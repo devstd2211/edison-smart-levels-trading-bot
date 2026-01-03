@@ -1,0 +1,318 @@
+---
+document: Centralized Blocking Rules
+description: All hard blocking rules in one place (Hard Blocking System)
+philosophy: "Better to miss a good trade than take a bad trade"
+priority: "Capital preservation > Profit maximization"
+
+blocking_system:
+  type: HARD_BLOCKING
+  description: "If condition not met → signal NOT generated (return null)"
+  advantages:
+    - "Simple logic (if/else)"
+    - "Predictable"
+    - "Protection from bad trades"
+  disadvantages:
+    - "Miss good trades (false negatives)"
+    - "Limited flexibility"
+
+global_blocks:
+  description: "Blocking rules applied to ALL strategies"
+
+  - id: GLOBAL_1
+    name: Insufficient Data
+    severity: CRITICAL
+    check: |
+      candles5m.length < 100 ||
+      candles30m.length < 50 ||
+      candles1h.length < 50
+    reason: "Insufficient data for RSI/EMA calculations"
+    action: "return null"
+    applies_to: ALL_STRATEGIES
+    bypass: IMPOSSIBLE
+
+  - id: GLOBAL_2
+    name: EMA Distance > 5.5%
+    severity: CRITICAL
+    check: "abs((currentPrice - EMA50) / EMA50 * 100) > 5.5"
+    reason: "Falling knife (LONG) or blow-off top (SHORT)"
+    historical_data: "Prevented 15+ losses (APEXUSDT backtest)"
+    action: "return null"
+    applies_to: ALL_STRATEGIES
+    bypass: IMPOSSIBLE
+    env_var: MAX_DISTANCE_TO_EMA_PERCENT
+    default_value: 5.5
+
+  - id: GLOBAL_3
+    name: Active Positions Limit
+    severity: CRITICAL
+    check: "activePositions.length > 0"
+    max_positions: 1
+    reason: "Max positions limit (risk management)"
+    action: "return null"
+    applies_to: ALL_STRATEGIES
+    bypass: "Close existing position first"
+
+  - id: GLOBAL_4
+    name: Cooldown Period
+    severity: MEDIUM
+    check: "now - lastSignalTime < 10000"
+    cooldown_ms: 10000
+    reason: "Rate limiting (avoid spam signals)"
+    action: "skip signal"
+    applies_to: ALL_STRATEGIES
+    implementation_status: VERIFY
+
+rsi_blocks:
+  description: "RSI-specific blocking rules by strategy"
+
+  reversal_patterns:
+    long:
+      - id: RSI_REVERSAL_LONG_1
+        check: "rsi > 45"
+        reason: "Reversal LONG requires oversold (20-45)"
+        action: "return null"
+
+      - id: RSI_REVERSAL_LONG_2
+        check: "rsi < 20"
+        reason: "Extreme oversold (< 20) - too early"
+        action: "return null"
+
+    short:
+      - id: RSI_REVERSAL_SHORT_1
+        check: "rsi < 55"
+        reason: "Reversal SHORT requires overbought (55-85)"
+        action: "return null"
+
+      - id: RSI_REVERSAL_SHORT_2
+        check: "rsi > 85"
+        reason: "Extreme overbought (> 85) - too early"
+        action: "return null"
+
+  trend_following:
+    long:
+      - id: RSI_TREND_LONG_1
+        check: "rsi < 45"
+        reason: "Avoid falling knife (min RSI 45)"
+        action: "return null"
+
+      - id: RSI_TREND_LONG_2
+        check: "rsi > 65"
+        reason: "Priority 3 Fix: avoid buying tops (max RSI 65)"
+        action: "return null"
+        env_var: TREND_FOLLOWING_LONG_MAX_RSI
+        default_value: 65
+        priority_fix: 3
+
+      - id: RSI_TREND_LONG_3
+        check: "rsi < 35"
+        reason: "Avoid extreme oversold (double check)"
+        action: "return null"
+
+    short:
+      - id: RSI_TREND_SHORT_1
+        check: "rsi < 35"
+        reason: "Priority 3 Fix: avoid shorting bottoms (min RSI 35)"
+        action: "return null"
+        env_var: TREND_FOLLOWING_SHORT_MIN_RSI
+        default_value: 35
+        priority_fix: 3
+
+      - id: RSI_TREND_SHORT_2
+        check: "rsi > 50 && trend === 'BEAR'"
+        reason: "Priority 4 Fix: avoid counter-trend bounces"
+        action: "return null"
+        priority_fix: 4
+
+      - id: RSI_TREND_SHORT_3
+        check: "rsi > 65"
+        reason: "Avoid overbought (max RSI 65)"
+        action: "return null"
+
+  level_based:
+    long:
+      - id: RSI_LEVEL_LONG_1
+        check: "rsi < 30"
+        reason: "Too oversold (min RSI 30)"
+        action: "return null"
+
+      - id: RSI_LEVEL_LONG_2
+        check: "rsi > 55"
+        reason: "Good zone for LONG: 30-55"
+        action: "return null"
+
+    short:
+      - id: RSI_LEVEL_SHORT_1
+        check: "rsi < 45"
+        reason: "Good zone for SHORT: 45-70"
+        action: "return null"
+
+      - id: RSI_LEVEL_SHORT_2
+        check: "rsi > 70"
+        reason: "Too overbought (max RSI 70)"
+        action: "return null"
+
+  extreme_counter_trend:
+    long:
+      - id: RSI_EXTREME_LONG
+        check: "rsi >= 20"
+        reason: "Extreme Counter-Trend requires RSI < 20"
+        action: "return null"
+
+    short:
+      - id: RSI_EXTREME_SHORT
+        check: "rsi <= 85"
+        reason: "Extreme Counter-Trend requires RSI > 85"
+        action: "return null"
+
+trend_blocks:
+  description: "Blocking rules based on trend"
+
+  trend_following:
+    long:
+      - id: TREND_TF_LONG_1
+        check: "trend30m !== 'BULL' && trend30m !== 'STRONG_BULL'"
+        reason: "Trend-Following LONG requires BULL on 30m"
+        action: "return null"
+
+      - id: TREND_TF_LONG_2
+        check: "trend1h !== 'BULL' && trend1h !== 'STRONG_BULL'"
+        reason: "Trend-Following LONG requires BULL on 1h"
+        action: "return null"
+
+    short:
+      - id: TREND_TF_SHORT_1
+        check: "trend30m !== 'BEAR' && trend30m !== 'STRONG_BEAR'"
+        reason: "Trend-Following SHORT requires BEAR on 30m"
+        action: "return null"
+
+      - id: TREND_TF_SHORT_2
+        check: "trend1h !== 'BEAR' && trend1h !== 'STRONG_BEAR'"
+        reason: "Trend-Following SHORT requires BEAR on 1h"
+        action: "return null"
+
+  level_based:
+    long:
+      - id: TREND_LEVEL_LONG
+        check: "trend30m === 'BEAR' || trend30m === 'STRONG_BEAR'"
+        reason: "Level-Based LONG does not enter BEAR trend"
+        action: "return null"
+
+    short:
+      - id: TREND_LEVEL_SHORT
+        check: "trend30m === 'BULL' || trend30m === 'STRONG_BULL'"
+        reason: "Level-Based SHORT does not enter BULL trend"
+        action: "return null"
+
+volume_blocks:
+  description: "Blocking rules based on volume"
+
+  - id: VOL_TREND_1
+    strategy: Trend-Following
+    check: "currentVolume / avgVolume < 0.5"
+    threshold: 0.5
+    reason: "Low liquidity (wick/gap risk)"
+    action: "return null"
+    env_var: VOLUME_MIN_MULTIPLIER
+
+  - id: VOL_LEVEL_1
+    strategy: Level-Based
+    check: "currentVolume / avgVolume < 0.3"
+    threshold: 0.3
+    reason: "Very low liquidity for level-based"
+    action: "return null"
+
+wick_blocks:
+  description: "Protection from wicks (wick hunting zones)"
+
+  - id: WICK_LONG
+    direction: LONG
+    check: "wickDown > bodySize * 2 && wickDownPercent > 0.5"
+    candles_to_check: 3
+    reason: "Lower wick > 2x body (high volatility down)"
+    risk: "Stop-out risk (wick hunting)"
+    action: "return null"
+    env_var: WICK_BODY_MULTIPLIER
+    default_value: 2
+
+  - id: WICK_SHORT
+    direction: SHORT
+    check: "wickUp > bodySize * 2 && wickUpPercent > 0.5"
+    candles_to_check: 3
+    reason: "Upper wick > 2x body (high volatility up)"
+    risk: "Stop-out risk (wick hunting)"
+    action: "return null"
+
+ath_protection_blocks:
+  description: "Protection from buying at ATH"
+
+  - id: ATH_LONG
+    direction: LONG
+    check: "dropFromHigh < 0.2"
+    threshold_percent: 0.2
+    reason: "Price too close to ATH (risk of buying the top)"
+    action: "return null"
+    applies_to: [Trend-Following]
+    env_var: MIN_DROP_FROM_ATH_FOR_LONG
+    default_value: 0.2
+
+entry_filter_blocks:
+  description: "Advanced entry filters (Priority 4 fix)"
+
+  - id: ENTRY_LONG_FILTER
+    direction: LONG
+    check: "rsi > 60 && distance > 10"
+    reason: "Buying the top protection (RSI > 60 + far from EMA)"
+    historical_data: "High loss rate for this combination"
+    action: "return null"
+    env_var: TREND_FOLLOWING_BLOCK_OVERSOLD_HIGH_DISTANCE
+    enabled_by_default: true
+
+  - id: ENTRY_SHORT_FILTER
+    direction: SHORT
+    check: "rsi < 40 && distance > 10"
+    reason: "Falling knife protection (RSI < 40 + far from EMA)"
+    historical_data: "83% loss rate (APEXUSDT backtest)"
+    action: "return null"
+    env_var: TREND_FOLLOWING_BLOCK_OVERSOLD_HIGH_DISTANCE
+    enabled_by_default: true
+
+level_blocks:
+  description: "Level-Based strategy blocking"
+
+  - id: LEVEL_DISTANCE_1
+    check: "distanceToLevel > 1.5"
+    threshold_percent: 1.5
+    reason: "Price too far from level"
+    action: "return null"
+    env_var: MAX_DISTANCE_TO_LEVEL_PERCENT
+
+summary:
+  total_blocking_rules: 35+
+  global_critical_blocks: 4
+  rsi_blocks: 14 (by strategies)
+  trend_blocks: 6
+  volume_blocks: 2
+  wick_blocks: 2
+  ath_blocks: 1
+  entry_filter_blocks: 2
+  level_blocks: 1
+
+calibration:
+  method: "Based on APEXUSDT backtest data"
+  tuning_approach: "Conservative (avoid losses > catch gains)"
+  adjustable_via_env:
+    - MAX_DISTANCE_TO_EMA_PERCENT (default: 5.5)
+    - TREND_FOLLOWING_LONG_MAX_RSI (default: 65)
+    - TREND_FOLLOWING_SHORT_MIN_RSI (default: 35)
+    - MIN_DROP_FROM_ATH_FOR_LONG (default: 0.2)
+    - VOLUME_MIN_MULTIPLIER (default: 0.5)
+    - WICK_BODY_MULTIPLIER (default: 2)
+
+effectiveness:
+  most_effective:
+    1: "EMA Distance > 5.5% (prevented 15+ losses)"
+    2: "RSI Out of Range (Priority 3 & 4 fixes)"
+    3: "Dangerous Wicks (wick hunting protection)"
+
+  false_negatives: "~20% good trades blocked (acceptable trade-off)"
+  false_positives: "~5% bad trades allowed (room for improvement)"

@@ -1,0 +1,178 @@
+---
+document: Trading Strategies Summary
+strategies_count: 4
+priority_order: [Trend-Following, Level-Based, Counter-Trend, Reversal-Pattern]
+
+strategies:
+  - name: Trend-Following Strategy
+    file: src/strategies/trend-following.strategy.ts
+    priority: 1 (highest)
+    type: Momentum trading
+    description: |
+      Trend-following trading - main scalping strategy.
+      Entry on EMA pullback in strong trend.
+
+    entry_conditions:
+      LONG:
+        - "Trend: BULL/STRONG_BULL (30m/1h/4h)"
+        - "RSI: 45-65 (trend range, NOT overbought)"
+        - "Price near EMA (pullback)"
+        - "Distance to EMA < 5.5%"
+        - "RSI < 65 (Priority 3 Fix: avoid buying tops)"
+        - "NOT at ATH (dropFromHigh > 0.2%)"
+        - "Volume > 0.5x avg (low liquidity protection)"
+        - "NO recent downward wicks (> 2x body size)"
+
+      SHORT:
+        - "Trend: BEAR/STRONG_BEAR (30m/1h/4h)"
+        - "RSI: 32-50 (trend range, NOT oversold)"
+        - "Price near EMA (pullback)"
+        - "Distance to EMA < 5.5%"
+        - "RSI > 35 (Priority 3 Fix: avoid catching knives)"
+        - "RSI < 50 in BEAR (Priority 4: avoid counter-trend bounces)"
+        - "Volume > 0.5x avg"
+        - "NO recent upward wicks (> 2x body size)"
+
+    blocking_rules:
+      - "Distance > 5.5% → BLOCK (falling knife / blow-off top)"
+      - "RSI out of range → BLOCK"
+      - "Wick detection (фитиль > 2x body) → BLOCK"
+      - "Volume < 0.5x avg → BLOCK (low liquidity)"
+      - "ATH protection (< 0.2% drop) → BLOCK LONG"
+      - "RSI > 60 && distance > 10% → BLOCK LONG (buying the top)"
+      - "RSI < 40 && distance > 10% → BLOCK SHORT (falling knife)"
+
+    confidence_modifiers:
+      base:
+        - "STRONG_BULL/STRONG_BEAR: high (0.8)"
+        - "BULL/BEAR: medium (0.6)"
+
+      distance_to_ema:
+        - "< 3%: excellent (1.0)"
+        - "3-7%: good (0.9)"
+        - "7-15%: ok (0.7)"
+        - "15-25%: poor (0.5)"
+        - "> 25%: very far (0.3)"
+
+      choch_bos:
+        - "CHoCH против нас → -40% (0.6x)"
+        - "BoS в нашу сторону → +10% (1.1x)"
+
+  - name: Level-Based Strategy
+    file: src/strategies/level-based.strategy.ts
+    priority: 2
+    type: Support/Resistance trading
+    description: |
+      Trading from ZigZag levels (swing highs/lows).
+      Entry approaching key levels with RSI/Volume confirmation.
+
+    entry_conditions:
+      LONG:
+        - "Price near support level (swing low)"
+        - "Distance to level < 1.5%"
+        - "RSI: 30-55 (good zone for LONG)"
+        - "Level strength: HIGH (multiple touches)"
+        - "Volume confirmation"
+
+      SHORT:
+        - "Price near resistance level (swing high)"
+        - "Distance to level < 1.5%"
+        - "RSI: 45-70 (good zone for SHORT)"
+        - "Level strength: HIGH"
+        - "Volume confirmation"
+
+    blocking_rules:
+      - "Distance to level > 1.5% → BLOCK"
+      - "RSI out of good zone → BLOCK"
+      - "Distance to EMA > 5.5% → BLOCK"
+      - "Volume < 0.3x avg → BLOCK"
+      - "Level strength LOW → BLOCK"
+
+    confidence:
+      - "Base: medium (0.6)"
+      - "Level strength HIGH: +0.10"
+      - "Volume high: +0.10"
+      - "Distance to level < 0.5%: +0.10"
+
+  - name: Counter-Trend Strategy
+    file: src/strategies/counter-trend.strategy.ts
+    priority: 3
+    type: Reversal trading
+    description: |
+      Extreme RSI (< 20 or > 85) - catching reversals.
+      DANGEROUS strategy, requires confirmation.
+
+    entry_conditions:
+      LONG:
+        - "RSI < 20 (extreme oversold)"
+        - "Distance to EMA < 5.5%"
+        - "Trend NOT STRONG_BEAR (avoid strong downtrend)"
+
+      SHORT:
+        - "RSI > 85 (extreme overbought)"
+        - "Distance to EMA < 5.5%"
+        - "Trend NOT STRONG_BULL (avoid strong uptrend)"
+
+    blocking_rules:
+      - "RSI not extreme → BLOCK"
+      - "Distance > 5.5% → BLOCK"
+      - "Strong opposite trend → BLOCK"
+
+    confidence:
+      - "Base: low (0.5)"
+      - "Very high risk strategy"
+
+  - name: Reversal-Pattern Strategy
+    file: src/strategies/reversal-pattern.strategy.ts
+    priority: 4 (lowest)
+    type: Pattern recognition (EXPERIMENTAL)
+    description: |
+      Reversal candle pattern detection.
+      EXPERIMENTAL strategy, low priority.
+
+    patterns:
+      - "Hammer → LONG"
+      - "Shooting Star → SHORT"
+      - "Engulfing patterns"
+      - "Doji patterns"
+
+    confidence:
+      - "Base: very low (0.4)"
+      - "Experimental, needs validation"
+
+signal_priority:
+  description: "If multiple strategies generate signals, priority is used"
+  order:
+    1: Trend-Following (most reliable)
+    2: Level-Based (good risk/reward)
+    3: Counter-Trend (risky, only extreme conditions)
+    4: Reversal-Pattern (experimental)
+
+global_validations:
+  all_strategies:
+    - "Sufficient data (candles, RSI, EMA)"
+    - "Position limits (max 1 position)"
+    - "Cooldown period (10 sec between signals)"
+    - "No duplicate signals (same direction)"
+
+weight_system:
+  description: "Each strategy can adjust confidence via modifiers"
+  components:
+    - "RSI zone: -0.15 to +0.20"
+    - "EMA distance: -0.25 to +0.15"
+    - "Trend alignment: -0.20 to +0.25"
+    - "Order Book imbalance: -0.10 to +0.15"
+    - "Level strength: 0 to +0.40"
+    - "Volume: -0.10 to +0.10"
+    - "CHoCH/BoS: -0.50 to +0.30"
+
+  final_confidence:
+    formula: "baseConfidence * distanceConfidence * chochBosModifier"
+    range: [0.3, 1.0]
+    threshold: "Signal accepted if confidence > minConfidenceThreshold (0.5)"
+
+test_coverage_goals:
+  - "Trend-Following: 85%+"
+  - "Level-Based: 85%+"
+  - "Counter-Trend: 80%+"
+  - "Reversal-Pattern: 70%+ (experimental)"

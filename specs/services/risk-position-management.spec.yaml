@@ -1,0 +1,908 @@
+---
+document: Risk & Position Management System
+description: Risk management, position management, stop-loss, and dynamic position sizing
+
+# =============================================================================
+# RISK MANAGEMENT SERVICES
+# =============================================================================
+
+risk_management:
+  description: Risk management system with circuit breaker, entry filters, and balance management
+
+  # ---------------------------------------------------------------------------
+  # CIRCUIT BREAKER SERVICE
+  # ---------------------------------------------------------------------------
+  circuit_breaker:
+    service: CircuitBreakerService
+    file: src/services/circuit-breaker.service.ts
+    description: Protection from cascading API errors with automatic recovery
+
+    functionality:
+      error_tracking:
+        description: Tracking of consecutive API errors
+        counter: consecutiveApiErrors (0-5)
+        threshold: MAX_CIRCUIT_BREAKER_ERRORS (default 5)
+        reset_on_success: "Counter resets on successful API call"
+
+      circuit_breaker_activation:
+        trigger: "consecutiveApiErrors >= 5"
+        action: Stops trading for CIRCUIT_BREAKER_RESET_MS (5 minutes)
+        persistent: "State saved to file (survives restarts)"
+        log: "🚨 Circuit breaker tripped! Pausing trading"
+
+      automatic_recovery:
+        mechanism: Automatic reset after pause
+        check: "Each cycle checks if pause time has elapsed"
+        recovery: "🟢 Circuit breaker reset, resuming trading"
+
+      state_persistence:
+        methods:
+          - loadState(): Loads state from persistent storage
+          - saveState(): Saves state after changes
+        storage: ConfigurationService.loadCircuitBreakerState()
+
+    methods:
+      checkCircuitBreaker():
+        returns: "{ canProceed: boolean, reason?: string, timeUntilReset?: number }"
+        logic: |
+          if tripped && now < resetTime:
+            return { canProceed: false, timeUntilReset }
+          else if tripped && now >= resetTime:
+            resetCircuitBreaker()
+            return { canProceed: true }
+          else:
+            return { canProceed: true }
+
+      handleError(error):
+        logic: |
+          if error.type === API_ERROR:
+            consecutiveApiErrors++
+            if consecutiveApiErrors >= 5:
+              tripCircuitBreaker()
+          else:
+            consecutiveApiErrors = 0  # Non-API errors reset counter
+
+      handleSuccess():
+        description: "Сбрасывает счётчик при успешной операции"
+        logic: "consecutiveApiErrors = 0"
+
+    configuration:
+      MAX_CIRCUIT_BREAKER_ERRORS: 5
+      CIRCUIT_BREAKER_RESET_MS: 300000  # 5 минут
+
+    use_cases:
+      api_outage:
+        scenario: "Биржа недоступна 5 минут"
+        behavior: "После 5 ошибок останавливает попытки на 5 минут, затем возобновляет"
+
+      rate_limiting:
+        scenario: "429 Too Many Requests"
+        behavior: "Считается как API_ERROR, активирует circuit breaker"
+
+  # ---------------------------------------------------------------------------
+  # RISK FILTER SERVICE
+  # ---------------------------------------------------------------------------
+  risk_filter:
+    service: RiskFilterService
+    file: src/services/risk-filter.service.ts
+    description: Фильтрация сигналов по multi-TF RSI, балансу и тренду
+
+    filters:
+      multi_tf_rsi_filter:
+        description: Проверка RSI на всех trend таймфреймах (30m, 1h, 4h)
+
+        long_filter:
+          threshold: RSI_ENTRY_FILTER_OVERBOUGHT (default 70)
+          condition: "majority of trend TFs > 70 → BLOCK or ADVISORY"
+          modes:
+            blocking_mode:
+              enabled: RSI_ADVISORY_MODE=false
+              action: "canProceed: false"
+              log: "🚫 LONG blocked - majority of trend timeframes overbought"
+
+            advisory_mode:
+              enabled: RSI_ADVISORY_MODE=true
+              action: "canProceed: true + confidencePenalty: 0.2"
+              log: "⚠️ LONG advisory - majority overbought, reducing confidence"
+
+        short_filter:
+          threshold: RSI_ENTRY_FILTER_OVERSOLD (default 35)
+          condition: "majority of trend TFs < 35 → BLOCK or ADVISORY"
+          logic: "Симметрично LONG"
+
+        example:
+          scenario: "RSI = [Main: 55, Trend1(30m): 72, Trend2(1h): 75, Context(4h): 68]"
+          analysis: "3 из 4 таймфреймов > 70 (majority)"
+          blocking_result: "LONG blocked"
+          advisory_result: "LONG allowed with -0.2 confidence penalty"
+
+      balance_check:
+        method: checkBalanceForLong(usdtBalance)
+        condition: "usdtBalance < basePositionSize → BLOCK"
+        returns: "{ canProceed: false, reason: 'Insufficient balance' }"
+
+      trend_block_filter:
+        description: "Блокировка торговли против тренда БЕЗ экстремальных условий"
+
+        long_in_bear_trend:
+          condition: "trend === BEAR || STRONG_BEAR"
+          allowed_if: "RSI Main < 30 OR RSI Trend1 < 30 (extreme oversold)"
+          blocked_if: "NOT (oversold conditions)"
+          reason: "Bear trend without oversold (RSI Main 55, Trend1 45)"
+          log: "🚫 LONG blocked - bear trend without oversold conditions"
+
+        short_in_bull_trend:
+          condition: "trend === BULL || STRONG_BULL"
+          allowed_if: "RSI Main > 85 OR RSI Trend1 > 85 (extreme overbought)"
+          blocked_if: "NOT (overbought conditions)"
+          reason: "Bull trend without overbought"
+
+        oversold_bounce_example:
+          scenario: "BEAR trend, RSI Trend1 = 28 (oversold)"
+          result: "✅ LONG allowed - Longing bounce on oversold higher timeframe"
+
+    configuration:
+      RSI_ADVISORY_MODE: true/false  # Advisory vs Blocking mode
+      RSI_CONFIDENCE_PENALTY: 0.2    # Penalty in advisory mode
+      RSI_ENTRY_FILTER_OVERBOUGHT: 70
+      RSI_ENTRY_FILTER_OVERSOLD: 35
+      EXTREME_RSI_THRESHOLD: 30  # For trend block exceptions
+
+    integration:
+      called_by: SignalGeneratorService.generateSignals()
+      flow: |
+        1. Check multi-TF RSI filter
+        2. Check balance
+        3. Check trend block
+        4. Return filter result
+
+  # ---------------------------------------------------------------------------
+  # BALANCE MANAGER SERVICE
+  # ---------------------------------------------------------------------------
+  balance_manager:
+    service: BalanceManagerService
+    file: src/services/balance-manager.service.ts
+    description: Управление балансом с защитой от фрагментации и drift detection
+
+    features:
+      initial_balance_tracking:
+        description: "Использует ИЗНАЧАЛЬНЫЙ баланс вместо текущего"
+        reason: "ИСПРАВЛЯЕТ проблему экспоненциальной фрагментации"
+        variable: initialBalance (from config)
+        formula: "positionSize = initialBalance × POSITION_SIZE_PERCENT"
+
+      reserved_amount_tracking:
+        description: "Отслеживание зарезервированных средств для pending orders"
+        variables:
+          - reservedAmount: float (сумма зарезервированная)
+          - ordersPlaced: int (количество ордеров)
+
+      drift_detection:
+        description: "КРИТИЧЕСКАЯ ПРОВЕРКА: обнаружение расхождения расчётного и реального баланса"
+        check: "if calculated > actualAvailable → DRIFT DETECTED"
+        action: "Использует реальный баланс вместо расчётного"
+        log: "🚨 BALANCE DRIFT DETECTED! calculated: $50, actual: $45, drift: $5"
+
+    methods:
+      calculatePositionSize(positionSizePercent, signalConfidence):
+        description: "Умный расчёт размера позиции с множественными проверками"
+        steps:
+          step1_base_calculation:
+            formula: "basePositionValue = initialBalance × positionSizePercent / 100"
+            example: "$1000 × 1.0% = $10"
+
+          step2_confidence_adjustment:
+            formula: "adjustedValue = basePositionValue × signalConfidence"
+            example: "$10 × 0.85 = $8.50"
+
+          step3_limit_checks:
+            checks:
+              - "ordersPlaced >= MAX_PENDING_ORDERS → BLOCK"
+              - "adjustedValue < MIN_ORDER_VALUE → BLOCK"
+              - "adjustedValue > MAX_ORDER_VALUE → CAP to MAX"
+
+          step4_drift_detection:
+            check: "reservedAmount + adjustedValue > maxTotalExposure"
+            action: "Calculate maxAvailable, check drift"
+            drift_correction: "Use actualAvailable instead of calculated"
+
+        returns: "{ positionValue: number, canPlace: boolean, reason?: string }"
+
+      reserveForOrder(positionValue):
+        action: |
+          reservedAmount += positionValue
+          ordersPlaced++
+        log: "🔒 Reserved $10 USDT (totalReserved: $20, ordersPlaced: 2)"
+
+      releaseFromOrder(positionValue):
+        action: |
+          reservedAmount = max(0, reservedAmount - positionValue)
+          ordersPlaced = max(0, ordersPlaced - 1)
+        log: "🔓 Released $10 USDT (totalReserved: $10, ordersPlaced: 1)"
+
+      getBalanceState(currentBalance):
+        returns: |
+          {
+            totalBalance: initialBalance,
+            reservedForOrders: reservedAmount,
+            emergencyReserve: initialBalance × 0.05,
+            availableForNewOrders: maxExposure - reserved,
+            maxTotalExposure: initialBalance × 0.95,
+            ordersPlaced: ordersPlaced
+          }
+
+    configuration:
+      BALANCE_INITIAL_AMOUNT: 1000  # Изначальный баланс для расчётов
+      BALANCE_MAX_TOTAL_EXPOSURE: 0.95  # 95% баланса доступно
+      BALANCE_EMERGENCY_RESERVE: 0.05   # 5% резерв
+      BALANCE_MIN_ORDER_VALUE: 5        # Минимум $5
+      BALANCE_MAX_ORDER_VALUE: 50       # Максимум $50
+      BALANCE_MAX_PENDING_ORDERS: 5     # До 5 ордеров одновременно
+      BALANCE_MAX_DAILY_ORDERS: 100     # До 100 ордеров в день
+
+    decimal_precision:
+      library: Decimal.js
+      reason: "Избегает накопления floating-point ошибок"
+      usage: "Все финансовые расчёты через new Decimal()"
+
+# =============================================================================
+# POSITION MANAGEMENT SERVICES
+# =============================================================================
+
+position_management:
+  description: Управление фьючерсными позициями с TP/SL, trailing stop и dynamic sizing
+
+  # ---------------------------------------------------------------------------
+  # FUTURES POSITION MANAGER
+  # ---------------------------------------------------------------------------
+  futures_position_manager:
+    service: FuturesPositionManagerService
+    file: src/services/futures-position-manager.service.ts
+    description: Полный цикл управления позициями от открытия до закрытия
+
+    architecture:
+      local_cache:
+        description: "Map<positionId, Position>"
+        purpose: "Хранение метаданных (TP levels, reasons, timestamps)"
+        source_of_truth: "API биржи (positions, quantity, PnL)"
+        synchronization: "monitorPositions() удаляет закрытые позиции"
+
+      pending_orders:
+        description: "Map<orderId, PendingOrder>"
+        purpose: "Отслеживание лимитных ордеров до исполнения"
+        lifecycle: |
+          1. openPosition() → добавляет в pending
+          2. WebSocket order.filled → createPositionFromFilledOrder()
+          3. Удаляется из pending
+
+    position_lifecycle:
+      step1_open_position:
+        method: "openPosition(params)"
+        description: "Размещает entry ордер (Market или Limit)"
+
+        order_types:
+          market_order:
+            enabled: FUTURES_USE_MARKET_ORDERS=true
+            price: currentPrice
+            execution: "Мгновенное исполнение"
+
+          limit_order:
+            enabled: FUTURES_USE_MARKET_ORDERS=false
+            offset: FUTURES_BUY_LIMIT_OFFSET (default 0.01%)
+            price_long: "currentPrice × (1 - 0.01%)"
+            price_short: "currentPrice × (1 + 0.01%)"
+            execution: "Ждёт WebSocket fill event"
+
+        dynamic_sizing:
+          enabled: "if dynamicSizer exists"
+          calculation: "quantity = (dynamicSize × leverage) / currentPrice"
+          log: "💰 Dynamic Position Sizing applied: 10.0 → 12.5 USDT"
+
+        race_condition_fix:
+          problem: "WebSocket может прийти раньше API response"
+          solution: "Создаём pending ДО API вызова с temp ID"
+          temp_id: "temp_{symbol}_{side}_{timestamp}_{random}"
+          flow: |
+            1. Create pending with tempOrderId
+            2. Add to pendingOrders map
+            3. Call API
+            4. Update pending with real orderId
+
+        risk_checks:
+          - checkPositionLimits(side): Проверка MAX_OPEN_POSITIONS
+          - checkMarginAvailable(quantity, leverage): Проверка баланса
+
+      step2_create_position:
+        method: "createPositionFromFilledOrder(pending)"
+        trigger: "WebSocket order filled event"
+
+        position_creation:
+          fetch_position: "Получаем позицию с биржи через API"
+          local_position: |
+            {
+              id: "{symbol}_{side}_{timestamp}",
+              ...bybitPosition,
+              reason: pending.reason
+            }
+
+        stop_loss_setup:
+          standard_sl:
+            calculation: "SL = entryPrice × (1 ± stopLossPercent)"
+            example_long: "Entry $2.30, SL 0.4% → $2.2908"
+
+          level_based_sl:
+            enabled: "LEVEL_STOP_BEHIND_LEVEL=true && strategy=Level-Based"
+            calculation: "SL = levelPrice × (1 ± offsetPercent)"
+            offset: LEVEL_STOP_OFFSET_PERCENT (default 0.5%)
+            logic_long: "Стоп НИЖЕ support уровня"
+            logic_short: "Стоп ВЫШЕ resistance уровня"
+            example: "Support $2.30, offset 0.5% → SL $2.2885"
+
+        take_profit_setup:
+          levels:
+            - TP1: "0.6% (50% позиции)"
+            - TP2: "1.0% (30% позиции)"
+            - TP3: "1.8% (20% позиции)"
+
+          placement: "Размещает все TP ордера одновременно"
+          tracking: "Сохраняет orderId для каждого уровня"
+
+        trade_journal:
+          enabled: "if tradeJournal exists"
+          records: |
+            {
+              positionId, symbol, entryConditions,
+              entryPrice, quantity, leverage,
+              stopLoss, takeProfitLevels,
+              openedAt, status: 'open'
+            }
+
+        telegram_notification:
+          event: notifyPositionEntry(position)
+          includes: "Entry price, leverage, SL, TP levels"
+
+      step3_monitor_position:
+        method: "monitorPositions()"
+        frequency: FUTURES_POSITION_CHECK_INTERVAL_MS (default 60000ms)
+
+        synchronization:
+          fetch: "Получаем ВСЕ позиции с биржи"
+          filter: "Только открытые (quantity > 0)"
+          cleanup: "Удаляем закрытые из local cache"
+
+        tp_level_detection:
+          method: checkTakeProfitLevels(position)
+          check: "Проверяет статус каждого TP ордера"
+          on_filled: "Вызывает onTakeProfitHit(position, level)"
+
+        closed_position_detection:
+          trigger: "Позиция есть локально, но нет на бирже"
+          analysis: |
+            - Check if trailing was active → "Trailing Stop triggered"
+            - Check if SL moved to breakeven → "Breakeven SL triggered"
+            - Else → "Position closed (unknown reason)"
+
+          journal_fallback: "Записывает в журнал если WebSocket пропустил"
+          no_telegram: "Telegram уже отправлен в WebSocket handlers"
+
+      step4_tp_hit_logic:
+        method: "onTakeProfitHit(position, level)"
+
+        tp1_hit:
+          action: "Перемещает SL в breakeven (entry + 0.2%)"
+          offset: FUTURES_BREAKEVEN_OFFSET_PERCENT (default 0.12%)
+          calculation_long: "breakeven = entryPrice × (1 + 0.12%)"
+          calculation_short: "breakeven = entryPrice × (1 - 0.12%)"
+          log: "✅ Stop moved to breakeven + offset"
+          telegram: notifyBreakevenStop(position, breakevenPrice)
+
+        tp2_hit:
+          action: "Trailing stop активируется автоматически в StopLossManager"
+          trigger: "shouldActivateTrailing() при достижении activationPercent"
+
+        all_tps_filled:
+          detection: "position.takeProfitLevels.every(tp => tp.filled)"
+          action: "Закрывает позицию полностью"
+          reason: "All TP levels filled"
+
+      step5_close_position:
+        method: "closePosition(positionId, reason)"
+
+        cleanup_orders:
+          tp_orders: "Отменяет все незаполненные TP ордера"
+          sl_order: "Отменяет Stop Loss ордер"
+
+        close_execution:
+          api_call: "bybit.closeFuturesPosition(symbol, side)"
+          market_order: "Закрывает по рыночной цене"
+
+        metrics_calculation:
+          realized_pnl: position.unrealizedPnL
+          realized_pnl_percent: "(realizedPnL / margin) × 100"
+          holding_time_ms: "closedAt - openedAt"
+          tp_levels_hit: "TP уровни которые сработали"
+          stopped_out: "Закрыто по стопу (true/false)"
+
+        journal_recording:
+          exit_conditions: |
+            {
+              closeReason, closePrice, closedAt,
+              realizedPnL, realizedPnLPercent,
+              holdingTimeMs, tpLevelsHit,
+              stoppedOut, trailingStopUsed
+            }
+
+        dynamic_sizing_update:
+          enabled: "if dynamicSizer exists"
+          call: "dynamicSizer.updateAfterTrade(realizedPnL)"
+
+        telegram_notification:
+          event: notifyPositionExit(position, reason, closePrice, pnl, pnlPercent, tpLevels)
+
+    websocket_handlers:
+      handle_position_update:
+        topic: "position.linear"
+        trigger: "Позиция обновлена или закрыта"
+
+        position_closed_detection:
+          condition: "size === 0"
+          analysis: |
+            Priority 1: Check if trailing was active
+            Priority 2: Check if breakeven SL (after TP hit)
+            Priority 3: Check if initial SL (no TPs hit)
+            Priority 4: Unknown (manual close / liquidation)
+
+          close_reasons:
+            - "Trailing Stop triggered (server-side)"
+            - "Breakeven Stop Loss triggered"
+            - "Stop Loss triggered"
+            - "Position closed on exchange (unknown reason)"
+
+          order_cleanup:
+            tp_orders: "Отменяет все незаполненные TP"
+            sl_order: "Отменяет SL (может быть already executed)"
+
+          journal_recording: "Записывает exit conditions"
+          telegram: "Отправляет уведомление (по типу закрытия)"
+          cache_removal: "positions.delete(position.id)"
+
+        position_updated:
+          updates: "quantity, unrealizedPnL, liquidationPrice, updatedAt"
+
+      handle_order_update:
+        topic: "order.linear"
+        trigger: "Ордер изменил статус (Filled/Cancelled/Rejected)"
+
+        priority1_pending_orders:
+          check: "Ищет orderId в pendingOrders map"
+          race_condition_fix: "Проверяет temp IDs если real ID не найден"
+
+          filled:
+            action: "createPositionFromFilledOrder(pending)"
+            cleanup: "pendingOrders.delete(orderId)"
+
+          cancelled_rejected:
+            log: "⚠️ Pending order cancelled/rejected"
+            cleanup: "pendingOrders.delete(orderId)"
+
+        priority2_tp_orders:
+          check: "Ищет orderId в position.takeProfitLevels"
+
+          tp_filled:
+            action: "tpLevel.filled = true"
+            check_all_filled: "if all TPs filled → close position"
+            partial_close: "onTakeProfitHit(position, level)"
+            telegram: notifyTakeProfitHit(position, tpLevel)
+
+          all_tps_filled:
+            sl_cleanup: "Отменяет висящий Stop Loss"
+            journal: "Записывает exit с tpLevelsHit"
+            telegram: notifyAllTakeProfitsHit()
+            cache_removal: "positions.delete()"
+
+        priority3_trailing_stop:
+          detection: "stopOrderType === TrailingStop && status === Filled"
+          description: "Server-side Bybit trailing stop сработал"
+
+          journal_recording:
+            close_reason: "Trailing Stop triggered (server-side)"
+            stopped_out: true
+            trailing_stop_used: true
+
+          telegram: notifyTrailingStopTriggered()
+          cache_removal: "positions.delete() СРАЗУ"
+
+        priority4_sl_orders:
+          check: "position.stopLoss.orderId === orderId"
+
+          breakeven_sl:
+            detection: "TP hit + SL moved to entry"
+            close_reason: "Breakeven Stop Loss triggered"
+            telegram: notifyBreakevenStopTriggered()
+
+          initial_sl:
+            detection: "No TPs hit + negative PnL"
+            close_reason: "Stop Loss triggered"
+            telegram: notifyStopLossTriggered()
+
+          journal_recording: "Записывает exit conditions"
+          cache_removal: "positions.delete() СРАЗУ"
+
+      handle_execution_update:
+        topic: "execution.linear"
+        purpose: "Детальная диагностика (логирование)"
+        note: "Основная обработка в orderUpdate"
+
+    position_limits:
+      max_open_positions: FUTURES_MAX_OPEN_POSITIONS (default 1)
+      max_long_positions: FUTURES_MAX_LONG_POSITIONS (default 2)
+      max_short_positions: FUTURES_MAX_SHORT_POSITIONS (default 2)
+
+      symbol_check:
+        critical: "ОДНА позиция на symbol (нет hedging)"
+        check: "existingPosition.symbol === symbol → BLOCK"
+
+    pending_orders_timeout:
+      method: checkPendingOrdersTimeout()
+      frequency: "Каждую минуту из trading cycle"
+      timeout: FUTURES_PENDING_ORDER_TIMEOUT_MS (default 120000ms)
+      action: "Отменяет ордера старше 2 минут"
+
+  # ---------------------------------------------------------------------------
+  # STOP LOSS MANAGER
+  # ---------------------------------------------------------------------------
+  stop_loss_manager:
+    service: StopLossManagerService
+    file: src/services/stop-loss-manager.service.ts
+    description: ATR-based adaptive trailing stop с minimum profit floor
+
+    features:
+      initial_stop_loss:
+        method: "setInitialStopLoss(position, stopLossPrice)"
+        description: "Принимает уже рассчитанный SL (для Level-Based)"
+        placement: "Размещает fixed Stop Loss ордер на бирже"
+
+      adaptive_activation:
+        description: "🔥 АДАПТИВНЫЙ threshold = ATR distance"
+        reason: "Гарантирует что trailing сразу в breakeven"
+
+        calculation:
+          atr: "priceAnalyzer.calculateATR(14 periods)"
+          atr_based_distance: "ATR × 1.5 (адаптируется к волатильности)"
+          min_max_clamp: "1.0% - 4.0%"
+
+          activation_threshold: "MIN(config, atrBasedDistance)"
+          logic: "Используем меньший (раньше активация)"
+
+        no_fallback:
+          rule: "Если нет PriceAnalyzer → НЕ активируем trailing"
+          reason: "Нельзя рассчитать безопасный threshold без ATR"
+
+        example:
+          scenario: "ATR = 2.5%, config = 0.6%"
+          activation: "0.6% (config меньше, активация раньше)"
+          trailing_distance: "2.5% (ATR-based)"
+          result: "Активируется раньше, но trailing широкий → breakeven гарантирован"
+
+      atr_based_trailing:
+        description: "Trailing distance адаптируется к волатильности"
+
+        calculation:
+          atr_periods: TRAILING_STOP_ATR_PERIODS (default 14)
+          atr_multiplier: TRAILING_STOP_ATR_MULTIPLIER (default 1.5)
+          trailing_distance: "ATR × 1.5, clamped to [1%, 4%]"
+
+        examples:
+          low_volatility:
+            atr: "0.8%"
+            distance: "1.2% (< 1% min) → 1.0%"
+
+          normal_volatility:
+            atr: "1.8%"
+            distance: "2.7%"
+
+          high_volatility:
+            atr: "3.5%"
+            distance: "5.25% (> 4% max) → 4.0%"
+
+      minimum_profit_floor:
+        description: "🛡️ Трейлинг НЕ МОЖЕТ быть ниже entry + 0.3%"
+        reason: "Защита профита после TP1"
+
+        floor_calculation:
+          long: "floorPrice = entryPrice × (1 + 0.3%)"
+          short: "floorPrice = entryPrice × (1 - 0.3%)"
+
+        adjustment:
+          condition_long: "if newStopPrice < floorPrice → set to floor"
+          condition_short: "if newStopPrice > floorPrice → set to floor"
+          log: "🛡️ Trailing stop adjusted to minimum floor (entry + 0.3%)"
+
+      server_side_trailing:
+        description: "Использует native Bybit trailing stop (server-side)"
+        activation: "После shouldActivateTrailing() → setTrailingStop()"
+
+        process:
+          step1: "Отменяет старый fixed SL ордер"
+          step2: "Активирует Bybit trailing stop"
+          step3: "АДАПТИВНЫЙ TP3: отменяет ТОЛЬКО если тренд сильный"
+
+        no_manual_updates:
+          reason: "Биржа сама управляет trailing (двигает автоматически)"
+          log: "✅ Trailing Stop already active (server-side), no manual updates needed"
+
+      adaptive_tp3_cancellation:
+        description: "Умная логика отмены TP3 на основе силы тренда"
+
+        trend_strength_check:
+          method: checkTrendStrength(position)
+          criteria: "TP1 → TP2 < 30 секунд = HYPER SCALPING MODE"
+
+          strong_trend:
+            time: "< 30 seconds"
+            action: "Отменяет TP3 → едем к ATH с trailing"
+            log: "🚀 Strong trend detected - canceling TP3 to ride trailing to ATH"
+
+          weak_trend:
+            time: ">= 30 seconds"
+            action: "Оставляет TP3 как страховку (2.2%)"
+            log: "🛡️ Weak trend detected - keeping TP3 as safety net"
+
+    monitoring:
+      method: monitorAndUpdateStops(positions)
+      frequency: FUTURES_TRAILING_UPDATE_INTERVAL_MS (default 30000ms)
+
+      per_position:
+        - fetch: "Получаем currentPrice"
+        - update: "updateTrailingStop(position, currentPrice)"
+
+      race_condition_fix:
+        check: "Проверяет существование позиции ПЕРЕД обновлением"
+        reason: "Позиция могла закрыться между циклами"
+
+    configuration:
+      TRAILING_STOP_ATR_PERIODS: 14
+      TRAILING_STOP_ATR_MULTIPLIER: 1.5
+      TRAILING_STOP_MIN_DISTANCE: 1.0  # %
+      TRAILING_STOP_MAX_DISTANCE: 4.0  # %
+      TRAILING_STOP_MIN_PROFIT_FLOOR: 0.3  # %
+      FUTURES_TRAILING_UPDATE_INTERVAL_MS: 30000
+
+  # ---------------------------------------------------------------------------
+  # DYNAMIC POSITION SIZER
+  # ---------------------------------------------------------------------------
+  dynamic_position_sizer:
+    service: DynamicPositionSizerService
+    file: src/services/dynamic-position-sizer.service.ts
+    description: Compound interest sizing с автоматическим масштабированием
+
+    concept:
+      description: "Добавляет профит к следующей позиции (COMPOUND!)"
+      formula: "nextPositionSize = baseSize + accumulatedProfit"
+      max_cap: "maxPositionSize (защита от overexposure)"
+
+    state_management:
+      persistence:
+        file: "data/position-sizing-state.json"
+        format: |
+          {
+            currentPositionSize: 12.50,
+            accumulatedProfit: 2.50,
+            consecutiveWins: 3,
+            consecutiveLosses: 0,
+            totalTrades: 15,
+            lastUpdated: "2025-10-15T12:30:00Z"
+          }
+
+      methods:
+        loadState(): "Загружает из файла или инициализирует defaults"
+        saveState(): "Сохраняет после каждого изменения"
+
+    lifecycle:
+      get_position_size:
+        method: getPositionSize()
+        returns: "enabled ? currentPositionSize : basePositionSize"
+        used_by: "FuturesPositionManager.openPosition()"
+
+      update_after_trade:
+        method: "updateAfterTrade(realizedPnL)"
+        trigger: "После closePosition()"
+
+        on_win:
+          condition: "realizedPnL > 0"
+          calculation: |
+            accumulatedProfit += realizedPnL
+            currentPositionSize = baseSize + accumulatedProfit
+            if currentPositionSize > maxSize:
+              currentPositionSize = maxSize
+
+          counters: |
+            consecutiveWins++
+            consecutiveLosses = 0
+
+          log: "✅ WIN - Position size increased (COMPOUND): $10 → $12.50 (+25%)"
+
+        on_loss:
+          reset_mode:
+            enabled: RESET_ON_LOSS=true
+            action: |
+              accumulatedProfit = 0
+              currentPositionSize = baseSize
+            log: "❌ LOSS - Position size reset to base: $12.50 → $10 (lost $2.50)"
+
+          compound_mode:
+            enabled: RESET_ON_LOSS=false
+            action: |
+              accumulatedProfit += realizedPnL  # realizedPnL negative
+              currentPositionSize = max(baseSize, baseSize + accumulatedProfit)
+            log: "❌ LOSS - Position size reduced: $12.50 → $11 (accumulated: $1)"
+
+    configuration:
+      DYNAMIC_SIZING_ENABLED: true/false
+      DYNAMIC_BASE_POSITION_SIZE: 10  # USDT
+      DYNAMIC_MAX_POSITION_SIZE: 50   # USDT
+      DYNAMIC_RESET_ON_LOSS: true     # Reset vs compound losses
+
+    examples:
+      winning_streak:
+        trades:
+          - trade1: "Base $10 → Win +$2 → Next $12"
+          - trade2: "$12 → Win +$3 → Next $15"
+          - trade3: "$15 → Win +$5 → Next $20"
+        result: "Position size растёт с профитом (compound interest)"
+
+      loss_with_reset:
+        trades:
+          - trade1: "Base $10 → Win +$5 → Next $15"
+          - trade2: "$15 → Loss -$3 → Reset to $10"
+        result: "Потерян accumulated profit, но base сохранён"
+
+      loss_without_reset:
+        trades:
+          - trade1: "Base $10 → Win +$5 → Next $15"
+          - trade2: "$15 → Loss -$3 → Next $12 (base + $2)"
+        result: "Часть профита сохранена"
+
+# =============================================================================
+# INTEGRATION & DATA FLOW
+# =============================================================================
+
+integration:
+  trading_cycle_flow:
+    step1_risk_checks:
+      - CircuitBreaker.checkCircuitBreaker() → can proceed?
+      - RiskFilter.checkLongEntryFilter() → RSI OK?
+      - RiskFilter.checkBalanceForLong() → balance OK?
+      - RiskFilter.checkTrendBlockForLong() → trend OK?
+
+    step2_position_sizing:
+      - BalanceManager.calculatePositionSize() → size OK?
+      - DynamicPositionSizer.getPositionSize() → compound size
+      - BalanceManager.reserveForOrder() → lock funds
+
+    step3_position_opening:
+      - FuturesPositionManager.openPosition() → place order
+      - Pending order tracking
+      - WebSocket monitoring
+
+    step4_position_monitoring:
+      - FuturesPositionManager.monitorPositions() → sync with exchange
+      - StopLossManager.monitorAndUpdateStops() → trailing logic
+      - WebSocket updates → real-time events
+
+    step5_position_closing:
+      - TP hit / SL hit / manual close
+      - FuturesPositionManager.closePosition() → cleanup
+      - DynamicPositionSizer.updateAfterTrade() → update sizing
+      - BalanceManager.releaseFromOrder() → unlock funds
+
+  error_recovery:
+    circuit_breaker_trip:
+      - "После 5 API errors → пауза 5 минут"
+      - "Автоматическое восстановление"
+
+    websocket_disconnection:
+      - "Polling fallback через monitorPositions()"
+      - "Синхронизация с биржей каждые 60 секунд"
+
+    race_conditions:
+      - "Temp order IDs для pending"
+      - "Position existence check перед updates"
+      - "Journal fallback если WebSocket пропустил"
+
+# =============================================================================
+# CONFIGURATION SUMMARY
+# =============================================================================
+
+configuration_summary:
+  circuit_breaker:
+    MAX_CIRCUIT_BREAKER_ERRORS: 5
+    CIRCUIT_BREAKER_RESET_MS: 300000  # 5 min
+
+  risk_filters:
+    RSI_ADVISORY_MODE: true
+    RSI_CONFIDENCE_PENALTY: 0.2
+    RSI_ENTRY_FILTER_OVERBOUGHT: 70
+    RSI_ENTRY_FILTER_OVERSOLD: 35
+    EXTREME_RSI_THRESHOLD: 30
+
+  balance_management:
+    BALANCE_INITIAL_AMOUNT: 1000
+    BALANCE_MAX_TOTAL_EXPOSURE: 0.95
+    BALANCE_EMERGENCY_RESERVE: 0.05
+    BALANCE_MIN_ORDER_VALUE: 5
+    BALANCE_MAX_ORDER_VALUE: 50
+    BALANCE_MAX_PENDING_ORDERS: 5
+
+  futures_positions:
+    FUTURES_MAX_OPEN_POSITIONS: 1
+    FUTURES_MAX_LONG_POSITIONS: 2
+    FUTURES_MAX_SHORT_POSITIONS: 2
+    FUTURES_USE_MARKET_ORDERS: true
+    FUTURES_BUY_LIMIT_OFFSET: 0.01
+    FUTURES_PENDING_ORDER_TIMEOUT: 120000  # 2 min
+    FUTURES_POSITION_CHECK_INTERVAL: 60000  # 1 min
+
+  take_profit:
+    FUTURES_TAKE_PROFIT_1: 0.6  # %
+    FUTURES_TAKE_PROFIT_2: 1.0  # %
+    FUTURES_TAKE_PROFIT_3: 1.8  # %
+    FUTURES_TP1_SIZE: 50  # %
+    FUTURES_TP2_SIZE: 30  # %
+    FUTURES_TP3_SIZE: 20  # %
+
+  stop_loss:
+    FUTURES_STOP_LOSS_PERCENT: 0.4
+    FUTURES_BREAKEVEN_OFFSET_PERCENT: 0.12
+    LEVEL_STOP_BEHIND_LEVEL: true
+    LEVEL_STOP_OFFSET_PERCENT: 0.5
+
+  trailing_stop:
+    TRAILING_STOP_ATR_PERIODS: 14
+    TRAILING_STOP_ATR_MULTIPLIER: 1.5
+    TRAILING_STOP_MIN_DISTANCE: 1.0
+    TRAILING_STOP_MAX_DISTANCE: 4.0
+    TRAILING_STOP_MIN_PROFIT_FLOOR: 0.3
+    FUTURES_TRAILING_UPDATE_INTERVAL: 30000  # 30 sec
+
+  dynamic_sizing:
+    DYNAMIC_SIZING_ENABLED: true
+    DYNAMIC_BASE_POSITION_SIZE: 10
+    DYNAMIC_MAX_POSITION_SIZE: 50
+    DYNAMIC_RESET_ON_LOSS: true
+
+# =============================================================================
+# BEST PRACTICES
+# =============================================================================
+
+best_practices:
+  risk_management:
+    - "Используйте Circuit Breaker для защиты от API outages"
+    - "Включайте RSI Advisory Mode для гибкости вместо жёсткой блокировки"
+    - "Мониторьте balance drift и доверяйте real-time проверкам"
+    - "Не превышайте MAX_TOTAL_EXPOSURE (95% баланса)"
+
+  position_management:
+    - "Одна позиция на symbol (избегайте hedging)"
+    - "Используйте Market Orders для мгновенного исполнения"
+    - "Размещайте все TP уровни сразу (не ждите частичного заполнения)"
+    - "Проверяйте existence позиции перед каждым update"
+
+  stop_loss_strategy:
+    - "Для Level-Based: стопы ЗА уровнями (Priority 1)"
+    - "После TP1: перемещайте SL в breakeven (entry + 0.2%)"
+    - "Используйте ATR-based trailing для адаптации к волатильности"
+    - "Minimum profit floor = entry + 0.3% (защита профита)"
+    - "Отменяйте TP3 ТОЛЬКО при сильном тренде (< 30 sec TP1→TP2)"
+
+  dynamic_sizing:
+    - "Включайте compound interest для максимизации роста"
+    - "RESET_ON_LOSS=true для консервативного подхода"
+    - "MAX_POSITION_SIZE как защита от overexposure"
+    - "Сохраняйте state в файл (переживает рестарты)"
+
+  websocket_handling:
+    - "Создавайте pending ДО API вызова (race condition fix)"
+    - "Записывайте в journal ДО удаления из cache"
+    - "Проверяйте order existence перед cancel (avoid errors)"
+    - "Используйте polling fallback (monitorPositions) на случай WebSocket drops"

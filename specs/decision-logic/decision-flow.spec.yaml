@@ -1,0 +1,362 @@
+---
+document: Signal Generation Decision Flow
+description: Step-by-step process of trading signal generation in Signal Generator
+coordinator: SignalGeneratorService
+priority_system: FIRST_VALID_WINS
+
+execution_flow:
+  step1_global_validation:
+    description: "Check global conditions (applies to ALL strategies)"
+    checks:
+      - name: Sufficient Data
+        condition: "candles5m.length >= 100 && candles30m.length >= 50"
+        on_fail: "return null (CRITICAL)"
+
+      - name: Active Positions Limit
+        condition: "activePositions.length === 0"
+        on_fail: "return null (max 1 position)"
+
+      - name: Cooldown Period
+        condition: "now - lastSignalTime >= 10000ms"
+        on_fail: "skip signal generation"
+
+      - name: RSI Available
+        condition: "rsiAnalysis?.main !== undefined"
+        on_fail: "return null (RSI data required)"
+
+      - name: EMA Available
+        condition: "emaData !== null"
+        on_fail: "return null (EMA data required)"
+
+    result: "PASS → continue | FAIL → return null"
+
+  step2_market_context_preparation:
+    description: "Prepare data for all strategies"
+    inputs:
+      - currentPrice: number
+      - candlesMain: Candle[] (5m)
+      - candlesTrend1: Candle[] (30m)
+      - candlesTrend2: Candle[] (1h)
+      - candlesContext: Candle[] (4h)
+      - orderBookData: OrderBook
+      - rsiAnalysis: RSIAnalysis (multi-TF)
+
+    calculations:
+      - rsi: "timeframeProvider.getMainRSI(rsiAnalysis)"
+      - emaTrend1: "emaCalculator.calculateSingle(candlesTrend1)"
+      - emaTrend2: "emaCalculator4h.calculateSingle(candlesTrend2)"
+      - priceAnalysis: "priceAnalyzer.analyzePrice(currentPrice)"
+      - trendAnalysis: "analyzeTrendStrength(currentPrice, emaTrend1, emaTrend2)"
+      - portfolio: "await bybit.getPortfolio()"
+      - usdtBalance: "portfolio.balances.find('USDT').free"
+
+    context_object:
+      properties:
+        - currentPrice
+        - rsi
+        - previousRSI
+        - emaTrend1
+        - emaTrend2
+        - candlesMain
+        - candlesTrend1
+        - candlesTrend2
+        - candlesContext
+        - priceAnalysis
+        - rsiAnalysis
+        - trendAnalysis
+        - usdtBalance
+        - supportLevel
+        - resistanceLevel
+        - emaCrossover
+        - priceActionAnalysis
+
+  step3_global_ema_distance_check:
+    description: "CRITICAL check: Distance to EMA"
+    priority: CRITICAL
+    applies_to: ALL_STRATEGIES
+
+    check:
+      formula: "abs((currentPrice - emaTrend1) / emaTrend1 * 100)"
+      threshold: 5.5
+      condition: "distance > MAX_DISTANCE_TO_EMA_PERCENT"
+
+    on_fail:
+      action: "return null"
+      reason: "Falling knife (LONG) or blow-off top (SHORT)"
+      log_level: WARN
+
+    result: "PASS → continue | FAIL → return null"
+
+  step4_strategy_iteration:
+    description: "Iterate strategies by priority (FIRST VALID WINS)"
+    order: [Level-Based, Price-Action, Reversal, Trend-Following, Counter-Trend]
+
+    iteration_logic: |
+      for strategy in strategies_by_priority:
+        signal = strategy.generate(context)
+        if signal !== null:
+          return applyValidationAndFilters(signal)
+
+      return createHoldSignal()
+
+    strategies:
+      - priority: 0
+        name: Level-Based Strategy
+        method: levelBasedStrategy.generateLongSignal(context)
+        then: levelBasedStrategy.generateShortSignal(context)
+        description: "Support/Resistance from ZigZag swing points"
+        blocking_rules:
+          - "Distance to level > 1.5%"
+          - "RSI out of range (30-55 LONG, 45-70 SHORT)"
+          - "Volume < 0.3x avg"
+          - "Distance to EMA > 5.5%"
+          - "Strong opposite trend"
+        on_valid: "return signal → STEP 5"
+        on_invalid: "continue to next strategy"
+
+      - priority: 0.5
+        name: Price Action Toolkit
+        condition: "priceActionConfig.enabled === true"
+        method: priceActionAnalyzer.generateSignal(candlesMain)
+        description: "CHoCH/BoS/Liquidity Sweeps/Order Blocks"
+        validation:
+          - "Block PA LONG in DOWN trend"
+          - "Block PA SHORT in UP trend"
+          - "Check market structure validity"
+        on_valid: "convertPriceActionSignal(paSignal) → STEP 5"
+        on_invalid: "continue to next strategy"
+
+      - priority: 1
+        name: Reversal Pattern Strategy
+        method: reversalStrategy.generateLongSignal(context)
+        then: reversalStrategy.generateShortSignal(context)
+        description: "Volume/RSI divergence patterns"
+        blocking_rules:
+          - "RSI out of range (20-45 LONG, 55-85 SHORT)"
+          - "No divergence detected"
+          - "Strong opposite trend"
+        on_valid: "return signal → STEP 5"
+        on_invalid: "continue to next strategy"
+
+      - priority: 2
+        name: Trend-Following Strategy
+        method: trendStrategy.generateLongSignal(context)
+        then: trendStrategy.generateShortSignal(context)
+        description: "EMA pullback in strong trend"
+        blocking_rules:
+          - "Trend not confirmed (30m/1h)"
+          - "RSI out of range (45-65 LONG, 35-50 SHORT)"
+          - "Dangerous wicks detected"
+          - "ATH protection (LONG)"
+          - "Volume < 0.5x avg"
+          - "Entry filter (RSI + distance combos)"
+        validation_layers:
+          - "Trend blocks (analyzer)"
+          - "Entry filters (RSI Advisory Mode)"
+          - "Balance checks"
+        on_valid: "return signal → STEP 5"
+        on_invalid: "continue to next strategy"
+
+      - priority: 3
+        name: Counter-Trend Strategy
+        method: counterTrendStrategy.generateLongSignal(context)
+        then: counterTrendStrategy.generateShortSignal(context)
+        description: "Extreme RSI (< 20 or > 85)"
+        blocking_rules:
+          - "RSI not extreme (>= 20 LONG, <= 85 SHORT)"
+          - "Distance to EMA > 5.5%"
+          - "Strong opposite trend"
+        risk_level: HIGH
+        on_valid: "return signal → STEP 5"
+        on_invalid: "continue to STEP 6"
+
+  step5_signal_validation:
+    description: "Signal validation via SignalValidationService"
+    service: SignalValidationService
+
+    validations:
+      - name: Catching Falling Knife Check
+        method: validator.validateNotCatchingFallingKnife(signal, context)
+        description: "3 protections against false entries"
+        penalties:
+          - "RSI falling too quickly: -10% confidence"
+          - "Price falling too quickly: -10% confidence"
+          - "Bearish candle pattern: -10% confidence"
+        max_penalty: -30%
+
+      - name: Risk Filter
+        method: riskFilter.applyFilters(signal, context)
+        filters:
+          - "Trend blocks (conflicting trend)"
+          - "Entry filters (RSI Advisory Mode)"
+          - "Balance checks (minimum USDT balance)"
+        on_fail: "return null (signal blocked)"
+
+    result: "VALIDATED signal → STEP 6 | BLOCKED → return null"
+
+  step6_hold_signal:
+    description: "If no strategy triggered → HOLD"
+    trigger: "All strategies returned null"
+
+    signal:
+      type: HOLD
+      reason: "No trading conditions met"
+      confidence: 0.3
+      timestamp: now()
+      strategy: "Signal Generator"
+
+    result: "return HOLD signal"
+
+trend_analysis_logic:
+  method: analyzeTrendStrength(currentPrice, emaTrend1, emaTrend2)
+
+  calculation:
+    distance_trend1: "(currentPrice - emaTrend1) / emaTrend1 * 100"
+    distance_trend2: "(currentPrice - emaTrend2) / emaTrend2 * 100"
+
+  trend_determination:
+    STRONG_BULL:
+      condition: "distance > TREND_STRONG_BULL_THRESHOLD"
+      default_threshold: 5.0
+
+    BULL:
+      condition: "distance > TREND_BULL_THRESHOLD"
+      default_threshold: 2.0
+
+    NEUTRAL:
+      condition: "abs(distance) <= TREND_NEUTRAL_THRESHOLD"
+      default_threshold: 1.0
+
+    BEAR:
+      condition: "distance < -TREND_BEAR_THRESHOLD"
+      default_threshold: -2.0
+
+    STRONG_BEAR:
+      condition: "distance < -TREND_STRONG_BEAR_THRESHOLD"
+      default_threshold: -5.0
+
+  confidence_adjustment:
+    high:
+      condition: "trend30m === trend1h (alignment)"
+      confidence: 0.8
+
+    medium:
+      condition: "trend30m confirmed, but trend1h diverges"
+      confidence: 0.6
+
+    low:
+      condition: "trend30m and trend1h conflict"
+      confidence: 0.4
+
+ema_crossover_detection:
+  description: "Golden/Death Cross detection (cached)"
+  cache_ttl: 300000  # 5 minutes
+  method: detectEMACrossover(candlesTrend1, candlesTrend2, emaTrend1, emaTrend2)
+
+  states:
+    GOLDEN:
+      condition: "fastEMA > slowEMA && previous fastEMA <= slowEMA"
+      signal: BULLISH
+
+    DEATH:
+      condition: "fastEMA < slowEMA && previous fastEMA >= slowEMA"
+      signal: BEARISH
+
+    NONE:
+      condition: "No recent crossover"
+
+  cache_invalidation:
+    - "Cache expires after 5 minutes"
+    - "Force recalculation on cache miss"
+
+price_action_integration:
+  enabled_via: "PRICE_ACTION_ENABLED=true in .env"
+
+  components:
+    - ZigZagDetector: "Market structure (CHoCH/BoS)"
+    - LiquidityDetector: "Liquidity sweeps"
+    - DivergenceDetector: "RSI/Price divergence"
+
+  signal_conversion:
+    method: convertPriceActionSignal(paSignal, context, paAnalysis)
+    steps:
+      - "Create TradingSignal from PA signal"
+      - "Add priceActionContext (structure, sweeps, OB)"
+      - "Set confidence based on PA factors"
+      - "Apply validation and filters"
+
+  blocking_rules:
+    - "PA LONG blocked if trend30m === 'DOWN'"
+    - "PA SHORT blocked if trend30m === 'UP'"
+
+output_signal:
+  type: TradingSignal
+  properties:
+    type: "'LONG' | 'SHORT' | 'HOLD'"
+    reason: string
+    confidence: number (0.3-1.0)
+    targetPrice: number
+    timestamp: number
+    strategy: string
+    levelPrice: number | undefined
+    indicators:
+      rsi: number
+      emaTrend1: number
+      emaTrend2: number | undefined
+      dropFromHigh: number
+      volume: number
+    direction: "'Buy' | 'Sell' | undefined"
+    leverage: number | undefined
+    priceActionContext: object | undefined
+    trendContext:
+      trend: string
+      distance: number
+      confidence: number
+
+statistics_tracking:
+  - buySignalsGenerated: "Increment on LONG"
+  - sellSignalsGenerated: "Increment on SHORT"
+
+performance_optimizations:
+  - "EMA Crossover cache (5 min TTL)"
+  - "Price Action Analysis cache (internal)"
+  - "NO repeated RSI/EMA calculations"
+
+error_handling:
+  insufficient_data: "return null"
+  calculation_error: "log error, return null"
+  validation_failure: "return null or HOLD"
+
+decision_tree_summary:
+  total_steps: 6
+  critical_checks: 2 (Global validation, EMA distance)
+  strategy_priorities: 5 (0, 0.5, 1, 2, 3)
+  validation_layers: 2 (Validator, Risk Filter)
+  fallback: HOLD signal
+
+calibration_guide:
+  approach: "Based on APEXUSDT backtest"
+  priority: "Avoid false positives (bad trades) > catch all opportunities"
+  tuning_parameters:
+    thresholds:
+      - MAX_DISTANCE_TO_EMA_PERCENT
+      - TREND_STRONG_THRESHOLD
+      - MIN_DROP_FROM_ATH_FOR_LONG
+      - VOLUME_MIN_MULTIPLIER
+
+    ranges:
+      - RSI ranges per strategy
+      - Trend thresholds
+      - Level distance thresholds
+
+    weights:
+      - Base confidence per strategy
+      - Weight ranges for each component
+      - Confidence modifiers
+
+  iteration_process:
+    1: "Run backtest with current parameters"
+    2: "Analyze win rate, false positives, false negatives"
+    3: "Adjust blocking thresholds (conservative)"
+    4: "Adjust weights (fine-tuning)"
+    5: "Repeat until satisfactory"

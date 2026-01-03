@@ -1,0 +1,349 @@
+---
+document: SHORT Entry Scenarios
+description: Detailed specifications of SHORT entry scenarios for APEXUSDT Futures
+symbol: APEXUSDT
+leverage: 10x
+timeframes: [5m, 30m, 1h, 4h]
+
+scenarios:
+  - id: S1
+    name: RSI Divergence Reversal
+    strategy: Reversal Patterns
+    priority: 0
+    win_rate: 70%
+    status: HIGH_CONFIDENCE
+
+    market_context:
+      price_movement: "$2.20 → $2.50 (uptrend, +13.6%)"
+      timeframe: 5m (last 2 hours)
+      trend_30m: BULL (price > EMA50)
+      trend_4h: NEUTRAL
+
+    technical_setup:
+      price: 2.50
+      previous_high: 2.48
+      previous_high_time: "30 min ago"
+      rsi_current: 68
+      rsi_previous: 72
+      divergence:
+        type: BEARISH
+        pattern: "Price HH, RSI LH"
+        description: "Price higher high but RSI lower high"
+      volume: NORMAL
+      order_book:
+        bid_pressure: 40%
+        ask_pressure: 60%
+        imbalance: -0.20
+
+    signal:
+      type: SHORT
+      strategy: Reversal Patterns (Priority 0)
+      reason: "RSI Bearish Divergence - price higher high but RSI lower high"
+      confidence: 0.85
+      confidence_breakdown:
+        base: 0.70 (Reversal strategy)
+        rsi_divergence: +0.10
+        order_book_imbalance: +0.05
+
+    entry:
+      price: 2.50
+      entry_trigger: "RSI divergence confirmed"
+      stop_loss: 2.525
+      stop_loss_percent: +1.0%
+      take_profits:
+        - level: TP1
+          price: 2.485
+          percent: -0.6%
+        - level: TP2
+          price: 2.478
+          percent: -0.9%
+        - level: TP3
+          price: 2.463
+          percent: -1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 70%"
+
+    validation_checks:
+      divergence_confirmed: PASS (RSI LH, Price HH)
+      rsi_range: PASS (55-80 for reversal)
+      ema_distance: PASS (< 5.5%)
+      volume: PASS
+      trend_not_strong_bull: PASS (not STRONG_BULL)
+
+  - id: S2
+    name: Bearish BoS + Order Block
+    strategy: Price Action Toolkit
+    priority: 0.5
+    win_rate: 70%
+    status: HIGH_CONFIDENCE
+
+    market_context:
+      price_movement: "$2.55 → $2.60 → $2.57 (uptrend → reversal)"
+      timeframe: 5m + 30m (dual TF confirmation)
+      trend_4h: NEUTRAL
+
+    technical_setup:
+      price: 2.57
+      bos_5m:
+        detected_at: 2.56
+        time: "11:20"
+        direction: BEARISH
+        break_type: "Break of LL (Lower Low)"
+      bos_30m:
+        detected_at: 2.55
+        time: "11:00"
+        direction: BEARISH
+        break_type: "Break of LL"
+      order_block:
+        type: BEARISH
+        range: [2.59, 2.60]
+        strength: STRONG
+        candle_body_percent: 70%
+        timeframe: 5m
+      rsi: 58
+      rsi_status: neutral
+
+    signal:
+      type: SHORT
+      strategy: Price Action Toolkit (Priority 0.5)
+      reason: "Bearish BoS (dual TF) + OB confluence"
+      confidence: 0.80
+      confidence_breakdown:
+        base: 0.60 (PA Toolkit)
+        bos_dual_tf: +0.15 (5m + 30m)
+        order_block_confluence: +0.05
+
+    entry:
+      price: 2.57
+      entry_trigger: "Retest of OB zone"
+      stop_loss: 2.596
+      stop_loss_percent: +1.0%
+      stop_loss_placement: "Above OB"
+      take_profits:
+        - level: TP1
+          price: 2.555
+          percent: -0.6%
+        - level: TP2
+          price: 2.547
+          percent: -0.9%
+        - level: TP3
+          price: 2.532
+          percent: -1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 70%"
+
+    validation_checks:
+      market_structure: PASS (BoS BEARISH)
+      dual_tf_confirmation: PASS (5m + 30m)
+      order_block_validity: PASS (fresh OB)
+
+  - id: S3
+    name: Trend-Following Pullback (Bear Trend)
+    strategy: Trend-Following
+    priority: 1
+    win_rate: 65%
+    status: RELIABLE
+
+    market_context:
+      price_movement: "$2.30 → $2.35 (pullback to EMA50)"
+      trend_30m: STRONG_BEAR (price -6% below EMA50, slope -0.6%)
+      trend_1h: BEAR
+      trend_4h: BEAR
+      alignment: "3 TF bearish alignment"
+
+    technical_setup:
+      price: 2.35
+      ema50_30m: 2.331
+      distance_to_ema50: +0.8%
+      distance_status: "Near EMA (ideal pullback)"
+      rsi: 48
+      rsi_status: "In trend range (32-60)"
+      rsi_not_overbought: true
+      rsi_check: "< 65 (avoid blow-off top)"
+      rsi_not_oversold: true
+      rsi_check_2: "< 50 in BEAR (Priority 4 fix)"
+      order_book:
+        bid_pressure: 35%
+        ask_pressure: 65%
+        imbalance: -0.30
+
+    signal:
+      type: SHORT
+      strategy: Trend-Following (Priority 1)
+      reason: "3 TF bearish alignment + EMA pullback + RSI in trend range"
+      confidence: 0.75
+      confidence_breakdown:
+        base: 0.60 (Trend-Following)
+        strong_bear_30m: +0.20 (STRONG_BEAR)
+        distance_modifier: 1.0 (excellent distance < 3%)
+        choch_bos_modifier: 1.0 (no recent structure events)
+
+    entry:
+      price: 2.35
+      entry_trigger: "Pullback to EMA50 (30m)"
+      stop_loss: 2.374
+      stop_loss_percent: +1.0%
+      stop_loss_placement: "Above EMA50"
+      take_profits:
+        - level: TP1
+          price: 2.336
+          percent: -0.6%
+        - level: TP2
+          price: 2.329
+          percent: -0.9%
+        - level: TP3
+          price: 2.314
+          percent: -1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 65%"
+
+    validation_checks:
+      trend_alignment: PASS (3 TF BEAR)
+      rsi_range: PASS (32-60)
+      rsi_not_oversold: PASS (> 35)
+      rsi_less_than_50: PASS (< 50 in BEAR, Priority 4 fix)
+      ema_distance: PASS (< 5.5%)
+      volume: PASS (> 0.5x avg)
+      no_wicks: PASS (no dangerous upward wicks)
+
+  - id: S4
+    name: Level-Based Resistance Rejection
+    strategy: Level-Based
+    priority: 2
+    win_rate: 55%
+    status: MODERATE
+
+    market_context:
+      price_movement: "$2.50 → $2.55 (approaching resistance)"
+      resistance_level: 2.55
+      level_touches: 2 (last 12h)
+      level_strength: MEDIUM
+
+    technical_setup:
+      price: 2.548
+      distance_to_resistance: 0.1%
+      distance_status: "Within 1.5% threshold"
+      level_touches: 2
+      level_strength: MEDIUM
+      volume: 120k
+      volume_ratio: 0.8
+      volume_status: "Above 0.3x threshold"
+      rsi: 62
+      rsi_status: "In good zone (45-70)"
+      trend_30m: NEUTRAL
+      trend_30m_status: "Not BULL/STRONG_BULL (allowed)"
+      trend_4h: BEAR
+
+    signal:
+      type: SHORT
+      strategy: Level-Based (Priority 2)
+      reason: "Resistance level (2 touches) + RSI good zone + volume confirmation"
+      confidence: 0.68
+      confidence_breakdown:
+        base: 0.60 (Level-Based)
+        level_strength_medium: +0.05
+        volume_confirmation: +0.03
+        distance_optimal: +0.05 (< 0.5%)
+
+    entry:
+      price: 2.548
+      entry_trigger: "Price at resistance level"
+      stop_loss: 2.573
+      stop_loss_percent: +1.0%
+      stop_loss_placement: "Above resistance"
+      take_profits:
+        - level: TP1
+          price: 2.533
+          percent: -0.6%
+        - level: TP2
+          price: 2.525
+          percent: -0.9%
+        - level: TP3
+          price: 2.510
+          percent: -1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 55%"
+
+    validation_checks:
+      distance_to_level: PASS (< 1.5%)
+      level_strength: PASS (2 touches)
+      rsi_good_zone: PASS (45-70)
+      volume: PASS (> 0.3x avg)
+      ema_distance: PASS (< 5.5%)
+      trend_not_opposite: PASS (not BULL)
+
+  - id: S5
+    name: BLOCKED - Oversold in Bear Trend (RSI Filter)
+    strategy: Trend-Following
+    priority: 1
+    status: BLOCKED
+    reason: RSI < 35 (oversold protection)
+
+    market_context:
+      price_movement: "Strong downtrend"
+      trend_30m: STRONG_BEAR
+      rsi: 28
+
+    technical_setup:
+      price: 2.20
+      rsi: 28
+      rsi_status: "< 35 (oversold!)"
+      trend_30m: STRONG_BEAR
+      ema_distance: "-4.2%"
+      ema_distance_status: "OK (< 5.5%)"
+
+    signal:
+      type: WOULD_BE_SHORT
+      strategy: Trend-Following (would trigger STRONG_BEAR)
+      result: BLOCKED
+      blocking_reason: "RSI 28 < 35 (TREND_FOLLOWING_SHORT_MIN_RSI) - avoid shorting in oversold"
+      confidence: N/A
+
+    entry: NONE
+
+    expected_outcome:
+      protection_worked: true
+      avoided_risk: "Shorting at bottom (reversal risk)"
+      reason: "Priority 3 Fix: prevent shorting oversold conditions"
+
+    validation_checks:
+      trend: PASS (STRONG_BEAR)
+      ema_distance: PASS (< 5.5%)
+      rsi_min_check: FAIL (< 35) → BLOCK
+
+blocking_summary:
+  total_short_scenarios: 5
+  successful_entries: 4
+  blocked_entries: 1
+  blocking_reasons:
+    - "RSI < 35 (oversold protection)"
+
+common_patterns:
+  successful_entries:
+    - "RSI не extreme (35-80)"
+    - "RSI < 50 in BEAR (Priority 4 fix)"
+    - "Distance to EMA < 5.5%"
+    - "Multi-TF alignment или confluence"
+    - "Volume confirmation"
+    - "No dangerous upward wicks"
+
+  blocking_triggers:
+    - "RSI < 35 (oversold)"
+    - "Distance > 5.5%"
+    - "Strong opposite trend (STRONG_BULL)"
+    - "Low volume (< 0.3x avg)"
+
+priority_fixes_demonstrated:
+  priority_3:
+    description: "Prevent trend-following SHORT at oversold levels"
+    scenario: S5
+    blocking_rule: "RSI < 35 → BLOCK SHORT"
+
+  priority_4:
+    description: "Prevent trend-following SHORT at counter-trend bounces"
+    scenario: S3
+    validation: "RSI < 50 in BEAR (avoid shorting bounces)"

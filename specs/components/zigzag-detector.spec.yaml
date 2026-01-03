@@ -1,0 +1,366 @@
+---
+component: ZigZag Detector
+type: Market Structure Analyzer
+file: src/utils/price-action/zigzag-detector.ts
+status: implemented
+priority: high
+
+description: |
+  ZigZag Detector detects Market Structure through swing points (highs/lows)
+  and structure change events (CHoCH, BoS). Used for trend determination
+  and key reversal points on the chart.
+
+  Concepts:
+  - Swing High: local maximum (candle with the highest high in the zigzagLen window)
+  - Swing Low: local minimum (candle with the lowest low in the zigzagLen window)
+  - CHoCH (Change of Character): trend structure change (break of previous swing)
+  - BoS (Break of Structure): continuation of current trend (break of current swing)
+
+inputs:
+  - name: config
+    type: Configuration
+    description: Configuration with zigzagLength parameter
+    required: true
+    properties:
+      - zigzagLength: number of candles for swing point detection window (usually 5)
+
+  - name: logger
+    type: Logger
+    description: Logger for Market Structure events
+    required: true
+
+  - name: candles
+    type: Candle[]
+    description: Array of candles for analysis
+    required: true
+    min_length: "zigzagLen * 2 + 1"
+
+outputs:
+  - name: SwingPoint
+    type: object
+    properties:
+      type:
+        type: "'HIGH' | 'LOW'"
+        description: Type of swing point
+      price:
+        type: number
+        description: Swing point price (high for HIGH, low for LOW)
+      timestamp:
+        type: number
+        description: Candle timestamp
+      barIndex:
+        type: number
+        description: Candle index in array
+
+  - name: StructureEvent
+    type: object
+    properties:
+      type:
+        type: "'CHoCH' | 'BoS'"
+        description: Type of structure event
+      direction:
+        type: "'BULLISH' | 'BEARISH'"
+        description: Direction of break
+      timestamp:
+        type: number
+        description: Event timestamp
+      price:
+        type: number
+        description: Break price (candle close)
+
+  - name: Trend
+    type: "'UP' | 'DOWN' | 'NEUTRAL'"
+    description: Current trend based on Market Structure
+
+algorithm:
+  step1_swing_detection:
+    description: Detection of Swing High and Swing Low
+
+    swing_high_condition:
+      formula: |
+        pivotCandle = candles[length - 1 - zigzagLen]
+        windowCandles = candles.slice(-(zigzagLen * 2 + 1))
+        highest = max(windowCandles.map(c => c.high))
+
+        isSwingHigh = pivotCandle.high >= highest
+
+      explanation: |
+        A candle is considered a Swing High if its high >= all other highs
+        in a window of size (zigzagLen * 2 + 1) centered on this candle.
+
+    swing_low_condition:
+      formula: |
+        pivotCandle = candles[length - 1 - zigzagLen]
+        windowCandles = candles.slice(-(zigzagLen * 2 + 1))
+        lowest = min(windowCandles.map(c => c.low))
+
+        isSwingLow = pivotCandle.low <= lowest
+
+      explanation: |
+        A candle is considered a Swing Low if its low <= all other lows
+        in a window of size (zigzagLen * 2 + 1) centered on this candle.
+
+  step2_swing_storage:
+    description: Storage of swing points in arrays with limited size
+
+    storage_logic:
+      - Swing Highs → swingHighs[] (max 50 most recent)
+      - Swing Lows → swingLows[] (max 50 most recent)
+      - When limit exceeded, the oldest element is removed (shift)
+
+    constants:
+      PRICE_ACTION_SWING_STRENGTH: 50
+
+  step3_choch_bos_detection:
+    description: Detection of CHoCH (Change of Character) and BoS (Break of Structure)
+
+    uptrend_to_downtrend:
+      condition: "currentTrend === 'UP' && new swing low detected"
+      logic: |
+        prevLow = swingLows[swingLows.length - 2]
+        currentLow = swingLows[swingLows.length - 1]
+        latestCandle = candles[candles.length - 1]
+
+        if latestCandle.close < prevLow.price:
+          # CHoCH BEARISH - previous swing low broken
+          lastStructureEvent = { type: 'CHoCH', direction: 'BEARISH', ... }
+          currentTrend = 'DOWN'
+
+        elif latestCandle.close < currentLow.price:
+          # BoS BEARISH - current swing low broken (downtrend continuation)
+          lastStructureEvent = { type: 'BoS', direction: 'BEARISH', ... }
+
+    downtrend_to_uptrend:
+      condition: "currentTrend === 'DOWN' && new swing high detected"
+      logic: |
+        prevHigh = swingHighs[swingHighs.length - 2]
+        currentHigh = swingHighs[swingHighs.length - 1]
+        latestCandle = candles[candles.length - 1]
+
+        if latestCandle.close > prevHigh.price:
+          # CHoCH BULLISH - previous swing high broken
+          lastStructureEvent = { type: 'CHoCH', direction: 'BULLISH', ... }
+          currentTrend = 'UP'
+
+        elif latestCandle.close > currentHigh.price:
+          # BoS BULLISH - current swing high broken (uptrend continuation)
+          lastStructureEvent = { type: 'BoS', direction: 'BULLISH', ... }
+
+    neutral_to_trend:
+      condition: "currentTrend === 'NEUTRAL'"
+      logic: |
+        # Determine initial trend based on direction of swing points
+        if new swing high && currentHigh.price > prevHigh.price:
+          currentTrend = 'UP'
+
+        if new swing low && currentLow.price < prevLow.price:
+          currentTrend = 'DOWN'
+
+structure_events:
+  CHoCH:
+    name: Change of Character
+    description: Trend structure change - signal of potential reversal
+
+    CHoCH_BULLISH:
+      condition: "DOWN trend → prevHigh broken → UP trend"
+      signal: Possible upward reversal
+      trading_implication: Counter-trend LONG (+30% confidence if CHoCH in our favor)
+
+    CHoCH_BEARISH:
+      condition: "UP trend → prevLow broken → DOWN trend"
+      signal: Possible downward reversal
+      trading_implication: Counter-trend SHORT (+30% confidence if CHoCH in our favor)
+
+    confidence_modifiers:
+      in_favor: +0.30  # CHOCH_CONFIDENCE_BOOST_COUNTER_TREND = 1.3
+      against: -0.50   # CHOCH_CONFIDENCE_PENALTY_COUNTER_TREND = 0.5
+
+  BoS:
+    name: Break of Structure
+    description: Continuation of current trend - confirmation of strength
+
+    BoS_BULLISH:
+      condition: "UP trend → currentHigh broken → UP trend continues"
+      signal: Strong uptrend
+      trading_implication: Trend-Following LONG (+10% confidence if BoS in our favor)
+
+    BoS_BEARISH:
+      condition: "DOWN trend → currentLow broken → DOWN trend continues"
+      signal: Strong downtrend
+      trading_implication: Trend-Following SHORT (+10% confidence if BoS in our favor)
+
+    confidence_modifiers:
+      in_favor: +0.10  # BOS_CONFIDENCE_BOOST_TREND = 1.1
+      against: -0.40   # CHOCH_CONFIDENCE_PENALTY_TREND = 0.6
+
+configuration_parameters:
+  ZIGZAG_LENGTH: 5  # Window size for swing point detection
+  PRICE_ACTION_SWING_STRENGTH: 50  # Maximum swing points in memory
+  CHOCH_CONFIDENCE_BOOST_COUNTER_TREND: 1.3  # +30%
+  CHOCH_CONFIDENCE_PENALTY_COUNTER_TREND: 0.5  # -50%
+  CHOCH_CONFIDENCE_PENALTY_TREND: 0.6  # -40%
+  BOS_CONFIDENCE_BOOST_TREND: 1.1  # +10%
+
+methods:
+  update:
+    description: Updates ZigZag with new candles
+    params:
+      - candles: Candle[]
+    returns: void
+    notes: |
+      - Checks minimum data (zigzagLen * 2 + 1)
+      - Searches for new swing highs/lows
+      - Updates currentTrend on CHoCH/BoS detection
+
+  isSwingHigh:
+    description: Checks if pivot candle is Swing High
+    params:
+      - candles: Candle[]
+    returns: boolean
+    notes: Pivot = candles[length - 1 - zigzagLen]
+
+  isSwingLow:
+    description: Checks if pivot candle is Swing Low
+    params:
+      - candles: Candle[]
+    returns: boolean
+    notes: Pivot = candles[length - 1 - zigzagLen]
+
+  addSwingHigh:
+    description: Adds new Swing High to swingHighs[]
+    params:
+      - candles: Candle[]
+    returns: void
+    notes: Automatically limits array size (50 max)
+
+  addSwingLow:
+    description: Adds new Swing Low to swingLows[]
+    params:
+      - candles: Candle[]
+    returns: void
+    notes: Automatically limits array size (50 max)
+
+  checkTrendChange:
+    description: Checks for trend change (CHoCH/BoS)
+    params:
+      - candles: Candle[]
+      - swingType: "'HIGH' | 'LOW'"
+    returns: void
+    notes: Updates currentTrend and lastStructureEvent
+
+  getCurrentTrend:
+    description: Returns current trend
+    params: []
+    returns: "'UP' | 'DOWN' | 'NEUTRAL'"
+
+  getLastStructureEvent:
+    description: Returns last structure event (CHoCH/BoS)
+    params: []
+    returns: StructureEvent | null
+
+  getSwingPoints:
+    description: Returns all swing points sorted by time
+    params: []
+    returns: SwingPoint[]
+    notes: Combines swingHighs and swingLows, sorts by timestamp
+
+trading_strategy_usage:
+  price_action_strategy:
+    description: ZigZag usage in PA Toolkit Strategy
+    rules:
+      - "CHoCH in our favor → +30% confidence (counter-trend)"
+      - "CHoCH against us → -50% confidence (counter-trend) or -40% (trend-following)"
+      - "BoS in our favor → +10% confidence (trend-following)"
+      - "Swing points used for support/resistance level determination"
+
+  trend_following_strategy:
+    description: Trend confirmation through BoS
+    rules:
+      - "LONG: BoS BULLISH → strong trend, continue searching for LONG"
+      - "SHORT: BoS BEARISH → strong trend, continue searching for SHORT"
+      - "CHoCH against us → reduce confidence (-40%)"
+
+  counter_trend_strategy:
+    description: Reversal on CHoCH
+    rules:
+      - "LONG: CHoCH BULLISH → upward reversal, search for LONG (+30%)"
+      - "SHORT: CHoCH BEARISH → downward reversal, search for SHORT (+30%)"
+      - "CHoCH against us → strong confidence reduction (-50%)"
+
+implementation_notes:
+  - NO Decimal.js (high precision not required for swing detection)
+  - Uses Math.max/Math.min for finding highest/lowest
+  - Swing detection operates with delay (pivot = length - 1 - zigzagLen)
+  - swingHighs/swingLows arrays automatically limited (shift)
+  - CHoCH/BoS event logging via logger.info/logger.debug
+  - currentTrend stored in state (UP/DOWN/NEUTRAL)
+
+edge_cases:
+  - candles.length < zigzagLen * 2 + 1 → return (insufficient data)
+  - swingHighs/swingLows.length < 2 → skip CHoCH/BoS check
+  - NEUTRAL trend → determine initial trend from swing point direction
+  - Rapid CHoCH → each CHoCH logged separately
+
+dependencies:
+  - MagicNumbers (../../constants/magic-numbers):
+      - NUMBER_TWO = 2
+      - PRICE_ACTION_SWING_STRENGTH = 50
+  - Logger (../../services/logger.service)
+  - Configuration (../../config/configuration)
+
+test_requirements:
+  unit_tests:
+    - "Swing High detection (peak in window)"
+    - "Swing Low detection (valley in window)"
+    - "CHoCH BULLISH (DOWN → UP trend change)"
+    - "CHoCH BEARISH (UP → DOWN trend change)"
+    - "BoS BULLISH (continuation of uptrend)"
+    - "BoS BEARISH (continuation of downtrend)"
+    - "NEUTRAL → UP/DOWN (initial trend detection)"
+    - "Insufficient data (< zigzagLen * 2 + 1)"
+    - "Swing points storage limit (max 50)"
+    - "getSwingPoints sorted by timestamp"
+
+  integration_tests:
+    - "ZigZag integration with real APEXUSDT candles (5m timeframe)"
+    - "CHoCH/BoS confidence modifiers in Price Action Strategy"
+    - "ZigZag + Trend-Following combined signals"
+    - "ZigZag swing points as support/resistance levels"
+
+  validation:
+    - "Compare swing points with TradingView ZigZag indicator"
+    - "Verify CHoCH events match manual chart analysis"
+    - "Test BoS events in strong trends"
+
+performance:
+  time_complexity: O(n) per update call (n = zigzagLen * 2)
+  space_complexity: O(1) - max 100 swing points (50 highs + 50 lows)
+  memory_efficient: true (automatic size limiting)
+
+examples:
+  scenario1_uptrend_to_downtrend:
+    description: "UP trend → CHoCH BEARISH → DOWN trend"
+    sequence:
+      - "Swing Highs: $2.50, $2.55, $2.60 (higher highs)"
+      - "Swing Lows: $2.40, $2.45 (higher lows)"
+      - "Current Trend: UP"
+      - "Price falls and breaks prevLow ($2.40): close < $2.40"
+      - "CHoCH BEARISH detected"
+      - "Current Trend: DOWN"
+
+  scenario2_downtrend_continuation:
+    description: "DOWN trend → BoS BEARISH → DOWN trend continues"
+    sequence:
+      - "Swing Lows: $2.30, $2.25, $2.20 (lower lows)"
+      - "Current Trend: DOWN"
+      - "Price breaks currentLow ($2.20): close < $2.20"
+      - "BoS BEARISH detected"
+      - "Current Trend: DOWN (continuation)"
+
+  scenario3_neutral_to_uptrend:
+    description: "NEUTRAL → UP trend (initial trend)"
+    sequence:
+      - "Swing Highs: $2.50, $2.55"
+      - "Current Trend: NEUTRAL"
+      - "currentHigh ($2.55) > prevHigh ($2.50)"
+      - "Current Trend: UP"

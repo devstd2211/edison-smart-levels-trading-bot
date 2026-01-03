@@ -1,0 +1,362 @@
+---
+component: EMA Calculator
+type: Technical Indicator
+file: src/utils/ema-calculator.ts
+status: implemented
+priority: critical
+
+description: |
+  Exponential Moving Average (EMA) - trend indicator that weights recent prices
+  more heavily compared to SMA. Uses Decimal.js for precise mathematics and
+  rounding error avoidance.
+
+inputs:
+  - name: period
+    type: number
+    description: Period for EMA calculation (e.g., 20, 50, 200)
+    validation: "period > 0"
+    examples:
+      - 20  # EMA20 on 1h (Trend2)
+      - 50  # EMA50 on 30m (Trend1)
+      - 200 # EMA200 on 4h (Context)
+
+  - name: timeService
+    type: TimeService
+    description: Service for obtaining timestamps
+    required: true
+
+outputs:
+  - name: EMAValue
+    type: object
+    properties:
+      value:
+        type: number
+        description: EMA value
+      timestamp:
+        type: number
+        description: Timestamp in milliseconds
+      period:
+        type: number
+        description: Calculation period
+
+algorithm:
+  step1_multiplier_calculation:
+    description: Smoothing multiplier calculation (one-time initialization)
+    formula: |
+      multiplier = EMA_SMOOTHING_FACTOR / (period + 1)
+      where EMA_SMOOTHING_FACTOR = 2
+
+      Examples:
+      - EMA20: multiplier = 2 / (20 + 1) = 0.0952...
+      - EMA50: multiplier = 2 / (50 + 1) = 0.0392...
+      - EMA200: multiplier = 2 / (200 + 1) = 0.00995...
+
+  step2_initialization:
+    description: EMA initialization with first price
+    condition: "!isInitialized"
+    formula: |
+      ema = firstPrice
+      isInitialized = true
+
+  step3_incremental_update:
+    description: Incremental EMA update with new price
+    condition: "isInitialized"
+    formula: |
+      priceDiff = currentPrice - ema
+      change = priceDiff * multiplier
+      ema = ema + change
+
+      # Equivalent formula:
+      # ema = ((currentPrice - ema) * multiplier) + ema
+      # or
+      # ema = ema + (currentPrice - ema) * multiplier
+
+  step4_batch_calculation:
+    description: EMA calculation for historical data (calculateSingle/calculateFromCandles)
+    steps:
+      - name: SMA Initialization
+        formula: |
+          smaSum = sum(prices[0...period-1])
+          ema = smaSum / period
+
+      - name: EMA Smoothing
+        formula: |
+          for i = period to prices.length:
+            ema = ema + (prices[i] - ema) * multiplier
+
+multi_timeframe_usage:
+  trend1_30m:
+    indicator: EMA50
+    period: 50
+    timeframe: 30m
+    config_param: EMA_1H_PERIOD (applied to 30m!)
+    purpose: Medium trend, pullback entry point
+
+  trend2_1h:
+    indicator: EMA20
+    period: 20
+    timeframe: 1h
+    config_param: EMA_4H_PERIOD (applied to 1h!)
+    purpose: Strong trend, confirmation
+
+  context_4h:
+    indicator: EMA200
+    period: 200
+    timeframe: 4h
+    config_param: N/A (fixed period)
+    purpose: Macro trend, overall market context
+
+trend_detection:
+  description: Trend determination based on price position relative to EMA and EMA slope
+
+  zones:
+    STRONG_BULL:
+      condition: "price > EMA && EMA_slope > 0.5%"
+      description: Strong bullish trend
+
+    BULL:
+      condition: "price > EMA && EMA_slope > 0%"
+      description: Bullish trend
+
+    NEUTRAL:
+      condition: "abs((price - EMA) / EMA * 100) <= 1%"
+      description: Price near EMA (±1%)
+
+    BEAR:
+      condition: "price < EMA && EMA_slope < 0%"
+      description: Bearish trend
+
+    STRONG_BEAR:
+      condition: "price < EMA && EMA_slope < -0.5%"
+      description: Strong bearish trend
+
+  slope_calculation:
+    description: EMA slope determined by change over last period
+    formula: |
+      ema_change = (current_ema - previous_ema) / previous_ema * 100
+      # Threshold values:
+      # STRONG_THRESHOLD = 0.5% (TREND_STRONG_THRESHOLD from .env)
+
+distance_to_ema:
+  description: Distance from current price to EMA (critical filter)
+
+  formula: |
+    distance_percent = ((currentPrice - ema) / ema) * 100
+    abs_distance = abs(distance_percent)
+
+  thresholds:
+    MAX_DISTANCE_TO_EMA_PERCENT: 5.5
+    description: |
+      If abs_distance > 5.5% → SIGNAL BLOCK
+      Reason: falling knife (price crash) or blow-off top (spike before drop)
+
+  usage_in_strategies:
+    blocking:
+      - "LONG signal blocked if distance < -5.5% (price too far BELOW EMA)"
+      - "SHORT signal blocked if distance > +5.5% (price too far ABOVE EMA)"
+
+    weights:
+      - "LONG: prefer pullback (price below or near EMA)"
+      - "SHORT: prefer pullback (price above or near EMA)"
+
+configuration_parameters:
+  EMA_1H_PERIOD: 50
+  EMA_4H_PERIOD: 20
+  MAX_DISTANCE_TO_EMA_PERCENT: 5.5
+  TREND_STRONG_THRESHOLD: 0.005  # 0.5% slope for STRONG_BULL/STRONG_BEAR
+
+methods:
+  addPrice:
+    description: Adds new price and incrementally updates EMA
+    params:
+      - price: number
+    returns: EMAValue
+    notes: |
+      - First price initializes EMA (ema = price)
+      - Subsequent prices update EMA according to formula
+      - Always returns result (not null)
+
+  calculateFromCandles:
+    description: Calculates EMA for candle array (with SMA initialization)
+    params:
+      - candles: Candle[]
+    returns: EMAValue[]
+    notes: |
+      - Resets state before calculation
+      - Calculates SMA for first {period} candles
+      - Then applies EMA for remaining candles
+      - Returns array of EMA values for each candle after period
+
+  calculateSingle:
+    description: Calculates single final EMA value for candle array
+    params:
+      - candles: Candle[]
+    returns: EMAValue | null
+    notes: |
+      - Requires minimum {period} candles
+      - Returns only last EMA value
+      - Null if insufficient data
+
+  reset:
+    description: Resets calculator state
+    params: []
+    returns: void
+    notes: Clears ema, sets isInitialized = false
+
+  isReady:
+    description: Checks calculator readiness
+    params: []
+    returns: boolean
+    notes: Returns true if isInitialized && ema !== null
+
+  getCurrentEMA:
+    description: Returns current EMA value without adding new price
+    params: []
+    returns: number | null
+    notes: Null if not initialized
+
+  getPeriod:
+    description: Returns EMA period
+    params: []
+    returns: number
+
+trading_strategy_usage:
+  trend_following:
+    description: Primary strategy - entry on pullback to EMA
+    rules:
+      LONG:
+        - "Trend: BULL/STRONG_BULL on 30m/1h/4h"
+        - "Price near EMA50 (30m) or EMA20 (1h)"
+        - "Distance to EMA < 5.5%"
+        - "RSI in trend range (45-68)"
+
+      SHORT:
+        - "Trend: BEAR/STRONG_BEAR on 30m/1h/4h"
+        - "Price near EMA50 (30m) or EMA20 (1h)"
+        - "Distance to EMA < 5.5%"
+        - "RSI in trend range (32-60)"
+
+  level_based:
+    description: Level + EMA distance check
+    rules:
+      - "Level near EMA zone"
+      - "Distance to EMA < 5.5% (mandatory)"
+
+  extreme_counter_trend:
+    description: Extreme RSI + EMA check
+    rules:
+      - "RSI extreme (< 20 or > 85)"
+      - "Distance to EMA < 5.5% (mandatory)"
+
+  blocking:
+    description: EMA used for hard blocking
+    rules:
+      - "Distance > 5.5% → BLOCK (falling knife / blow-off top)"
+      - "Trend not confirmed on all TF → BLOCK"
+
+  weights:
+    description: EMA distance used in weight system
+    formula: |
+      # LONG: prefer pullback (price below or near EMA)
+      if direction == 'LONG':
+        relativeDistance = (ema - currentPrice) / ema * 100  # positive if below
+        if 0 <= relativeDistance <= 2:    weight = +0.15  # ideal pullback
+        elif 2 < relativeDistance <= 4:   weight = +0.10  # good pullback
+        elif 4 < relativeDistance <= 5.5: weight = +0.05  # far but ok
+        elif relativeDistance > 5.5:      weight = -0.25  # falling knife!
+        else:                             weight = +0.05  # above EMA (breakout)
+
+      # SHORT: prefer pullback (price above or near EMA)
+      if direction == 'SHORT':
+        relativeDistance = (currentPrice - ema) / ema * 100  # positive if above
+        if 0 <= relativeDistance <= 2:    weight = +0.15  # ideal pullback
+        elif 2 < relativeDistance <= 4:   weight = +0.10  # good pullback
+        elif 4 < relativeDistance <= 5.5: weight = +0.05  # far but ok
+        elif relativeDistance > 5.5:      weight = -0.25  # blow-off top!
+        else:                             weight = +0.05  # below EMA (breakdown)
+
+    weight_range: [-0.25, +0.15]
+
+implementation_notes:
+  - Uses Decimal.js for ALL mathematical operations
+  - NO state management except ema, isInitialized, period, multiplier
+  - NO Math.round() - exact values returned
+  - Multiplier calculated once during initialization
+  - Result validation (isFinite)
+  - First price initializes EMA directly (no period candles required to start)
+
+edge_cases:
+  - period <= 0 → throw Error
+  - empty candles array → return [] (for calculateFromCandles) or null (for calculateSingle)
+  - candles.length < period → return [] or null
+  - first price → initialize ema = price
+  - undefined/null price → skip or handle gracefully
+
+dependencies:
+  - Decimal.js (decimal.js)
+  - MagicNumbers (../constants/magic-numbers):
+      - EMA_SMOOTHING_FACTOR = 2
+  - TimeService (../services/time.service)
+
+test_requirements:
+  unit_tests:
+    - "EMA initialization with first price"
+    - "EMA incremental updates (addPrice)"
+    - "EMA calculation from candles (SMA + EMA)"
+    - "EMA with insufficient data (< period)"
+    - "EMA with flat prices (no change)"
+    - "EMA multiplier calculation (different periods: 20, 50, 200)"
+    - "Reset functionality"
+    - "isReady method"
+    - "getCurrentEMA method"
+    - "Distance calculation and thresholds"
+
+  integration_tests:
+    - "EMA integration with real APEXUSDT candles (30m/1h/4h)"
+    - "Multi-timeframe EMA (EMA50@30m, EMA20@1h, EMA200@4h)"
+    - "EMA + Trend detection (STRONG_BULL/BULL/NEUTRAL/BEAR/STRONG_BEAR)"
+    - "EMA distance blocking in Signal Generator"
+    - "EMA + RSI combined validation (Trend-Following strategy)"
+
+  validation:
+    - "Compare EMA values with TradingView EMA"
+    - "Verify EMA responds faster than SMA to price changes"
+    - "Test EMA slope calculation for trend detection"
+
+performance:
+  time_complexity: O(1) per addPrice call, O(n) for calculateFromCandles/calculateSingle
+  space_complexity: O(1) - только текущее состояние (ema, isInitialized)
+  memory_efficient: true (NO arrays stored, только current state)
+
+accuracy:
+  decimal_precision: "Full precision with Decimal.js"
+  rounding_errors: "Eliminated by Decimal.js"
+  validation: "Compare with TradingView EMA"
+
+examples:
+  scenario1_uptrend:
+    description: "Strong uptrend, price rising above EMA"
+    prices: [100, 102, 105, 107, 110, 112, 115]
+    period: 5
+    expected:
+      - EMA responds faster than SMA
+      - EMA slope > 0 (BULL trend)
+      - price > EMA on all candles after initialization
+
+  scenario2_pullback:
+    description: "Pullback to EMA50 in uptrend (Trend-Following entry)"
+    prices: [100, 102, 105, 107, 110, 108, 106, 109]
+    period: 50
+    expected:
+      - EMA continues rising slowly
+      - Price declining to EMA (pullback)
+      - Distance decreases from 5% to 1%
+      - Ideal entry point around distance = 1%
+
+  scenario3_falling_knife:
+    description: "Crash, price falls far below EMA"
+    scenario:
+      - Price: $2.80 → $2.50 (crash -10.7%)
+      - EMA50 (30m): $2.73
+      - Distance: -8.5% (> 5.5% threshold)
+      - Result: BLOCKED (falling knife protection)

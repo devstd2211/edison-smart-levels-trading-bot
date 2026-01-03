@@ -1,0 +1,249 @@
+---
+component: RSI Calculator
+type: Technical Indicator
+file: src/utils/rsi-calculator.ts
+status: implemented
+priority: critical
+
+description: |
+  Relative Strength Index (RSI) - momentum indicator measuring speed and
+  magnitude of price movements. Uses Decimal.js for precise mathematics
+  and rounding error avoidance.
+
+inputs:
+  - name: period
+    type: number
+    description: Period for RSI calculation (usually 14)
+    default: 14
+    validation: "period > 0"
+
+  - name: timeService
+    type: TimeService
+    description: Service for obtaining timestamps
+    required: true
+
+  - name: config
+    type: Configuration
+    description: Full bot configuration
+    required: true
+    properties:
+      - technicalIndicators.rsiArrayBufferMultiplier
+      - technicalIndicators.rsiOversold
+      - technicalIndicators.rsiOverbought
+      - technicalIndicators.rsiMaxValue (100)
+      - technicalIndicators.rsiMinValue (0)
+      - technicalIndicators.rsiNeutralValue (50)
+
+outputs:
+  - name: RSIValue
+    type: object
+    properties:
+      value:
+        type: number
+        range: [0, 100]
+        description: RSI value
+      timestamp:
+        type: number
+        description: Timestamp in milliseconds
+      period:
+        type: number
+        description: Calculation period
+
+algorithm:
+  initialization:
+    - Create circular buffers for prices, gains, losses
+    - bufferSize = period * rsiArrayBufferMultiplier
+    - avgGain = 0, avgLoss = 0, isInitialized = false
+
+  step1_price_change:
+    description: Calculate price change (gain/loss)
+    formula: |
+      change = currentPrice - previousPrice
+      gain = change > 0 ? change : 0
+      loss = change < 0 ? |change| : 0
+
+  step2_initial_sma:
+    description: Initial calculation via Simple Moving Average
+    condition: !isInitialized && gains.length >= period
+    formula: |
+      avgGain = sum(gains[0...period]) / period
+      avgLoss = sum(losses[0...period]) / period
+      isInitialized = true
+
+  step3_ema_smoothing:
+    description: EMA smoothing for subsequent values
+    condition: isInitialized
+    formula: |
+      avgGain = (avgGain * (period - 1) + currentGain) / period
+      avgLoss = (avgLoss * (period - 1) + currentLoss) / period
+
+  step4_rsi_calculation:
+    description: Final RSI calculation
+    formula: |
+      if avgLoss == 0:
+        rsi = avgGain > 0 ? 100 : 50
+      elif avgGain == 0:
+        rsi = 0
+      else:
+        rs = avgGain / avgLoss
+        rsi = 100 - (100 / (1 + rs))
+
+      # Clamping
+      rsi = max(0, min(100, rsi))
+
+rsi_zones:
+  extreme_oversold:
+    range: [0, 20]
+    description: Extreme oversold
+    signal: STRONG_BUY
+
+  oversold:
+    range: [20, 30]
+    description: Oversold
+    signal: BUY
+
+  neutral_low:
+    range: [30, 45]
+    description: Neutral zone (below middle)
+    signal: HOLD
+
+  neutral:
+    range: [45, 55]
+    description: Neutral zone
+    signal: HOLD
+
+  neutral_high:
+    range: [55, 70]
+    description: Neutral zone (above middle)
+    signal: HOLD
+
+  overbought:
+    range: [70, 85]
+    description: Overbought
+    signal: SELL
+
+  extreme_overbought:
+    range: [85, 100]
+    description: Extreme overbought
+    signal: STRONG_SELL
+
+configuration_parameters:
+  RSI_OVERSOLD_EXTREME: 20
+  RSI_OVERBOUGHT_EXTREME: 85
+  RSI_TREND_LONG_MIN: 45
+  RSI_TREND_LONG_MAX: 68
+  RSI_TREND_SHORT_MIN: 32
+  RSI_TREND_SHORT_MAX: 60
+  LEVEL_RSI_GOOD_ZONE_LONG_MIN: 30
+  LEVEL_RSI_GOOD_ZONE_LONG_MAX: 55
+  LEVEL_RSI_GOOD_ZONE_SHORT_MIN: 45
+  LEVEL_RSI_GOOD_ZONE_SHORT_MAX: 70
+
+methods:
+  addPrice:
+    description: Adds new price and updates RSI incrementally
+    params:
+      - price: number
+    returns: RSIValue | null
+    notes: Returns null if insufficient data
+
+  calculateSingle:
+    description: Calculates RSI for candle array (batch mode)
+    params:
+      - candles: Candle[]
+    returns: RSIValue | null
+    notes: Used for historical data
+
+  getCurrentRSI:
+    description: Returns current RSI value without adding new price
+    params: []
+    returns: number | null
+
+  isOversold:
+    description: Checks if RSI is in oversold zone
+    params:
+      - rsi?: number
+    returns: boolean
+
+  isOverbought:
+    description: Checks if RSI is in overbought zone
+    params:
+      - rsi?: number
+    returns: boolean
+
+  getSignal:
+    description: Returns trading signal based on RSI
+    params:
+      - rsi?: number
+    returns: "BUY" | "SELL" | "HOLD"
+
+  reset:
+    description: Resets calculator state
+    params: []
+    returns: void
+
+  isReady:
+    description: Checks calculator readiness (sufficient data)
+    params: []
+    returns: boolean
+
+trading_strategy_usage:
+  blocking:
+    description: RSI used for hard blocking signals
+    rules:
+      - "Block LONG if RSI > RSI_OVERBOUGHT_EXTREME (85)"
+      - "Block SHORT if RSI < RSI_OVERSOLD_EXTREME (20)"
+      - "For Trend-Following: RSI must be in trend zone"
+      - "For Level-Based: RSI must be in good zone"
+
+  weights:
+    description: RSI NOT used in weight system (only blocking)
+    value: N/A
+
+implementation_notes:
+  - Uses Decimal.js for ALL mathematical operations
+  - CircularBuffer for efficient memory management
+  - NO Math.round() - exact values returned
+  - EMA smoothing after first SMA calculation
+  - Result validation (isFinite, isNaN)
+  - Clamping RSI to [0, 100] range
+
+edge_cases:
+  - avgLoss = 0 → RSI = 100 (if gain exists) or 50 (if not)
+  - avgGain = 0 → RSI = 0
+  - Insufficient data → return null
+  - Infinity/NaN result → return null
+
+dependencies:
+  - CircularBuffer (./circular-buffer)
+  - Decimal.js (decimal.js)
+  - MagicNumbers (../constants/magic-numbers)
+  - TimeService (../services/time.service)
+
+test_requirements:
+  unit_tests:
+    - "RSI calculation uptrend scenario"
+    - "RSI calculation downtrend scenario"
+    - "RSI with insufficient data"
+    - "RSI with flat price (no change)"
+    - "RSI extreme values (0, 100)"
+    - "RSI edge case: avgLoss = 0"
+    - "RSI edge case: avgGain = 0"
+    - "Reset functionality"
+    - "isOversold/isOverbought methods"
+    - "getSignal method (BUY/SELL/HOLD)"
+
+  integration_tests:
+    - "RSI integration with real APEXUSDT candles"
+    - "RSI + EMA combined signal validation"
+    - "RSI blocking rules in Signal Generator"
+
+performance:
+  time_complexity: O(1) per addPrice call
+  space_complexity: O(period * rsiArrayBufferMultiplier)
+  memory_efficient: true (uses CircularBuffer)
+
+accuracy:
+  decimal_precision: "Full precision with Decimal.js"
+  rounding_errors: "Eliminated by Decimal.js"
+  validation: "Compare with TradingView RSI"

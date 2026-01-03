@@ -1,0 +1,166 @@
+# =============================================================================
+# SMART LEVELS TRADING BOT - GITIGNORE
+# Keep source code public, keep secrets local
+# =============================================================================
+
+# =============================================================================
+# SECRETS & CONFIGURATION (NEVER COMMIT)
+# =============================================================================
+
+# Local configuration with API keys
+config.json
+config-*.json
+configs/
+!config.example.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local overrides
+.env.local
+.env.*.local
+
+# =============================================================================
+# LEGACY & ARCHIVED CODE (NEVER COMMIT)
+# =============================================================================
+
+# Archived development phases
+src/archive/
+src/old_code/
+src/legacy/
+
+# Other legacy directories
+old/
+legacy/
+archived/
+
+# =============================================================================
+# DEVELOPMENT & IDE SETTINGS (LOCAL ONLY)
+# =============================================================================
+
+# Claude Code / AI Tools
+.claude/
+.specify/
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# VS Code
+.vscode/settings.json
+.vscode/extensions.json
+
+# WebStorm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# =============================================================================
+# BUILD & COMPILED OUTPUT
+# =============================================================================
+
+# TypeScript compiled output
+dist/
+build/
+*.tsbuildinfo
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =============================================================================
+# RUNTIME DATA & LOGS
+# =============================================================================
+
+# Trading logs
+logs/
+*.log
+
+# Data files (market data, databases)
+data/
+!data/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime state
+state/
+cache/
+
+# =============================================================================
+# TEMPORARY & BACKUP FILES
+# =============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+temporary/
+
+# Backups
+backups/
+backup/
+*.bak
+*.backup
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# =============================================================================
+# SESSION & DEVELOPMENT NOTES (LOCAL ONLY)
+# =============================================================================
+
+# Development documentation
+CONTINUE_HERE.md
+ARCHITECTURE_ANALYSIS.md
+SESSION_*.md
+session-*.md
+
+# Development notes
+notes/
+*.note
+TODO.md
+NOTES.md
+
+# =============================================================================
+# TEST & COVERAGE
+# =============================================================================
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Test results
+.test-results/
+
+# =============================================================================
+# MISC
+# =============================================================================
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Linux
+.directory
+
+# Windows
+desktop.ini
+$RECYCLE.BIN/

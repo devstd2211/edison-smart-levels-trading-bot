@@ -1,0 +1,706 @@
+---
+document: Market Data & Monitoring System
+description: Market data analysis, trade journaling, and performance monitoring
+
+# =============================================================================
+# MARKET DATA SERVICE
+# =============================================================================
+
+market_data:
+  service: MarketDataService
+  file: src/services/market-data.service.ts
+  description: RSI analysis, Order Book analysis, Volume analysis with validation
+
+  # ---------------------------------------------------------------------------
+  # MULTI-TIMEFRAME RSI ANALYSIS
+  # ---------------------------------------------------------------------------
+  rsi_analysis:
+    description: RSI calculation for all timeframes WITHOUT caching (real-time)
+
+    method: getOptimizedMultiTimeframeRSI(cycleNumber)
+    integration: TimeframeProvider (no hardcoded timeframes!)
+
+    process:
+      step1_fetch_candles:
+        description: "Получает свечи для каждого таймфрейма через TimeframeProvider"
+        timeframes:
+          entry: "1m (150 candles)"
+          main: "5m (150 candles)"
+          trend1: "30m (100 candles)"
+          trend2: "1h (80 candles)"
+          context: "4h (50 candles)"
+
+      step2_calculate_rsi:
+        calculator: RSICalculator(period=14)
+        validation: "if RSI === undefined → throw CRITICAL error"
+        reason: "Cannot trade with invalid RSI data"
+
+      step3_return:
+        returns: |
+          {
+            entry: RSI value,
+            main: RSI value,
+            trends: [Trend1 RSI, Trend2 RSI],
+            context: Context RSI
+          }
+
+    rsi_interpretation:
+      method: interpretRSILevels(rsiResults)
+      logic: |
+        Count oversold (< 30) and overbought (> 70) across timeframes
+        if oversoldCount >= 3 → STRONG_OVERSOLD
+        if oversoldCount >= 2 → OVERSOLD
+        if overboughtCount >= 3 → STRONG_OVERBOUGHT
+        if overboughtCount >= 2 → OVERBOUGHT
+        else → NEUTRAL
+
+    configuration:
+      RSI_PERIOD: 14
+      RSI_OVERSOLD: 30
+      RSI_OVERBOUGHT: 70
+      RSI_STRONG_SIGNAL_THRESHOLD: 3  # 3+ timeframes
+      RSI_NORMAL_SIGNAL_THRESHOLD: 2  # 2+ timeframes
+
+  # ---------------------------------------------------------------------------
+  # ORDER BOOK ANALYSIS
+  # ---------------------------------------------------------------------------
+  order_book_analysis:
+    description: Анализ стакана с circuit breaker и валидацией
+
+    circuit_breaker:
+      description: "Защита от каскадных ошибок Order Book API"
+      threshold: 3 consecutive failures
+      cooldown: 60 seconds
+      behavior: "После 3 ошибок → блокирует запросы на 1 минуту"
+
+      error_tracking:
+        counter: orderBookFailures (0-3)
+        last_failure: lastOrderBookFailure (timestamp)
+        on_success: "Сбрасывает счётчик в 0"
+        on_failure: "Увеличивает счётчик + saves timestamp"
+
+      active_state:
+        check: "failures >= 3 && (now - lastFailure) < cooldown"
+        action: "throw CRITICAL error - market data unreliable"
+        log: "🔴 Order book circuit breaker active (cooldown: 45s)"
+
+      reset:
+        condition: "(now - lastFailure) >= cooldown"
+        action: "orderBookFailures = 0"
+        log: "🟢 Order book circuit breaker reset"
+
+    data_validation:
+      method: validateOrderBookData(orderBook, currentPrice)
+
+      checks:
+        structure_check:
+          - "bids && asks exist"
+          - "Arrays.isArray(bids) && Array.isArray(asks)"
+          - "bids.length > 0 && asks.length > 0"
+
+        format_check:
+          - "bestBid && bestAsk are arrays"
+          - "bidPrice, askPrice, bidSize, askSize are numbers"
+          - "!isNaN(all values)"
+
+        logic_check:
+          - "bidPrice < askPrice (no crossed spread)"
+          - "bidSize > 0 && askSize > 0"
+
+        sanity_check:
+          threshold: "ORDER_BOOK_MAX_DEVIATION_PERCENT (default 10%)"
+          condition: "abs(bidPrice - currentPrice) < maxDeviation"
+          reason: "Prices too far from current price"
+
+      returns: "{ isValid: boolean, reason?: string }"
+
+    metrics_calculation:
+      bid_volume:
+        description: "Суммарный объём в первых 10 bids"
+        formula: "sum(bids[0:10].quantity)"
+
+      ask_volume:
+        description: "Суммарный объём в первых 10 asks"
+        formula: "sum(asks[0:10].quantity)"
+
+      order_book_imbalance:
+        formula: "bidVolume / (bidVolume + askVolume)"
+        interpretation:
+          bullish: "> 0.55 (больше покупок)"
+          bearish: "< 0.45 (больше продаж)"
+          neutral: "0.45 - 0.55"
+
+      spread:
+        formula: "((bestAsk - bestBid) / bestBid) × 100"
+        interpretation:
+          tight: "< 0.01% (очень ликвидный)"
+          normal: "0.01% - 0.05%"
+          wide: "> 0.05% (низкая ликвидность)"
+
+      big_walls:
+        description: "Крупные стены (support/resistance)"
+        threshold: ORDER_BOOK_WALL_THRESHOLD (default 0.15 = 15% от avg volume)
+        bid_walls: "bids.filter(q > bidVolume × 0.15).slice(0, 3)"
+        ask_walls: "asks.filter(q > askVolume × 0.15).slice(0, 3)"
+        significance: "Индикатор китовой поддержки/сопротивления"
+
+    logging:
+      frequency: "Каждый trading cycle"
+      log_entry: |
+        🏛️ Order Book & Volume Analysis (Cycle #123)
+        Spread: 0.012% (TIGHT)
+        Order Book: bidVolume: 1250, askVolume: 1180, imbalance: 0.514 (BULLISH)
+        Walls: support [$2.30(150), $2.28(120)], resistance [$2.32(180)]
+        Volume: trend=increasing, intensity=high
+
+    configuration:
+      ORDER_BOOK_WALL_THRESHOLD: 0.15  # 15% выше среднего
+      ORDER_BOOK_BIAS_THRESHOLD_PERCENT: 55  # > 55% = BULLISH
+      ORDER_BOOK_NEUTRAL_PRESSURE_PERCENT: 45  # < 45% = BEARISH
+      ORDER_BOOK_MAX_DEVIATION_PERCENT: 0.10  # 10% санity check
+
+  # ---------------------------------------------------------------------------
+  # VOLUME PATTERN ANALYSIS
+  # ---------------------------------------------------------------------------
+  volume_analysis:
+    description: Анализ паттернов объёма торговли с TTL кешем
+
+    ttl_cache:
+      duration: VOLUME_ANALYSIS_TTL_MS (default 120000ms = 2 min)
+      purpose: "Избегает частых запросов к getRecentTrades()"
+      invalidation: "Автоматически обновляется при истечении TTL"
+
+    recent_trades:
+      method: getRecentTrades()
+      api_call: "bybit.getRecentTrades(symbol, limit=50)"
+      fallback: "[] (empty array) if API fails"
+
+    trades_validation:
+      method: validateTradesData(trades)
+
+      checks:
+        - "Array.isArray(trades)"
+        - "Each trade has: price, quantity, side"
+        - "price > 0 && quantity > 0"
+        - "side === 'buy' || side === 'sell'"
+
+      strict_mode: "throw CRITICAL error if invalid"
+      reason: "Cannot analyze volume with corrupt data"
+
+    metrics:
+      buy_sell_split:
+        buy_volume: "sum(buyTrades.quantity)"
+        sell_volume: "sum(sellTrades.quantity)"
+        buy_ratio: "buyVolume / totalVolume"
+
+      average_trade_size:
+        formula: "totalVolume / trades.length"
+
+      large_trades_detection:
+        threshold: "LARGE_TRADE_MULTIPLIER × avgTradeSize (default 2.0)"
+        large_trades: "trades.filter(quantity > threshold)"
+        large_trades_bias: "largeTrades.filter(side=buy).length / largeTrades.length"
+        significance: "Индикатор китовой активности"
+
+    output:
+      returns: |
+        {
+          averageVolume: number,
+          currentVolume: number,
+          volumeRatio: number (0-1),
+          trend: "increasing" | "decreasing" | "stable",
+          intensity: "high" | "medium" | "low"
+        }
+
+      trend_interpretation:
+        increasing: "buyRatio > 0.6"
+        decreasing: "buyRatio < 0.4"
+        stable: "0.4 <= buyRatio <= 0.6"
+
+      intensity_interpretation:
+        high: "trades.length > 50"
+        medium: "trades.length > 20"
+        low: "trades.length <= 20"
+
+    configuration:
+      VOLUME_ANALYSIS_TTL_MS: 120000  # 2 min cache
+      LARGE_TRADE_MULTIPLIER: 2.0     # 2× avg size
+      TRADE_INTENSITY_HIGH_THRESHOLD: 50
+      TRADE_INTENSITY_MEDIUM_THRESHOLD: 20
+
+  # ---------------------------------------------------------------------------
+  # DATA VALIDATION & CLEANUP
+  # ---------------------------------------------------------------------------
+  data_integrity:
+    no_fallbacks_policy:
+      description: "NO FALLBACKS для критических данных"
+      rule: "If data invalid → throw CRITICAL error"
+      reason: "Cannot trade with corrupt market data"
+
+    validation_points:
+      - "RSI calculation (must have value)"
+      - "Order book structure (bids/asks exist)"
+      - "Trade data fields (price/quantity/side)"
+      - "Numeric values (not NaN, > 0)"
+
+    cleanup:
+      method: cleanupAnalysisCaches()
+      frequency: "Every 30 minutes (MEMORY_CLEANUP_INTERVAL_MS)"
+
+      actions:
+        - "Clear stale volume cache (> 1 hour old)"
+        - "Reset circuit breaker (if cooldown passed)"
+
+# =============================================================================
+# TRADE JOURNAL SERVICE
+# =============================================================================
+
+trade_journal:
+  service: TradeJournalService
+  file: src/services/trade-journal.service.ts
+  description: Ведение журнала сделок с условиями входа и выхода
+
+  # ---------------------------------------------------------------------------
+  # JOURNAL STRUCTURE
+  # ---------------------------------------------------------------------------
+  data_structure:
+    storage:
+      type: Map<positionId, JournalEntry>
+      persistence: "data/trade-journal.json"
+      format: JSON (pretty printed with 2-space indent)
+
+    journal_entry:
+      entry_metadata:
+        - id: "Unique journal entry ID"
+        - positionId: "Position ID from FuturesPositionManager"
+        - symbol: "Trading symbol (APEXUSDT)"
+
+      position_data:
+        - side: "Long | Short"
+        - entryPrice: number
+        - quantity: number
+        - leverage: number
+        - marginType: "isolated"
+        - margin: number
+
+      stop_loss_take_profit:
+        - stopLossPercent: number
+        - stopLossPrice: number
+        - takeProfitLevels: "Array<{ level, percent, sizePercent, price }>"
+
+      entry_conditions:
+        - signalReason: "Human-readable reason"
+        - signalType: "TrendFollowing | Reversal | Level-Based | Price Action"
+        - signalConfidence: number (0-1)
+        - rsiMain: number
+        - rsiTrends: number[]
+        - trend: "BULL | BEAR | NEUTRAL"
+        - trendConfidence: number
+        - dropFromHigh: number (optional)
+        - strategy: "Strategy name"
+        - priority: number
+
+      exit_conditions:
+        - closeReason: string
+        - closePrice: number
+        - closedAt: timestamp
+        - realizedPnL: number (USDT)
+        - realizedPnLPercent: number
+        - holdingTimeMs: number
+        - tpLevelsHit: number[] (e.g. [1, 2])
+        - stoppedOut: boolean
+        - trailingStopUsed: boolean
+
+      timestamps:
+        - openedAt: number (ms)
+        - closedAt: number (ms, optional)
+
+      status:
+        - "open": Позиция открыта
+        - "partial": Частичное закрытие (TP hit)
+        - "closed": Полностью закрыта
+
+  # ---------------------------------------------------------------------------
+  # JOURNAL OPERATIONS
+  # ---------------------------------------------------------------------------
+  operations:
+    record_position_open:
+      method: recordPositionOpen(entry)
+      trigger: "FuturesPositionManager.createPositionFromFilledOrder()"
+      action: |
+        1. entries.set(positionId, entry)
+        2. saveJournal() → writes to JSON file
+        3. Log entry with signal reason, RSI, trend
+
+    record_position_close:
+      method: recordPositionClose(positionId, exitConditions)
+      trigger: "FuturesPositionManager.closePosition()"
+      action: |
+        1. Find entry by positionId
+        2. Update: exitConditions, closedAt, status='closed'
+        3. saveJournal()
+        4. Log exit with PnL, holding time, TP levels hit
+
+    update_position_status:
+      method: updatePositionStatus(positionId, status)
+      trigger: "onTakeProfitHit() → status='partial'"
+      action: "Update status + saveJournal()"
+
+  # ---------------------------------------------------------------------------
+  # JOURNAL QUERIES
+  # ---------------------------------------------------------------------------
+  queries:
+    get_entry:
+      method: "getEntry(positionId)"
+      returns: "JournalEntry | undefined"
+
+    get_all_entries:
+      method: getAllEntries()
+      returns: "JournalEntry[]"
+
+    get_open_entries:
+      method: getOpenEntries()
+      filter: "status === 'open' || status === 'partial'"
+
+    get_closed_entries:
+      method: getClosedEntries()
+      filter: "status === 'closed'"
+
+  # ---------------------------------------------------------------------------
+  # STATISTICS & ANALYTICS
+  # ---------------------------------------------------------------------------
+  statistics:
+    method: getStatistics()
+
+    metrics:
+      total_trades: entries.size
+      open_trades: getOpenEntries().length
+      closed_trades: getClosedEntries().length
+
+      winning_trades:
+        filter: "exitConditions.realizedPnL > 0"
+        count: winning.length
+
+      losing_trades:
+        filter: "exitConditions.realizedPnL <= 0"
+        count: losing.length
+
+      total_pnl:
+        formula: "sum(closed.exitConditions.realizedPnL)"
+
+      average_pnl:
+        formula: "totalPnL / closedTrades"
+
+      win_rate:
+        formula: "winningTrades / closedTrades"
+
+      average_holding_time:
+        formula: "sum(exitConditions.holdingTimeMs) / closedTrades"
+
+    returns: |
+      {
+        totalTrades, openTrades, closedTrades,
+        winningTrades, losingTrades,
+        totalPnL, averagePnL, winRate,
+        averageHoldingTime
+      }
+
+  # ---------------------------------------------------------------------------
+  # CSV EXPORT
+  # ---------------------------------------------------------------------------
+  csv_export:
+    method: exportToCSV(outputPath)
+    default_path: "data/trade-journal.csv"
+
+    columns:
+      - ID, Symbol, Side, Entry Price, Quantity, Leverage, Margin
+      - Signal Reason, RSI Main, Trend, Trend Confidence, Drop From High
+      - Opened At, Closed At
+      - Close Reason, Close Price
+      - Realized PnL, Realized PnL %, Holding Time (min)
+      - TP Levels Hit, Stopped Out, Status
+
+    format:
+      - CSV with header row
+      - Quotes around text fields (signal reason, close reason)
+      - ISO timestamps for dates
+      - Semicolon separator for TP levels (1;2;3)
+
+    use_case: "Import into Excel/Google Sheets for analysis"
+
+  # ---------------------------------------------------------------------------
+  # PERSISTENCE
+  # ---------------------------------------------------------------------------
+  persistence:
+    load_journal:
+      trigger: "Constructor initialization"
+      action: |
+        1. Check if file exists
+        2. Read JSON file
+        3. Parse entries array
+        4. Populate entries Map
+      log: "📖 Trade journal loaded (123 entries)"
+
+    save_journal:
+      trigger: "After every modification"
+      action: |
+        1. Convert entries Map to array
+        2. JSON.stringify(entries, null, 2)
+        3. Write to file
+      log: "💾 Trade journal saved (124 entries)"
+
+# =============================================================================
+# PERFORMANCE MONITOR SERVICE
+# =============================================================================
+
+performance_monitor:
+  service: PerformanceMonitorService
+  file: src/services/performance-monitor.service.ts
+  description: Мониторинг производительности операций бота
+
+  # ---------------------------------------------------------------------------
+  # OPERATION TRACKING
+  # ---------------------------------------------------------------------------
+  operation_tracking:
+    description: "Измерение времени выполнения операций"
+
+    active_metrics:
+      storage: "Map<operationId, OperationMetric>"
+      purpose: "Отслеживание незавершённых операций"
+
+      operation_metric:
+        - name: "Operation name"
+        - startTime: number (ms)
+        - endTime: number (ms, optional)
+        - duration: number (ms, optional)
+        - metadata: object
+
+    completed_metrics:
+      storage: "Array<OperationMetric>"
+      limit: MAX_COMPLETED_METRICS (default 1000)
+      cleanup: "Auto-cleanup (FIFO) when limit exceeded"
+
+    aggregated_metrics:
+      storage: "Map<operationName, AggregatedMetric>"
+      limit: MAX_AGGREGATED_METRICS (default 100)
+
+      aggregated_metric:
+        - name: string
+        - count: number (total executions)
+        - totalDuration: number (sum of all durations)
+        - averageDuration: number
+        - minDuration: number
+        - maxDuration: number
+        - lastExecuted: Date
+
+  # ---------------------------------------------------------------------------
+  # MEASURING OPERATIONS
+  # ---------------------------------------------------------------------------
+  measurement_methods:
+    start_operation:
+      method: "startOperation(operationName, metadata)"
+      action: |
+        1. Generate unique operationId (name_timestamp_random)
+        2. Create metric: { name, startTime, metadata }
+        3. activeMetrics.set(operationId, metric)
+      returns: operationId
+      log: "🚀 Started operation: fetchMarketData"
+
+    end_operation:
+      method: "endOperation(operationId, additionalMetadata)"
+      action: |
+        1. Find metric in activeMetrics
+        2. Calculate duration = endTime - startTime
+        3. Move to completedMetrics
+        4. Update aggregatedMetrics
+        5. Log based on duration
+      returns: duration (ms)
+
+    measure_async:
+      method: "measureAsync<T>(operationName, operation, metadata): Promise<T>"
+      process: |
+        1. startOperation()
+        2. await operation()
+        3. endOperation(success: true)
+        4. return result
+      error_handling: "endOperation(success: false, error: message)"
+
+    measure_sync:
+      method: "measureSync<T>(operationName, operation, metadata): T"
+      process: "Similar to measureAsync but synchronous"
+
+  # ---------------------------------------------------------------------------
+  # PERFORMANCE THRESHOLDS
+  # ---------------------------------------------------------------------------
+  thresholds:
+    slow_operation:
+      threshold: SLOW_OPERATION_THRESHOLD_MS (5000ms = 5 sec)
+      log: "🐌 Slow operation detected"
+      action: "logger.warn()"
+
+    very_slow_operation:
+      threshold: VERY_SLOW_OPERATION_THRESHOLD_MS (15000ms = 15 sec)
+      log: "🐌🐌 Very slow operation detected"
+      action: "logger.error()"
+
+    normal_operation:
+      threshold: "< 5 seconds"
+      log: "✅ Operation completed"
+      action: "logger.debug()"
+
+  # ---------------------------------------------------------------------------
+  # SUSPICIOUS OPERATIONS DETECTION
+  # ---------------------------------------------------------------------------
+  suspicious_operations:
+    description: "Обнаружение зависших операций"
+
+    detection:
+      method: detectSuspiciousOperations()
+      threshold: 60000ms (1 minute)
+      filter: "activeMetrics where (now - startTime) > 60s"
+      returns: "Array<{ name, duration, metadata }>"
+
+    use_case: "Identify stuck operations (WebSocket, API calls, etc.)"
+
+  # ---------------------------------------------------------------------------
+  # METRICS QUERIES
+  # ---------------------------------------------------------------------------
+  queries:
+    get_aggregated_metrics:
+      method: getAggregatedMetrics()
+      returns: "Sorted by averageDuration (slowest first)"
+
+    get_recent_metrics:
+      method: "getRecentMetrics(limit=20)"
+      returns: "Last N completed operations (sorted by endTime)"
+
+    get_slow_operations:
+      method: "getSlowOperations(threshold=5000)"
+      returns: "Metrics where duration >= threshold (top 10)"
+
+    get_active_operations:
+      method: getActiveOperations()
+      returns: "Currently running operations with current duration"
+
+    get_system_metrics:
+      method: getSystemMetrics()
+      returns: |
+        {
+          activeOperations: count,
+          completedOperations: count,
+          averageSystemLoad: ms,
+          slowOperationsCount: count,
+          suspiciousOperationsCount: count,
+          topSlowOperations: [{ name, avgDuration, count }]
+        }
+
+  # ---------------------------------------------------------------------------
+  # MEMORY MANAGEMENT
+  # ---------------------------------------------------------------------------
+  memory_management:
+    cleanup:
+      method: cleanup()
+      frequency: "Every 30 minutes (MEMORY_CLEANUP_INTERVAL_MS)"
+
+      actions:
+        completed_metrics_cleanup:
+          condition: "completedMetrics.length > MAX_COMPLETED_METRICS"
+          action: "Remove oldest entries (FIFO)"
+
+        aggregated_metrics_cleanup:
+          condition: "aggregatedMetrics.size > MAX_AGGREGATED_METRICS"
+          action: "Remove least recently executed"
+
+        suspicious_operations_warning:
+          condition: "detectSuspiciousOperations().length > 0"
+          action: "logger.warn() with operation details"
+
+    reset:
+      method: reset()
+      action: "Clear all metrics (activeMetrics, completedMetrics, aggregatedMetrics)"
+      use_case: "Manual reset for testing"
+
+  # ---------------------------------------------------------------------------
+  # CONFIGURATION
+  # ---------------------------------------------------------------------------
+  configuration:
+    SLOW_OPERATION_THRESHOLD_MS: 5000      # 5 sec
+    VERY_SLOW_OPERATION_THRESHOLD_MS: 15000  # 15 sec
+    MAX_COMPLETED_METRICS: 1000
+    MAX_AGGREGATED_METRICS: 100
+    MEMORY_CLEANUP_INTERVAL_MS: 1800000    # 30 min
+
+# =============================================================================
+# INTEGRATION & DATA FLOW
+# =============================================================================
+
+integration:
+  trading_cycle_integration:
+    step1_market_data:
+      - MarketDataService.getOptimizedMultiTimeframeRSI() → RSI for all TFs
+      - MarketDataService.getOrderBookData() → Order book analysis
+      - MarketDataService.logOrderBookAnalysis() → Volume analysis
+
+    step2_signal_generation:
+      - Uses RSI data from MarketDataService
+      - Validates market conditions
+      - Generates trading signals
+
+    step3_position_execution:
+      - Opens position with entry conditions
+      - TradeJournal.recordPositionOpen() → Saves entry
+
+    step4_position_monitoring:
+      - Monitors TP/SL hits
+      - Updates position status
+
+    step5_position_closing:
+      - Closes position with exit conditions
+      - TradeJournal.recordPositionClose() → Saves exit
+
+  performance_monitoring_points:
+    - "Trading cycle execution"
+    - "RSI calculation"
+    - "Order book fetch"
+    - "Signal generation"
+    - "Position opening"
+    - "WebSocket message processing"
+    - "API calls to exchange"
+
+  cleanup_schedule:
+    every_30_minutes:
+      - MarketDataService.cleanupAnalysisCaches()
+      - PerformanceMonitor.cleanup()
+      - Memory statistics logging
+
+# =============================================================================
+# BEST PRACTICES
+# =============================================================================
+
+best_practices:
+  market_data:
+    - "Use circuit breaker для Order Book API (3 failures → 1 min pause)"
+    - "Validate ALL market data перед использованием (no fallbacks!)"
+    - "Cache volume analysis на 2 минуты (избегает частых API calls)"
+    - "NO hardcoded timeframes (use TimeframeProvider)"
+    - "throw CRITICAL errors при invalid data (better crash than bad trade)"
+
+  trade_journal:
+    - "Record BOTH entry AND exit conditions (full context)"
+    - "Save journal после каждого изменения (data persistence)"
+    - "Include strategy, RSI, trend в entry conditions"
+    - "Track TP levels hit и trailing stop usage"
+    - "Export to CSV для анализа в Excel/Google Sheets"
+
+  performance_monitoring:
+    - "Measure critical operations (API calls, calculations)"
+    - "Set thresholds для slow operation warnings (5 sec)"
+    - "Detect suspicious operations (> 1 min = stuck)"
+    - "Cleanup metrics регулярно (avoid memory leaks)"
+    - "Use aggregated metrics для trend analysis"
+
+  data_integrity:
+    - "NO fallbacks для критических данных"
+    - "Strict validation (throw на invalid data)"
+    - "Circuit breakers для API protection"
+    - "TTL caches для balance между performance и freshness"

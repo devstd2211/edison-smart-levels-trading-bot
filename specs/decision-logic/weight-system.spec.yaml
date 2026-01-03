@@ -1,0 +1,448 @@
+---
+document: Centralized Weight System
+description: Weight system for confidence calculation (Soft Rules)
+philosophy: "Gradual degradation instead of all-or-nothing"
+status: PROPOSED (current system uses mostly blocking)
+
+weight_system:
+  type: CONFIDENCE_MODIFIERS
+  description: "Each factor adds/subtracts confidence → final score"
+  advantages:
+    - "Flexibility (many factors → one score)"
+    - "Gradual degradation (not all or nothing)"
+    - "ML-friendly (weights can be trained)"
+  disadvantages:
+    - "Harder to debug (why 0.58, not 0.62?)"
+    - "Requires weight balancing"
+
+base_confidence:
+  description: "Initial confidence for each strategy"
+
+  reversal_patterns: 0.70
+  price_action_toolkit: 0.60
+  trend_following: 0.60
+  level_based: 0.60
+  extreme_counter_trend: 0.50
+
+rsi_weights:
+  description: "Weights based on RSI zones"
+  range: [-0.15, +0.20]
+
+  long:
+    zones:
+      - range: [30, 45]
+        weight: +0.20
+        description: "Ideal zone - oversold but not extreme"
+
+      - range: [20, 30]
+        weight: +0.15
+        description: "Extreme oversold (risky but opportunity)"
+
+      - range: [45, 55]
+        weight: +0.10
+        description: "Neutral low"
+
+      - range: [55, 68]
+        weight: +0.05
+        description: "Neutral high (weak signal)"
+
+      - range: [68, 85]
+        weight: -0.10
+        description: "Overbought (bad for LONG)"
+
+      - range: [85, 100]
+        weight: -0.15
+        description: "Extreme overbought (very bad)"
+
+  short:
+    zones:
+      - range: [55, 70]
+        weight: +0.20
+        description: "Ideal zone - overbought but not extreme"
+
+      - range: [70, 85]
+        weight: +0.15
+        description: "Extreme overbought (risky but opportunity)"
+
+      - range: [45, 55]
+        weight: +0.10
+        description: "Neutral high"
+
+      - range: [32, 45]
+        weight: +0.05
+        description: "Neutral low (weak signal)"
+
+      - range: [20, 32]
+        weight: -0.10
+        description: "Oversold (bad for SHORT)"
+
+      - range: [0, 20]
+        weight: -0.15
+        description: "Extreme oversold (very bad)"
+
+  implementation:
+    function: calculateRsiWeight(rsi, direction)
+    returns: number (-0.15 to +0.20)
+    usage: "confidence += calculateRsiWeight(rsi, direction)"
+
+ema_distance_weights:
+  description: "Веса на основе расстояния до EMA"
+  range: [-0.25, +0.15]
+
+  long:
+    description: "Предпочтение pullback (price below or near EMA)"
+    zones:
+      - range: [0, 2]
+        condition: "price 0-2% below EMA"
+        weight: +0.15
+        description: "Ideal pullback"
+
+      - range: [2, 4]
+        condition: "price 2-4% below EMA"
+        weight: +0.10
+        description: "Good pullback"
+
+      - range: [4, 5.5]
+        condition: "price 4-5.5% below EMA"
+        weight: +0.05
+        description: "Far but ok"
+
+      - range: [5.5, Infinity]
+        condition: "price > 5.5% below EMA"
+        weight: -0.25
+        description: "Falling knife!"
+
+      - condition: "price above EMA"
+        weight: +0.05
+        description: "Breakout (allowed but not ideal)"
+
+  short:
+    description: "Предпочтение pullback (price above or near EMA)"
+    zones:
+      - range: [0, 2]
+        condition: "price 0-2% above EMA"
+        weight: +0.15
+        description: "Ideal pullback"
+
+      - range: [2, 4]
+        condition: "price 2-4% above EMA"
+        weight: +0.10
+        description: "Good pullback"
+
+      - range: [4, 5.5]
+        condition: "price 4-5.5% above EMA"
+        weight: +0.05
+        description: "Far but ok"
+
+      - range: [5.5, Infinity]
+        condition: "price > 5.5% above EMA"
+        weight: -0.25
+        description: "Blow-off top!"
+
+      - condition: "price below EMA"
+        weight: +0.05
+        description: "Breakdown (allowed but not ideal)"
+
+  implementation:
+    function: calculateEmaDistanceWeight(price, ema, direction)
+    returns: number (-0.25 to +0.15)
+    formula: |
+      relativeDistance = (ema - price) / ema * 100  // LONG
+      relativeDistance = (price - ema) / ema * 100  // SHORT
+
+trend_alignment_weights:
+  description: "Веса на основе multi-TF trend alignment"
+  range: [-0.20, +0.25]
+
+  long:
+    perfect_alignment:
+      condition: "3 TF BULL/STRONG_BULL"
+      weight: +0.25
+      description: "All timeframes bullish"
+
+    good_alignment:
+      condition: "2 TF BULL/STRONG_BULL"
+      weight: +0.15
+      description: "Majority bullish"
+
+    weak_alignment:
+      condition: "1 TF BULL/STRONG_BULL"
+      weight: +0.05
+      description: "Weak bullish"
+
+    counter_trend:
+      condition: "2+ TF BEAR/STRONG_BEAR"
+      weight: -0.20
+      description: "Counter-trend (risky)"
+
+    neutral:
+      condition: "Mixed trends"
+      weight: 0.00
+      description: "No clear direction"
+
+  short:
+    perfect_alignment:
+      condition: "3 TF BEAR/STRONG_BEAR"
+      weight: +0.25
+      description: "All timeframes bearish"
+
+    good_alignment:
+      condition: "2 TF BEAR/STRONG_BEAR"
+      weight: +0.15
+      description: "Majority bearish"
+
+    weak_alignment:
+      condition: "1 TF BEAR/STRONG_BEAR"
+      weight: +0.05
+      description: "Weak bearish"
+
+    counter_trend:
+      condition: "2+ TF BULL/STRONG_BULL"
+      weight: -0.20
+      description: "Counter-trend (risky)"
+
+  implementation:
+    function: calculateTrendWeight(trend30m, trend1h, trend4h, direction)
+    returns: number (-0.20 to +0.25)
+
+order_book_weights:
+  description: "Веса на основе Order Book imbalance"
+  range: [-0.10, +0.15]
+
+  calculation:
+    formula: "imbalance = (bidPressure - askPressure) / (bidPressure + askPressure)"
+    range: [-1, +1]
+
+  long:
+    zones:
+      - range: [0.3, 1.0]
+        weight: +0.15
+        description: "Strong bid pressure (good for LONG)"
+
+      - range: [0.1, 0.3]
+        weight: +0.10
+        description: "Moderate bid pressure"
+
+      - range: [-0.1, 0.1]
+        weight: 0.00
+        description: "Neutral"
+
+      - range: [-0.3, -0.1]
+        weight: -0.05
+        description: "Moderate ask pressure (bad for LONG)"
+
+      - range: [-1.0, -0.3]
+        weight: -0.10
+        description: "Strong ask pressure"
+
+  short:
+    zones:
+      - range: [-0.3, -1.0]
+        weight: +0.15
+        description: "Strong ask pressure (good for SHORT)"
+
+      - range: [-0.1, -0.3]
+        weight: +0.10
+        description: "Moderate ask pressure"
+
+      - range: [-0.1, 0.1]
+        weight: 0.00
+        description: "Neutral"
+
+      - range: [0.1, 0.3]
+        weight: -0.05
+        description: "Moderate bid pressure (bad for SHORT)"
+
+      - range: [0.3, 1.0]
+        weight: -0.10
+        description: "Strong bid pressure"
+
+level_strength_weights:
+  description: "Веса на основе силы уровня (Level-Based strategy)"
+  range: [0, +0.40]
+
+  components:
+    distance_to_level:
+      - range: [0, 0.5]
+        weight: +0.15
+        description: "Very close to level"
+
+      - range: [0.5, 1.0]
+        weight: +0.10
+        description: "Close to level"
+
+      - range: [1.0, 1.5]
+        weight: +0.05
+        description: "Near level"
+
+    level_touches:
+      - value: 5+
+        weight: +0.15
+        description: "Very strong level (5+ touches)"
+
+      - value: 3-4
+        weight: +0.10
+        description: "Strong level (3-4 touches)"
+
+      - value: 2
+        weight: +0.05
+        description: "Medium level (2 touches)"
+
+      - value: 1
+        weight: 0.00
+        description: "Weak level (1 touch)"
+
+    volume_at_level:
+      - condition: "volume > 1.5x avg"
+        weight: +0.10
+        description: "High volume at level"
+
+      - condition: "volume > 1.0x avg"
+        weight: +0.05
+        description: "Normal volume"
+
+      - condition: "volume < 0.5x avg"
+        weight: -0.10
+        description: "Low volume (weak level)"
+
+choch_bos_weights:
+  description: "Веса на основе Market Structure (CHoCH/BoS)"
+  range: [-0.50, +0.30]
+
+  choch_in_favor:
+    long:
+      condition: "CHoCH BULLISH (DOWN → UP)"
+      weight: +0.30
+      multiplier: 1.3
+      description: "Counter-trend reversal в нашу сторону"
+      env_var: CHOCH_CONFIDENCE_BOOST_COUNTER_TREND
+
+    short:
+      condition: "CHoCH BEARISH (UP → DOWN)"
+      weight: +0.30
+      multiplier: 1.3
+      description: "Counter-trend reversal в нашу сторону"
+
+  choch_against:
+    counter_trend_strategies:
+      weight: -0.50
+      multiplier: 0.5
+      description: "CHoCH против нас (counter-trend strategy)"
+      env_var: CHOCH_CONFIDENCE_PENALTY_COUNTER_TREND
+
+    trend_following_strategies:
+      weight: -0.40
+      multiplier: 0.6
+      description: "CHoCH против нас (trend-following strategy)"
+      env_var: CHOCH_CONFIDENCE_PENALTY_TREND
+
+  bos_in_favor:
+    weight: +0.10
+    multiplier: 1.1
+    description: "BoS в нашу сторону (trend continuation)"
+    env_var: BOS_CONFIDENCE_BOOST_TREND
+
+volume_weights:
+  description: "Веса на основе объёма"
+  range: [-0.10, +0.10]
+
+  zones:
+    - condition: "volume > 1.5x avg"
+      weight: +0.10
+      description: "High volume (strong signal)"
+
+    - condition: "volume > 1.0x avg"
+      weight: +0.05
+      description: "Normal volume"
+
+    - condition: "volume 0.5x - 1.0x avg"
+      weight: 0.00
+      description: "Moderate volume"
+
+    - condition: "volume < 0.5x avg"
+      weight: -0.10
+      description: "Low volume (weak signal)"
+
+confidence_calculation:
+  description: "Итоговая formula для confidence"
+
+  additive_model:
+    formula: |
+      confidence = baseConfidence
+                 + rsiWeight
+                 + emaDistanceWeight
+                 + trendAlignmentWeight
+                 + orderBookWeight
+                 + levelStrengthWeight
+                 + volumeWeight
+
+    range: [0, 1.0]
+    clamping: "Math.max(0.3, Math.min(1.0, confidence))"
+
+  multiplicative_model:
+    formula: |
+      confidence = baseConfidence
+                 * distanceConfidenceMultiplier
+                 * chochBosMultiplier
+
+    example: "0.60 * 0.9 * 1.1 = 0.594"
+
+  hybrid_model:
+    description: "CURRENT IMPLEMENTATION"
+    formula: |
+      confidence = (baseConfidence + additiveWeights)
+                 * distanceMultiplier
+                 * chochBosMultiplier
+
+    range: [0.3, 1.0]
+
+threshold:
+  min_confidence: 0.5
+  description: "Сигнал принимается если confidence >= 0.5"
+  bypass: "Некоторые стратегии могут иметь свой threshold"
+
+examples:
+  scenario_1:
+    description: "Perfect Trend-Following LONG"
+    calculation:
+      base: 0.60
+      rsi_weight: +0.20 (RSI 35, ideal zone)
+      ema_distance: +0.15 (price 1% below EMA)
+      trend_alignment: +0.25 (3 TF BULL)
+      order_book: +0.10 (bid pressure 65%)
+      volume: +0.05 (1.2x avg)
+      total_additive: 1.35
+      distance_multiplier: 1.0 (< 3%)
+      choch_bos_multiplier: 1.0 (no events)
+      final_confidence: 1.0 (clamped)
+
+  scenario_2:
+    description: "Weak Level-Based SHORT"
+    calculation:
+      base: 0.60
+      rsi_weight: +0.10 (RSI 62, neutral)
+      ema_distance: +0.05 (price 4% above EMA)
+      trend_alignment: 0.00 (mixed trends)
+      level_strength: +0.10 (2 touches, 0.5% distance)
+      volume: -0.05 (0.8x avg)
+      total_additive: 0.80
+      distance_multiplier: 0.9 (3-7% range)
+      choch_bos_multiplier: 1.0
+      final_confidence: 0.72
+
+  scenario_3:
+    description: "Falling Knife (blocked or heavy penalty)"
+    calculation:
+      base: 0.60
+      rsi_weight: +0.15 (RSI 28, oversold)
+      ema_distance: -0.25 (price -8.5% below EMA)
+      trend_alignment: -0.20 (2 TF BEAR)
+      total_additive: 0.30
+      distance_multiplier: 0.3 (> 25%)
+      final_confidence: 0.09 → BLOCKED (< 0.3 threshold)
+
+implementation_notes:
+  current_status: "Mostly BLOCKING system (ЭТАП 3)"
+  proposed_migration: "Hybrid (critical blocks + weights)"
+  ml_integration: "Weights можно обучить через backtest optimization"
+  tuning: "Weights calibrated на APEXUSDT historical data"

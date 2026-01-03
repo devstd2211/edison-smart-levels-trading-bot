@@ -1,0 +1,266 @@
+---
+component: Signal Generator Service
+type: Orchestrator / Coordinator
+file: src/services/signal-generator.service.ts
+status: implemented
+priority: CRITICAL
+
+description: |
+  STRATEGY COORDINATOR - main trading signal generation service.
+  Coordinates 4 strategies by priority, applies validation and risk filters.
+
+architecture:
+  layers:
+    1: "Strategy Layer (4 strategies)"
+    2: "Validation Layer (SignalValidationService)"
+    3: "Risk Filter Layer (RiskFilterService)"
+    4: "Coordinator Layer (SignalGeneratorService)"
+
+  responsibilities:
+    - "Strategy prioritization"
+    - "Signal coordination (NO conflicting signals)"
+    - "Validation of all signals"
+    - "Application of risk filters"
+    - "Multi-timeframe analysis (5m/30m/1h/4h)"
+    - "Price Action Toolkit integration"
+
+priority_order:
+  description: "Strategies checked in priority order. First valid → returned"
+  order:
+    0: "Level-Based Strategy (support/resistance)"
+    0.5: "Price Action Toolkit (CHoCH/BoS/Sweeps/Order Blocks)"
+    1: "Reversal Pattern Strategy (patterns)"
+    2: "Trend-Following Strategy (main)"
+    3: "Counter-Trend Strategy (extreme RSI)"
+
+strategy_selection_logic:
+  step1_level_based:
+    - "Checks Level-Based LONG/SHORT"
+    - "If valid → return signal"
+
+  step2_price_action:
+    - "Checks Price Action signals (if enabled)"
+    - "Blocks PA LONG in DOWN trend"
+    - "Blocks PA SHORT in UP trend"
+    - "If valid → return signal"
+
+  step3_reversal:
+    - "Checks Reversal LONG/SHORT"
+    - "Blocks if trend conflicts"
+    - "If valid → return signal"
+
+  step4_trend_following:
+    - "Checks Trend-Following LONG/SHORT"
+    - "Applies trend blocks"
+    - "Applies entry filters (RSI Advisory Mode)"
+    - "Applies balance checks"
+    - "If valid → return signal"
+
+  step5_counter_trend:
+    - "Checks Counter-Trend LONG/SHORT (extreme RSI)"
+    - "If valid → return signal"
+
+  step6_hold:
+    - "If no strategy triggered → HOLD"
+
+validation_services:
+  SignalValidationService:
+    checks:
+      - "3 защиты от ложных входов"
+      - "RSI validation (catching falling knife)"
+      - "Candle pattern validation"
+      - "Price movement validation"
+      - "Confidence penalties (до -30%)"
+
+  RiskFilterService:
+    filters:
+      - "Trend blocks (противоречивый тренд)"
+      - "Entry filters (RSI Advisory Mode penalties)"
+      - "Balance checks (минимальный balance)"
+      - "Multi-TF RSI alignment"
+
+market_context:
+  description: "Данные для всех стратегий"
+  fields:
+    - currentPrice: number
+    - rsi: number (main TF)
+    - previousRSI: number | null
+    - emaTrend1: number (EMA50 на 30m)
+    - emaTrend2: number (EMA20 на 1h)
+    - candlesMain: Candle[] (5m)
+    - candlesTrend1: Candle[] (30m)
+    - candlesTrend2: Candle[] (1h)
+    - candlesContext: Candle[] (4h)
+    - priceAnalysis: PriceAnalysis
+    - rsiAnalysis: RSIAnalysis (multi-TF)
+    - trendAnalysis: TrendAnalysis
+    - usdtBalance: number
+    - supportLevel: number | null
+    - resistanceLevel: number | null
+    - emaCrossover: EMACrossover | undefined
+    - priceActionAnalysis: PriceActionAnalysis | undefined
+
+trend_analysis:
+  description: "Анализ силы тренда с адаптивными порогами"
+  method: analyzeTrendStrength()
+
+  logic:
+    - "distanceTrend1 = (currentPrice - emaTrend1) / emaTrend1 * 100"
+    - "Определяет trend: STRONG_BULL/BULL/NEUTRAL/BEAR/STRONG_BEAR"
+    - "Подтверждение старшим TF (emaTrend2) → повышает confidence"
+    - "Расхождение TF → понижает confidence"
+
+  thresholds:
+    STRONG_BULL: "> trendStrongBullThreshold (обычно > 5%)"
+    BULL: "> trendBullThreshold (обычно > 2%)"
+    NEUTRAL: "±trendNeutralThreshold (обычно ±1%)"
+    BEAR: "< -trendBearThreshold (обычно < -2%)"
+    STRONG_BEAR: "< -trendStrongBearThreshold (обычно < -5%)"
+
+  confidence_levels:
+    high: "0.8 (alignment с Trend2, strong trend)"
+    medium: "0.6 (alignment, but weak trend)"
+    low: "0.4 (divergence между TF)"
+
+price_action_integration:
+  enabled: "Via .env PRICE_ACTION_ENABLED=true"
+  components:
+    - "ZigZag Detector (CHoCH/BoS)"
+    - "Liquidity Detector (sweeps)"
+    - "Divergence Detector (RSI divergence)"
+    - "Order Block Detector (FUTURE)"
+    - "Trendline Detector (FUTURE)"
+
+  signal_flow:
+    - "PA Analyzer генерирует signals"
+    - "Signal Generator конвертирует PA signal → TradingSignal"
+    - "Добавляет priceActionContext (market structure, sweeps, OB)"
+    - "Применяет валидацию + risk filters"
+
+ema_crossover_cache:
+  description: "Оптимизация: кешируем EMA crossover на 5 минут"
+  reason: "Crossover расчет O(n²) → слишком медленный каждые 10 сек"
+  ttl: "300000ms (5 минут)"
+  cache_fields:
+    - currentState: "'GOLDEN' | 'DEATH' | 'NONE'"
+    - lastCrossoverBar: number
+    - lastCrossoverTime: number
+    - fastEMA: number
+    - slowEMA: number
+
+hold_signal:
+  description: "Возвращается если ни одна стратегия не сработала"
+  type: "HOLD"
+  reason: "No trading conditions met"
+  confidence: "initialStateConfidence (обычно 0.3)"
+
+trading_modes:
+  futures:
+    enabled: "config.futures.enabled === true"
+    signals: "LONG / SHORT / HOLD"
+    leverage: "config.futures.defaultLeverage (10x)"
+
+  spot:
+    enabled: "config.futures.enabled === false"
+    signals: "BUY / SELL / HOLD"
+    status: "NOT IMPLEMENTED (legacy)"
+
+output:
+  - name: TradingSignal
+    properties:
+      type: "'LONG' | 'SHORT' | 'HOLD' | 'BUY' | 'SELL'"
+      reason: string
+      confidence: number (0.3-1.0)
+      targetPrice: number
+      timestamp: number
+      strategy: string
+      levelPrice: number
+      indicators:
+        rsi: number
+        emaTrend1: number
+        emaTrend2: number | undefined
+        dropFromHigh: number
+        volume: number
+      direction: "'Buy' | 'Sell' | undefined"
+      leverage: number | undefined
+      priceActionContext: object | undefined
+      trendContext:
+        trend: string
+        distance: number
+        confidence: number
+
+key_methods:
+  generateTradingSignal:
+    description: "Основной метод - генерирует торговый сигнал"
+    params: "(currentPrice, candlesMain, candlesTrend1, candlesTrend2, candlesContext, orderBookData, rsiAnalysis)"
+    returns: "TradingSignal | null"
+    async: true
+
+  generateFuturesSignal:
+    description: "Координация стратегий для FUTURES mode"
+    params: "(context, candlesMain)"
+    returns: "TradingSignal | null"
+
+  analyzeTrendStrength:
+    description: "Анализ силы тренда"
+    params: "(currentPrice, emaTrend1, emaTrend2)"
+    returns: "TrendAnalysis"
+
+  detectEMACrossover:
+    description: "Детекция Golden/Death Cross (кешировано)"
+    params: "(candlesTrend1, candlesTrend2, emaTrend1Current, emaTrend2Current)"
+    returns: "EMACrossover | undefined"
+
+  convertPriceActionSignal:
+    description: "Конвертация PA signal → TradingSignal"
+    params: "(paSignal, context, paAnalysis)"
+    returns: "TradingSignal"
+
+  createHoldSignal:
+    description: "Создаёт HOLD signal"
+    params: "(context)"
+    returns: "TradingSignal"
+
+  registerStopLoss:
+    description: "Регистрирует срабатывание StopLoss в validator"
+    params: "()"
+    returns: "void"
+
+statistics:
+  tracked_metrics:
+    - buySignalsGenerated: number
+    - sellSignalsGenerated: number
+
+performance_optimizations:
+  - "EMA Crossover кеш (TTL 5 мин)"
+  - "Price Action Analysis кеш (внутри PriceActionAnalyzer)"
+  - "NO повторных расчетов RSI/EMA (передаются извне)"
+
+test_coverage_goals:
+  target: "95%+ (CRITICAL component)"
+  scenarios:
+    - "Priority order (Level-Based > PA > Reversal > Trend > Counter-Trend)"
+    - "Validation всех сигналов"
+    - "Risk filters blocking"
+    - "Confidence penalties"
+    - "Multi-TF trend analysis"
+    - "EMA crossover cache"
+    - "Price Action integration"
+    - "HOLD signal generation"
+
+dependencies:
+  strategies:
+    - TrendFollowingStrategy
+    - LevelBasedStrategy
+    - ReversalPatternStrategy
+    - CounterTrendStrategy
+
+  services:
+    - SignalValidationService
+    - RiskFilterService
+    - PriceActionAnalyzer (optional)
+
+  calculators:
+    - RSICalculator
+    - EMACalculator (2 instances: 30m and 4h)
+    - PriceAnalyzer

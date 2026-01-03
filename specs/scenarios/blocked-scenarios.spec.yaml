@@ -1,0 +1,118 @@
+---
+document: BLOCKED Scenarios
+description: Scenarios when signal is NOT generated (protection mechanisms)
+purpose: Documentation of all blocks to prevent losing trades
+
+blocked_scenarios:
+  - id: B1
+    name: Insufficient Data
+    category: Data Validation
+    severity: CRITICAL
+    frequency: RARE
+
+    condition: "Insufficient candles for technical analysis"
+
+    examples:
+      - description: "Insufficient candles for RSI"
+        check: "candles5m.length < 100"
+        required: "Minimum 100 candles for RSI(14)"
+        result: "Insufficient market data"
+
+      - description: "Insufficient candles on 30m"
+        check: "candles30m.length < 50"
+        required: "Minimum 50 candles for EMA50"
+        result: "Insufficient market data"
+
+    action: "return null"
+    bypass: "Impossible (critical safety check)"
+
+  - id: B2
+    name: Conflicting Signals
+    category: Multi-Timeframe Validation
+    severity: HIGH
+    frequency: OCCASIONAL
+
+    condition: "Conflicting signals across different timeframes"
+
+    examples:
+      - description: "CHoCH conflict between 5m and 30m"
+        check: "CHoCH(5m) === BULLISH && CHoCH(30m) === BEARISH"
+        result: "Skip Price Action Toolkit strategy"
+
+    action: "Skip strategy OR lower confidence"
+
+  - id: B6
+    name: Distance to EMA > 5.5%
+    category: Falling Knife Protection
+    severity: CRITICAL
+    frequency: COMMON
+
+    condition: "Price too far from EMA (falling knife or spike)"
+
+    examples:
+      - description: "LONG blocking (falling knife)"
+        check: "(EMA - price) / EMA * 100 > 5.5%"
+        scenario: "Price $2.50, EMA50 $2.73 → distance -8.5%"
+        result: "BLOCKED (falling knife protection)"
+        prevented_loss: "-7% to -10%"
+
+      - description: "SHORT blocking (blow-off top)"
+        check: "(price - EMA) / EMA * 100 > 5.5%"
+        scenario: "Price $2.80, EMA50 $2.65 → distance +5.7%"
+        result: "BLOCKED (blow-off top protection)"
+
+    action: "return null (ALL strategies blocked)"
+    historical_effectiveness: "Prevented 15+ falling knife losses"
+
+  - id: B7
+    name: RSI Out of Range
+    category: Strategy-Specific Blocking
+    severity: HIGH
+    frequency: COMMON
+
+    condition: "RSI outside acceptable range for strategy"
+
+    blocking_by_strategy:
+      trend_following_long:
+        min_rsi: 45
+        max_rsi: 65
+        reason: "Avoid overbought entries (Priority 3 fix)"
+
+      trend_following_short:
+        min_rsi: 35
+        max_rsi: 50
+        reason: "Avoid oversold & counter-trend bounces"
+
+      extreme_counter_trend:
+        long_rsi: "< 20"
+        short_rsi: "> 85"
+
+    action: "Skip strategy"
+
+  - id: B10
+    name: Dangerous Wicks
+    category: Volatility Protection
+    severity: HIGH
+    frequency: OCCASIONAL
+
+    condition: "Wicks > 2x body size (high volatility)"
+
+    blocking_rules:
+      check_candles: 3
+      wick_threshold: "wick > body * 2"
+      min_wick_percent: 0.5%
+
+    examples:
+      - direction: LONG
+        scenario: "Lower wick > 2x body"
+        result: "BLOCKED LONG"
+
+    action: "Skip entry (stop-out risk)"
+
+summary:
+  total_blocking_mechanisms: 12
+  critical_blocks: 4
+  most_effective_blocks:
+    1: "Distance to EMA > 5.5%"
+    2: "RSI Out of Range"
+    3: "Dangerous Wicks"

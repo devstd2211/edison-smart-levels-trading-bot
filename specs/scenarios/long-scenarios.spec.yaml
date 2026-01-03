@@ -1,0 +1,347 @@
+---
+document: LONG Entry Scenarios
+description: Detailed specifications of LONG entry scenarios for APEXUSDT Futures
+symbol: APEXUSDT
+leverage: 10x
+timeframes: [5m, 30m, 1h, 4h]
+
+scenarios:
+  - id: L1
+    name: Volume Divergence Reversal
+    strategy: Reversal Patterns
+    priority: 0
+    win_rate: 100%
+    status: BEST_PERFORMER
+
+    market_context:
+      price_movement: "$2.50 → $2.30 (downtrend, -8%)"
+      timeframe: 5m (last 2 hours)
+      trend_30m: BEAR (price < EMA50)
+      trend_1h: NEUTRAL
+      trend_4h: BULL (macro uptrend)
+
+    technical_setup:
+      price: 2.30
+      rsi: 28
+      rsi_status: oversold (not extreme)
+      volume_pattern: Decreasing (100k → 80k → 60k → 40k)
+      volume_divergence: true
+      ema_distance_30m: -3.2%
+      ema_distance_status: OK (< 5.5%)
+      order_book:
+        bid_pressure: 65%
+        ask_pressure: 35%
+        imbalance: +0.30
+
+    signal:
+      type: LONG
+      strategy: Reversal Patterns (Priority 0)
+      reason: "Volume Divergence - price falling but volume decreasing (selling exhaustion)"
+      confidence: 0.90
+      confidence_breakdown:
+        base: 0.70 (Reversal strategy)
+        volume_divergence: +0.10
+        order_book_imbalance: +0.10
+
+    entry:
+      price: 2.30
+      stop_loss: 2.277
+      stop_loss_percent: -1.0%
+      take_profits:
+        - level: TP1
+          price: 2.314
+          percent: +0.6%
+          position_close: 40%
+          hit_probability: 90%
+        - level: TP2
+          price: 2.321
+          percent: +0.9%
+          position_close: 35%
+          hit_probability: 70%
+        - level: TP3
+          price: 2.335
+          percent: +1.5%
+          position_close: 25%
+          hit_probability: 40%
+
+    risk_reward: 1:2.3
+    expected_outcome: "TP1 Hit: 90%, TP2: 70%, TP3: 40%"
+
+    validation_checks:
+      sufficient_data: PASS
+      position_limits: PASS
+      cooldown_period: PASS
+      rsi_range: PASS (20-45 for reversal)
+      ema_distance: PASS (< 5.5%)
+      volume_confirmation: PASS
+      trend_blocks: PASS (4h BULL макро тренд)
+
+  - id: L2
+    name: CHoCH + Order Block (Price Action)
+    strategy: Price Action Toolkit
+    priority: 0.5
+    win_rate: 75%
+    status: HIGH_CONFIDENCE
+
+    market_context:
+      price_movement: "$2.40 → $2.35 → $2.38 (downtrend → reversal)"
+      timeframe: 5m + 30m (dual TF confirmation)
+      trend_4h: BULL
+
+    technical_setup:
+      price: 2.38
+      choch_5m:
+        detected_at: 2.36
+        time: "10:15"
+        direction: BULLISH
+        break_type: "Break of LH (Lower High)"
+      choch_30m:
+        detected_at: 2.37
+        time: "10:00"
+        direction: BULLISH
+        break_type: "Break of LH"
+      order_block:
+        type: BULLISH
+        range: [2.35, 2.36]
+        strength: STRONG
+        candle_body_percent: 75%
+        timeframe: 5m
+      liquidity_sweep:
+        detected: true
+        wick_low: 2.34
+        close: 2.36
+        type: Bullish sweep (false breakdown)
+      rsi: 42
+      rsi_status: neutral
+
+    signal:
+      type: LONG
+      strategy: Price Action Toolkit (Priority 0.5)
+      reason: "CHoCH (dual TF) + Liquidity Sweep + OB confluence"
+      confidence: 0.85
+      confidence_breakdown:
+        base: 0.60 (PA Toolkit)
+        choch_dual_tf: +0.15 (5m + 30m)
+        liquidity_sweep: +0.05
+        order_block_confluence: +0.05
+
+    entry:
+      price: 2.38
+      entry_trigger: "Retest of OB zone"
+      stop_loss: 2.356
+      stop_loss_percent: -1.0%
+      stop_loss_placement: "Below OB"
+      take_profits:
+        - level: TP1
+          price: 2.394
+          percent: +0.6%
+        - level: TP2
+          price: 2.401
+          percent: +0.9%
+        - level: TP3
+          price: 2.416
+          percent: +1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 75%"
+
+    validation_checks:
+      market_structure: PASS (CHoCH BULLISH)
+      dual_tf_confirmation: PASS (5m + 30m)
+      order_block_validity: PASS (fresh OB)
+      liquidity_sweep: PASS (bullish sweep detected)
+
+  - id: L3
+    name: Trend-Following Pullback (EMA Bounce)
+    strategy: Trend-Following
+    priority: 1
+    win_rate: 65%
+    status: RELIABLE
+
+    market_context:
+      price_movement: "$2.60 → $2.55 (pullback to EMA50)"
+      trend_30m: STRONG_BULL (price +8% above EMA50, slope +0.7%)
+      trend_1h: BULL
+      trend_4h: BULL
+      alignment: "3 TF bullish alignment"
+
+    technical_setup:
+      price: 2.55
+      ema50_30m: 2.556
+      distance_to_ema50: -0.5%
+      distance_status: "Near EMA (ideal pullback)"
+      rsi: 52
+      rsi_status: "Neutral, in trend range (45-68)"
+      rsi_not_oversold: true
+      rsi_check: "> 35 (avoid falling knife)"
+      order_book:
+        bid_pressure: 60%
+        ask_pressure: 40%
+        imbalance: +0.20
+
+    signal:
+      type: LONG
+      strategy: Trend-Following (Priority 1)
+      reason: "3 TF bullish alignment + EMA pullback + RSI in trend range"
+      confidence: 0.75
+      confidence_breakdown:
+        base: 0.60 (Trend-Following)
+        strong_bull_30m: +0.20 (STRONG_BULL)
+        distance_modifier: 1.0 (excellent distance < 3%)
+        choch_bos_modifier: 1.0 (no recent structure events)
+
+    entry:
+      price: 2.55
+      entry_trigger: "Pullback to EMA50 (30m)"
+      stop_loss: 2.524
+      stop_loss_percent: -1.0%
+      stop_loss_placement: "Behind EMA50"
+      take_profits:
+        - level: TP1
+          price: 2.565
+          percent: +0.6%
+        - level: TP2
+          price: 2.573
+          percent: +0.9%
+        - level: TP3
+          price: 2.588
+          percent: +1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 65%"
+
+    validation_checks:
+      trend_alignment: PASS (3 TF BULL)
+      rsi_range: PASS (45-68)
+      rsi_not_oversold: PASS (> 35)
+      ema_distance: PASS (< 5.5%)
+      ath_protection: PASS (not at ATH)
+      volume: PASS (> 0.5x avg)
+      no_wicks: PASS (no dangerous wicks)
+
+  - id: L4
+    name: Level-Based Support Bounce
+    strategy: Level-Based
+    priority: 2
+    win_rate: 60%
+    status: MODERATE
+
+    market_context:
+      price_movement: "$2.45 → $2.40 (approaching support)"
+      support_level: 2.40
+      level_touches: 3 (last 24h)
+      level_strength: HIGH
+
+    technical_setup:
+      price: 2.405
+      distance_to_support: 0.2%
+      distance_status: "Within 1.5% threshold"
+      level_touches: 3
+      level_strength: HIGH
+      volume: 150k
+      volume_ratio: 1.2
+      volume_status: "Above 0.3x threshold"
+      rsi: 38
+      rsi_status: "In good zone (30-55)"
+      trend_30m: NEUTRAL
+      trend_30m_status: "Not BEAR/STRONG_BEAR (allowed)"
+      trend_4h: BULL
+
+    signal:
+      type: LONG
+      strategy: Level-Based (Priority 2)
+      reason: "Support level (3 touches) + RSI good zone + volume confirmation"
+      confidence: 0.70
+      confidence_breakdown:
+        base: 0.60 (Level-Based)
+        level_strength_high: +0.10
+        volume_confirmation: +0.05
+        distance_optimal: +0.05 (< 0.5%)
+
+    entry:
+      price: 2.405
+      entry_trigger: "Price at support level"
+      stop_loss: 2.381
+      stop_loss_percent: -1.0%
+      stop_loss_placement: "Below support"
+      take_profits:
+        - level: TP1
+          price: 2.419
+          percent: +0.6%
+        - level: TP2
+          price: 2.427
+          percent: +0.9%
+        - level: TP3
+          price: 2.441
+          percent: +1.5%
+
+    risk_reward: 1:2.3
+    expected_outcome: "Win Rate: 60%"
+
+    validation_checks:
+      distance_to_level: PASS (< 1.5%)
+      level_strength: PASS (3 touches)
+      rsi_good_zone: PASS (30-55)
+      volume: PASS (> 0.3x avg)
+      ema_distance: PASS (< 5.5%)
+      trend_not_opposite: PASS (not BEAR)
+
+  - id: L5
+    name: BLOCKED - Falling Knife (High Distance to EMA)
+    strategy: Extreme Counter-Trend
+    priority: 3
+    status: BLOCKED
+    reason: Distance to EMA > 5.5%
+
+    market_context:
+      price_movement: "$2.80 → $2.50 (crash, -10.7%)"
+      trend_30m: STRONG_BEAR
+      volume: HIGH (panic selling)
+
+    technical_setup:
+      price: 2.50
+      rsi: 22
+      rsi_status: "Oversold (< 30)"
+      ema50_30m: 2.732
+      distance_to_ema50: -8.5%
+      distance_status: "EXCEEDS 5.5% threshold!"
+
+    signal:
+      type: WOULD_BE_LONG
+      strategy: Extreme Counter-Trend (would trigger RSI < 30)
+      result: BLOCKED
+      blocking_reason: "Distance to EMA 8.5% > 5.5% (falling knife protection)"
+      confidence: N/A
+
+    entry: NONE
+
+    expected_outcome:
+      protection_worked: true
+      avoided_loss: "-7% to -10% (historical data)"
+      reason: "Falling knife protection - price too far from EMA"
+
+    validation_checks:
+      rsi_extreme: TRIGGER (< 30)
+      ema_distance: FAIL (> 5.5%) → BLOCK
+      trend_check: FAIL (STRONG_BEAR) → additional concern
+
+blocking_summary:
+  total_long_scenarios: 5
+  successful_entries: 4
+  blocked_entries: 1
+  blocking_reasons:
+    - "Distance to EMA > 5.5% (falling knife)"
+
+common_patterns:
+  successful_entries:
+    - "RSI не extreme (20-65)"
+    - "Distance to EMA < 5.5%"
+    - "Multi-TF alignment или confluence"
+    - "Volume confirmation"
+    - "No dangerous wicks"
+
+  blocking_triggers:
+    - "Distance > 5.5%"
+    - "RSI > 65 (overbought)"
+    - "Strong opposite trend"
+    - "Low volume (< 0.3x avg)"

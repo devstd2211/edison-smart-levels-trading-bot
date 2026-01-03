@@ -1,0 +1,477 @@
+---
+document: Logging & Configuration System
+description: Centralized logging and configuration management system
+
+# =============================================================================
+# LOGGING SYSTEM
+# =============================================================================
+
+logging:
+  service: LoggerService
+  file: src/services/logger.service.ts
+  description: Centralized logging with file and console support
+
+  configuration:
+    log_levels: [DEBUG, INFO, WARN, ERROR]
+    default_level: INFO
+    env_vars:
+      LOG_LEVEL: "debug | info | warn | error"
+      LOG_TO_FILE: "true | false"
+      LOG_DIR: "./logs"
+      LOG_FILE_MAX_AGE_MS: 604800000  # 7 days
+
+  features:
+    file_logging:
+      enabled: "via LOG_TO_FILE=true"
+      format: "trading-bot-YYYY-MM-DD.log"
+      rotation: Daily (new file every day)
+      cleanup: Automatic deletion of files older than 7 days
+      async_writes: true (queue-based, non-blocking main thread)
+      batch_size: 10 entries at a time
+
+    console_logging:
+      enabled: Always
+      colors:
+        DEBUG: cyan
+        INFO: green
+        WARN: yellow
+        ERROR: red
+      format: "[timestamp] [level] [category] message | Data: {...}"
+
+    async_operations:
+      write_queue: Write queue for async processing
+      batch_processing: Up to 10 entries in parallel
+      error_handling: Fallback to console.error on file write failure
+
+  log_entry_structure:
+    timestamp: Date (ISO string)
+    level: "DEBUG | INFO | WARN | ERROR"
+    category: string (SYSTEM | TRADING | API | STRATEGY)
+    message: string
+    data: object (optional, structured data)
+
+  categories:
+    SYSTEM:
+      description: Системные события
+      methods:
+        - debug(message, data)
+        - info(message, data)
+        - warn(message, data)
+        - error(message, error)
+
+    TRADING:
+      description: Торговые операции
+      methods:
+        - trading(message, data)
+        - tradingError(message, error)
+      events:
+        - Signal generated
+        - Order placed
+        - Position opened/closed
+        - TP/SL hit
+
+    API:
+      description: API вызовы к бирже
+      methods:
+        - api(message, data)
+        - apiError(message, error)
+      events:
+        - REST API requests
+        - WebSocket events
+        - Rate limiting
+        - Connection errors
+
+    STRATEGY:
+      description: Стратегии и анализ
+      methods:
+        - strategy(message, data)
+        - strategyError(message, error)
+      events:
+        - RSI calculation
+        - EMA updates
+        - Trend analysis
+        - Signal validation
+
+  log_level_filtering:
+    mechanism: shouldLog(level)
+    hierarchy:
+      DEBUG: Все сообщения (самый подробный)
+      INFO: INFO + WARN + ERROR
+      WARN: WARN + ERROR
+      ERROR: Только ERROR
+
+  performance:
+    write_queue: Асинхронная очередь
+    batching: Группировка записей по файлам
+    non_blocking: setImmediate для продолжения обработки
+    memory: Ограничение размера очереди
+
+  security:
+    sensitive_data: Маскирование API keys/secrets в логах
+    env_var: LOG_SANITIZE_SENSITIVE=true
+
+# =============================================================================
+# CONFIGURATION SYSTEM
+# =============================================================================
+
+configuration:
+  service: ConfigurationService
+  file: src/services/configuration.service.ts
+  source: .env file
+  description: Загрузка и валидация конфигурации из переменных окружения
+
+  critical_parameters:
+    trading:
+      SYMBOL: APEXUSDT
+      TIMEFRAME: 5m
+      LEVERAGE: 10
+      RISK_PERCENT: 1.0
+      CONFIRM_REAL_TRADING: I_UNDERSTAND_THE_RISKS
+
+    api:
+      BYBIT_API_KEY: "Production key"
+      BYBIT_API_SECRET: "Production secret"
+      BYBIT_DEMO_API_KEY: "Demo key"
+      BYBIT_DEMO_API_SECRET: "Demo secret"
+      BYBIT_DEMO_MODE: true/false
+      BYBIT_TESTNET: false
+      BYBIT_API_TIMEOUT_MS: 15000
+
+    technical_indicators:
+      RSI_PERIOD: 14
+      EMA_1H_PERIOD: 50
+      EMA_4H_PERIOD: 20
+      MAX_DISTANCE_TO_EMA_PERCENT: 5.5
+      MIN_DROP_FROM_ATH_FOR_LONG: 0.2
+
+    timeframes:
+      TIMEFRAME_ENTRY_INTERVAL: 1m
+      TIMEFRAME_MAIN_INTERVAL: 5m
+      TIMEFRAME_TREND_1_INTERVAL: 30m
+      TIMEFRAME_TREND_2_INTERVAL: 1h
+      TIMEFRAME_CONTEXT_INTERVAL: 4h
+
+      TIMEFRAME_ENTRY_CANDLES: 150
+      TIMEFRAME_MAIN_CANDLES: 150
+      TIMEFRAME_TREND_1_CANDLES: 100
+      TIMEFRAME_TREND_2_CANDLES: 80
+      TIMEFRAME_CONTEXT_CANDLES: 50
+
+    risk_management:
+      BASE_POSITION_SIZE: 10
+      MAX_POSITION_SIZE: 20
+      MAX_TOTAL_EXPOSURE: 95
+      MIN_PROFIT_PERCENT: 0.3
+
+  rsi_configuration:
+    trend_following_long:
+      RSI_TREND_LONG_MIN: 40
+      RSI_TREND_LONG_MAX: 72
+      TREND_FOLLOWING_LONG_MAX_RSI: 65  # Priority 3 fix
+
+    trend_following_short:
+      RSI_TREND_SHORT_MIN: 28
+      RSI_TREND_SHORT_MAX: 55
+      TREND_FOLLOWING_SHORT_MIN_RSI: 33  # Priority 3 fix
+
+    extreme_counter_trend:
+      RSI_OVERSOLD_EXTREME: 35
+      RSI_OVERBOUGHT_EXTREME: 75
+      COUNTER_TREND_MAX_DROP_FROM_HIGH: 8
+
+    legacy_compatibility:
+      RSI_OVERSOLD_NORMAL: 45
+      RSI_OVERSOLD_AGGRESSIVE: 40
+      RSI_OVERBOUGHT_NORMAL: 65
+      RSI_OVERBOUGHT_HIGH: 80
+
+  futures_configuration:
+    enabled: ENABLE_FUTURES=true
+
+    leverage_margin:
+      FUTURES_LEVERAGE: 10
+      FUTURES_MARGIN_MODE: isolated
+
+    entry_orders:
+      FUTURES_USE_MARKET_ORDERS: true
+      FUTURES_BUY_LIMIT_OFFSET: 0.01
+
+    take_profit_levels:
+      FUTURES_TAKE_PROFIT_1: 0.6  # 0.6%
+      FUTURES_TAKE_PROFIT_2: 1.0  # 1.0%
+      FUTURES_TAKE_PROFIT_3: 1.8  # 1.8%
+
+      FUTURES_TP1_SIZE: 50  # 50% позиции
+      FUTURES_TP2_SIZE: 30  # 30% позиции
+      FUTURES_TP3_SIZE: 20  # 20% позиции
+
+    stop_loss:
+      FUTURES_STOP_LOSS_PERCENT: 0.4  # 0.4%
+      FUTURES_BREAKEVEN_OFFSET_PERCENT: 0.12
+      FUTURES_ENABLE_TRAILING_STOP: true
+      FUTURES_TRAILING_STOP_ACTIVATION: 0.6
+      FUTURES_TRAILING_STOP_DISTANCE: 0.3
+
+    position_limits:
+      FUTURES_POSITION_SIZE_USDT: 10
+      FUTURES_MAX_POSITION_SIZE: 50
+      FUTURES_MAX_OPEN_POSITIONS: 1
+      FUTURES_MAX_LONG_POSITIONS: 2
+      FUTURES_MAX_SHORT_POSITIONS: 2
+
+    monitoring:
+      FUTURES_POSITION_CHECK_INTERVAL: 60000
+      FUTURES_TRAILING_UPDATE_INTERVAL: 30000
+      FUTURES_PENDING_ORDER_TIMEOUT: 120000
+
+  price_action_configuration:
+    enabled: PRICE_ACTION_ENABLED=true
+
+    timeframes:
+      PRICE_ACTION_PRIMARY_TIMEFRAME: 5m
+      PRICE_ACTION_SECONDARY_TIMEFRAME: 30m
+
+    detectors:
+      PRICE_ACTION_ZIGZAG_LENGTH: 9
+      PRICE_ACTION_LIQUIDITY_LENGTH: 30
+      PRICE_ACTION_ORDER_BLOCKS_SHOW: 2
+      PRICE_ACTION_TRENDLINE_LENGTH: 20
+
+  level_based_configuration:
+    enabled: LEVEL_BASED_ENABLED=true
+
+    thresholds:
+      LEVEL_DISTANCE_THRESHOLD: 1.5
+      LEVEL_BREAKOUT_BUFFER: 0.5
+      LEVEL_MIN_CONFIDENCE: 0.75
+      LEVEL_MIN_VOLUME_MULTIPLIER: 0.3
+
+    rsi_zones:
+      LEVEL_RSI_GOOD_ZONE_LONG_MIN: 30
+      LEVEL_RSI_GOOD_ZONE_LONG_MAX: 55
+      LEVEL_RSI_GOOD_ZONE_SHORT_MIN: 45
+      LEVEL_RSI_GOOD_ZONE_SHORT_MAX: 70
+
+    rejection:
+      LEVEL_REQUIRE_REJECTION: true
+      LEVEL_REJECTION_WICK_MIN_PERCENT: 0.2
+      LEVEL_REJECTION_TOUCH_THRESHOLD: 0.3
+
+    stop_loss:
+      LEVEL_STOP_BEHIND_LEVEL: true
+      LEVEL_STOP_OFFSET_PERCENT: 0.5
+
+  trend_analysis_configuration:
+    thresholds:
+      TREND_STRONG_BULL_THRESHOLD: 5    # 5% выше EMA
+      TREND_BULL_THRESHOLD: 2           # 2% выше EMA
+      TREND_NEUTRAL_THRESHOLD: 0.1      # ±0.1%
+      TREND_BEAR_THRESHOLD: 5           # 5% ниже EMA
+
+    confidence_levels:
+      HIGH_CONFIDENCE_LEVEL: 0.9
+      MEDIUM_CONFIDENCE_LEVEL: 0.7
+      LOW_CONFIDENCE_LEVEL: 0.3
+      MIN_TREND_CONFIDENCE: 0.5
+
+  validation_configuration:
+    mode:
+      VALIDATION_USE_WEIGHTS: false  # false = hard blocking
+
+    penalties:
+      VALIDATION_RSI_TREND_PENALTY: 0.10
+      VALIDATION_CANDLE_COLOR_PENALTY: 0.15
+      VALIDATION_WRONG_TREND_PENALTY: 0.20
+      VALIDATION_ATH_ATL_PENALTY: 0.25
+
+    thresholds:
+      VALIDATION_MIN_CONFIDENCE: 0.1
+      VALIDATION_DEFAULT_CONFIDENCE: 0.5
+      MIN_SIGNAL_CONFIDENCE: 0.5  # Final check after penalties
+
+  entry_filters:
+    enabled:
+      TREND_FOLLOWING_BLOCK_OVERSOLD_HIGH_DISTANCE: true
+
+    thresholds:
+      TREND_FOLLOWING_OVERSOLD_THRESHOLD: 40
+      TREND_FOLLOWING_HIGH_DISTANCE_THRESHOLD: 10.0
+      TREND_FOLLOWING_MIN_VOLUME_MULTIPLIER: 0.5
+
+  machine_learning_configuration:
+    enabled: ML_ENABLED=true
+
+    training:
+      ML_MIN_TRADES_FOR_TRAINING: 100
+      ML_RETRAIN_INTERVAL: 50
+      ML_CONFIDENCE_THRESHOLD: 0.6
+      ML_MODEL_PATH: data/ml-model-apex
+
+    mode:
+      ML_MODE: multiplier  # multiplier | decision
+
+    safety:
+      ML_MAX_CONFIDENCE_REDUCTION: 0.5
+      ML_NO_MODEL_CONFIDENCE: 1.0  # No impact if not trained
+
+  telegram_configuration:
+    optional: true
+    TELEGRAM_BOT_TOKEN: "Your bot token"
+    TELEGRAM_CHAT_ID: "Your chat ID"
+
+  intervals_timeouts:
+    TRADING_CYCLE_INTERVAL_MS: 10000  # 10 sec
+    ORDER_TIMEOUT_MS: 60000           # 1 min
+    ORDER_COOLDOWN_MS: 1000           # 1 sec
+    CIRCUIT_BREAKER_RESET_MS: 300000  # 5 min
+    MEMORY_CLEANUP_INTERVAL_MS: 1800000  # 30 min
+
+  memory_limits:
+    MAX_ERRORS_IN_MEMORY: 100
+    MAX_POSITIONS_IN_MEMORY: 100
+    MAX_PENDING_ORDERS: 100
+
+  performance:
+    PERFORMANCE_MONITORING: true
+    CIRCULAR_BUFFER_DEFAULT_SIZE: 1000
+
+  security:
+    API_KEY_ENCRYPTION_ENABLED: true
+    CREDENTIAL_CLEANUP_ENABLED: true
+    SENSITIVE_DATA_MASKING: true
+    PRODUCTION_SAFE_LOGGING: true
+
+validation:
+  description: Валидация конфигурации при запуске
+
+  required_fields:
+    - SYMBOL
+    - BYBIT_API_KEY
+    - BYBIT_API_SECRET
+    - RSI_PERIOD
+    - EMA_1H_PERIOD
+    - CONFIRM_REAL_TRADING
+
+  type_conversion:
+    numbers:
+      - LEVERAGE
+      - RSI_PERIOD
+      - MAX_DISTANCE_TO_EMA_PERCENT
+      - TRADING_CYCLE_INTERVAL_MS
+
+    booleans:
+      - BYBIT_DEMO_MODE
+      - LOG_TO_FILE
+      - ENABLE_FUTURES
+      - PRICE_ACTION_ENABLED
+
+    strings:
+      - SYMBOL
+      - LOG_LEVEL
+      - BYBIT_API_KEY
+
+  defaults:
+    LOG_LEVEL: info
+    LOG_TO_FILE: true
+    LOG_DIR: ./logs
+    BYBIT_DEMO_MODE: true
+    LEVERAGE: 10
+
+error_handling:
+  missing_required:
+    action: Throw error
+    message: "Missing required environment variable: {VAR_NAME}"
+
+  invalid_value:
+    action: Use default OR throw error
+    example: "Invalid LOG_LEVEL, using default: info"
+
+  file_not_found:
+    action: Create .env from template
+    fallback: Use all defaults
+
+environment_files:
+  production:
+    file: .env
+    usage: Active configuration
+
+  demo_apex:
+    file: .env_APEX.env
+    usage: APEX symbol demo configuration
+
+  demo_sol:
+    file: .env_SOL.env
+    usage: SOL symbol demo configuration
+
+  structure:
+    sections:
+      - "Trading bot configuration header"
+      - "Bybit API credentials"
+      - "Node environment"
+      - "Position sizing"
+      - "RSI parameters"
+      - "Trading thresholds"
+      - "DCA levels"
+      - "Profit levels"
+      - "Timeouts & intervals"
+      - "Memory limits"
+      - "Candle counts"
+      - "Logging"
+      - "Telegram (optional)"
+      - "Dynamic limit orders"
+      - "ATH detection"
+      - "Market data analysis"
+      - "Magic constants"
+      - "Futures configuration"
+      - "Price Action Toolkit"
+      - "Level-Based strategy"
+      - "Machine Learning"
+
+usage_examples:
+  loading_config:
+    code: |
+      import { ConfigurationService } from './services/configuration.service'
+      const config = new ConfigurationService()
+
+      // Access values
+      const symbol = config.symbol
+      const rsiPeriod = config.technicalIndicators.rsiPeriod
+
+  logging:
+    code: |
+      import { LoggerService } from './services/logger.service'
+      const logger = new LoggerService()
+
+      logger.info('Trading cycle started')
+      logger.trading('Signal generated', { type: 'LONG', confidence: 0.85 })
+      logger.error('Order failed', new Error('Insufficient balance'))
+
+  categories:
+    system: "logger.info(message, data)"
+    trading: "logger.trading(message, data)"
+    api: "logger.api(message, data)"
+    strategy: "logger.strategy(message, data)"
+    errors: "logger.tradingError(message, error)"
+
+best_practices:
+  configuration:
+    - "Never commit .env files to git"
+    - "Use .env.example as template"
+    - "Validate all required fields at startup"
+    - "Use strong typing for config values"
+    - "Provide sensible defaults"
+
+  logging:
+    - "Use appropriate log levels (DEBUG for dev, INFO for prod)"
+    - "Include structured data in logs"
+    - "Avoid logging sensitive data (API keys, secrets)"
+    - "Monitor log file sizes"
+    - "Rotate logs regularly (7 days max)"
+    - "Use categories for filtering"
+
+  security:
+    - "Enable API key encryption"
+    - "Enable sensitive data masking"
+    - "Use separate .env for demo/prod"
+    - "Never log API credentials"
+    - "Validate CONFIRM_REAL_TRADING flag"

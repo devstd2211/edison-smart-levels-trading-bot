@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-10-16T16:15:15.603Z",
+  "totalErrors": 236,
+  "fixes": {
+    "initializers": 4,
+    "readonly": 16,
+    "parameterTypes": 27
+  },
+  "needsManualReview": {
+    "nullChecks": 21,
+    "missingProperties": {
+      "TradingConfig": [
+        "exchange",
+        "trading",
+        "futures"
+      ],
+      "LiquidityZone": [
+        "startTimestamp"
+      ],
+      "OrderBlock": [
+        "bottomPrice",
+        "startTimestamp",
+        "topPrice"
+      ],
+      "Position": [
+        "id"
+      ]
+    }
+  }
+}

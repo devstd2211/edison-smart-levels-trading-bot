@@ -1,0 +1,81 @@
+---
+component: Liquidity Detector
+type: Price Action Analyzer
+file: src/utils/price-action/liquidity-detector.ts
+status: implemented
+priority: high
+
+description: |
+  Detects liquidity zones (pivot highs/lows) and liquidity sweeps - key
+  Smart Money patterns indicating liquidity manipulation before reversals.
+
+  Concepts:
+  - Pivot High: local maximum → Bearish Liquidity (resistance, stop losses above)
+  - Pivot Low: local minimum → Bullish Liquidity (support, stop losses below)
+  - Liquidity Sweep: fakeout (level breakout with quick return) → reversal signal
+
+inputs:
+  - name: config.liquidityLength
+    type: number
+    description: Window size for pivot determination (usually 5)
+
+  - name: candles
+    type: Candle[]
+    min_length: "liquidityLen * 2 + 1"
+
+outputs:
+  - name: LiquidityZone
+    properties:
+      type: "'BULLISH' | 'BEARISH'"
+      price: number
+      startTimestamp: number
+      endTimestamp: number
+      broken: boolean
+      swept: boolean
+
+algorithm:
+  pivot_detection:
+    pivot_high:
+      condition: "pivotCandle.high > all leftCandles.high && pivotCandle.high > all rightCandles.high"
+      result: "Bearish Liquidity zone (resistance)"
+
+    pivot_low:
+      condition: "pivotCandle.low < all leftCandles.low && pivotCandle.low < all rightCandles.low"
+      result: "Bullish Liquidity zone (support)"
+
+  sweep_detection:
+    bearish_sweep:
+      condition: "latest.high > zone.price && latest.close < zone.price"
+      meaning: "Broke resistance, but closed below → FALSE BREAKOUT → downside reversal"
+      signal: SHORT opportunity
+
+    bullish_sweep:
+      condition: "latest.low < zone.price && latest.close > zone.price"
+      meaning: "Broke support, but closed above → FALSE BREAKOUT → upside reversal"
+      signal: LONG opportunity
+
+configuration:
+  LIQUIDITY_LENGTH: 5
+  PRICE_ACTION_LOOKBACK_DAYS: 7  # max zones in memory
+  MIN_ARRAY_LENGTH_FOR_COMPARISON: 2
+
+methods:
+  update: "Updates zones, checks sweeps"
+  detectPivotHigh: "Searches for pivot high"
+  detectPivotLow: "Searches for pivot low"
+  checkSweeps: "Checks liquidity sweeps"
+  getActiveLiquidityZones: "Returns unbroken zones"
+  getRecentSweeps: "Last 3 sweeps"
+
+trading_usage:
+  price_action_strategy:
+    - "Liquidity sweep → strong reversal signal"
+    - "Bearish sweep → SHORT confidence boost"
+    - "Bullish sweep → LONG confidence boost"
+    - "Active liquidity zones → support/resistance levels"
+
+test_requirements:
+  - "Pivot high/low detection"
+  - "Bearish/Bullish sweep detection"
+  - "Zone storage limit (max 7)"
+  - "getRecentSweeps (last 3)"

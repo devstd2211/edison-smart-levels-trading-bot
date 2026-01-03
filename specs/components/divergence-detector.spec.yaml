@@ -1,0 +1,72 @@
+---
+component: Divergence Detector
+type: RSI/Price Analyzer
+file: src/utils/divergence-detector.ts
+status: implemented
+priority: medium
+
+description: |
+  Detection of RSI divergences for predicting trend reversals.
+  Divergence = discrepancy between price movement and RSI.
+
+  Types:
+  - BEARISH: price higher high + RSI lower high → downside reversal (SHORT)
+  - BULLISH: price lower low + RSI higher low → upside reversal (LONG)
+
+inputs:
+  - candles: Candle[]
+  - rsiPeriod: 14 (default)
+  - lookbackPeriod: 20 (default)
+  - minPeakDistance: 5 (minimum candles between peaks)
+  - peakThreshold: 1.0% (minimum difference for divergence)
+
+outputs:
+  - name: DivergenceResult
+    properties:
+      type: "'BEARISH' | 'BULLISH' | 'NONE'"
+      strength: number (0-1)
+      priceChange: number (%)
+      rsiChange: number
+      description: string
+
+algorithm:
+  step1_rsi_calculation:
+    - "Calculates RSI for each candle in lookback period"
+    - "Uses simple RSI calculation (SMA, not EMA)"
+
+  step2_peak_valley_detection:
+    - "findPeaks: local maxima (high > all neighbors)"
+    - "findValleys: local minima (low < all neighbors)"
+    - "minPeakDistance = 5 candles between peaks"
+
+  step3_divergence_check:
+    bearish:
+      condition: "priceChange > 1% && rsiChange < 0"
+      formula: "strength = min(1, (|rsiChange| / 20) * (priceChange / 5))"
+
+    bullish:
+      condition: "priceChange < -1% && rsiChange > 0"
+      formula: "strength = min(1, (|rsiChange| / 20) * (|priceChange| / 5))"
+
+methods:
+  detectDivergence: "Main method - divergence detection"
+  calculateRSI: "Simple RSI calculation (SMA)"
+  findPeaks: "Search for local maxima"
+  findValleys: "Search for local minima"
+  checkBearishDivergence: "Bearish divergence check"
+  checkBullishDivergence: "Bullish divergence check"
+
+trading_usage:
+  price_action_strategy:
+    - "BEARISH divergence → SHORT signal, boosts confidence"
+    - "BULLISH divergence → LONG signal, boosts confidence"
+    - "strength used as weight modifier"
+    - "Divergence = early reversal signal"
+
+test_requirements:
+  - "RSI calculation accuracy"
+  - "Peak/valley detection"
+  - "Bearish divergence (higher high + lower high RSI)"
+  - "Bullish divergence (lower low + higher low RSI)"
+  - "Strength calculation (0-1 range)"
+  - "Insufficient data handling"

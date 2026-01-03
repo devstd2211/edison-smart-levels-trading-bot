@@ -1,0 +1,325 @@
+---
+document: System Architecture
+description: Complete architecture of the Smart Levels trading system
+version: 2.0
+platform: Node.js + TypeScript
+exchange: Bybit (Futures)
+symbol: XRPUSDT
+leverage: 10x
+
+architecture_layers:
+  layer_1_presentation:
+    name: Presentation Layer
+    description: API endpoints and user interface
+    components:
+      - signal.controller.ts
+      - REST API endpoints
+      - Telegram notifications
+
+  layer_2_orchestration:
+    name: Orchestration Layer
+    description: Trading cycle coordination
+    components:
+      - trading-cycle-orchestrator.service.ts
+      - trading-bot-v2.service.ts
+      - lifecycle-manager.service.ts
+
+  layer_3_business_logic:
+    name: Business Logic Layer
+    description: Strategies and signal generation
+    components:
+      - signal-generator.service.ts (COORDINATOR)
+      - level-based.strategy.ts
+      - whale-hunter.strategy.ts
+      - price-action-analyzer.ts
+      - multi-scalping.strategy.ts
+
+  layer_4_execution:
+    name: Execution Layer
+    description: Order execution and position management
+    components:
+      - position-opening.service.ts
+      - position-manager.service.ts
+      - position-exiting.service.ts
+      - order-execution.service.ts
+      - stop-loss-manager.service.ts
+
+  layer_5_validation:
+    name: Validation & Risk Layer
+    description: Signal validation and risk management
+    components:
+      - signal-validation.service.ts
+      - risk-filter.service.ts
+      - circuit-breaker.service.ts
+      - balance-manager.service.ts
+
+  layer_6_market_data:
+    name: Market Data Layer
+    description: Market data collection and processing
+    components:
+      - websocket.handler.ts
+      - market-data-collector.service.ts
+      - timeframe-provider.service.ts
+      - bybit-api.service.ts (exchange integration)
+
+  layer_7_technical_analysis:
+    name: Technical Analysis Layer
+    description: Indicators and analysis
+    components:
+      - rsi.indicator.ts
+      - ema.indicator.ts
+      - zigzag.detector.ts
+      - liquidity.analyzer.ts
+      - divergence.detector.ts
+
+  layer_8_infrastructure:
+    name: Infrastructure Layer
+    description: Logging, caching, storage
+    components:
+      - logger.service.ts
+      - cache-manager.service.ts
+      - configuration.service.ts
+      - time.service.ts
+
+  layer_9_monitoring:
+    name: Monitoring & Analytics Layer
+    description: Monitoring and statistics
+    components:
+      - performance-monitor.service.ts
+      - trade-journal.service.ts
+      - telegram-notification.service.ts
+
+core_services:
+  orchestration:
+    - name: TradingCycleOrchestrator
+      file: trading-bot-initializer.ts
+      responsibility: Orchestration of trading cycles (every 10s)
+      dependencies:
+        - SignalGeneratorService
+        - PositionOpeningService
+        - WebSocketHandler
+        - LoggerService
+      key_methods:
+        - start(): Start trading cycle
+        - stop(): Stop trading
+        - executeTradingCycle(): Main cycle execution
+
+    - name: LifecycleManager
+      file: bot-initializer.service.ts
+      responsibility: Application lifecycle management
+      features:
+        - Graceful shutdown
+        - Resource cleanup
+        - State persistence
+        - Error recovery
+
+  signal_generation:
+    - name: SignalGeneratorService
+      file: entry.scanner.ts
+      responsibility: COORDINATOR of strategies
+      priority_system: FIRST_VALID_WINS
+      strategies:
+        - Level-Based (Support/Resistance)
+        - Whale Hunter (Liquidity Detection)
+        - Multi-Scalping Strategies
+      validation_layers:
+        - Divergence Detection
+        - Trend Validation
+
+  execution:
+    - name: PositionOpeningService
+      file: position-opening.service.ts
+      responsibility: Signal execution for entry
+      features:
+        - Order placement (Market orders)
+        - Stop-loss setup
+        - Take-profit ladder
+        - Position tracking
+
+    - name: PositionManager
+      file: position-manager.service.ts
+      responsibility: Position lifecycle management
+      features:
+        - Position monitoring
+        - TP hit detection
+        - Partial close logic
+        - PnL tracking
+
+    - name: PositionExitingService
+      file: position-exiting.service.ts
+      responsibility: Position exit management
+      features:
+        - TP execution
+        - SL management
+        - Trailing stop
+        - Emergency close
+
+  market_data:
+    - name: WebSocketHandler
+      file: websocket.handler.ts
+      responsibility: Real-time market data
+      features:
+        - Multi-timeframe candles (1m, 5m, 15m, 30m, 60m)
+        - Order book data
+        - Trade ticks
+        - Position updates
+
+    - name: BybitService
+      file: exchange-api.service.ts
+      responsibility: Bybit API integration
+      features:
+        - REST API client
+        - WebSocket streaming
+        - Portfolio management
+        - Order execution
+
+  infrastructure:
+    - name: LoggerService
+      file: logger.service.ts
+      responsibility: Centralized logging
+      features:
+        - Log levels (debug, info, warn, error)
+        - File rotation
+        - Console + file output
+        - Structured logging
+
+    - name: ConfigurationService
+      file: config.ts
+      responsibility: Configuration loading
+      features:
+        - Environment variables
+        - Default values
+        - Validation
+        - Type conversion
+
+  safety:
+    - name: CircuitBreaker
+      file: bot-initializer.service.ts
+      responsibility: Circuit breaker pattern
+      states: [CLOSED, OPEN, HALF_OPEN]
+      features:
+        - Failure threshold
+        - Timeout period
+        - Automatic recovery
+
+    - name: BalanceManager
+      file: position-manager.service.ts
+      responsibility: Balance tracking and limits
+      features:
+        - Min balance check
+        - Balance updates
+        - Risk allocation
+
+data_flow:
+  trading_cycle:
+    step1: "Timer triggers (every 10 sec)"
+    step2: "WebSocketHandler receives candle close"
+    step3: "Indicators recalculated (RSI, EMA, ZigZag)"
+    step4: "SignalGeneratorService.generateSignal()"
+    step5: "Strategy evaluation with confidence scoring"
+    step6: "Divergence and trend validation"
+    step7: "RiskFilterService applies trend blocks"
+    step8: "PositionOpeningService executes entry"
+    step9: "Order placed via Bybit API"
+    step10: "StopLoss and TakeProfit set"
+    step11: "Position tracked in journal"
+    step12: "TelegramNotification sent (if configured)"
+
+  position_monitoring:
+    step1: "Timer triggers (every 10 sec)"
+    step2: "PositionManager checks active positions"
+    step3: "Check TP hits (price >= TP1/TP2)"
+    step4: "Partial close on TP hit"
+    step5: "Update remaining position"
+    step6: "Check SL hit (price <= SL)"
+    step7: "Full close on SL hit"
+    step8: "TradeJournal records trade"
+    step9: "TelegramNotification sends close signal"
+
+configuration:
+  config_file: config.json
+  critical_params:
+    - symbol: XRPUSDT
+    - timeframe: 5m
+    - leverage: 10
+    - riskPercent: 1.0
+    - minDistancePercent: 1.5
+
+  optional_params:
+    - testnet: true/false
+    - demo: true/false
+    - telegramEnabled: true/false
+    - trailingStopEnabled: true/false
+
+deployment:
+  environment: Production/Development
+  runtime: Node.js 18+
+  key_dependencies:
+    - bybit-api: Exchange integration
+    - typescript: Type safety
+    - jest: Testing
+    - dotenv: Configuration
+    - ws: WebSocket
+
+  startup_sequence:
+    1: "Load configuration (config.json)"
+    2: "Initialize LoggerService"
+    3: "Initialize WebSocket connection"
+    4: "Initialize all indicators"
+    5: "Initialize strategies"
+    6: "Initialize SignalGeneratorService"
+    7: "Initialize PositionManager"
+    8: "Start trading cycle"
+    9: "WebSocket streams active"
+    10: "Ready for trading"
+
+error_handling:
+  strategy: "Fail-fast with graceful degradation"
+  levels:
+    critical:
+      - Exchange connection lost
+      - Invalid API credentials
+      - Insufficient balance
+      action: "Stop trading, send alert"
+
+    high:
+      - Order execution failed
+      - Position manager error
+      action: "Retry with backoff, alert if persists"
+
+    medium:
+      - Signal generation error
+      - Validation error
+      action: "Log, skip cycle, continue"
+
+    low:
+      - Cache miss
+      - Non-critical service error
+      action: "Log, use fallback"
+
+performance:
+  trading_cycle_duration: "< 2 seconds (target)"
+  memory_usage: "< 500 MB (target)"
+  cpu_usage: "< 20% (idle), < 50% (active)"
+
+  optimizations:
+    - EMA crossover caching (5 min TTL)
+    - Market data cache (30 sec TTL)
+    - Circular buffers for indicators
+    - Lazy initialization
+    - Connection pooling
+
+scalability:
+  current: "Single symbol (multi-strategy)"
+  future:
+    - Multi-symbol support
+    - Parallel signal generation
+    - Distributed caching
+    - Horizontal scaling
+
+security:
+  api_keys: "Stored in local config.json (NEVER committed)"
+  permissions: "Read + Trade (no withdrawal)"
+  ip_whitelist: "Recommended for Bybit API"
+  rate_limiting: "Respects exchange limits"
+  data_encryption: "API keys excluded from version control"
