@@ -1,6 +1,7 @@
 # Smart Levels Trading Bot
 
 > Educational algorithmic trading bot with Smart Money Concepts strategies
+> Created with Claude Code
 
 An advanced TypeScript trading bot featuring multiple strategies based on **Smart Money Concepts (SMC)**, including level-based support/resistance analysis, liquidity zone detection, whale wall identification, and advanced risk management.
 
