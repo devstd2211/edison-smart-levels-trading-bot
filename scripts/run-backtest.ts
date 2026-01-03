@@ -47,13 +47,36 @@ async function main() {
   const fullConfigPath = path.isAbsolute(configPath)
     ? configPath
     : path.join(__dirname, '../' + configPath);
+  console.log(`📋 Loading config from: ${fullConfigPath}`);
   const configRaw = fs.readFileSync(fullConfigPath, 'utf-8');
   const config = JSON.parse(configRaw);
   const symbol = config.exchange.symbol;
+  console.log(`🔍 DEBUG: Config keys:`, Object.keys(config).slice(0, 15));
+  console.log(`🔍 DEBUG: Has btcConfirmation?`, 'btcConfirmation' in config);
 
 
   // Load data using provider
+  console.log(`\n📊 Loading ${symbol} candles...`);
   const { candles1m, candles5m, candles15m } = await dataProvider.loadCandles(symbol);
+  console.log(`✅ Loaded: ${candles1m.length} 1m candles, ${candles5m.length} 5m, ${candles15m.length} 15m`);
+
+  // Load BTC data for correlation analysis (if enabled)
+  let btcCandles1m: typeof candles1m = [];
+  console.log(`\n🔍 DEBUG: btcConfirmation config:`, config.btcConfirmation);
+  if (config.btcConfirmation?.enabled) {
+    console.log(`\n🔗 BTC Correlation Enabled - Loading BTC data...`);
+    try {
+      const btcData = await dataProvider.loadCandles('BTCUSDT');
+      btcCandles1m = btcData.candles1m;
+      console.log(`✅ Loaded BTC: ${btcData.candles1m.length} 1m, ${btcData.candles5m.length} 5m, ${btcData.candles15m.length} 15m candles`);
+      console.log(`📌 BTC & ${symbol} data synchronized for correlation analysis`);
+    } catch (err) {
+      console.warn(`⚠️  BTC data not available - BTC confirmation will be disabled`);
+      console.error(`Error details:`, err);
+    }
+  } else {
+    console.log(`⚠️  BTC Correlation NOT enabled in config`);
+  }
 
   // Build backtest config
   const backtestConfig: BacktestConfig = {
@@ -71,7 +94,8 @@ async function main() {
   const result = await engine.run(
     candles1m,
     candles5m,
-    candles15m
+    candles15m,
+    btcCandles1m
   );
 
   // Print results

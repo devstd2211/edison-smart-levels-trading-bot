@@ -156,16 +156,8 @@ export class TradeExecutionService {
         }
       }
 
-      // Week 13: BTC confirmation check (using ExternalAnalysisService)
-      if (this.externalAnalysisService && this.config?.btcConfirmation?.enabled) {
-        const btcConfirmed = await this.externalAnalysisService.checkBTCConfirmation(
-          entrySignal.direction as any
-        );
-
-        if (!btcConfirmed) {
-          return; // Block trade - ExternalAnalysisService logs details
-        }
-      }
+      // Week 13: BTC confirmation check removed - now handled as analyzer vote in confidence system
+      // BTC_CORRELATION analyzer participates in voting with weight 0.12, not hard block
 
       // Week 13: Funding rate filter check (using ExternalAnalysisService)
       if (this.externalAnalysisService && this.config?.fundingRateFilter?.enabled) {

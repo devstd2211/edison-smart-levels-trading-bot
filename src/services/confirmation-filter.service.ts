@@ -28,6 +28,7 @@ import { BybitService } from './bybit';
 
 export class ConfirmationFilter {
   private btcAnalyzer: BTCAnalyzer | null = null;
+  private btcCandlesStore?: { btcCandles1m: Candle[] }; // Reference to pre-loaded BTC candles
 
   constructor(
     private bybitService: BybitService,
@@ -35,15 +36,26 @@ export class ConfirmationFilter {
     private logger: LoggerService,
   ) {
     // Initialize BTC analyzer if enabled
-    if (this.config.strategy.btcConfirmation?.enabled) {
+    if (this.config.btcConfirmation?.enabled) {
       this.btcAnalyzer = new BTCAnalyzer(
-        this.config.strategy.btcConfirmation,
+        this.config.btcConfirmation,
         this.logger,
       );
       this.logger.info('BTC confirmation filter enabled', {
-        symbol: this.config.strategy.btcConfirmation.symbol,
-        timeframe: this.config.strategy.btcConfirmation.timeframe,
+        symbol: this.config.btcConfirmation.symbol,
+        timeframe: this.config.btcConfirmation.timeframe,
       });
+    }
+  }
+
+  /**
+   * Set the BTC candles store (used to access pre-loaded BTC candles)
+   * Called by BotServices after initialization
+   */
+  setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
+    this.btcCandlesStore = store;
+    if (this.btcAnalyzer) {
+      this.logger.debug('🔗 BTC candles store configured for ConfirmationFilter');
     }
   }
 
@@ -59,7 +71,7 @@ export class ConfirmationFilter {
     altSymbol: string,
   ): Promise<ConfirmationResult> {
     // If BTC confirmation disabled, always confirm
-    if (!this.btcAnalyzer || !this.config.strategy.btcConfirmation?.enabled) {
+    if (!this.btcAnalyzer || !this.config.btcConfirmation?.enabled) {
       return {
         shouldConfirm: true,
         reason: 'BTC confirmation disabled',
@@ -125,29 +137,39 @@ export class ConfirmationFilter {
     signalDirection: SignalDirection,
     altSymbol: string,
   ): Promise<BTCAnalysis | null> {
-    if (!this.btcAnalyzer || !this.config.strategy.btcConfirmation) {
+    if (!this.btcAnalyzer || !this.config.btcConfirmation) {
       return null;
     }
 
     try {
-      const btcConfig = this.config.strategy.btcConfirmation;
+      const btcConfig = this.config.btcConfirmation;
 
-      // Fetch BTC candles
-      this.logger.debug('Fetching BTC candles', {
-        symbol: btcConfig.symbol,
-        timeframe: btcConfig.timeframe,
-        limit: btcConfig.candleLimit,
-      });
+      // Use pre-loaded BTC candles if available (more efficient)
+      let btcCandles: Candle[];
+      if (this.btcCandlesStore && this.btcCandlesStore.btcCandles1m.length > 0) {
+        btcCandles = this.btcCandlesStore.btcCandles1m;
+        this.logger.debug('Using pre-loaded BTC candles', {
+          count: btcCandles.length,
+        });
+      } else {
+        // Fallback: Fetch BTC candles from API if not pre-loaded
+        const candleLimit = btcConfig.candleLimit || btcConfig.lookbackCandles || 50;
+        this.logger.debug('Fetching BTC candles from API', {
+          symbol: btcConfig.symbol,
+          timeframe: btcConfig.timeframe,
+          limit: candleLimit,
+        });
 
-      const btcCandles = await this.bybitService.getCandles(
-        btcConfig.symbol,
-        btcConfig.timeframe,
-        btcConfig.candleLimit,
-      );
+        btcCandles = await this.bybitService.getCandles(
+          btcConfig.symbol,
+          btcConfig.timeframe,
+          candleLimit,
+        );
 
-      if (!btcCandles || btcCandles.length === 0) {
-        this.logger.warn('Failed to fetch BTC candles');
-        return null;
+        if (!btcCandles || btcCandles.length === 0) {
+          this.logger.warn('Failed to fetch BTC candles');
+          return null;
+        }
       }
 
       // Fetch altcoin candles for correlation (if enabled)

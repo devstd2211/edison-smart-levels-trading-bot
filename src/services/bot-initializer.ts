@@ -49,6 +49,11 @@ export class BotInitializer {
         this.logger.warn('⚠️ Candles disabled - strategies may not work correctly!');
       }
 
+      // Phase 4.5: Load BTC candles (if BTC confirmation is enabled)
+      if (this.config.btcConfirmation?.enabled) {
+        await this.initializeBtcCandles();
+      }
+
       this.logger.info('✅ Bot initialization complete - ready to start trading');
     } catch (error) {
       this.logger.error('Failed to initialize bot', {
@@ -249,6 +254,43 @@ export class BotInitializer {
     this.logger.info(
       '✅ Periodic tasks enabled (every 30 seconds): time sync + conditional orders cleanup',
     );
+  }
+
+  /**
+   * Private: Initialize BTC candles for correlation analysis
+   */
+  private async initializeBtcCandles(): Promise<void> {
+    try {
+      const btcConfig = this.config.btcConfirmation;
+      if (!btcConfig) {
+        this.logger.warn('⚠️ BTC confirmation config not found');
+        return;
+      }
+
+      this.logger.info('🔗 Loading BTC candles for correlation analysis...', {
+        symbol: btcConfig.symbol,
+        interval: btcConfig.timeframe,
+        lookbackCandles: btcConfig.lookbackCandles,
+      });
+
+      const btcCandles = await this.services.bybitService.getCandles(
+        btcConfig.symbol,
+        btcConfig.timeframe,
+        btcConfig.lookbackCandles || 100,
+      );
+
+      this.services.btcCandles1m = btcCandles;
+
+      this.logger.info('✅ BTC candles loaded successfully', {
+        count: btcCandles.length,
+        latestTimestamp: btcCandles.length > 0 ? new Date(btcCandles[btcCandles.length - 1].timestamp).toISOString() : 'N/A',
+      });
+    } catch (error) {
+      const errorObj = error instanceof Error ? { error: error.message } : { error: String(error) };
+      this.logger.error('Failed to load BTC candles', errorObj);
+      // Don't throw - allow bot to continue without BTC confirmation
+      this.services.btcCandles1m = [];
+    }
   }
 
   /**

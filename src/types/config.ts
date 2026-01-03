@@ -186,6 +186,13 @@ export interface BTCConfirmationConfig {
   volumeMaxWeight: number; // Max weight for volume component
   movesDivisor: number; // Divisor for consecutive moves scoring
   volumeDivisor: number; // Divisor for volume ratio scoring
+  // Week 13: BTC_CORRELATION analyzer configuration (soft voting system)
+  analyzer?: {
+    weight: number; // Voting weight (0-1, typically 0.12 for secondary influence)
+    priority: number; // Analyzer priority (1-10, typically 5)
+    minConfidence: number; // Minimum confidence threshold to participate (0-100)
+    maxConfidence: number; // Maximum confidence cap (0-100, typically 85)
+  };
 }
 
 /**

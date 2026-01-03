@@ -248,6 +248,9 @@ export class TradingOrchestrator {
   // Handles real-time whale hunter signal detection and execution
   private whaleSignalDetectionService: any | null = null; // Will be WhaleSignalDetectionService
 
+  // Reference to analyzer registration for updating BTC candles later
+  private analyzerRegistration: AnalyzerRegistrationService | null = null;
+
   constructor(
     private config: OrchestratorConfig,
     private candleProvider: CandleProvider,
@@ -298,7 +301,7 @@ export class TradingOrchestrator {
     logger.info('✅ Risk Calculator initialized for consistent SL/TP calculation');
 
     // Register all analyzers into the registry (45+ analyzers)
-    const analyzerRegistration = new AnalyzerRegistrationService(
+    this.analyzerRegistration = new AnalyzerRegistrationService(
       this.analyzerRegistry,
       logger,
       config,
@@ -316,7 +319,7 @@ export class TradingOrchestrator {
       this.deltaAnalyzerService,
       this.orderbookImbalanceService,
     );
-    analyzerRegistration.registerAllAnalyzers();
+    this.analyzerRegistration.registerAllAnalyzers();
 
     // Week 13 Phase 5a: Use StrategyRegistrationService for all strategy registration
     const StrategyRegistrationModule = require('./strategy-registration.service') as any;
@@ -674,6 +677,21 @@ export class TradingOrchestrator {
     this.logger.info('🔄 Trading context will be initialized on first PRIMARY candle close (TrendAnalyzer)');
   }
 
+  /**
+   * Set the BTC candles store (used to access pre-loaded BTC candles)
+   * Called by BotServices after initialization
+   */
+  setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
+    // Link BTC candles to AnalyzerRegistrationService for BTC_CORRELATION analyzer
+    if (this.analyzerRegistration) {
+      this.analyzerRegistration.setBtcCandlesStore(store);
+    }
+    // Link BTC candles to ExternalAnalysisService for BTC analysis
+    if (this.externalAnalysisService) {
+      (this.externalAnalysisService as any).setBtcCandlesStore(store);
+    }
+    this.logger.info('🔗 BTC candles store linked to TradingOrchestrator');
+  }
 
   /**
    * Handle candle close event

@@ -158,6 +158,12 @@
       "weak": 0.15
     }
   },
+  "analyzer": {
+    "weight": 0.15,
+    "priority": 5,
+    "minConfidence": 25,
+    "maxConfidence": 85
+  },
   "analyzerConstants": {
     "rsi": {
       "maxConfidence": 25

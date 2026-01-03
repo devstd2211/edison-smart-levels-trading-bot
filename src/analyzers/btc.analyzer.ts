@@ -16,9 +16,9 @@ import {
   SignalDirection,
   BTCConfirmationConfig,
   LoggerService,
-  BTCDirection,
   BTCAnalysis,
 } from '../types';
+import { BTCDirection } from '../types/enums';
 import { CorrelationCalculator, CorrelationResult } from './correlation.calculator';
 
 // ============================================================================

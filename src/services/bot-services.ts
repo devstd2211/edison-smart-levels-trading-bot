@@ -11,7 +11,7 @@
  * - Easy to add new services
  */
 
-import { Config, LoggerService, MarketStructureAnalyzer } from '../types';
+import { Config, LoggerService, MarketStructureAnalyzer, Candle } from '../types';
 import {
   BybitService,
   PositionManagerService,
@@ -60,6 +60,7 @@ export class BotServices {
   // Data & Providers
   readonly timeframeProvider: TimeframeProvider;
   readonly candleProvider: CandleProvider;
+  btcCandles1m: Candle[] = []; // BTC 1-minute candles for correlation analysis
 
   // Analysis & Orchestration
   readonly structureAnalyzer: MarketStructureAnalyzer;
@@ -280,6 +281,7 @@ export class BotServices {
       config.exchange.symbol,
       this.timeframeProvider,
       this.logger,
+      config.btcConfirmation,
     );
 
     // 10. Initialize orderbook and monitoring
@@ -300,40 +302,47 @@ export class BotServices {
 
     // 11. Initialize trading orchestrator (uses all above)
     // TradingOrchestrator creates RiskManager and TrendAnalyzer internally if not passed
-    this.tradingOrchestrator = new TradingOrchestrator(
-      {
-        contextConfig: {
-          atrPeriod: config.indicators.atrPeriod,
-          emaPeriod: config.indicators.slowEmaPeriod,
-          zigzagDepth: config.indicators.zigzagDepth,
-          minimumATR: config.atrFilter?.minimumATR || 0.01,
-          maximumATR: config.atrFilter?.maximumATR || 100,
-          maxEmaDistance: config.strategy?.emaDistanceThreshold || 0.5,
-          filteringMode: (config.strategy?.contextFilteringMode as any) || 'HARD_BLOCK',
-          atrFilterEnabled: config.atrFilter?.enabled === true,
-        },
-        entryConfig: {
-          rsiPeriod: config.indicators.rsiPeriod,
-          fastEmaPeriod: config.indicators.fastEmaPeriod,
-          slowEmaPeriod: config.indicators.slowEmaPeriod,
-          zigzagDepth: config.indicators.zigzagDepth,
-          rsiOversold: config.indicators.rsiOversold,
-          rsiOverbought: config.indicators.rsiOverbought,
-          stopLossPercent: config.riskManagement.stopLossPercent,
-          takeProfits: config.riskManagement.takeProfits,
-          priceAction: config?.strategy?.priceAction,
-        },
-        strategiesConfig: config.strategies,
-        positionSizeUsdt: config.riskManagement.positionSizeUsdt,
-        leverage: config.trading.leverage,
-        btcConfirmation: config?.strategy?.btcConfirmation,
-        system: config.system,
-        strategicWeights: config.strategicWeights,
-        trendConfirmation: config.trendConfirmation,
-        analysisConfig: config.analysisConfig,
-        volatilityRegime: config.volatilityRegime,
-        riskManagement: config.riskManagement,
+    const orchestratorConfig = {
+      contextConfig: {
+        atrPeriod: config.indicators.atrPeriod,
+        emaPeriod: config.indicators.slowEmaPeriod,
+        zigzagDepth: config.indicators.zigzagDepth,
+        minimumATR: config.atrFilter?.minimumATR || 0.01,
+        maximumATR: config.atrFilter?.maximumATR || 100,
+        maxEmaDistance: config.strategy?.emaDistanceThreshold || 0.5,
+        filteringMode: (config.strategy?.contextFilteringMode as any) || 'HARD_BLOCK',
+        atrFilterEnabled: config.atrFilter?.enabled === true,
       },
+      entryConfig: {
+        rsiPeriod: config.indicators.rsiPeriod,
+        fastEmaPeriod: config.indicators.fastEmaPeriod,
+        slowEmaPeriod: config.indicators.slowEmaPeriod,
+        zigzagDepth: config.indicators.zigzagDepth,
+        rsiOversold: config.indicators.rsiOversold,
+        rsiOverbought: config.indicators.rsiOverbought,
+        stopLossPercent: config.riskManagement.stopLossPercent,
+        takeProfits: config.riskManagement.takeProfits,
+        priceAction: config?.strategy?.priceAction,
+      },
+      strategiesConfig: config.strategies,
+      positionSizeUsdt: config.riskManagement.positionSizeUsdt,
+      leverage: config.trading.leverage,
+      btcConfirmation: config?.btcConfirmation,
+      system: config.system,
+      strategicWeights: config.strategicWeights,
+      trendConfirmation: config.trendConfirmation,
+      analysisConfig: config.analysisConfig,
+      volatilityRegime: config.volatilityRegime,
+      riskManagement: config.riskManagement,
+    };
+
+    this.logger.info('🔗 OrchestratorConfig prepared', {
+      hasBtcConfirmation: !!orchestratorConfig.btcConfirmation,
+      btcEnabled: orchestratorConfig.btcConfirmation?.enabled,
+    });
+
+    this.tradingOrchestrator = new TradingOrchestrator(
+      orchestratorConfig,
       this.candleProvider,
       this.timeframeProvider,
       this.bybitService,
@@ -348,6 +357,12 @@ export class BotServices {
       this.journal,          // 13
       this.sessionStats,     // 14
     );
+
+    // 11.5. Link BTC candles store to TradingOrchestrator for BTC_CORRELATION analyzer
+    if (config.btcConfirmation?.enabled) {
+      this.tradingOrchestrator.setBtcCandlesStore(this);
+      this.logger.info('🔗 BTC candles store linked to TradingOrchestrator');
+    }
 
     // 12. Initialize event handlers (uses all above services)
     this.positionEventHandler = new PositionEventHandler(
@@ -367,6 +382,12 @@ export class BotServices {
       this.telegram,
       this.logger,
     );
+
+    // 13. Link BTC candles store to PublicWebSocket for real-time updates
+    if (config.btcConfirmation?.enabled) {
+      this.publicWebSocket.setBtcCandlesStore(this);
+      this.logger.info('🔗 BTC candles store linked to PublicWebSocket');
+    }
 
     this.logger.info('✅ BotServices initialized - all dependencies ready');
   }

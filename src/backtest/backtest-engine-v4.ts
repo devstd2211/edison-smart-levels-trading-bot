@@ -22,12 +22,16 @@ import {
   SignalDirection,
   TrendBias,
   LoggerService,
+  AnalyzerSignal,
+  BTCDirection,
 } from '../types';
 import { LevelBasedStrategy } from '../strategies/level-based.strategy';
 import { RSIIndicator } from '../indicators/rsi.indicator';
 import { EMAIndicator } from '../indicators/ema.indicator';
 import { ATRIndicator } from '../indicators/atr.indicator';
 import { ZigZagNRIndicator } from '../indicators/zigzag-nr.indicator';
+import { BTCAnalyzer } from '../analyzers/btc.analyzer';
+import { AnalyzerRegistry } from '../services/analyzer-registry.service';
 
 export interface BacktestConfig {
   symbol: string;
@@ -102,8 +106,11 @@ export class BacktestEngineV4 {
   private atrIndicator: ATRIndicator;
   private zigzagIndicator: ZigZagNRIndicator;
 
-  // Strategy
+  // Strategy and Analyzers
   private levelBasedStrategy: LevelBasedStrategy;
+  private btcAnalyzer: BTCAnalyzer | null = null;
+  private btcCandles1m: Candle[] = [];
+  private analyzerRegistry: AnalyzerRegistry;
   private logger: LoggerService;
 
   constructor(private config: BacktestConfig) {
@@ -126,6 +133,18 @@ export class BacktestEngineV4 {
     this.atrIndicator = new ATRIndicator(atrPeriod);
     this.zigzagIndicator = new ZigZagNRIndicator(zigzagDepth);
 
+    // Initialize BTC analyzer if enabled
+    if (config.config?.btcConfirmation?.enabled) {
+      this.btcAnalyzer = new BTCAnalyzer(
+        config.config.btcConfirmation,
+        this.logger
+      );
+      this.logger.info('🔗 BTC Confirmation initialized for backtest', {
+        symbol: config.config.btcConfirmation.symbol,
+        useCorrelation: config.config.btcConfirmation.useCorrelation,
+      });
+    }
+
     // Initialize strategy with config
     // Merge levelBased config with risk management (takeProfits is in riskManagement)
     const levelBasedConfig = {
@@ -133,6 +152,87 @@ export class BacktestEngineV4 {
       takeProfits: config.config?.riskManagement?.takeProfits,
     };
     this.levelBasedStrategy = new LevelBasedStrategy(levelBasedConfig, this.logger);
+
+    // Initialize AnalyzerRegistry for unified signal collection (same as live trading)
+    this.analyzerRegistry = new AnalyzerRegistry(this.logger);
+    this.logger.info('📊 AnalyzerRegistry initialized for backtest', {
+      mode: 'unified-signal-processing',
+    });
+
+    // Register BTC_CORRELATION analyzer - enables soft voting based on BTC direction
+    if (this.btcAnalyzer) {
+      const btcAnalyzerConfig = config.config?.btcConfirmation?.analyzer || {
+        weight: 0.12,
+        priority: 5,
+        minConfidence: 25,
+        maxConfidence: 85,
+      };
+
+      // Capture references for closure
+      const backtestEngine = this;
+
+      this.analyzerRegistry.register('BTC_CORRELATION', {
+        name: 'BTC_CORRELATION',
+        weight: btcAnalyzerConfig.weight,
+        priority: btcAnalyzerConfig.priority,
+        enabled: true,
+        evaluate: async (data: StrategyMarketData) => {
+          try {
+            // Use stored BTC candles for analysis
+            if (!backtestEngine.btcCandles1m || backtestEngine.btcCandles1m.length === 0) {
+              return null;
+            }
+
+            // Analyze BTC momentum
+            const signalDirection = data.trend === 'BULLISH' ? SignalDirection.LONG : SignalDirection.SHORT;
+            const btcAnalysis = backtestEngine.btcAnalyzer!.analyze(backtestEngine.btcCandles1m, signalDirection);
+
+            if (!btcAnalysis || btcAnalysis.direction === 'NEUTRAL') {
+              return null;
+            }
+
+            // Convert BTC direction to confidence score
+            let confidence = btcAnalysis.momentum * 100; // momentum is already 0-1
+            const minConfidence = btcAnalyzerConfig.minConfidence ?? 25;
+            const maxConfidence = btcAnalyzerConfig.maxConfidence ?? 85;
+
+            backtestEngine.logger.info('🔗 BTC_CORRELATION evaluation', {
+              direction: btcAnalysis.direction,
+              momentum: btcAnalysis.momentum.toFixed(3),
+              confidence: confidence.toFixed(1),
+              minConfidence,
+              passesMinCheck: confidence >= minConfidence,
+            });
+
+            if (confidence < minConfidence) {
+              return null;
+            }
+
+            confidence = Math.min(confidence, maxConfidence);
+
+            const direction = btcAnalysis.direction === 'UP' ? SignalDirection.LONG : SignalDirection.SHORT;
+
+            return {
+              source: 'BTC_CORRELATION',
+              direction,
+              confidence,
+              weight: btcAnalyzerConfig.weight,
+              priority: btcAnalyzerConfig.priority,
+            };
+          } catch (error) {
+            backtestEngine.logger.error('BTC_CORRELATION analyzer error', {
+              error: error instanceof Error ? error.message : String(error),
+            });
+            return null;
+          }
+        },
+      });
+
+      this.logger.info('✅ BTC_CORRELATION analyzer registered for backtest', {
+        weight: btcAnalyzerConfig.weight,
+        priority: btcAnalyzerConfig.priority,
+      });
+    }
   }
 
   /**
@@ -142,7 +242,17 @@ export class BacktestEngineV4 {
     candles1m: Candle[],
     candles5m: Candle[],
     candles15m: Candle[],
+    btcCandles1m?: Candle[],
   ): Promise<BacktestResult> {
+    // Store BTC candles if provided and BTC confirmation is enabled
+    if (btcCandles1m && this.btcAnalyzer) {
+      this.btcCandles1m = btcCandles1m;
+      this.logger.info('📊 BTC candles loaded for backtest', {
+        count: btcCandles1m.length,
+        useConfirmation: true,
+      });
+    }
+
     // Use 5m candles as primary (most data available)
     const mainCandles = candles5m;
 
@@ -253,7 +363,7 @@ export class BacktestEngineV4 {
   }
 
   /**
-   * Generate entry signal using LevelBasedStrategy
+   * Generate entry signal using LevelBasedStrategy + AnalyzerRegistry soft voting
    */
   private async tryEntry(candles: Candle[], currentIndex: number, currentPrice: number, timestamp: number): Promise<void> {
     // Need minimum candles for swing point detection and indicators
@@ -268,7 +378,7 @@ export class BacktestEngineV4 {
       // Prepare market data with indicators and swing points
       const marketData = this.prepareMarketData(candles, currentIndex);
 
-      // Evaluate using LevelBasedStrategy
+      // STEP 1: Evaluate using LevelBasedStrategy
       const strategySignal = await this.levelBasedStrategy.evaluate(marketData);
 
       // Check if valid signal
@@ -276,29 +386,90 @@ export class BacktestEngineV4 {
         return;
       }
 
-      const signal = strategySignal.signal;
+      let signal = strategySignal.signal;
 
       // Validate signal has required fields
       if (!signal.direction) {
         return;
       }
 
-      // Check minimum confidence threshold
+      // STEP 2: Collect signals from AnalyzerRegistry (BTC soft voting)
+      const analyzerSignals = await this.analyzerRegistry.collectSignals(marketData);
+
+      // Apply BTC_CORRELATION soft voting if available
+      if (analyzerSignals.length > 0) {
+        const btcSignal = analyzerSignals.find((s) => s.source === 'BTC_CORRELATION');
+
+        if (btcSignal) {
+          // BTC soft voting: adjust confidence based on BTC direction alignment
+          const isStrategyLong = signal.direction === SignalDirection.LONG;
+          const isBTCLong = btcSignal.direction === SignalDirection.LONG;
+
+          // HARD RULE for LONG: Allow only if BTC LONG or BTC very weak SHORT (<= 30%)
+          // Block LONG if BTC is moderately SHORT or strongly SHORT (momentum > 30%)
+          if (isStrategyLong && !isBTCLong && btcSignal.confidence > 30) {
+            this.logger.info('🚫 LONG blocked - BTC bearish momentum > 30%', {
+              btcDir: btcSignal.direction,
+              btcMomentum: btcSignal.confidence.toFixed(1),
+              reason: 'LONG requires BTC LONG or very weak SHORT (<= 30%)',
+            });
+            return;
+          }
+
+          this.logger.info('🔗 BTC Soft Voting', {
+            strategyDir: signal.direction,
+            btcDir: btcSignal.direction,
+            strategyLong: isStrategyLong,
+            btcLong: isBTCLong,
+            aligned: isStrategyLong === isBTCLong,
+          });
+
+          if (isStrategyLong === isBTCLong) {
+            // BTC aligns with strategy: boost confidence (1.10x multiplier = +10%)
+            const oldConf = signal.confidence;
+            signal.confidence = signal.confidence * 1.10;
+            this.logger.info('📈 BTC aligned - boosting confidence +10%', {
+              oldConf: oldConf.toFixed(2),
+              newConf: signal.confidence.toFixed(2),
+              btcConf: btcSignal.confidence.toFixed(2),
+            });
+          } else {
+            // BTC opposes strategy: reduce confidence based on direction
+            const oldConf = signal.confidence;
+            // SHORT gets -40% penalty (0.60x), LONG gets -25% penalty (0.75x) for better win rate
+            const penalty = isStrategyLong ? 0.75 : 0.60;
+            signal.confidence = signal.confidence * penalty;
+            this.logger.info('📉 BTC opposed - reducing confidence', {
+              direction: isStrategyLong ? 'LONG' : 'SHORT',
+              penalty: `${(1 - penalty) * 100}%`,
+              oldConf: oldConf.toFixed(2),
+              newConf: signal.confidence.toFixed(2),
+              btcConf: btcSignal.confidence.toFixed(2),
+            });
+          }
+        }
+      }
+
+      this.logger.info('✅ Signal after BTC voting', {
+        direction: signal.direction,
+        confidence: signal.confidence.toFixed(2),
+      });
+
+      // STEP 3: Check minimum confidence threshold
       const minConfidence = this.config.config?.strategies?.levelBased?.minConfidenceThreshold || 0.65;
       if (signal.confidence < minConfidence) {
         return;
       }
 
       // Determine direction and create position
-      const isLong = signal.direction === 'LONG';
+      const isLong = signal.direction === SignalDirection.LONG;
       const entryPrice = currentPrice;
 
       // Get SL and TP from config
       const stopLossPercent = this.config.config?.riskManagement?.stopLossPercent || 1.5;
       const takeProfits = this.config.config?.riskManagement?.takeProfits || [
-        { level: 1, percent: 2.0, closePercent: 50 },
-        { level: 2, percent: 3.0, closePercent: 30 },
-        { level: 3, percent: 4.0, closePercent: 20 }
+        { level: 1, percent: 0.5, closePercent: 70 },
+        { level: 2, percent: 1.0, closePercent: 30 }
       ];
 
       // Calculate SL and TPs
@@ -307,16 +478,16 @@ export class BacktestEngineV4 {
         : entryPrice * (1 + stopLossPercent / 100);
 
       const tp1 = isLong
-        ? entryPrice * (1 + (takeProfits[0]?.percent || 2) / 100)
-        : entryPrice * (1 - (takeProfits[0]?.percent || 2) / 100);
+        ? entryPrice * (1 + (takeProfits[0]?.percent || 0.5) / 100)
+        : entryPrice * (1 - (takeProfits[0]?.percent || 0.5) / 100);
 
       const tp2 = isLong
-        ? entryPrice * (1 + (takeProfits[1]?.percent || 3) / 100)
-        : entryPrice * (1 - (takeProfits[1]?.percent || 3) / 100);
+        ? entryPrice * (1 + (takeProfits[1]?.percent || 1.0) / 100)
+        : entryPrice * (1 - (takeProfits[1]?.percent || 1.0) / 100);
 
       const tp3 = isLong
-        ? entryPrice * (1 + (takeProfits[2]?.percent || 4) / 100)
-        : entryPrice * (1 - (takeProfits[2]?.percent || 4) / 100);
+        ? entryPrice * (1 + (takeProfits[2]?.percent || takeProfits[1]?.percent || 1.0) / 100)
+        : entryPrice * (1 - (takeProfits[2]?.percent || takeProfits[1]?.percent || 1.0) / 100);
 
       // Open position
       this.position = {

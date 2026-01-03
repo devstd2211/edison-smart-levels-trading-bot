@@ -69,6 +69,8 @@ interface FlatMarketConfig {
  * Filters trading signals based on BTC correlation, funding rates, and market flatness.
  */
 export class ExternalAnalysisService {
+  private btcCandlesStore?: { btcCandles1m: any[] }; // Reference to pre-loaded BTC candles
+
   constructor(
     private bybitService: BybitService,
     private candleProvider: CandleProvider,
@@ -80,6 +82,17 @@ export class ExternalAnalysisService {
     private fundingRateConfig?: FundingRateConfig,
     private flatMarketConfig?: FlatMarketConfig,
   ) {}
+
+  /**
+   * Set the BTC candles store (used to access pre-loaded BTC candles)
+   * Called by TradingOrchestrator after BotServices initialization
+   */
+  setBtcCandlesStore(store: { btcCandles1m: any[] }): void {
+    this.btcCandlesStore = store;
+    if (this.btcAnalyzer && this.btcConfig?.enabled) {
+      this.logger.debug('🔗 BTC candles store configured for ExternalAnalysisService');
+    }
+  }
 
   /**
    * Analyze BTC for correlation and trend confirmation
@@ -94,12 +107,27 @@ export class ExternalAnalysisService {
     try {
       const btcConfig = this.btcConfig;
 
-      // Fetch BTC candles directly from Bybit
-      const btcCandles = await this.bybitService.getCandles(
-        btcConfig.symbol,
-        btcConfig.timeframe,
-        btcConfig.candleLimit || INTEGER_MULTIPLIERS.FIFTY,
-      );
+      // Use pre-loaded BTC candles if available (more efficient)
+      let btcCandles;
+      if (this.btcCandlesStore && this.btcCandlesStore.btcCandles1m.length > 0) {
+        btcCandles = this.btcCandlesStore.btcCandles1m;
+        this.logger.debug('Using pre-loaded BTC candles', {
+          count: btcCandles.length,
+        });
+      } else {
+        // Fallback: Fetch BTC candles from API if not pre-loaded
+        this.logger.debug('Fetching BTC candles from API', {
+          symbol: btcConfig.symbol,
+          timeframe: btcConfig.timeframe,
+          limit: btcConfig.candleLimit || INTEGER_MULTIPLIERS.FIFTY,
+        });
+
+        btcCandles = await this.bybitService.getCandles(
+          btcConfig.symbol,
+          btcConfig.timeframe,
+          btcConfig.candleLimit || INTEGER_MULTIPLIERS.FIFTY,
+        );
+      }
 
       if (!btcCandles || btcCandles.length < (btcConfig.lookbackCandles || INTEGER_MULTIPLIERS.TEN)) {
         this.logger.warn('Not enough BTC candles for analysis', {
@@ -144,21 +172,14 @@ export class ExternalAnalysisService {
       return true; // Pass if BTC analysis not enabled
     }
 
+    // NOTE: Hard block removed in favor of soft voting through AnalyzerRegistry
+    // BTC_CORRELATION analyzer now participates in weighted voting system instead of blocking
+    // This allows BTC signals to influence confidence scores rather than preventing entries entirely
+
+    // Legacy code - keeping for reference but not using hard block anymore
     const analysis = btcAnalysis || (await this.analyzeBTC(signalDirection));
-
-    if (analysis && !this.btcAnalyzer.shouldConfirm(analysis)) {
-      this.logger.info('❌ BTC confirmation FAILED - signal blocked', {
-        direction: signalDirection,
-        btcDirection: analysis.direction,
-        btcMomentum: analysis.momentum.toFixed(DECIMAL_PLACES.PERCENT),
-        isAligned: analysis.isAligned,
-        reason: analysis.reason,
-      });
-      return false;
-    }
-
     if (analysis) {
-      this.logger.info('✅ BTC confirmation PASSED', {
+      this.logger.debug('BTC analysis available for reference (not used for hard blocking)', {
         direction: signalDirection,
         btcDirection: analysis.direction,
         btcMomentum: analysis.momentum.toFixed(DECIMAL_PLACES.PERCENT),
@@ -166,6 +187,7 @@ export class ExternalAnalysisService {
       });
     }
 
+    // Always pass - let AnalyzerRegistry handle BTC filtering through soft voting
     return true;
   }
 

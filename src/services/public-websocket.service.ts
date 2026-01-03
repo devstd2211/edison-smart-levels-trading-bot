@@ -40,19 +40,34 @@ export class PublicWebSocketService extends EventEmitter {
   private shouldReconnect: boolean = true;
   private subscribedTopics: Set<string> = new Set();
   private lastIncompleteWarning: number = 0; // Timestamp of last incomplete orderbook warning
+  private btcConfirmation?: any; // BTC confirmation config (optional)
+  private btcCandlesStore?: { btcCandles1m: Candle[] }; // Reference to bot services for updating BTC candles
 
   constructor(
     private readonly config: ExchangeConfig,
     private readonly symbol: string,
     private readonly timeframeProvider: TimeframeProvider,
     private readonly logger: LoggerService,
+    btcConfirmation?: any,
   ) {
     super();
+    this.btcConfirmation = btcConfirmation;
   }
 
   // ==========================================================================
   // PUBLIC API
   // ==========================================================================
+
+  /**
+   * Set the BTC candles store (used to update candles from WebSocket)
+   * Called by BotServices after initialization
+   */
+  setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
+    this.btcCandlesStore = store;
+    if (this.btcConfirmation) {
+      this.logger.debug('🔗 BTC candles store configured for WebSocket updates');
+    }
+  }
 
   /**
    * Connect to Public WebSocket and subscribe to kline
@@ -172,13 +187,23 @@ export class PublicWebSocketService extends EventEmitter {
     topics.push(tradeTopic);
     this.subscribedTopics.add(tradeTopic);
 
+    // Subscribe to BTC kline (1m) for correlation analysis (if enabled)
+    if (this.btcConfirmation?.enabled) {
+      const btcInterval = this.btcConfirmation.timeframe || '1';
+      const btcSymbol = this.btcConfirmation.symbol || 'BTCUSDT';
+      const btcTopic = `kline.${btcInterval}.${btcSymbol}`;
+      topics.push(btcTopic);
+      this.subscribedTopics.add(btcTopic);
+      this.logger.info('🔗 BTC subscription added', { btcTopic, btcSymbol, interval: btcInterval });
+    }
+
     const subscribeMessage = {
       op: 'subscribe',
       args: topics,
     };
 
     this.ws.send(JSON.stringify(subscribeMessage));
-    this.logger.info('Subscribed to timeframes, orderbook, and public trades', { topics });
+    this.logger.info('Subscribed to timeframes, orderbook, public trades' + (this.btcConfirmation?.enabled ? ', and BTC' : ''), { topics });
   }
 
   /**
@@ -207,7 +232,7 @@ export class PublicWebSocketService extends EventEmitter {
 
       // Handle kline data
       if (message.topic?.startsWith('kline.') && message.data !== undefined && message.data !== null) {
-        this.handleKlineUpdate(message.data as KlineData | KlineData[]);
+        this.handleKlineUpdate(message.data as KlineData | KlineData[], message.topic);
       }
 
       // Handle orderbook data
@@ -230,14 +255,24 @@ export class PublicWebSocketService extends EventEmitter {
 
   /**
    * Handle kline update from WebSocket
+   * Handles both main symbol (XRPUSDT) and BTC candles
    */
-  private handleKlineUpdate(data: KlineData | KlineData[]): void {
+  private handleKlineUpdate(data: KlineData | KlineData[], topic?: string): void {
     const klines = Array.isArray(data) ? data : [data];
+
+    // Extract symbol from topic (e.g., "kline.1.BTCUSDT" -> "BTCUSDT")
+    let topicSymbol = '';
+    if (topic) {
+      const parts = topic.split('.');
+      if (parts.length >= 3) {
+        topicSymbol = parts[2]; // parts[0]="kline", parts[1]="interval", parts[2]="SYMBOL"
+      }
+    }
 
     for (const kline of klines) {
       const klineData = kline;
 
-      // Only emit on closed candles (confirm = true)
+      // Only process closed candles (confirm = true)
       if (klineData.confirm !== true) {
         continue;
       }
@@ -251,12 +286,47 @@ export class PublicWebSocketService extends EventEmitter {
         volume: parseFloat(klineData.volume ?? '0'),
       };
 
+      // Check if this is a BTC candle - use symbol from topic (not from klineData.symbol which is empty)
+      const isBtcCandle = this.btcConfirmation?.enabled && topicSymbol === (this.btcConfirmation.symbol || 'BTCUSDT');
+
+      // DEBUG: Log all kline symbols to track what's coming
+      if (topicSymbol !== this.symbol) {
+        this.logger.debug('🔍 Received non-main kline', {
+          symbol: topicSymbol,
+          close: candle.close,
+          isBtcCandle,
+          expectedBtcSymbol: this.btcConfirmation?.symbol || 'BTCUSDT',
+          topic,
+        });
+      }
+
+      if (isBtcCandle) {
+        // Handle BTC candle - update the BTC candles store
+        if (this.btcCandlesStore) {
+          // Keep only the last N candles (same as lookbackCandles)
+          const maxCandles = this.btcConfirmation.lookbackCandles || 100;
+          this.btcCandlesStore.btcCandles1m.push(candle);
+          if (this.btcCandlesStore.btcCandles1m.length > maxCandles) {
+            this.btcCandlesStore.btcCandles1m.shift();
+          }
+
+          this.logger.info('🔗 BTC candle updated', {
+            symbol: 'BTCUSDT',
+            timestamp: new Date(candle.timestamp).toISOString(),
+            close: candle.close,
+            totalCandles: this.btcCandlesStore.btcCandles1m.length,
+          });
+        }
+        continue;
+      }
+
+      // Handle main symbol candles (XRPUSDT or other)
       // Determine timeframe role from interval
       const interval = klineData.interval ?? '';
       const role = this.getTimeframeRole(interval);
 
       if (role == null) {
-        this.logger.warn('Unknown interval received', { interval });
+        this.logger.warn('Unknown interval received', { interval, symbol: topicSymbol });
         continue;
       }
 

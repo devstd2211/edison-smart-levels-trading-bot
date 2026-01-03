@@ -23,6 +23,7 @@ import {
   BTCAnalyzer,
   FlatMarketDetector,
   SwingPointType,
+  BTCDirection,
 } from '../types';
 import { LevelAnalyzer } from '../analyzers/level.analyzer';
 import { VolumeProfileAnalyzer } from '../analyzers/volume-profile.analyzer';
@@ -67,6 +68,7 @@ import {
 export class AnalyzerRegistrationService {
   private levelAnalyzer: LevelAnalyzer;
   private volumeProfileAnalyzer: VolumeProfileAnalyzer;
+  private btcCandlesStore?: { btcCandles1m: any[] }; // Reference to pre-loaded BTC candles
 
   constructor(
     private analyzerRegistry: AnalyzerRegistry,
@@ -113,6 +115,17 @@ export class AnalyzerRegistrationService {
       baseConfidence: 60,
       maxConfidence: 85,
     });
+  }
+
+  /**
+   * Set the BTC candles store (used to access pre-loaded BTC candles)
+   * Called by TradingOrchestrator after BotServices initialization
+   */
+  setBtcCandlesStore(store: { btcCandles1m: any[] }): void {
+    this.btcCandlesStore = store;
+    if (this.btcAnalyzer && this.config?.btcConfirmation?.enabled) {
+      this.logger.debug('🔗 BTC candles store configured for AnalyzerRegistrationService');
+    }
   }
 
   /**
@@ -1167,15 +1180,115 @@ export class AnalyzerRegistrationService {
     });
 
     // BTC Correlation (priority 5, weight 0.12)
-    const btcCorrEnabled = this.config?.strategicWeights?.filters?.btcCorrelation?.enabled ?? true;
-    this.analyzerRegistry.register('BTC_CORRELATION', {
-      name: 'BTC_CORRELATION',
+    // NOTE: BTC confirmation is handled separately in ConfirmationFilter and TradeExecutionService
+    // This stub ensures the analyzer is registered but actual BTC analysis happens in the proper filter pipeline
+    const isBtcConfirmationEnabled = this.config?.btcConfirmation?.enabled === true;
+
+    this.logger.debug('🔗 BTC_CORRELATION analyzer registration', {
+      btcConfirmationEnabled: isBtcConfirmationEnabled,
+      configHasBtc: !!this.config?.btcConfirmation,
+      btcConfig: this.config?.btcConfirmation ? {
+        enabled: this.config.btcConfirmation.enabled,
+        symbol: this.config.btcConfirmation.symbol,
+      } : 'NOT_FOUND',
+    });
+
+    // BTC_CORRELATION Analyzer - Week 13 Phase 2: Soft Voting System
+    // Get configuration from config.btcConfirmation.analyzer
+    const btcAnalyzerConfig = this.config?.btcConfirmation?.analyzer || {
       weight: 0.12,
       priority: 5,
-      enabled: btcCorrEnabled,
+      minConfidence: 25,
+      maxConfidence: 85,
+    };
+
+    this.logger.info('📊 Registering BTC_CORRELATION analyzer', {
+      enabled: isBtcConfirmationEnabled,
+      weight: btcAnalyzerConfig.weight,
+      priority: btcAnalyzerConfig.priority,
+      minConfidence: btcAnalyzerConfig.minConfidence,
+      maxConfidence: btcAnalyzerConfig.maxConfidence,
+      btcAnalyzerAvailable: !!this.btcAnalyzer,
+    });
+
+    this.analyzerRegistry.register('BTC_CORRELATION', {
+      name: 'BTC_CORRELATION',
+      weight: btcAnalyzerConfig.weight,
+      priority: btcAnalyzerConfig.priority,
+      enabled: isBtcConfirmationEnabled,
       evaluate: async (data: StrategyMarketData) => {
-        // BTC correlation check
-        return null;
+        // BTC Correlation Analyzer - Week 13 Phase 2: Soft Voting System
+        // BTC participates in weighted voting instead of hard blocking signals
+        // Confidence is based on BTC momentum strength (0-1 scale converted to 0-100)
+
+        if (!this.btcAnalyzer || !this.btcCandlesStore || this.btcCandlesStore.btcCandles1m.length === 0) {
+          this.logger.warn('🔗 BTC_CORRELATION analyzer - data not available', {
+            btcAnalyzer: !!this.btcAnalyzer,
+            btcCandlesStore: !!this.btcCandlesStore,
+            candlesLength: this.btcCandlesStore?.btcCandles1m?.length ?? 0,
+          });
+          return null; // BTC analysis not available
+        }
+
+        try {
+          const btcCandles = this.btcCandlesStore.btcCandles1m;
+
+          // Analyze BTC with LONG direction to check alignment
+          // (actual return signal is based on BTC's momentum, not alignment check)
+          const btcAnalysis = this.btcAnalyzer.analyze(btcCandles, SignalDirection.LONG);
+
+          // If BTC is neutral, don't participate in voting
+          if (btcAnalysis.direction === BTCDirection.NEUTRAL) {
+            return null;
+          }
+
+          // Convert BTC momentum (0-1) to confidence (0-100)
+          let confidence = btcAnalysis.momentum * PERCENT_MULTIPLIER;
+
+          // Get min/max confidence thresholds from config
+          const minConfidence = btcAnalyzerConfig.minConfidence ?? 25;
+          const maxConfidence = btcAnalyzerConfig.maxConfidence ?? 85;
+
+          // Ensure minimum confidence threshold (don't return very weak signals)
+          if (confidence < minConfidence) {
+            this.logger.info('🔗 BTC_CORRELATION filtered (low momentum)', {
+              confidence: confidence.toFixed(1),
+              minConfidence,
+              btcMomentum: btcAnalysis.momentum.toFixed(3),
+            });
+            return null;
+          }
+
+          // Cap maximum confidence (BTC is secondary, not primary)
+          confidence = Math.min(confidence, maxConfidence);
+
+          // Return BTC's own direction with confidence based on momentum
+          const direction =
+            btcAnalysis.direction === BTCDirection.UP ? SignalDirection.LONG : SignalDirection.SHORT;
+
+          this.logger.info('🔗 BTC_CORRELATION analyzer SIGNAL', {
+            direction,
+            confidence: confidence.toFixed(1),
+            btcMomentum: btcAnalysis.momentum.toFixed(3),
+            btcCandles: btcCandles.length,
+            configWeight: btcAnalyzerConfig.weight,
+            configMinConfidence: minConfidence,
+            configMaxConfidence: maxConfidence,
+          });
+
+          return {
+            source: 'BTC_CORRELATION',
+            direction,
+            confidence,
+            weight: btcAnalyzerConfig.weight,
+            priority: btcAnalyzerConfig.priority,
+          };
+        } catch (error) {
+          this.logger.error('BTC_CORRELATION analyzer failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
       },
     });
 
