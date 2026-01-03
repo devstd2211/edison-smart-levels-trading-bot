@@ -112,6 +112,16 @@ If you do not accept these risks, DO NOT RUN THIS BOT.
 - **Pattern Analysis** - Identify loss patterns and optimization opportunities
 - **Session Reports** - Comprehensive trading session breakdowns
 
+### User Interface
+
+- **Web Interface** - ⏳ Currently in development
+  - Real-time trading dashboard (planned)
+  - Configuration UI (planned)
+  - Performance analytics viewer (planned)
+  - Trade journal browser (planned)
+
+**Status:** For now, the bot runs via CLI. Web UI coming soon!
+
 ---
 
 ## Quick Start
