@@ -27,7 +27,9 @@ describe('SignalProcessingService', () => {
         confidence: 75,
         totalScore: 0.75,
         recommendedEntry: true,
-        signals: [{ direction: SignalDirection.LONG, weight: 0.5, reason: 'Test' }],
+        signals: [
+          { source: 'TestAnalyzer', direction: SignalDirection.LONG, weight: 0.5, confidence: 75, priority: 1, reason: 'Test' }
+        ],
         reasoning: 'Test reasoning',
       }),
       getMinTotalScore: jest.fn().mockReturnValue(0.5),

@@ -96,11 +96,15 @@ export class BotInitializer {
     try {
       this.logger.info('🔍 Starting position monitor and maintenance tasks...');
 
+      // CRITICAL: Restore open positions from exchange BEFORE periodic cleanup starts
+      // This prevents race condition where cleanup cancels SL/TP before position is restored from WebSocket
+      await this.restoreOpenPositions();
+
       // Start Position Monitor
       this.services.positionMonitor.start();
       this.logger.debug('Position monitor started');
 
-      // Setup periodic maintenance tasks
+      // Setup periodic maintenance tasks (only after position restoration)
       this.setupPeriodicTasks();
 
       this.logger.info('✅ Position monitor and maintenance tasks started');
@@ -109,6 +113,58 @@ export class BotInitializer {
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
+    }
+  }
+
+  /**
+   * Restore open positions from exchange after bot restart
+   * CRITICAL: This is called BEFORE periodic cleanup to prevent cancelling SL/TP orders
+   *
+   * Race condition being prevented:
+   * - Bot stops with open position
+   * - Bot restarts
+   * - Periodic cleanup runs every 30s and calls cancelAllConditionalOrders() if no position in memory
+   * - WebSocket position restoration happens async and might not complete before first cleanup
+   *
+   * Solution: Proactively fetch position from exchange and restore to memory BEFORE cleanup starts
+   */
+  private async restoreOpenPositions(): Promise<void> {
+    try {
+      this.logger.info('🔄 Checking for open positions to restore...');
+
+      // Fetch current position from exchange
+      const exchangePosition = await this.services.bybitService.getPosition();
+
+      if (exchangePosition === null || exchangePosition.quantity === 0) {
+        this.logger.debug('✅ No open positions found on exchange - clean state');
+        return;
+      }
+
+      // Position exists on exchange - restore it to memory
+      this.logger.info('✅ Found open position on exchange - restoring to memory...', {
+        symbol: exchangePosition.symbol,
+        side: exchangePosition.side,
+        quantity: exchangePosition.quantity,
+        entryPrice: exchangePosition.entryPrice,
+      });
+
+      // Sync position with WebSocket (this handles journal linking)
+      this.services.positionManager.syncWithWebSocket(exchangePosition);
+
+      const restoredPosition = this.services.positionManager.getCurrentPosition();
+      if (restoredPosition) {
+        this.logger.info('✅ Position restored successfully', {
+          positionId: restoredPosition.id,
+          journalId: restoredPosition.journalId,
+          protectionVerified: restoredPosition.protectionVerifiedOnce,
+        });
+      }
+    } catch (error) {
+      this.logger.error('Failed to restore open positions', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Non-fatal error - continue startup but log the issue
+      // User should investigate why position restoration failed
     }
   }
 

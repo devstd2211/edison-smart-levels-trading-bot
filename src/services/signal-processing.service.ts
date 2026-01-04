@@ -131,6 +131,14 @@ export class SignalProcessingService {
       // Aggregate signals using weighted voting (with trend-filtered signals)
       const aggregatedResult = this.strategyCoordinator.aggregateSignals(trendFilteredSignals);
 
+      // Create detailed analyzer participation list
+      const participatingAnalyzers = aggregatedResult.signals.map((signal: any) => ({
+        name: signal.source,
+        direction: signal.direction,
+        confidence: signal.confidence.toFixed(0) + '%',
+        weight: signal.weight.toFixed(4),
+      }));
+
       this.logger.info('📊 Weighted Voting Result (with PHASE 4 trend filter)', {
         direction: aggregatedResult.direction,
         trend: trendAnalysis?.bias || 'N/A',
@@ -142,6 +150,12 @@ export class SignalProcessingService {
         signalCount: aggregatedResult.signals.length,
         meetsThresholds: aggregatedResult.recommendedEntry,
         reasoning: aggregatedResult.reasoning,
+      });
+
+      // Log detailed analyzer participation
+      this.logger.info('📊 Participating Analyzers in Weighted Voting', {
+        analyzersCount: participatingAnalyzers.length,
+        analyzers: participatingAnalyzers,
       });
 
       if (!aggregatedResult.recommendedEntry) {
