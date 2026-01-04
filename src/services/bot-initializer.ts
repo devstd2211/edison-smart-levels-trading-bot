@@ -54,6 +54,12 @@ export class BotInitializer {
         await this.initializeBtcCandles();
       }
 
+      // Phase 5: Initialize trend analysis from loaded candles (CRITICAL - prevents ~5 minute startup delay)
+      // MUST be called after candles are loaded but before trading starts
+      if ((this.services as any).tradingOrchestrator) {
+        await (this.services as any).tradingOrchestrator.initializeTrendAnalysis();
+      }
+
       this.logger.info('✅ Bot initialization complete - ready to start trading');
     } catch (error) {
       this.logger.error('Failed to initialize bot', {

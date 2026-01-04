@@ -566,6 +566,9 @@ export class TradingOrchestrator {
       responsibility: ['Update trend analysis on PRIMARY candle close', 'Filter signals by trend alignment'],
     });
 
+    // CRITICAL: Trend analysis will be initialized in initializeAfterConstruction()
+    // This prevents the ~5 minute wait for first PRIMARY candle close
+
     // Week 13: Initialize ExternalAnalysisService (extracted external data analysis)
     const ExternalAnalysisModule = require('./external-analysis.service') as any;
     const ExternalAnalysis = ExternalAnalysisModule.ExternalAnalysisService;
@@ -691,6 +694,26 @@ export class TradingOrchestrator {
       (this.externalAnalysisService as any).setBtcCandlesStore(store);
     }
     this.logger.info('🔗 BTC candles store linked to TradingOrchestrator');
+  }
+
+  /**
+   * Initialize trend analysis from loaded candles
+   * CRITICAL: Called immediately after candles are loaded to prevent ~5 minute startup delay
+   * This allows trend analysis to be available immediately instead of waiting for first PRIMARY candle close
+   */
+  async initializeTrendAnalysis(): Promise<void> {
+    try {
+      if (this.tradingContextService) {
+        this.logger.info('🚀 Initializing trend analysis from loaded candles...');
+        await this.tradingContextService.initializeTrendAnalysis();
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize trend analysis', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Non-fatal error - continue without initial trend analysis
+      // It will be available on first PRIMARY candle close
+    }
   }
 
   /**

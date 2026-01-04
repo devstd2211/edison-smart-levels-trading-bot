@@ -39,6 +39,42 @@ export class TradingContextService {
   ) {}
 
   /**
+   * Initialize trend analysis on bot startup
+   * CRITICAL: Called immediately after candle loading to avoid null trend at start
+   * This prevents the "trend not available" blocking that lasts ~5 minutes
+   */
+  async initializeTrendAnalysis(): Promise<void> {
+    if (!this.trendAnalyzer) {
+      this.logger.warn('⚠️ TrendAnalyzer not available - trend analysis skipped');
+      return;
+    }
+
+    try {
+      const primaryCandles = await this.candleProvider.getCandles(TimeframeRole.PRIMARY);
+      if (!primaryCandles || primaryCandles.length < 20) {
+        this.logger.warn('⚠️ Insufficient candles for trend initialization', {
+          available: primaryCandles?.length || 0,
+          required: 20,
+        });
+        return;
+      }
+
+      this.logger.info('🚀 INITIALIZING TREND ANALYSIS ON BOT STARTUP...');
+      this.currentTrendAnalysis = await this.trendAnalyzer.analyzeTrend(primaryCandles, '1h');
+
+      if (this.currentTrendAnalysis) {
+        this.logTrendStatus('STARTUP INITIALIZATION');
+      } else {
+        this.logger.warn('⚠️ Trend analysis initialization returned null');
+      }
+    } catch (error) {
+      this.logger.warn('Failed to initialize trend analysis', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
    * Update trend context on PRIMARY candle close
    * CRITICAL: Runs FIRST in signal pipeline to set global trend bias
    */
@@ -60,31 +96,7 @@ export class TradingContextService {
       this.currentTrendAnalysis = await this.trendAnalyzer.analyzeTrend(primaryCandles, '1h');
 
       if (this.currentTrendAnalysis) {
-        const trendEmoji = this.getTrendEmoji(this.currentTrendAnalysis.bias);
-        const restrictedText =
-          this.currentTrendAnalysis.restrictedDirections.length > 0
-            ? this.currentTrendAnalysis.restrictedDirections.join(', ')
-            : 'NONE';
-
-        // Super visible trend status output
-        this.logger.info(
-          `\n${'═'.repeat(80)}\n${trendEmoji} SUPER TREND STATUS (PRIMARY - 5min candles)\n${'═'.repeat(80)}`,
-        );
-
-        this.logger.info('📊 TREND ANALYSIS UPDATED (PRIMARY)', {
-          trendDirection: this.currentTrendAnalysis.bias,
-          trendEmoji: trendEmoji,
-          strength: (this.currentTrendAnalysis.strength * 100).toFixed(1) + '%',
-          pattern: this.currentTrendAnalysis.pattern,
-          timeframe: 'PRIMARY (5-minute)',
-          candles: primaryCandles.length,
-          restrictedDirections: restrictedText,
-          reasoning: this.currentTrendAnalysis.reasoning.slice(0, 3).join(' | '),
-        });
-
-        this.logger.info(
-          `${trendEmoji} CURRENT MARKET STATE: ${this.getTrendDescription(this.currentTrendAnalysis)}\n${'═'.repeat(80)}\n`,
-        );
+        this.logTrendStatus('PRIMARY CANDLE CLOSE UPDATE');
       }
     } catch (error) {
       this.logger.warn('Failed to update trend analysis', {
@@ -92,6 +104,38 @@ export class TradingContextService {
       });
       // Do not clear currentTrendAnalysis - keep previous value if analysis fails
     }
+  }
+
+  /**
+   * Helper: Log trend status with super visible output
+   */
+  private logTrendStatus(source: string): void {
+    if (!this.currentTrendAnalysis) return;
+
+    const trendEmoji = this.getTrendEmoji(this.currentTrendAnalysis.bias);
+    const restrictedText =
+      this.currentTrendAnalysis.restrictedDirections.length > 0
+        ? this.currentTrendAnalysis.restrictedDirections.join(', ')
+        : 'NONE';
+
+    // Super visible trend status output
+    this.logger.info(
+      `\n${'═'.repeat(80)}\n${trendEmoji} SUPER TREND STATUS (${source}) - 5min candles\n${'═'.repeat(80)}`,
+    );
+
+    this.logger.info('📊 TREND ANALYSIS UPDATED', {
+      source: source,
+      bias: this.currentTrendAnalysis.bias,
+      strength: (this.currentTrendAnalysis.strength * 100).toFixed(1) + '%',
+      pattern: this.currentTrendAnalysis.pattern,
+      timeframe: 'PRIMARY (5-minute)',
+      restrictedDirections: restrictedText,
+      reasoning: this.currentTrendAnalysis.reasoning.slice(0, 3).join(' | '),
+    });
+
+    this.logger.info(
+      `${trendEmoji} CURRENT MARKET STATE: ${this.getTrendDescription(this.currentTrendAnalysis)}\n${'═'.repeat(80)}\n`,
+    );
   }
 
   /**
