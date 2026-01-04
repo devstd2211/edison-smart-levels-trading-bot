@@ -54,17 +54,7 @@ export class BotInitializer {
         await this.initializeBtcCandles();
       }
 
-      // Phase 5: Initialize trend analysis from loaded candles (CRITICAL - prevents ~5 minute startup delay)
-      // MUST be called after candles are loaded but before trading starts
-      if ((this.services as any).tradingOrchestrator) {
-        this.logger.info('📍 Phase 5: Calling TradingOrchestrator.initializeTrendAnalysis()...');
-        await (this.services as any).tradingOrchestrator.initializeTrendAnalysis();
-        this.logger.info('✅ Phase 5: TradingOrchestrator.initializeTrendAnalysis() completed');
-      } else {
-        this.logger.warn('⚠️ TradingOrchestrator not available in BotServices');
-      }
-
-      this.logger.info('✅ Bot initialization complete - ready to start trading');
+      this.logger.info('✅ Bot initialization complete - ready to connect WebSockets');
     } catch (error) {
       this.logger.error('Failed to initialize bot', {
         error: error instanceof Error ? error.message : String(error),
@@ -90,11 +80,41 @@ export class BotInitializer {
       this.services.publicWebSocket.connect();
 
       this.logger.info('✅ WebSocket connections established');
+
+      // CRITICAL Phase 5: Initialize trend analysis NOW that WebSocket has candles
+      // This must happen AFTER WebSocket connects because candles are loaded asynchronously via WebSocket
+      await this.initializeTrendAnalysisAfterWebSocket();
     } catch (error) {
       this.logger.error('Failed to connect WebSockets', {
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
+    }
+  }
+
+  /**
+   * Initialize trend analysis after WebSocket connection
+   * CRITICAL: Must be called AFTER WebSocket connects, not during initial initialization
+   * Candles are loaded asynchronously via WebSocket, so we wait for connection first
+   */
+  private async initializeTrendAnalysisAfterWebSocket(): Promise<void> {
+    try {
+      // Give WebSocket a brief moment to start receiving candles
+      // Typically first candles arrive within 100-500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      this.logger.info('📍 Phase 5: Initializing trend analysis after WebSocket connection...');
+      if ((this.services as any).tradingOrchestrator) {
+        await (this.services as any).tradingOrchestrator.initializeTrendAnalysis();
+        this.logger.info('✅ Phase 5: Trend analysis initialized successfully after WebSocket');
+      } else {
+        this.logger.warn('⚠️ TradingOrchestrator not available in BotServices');
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize trend after WebSocket', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Non-fatal - trend will initialize on first PRIMARY candle close
     }
   }
 

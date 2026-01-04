@@ -174,7 +174,7 @@ describe('BotInitializer', () => {
 
       expect(mockServices.logger.info).toHaveBeenCalledWith('🚀 Starting bot initialization sequence...');
       expect(mockServices.logger.info).toHaveBeenCalledWith(
-        '✅ Bot initialization complete - ready to start trading',
+        '✅ Bot initialization complete - ready to connect WebSockets',
       );
     });
 
