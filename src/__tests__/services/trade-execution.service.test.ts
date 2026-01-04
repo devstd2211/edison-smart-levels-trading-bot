@@ -150,7 +150,7 @@ describe('TradeExecutionService', () => {
 
       // PHASE 6a: EntryOrchestrator is now PRIMARY decision point (RiskManager called inside)
       expect(mockEntryOrchestrator.evaluateEntry).toHaveBeenCalled();
-      expect(mockExternalAnalysisService.checkBTCConfirmation).toHaveBeenCalled();
+      // Week 13: BTC confirmation now handled as soft voting through analyzer system, not hard block
       expect(mockExternalAnalysisService.checkFundingRate).toHaveBeenCalled();
       expect(mockPositionManager.openPosition).toHaveBeenCalled();
       expect(mockTelegram.sendTradeNotification).toHaveBeenCalled();

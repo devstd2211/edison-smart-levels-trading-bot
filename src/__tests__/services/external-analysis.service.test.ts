@@ -162,7 +162,7 @@ describe('ExternalAnalysisService', () => {
       expect(confirmed).toBe(true);
     });
 
-    it('should reject signal when BTC is not aligned', async () => {
+    it('should still pass signal when BTC is not aligned (soft voting mode)', async () => {
       mockBTCAnalyzer.shouldConfirm.mockReturnValue(false);
 
       const mockCandles = Array(50)
@@ -181,7 +181,8 @@ describe('ExternalAnalysisService', () => {
 
       const confirmed = await service.checkBTCConfirmation(SignalDirection.LONG);
 
-      expect(confirmed).toBe(false);
+      // BTC confirmation now uses soft voting through AnalyzerRegistry instead of hard blocking
+      expect(confirmed).toBe(true);
     });
 
     it('should pass if BTC analyzer not available', async () => {

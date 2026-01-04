@@ -102,15 +102,15 @@
   },
   "riskManagement": {
     "positionSizeUsdt": 10,
-    "stopLossPercent": 2.5,
+    "stopLossPercent": 1.5,
     "minStopLossPercent": 1.0,
     "breakevenOffsetPercent": 0.4,
     "trailingStopEnabled": false,
     "trailingStopPercent": 0.6,
     "trailingStopActivationLevel": 2,
     "takeProfits": [
-      { "level": 1, "percent": 0.5, "sizePercent": 70 },
-      { "level": 2, "percent": 1.0, "sizePercent": 30 }
+      { "level": 1, "percent": 1.0, "sizePercent": 50 },
+      { "level": 2, "percent": 2.0, "sizePercent": 50 }
     ],
     "timeBasedExitEnabled": false
   },
@@ -171,6 +171,106 @@
     "ema": {
       "baseConfidence": 0.5,
       "strengthConfidenceMultiplier": 0.2
+    }
+  },
+  "analyzerStrategic": {
+    "_comment": "FIX #1-9: Strategic configuration for new analyzers and validators",
+    "rsiAnalyzer": {
+      "_comment": "FIX #1: Dynamic SHORT threshold with ATR adaptation",
+      "enabled": true,
+      "dynamicShortThresholdMode": "enabled",
+      "dynamicShortThreshold": 50,
+      "atrBasedAdaptation": true,
+      "dynamicMultiplier": 2,
+      "risingKnifePenalty": 0.6,
+      "bounceBonus": 1.1,
+      "minConfidenceAfterFallingKnife": 30,
+      "logValidations": true
+    },
+    "chochBosDetector": {
+      "_comment": "FIX #2: Full Break of Structure / Change of Character detection",
+      "enabled": true,
+      "baseConfidence": 75,
+      "bosDetectionStrength": 0.8,
+      "chochDetectionStrength": 0.85,
+      "logAllDetections": true
+    },
+    "footprintAnalyzer": {
+      "_comment": "FIX #3: Resistance rejection mode for SHORT",
+      "enabled": true,
+      "baseConfidence": 60,
+      "maxConfidence": 85,
+      "minClosePositionPercent": 70,
+      "minBodyToRangeRatio": 0.6,
+      "closePositionMultiplier": 0.15,
+      "resistanceRejectionMode": "enabled",
+      "resistanceRejectionConfidence": 70,
+      "requireRejectWickPercent": 95,
+      "blockLongInDowntrend": true,
+      "rsiDowntrendThreshold": 55,
+      "logDecisions": true
+    },
+    "hiddenDivergence": {
+      "_comment": "FIX #4: Hidden divergence detection (Price HH but RSI LH)",
+      "enabled": true,
+      "hiddenBearishConfidence": 65,
+      "hiddenBullishConfidence": 65,
+      "logDetections": true
+    },
+    "wickAnalyzer": {
+      "_comment": "FIX #5: Adaptive wick age handling",
+      "enabled": true,
+      "baseConfidence": 50,
+      "maxConfidence": 80,
+      "rejectionThresholdPercent": 40,
+      "adaptiveAging": "enabled",
+      "currentCandlePercent": 100,
+      "previousCandlePercent": 70,
+      "twoThreeCandlesPercent": 30,
+      "logWickAge": true
+    },
+    "trendConflictDetector": {
+      "_comment": "FIX #6: Detects conflicting signals indicating reversals",
+      "enabled": true,
+      "minConflictingSignals": 2,
+      "conflictConfidence": 60,
+      "weight": 0.1,
+      "priority": 8,
+      "logDetections": true
+    },
+    "postTPFilter": {
+      "_comment": "FIX #7: Anti-FOMO filter after take-profit",
+      "enabled": true,
+      "consolidationMinutes": 10,
+      "firstHalfMinutes": 5,
+      "firstHalfRequired": 0.75,
+      "secondHalfMinutes": 3,
+      "secondHalfRequired": 0.70,
+      "logDecisions": true
+    },
+    "shortEntryValidator": {
+      "_comment": "FIX #8: Stricter SHORT entry requirements",
+      "enabled": true,
+      "minConfidenceShort": 0.75,
+      "minConfidenceLong": 0.70,
+      "requireMomentumConfirmation": true,
+      "maxRsiForShort": 60,
+      "logValidations": true
+    },
+    "entryCostValidator": {
+      "_comment": "FIX #9: Ensures minimum analyzer consensus",
+      "enabled": true,
+      "minAnalyzersForShort": 2,
+      "minAnalyzersForLong": 2,
+      "maxSilentPercentShort": 40,
+      "maxSilentPercentLong": 50,
+      "logDecisions": true
+    },
+    "divergenceAnalyzer": {
+      "enabled": true,
+      "maxConfidence": 80,
+      "hiddenDivergenceMode": "enabled",
+      "hiddenBearishDivergenceConfidence": 65
     }
   },
   "entryThresholds": {

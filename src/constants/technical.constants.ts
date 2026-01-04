@@ -759,3 +759,72 @@ export const TREND_ANALYZER_ZIGZAG_MIN_DEPTH = 5;
 
 /** Maximum age for considering recent swings (in candles) */
 export const TREND_ANALYZER_RECENT_SWING_MAX_AGE = 20;
+
+// ============================================================================
+// FIX #1: RSI_ANALYZER TECHNICAL CONSTANTS
+// ============================================================================
+
+/** Multiplier for dynamic RSI threshold (50 + atrPercent * 2) */
+export const RSI_DYNAMIC_THRESHOLD_ATR_MULTIPLIER = 2;
+
+/** Penalty multiplier when falling/rising knife pattern detected */
+export const RSI_KNIFE_PENALTY_MULTIPLIER = 0.6;
+
+/** Bonus multiplier when bouncing/confirming candle detected */
+export const RSI_BOUNCE_BONUS_MULTIPLIER = 1.1;
+
+// ============================================================================
+// FIX #2: CHOCH_BOS_DETECTOR TECHNICAL CONSTANTS
+// ============================================================================
+
+/** Minimum number of swings required to detect BOS pattern */
+export const CHOCH_BOS_MIN_SWINGS = 2;
+
+/** Swing point lookback index (get last 3 swings) */
+export const CHOCH_BOS_LOOKBACK = 3;
+
+// ============================================================================
+// FIX #3: FOOTPRINT TECHNICAL CONSTANTS
+// ============================================================================
+
+/** Wick percentage threshold for resistance rejection (95% = 0.95) */
+export const FOOTPRINT_RESISTANCE_WICK_THRESHOLD = 0.95;
+
+// ============================================================================
+// FIX #5: WICK_ANALYZER TECHNICAL CONSTANTS
+// ============================================================================
+
+/** Milliseconds per candlestick (for 1m candles) */
+export const WICK_CANDLE_INTERVAL_MS = 60000;
+
+/** Confidence multiplier for current candle's wick */
+export const WICK_CURRENT_CANDLE_CONFIDENCE = 1.0;
+
+/** Confidence multiplier for previous candle's wick */
+export const WICK_PREVIOUS_CANDLE_CONFIDENCE = 0.7;
+
+/** Confidence multiplier for 2-3 candles ago wick */
+export const WICK_OLD_CANDLE_CONFIDENCE = 0.3;
+
+// ============================================================================
+// FIX #7: POST-TP CONSOLIDATION TECHNICAL CONSTANTS (time in ms)
+// ============================================================================
+
+/** First half consolidation period (5 minutes) */
+export const POST_TP_FIRST_HALF_MS = 5 * 60 * 1000;
+
+/** Second half consolidation period (3 minutes) */
+export const POST_TP_SECOND_HALF_MS = 3 * 60 * 1000;
+
+/** Total consolidation wait time (10 minutes) */
+export const POST_TP_TOTAL_WAIT_MS = 10 * 60 * 1000;
+
+// ============================================================================
+// FIX #9: ANALYZER COST VALIDATION TECHNICAL CONSTANTS
+// ============================================================================
+
+/** Percentage threshold for blocked analyzers (40% of total) */
+export const ENTRY_COST_BLOCKED_PERCENTAGE = 0.40;
+
+/** Percentage threshold for blocked analyzers on LONG (50% of total) */
+export const ENTRY_COST_BLOCKED_PERCENTAGE_LONG = 0.50;
