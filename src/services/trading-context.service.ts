@@ -44,40 +44,55 @@ export class TradingContextService {
    * This prevents the "trend not available" blocking that lasts ~5 minutes
    */
   async initializeTrendAnalysis(): Promise<void> {
-    this.logger.info('📍 TradingContextService.initializeTrendAnalysis() called');
+    this.logger.info('🔥 TradingContextService.initializeTrendAnalysis() CALLED - THIS IS CRITICAL');
 
     if (!this.trendAnalyzer) {
-      this.logger.warn('⚠️ TrendAnalyzer not available - trend analysis skipped');
+      this.logger.error('🚨 CRITICAL: TrendAnalyzer is NULL! Trend analysis cannot initialize');
       return;
     }
 
+    this.logger.info('✅ TrendAnalyzer is available, proceeding...');
+
     try {
       const primaryCandles = await this.candleProvider.getCandles(TimeframeRole.PRIMARY);
-      this.logger.info('📍 Got primary candles for trend init', {
-        count: primaryCandles?.length || 0,
+      const candleCount = primaryCandles?.length || 0;
+
+      this.logger.info('🔥 CRITICAL: Got primary candles', {
+        count: candleCount,
         required: 20,
+        hasCandles: candleCount > 0,
+        isEnough: candleCount >= 20,
       });
 
-      if (!primaryCandles || primaryCandles.length < 20) {
-        this.logger.warn('⚠️ Insufficient candles for trend initialization', {
-          available: primaryCandles?.length || 0,
+      if (!primaryCandles || candleCount < 20) {
+        this.logger.error('🚨 NOT ENOUGH CANDLES FOR TREND INIT', {
+          available: candleCount,
           required: 20,
+          candleProvider: this.candleProvider ? 'exists' : 'NULL',
         });
         return;
       }
 
-      this.logger.info('🚀 INITIALIZING TREND ANALYSIS ON BOT STARTUP...');
-      this.currentTrendAnalysis = await this.trendAnalyzer.analyzeTrend(primaryCandles, '1h');
+      this.logger.info('🚀 STARTING TREND ANALYZER...');
+      const result = await this.trendAnalyzer.analyzeTrend(primaryCandles, '1h');
+
+      this.logger.info('🔥 ANALYZER RETURNED', {
+        resultExists: !!result,
+        resultType: result ? typeof result : 'null',
+      });
+
+      this.currentTrendAnalysis = result;
 
       if (this.currentTrendAnalysis) {
-        this.logger.info('✅ Trend analysis initialized successfully at startup!');
+        this.logger.info('✅✅✅ TREND ANALYSIS INITIALIZED SUCCESSFULLY AT STARTUP!');
         this.logTrendStatus('STARTUP INITIALIZATION');
       } else {
-        this.logger.warn('⚠️ Trend analysis initialization returned null');
+        this.logger.error('🚨 ANALYZER RETURNED NULL - TREND ANALYSIS FAILED');
       }
     } catch (error) {
-      this.logger.warn('Failed to initialize trend analysis', {
+      this.logger.error('🚨 EXCEPTION DURING TREND INIT', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
   }

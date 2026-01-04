@@ -69,6 +69,7 @@ export class BotInitializer {
    */
   async connectWebSockets(): Promise<void> {
     try {
+      this.logger.error('🔥🔥🔥 connectWebSockets() CALLED - CRITICAL FLOW POINT 🔥🔥🔥');
       this.logger.info('📡 Connecting WebSocket connections...');
 
       // Connect Private WebSocket (position/orders)
@@ -83,7 +84,9 @@ export class BotInitializer {
 
       // CRITICAL Phase 5: Initialize trend analysis NOW that WebSocket has candles
       // This must happen AFTER WebSocket connects because candles are loaded asynchronously via WebSocket
+      this.logger.error('🔥🔥🔥 ABOUT TO CALL initializeTrendAnalysisAfterWebSocket() 🔥🔥🔥');
       await this.initializeTrendAnalysisAfterWebSocket();
+      this.logger.error('🔥🔥🔥 initializeTrendAnalysisAfterWebSocket() RETURNED 🔥🔥🔥');
     } catch (error) {
       this.logger.error('Failed to connect WebSockets', {
         error: error instanceof Error ? error.message : String(error),
@@ -99,20 +102,25 @@ export class BotInitializer {
    */
   private async initializeTrendAnalysisAfterWebSocket(): Promise<void> {
     try {
+      this.logger.error('🔥🔥🔥 BEFORE WEBSOCKET DELAY - Waiting 500ms for candles... 🔥🔥🔥');
+
       // Give WebSocket a brief moment to start receiving candles
       // Typically first candles arrive within 100-500ms
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      this.logger.info('📍 Phase 5: Initializing trend analysis after WebSocket connection...');
+      this.logger.error('🔥🔥🔥 AFTER WEBSOCKET DELAY - Now calling TradingOrchestrator 🔥🔥🔥');
+
       if ((this.services as any).tradingOrchestrator) {
+        this.logger.info('✅ TradingOrchestrator found, calling initializeTrendAnalysis()...');
         await (this.services as any).tradingOrchestrator.initializeTrendAnalysis();
-        this.logger.info('✅ Phase 5: Trend analysis initialized successfully after WebSocket');
+        this.logger.info('✅ TradingOrchestrator.initializeTrendAnalysis() returned');
       } else {
-        this.logger.warn('⚠️ TradingOrchestrator not available in BotServices');
+        this.logger.error('🚨 CRITICAL: TradingOrchestrator not available in BotServices');
       }
     } catch (error) {
-      this.logger.error('Failed to initialize trend after WebSocket', {
+      this.logger.error('🚨 Exception during trend initialization after WebSocket', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
       // Non-fatal - trend will initialize on first PRIMARY candle close
     }

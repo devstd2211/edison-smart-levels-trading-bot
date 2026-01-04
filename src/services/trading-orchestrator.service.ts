@@ -703,17 +703,18 @@ export class TradingOrchestrator {
    */
   async initializeTrendAnalysis(): Promise<void> {
     try {
-      this.logger.info('📍 TradingOrchestrator.initializeTrendAnalysis() called');
+      this.logger.error('🔥🔥🔥 TradingOrchestrator.initializeTrendAnalysis() CALLED - CRITICAL POINT 🔥🔥🔥');
       if (this.tradingContextService) {
-        this.logger.info('🚀 Initializing trend analysis from loaded candles...');
+        this.logger.info('✅ TradingContextService exists, calling initializeTrendAnalysis()...');
         await this.tradingContextService.initializeTrendAnalysis();
-        this.logger.info('✅ TradingContextService.initializeTrendAnalysis() completed');
+        this.logger.info('✅ TradingContextService.initializeTrendAnalysis() returned');
       } else {
-        this.logger.warn('⚠️ TradingContextService not available');
+        this.logger.error('🚨 CRITICAL: TradingContextService is NULL!');
       }
     } catch (error) {
-      this.logger.error('Failed to initialize trend analysis', {
+      this.logger.error('🚨 Exception in TradingOrchestrator.initializeTrendAnalysis()', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
       // Non-fatal error - continue without initial trend analysis
       // It will be available on first PRIMARY candle close
