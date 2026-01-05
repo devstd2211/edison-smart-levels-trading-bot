@@ -20,6 +20,7 @@ export class DashboardIntegrationService {
   private lastRSI: Map<string, number> = new Map();
   private lastEMA: Map<string, { fast: number; slow: number }> = new Map();
   private detectedPatterns: string[] = [];
+  private isUpdatingAnalyzers: boolean = false; // Prevent concurrent analyzer updates
 
   constructor(
     private dashboard: ConsoleDashboardService,
@@ -173,16 +174,29 @@ export class DashboardIntegrationService {
   }
 
   private async updateAnalyzerData(): Promise<void> {
+    // Skip if already updating - prevent concurrent updates from piling up
+    if (this.isUpdatingAnalyzers) return;
+
+    this.isUpdatingAnalyzers = true;
     try {
       // Get real-time data from analyzers when candle closes
-      await Promise.all([
-        this.updateTrendDataAsync(),
-        this.updateRSIDataAsync(),
-        this.updateEMADataAsync(),
+      // Add timeout to prevent hanging on slow analyzer calls
+      await Promise.race([
+        Promise.all([
+          this.updateTrendDataAsync(),
+          this.updateRSIDataAsync(),
+          this.updateEMADataAsync(),
+        ]),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Dashboard analyzer update timeout')), 2000)
+        ),
       ]);
       this.updatePositionData();
     } catch (error) {
       // Silently fail - don't break the bot
+      // Error likely means analyzers are slow - that's ok
+    } finally {
+      this.isUpdatingAnalyzers = false;
     }
   }
 

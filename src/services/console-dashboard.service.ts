@@ -43,6 +43,8 @@ export class ConsoleDashboardService extends EventEmitter {
   private state: DashboardState;
   private widgets: Map<string, Widgets.BoxElement> = new Map();
   private updateTimer?: NodeJS.Timeout;
+  private lastRenderTime: number = 0;
+  private readonly minRenderInterval: number = 200; // Minimum ms between renders
 
   constructor(config: DashboardConfig = { enabled: true }) {
     super();
@@ -227,6 +229,13 @@ export class ConsoleDashboardService extends EventEmitter {
 
   private render(): void {
     if (!this.screen || !this.config.enabled) return;
+
+    // Throttle rendering to prevent freezing
+    const now = Date.now();
+    if (now - this.lastRenderTime < this.minRenderInterval) {
+      return; // Skip render if too soon
+    }
+    this.lastRenderTime = now;
 
     try {
       this.renderMarketData();
