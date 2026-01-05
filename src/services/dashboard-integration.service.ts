@@ -206,11 +206,7 @@ export class DashboardIntegrationService {
     try {
       // Use multiTimeframeAnalysis to get all timeframes
       const multiTrend = (this.trendAnalyzer as any).lastAnalysis;
-      console.debug(`[DASHBOARD] Trend analyzer lastAnalysis:`, multiTrend ? 'exists' : 'null');
-
       if (multiTrend && multiTrend.byTimeframe) {
-        console.debug(`[DASHBOARD] Trend byTimeframe keys:`, Object.keys(multiTrend.byTimeframe));
-
         // Update each timeframe from the analysis
         Object.entries(multiTrend.byTimeframe).forEach(([timeframe, analysis]: any) => {
           if (analysis && analysis.bias) {
@@ -223,13 +219,12 @@ export class DashboardIntegrationService {
                 trend,
                 pattern: this.detectCurrentPattern(),
               });
-              console.debug(`[DASHBOARD] Updated trend for ${timeframe}: ${trend}`);
             }
           }
         });
       }
     } catch (error) {
-      console.debug(`[DASHBOARD] Trend update error:`, error instanceof Error ? error.message : String(error));
+      // Ignore errors
     }
   }
 
@@ -240,9 +235,6 @@ export class DashboardIntegrationService {
       // Call calculateAll() to get real-time RSI values
       const rsiData = await (this.rsiAnalyzer as any).calculateAll?.();
       if (rsiData) {
-        // DEBUG: Log what we received to understand the structure
-        console.debug(`[DASHBOARD] RSI Data received:`, JSON.stringify(rsiData, null, 2));
-
         const timeframeMap: Record<string, string> = {
           entry: '1m',
           primary: '5m',
@@ -255,12 +247,11 @@ export class DashboardIntegrationService {
           if (Math.abs((this.lastRSI.get(tf) || 50) - rsi) > 0.5) {
             this.lastRSI.set(tf, rsi);
             this.dashboard.updateMarketData(tf, { rsi });
-            console.debug(`[DASHBOARD] Updated RSI for ${tf}: ${rsi}`);
           }
         });
       }
     } catch (error) {
-      console.debug(`[DASHBOARD] RSI update error:`, error instanceof Error ? error.message : String(error));
+      // Ignore errors
     }
   }
 
@@ -270,8 +261,6 @@ export class DashboardIntegrationService {
     try {
       // Call calculateAll() to get real-time EMA values
       const emaData = await (this.emaAnalyzer as any).calculateAll?.();
-      console.debug(`[DASHBOARD] EMA Data received:`, emaData ? JSON.stringify(emaData, null, 2) : 'null');
-
       if (emaData) {
         const timeframeMap: Record<string, string> = {
           entry: '1m',
@@ -290,13 +279,12 @@ export class DashboardIntegrationService {
             if (!lastEma || Math.abs(lastEma.fast - fast) > 0.0001) {
               this.lastEMA.set(tf, { fast, slow });
               this.dashboard.updateMarketData(tf, { emaFast: fast, emaSlow: slow });
-              console.debug(`[DASHBOARD] Updated EMA for ${tf}: fast=${fast}, slow=${slow}`);
             }
           }
         });
       }
     } catch (error) {
-      console.debug(`[DASHBOARD] EMA update error:`, error instanceof Error ? error.message : String(error));
+      // Ignore errors
     }
   }
 

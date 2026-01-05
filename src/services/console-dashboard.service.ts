@@ -254,25 +254,37 @@ export class ConsoleDashboardService extends EventEmitter {
     if (!marketWidget) return;
 
     let content = '';
-    const timeframes = ['1m', '5m', '15m', '30m', '1h'];
+    const timeframes = ['1m', '5m', '15m', '30m'];
 
-    content += '{bold}Timeframe  │ Trend      │ RSI  │ EMA F/S        │ Pattern{/bold}\n';
-    content += '─'.repeat(70) + '\n';
+    content += '{bold}{cyan-fg}╔══ MARKET DATA ══════════════════════════════╗{/cyan-fg}{/bold}\n';
+    content += '{bold}{cyan-fg}║ TF  │ Trend      │ RSI    │ EMA           ║{/cyan-fg}{/bold}\n';
+    content += '{cyan-fg}╠═════╪════════════╪════════╪═══════════════╣{/cyan-fg}\n';
 
     timeframes.forEach((tf) => {
       const data = this.state.marketData.get(tf);
       if (data) {
-        const trendText = data.trend.includes('UP') ? `{green-fg}${data.trend}{/green-fg}` : `{red-fg}${data.trend}{/red-fg}`;
-        const rsiText =
-          data.rsi > 70 || data.rsi < 30
-            ? `{yellow-fg}${data.rsi.toFixed(0)}{/yellow-fg}`
-            : `${data.rsi.toFixed(0)}`;
+        // Format trend with color
+        const trendText = data.trend.includes('UP')
+          ? `{green-fg}${data.trend.padEnd(10)}{/green-fg}`
+          : `{red-fg}${data.trend.padEnd(10)}{/red-fg}`;
 
-        content += `${tf.padEnd(10)}│ ${trendText.padEnd(20)}│ ${rsiText.padEnd(4)} │ ${data.emaFast.toFixed(4)}/${data.emaSlow.toFixed(4)} │ ${data.pattern}\n`;
+        // Format RSI with color - yellow if extreme, white otherwise
+        let rsiColor = '{white-fg}';
+        if (data.rsi > 70) rsiColor = '{yellow-fg}';
+        if (data.rsi < 30) rsiColor = '{yellow-fg}';
+        const rsiText = `${rsiColor}${data.rsi.toFixed(0).padStart(5)}{/white-fg}`;
+
+        // Format EMA
+        const emaText = `${data.emaFast.toFixed(1).padStart(6)}/${data.emaSlow.toFixed(1).padStart(6)}`;
+
+        content += `{cyan-fg}║{/cyan-fg} ${tf.padEnd(3)} │ ${trendText} │ ${rsiText} │ ${emaText} {cyan-fg}║{/cyan-fg}\n`;
+      } else {
+        content += `{cyan-fg}║{/cyan-fg} ${tf.padEnd(3)} │ {yellow-fg}Loading...    {/yellow-fg} │ {yellow-fg}  -- {/yellow-fg} │ {yellow-fg}   --/   -- {/yellow-fg} {cyan-fg}║{/cyan-fg}\n`;
       }
     });
 
-    content += `\n{bold}Current Price: {cyan-fg}${this.state.currentPrice.toFixed(4)}{/cyan-fg}{/bold}`;
+    content += '{cyan-fg}╚═════╧════════════╧════════╧═══════════════╝{/cyan-fg}\n';
+    content += `{bold}Price: {cyan-fg}${this.state.currentPrice.toFixed(4)}{/cyan-fg}{/bold}`;
 
     marketWidget.setContent(content);
   }
@@ -351,9 +363,6 @@ export class ConsoleDashboardService extends EventEmitter {
 
     this.state.marketData.set(timeframe, updated);
     this.state.lastUpdate = new Date();
-
-    // DEBUG: Log market data updates
-    console.debug(`[DASHBOARD] updateMarketData called for ${timeframe}:`, JSON.stringify(updated));
   }
 
   public updatePrice(price: number): void {
