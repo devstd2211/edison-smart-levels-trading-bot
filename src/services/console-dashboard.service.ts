@@ -33,6 +33,7 @@ interface DashboardState {
   tpLevels: Array<{ level: number; percent: number; reached: boolean }>;
   slLevel?: number;
   patterns: string[];
+  logs: Array<{ level: string; message: string; timestamp: Date }>;
   lastUpdate: Date;
 }
 
@@ -51,6 +52,7 @@ export class ConsoleDashboardService extends EventEmitter {
       currentPrice: 0,
       tpLevels: [],
       patterns: [],
+      logs: [],
       lastUpdate: new Date(),
     };
 
@@ -78,8 +80,14 @@ export class ConsoleDashboardService extends EventEmitter {
 
       this.createLayout();
       this.startUpdating();
+      console.log('[DASHBOARD] ✅ Console dashboard initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize dashboard:', error);
+      console.warn(
+        '[DASHBOARD] ⚠️ Failed to initialize dashboard UI (logs will continue):',
+        error instanceof Error ? error.message : String(error),
+      );
+      // Dashboard fails silently - logs continue working
+      this.config.enabled = false;
     }
   }
 
@@ -195,7 +203,7 @@ export class ConsoleDashboardService extends EventEmitter {
       right: 0,
       bottom: 0,
       border: 'line',
-      title: '📝 Logs (existing logs below)',
+      title: '📝 Live Logs',
       style: {
         border: {
           fg: 'magenta',
@@ -204,6 +212,8 @@ export class ConsoleDashboardService extends EventEmitter {
       scrollable: true,
       mouse: true,
       tags: true,
+      keys: true,
+      vi: true,
     });
 
     this.widgets.set('logs', logs);
@@ -216,15 +226,17 @@ export class ConsoleDashboardService extends EventEmitter {
   }
 
   private render(): void {
-    if (!this.screen) return;
+    if (!this.screen || !this.config.enabled) return;
 
     try {
       this.renderMarketData();
       this.renderPosition();
       this.renderPatterns();
+      this.renderLogs();
       this.screen.render();
     } catch (error) {
       // Silently fail - don't break the bot
+      // Dashboard errors should never crash the trading bot
     }
   }
 
@@ -367,6 +379,51 @@ export class ConsoleDashboardService extends EventEmitter {
 
   public clearPatterns(): void {
     this.state.patterns = [];
+  }
+
+  private renderLogs(): void {
+    const logsWidget = this.widgets.get('logs');
+    if (!logsWidget) return;
+
+    // Show last 20 logs
+    const lastLogs = this.state.logs.slice(-20);
+    let content = '';
+
+    lastLogs.forEach((log) => {
+      const levelColor = this.getLevelColor(log.level);
+      const time = log.timestamp.toLocaleTimeString();
+      content += `${levelColor}[${time}] ${log.level.toUpperCase()}{/} ${log.message}\n`;
+    });
+
+    logsWidget.setContent(content || '{yellow}No logs yet...{/yellow}');
+  }
+
+  private getLevelColor(level: string): string {
+    switch (level.toLowerCase()) {
+      case 'error':
+        return '{red}';
+      case 'warn':
+        return '{yellow}';
+      case 'info':
+        return '{cyan}';
+      case 'debug':
+        return '{gray}';
+      default:
+        return '{white}';
+    }
+  }
+
+  public addLog(level: string, message: string): void {
+    this.state.logs.push({
+      level,
+      message: message.substring(0, 100), // Truncate long messages
+      timestamp: new Date(),
+    });
+
+    // Keep only last 100 logs in memory
+    if (this.state.logs.length > 100) {
+      this.state.logs.shift();
+    }
   }
 
   public destroy(): void {

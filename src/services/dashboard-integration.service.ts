@@ -45,6 +45,9 @@ export class DashboardIntegrationService {
   }
 
   private subscribeToEvents(): void {
+    // Intercept logger to show logs in dashboard
+    this.interceptLoggerOutput();
+
     // Position events
     this.eventBus.on('position-opened', (data: any) => {
       this.updatePositionData(data?.position);
@@ -80,6 +83,51 @@ export class DashboardIntegrationService {
         this.dashboard.updatePrice(data.candle.close);
       }
     });
+  }
+
+  private interceptLoggerOutput(): void {
+    // Store original console methods
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    // Override console methods to also update dashboard
+    console.log = (...args: any[]) => {
+      const message = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+      // Extract log level from message if present
+      let level = 'info';
+      let cleanMessage = message;
+
+      if (message.includes('[ERROR]') || message.includes('error TS')) {
+        level = 'error';
+        cleanMessage = message.replace(/\[ERROR\]/g, '').trim();
+      } else if (message.includes('[WARN]') || message.includes('warning')) {
+        level = 'warn';
+        cleanMessage = message.replace(/\[WARN\]/g, '').trim();
+      } else if (message.includes('[DEBUG]')) {
+        level = 'debug';
+        cleanMessage = message.replace(/\[DEBUG\]/g, '').trim();
+      } else if (message.includes('[DASHBOARD]')) {
+        level = 'info';
+        cleanMessage = message.replace(/\[DASHBOARD\]/g, '').trim();
+      }
+
+      this.dashboard.addLog(level, cleanMessage);
+      // Still log to original console for debugging if needed
+      // originalLog.apply(console, args);
+    };
+
+    console.warn = (...args: any[]) => {
+      const message = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+      this.dashboard.addLog('warn', message);
+      // originalWarn.apply(console, args);
+    };
+
+    console.error = (...args: any[]) => {
+      const message = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+      this.dashboard.addLog('error', message);
+      // originalError.apply(console, args);
+    };
   }
 
   private startUpdateLoop(): void {
