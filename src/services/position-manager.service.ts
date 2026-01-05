@@ -196,7 +196,9 @@ export class PositionManagerService {
       this.currentPosition = position;
 
       // Emit position-opened event for dashboard and other listeners
+      this.logger.info('📢 Emitting position-opened event', { positionId: position.id });
       this.eventBus.emit('position-opened', { position });
+      console.log('[EVENT] position-opened emitted:', position.id);
 
       // Initialize TakeProfitManager for partial close tracking
       this.takeProfitManager = new TakeProfitManagerService(

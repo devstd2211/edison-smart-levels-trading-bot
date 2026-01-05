@@ -57,11 +57,13 @@ export class DashboardIntegrationService {
 
     // Position events
     this.eventBus.on('position-opened', (data: any) => {
+      console.log('[DASHBOARD EVENT] position-opened received:', data?.position?.id);
       this.updatePositionData(data?.position);
       this.dashboard.addPattern('Position Opened');
     });
 
     this.eventBus.on('position-closed', (data: any) => {
+      console.log('[DASHBOARD EVENT] position-closed received:', data?.position?.id);
       this.dashboard.updatePosition(undefined);
       this.dashboard.addPattern('Position Closed');
     });
@@ -99,6 +101,7 @@ export class DashboardIntegrationService {
 
     // Candle updates - trigger real-time data refresh
     this.eventBus.on('candle-closed', (data: any) => {
+      console.log('[DASHBOARD EVENT] candle-closed received:', data?.candle?.close);
       if (data?.candle?.close) {
         this.lastPrice = data.candle.close;
         this.dashboard.updatePrice(data.candle.close);
