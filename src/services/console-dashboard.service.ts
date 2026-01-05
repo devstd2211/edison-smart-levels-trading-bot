@@ -117,10 +117,10 @@ export class ConsoleDashboardService extends EventEmitter {
       left: 0,
       right: 0,
       height: 3,
-      content: '{bold}{cyan-fg}📊 EDISON TRADING DASHBOARD{/cyan-fg}{/bold}',
+      content: '{bold}{yellow-fg,yellow-bg} E {/yellow-bg,yellow-fg} {white-fg}EDISON TRADING DASHBOARD{/white-fg}{/bold}',
       style: {
-        fg: 'cyan',
-        bg: 'blue',
+        fg: 'white',
+        bg: 'darkblue',
       },
       tags: true,
     });
