@@ -42,7 +42,7 @@ import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { TakeProfitManagerService } from './take-profit-manager.service';
 import { SessionStatsService } from './session-stats.service';
-import { PositionSizingService, PositionSizingResult } from './position-sizing.service';
+import { PositionSizingService } from './position-sizing.service';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS, TIMING_CONSTANTS } from '../constants';
 
 // ============================================================================

@@ -17,7 +17,6 @@ import { DECIMAL_PLACES } from '../constants';
 
 import {
   SwingPoint,
-  Candle,
   TimeframeRole,
   LoggerService,
   MarketData,

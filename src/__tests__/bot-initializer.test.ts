@@ -11,7 +11,6 @@
  */
 
 import { BotInitializer } from '../services/bot-initializer';
-import { Config, LoggerService } from '../types';
 
 // Mock logger
 const createMockLogger = (): any => ({

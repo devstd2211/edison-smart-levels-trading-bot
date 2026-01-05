@@ -8,7 +8,7 @@
 
 import { ConfirmationFilter } from '../../services/confirmation-filter.service';
 import { BybitService } from '../../services/bybit';
-import { BTCAnalyzer, BTCAnalysis, BTCDirection } from '../../analyzers/btc.analyzer';
+import { BTCAnalysis, BTCDirection } from '../../analyzers/btc.analyzer';
 import {
   LoggerService,
   LogLevel,

@@ -14,8 +14,6 @@ import { PositionExitingService } from '../services/position-exiting.service';
 import {
   Position,
   PositionSide,
-  ExitType,
-  ExitAction,
   LoggerService,
   TradingConfig,
   RiskManagementConfig,

@@ -4,7 +4,7 @@
  */
 
 import { ZigZagNRIndicator } from '../../indicators/zigzag-nr.indicator';
-import { Candle, SwingPoint, SwingPointType } from '../../types';
+import { Candle, SwingPointType } from '../../types';
 
 describe('ZigZag Indicator', () => {
   describe('Basic Functionality', () => {

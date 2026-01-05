@@ -13,7 +13,7 @@
 
 import { LoggerService, SignalDirection, SessionBasedSLConfig } from '../types';
 import { SessionDetector } from '../utils/session-detector';
-import { MULTIPLIERS, PERCENT_MULTIPLIER, DECIMAL_PLACES } from '../constants';
+import { PERCENT_MULTIPLIER, DECIMAL_PLACES } from '../constants';
 
 // ============================================================================
 // TYPES

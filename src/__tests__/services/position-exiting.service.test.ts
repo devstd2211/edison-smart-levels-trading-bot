@@ -21,7 +21,6 @@ import {
   RiskManagementConfig,
   TradingConfig,
   Config,
-  TakeProfitConfig,
 } from '../../types';
 
 const createMockLogger = () => ({

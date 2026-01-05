@@ -1,7 +1,6 @@
-import { CONFIDENCE_THRESHOLDS, MULTIPLIERS, PERCENTAGE_THRESHOLDS } from './constants';
 
 // Re-export constants so they're available when importing from types
-export { CONFIDENCE_THRESHOLDS, MULTIPLIERS, PERCENTAGE_THRESHOLDS } from './constants';
+export { CONFIDENCE_THRESHOLDS, PERCENTAGE_THRESHOLDS } from './constants';
 
 // Import and re-export all enums from centralized enums file
 import {
@@ -2456,21 +2455,6 @@ export interface LiquiditySweepData {
  * Type guard for liquidity sweep detection
  * Safe way to check and access sweep properties
  */
-export function isLiquiditySweepData(value: unknown): value is LiquiditySweepData {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const sweep = value as Record<string, unknown>;
-  return (
-    typeof sweep.detected === 'boolean' &&
-    typeof sweep.isFakeout === 'boolean' &&
-    typeof sweep.sweepPrice === 'number' &&
-    typeof sweep.sweepTime === 'number' &&
-    typeof sweep.priceAfterSweep === 'number'
-  );
-}
-
 /**
  * Timeframe-Specific Technical Data
  * Ensures all optional technical fields are typed together

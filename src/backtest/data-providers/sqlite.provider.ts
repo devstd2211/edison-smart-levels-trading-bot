@@ -10,7 +10,7 @@ import { open, Database } from 'sqlite';
 import * as path from 'path';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
-import { IDataProvider, CandleData, TimeframeData } from './base.provider';
+import { IDataProvider, TimeframeData } from './base.provider';
 
 const sqlite3 = sqlite3Import.verbose();
 

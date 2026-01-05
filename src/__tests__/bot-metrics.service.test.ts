@@ -11,7 +11,7 @@
  * - Metrics reset
  */
 
-import { BotMetricsService, TradeMetrics, PerformanceMetrics, EventMetrics } from '../services/bot-metrics.service';
+import { BotMetricsService, TradeMetrics } from '../services/bot-metrics.service';
 import { LoggerService } from '../types';
 
 // Mock logger

@@ -8,7 +8,7 @@
  * the system behaves predictably
  */
 
-import { LoggerService, Signal, SignalDirection } from '../../types';
+import { LoggerService } from '../../types';
 
 describe('SMOKE TESTS: Orchestrator Runtime Behavior', () => {
   let logger: LoggerService;

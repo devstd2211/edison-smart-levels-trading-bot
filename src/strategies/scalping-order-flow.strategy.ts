@@ -24,7 +24,6 @@ import {
   ScalpingOrderFlowConfig,
   LoggerService,
   OrderBook,
-  FlowImbalance,
   TakeProfit,
   OrderFlowAnalyzerService,
 } from '../types';

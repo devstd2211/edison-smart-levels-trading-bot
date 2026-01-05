@@ -20,8 +20,8 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, ValidatedVirtualBalanceState, ErrorContext } from '../types';
-import { extractErrorMessage, createErrorContext } from '../utils/error-helper';
+import { LoggerService, ValidatedVirtualBalanceState } from '../types';
+import { createErrorContext } from '../utils/error-helper';
 
 // ============================================================================
 // TYPES

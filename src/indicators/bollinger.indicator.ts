@@ -17,7 +17,7 @@
  */
 
 import type { Candle } from '../types';
-import { MULTIPLIERS, PERCENTAGE_THRESHOLDS, THRESHOLD_VALUES, MULTIPLIER_VALUES } from '../constants';
+import { MULTIPLIERS, THRESHOLD_VALUES, MULTIPLIER_VALUES } from '../constants';
 import {
   INTEGER_MULTIPLIERS,
   RATIO_MULTIPLIERS,

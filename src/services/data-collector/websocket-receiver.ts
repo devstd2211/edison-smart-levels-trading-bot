@@ -6,7 +6,6 @@
  */
 
 import { CandleRecord, TradeTickRecord, LoggerService } from '../../types';
-import { ServerPingMessage, BybitWebSocketMessage } from '../../types/events.types';
 
 // ============================================================================
 // INTERFACES (Bybit V5 format)

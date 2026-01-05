@@ -13,7 +13,6 @@ import {
   Position,
   PositionSide,
   Signal,
-  SignalDirection,
   ExitType,
   SessionEntryCondition,
   SessionTradeRecord,

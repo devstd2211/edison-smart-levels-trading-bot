@@ -13,7 +13,7 @@
  */
 
 import { Candle, FootprintLevel, FootprintCandle, FootprintAnalysis, FootprintConfig, LoggerService, Tick } from '../types';
-import { MULTIPLIER_VALUES, RATIO_MULTIPLIERS, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
+import { MULTIPLIER_VALUES, RATIO_MULTIPLIERS, INTEGER_MULTIPLIERS } from '../constants';
 
 // ============================================================================
 // CONSTANTS

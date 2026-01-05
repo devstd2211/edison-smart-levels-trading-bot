@@ -29,7 +29,6 @@ import {
   MATH_BOUNDS as MB,
   INTEGER_MULTIPLIERS,
   THRESHOLD_VALUES,
-  MULTIPLIER_VALUES,
 } from './technical.constants';
 
 // ============================================================================

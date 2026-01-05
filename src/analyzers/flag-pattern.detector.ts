@@ -1,8 +1,6 @@
 import {
-  CONFIDENCE_THRESHOLDS,
   DECIMAL_PLACES,
   PERCENT_MULTIPLIER,
-  PERCENTAGE_THRESHOLDS,
   TIME_UNITS,
   INTEGER_MULTIPLIERS,
   THRESHOLD_VALUES,
@@ -28,7 +26,7 @@ import {
  *      |/____\    → Direction = pole direction
  */
 
-import { SwingPoint, LoggerService, AnalysisConfig } from '../types';
+import { SwingPoint, LoggerService } from '../types';
 
 export enum FlagPatternType {
   BULL_FLAG = 'BULL_FLAG',

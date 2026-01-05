@@ -4,7 +4,7 @@
 
 import { MTFTPValidatorService, MTFTPConfig } from '../services/mtf-tp-validator.service';
 import { LevelAnalyzer } from '../analyzers/level.analyzer';
-import { SignalDirection, LoggerService, Candle, SwingPointType } from '../types';
+import { SignalDirection, LoggerService, Candle } from '../types';
 
 // ============================================================================
 // MOCK LOGGER

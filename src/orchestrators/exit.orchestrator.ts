@@ -39,9 +39,7 @@ import {
   Position,
   PositionState,
   ExitAction,
-  PositionExitAction,
   ExitOrchestratorResult,
-  TakeProfit,
   LoggerService,
   PositionSide,
 } from '../types';

@@ -27,7 +27,7 @@ import {
  * Bot1 Bot2 Bot3          → 3 bottoms at same level = LONG
  */
 
-import { SwingPoint, SwingPointType, LoggerService, AnalysisConfig } from '../types';
+import { SwingPoint, SwingPointType, LoggerService } from '../types';
 
 // ============================================================================
 // TYPES

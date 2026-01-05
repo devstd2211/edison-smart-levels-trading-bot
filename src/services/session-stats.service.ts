@@ -17,7 +17,6 @@ import {
   Session,
   SessionDatabase,
   SessionTradeRecord,
-  SessionEntryCondition,
   SessionSummary,
   StrategyStats,
   DirectionStats,

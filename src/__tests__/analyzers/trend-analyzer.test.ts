@@ -19,9 +19,7 @@ import { LoggerService } from '../../services/logger.service';
 import { SwingPointDetectorService } from '../../services/swing-point-detector.service';
 import {
   TREND_ANALYZER_MIN_CANDLES_REQUIRED,
-  TREND_ANALYZER_STRONG_TREND_STRENGTH,
   TREND_ANALYZER_FLAT_TREND_STRENGTH,
-  TREND_ANALYZER_UNCLEAR_TREND_STRENGTH,
 } from '../../constants';
 
 /**
@@ -57,7 +55,7 @@ class MockMarketStructure {
  */
 function createMockCandles(count: number, startPrice: number = 100, pattern: 'bullish' | 'bearish' | 'neutral' | 'flat' = 'bullish'): Candle[] {
   const candles: Candle[] = [];
-  let currentPrice = startPrice;
+  const currentPrice = startPrice;
 
   for (let i = 0; i < count; i++) {
     let candlePrice: number;

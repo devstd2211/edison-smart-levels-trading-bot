@@ -4,7 +4,7 @@
  */
 
 import { EntryLogicService } from '../../services/entry-logic.service';
-import { TimeframeRole, SignalDirection } from '../../types';
+import { SignalDirection } from '../../types';
 
 describe('EntryLogicService', () => {
   let service: EntryLogicService;

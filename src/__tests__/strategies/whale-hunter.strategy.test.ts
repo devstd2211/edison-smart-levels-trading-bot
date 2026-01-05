@@ -5,7 +5,7 @@
 import { WhaleHunterStrategy } from '../../strategies/whale-hunter.strategy';
 import { WhaleDetectorService, WhaleDetectionMode } from '../../services/whale-detector.service';
 import { OrderBookAnalyzer } from '../../analyzers/orderbook.analyzer';
-import { LoggerService, LogLevel, SignalDirection, StrategyMarketData, Candle, OrderBook, TrendBias } from '../../types';
+import { LoggerService, LogLevel, SignalDirection, StrategyMarketData, OrderBook, TrendBias } from '../../types';
 
 function createMarketData(orderbook: OrderBook | undefined, price: number): StrategyMarketData {
   return {

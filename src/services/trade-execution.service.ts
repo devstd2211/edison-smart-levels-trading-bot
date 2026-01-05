@@ -22,8 +22,6 @@ import {
   RiskDecision,
   StrategyMarketData,
   TimeframeRole,
-  SessionEntryCondition,
-  IndicatorSnapshot,
   EntryDecision,
   TrendAnalysis,
 } from '../types';
@@ -36,7 +34,6 @@ import { RiskManager } from './risk-manager.service';
 import { CandleProvider } from '../providers/candle.provider';
 import {
   DECIMAL_PLACES,
-  INTEGER_MULTIPLIERS,
   THRESHOLD_VALUES,
   PERCENT_MULTIPLIER,
 } from '../constants';

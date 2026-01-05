@@ -10,11 +10,9 @@
  */
 
 import { Candle, FractalSignal, FractalType, LoggerService } from '../types';
-import { DECIMAL_PLACES } from '../constants';
 import {
   INTEGER_MULTIPLIERS,
   FIRST_INDEX,
-  SECOND_INDEX,
   THIRD_INDEX,
   PERCENT_MULTIPLIER,
   RATIO_MULTIPLIERS,

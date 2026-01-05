@@ -16,7 +16,6 @@ import {
   LoggerService,
   Candle,
   SignalDirection,
-  SwingPoint,
   ZigZagNRIndicator,
 } from '../types';
 import { Level, LevelAnalyzer } from '../analyzers/level.analyzer';

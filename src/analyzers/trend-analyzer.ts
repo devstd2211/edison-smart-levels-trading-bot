@@ -20,7 +20,6 @@ import {
   ComprehensiveTrendAnalysis,
   TrendBias,
   SwingPoint,
-  MarketStructure,
   SignalDirection,
   MultiTimeframeData,
   TradingMode,

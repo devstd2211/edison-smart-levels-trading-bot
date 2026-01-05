@@ -10,7 +10,6 @@ import {
   LogLevel,
   StrategyMarketData,
   SignalDirection,
-  AnalyzerSignal,
 } from '../../types';
 import { createTestMarketData } from '../helpers/test-data.helper';
 

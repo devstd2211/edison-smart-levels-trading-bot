@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS, TIME_UNITS, INTEGER_MULTIPLIERS } from '../constants';
+import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS, INTEGER_MULTIPLIERS } from '../constants';
 /**
  * Whale Detector Service - Combined Approach
  *
@@ -23,7 +23,7 @@ import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS,
  * REST API polling is too slow for whale detection!
  */
 
-import { LoggerService, SignalDirection, OrderBookAnalysis, OrderBookWall } from '../types';
+import { LoggerService, SignalDirection, OrderBookAnalysis } from '../types';
 
 // ============================================================================
 // CONSTANTS

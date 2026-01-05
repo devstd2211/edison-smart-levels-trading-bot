@@ -12,7 +12,7 @@
  */
 
 import { TradingBot } from '../bot';
-import { BotFactory, BotFactoryConfig } from '../bot-factory';
+import { BotFactory } from '../bot-factory';
 import { Config } from '../types';
 
 // Minimal valid config for testing

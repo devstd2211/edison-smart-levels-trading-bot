@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
+import { PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
 /**
  * Delta Analyzer Service
  *

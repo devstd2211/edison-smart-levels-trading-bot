@@ -1,5 +1,4 @@
 import {
-  PERCENTAGE_THRESHOLDS,
   TIME_UNITS,
   INTEGER_MULTIPLIERS,
   RATIO_MULTIPLIERS,
@@ -33,7 +32,7 @@ import {
  *   /      \
  */
 
-import { SwingPoint, SwingPointType, LoggerService, AnalysisConfig } from '../types';
+import { SwingPoint, SwingPointType, LoggerService } from '../types';
 
 // ============================================================================
 // TYPES

@@ -11,11 +11,7 @@
 import { StrategyMarketData, SignalDirection, LoggerService } from '../types';
 import {
   INTEGER_MULTIPLIERS,
-  PERCENT_MULTIPLIER,
   THRESHOLD_VALUES,
-  RSI_DYNAMIC_THRESHOLD_ATR_MULTIPLIER,
-  RSI_KNIFE_PENALTY_MULTIPLIER,
-  RSI_BOUNCE_BONUS_MULTIPLIER,
 } from '../constants/technical.constants';
 
 export interface RSISignalConfig {

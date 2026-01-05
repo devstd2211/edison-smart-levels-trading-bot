@@ -1,4 +1,4 @@
-import { CONFIDENCE_THRESHOLDS, MULTIPLIERS, PERCENT_MULTIPLIER, THRESHOLD_VALUES } from '../constants';
+import { CONFIDENCE_THRESHOLDS, PERCENT_MULTIPLIER, THRESHOLD_VALUES } from '../constants';
 import { formatToDecimal, DECIMAL_PLACES, INTEGER_MULTIPLIERS } from '../constants/technical.constants';
 /**
  * Correlation Calculator

@@ -14,16 +14,11 @@
 import type {
   Candle,
   StrategyMarketData,
-  Signal,
 } from '../types';
 import {
   PositionSide,
-  SignalType,
   SignalDirection,
-  TrendBias,
   LoggerService,
-  AnalyzerSignal,
-  BTCDirection,
 } from '../types';
 import { LevelBasedStrategy } from '../strategies/level-based.strategy';
 import { RSIIndicator } from '../indicators/rsi.indicator';
@@ -386,7 +381,7 @@ export class BacktestEngineV4 {
         return;
       }
 
-      let signal = strategySignal.signal;
+      const signal = strategySignal.signal;
 
       // Validate signal has required fields
       if (!signal.direction) {

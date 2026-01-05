@@ -15,10 +15,8 @@ import {
   LoggerService,
   TimeframeRole,
   TrendAnalysis,
-  ComprehensiveTrendAnalysis,
   AnalyzerSignal,
   SignalDirection,
-  TradingMode,
   TrendAnalyzer,
 } from '../types';
 import { CandleProvider } from '../providers/candle.provider';

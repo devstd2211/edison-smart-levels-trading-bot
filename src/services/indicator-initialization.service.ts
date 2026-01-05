@@ -16,7 +16,6 @@ import {
   LoggerService,
   OrchestratorConfig,
   ATRIndicator,
-  RSIIndicator,
   ZigZagNRIndicator,
   StochasticIndicator,
   BollingerBandsIndicator,

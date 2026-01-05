@@ -221,7 +221,7 @@ export class OrderBookAnalyzer {
       return null;
     }
 
-    let strongest = levels[0];
+    const strongest = levels[0];
     let strongestQty = this.extractQuantity(strongest);
     let strongestPrice = this.extractPrice(strongest);
 

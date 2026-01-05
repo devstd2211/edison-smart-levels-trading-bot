@@ -17,7 +17,6 @@
 
 import {
   LoggerService,
-  TimeframeRole,
   TrendAnalysis,
   AnalyzerSignal,
   SignalDirection,
@@ -32,7 +31,6 @@ import { AntiFlipService } from './anti-flip.service';
 import {
   DECIMAL_PLACES,
   INTEGER_MULTIPLIERS,
-  PERCENT_MULTIPLIER,
   FIXED_EXIT_PERCENTAGES,
 } from '../constants';
 
@@ -276,7 +274,7 @@ export class SignalProcessingService {
       });
 
       // Adjust TPs based on market conditions
-      let finalTakeProfits = this.adjustTakeProfitsForMarketCondition(riskResult.takeProfits, flatResult);
+      const finalTakeProfits = this.adjustTakeProfitsForMarketCondition(riskResult.takeProfits, flatResult);
 
       // Generate entry signal
       const entrySignal: EntrySignal = {

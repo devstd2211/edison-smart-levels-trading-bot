@@ -4,7 +4,7 @@
  */
 
 import { AnalyzerRegistry } from '../analyzer-registry.service';
-import { LoggerService, StrategyMarketData, SignalDirection, SwingPointType } from '../../types';
+import { LoggerService, StrategyMarketData } from '../../types';
 import { AnalyzerRegistrationModule } from './analyzer-registry.interface';
 import { LevelAnalyzer } from '../../analyzers/level.analyzer';
 import { VolumeProfileAnalyzer } from '../../analyzers/volume-profile.analyzer';

@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, MULTIPLIERS, PERCENTAGE_THRESHOLDS, PERCENT_MULTIPLIER } from '../constants';
+import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER } from '../constants';
 import { INTEGER_MULTIPLIERS, RATIO_MULTIPLIERS, MATH_BOUNDS } from '../constants/technical.constants';
 import {
   WeightMatrixConfig,

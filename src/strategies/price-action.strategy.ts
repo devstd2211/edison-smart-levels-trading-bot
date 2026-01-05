@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, MULTIPLIERS, THRESHOLD_VALUES, MULTIPLIER_VALUES } from '../constants';
+import { DECIMAL_PLACES, THRESHOLD_VALUES } from '../constants';
 /**
  * Price Action Strategy
  *

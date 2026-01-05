@@ -3,7 +3,7 @@ import { Candle, TimeframeRole, OrderBook, LoggerService } from '../types';
 import { OrderbookUpdateEvent, TradeTickEvent } from '../types/events.types';
 import { BotServices } from './bot-services';
 import { RealTimeWhaleDetector } from './realtime-whale-detector';
-import { OrderbookManagerService, type OrderbookUpdate } from './orderbook-manager.service';
+import { type OrderbookUpdate } from './orderbook-manager.service';
 
 /**
  * WebSocket Event Handler Manager

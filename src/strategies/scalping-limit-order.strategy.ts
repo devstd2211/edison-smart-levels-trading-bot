@@ -22,7 +22,6 @@ import {
   IStrategy,
   StrategySignal,
   StrategyMarketData,
-  SignalDirection,
   SignalType,
   LoggerService,
   ScalpingLimitOrderConfig,

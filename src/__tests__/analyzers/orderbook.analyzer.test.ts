@@ -8,7 +8,6 @@ import {
   OrderBookAnalyzer,
   OrderBookData,
   OrderBookConfig,
-  OrderbookLevel,
 } from '../../analyzers/orderbook.analyzer';
 import { LoggerService, LogLevel } from '../../types';
 

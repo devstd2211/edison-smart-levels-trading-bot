@@ -13,7 +13,6 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS, RATIO_MULTIPLI
 import {
   TradingContext,
   TrendBias,
-  MarketStructure,
   TimeframeRole,
   LoggerService,
   ContextFilteringMode,

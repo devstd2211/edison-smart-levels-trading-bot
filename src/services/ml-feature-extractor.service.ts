@@ -15,7 +15,6 @@ import {
   FIRST_INDEX,
   SECOND_INDEX,
   PERCENT_MULTIPLIER,
-  MATH_BOUNDS,
 } from '../constants/technical.constants';
 
 export interface MultiTimeframeContext {

@@ -1,5 +1,5 @@
-import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS } from '../constants';
-import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, TIMING_CONSTANTS } from '../constants/technical.constants';
+import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
+import { TIMING_CONSTANTS } from '../constants/technical.constants';
 /**
  * Position Manager Service
  * Manages trading positions for futures with TP/SL
@@ -22,18 +22,13 @@ import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, TIMING_CONSTANTS } from '../cons
 
 import {
   Position,
-  PositionSide,
   Signal,
   SignalDirection,
   TradingConfig,
   RiskManagementConfig,
   LoggerService,
   EntryConfirmationConfig,
-  ExitType,
   SessionEntryCondition,
-  SessionTradeRecord,
-  SmartTrailingConfig,
-  AdaptiveTP3Config,
   Config,
   SmartBreakevenConfig,
   SignalType,
@@ -41,8 +36,8 @@ import {
 import { BybitService } from './bybit';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
-import { TakeProfitManagerService, PartialClose } from './take-profit-manager.service';
-import { EntryConfirmationManager, ConfirmationResult } from './entry-confirmation.service';
+import { TakeProfitManagerService } from './take-profit-manager.service';
+import { EntryConfirmationManager } from './entry-confirmation.service';
 import { PositionCalculatorService } from './position-calculator.service';
 import { CompoundInterestCalculatorService } from './compound-interest-calculator.service';
 import { SessionStatsService } from './session-stats.service';

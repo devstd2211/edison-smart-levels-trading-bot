@@ -66,7 +66,7 @@ describe('BotEventEmitter', () => {
         indicators: [],
       };
 
-      let callCount = 0;
+      const callCount = 0;
       const handler1 = jest.fn();
       const handler2 = jest.fn();
 

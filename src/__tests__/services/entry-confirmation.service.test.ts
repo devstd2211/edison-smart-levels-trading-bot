@@ -2,7 +2,7 @@
  * Entry Confirmation Manager Tests
  */
 
-import { EntryConfirmationManager, PendingEntry, ConfirmationResult } from '../../services/entry-confirmation.service';
+import { EntryConfirmationManager } from '../../services/entry-confirmation.service';
 import { LoggerService, LogLevel, SignalDirection, EntryConfirmationConfig } from '../../types';
 
 // ============================================================================

@@ -3,7 +3,7 @@
  * Week 13 Phase 4a: Extracted from trading-orchestrator.service.ts
  */
 
-import { SignalProcessingService, EntrySignal } from '../../services/signal-processing.service';
+import { SignalProcessingService } from '../../services/signal-processing.service';
 import { SignalDirection, TrendBias } from '../../types';
 
 describe('SignalProcessingService', () => {

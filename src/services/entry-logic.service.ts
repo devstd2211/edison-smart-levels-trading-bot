@@ -39,7 +39,6 @@ import { CandleProvider } from '../providers/candle.provider';
 import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
 import { RetestEntryService } from './retest-entry.service';
 import { MarketDataPreparationService } from './market-data-preparation.service';
-import { ExternalAnalysisService } from './external-analysis.service';
 import { AnalyzerRegistry } from './analyzer-registry.service';
 import { StrategyCoordinator } from './strategy-coordinator.service';
 import { SignalProcessingService } from './signal-processing.service';

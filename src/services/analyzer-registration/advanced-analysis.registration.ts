@@ -8,8 +8,6 @@ import { LoggerService, StrategyMarketData, SignalDirection } from '../../types'
 import { AnalyzerRegistrationModule } from './analyzer-registry.interface';
 import {
   INTEGER_MULTIPLIERS,
-  PERCENT_MULTIPLIER,
-  THRESHOLD_VALUES,
 } from '../../constants/technical.constants';
 import { HiddenDivergenceSignalAnalyzer } from '../../analyzers/hidden-divergence-signal.analyzer';
 import { WickSignalAnalyzer } from '../../analyzers/wick-signal.analyzer';

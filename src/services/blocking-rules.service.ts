@@ -1,4 +1,4 @@
-import { CONFIDENCE_THRESHOLDS, DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER } from '../constants';
+import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 /**
  * Blocking Rules Service
  *
@@ -18,7 +18,7 @@ import { CONFIDENCE_THRESHOLDS, DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER 
  */
 
 import { SignalDirection, Candle, LoggerService, VolumeCalculator, WickAnalyzer } from '../types';
-import { COOLDOWN_PERIOD_MS, CANDLES_FOR_24H_HIGH, INTEGER_MULTIPLIERS, THRESHOLD_VALUES, MULTIPLIER_VALUES } from '../constants/technical.constants';
+import { CANDLES_FOR_24H_HIGH, INTEGER_MULTIPLIERS, THRESHOLD_VALUES, MULTIPLIER_VALUES } from '../constants/technical.constants';
 
 // ============================================================================
 // CONSTANTS

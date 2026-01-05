@@ -1,4 +1,4 @@
-import { CONFIDENCE_THRESHOLDS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS } from '../constants';
+import { PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS } from '../constants';
 /**
  * Flat Market Detector
  *

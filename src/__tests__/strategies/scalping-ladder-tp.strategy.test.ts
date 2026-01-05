@@ -17,7 +17,6 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import {
   LoggerService,
   LogLevel,
-  SignalDirection,
   PositionSide,
   ScalpingLadderTpConfig,
   StrategyMarketData,

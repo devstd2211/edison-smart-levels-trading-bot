@@ -36,7 +36,6 @@ import {
   MULTIPLIER_VALUES,
   THRESHOLD_VALUES,
   CONFIDENCE_THRESHOLDS,
-  PERCENT_MULTIPLIER,
 } from '../constants';
 import { CandleProvider } from '../providers/candle.provider';
 import { TimeframeProvider } from '../providers/timeframe.provider';

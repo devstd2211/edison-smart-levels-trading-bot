@@ -21,7 +21,6 @@ import {
   AnalyzerSignal,
   LoggerService,
   StrategyMarketData,
-  SignalDirection,
 } from '../types';
 
 // ============================================================================

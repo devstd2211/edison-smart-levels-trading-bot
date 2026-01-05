@@ -24,7 +24,6 @@ import {
   ScalpingTickDeltaConfig,
   LoggerService,
   Tick,
-  MomentumSpike,
   TakeProfit,
   TickDeltaAnalyzerService,
 } from '../types';

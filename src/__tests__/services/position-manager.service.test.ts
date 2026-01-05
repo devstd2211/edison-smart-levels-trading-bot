@@ -21,8 +21,6 @@ import {
   PositionSide,
   TradingConfig,
   RiskManagementConfig,
-  TrendBias,
-  ExitType,
 } from '../../types';
 
 // ============================================================================

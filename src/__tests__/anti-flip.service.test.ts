@@ -4,7 +4,7 @@
  * Tests for the anti-flip protection mechanism.
  */
 
-import { AntiFlipService, AntiFlipConfig } from '../services/anti-flip.service';
+import { AntiFlipService } from '../services/anti-flip.service';
 import { SignalDirection, Candle } from '../types';
 
 // Mock Logger

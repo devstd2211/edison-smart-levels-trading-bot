@@ -8,8 +8,6 @@ import { LoggerService, StrategyMarketData, SignalDirection } from '../../types'
 import { AnalyzerRegistrationModule } from './analyzer-registry.interface';
 import { INTEGER_MULTIPLIERS, EPSILON } from '../../constants/technical.constants';
 import {
-  FOOTPRINT_BASE_CONFIDENCE,
-  FOOTPRINT_CLOSE_POSITION_MULTIPLIER,
   ORDER_BLOCK_BASE_CONFIDENCE,
   ORDER_BLOCK_BODY_WICK_MULTIPLIER,
   FAIR_VALUE_GAP_BASE_CONFIDENCE,

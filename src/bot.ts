@@ -1,32 +1,13 @@
-import { PRICE_TOLERANCE, INTEGER_MULTIPLIERS, DECIMAL_PLACES } from './constants';
-import { TIME_MULTIPLIERS } from './constants/technical.constants';
 import {
   Config,
   Position,
-  PositionSide,
-  StopLossHitEvent,
-  TakeProfitHitEvent,
-  OrderFilledEvent,
-  SignalDirection,
-  SignalType,
   Candle,
-  TimeframeRole,
-  ExitType,
-  OrderBook,
-  IStrategy,
-  Tick,
 } from './types';
-import {
-  TakeProfitFilledEvent,
-  StopLossFilledEvent,
-  TimeBasedExitEvent,
-  OrderbookUpdateEvent,
-  TradeTickEvent,
-} from './types/events.types';
+
+
 import { BotServices } from './services/bot-services';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
-import { OrderbookManagerService, type OrderbookUpdate } from './services/orderbook-manager.service';
 import { BotWebAPI } from './api/bot-web-api';
 
 /**

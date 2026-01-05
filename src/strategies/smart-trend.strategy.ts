@@ -25,7 +25,6 @@ import {
   ATRFilterConfig,
   LoggerService,
   WeightMatrixInput,
-  SignalScoreBreakdown,
   MarketStructureAnalyzer,
   ATRIndicator,
   WeightMatrixCalculatorService,

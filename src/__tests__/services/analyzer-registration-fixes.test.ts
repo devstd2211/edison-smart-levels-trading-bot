@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { SignalDirection, SwingPointType, StrategyMarketData } from '../../types';
+import { SignalDirection, SwingPointType } from '../../types';
 
 describe('Analyzer Registration Service - All Fixes', () => {
   let mockLogger: any;

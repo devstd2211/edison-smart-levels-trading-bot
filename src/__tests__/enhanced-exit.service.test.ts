@@ -14,9 +14,6 @@
 
 import {
   EnhancedExitService,
-  EnhancedExitConfig,
-  RiskRewardGateConfig,
-  StructureBasedTPConfig,
 } from '../services/enhanced-exit.service';
 import { SignalDirection, SwingPointType, LoggerService } from '../types';
 import { Level } from '../analyzers/level.analyzer';

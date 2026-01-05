@@ -18,15 +18,12 @@ import {
   LogLevel,
   SignalType,
   StopLossConfig,
-  TakeProfit,
 } from '../../types';
 import { LoggerService } from '../../services/logger.service';
 import {
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_2_LOSSES,
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_3_LOSSES,
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_4_LOSSES,
-  RISK_MANAGER_MIN_SL_DISTANCE_PERCENT,
-  RATIO_MULTIPLIERS,
 } from '../../constants';
 
 /**

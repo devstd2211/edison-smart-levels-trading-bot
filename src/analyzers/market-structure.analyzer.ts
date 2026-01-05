@@ -29,7 +29,6 @@ import {
   StructureEventType,
   StructureDirection,
   CHoCHBoSDetection,
-  Candle,
   LoggerService,
   MarketStructureConfig,
 } from '../types';

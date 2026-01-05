@@ -16,7 +16,6 @@ import {
   LoggerService,
   SignalDirection,
   TakeProfit,
-  Candle,
   SwingPoint,
   SwingPointType,
   LiquidityZone,

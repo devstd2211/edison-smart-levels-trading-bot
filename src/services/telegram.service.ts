@@ -5,7 +5,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
  */
 
 import { Position, SignalDirection, PositionSide, LoggerService } from '../types';
-import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS } from '../constants/technical.constants';
+import { TIME_MULTIPLIERS } from '../constants/technical.constants';
 
 export interface TelegramConfig {
   botToken?: string;

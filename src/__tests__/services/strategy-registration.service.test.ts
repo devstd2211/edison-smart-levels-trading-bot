@@ -4,7 +4,6 @@
  */
 
 import { StrategyRegistrationService } from '../../services/strategy-registration.service';
-import { StrategyCoordinator } from '../../services/strategy-coordinator.service';
 
 describe('StrategyRegistrationService', () => {
   let service: StrategyRegistrationService;

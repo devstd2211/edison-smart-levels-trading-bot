@@ -1,4 +1,4 @@
-import { CONFIDENCE_THRESHOLDS, DECIMAL_PLACES, FIXED_EXIT_PERCENTAGES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS, THRESHOLD_VALUES, MULTIPLIER_VALUES, INTEGER_MULTIPLIERS, BACKTEST_CONSTANTS } from '../constants';
+import { DECIMAL_PLACES, INTEGER_MULTIPLIERS, BACKTEST_CONSTANTS } from '../constants';
 /**
  * Trading Orchestrator
  *
@@ -15,57 +15,14 @@ import { CONFIDENCE_THRESHOLDS, DECIMAL_PLACES, FIXED_EXIT_PERCENTAGES, MULTIPLI
 
 import {
   TradingContext,
-  EntrySignal,
   TimeframeRole,
   Candle,
   LoggerService,
-  SignalType,
-  Signal,
-  ContextFilteringMode,
-  StrategyMarketData,
-  SignalDirection,
-  BTCConfirmationConfig,
-  BTCAnalysis,
-  FundingRateFilterConfig,
-  SessionBasedSLConfig,
-  FlatMarketConfig,
-  TakeProfit,
-  SessionEntryCondition,
-  IndicatorSnapshot,
-  PatternSnapshot,
-  LevelSnapshot,
-  ContextSnapshot,
-  DailyLimitsConfig,
-  RiskBasedSizingConfig,
   IStrategy,
   OrderBook,
-  OrderbookLevel,
-  LossStreakConfig,
-  LevelBasedConfig,
-  WhaleHunterConfig,
-  Config,
-  ScalpingMicroWallConfig,
-  ScalpingLimitOrderConfig,
-  ScalpingLadderTpConfig,
-  ScalpingTickDeltaConfig,
-  ScalpingOrderFlowConfig,
-  IndicatorsConfig,
-  FastEntryConfig,
-  SmartBreakevenConfig,
-  RetestConfig,
-  WeightMatrixConfig,
-  DeltaConfig,
-  OrderbookImbalanceConfig,
-  VolumeProfileConfig,
-  TrendConfirmationConfig,
   TrendAnalysis,
-  TrendBias,
-  RiskManagerConfig,
-  RiskDecision,
-  Position,
   OrchestratorConfig,
   ExitType,
-  OrderBookAnalyzer,
   ATRIndicator,
   ZigZagNRIndicator,
   StochasticIndicator,
@@ -76,22 +33,8 @@ import {
   BreakoutPredictor,
   PriceMomentumAnalyzer,
   FlatMarketDetector,
-  DailyLevelTracker,
-  BreakoutDetector,
-  RetestPhaseAnalyzer,
-  EntryRefinementAnalyzer,
-  VolumeAnalyzer,
   MarketStructureAnalyzer,
   TrendAnalyzer,
-  LevelBasedStrategy,
-  WhaleHunterStrategy,
-  WhaleHunterFollowStrategy,
-  ScalpingMicroWallStrategy,
-  ScalpingLimitOrderStrategy,
-  ScalpingLadderTpStrategy,
-  ScalpingTickDeltaStrategy,
-  ScalpingOrderFlowStrategy,
-  FractalBreakoutRetestStrategy,
 } from '../types';
 // PHASE 4: ContextAnalyzer archived to src/archive/phase4-integration/
 // Replaced by TrendAnalyzer (PRIMARY component)
@@ -104,9 +47,6 @@ import { SessionStatsService } from './session-stats.service';
 import { StrategyCoordinator } from './strategy-coordinator.service';
 import { AnalyzerRegistry } from './analyzer-registry.service';
 import { AnalyzerRegistrationService } from './analyzer-registration.service';
-import { WhaleDetectorService } from './whale-detector.service';
-import { WhaleDetectorFollowService } from './whale-detector-follow.service';
-import { MicroWallDetectorService } from './micro-wall-detector.service';
 import { EntryScanner } from '../analyzers/entry.scanner';
 import { MultiTimeframeRSIAnalyzer } from '../analyzers/multi-timeframe-rsi.analyzer';
 import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
@@ -115,14 +55,11 @@ import { FundingRateFilterService } from './funding-rate-filter.service';
 // FastEntryService archived to src/archive/phase4-week2/ (consolidated into EntryOrchestrator)
 // SmartBreakevenService archived to src/archive/phase4-week3/ (consolidated into ExitOrchestrator)
 import { RetestEntryService } from './retest-entry.service';
-import { WeightMatrixCalculatorService } from './weight-matrix-calculator.service';
 import { DeltaAnalyzerService } from './delta-analyzer.service';
 import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { VolumeProfileService } from './volume-profile.service';
 import { RiskCalculator } from './risk-calculator.service';
 import { TrendConfirmationService } from './trend-confirmation.service';
-import { FractalSmcWeightingService } from './fractal-smc-weighting.service';
-import { MarketHealthMonitor } from './market-health.monitor';
 // PHASE 4: RiskManager (unified risk gatekeeper - ATOMIC decision point)
 import { RiskManager } from './risk-manager.service';
 // PHASE 4: EntryOrchestrator (PRIMARY entry decision point - Week 2)
@@ -130,8 +67,6 @@ import { EntryOrchestrator } from '../orchestrators/entry.orchestrator';
 // PHASE 4: ExitOrchestrator (PRIMARY exit state machine - Week 3)
 import { ExitOrchestrator } from '../orchestrators/exit.orchestrator';
 import { PositionExitingService } from './position-exiting.service';
-import { IndicatorInitializationService } from './indicator-initialization.service';
-import { FilterInitializationService } from './filter-initialization.service';
 import { EntryLogicService } from './entry-logic.service';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { MultiTimeframeTrendService } from './multi-timeframe-trend.service';

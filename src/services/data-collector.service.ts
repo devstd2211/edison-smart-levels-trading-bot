@@ -26,7 +26,7 @@ import {
 import { PingPongHandler } from './data-collector/ping-pong.handler';
 import { DataQueue } from './data-collector/data-queue';
 import { DatabaseWriter } from './data-collector/database-writer';
-import { WebSocketReceiver, ParsedMessage } from './data-collector/websocket-receiver';
+import { WebSocketReceiver } from './data-collector/websocket-receiver';
 import { TIME_MULTIPLIERS, TIMING_CONSTANTS, ORDERBOOK_SNAPSHOT_INTERVAL_MS } from '../constants/technical.constants';
 
 // ============================================================================

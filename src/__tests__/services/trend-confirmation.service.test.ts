@@ -5,9 +5,6 @@
 import { TrendConfirmationService } from '../../services/trend-confirmation.service';
 import {
   SignalDirection,
-  TrendBias,
-  TimeframeRole,
-  MarketStructure,
   LogLevel,
   LoggerService,
   TrendConfirmationConfig,

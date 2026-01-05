@@ -16,7 +16,6 @@ import {
   SignalDirection,
   SignalType,
   PositionSide,
-  StopLossConfig,
   TrendBias,
   LogLevel,
   Position,

@@ -19,12 +19,9 @@ import {
   LogLevel,
   SignalType,
   StopLossConfig,
-  TakeProfit,
 } from '../../types';
 import { LoggerService } from '../../services/logger.service';
 import {
-  TREND_ANALYZER_MIN_CANDLES_REQUIRED,
-  TREND_ANALYZER_STRONG_TREND_STRENGTH,
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_2_LOSSES,
 } from '../../constants';
 

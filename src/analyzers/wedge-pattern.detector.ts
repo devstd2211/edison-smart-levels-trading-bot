@@ -26,7 +26,7 @@ import {
  * |   \       Selling exhaustion
  */
 
-import { SwingPoint, SwingPointType, LoggerService, AnalysisConfig } from '../types';
+import { SwingPoint, SwingPointType, LoggerService } from '../types';
 
 // ============================================================================
 // TYPES

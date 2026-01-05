@@ -20,7 +20,6 @@ import {
   BreakoutPredictor,
   BTCAnalyzer,
   FlatMarketDetector,
-  SwingPointType,
 } from '../types';
 import { LevelAnalyzer } from '../analyzers/level.analyzer';
 import { VolumeProfileAnalyzer } from '../analyzers/volume-profile.analyzer';
@@ -36,9 +35,6 @@ import { HiddenDivergenceSignalAnalyzer } from '../analyzers/hidden-divergence-s
 import { WickSignalAnalyzer } from '../analyzers/wick-signal.analyzer';
 // ===== Import new validator classes =====
 import { TrendConflictDetector } from './signal-validators/trend-conflict-detector';
-import { PostTPFilter } from './signal-validators/post-tp-filter';
-import { ShortEntryValidator } from './signal-validators/short-entry-validator';
-import { EntryCostValidator } from './signal-validators/entry-cost-validator';
 // ===== Import registration modules =====
 import { TechnicalIndicatorsRegistration } from './analyzer-registration/technical-indicators.registration';
 import { AdvancedAnalysisRegistration } from './analyzer-registration/advanced-analysis.registration';

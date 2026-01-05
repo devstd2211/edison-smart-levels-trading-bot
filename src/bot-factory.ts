@@ -14,7 +14,7 @@
  * - Easy to add pre/post-creation hooks
  */
 
-import { Config, LoggerService } from './types';
+import { Config } from './types';
 import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
 import { BotServices } from './services/bot-services';

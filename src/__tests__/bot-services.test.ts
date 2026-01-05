@@ -13,7 +13,7 @@
  */
 
 import { BotServices } from '../services/bot-services';
-import { Config, LoggerService } from '../types';
+import { Config } from '../types';
 
 // Minimal valid config for BotServices
 const createMinimalConfig = (): Config => ({

@@ -7,7 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { IDataProvider, CandleData, TimeframeData } from './base.provider';
+import { IDataProvider, TimeframeData } from './base.provider';
 import { Candle } from '../../types';
 
 export class JsonDataProvider implements IDataProvider {

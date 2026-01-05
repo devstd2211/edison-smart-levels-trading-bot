@@ -16,7 +16,7 @@
  */
 
 import { LoggerService } from '../types';
-import { TIME_INTERVALS, MAX_ERROR_HISTORY, DEFAULT_ERROR_THRESHOLD } from '../constants/technical.constants';
+import { TIME_INTERVALS, MAX_ERROR_HISTORY } from '../constants/technical.constants';
 
 // ============================================================================
 // CONSTANTS

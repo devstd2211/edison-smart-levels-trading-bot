@@ -6,7 +6,6 @@
 import { AnalyzerRegistry } from '../analyzer-registry.service';
 import { LoggerService, StrategyMarketData, SignalDirection } from '../../types';
 import { AnalyzerRegistrationModule } from './analyzer-registry.interface';
-import { INTEGER_MULTIPLIERS } from '../../constants/technical.constants';
 import {
   TREND_DETECTOR_DEFAULT_CONFIDENCE,
 } from '../../constants/analyzer.constants';

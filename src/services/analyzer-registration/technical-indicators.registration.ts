@@ -12,13 +12,10 @@ import {
   THRESHOLD_VALUES,
 } from '../../constants/technical.constants';
 import {
-  RSI_OVERSOLD_LEVEL,
-  RSI_OVERBOUGHT_LEVEL,
   EMA_BASE_CONFIDENCE,
   EMA_STRENGTH_CONFIDENCE_MULTIPLIER,
   ATR_CONFIDENCE_MULTIPLIER,
   VOLUME_NEUTRAL_CONFIDENCE,
-  TREND_DETECTOR_DEFAULT_CONFIDENCE,
 } from '../../constants/analyzer.constants';
 import { RSISignalAnalyzer } from '../../analyzers/rsi-signal.analyzer';
 import { MultiTimeframeRSIAnalyzer } from '../../analyzers/multi-timeframe-rsi.analyzer';

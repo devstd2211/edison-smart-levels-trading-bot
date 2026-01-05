@@ -8,8 +8,8 @@
 import { PriceActionStrategy, PriceActionConfig, PriceActionData } from '../../strategies/price-action.strategy';
 import { MarketStructureAnalyzer } from '../../analyzers/market-structure.analyzer';
 import { LiquidityDetector } from '../../analyzers/liquidity.detector';
-import { DivergenceDetector, DivergenceType } from '../../analyzers/divergence.detector';
-import { LoggerService, LogLevel, SwingPoint, SwingPointType, Candle, SignalDirection, StructureEventType, StructureDirection, TrendBias, MarketStructureConfig, LiquidityDetectorConfig } from '../../types';
+import { DivergenceDetector } from '../../analyzers/divergence.detector';
+import { LoggerService, LogLevel, SwingPoint, SwingPointType, SignalDirection, TrendBias, MarketStructureConfig, LiquidityDetectorConfig } from '../../types';
 
 // Mock logger
 const logger = new LoggerService(LogLevel.ERROR, './logs', false);

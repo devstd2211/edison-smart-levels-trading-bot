@@ -10,7 +10,6 @@
 import { LoggerService, PositionSide, Signal } from '../types';
 import { BybitService } from './bybit';
 import { TelegramService } from './telegram.service';
-import { INTEGER_MULTIPLIERS } from '../constants';
 
 const MAX_VERIFICATION_RETRIES = 3;
 const VERIFICATION_WAIT_MS = 1000;

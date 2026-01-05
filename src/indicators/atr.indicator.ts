@@ -1,4 +1,4 @@
-import { MULTIPLIERS, PERCENT_MULTIPLIER } from '../constants';
+import { PERCENT_MULTIPLIER } from '../constants';
 import { INTEGER_MULTIPLIERS } from '../constants/technical.constants';
 /**
  * ATR Indicator (Average True Range)

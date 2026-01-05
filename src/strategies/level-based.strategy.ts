@@ -1,5 +1,5 @@
-import { CONFIDENCE_THRESHOLDS, DECIMAL_PLACES, MULTIPLIERS, PERCENTAGE_THRESHOLDS, PERCENT_MULTIPLIER } from '../constants';
-import { FIRST_INDEX, SECOND_INDEX, THRESHOLD_VALUES, INTEGER_MULTIPLIERS, MULTIPLIER_VALUES } from '../constants/technical.constants';
+import { CONFIDENCE_THRESHOLDS, DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER } from '../constants';
+import { INTEGER_MULTIPLIERS, MULTIPLIER_VALUES } from '../constants/technical.constants';
 /**
  * Level-Based Strategy (Priority 2)
  *
@@ -26,8 +26,6 @@ import {
   SignalType,
   LoggerService,
   Candle,
-  SwingPoint,
-  SwingPointType,
   TakeProfit,
   SessionBasedSLConfig,
   WeightMatrixInput,
