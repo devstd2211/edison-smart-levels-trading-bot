@@ -227,7 +227,7 @@ export class DashboardIntegrationService {
       // Use multiTimeframeAnalysis to get all timeframes
       const multiTrend = (this.trendAnalyzer as any).lastAnalysis;
       if (!multiTrend) {
-        this.logger.debug('⚠️ [DASHBOARD] TrendAnalyzer.lastAnalysis is null/undefined');
+        this.logger.debug('⚠️ [DASHBOARD] TrendAnalyzer.lastAnalysis is null/undefined - waiting for analysis');
         return;
       }
 
@@ -249,7 +249,10 @@ export class DashboardIntegrationService {
           }
         });
       } else {
-        this.logger.debug('⚠️ [DASHBOARD] TrendAnalyzer.lastAnalysis.byTimeframe missing');
+        // Single-timeframe analysis available but multi-timeframe not ready yet
+        // This happens when PRIMARY candle hasn't closed yet (analyzeMultiTimeframe needs PRIMARY data)
+        this.logger.debug('⏳ [DASHBOARD] TrendAnalyzer has single-TF analysis - awaiting PRIMARY candle close for multi-TF data',
+          { hasBias: !!multiTrend?.bias, timeframe: multiTrend?.timeframe });
       }
     } catch (error) {
       this.logger.debug('❌ [DASHBOARD] Trend update error', { error: error instanceof Error ? error.message : String(error) });

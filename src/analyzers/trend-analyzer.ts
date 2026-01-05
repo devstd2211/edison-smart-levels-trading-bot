@@ -36,6 +36,9 @@ import { MultiTimeframeTrendService } from '../services/multi-timeframe-trend.se
 import { TimeframeWeightingService } from '../services/timeframe-weighting.service';
 
 export class TrendAnalyzer {
+  // Cache for dashboard real-time updates
+  public lastAnalysis: any = null;
+
   /**
    * Constructor
    * PHASE 4 RULE: All dependencies REQUIRED (no optional params)
@@ -156,7 +159,7 @@ export class TrendAnalyzer {
     // RETURN: Explicit TrendAnalysis object
     // ========================================================================
 
-    return {
+    const analysis = {
       bias,
       strength,
       timeframe,
@@ -164,6 +167,11 @@ export class TrendAnalyzer {
       reasoning,
       restrictedDirections,
     };
+
+    // Cache for dashboard real-time updates
+    this.lastAnalysis = analysis;
+
+    return analysis;
   }
 
   /**
@@ -249,6 +257,9 @@ export class TrendAnalyzer {
       alignment: multiTFAnalysis.consensus.alignment,
       tradingMode,
     });
+
+    // Cache for dashboard real-time updates
+    this.lastAnalysis = comprehensiveAnalysis;
 
     return comprehensiveAnalysis;
   }
