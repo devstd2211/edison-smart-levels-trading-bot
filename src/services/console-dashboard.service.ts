@@ -344,11 +344,16 @@ export class ConsoleDashboardService extends EventEmitter {
       pattern: '-',
     };
 
-    this.state.marketData.set(timeframe, {
+    const updated = {
       ...existing,
       ...data,
-    });
+    };
+
+    this.state.marketData.set(timeframe, updated);
     this.state.lastUpdate = new Date();
+
+    // DEBUG: Log market data updates
+    console.debug(`[DASHBOARD] updateMarketData called for ${timeframe}:`, JSON.stringify(updated));
   }
 
   public updatePrice(price: number): void {
