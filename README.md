@@ -158,9 +158,7 @@ npm install
 npm run build
 ```
 
-### 3. Setup Environment Variables (.env) - PRIORITY 1
-
-This is the FIRST step for credentials:
+### 3. Setup Credentials - .env File
 
 ```bash
 # Copy environment template
@@ -170,10 +168,11 @@ cp .env.example .env
 nano .env  # or use your editor
 ```
 
-**Your .env should look like:**
+**Your .env should contain:**
 
 ```env
 # Bybit API Credentials (from https://www.bybit.com/app/user/api-management)
+# Use DEMO account credentials, NOT live trading!
 BYBIT_API_KEY=your_demo_api_key_here
 BYBIT_API_SECRET=your_demo_api_secret_here
 
@@ -182,11 +181,11 @@ BYBIT_TESTNET=true
 ```
 
 **⚠️ IMPORTANT:**
-- Environment variables (.env) OVERRIDE config.json settings
+- Store API credentials ONLY in `.env`, NEVER in config.json
 - Copy from `.env.example`, NEVER commit `.env` (it's in .gitignore)
-- Start with `BYBIT_TESTNET=true` for demo trading
+- Use DEMO account credentials for initial testing
 
-### 4. Setup Configuration (config.json) - PRIORITY 2
+### 4. Setup Configuration - config.json
 
 ```bash
 # Copy config template
@@ -196,12 +195,13 @@ cp config.example.json config.json
 nano config.json  # or use your editor
 ```
 
-**Key settings to adjust (in config.json):**
+**Key settings in config.json (start conservative):**
 
 ```json
 {
   "exchange": {
     "symbol": "XRPUSDT",
+    "timeframe": "5",
     "testnet": true,
     "demo": true
   },
@@ -221,45 +221,43 @@ nano config.json  # or use your editor
 }
 ```
 
-**NOTE:** API keys from `.env` will be used automatically. Do NOT put API keys in config.json!
+**Configuration Priority:**
+- `.env` file for API credentials and testnet flag
+- `config.json` for all trading settings
+- Start with `testnet: true` and `demo: true`
 
-### 5. Run on Demo/Testnet (MANDATORY!)
+### 5. Run the Bot
 
 ```bash
-# Verify your .env and config.json are set up correctly
-# Make sure BOTH settings are true:
-# - BYBIT_TESTNET=true in .env
-# - "testnet": true and "demo": true in config.json
-
+# Start trading on testnet/demo
 npm run dev
 ```
 
-Monitor logs to verify:
-- ✅ .env loads API keys correctly
-- ✅ Config loads from config.json
+**Verify in logs:**
+- ✅ `.env` loads API keys correctly
+- ✅ `config.json` settings applied
 - ✅ WebSocket connects to Bybit DEMO
 - ✅ Historical data downloads
-- ✅ Indicators initialize
 - ✅ First signals generate
 
-**⚠️ DO NOT change these settings to false yet!**
+### 6. Test & Backtest Before Going Live
 
-### 6. Test for 1-2 Weeks Minimum
+**Recommended testing timeline:**
 
-Before even considering live trading:
-1. Run on demo for at least 1-2 weeks
-2. Monitor 100+ trades minimum
-3. Check win rate and loss patterns
-4. Verify risk management is working
-5. Only then consider testing on very small amounts
+1. **Week 1-2:** Monitor live demo trading
+   - Run `npm run dev` for at least 100+ trades
+   - Check win rate and loss patterns
+   - Verify risk management works
 
-```bash
-# Run backtest to validate strategy
-npm run download-data XRPUSDT 2025-12-01 2025-12-31
-npm run backtest:sqlite
-npm run analyze-journal
-npm run analyze-losses
-```
+2. **Backtest to validate strategy:**
+   ```bash
+   npm run download-data XRPUSDT 2025-12-01 2025-12-31
+   npm run backtest:sqlite
+   npm run analyze-journal
+   npm run analyze-losses
+   ```
+
+3. **Only then** consider very small amounts on live (if you accept total loss)
 
 ### 7. ⚠️ LIVE TRADING - ONLY IF YOU ACCEPT TOTAL LOSS
 
@@ -342,13 +340,13 @@ smart-levels-trading-bot/
 "exchange": {
   "name": "bybit",
   "symbol": "XRPUSDT",           // Trading pair
-  "timeframe": "5",              // 5-minute candles
-  "apiKey": "YOUR_KEY",          // Bybit API key
-  "apiSecret": "YOUR_SECRET",    // Bybit API secret
+  "timeframe": "5",              // 5-minute candles (main strategy)
   "testnet": true,               // Start with testnet!
   "demo": true                   // Demo trading (no real orders)
 }
 ```
+
+**Note:** API credentials come from `.env` file, NOT from config.json
 
 ### Strategy Configuration
 
@@ -699,56 +697,6 @@ A: For DEMO: Any amount to test. For REAL: Only use money you can afford to lose
 ## License
 
 MIT License - See LICENSE file for details
-
----
-
-## Final Disclaimer - READ THIS OR DON'T USE
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-
-⚠️ BYBIT DEMO/TESTNET ONLY - NO LIVE TRADING ⚠️
-
-This software is provided for EDUCATIONAL purposes on Bybit DEMO accounts ONLY.
-
-ABSOLUTE REQUIREMENTS:
-✓ Test ONLY on Bybit DEMO or TESTNET accounts
-✓ Run for 1-2 weeks minimum before considering anything else
-✓ NEVER use on live trading accounts without accepting total loss
-
-WHAT WILL HAPPEN IF YOU USE REAL MONEY:
-✗ You will lose your deposit
-✗ Your account will be liquidated
-✗ You may owe money to the exchange
-✗ The author will NOT help you
-
-═══════════════════════════════════════════════════════════════════════════════
-
-LEGAL LIABILITY:
-- This software is provided "AS-IS" WITHOUT ANY WARRANTY
-- NO promises of profitability or successful trading
-- The author assumes NO responsibility for:
-  • Loss of funds
-  • Account liquidation
-  • Negative balances / debt
-  • Poor trading decisions
-  • System failures or bugs
-  • Market losses
-
-Trading on live accounts is YOUR decision and YOUR responsibility alone.
-
-═══════════════════════════════════════════════════════════════════════════════
-
-If you use this bot with real money, you accept:
-✓ You will probably lose everything
-✓ You cannot blame anyone else
-✓ You understand the complete risk
-✓ You use it by your own choice
-
-If you don't accept these terms, DO NOT USE THIS BOT.
-
-═══════════════════════════════════════════════════════════════════════════════
-```
 
 ---
 
