@@ -27,8 +27,7 @@ import { WeightMatrixCalculatorService } from './weight-matrix-calculator.servic
 import { LevelBasedStrategy } from '../strategies/level-based.strategy';
 import { WhaleHunterStrategy } from '../strategies/whale-hunter.strategy';
 import { WhaleHunterFollowStrategy } from '../strategies/whale-hunter-follow.strategy';
-import { WhaleDetectorService } from './whale-detector.service';
-import { WhaleDetectorFollowService } from './whale-detector-follow.service';
+import { WhaleDetectionService } from './whale-detection.service';
 import { OrderBookAnalyzer } from '../analyzers/orderbook.analyzer';
 import { VolatilityRegimeService } from './volatility-regime.service';
 import { ScalpingMicroWallStrategy } from '../strategies/scalping-micro-wall.strategy';
@@ -165,9 +164,10 @@ export class StrategyRegistrationService {
    */
   private registerWhaleStrategies(): void {
     if (this.config.whaleHunter?.enabled) {
-      const whaleDetector = new WhaleDetectorService(
+      const whaleDetector = new WhaleDetectionService(
         this.config.whaleHunter.detector,
         this.logger,
+        'BREAKOUT', // Strategy: sell walls break = SHORT, buy walls break = LONG
       );
 
       const orderbookConfig = {
@@ -198,9 +198,10 @@ export class StrategyRegistrationService {
     }
 
     if (this.config.whaleHunterFollow?.enabled) {
-      const whaleDetectorFollow = new WhaleDetectorFollowService(
+      const whaleDetectorFollow = new WhaleDetectionService(
         this.config.whaleHunterFollow.detector,
         this.logger,
+        'FOLLOW', // Strategy: follow whale direction (whale selling = SHORT, buying = LONG)
       );
 
       const orderbookConfig = {

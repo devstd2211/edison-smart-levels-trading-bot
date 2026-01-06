@@ -3,7 +3,7 @@
  */
 
 import { WhaleHunterStrategy } from '../../strategies/whale-hunter.strategy';
-import { WhaleDetectorService, WhaleDetectionMode } from '../../services/whale-detector.service';
+import { WhaleDetectionService, WhaleDetectionMode } from '../../services/whale-detection.service';
 import { OrderBookAnalyzer } from '../../analyzers/orderbook.analyzer';
 import { LoggerService, LogLevel, SignalDirection, StrategyMarketData, OrderBook, TrendBias } from '../../types';
 
@@ -41,7 +41,7 @@ function createOrderBook(bids: Array<[number, number]>, asks: Array<[number, num
 
 describe('WhaleHunterStrategy', () => {
   let strategy: WhaleHunterStrategy;
-  let whaleDetector: WhaleDetectorService;
+  let whaleDetector: WhaleDetectionService;
   let orderbookAnalyzer: OrderBookAnalyzer;
   let logger: LoggerService;
 
@@ -52,7 +52,7 @@ describe('WhaleHunterStrategy', () => {
       wallDisappearance: { enabled: true, minWallSize: 20, minWallDuration: 60000, wallGoneThresholdMs: 15000, maxConfidence: 80 },
       imbalanceSpike: { enabled: true, minRatioChange: 0.5, detectionWindow: 10000, maxConfidence: 90 },
     }, maxImbalanceHistory: 20, wallExpiryMs: 60000, breakExpiryMs: 300000 };
-    whaleDetector = new WhaleDetectorService(detectorConfig, logger);
+    whaleDetector = new WhaleDetectionService(detectorConfig, logger, 'BREAKOUT');
     const analyzerConfig = { enabled: true, depth: 50, wallThreshold: 0.1, imbalanceThreshold: 1.5, updateIntervalMs: 5000 };
     orderbookAnalyzer = new OrderBookAnalyzer(analyzerConfig, logger);
     const strategyConfig = { enabled: true, priority: 1, minConfidence: 70, requireTrendAlignment: false, requireMultipleSignals: false, cooldownMs: 60000, detector: detectorConfig };

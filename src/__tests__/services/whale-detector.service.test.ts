@@ -4,7 +4,7 @@
  * Tests real whale detection logic with proper orderbook tracking
  */
 
-import { WhaleDetectorService, WhaleDetectionMode, WhaleDetectorConfig } from '../../services/whale-detector.service';
+import { WhaleDetectionService, WhaleDetectionMode, WhaleDetectorConfig } from '../../services/whale-detection.service';
 import { OrderBookAnalysis, OrderBookWall, LoggerService, LogLevel, SignalDirection } from '../../types';
 
 function createAnalysis(walls: OrderBookWall[], ratio: number, direction: 'BULLISH' | 'BEARISH' | 'NEUTRAL'): OrderBookAnalysis {
@@ -32,8 +32,8 @@ function createAnalysis(walls: OrderBookWall[], ratio: number, direction: 'BULLI
   };
 }
 
-describe('WhaleDetectorService', () => {
-  let detector: WhaleDetectorService;
+describe('WhaleDetectionService', () => {
+  let detector: WhaleDetectionService;
   let logger: LoggerService;
   let config: WhaleDetectorConfig;
 
@@ -66,7 +66,7 @@ describe('WhaleDetectorService', () => {
       wallExpiryMs: 60000,
       breakExpiryMs: 300000,
     };
-    detector = new WhaleDetectorService(config, logger);
+    detector = new WhaleDetectionService(config, logger, 'BREAKOUT');
   });
 
   afterEach(() => {
@@ -418,7 +418,7 @@ describe('WhaleDetectorService', () => {
         wallExpiryMs: 60000,
         breakExpiryMs: 300000,
       };
-      const disabledDetector = new WhaleDetectorService(disabledConfig, logger);
+      const disabledDetector = new WhaleDetectionService(disabledConfig, logger, 'BREAKOUT');
 
       const analysis = createAnalysis([], 1.6, 'BULLISH');
       const signal = disabledDetector.detectWhale(analysis, 1000);

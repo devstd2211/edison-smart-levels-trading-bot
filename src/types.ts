@@ -2291,7 +2291,7 @@ export interface ScalpingOrderFlowConfig {
 export { LoggerService } from './services/logger.service';
 export { RiskManager } from './services/risk-manager.service';
 export { WeightMatrixCalculatorService } from './services/weight-matrix-calculator.service';
-export { WhaleDetectorService } from './services/whale-detector.service';
+export { WhaleDetectionService } from './services/whale-detection.service';
 export { WallTrackerService } from './services/wall-tracker.service';
 export { MicroWallDetectorService } from './services/micro-wall-detector.service';
 export { TickDeltaAnalyzerService } from './services/tick-delta-analyzer.service';
@@ -2299,7 +2299,6 @@ export { LadderTpManagerService } from './services/ladder-tp-manager.service';
 export { OrderFlowAnalyzerService } from './services/order-flow-analyzer.service';
 export { FractalSmcWeightingService } from './services/fractal-smc-weighting.service';
 export { MarketHealthMonitor } from './services/market-health.monitor';
-export { WhaleDetectorFollowService } from './services/whale-detector-follow.service';
 export { AntiFlipService, AntiFlipConfig, LastSignalInfo } from './services/anti-flip.service';
 export { VolatilityRegimeService } from './services/volatility-regime.service';
 export {

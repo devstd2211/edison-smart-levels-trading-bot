@@ -30,10 +30,10 @@ import {
   TakeProfit,
   OrderBookAnalysis,
   OrderbookLevel,
-  WhaleDetectorFollowService,
+  WhaleDetectionService,
   OrderBookAnalyzer,
 } from '../types';
-import { WhaleSignal, WhaleDetectionMode } from '../services/whale-detector-follow.service';
+import { WhaleSignal, WhaleDetectionMode } from '../services/whale-detection.service';
 import { SessionDetector } from '../utils/session-detector';
 
 // ============================================================================
@@ -50,7 +50,7 @@ export class WhaleHunterFollowStrategy implements IStrategy {
 
   constructor(
     private config: WhaleHunterConfig,
-    private whaleDetector: WhaleDetectorFollowService,
+    private whaleDetector: WhaleDetectionService,
     private orderbookAnalyzer: OrderBookAnalyzer,
     private logger: LoggerService,
   ) {
@@ -424,7 +424,7 @@ export class WhaleHunterFollowStrategy implements IStrategy {
     enabled: boolean;
     priority: number;
     inCooldown: boolean;
-    whaleDetectorStats: ReturnType<WhaleDetectorFollowService['getStats']>;
+    whaleDetectorStats: ReturnType<WhaleDetectionService['getStats']>;
     } {
     return {
       name: this.name,

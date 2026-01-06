@@ -129,7 +129,14 @@ export interface WhaleSignal {
 // WHALE DETECTOR SERVICE
 // ============================================================================
 
-export class WhaleDetectorService {
+/**
+ * Whale Detection Service
+ *
+ * Unified whale detection with pluggable strategies:
+ * - 'BREAKOUT': Sell walls broken = SHORT, Buy walls broken = LONG
+ * - 'FOLLOW': Follow whale direction (whale selling = SHORT, whale buying = LONG)
+ */
+export class WhaleDetectionService {
   // Mode 1: Wall tracking (for breaks and disappearances)
   private trackedBidWalls: Map<number, WhaleWall> = new Map();
   private trackedAskWalls: Map<number, WhaleWall> = new Map();
@@ -143,6 +150,7 @@ export class WhaleDetectorService {
   constructor(
     private config: WhaleDetectorConfig,
     private logger: LoggerService,
+    private strategy: 'BREAKOUT' | 'FOLLOW' = 'BREAKOUT', // Pluggable strategy (default: BREAKOUT)
   ) {}
 
   /**
@@ -624,8 +632,13 @@ export class WhaleDetectorService {
     btcMomentum?: number,
     btcDirection?: string,
   ): { direction: SignalDirection | null; reason: string; trendInverted: boolean } {
-    // Default direction (neutral market logic)
-    const defaultDirection = wallSide === 'BID' ? SignalDirection.SHORT : SignalDirection.LONG;
+    // Choose direction based on strategy
+    // BREAKOUT: BID gone → SHORT (expect sell), ASK gone → LONG (expect buy)
+    // FOLLOW: BID gone → LONG (follow whale), ASK gone → SHORT (follow whale)
+    const useFollowLogic = this.strategy === 'FOLLOW';
+    const defaultDirection = useFollowLogic
+      ? (wallSide === 'BID' ? SignalDirection.LONG : SignalDirection.SHORT)
+      : (wallSide === 'BID' ? SignalDirection.SHORT : SignalDirection.LONG);
     const invertedDirection = wallSide === 'BID' ? SignalDirection.LONG : SignalDirection.SHORT;
 
     // If BTC data not available, use default logic
