@@ -365,6 +365,19 @@ export class PositionLifecycleService {
   }
 
   /**
+   * Get all open positions from journal
+   * @returns Array of Position objects currently open
+   */
+  getOpenPositions(): Position[] {
+    if (!this.journal || !this.currentPosition) {
+      return [];
+    }
+
+    // Return only the current position (single open position per symbol)
+    return [this.currentPosition];
+  }
+
+  /**
    * Sync position from WebSocket update
    * Handles both position restoration (after bot restart) and state updates
    */

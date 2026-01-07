@@ -30,6 +30,7 @@ import {
   BollingerBandsIndicator,
   Position,
   StrategySignal,
+  FlatMarketResult,
 } from '../types';
 import {
   DECIMAL_PLACES,
@@ -406,7 +407,7 @@ export class EntryLogicService {
     this.logger.info(`⚡ ${entrySignal.direction} entering immediately (confirmation disabled)`);
     // PHASE 6a: Execute with trend context for trend-aware filtering
     // PHASE 1.3: Include flat market analysis for entry blocking
-    await this.executeTradeWithTrend(entrySignal, marketData, flatMarketAnalysis);
+    await this.executeTradeWithTrend(entrySignal, marketData, flatMarketAnalysis as FlatMarketResult | null);
   }
 
   /**
@@ -443,7 +444,7 @@ export class EntryLogicService {
   private async executeTradeWithTrend(
     entrySignal: EntrySignal,
     marketData?: StrategyMarketData | undefined,
-    flatMarketAnalysis?: { isFlat: boolean; confidence: number } | null,
+    flatMarketAnalysis?: FlatMarketResult | null,
   ): Promise<void> {
     const trendAnalysis = this.getCurrentTrendAnalysis();
     await this.tradeExecutionService.executeTrade(

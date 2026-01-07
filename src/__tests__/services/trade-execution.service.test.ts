@@ -3,7 +3,8 @@
  * Week 13 Phase 4b: Extracted from trading-orchestrator.service.ts
  */
 
-import { TradeExecutionService, EntrySignal } from '../../services/trade-execution.service';
+import { TradeExecutionService } from '../../services/trade-execution.service';
+import { EntrySignal } from '../../types';
 import { SignalDirection } from '../../types';
 
 describe('TradeExecutionService', () => {

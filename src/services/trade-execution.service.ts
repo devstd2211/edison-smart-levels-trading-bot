@@ -24,6 +24,13 @@ import {
   TimeframeRole,
   EntryDecision,
   TrendAnalysis,
+  EntrySignal,
+  EntryOrchestratorDecision,
+  SignalType,
+  SignalDirection,
+  OrchestratorConfig,
+  TrendBias,
+  FlatMarketResult,
 } from '../types';
 import { BybitService } from './bybit/bybit.service';
 import { PositionLifecycleService } from './position-lifecycle.service';
@@ -32,26 +39,16 @@ import { ExternalAnalysisService } from './external-analysis.service';
 import { RetestEntryService } from './retest-entry.service';
 import { RiskManager } from './risk-manager.service';
 import { CandleProvider } from '../providers/candle.provider';
+import { EntryOrchestrator } from '../orchestrators/entry.orchestrator';
+import { MultiTimeframeRSIAnalyzer } from '../analyzers/multi-timeframe-rsi.analyzer';
+import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
+import { LiquidityDetector } from '../analyzers/liquidity.detector';
 import {
   DECIMAL_PLACES,
   THRESHOLD_VALUES,
   PERCENT_MULTIPLIER,
 } from '../constants';
 
-/**
- * Entry Signal interface (imported from signal-processing)
- */
-export interface EntrySignal {
-  shouldEnter: boolean;
-  direction: string;
-  confidence: number;
-  entryPrice: number;
-  stopLoss: number;
-  takeProfits: any[];
-  reason: string;
-  timestamp: number;
-  strategyName?: string;
-}
 
 /**
  * Trade Execution Service
@@ -76,11 +73,11 @@ export class TradeExecutionService {
     private externalAnalysisService: ExternalAnalysisService | null,
     private telegram: TelegramService | null,
     private logger: LoggerService,
-    private config?: any, // OrchestratorConfig
-    private rsiAnalyzer?: any,
-    private emaAnalyzer?: any,
-    private liquidityDetector?: any,
-    private entryOrchestrator?: any, // EntryOrchestrator - PHASE 6
+    private config?: OrchestratorConfig,
+    private rsiAnalyzer?: MultiTimeframeRSIAnalyzer,
+    private emaAnalyzer?: MultiTimeframeEMAAnalyzer,
+    private liquidityDetector?: LiquidityDetector,
+    private entryOrchestrator?: EntryOrchestrator,
   ) {}
 
   /**
@@ -96,7 +93,7 @@ export class TradeExecutionService {
     entrySignal: EntrySignal,
     marketData?: StrategyMarketData,
     globalTrendBias?: TrendAnalysis | null,
-    flatMarketAnalysis?: { isFlat: boolean; confidence: number } | null,
+    flatMarketAnalysis?: FlatMarketResult | null,
   ): Promise<void> {
     try {
       // PHASE 5: Check Emergency Kill-Switch
@@ -111,8 +108,8 @@ export class TradeExecutionService {
 
       // Convert EntrySignal to Signal (shared format)
       const signal: Signal = {
-        type: (entrySignal.strategyName as any) || 'LEVEL_BASED',
-        direction: entrySignal.direction as any,
+        type: (entrySignal.strategyName as SignalType) || SignalType.LEVEL_BASED,
+        direction: entrySignal.direction as SignalDirection,
         price: entrySignal.entryPrice,
         stopLoss: entrySignal.stopLoss,
         takeProfits: entrySignal.takeProfits,
@@ -159,7 +156,7 @@ export class TradeExecutionService {
       // Week 13: Funding rate filter check (using ExternalAnalysisService)
       if (this.externalAnalysisService && this.config?.fundingRateFilter?.enabled) {
         const fundingRateAllowed = await this.externalAnalysisService.checkFundingRate(
-          entrySignal.direction as any
+          entrySignal.direction as SignalDirection
         );
 
         if (!fundingRateAllowed) {
@@ -238,9 +235,9 @@ export class TradeExecutionService {
   private async evaluateEntryWithOrchestrator(
     signal: Signal,
     accountBalance: number,
-    openPositions: any[],
+    openPositions: Position[],
     globalTrendBias?: TrendAnalysis | null,
-    flatMarketAnalysis?: { isFlat: boolean; confidence: number } | null,
+    flatMarketAnalysis?: FlatMarketResult | null,
   ): Promise<RiskDecision | null> {
     // Validate orchestrator is initialized (PHASE 4: FAST FAIL)
     if (!this.entryOrchestrator) {
@@ -250,23 +247,38 @@ export class TradeExecutionService {
       throw new Error('EntryOrchestrator must be initialized');
     }
 
+    // Validate trend analysis is provided (CRITICAL: required by EntryOrchestrator)
+    let validTrendBias: TrendAnalysis;
+    if (!globalTrendBias) {
+      this.logger.warn('⚠️ Trend analysis not provided to entry orchestrator, using NEUTRAL bias');
+      validTrendBias = {
+        bias: TrendBias.NEUTRAL,
+        strength: 0,
+        restrictedDirections: [],
+        timeframe: '1m',
+        reasoning: ['No trend analysis provided - using default NEUTRAL bias'],
+      };
+    } else {
+      validTrendBias = globalTrendBias;
+    }
+
     // Use EntryOrchestrator for single atomic entry decision with trend filtering
     const orchestratorDecision = await this.entryOrchestrator.evaluateEntry(
       [signal], // Convert single signal to array for multi-signal ranking capability
       accountBalance,
       openPositions,
-      globalTrendBias, // PHASE 6a: Now provided - enables trend-aware filtering
-      flatMarketAnalysis, // PHASE 1.3: Now provided - enables flat market blocking
+      validTrendBias, // PHASE 6a: Now provided - enables trend-aware filtering
+      flatMarketAnalysis ?? undefined, // PHASE 1.3: Convert null to undefined for type safety
     );
 
     // Check orchestrator decision result
     if (orchestratorDecision.decision !== EntryDecision.ENTER) {
-      this.logEntryBlocked(orchestratorDecision, globalTrendBias);
+      this.logEntryBlocked(orchestratorDecision, validTrendBias);
       return null;
     }
 
     // Log successful approval with risk details
-    this.logEntryApproved(orchestratorDecision, signal, globalTrendBias);
+    this.logEntryApproved(orchestratorDecision, signal, validTrendBias);
     return orchestratorDecision.riskAssessment || null;
   }
 
@@ -274,7 +286,7 @@ export class TradeExecutionService {
    * Log when entry is blocked by EntryOrchestrator
    */
   private logEntryBlocked(
-    orchestratorDecision: any,
+    orchestratorDecision: EntryOrchestratorDecision,
     globalTrendBias?: TrendAnalysis | null,
   ): void {
     this.logger.info('❌ Trade blocked by EntryOrchestrator', {
@@ -289,7 +301,7 @@ export class TradeExecutionService {
    * Log when entry is approved by EntryOrchestrator
    */
   private logEntryApproved(
-    orchestratorDecision: any,
+    orchestratorDecision: EntryOrchestratorDecision,
     signal: Signal,
     globalTrendBias?: TrendAnalysis | null,
   ): void {
@@ -328,34 +340,14 @@ export class TradeExecutionService {
   }
 
   /**
-   * Get open positions from journal
+   * Get open positions from position manager
    * @returns Array of open positions
    */
   private async getOpenPositions(): Promise<Position[]> {
     try {
-      const journal = (this.positionManager as any)['journal'];
-      if (journal && typeof journal.getOpenTrades === 'function') {
-        const openTrades = journal.getOpenTrades() || [];
-        return openTrades.map((trade: any) => ({
-          id: trade.id || 'unknown',
-          symbol: trade.symbol || 'UNKNOWN',
-          side: trade.side,
-          quantity: trade.quantity || 0,
-          entryPrice: trade.entryPrice || 0,
-          leverage: trade.leverage || 1,
-          marginUsed: ((trade.quantity || 0) * (trade.entryPrice || 1)) / (trade.leverage || 1),
-          stopLoss: trade.stopLoss || { price: 0, initialPrice: 0, isBreakeven: false, isTrailing: false, updatedAt: 0 },
-          takeProfits: trade.takeProfits || [],
-          openedAt: trade.openedAt || Date.now(),
-          unrealizedPnL: 0,
-          orderId: trade.id || 'unknown',
-          reason: 'open position',
-          status: 'OPEN' as const,
-        }));
-      }
-      return [];
+      return this.positionManager.getOpenPositions();
     } catch (error) {
-      this.logger.warn('Failed to get open positions from journal', {
+      this.logger.warn('Failed to get open positions', {
         error: error instanceof Error ? error.message : String(error),
       });
       return [];
@@ -375,7 +367,7 @@ export class TradeExecutionService {
       }
 
       const currentPrice = entryCandles[entryCandles.length - 1].close;
-      const symbol = (this.bybitService as any)['symbol'];
+      const symbol = this.bybitService.getSymbol();
 
       if (!this.retestEntryService) {
         return false;
@@ -385,8 +377,8 @@ export class TradeExecutionService {
 
       if (impulse.hasImpulse) {
         const signal: Signal = {
-          type: (entrySignal.strategyName as any) || 'LEVEL_BASED',
-          direction: entrySignal.direction as any,
+          type: (entrySignal.strategyName as SignalType) || SignalType.LEVEL_BASED,
+          direction: entrySignal.direction as SignalDirection,
           price: entrySignal.entryPrice,
           stopLoss: entrySignal.stopLoss,
           takeProfits: entrySignal.takeProfits,
@@ -455,7 +447,7 @@ export class TradeExecutionService {
   private scheduleEntryValidationCheck(position: Position, signal: Signal): void {
     const VALIDATION_DELAY_MS = 60000; // 1 minute
     // Convert percent to decimal (0.1% → 0.001)
-    const favorableMovementThreshold = (this.config?.trading?.favorableMovementThresholdPercent ?? 0.1) / PERCENT_MULTIPLIER;
+    const favorableMovementThreshold = 0.1 / PERCENT_MULTIPLIER;
 
     // Schedule validation asynchronously (non-blocking)
     setTimeout(async () => {
