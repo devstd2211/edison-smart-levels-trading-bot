@@ -20,6 +20,7 @@ import {
   LogLevel,
   Position,
   RiskManagerConfig,
+  TrendAnalysis,
 } from '../../types';
 import { LoggerService } from '../../services/logger.service';
 
@@ -28,6 +29,17 @@ class TestLogger extends LoggerService {
   constructor() {
     super(LogLevel.INFO, './logs', false);
   }
+}
+
+function createNeutralTrend(): TrendAnalysis {
+  return {
+    bias: 'NEUTRAL' as TrendBias,
+    strength: 0.0,
+    timeframe: '1h',
+    pattern: 'MIXED',
+    reasoning: ['No clear direction'],
+    restrictedDirections: [],
+  };
 }
 
 function createSignal(
@@ -94,7 +106,7 @@ describe('EntryOrchestrator', () => {
 
   describe('Basic Functionality', () => {
     it('should SKIP when no signals provided', async () => {
-      const result = await orchestrator.evaluateEntry([], 1000, []);
+      const result = await orchestrator.evaluateEntry([], 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
       expect(result.reason).toContain('No signals');
@@ -106,7 +118,7 @@ describe('EntryOrchestrator', () => {
         createSignal(SignalDirection.LONG, 15), // Below 30%
       ];
 
-      const result = await orchestrator.evaluateEntry(lowConfidenceSignals, 1000, []);
+      const result = await orchestrator.evaluateEntry(lowConfidenceSignals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
       expect(result.reason).toContain('confidence');
@@ -115,7 +127,7 @@ describe('EntryOrchestrator', () => {
     it('should ENTER when single valid signal passed all checks', async () => {
       const signals = [createSignal(SignalDirection.LONG, 75, 100)];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.ENTER);
       expect(result.signal).toBeDefined();
@@ -125,7 +137,7 @@ describe('EntryOrchestrator', () => {
     it('should return RiskDecision when entry approved', async () => {
       const signals = [createSignal(SignalDirection.LONG, 75, 100)];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.riskAssessment).toBeDefined();
       expect(result.riskAssessment?.allowed).toBe(true);
@@ -141,7 +153,7 @@ describe('EntryOrchestrator', () => {
         createSignal(SignalDirection.LONG, 65, 100), // Medium confidence
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       // Should pick the 85% confidence signal
       expect(result.decision).toBe(EntryDecision.ENTER);
@@ -156,7 +168,7 @@ describe('EntryOrchestrator', () => {
         { ...createSignal(SignalDirection.LONG, 60), type: SignalType.LEVEL_BASED },
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.signal?.confidence).toBe(95);
     });
@@ -169,7 +181,7 @@ describe('EntryOrchestrator', () => {
         createSignal(SignalDirection.LONG, 80, 102),
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       // Should pick LONG (more agreement)
       expect(result.signal?.direction).toBe(SignalDirection.LONG);
@@ -262,12 +274,14 @@ describe('EntryOrchestrator', () => {
       expect(shortResult.decision).toBe(EntryDecision.ENTER);
     });
 
-    it('should ignore trend check when no trend provided', async () => {
+    it('should require trend analysis for entry decision', async () => {
       const signals = [createSignal(SignalDirection.LONG, 80, 100)];
+      const validTrend = createNeutralTrend();
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, [], undefined);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], validTrend);
 
       expect(result.decision).toBe(EntryDecision.ENTER);
+      // Trend is now required, so entries cannot proceed without it
     });
   });
 
@@ -293,7 +307,7 @@ describe('EntryOrchestrator', () => {
       riskManager.recordTradeResult(trade);
 
       // Now try to trade - should be blocked
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
       expect(result.reason).toContain('Risk check failed');
@@ -302,7 +316,7 @@ describe('EntryOrchestrator', () => {
     it('should include RiskDecision in response', async () => {
       const signals = [createSignal(SignalDirection.LONG, 80, 100)];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.riskAssessment).toBeDefined();
       expect(result.riskAssessment?.allowed).toBe(true);
@@ -313,7 +327,7 @@ describe('EntryOrchestrator', () => {
       const signals = [createSignal(SignalDirection.LONG, 80, 100)];
       const positions: Position[] = [];
 
-      const result = await orchestrator.evaluateEntry(signals, 1500, positions);
+      const result = await orchestrator.evaluateEntry(signals, 1500, positions, createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.ENTER);
       // RiskManager would have been called with correct balance
@@ -325,7 +339,7 @@ describe('EntryOrchestrator', () => {
     it('should return SKIP with error reason on invalid account balance (0)', async () => {
       const signals = [createSignal(SignalDirection.LONG, 80, 100)];
 
-      const result = await orchestrator.evaluateEntry(signals, 0, []);
+      const result = await orchestrator.evaluateEntry(signals, 0, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
       expect(result.reason).toContain('accountBalance');
@@ -334,7 +348,7 @@ describe('EntryOrchestrator', () => {
     it('should return SKIP with error reason on negative account balance', async () => {
       const signals = [createSignal(SignalDirection.LONG, 80, 100)];
 
-      const result = await orchestrator.evaluateEntry(signals, -100, []);
+      const result = await orchestrator.evaluateEntry(signals, -100, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
       expect(result.reason).toContain('accountBalance');
@@ -346,7 +360,7 @@ describe('EntryOrchestrator', () => {
         createSignal(SignalDirection.LONG, 80), // Valid
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       // Should only consider the valid signal
       expect(result.decision).toBe(EntryDecision.ENTER);
@@ -359,7 +373,7 @@ describe('EntryOrchestrator', () => {
         createSignal(SignalDirection.LONG, 80), // Valid
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.ENTER);
       expect(result.signal?.confidence).toBe(80);
@@ -372,7 +386,7 @@ describe('EntryOrchestrator', () => {
       ];
 
       // Should proceed with evaluation (RiskManager will validate)
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result).toBeDefined();
     });
@@ -389,7 +403,7 @@ describe('EntryOrchestrator', () => {
 
       const brokenOrchestrator = new EntryOrchestrator(brokenRiskManager, logger);
 
-      const result = await brokenOrchestrator.evaluateEntry(signals, 1000, []);
+      const result = await brokenOrchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
       expect(result.reason).toContain('Orchestrator error');
@@ -400,7 +414,7 @@ describe('EntryOrchestrator', () => {
     it('should handle single signal at minimum confidence threshold', async () => {
       const signals = [createSignal(SignalDirection.LONG, 60, 100)]; // Exactly 60% (new minimum)
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.ENTER);
     });
@@ -408,7 +422,7 @@ describe('EntryOrchestrator', () => {
     it('should reject signal just below minimum confidence', async () => {
       const signals = [createSignal(SignalDirection.LONG, 59, 100)]; // 59% (below 60% threshold)
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
     });
@@ -418,7 +432,7 @@ describe('EntryOrchestrator', () => {
         createSignal(SignalDirection.LONG, 60 + (i % 40), 100), // 60-99% range
       );
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       // Should pick highest confidence
       expect(result.decision).toBe(EntryDecision.ENTER);
@@ -431,7 +445,7 @@ describe('EntryOrchestrator', () => {
         { ...createSignal(SignalDirection.LONG, 80), type: SignalType.TREND_FOLLOWING },
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.ENTER);
       expect(result.signal?.confidence).toBe(80);
@@ -464,7 +478,7 @@ describe('EntryOrchestrator', () => {
         },
       ];
 
-      const result = await orchestrator.evaluateEntry(signals, 1000, []);
+      const result = await orchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.reason).toBeDefined();
     });

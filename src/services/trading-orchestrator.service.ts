@@ -146,7 +146,8 @@ export class TradingOrchestrator {
   private maxConcurrentRiskService: any | null = null; // Consolidated into RiskManager
 
   // PHASE 4: TrendAnalyzer (PRIMARY - runs FIRST to set global trend bias)
-  private trendAnalyzer: TrendAnalyzer | null = null;
+  // NOW REQUIRED - no longer optional! Bug fix: prevent entries before trend is determined
+  private trendAnalyzer!: TrendAnalyzer;
   private currentTrendAnalysis: TrendAnalysis | null = null;
 
   // PHASE 4: RiskManager (PRIMARY - unified atomic risk gatekeeper)
@@ -211,7 +212,7 @@ export class TradingOrchestrator {
     retestEntryService?: RetestEntryService,
     deltaAnalyzerService?: DeltaAnalyzerService,
     orderbookImbalanceService?: OrderbookImbalanceService,
-    trendAnalyzer?: TrendAnalyzer,  // PHASE 4: Global trend detection (optional - created internally if not provided)
+    trendAnalyzer?: TrendAnalyzer,  // NOTE: Still accepts for override, but OrchestratorInitializationService always creates one
     private tradingJournal?: TradingJournalService,  // For PositionExitingService (Session 68)
     private sessionStats?: SessionStatsService,  // For PositionExitingService (Session 68)
   ) {

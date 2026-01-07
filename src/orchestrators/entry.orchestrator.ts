@@ -73,15 +73,19 @@ export class EntryOrchestrator {
    * @param signals - Array of entry signals from strategies
    * @param accountBalance - Current account balance
    * @param openPositions - Currently open positions (for risk checking)
-   * @param globalTrendBias - Current trend from TrendAnalyzer (HH_HL/LH_LL/NEUTRAL)
+   * @param globalTrendBias - Current trend from TrendAnalyzer (HH_HL/LH_LL/NEUTRAL) - REQUIRED!
    * @param flatMarketAnalysis - Market flatness detection (PHASE 1.3)
    * @returns EntryOrchestratorDecision with ENTER/SKIP/WAIT
+   *
+   * CRITICAL BUG FIX: globalTrendBias is now REQUIRED (not optional)
+   * Previously, entries could be accepted before trend was determined
+   * This prevents positions from being opened during initialization gap
    */
   async evaluateEntry(
     signals: Signal[],
     accountBalance: number,
     openPositions: Position[],
-    globalTrendBias?: TrendAnalysis,
+    globalTrendBias: TrendAnalysis,  // REQUIRED - no longer optional!
     flatMarketAnalysis?: FlatMarketResult,
   ): Promise<EntryOrchestratorDecision> {
     try {
@@ -167,50 +171,50 @@ export class EntryOrchestrator {
 
       // =====================================================================
       // STEP 3: Check trend alignment (PHASE 4 RULE)
+      // CRITICAL: Always check trend alignment (not optional!)
+      // Bug fix: prevents entries before trend is determined
       // =====================================================================
-      if (globalTrendBias) {
-        const trendCheck = this.checkTrendAlignment(topSignal, globalTrendBias);
-        if (!trendCheck.aligned) {
-          this.logger.info('❌ Signal blocked by trend alignment', {
-            signal: topSignal.type,
-            direction: topSignal.direction,
-            trend: globalTrendBias.bias,
-            reason: trendCheck.reason,
-          });
-          return {
-            decision: EntryDecision.SKIP,
-            reason: `Trend misalignment: ${trendCheck.reason}`,
-          };
-        }
-
-        this.logger.debug('✅ Signal passed trend alignment check', {
+      const trendCheck = this.checkTrendAlignment(topSignal, globalTrendBias);
+      if (!trendCheck.aligned) {
+        this.logger.info('❌ Signal blocked by trend alignment', {
           signal: topSignal.type,
           direction: topSignal.direction,
           trend: globalTrendBias.bias,
+          reason: trendCheck.reason,
         });
+        return {
+          decision: EntryDecision.SKIP,
+          reason: `Trend misalignment: ${trendCheck.reason}`,
+        };
+      }
 
-        // =====================================================================
-        // STEP 3.5: Check NEUTRAL trend strength (via filter class)
-        // =====================================================================
-        if (this.neutralTrendFilter) {
-          const neutralCheck = this.neutralTrendFilter.evaluate(topSignal, globalTrendBias);
-          if (!neutralCheck.allowed) {
-            this.logger.info('❌ Signal blocked by NEUTRAL trend strength filter', {
-              signal: topSignal.type,
-              direction: topSignal.direction,
-              reason: neutralCheck.reason,
-            });
-            return {
-              decision: EntryDecision.SKIP,
-              reason: `NEUTRAL trend filter: ${neutralCheck.reason}`,
-            };
-          }
+      this.logger.debug('✅ Signal passed trend alignment check', {
+        signal: topSignal.type,
+        direction: topSignal.direction,
+        trend: globalTrendBias.bias,
+      });
 
-          this.logger.debug('✅ Signal passed NEUTRAL trend strength filter', {
+      // =====================================================================
+      // STEP 3.5: Check NEUTRAL trend strength (via filter class)
+      // =====================================================================
+      if (this.neutralTrendFilter) {
+        const neutralCheck = this.neutralTrendFilter.evaluate(topSignal, globalTrendBias);
+        if (!neutralCheck.allowed) {
+          this.logger.info('❌ Signal blocked by NEUTRAL trend strength filter', {
             signal: topSignal.type,
+            direction: topSignal.direction,
             reason: neutralCheck.reason,
           });
+          return {
+            decision: EntryDecision.SKIP,
+            reason: `NEUTRAL trend filter: ${neutralCheck.reason}`,
+          };
         }
+
+        this.logger.debug('✅ Signal passed NEUTRAL trend strength filter', {
+          signal: topSignal.type,
+          reason: neutralCheck.reason,
+        });
       }
 
       // =====================================================================

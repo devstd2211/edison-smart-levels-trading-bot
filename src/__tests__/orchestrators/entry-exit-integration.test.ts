@@ -28,10 +28,10 @@ import {
   LogLevel,
   TakeProfit,
   RiskManagerConfig,
+  RiskDecision,
 } from '../../types';
 import { LoggerService } from '../../services/logger.service';
 import { RiskManager } from '../../services/risk-manager.service';
-import { RiskDecision } from '../../types';
 
 // ============================================================================
 // TEST UTILITIES
@@ -171,6 +171,11 @@ function createTrendAnalysis(bias: TrendBias): TrendAnalysis {
   };
 }
 
+// Create neutral trend helper
+function createNeutralTrend(): TrendAnalysis {
+  return createTrendAnalysis(TrendBias.NEUTRAL);
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -224,6 +229,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
         [signal],
         10000, // account balance (increased to avoid risk limits)
         [], // no open positions
+        createNeutralTrend(),
       );
 
       expect(entryDecision.decision).toBe(EntryDecision.ENTER);
@@ -269,6 +275,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
         [signal],
         10000,
         [],
+        createNeutralTrend(),
       );
 
       expect(entryDecision.decision).toBe(EntryDecision.ENTER);
@@ -415,7 +422,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
 
       // Entry decision
       const signal = createSignal(SignalDirection.LONG, 75);
-      await entryOrchestrator.evaluateEntry([signal], 1000, []);
+      await entryOrchestrator.evaluateEntry([signal], 1000, [], createNeutralTrend());
 
       // Exit decision
       const position = createPosition(PositionSide.LONG, 100, 1);
@@ -493,7 +500,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
   describe('Error Handling', () => {
     it('should handle invalid entry signals gracefully', async () => {
       const invalidSignal = createSignal(SignalDirection.LONG, -50); // Invalid confidence
-      const decision = await entryOrchestrator.evaluateEntry([invalidSignal], 10000, []);
+      const decision = await entryOrchestrator.evaluateEntry([invalidSignal], 10000, [], createNeutralTrend());
 
       expect(decision.decision).toBe(EntryDecision.SKIP);
       expect(decision.reason).toContain('confidence');
@@ -503,7 +510,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
       const signal = createSignal(SignalDirection.LONG, 75);
 
       try {
-        await entryOrchestrator.evaluateEntry([signal], 0, []);
+        await entryOrchestrator.evaluateEntry([signal], 0, [], createNeutralTrend());
         fail('Should have thrown an error for zero account balance');
       } catch (error) {
         expect(error).toBeDefined();
@@ -511,7 +518,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
     });
 
     it('should handle null/undefined signals', async () => {
-      const decision = await entryOrchestrator.evaluateEntry([], 10000, []);
+      const decision = await entryOrchestrator.evaluateEntry([], 10000, [], createNeutralTrend());
 
       expect(decision.decision).toBe(EntryDecision.SKIP);
       expect(decision.reason).toContain('No signals');
@@ -539,7 +546,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
   describe('Cross-Phase Interaction', () => {
     it('Entry approval should not interfere with exit execution', async () => {
       const signal = createSignal(SignalDirection.LONG, 75);
-      const entryDecision = await entryOrchestrator.evaluateEntry([signal], 10000, []);
+      const entryDecision = await entryOrchestrator.evaluateEntry([signal], 10000, [], createNeutralTrend());
       expect(entryDecision.decision).toBe(EntryDecision.ENTER);
 
       const position = createPosition(PositionSide.LONG, 100, 1);
@@ -552,7 +559,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
     it('Entry should not be blocked by previous exit decisions', async () => {
       // First entry+exit cycle
       const signal1 = createSignal(SignalDirection.LONG, 75);
-      const entry1 = await entryOrchestrator.evaluateEntry([signal1], 10000, []);
+      const entry1 = await entryOrchestrator.evaluateEntry([signal1], 10000, [], createNeutralTrend());
       expect(entry1.decision).toBe(EntryDecision.ENTER);
 
       const position1 = createPosition(PositionSide.LONG, 100, 1);
@@ -560,7 +567,7 @@ describe('Entry + Exit Orchestrator Integration', () => {
 
       // Second entry+exit cycle
       const signal2 = createSignal(SignalDirection.SHORT, 75);
-      const entry2 = await entryOrchestrator.evaluateEntry([signal2], 10000, []);
+      const entry2 = await entryOrchestrator.evaluateEntry([signal2], 10000, [], createNeutralTrend());
       expect(entry2.decision).toBe(EntryDecision.ENTER);
     });
   });

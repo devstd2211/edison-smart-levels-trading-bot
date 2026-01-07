@@ -115,7 +115,7 @@ export interface InitializedOrchestratorServices {
 
   // Market structure & trend
   marketStructureAnalyzer: MarketStructureAnalyzer;
-  trendAnalyzer: TrendAnalyzer | null;
+  trendAnalyzer: TrendAnalyzer; // REQUIRED - no longer optional! (Bug fix: prevent entries before trend is determined)
 
   // Orchestrators
   entryOrchestrator: EntryOrchestrator;
@@ -350,11 +350,18 @@ export class OrchestratorInitializationService {
     );
     this.logger.info('✅ Market Structure Analyzer initialized (TrendAnalyzer dependency)');
 
-    // Initialize TrendAnalyzer
-    let trendAnalyzer: TrendAnalyzer | null = null;
+    // Initialize TrendAnalyzer - NOW REQUIRED (no longer optional!)
+    // CRITICAL: TrendAnalyzer must ALWAYS be initialized before entry signals are accepted
+    // This prevents the bug where bot opens positions before trend is determined
+    let trendAnalyzer: TrendAnalyzer;
+
     if (this.trendAnalyzer) {
+      // Use provided TrendAnalyzer (e.g., from BotServices override)
       trendAnalyzer = this.trendAnalyzer;
-    } else if (marketStructureAnalyzer) {
+      this.logger.info('✅ TrendAnalyzer initialized (provided externally)');
+    } else {
+      // Always create TrendAnalyzer if not provided
+      // This ensures entries are always validated against trend
       const swingPointDetector = new SwingPointDetectorService(this.logger, 2);
       const multiTimeframeTrendService = new MultiTimeframeTrendService(this.logger, swingPointDetector);
       const timeframeWeightingService = new TimeframeWeightingService(this.logger);
@@ -366,14 +373,14 @@ export class OrchestratorInitializationService {
         multiTimeframeTrendService,
         timeframeWeightingService,
       );
+      this.logger.info('✅ TrendAnalyzer initialized internally (REQUIRED)');
     }
 
-    if (trendAnalyzer) {
-      this.logger.info('✅ TrendAnalyzer initialized (PHASE 4 PRIMARY)', {
-        role: 'Global trend detection - runs FIRST in pipeline',
-        blocks: ['LONG in BEARISH trend', 'SHORT in BULLISH trend'],
-      });
-    }
+    this.logger.info('✅ TrendAnalyzer initialized (PHASE 4 PRIMARY - REQUIRED)', {
+      role: 'Global trend detection - runs FIRST in pipeline',
+      blocks: ['LONG in BEARISH trend', 'SHORT in BULLISH trend'],
+      critical: 'MUST be initialized before entry signals are accepted',
+    });
 
     return {
       marketStructure: marketStructureAnalyzer,
