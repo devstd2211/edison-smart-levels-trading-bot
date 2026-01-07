@@ -28,6 +28,8 @@ import {
   TrendAnalysis,
   StrategyMarketData,
   BollingerBandsIndicator,
+  Position,
+  StrategySignal,
 } from '../types';
 import {
   DECIMAL_PLACES,
@@ -39,6 +41,8 @@ import { CandleProvider } from '../providers/candle.provider';
 import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
 import { RetestEntryService } from './retest-entry.service';
 import { MarketDataPreparationService } from './market-data-preparation.service';
+import { ExternalAnalysisService } from './external-analysis.service';
+import { TradingContextService } from './trading-context.service';
 import { AnalyzerRegistry } from './analyzer-registry.service';
 import { StrategyCoordinator } from './strategy-coordinator.service';
 import { SignalProcessingService } from './signal-processing.service';
@@ -56,10 +60,10 @@ export class EntryLogicService {
     private bollingerIndicator: BollingerBandsIndicator | undefined,
     private candleProvider: CandleProvider,
     private emaAnalyzer: MultiTimeframeEMAAnalyzer,
-    private currentContext: any | null, // TradingContextService - provides getCurrentTrendAnalysis()
+    private currentContext: TradingContextService | null,
     private retestEntryService: RetestEntryService | null,
     private marketDataPreparationService: MarketDataPreparationService,
-    private externalAnalysisService: any,
+    private externalAnalysisService: ExternalAnalysisService,
     private analyzerRegistry: AnalyzerRegistry,
     private strategyCoordinator: StrategyCoordinator,
     private signalProcessingService: SignalProcessingService,
@@ -183,7 +187,7 @@ export class EntryLogicService {
   /**
    * Handle position status when already in position
    */
-  private async handlePositionStatus(candle: Candle, currentPosition: any): Promise<void> {
+  private async handlePositionStatus(candle: Candle, currentPosition: Position): Promise<void> {
 
     // Check retest entry
     if (this.retestEntryService && this.config.retestEntry?.enabled) {
@@ -248,7 +252,7 @@ export class EntryLogicService {
       if (primaryCandles.length > 0 && primaryEma) {
         return this.externalAnalysisService.detectFlatMarket(
           primaryCandles,
-          this.currentContext,
+          this.currentContext as any,
           primaryEma.fast,
           primaryEma.slow,
         );
@@ -289,9 +293,15 @@ export class EntryLogicService {
    * @returns true if executed immediately, false if blocked or declined
    */
   private async processStrategySignal(
-    strategySignals: any,
+    strategySignals: StrategySignal,
     marketData: StrategyMarketData,
   ): Promise<boolean> {
+    // Guard: signal must exist to process
+    if (!strategySignals.signal) {
+      this.logger.warn('⚠️ Strategy signal missing, cannot process');
+      return false;
+    }
+
     this.logger.info('🎯 Strategy Signal Generated', {
       strategy: strategySignals.strategyName,
       direction: strategySignals.signal.direction,

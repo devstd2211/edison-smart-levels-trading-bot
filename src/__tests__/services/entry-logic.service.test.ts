@@ -6,6 +6,14 @@
 import { EntryLogicService } from '../../services/entry-logic.service';
 import { SignalDirection } from '../../types';
 
+// Mock TradingContextService for tests
+function createMockTradingContextService(): any {
+  return {
+    getCurrentTrendAnalysis: jest.fn().mockReturnValue(null),
+    getSuperTrendStatus: jest.fn().mockReturnValue(null),
+  };
+}
+
 describe('EntryLogicService', () => {
   let service: EntryLogicService;
   let mockLogger: any;
@@ -369,14 +377,14 @@ describe('EntryLogicService', () => {
 
     it('should handle flat market detection', async () => {
       // Need to create service with proper currentContext for flat market detection
-      const mockContext = { atrPercent: 2.5, volatility: 0.015 };
+      const mockContext = createMockTradingContextService();
       const serviceWithContext = new EntryLogicService(
         mockConfig,
         mockPositionManager,
         mockBollingerIndicator,
         mockCandleProvider,
         mockEmaAnalyzer,
-        mockContext, // Provide context
+        mockContext,
         mockRetestEntryService,
         mockMarketDataPreparationService,
         mockExternalAnalysisService,
@@ -404,7 +412,7 @@ describe('EntryLogicService', () => {
     it('should use adaptive confidence threshold for flat market', async () => {
       mockConfig.weightMatrix.minConfidenceFlat = 40;
 
-      const mockContext = { atrPercent: 2.5, volatility: 0.015 };
+      const mockContext = createMockTradingContextService();
       const serviceWithContext = new EntryLogicService(
         mockConfig,
         mockPositionManager,
@@ -439,7 +447,7 @@ describe('EntryLogicService', () => {
     });
 
     it('should detect flat market with proper log output', async () => {
-      const mockContext = { atrPercent: 2.5, volatility: 0.015 };
+      const mockContext = createMockTradingContextService();
       const serviceWithContext = new EntryLogicService(
         mockConfig,
         mockPositionManager,
