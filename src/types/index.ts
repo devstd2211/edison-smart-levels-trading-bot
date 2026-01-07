@@ -112,7 +112,6 @@ export type {
   SMCMicrostructureConfig,
   DynamicTPConfig,
   TFAlignmentConfig,
-  AdaptiveStopLossConfig,
   SmartTrailingConfig,
   WeightSystemConfig,
   TrendConfirmationConfig,

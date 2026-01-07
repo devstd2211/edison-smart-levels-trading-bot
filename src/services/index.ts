@@ -4,12 +4,8 @@
  */
 
 export * from './bybit';
-export * from './position-manager.service';
-export * from './position-exiting.service';
-export * from './position-protection.service';
-export * from './position-sync.service';
-export * from './position-initialization.service';
-export * from './position-execution.service';
+export * from './position-lifecycle.service'; // Consolidated position management service
+export * from './position-exiting.service'; // Handles partial TP, breakeven, trailing
 export * from './websocket-manager.service';
 export * from './position-monitor.service';
 export * from './trading-journal.service';

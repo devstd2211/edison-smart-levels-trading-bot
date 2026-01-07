@@ -9,7 +9,7 @@
  * ✅ SmartTrailingV2Service (trailing stop logic with ATR + volume)
  * ✅ AdaptiveTP3Service (adaptive TP levels based on market conditions)
  * ✅ BBTrailingStop (Bollinger Band trailing for final leg)
- * ✅ Exit logic from PositionManagerService
+ * ✅ Exit logic from PositionLifecycleService
  *
  * NEW FEATURES (Session 66):
  * - Smart Breakeven Pre-BE Mode: Sophisticated candle-based profit locking

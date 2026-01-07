@@ -163,7 +163,6 @@ import type {
   SMCMicrostructureConfig,
   DynamicTPConfig,
   TFAlignmentConfig,
-  AdaptiveStopLossConfig,
   SmartTrailingConfig,
   WeightSystemConfig,
   TrendConfirmationConfig,
@@ -223,7 +222,6 @@ export type {
   SMCMicrostructureConfig,
   DynamicTPConfig,
   TFAlignmentConfig,
-  AdaptiveStopLossConfig,
   SmartTrailingConfig,
   WeightSystemConfig,
   TrendConfirmationConfig,
@@ -869,7 +867,6 @@ export interface Config {
   // Phase 2: Weight Matrix System (optional)
   weightMatrix?: WeightMatrixConfig; // Gradient scoring instead of boolean filters (optional)
   // Phase 3: Dynamic Stops & Trailing System (optional)
-  adaptiveStopLoss?: AdaptiveStopLossConfig; // Structure-based stop loss (optional)
   smartTrailing?: SmartTrailingConfig; // Impulse-based trailing stop (optional)
   adaptiveTP3?: AdaptiveTP3Config; // Momentum-based TP3 extension (optional)
   // Phase 4: Market Data Enhancement (optional)
@@ -1955,8 +1952,6 @@ export interface WeightMatrixInput {
 // ============================================================================
 // PHASE 3: DYNAMIC STOPS & TRAILING SYSTEM
 // ============================================================================
-
-// AdaptiveStopLossConfig moved to ./types/config.ts
 
 /**
  * Stop Loss calculation result with reasoning

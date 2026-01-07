@@ -40,7 +40,7 @@ import {
 // Replaced by TrendAnalyzer (PRIMARY component)
 import { CandleProvider } from '../providers/candle.provider';
 import { BybitService } from './bybit';
-import { PositionManagerService } from './position-manager.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
@@ -202,7 +202,7 @@ export class TradingOrchestrator {
     private candleProvider: CandleProvider,
     private timeframeProvider: TimeframeProvider,
     private bybitService: BybitService,
-    private positionManager: PositionManagerService,
+    private positionManager: PositionLifecycleService,
     private telegram: TelegramService | null,
     private logger: LoggerService,
     private riskManager: RiskManager,  // PHASE 4: REQUIRED - Unified risk decision point
@@ -387,7 +387,7 @@ export class TradingOrchestrator {
     this.exitOrchestrator = new ExitOrchestrator(logger);
     this.logger.info('✅ ExitOrchestrator initialized (PHASE 4 PRIMARY Week 3)', {
       role: 'Position exit state machine',
-      consolidates: ['SmartBreakevenService', 'SmartTrailingV2Service', 'AdaptiveTP3Service', 'PositionManagerService exit logic'],
+      consolidates: ['SmartBreakevenService', 'SmartTrailingV2Service', 'AdaptiveTP3Service', 'PositionLifecycleService exit logic'],
       states: ['OPEN', 'TP1_HIT', 'TP2_HIT', 'TP3_HIT', 'CLOSED'],
       logic: ['State transitions', 'SL priority', 'Breakeven lock-in', 'Trailing stop activation'],
     });
@@ -449,12 +449,12 @@ export class TradingOrchestrator {
         riskConfigForExit,
         fullConfigForExit,
         this.sessionStats,
-        null, // TakeProfitManager (not required for read-only mode)
+        this.positionManager, // For accessing TakeProfitManager
       );
       this.logger.info('✅ PositionExitingService initialized (PHASE 4 Week 3, ACTIVE)', {
         role: 'Position exit execution',
         mode: 'ACTIVE - handling all position exits',
-        consolidates: ['PositionManagerService.closePosition()', 'PositionManagerService.recordPositionClose()', 'SL updates', 'Trailing stops'],
+        consolidates: ['PositionLifecycleService.closeFullPosition()', 'PositionLifecycleService.closePartialPosition()', 'SL updates', 'Trailing stops'],
       });
     } else {
       this.logger.warn('⚠️  PositionExitingService NOT initialized - missing dependencies', {

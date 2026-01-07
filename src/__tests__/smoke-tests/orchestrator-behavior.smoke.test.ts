@@ -189,19 +189,19 @@ describe('SMOKE TESTS: Orchestrator Runtime Behavior', () => {
   });
 
   describe('Position Management', () => {
-    it('should verify PositionManagerService exists', () => {
-      const Module = require('../../services/position-manager.service') as any;
-      expect(Module.PositionManagerService).toBeDefined();
-    });
-
-    it('should verify PositionOpeningService exists', () => {
-      const Module = require('../../services/position-opening.service') as any;
-      expect(Module.PositionOpeningService).toBeDefined();
+    it('should verify PositionLifecycleService exists', () => {
+      const Module = require('../../services/position-lifecycle.service') as any;
+      expect(Module.PositionLifecycleService).toBeDefined();
     });
 
     it('should verify PositionExitingService exists', () => {
       const Module = require('../../services/position-exiting.service') as any;
       expect(Module.PositionExitingService).toBeDefined();
+    });
+
+    it('should verify PositionMonitorService exists', () => {
+      const Module = require('../../services/position-monitor.service') as any;
+      expect(Module.PositionMonitorService).toBeDefined();
     });
   });
 

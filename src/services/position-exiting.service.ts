@@ -2,7 +2,7 @@
  * Position Exiting Service
  * Single Responsibility: Execute position exit actions from ExitOrchestrator
  *
- * Extracted from PositionManager.recordPositionClose(), closePosition(), etc:
+ * Extracted from PositionLifecycleService.closeFullPosition(), closePartialPosition(), etc:
  * - Execute partial/full closes
  * - Update stop-loss and trailing stops
  * - Record exit in journal with PnL calculation
@@ -16,6 +16,7 @@
  * - TelegramService (for notifications)
  * - SessionStatsService (for session tracking)
  * - LoggerService (for logging)
+ * - PositionLifecycleService (for accessing TakeProfitManager)
  */
 
 import {
@@ -32,6 +33,7 @@ import { BybitService } from './bybit';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
 
 // ============================================================================
@@ -48,7 +50,7 @@ export class PositionExitingService {
     private readonly riskConfig: RiskManagementConfig,
     private readonly fullConfig: Config,
     private readonly sessionStats?: SessionStatsService,
-    private readonly positionManager?: any, // PositionManagerService - for accessing takeProfitManager
+    private readonly positionManager?: PositionLifecycleService, // For accessing takeProfitManager
   ) {}
 
   /**
@@ -141,13 +143,15 @@ export class PositionExitingService {
       position.quantity -= quantityToClose;
 
       // Record partial close in TakeProfitManager if available
-      const takeProfitManager = this.positionManager?.getTakeProfitManager?.();
+      const takeProfitManager = this.positionManager?.getTakeProfitManager();
       if (takeProfitManager) {
-        takeProfitManager.recordPartialClose({
-          percent: closePercent,
-          exitPrice,
-          timestamp: Date.now(),
-        });
+        // Find TP level that matches this exit price (within tolerance)
+        const matchedTP = position.takeProfits.find(tp =>
+          Math.abs(tp.price - exitPrice) / exitPrice < 0.01 // 1% tolerance
+        );
+        if (matchedTP) {
+          takeProfitManager.recordPartialClose(matchedTP.level, quantityToClose, exitPrice);
+        }
       }
 
       // Calculate PnL for this partial close
@@ -489,15 +493,10 @@ export class PositionExitingService {
       }
 
       // Record partial close in TakeProfitManager
-      const takeProfitManager = this.positionManager?.getTakeProfitManager?.();
+      const takeProfitManager = this.positionManager?.getTakeProfitManager();
       if (takeProfitManager) {
         const partialQuantity = (position.quantity * tpConfig.sizePercent) / PERCENT_MULTIPLIER;
-        takeProfitManager.recordPartialClose({
-          level: tpLevel,
-          quantity: partialQuantity,
-          price: currentPrice,
-          timestamp: Date.now(),
-        });
+        takeProfitManager.recordPartialClose(tpLevel, partialQuantity, currentPrice);
       }
 
       // Mark TP as hit

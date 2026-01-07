@@ -22,7 +22,7 @@ import {
 } from '../types';
 import { DECIMAL_PLACES } from '../constants';
 import { StrategyCoordinator } from './strategy-coordinator.service';
-import { PositionManagerService } from './position-manager.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { TradeExecutionService } from './trade-execution.service';
 import { MarketDataPreparationService } from './market-data-preparation.service';
 
@@ -33,7 +33,7 @@ import { MarketDataPreparationService } from './market-data-preparation.service'
 export class WhaleSignalDetectionService {
   constructor(
     private strategyCoordinator: StrategyCoordinator,
-    private positionManager: PositionManagerService,
+    private positionManager: PositionLifecycleService,
     private marketDataPreparationService: MarketDataPreparationService,
     private tradeExecutionService: TradeExecutionService,
     private logger: LoggerService,

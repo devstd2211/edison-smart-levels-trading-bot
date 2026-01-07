@@ -45,7 +45,7 @@ describe('SMOKE TESTS: Service Initialization', () => {
         { file: 'trading-context.service', class: 'TradingContextService' },
         { file: 'external-analysis.service', class: 'ExternalAnalysisService' },
         { file: 'signal-processing.service', class: 'SignalProcessingService' },
-        { file: 'position-manager.service', class: 'PositionManagerService' },
+        { file: 'position-lifecycle.service', class: 'PositionLifecycleService' },
         { file: 'risk-manager.service', class: 'RiskManager' },
         { file: 'analyzer-registration.service', class: 'AnalyzerRegistrationService' },
         { file: 'trend-confirmation.service', class: 'TrendConfirmationService' },
@@ -233,7 +233,7 @@ describe('SMOKE TESTS: Service Initialization', () => {
     it('should verify all critical services can be instantiated', () => {
       const services = [
         { file: 'risk-manager.service', class: 'RiskManager' },
-        { file: 'position-manager.service', class: 'PositionManagerService' },
+        { file: 'position-lifecycle.service', class: 'PositionLifecycleService' },
         { file: 'external-analysis.service', class: 'ExternalAnalysisService' },
         { file: 'entry-logic.service', class: 'EntryLogicService' },
       ];
@@ -268,9 +268,9 @@ describe('SMOKE TESTS: Service Initialization', () => {
       expect(Module.ExitOrchestrator).toBeDefined();
     });
 
-    it('should verify position opening service exists', () => {
-      const Module = require('../../services/position-opening.service') as any;
-      expect(Module.PositionOpeningService).toBeDefined();
+    it('should verify position lifecycle service exists', () => {
+      const Module = require('../../services/position-lifecycle.service') as any;
+      expect(Module.PositionLifecycleService).toBeDefined();
     });
 
     it('should verify position exiting service exists', () => {

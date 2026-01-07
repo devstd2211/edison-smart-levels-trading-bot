@@ -197,12 +197,8 @@ describe('PositionExitingService', () => {
       const position = createTestPosition();
       await service.onTakeProfitHit(position, 1, 110);
 
-      expect(mockTPManager.recordPartialClose).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: 1,
-          price: 110,
-        }),
-      );
+      // TP1 has sizePercent: 50, so partialQuantity = (1 * 50) / 100 = 0.5
+      expect(mockTPManager.recordPartialClose).toHaveBeenCalledWith(1, 0.5, 110);
     });
 
     it('should mark TP1 as hit', async () => {

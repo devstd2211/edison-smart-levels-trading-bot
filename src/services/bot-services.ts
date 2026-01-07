@@ -14,7 +14,7 @@
 import { Config, LoggerService, MarketStructureAnalyzer, Candle } from '../types';
 import {
   BybitService,
-  PositionManagerService,
+  PositionLifecycleService,
   WebSocketManagerService,
   PositionMonitorService,
   TradingJournalService,
@@ -72,7 +72,7 @@ export class BotServices {
   // Tracking & Journal
   readonly journal: TradingJournalService;
   readonly sessionStats: SessionStatsService;
-  readonly positionManager: PositionManagerService;
+  readonly positionManager: PositionLifecycleService;
   readonly positionExitingService: PositionExitingService;
 
   // WebSocket & Data
@@ -256,7 +256,7 @@ export class BotServices {
     const riskManager = new RiskManager(riskManagerConfig, this.logger);
 
     // 8. Initialize position management
-    this.positionManager = new PositionManagerService(
+    this.positionManager = new PositionLifecycleService(
       this.bybitService,
       config.trading,
       config.riskManagement,

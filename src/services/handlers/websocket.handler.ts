@@ -13,7 +13,7 @@
  */
 
 import { LoggerService, Position, ExitType, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types';
-import { PositionManagerService } from '../position-manager.service';
+import { PositionLifecycleService } from '../position-lifecycle.service';
 import { PositionExitingService } from '../position-exiting.service';
 import { BybitService } from '../bybit';
 import { WebSocketManagerService } from '../websocket-manager.service';
@@ -42,7 +42,7 @@ const PRICE_TOLERANCE = {
  */
 export class WebSocketEventHandler {
   constructor(
-    private positionManager: PositionManagerService,
+    private positionManager: PositionLifecycleService,
     private positionExitingService: PositionExitingService,
     private bybitService: BybitService,
     private webSocketManager: WebSocketManagerService,

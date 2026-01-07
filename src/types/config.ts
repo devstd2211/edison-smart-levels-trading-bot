@@ -761,19 +761,6 @@ export interface TFAlignmentConfig {
 }
 
 /**
- * Adaptive Stop Loss Configuration
- * Multi-factor stop loss placement based on market structure
- */
-export interface AdaptiveStopLossConfig {
-  enabled: boolean;
-  priorityOrder: StopLossType[]; // ['SWEEP', 'ORDER_BLOCK', 'SWING', 'LEVEL', 'ATR', 'PERCENT']
-  bufferMultiplier: number; // 0.3 (ATR buffer below/above structure)
-  minDistancePercent: number; // 0.3 (%)
-  maxDistancePercent: number; // 5.0 (%)
-  fallbackPercent: number; // 2.0 (%)
-}
-
-/**
  * Smart Trailing Stop v2 Configuration
  * Impulse-based trailing with multiple activation triggers
  */

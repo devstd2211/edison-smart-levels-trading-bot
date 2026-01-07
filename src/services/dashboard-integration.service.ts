@@ -10,7 +10,7 @@ import { LoggerService, Position } from '../types';
 import { TrendAnalyzer } from '../analyzers/trend-analyzer';
 import { MultiTimeframeRSIAnalyzer } from '../analyzers/multi-timeframe-rsi.analyzer';
 import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
-import { PositionManagerService } from './position-manager.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { PublicWebSocketService } from './public-websocket.service';
 
 export class DashboardIntegrationService {
@@ -29,7 +29,7 @@ export class DashboardIntegrationService {
     private trendAnalyzer?: TrendAnalyzer,
     private rsiAnalyzer?: MultiTimeframeRSIAnalyzer,
     private emaAnalyzer?: MultiTimeframeEMAAnalyzer,
-    private positionManager?: PositionManagerService,
+    private positionManager?: PositionLifecycleService,
     private publicWebSocket?: PublicWebSocketService,
   ) {
     this.initialize();

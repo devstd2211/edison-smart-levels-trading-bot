@@ -34,7 +34,7 @@ import {
   PERCENT_MULTIPLIER,
   INTEGER_MULTIPLIERS,
 } from '../constants';
-import { PositionManagerService } from './position-manager.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { CandleProvider } from '../providers/candle.provider';
 import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
 import { RetestEntryService } from './retest-entry.service';
@@ -52,7 +52,7 @@ import { BybitService } from './bybit';
 export class EntryLogicService {
   constructor(
     private config: OrchestratorConfig,
-    private positionManager: PositionManagerService,
+    private positionManager: PositionLifecycleService,
     private bollingerIndicator: BollingerBandsIndicator | undefined,
     private candleProvider: CandleProvider,
     private emaAnalyzer: MultiTimeframeEMAAnalyzer,

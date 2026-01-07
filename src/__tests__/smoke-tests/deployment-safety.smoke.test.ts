@@ -16,7 +16,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
         { path: '../../services/entry-logic.service', name: 'EntryLogicService' },
         { path: '../../orchestrators/entry.orchestrator', name: 'EntryOrchestrator' },
         { path: '../../orchestrators/exit.orchestrator', name: 'ExitOrchestrator' },
-        { path: '../../services/position-manager.service', name: 'PositionManagerService' },
+        { path: '../../services/position-lifecycle.service', name: 'PositionLifecycleService' },
       ];
 
       modules.forEach(({ path, name }) => {
@@ -132,10 +132,10 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
       expect(typeof Module.ExitOrchestrator).toBe('function');
     });
 
-    it('should verify PositionManager can be instantiated', () => {
-      const Module = require('../../services/position-manager.service') as any;
-      expect(Module.PositionManagerService).toBeDefined();
-      expect(typeof Module.PositionManagerService).toBe('function');
+    it('should verify PositionLifecycle can be instantiated', () => {
+      const Module = require('../../services/position-lifecycle.service') as any;
+      expect(Module.PositionLifecycleService).toBeDefined();
+      expect(typeof Module.PositionLifecycleService).toBe('function');
     });
   });
 
@@ -145,7 +145,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
         { file: '../../services/entry-logic.service', name: 'EntryLogicService' },
         { file: '../../services/trade-execution.service', name: 'TradeExecutionService' },
         { file: '../../orchestrators/entry.orchestrator', name: 'EntryOrchestrator' },
-        { file: '../../services/position-opening.service', name: 'PositionOpeningService' },
+        { file: '../../services/position-lifecycle.service', name: 'PositionLifecycleService' },
       ];
 
       entryPipeline.forEach(({ file, name }) => {

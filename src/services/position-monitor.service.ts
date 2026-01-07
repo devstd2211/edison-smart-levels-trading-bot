@@ -14,7 +14,7 @@ import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, POSITION_MONITOR_INTERVAL_MS } f
 
 import { EventEmitter } from 'events';
 import { BybitService } from './bybit';
-import { PositionManagerService } from './position-manager.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { Position, PositionSide, RiskManagementConfig, LoggerService, ExitType, BybitOrder, isStopLossOrder, isTakeProfitOrder } from '../types';
 import { isCriticalApiError } from '../utils/error-helper';
 import { TelegramService } from './telegram.service';
@@ -37,7 +37,7 @@ export class PositionMonitorService extends EventEmitter {
 
   constructor(
     private readonly bybitService: BybitService,
-    private readonly positionManager: PositionManagerService,
+    private readonly positionManager: PositionLifecycleService,
     private readonly riskConfig: RiskManagementConfig,
     private readonly telegram: TelegramService,
     private readonly logger: LoggerService,

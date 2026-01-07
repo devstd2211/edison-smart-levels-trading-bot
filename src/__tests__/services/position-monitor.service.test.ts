@@ -6,7 +6,7 @@
 
 import { PositionMonitorService } from '../../services/position-monitor.service';
 import { BybitService } from '../../services/bybit';
-import { PositionManagerService } from '../../services/position-manager.service';
+import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { TelegramService } from '../../services/telegram.service';
 import {
   Position,
@@ -127,7 +127,7 @@ describe('PositionMonitorService', () => {
 
     monitor = new PositionMonitorService(
       mockBybit as unknown as BybitService,
-      mockPositionManager as unknown as PositionManagerService,
+      mockPositionManager as unknown as PositionLifecycleService,
       defaultRiskConfig,
       mockTelegram as unknown as TelegramService,
       logger,
@@ -395,7 +395,7 @@ describe('PositionMonitorService', () => {
 
       monitor = new PositionMonitorService(
         mockBybit as unknown as BybitService,
-        mockPositionManager as unknown as PositionManagerService,
+        mockPositionManager as unknown as PositionLifecycleService,
         config,
         mockTelegram as unknown as TelegramService,
         logger,
@@ -433,7 +433,7 @@ describe('PositionMonitorService', () => {
 
       monitor = new PositionMonitorService(
         mockBybit as unknown as BybitService,
-        mockPositionManager as unknown as PositionManagerService,
+        mockPositionManager as unknown as PositionLifecycleService,
         config,
         mockTelegram as unknown as TelegramService,
         logger,
@@ -464,7 +464,7 @@ describe('PositionMonitorService', () => {
 
       monitor = new PositionMonitorService(
         mockBybit as unknown as BybitService,
-        mockPositionManager as unknown as PositionManagerService,
+        mockPositionManager as unknown as PositionLifecycleService,
         config,
         mockTelegram as unknown as TelegramService,
         logger,
@@ -493,7 +493,7 @@ describe('PositionMonitorService', () => {
 
       monitor = new PositionMonitorService(
         mockBybit as unknown as BybitService,
-        mockPositionManager as unknown as PositionManagerService,
+        mockPositionManager as unknown as PositionLifecycleService,
         config,
         mockTelegram as unknown as TelegramService,
         logger,
@@ -524,7 +524,7 @@ describe('PositionMonitorService', () => {
 
       monitor = new PositionMonitorService(
         mockBybit as unknown as BybitService,
-        mockPositionManager as unknown as PositionManagerService,
+        mockPositionManager as unknown as PositionLifecycleService,
         config,
         mockTelegram as unknown as TelegramService,
         logger,

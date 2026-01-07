@@ -32,7 +32,6 @@ import {
   FlatMarketDetector,
 } from '../types';
 import { SessionDetector } from '../utils/session-detector';
-import { AdaptiveStopLossService } from './adaptive-stop-loss.service';
 import { StructureAwareExitService } from './structure-aware-exit.service';
 
 // ============================================================================
@@ -41,7 +40,6 @@ import { StructureAwareExitService } from './structure-aware-exit.service';
 
 export class SignalCalculator {
   private flatMarketDetector?: FlatMarketDetector;
-  private adaptiveStopLossService?: AdaptiveStopLossService;
   private structureAwareExitService?: StructureAwareExitService;
 
   constructor(
@@ -56,15 +54,6 @@ export class SignalCalculator {
         threshold: flatMarketConfig.flatThreshold,
         factors: 6,
       });
-    }
-
-    // Initialize AdaptiveStopLossService if enabled
-    if (config.adaptiveStopLoss?.enabled) {
-      this.adaptiveStopLossService = new AdaptiveStopLossService(
-        config.adaptiveStopLoss,
-        logger,
-      );
-      this.logger.info('✅ AdaptiveStopLossService initialized');
     }
 
     // Initialize StructureAwareExitService if enabled
@@ -211,36 +200,7 @@ export class SignalCalculator {
   ): number {
     const isLong = direction === SignalDirection.LONG;
 
-    // Priority 1: Adaptive SL (structure-based) - Phase 3
-    if (this.adaptiveStopLossService && (swingPoints || liquidityZones || levels || atr)) {
-      try {
-        const result = this.adaptiveStopLossService.calculateStopLoss(
-          currentPrice,
-          direction,
-          {
-            swingPoints,
-            liquidityZones,
-            supportResistance: levels,
-            atr,
-          },
-          currentPrice,
-        );
-
-        this.logger.info('🎯 Adaptive SL (Phase 3)', {
-          type: result.type,
-          price: result.price.toFixed(DECIMAL_PLACES.PRICE),
-          distance: result.distancePercent.toFixed(DECIMAL_PLACES.PERCENT) + '%',
-          reason: result.reason,
-        });
-
-        return result.price;
-      } catch (error) {
-        this.logger.warn('⚠️ Adaptive SL failed, using fallback', { error });
-        // Fall through to BB or percentage-based SL
-      }
-    }
-
-    // Priority 2: BB.MD - BB-based dynamic SL (if available)
+    // Priority 1: BB.MD - BB-based dynamic SL (if available)
     if (
       bollingerBands &&
       atr !== undefined &&
@@ -280,7 +240,7 @@ export class SignalCalculator {
       return finalStopLoss;
     }
 
-    // Fallback: Percentage-based SL
+    // Priority 2: Percentage-based SL (fallback)
     let stopLossPercent = this.config.riskManagement.stopLossPercent;
 
     // Apply session-based SL widening if enabled

@@ -12,7 +12,7 @@
  */
 
 import { LoggerService, Position, ExitType, PositionSide } from '../../types';
-import { PositionManagerService } from '../position-manager.service';
+import { PositionLifecycleService } from '../position-lifecycle.service';
 import { PositionExitingService } from '../position-exiting.service';
 import { TelegramService } from '../telegram.service';
 import { BybitService } from '../bybit';
@@ -34,7 +34,7 @@ const DECIMAL_PLACES = {
  */
 export class PositionEventHandler {
   constructor(
-    private positionManager: PositionManagerService,
+    private positionManager: PositionLifecycleService,
     private positionExitingService: PositionExitingService,
     private bybitService: BybitService,
     private telegram: TelegramService,

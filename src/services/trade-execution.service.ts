@@ -26,7 +26,7 @@ import {
   TrendAnalysis,
 } from '../types';
 import { BybitService } from './bybit/bybit.service';
-import { PositionManagerService } from './position-manager.service';
+import { PositionLifecycleService } from './position-lifecycle.service';
 import { TelegramService } from './telegram.service';
 import { ExternalAnalysisService } from './external-analysis.service';
 import { RetestEntryService } from './retest-entry.service';
@@ -69,7 +69,7 @@ export interface EntrySignal {
 export class TradeExecutionService {
   constructor(
     private bybitService: BybitService,
-    private positionManager: PositionManagerService,
+    private positionManager: PositionLifecycleService,
     private candleProvider: CandleProvider,
     private riskManager: RiskManager | null,
     private retestEntryService: RetestEntryService | null,

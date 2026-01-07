@@ -347,12 +347,8 @@ describe('PositionExitingService', () => {
         ExitType.TAKE_PROFIT_1,
       );
 
-      expect(mockTakeProfitManager.recordPartialClose).toHaveBeenCalledWith(
-        expect.objectContaining({
-          percent: 50,
-          exitPrice: 105,
-        }),
-      );
+      // Closing 50% of 10 = 5 quantity. Price 105 matches TP1 (level=1).
+      expect(mockTakeProfitManager.recordPartialClose).toHaveBeenCalledWith(1, 5, 105);
     });
 
     it('should send Telegram alert on partial close', async () => {
