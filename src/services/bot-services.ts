@@ -28,6 +28,7 @@ import { RiskManager } from './risk-manager.service';
 import { OrderExecutionDetectorService } from './order-execution-detector.service';
 import { WebSocketAuthenticationService } from './websocket-authentication.service';
 import { EventDeduplicationService } from './event-deduplication.service';
+import { WebSocketKeepAliveService } from './websocket-keep-alive.service';
 import { PositionEventHandler, WebSocketEventHandler } from './handlers';
 import { CompoundInterestCalculatorService } from './compound-interest-calculator.service';
 import { PublicWebSocketService } from './public-websocket.service';
@@ -290,6 +291,7 @@ export class BotServices {
     const orderExecutionDetector = new OrderExecutionDetectorService(this.logger);
     const authService = new WebSocketAuthenticationService();
     const deduplicationService = new EventDeduplicationService(100, 60000, this.logger);
+    const keepAliveService = new WebSocketKeepAliveService(20000, this.logger);
     this.webSocketManager = new WebSocketManagerService(
       config.exchange,
       config.exchange.symbol,
@@ -297,6 +299,7 @@ export class BotServices {
       orderExecutionDetector,
       authService,
       deduplicationService,
+      keepAliveService,
     );
 
     this.publicWebSocket = new PublicWebSocketService(

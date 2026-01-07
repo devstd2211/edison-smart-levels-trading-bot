@@ -28,6 +28,7 @@ import {
 import { OrderExecutionDetectorService } from './order-execution-detector.service';
 import { WebSocketAuthenticationService } from './websocket-authentication.service';
 import { EventDeduplicationService } from './event-deduplication.service';
+import { WebSocketKeepAliveService } from './websocket-keep-alive.service';
 
 // ============================================================================
 // CONSTANTS
@@ -36,7 +37,6 @@ import { EventDeduplicationService } from './event-deduplication.service';
 const WS_BASE_URL = 'wss://stream.bybit.com/v5/private';
 const WS_TESTNET_URL = 'wss://stream-testnet.bybit.com/v5/private';
 const WS_DEMO_URL = 'wss://stream-demo.bybit.com/v5/private';
-const PING_INTERVAL_MS = TIMING_CONSTANTS.PING_INTERVAL_MS;
 const RECONNECT_DELAY_MS = TIMING_CONSTANTS.RECONNECT_DELAY_MS;
 const MAX_RECONNECT_ATTEMPTS = TIMING_CONSTANTS.MAX_RECONNECT_ATTEMPTS;
 const POSITION_SIZE_ZERO = INTEGER_MULTIPLIERS.ZERO;
@@ -79,7 +79,6 @@ export interface OrderUpdateEvent {
 
 export class WebSocketManagerService extends EventEmitter {
   private ws: WebSocket | null = null;
-  private pingInterval: NodeJS.Timeout | null = null;
   private reconnectAttempts: number = 0;
   private isConnecting: boolean = false;
   private shouldReconnect: boolean = true;
@@ -91,6 +90,7 @@ export class WebSocketManagerService extends EventEmitter {
     private readonly orderExecutionDetector: OrderExecutionDetectorService,
     private readonly authService: WebSocketAuthenticationService,
     private readonly deduplicationService: EventDeduplicationService,
+    private readonly keepAliveService: WebSocketKeepAliveService,
   ) {
     super();
   }
@@ -579,24 +579,19 @@ export class WebSocketManagerService extends EventEmitter {
 
   /**
    * Start ping interval to keep connection alive
+   * Delegates to WebSocketKeepAliveService
    */
   private startPing(): void {
-    this.stopPing();
-
-    this.pingInterval = setInterval(() => {
-      if (this.ws !== null && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ op: 'ping' }));
-      }
-    }, PING_INTERVAL_MS);
+    if (this.ws !== null) {
+      this.keepAliveService.start(this.ws);
+    }
   }
 
   /**
    * Stop ping interval
+   * Delegates to WebSocketKeepAliveService
    */
   private stopPing(): void {
-    if (this.pingInterval !== null) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
-    }
+    this.keepAliveService.stop();
   }
 }

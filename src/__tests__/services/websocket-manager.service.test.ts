@@ -8,6 +8,7 @@ import { WebSocketManagerService } from '../../services/websocket-manager.servic
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
+import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
 import { ExchangeConfig, LoggerService, LogLevel } from '../../types';
 
 // ============================================================================
@@ -39,6 +40,7 @@ describe('WebSocketManagerService', () => {
   let orderExecutionDetector: OrderExecutionDetectorService;
   let authService: WebSocketAuthenticationService;
   let deduplicationService: EventDeduplicationService;
+  let keepAliveService: WebSocketKeepAliveService;
 
   beforeEach(() => {
     config = createMockConfig();
@@ -46,7 +48,8 @@ describe('WebSocketManagerService', () => {
     orderExecutionDetector = new OrderExecutionDetectorService(logger);
     authService = new WebSocketAuthenticationService();
     deduplicationService = new EventDeduplicationService(100, 60000, logger);
-    wsManager = new WebSocketManagerService(config, 'APEXUSDT', logger, orderExecutionDetector, authService, deduplicationService);
+    keepAliveService = new WebSocketKeepAliveService(20000, logger);
+    wsManager = new WebSocketManagerService(config, 'APEXUSDT', logger, orderExecutionDetector, authService, deduplicationService, keepAliveService);
   });
 
   afterEach(() => {
