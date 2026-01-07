@@ -6,6 +6,7 @@
 
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
+import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import { ExchangeConfig, LoggerService, LogLevel } from '../../types';
 
 // ============================================================================
@@ -35,12 +36,14 @@ describe('WebSocketManagerService', () => {
   let config: ExchangeConfig;
   let logger: LoggerService;
   let orderExecutionDetector: OrderExecutionDetectorService;
+  let authService: WebSocketAuthenticationService;
 
   beforeEach(() => {
     config = createMockConfig();
     logger = createMockLogger();
     orderExecutionDetector = new OrderExecutionDetectorService(logger);
-    wsManager = new WebSocketManagerService(config, 'APEXUSDT', logger, orderExecutionDetector);
+    authService = new WebSocketAuthenticationService();
+    wsManager = new WebSocketManagerService(config, 'APEXUSDT', logger, orderExecutionDetector, authService);
   });
 
   afterEach(() => {

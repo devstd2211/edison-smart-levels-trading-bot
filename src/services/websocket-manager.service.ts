@@ -15,7 +15,6 @@ import { TIMING_CONSTANTS } from '../constants/technical.constants';
  */
 
 import WebSocket from 'ws';
-import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import {
   ExchangeConfig,
@@ -27,6 +26,7 @@ import {
   OrderUpdateData,
 } from '../types';
 import { OrderExecutionDetectorService } from './order-execution-detector.service';
+import { WebSocketAuthenticationService } from './websocket-authentication.service';
 
 // ============================================================================
 // CONSTANTS
@@ -38,7 +38,6 @@ const WS_DEMO_URL = 'wss://stream-demo.bybit.com/v5/private';
 const PING_INTERVAL_MS = TIMING_CONSTANTS.PING_INTERVAL_MS;
 const RECONNECT_DELAY_MS = TIMING_CONSTANTS.RECONNECT_DELAY_MS;
 const MAX_RECONNECT_ATTEMPTS = TIMING_CONSTANTS.MAX_RECONNECT_ATTEMPTS;
-const AUTH_EXPIRES_OFFSET_MS = TIMING_CONSTANTS.AUTH_EXPIRES_OFFSET_MS;
 const POSITION_SIZE_ZERO = INTEGER_MULTIPLIERS.ZERO;
 
 // ============================================================================
@@ -94,6 +93,7 @@ export class WebSocketManagerService extends EventEmitter {
     private readonly symbol: string,
     private readonly logger: LoggerService,
     private readonly orderExecutionDetector: OrderExecutionDetectorService,
+    private readonly authService: WebSocketAuthenticationService,
   ) {
     super();
   }
@@ -238,24 +238,19 @@ export class WebSocketManagerService extends EventEmitter {
 
   /**
    * Authenticate WebSocket connection
+   * Delegates HMAC signature generation to WebSocketAuthenticationService
    */
   private authenticate(): void {
     if (this.ws === null || this.ws.readyState !== WebSocket.OPEN) {
       return;
     }
 
-    const expires = Date.now() + AUTH_EXPIRES_OFFSET_MS;
-    const signature = crypto
-      .createHmac('sha256', this.config.apiSecret)
-      .update(`GET/realtime${expires}`)
-      .digest('hex');
+    const authPayload = this.authService.generateAuthPayload(
+      this.config.apiKey,
+      this.config.apiSecret
+    );
 
-    const authMessage = {
-      op: 'auth',
-      args: [this.config.apiKey, expires.toString(), signature],
-    };
-
-    this.ws.send(JSON.stringify(authMessage));
+    this.ws.send(JSON.stringify(authPayload));
   }
 
   /**

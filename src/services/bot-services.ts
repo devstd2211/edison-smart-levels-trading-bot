@@ -26,6 +26,7 @@ import {
 } from './index';
 import { RiskManager } from './risk-manager.service';
 import { OrderExecutionDetectorService } from './order-execution-detector.service';
+import { WebSocketAuthenticationService } from './websocket-authentication.service';
 import { PositionEventHandler, WebSocketEventHandler } from './handlers';
 import { CompoundInterestCalculatorService } from './compound-interest-calculator.service';
 import { PublicWebSocketService } from './public-websocket.service';
@@ -286,11 +287,13 @@ export class BotServices {
 
     // 9. Initialize WebSocket managers
     const orderExecutionDetector = new OrderExecutionDetectorService(this.logger);
+    const authService = new WebSocketAuthenticationService();
     this.webSocketManager = new WebSocketManagerService(
       config.exchange,
       config.exchange.symbol,
       this.logger,
       orderExecutionDetector,
+      authService,
     );
 
     this.publicWebSocket = new PublicWebSocketService(
