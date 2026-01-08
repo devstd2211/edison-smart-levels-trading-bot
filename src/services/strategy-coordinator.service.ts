@@ -37,6 +37,8 @@ export class StrategyCoordinator {
     private logger: LoggerService,
     private minTotalScore: number = MIN_TOTAL_SCORE_DEFAULT,
     private minConfidence: number = MIN_CONFIDENCE_DEFAULT,
+    private blindZoneMinSignalsLong: number = 5,
+    private blindZoneMinSignalsShort: number = 4,
   ) {}
 
   /**
@@ -513,9 +515,9 @@ export class StrategyCoordinator {
     const signalCount = signals.length;
     const coverage = (signalCount / DEFAULT_EXPECTED_ANALYZERS) * 100;
 
-    // Different thresholds for LONG vs SHORT
+    // Different thresholds for LONG vs SHORT (from config)
     const isLongEntry = direction === SignalDirection.LONG;
-    const MIN_SAFE_SIGNALS = isLongEntry ? 5 : 4; // LONG needs more signals (bounces risky)
+    const MIN_SAFE_SIGNALS = isLongEntry ? this.blindZoneMinSignalsLong : this.blindZoneMinSignalsShort;
     const BLIND_ZONE_PENALTY = isLongEntry ? 0.85 : 0.90; // LONG: 15% reduction, SHORT: 10%
 
     if (signalCount < MIN_SAFE_SIGNALS) {

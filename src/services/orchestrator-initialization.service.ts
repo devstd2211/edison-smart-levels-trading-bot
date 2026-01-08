@@ -271,7 +271,16 @@ export class OrchestratorInitializationService {
     const priceMomentumAnalyzer = new PriceMomentumAnalyzer();
     this.logger.info('✅ PriceMomentumAnalyzer initialized for real-time momentum validation');
 
-    const strategyCoordinator = new StrategyCoordinator(this.logger);
+    // Blind zone thresholds from config (only 3 analyzers active, so require 3 signals)
+    const blindZoneMinLong = (this.config as any).filters?.blindZone?.minSignalsForLong || 3;
+    const blindZoneMinShort = (this.config as any).filters?.blindZone?.minSignalsForShort || 3;
+    const strategyCoordinator = new StrategyCoordinator(
+      this.logger,
+      0.55,
+      65,
+      blindZoneMinLong,
+      blindZoneMinShort,
+    );
 
     const analyzerRegistry = new AnalyzerRegistry(this.logger);
     this.logger.info('✅ Analyzer Registry initialized for unified weighted voting system');

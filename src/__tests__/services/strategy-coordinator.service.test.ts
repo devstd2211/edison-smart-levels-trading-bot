@@ -77,7 +77,7 @@ describe('StrategyCoordinator', () => {
 
   beforeEach(() => {
     logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    coordinator = new StrategyCoordinator(logger, 0.55, 45);
+    coordinator = new StrategyCoordinator(logger, 0.55, 45, 3, 3); // 3 active analyzers
 
     mockMarketData = createTestMarketData({
       candles: [],
