@@ -126,17 +126,24 @@ Thumbs.db
 # SESSION & DEVELOPMENT NOTES (LOCAL ONLY)
 # =============================================================================
 
-# Development documentation
-CONTINUE_HERE.md
-ARCHITECTURE_ANALYSIS.md
-SESSION_*.md
-session-*.md
-
 # Development notes
 notes/
 *.note
-TODO.md
-NOTES.md
+
+# =============================================================================
+# MARKDOWN FILES (DOCUMENTATION)
+# =============================================================================
+
+# Ignore ALL markdown files except key docs
+*.md
+!README.md
+!README
+!SPEC.md
+!SPEC
+!DISCLAIMER.md
+!DISCLAIMER
+!LICENSE
+!LICENSE.md
 
 # =============================================================================
 # TEST & COVERAGE
