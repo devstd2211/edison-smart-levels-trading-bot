@@ -35,11 +35,15 @@ export class SignalFilteringService {
   ) {}
 
   /**
-   * Filter analyzer signals by trend alignment
-   * Blocks signals that are in restricted directions based on current trend
+   * Filter analyzer signals by trend alignment (PHASE 4b)
+   *
+   * CHANGED: Instead of BLOCKING entire directions, now REDUCES confidence
+   * This allows restricted signals to still participate in voting with penalty
+   * Prevents artificial consensus loss
+   *
    * @param signals - Array of analyzer signals
    * @param trendAnalysis - Current trend analysis
-   * @returns Filtered signals that align with trend
+   * @returns Adjusted signals with reduced confidence for restricted directions
    */
   public filterSignalsByTrend(
     signals: AnalyzerSignal[],
@@ -55,28 +59,44 @@ export class SignalFilteringService {
       return signals;
     }
 
-    const filtered = signals.filter((signal) => {
+    const TREND_RESTRICTION_PENALTY = 0.7; // 30% confidence reduction instead of blocking
+    const adjusted = signals.map((signal) => {
       const isRestricted = restrictedDirections.includes(signal.direction as SignalDirection);
+
       if (isRestricted) {
-        this.logger.warn('🚫 Signal BLOCKED by trend alignment', {
+        const reducedConfidence = Math.round(signal.confidence * TREND_RESTRICTION_PENALTY);
+
+        this.logger.warn('⚠️ Signal confidence REDUCED by trend alignment', {
           signal: signal.direction,
           trend: trendAnalysis.bias,
-          reason: `${signal.direction} blocked in ${trendAnalysis.bias} trend`,
+          originalConfidence: signal.confidence,
+          reducedConfidence,
+          penalty: '30%',
+          reason: `${signal.direction} restricted in ${trendAnalysis.bias} trend`,
         });
+
+        return {
+          ...signal,
+          confidence: reducedConfidence,
+        };
       }
-      return !isRestricted;
+
+      return signal;
     });
 
-    if (filtered.length < signals.length) {
-      this.logger.info('🔀 Trend Alignment Filtering', {
+    // Log if any signals were adjusted
+    const adjustedCount = adjusted.filter((s, i) => s.confidence !== signals[i].confidence).length;
+    if (adjustedCount > 0) {
+      this.logger.info('🔀 Trend Alignment Filtering (Confidence Reduction Mode)', {
         total: signals.length,
-        filtered: filtered.length,
-        blocked: signals.length - filtered.length,
+        adjusted: adjustedCount,
+        unchanged: signals.length - adjustedCount,
         trend: trendAnalysis.bias,
+        penalty: '30%',
       });
     }
 
-    return filtered;
+    return adjusted;
   }
 
   /**

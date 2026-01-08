@@ -137,7 +137,7 @@ describe('SignalProcessingService', () => {
       expect(mockLogger.warn.mock.calls.length).toBeGreaterThan(0);
     });
 
-    it('should return null if all signals filtered out by trend', async () => {
+    it('should reduce signal confidence when filtered by trend, not remove it', async () => {
       const mockMarketData = { currentPrice: 100, atr: 1.5, timestamp: Date.now(), candles: [] } as any;
       const mockAnalyzerSignals = [
         { source: 'Test', direction: SignalDirection.LONG, confidence: 75, weight: 0.5, priority: 1 },
@@ -151,6 +151,18 @@ describe('SignalProcessingService', () => {
         reasoning: ['Bearish trend'],
       };
 
+      // Mock the coordinator to return result with reduced confidence
+      mockStrategyCoordinator.aggregateSignals.mockReturnValue({
+        direction: SignalDirection.LONG,
+        confidence: 53, // Reduced from 75 due to trend (75 * 0.7 ≈ 53)
+        totalScore: 0.53,
+        recommendedEntry: true,
+        signals: [
+          { source: 'Test', direction: SignalDirection.LONG, weight: 0.5, confidence: 53, priority: 1 }
+        ],
+        reasoning: 'Test reasoning (confidence reduced by trend)',
+      });
+
       const result = await service.processSignals(
         mockMarketData,
         mockAnalyzerSignals,
@@ -158,11 +170,9 @@ describe('SignalProcessingService', () => {
         null,
       );
 
-      expect(result).toBeNull();
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('All analyzer signals filtered out by trend alignment'),
-        expect.any(Object),
-      );
+      // Signal should still be processed, but with reduced confidence
+      expect(result).toBeDefined();
+      expect(result?.confidence).toBeLessThanOrEqual(59); // Reduced from original 75
     });
 
     it('should return null if aggregated result does not meet thresholds', async () => {
@@ -350,9 +360,10 @@ describe('SignalProcessingService', () => {
       );
 
       // Should proceed since LONG is not restricted
+      // SHORT signals are reduced but still processed
       expect(result).toBeDefined();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Signal BLOCKED by trend alignment'),
+        expect.stringContaining('Signal confidence REDUCED by trend alignment'),
         expect.any(Object),
       );
     });

@@ -119,42 +119,55 @@ describe('SignalFilteringService', () => {
       expect(filtered).toHaveLength(2);
     });
 
-    it('should block LONG signals in BEARISH trend', () => {
+    it('should reduce LONG signal confidence in BEARISH trend', () => {
       const signals = [
-        createMockAnalyzerSignal({ direction: SignalDirection.LONG }),
-        createMockAnalyzerSignal({ direction: SignalDirection.SHORT }),
+        createMockAnalyzerSignal({ direction: SignalDirection.LONG, confidence: 75 }),
+        createMockAnalyzerSignal({ direction: SignalDirection.SHORT, confidence: 75 }),
       ];
       const trendAnalysis = createMockTrendAnalysis('BEARISH', [SignalDirection.LONG]);
 
       const filtered = service.filterSignalsByTrend(signals, trendAnalysis);
 
-      expect(filtered).toHaveLength(1);
-      expect(filtered[0].direction).toBe(SignalDirection.SHORT);
+      // Both signals still present, but LONG confidence reduced by 30%
+      expect(filtered).toHaveLength(2);
+      expect(filtered[0].direction).toBe(SignalDirection.LONG);
+      expect(filtered[0].confidence).toBe(53); // 75 * 0.7 ≈ 53
+      expect(filtered[1].direction).toBe(SignalDirection.SHORT);
+      expect(filtered[1].confidence).toBe(75); // Unchanged
     });
 
-    it('should block SHORT signals in BULLISH trend', () => {
+    it('should reduce SHORT signal confidence in BULLISH trend', () => {
       const signals = [
-        createMockAnalyzerSignal({ direction: SignalDirection.LONG }),
-        createMockAnalyzerSignal({ direction: SignalDirection.SHORT }),
+        createMockAnalyzerSignal({ direction: SignalDirection.LONG, confidence: 75 }),
+        createMockAnalyzerSignal({ direction: SignalDirection.SHORT, confidence: 75 }),
       ];
       const trendAnalysis = createMockTrendAnalysis('BULLISH', [SignalDirection.SHORT]);
 
       const filtered = service.filterSignalsByTrend(signals, trendAnalysis);
 
-      expect(filtered).toHaveLength(1);
+      // Both signals still present, but SHORT confidence reduced by 30%
+      expect(filtered).toHaveLength(2);
       expect(filtered[0].direction).toBe(SignalDirection.LONG);
+      expect(filtered[0].confidence).toBe(75); // Unchanged
+      expect(filtered[1].direction).toBe(SignalDirection.SHORT);
+      expect(filtered[1].confidence).toBe(53); // 75 * 0.7 ≈ 53
     });
 
-    it('should block multiple directions if restricted', () => {
+    it('should reduce confidence for multiple restricted directions', () => {
       const signals = [
-        createMockAnalyzerSignal({ direction: SignalDirection.LONG }),
-        createMockAnalyzerSignal({ direction: SignalDirection.SHORT }),
+        createMockAnalyzerSignal({ direction: SignalDirection.LONG, confidence: 75 }),
+        createMockAnalyzerSignal({ direction: SignalDirection.SHORT, confidence: 75 }),
       ];
       const trendAnalysis = createMockTrendAnalysis('BULLISH', [SignalDirection.LONG, SignalDirection.SHORT]);
 
       const filtered = service.filterSignalsByTrend(signals, trendAnalysis);
 
-      expect(filtered).toHaveLength(0);
+      // Both signals still present, but both confidence reduced by 30%
+      expect(filtered).toHaveLength(2);
+      expect(filtered[0].direction).toBe(SignalDirection.LONG);
+      expect(filtered[0].confidence).toBe(53); // 75 * 0.7 ≈ 53
+      expect(filtered[1].direction).toBe(SignalDirection.SHORT);
+      expect(filtered[1].confidence).toBe(53); // 75 * 0.7 ≈ 53
     });
   });
 

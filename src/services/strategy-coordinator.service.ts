@@ -265,15 +265,25 @@ export class StrategyCoordinator {
       ? selectedSignals.reduce((sum, s) => sum + s.confidence, 0) / selectedSignals.length
       : 0;
 
+    // ✨ NEW: Check for signal conflicts (FIX #2)
+    const opposingSignals = selectedDirection === SignalDirection.LONG ? shortSignals : longSignals;
+    const conflictPenalty = this.detectSignalConflict(selectedSignals, opposingSignals);
+
+    // ✨ NEW: Check opposing signal strength (FIX #3)
+    const opposingPenalty = this.checkOpposingSignalStrength(selectedSignals, opposingSignals, selectedDirection);
+
+    // Apply both penalties to confidence
+    const adjustedConfidence = Math.round(avgConfidence * conflictPenalty * opposingPenalty);
+
     // Check thresholds
     const meetsThresholds = selectedDirection !== SignalDirection.HOLD &&
       selectedScore >= this.minTotalScore &&
-      avgConfidence >= this.minConfidence;
+      adjustedConfidence >= this.minConfidence;
 
     const reasoning = this.buildReasoning(
       selectedDirection,
       selectedScore,
-      avgConfidence,
+      adjustedConfidence,
       selectedSignals,
       meetsThresholds,
     );
@@ -281,7 +291,7 @@ export class StrategyCoordinator {
     return {
       direction: selectedDirection,
       totalScore: selectedScore,
-      confidence: Math.round(avgConfidence),
+      confidence: adjustedConfidence,
       signals: selectedSignals,
       reasoning,
       recommendedEntry: meetsThresholds,
@@ -308,6 +318,138 @@ export class StrategyCoordinator {
     );
 
     return Math.min(weightedScore / totalWeight, 1.0);
+  }
+
+  /**
+   * Detect signal direction conflict (FIX #2)
+   *
+   * Flags when indicators are strongly disagreeing on direction
+   * Returns confidence penalty multiplier:
+   * - 0.75 (25% penalty): Major conflict
+   * - 0.85 (15% penalty): Minor conflict
+   * - 1.0 (no penalty): No conflict
+   *
+   * Example: 5 SHORT vs 3 LONG with 15% confidence difference = CONFLICT
+   *
+   * @private
+   */
+  private detectSignalConflict(
+    selectedSignals: AnalyzerSignal[],
+    opposingSignals: AnalyzerSignal[],
+  ): number {
+    if (selectedSignals.length === 0 || opposingSignals.length === 0) {
+      return 1.0; // No conflict if one side empty
+    }
+
+    const selectedCount = selectedSignals.length;
+    const opposingCount = opposingSignals.length;
+
+    // Calculate average confidences
+    const selectedAvgConf = selectedSignals.reduce((sum, s) => sum + s.confidence, 0) / selectedCount;
+    const opposingAvgConf = opposingSignals.reduce((sum, s) => sum + s.confidence, 0) / opposingCount;
+
+    // Calculate imbalance ratio (higher = more imbalanced)
+    const countRatio = Math.max(selectedCount, opposingCount) / Math.min(selectedCount, opposingCount);
+    const confDiff = Math.abs(selectedAvgConf - opposingAvgConf);
+
+    // Log conflict analysis
+    this.logger.debug('📊 Signal Conflict Analysis', {
+      selectedCount,
+      opposingCount,
+      selectedAvgConf: Math.round(selectedAvgConf),
+      opposingAvgConf: Math.round(opposingAvgConf),
+      countRatio: countRatio.toFixed(2),
+      confDiff: Math.round(confDiff),
+    });
+
+    // CONFLICT: Many indicators on one side, few on other, with similar confidence
+    // Example: 5 SHORT vs 3 LONG with 15% confidence difference = CONFLICT
+    if (countRatio > 1.5 && confDiff < 15) {
+      this.logger.warn('⚠️ CONFLICT DETECTED: Indicators disagree strongly on direction', {
+        selectedCount,
+        opposingCount,
+        countRatio: countRatio.toFixed(2),
+        confDiff: Math.round(confDiff),
+        penalty: '25%',
+      });
+      return 0.75; // 25% penalty
+    }
+
+    // MINOR CONFLICT: Imbalanced but reasonable confidence difference
+    if (countRatio > 1.3 && confDiff < 20) {
+      this.logger.warn('⚠️ MINOR CONFLICT: Slight indicator disagreement detected', {
+        selectedCount,
+        opposingCount,
+        countRatio: countRatio.toFixed(2),
+        confDiff: Math.round(confDiff),
+        penalty: '15%',
+      });
+      return 0.85; // 15% penalty
+    }
+
+    return 1.0; // No conflict
+  }
+
+  /**
+   * Check if opposing direction has stronger or close signal (FIX #3)
+   *
+   * Catches when the strongest indicator opposes the winning direction
+   * Returns confidence penalty multiplier:
+   * - 0.8 (20% penalty): Major risk
+   * - 0.9 (10% penalty): Minor risk
+   * - 1.0 (no penalty): Safe
+   *
+   * @private
+   */
+  private checkOpposingSignalStrength(
+    selectedSignals: AnalyzerSignal[],
+    opposingSignals: AnalyzerSignal[],
+    selectedDirection: SignalDirection,
+  ): number {
+    if (selectedSignals.length === 0 || opposingSignals.length === 0) {
+      return 1.0; // No opposing signals
+    }
+
+    // Find strongest signal in each group
+    const selectedBest = Math.max(...selectedSignals.map(s => s.confidence));
+    const opposingBest = Math.max(...opposingSignals.map(s => s.confidence));
+
+    // If selected side's strongest signal is stronger → safe
+    if (selectedBest >= opposingBest) {
+      return 1.0; // No penalty needed
+    }
+
+    // If opposing side's strongest signal is stronger → risky
+    const signalDiff = opposingBest - selectedBest;
+
+    this.logger.warn('⚠️ Opposing signal stronger than selected direction', {
+      selectedDirection,
+      selectedBest: `${selectedBest}%`,
+      opposingBest: `${opposingBest}%`,
+      diff: `${signalDiff}%`,
+    });
+
+    // If difference > 10%, apply 20% penalty
+    if (signalDiff > 10) {
+      this.logger.error('❌ MAJOR RISK: Strongest indicator opposes selected direction!', {
+        selectedDirection,
+        diff: signalDiff,
+        penalty: '20%',
+      });
+      return 0.8; // 20% penalty
+    }
+
+    // If difference 5-10%, apply 10% penalty
+    if (signalDiff > 5) {
+      this.logger.warn('⚠️ RISK: Strongest indicator close to selected direction', {
+        selectedDirection,
+        diff: signalDiff,
+        penalty: '10%',
+      });
+      return 0.9; // 10% penalty
+    }
+
+    return 1.0; // Safe - difference is minimal
   }
 
   /**
