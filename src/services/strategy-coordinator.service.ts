@@ -275,8 +275,11 @@ export class StrategyCoordinator {
     // ✨ NEW: Check time-based risk (night trading penalty)
     const nightTimePenalty = this.checkNightTimePenalty();
 
+    // ✨ NEW: Check for "blind zone" - too few signals (many analyzers blocked) (FIX #4)
+    const blindZonePenalty = this.checkBlindZone(signals, selectedDirection);
+
     // Apply all penalties to confidence (stacked multipliers)
-    const adjustedConfidence = Math.round(avgConfidence * conflictPenalty * opposingPenalty * nightTimePenalty);
+    const adjustedConfidence = Math.round(avgConfidence * conflictPenalty * opposingPenalty * nightTimePenalty * blindZonePenalty);
 
     // Check thresholds
     const meetsThresholds = selectedDirection !== SignalDirection.HOLD &&
@@ -485,6 +488,49 @@ export class StrategyCoordinator {
     }
 
     return 1.0; // No penalty during day hours
+  }
+
+  /**
+   * Check for "blind zone" - when too few signals collected
+   * (indicates many analyzers blocked/inactive)
+   *
+   * Problem discovered: System had 19/26 analyzers blocked, only 7 signals.
+   * This led to false LONG entry during false bounce that turned into downtrend.
+   * LONG on bounce with poor analyzer coverage is especially risky.
+   *
+   * Solution: Apply penalty when coverage is low.
+   * Coverage = total signals / expected analyzers
+   *
+   * Targets:
+   * - LONG entries: Minimum 5 signals (19% coverage), 0.85 penalty (15% reduction)
+   * - SHORT entries: Minimum 4 signals (15% coverage), 0.90 penalty (10% reduction)
+   * - Rationale: SHORT signals are naturally rarer, LONG bounces more dangerous
+   *
+   * @private
+   */
+  private checkBlindZone(signals: AnalyzerSignal[], direction: SignalDirection): number {
+    const DEFAULT_EXPECTED_ANALYZERS = 26; // Total analyzers in system
+    const signalCount = signals.length;
+    const coverage = (signalCount / DEFAULT_EXPECTED_ANALYZERS) * 100;
+
+    // Different thresholds for LONG vs SHORT
+    const isLongEntry = direction === SignalDirection.LONG;
+    const MIN_SAFE_SIGNALS = isLongEntry ? 5 : 4; // LONG needs more signals (bounces risky)
+    const BLIND_ZONE_PENALTY = isLongEntry ? 0.85 : 0.90; // LONG: 15% reduction, SHORT: 10%
+
+    if (signalCount < MIN_SAFE_SIGNALS) {
+      this.logger.warn('⚠️ BLIND ZONE DETECTED: Too few signals collected', {
+        signalCount,
+        minRequired: MIN_SAFE_SIGNALS,
+        coverage: coverage.toFixed(1) + '%',
+        direction: direction,
+        penalty: isLongEntry ? '15%' : '10%',
+        reason: `Only ${signalCount} analyzers active (many blocked). LONG bounces risky with low coverage.`,
+      });
+      return BLIND_ZONE_PENALTY;
+    }
+
+    return 1.0; // No penalty - good signal coverage
   }
 
   /**
