@@ -29,6 +29,9 @@ import { OrderExecutionDetectorService } from './order-execution-detector.servic
 import { WebSocketAuthenticationService } from './websocket-authentication.service';
 import { EventDeduplicationService } from './event-deduplication.service';
 import { WebSocketKeepAliveService } from './websocket-keep-alive.service';
+import { ExitTypeDetectorService } from './exit-type-detector.service';
+import { PositionPnLCalculatorService } from './position-pnl-calculator.service';
+import { PositionSyncService } from './position-sync.service';
 import { PositionEventHandler, WebSocketEventHandler } from './handlers';
 import { CompoundInterestCalculatorService } from './compound-interest-calculator.service';
 import { PublicWebSocketService } from './public-websocket.service';
@@ -317,12 +320,26 @@ export class BotServices {
       this.wallTrackerService,
     );
 
+    const exitTypeDetectorService = new ExitTypeDetectorService(this.logger);
+    const pnlCalculatorService = new PositionPnLCalculatorService();
+    const positionSyncService = new PositionSyncService(
+      this.bybitService,
+      this.positionManager,
+      exitTypeDetectorService,
+      this.telegram,
+      this.logger,
+      this.positionExitingService,
+    );
+
     this.positionMonitor = new PositionMonitorService(
       this.bybitService,
       this.positionManager,
       config.riskManagement,
       this.telegram,
       this.logger,
+      exitTypeDetectorService,
+      pnlCalculatorService,
+      positionSyncService,
       this.positionExitingService,
     );
 

@@ -8,6 +8,9 @@ import { PositionMonitorService } from '../../services/position-monitor.service'
 import { BybitService } from '../../services/bybit';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { TelegramService } from '../../services/telegram.service';
+import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
+import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
+import { PositionSyncService } from '../../services/position-sync.service';
 import {
   Position,
   PositionSide,
@@ -91,6 +94,27 @@ const createMockLogger = (): LoggerService => {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 };
 
+const createMockExitTypeDetectorService = () => ({
+  determineExitTypeFromHistory: jest.fn(),
+  identifyTPLevel: jest.fn(),
+});
+
+const createMockPositionPnLCalculatorService = () => ({
+  calculatePnL: jest.fn((position, currentPrice) => {
+    // Simple mock implementation
+    if (position.side === PositionSide.LONG) {
+      return ((currentPrice - position.entryPrice) / position.entryPrice) * 100;
+    } else {
+      return ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
+    }
+  }),
+});
+
+const createMockPositionSyncService = () => ({
+  syncClosedPosition: jest.fn().mockResolvedValue(undefined),
+  deepSyncCheck: jest.fn().mockResolvedValue(undefined),
+});
+
 const defaultRiskConfig: RiskManagementConfig = {
   positionSizeUsdt: 10,
   takeProfits: [],
@@ -114,6 +138,9 @@ describe('PositionMonitorService', () => {
   let mockBybit: ReturnType<typeof createMockBybitService>;
   let mockPositionManager: ReturnType<typeof createMockPositionManager>;
   let mockTelegram: ReturnType<typeof createMockTelegram>;
+  let mockExitTypeDetector: ReturnType<typeof createMockExitTypeDetectorService>;
+  let mockPnLCalculator: ReturnType<typeof createMockPositionPnLCalculatorService>;
+  let mockPositionSync: ReturnType<typeof createMockPositionSyncService>;
   let logger: LoggerService;
 
   beforeEach(() => {
@@ -123,6 +150,9 @@ describe('PositionMonitorService', () => {
     mockBybit = createMockBybitService();
     mockPositionManager = createMockPositionManager();
     mockTelegram = createMockTelegram();
+    mockExitTypeDetector = createMockExitTypeDetectorService();
+    mockPnLCalculator = createMockPositionPnLCalculatorService();
+    mockPositionSync = createMockPositionSyncService();
     logger = createMockLogger();
 
     monitor = new PositionMonitorService(
@@ -131,6 +161,9 @@ describe('PositionMonitorService', () => {
       defaultRiskConfig,
       mockTelegram as unknown as TelegramService,
       logger,
+      mockExitTypeDetector as unknown as ExitTypeDetectorService,
+      mockPnLCalculator as unknown as PositionPnLCalculatorService,
+      mockPositionSync as unknown as PositionSyncService,
     );
   });
 
@@ -399,6 +432,9 @@ describe('PositionMonitorService', () => {
         config,
         mockTelegram as unknown as TelegramService,
         logger,
+        mockExitTypeDetector as unknown as ExitTypeDetectorService,
+        mockPnLCalculator as unknown as PositionPnLCalculatorService,
+        mockPositionSync as unknown as PositionSyncService,
       );
 
       const exitSpy = jest.fn();
@@ -437,6 +473,9 @@ describe('PositionMonitorService', () => {
         config,
         mockTelegram as unknown as TelegramService,
         logger,
+        mockExitTypeDetector as unknown as ExitTypeDetectorService,
+        mockPnLCalculator as unknown as PositionPnLCalculatorService,
+        mockPositionSync as unknown as PositionSyncService,
       );
 
       const exitSpy = jest.fn();
@@ -468,6 +507,9 @@ describe('PositionMonitorService', () => {
         config,
         mockTelegram as unknown as TelegramService,
         logger,
+        mockExitTypeDetector as unknown as ExitTypeDetectorService,
+        mockPnLCalculator as unknown as PositionPnLCalculatorService,
+        mockPositionSync as unknown as PositionSyncService,
       );
 
       const exitSpy = jest.fn();
@@ -497,6 +539,9 @@ describe('PositionMonitorService', () => {
         config,
         mockTelegram as unknown as TelegramService,
         logger,
+        mockExitTypeDetector as unknown as ExitTypeDetectorService,
+        mockPnLCalculator as unknown as PositionPnLCalculatorService,
+        mockPositionSync as unknown as PositionSyncService,
       );
 
       const exitSpy = jest.fn();
@@ -528,6 +573,9 @@ describe('PositionMonitorService', () => {
         config,
         mockTelegram as unknown as TelegramService,
         logger,
+        mockExitTypeDetector as unknown as ExitTypeDetectorService,
+        mockPnLCalculator as unknown as PositionPnLCalculatorService,
+        mockPositionSync as unknown as PositionSyncService,
       );
 
       const exitSpy = jest.fn();
@@ -545,35 +593,28 @@ describe('PositionMonitorService', () => {
   // ==========================================================================
 
   describe('position closed externally', () => {
-    it('should emit positionClosedExternally when exchange position is null', async () => {
+    it('should sync closed position when exchange position is null', async () => {
       const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockBybit.getPosition.mockResolvedValue(null); // Position doesn't exist on exchange
 
-      const closedSpy = jest.fn();
-      monitor.on('positionClosedExternally', closedSpy);
-
       monitor.start();
       await jest.advanceTimersByTimeAsync(10000);
 
-      expect(closedSpy).toHaveBeenCalledTimes(1);
-      expect(closedSpy).toHaveBeenCalledWith(position);
-      expect(mockPositionManager.clearPosition).toHaveBeenCalledTimes(1);
+      // Should delegate to PositionSyncService.syncClosedPosition
+      expect(mockPositionSync.syncClosedPosition).toHaveBeenCalledWith(position);
     });
 
-    it('should emit positionClosedExternally when exchange position quantity is zero', async () => {
+    it('should sync closed position when exchange position quantity is zero', async () => {
       const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockBybit.getPosition.mockResolvedValue({ ...position, quantity: 0 });
 
-      const closedSpy = jest.fn();
-      monitor.on('positionClosedExternally', closedSpy);
-
       monitor.start();
       await jest.advanceTimersByTimeAsync(10000);
 
-      expect(closedSpy).toHaveBeenCalledTimes(1);
-      expect(mockPositionManager.clearPosition).toHaveBeenCalledTimes(1);
+      // Should delegate to PositionSyncService.syncClosedPosition
+      expect(mockPositionSync.syncClosedPosition).toHaveBeenCalledWith(position);
     });
 
     it('should NOT check price when position closed externally', async () => {
@@ -713,31 +754,19 @@ describe('PositionMonitorService', () => {
       expect(mockPositionManager.clearPosition).not.toHaveBeenCalled();
     });
 
-    it('should detect missing Stop Loss and close position (deepSyncCheck)', async () => {
+    it('should call deepSyncCheck for positions > 2 minutes old', async () => {
       const openedAt = Date.now() - 150000; // 2.5 minutes ago (> 2min threshold)
       const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
       position.status = 'OPEN';
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockBybit.getPosition.mockResolvedValue(position); // Position exists
-
-      // Mock getActiveOrders - NO Stop Loss present!
-      mockBybit.getActiveOrders = jest.fn().mockResolvedValue([
-        {
-          orderId: 'tp1-order-123',
-          orderType: 'Limit',
-          reduceOnly: true,
-          stopOrderType: undefined, // Not a stop loss
-        },
-      ]);
+      mockBybit.getCurrentPrice.mockResolvedValue(1.5);  // Current price
 
       monitor.start();
       await jest.advanceTimersByTimeAsync(30000); // Advance 30s to trigger deepSyncCheck
 
-      // Should detect missing SL and emergency close
-      expect(mockBybit.closePosition).toHaveBeenCalledWith(PositionSide.LONG, 100);
-      expect(mockTelegram.sendAlert).toHaveBeenCalledWith(
-        expect.stringContaining('CRITICAL: Stop Loss missing'),
-      );
+      // Should delegate to PositionSyncService.deepSyncCheck
+      expect(mockPositionSync.deepSyncCheck).toHaveBeenCalledWith(position);
     });
   });
 });

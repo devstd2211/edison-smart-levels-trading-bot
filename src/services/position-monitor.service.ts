@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS } from '../constants';
+import { DECIMAL_PLACES, TIME_UNITS } from '../constants';
 import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, POSITION_MONITOR_INTERVAL_MS } from '../constants/technical.constants';
 /**
  * Position Monitor Service
@@ -15,9 +15,12 @@ import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, POSITION_MONITOR_INTERVAL_MS } f
 import { EventEmitter } from 'events';
 import { BybitService } from './bybit';
 import { PositionLifecycleService } from './position-lifecycle.service';
-import { Position, PositionSide, RiskManagementConfig, LoggerService, ExitType, BybitOrder, isStopLossOrder, isTakeProfitOrder } from '../types';
+import { Position, PositionSide, RiskManagementConfig, LoggerService } from '../types';
 import { isCriticalApiError } from '../utils/error-helper';
 import { TelegramService } from './telegram.service';
+import { ExitTypeDetectorService } from './exit-type-detector.service';
+import { PositionPnLCalculatorService } from './position-pnl-calculator.service';
+import { PositionSyncService } from './position-sync.service';
 
 // ============================================================================
 // CONSTANTS
@@ -41,6 +44,9 @@ export class PositionMonitorService extends EventEmitter {
     private readonly riskConfig: RiskManagementConfig,
     private readonly telegram: TelegramService,
     private readonly logger: LoggerService,
+    private readonly exitTypeDetectorService: ExitTypeDetectorService,
+    private readonly pnlCalculator: PositionPnLCalculatorService,
+    private readonly positionSyncService: PositionSyncService,
     private readonly positionExitingService?: any, // PositionExitingService (optional for now)
   ) {
     super();
@@ -138,7 +144,7 @@ export class PositionMonitorService extends EventEmitter {
         }
 
         // Position closed on exchange but WebSocket event missed - sync state
-        await this.syncClosedPosition(currentPosition);
+        await this.positionSyncService.syncClosedPosition(currentPosition);
         return;
       }
 
@@ -347,7 +353,7 @@ export class PositionMonitorService extends EventEmitter {
     const openedMinutes = openedMs / TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND / INTEGER_MULTIPLIERS.SIXTY;
 
     // Calculate current PnL %
-    const pnlPercent = this.calculatePnL(position, currentPrice);
+    const pnlPercent = this.pnlCalculator.calculatePnL(position, currentPrice);
 
     // Log current state (debug)
     if (openedMinutes > maxMinutes / 2) {
@@ -373,168 +379,10 @@ export class PositionMonitorService extends EventEmitter {
     return { shouldExit: false };
   }
 
-  /**
-   * Calculate current PnL percentage
-   *
-   * @param position - Current position
-   * @param currentPrice - Current market price
-   * @returns PnL in percentage
-   */
-  private calculatePnL(position: Position, currentPrice: number): number {
-    if (position.side === PositionSide.LONG) {
-      return ((currentPrice - position.entryPrice) / position.entryPrice) * PERCENT_MULTIPLIER;
-    } else {
-      return ((position.entryPrice - currentPrice) / position.entryPrice) * PERCENT_MULTIPLIER;
-    }
-  }
-
   // ==========================================================================
   // SAFETY MONITOR: SYNC WITH EXCHANGE
   // ==========================================================================
 
-  /**
-   * Sync closed position state when WebSocket event was missed
-   * Queries order history to determine correct exitType
-   */
-  private async syncClosedPosition(position: Position): Promise<void> {
-    this.logger.warn('⚠️ Position closed on exchange but WebSocket event missed', {
-      positionId: position.id,
-      entryPrice: position.entryPrice,
-      side: position.side,
-    });
-
-    try {
-      // Get order history to determine exitType
-      const orderHistory = await this.bybitService.getOrderHistory(20);
-      const exitType = this.determineExitTypeFromHistory(orderHistory, position);
-
-      // Get current price for PnL calculation
-      const currentPrice = await this.bybitService.getCurrentPrice();
-
-      // Record close with correct exitType (NOT MANUAL unless truly manual)
-      const exitReason = `Position closed on exchange (WebSocket event missed) - ${exitType}`;
-
-      await this.positionExitingService.closeFullPosition(
-        position,
-        currentPrice,
-        exitReason,
-        exitType,
-      );
-
-      // Send alert
-      await this.telegram.sendAlert(
-        '⚠️ SYNC: Position closed on exchange\n' +
-        `Exit Type: ${exitType}\n` +
-        `Entry: ${position.entryPrice}\n` +
-        `Exit: ${currentPrice.toFixed(DECIMAL_PLACES.PRICE)}\n` +
-        'Reason: WebSocket event missed',
-      );
-
-      // Clear position
-      await this.positionManager.clearPosition();
-
-      this.logger.info('✅ Position state synced with exchange', {
-        positionId: position.id,
-        exitType,
-      });
-    } catch (error) {
-      this.logger.error('Failed to sync closed position', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-
-      // Fallback: emit external close event
-      this.emit('positionClosedExternally', position);
-      await this.positionManager.clearPosition();
-    }
-  }
-
-  /**
-   * Determine exitType from order history
-   * Analyzes filled orders to understand how position was closed
-   */
-  private determineExitTypeFromHistory(orderHistory: BybitOrder[], position: Position): ExitType {
-    // Find filled orders for this symbol
-    const filledOrders = orderHistory
-      .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled')
-      .sort((a, b) => {
-        const aTime = (a as Record<string, unknown>).updatedTime as number;
-        const bTime = (b as Record<string, unknown>).updatedTime as number;
-        return bTime - aTime;
-      }); // Most recent first
-
-    if (filledOrders.length === 0) {
-      this.logger.warn('No filled orders found in history, assuming MANUAL close');
-      return ExitType.MANUAL;
-    }
-
-    // Check last filled order
-    const lastOrder = filledOrders[0];
-
-    // Stop Loss: triggerPrice exists + reduceOnly + side matches close direction
-    if (lastOrder.stopOrderType === 'Stop' || lastOrder.stopOrderType === 'StopLoss') {
-      return ExitType.STOP_LOSS;
-    }
-
-    // Trailing Stop
-    if (lastOrder.stopOrderType === 'TrailingStop') {
-      return ExitType.TRAILING_STOP;
-    }
-
-    // Take Profit: Limit order + reduceOnly
-    if (lastOrder.orderType === 'Limit' && lastOrder.reduceOnly === true) {
-      // Try to determine TP level from price
-      const tpLevel = this.identifyTPLevel(parseFloat(lastOrder.price), position);
-      if (tpLevel === 1) {
-        return ExitType.TAKE_PROFIT_1;
-      }
-      if (tpLevel === 2) {
-        return ExitType.TAKE_PROFIT_2;
-      }
-      if (tpLevel === 3) {
-        return ExitType.TAKE_PROFIT_3;
-      }
-      return ExitType.TAKE_PROFIT_1; // Fallback
-    }
-
-    // Market order + reduceOnly = likely manual close
-    if (lastOrder.orderType === 'Market' && lastOrder.reduceOnly === true) {
-      return ExitType.MANUAL;
-    }
-
-    this.logger.warn('Could not determine exitType from order history', {
-      lastOrderType: lastOrder.orderType,
-      stopOrderType: lastOrder.stopOrderType,
-      reduceOnly: lastOrder.reduceOnly,
-    });
-
-    return ExitType.MANUAL; // Fallback
-  }
-
-  /**
-   * Identify TP level from price
-   * Returns 1, 2, or 3 based on which TP level price is closest to
-   */
-  private identifyTPLevel(price: number, position: Position): number {
-    const tpLevels = position.takeProfits;
-
-    if (tpLevels.length === 0) {
-      return 1; // Default
-    }
-
-    // Find closest TP level
-    let closestLevel = 1;
-    let closestDistance = Math.abs(price - tpLevels[0].price);
-
-    for (let i = 1; i < tpLevels.length; i++) {
-      const distance = Math.abs(price - tpLevels[i].price);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestLevel = i + 1;
-      }
-    }
-
-    return closestLevel;
-  }
 
   // ==========================================================================
   // DEEP SYNC CHECK (Level 2 Safety)
@@ -542,155 +390,12 @@ export class PositionMonitorService extends EventEmitter {
 
   /**
    * Deep sync check - runs every 30s for positions > 2 minutes old
-   * Verifies:
-   * 1. TP/SL orders still active on exchange
-   * 2. Stop Loss not missing (emergency close if missing)
-   * 3. Position quantity matches exchange
+   * Delegates to PositionSyncService for verification logic
    */
   private async deepSyncCheck(): Promise<void> {
     try {
       const position = this.positionManager.getCurrentPosition();
-
-      // No position or already closed
-      if (position === null || position.status === 'CLOSED') {
-        return;
-      }
-
-      const positionAgeMs = Date.now() - position.openedAt;
-
-      // Only run deep check if position > 2 minutes old
-      if (positionAgeMs < 120000) {
-        return;
-      }
-
-      this.logger.debug('🔍 Running deep sync check', {
-        positionId: position.id,
-        ageMinutes: Math.floor(positionAgeMs / TIME_UNITS.MINUTE),
-      });
-
-      // 1. Verify position still exists on exchange
-      const exchangePos = await this.bybitService.getPosition();
-
-      if (exchangePos === null || exchangePos.quantity === POSITION_SIZE_ZERO) {
-        // Position closed on exchange - already handled by syncClosedPosition
-        this.logger.debug('Deep sync: Position closed on exchange (will be handled by monitor)');
-        return;
-      }
-
-      // 2. Verify TP/SL orders still active
-      const activeOrders = await this.bybitService.getActiveOrders();
-
-      // Check for Stop Loss order
-      const hasStopLoss = activeOrders.some((order: BybitOrder) => {
-        const isSL = isStopLossOrder(order);
-
-        const correctSide = position.side === PositionSide.LONG
-          ? order.side === 'Sell'
-          : order.side === 'Buy';
-
-        return isSL && correctSide;
-      });
-
-      // Check for Take Profit orders
-      const hasTakeProfit = activeOrders.some((order: BybitOrder) => {
-        const isTP = isTakeProfitOrder(order);
-
-        const correctSide = position.side === PositionSide.LONG
-          ? order.side === 'Sell'
-          : order.side === 'Buy';
-
-        return isTP && correctSide;
-      });
-
-      // Check for Trailing Stop via position info
-      let hasTrailingStop = false;
-      if (position.stopLoss.isTrailing) {
-        hasTrailingStop = true;
-        this.logger.debug('Deep sync: Trailing stop active (position flag set)');
-      }
-
-      // 🚨 CRITICAL: Stop Loss missing!
-      if (!hasStopLoss && !hasTrailingStop) {
-        this.logger.error('🚨 CRITICAL: Stop Loss order missing!', {
-          positionId: position.id,
-          hasTrailing: hasTrailingStop,
-          activeOrders: activeOrders.length,
-        });
-
-        // FIX: Verify position still exists before emergency close (race condition)
-        const preClosePos = await this.bybitService.getPosition();
-        if (preClosePos === null || preClosePos.quantity === POSITION_SIZE_ZERO) {
-          // Position already closed on exchange during deep sync check
-          this.logger.warn('⚠️ Position already closed on exchange (race condition avoided)', {
-            positionId: position.id,
-          });
-          return;
-        }
-
-        await this.telegram.sendAlert(
-          '🚨 CRITICAL: Stop Loss missing!\n' +
-          `Position: ${position.id}\n` +
-          `Side: ${position.side}\n` +
-          `Entry: ${position.entryPrice}\n` +
-          `Age: ${Math.floor(positionAgeMs / TIME_UNITS.MINUTE)} minutes\n` +
-          'Action: Closing position immediately',
-        );
-
-        // Emergency close
-        try {
-          await this.bybitService.closePosition(position.side, position.quantity);
-          this.logger.warn('✅ Unprotected position closed successfully (deep sync)');
-        } catch (closeError) {
-          // Check if error is due to zero position (race condition)
-          const errorMsg = closeError instanceof Error ? closeError.message : String(closeError);
-          if (errorMsg.includes('current position is zero') || errorMsg.includes('zero position')) {
-            this.logger.warn('⚠️ Position became zero during close attempt (race condition)', {
-              positionId: position.id,
-              error: errorMsg,
-            });
-            return;
-          }
-
-          this.logger.error('🚨🚨🚨 CRITICAL: Failed to close unprotected position!', {
-            error: errorMsg,
-          });
-
-          await this.telegram.sendAlert(
-            '🚨🚨🚨 CRITICAL ALERT 🚨🚨🚨\n' +
-            `Position ${position.id} is UNPROTECTED and CANNOT BE CLOSED!\n` +
-            'MANUAL INTERVENTION REQUIRED IMMEDIATELY!',
-          );
-        }
-        return;
-      }
-
-      // 3. Sync position quantity mismatch
-      if (Math.abs(exchangePos.quantity - position.quantity) > 0.01) {
-        this.logger.warn('Position quantity mismatch - syncing', {
-          local: position.quantity,
-          exchange: exchangePos.quantity,
-          difference: Math.abs(exchangePos.quantity - position.quantity),
-        });
-
-        // Update local position quantity
-        this.positionManager.syncWithWebSocket(exchangePos);
-
-        await this.telegram.sendAlert(
-          '⚠️ Position quantity synced\n' +
-          `Position: ${position.id}\n` +
-          `Local: ${position.quantity}\n` +
-          `Exchange: ${exchangePos.quantity}\n` +
-          'Updated to match exchange',
-        );
-      }
-
-      this.logger.debug('✅ Deep sync check passed', {
-        hasStopLoss,
-        hasTakeProfit,
-        hasTrailingStop,
-        quantityMatch: Math.abs(exchangePos.quantity - position.quantity) < 0.01,
-      });
-
+      await this.positionSyncService.deepSyncCheck(position);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 

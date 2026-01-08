@@ -8,6 +8,9 @@ export * from './position-lifecycle.service'; // Consolidated position managemen
 export * from './position-exiting.service'; // Handles partial TP, breakeven, trailing
 export * from './websocket-manager.service';
 export * from './position-monitor.service';
+export * from './exit-type-detector.service'; // Determines position exit type from order history
+export * from './position-pnl-calculator.service'; // Calculates unrealized P&L
+export * from './position-sync.service'; // Syncs position state with exchange
 export * from './trading-journal.service';
 export * from './logger.service';
 export * from './time.service';
