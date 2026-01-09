@@ -420,6 +420,7 @@ export class BotServices {
       riskManagement: config.riskManagement,
       indicators: config.indicators,
       analyzers: config.analyzers,
+      analyzerDefaults: (config as any).analyzerDefaults,
     };
 
     this.logger.info('🔗 OrchestratorConfig prepared', {

@@ -282,6 +282,122 @@
       "stdDev": 2.0
     }
   },
+  "analyzerDefaults": {
+    "EMA_ANALYZER_NEW": {
+      "baseConfidence": 0.8,
+      "strengthMultiplier": 1.5,
+      "maxConfidence": 0.95
+    },
+    "RSI_ANALYZER_NEW": {
+      "extremeThreshold": 5,
+      "maxConfidence": 0.9
+    },
+    "ATR_ANALYZER_NEW": {
+      "confidenceMultiplier": 2.0,
+      "maxConfidence": 0.95
+    },
+    "VOLUME_ANALYZER_NEW": {
+      "neutralConfidence": 0.2,
+      "maxConfidence": 0.95
+    },
+    "STOCHASTIC_ANALYZER_NEW": {
+      "extremeThreshold": 5,
+      "maxConfidence": 0.9
+    },
+    "BOLLINGER_BANDS_ANALYZER_NEW": {
+      "bandTouchConfidence": 0.5,
+      "maxConfidence": 0.9
+    },
+    "DIVERGENCE_ANALYZER_NEW": {
+      "minBars": 3,
+      "maxConfidence": 0.85
+    },
+    "BREAKOUT_ANALYZER_NEW": {
+      "minBars": 5,
+      "breakoutThresholdPercent": 0.1,
+      "maxConfidence": 0.9
+    },
+    "WICK_ANALYZER_NEW": {
+      "minWickPercent": 0.5,
+      "maxConfidence": 0.85
+    },
+    "PRICE_MOMENTUM_ANALYZER_NEW": {
+      "minMomentum": 0.1,
+      "maxConfidence": 0.9
+    },
+    "TREND_DETECTOR_ANALYZER_NEW": {
+      "minEmaGapPercent": 0.5,
+      "minConfidence": 0.3,
+      "maxConfidence": 0.95
+    },
+    "SWING_ANALYZER_NEW": {
+      "minSwingPercent": 0.5,
+      "maxConfidence": 0.85
+    },
+    "LEVEL_ANALYZER_NEW": {
+      "minTouches": 2,
+      "maxConfidence": 0.9
+    },
+    "CHOCH_BOS_ANALYZER_NEW": {
+      "minSwingPercent": 0.5,
+      "maxConfidence": 0.85
+    },
+    "LIQUIDITY_SWEEP_ANALYZER_NEW": {
+      "minVolumeMultiplier": 1.5,
+      "maxConfidence": 0.9
+    },
+    "LIQUIDITY_ZONE_ANALYZER_NEW": {
+      "zoneDepthPercent": 0.5,
+      "maxConfidence": 0.85
+    },
+    "ORDER_BLOCK_ANALYZER_NEW": {
+      "minBars": 5,
+      "maxConfidence": 0.9
+    },
+    "FAIR_VALUE_GAP_ANALYZER_NEW": {
+      "minGapPercent": 0.1,
+      "maxConfidence": 0.85
+    },
+    "VOLUME_PROFILE_ANALYZER_NEW": {
+      "pocConfidence": 0.7,
+      "maxConfidence": 0.9
+    },
+    "ORDER_FLOW_ANALYZER_NEW": {
+      "minDeltaPercent": 5,
+      "maxConfidence": 0.9
+    },
+    "FOOTPRINT_ANALYZER_NEW": {
+      "minFootprintBars": 3,
+      "maxConfidence": 0.85
+    },
+    "WHALE_ANALYZER_NEW": {
+      "minOrderSizePercent": 1,
+      "maxConfidence": 0.9
+    },
+    "MICRO_WALL_ANALYZER_NEW": {
+      "minWallSizePercent": 0.5,
+      "maxConfidence": 0.85
+    },
+    "DELTA_ANALYZER_NEW": {
+      "minDeltaPercent": 10,
+      "maxConfidence": 0.9
+    },
+    "TICK_DELTA_ANALYZER_NEW": {
+      "minTickDelta": 5,
+      "maxConfidence": 0.85
+    },
+    "PRICE_ACTION_ANALYZER_NEW": {
+      "minBars": 3,
+      "maxConfidence": 0.9
+    },
+    "TREND_CONFLICT_ANALYZER_NEW": {
+      "minConflictPercent": 10,
+      "maxConfidence": 0.8
+    },
+    "VOLATILITY_SPIKE_ANALYZER_NEW": {
+      "maxConfidence": 0.95
+    }
+  },
   "filters": {
     "blindZone": {
       "minSignalsForLong": 3,

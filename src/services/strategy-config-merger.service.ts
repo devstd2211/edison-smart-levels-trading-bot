@@ -51,6 +51,22 @@ export class StrategyConfigMergerService {
       (merged as any).analyzers = strategy.analyzers;
     }
 
+    // 5. Merge analyzer defaults from strategy (strategy defaults override main config defaults)
+    if ((strategy as any).analyzerDefaults) {
+      const mainDefaults = (merged as any).analyzerDefaults || {};
+      const mergedDefaults = {
+        ...mainDefaults,
+        ...(strategy as any).analyzerDefaults,
+      };
+      (merged as any).analyzerDefaults = mergedDefaults;
+      console.log('[MERGE] StrategyConfigMerger: Added analyzerDefaults from strategy', {
+        strategyDefaultsCount: Object.keys((strategy as any).analyzerDefaults).length,
+        mergedDefaultsCount: Object.keys(mergedDefaults).length,
+      });
+    } else {
+      console.log('[MERGE] StrategyConfigMerger: No analyzerDefaults in strategy');
+    }
+
     return merged;
   }
 

@@ -22,6 +22,7 @@ export interface StrategyConfig {
   metadata: StrategyMetadata;
   analyzers: StrategyAnalyzerConfig[];
   indicators?: IndicatorOverrides;
+  analyzerDefaults?: Record<string, Record<string, any>>; // Default parameters for each analyzer
   filters?: FilterOverrides;
   riskManagement?: RiskManagementOverrides;
   notes?: string;

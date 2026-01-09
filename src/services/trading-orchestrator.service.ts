@@ -339,9 +339,11 @@ export class TradingOrchestrator {
 
   /**
    * Build analyzer config from strategy and indicator configs
+   * Falls back to analyzerDefaults from main config if not specified
    */
   private buildAnalyzerConfig(analyzerCfg: any): any {
     const baseConfig = (this.config as any).indicators || {};
+    const analyzerDefaults = ((this.config as any).analyzerDefaults || {}) as Record<string, any>;
 
     // Common analyzer config structure
     const config: any = {
@@ -352,7 +354,19 @@ export class TradingOrchestrator {
       maxConfidence: analyzerCfg.maxConfidence ?? 1.0,
     };
 
-    // Map analyzer names to their indicator configs
+    // 1. Merge analyzer defaults from main config
+    if (analyzerDefaults[analyzerCfg.name]) {
+      Object.assign(config, analyzerDefaults[analyzerCfg.name]);
+      this.logger.debug(`Merged defaults for ${analyzerCfg.name}`, {
+        defaults: analyzerDefaults[analyzerCfg.name],
+      });
+    } else {
+      this.logger.debug(`No defaults found for ${analyzerCfg.name}`, {
+        availableDefaults: Object.keys(analyzerDefaults).slice(0, 5),
+      });
+    }
+
+    // 2. Map analyzer names to their indicator configs
     const analyzerToIndicator: Record<string, string> = {
       EMA_ANALYZER_NEW: 'ema',
       RSI_ANALYZER_NEW: 'rsi',
@@ -362,13 +376,13 @@ export class TradingOrchestrator {
       BOLLINGER_BANDS_ANALYZER_NEW: 'bollingerBands',
     };
 
-    // Merge indicator config if available
+    // Merge indicator config if available (overrides defaults)
     const indicatorKey = analyzerToIndicator[analyzerCfg.name];
     if (indicatorKey && baseConfig[indicatorKey]) {
       Object.assign(config, baseConfig[indicatorKey]);
     }
 
-    // Add analyzer-specific params from strategy
+    // 3. Add analyzer-specific params from strategy (highest priority)
     if (analyzerCfg.params) {
       Object.assign(config, analyzerCfg.params);
     }

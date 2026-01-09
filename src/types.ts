@@ -833,6 +833,7 @@ export interface Config {
   logging: LoggingConfig;
   system: SystemConfig;
   dataSubscriptions: DataSubscriptionsConfig; // Data subscriptions (candles, orderbook, ticks)
+  analyzerDefaults?: Record<string, any>; // Default analyzer parameters (optional)
   entryConfig: {
     divergenceDetector: {
       minStrength: number;
