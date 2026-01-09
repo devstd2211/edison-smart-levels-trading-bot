@@ -11,7 +11,7 @@
  * - Easy to add new services
  */
 
-import { Config, LoggerService, MarketStructureAnalyzer, Candle } from '../types';
+import { Config, LoggerService, Candle } from '../types';
 import {
   BybitService,
   PositionLifecycleService,
@@ -45,13 +45,6 @@ import { DeltaAnalyzerService } from './delta-analyzer.service';
 import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { WallTrackerService } from './wall-tracker.service';
 import { ConsoleDashboardService } from './console-dashboard.service';
-import { DashboardIntegrationService } from './dashboard-integration.service';
-import {
-  CHOCH_ALIGNED_BOOST,
-  CHOCH_AGAINST_PENALTY,
-  BOS_ALIGNED_BOOST,
-  NO_MODIFICATION_MULTIPLIER,
-} from '../constants/technical.constants';
 import { INTEGER_MULTIPLIERS } from '../constants';
 
 /**
@@ -73,7 +66,6 @@ export class BotServices {
   btcCandles1m: Candle[] = []; // BTC 1-minute candles for correlation analysis
 
   // Analysis & Orchestration
-  readonly structureAnalyzer: MarketStructureAnalyzer;
   readonly tradingOrchestrator: TradingOrchestrator;
 
   // Tracking & Journal
@@ -94,7 +86,6 @@ export class BotServices {
 
   // UI & Dashboard
   readonly dashboard: ConsoleDashboardService;
-  readonly dashboardIntegration?: DashboardIntegrationService; // Optional now - disabled due to hang issues
 
   // Optional services
   readonly compoundInterestCalculator?: CompoundInterestCalculatorService;
@@ -165,19 +156,7 @@ export class BotServices {
       config.exchange.symbol,
     );
 
-    // 6. Initialize analyzers
-    const marketStructureConfig = config.analysisConfig?.marketStructure || {
-      chochAlignedBoost: CHOCH_ALIGNED_BOOST,
-      chochAgainstPenalty: CHOCH_AGAINST_PENALTY,
-      bosAlignedBoost: BOS_ALIGNED_BOOST,
-      noModification: NO_MODIFICATION_MULTIPLIER,
-    };
-    this.structureAnalyzer = new MarketStructureAnalyzer(
-      marketStructureConfig,
-      this.logger,
-    );
-
-    // 7. Initialize optional services
+    // 6. Initialize optional services
     if (config.compoundInterest && config.compoundInterest.enabled) {
       this.compoundInterestCalculator = new CompoundInterestCalculatorService(
         config.compoundInterest,
@@ -399,9 +378,8 @@ export class BotServices {
       this.retestEntryService,  // 9 - optional
       this.deltaAnalyzerService,  // 10 - optional
       this.orderbookImbalanceService,  // 11 - optional
-      undefined,             // 12 - trendAnalyzer (optional, created internally)
-      this.journal,          // 13 - optional
-      this.sessionStats,     // 14 - optional
+      this.journal,          // 12 - optional
+      this.sessionStats,     // 13 - optional
     );
 
     // 11.5. Link BTC candles store to TradingOrchestrator for BTC_CORRELATION analyzer
@@ -435,20 +413,6 @@ export class BotServices {
       this.logger.info('🔗 BTC candles store linked to PublicWebSocket');
     }
 
-    // 14. Initialize Dashboard Integration (connects dashboard to data sources)
-    // TEMPORARILY DISABLED - dashboard was causing hang/freeze issues
-    // this.dashboardIntegration = new DashboardIntegrationService(
-    //   this.dashboard,
-    //   this.eventBus,
-    //   this.logger,
-    //   (this.tradingOrchestrator as any).trendAnalyzer,
-    //   (this.tradingOrchestrator as any).rsiAnalyzer,
-    //   (this.tradingOrchestrator as any).emaAnalyzer,
-    //   this.positionManager,
-    //   this.publicWebSocket,
-    // );
-    // this.logger.info('🔗 Dashboard Integration Service initialized - real-time updates enabled');
-
     this.logger.info('✅ BotServices initialized - all dependencies ready');
   }
 
@@ -466,7 +430,6 @@ export class BotServices {
       bybitService: this.bybitService,
       timeframeProvider: this.timeframeProvider,
       candleProvider: this.candleProvider,
-      structureAnalyzer: this.structureAnalyzer,
       tradingOrchestrator: this.tradingOrchestrator,
       journal: this.journal,
       sessionStats: this.sessionStats,

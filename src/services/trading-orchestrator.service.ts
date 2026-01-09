@@ -23,18 +23,6 @@ import {
   TrendAnalysis,
   OrchestratorConfig,
   ExitType,
-  ATRIndicator,
-  ZigZagNRIndicator,
-  StochasticIndicator,
-  BollingerBandsIndicator,
-  LiquidityDetector,
-  DivergenceDetector,
-  BTCAnalyzer,
-  BreakoutPredictor,
-  PriceMomentumAnalyzer,
-  FlatMarketDetector,
-  MarketStructureAnalyzer,
-  TrendAnalyzer,
 } from '../types';
 // PHASE 4: ContextAnalyzer archived to src/archive/phase4-integration/
 // Replaced by TrendAnalyzer (PRIMARY component)
@@ -46,10 +34,6 @@ import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
 import { StrategyCoordinator } from './strategy-coordinator.service';
 import { AnalyzerRegistry } from './analyzer-registry.service';
-import { AnalyzerRegistrationService } from './analyzer-registration.service';
-import { EntryScanner } from '../analyzers/entry.scanner';
-import { MultiTimeframeRSIAnalyzer } from '../analyzers/multi-timeframe-rsi.analyzer';
-import { MultiTimeframeEMAAnalyzer } from '../analyzers/multi-timeframe-ema.analyzer';
 import { TimeframeProvider } from '../providers/timeframe.provider';
 import { FundingRateFilterService } from './funding-rate-filter.service';
 // FastEntryService archived to src/archive/phase4-week2/ (consolidated into EntryOrchestrator)
@@ -75,8 +59,6 @@ import { MultiTimeframeTrendService } from './multi-timeframe-trend.service';
 import { TimeframeWeightingService } from './timeframe-weighting.service';
 import { IndicatorInitializationService } from './indicator-initialization.service';
 import { FilterInitializationService } from './filter-initialization.service';
-import { StrategyRegistrationService } from './strategy-registration.service';
-import { OrchestratorInitializationService, InitializedOrchestratorServices } from './orchestrator-initialization.service';
 import { MarketDataPreparationService } from './market-data-preparation.service';
 import { TradingContextService } from './trading-context.service';
 import { ExternalAnalysisService } from './external-analysis.service';
@@ -93,111 +75,33 @@ import { WhaleSignalDetectionService } from './whale-signal-detection.service';
 // ============================================================================
 
 export class TradingOrchestrator {
-  // PHASE 4: Removed contextAnalyzer (archived to phase4-integration)
-  // Replaced by trendAnalyzer (passed in constructor)
-  private entryScanner!: EntryScanner;
+  // Core services
   private strategyCoordinator!: StrategyCoordinator;
   private analyzerRegistry!: AnalyzerRegistry;
-  private riskCalculator!: RiskCalculator;
   private currentContext: TradingContext | null = null;
+  private currentOrderbook: OrderBook | null = null;
 
-  // Multi-timeframe analyzers
-  private rsiAnalyzer!: MultiTimeframeRSIAnalyzer;
-  private emaAnalyzer!: MultiTimeframeEMAAnalyzer;
+  // Orchestrators
+  private entryOrchestrator: EntryOrchestrator | null = null;
+  private exitOrchestrator: ExitOrchestrator | null = null;
+  private positionExitingService: PositionExitingService | null = null;
 
-  // PHASE 6c: Price momentum analyzer for real-time momentum validation
-  private priceMomentumAnalyzer!: PriceMomentumAnalyzer;
-
-  // Single-timeframe indicators (still needed for specific tasks)
-  private atrIndicator!: ATRIndicator;
-  private zigzagNRIndicator!: ZigZagNRIndicator;
-  private stochasticIndicator?: StochasticIndicator;
-  private bollingerIndicator?: BollingerBandsIndicator;
-  private liquidityDetector!: LiquidityDetector;
-  private divergenceDetector!: DivergenceDetector;
-  private breakoutPredictor!: BreakoutPredictor;
-
-  // BTC confirmation
-  private btcAnalyzer: BTCAnalyzer | null = null;
-
-  // Funding rate filter
-  private fundingRateFilter: FundingRateFilterService | null = null;
-
-  // Flat market detector
-  private flatMarketDetector: FlatMarketDetector | null = null;
-
-  // Trend confirmation filter (secondary filter for signal validation)
-  private trendConfirmationService: TrendConfirmationService | null = null;
-
-  // Phase 1: Smart Entry & Breakeven services
-  private fastEntryService: any | null = null; // Archived - Consolidated into EntryOrchestrator
-  private smartBreakevenService: any | null = null; // Archived - Consolidated into ExitOrchestrator
+  // Services
   private retestEntryService: RetestEntryService | null = null;
-
-  // Phase 4: Market Data Enhancement services
   private deltaAnalyzerService: DeltaAnalyzerService | null = null;
   private orderbookImbalanceService: OrderbookImbalanceService | null = null;
   private volumeProfileService: VolumeProfileService | null = null;
+  private trendConfirmationService: TrendConfirmationService | null = null;
+  private fundingRateFilter: FundingRateFilterService | null = null;
 
-  // Phase 5: Risk Management services - ARCHIVED to src/archive/phase4-week1/
-  private dailyLimitsService: any | null = null; // Consolidated into RiskManager
-  private riskBasedSizingService: any | null = null; // Consolidated into RiskManager
-  private lossStreakService: any | null = null; // Consolidated into RiskManager
-  private maxConcurrentRiskService: any | null = null; // Consolidated into RiskManager
-
-  // PHASE 4: TrendAnalyzer (PRIMARY - runs FIRST to set global trend bias)
-  // NOW REQUIRED - no longer optional! Bug fix: prevent entries before trend is determined
-  private trendAnalyzer!: TrendAnalyzer;
-  private currentTrendAnalysis: TrendAnalysis | null = null;
-
-  // PHASE 4: RiskManager (PRIMARY - unified atomic risk gatekeeper)
-  // Now a REQUIRED constructor parameter - no longer optional
-
-  // PHASE 4: EntryOrchestrator (PRIMARY - single entry decision point - Week 2)
-  private entryOrchestrator: EntryOrchestrator | null = null;
-
-  // PHASE 4: ExitOrchestrator (PRIMARY - position exit state machine - Week 3)
-  private exitOrchestrator: ExitOrchestrator | null = null;
-
-  // PHASE 4: PositionExitingService (PRIMARY - position exit execution - Week 3)
-  private positionExitingService: PositionExitingService | null = null;
-
-  // Market structure analyzer for TrendAnalyzer dependency
-  private marketStructureAnalyzer: MarketStructureAnalyzer | null = null;
-
-  // Orderbook data (for whale detection)
-  private currentOrderbook: OrderBook | null = null;
-
-  // Week 13: MarketDataPreparationService (extracted from trading-orchestrator)
-  // Handles market data aggregation, indicator calculation, and data preparation
-  private marketDataPreparationService: any | null = null; // Will be MarketDataPreparationService
-
-  // Week 13: TradingContextService (extracted from trading-orchestrator)
-  // Handles trend analysis and signal filtering by trend alignment
-  private tradingContextService: any | null = null; // Will be TradingContextService
-
-  // Week 13: ExternalAnalysisService (extracted from trading-orchestrator)
-  // Handles BTC analysis, funding rate filtering, and flat market detection
-  private externalAnalysisService: any | null = null; // Will be ExternalAnalysisService
-
-  // Week 13: SignalProcessingService (extracted from trading-orchestrator)
-  // Handles signal collection, filtering, aggregation, and entry signal generation
-  private signalProcessingService: any | null = null; // Will be SignalProcessingService
-
-  // Week 13: TradeExecutionService (extracted from trading-orchestrator)
-  // Handles all pre-trade checks and position opening
-  private tradeExecutionService: any | null = null; // Will be TradeExecutionService
-
-  // Week 13: EntryLogicService (extracted from trading-orchestrator)
-  // Handles entire ENTRY candle scanning pipeline
-  private entryLogicService: EntryLogicService | null = null; // Will be EntryLogicService
-
-  // Week 13: WhaleSignalDetectionService (extracted from trading-orchestrator)
-  // Handles real-time whale hunter signal detection and execution
-  private whaleSignalDetectionService: any | null = null; // Will be WhaleSignalDetectionService
-
-  // Reference to analyzer registration for updating BTC candles later
-  private analyzerRegistration: AnalyzerRegistrationService | null = null;
+  // Data services
+  private marketDataPreparationService: any | null = null;
+  private tradingContextService: any | null = null;
+  private externalAnalysisService: any | null = null;
+  private signalProcessingService: any | null = null;
+  private tradeExecutionService: any | null = null;
+  private entryLogicService: EntryLogicService | null = null;
+  private whaleSignalDetectionService: any | null = null;
 
   constructor(
     private config: OrchestratorConfig,
@@ -207,37 +111,18 @@ export class TradingOrchestrator {
     private positionManager: PositionLifecycleService,
     private telegram: TelegramService | null,
     private logger: LoggerService,
-    private riskManager: RiskManager,  // PHASE 4: REQUIRED - Unified risk decision point
+    private riskManager: RiskManager,
     // Optional parameters after required ones
     retestEntryService?: RetestEntryService,
     deltaAnalyzerService?: DeltaAnalyzerService,
     orderbookImbalanceService?: OrderbookImbalanceService,
-    trendAnalyzer?: TrendAnalyzer,  // NOTE: Still accepts for override, but OrchestratorInitializationService always creates one
-    private tradingJournal?: TradingJournalService,  // For PositionExitingService (Session 68)
-    private sessionStats?: SessionStatsService,  // For PositionExitingService (Session 68)
+    private tradingJournal?: TradingJournalService,
+    private sessionStats?: SessionStatsService,
   ) {
-    // Initialize all orchestrator services via OrchestratorInitializationService
-    const initializer = new OrchestratorInitializationService(
-      config,
-      candleProvider,
-      timeframeProvider,
-      bybitService,
-      positionManager,
-      telegram,
-      logger,
-      riskManager,
-      retestEntryService,
-      deltaAnalyzerService,
-      orderbookImbalanceService,
-      trendAnalyzer,
-      this.tradingJournal,
-      this.sessionStats,
-    );
-
-    const services = initializer.initializeOrchestrator();
-
-    // Assign all initialized services to class properties
-    Object.assign(this, services);
+    // Initialize services from parameters
+    if (retestEntryService) this.retestEntryService = retestEntryService;
+    if (deltaAnalyzerService) this.deltaAnalyzerService = deltaAnalyzerService;
+    if (orderbookImbalanceService) this.orderbookImbalanceService = orderbookImbalanceService;
 
     // Initialize context on startup (async)
     void this.initializeContext();
@@ -258,10 +143,6 @@ export class TradingOrchestrator {
    * Called by BotServices after initialization
    */
   setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
-    // Link BTC candles to AnalyzerRegistrationService for BTC_CORRELATION analyzer
-    if (this.analyzerRegistration) {
-      this.analyzerRegistration.setBtcCandlesStore(store);
-    }
     // Link BTC candles to ExternalAnalysisService for BTC analysis
     if (this.externalAnalysisService) {
       (this.externalAnalysisService as any).setBtcCandlesStore(store);
@@ -320,7 +201,7 @@ export class TradingOrchestrator {
           try {
             // Gather indicators for advanced exit features (Smart Breakeven, SmartTrailingV2)
             const indicators = {
-              ema20: this.emaAnalyzer ? (await this.emaAnalyzer.calculate(TimeframeRole.PRIMARY))?.fast : undefined,
+              ema20: undefined,  // EMA calculation handled by AnalyzerRegistry
               currentVolume: candle.volume,
               avgVolume: candle.volume, // TODO: Calculate proper average from recent candles
               // ATRPercent: Will use default value if not provided (1.5%)
@@ -455,11 +336,4 @@ export class TradingOrchestrator {
   getCurrentContext(): TradingContext | null {
     return this.currentContext;
   }
-  /**
-   * Get all registered strategies
-   */
-  getStrategies(): IStrategy[] {
-    return this.strategyCoordinator.getStrategies();
-  }
-
 }

@@ -188,4 +188,11 @@ export class StrategyCoordinator {
   getEnabledAnalyzersCount(): number {
     return this.strategy.analyzers.filter((a) => a.enabled).length;
   }
+
+  /**
+   * Get minimum confidence threshold (75%)
+   */
+  getMinConfidence(): number {
+    return this.minConfidence * 100; // Return as percentage (75)
+  }
 }

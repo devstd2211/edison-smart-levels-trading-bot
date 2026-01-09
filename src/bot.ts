@@ -33,7 +33,6 @@ export class TradingBot {
   private readonly bybitService: any;
   private readonly candleProvider: any;
   private readonly timeframeProvider: any;
-  private readonly structureAnalyzer: any;
   private readonly tradingOrchestrator: any;
   private readonly positionManager: any;
   private readonly webSocketManager: any;
@@ -80,7 +79,6 @@ export class TradingBot {
     this.bybitService = services.bybitService;
     this.candleProvider = services.candleProvider;
     this.timeframeProvider = services.timeframeProvider;
-    this.structureAnalyzer = services.structureAnalyzer;
     this.tradingOrchestrator = services.tradingOrchestrator;
     this.positionManager = services.positionManager;
     this.webSocketManager = services.webSocketManager;

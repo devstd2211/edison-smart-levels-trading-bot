@@ -2307,77 +2307,21 @@ export {
   TimeDecayAdjustment,
 } from './services/enhanced-exit.service';
 export {
-  MTFTPValidatorService,
-  MTFTPConfig,
-  MTFTPValidationResult,
-} from './services/mtf-tp-validator.service';
-export {
   WhaleWallTPService,
   WhaleWallTPConfig,
   WhaleWallTPResult,
 } from './services/whale-wall-tp.service';
 
 // ============================================================================
-// INDICATOR EXPORTS
+// LEGACY EXPORTS REMOVED
 // ============================================================================
-
-export { RSIIndicator } from './indicators/rsi.indicator';
-export { EMAIndicator } from './indicators/ema.indicator';
-export { ATRIndicator } from './indicators/atr.indicator';
-export { ZigZagNRIndicator } from './indicators/zigzag-nr.indicator';
-export { StochasticIndicator } from './indicators/stochastic.indicator';
-export { BollingerBandsIndicator } from './indicators/bollinger.indicator';
-export { VWAPIndicator } from './indicators/vwap.indicator';
-export { FootprintIndicator } from './indicators/footprint.indicator';
-export { OrderBlockDetector } from './indicators/order-block.detector';
-export { FairValueGapDetector } from './indicators/fair-value-gap.detector';
-
-// ============================================================================
-// ANALYZER EXPORTS
-// ============================================================================
-
-export { OrderBookAnalyzer } from './analyzers/orderbook.analyzer';
-export { MarketStructureAnalyzer } from './analyzers/market-structure.analyzer';
-// Async/Complex analyzers - only if no circular deps
-export { LiquidityDetector } from './analyzers/liquidity.detector';
-export { DivergenceDetector } from './analyzers/divergence.detector';
-export { BreakoutPredictor } from './analyzers/breakout-predictor';
-export { FlatMarketDetector } from './analyzers/flat-market.detector';
-export { BTCAnalyzer } from './analyzers/btc.analyzer';
-export { VolumeCalculator } from './analyzers/volume.calculator';
-export { WickAnalyzer } from './analyzers/wick.analyzer';
-export { VolumeAnalyzer } from './analyzers/volume.analyzer';
-export { PriceMomentumAnalyzer } from './analyzers/price-momentum.analyzer';
-export { DailyLevelTracker } from './analyzers/daily-level.tracker';
-export { BreakoutDetector } from './analyzers/breakout.detector';
-export { RetestPhaseAnalyzer } from './analyzers/retest-phase.analyzer';
-export { EntryRefinementAnalyzer } from './analyzers/entry-refinement.analyzer';
-export { TrendAnalyzer } from './analyzers/trend-analyzer';
-export { LevelAnalyzer, LevelAnalyzerConfig, Level, LevelAnalysisResult } from './analyzers/level.analyzer';
-export { VolumeProfileAnalyzer, PriceLevel } from './analyzers/volume-profile.analyzer';
-export type { VolumeProfileConfig as VPConfig, VolumeProfileResult as VPResult } from './analyzers/volume-profile.analyzer';
-
-// ============================================================================
-// STRATEGY EXPORTS
-// ============================================================================
-
-export { LevelBasedStrategy } from './strategies/level-based.strategy';
-export { WhaleHunterStrategy } from './strategies/whale-hunter.strategy';
-export { WhaleHunterFollowStrategy } from './strategies/whale-hunter-follow.strategy';
-export { ScalpingMicroWallStrategy } from './strategies/scalping-micro-wall.strategy';
-export { ScalpingLimitOrderStrategy } from './strategies/scalping-limit-order.strategy';
-export { ScalpingLadderTpStrategy } from './strategies/scalping-ladder-tp.strategy';
-export { ScalpingTickDeltaStrategy } from './strategies/scalping-tick-delta.strategy';
-export { ScalpingOrderFlowStrategy } from './strategies/scalping-order-flow.strategy';
-export { FractalBreakoutRetestStrategy } from './strategies/fractal-breakout-retest.strategy';
-
-// ============================================================================
-// ADDITIONAL ANALYZER EXPORTS
-// ============================================================================
-
-export { DivergenceType } from './analyzers/divergence.detector';
-export { WickDirection } from './analyzers/wick.analyzer';
-export { PatternAnalyzerHelper } from './analyzers/pattern-analyzer.helper';
+// Old indicators, analyzers, and strategies have been removed
+// New architecture uses:
+// - JSON-based strategies (src/strategies/json/*.strategy.json)
+// - Strategy-driven analyzer loading (StrategyManagerService)
+// - NEW analyzer versions (src/analyzers/*.analyzer-new.ts)
+// - NEW indicator versions (src/indicators/*.indicator-new.ts)
+// See MIGRATION_PLAN.md and CLEANUP_PLAN.md for details
 
 // ============================================================================
 // EVENT TYPES EXPORTS

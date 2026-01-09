@@ -271,22 +271,8 @@ export class WebSocketEventHandlerManager {
         });
       }
 
-      // Feed ticks to ScalpingTickDelta strategy (if registered)
-      const strategies = this.services.tradingOrchestrator.getStrategies();
-      const tickDeltaStrategy = strategies.find((s: any) => s.name === 'ScalpingTickDelta');
-      if (
-        tickDeltaStrategy &&
-        'feedTicks' in tickDeltaStrategy &&
-        typeof tickDeltaStrategy.feedTicks === 'function'
-      ) {
-        const tick = {
-          timestamp: trade.timestamp,
-          price: trade.price,
-          size: trade.quantity,
-          side: trade.side as 'BUY' | 'SELL',
-        };
-        tickDeltaStrategy.feedTicks([tick]);
-      }
+      // REMOVED: Legacy strategy-based tick feeding
+      // New architecture uses JSON-based strategies loaded at startup
     } catch (error) {
       this.logger.error('Error handling trade update', {
         error,

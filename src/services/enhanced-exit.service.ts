@@ -20,9 +20,14 @@ import {
   SwingPointType,
   LiquidityZone,
 } from '../types';
-import { Level } from '../analyzers/level.analyzer';
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
+
+// Local Level type definition
+interface Level {
+  price: number;
+  strength: number;
+}
 
 // ============================================================================
 // CONFIGURATION TYPES
