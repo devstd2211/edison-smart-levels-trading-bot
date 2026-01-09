@@ -46,6 +46,11 @@ export class StrategyConfigMergerService {
       );
     }
 
+    // 4. Add analyzers from strategy
+    if (strategy.analyzers) {
+      (merged as any).analyzers = strategy.analyzers;
+    }
+
     return merged;
   }
 
