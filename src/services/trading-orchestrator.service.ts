@@ -209,7 +209,46 @@ export class TradingOrchestrator {
         }
       }
 
-      // ENTRY closed → Entry scanning is handled by bot
+      // ENTRY closed → Run entry signal analysis
+      if (role === TimeframeRole.ENTRY) {
+        this.logger.info('🕯️ ENTRY candle closed - analyzing entry signals');
+
+        try {
+          // Get ENTRY candles for analysis
+          const entryCandles = await this.candleProvider.getCandles(TimeframeRole.ENTRY, 100);
+          if (!entryCandles || entryCandles.length < 20) {
+            this.logger.debug('Not enough candles for entry analysis', {
+              available: entryCandles?.length || 0,
+            });
+            return;
+          }
+
+          // Run strategy (black box - analyze all configured analyzers)
+          const signals = await this.runStrategyAnalysis(entryCandles);
+
+          if (signals && signals.length > 0) {
+            this.logger.info(`📊 Entry signals generated: ${signals.length}`, {
+              signals: signals
+                .map((s) => `${s.source}(${s.direction}:${(s.confidence * 100).toFixed(0)}%)`)
+                .join(', '),
+            });
+
+            // TODO: Pass signals to EntryOrchestrator for decision
+            // const decision = await this.entryOrchestrator.evaluateEntry(
+            //   signals as any,
+            //   balance,
+            //   positions,
+            //   trendBias
+            // );
+          } else {
+            this.logger.debug('No entry signals generated');
+          }
+        } catch (entryError) {
+          this.logger.error('Error analyzing entry signals', {
+            error: entryError instanceof Error ? entryError.message : String(entryError),
+          });
+        }
+      }
     } catch (error) {
       this.logger.error('Error in orchestrator onCandleClosed', {
         role,
@@ -217,6 +256,126 @@ export class TradingOrchestrator {
       });
     }
   }
+
+  /**
+   * Run strategy analysis (black box pattern)
+   * Takes ENTRY candles and returns signals from enabled analyzers
+   */
+  private async runStrategyAnalysis(entryCandles: Candle[]): Promise<any[]> {
+    const signals: any[] = [];
+    const analyzerConfigs = (this.config as any).analyzers as any[] | undefined;
+
+    if (!analyzerConfigs || analyzerConfigs.length === 0) {
+      this.logger.debug('No analyzers configured in strategy');
+      return signals;
+    }
+
+    // Map analyzer names to classes - lazy load on demand
+    const analyzerClassMap: Record<string, any> = {
+      EMA_ANALYZER_NEW: () => import('../analyzers/ema.analyzer-new').then(m => m.EmaAnalyzerNew),
+      RSI_ANALYZER_NEW: () => import('../analyzers/rsi.analyzer-new').then(m => m.RsiAnalyzerNew),
+      ATR_ANALYZER_NEW: () => import('../analyzers/atr.analyzer-new').then(m => m.AtrAnalyzerNew),
+      VOLUME_ANALYZER_NEW: () => import('../analyzers/volume.analyzer-new').then(m => m.VolumeAnalyzerNew),
+      STOCHASTIC_ANALYZER_NEW: () => import('../analyzers/stochastic.analyzer-new').then(m => m.StochasticAnalyzerNew),
+      BOLLINGER_BANDS_ANALYZER_NEW: () => import('../analyzers/bollinger-bands.analyzer-new').then(m => m.BollingerBandsAnalyzerNew),
+      LEVEL_ANALYZER_NEW: () => import('../analyzers/level.analyzer-new').then(m => m.LevelAnalyzerNew),
+      BREAKOUT_ANALYZER_NEW: () => import('../analyzers/breakout.analyzer-new').then(m => m.BreakoutAnalyzerNew),
+      TREND_DETECTOR_ANALYZER_NEW: () => import('../analyzers/trend-detector.analyzer-new').then(m => m.TrendDetectorAnalyzerNew),
+      WICK_ANALYZER_NEW: () => import('../analyzers/wick.analyzer-new').then(m => m.WickAnalyzerNew),
+      DIVERGENCE_ANALYZER_NEW: () => import('../analyzers/divergence.analyzer-new').then(m => m.DivergenceAnalyzerNew),
+      PRICE_MOMENTUM_ANALYZER_NEW: () => import('../analyzers/price-momentum.analyzer-new').then(m => m.PriceMomentumAnalyzerNew),
+      SWING_ANALYZER_NEW: () => import('../analyzers/swing.analyzer-new').then(m => m.SwingAnalyzerNew),
+      CHOCH_BOS_ANALYZER_NEW: () => import('../analyzers/choch-bos.analyzer-new').then(m => m.ChochBosAnalyzerNew),
+      LIQUIDITY_SWEEP_ANALYZER_NEW: () => import('../analyzers/liquidity-sweep.analyzer-new').then(m => m.LiquiditySweepAnalyzerNew),
+      LIQUIDITY_ZONE_ANALYZER_NEW: () => import('../analyzers/liquidity-zone.analyzer-new').then(m => m.LiquidityZoneAnalyzerNew),
+      ORDER_BLOCK_ANALYZER_NEW: () => import('../analyzers/order-block.analyzer-new').then(m => m.OrderBlockAnalyzerNew),
+      FAIR_VALUE_GAP_ANALYZER_NEW: () => import('../analyzers/fair-value-gap.analyzer-new').then(m => m.FairValueGapAnalyzerNew),
+      VOLUME_PROFILE_ANALYZER_NEW: () => import('../analyzers/volume-profile.analyzer-new').then(m => m.VolumeProfileAnalyzerNew),
+      ORDER_FLOW_ANALYZER_NEW: () => import('../analyzers/order-flow.analyzer-new').then(m => m.OrderFlowAnalyzerNew),
+      FOOTPRINT_ANALYZER_NEW: () => import('../analyzers/footprint.analyzer-new').then(m => m.FootprintAnalyzerNew),
+      WHALE_ANALYZER_NEW: () => import('../analyzers/whale.analyzer-new').then(m => m.WhaleAnalyzerNew),
+      MICRO_WALL_ANALYZER_NEW: () => import('../analyzers/micro-wall.analyzer-new').then(m => m.MicroWallAnalyzerNew),
+      DELTA_ANALYZER_NEW: () => import('../analyzers/delta.analyzer-new').then(m => m.DeltaAnalyzerNew),
+      TICK_DELTA_ANALYZER_NEW: () => import('../analyzers/tick-delta.analyzer-new').then(m => m.TickDeltaAnalyzerNew),
+      PRICE_ACTION_ANALYZER_NEW: () => import('../analyzers/price-action.analyzer-new').then(m => m.PriceActionAnalyzerNew),
+      TREND_CONFLICT_ANALYZER_NEW: () => import('../analyzers/trend-conflict.analyzer-new').then(m => m.TrendConflictAnalyzerNew),
+      VOLATILITY_SPIKE_ANALYZER_NEW: () => import('../analyzers/volatility-spike.analyzer-new').then(m => m.VolatilitySpikeAnalyzerNew),
+    };
+
+    // Run each enabled analyzer
+    for (const analyzerCfg of analyzerConfigs) {
+      if (!analyzerCfg.enabled) continue;
+
+      try {
+        const AnalyzerClass = analyzerClassMap[analyzerCfg.name];
+        if (!AnalyzerClass) {
+          this.logger.debug(`Analyzer class not found: ${analyzerCfg.name}`);
+          continue;
+        }
+
+        const Clazz = await AnalyzerClass();
+
+        // Build analyzer-specific config from strategy and indicator configs
+        const analyzerConfig = this.buildAnalyzerConfig(analyzerCfg);
+        const instance = new Clazz(analyzerConfig, this.logger);
+        const signal = await instance.analyze(entryCandles);
+
+        if (signal && signal.direction !== 'HOLD') {
+          signals.push({
+            ...signal,
+            weight: analyzerCfg.weight,
+            priority: analyzerCfg.priority,
+          });
+        }
+      } catch (analyzerError) {
+        this.logger.debug(`Error running analyzer ${analyzerCfg.name}`, {
+          error: analyzerError instanceof Error ? analyzerError.message : String(analyzerError),
+        });
+      }
+    }
+
+    return signals;
+  }
+
+  /**
+   * Build analyzer config from strategy and indicator configs
+   */
+  private buildAnalyzerConfig(analyzerCfg: any): any {
+    const baseConfig = (this.config as any).indicators || {};
+
+    // Common analyzer config structure
+    const config: any = {
+      enabled: analyzerCfg.enabled,
+      weight: analyzerCfg.weight,
+      priority: analyzerCfg.priority,
+      minConfidence: analyzerCfg.minConfidence ?? 0.5,
+      maxConfidence: analyzerCfg.maxConfidence ?? 1.0,
+    };
+
+    // Map analyzer names to their indicator configs
+    const analyzerToIndicator: Record<string, string> = {
+      EMA_ANALYZER_NEW: 'ema',
+      RSI_ANALYZER_NEW: 'rsi',
+      ATR_ANALYZER_NEW: 'atr',
+      VOLUME_ANALYZER_NEW: 'volume',
+      STOCHASTIC_ANALYZER_NEW: 'stochastic',
+      BOLLINGER_BANDS_ANALYZER_NEW: 'bollingerBands',
+    };
+
+    // Merge indicator config if available
+    const indicatorKey = analyzerToIndicator[analyzerCfg.name];
+    if (indicatorKey && baseConfig[indicatorKey]) {
+      Object.assign(config, baseConfig[indicatorKey]);
+    }
+
+    // Add analyzer-specific params from strategy
+    if (analyzerCfg.params) {
+      Object.assign(config, analyzerCfg.params);
+    }
+
+    return config;
+  }
+
   /**
    * Sync time with Bybit exchange
    * CRITICAL: Prevents timestamp errors when opening positions

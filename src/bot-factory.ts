@@ -61,9 +61,11 @@ export class BotFactory {
           `✅ Strategy merged | ${changeReport.changesCount} config overrides applied`,
         );
 
-        // Log loaded analyzers
+        // Log loaded analyzers with visual separators
         if (strategy.analyzers && strategy.analyzers.length > 0) {
-          console.log(`📊 Strategy Analyzers (${strategy.analyzers.length} total):`);
+          console.log('\n' + '═'.repeat(80));
+          console.log(`📊 STRATEGY ANALYZERS (${strategy.analyzers.length} total):`);
+          console.log('═'.repeat(80));
           const enabledAnalyzers = strategy.analyzers.filter((a) => a.enabled);
           console.log(
             `   ✅ Enabled: ${enabledAnalyzers.length} | ❌ Disabled: ${strategy.analyzers.length - enabledAnalyzers.length}`,
@@ -80,10 +82,11 @@ export class BotFactory {
             {} as Record<string, string[]>,
           );
 
+          console.log('\n   Weight Distribution:');
           Object.entries(byWeight)
             .sort(([w1], [w2]) => parseFloat(w2) - parseFloat(w1))
             .forEach(([weight, names]) => {
-              console.log(`   ${weight}: ${names.length} analyzers`);
+              console.log(`     ${weight}: ${names.length} analyzers`);
             });
 
           // Log top 5 by weight
@@ -91,27 +94,35 @@ export class BotFactory {
             .sort((a, b) => (b.weight || 0) - (a.weight || 0))
             .slice(0, 5);
           if (topAnalyzers.length > 0) {
-            console.log(`   Top 5:`);
+            console.log('\n   Top 5 Analyzers by Weight:');
             topAnalyzers.forEach((a) => {
-              console.log(`     ${a.name}: ${(a.weight * 100).toFixed(2)}% weight, priority=${a.priority}`);
+              console.log(
+                `     🔹 ${a.name}: ${(a.weight * 100).toFixed(2)}% weight (priority=${a.priority})`,
+              );
             });
           }
+          console.log('═'.repeat(80) + '\n');
         }
 
-        // Log indicator overrides
+        // Log indicator overrides with visual separator
         if (strategy.indicators) {
+          console.log('═'.repeat(80));
           console.log(
-            `📈 Indicator Overrides: ${Object.keys(strategy.indicators).length} indicators`,
+            `📈 INDICATORS CONFIGURED (${Object.keys(strategy.indicators).length} total):`,
           );
+          console.log('═'.repeat(80));
           Object.entries(strategy.indicators).forEach(([name, config]) => {
             const cfg = config as any;
             const details: string[] = [];
             if (cfg.period) details.push(`period=${cfg.period}`);
-            if (cfg.fastPeriod) details.push(`fast=${cfg.fastPeriod}, slow=${cfg.slowPeriod}`);
+            if (cfg.fastPeriod)
+              details.push(`fast=${cfg.fastPeriod}, slow=${cfg.slowPeriod}`);
             if (cfg.kPeriod) details.push(`k=${cfg.kPeriod}, d=${cfg.dPeriod}`);
             if (cfg.stdDev) details.push(`stdDev=${cfg.stdDev}`);
-            console.log(`   ${name}: ${details.join(', ')}`);
+            const detailsStr = details.length > 0 ? ` → ${details.join(', ')}` : '';
+            console.log(`   🔹 ${name}${detailsStr}`);
           });
+          console.log('═'.repeat(80) + '\n');
         }
       } catch (error) {
         console.error('❌ Failed to load strategy:', error);
