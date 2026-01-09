@@ -5,8 +5,7 @@
  * Responsibilities:
  * 1. Load strategy from JSON at startup
  * 2. Merge strategy overrides with main config
- * 3. Provide strategy to AnalyzerRegistry (for lazy loading)
- * 4. Provide strategy to StrategyCoordinator (for weights)
+ * 3. Provide strategy to services (weights, analyzer selection)
  *
  * Bot integration point:
  * - Load strategy once at startup
@@ -96,7 +95,6 @@ export class StrategyManagerService {
 
   /**
    * Get list of enabled analyzers in strategy
-   * Used by AnalyzerRegistry
    */
   getEnabledAnalyzers(): string[] {
     return this.getStrategy().analyzers

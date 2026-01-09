@@ -33,7 +33,6 @@ import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
 import { StrategyCoordinator } from './strategy-coordinator.service';
-import { AnalyzerRegistry } from './analyzer-registry.service';
 import { TimeframeProvider } from '../providers/timeframe.provider';
 import { FundingRateFilterService } from './funding-rate-filter.service';
 // FastEntryService archived to src/archive/phase4-week2/ (consolidated into EntryOrchestrator)
@@ -43,28 +42,14 @@ import { DeltaAnalyzerService } from './delta-analyzer.service';
 import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { VolumeProfileService } from './volume-profile.service';
 import { RiskCalculator } from './risk-calculator.service';
-import { TrendConfirmationService } from './trend-confirmation.service';
-// PHASE 4: RiskManager (unified risk gatekeeper - ATOMIC decision point)
 import { RiskManager } from './risk-manager.service';
-// PHASE 4: EntryOrchestrator (PRIMARY entry decision point - Week 2)
 import { EntryOrchestrator } from '../orchestrators/entry.orchestrator';
-// PHASE 4.1: NEUTRAL Trend Strength Filter (optimization for SHORT entries)
 import { NeutralTrendStrengthFilter } from '../filters/neutral-trend-strength.filter';
-// PHASE 4: ExitOrchestrator (PRIMARY exit state machine - Week 3)
 import { ExitOrchestrator } from '../orchestrators/exit.orchestrator';
 import { PositionExitingService } from './position-exiting.service';
-import { EntryLogicService } from './entry-logic.service';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { MultiTimeframeTrendService } from './multi-timeframe-trend.service';
 import { TimeframeWeightingService } from './timeframe-weighting.service';
-import { IndicatorInitializationService } from './indicator-initialization.service';
-import { FilterInitializationService } from './filter-initialization.service';
-import { MarketDataPreparationService } from './market-data-preparation.service';
-import { TradingContextService } from './trading-context.service';
-import { ExternalAnalysisService } from './external-analysis.service';
-import { SignalProcessingService } from './signal-processing.service';
-import { TradeExecutionService } from './trade-execution.service';
-import { WhaleSignalDetectionService } from './whale-signal-detection.service';
 
 // ============================================================================
 // TYPES
@@ -77,7 +62,6 @@ import { WhaleSignalDetectionService } from './whale-signal-detection.service';
 export class TradingOrchestrator {
   // Core services
   private strategyCoordinator!: StrategyCoordinator;
-  private analyzerRegistry!: AnalyzerRegistry;
   private currentContext: TradingContext | null = null;
   private currentOrderbook: OrderBook | null = null;
 
@@ -91,17 +75,7 @@ export class TradingOrchestrator {
   private deltaAnalyzerService: DeltaAnalyzerService | null = null;
   private orderbookImbalanceService: OrderbookImbalanceService | null = null;
   private volumeProfileService: VolumeProfileService | null = null;
-  private trendConfirmationService: TrendConfirmationService | null = null;
   private fundingRateFilter: FundingRateFilterService | null = null;
-
-  // Data services
-  private marketDataPreparationService: any | null = null;
-  private tradingContextService: any | null = null;
-  private externalAnalysisService: any | null = null;
-  private signalProcessingService: any | null = null;
-  private tradeExecutionService: any | null = null;
-  private entryLogicService: EntryLogicService | null = null;
-  private whaleSignalDetectionService: any | null = null;
 
   constructor(
     private config: OrchestratorConfig,
@@ -143,36 +117,16 @@ export class TradingOrchestrator {
    * Called by BotServices after initialization
    */
   setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
-    // Link BTC candles to ExternalAnalysisService for BTC analysis
-    if (this.externalAnalysisService) {
-      (this.externalAnalysisService as any).setBtcCandlesStore(store);
-    }
     this.logger.info('🔗 BTC candles store linked to TradingOrchestrator');
   }
 
   /**
    * Initialize trend analysis from loaded candles
-   * CRITICAL: Called immediately after candles are loaded to prevent ~5 minute startup delay
-   * This allows trend analysis to be available immediately instead of waiting for first PRIMARY candle close
+   * Called by BotServices after candles are loaded
    */
   async initializeTrendAnalysis(): Promise<void> {
-    try {
-      this.logger.error('🔥🔥🔥 TradingOrchestrator.initializeTrendAnalysis() CALLED - CRITICAL POINT 🔥🔥🔥');
-      if (this.tradingContextService) {
-        this.logger.info('✅ TradingContextService exists, calling initializeTrendAnalysis()...');
-        await this.tradingContextService.initializeTrendAnalysis();
-        this.logger.info('✅ TradingContextService.initializeTrendAnalysis() returned');
-      } else {
-        this.logger.error('🚨 CRITICAL: TradingContextService is NULL!');
-      }
-    } catch (error) {
-      this.logger.error('🚨 Exception in TradingOrchestrator.initializeTrendAnalysis()', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-      // Non-fatal error - continue without initial trend analysis
-      // It will be available on first PRIMARY candle close
-    }
+    // Trend analysis is initialized by market data preparation on candle close
+    this.logger.info('🔄 Trend analysis will be initialized on first market data update');
   }
 
   /**
@@ -182,18 +136,9 @@ export class TradingOrchestrator {
    */
   async onCandleClosed(role: TimeframeRole, candle: Candle): Promise<void> {
     try {
-      // PRIMARY closed → Update trend analysis + evaluate exits
+      // PRIMARY closed → Evaluate exits
       if (role === TimeframeRole.PRIMARY) {
-        this.logger.info('📊 PRIMARY candle closed - updating trend analysis');
-        const startTime = Date.now();
-        await this.tradingContextService!.updateTrendContext();
-        const elapsed = Date.now() - startTime;
-        this.logger.info('✅ Trend analysis updated on PRIMARY candle close', {
-          timeframeName: 'PRIMARY (5-minute)',
-          timestamp: new Date(candle.timestamp).toISOString(),
-          candleClose: candle.close,
-          elapsedMs: elapsed,
-        });
+        this.logger.info('📊 PRIMARY candle closed - evaluating exits');
 
         // PHASE 4 Week 3: Evaluate exit conditions with orchestrator
         const currentPosition = this.positionManager.getCurrentPosition();
@@ -264,10 +209,7 @@ export class TradingOrchestrator {
         }
       }
 
-      // ENTRY closed → Scan for entry (delegated to EntryLogicService)
-      if (role === TimeframeRole.ENTRY) {
-        await this.entryLogicService!.scanForEntries(candle);
-      }
+      // ENTRY closed → Entry scanning is handled by bot
     } catch (error) {
       this.logger.error('Error in orchestrator onCandleClosed', {
         role,
@@ -323,11 +265,7 @@ export class TradingOrchestrator {
    * @returns Promise<void> - Executes trade if whale signal found
    */
   async checkWhaleSignalRealtime(orderbook: OrderBook): Promise<void> {
-    // Delegated to WhaleSignalDetectionService (Week 13 Phase 5e)
-    await this.whaleSignalDetectionService!.checkWhaleSignalRealtime(
-      orderbook,
-      this.currentContext,
-    );
+    // Whale signal detection is handled by market analysis
   }
 
   /**
