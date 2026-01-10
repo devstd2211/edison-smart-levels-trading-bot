@@ -30,22 +30,11 @@ import { CandleProvider } from '../providers/candle.provider';
 import { BybitService } from './bybit';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { TelegramService } from './telegram.service';
-import { TradingJournalService } from './trading-journal.service';
-import { SessionStatsService } from './session-stats.service';
-import { StrategyCoordinator } from './strategy-coordinator.service';
 import { TimeframeProvider } from '../providers/timeframe.provider';
-import { FundingRateFilterService } from './funding-rate-filter.service';
-// FastEntryService archived to src/archive/phase4-week2/ (consolidated into EntryOrchestrator)
-// SmartBreakevenService archived to src/archive/phase4-week3/ (consolidated into ExitOrchestrator)
-import { RetestEntryService } from './retest-entry.service';
-import { DeltaAnalyzerService } from './delta-analyzer.service';
-import { OrderbookImbalanceService } from './orderbook-imbalance.service';
-import { VolumeProfileService } from './volume-profile.service';
-import { RiskCalculator } from './risk-calculator.service';
 import { RiskManager } from './risk-manager.service';
-import { EntryOrchestrator } from '../orchestrators/entry.orchestrator';
 import { NeutralTrendStrengthFilter } from '../filters/neutral-trend-strength.filter';
 import { ExitOrchestrator } from '../orchestrators/exit.orchestrator';
+import { EntryOrchestrator } from '../orchestrators/entry.orchestrator';
 import { PositionExitingService } from './position-exiting.service';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { MultiTimeframeTrendService } from './multi-timeframe-trend.service';
@@ -63,7 +52,6 @@ import { FilterOrchestrator } from '../orchestrators/filter.orchestrator';
 
 export class TradingOrchestrator {
   // Core services
-  private strategyCoordinator!: StrategyCoordinator;
   private analyzerRegistry: AnalyzerRegistryService | null = null;
   private filterOrchestrator: FilterOrchestrator | null = null;
   private currentContext: TradingContext | null = null;
@@ -74,12 +62,6 @@ export class TradingOrchestrator {
   private exitOrchestrator: ExitOrchestrator | null = null;
   private positionExitingService: PositionExitingService | null = null;
 
-  // Services
-  private retestEntryService: RetestEntryService | null = null;
-  private deltaAnalyzerService: DeltaAnalyzerService | null = null;
-  private orderbookImbalanceService: OrderbookImbalanceService | null = null;
-  private volumeProfileService: VolumeProfileService | null = null;
-  private fundingRateFilter: FundingRateFilterService | null = null;
 
   constructor(
     private config: OrchestratorConfig,
@@ -90,22 +72,20 @@ export class TradingOrchestrator {
     private telegram: TelegramService | null,
     private logger: LoggerService,
     private riskManager: RiskManager,
-    // Optional parameters after required ones
-    retestEntryService?: RetestEntryService,
-    deltaAnalyzerService?: DeltaAnalyzerService,
-    orderbookImbalanceService?: OrderbookImbalanceService,
-    private tradingJournal?: TradingJournalService,
-    private sessionStats?: SessionStatsService,
   ) {
-    // Initialize services from parameters
-    if (retestEntryService) this.retestEntryService = retestEntryService;
-    if (deltaAnalyzerService) this.deltaAnalyzerService = deltaAnalyzerService;
-    if (orderbookImbalanceService) this.orderbookImbalanceService = orderbookImbalanceService;
 
     // Initialize new black-box services
     this.analyzerRegistry = new AnalyzerRegistryService(this.logger);
     const filterConfig = (this.config as any).filters || {};
     this.filterOrchestrator = new FilterOrchestrator(this.logger, filterConfig);
+
+    // Initialize EntryOrchestrator with FilterOrchestrator
+    this.entryOrchestrator = new EntryOrchestrator(
+      riskManager,
+      this.logger,
+      undefined, // NeutralTrendFilter not passed yet
+      this.filterOrchestrator,
+    );
 
     // Initialize context on startup (async)
     void this.initializeContext();
@@ -242,8 +222,31 @@ export class TradingOrchestrator {
                 .join(', '),
             });
 
-            // TODO: Aggregate signals in EntryOrchestrator when position/balance context available
-            // For now, signals are collected and ready for downstream entry decision logic
+            // Evaluate signals with EntryOrchestrator
+            if (this.entryOrchestrator) {
+              const currentPosition = this.positionManager.getCurrentPosition();
+              const currentBalance = 100; // TODO: Get actual account balance
+              const openPositions = currentPosition ? [currentPosition] : [];
+
+              try {
+                const entryDecision = await this.entryOrchestrator.evaluateEntry(
+                  signals,
+                  currentBalance,
+                  openPositions,
+                  { bias: 'UPTREND', strength: 0.5 } as any, // TODO: Get actual trend from context
+                );
+
+                this.logger.info('📋 EntryOrchestrator decision', {
+                  decision: entryDecision.decision,
+                  reason: entryDecision.reason,
+                  signal: entryDecision.signal?.type,
+                });
+              } catch (orchestratorError) {
+                this.logger.error('Error in EntryOrchestrator.evaluateEntry', {
+                  error: orchestratorError instanceof Error ? orchestratorError.message : String(orchestratorError),
+                });
+              }
+            }
           } else {
             this.logger.debug('No entry signals generated');
           }
