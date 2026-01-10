@@ -229,17 +229,12 @@ export class TradingOrchestrator {
           if (signals && signals.length > 0) {
             this.logger.info(`📊 Entry signals generated: ${signals.length}`, {
               signals: signals
-                .map((s) => `${s.source}(${s.direction}:${(s.confidence * 100).toFixed(0)}%)`)
+                .map((s) => `${s.source}(${s.direction}:${s.confidence.toFixed(0)}%)`)
                 .join(', '),
             });
 
-            // TODO: Pass signals to EntryOrchestrator for decision
-            // const decision = await this.entryOrchestrator.evaluateEntry(
-            //   signals as any,
-            //   balance,
-            //   positions,
-            //   trendBias
-            // );
+            // TODO: Aggregate signals in EntryOrchestrator when position/balance context available
+            // For now, signals are collected and ready for downstream entry decision logic
           } else {
             this.logger.debug('No entry signals generated');
           }
@@ -333,13 +328,6 @@ export class TradingOrchestrator {
         });
       }
     }
-
-    // Normalize confidence from 0-100 scale (from analyzers) to 0-1 scale (for internal use)
-    signals.forEach(s => {
-      s.confidence = s.confidence / 100;
-      // Recalculate score based on normalized confidence
-      s.score = s.confidence * s.weight;
-    });
 
     return signals;
   }
