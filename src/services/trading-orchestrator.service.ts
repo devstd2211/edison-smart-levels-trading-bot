@@ -50,6 +50,8 @@ import { PositionExitingService } from './position-exiting.service';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { MultiTimeframeTrendService } from './multi-timeframe-trend.service';
 import { TimeframeWeightingService } from './timeframe-weighting.service';
+import { AnalyzerRegistryService } from './analyzer-registry.service';
+import { FilterOrchestrator } from '../orchestrators/filter.orchestrator';
 
 // ============================================================================
 // TYPES
@@ -62,6 +64,8 @@ import { TimeframeWeightingService } from './timeframe-weighting.service';
 export class TradingOrchestrator {
   // Core services
   private strategyCoordinator!: StrategyCoordinator;
+  private analyzerRegistry: AnalyzerRegistryService | null = null;
+  private filterOrchestrator: FilterOrchestrator | null = null;
   private currentContext: TradingContext | null = null;
   private currentOrderbook: OrderBook | null = null;
 
@@ -97,6 +101,11 @@ export class TradingOrchestrator {
     if (retestEntryService) this.retestEntryService = retestEntryService;
     if (deltaAnalyzerService) this.deltaAnalyzerService = deltaAnalyzerService;
     if (orderbookImbalanceService) this.orderbookImbalanceService = orderbookImbalanceService;
+
+    // Initialize new black-box services
+    this.analyzerRegistry = new AnalyzerRegistryService(this.logger);
+    const filterConfig = (this.config as any).filters || {};
+    this.filterOrchestrator = new FilterOrchestrator(this.logger, filterConfig);
 
     // Initialize context on startup (async)
     void this.initializeContext();
@@ -254,7 +263,7 @@ export class TradingOrchestrator {
 
   /**
    * Run strategy analysis (black box pattern)
-   * Takes ENTRY candles and returns signals from enabled analyzers
+   * Uses AnalyzerRegistry to dynamically load and run enabled analyzers
    */
   private async runStrategyAnalysis(entryCandles: Candle[]): Promise<any[]> {
     const signals: any[] = [];
@@ -265,54 +274,23 @@ export class TradingOrchestrator {
       return signals;
     }
 
-    // Map analyzer names to classes - lazy load on demand
-    const analyzerClassMap: Record<string, any> = {
-      EMA_ANALYZER_NEW: () => import('../analyzers/ema.analyzer-new').then(m => m.EmaAnalyzerNew),
-      RSI_ANALYZER_NEW: () => import('../analyzers/rsi.analyzer-new').then(m => m.RsiAnalyzerNew),
-      ATR_ANALYZER_NEW: () => import('../analyzers/atr.analyzer-new').then(m => m.AtrAnalyzerNew),
-      VOLUME_ANALYZER_NEW: () => import('../analyzers/volume.analyzer-new').then(m => m.VolumeAnalyzerNew),
-      STOCHASTIC_ANALYZER_NEW: () => import('../analyzers/stochastic.analyzer-new').then(m => m.StochasticAnalyzerNew),
-      BOLLINGER_BANDS_ANALYZER_NEW: () => import('../analyzers/bollinger-bands.analyzer-new').then(m => m.BollingerBandsAnalyzerNew),
-      LEVEL_ANALYZER_NEW: () => import('../analyzers/level.analyzer-new').then(m => m.LevelAnalyzerNew),
-      BREAKOUT_ANALYZER_NEW: () => import('../analyzers/breakout.analyzer-new').then(m => m.BreakoutAnalyzerNew),
-      TREND_DETECTOR_ANALYZER_NEW: () => import('../analyzers/trend-detector.analyzer-new').then(m => m.TrendDetectorAnalyzerNew),
-      WICK_ANALYZER_NEW: () => import('../analyzers/wick.analyzer-new').then(m => m.WickAnalyzerNew),
-      DIVERGENCE_ANALYZER_NEW: () => import('../analyzers/divergence.analyzer-new').then(m => m.DivergenceAnalyzerNew),
-      PRICE_MOMENTUM_ANALYZER_NEW: () => import('../analyzers/price-momentum.analyzer-new').then(m => m.PriceMomentumAnalyzerNew),
-      SWING_ANALYZER_NEW: () => import('../analyzers/swing.analyzer-new').then(m => m.SwingAnalyzerNew),
-      CHOCH_BOS_ANALYZER_NEW: () => import('../analyzers/choch-bos.analyzer-new').then(m => m.ChochBosAnalyzerNew),
-      LIQUIDITY_SWEEP_ANALYZER_NEW: () => import('../analyzers/liquidity-sweep.analyzer-new').then(m => m.LiquiditySweepAnalyzerNew),
-      LIQUIDITY_ZONE_ANALYZER_NEW: () => import('../analyzers/liquidity-zone.analyzer-new').then(m => m.LiquidityZoneAnalyzerNew),
-      ORDER_BLOCK_ANALYZER_NEW: () => import('../analyzers/order-block.analyzer-new').then(m => m.OrderBlockAnalyzerNew),
-      FAIR_VALUE_GAP_ANALYZER_NEW: () => import('../analyzers/fair-value-gap.analyzer-new').then(m => m.FairValueGapAnalyzerNew),
-      VOLUME_PROFILE_ANALYZER_NEW: () => import('../analyzers/volume-profile.analyzer-new').then(m => m.VolumeProfileAnalyzerNew),
-      ORDER_FLOW_ANALYZER_NEW: () => import('../analyzers/order-flow.analyzer-new').then(m => m.OrderFlowAnalyzerNew),
-      FOOTPRINT_ANALYZER_NEW: () => import('../analyzers/footprint.analyzer-new').then(m => m.FootprintAnalyzerNew),
-      WHALE_ANALYZER_NEW: () => import('../analyzers/whale.analyzer-new').then(m => m.WhaleAnalyzerNew),
-      MICRO_WALL_ANALYZER_NEW: () => import('../analyzers/micro-wall.analyzer-new').then(m => m.MicroWallAnalyzerNew),
-      DELTA_ANALYZER_NEW: () => import('../analyzers/delta.analyzer-new').then(m => m.DeltaAnalyzerNew),
-      TICK_DELTA_ANALYZER_NEW: () => import('../analyzers/tick-delta.analyzer-new').then(m => m.TickDeltaAnalyzerNew),
-      PRICE_ACTION_ANALYZER_NEW: () => import('../analyzers/price-action.analyzer-new').then(m => m.PriceActionAnalyzerNew),
-      TREND_CONFLICT_ANALYZER_NEW: () => import('../analyzers/trend-conflict.analyzer-new').then(m => m.TrendConflictAnalyzerNew),
-      VOLATILITY_SPIKE_ANALYZER_NEW: () => import('../analyzers/volatility-spike.analyzer-new').then(m => m.VolatilitySpikeAnalyzerNew),
-    };
+    if (!this.analyzerRegistry) {
+      this.logger.error('AnalyzerRegistry not initialized');
+      return signals;
+    }
+
+    // Get all enabled analyzers from registry
+    const enabledAnalyzers = await this.analyzerRegistry.getEnabledAnalyzers(
+      analyzerConfigs,
+      this.buildAnalyzerConfigForRegistry(),
+    );
 
     // Run each enabled analyzer
-    for (const analyzerCfg of analyzerConfigs) {
-      if (!analyzerCfg.enabled) continue;
-
+    for (const [analyzerName, { instance }] of enabledAnalyzers) {
       try {
-        const AnalyzerClass = analyzerClassMap[analyzerCfg.name];
-        if (!AnalyzerClass) {
-          this.logger.debug(`Analyzer class not found: ${analyzerCfg.name}`);
-          continue;
-        }
+        const analyzerCfg = analyzerConfigs.find((cfg) => cfg.name === analyzerName);
+        if (!analyzerCfg) continue;
 
-        const Clazz = await AnalyzerClass();
-
-        // Build analyzer-specific config from strategy and indicator configs
-        const analyzerConfig = this.buildAnalyzerConfig(analyzerCfg);
-        const instance = new Clazz(analyzerConfig, this.logger);
         const signal = await instance.analyze(entryCandles);
 
         if (signal && signal.direction !== 'HOLD') {
@@ -323,13 +301,28 @@ export class TradingOrchestrator {
           });
         }
       } catch (analyzerError) {
-        this.logger.debug(`Error running analyzer ${analyzerCfg.name}`, {
+        this.logger.debug(`Error running analyzer ${analyzerName}`, {
           error: analyzerError instanceof Error ? analyzerError.message : String(analyzerError),
         });
       }
     }
 
     return signals;
+  }
+
+  /**
+   * Build analyzer config for AnalyzerRegistry
+   * Returns a config object that includes indicator config and all analyzer defaults
+   * Each analyzer instance will merge its specific config from this base
+   */
+  private buildAnalyzerConfigForRegistry(): any {
+    const baseConfig = (this.config as any).indicators || {};
+    const analyzerDefaults = ((this.config as any).analyzerDefaults || {}) as Record<string, any>;
+
+    return {
+      indicators: baseConfig,
+      analyzerDefaults: analyzerDefaults,
+    };
   }
 
   /**

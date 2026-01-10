@@ -166,10 +166,13 @@ export interface BollingerBandsIndicatorOverride {
 
 export interface FilterOverrides {
   blindZone?: BlindZoneFilterOverride;
+  flatMarket?: FlatMarketFilterOverride;
+  fundingRate?: FundingRateFilterOverride;
   btcCorrelation?: BtcCorrelationFilterOverride;
-  nightTrading?: NightTradingFilterOverride;
-  atr?: AtrFilterOverride;
+  trendAlignment?: TrendAlignmentFilterOverride;
   volatilityRegime?: VolatilityRegimeFilterOverride;
+  postTpFilter?: PostTpFilterOverride;
+  timeBasedFilter?: TimeBasedFilterOverride;
 }
 
 export interface BlindZoneFilterOverride {
@@ -200,6 +203,41 @@ export interface AtrFilterOverride {
   period?: number;
   minimumATR?: number;
   maximumATR?: number;
+}
+
+export interface FlatMarketFilterOverride {
+  enabled?: boolean;
+  flatThreshold?: number; // 0-100, confidence % that market is flat
+  emaThreshold?: number; // max EMA gap % to consider market flat
+  atrThreshold?: number; // max ATR % to consider market flat
+}
+
+export interface FundingRateFilterOverride {
+  enabled?: boolean;
+  blockLongAbove?: number; // funding rate above this blocks LONG
+  blockShortBelow?: number; // funding rate below this blocks SHORT
+  cacheTimeMs?: number; // how long to cache funding rate
+}
+
+export interface TrendAlignmentFilterOverride {
+  enabled?: boolean;
+  blockLongInDowntrend?: boolean;
+  blockShortInUptrend?: boolean;
+  blockInNeutral?: boolean;
+}
+
+export interface PostTpFilterOverride {
+  enabled?: boolean;
+  blockDurationSeconds?: number; // how long to block entries after TP
+  requireConfidencePercent?: number; // need X% confidence to re-enter
+}
+
+export interface TimeBasedFilterOverride {
+  enabled?: boolean;
+  blockStartHourUTC?: number;
+  blockEndHourUTC?: number;
+  timezone?: string;
+  confidencePenalty?: number;
 }
 
 export interface VolatilityRegimeFilterOverride {
