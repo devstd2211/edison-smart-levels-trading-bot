@@ -38,29 +38,53 @@
   ],
   "indicators": {
     "ema": {
+      "enabled": true,
       "fastPeriod": 9,
       "slowPeriod": 19,
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5
     },
+    "rsi": {
+      "enabled": true,
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70
+    },
     "atr": {
+      "enabled": true,
       "period": 14,
       "minimumATR": 0.005,
       "maximumATR": 2.0
+    },
+    "volume": {
+      "enabled": true,
+      "period": 20,
+      "volumeMultiplier": 1.5
+    },
+    "stochastic": {
+      "enabled": true,
+      "kPeriod": 14,
+      "dPeriod": 3,
+      "oversold": 20,
+      "overbought": 80
+    },
+    "bollingerBands": {
+      "enabled": true,
+      "period": 20,
+      "stdDev": 2.0
     }
   },
   "analyzerDefaults": {
     "LEVEL_ANALYZER_NEW": {
-      "minTouches": 2,
-      "maxConfidence": 0.95
     },
     "PRICE_MOMENTUM_ANALYZER_NEW": {
-      "minMomentum": 0.1,
-      "maxConfidence": 0.9
+      "minConfidence": 0.55,
+      "maxConfidence": 0.90
     },
     "EMA_ANALYZER_NEW": {
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5,
+      "minConfidence": 0.50,
       "maxConfidence": 0.95
     }
   },
