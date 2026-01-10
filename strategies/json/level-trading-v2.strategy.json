@@ -1,20 +1,15 @@
 {
   "version": 1,
   "metadata": {
-    "name": "Level Trading V2 - Momentum + Levels",
-    "version": "1.0.0",
-    "description": "Combines structural levels with momentum for impulse moves. 5m intraday strategy. V2 = LEVEL (40%) + MOMENTUM (35%) + EMA (25%)",
+    "name": "Level Trading V2 - Momentum + Levels (OPTIMIZED)",
+    "version": "2.0.0",
+    "description": "Optimized for profit factor. Combines structural levels with momentum for impulse moves. EMA 9/19 from calibration (2 sources). 5m intraday strategy. V2 = LEVEL (40%) + MOMENTUM (35%) + EMA (25%)",
     "author": "Edison Trading Bot",
     "createdAt": "2026-01-10T00:00:00Z",
-    "lastModified": "2026-01-10T00:00:00Z",
-    "tags": ["level-trading", "v2", "momentum", "5m-intraday", "impulse"],
-    "backtest": {
-      "winRate": 0.62,
-      "profitFactor": 2.15,
-      "trades": 200,
-      "period": "2025-12-10 to 2026-01-10"
-    }
+    "lastModified": "2026-01-10T16:21:41Z",
+    "tags": ["level-trading", "v2", "momentum", "5m-intraday", "impulse", "calibrated", "optimized"]
   },
+  "entryThreshold": 30,
   "analyzers": [
     {
       "name": "LEVEL_ANALYZER_NEW",
@@ -43,8 +38,8 @@
   ],
   "indicators": {
     "ema": {
-      "fastPeriod": 12,
-      "slowPeriod": 26,
+      "fastPeriod": 9,
+      "slowPeriod": 19,
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5
     },
@@ -140,5 +135,5 @@
       "activationLevel": 2.0
     }
   },
-  "notes": "V2: Momentum + Levels. Better for impulse moves and faster entries. More trades expected (200+). 5m intraday. Entry timeframe: 5m, Trend context: 15m. SL: 2x ATR. TP1: 1%, TP2: 2%, TP3: 3.5%. Trailing stop enabled after TP2."
+  "notes": "V2 OPTIMIZED: Momentum + Levels balanced strategy. Calibrated on both JSON (1 month) and SQLite (8 days) sources. EMA 9/19 periods from calibration. Entry Threshold: 30. ATR Multiplier: 2.0. Expected: 45-55% WR, PF 1.5-2.7. 5m intraday. SL: 2x ATR. TP1: 1%, TP2: 2%, TP3: 3.5%. Trailing stop enabled after TP2. This is the RECOMMENDED production strategy."
 }
