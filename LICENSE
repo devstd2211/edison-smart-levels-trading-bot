@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 devstd2211
+Copyright (c) 2026 Edison Trading Bot Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,35 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-===============================================================================
-
-TRADING DISCLAIMER
-==================
-
-THIS SOFTWARE IS PROVIDED FOR EDUCATIONAL PURPOSES ONLY.
-
-The author makes no representation or warranty as to the accuracy or
-completeness of the information provided.
-
-TRADING AND INVESTING INVOLVE SUBSTANTIAL RISK OF LOSS.
-Past performance is not indicative of future results.
-
-The author of this software assumes NO responsibility for:
-- Loss of funds resulting from use of this software
-- Poor trading decisions made using this software
-- System failures or bugs in the software
-- Loss of data or corruption of files
-- Any other damages resulting from use or misuse of this software
-
-DO NOT use this software with money you cannot afford to lose.
-
-Always:
-1. Test thoroughly on a testnet with small amounts FIRST
-2. Understand the risks of algorithmic trading
-3. Use proper risk management (position sizing, stop losses)
-4. Never risk more than 2-5% of your account per trade
-5. Have an exit plan BEFORE entering any trade
-
-By using this software, you acknowledge that you understand and accept
-these risks and that the author bears no responsibility for any losses.

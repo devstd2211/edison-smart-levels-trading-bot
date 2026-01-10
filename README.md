@@ -879,22 +879,44 @@ npm run dev
 
 ### Adding New Analyzers
 
-When you add a new analyzer:
+When you add a new analyzer (complete checklist):
 
 1. **Create the analyzer class** in `src/analyzers/my-analyzer-new.ts`
-2. **Register it** in `AnalyzerRegistry` (one-time)
-3. **Use it in strategies** via JSON config:
+   - Extend from analyzer base pattern
+   - Implement `analyze(candles: Candle[]): AnalyzerSignal` method
+   - Return signal with direction (LONG/SHORT/HOLD), confidence (0-100), weight, priority
+
+2. **Define type in config-new.types.ts**
+   - Create `MyAnalyzerConfigNew` interface extending `BaseAnalyzerConfigNew`
+   - Add analyzer-specific parameters (e.g., thresholds, periods)
+   - Export from types file
+
+3. **Register in AnalyzerRegistry** (`src/services/analyzer-registry.service.ts`)
+   - Add analyzer to `analyzerRegistry` map with config merging logic
+
+4. **Add defaults in config files**
+   - `config.json`: Add `MY_ANALYZER_NEW` entry to `analyzerDefaults` section
+   - `config.example.json`: Add with full documentation comments
+
+5. **Write tests**
+   - Technical tests: Verify analyzer logic and calculations
+   - Functional tests: Test with real market patterns (uptrend, downtrend, reversals)
+   - See `src/__tests__/analyzers/` for examples
+
+6. **Use in strategies** via JSON config:
 
 ```json
 {
   "name": "MY_ANALYZER_NEW",
   "enabled": true,
   "weight": 0.5,
-  "priority": 2
+  "priority": 2,
+  "param1": 14,
+  "param2": 0.75
 }
 ```
 
-**No code changes needed elsewhere!** The registry automatically handles instantiation.
+**See MIGRATION_PLAN.md** for phase-by-phase checklist of all 28 analyzers.
 
 ### Data Flow: From Market to Trade
 
@@ -1275,6 +1297,82 @@ For questions or issues, open a GitHub issue.
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions! This project uses GitHub issues to organize work.
+
+### Good First Issues
+
+Looking to contribute? Start with these **easy tasks** perfect for beginners:
+
+- `good first issue` - Tasks explicitly marked as beginner-friendly
+  - Usually require 30 min - 1 hour
+  - Well-documented requirements
+  - Help you understand the codebase
+
+**Example:** Add basic example to README, difficulty: easy, estimated 30 min
+
+### Help Wanted
+
+For developers ready for a bigger challenge:
+
+- `help wanted` - Specific features or fixes we need
+- `documentation` - Improve docs, add examples, clarify code
+- `enhancement` - New features or improvements
+
+### How to Find Issues
+
+Visit the **Issues** tab and filter by label:
+- `good first issue` - Perfect for beginners
+- `help wanted` - Medium complexity
+- `documentation` - Doc improvements
+- `bug` - Bug fixes
+- `enhancement` - New features
+
+### Contribution Process
+
+1. **Pick an issue** that interests you
+2. **Comment on the issue** to let us know you're working on it
+3. **Create a branch** from `main`
+4. **Make your changes** following the code style
+5. **Write tests** for your changes
+6. **Submit a PR** with a clear description
+7. **Wait for review** - we'll provide feedback
+
+### Development Setup
+
+```bash
+# Clone and install
+git clone <repo>
+cd Edison
+npm install
+
+# Run tests
+npm test
+
+# Run dev bot
+npm run dev
+
+# Run backtest
+npm run backtest-v5 -- --strategy level-trading-v2
+```
+
+### Code Style
+
+- **TypeScript strict mode** - No `any` types
+- **Tests required** - Technical + functional tests
+- **Documentation** - Comment non-obvious logic
+- **Git commits** - Clear, descriptive messages
+
+### Questions?
+
+- Check **CLAUDE.md** for project context
+- Check **MIGRATION_PLAN.md** for feature roadmap
+- Check **SPEC.md** files for detailed specs
+- Open an issue with `question` label
+
+---
+
 ## 🤖 Built With Claude Code
 
 **This entire project demonstrates successful AI-assisted development:**
@@ -1341,6 +1439,20 @@ if (fastEMA > slowEMA && RSI < 70 && ATR > X) {
 ```
 
 That's it! Edison handles the orchestration, signal ranking, filtering, and execution automatically.
+
+---
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file for details.
+
+**MIT License Summary:**
+- ✅ Free to use commercially
+- ✅ Free to modify and distribute
+- ✅ Minimal restrictions
+- ⚠️ Use at your own risk (no warranty)
 
 ---
 
