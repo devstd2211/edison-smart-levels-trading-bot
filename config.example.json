@@ -229,8 +229,13 @@
     "EMA_ANALYZER_NEW": {
       "_comment": "EMA crossover analyzer: fast EMA crosses slow EMA",
       "baseConfidence": 0.8,
+      "_baseConfidence_comment": "Base confidence level for EMA signals (0.0-1.0)",
       "strengthMultiplier": 1.5,
-      "maxConfidence": 0.95
+      "_strengthMultiplier_comment": "Multiply confidence by this for strong trends (1.5 = 50% boost)",
+      "minConfidence": 0.50,
+      "_minConfidence_comment": "Minimum confidence threshold (signals below this are HOLD)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence cap (signals above this are capped)"
     },
     "RSI_ANALYZER_NEW": {
       "_comment": "RSI analyzer: overbought/oversold conditions",
@@ -274,9 +279,11 @@
       "maxConfidence": 0.85
     },
     "PRICE_MOMENTUM_ANALYZER_NEW": {
-      "_comment": "Momentum analyzer: rapid price movement in direction",
-      "minMomentum": 0.1,
-      "maxConfidence": 0.9
+      "_comment": "Momentum analyzer: rapid price movement and acceleration",
+      "minConfidence": 0.55,
+      "_minConfidence_comment": "Minimum confidence threshold for momentum signals (0.0-1.0)",
+      "maxConfidence": 0.90,
+      "_maxConfidence_comment": "Maximum confidence cap for momentum signals"
     },
     "TREND_DETECTOR_ANALYZER_NEW": {
       "_comment": "Trend detector: EMA gap indicates trend strength",
@@ -290,10 +297,8 @@
       "maxConfidence": 0.85
     },
     "LEVEL_ANALYZER_NEW": {
-      "_comment": "Level analyzer: price bounces from structural levels",
-      "minTouches": 2,
-      "_minTouches_comment": "Level needs min 2 touches to be valid",
-      "maxConfidence": 0.9
+      "_comment": "Level analyzer: price bounces from support/resistance levels",
+      "_note": "This analyzer only requires base config (enabled, weight, priority). No additional parameters needed."
     },
     "CHOCH_BOS_ANALYZER_NEW": {
       "_comment": "CHOCH/BOS analyzer: Change of Character / Break of Structure",
