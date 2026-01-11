@@ -194,18 +194,19 @@ export class LoggerService {
 
     const formattedMessage = this.formatLogEntry(entry);
 
+    // Use template literals instead of %s formatting to avoid console wrapping issues
     switch (entry.level) {
     case LogLevel.DEBUG:
-      console.debug('\x1b[36m%s\x1b[0m', formattedMessage); // Cyan
+      console.debug(`\x1b[36m${formattedMessage}\x1b[0m`); // Cyan
       break;
     case LogLevel.INFO:
-      console.info('\x1b[32m%s\x1b[0m', formattedMessage); // Green
+      console.info(`\x1b[32m${formattedMessage}\x1b[0m`); // Green
       break;
     case LogLevel.WARN:
-      console.warn('\x1b[33m%s\x1b[0m', formattedMessage); // Yellow
+      console.warn(`\x1b[33m${formattedMessage}\x1b[0m`); // Yellow
       break;
     case LogLevel.ERROR:
-      console.error('\x1b[31m%s\x1b[0m', formattedMessage); // Red
+      console.error(`\x1b[31m${formattedMessage}\x1b[0m`); // Red
       break;
     }
   }
