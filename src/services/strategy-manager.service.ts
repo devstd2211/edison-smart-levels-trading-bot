@@ -33,7 +33,7 @@ export class StrategyManagerService {
    * Called once at bot startup
    *
    * @param strategyName - Name of strategy to load (e.g., "level-trading")
-   * @param mainConfig - Main config from config-new.json
+   * @param mainConfig - Main config from config.json
    */
   async initialize(strategyName: string, mainConfig: ConfigNew | any): Promise<void> {
     console.log(`[StrategyManager] Loading strategy: ${strategyName}`);

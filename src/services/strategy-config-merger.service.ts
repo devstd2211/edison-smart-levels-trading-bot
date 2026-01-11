@@ -2,10 +2,10 @@
  * STRATEGY CONFIG MERGER SERVICE
  * Merges main config with strategy overrides
  *
- * Priority: Strategy Overrides > config-new.json > Defaults
+ * Priority: Strategy Overrides > config.json > Defaults
  *
  * Example:
- * - config-new.json has: emaFilter.rsiThreshold = 50
+ * - config.json has: emaFilter.rsiThreshold = 50
  * - strategy.json has: filters.emaFilter.rsiThreshold = 55
  * - Result: emaFilter.rsiThreshold = 55 (strategy wins)
  */
