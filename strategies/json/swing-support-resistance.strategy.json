@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Swing Support & Resistance",
+    "version": "1.0.0",
+    "description": "Swing trading strategy using support/resistance levels, divergences, and breakouts. Optimized for 5m timeframe with JSON data (no orderbook required).",
+    "author": "Edison Trading Bot - Swing Division",
+    "createdAt": "2026-01-11T15:20:00Z",
+    "lastModified": "2026-01-11T15:20:00Z",
+    "tags": ["swing", "support-resistance", "divergence", "breakout", "json-compatible"]
+  },
+  "entryThreshold": 65,
+  "analyzers": [
+    {
+      "name": "LEVEL_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.40,
+      "priority": 1,
+      "minConfidence": 0.55,
+      "maxConfidence": 0.95
+    },
+    {
+      "name": "DIVERGENCE_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.35,
+      "priority": 2,
+      "minConfidence": 0.50,
+      "maxConfidence": 0.90
+    },
+    {
+      "name": "BREAKOUT_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.25,
+      "priority": 3,
+      "minConfidence": 0.50,
+      "maxConfidence": 0.85
+    }
+  ],
+  "indicators": {
+    "ema": {
+      "fastPeriod": 9,
+      "slowPeriod": 21,
+      "baseConfidence": 0.7,
+      "strengthMultiplier": 1.2
+    },
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.75
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.0001,
+      "maximumATR": 1.0
+    },
+    "volume": {
+      "period": 20
+    }
+  },
+  "analyzerDefaults": {
+    "LEVEL_ANALYZER_NEW": {
+      "minTouches": 2,
+      "maxConfidence": 0.9
+    },
+    "DIVERGENCE_ANALYZER_NEW": {
+      "minBars": 3,
+      "maxConfidence": 0.85
+    },
+    "BREAKOUT_ANALYZER_NEW": {
+      "minBars": 5,
+      "breakoutThresholdPercent": 0.1,
+      "maxConfidence": 0.9
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 2,
+      "minSignalsForShort": 2,
+      "longPenalty": 0.80,
+      "shortPenalty": 0.85
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.25
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 0.5,
+        "sizePercent": 50
+      },
+      {
+        "level": 2,
+        "percent": 1.0,
+        "sizePercent": 35
+      },
+      {
+        "level": 3,
+        "percent": 1.5,
+        "sizePercent": 15
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 0.3,
+      "activationLevel": 0.8
+    }
+  },
+  "notes": "Swing trading strategy using support/resistance levels, divergences, and breakouts. Works with JSON OHLCV data (no orderbook required). Entry on confirmed breakouts with divergence confirmation. Moderate risk management (0.25% SL, 0.5-1.5% TP)."
+}

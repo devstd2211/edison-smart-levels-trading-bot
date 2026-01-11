@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Scalping - Orderbook Imbalance & Micro-Walls",
+    "version": "1.0.0",
+    "description": "High-frequency scalping strategy using orderbook data. Detects micro-walls and orderbook imbalances for quick entries/exits. Optimized for 1m timeframe.",
+    "author": "Edison Trading Bot - Scalping Division",
+    "createdAt": "2026-01-11T00:00:00Z",
+    "lastModified": "2026-01-11T00:00:00Z",
+    "tags": ["scalping", "orderbook", "high-frequency", "micro-walls", "delta"]
+  },
+  "entryThreshold": 65,
+  "analyzers": [
+    {
+      "name": "DELTA_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.40,
+      "priority": 1,
+      "minConfidence": 0.55,
+      "maxConfidence": 0.95
+    },
+    {
+      "name": "MICRO_WALL_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.35,
+      "priority": 2,
+      "minConfidence": 0.50,
+      "maxConfidence": 0.90
+    },
+    {
+      "name": "TICK_DELTA_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.25,
+      "priority": 3,
+      "minConfidence": 0.50,
+      "maxConfidence": 0.85
+    }
+  ],
+  "indicators": {
+    "ema": {
+      "fastPeriod": 5,
+      "slowPeriod": 12,
+      "baseConfidence": 0.7,
+      "strengthMultiplier": 1.2
+    },
+    "rsi": {
+      "period": 9,
+      "oversold": 35,
+      "overbought": 65,
+      "neutralZone": {
+        "min": 45,
+        "max": 55
+      },
+      "extreme": {
+        "low": 25,
+        "high": 75
+      },
+      "maxConfidence": 0.75
+    },
+    "atr": {
+      "period": 10,
+      "minimumATR": 0.0001,
+      "maximumATR": 1.0
+    },
+    "volume": {
+      "period": 10
+    }
+  },
+  "analyzerDefaults": {
+    "DELTA_ANALYZER_NEW": {
+      "windowSizeMs": 1000,
+      "minDeltaThreshold": 0.15,
+      "baseConfidence": 0.7,
+      "maxConfidence": 0.95
+    },
+    "MICRO_WALL_ANALYZER_NEW": {
+      "minWallSize": 10.0,
+      "maxWallDistance": 0.003,
+      "baseConfidence": 0.75,
+      "maxConfidence": 0.90
+    },
+    "TICK_DELTA_ANALYZER_NEW": {
+      "windowMs": 2000,
+      "minDeltaForSignal": 0.2,
+      "baseConfidence": 0.65,
+      "maxConfidence": 0.85
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 2,
+      "minSignalsForShort": 2,
+      "longPenalty": 0.80,
+      "shortPenalty": 0.85
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.15
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 0.4,
+        "sizePercent": 50
+      },
+      {
+        "level": 2,
+        "percent": 0.8,
+        "sizePercent": 35
+      },
+      {
+        "level": 3,
+        "percent": 1.2,
+        "sizePercent": 15
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 0.2,
+      "activationLevel": 0.6
+    }
+  },
+  "notes": "Scalping strategy using orderbook microstructure. Optimized for 1m timeframe. Uses DELTA (bid/ask imbalance), MICRO_WALL (resistance at orderbook), and TICK_DELTA (flow imbalance). Very tight stops (0.15%) and quick exits (0.4-1.2% targets). Not for trending markets - designed for choppy/range-bound conditions."
+}
