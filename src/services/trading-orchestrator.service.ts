@@ -593,47 +593,94 @@ export class TradingOrchestrator {
   }
 
   /**
-   * Enrich signal with SL/TP protection levels before opening position
-   * CRITICAL: Signal must have stopLoss and takeProfits arrays to avoid crashes
+   * Enrich signal with SL/TP protection levels from strategy config
+   * ATOMIC: All SL/TP levels computed and set together for atomic position opening
+   * CRITICAL: Signal must have stopLoss and takeProfits arrays
    */
   private enrichSignalWithProtection(signal: any): any {
-    // CRITICAL: Ensure takeProfits is an array (not undefined)
-    if (!signal.takeProfits || !Array.isArray(signal.takeProfits)) {
-      this.logger.warn('⚠️ Signal missing takeProfits array - using empty array', {
-        signalType: signal.type,
-        direction: signal.direction,
-      });
-      signal.takeProfits = [];
-    }
+    const entryPrice = signal.price || 0;
+    const isLong = signal.direction === 'LONG';
 
-    // CRITICAL: Ensure stopLoss is a number (not undefined or NaN)
+    // =====================================================================
+    // STEP 1: Calculate Stop Loss from config (ATR-based)
+    // =====================================================================
     if (typeof signal.stopLoss !== 'number' || isNaN(signal.stopLoss)) {
-      // Use default ATR-based SL: 2x ATR from current price
-      const atrMultiplier = 2.0;
-      const currentPrice = signal.price || 0;
-      const atrDistance = currentPrice * 0.01 * atrMultiplier; // Simple 1% ATR estimate
+      const riskConfig = (this.config as any)?.riskManagement?.stopLoss || {};
+      const atrMultiplier = riskConfig.atrMultiplier || 2.0;
+      const minDistancePercent = riskConfig.minDistancePercent || 0.5;
 
-      signal.stopLoss = signal.direction === 'LONG'
-        ? currentPrice - atrDistance
-        : currentPrice + atrDistance;
+      // Use min distance as fallback if ATR not available
+      const slDistancePercent = Math.max(minDistancePercent, 1.0); // At least 1%
+      const slDistance = (entryPrice * slDistancePercent) / 100;
 
-      this.logger.warn('⚠️ Signal missing stopLoss - calculated default', {
+      signal.stopLoss = isLong
+        ? entryPrice - slDistance
+        : entryPrice + slDistance;
+
+      this.logger.warn('⚠️ Signal enriched with calculated SL (ATR-based)', {
         signalType: signal.type,
         direction: signal.direction,
-        price: currentPrice,
-        calculatedStopLoss: signal.stopLoss,
+        entryPrice,
+        stopLoss: signal.stopLoss,
+        slDistancePercent,
       });
     }
 
-    // CRITICAL: Ensure reason is string (not undefined)
+    // =====================================================================
+    // STEP 2: Calculate Take Profit levels from strategy config (ATOMIC)
+    // =====================================================================
+    if (!signal.takeProfits || !Array.isArray(signal.takeProfits) || signal.takeProfits.length === 0) {
+      const tpConfig = (this.config as any)?.riskManagement?.takeProfits || [];
+
+      if (tpConfig.length > 0) {
+        // Calculate TP prices based on config percentages
+        signal.takeProfits = tpConfig.map((tp: any) => ({
+          price: isLong
+            ? entryPrice * (1 + tp.percent / 100)
+            : entryPrice * (1 - tp.percent / 100),
+          percent: tp.percent,
+          level: tp.level || 1,
+        }));
+
+        this.logger.info('✅ Signal enriched with strategy TP levels (ATOMIC)', {
+          signalType: signal.type,
+          direction: signal.direction,
+          entryPrice,
+          tpCount: signal.takeProfits.length,
+          tpLevels: signal.takeProfits
+            .map((tp: any) => `TP${tp.level}:${tp.price.toFixed(4)}@${tp.percent}%`)
+            .join(', '),
+        });
+      } else {
+        // No TP config - use empty array (position can still open with just SL)
+        this.logger.warn('⚠️ Signal has no TP config - opening with only SL protection', {
+          signalType: signal.type,
+          direction: signal.direction,
+        });
+        signal.takeProfits = [];
+      }
+    }
+
+    // =====================================================================
+    // STEP 3: Ensure reason is string
+    // =====================================================================
     if (typeof signal.reason !== 'string') {
       signal.reason = `${signal.type} @ ${signal.confidence?.toFixed(1) || '?'}% confidence`;
     }
 
-    // CRITICAL: Ensure timestamp is number (not undefined)
+    // =====================================================================
+    // STEP 4: Ensure timestamp is number
+    // =====================================================================
     if (typeof signal.timestamp !== 'number') {
       signal.timestamp = Date.now();
     }
+
+    this.logger.debug('✅ Signal enrichment complete (ATOMIC SL/TP)', {
+      signalType: signal.type,
+      entryPrice,
+      stopLoss: signal.stopLoss.toFixed(4),
+      tpCount: signal.takeProfits.length,
+    });
 
     return signal;
   }
