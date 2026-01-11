@@ -46,6 +46,7 @@ import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { WallTrackerService } from './wall-tracker.service';
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
+import { RealityCheckService } from './reality-check.service';
 
 /**
  * Container for all bot services
@@ -73,6 +74,7 @@ export class BotServices {
   readonly sessionStats: SessionStatsService;
   readonly positionManager: PositionLifecycleService;
   readonly positionExitingService: PositionExitingService;
+  readonly realityCheck: RealityCheckService;
 
   // WebSocket & Data
   readonly webSocketManager: WebSocketManagerService;
@@ -208,6 +210,9 @@ export class BotServices {
 
     this.sessionStats = new SessionStatsService(this.logger);
 
+    // 4.5 Initialize Reality Check Service (tracks broken assumptions in trades)
+    this.realityCheck = new RealityCheckService(this.logger);
+
     // 5. Initialize data providers
     this.timeframeProvider = new TimeframeProvider(config.timeframes);
     this.candleProvider = new CandleProvider(
@@ -328,6 +333,7 @@ export class BotServices {
       config,
       this.sessionStats,
       this.positionManager, // Pass PositionManager so we can access takeProfitManager when needed
+      this.realityCheck, // For analyzing trades when they close
     );
 
     // 9. Initialize WebSocket managers

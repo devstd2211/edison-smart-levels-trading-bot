@@ -24,3 +24,4 @@ export * from './multi-timeframe-trend.service';
 export * from './timeframe-weighting.service';
 export * from './console-dashboard.service';
 export * from './market-condition-analyzer.service'; // Adjusts take profits based on market conditions
+export * from './reality-check.service'; // Tracks when bot logic was right but market gave opposite result

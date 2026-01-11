@@ -34,6 +34,7 @@ import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
 import { PositionLifecycleService } from './position-lifecycle.service';
+import { RealityCheckService } from './reality-check.service';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
 
 // ============================================================================
@@ -51,6 +52,7 @@ export class PositionExitingService {
     private readonly fullConfig: Config,
     private readonly sessionStats?: SessionStatsService,
     private readonly positionManager?: PositionLifecycleService, // For accessing takeProfitManager
+    private readonly realityCheck?: RealityCheckService, // For analyzing trades when they close
   ) {}
 
   /**

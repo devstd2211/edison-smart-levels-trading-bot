@@ -303,9 +303,26 @@ export class TradingOrchestrator {
               });
 
               // Try to execute the trade
-              // NOTE: In a real implementation, would call positionManager.openPosition()
-              // For now, just log that we're ready
-              this.logger.info('🚀 Ready to open position on next execution cycle');
+              try {
+                this.logger.info('🚀 Opening position with signal', {
+                  direction: this.pendingEntryDecision.signal.direction,
+                  entryPrice: currentCandle.close,
+                  confidence: this.pendingEntryDecision.signal.confidence,
+                });
+
+                // Actually open the position
+                await this.positionManager.openPosition(
+                  this.pendingEntryDecision.signal,
+                );
+
+                // Clear pending decision once position opened
+                this.pendingEntryDecision = null;
+                this.logger.info('✅ Position opened successfully');
+              } catch (openPositionError) {
+                this.logger.error('❌ Failed to open position', {
+                  error: openPositionError instanceof Error ? openPositionError.message : String(openPositionError),
+                });
+              }
             } else {
               this.logger.debug('⏳ ENTRY (1m): Current candle not ideal for entry - waiting for better point', {
                 direction: this.pendingEntryDecision.signal.direction,
