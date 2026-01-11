@@ -297,6 +297,18 @@ export class LoggerService {
   }
 
   /**
+   * Set console output mode (for dashboard)
+   * When false: logs only go to file, preventing interference with blessed UI
+   * When true: logs go to both console and file
+   */
+  setConsoleOutputEnabled(enabled: boolean): void {
+    this.enableConsoleOutput = enabled;
+    if (!enabled) {
+      console.log('[LOGGER] 🎨 Console output disabled - logs will be file-only (dashboard mode)');
+    }
+  }
+
+  /**
    * Get current log file path
    */
   getLogFilePath(): string | null {

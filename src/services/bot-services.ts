@@ -100,12 +100,14 @@ export class BotServices {
     // 0. Initialize dashboard FIRST to capture early logs
     // NOW FIXED: Uses non-blocking setImmediate render queue
     const dashboardConfig = (config as any)?.dashboard || {};
+    const dashboardEnabled = dashboardConfig.enabled !== false;
+
     this.dashboard = new ConsoleDashboardService({
-      enabled: dashboardConfig.enabled !== false, // Enabled by default (can disable in config)
+      enabled: dashboardEnabled,
       updateInterval: dashboardConfig.updateInterval || 1000, // 1 second refresh
       theme: dashboardConfig.theme || 'dark',
     });
-    console.log(`🎨 Console Dashboard initialized (${this.dashboard ? 'ENABLED' : 'DISABLED'})`);
+    console.log(`🎨 Console Dashboard initialized (${dashboardEnabled ? 'ENABLED' : 'DISABLED'})`);
 
     // 1. Initialize logger
     this.logger = new LoggerService(
@@ -117,6 +119,12 @@ export class BotServices {
     const logFilePath = this.logger.getLogFilePath();
     if (logFilePath) {
       this.logger.info('📝 Log file', { path: logFilePath });
+    }
+
+    // CRITICAL: Disable console output when dashboard is enabled
+    // Prevents logs from overwriting blessed UI
+    if (dashboardEnabled) {
+      this.logger.setConsoleOutputEnabled(false);
     }
 
     // Log strategy analyzer information
