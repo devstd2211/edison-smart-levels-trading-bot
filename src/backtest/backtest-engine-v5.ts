@@ -160,7 +160,8 @@ export class BacktestEngineV5 {
       : new SqliteDataProvider();
 
     this.logger.info('🎯 BacktestEngineV5 initialized', {
-      strategy: this.strategyConfig.metadata.name,
+      strategyFile: config.strategyFile,
+      strategyName: this.strategyConfig.metadata.name,
       symbol: config.symbol,
       initialBalance: config.initialBalance,
       entryThreshold: EntryOrchestrator.getMinConfidenceThreshold(),
@@ -186,6 +187,8 @@ export class BacktestEngineV5 {
     const startTime = Date.now();
 
     this.logger.info('📊 Starting backtest run...', {
+      strategyFile: this.config.strategyFile,
+      strategyName: this.strategyConfig.metadata.name,
       symbol: this.config.symbol,
       startDate: this.config.startDate,
       endDate: this.config.endDate,

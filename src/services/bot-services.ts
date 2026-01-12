@@ -123,6 +123,16 @@ export class BotServices {
       this.logger.info('📝 Log file', { path: logFilePath });
     }
 
+    // Log loaded strategy file
+    if ((config as any).meta?.strategy) {
+      const strategyFile = (config as any).meta?.strategyFile || `strategies/json/${(config as any).meta.strategy}.strategy.json`;
+      this.logger.info('📋 Strategy loaded', {
+        strategy: (config as any).meta.strategy,
+        file: strategyFile,
+        notes: (config as any).meta?.notes,
+      });
+    }
+
     // CRITICAL: Disable console output when dashboard is enabled
     // Prevents logs from overwriting blessed UI
     // Only happens if dashboard explicitly enabled in config

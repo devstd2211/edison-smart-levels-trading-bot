@@ -49,8 +49,18 @@ export class BotFactory {
         const strategyLoader = new StrategyLoaderService();
         const strategyMerger = new StrategyConfigMergerService();
 
+        const strategyFile = (config.meta as any).strategyFile || `strategies/json/${config.meta.strategy}.strategy.json`;
         console.log(`📋 Loading strategy: ${config.meta.strategy}`);
+        console.log(`   📄 File: ${strategyFile}`);
         const strategy = await strategyLoader.loadStrategy(config.meta.strategy);
+
+        // Log strategy metadata for clarity
+        if (strategy.metadata) {
+          console.log(`   ℹ️  Name: ${strategy.metadata.name} v${strategy.metadata.version}`);
+          if (strategy.metadata.description) {
+            console.log(`   📝 Description: ${strategy.metadata.description}`);
+          }
+        }
         config = strategyMerger.mergeConfigs(config, strategy) as Config;
 
         const changeReport = strategyMerger.getChangeReport(
