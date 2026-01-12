@@ -1,0 +1,20 @@
+# Vector Database files (local only)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Generated index (regenerate on each session if needed)
+index.json
+
+# Cache files
+*.tmp
+*.cache
+
+# Logs
+logs.txt
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -25,6 +25,7 @@ import {
   ExitType,
   Position,
 } from '../types';
+import { TrendBias, SignalDirection } from '../types/enums';
 // PHASE 4: ContextAnalyzer archived to src/archive/phase4-integration/
 // Replaced by TrendAnalyzer (PRIMARY component)
 import { CandleProvider } from '../providers/candle.provider';
@@ -41,6 +42,7 @@ import { MultiTimeframeTrendService } from './multi-timeframe-trend.service';
 import { TimeframeWeightingService } from './timeframe-weighting.service';
 import { AnalyzerRegistryService } from './analyzer-registry.service';
 import { FilterOrchestrator } from '../orchestrators/filter.orchestrator';
+import { MTFSnapshotGate } from './mtf-snapshot-gate.service';
 
 // ============================================================================
 // TYPES
@@ -65,6 +67,9 @@ export class TradingOrchestrator {
   // Entry decision tracking (for PRIMARY->ENTRY refinement)
   private pendingEntryDecision: any = null;
 
+  // MTF Snapshot Gate (fixes race condition between HTF bias changes and ENTRY execution)
+  private snapshotGate: MTFSnapshotGate | null = null;
+
   // DEBUG: Allow testing without real signals
   private testModeEnabled: boolean = false;
   private testModeSignalCount: number = 0;
@@ -84,6 +89,9 @@ export class TradingOrchestrator {
     this.analyzerRegistry = new AnalyzerRegistryService(this.logger);
     const filterConfig = (this.config as any).filters || {};
     this.filterOrchestrator = new FilterOrchestrator(this.logger, filterConfig);
+
+    // Initialize MTF Snapshot Gate (fixes race condition)
+    this.snapshotGate = new MTFSnapshotGate(this.logger);
 
     // Initialize EntryOrchestrator with FilterOrchestrator
     this.entryOrchestrator = new EntryOrchestrator(
@@ -195,17 +203,28 @@ export class TradingOrchestrator {
 
               try {
                 // Get trend bias from context
-                // For now use neutral default - in production would use TrendAnalyzer or MultiTimeframeTrendService
-                const trendBias = this.currentContext?.trend || {
-                  bias: 'NEUTRAL',
+                // currentContext.trend is a TrendBias enum value, not a TrendAnalysis object
+                const htfBiasValue: TrendBias = this.currentContext?.trend ?? TrendBias.NEUTRAL;
+
+                // Create a minimal TrendAnalysis object for the entry orchestrator
+                const trendAnalysis: TrendAnalysis = {
+                  bias: htfBiasValue,
                   strength: 0.5,
+                  timeframe: '4h',
+                  reasoning: ['Context bias'],
+                  restrictedDirections:
+                    htfBiasValue === TrendBias.BULLISH
+                      ? [SignalDirection.SHORT]
+                      : htfBiasValue === TrendBias.BEARISH
+                        ? [SignalDirection.LONG]
+                        : [],
                 };
 
                 const entryDecision = await this.entryOrchestrator.evaluateEntry(
                   signals,
                   currentBalance,
                   openPositions,
-                  trendBias as any,
+                  trendAnalysis,
                 );
 
                 this.logger.info('📋 EntryOrchestrator decision (PRIMARY)', {
@@ -215,20 +234,49 @@ export class TradingOrchestrator {
                 });
 
                 // Store decision for ENTRY timeframe to use for entry point refinement
+                // FIXED: Use MTF Snapshot Gate to prevent race condition
                 if (entryDecision.decision === 'ENTER') {
                   // CRITICAL: Enrich signal early to ensure all required fields are present
                   const enrichedSignal = this.enrichSignalWithProtection(entryDecision.signal || {});
-                  this.pendingEntryDecision = {
-                    decision: entryDecision.decision,
-                    signal: enrichedSignal,
-                    timestamp: Date.now(),
-                    primaryCandle: primaryCandles[primaryCandles.length - 1],
-                  };
-                  this.logger.info('💾 Pending entry decision stored for ENTRY timeframe refinement', {
-                    signalType: enrichedSignal?.type,
-                  });
+
+                  // Create snapshot of trading context at PRIMARY close
+                  // This prevents HTF bias changes from affecting ENTRY execution
+                  if (this.snapshotGate) {
+                    const riskRules = (this.config as any)?.riskManager || {};
+                    const snapshot = this.snapshotGate.createSnapshot(
+                      htfBiasValue,
+                      trendAnalysis,
+                      enrichedSignal,
+                      primaryCandles[primaryCandles.length - 1],
+                      currentBalance,
+                      {
+                        maxRiskPercent: riskRules?.maxRiskPercent,
+                        maxPositionSize: riskRules?.maxPositionSize,
+                        minSignals: (this.config as any)?.minSignals,
+                      }
+                    );
+
+                    // LEGACY: Also store in pendingEntryDecision for backward compatibility
+                    // (some code may still reference this)
+                    this.pendingEntryDecision = {
+                      decision: entryDecision.decision,
+                      signal: enrichedSignal,
+                      timestamp: Date.now(),
+                      primaryCandle: primaryCandles[primaryCandles.length - 1],
+                      snapshotId: snapshot.id,
+                    };
+
+                    this.logger.info('💾 Snapshot created for ENTRY timeframe (HTF bias frozen)', {
+                      signalType: enrichedSignal?.type,
+                      htfBias: htfBiasValue,
+                      snapshotId: snapshot.id.substring(0, 8),
+                    });
+                  }
                 } else if (entryDecision.decision === 'SKIP') {
                   this.pendingEntryDecision = null;
+                  if (this.snapshotGate) {
+                    this.snapshotGate.clearActiveSnapshot();
+                  }
                   this.logger.debug('❌ Entry decision skipped - clearing pending decision');
                 }
               } catch (orchestratorError) {
@@ -360,6 +408,43 @@ export class TradingOrchestrator {
           this.logger.info('🎯 ENTRY (1m): Refining entry point for pending PRIMARY decision');
 
           try {
+            // ========================================================
+            // FIX: VALIDATE SNAPSHOT BEFORE PROCEEDING
+            // ========================================================
+            // Re-fetch current HTF bias to detect any race condition
+            // Note: currentContext.trend is a TrendBias enum value, not an object
+            const currentHTFBias: TrendBias =
+              this.currentContext?.trend ?? TrendBias.NEUTRAL;
+
+            let snapshotValid = false;
+            if (this.snapshotGate) {
+              const validationResult = this.snapshotGate.validateSnapshot(currentHTFBias);
+
+              if (!validationResult.valid) {
+                this.logger.warn('⚠️ ENTRY: Snapshot validation FAILED - skipping entry', {
+                  reason: validationResult.reason,
+                  expired: validationResult.expired,
+                  biasMismatch: validationResult.biasMismatch,
+                  originalBias: this.pendingEntryDecision.snapshotId ? 'captured' : 'unknown',
+                  currentBias: currentHTFBias,
+                });
+
+                // Clear pending decision and snapshot
+                this.pendingEntryDecision = null;
+                this.snapshotGate.clearActiveSnapshot();
+                return; // SKIP ENTRY - snapshot is invalid
+              }
+
+              snapshotValid = true;
+            }
+
+            if (!snapshotValid && this.snapshotGate) {
+              this.logger.warn('⚠️ ENTRY: Snapshot gate not available - proceeding with caution');
+            }
+
+            // ========================================================
+            // PROCEED WITH ENTRY (snapshot is valid)
+            // ========================================================
             // Get latest 1-minute candles for entry point analysis
             const entryCandles = await this.candleProvider.getCandles(TimeframeRole.ENTRY, 50);
             if (!entryCandles || entryCandles.length < 5) {
@@ -391,6 +476,7 @@ export class TradingOrchestrator {
                 price: currentCandle.close,
                 candleSize,
                 avgSize: avgCandleSize,
+                snapshotValid,
               });
 
               // Try to execute the trade
@@ -399,13 +485,17 @@ export class TradingOrchestrator {
                   direction: this.pendingEntryDecision.signal.direction,
                   entryPrice: currentCandle.close,
                   confidence: this.pendingEntryDecision.signal.confidence,
+                  htfBias: currentHTFBias,
                 });
 
                 // Actually open the position (signal already enriched earlier)
                 await this.positionManager.openPosition(this.pendingEntryDecision.signal);
 
-                // Clear pending decision once position opened
+                // Clear pending decision and snapshot once position opened
                 this.pendingEntryDecision = null;
+                if (this.snapshotGate) {
+                  this.snapshotGate.clearActiveSnapshot();
+                }
                 this.logger.info('✅ Position opened successfully');
               } catch (openPositionError) {
                 this.logger.error('❌ Failed to open position', {

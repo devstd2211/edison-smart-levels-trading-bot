@@ -106,9 +106,32 @@ export class LevelAnalyzerNew {
     // Calculate trend
     const trend = this.calculateTrend(candles);
 
+    // Log analyzed levels for debugging
+    if (this.logger) {
+      const closestSupport = supportLevels[0];
+      const closestResistance = resistanceLevels[0];
+      const distToSupport = closestSupport ? Math.abs(current.close - closestSupport.price) : null;
+      const distToResistance = closestResistance ? Math.abs(current.close - closestResistance.price) : null;
+
+      this.logger.debug('[LEVEL] Analysis details', {
+        currentPrice: current.close,
+        supportLevels: supportLevels.length,
+        resistanceLevels: resistanceLevels.length,
+        topSupport: closestSupport ? { price: closestSupport.price, strength: closestSupport.strength, touches: closestSupport.touches } : null,
+        topResistance: closestResistance ? { price: closestResistance.price, strength: closestResistance.strength, touches: closestResistance.touches } : null,
+        distToSupport: distToSupport ? Math.round(distToSupport * 100) / 100 : null,
+        distToResistance: distToResistance ? Math.round(distToResistance * 100) / 100 : null,
+        proximityThreshold: Math.round(proximityThreshold * 100) / 100,
+        nearSupport,
+        nearResistance,
+        trend,
+      });
+    }
+
     // Determine direction
     let direction = SignalDirection.HOLD;
     let confidence = MIN_CONFIDENCE;
+    let reason = 'No signal condition met';
 
     if (nearSupport && (trend === 'up' || trend === 'neutral')) {
       direction = SignalDirection.LONG;
@@ -117,6 +140,7 @@ export class LevelAnalyzerNew {
         MAX_CONFIDENCE,
         MIN_CONFIDENCE + topSupport.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE),
       );
+      reason = `Support bounce: price=${current.close}, support=${topSupport.price}, trend=${trend}`;
     } else if (nearResistance && (trend === 'down' || trend === 'neutral')) {
       direction = SignalDirection.SHORT;
       const topResistance = resistanceLevels[0];
@@ -124,14 +148,29 @@ export class LevelAnalyzerNew {
         MAX_CONFIDENCE,
         MIN_CONFIDENCE + topResistance.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE),
       );
+      reason = `Resistance pullback: price=${current.close}, resistance=${topResistance.price}, trend=${trend}`;
     } else if (nearSupport && trend === 'down' && supportLevels[0]?.touches >= 2) {
       direction = SignalDirection.LONG;
       confidence = MIN_CONFIDENCE + 0.3;
+      reason = `Reversal at support: price=${current.close}, support=${supportLevels[0].price}, touches=${supportLevels[0].touches}`;
     } else if (nearResistance && trend === 'up' && resistanceLevels[0]?.touches >= 2) {
       direction = SignalDirection.SHORT;
       confidence = MIN_CONFIDENCE + 0.3;
+      reason = `Reversal at resistance: price=${current.close}, resistance=${resistanceLevels[0].price}, touches=${resistanceLevels[0].touches}`;
     } else {
       confidence = MIN_CONFIDENCE + (supportLevels.length + resistanceLevels.length) * 0.05;
+      // Provide detailed reason for HOLD
+      if (supportLevels.length === 0 && resistanceLevels.length === 0) {
+        reason = `HOLD: No levels detected (min ${MIN_CANDLES} candles needed)`;
+      } else if (!nearSupport && !nearResistance) {
+        reason = `HOLD: Price not near support/resistance (threshold=${Math.round(proximityThreshold * 100) / 100})`;
+      } else if (nearSupport && trend === 'down') {
+        reason = `HOLD: Near support but trend is down (need reverse pattern)`;
+      } else if (nearResistance && trend === 'up') {
+        reason = `HOLD: Near resistance but trend is up (need reverse pattern)`;
+      } else {
+        reason = `HOLD: No valid signal condition (supports=${supportLevels.length}, resistances=${resistanceLevels.length}, trend=${trend})`;
+      }
     }
 
     const signal: AnalyzerSignal = {
@@ -142,6 +181,15 @@ export class LevelAnalyzerNew {
       priority: this.priority,
       score: (confidence / 100) * this.weight,
     };
+
+    // Log signal with reason
+    if (this.logger) {
+      if (direction === SignalDirection.HOLD) {
+        this.logger.debug(`[LEVEL] ${reason}`);
+      } else {
+        this.logger.info(`[LEVEL] Signal: ${direction} | Confidence: ${signal.confidence}% | ${reason}`);
+      }
+    }
 
     this.lastSignal = signal;
     this.initialized = true;
