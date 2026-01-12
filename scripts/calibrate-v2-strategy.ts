@@ -91,7 +91,7 @@ logger.info(`🎛️ V2 Strategy Calibration`, {
  * Load and clone base strategy configuration
  */
 function loadBaseStrategyConfig(): StrategyConfig {
-  const configPath = path.join(__dirname, '../strategies/json/level-trading-v2.strategy.json');
+  const configPath = path.join(__dirname, '../strategies/json/simple-levels.strategy.json');
   const content = fs.readFileSync(configPath, 'utf-8');
   return JSON.parse(content);
 }
@@ -109,22 +109,31 @@ function createStrategyVariant(
   config.indicators.ema.fastPeriod = params.emaFastPeriod;
   config.indicators.ema.slowPeriod = params.emaSlowPeriod;
 
-  // Update analyzer weights and normalize
+  // Update analyzer weights for simple-levels strategy
+  // simple-levels has: LEVEL_ANALYZER_NEW, BREAKOUT_ANALYZER_NEW, TREND_DETECTOR_ANALYZER_NEW, WICK_ANALYZER_NEW
   const levelWeight = params.levelAnalyzerWeight;
-  const momentumWeight = params.momentumAnalyzerWeight;
-  const emaWeight = 1.0 - levelWeight - momentumWeight;
+  const breakoutWeight = params.momentumAnalyzerWeight; // Reuse momentum param for breakout
+  const remainingWeight = 1.0 - levelWeight - breakoutWeight;
 
   // Clamp to valid range
-  if (emaWeight < 0.05) {
+  if (remainingWeight < 0.05) {
     // Skip invalid combinations
     return null as any;
   }
 
+  // Distribute remaining weight between trend detector and wick analyzer
+  const trendWeight = remainingWeight * 0.6;
+  const wickWeight = remainingWeight * 0.4;
+
   config.analyzers[0].weight = levelWeight; // LEVEL_ANALYZER_NEW
-  config.analyzers[1].weight = momentumWeight; // PRICE_MOMENTUM_ANALYZER_NEW
-  config.analyzers[2].weight = emaWeight; // EMA_ANALYZER_NEW
+  config.analyzers[1].weight = breakoutWeight; // BREAKOUT_ANALYZER_NEW
+  config.analyzers[2].weight = trendWeight; // TREND_DETECTOR_ANALYZER_NEW
+  config.analyzers[3].weight = wickWeight; // WICK_ANALYZER_NEW
 
   // Update entry threshold
+  if (!config.entryThreshold) {
+    config.entryThreshold = 60;
+  }
   config.entryThreshold = params.minConfidenceThreshold;
 
   // Update risk management

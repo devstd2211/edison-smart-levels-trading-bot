@@ -32,7 +32,7 @@
     {
       "name": "BREAKOUT_ANALYZER_NEW",
       "enabled": true,
-      "weight": 0.25,
+      "weight": 0.35,
       "priority": 2,
       "minConfidence": 0.55,
       "maxConfidence": 1.0,
@@ -43,7 +43,7 @@
     {
       "name": "TREND_DETECTOR_ANALYZER_NEW",
       "enabled": true,
-      "weight": 0.20,
+      "weight": 0.21,
       "priority": 3,
       "minConfidence": 0.50,
       "maxConfidence": 1.0,
@@ -54,7 +54,7 @@
     {
       "name": "WICK_ANALYZER_NEW",
       "enabled": true,
-      "weight": 0.15,
+      "weight": 0.04,
       "priority": 4,
       "minConfidence": 0.50,
       "maxConfidence": 1.0,
@@ -65,8 +65,8 @@
   ],
   "indicators": {
     "ema": {
-      "fastPeriod": 12,
-      "slowPeriod": 26,
+      "fastPeriod": 9,
+      "slowPeriod": 19,
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5
     },
@@ -94,6 +94,7 @@
       "volumeMultiplier": 1.5
     }
   },
+  "entryThreshold": 30,
   "filters": {
     "blindZone": {
       "minSignalsForLong": 2,
@@ -125,7 +126,7 @@
   "riskManagement": {
     "stopLoss": {
       "percent": 2.0,
-      "atrMultiplier": 2.0,
+      "atrMultiplier": 1.5,
       "minDistancePercent": 0.5
     },
     "takeProfits": [
