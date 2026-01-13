@@ -42,10 +42,12 @@ THIS FILE: QUICK START
 | Phase | Name | Duration | Files | Status |
 |-------|------|----------|-------|--------|
 | **0.1** | Architecture Types | ✅ DONE | architecture.types.ts + 6 interfaces | COMPLETE |
-| **0.2** | Indicator Cache | 3-5 days | Core: ✅ DONE, Integration: IN PROGRESS | **BUILD SUCCESSFUL** |
-| **0.3** | Decision Functions | 2-3 days | src/decision-engine/*.ts | **AFTER 0.2** |
-| **1** | Action Queue | 5-7 days | ActionQueueService + handlers | Later |
-| **2+** | External Interfaces | 4+ weeks | IExchange, ICandleProvider, etc | Later |
+| **0.2** | Indicator Cache | ✅ DONE | Core: ✅ COMPLETE, Integration: NEXT | **BUILD SUCCESS** (fd5dec1, 01837d5) |
+| **Infra** | Registry + Loader | ✅ DONE | IndicatorRegistry, IndicatorLoader, IndicatorType enum | **BUILD SUCCESS** (1115708) |
+| **1** | Refactor Indicators | 1-2 days | Implement IIndicator in 6 indicators | **NEXT SESSION** |
+| **0.2-Int** | Phase 0.2 Integration | 1-2 days | BotFactory init, DI into analyzers, backtest | **AFTER PHASE 1** |
+| **0.3** | Decision Functions | 2-3 days | src/decision-engine/*.ts | Later |
+| **0.4** | Action Queue | 5-7 days | ActionQueueService + handlers | Later |
 
 ---
 
@@ -264,6 +266,124 @@ Results:
 - [ ] Git commit created
 
 **If all ✓ → Phase 0.2 COMPLETE**
+
+---
+
+## 🎯 Infrastructure Phase: Registry + Loader (Config-Driven Indicators)
+
+### Status: ✅ COMPLETE (Session 3)
+
+**Commit:** `1115708`
+
+### What Was Built
+
+**Problem Solved:**
+```
+❌ BEFORE: Hardcoded indicator dependencies
+           Each strategy needs all 6 indicators loaded
+           Indicators passed directly to analyzers
+           Magic strings everywhere ('EMA', 'RSI', etc)
+
+✅ AFTER: Config-driven, type-safe indicator loading
+          Strategy loads ONLY needed indicators from config
+          IndicatorRegistry + IndicatorLoader pattern
+          IndicatorType enum (NO magic strings!)
+```
+
+### Architecture (3 Layers)
+
+```
+Layer 1: REGISTRY (Pure metadata, NO implementations)
+  └─ IndicatorRegistry
+  └─ IIndicatorMetadata interface
+  └─ Map<IndicatorType, metadata>
+
+Layer 2: LOADER (Creates implementations from config)
+  └─ IndicatorLoader
+  └─ Imports: EmaIndicator, RsiIndicator, etc
+  └─ Returns: Map<IndicatorType, IIndicator>
+
+Layer 3: CONSUMER (Uses through IIndicator interface)
+  └─ Analyzers
+  └─ Receives: indicators: Map<IndicatorType, IIndicator>
+  └─ NO hardcoded dependencies
+```
+
+### Files Created
+
+**Types:**
+- `src/types/indicator-type.enum.ts` - IndicatorType enum (EMA, RSI, ATR, VOLUME, STOCHASTIC, BOLLINGER_BANDS)
+- `src/types/indicator.interface.ts` - IIndicator universal contract
+
+**Services:**
+- `src/services/indicator-registry.service.ts` - Pure registry (metadata only)
+
+**Loaders:**
+- `src/loaders/indicator.loader.ts` - Loads from config, creates instances
+
+### Type Safety (NO Magic Strings!)
+
+```typescript
+❌ OLD:
+indicators.set('EMA', ...)       // Magic string, typo possible
+indicators.set('EMÄ', ...)       // Oops! Different identifier
+
+✅ NEW:
+indicators.set(IndicatorType.EMA, ...)  // Enum, typo caught at compile time
+indicators.set(IndicatorType.EMÄ, ...)  // Compile error! Unknown enum value
+```
+
+### Why Separate Registry & Loader?
+
+| Aspect | Registry | Loader |
+|--------|----------|--------|
+| **Imports** | None (metadata only) | EmaIndicator, RsiIndicator, etc |
+| **Depends On** | IndicatorType enum | Registry + implementations |
+| **Changes** | New indicator? Add to enum | New indicator? Update loader |
+| **SOLID** | DIP respected ✅ | DIP respected ✅ |
+
+### Next: Phase 1 (Implement IIndicator)
+
+Each indicator needs to implement IIndicator:
+
+```typescript
+export class EmaIndicator implements IIndicator {
+  getType(): string { return 'EMA'; }
+  calculate(candles): number { ... }
+  isReady(candles): boolean { ... }
+  getMinCandlesRequired(): number { ... }
+}
+```
+
+Currently using `as any` casts - Phase 1 will fix this.
+
+---
+
+## 🎯 Phase 1: Refactor Indicators (Implement IIndicator)
+
+### Status: ⏳ NEXT SESSION
+
+**Task:** Update 6 indicators to implement IIndicator interface
+
+**Indicators:**
+1. EMA Indicator - implement IIndicator
+2. RSI Indicator - implement IIndicator
+3. ATR Indicator - implement IIndicator
+4. Volume Indicator - implement IIndicator
+5. Stochastic Indicator - implement IIndicator
+6. Bollinger Bands Indicator - implement IIndicator
+
+**For each:**
+- Add `implements IIndicator` to class definition
+- Implement `getType()` method
+- Implement `isReady(candles)` method
+- Implement `getMinCandlesRequired()` method
+- Verify build: `npm run build`
+- Remove `as any` cast from IndicatorLoader
+
+**Expected Time:** 1-2 days
+
+**After Phase 1:** Remove `as any` casts, full type safety ✅
 
 ---
 
