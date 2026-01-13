@@ -1,7 +1,7 @@
 import { CandleProvider } from '../providers/candle.provider';
 import { IIndicatorCache } from '../types/indicator-cache.interface';
 import { IIndicatorCalculator } from '../types/indicator-calculator.interface';
-import { IPreCalculationService } from '../types/pre-calculation.interface';
+import { IIndicatorPreCalculationService } from '../types/pre-calculation.interface';
 import { LoggerService } from './logger.service';
 import { TimeframeRole } from '../types';
 
@@ -32,7 +32,7 @@ interface PendingClose {
  * - IIndicatorCache interface
  * - CandleProvider
  */
-export class IndicatorPreCalculationService implements IPreCalculationService {
+export class IndicatorPreCalculationService implements IIndicatorPreCalculationService {
   private isCalculating = false;
   private pendingCloses: PendingClose[] = [];
   private onIndicatorsReadyCallback?: (

@@ -1,8 +1,9 @@
 import { TimeframeRole } from './enums';
 
 /**
- * Pre-Calculation Service Interface
+ * Indicator Pre-Calculation Service Interface
  *
+ * Contract for indicator pre-calculation services
  * Primary Implementation: IndicatorPreCalculationService
  * Mock Implementation: MockPreCalculationService (for testing)
  *
@@ -25,7 +26,7 @@ import { TimeframeRole } from './enums';
  * - ICandleProvider (where to get candles)
  * - ILogger (for logging)
  */
-export interface IPreCalculationService {
+export interface IIndicatorPreCalculationService {
   /**
    * Called when a candle closes
    * Queues the close event for processing

@@ -1,4 +1,4 @@
-import { IPreCalculationService } from '../types/pre-calculation.interface';
+import { IIndicatorPreCalculationService } from '../types/pre-calculation.interface';
 import { TimeframeRole } from '../types';
 
 /**
@@ -10,7 +10,7 @@ import { TimeframeRole } from '../types';
  * 3. Verify callbacks are called
  * 4. Test without real calculations
  */
-export class MockPreCalculationService implements IPreCalculationService {
+export class MockPreCalculationService implements IIndicatorPreCalculationService {
   private onIndicatorsReadyCallback?: (
     timeframe: TimeframeRole,
     closeTime: number
