@@ -146,10 +146,49 @@ export class EntryOrchestrator {
       }
 
       // =====================================================================
-      // STEP 1.5: Check for flat market (PHASE 1.3 - NEW)
+      // NEW STEP: Check for signal conflicts (BEFORE taking top signal!)
+      // =====================================================================
+      const conflictAnalysis = this.rankSignalsWithConflictDetection(
+        validSignals
+      );
+
+      this.logger.info('📊 Signal conflict analysis', {
+        totalValid: validSignals.length,
+        conflictLevel: `${Math.round(conflictAnalysis.conflictLevel * 100)}%`,
+        consensusStrength: `${Math.round(
+          conflictAnalysis.consensusStrength * 100
+        )}%`,
+        reasoning: conflictAnalysis.reasoning,
+      });
+
+      // CRITICAL: If too much conflict, WAIT instead of entering
+      if (conflictAnalysis.shouldWait) {
+        this.logger.warn('⚠️ Entry blocked due to signal conflict', {
+          reason: conflictAnalysis.reasoning,
+        });
+        return {
+          decision: EntryDecision.WAIT,
+          reason: `Signal conflict too high: ${conflictAnalysis.reasoning}`,
+        };
+      }
+
+      if (!conflictAnalysis.topSignal) {
+        return {
+          decision: EntryDecision.SKIP,
+          reason: 'No clear top signal after conflict analysis',
+        };
+      }
+
+      const topSignal = conflictAnalysis.topSignal;
+
+      // =====================================================================
+      // STEP 1.5: Check for flat market
       // =====================================================================
       if (flatMarketAnalysis) {
-        if (flatMarketAnalysis.isFlat && flatMarketAnalysis.confidence >= FLAT_MARKET_CONFIDENCE_THRESHOLD) {
+        if (
+          flatMarketAnalysis.isFlat &&
+          flatMarketAnalysis.confidence >= FLAT_MARKET_CONFIDENCE_THRESHOLD
+        ) {
           this.logger.warn('🚫 Entry blocked: Flat/ranging market detected', {
             flatConfidence: flatMarketAnalysis.confidence.toFixed(1) + '%',
             threshold: FLAT_MARKET_CONFIDENCE_THRESHOLD + '%',
@@ -158,31 +197,12 @@ export class EntryOrchestrator {
           });
           return {
             decision: EntryDecision.SKIP,
-            reason: `Flat market detected (${flatMarketAnalysis.confidence.toFixed(1)}% confidence) - no clear directional bias`,
+            reason: `Flat market detected (${flatMarketAnalysis.confidence.toFixed(
+              1
+            )}% confidence) - no clear directional bias`,
           };
         }
-
-        if (flatMarketAnalysis.isFlat && flatMarketAnalysis.confidence >= FLAT_MARKET_CONFIDENCE_THRESHOLD * 0.7) {
-          // Soft warning if approaching threshold
-          this.logger.debug('⚠️ Market approaching flat state', {
-            flatConfidence: flatMarketAnalysis.confidence.toFixed(1) + '%',
-            threshold: FLAT_MARKET_CONFIDENCE_THRESHOLD + '%',
-            note: 'Proceeding with caution',
-          });
-        }
       }
-
-      // =====================================================================
-      // STEP 2: Rank signals by confidence (highest first)
-      // =====================================================================
-      const rankedSignals = this.rankSignalsByConfidence(validSignals);
-      const topSignal = rankedSignals[0];
-
-      this.logger.debug('📊 Signals ranked by confidence', {
-        topSignal: topSignal.type,
-        topConfidence: topSignal.confidence.toFixed(1) + '%',
-        totalValid: rankedSignals.length,
-      });
 
       // =====================================================================
       // STEP 3: Check trend alignment (PHASE 4 RULE)
@@ -273,13 +293,16 @@ export class EntryOrchestrator {
         signal: topSignal.type,
         direction: topSignal.direction,
         confidence: topSignal.confidence.toFixed(1) + '%',
+        signalAgreement: `${conflictAnalysis.consensusStrength * 100}%`,
         adjustedPositionSize: riskDecision.adjustedPositionSize?.toFixed(4),
       });
 
       return {
         decision: EntryDecision.ENTER,
         signal: topSignal,
-        reason: `${topSignal.type} @ ${topSignal.confidence.toFixed(1)}% confidence`,
+        reason: `${topSignal.type} @ ${topSignal.confidence.toFixed(
+          1
+        )}% (${conflictAnalysis.direction} consensus)`,
         riskAssessment: riskDecision,
       };
     } catch (error) {
@@ -291,6 +314,118 @@ export class EntryOrchestrator {
         reason: `Orchestrator error: ${error instanceof Error ? error.message : 'unknown'}`,
       };
     }
+  }
+
+  /**
+   * Analyze signals for agreement/conflict
+   */
+  private rankSignalsWithConflictDetection(signals: Signal[]): {
+    topSignal: Signal | null;
+    conflictLevel: number;
+    consensusStrength: number;
+    shouldWait: boolean;
+    reasoning: string;
+    direction: 'LONG' | 'SHORT' | 'NONE';
+  } {
+    if (signals.length === 0) {
+      return {
+        topSignal: null,
+        conflictLevel: 0,
+        consensusStrength: 0,
+        shouldWait: false,
+        reasoning: 'No signals available',
+        direction: 'NONE',
+      };
+    }
+
+    // Count votes by direction
+    const longSignals = signals.filter(
+      (s) => s.direction === SignalDirection.LONG
+    );
+    const shortSignals = signals.filter(
+      (s) => s.direction === SignalDirection.SHORT
+    );
+    const holdSignals = signals.filter(
+      (s) => s.direction === SignalDirection.HOLD
+    );
+
+    const totalVotes = signals.length;
+
+    // IMPORTANT: Only count LONG and SHORT for conflict calculation
+    // HOLD signals don't participate in direction voting
+    const directionalVotes = longSignals.length + shortSignals.length;
+
+    // Calculate conflict metrics
+    let conflictLevel = 0;
+    let consensusStrength = 0;
+    let direction: 'LONG' | 'SHORT' | 'NONE' = 'NONE';
+
+    if (directionalVotes === 0) {
+      // All signals are HOLD
+      return {
+        topSignal: null,
+        conflictLevel: 0,
+        consensusStrength: 0,
+        shouldWait: false,
+        reasoning: 'All signals are HOLD (no direction)',
+        direction: 'NONE',
+      };
+    }
+
+    // Conflict = minority votes / total directional votes
+    const minorityVotes = Math.min(longSignals.length, shortSignals.length);
+    conflictLevel = minorityVotes / directionalVotes;
+
+    // Consensus = majority votes / total directional votes
+    const majorityVotes = Math.max(longSignals.length, shortSignals.length);
+    consensusStrength = majorityVotes / directionalVotes;
+
+    // Determine direction and whether to wait
+    let topSignal: Signal | null = null;
+    let shouldWait = false;
+    let reasoning = '';
+
+    if (conflictLevel >= 0.4) {
+      // CRITICAL: High conflict (40%+ of votes are opposite direction)
+      // This means signals are genuinely confused
+      // Example: 3 LONG, 2 SHORT → 40% conflict, too risky
+      shouldWait = true;
+      reasoning = `CONFLICT DETECTED: ${longSignals.length} LONG vs ${shortSignals.length} SHORT (${Math.round(
+        conflictLevel * 100
+      )}% conflict). Signals disagree too much, waiting for clarity.`;
+      direction = 'NONE';
+
+    } else if (longSignals.length > shortSignals.length) {
+      // LONG consensus
+      direction = 'LONG';
+      topSignal = longSignals.sort((a, b) => b.confidence - a.confidence)[0];
+      reasoning = `LONG consensus: ${longSignals.length}/${totalVotes} signals (conflict: ${Math.round(
+        conflictLevel * 100
+      )}%)`;
+
+    } else if (shortSignals.length > longSignals.length) {
+      // SHORT consensus
+      direction = 'SHORT';
+      topSignal = shortSignals.sort((a, b) => b.confidence - a.confidence)[0];
+      reasoning = `SHORT consensus: ${shortSignals.length}/${totalVotes} signals (conflict: ${Math.round(
+        conflictLevel * 100
+      )}%)`;
+
+    } else {
+      // Equal votes (e.g., 2 LONG, 2 SHORT)
+      shouldWait = true;
+      reasoning = `NO CONSENSUS: ${longSignals.length} LONG = ${shortSignals.length} SHORT. Equal votes, no clear direction.`;
+      direction = 'NONE';
+    }
+
+    return {
+      topSignal,
+      conflictLevel,
+      consensusStrength,
+      shouldWait,
+      reasoning,
+      direction,
+    };
   }
 
   /**

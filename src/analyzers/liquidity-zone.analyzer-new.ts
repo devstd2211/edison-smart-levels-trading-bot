@@ -23,24 +23,111 @@ export class LiquidityZoneAnalyzerNew {
     if (!this.enabled) throw new Error('[LIQUIDITY_ZONE] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[LIQUIDITY_ZONE] Invalid candles input');
     if (candles.length < 25) throw new Error('[LIQUIDITY_ZONE] Not enough candles');
+
     for (let i = 0; i < candles.length; i++) {
-      if (!candles[i] || typeof candles[i].volume !== 'number') throw new Error('[LIQUIDITY_ZONE] Invalid candle');
+      if (!candles[i] || typeof candles[i].volume !== 'number') {
+        throw new Error('[LIQUIDITY_ZONE] Invalid candle');
+      }
     }
 
     const zone = this.detectZone(candles);
-    const direction = zone.hasHigh ? SignalDirectionEnum.SHORT : zone.hasLow ? SignalDirectionEnum.LONG : SignalDirectionEnum.HOLD;
-    const confidence = Math.round((0.1 + zone.strength * 0.85) * 100);
-    const signal: AnalyzerSignal = { source: 'LIQUIDITY_ZONE_ANALYZER', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
+
+    // FIX #1: Properly handle HIGH vs LOW zones
+    let direction = SignalDirectionEnum.HOLD;
+    let confidence = 0;
+
+    if (zone.hasHigh && !zone.hasLow) {
+      // Pure HIGH zone: price was rejected at high prices
+      direction = SignalDirectionEnum.SHORT; // Expect pullback from high
+      confidence = Math.round((0.25 + zone.highStrength * 0.7) * 100);
+
+    } else if (zone.hasLow && !zone.hasHigh) {
+      // Pure LOW zone: price was supported at low prices
+      direction = SignalDirectionEnum.LONG; // Expect bounce from low
+      confidence = Math.round((0.25 + zone.lowStrength * 0.7) * 100);
+
+    } else if (zone.hasHigh && zone.hasLow) {
+      // Both zones present: conflicting signals
+      direction = SignalDirectionEnum.HOLD; // No clear direction
+      confidence = Math.round(Math.min(zone.highStrength, zone.lowStrength) * 0.4 * 100);
+      if (this.logger) {
+        this.logger.debug('[LIQUIDITY_ZONE] Both HIGH and LOW zones detected, conflicting signals');
+      }
+
+    } else {
+      // No clear zones
+      direction = SignalDirectionEnum.HOLD;
+      confidence = 0;
+    }
+
+    // Ensure confidence is valid [0, 100]
+    confidence = Math.max(0, Math.min(100, confidence));
+
+    const signal: AnalyzerSignal = {
+      source: 'LIQUIDITY_ZONE_ANALYZER',
+      direction,
+      confidence,
+      weight: this.weight,
+      priority: this.priority,
+      score: (confidence / 100) * this.weight,
+    };
+
     this.lastSignal = signal;
     this.initialized = true;
     return signal;
   }
 
-  private detectZone(candles: Candle[]): { hasHigh: boolean; hasLow: boolean; strength: number } {
+  /**
+   * FIX #2: Detect HIGH and LOW zones independently
+   * HIGH zone: recent high prices with elevated volume
+   * LOW zone: recent low prices with elevated volume
+   */
+  private detectZone(
+    candles: Candle[]
+  ): { hasHigh: boolean; hasLow: boolean; highStrength: number; lowStrength: number } {
     const recent = candles.slice(-30);
-    const highVolume = recent.filter(c => (c.volume || 0) > recent.reduce((s, x) => s + (x.volume || 0), 0) / recent.length * 1.5);
-    const highVol = highVolume.length > 5;
-    return { hasHigh: highVol, hasLow: highVol, strength: highVolume.length / recent.length };
+
+    if (recent.length === 0) {
+      return { hasHigh: false, hasLow: false, highStrength: 0, lowStrength: 0 };
+    }
+
+    // Calculate average volume
+    const avgVolume = recent.reduce((s, x) => s + (x.volume || 0), 0) / recent.length;
+    const volumeThreshold = avgVolume * 1.5; // 50% above average = high volume
+
+    // Find max and min prices
+    const maxHigh = recent.reduce((max, x) => Math.max(max, x.high), 0);
+    const minLow = recent.reduce((min, x) => Math.min(min, x.low), Infinity);
+
+    // HIGH zone: recent HIGH prices with elevated volume
+    // (top 10% of price range with high volume)
+    const highPricesWithVolume = recent.filter((c) => {
+      const isHighPrice = c.high > maxHigh * 0.9; // Top 10% of recent highs
+      const hasHighVolume = (c.volume || 0) > volumeThreshold;
+      return isHighPrice && hasHighVolume;
+    });
+
+    // LOW zone: recent LOW prices with elevated volume
+    // (bottom 10% of price range with high volume)
+    const lowPricesWithVolume = recent.filter((c) => {
+      const isLowPrice = c.low < minLow * 1.1; // Bottom 10% of recent lows
+      const hasHighVolume = (c.volume || 0) > volumeThreshold;
+      return isLowPrice && hasHighVolume;
+    });
+
+    // Calculate strength (ratio of zone candles)
+    const highStrength = highPricesWithVolume.length / recent.length;
+    const lowStrength = lowPricesWithVolume.length / recent.length;
+
+    // Threshold: need at least 2 candles in zone to consider it valid
+    const minCandlesForZone = 2;
+
+    return {
+      hasHigh: highPricesWithVolume.length >= minCandlesForZone,
+      hasLow: lowPricesWithVolume.length >= minCandlesForZone,
+      highStrength,
+      lowStrength,
+    };
   }
 
   getLastSignal(): AnalyzerSignal | null { return this.lastSignal; }

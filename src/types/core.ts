@@ -189,3 +189,26 @@ export interface Position {
   protectionVerifiedOnce?: boolean; // Protection verified once - no need to check repeatedly
   status: 'OPEN' | 'CLOSED'; // Position status - used for idempotent close operations
 }
+
+// ============================================================================
+// AGGREGATED SIGNAL (from StrategyCoordinator)
+// ============================================================================
+
+/**
+ * Aggregated signal from StrategyCoordinator
+ * Result of combining all analyzer signals with strategy weights
+ */
+export interface AggregatedSignal {
+  direction: SignalDirection | null; // LONG, SHORT, or null if no signal
+  confidence: number; // 0-1, confidence in signal
+  totalScore: number; // 0-1, weighted score
+  signalCount: number; // number of contributing analyzers
+  analyzers: {
+    name: string;
+    direction: SignalDirection;
+    confidence: number;
+  }[];
+  appliedPenalty: number; // blind zone penalty applied (0.0-1.0)
+  reason: string; // human-readable explanation
+  timestamp: number; // when signal was generated
+}

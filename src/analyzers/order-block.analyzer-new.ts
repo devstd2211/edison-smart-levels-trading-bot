@@ -23,30 +23,203 @@ export class OrderBlockAnalyzerNew {
     if (!this.enabled) throw new Error('[ORDER_BLOCK] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[ORDER_BLOCK] Invalid candles input');
     if (candles.length < 25) throw new Error('[ORDER_BLOCK] Not enough candles');
+
     for (let i = 0; i < candles.length; i++) {
-      if (!candles[i] || typeof candles[i].close !== 'number') throw new Error('[ORDER_BLOCK] Invalid candle');
+      if (!candles[i] || typeof candles[i].close !== 'number') {
+        throw new Error('[ORDER_BLOCK] Invalid candle');
+      }
     }
 
     const block = this.detectBlock(candles);
-    const direction = block.type === 'BULLISH' ? SignalDirectionEnum.LONG : block.type === 'BEARISH' ? SignalDirectionEnum.SHORT : SignalDirectionEnum.HOLD;
-    const confidence = Math.round((0.1 + block.strength * 0.85) * 100);
-    const signal: AnalyzerSignal = { source: 'ORDER_BLOCK_ANALYZER', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
+
+    // FIX #1: Only generate signal if block is relevant (close to current price)
+    if (block.type === 'NONE' || !block.isRelevant) {
+      const signal: AnalyzerSignal = {
+        source: 'ORDER_BLOCK_ANALYZER',
+        direction: SignalDirectionEnum.HOLD,
+        confidence: 0,
+        weight: this.weight,
+        priority: this.priority,
+        score: 0,
+      };
+      this.lastSignal = signal;
+      this.initialized = true;
+      return signal;
+    }
+
+    // FIX #2: Use proper confidence based on strength
+    const direction = block.type === 'BULLISH' ? SignalDirectionEnum.LONG : SignalDirectionEnum.SHORT;
+    const confidence = Math.round((0.15 + block.strength * 0.8) * 100);
+
+    const signal: AnalyzerSignal = {
+      source: 'ORDER_BLOCK_ANALYZER',
+      direction,
+      confidence: Math.max(0, Math.min(100, confidence)),
+      weight: this.weight,
+      priority: this.priority,
+      score: (confidence / 100) * this.weight,
+    };
+
     this.lastSignal = signal;
     this.initialized = true;
     return signal;
   }
 
-  private detectBlock(candles: Candle[]): { type: 'BULLISH' | 'BEARISH' | 'NONE'; strength: number } {
-    const recent = candles.slice(-5);
-    const bodySize = (c: Candle) => Math.abs(c.close - c.open);
-    const largeBody = recent.filter(c => bodySize(c) > bodySize(recent[0]) * 0.8);
+  /**
+   * FIX #3: Detect REAL order blocks using wick rejection
+   *
+   * ORDER BLOCK THEORY (SMC):
+   * - Bullish OB: Price tried to go down, but got rejected (big lower wick)
+   * - Bearish OB: Price tried to go up, but got rejected (big upper wick)
+   *
+   * Detection:
+   * 1. Find candles with wick > 1.5x body size (rejection signal)
+   * 2. Count rejections at each price level
+   * 3. Find the most relevant block (closest to current price)
+   * 4. Calculate strength based on: rejection count + proximity
+   */
+  private detectBlock(
+    candles: Candle[]
+  ): {
+    type: 'BULLISH' | 'BEARISH' | 'NONE';
+    strength: number;
+    blockLevel?: number;
+    distance?: number;
+    isRelevant: boolean;
+  } {
+    const recent = candles.slice(-10);
+    const lastCandle = candles[candles.length - 1];
 
-    if (largeBody.length >= 2) {
-      const lastClose = candles[candles.length - 1].close;
-      const avgHigh = largeBody.reduce((s, c) => s + c.high, 0) / largeBody.length;
-      return lastClose < avgHigh ? { type: 'BULLISH', strength: 0.6 } : { type: 'BEARISH', strength: 0.6 };
+    if (recent.length < 3) {
+      return { type: 'NONE', strength: 0, isRelevant: false };
     }
-    return { type: 'NONE', strength: 0 };
+
+    // Helper: Calculate wick-to-body ratios
+    const getWickRatio = (
+      c: Candle
+    ): { upper: number; lower: number; body: number } => {
+      const body = Math.abs(c.close - c.open);
+      const upperWick = c.high - Math.max(c.open, c.close);
+      const lowerWick = Math.min(c.open, c.close) - c.low;
+
+      return {
+        upper: body > 0 ? upperWick / body : 0,
+        lower: body > 0 ? lowerWick / body : 0,
+        body,
+      };
+    };
+
+    // FIX #4: Find rejections (wick > 1.5x body)
+    // BEARISH rejection: upper wick (price went up, got rejected)
+    const bearishRejections = recent
+      .map((c, i) => {
+        const wick = getWickRatio(c);
+        return {
+          index: i,
+          candle: c,
+          level: c.high, // Top of rejection wick
+          wickRatio: wick.upper,
+          body: wick.body,
+          isRejection: wick.upper >= 1.5 && wick.body > 0,
+        };
+      })
+      .filter((x) => x.isRejection);
+
+    // BULLISH rejection: lower wick (price went down, got rejected)
+    const bullishRejections = recent
+      .map((c, i) => {
+        const wick = getWickRatio(c);
+        return {
+          index: i,
+          candle: c,
+          level: c.low, // Bottom of rejection wick
+          wickRatio: wick.lower,
+          body: wick.body,
+          isRejection: wick.lower >= 1.5 && wick.body > 0,
+        };
+      })
+      .filter((x) => x.isRejection);
+
+    // FIX #5: Find most relevant block (closest to current price)
+    interface BlockCandidate {
+      type: 'BULLISH' | 'BEARISH';
+      level: number;
+      distance: number;
+      rejections: any[];
+    }
+
+    let bestBlock: BlockCandidate | null = null;
+    let minDistance = Infinity;
+
+    // Check bearish rejections → BULLISH order block
+    if (bearishRejections.length > 0) {
+      // Use most recent rejection as block level
+      const blockLevel = bearishRejections[bearishRejections.length - 1].level;
+      const distance = Math.abs(lastCandle.close - blockLevel) / blockLevel;
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestBlock = {
+          type: 'BULLISH',
+          level: blockLevel,
+          distance,
+          rejections: bearishRejections,
+        };
+      }
+    }
+
+    // Check bullish rejections → BEARISH order block
+    if (bullishRejections.length > 0) {
+      const blockLevel = bullishRejections[bullishRejections.length - 1].level;
+      const distance = Math.abs(lastCandle.close - blockLevel) / blockLevel;
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestBlock = {
+          type: 'BEARISH',
+          level: blockLevel,
+          distance,
+          rejections: bullishRejections,
+        };
+      }
+    }
+
+    // No rejections found
+    if (!bestBlock) {
+      return { type: 'NONE', strength: 0, isRelevant: false };
+    }
+
+    // FIX #6: Calculate strength
+    // Strength = f(rejectionCount, distance)
+    // More rejections = stronger
+    // Closer distance = stronger
+    const maxDistanceThreshold = 0.05; // 5% distance = full strength
+    const maxRejectionCount = 5; // 5+ rejections = max strength
+
+    // Distance factor: 0 at block, 1 when too far
+    const distanceFactor = Math.min(1, bestBlock.distance / maxDistanceThreshold);
+
+    // Rejection factor: 0 with no rejections, 1 with many
+    const rejectionFactor = Math.min(1, bestBlock.rejections.length / maxRejectionCount);
+
+    // Combined strength: both matter equally
+    // At block (distance=0) with many rejections (ratio=1): strength ≈ 1.0
+    // Far from block (distance=max) with few rejections: strength ≈ 0
+    const strength = (1 - distanceFactor * 0.5) * rejectionFactor;
+
+    // Only consider block relevant if:
+    // 1. It has at least 1 rejection (confirmed)
+    // 2. Price is within 10% of block level
+    const isRelevant =
+      bestBlock.rejections.length >= 1 && bestBlock.distance <= 0.1;
+
+    return {
+      type: bestBlock.type,
+      strength: Math.max(0, Math.min(1, strength)),
+      blockLevel: bestBlock.level,
+      distance: bestBlock.distance,
+      isRelevant,
+    };
   }
 
   getLastSignal(): AnalyzerSignal | null { return this.lastSignal; }

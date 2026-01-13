@@ -44,6 +44,7 @@ export type {
   StopLossConfig,
   Signal,
   Position,
+  AggregatedSignal,
 } from './core';
 
 // Re-export all strategy types
@@ -191,3 +192,36 @@ export {
   validateAnalyzerConfig,
   validateIndicatorConfig,
 } from './config-new.types';
+
+// Re-export architecture refactoring types
+export { ActionType } from './architecture.types';
+export type {
+  IAction,
+  AnyAction,
+  ActionResult,
+  IActionHandler,
+  IActionQueue,
+  OpenPositionAction,
+  ClosePositionAction,
+  UpdateStopLossAction,
+  ActivateTrailingAction,
+  ClosePercentAction,
+  MoveSLToBreakeven,
+  EntryContext,
+  EntryDecisionResult,
+  ExitContext,
+  ExitDecisionResult,
+  TradeValidationResult,
+  RiskApprovalResult,
+  TrendContext,
+  VolatilityContext,
+  MarketConditions,
+  RiskLimits,
+  IPositionLifecycle,
+  IRiskGatekeeper,
+  IDecisionEngine,
+  IEventEmitter,
+  MemorySnapshot,
+  IQueueMonitor,
+  HealthStatus,
+} from './architecture.types';
