@@ -834,3 +834,121 @@ export class CSVExportError extends TradingError {
     Object.setPrototypeOf(this, CSVExportError.prototype);
   }
 }
+
+// ============================================================================
+// POSITION MONITORING DOMAIN ERRORS (Phase 8.9.3)
+// ============================================================================
+
+/**
+ * Position monitoring error
+ * Base error for position monitoring operations
+ */
+export class PositionMonitoringError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      positionId?: string;
+      operation: string;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'POSITION_MONITORING_ERROR',
+      ErrorDomain.POSITION,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, PositionMonitoringError.prototype);
+  }
+}
+
+/**
+ * Position exchange sync error
+ * Failed to sync position state with exchange (price, quantity, status)
+ */
+export class PositionExchangeSyncError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      positionId?: string;
+      syncType: 'closed' | 'price' | 'quantity' | 'status';
+      expectedValue?: unknown;
+      actualValue?: unknown;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'POSITION_EXCHANGE_SYNC_ERROR',
+      ErrorDomain.POSITION,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, PositionExchangeSyncError.prototype);
+  }
+}
+
+/**
+ * Position protection error
+ * Protection (TP/SL) verification or setup failed
+ */
+export class PositionProtectionError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      positionId?: string;
+      protectionType: 'stopLoss' | 'takeProfit' | 'trailingStop' | 'all';
+      hasStopLoss?: boolean;
+      hasTakeProfit?: boolean;
+      hasTrailingStop?: boolean;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'POSITION_PROTECTION_ERROR',
+      ErrorDomain.POSITION,
+      ErrorSeverity.CRITICAL,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, PositionProtectionError.prototype);
+  }
+}
+
+/**
+ * Position price fetch error
+ * Failed to fetch current market price for position monitoring
+ */
+export class PositionPriceFetchError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      symbol?: string;
+      positionId?: string;
+      reason: string;
+      lastSuccessfulPrice?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'POSITION_PRICE_FETCH_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, PositionPriceFetchError.prototype);
+  }
+}

@@ -21,6 +21,13 @@ import { TelegramService } from './telegram.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';
 import { PositionPnLCalculatorService } from './position-pnl-calculator.service';
 import { PositionSyncService } from './position-sync.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import {
+  PositionMonitoringError,
+  PositionExchangeSyncError,
+  PositionProtectionError,
+  PositionPriceFetchError,
+} from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -48,6 +55,7 @@ export class PositionMonitorService extends EventEmitter {
     private readonly pnlCalculator: PositionPnLCalculatorService,
     private readonly positionSyncService: PositionSyncService,
     private readonly positionExitingService?: any, // PositionExitingService (optional for now)
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.3: ErrorHandler integration
   ) {
     super();
   }
@@ -115,6 +123,7 @@ export class PositionMonitorService extends EventEmitter {
 
   /**
    * Monitor position (called periodically)
+   * Strategy: GRACEFUL_DEGRADE for most operations, SKIP for Telegram alerts
    * This is a safety check - main logic is driven by WebSocket events
    */
   private async monitorPosition(): Promise<void> {
@@ -133,7 +142,40 @@ export class PositionMonitorService extends EventEmitter {
       }
 
       // 2. SAFETY CHECK: Verify position exists on exchange
-      const exchangePosition = await this.bybitService.getPosition(currentPosition.id);
+      // Strategy: GRACEFUL_DEGRADE for sync failures (continue with reduced checks)
+      let exchangePosition: Position | null = null;
+      if (this.errorHandler) {
+        const syncResult = await this.errorHandler.executeAsync(
+          async () => await this.bybitService.getPosition(currentPosition.id),
+          {
+            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+            context: 'PositionMonitorService.getPosition',
+            onRecover: () => {
+              this.logger.warn('⚠️ Position sync failed, using cached position data');
+            },
+            onFailure: (error) => {
+              this.logger.error('❌ Position exchange sync failed', {
+                positionId: currentPosition.id,
+                error: error.message,
+              });
+            },
+          },
+        );
+        if (syncResult.success && syncResult.value) {
+          exchangePosition = syncResult.value;
+        } else {
+          // Graceful degrade: use cached position
+          exchangePosition = currentPosition;
+        }
+      } else {
+        try {
+          exchangePosition = await this.bybitService.getPosition(currentPosition.id);
+        } catch (error) {
+          // Fallback to cached position data
+          this.logger.warn('Failed to fetch position from exchange, using cached data');
+          exchangePosition = currentPosition;
+        }
+      }
 
       if (exchangePosition === null || exchangePosition.quantity === POSITION_SIZE_ZERO) {
         // Double-check: position might have been closed by WebSocket during async call
@@ -144,8 +186,32 @@ export class PositionMonitorService extends EventEmitter {
         }
 
         // Position closed on exchange but WebSocket event missed - sync state
-        await this.positionSyncService.syncClosedPosition(currentPosition);
-        return;
+        // Strategy: GRACEFUL_DEGRADE for sync service failures
+        if (this.errorHandler) {
+          const closeResult = await this.errorHandler.executeAsync(
+            async () => await this.positionSyncService.syncClosedPosition(currentPosition),
+            {
+              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+              context: 'PositionMonitorService.syncClosedPosition',
+              onFailure: (error) => {
+                this.logger.error('❌ Failed to sync closed position', {
+                  positionId: currentPosition.id,
+                  error: error.message,
+                });
+              },
+            },
+          );
+          if (closeResult.success) {
+            return;
+          }
+        } else {
+          try {
+            await this.positionSyncService.syncClosedPosition(currentPosition);
+            return;
+          } catch (syncError) {
+            this.logger.error('Failed to sync closed position', { error: syncError });
+          }
+        }
       }
 
       // 🚨 CRITICAL: Verify TP/SL protection is active
@@ -174,16 +240,45 @@ export class PositionMonitorService extends EventEmitter {
             activeOrders: protection.activeOrders,
           });
 
+          // Throw protection error for ErrorHandler
+          const protectionError = new PositionProtectionError(
+            '🚨 Unprotected position detected - emergency close initiated',
+            {
+              positionId: currentPosition.id,
+              protectionType: 'all',
+              hasStopLoss: protection.hasStopLoss,
+              hasTakeProfit: protection.hasTakeProfit,
+              hasTrailingStop: protection.hasTrailingStop,
+              reason: 'Position has no active protection orders',
+            },
+          );
+
           // Close position immediately - no emergency protection attempts
           try {
             await this.bybitService.closePosition({ positionId: currentPosition.id, percentage: 100 });
 
-            await this.telegram.sendAlert(
-              '🚨 UNPROTECTED POSITION CLOSED @ market price!\n' +
-              `Side: ${currentPosition.side}\n` +
-              `Entry: ${currentPosition.entryPrice}\n` +
-              'Reason: No SL/TP protection detected',
-            );
+            // Send Telegram alert with SKIP strategy (non-blocking)
+            if (this.errorHandler) {
+              await this.errorHandler.executeAsync(
+                async () => await this.telegram.sendAlert(
+                  '🚨 UNPROTECTED POSITION CLOSED @ market price!\n' +
+                  `Side: ${currentPosition.side}\n` +
+                  `Entry: ${currentPosition.entryPrice}\n` +
+                  'Reason: No SL/TP protection detected',
+                ),
+                {
+                  strategy: RecoveryStrategy.SKIP,
+                  context: 'PositionMonitorService.sendUnprotectedAlert',
+                },
+              );
+            } else {
+              await this.telegram.sendAlert(
+                '🚨 UNPROTECTED POSITION CLOSED @ market price!\n' +
+                `Side: ${currentPosition.side}\n` +
+                `Entry: ${currentPosition.entryPrice}\n` +
+                'Reason: No SL/TP protection detected',
+              );
+            }
 
             this.emit('positionClosedEmergency', currentPosition);
             await this.positionManager.clearPosition();
@@ -195,14 +290,32 @@ export class PositionMonitorService extends EventEmitter {
               error: closeError instanceof Error ? closeError.message : String(closeError),
             });
 
-            await this.telegram.sendAlert(
-              '🚨🚨🚨 CRITICAL ALERT 🚨🚨🚨\n' +
-              `Position ${currentPosition.id} is UNPROTECTED and CANNOT BE CLOSED!\n` +
-              'MANUAL INTERVENTION REQUIRED IMMEDIATELY!\n' +
-              `Side: ${currentPosition.side}\n` +
-              `Entry: ${currentPosition.entryPrice}\n` +
-              `Quantity: ${currentPosition.quantity}`,
-            );
+            // Send critical alert with SKIP strategy
+            if (this.errorHandler) {
+              await this.errorHandler.executeAsync(
+                async () => await this.telegram.sendAlert(
+                  '🚨🚨🚨 CRITICAL ALERT 🚨🚨🚨\n' +
+                  `Position ${currentPosition.id} is UNPROTECTED and CANNOT BE CLOSED!\n` +
+                  'MANUAL INTERVENTION REQUIRED IMMEDIATELY!\n' +
+                  `Side: ${currentPosition.side}\n` +
+                  `Entry: ${currentPosition.entryPrice}\n` +
+                  `Quantity: ${currentPosition.quantity}`,
+                ),
+                {
+                  strategy: RecoveryStrategy.SKIP,
+                  context: 'PositionMonitorService.sendCriticalUnprotectedAlert',
+                },
+              );
+            } else {
+              await this.telegram.sendAlert(
+                '🚨🚨🚨 CRITICAL ALERT 🚨🚨🚨\n' +
+                `Position ${currentPosition.id} is UNPROTECTED and CANNOT BE CLOSED!\n` +
+                'MANUAL INTERVENTION REQUIRED IMMEDIATELY!\n' +
+                `Side: ${currentPosition.side}\n` +
+                `Entry: ${currentPosition.entryPrice}\n` +
+                `Quantity: ${currentPosition.quantity}`,
+              );
+            }
             return; // Exit monitoring - manual intervention needed
           }
         } else {
@@ -216,14 +329,37 @@ export class PositionMonitorService extends EventEmitter {
       }
 
       // 3. Get current price
-      let currentPrice: number;
-      try {
-        currentPrice = await this.bybitService.getCurrentPrice();
-      } catch (priceError) {
-        this.logger.warn('Failed to get current price', {
-          error: priceError instanceof Error ? priceError.message : String(priceError),
-        });
-        return; // Skip this monitoring cycle
+      // Strategy: GRACEFUL_DEGRADE for price fetch failures
+      let currentPrice: number | null = null;
+      if (this.errorHandler) {
+        const priceResult = await this.errorHandler.executeAsync(
+          async () => await this.bybitService.getCurrentPrice(),
+          {
+            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+            context: 'PositionMonitorService.getCurrentPrice',
+            onFailure: (error) => {
+              this.logger.warn('⚠️ Failed to fetch current price, skipping price-based checks', {
+                error: error.message,
+              });
+            },
+          },
+        );
+        if (priceResult.success && priceResult.value !== undefined) {
+          currentPrice = priceResult.value;
+        }
+      } else {
+        try {
+          currentPrice = await this.bybitService.getCurrentPrice();
+        } catch (priceError) {
+          this.logger.warn('Failed to get current price', {
+            error: priceError instanceof Error ? priceError.message : String(priceError),
+          });
+        }
+      }
+
+      // Skip price-based checks if price fetch failed
+      if (currentPrice === null) {
+        return;
       }
 
       // Race condition check: position might have closed during API call
@@ -398,12 +534,35 @@ export class PositionMonitorService extends EventEmitter {
 
   /**
    * Deep sync check - runs every 30s for positions > 2 minutes old
+   * Strategy: GRACEFUL_DEGRADE for sync failures (non-critical)
    * Delegates to PositionSyncService for verification logic
    */
   private async deepSyncCheck(): Promise<void> {
     try {
       const position = this.positionManager.getCurrentPosition();
-      await this.positionSyncService.deepSyncCheck(position);
+
+      if (this.errorHandler) {
+        // Use ErrorHandler with GRACEFUL_DEGRADE strategy
+        const syncResult = await this.errorHandler.executeAsync(
+          async () => await this.positionSyncService.deepSyncCheck(position),
+          {
+            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+            context: 'PositionMonitorService.deepSyncCheck',
+            onRecover: () => {
+              this.logger.debug('Deep sync check completed with degradation');
+            },
+            onFailure: (error) => {
+              this.logger.warn('⚠️ Deep sync check failed, continuing with normal monitoring', {
+                error: error.message,
+              });
+            },
+          },
+        );
+        // No action needed on success - deepSyncCheck handles its own side effects
+      } else {
+        // Fallback to direct call
+        await this.positionSyncService.deepSyncCheck(position);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
