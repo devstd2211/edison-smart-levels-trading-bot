@@ -3,6 +3,15 @@ import { TIME_MULTIPLIERS } from '../constants/technical.constants';
 import { Config, LoggerService } from '../types';
 import { BotServices } from './bot-services';
 import { isCriticalApiError } from '../utils/error-helper';
+import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
+import {
+  ExchangeConnectionError,
+  ExchangeAPIError,
+  ExchangeRateLimitError,
+  WebSocketConnectionError,
+  PositionMonitoringError,
+  ConfigurationError,
+} from '../errors/DomainErrors';
 
 /**
  * BotInitializer - Manages bot lifecycle (initialization and shutdown)
@@ -19,11 +28,136 @@ export class BotInitializer {
   private logger: LoggerService;
   private periodicTaskInterval: NodeJS.Timeout | null = null;
 
+  // Retry configurations for different operations
+  private readonly BYBIT_INIT_RETRY_CONFIG: RetryConfig = {
+    maxAttempts: 3,
+    initialDelayMs: 500,
+    backoffMultiplier: 2,
+    maxDelayMs: 2000,
+  };
+
+  private readonly TIME_SYNC_RETRY_CONFIG: RetryConfig = {
+    maxAttempts: 3,
+    initialDelayMs: 300,
+    backoffMultiplier: 2,
+    maxDelayMs: 1500,
+  };
+
+  private readonly CANDLE_PROVIDER_RETRY_CONFIG: RetryConfig = {
+    maxAttempts: 5,
+    initialDelayMs: 1000,
+    backoffMultiplier: 2,
+    maxDelayMs: 5000,
+  };
+
+  private readonly WEBSOCKET_RETRY_CONFIG: RetryConfig = {
+    maxAttempts: 3,
+    initialDelayMs: 5000,
+    backoffMultiplier: 1.5,
+    maxDelayMs: 10000,
+  };
+
+  private readonly MONITOR_START_RETRY_CONFIG: RetryConfig = {
+    maxAttempts: 3,
+    initialDelayMs: 500,
+    backoffMultiplier: 2,
+    maxDelayMs: 2000,
+  };
+
   constructor(
     private services: BotServices,
     private config: Config,
+    private errorHandler?: ErrorHandler,
   ) {
     this.logger = services.logger;
+  }
+
+  /**
+   * Classify initialization error into appropriate domain error type
+   */
+  private classifyInitError(
+    error: unknown,
+    operation: string,
+    context: Record<string, unknown> = {},
+  ): Error {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const originalError = error instanceof Error ? error : undefined;
+
+    // Network/connection errors
+    if (
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('network')
+    ) {
+      return new ExchangeConnectionError(
+        `Failed during ${operation}`,
+        {
+          exchangeName: 'bybit',
+          ...context,
+        },
+        originalError,
+      );
+    }
+
+    // Rate limit errors
+    if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+      return new ExchangeRateLimitError(
+        `Rate limit during ${operation}`,
+        { exchangeName: 'bybit', retryAfterMs: 5000, ...context },
+        originalError,
+      );
+    }
+
+    // Position monitoring errors (check before WebSocket to be more specific)
+    if (
+      operation.toLowerCase().includes('monitor') ||
+      operation.toLowerCase().includes('position')
+    ) {
+      return new PositionMonitoringError(
+        `Monitor failed during ${operation}`,
+        {
+          operation,
+          reason: errorMessage,
+          ...context,
+        },
+        originalError,
+      );
+    }
+
+    // WebSocket errors
+    if (operation.includes('WebSocket') || errorMessage.includes('ws://')) {
+      return new WebSocketConnectionError(
+        `WS failed during ${operation}`,
+        {
+          url: context.url as string | undefined,
+          ...context,
+        },
+        originalError,
+      );
+    }
+
+    // Configuration errors
+    if (operation.includes('session') || operation.includes('stats')) {
+      return new ConfigurationError(
+        `Config error during ${operation}`,
+        {
+          configKey: operation,
+          issue: errorMessage,
+          ...context,
+        },
+        originalError,
+      );
+    }
+
+    // Default: ExchangeAPIError
+    return new ExchangeAPIError(
+      `Failed during ${operation}`,
+      {
+        exchangeName: 'bybit',
+        ...context,
+      },
+      originalError,
+    );
   }
 
   /**
@@ -65,7 +199,7 @@ export class BotInitializer {
   }
 
   /**
-   * Connect WebSocket connections
+   * Connect WebSocket connections with retry logic
    * Called after initialization, before trading starts
    */
   async connectWebSockets(): Promise<void> {
@@ -73,13 +207,17 @@ export class BotInitializer {
       this.logger.error('🔥🔥🔥 connectWebSockets() CALLED - CRITICAL FLOW POINT 🔥🔥🔥');
       this.logger.info('📡 Connecting WebSocket connections...');
 
-      // Connect Private WebSocket (position/orders)
+      // Connect Private WebSocket with retry
       this.logger.info('Connecting Private WebSocket...');
-      this.services.webSocketManager.connect();
+      await this.connectWithRetry('Private WebSocket', () => {
+        this.services.webSocketManager.connect();
+      });
 
-      // Connect Public WebSocket (kline/candles/orderbook)
+      // Connect Public WebSocket with retry
       this.logger.info('Connecting Public WebSocket...');
-      this.services.publicWebSocket.connect();
+      await this.connectWithRetry('Public WebSocket', () => {
+        this.services.publicWebSocket.connect();
+      });
 
       this.logger.info('✅ WebSocket connections established');
 
@@ -93,6 +231,40 @@ export class BotInitializer {
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
+    }
+  }
+
+  /**
+   * Helper to connect WebSocket with retry logic
+   */
+  private async connectWithRetry(
+    wsName: string,
+    connectFn: () => void,
+  ): Promise<void> {
+    if (this.errorHandler) {
+      for (let attempt = 1; attempt <= this.WEBSOCKET_RETRY_CONFIG.maxAttempts; attempt++) {
+        try {
+          connectFn();
+          return;
+        } catch (error) {
+          if (attempt === this.WEBSOCKET_RETRY_CONFIG.maxAttempts) {
+            throw this.classifyInitError(error, `connectWebSocket(${wsName})`, {
+              wsName,
+            });
+          }
+
+          const delay = this.calculateRetryDelay(
+            attempt,
+            this.WEBSOCKET_RETRY_CONFIG,
+          );
+          this.logger.warn(`🔄 Retrying ${wsName} connection (attempt ${attempt})...`, {
+            delayMs: delay,
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    } else {
+      connectFn();
     }
   }
 
@@ -139,9 +311,8 @@ export class BotInitializer {
       // This prevents race condition where cleanup cancels SL/TP before position is restored from WebSocket
       await this.restoreOpenPositions();
 
-      // Start Position Monitor
-      this.services.positionMonitor.start();
-      this.logger.debug('Position monitor started');
+      // Start Position Monitor with retry
+      await this.startPositionMonitor();
 
       // Setup periodic maintenance tasks (only after position restoration)
       this.setupPeriodicTasks();
@@ -152,6 +323,40 @@ export class BotInitializer {
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
+    }
+  }
+
+  /**
+   * Start position monitor with retry logic
+   */
+  private async startPositionMonitor(): Promise<void> {
+    const performStart = async () => {
+      this.services.positionMonitor.start();
+      this.logger.debug('Position monitor started');
+    };
+
+    if (this.errorHandler) {
+      for (let attempt = 1; attempt <= this.MONITOR_START_RETRY_CONFIG.maxAttempts; attempt++) {
+        try {
+          await performStart();
+          return;
+        } catch (error) {
+          if (attempt === this.MONITOR_START_RETRY_CONFIG.maxAttempts) {
+            throw this.classifyInitError(error, 'startPositionMonitor');
+          }
+
+          const delay = this.calculateRetryDelay(
+            attempt,
+            this.MONITOR_START_RETRY_CONFIG,
+          );
+          this.logger.warn(`🔄 Retrying position monitor start (attempt ${attempt})...`, {
+            delayMs: delay,
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    } else {
+      await performStart();
     }
   }
 
@@ -210,44 +415,116 @@ export class BotInitializer {
 
   /**
    * Graceful shutdown - stop all components
+   * With ErrorHandler: all operations use SKIP strategy (never block shutdown)
+   * Without ErrorHandler: uses original behavior (throws on errors for backward compatibility)
    */
   async shutdown(): Promise<void> {
     try {
       this.logger.info('🛑 Starting graceful shutdown...');
 
-      // Stop periodic tasks
-      if (this.periodicTaskInterval) {
-        clearInterval(this.periodicTaskInterval);
-        this.periodicTaskInterval = null;
-        this.logger.debug('Periodic tasks stopped');
+      if (this.errorHandler) {
+        // With ErrorHandler: Skip all errors to ensure shutdown completes
+        const skipOnError = async (name: string, fn: () => void | Promise<void>) => {
+          try {
+            await fn();
+          } catch (error) {
+            this.logger.warn(`⚠️ Error during ${name}, skipping:`, {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        };
+
+        // Stop periodic tasks
+        await skipOnError('stop periodic tasks', () => {
+          if (this.periodicTaskInterval) {
+            clearInterval(this.periodicTaskInterval);
+            this.periodicTaskInterval = null;
+            this.logger.debug('Periodic tasks stopped');
+          }
+        });
+
+        // Stop position monitor
+        await skipOnError('stop position monitor', () => {
+          this.services.positionMonitor.stop();
+          this.logger.debug('Position monitor stopped');
+        });
+
+        // Remove all position monitor listeners
+        await skipOnError('remove position monitor listeners', () => {
+          this.services.positionMonitor.removeAllListeners();
+          this.logger.debug('Position monitor listeners removed');
+        });
+
+        // Disconnect Private WebSocket
+        await skipOnError('disconnect private WebSocket', () => {
+          this.services.webSocketManager.disconnect();
+          this.logger.debug('Private WebSocket disconnected');
+        });
+
+        // Remove private WebSocket listeners
+        await skipOnError('remove private WebSocket listeners', () => {
+          this.services.webSocketManager.removeAllListeners();
+          this.logger.debug('Private WebSocket listeners removed');
+        });
+
+        // Disconnect Public WebSocket
+        await skipOnError('disconnect public WebSocket', () => {
+          this.services.publicWebSocket.disconnect();
+          this.logger.debug('Public WebSocket disconnected');
+        });
+
+        // Remove public WebSocket listeners
+        await skipOnError('remove public WebSocket listeners', () => {
+          this.services.publicWebSocket.removeAllListeners();
+          this.logger.debug('Public WebSocket listeners removed');
+        });
+
+        // End session statistics tracking
+        await skipOnError('end session statistics', () => {
+          this.services.sessionStats.endSession();
+          this.logger.info('📊 Session ended');
+        });
+
+        // Send Telegram notification
+        await skipOnError('send Telegram notification', async () => {
+          await this.services.telegram.notifyBotStopped();
+        });
+      } else {
+        // Without ErrorHandler: original behavior (throws on errors)
+        // Stop periodic tasks
+        if (this.periodicTaskInterval) {
+          clearInterval(this.periodicTaskInterval);
+          this.periodicTaskInterval = null;
+          this.logger.debug('Periodic tasks stopped');
+        }
+
+        // Stop position monitor
+        this.services.positionMonitor.stop();
+        this.logger.debug('Position monitor stopped');
+
+        // Remove all position monitor listeners
+        this.services.positionMonitor.removeAllListeners();
+        this.logger.debug('Position monitor listeners removed');
+
+        // Disconnect Private WebSocket
+        this.services.webSocketManager.disconnect();
+        this.logger.debug('Private WebSocket disconnected');
+        this.services.webSocketManager.removeAllListeners();
+        this.logger.debug('Private WebSocket listeners removed');
+
+        // Disconnect Public WebSocket
+        this.services.publicWebSocket.disconnect();
+        this.logger.debug('Public WebSocket disconnected');
+        this.services.publicWebSocket.removeAllListeners();
+        this.logger.debug('Public WebSocket listeners removed');
+
+        // End session statistics tracking
+        this.services.sessionStats.endSession();
+        this.logger.info('📊 Session ended');
+
+        // Send Telegram notification
+        await this.services.telegram.notifyBotStopped();
       }
-
-      // Stop position monitor
-      this.services.positionMonitor.stop();
-      this.logger.debug('Position monitor stopped');
-
-      // Remove all position monitor listeners
-      this.services.positionMonitor.removeAllListeners();
-      this.logger.debug('Position monitor listeners removed');
-
-      // Disconnect Private WebSocket
-      this.services.webSocketManager.disconnect();
-      this.logger.debug('Private WebSocket disconnected');
-      this.services.webSocketManager.removeAllListeners();
-      this.logger.debug('Private WebSocket listeners removed');
-
-      // Disconnect Public WebSocket
-      this.services.publicWebSocket.disconnect();
-      this.logger.debug('Public WebSocket disconnected');
-      this.services.publicWebSocket.removeAllListeners();
-      this.logger.debug('Public WebSocket listeners removed');
-
-      // End session statistics tracking
-      this.services.sessionStats.endSession();
-      this.logger.info('📊 Session ended');
-
-      // Send Telegram notification
-      await this.services.telegram.notifyBotStopped();
 
       this.logger.info('✅ Shutdown complete');
     } catch (error) {
@@ -259,61 +536,173 @@ export class BotInitializer {
   }
 
   /**
-   * Private: Initialize Bybit service
+   * Private: Initialize Bybit service with error recovery
    */
   private async initializeBybit(): Promise<void> {
     const exchangeName = (this.config.exchange as any)?.name || 'bybit';
     this.logger.info(`Initializing ${exchangeName} service...`);
 
-    // If using factory-created exchange (non-Bybit), create it asynchronously
-    const exchangeFactory = (this.services as any).exchangeFactory;
-    if (exchangeFactory && exchangeName !== 'bybit') {
-      this.logger.info(`Creating ${exchangeName} exchange via factory...`);
-      const exchange = await exchangeFactory.createExchange();
-      (this.services as any).bybitService = exchange;
-      this.logger.info(`✅ ${exchangeName} exchange created and initialized`);
-    } else if (this.services.bybitService.initialize) {
-      // Traditional Bybit initialization
-      await this.services.bybitService.initialize();
-      this.logger.debug('✅ Bybit service initialized');
+    const performInit = async () => {
+      // If using factory-created exchange (non-Bybit), create it asynchronously
+      const exchangeFactory = (this.services as any).exchangeFactory;
+      if (exchangeFactory && exchangeName !== 'bybit') {
+        this.logger.info(`Creating ${exchangeName} exchange via factory...`);
+        const exchange = await exchangeFactory.createExchange();
+        (this.services as any).bybitService = exchange;
+        this.logger.info(`✅ ${exchangeName} exchange created and initialized`);
+      } else if (this.services.bybitService.initialize) {
+        // Traditional Bybit initialization
+        await this.services.bybitService.initialize();
+        this.logger.debug('✅ Bybit service initialized');
+      } else {
+        this.logger.debug('✅ Exchange service initialized');
+      }
+    };
+
+    if (this.errorHandler) {
+      for (let attempt = 1; attempt <= this.BYBIT_INIT_RETRY_CONFIG.maxAttempts; attempt++) {
+        try {
+          await performInit();
+          return;
+        } catch (error) {
+          if (attempt === this.BYBIT_INIT_RETRY_CONFIG.maxAttempts) {
+            throw this.classifyInitError(error, 'initializeBybit', { exchangeName });
+          }
+
+          const delay = this.calculateRetryDelay(
+            attempt,
+            this.BYBIT_INIT_RETRY_CONFIG,
+          );
+          this.logger.warn(`🔄 Retrying Bybit init (attempt ${attempt})...`, {
+            delayMs: delay,
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     } else {
-      this.logger.debug('✅ Exchange service initialized');
+      await performInit();
     }
   }
 
   /**
-   * Private: Start session statistics
+   * Calculate retry delay with exponential backoff
+   */
+  private calculateRetryDelay(attempt: number, config: RetryConfig): number {
+    const delay =
+      config.initialDelayMs *
+      Math.pow(config.backoffMultiplier, attempt - 1);
+    return Math.min(delay, config.maxDelayMs || delay);
+  }
+
+  /**
+   * Private: Start session statistics with graceful degradation
    */
   private async startSessionStats(): Promise<void> {
     this.logger.info('Starting session statistics...');
-    const sessionId = this.services.sessionStats.startSession(
-      this.config,
-      this.config.exchange.symbol,
-    );
-    this.logger.info(`📊 Session started: ${sessionId}`);
+
+    const performStats = async () => {
+      const sessionId = this.services.sessionStats.startSession(
+        this.config,
+        this.config.exchange.symbol,
+      );
+      this.logger.info(`📊 Session started: ${sessionId}`);
+    };
+
+    if (this.errorHandler) {
+      try {
+        await performStats();
+      } catch (error) {
+        this.logger.warn('⚠️ Session statistics failed - continuing without stats', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Non-critical - continue without stats
+      }
+    } else {
+      try {
+        await performStats();
+      } catch (error) {
+        this.logger.warn('⚠️ Session statistics failed - continuing without stats', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
   }
 
   /**
-   * Private: Synchronize time with exchange
+   * Private: Synchronize time with exchange with retry
    */
   private async syncTimeWithExchange(): Promise<void> {
     this.logger.info('Synchronizing time with exchange...');
-    await this.services.timeService.syncWithExchange();
 
-    const syncInfo = this.services.timeService.getSyncInfo();
-    this.logger.info('Time synchronized', {
-      offset: syncInfo.offset,
-      nextSyncIn: `${Math.round(syncInfo.nextSyncIn / TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND)}s`,
-    });
+    const performSync = async () => {
+      await this.services.timeService.syncWithExchange();
+
+      const syncInfo = this.services.timeService.getSyncInfo();
+      this.logger.info('Time synchronized', {
+        offset: syncInfo.offset,
+        nextSyncIn: `${Math.round(syncInfo.nextSyncIn / TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND)}s`,
+      });
+    };
+
+    if (this.errorHandler) {
+      for (let attempt = 1; attempt <= this.TIME_SYNC_RETRY_CONFIG.maxAttempts; attempt++) {
+        try {
+          await performSync();
+          return;
+        } catch (error) {
+          if (attempt === this.TIME_SYNC_RETRY_CONFIG.maxAttempts) {
+            throw this.classifyInitError(error, 'syncTimeWithExchange');
+          }
+
+          const delay = this.calculateRetryDelay(
+            attempt,
+            this.TIME_SYNC_RETRY_CONFIG,
+          );
+          this.logger.warn(`🔄 Retrying time sync (attempt ${attempt})...`, {
+            delayMs: delay,
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    } else {
+      await performSync();
+    }
   }
 
   /**
-   * Private: Initialize candle provider cache
+   * Private: Initialize candle provider cache with retry
    */
   private async initializeCandleProvider(): Promise<void> {
     this.logger.info('Initializing candle cache for all enabled timeframes...');
-    await this.services.candleProvider.initialize();
-    this.logger.debug('✅ Candle cache initialized (async preload disabled)');
+
+    const performInit = async () => {
+      await this.services.candleProvider.initialize();
+      this.logger.debug('✅ Candle cache initialized (async preload disabled)');
+    };
+
+    if (this.errorHandler) {
+      for (let attempt = 1; attempt <= this.CANDLE_PROVIDER_RETRY_CONFIG.maxAttempts; attempt++) {
+        try {
+          await performInit();
+          return;
+        } catch (error) {
+          if (attempt === this.CANDLE_PROVIDER_RETRY_CONFIG.maxAttempts) {
+            throw this.classifyInitError(error, 'initializeCandleProvider');
+          }
+
+          const delay = this.calculateRetryDelay(
+            attempt,
+            this.CANDLE_PROVIDER_RETRY_CONFIG,
+          );
+          this.logger.warn(`🔄 Retrying candle provider init (attempt ${attempt})...`, {
+            delayMs: delay,
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    } else {
+      await performInit();
+    }
   }
 
   /**

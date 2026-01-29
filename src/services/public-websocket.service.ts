@@ -16,6 +16,8 @@ import { EventEmitter } from 'events';
 import { Candle, ExchangeConfig, TimeframeRole, LoggerService, KlineData, OrderbookData, TradeData } from '../types';
 import { TimeframeProvider } from '../providers/timeframe.provider';
 import { TIMING_CONSTANTS } from '../constants/technical.constants';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { WebSocketConnectionError } from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -48,6 +50,7 @@ export class PublicWebSocketService extends EventEmitter {
     private readonly symbol: string,
     private readonly timeframeProvider: TimeframeProvider,
     private readonly logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler,
     btcConfirmation?: any,
   ) {
     super();
@@ -133,17 +136,34 @@ export class PublicWebSocketService extends EventEmitter {
 
   /**
    * Disconnect from Public WebSocket
+   * Uses SKIP strategy for cleanup errors - disconnect should never be blocked
    */
   disconnect(): void {
     this.shouldReconnect = false;
     this.stopPing();
 
-    if (this.ws !== null) {
-      this.ws.close();
-      this.ws = null;
-    }
+    try {
+      if (this.ws !== null) {
+        this.ws.close();
+        this.ws = null;
+      }
 
-    this.logger.info('Public WebSocket disconnected');
+      this.logger.info('Public WebSocket disconnected');
+    } catch (error) {
+      const closeError = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn('Error during disconnect', {
+        error: closeError.message,
+      });
+
+      // Use SKIP strategy if ErrorHandler available - cleanup must not be blocked
+      if (this.errorHandler) {
+        this.errorHandler.handle(closeError, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'PublicWebSocketService.disconnect',
+          logger: this.logger,
+        });
+      }
+    }
   }
 
   /**
@@ -208,6 +228,7 @@ export class PublicWebSocketService extends EventEmitter {
 
   /**
    * Handle incoming WebSocket message
+   * Uses GRACEFUL_DEGRADE strategy for parse failures - continues processing on error
    */
   private handleMessage(data: string): void {
     try {
@@ -245,11 +266,24 @@ export class PublicWebSocketService extends EventEmitter {
         this.handleTradeUpdate(message.data as TradeData | TradeData[]);
       }
     } catch (error) {
+      const parseError = error instanceof Error ? error : new Error(String(error));
       this.logger.error('Failed to parse Public WebSocket message', {
-        error: String(error),
+        error: parseError.message,
         data: data.substring(0, 200),
       });
-      this.emit('error', new Error(`Failed to parse message: ${String(error)}`));
+
+      // Use GRACEFUL_DEGRADE strategy if ErrorHandler available
+      if (this.errorHandler) {
+        this.errorHandler.handle(parseError, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'PublicWebSocketService.handleMessage',
+          logger: this.logger,
+        });
+        this.logger.warn('⚠️ Skipping malformed message due to parse error');
+      } else {
+        // Fallback: emit error for consumers without ErrorHandler
+        this.emit('error', new Error(`Failed to parse message: ${parseError.message}`));
+      }
     }
   }
 
@@ -345,13 +379,24 @@ export class PublicWebSocketService extends EventEmitter {
 
   /**
    * Handle orderbook update from WebSocket
-   * Detects snapshot vs delta and emits raw update for OrderbookManager
+   * Uses GRACEFUL_DEGRADE for validation failures - continues with best-effort parsing
    */
   private handleOrderbookUpdate(data: OrderbookData): void {
     try {
       const orderbookData = data;
 
       if (!orderbookData.b || !orderbookData.a) {
+        if (this.errorHandler) {
+          // Use GRACEFUL_DEGRADE to skip this update but continue processing
+          this.errorHandler.handle(
+            new Error('Orderbook missing bids or asks'),
+            {
+              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+              context: 'PublicWebSocketService.handleOrderbookUpdate',
+              logger: this.logger,
+            },
+          );
+        }
         this.logger.warn('⚠️ Orderbook data missing b or a', {
           hasB: !!orderbookData.b,
           hasA: !!orderbookData.a,
@@ -396,14 +441,25 @@ export class PublicWebSocketService extends EventEmitter {
         this.lastIncompleteWarning = Date.now();
       }
     } catch (error) {
+      const obError = error instanceof Error ? error : new Error(String(error));
       this.logger.error('Failed to handle orderbook update', {
-        error: String(error),
+        error: obError.message,
       });
+
+      // Use GRACEFUL_DEGRADE to recover from parsing errors
+      if (this.errorHandler) {
+        this.errorHandler.handle(obError, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'PublicWebSocketService.handleOrderbookUpdate',
+          logger: this.logger,
+        });
+      }
     }
   }
 
   /**
    * Handle public trade update from WebSocket (for Delta Analysis)
+   * Uses GRACEFUL_DEGRADE for validation failures - continues processing valid trades
    */
   private handleTradeUpdate(data: TradeData | TradeData[]): void {
     try {
@@ -413,6 +469,17 @@ export class PublicWebSocketService extends EventEmitter {
         const tradeData = trade;
 
         if (!tradeData.T || !tradeData.S || !tradeData.v || !tradeData.p) {
+          if (this.errorHandler) {
+            // Use GRACEFUL_DEGRADE to skip incomplete trade but continue
+            this.errorHandler.handle(
+              new Error('Incomplete trade data'),
+              {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'PublicWebSocketService.handleTradeUpdate',
+                logger: this.logger,
+              },
+            );
+          }
           this.logger.warn('⚠️ Incomplete trade data', {
             hasTimestamp: !!tradeData.T,
             hasSide: !!tradeData.S,
@@ -438,9 +505,19 @@ export class PublicWebSocketService extends EventEmitter {
         // });
       }
     } catch (error) {
+      const tradeError = error instanceof Error ? error : new Error(String(error));
       this.logger.error('Failed to handle trade update', {
-        error: String(error),
+        error: tradeError.message,
       });
+
+      // Use GRACEFUL_DEGRADE to recover from parsing errors
+      if (this.errorHandler) {
+        this.errorHandler.handle(tradeError, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'PublicWebSocketService.handleTradeUpdate',
+          logger: this.logger,
+        });
+      }
     }
   }
 

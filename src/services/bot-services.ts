@@ -528,6 +528,7 @@ export class BotServices {
       config.exchange.symbol,
       this.timeframeProvider,
       this.logger,
+      this.errorHandler, // Phase 8.9.8: ErrorHandler injection for resilient public WebSocket
       config.btcConfirmation,
     );
 
