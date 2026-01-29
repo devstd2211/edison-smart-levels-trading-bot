@@ -332,12 +332,14 @@ export class BotServices {
     // CandleProvider uses IExchange interface (Phase 2.5 migration complete)
     this.timeframeProvider = new TimeframeProvider(config.timeframes);
     // Phase 6.2 TIER 2.2: Pass marketDataRepository to CandleProvider for unified caching
+    // Phase 8.9.9: Inject ErrorHandler for RETRY/SKIP strategies
     this.candleProvider = new CandleProvider(
       this.timeframeProvider,
       this.bybitService,
       this.logger,
       config.exchange.symbol,
       this.marketDataRepository, // Phase 6.2: Repository-backed candle storage
+      this.errorHandler, // Phase 8.9.9: ErrorHandler for retry/skip strategies
     );
 
     // 5.5 Initialize Indicator Cache System (Phase 6.2: Repository-backed)
