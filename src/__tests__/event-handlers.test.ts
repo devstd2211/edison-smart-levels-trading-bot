@@ -200,7 +200,8 @@ describe('PositionEventHandler', () => {
 
       await handler.handleTimeBasedExit(event);
 
-      expect(mockLogger.error).toHaveBeenCalledWith('Failed to close position for time-based exit', expect.any(Object));
+      // Verify fallback methods were called when exchange close fails
+      expect(mockLogger.error).toHaveBeenCalledTimes(3); // ErrorHandler + fallback logs
       expect(mockPositionExitingService.closeFullPosition).toHaveBeenCalled();
       expect(mockPositionManager.clearPosition).toHaveBeenCalled();
     });
@@ -226,12 +227,11 @@ describe('PositionEventHandler', () => {
   });
 
   describe('handleMonitorError', () => {
-    it('should log monitor error', async () => {
+    it('should throw monitor error', async () => {
       const error = new Error('Monitor error');
 
-      await handler.handleMonitorError(error);
-
-      expect(mockLogger.error).toHaveBeenCalledWith('Position Monitor error', expect.any(Object));
+      // handleMonitorError uses THROW strategy, so it should rethrow
+      await expect(handler.handleMonitorError(error)).rejects.toThrow();
     });
   });
 });

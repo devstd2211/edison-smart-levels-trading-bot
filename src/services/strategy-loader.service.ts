@@ -1,13 +1,15 @@
 /**
  * STRATEGY LOADER SERVICE
  * Loads, validates, and parses strategy JSON configuration files
+ * Integrated with ErrorHandler for resilient loading (Phase 8.9.6)
  *
  * Responsibilities:
- * 1. Load strategy JSON from file system
+ * 1. Load strategy JSON from file system with error recovery
  * 2. Validate against schema
  * 3. Validate analyzer references exist
  * 4. Validate weight distribution
  * 5. Return parsed StrategyConfig
+ * 6. Handle file/parse/validation errors with appropriate recovery strategies
  */
 
 import { promises as fs } from 'fs';
@@ -19,6 +21,8 @@ import {
   StrategyAnalyzerConfig,
   StrategyMetadata,
 } from '../types/strategy-config.types';
+import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
+import { StrategyLoadError, StrategyParseError } from '../errors/DomainErrors';
 
 const AVAILABLE_ANALYZERS: Set<AvailableAnalyzer> = new Set([
   // Technical Indicators
@@ -60,20 +64,35 @@ const AVAILABLE_ANALYZERS: Set<AvailableAnalyzer> = new Set([
 
 export class StrategyLoaderService {
   private strategiesDir: string;
+  private readonly errorHandler?: ErrorHandler;
 
-  constructor(strategiesDir: string = join(process.cwd(), 'strategies', 'json')) {
+  // Retry configuration for transient file read errors
+  private readonly LOAD_RETRY_CONFIG: RetryConfig = {
+    maxAttempts: 2,
+    initialDelayMs: 100,
+    backoffMultiplier: 2,
+    maxDelayMs: 500,
+  };
+
+  constructor(
+    strategiesDir: string = join(process.cwd(), 'strategies', 'json'),
+    errorHandler?: ErrorHandler,
+  ) {
     this.strategiesDir = strategiesDir;
+    this.errorHandler = errorHandler;
   }
 
   /**
    * Load strategy from JSON file
+   * (Error handling delegated to caller via loadAllStrategies or direct ErrorHandler use)
    * @param strategyName - Strategy file name (without .json extension)
    * @returns Parsed and validated StrategyConfig
-   * @throws StrategyValidationError if validation fails
+   * @throws StrategyLoadError/StrategyParseError on failure
    */
   async loadStrategy(strategyName: string): Promise<StrategyConfig> {
+    const filePath = join(this.strategiesDir, `${strategyName}.strategy.json`);
+
     try {
-      const filePath = join(this.strategiesDir, `${strategyName}.strategy.json`);
       const content = await fs.readFile(filePath, 'utf-8');
       const parsed = JSON.parse(content);
 
@@ -82,22 +101,70 @@ export class StrategyLoaderService {
 
       return parsed as StrategyConfig;
     } catch (error) {
-      if (error instanceof StrategyValidationError) {
-        throw error;
-      }
+      // Classify and throw the error (caller handles recovery)
+      const classifiedError = this.classifyLoadError(error, strategyName, filePath);
+      throw classifiedError;
+    }
+  }
 
-      if (error instanceof SyntaxError) {
-        throw new StrategyValidationError(
-          `Invalid JSON in strategy file: ${error.message}`,
-          'json',
-        );
-      }
+  /**
+   * Classify load error into appropriate domain error
+   */
+  private classifyLoadError(
+    error: unknown,
+    strategyName: string,
+    filePath: string,
+  ): Error {
+    // Handle validation errors
+    if (error instanceof StrategyValidationError) {
+      return error;
+    }
 
-      throw new StrategyValidationError(
-        `Failed to load strategy '${strategyName}': ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'file',
+    // Handle JSON parse errors
+    if (error instanceof SyntaxError) {
+      return new StrategyParseError(`Invalid JSON in strategy file: ${error.message}`, {
+        strategyName,
+        parseError: error.message,
+      });
+    }
+
+    // Handle file system errors
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage.includes('ENOENT') || errorMessage.includes('not found')) {
+      return new StrategyLoadError(
+        `Strategy file not found: ${strategyName}`,
+        {
+          strategyName,
+          reason: 'file_not_found',
+          filePath,
+        },
+        error instanceof Error ? error : undefined,
       );
     }
+
+    if (errorMessage.includes('EACCES') || errorMessage.includes('permission')) {
+      return new StrategyLoadError(
+        `Permission denied reading strategy file: ${strategyName}`,
+        {
+          strategyName,
+          reason: 'permission_denied',
+          filePath,
+        },
+        error instanceof Error ? error : undefined,
+      );
+    }
+
+    // Default: unknown error
+    return new StrategyLoadError(
+      `Failed to load strategy '${strategyName}': ${errorMessage}`,
+      {
+        strategyName,
+        reason: 'unknown',
+        filePath,
+      },
+      error instanceof Error ? error : undefined,
+    );
   }
 
   /**
@@ -394,7 +461,8 @@ export class StrategyLoaderService {
   }
 
   /**
-   * Load all strategies from directory
+   * Load all strategies from directory with error recovery
+   * Strategy: SKIP for individual strategy failures, GRACEFUL_DEGRADE for directory read
    */
   async loadAllStrategies(): Promise<Map<string, StrategyConfig>> {
     const strategies = new Map<string, StrategyConfig>();
@@ -409,11 +477,39 @@ export class StrategyLoaderService {
           const strategy = await this.loadStrategy(name);
           strategies.set(name, strategy);
         } catch (error) {
-          console.error(`Failed to load strategy ${name}:`, error);
+          // Individual strategy failures: SKIP and continue loading other strategies
+          if (this.errorHandler) {
+            const classifiedError = this.classifyLoadError(
+              error,
+              name,
+              join(this.strategiesDir, file),
+            );
+
+            await this.errorHandler.handle(classifiedError, {
+              strategy: RecoveryStrategy.SKIP,
+              context: `StrategyLoaderService.loadAllStrategies[individual_failure]`,
+            });
+          }
+          // Continue loading other strategies despite this failure
         }
       }
     } catch (error) {
-      console.warn(`Could not read strategies directory: ${error}`);
+      // Directory read failure: GRACEFUL_DEGRADE and return empty map
+      if (this.errorHandler) {
+        const loadError = new StrategyLoadError(
+          `Could not read strategies directory: ${error instanceof Error ? error.message : String(error)}`,
+          {
+            strategyName: 'directory',
+            reason: 'unknown',
+          },
+          error instanceof Error ? error : undefined,
+        );
+
+        await this.errorHandler.handle(loadError, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: `StrategyLoaderService.loadAllStrategies[directory_read]`,
+        });
+      }
     }
 
     return strategies;

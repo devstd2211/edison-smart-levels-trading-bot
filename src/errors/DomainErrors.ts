@@ -1074,3 +1074,61 @@ export class TelegramRateLimitError extends TradingError {
     Object.setPrototypeOf(this, TelegramRateLimitError.prototype);
   }
 }
+
+// ============================================================================
+// STRATEGY DOMAIN ERRORS (Phase 8.9.6)
+// ============================================================================
+
+/**
+ * Strategy load error
+ * Failed to load strategy from file system (file missing, permission denied, network)
+ */
+export class StrategyLoadError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      strategyName: string;
+      reason: 'file_not_found' | 'permission_denied' | 'network' | 'unknown';
+      filePath?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'STRATEGY_LOAD_ERROR',
+      ErrorDomain.CONFIGURATION,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, StrategyLoadError.prototype);
+  }
+}
+
+/**
+ * Strategy parse error
+ * Invalid JSON or parsing failure
+ */
+export class StrategyParseError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      strategyName: string;
+      parseError?: string;
+      position?: { line: number; column: number };
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'STRATEGY_PARSE_ERROR',
+      ErrorDomain.CONFIGURATION,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, StrategyParseError.prototype);
+  }
+}

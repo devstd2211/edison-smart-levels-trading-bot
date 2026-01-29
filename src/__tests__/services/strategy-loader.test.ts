@@ -5,6 +5,7 @@
 
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyValidationError } from '../../types/strategy-config.types';
+import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { mkdtemp, rmdir } from 'fs/promises';
@@ -67,7 +68,7 @@ describe('StrategyLoaderService', () => {
 
     it('should throw error for non-existent file', async () => {
       await expect(loader.loadStrategy('non-existent')).rejects.toThrow(
-        StrategyValidationError,
+        StrategyLoadError,
       );
     });
 
@@ -76,7 +77,7 @@ describe('StrategyLoaderService', () => {
       await fs.writeFile(filePath, 'not valid json {[');
 
       await expect(loader.loadStrategy('invalid')).rejects.toThrow(
-        StrategyValidationError,
+        StrategyParseError,
       );
     });
   });
