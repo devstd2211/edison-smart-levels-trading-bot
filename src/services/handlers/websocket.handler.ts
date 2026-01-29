@@ -157,25 +157,46 @@ export class WebSocketEventHandler {
    * - Stop Loss hit (SL)
    * - Manual close
    * - Exchange liquidation
+   *
+   * Strategy: RETRY + GRACEFUL_DEGRADE + SKIP
+   * - RETRY for journal operations (transient I/O errors)
+   * - GRACEFUL_DEGRADE for position sync (continue with stale data)
+   * - SKIP for Telegram notifications (non-blocking)
+   * - Atomic lock prevents concurrent close attempts
    */
   async handlePositionClosed(): Promise<void> {
     this.logger.info('WebSocket: Position closed');
 
-    // [P3] Use atomic lock to prevent concurrent close attempts
-    // This prevents the race condition where:
-    // 1. WebSocket triggers position close (this handler)
-    // 2. Timeout handler simultaneously tries to close the position
-    // 3. Both try to clearPosition() → "Position not found" error
-    await this.positionManager.closePositionWithAtomicLock(
-      'EXTERNAL_CLOSE', // reason: closed externally by WebSocket
-      () => this._handlePositionClosedInternal(), // Callback to execute within lock
-    );
+    try {
+      // [P3] Use atomic lock to prevent concurrent close attempts
+      // This prevents the race condition where:
+      // 1. WebSocket triggers position close (this handler)
+      // 2. Timeout handler simultaneously tries to close the position
+      // 3. Both try to clearPosition() → "Position not found" error
+      await this.positionManager.closePositionWithAtomicLock(
+        'EXTERNAL_CLOSE', // reason: closed externally by WebSocket
+        () => this._handlePositionClosedInternal(), // Callback to execute within lock
+      );
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        logger: this.logger,
+        context: 'WebSocketEventHandler.handlePositionClosed',
+        onRecover: () => {
+          this.logger.warn('⚠️ Position close handling failed, continuing with degraded state', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
+      });
+    }
   }
 
   /**
    * [P3] Internal: Handle position close using atomic lock
    * Called by closePositionWithAtomicLock from PositionLifecycleService
    * This executes within the atomic lock to prevent race conditions
+   *
+   * Strategy: RETRY (journal) + GRACEFUL_DEGRADE (sync) + SKIP (notifications)
    *
    * @private
    */
@@ -186,10 +207,56 @@ export class WebSocketEventHandler {
       return;
     }
 
-    // Check if position was already closed by another handler (e.g., TIME_BASED_EXIT)
+    // RETRY: Check if position was already closed by another handler (e.g., TIME_BASED_EXIT)
     // Use journalId if available, fallback to exchange id for backward compatibility
     const journalId = position.journalId || position.id;
-    const journalEntry = this.journal.getTrade(journalId);
+    let journalEntry: any = null;
+
+    try {
+      const result = await ErrorHandler.executeAsync(
+        async () => {
+          return this.journal.getTrade(journalId);
+        },
+        {
+          strategy: RecoveryStrategy.RETRY,
+          retryConfig: {
+            maxAttempts: 2,
+            initialDelayMs: 100,
+            backoffMultiplier: 2,
+          },
+          logger: this.logger,
+          context: 'WebSocketEventHandler._handlePositionClosedInternal.journalLookup',
+          onRetry: (attempt, error) => {
+            this.logger.warn(`⚠️ Retry ${attempt}/2: Journal lookup failed`, {
+              journalId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          },
+          onFailure: () => {
+            this.logger.warn('⚠️ Journal lookup failed after retries, using degraded state', {
+              journalId,
+            });
+          },
+        },
+      );
+
+      if (result.success && result.value) {
+        journalEntry = result.value;
+      }
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        logger: this.logger,
+        context: 'WebSocketEventHandler._handlePositionClosedInternal.journalFallback',
+        onRecover: () => {
+          this.logger.warn('⚠️ Journal lookup permanently failed, continuing without deduplication check', {
+            journalId,
+          });
+        },
+      });
+      // Continue without journalEntry check
+    }
+
     if (journalEntry?.status === 'CLOSED') {
       this.logger.debug('🧹 Position already closed in journal, skipping duplicate record', {
         positionId: position.id,
@@ -230,22 +297,50 @@ export class WebSocketEventHandler {
     // Reset lastCloseReason for next position
     this.webSocketManager.resetLastCloseReason();
 
-    // Record position close in journal using PositionExitingService
-    await this.positionExitingService.closeFullPosition(
-      position,
-      currentPrice,
-      'Position closed (SL/TP/Trailing)',
-      exitType,
-    );
+    // GRACEFUL_DEGRADE: Record position close in journal using PositionExitingService
+    try {
+      await this.positionExitingService.closeFullPosition(
+        position,
+        currentPrice,
+        'Position closed (SL/TP/Trailing)',
+        exitType,
+      );
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        logger: this.logger,
+        context: 'WebSocketEventHandler._handlePositionClosedInternal.recordClose',
+        onRecover: () => {
+          this.logger.warn('⚠️ Failed to record position close in journal, continuing with degraded state', {
+            positionId: position.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
+      });
+      // Continue without blocking on journal write
+    }
 
-    // Send Telegram notification before clearing position
-    void this.telegram.notifyPositionClosed(
-      position,
-      'Position closed (SL/TP/Trailing)',
-      currentPrice,
-      pnl,
-      pnlPercent,
-    );
+    // SKIP: Send Telegram notification before clearing position (non-blocking)
+    try {
+      await this.telegram.notifyPositionClosed(
+        position,
+        'Position closed (SL/TP/Trailing)',
+        currentPrice,
+        pnl,
+        pnlPercent,
+      );
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.SKIP,
+        logger: this.logger,
+        context: 'WebSocketEventHandler._handlePositionClosedInternal.telegram',
+        onRecover: () => {
+          this.logger.warn('⚠️ Telegram notification failed, continuing', {
+            positionId: position.id,
+          });
+        },
+      });
+    }
 
     // NOTE: DO NOT cancel conditional orders here!
     // When position closes on exchange, all associated orders (TP/SL) are automatically cancelled by Bybit
@@ -255,16 +350,47 @@ export class WebSocketEventHandler {
     // See: Session #33 ticket - microwall position closed TP level 1 was deleted
 
     // CRITICAL: Clear position ONLY within atomic lock to prevent race conditions
-    await this.positionManager.clearPosition();
+    try {
+      await this.positionManager.clearPosition();
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        logger: this.logger,
+        context: 'WebSocketEventHandler._handlePositionClosedInternal.clearPosition',
+        onRecover: () => {
+          this.logger.error('⚠️ Failed to clear position from memory, position may appear open but is closed on exchange', {
+            positionId: position.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
+      });
+    }
   }
 
   /**
    * Handle order filled event
    *
+   * Strategy: SKIP (informational event)
+   * - Continue monitoring if logging fails
+   * - Non-critical in main trading flow
+   *
    * @param order - Order fill event
    */
   async handleOrderFilled(order: OrderFilledEvent): Promise<void> {
-    this.logger.info('WebSocket: Order filled', { orderId: order.orderId });
+    try {
+      this.logger.info('WebSocket: Order filled', { orderId: order.orderId });
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.SKIP,
+        logger: this.logger,
+        context: 'WebSocketEventHandler.handleOrderFilled',
+        onRecover: () => {
+          this.logger.warn('⚠️ Order fill logging failed, continuing', {
+            orderId: order?.orderId,
+          });
+        },
+      });
+    }
   }
 
   /**
@@ -423,27 +549,56 @@ export class WebSocketEventHandler {
    * NOTE: Position will be closed by 'positionClosed' event
    * This handler just logs the stop loss execution
    *
+   * Strategy: SKIP (informational, backup signal)
+   * - Continue monitoring if logging fails
+   * - Primary SL handling via 'positionClosed' event
+   *
    * @param event - Stop loss filled event
    */
   async handleStopLossFilled(event: StopLossFilledEvent): Promise<void> {
-    this.logger.info('WebSocket: Stop Loss filled', {
-      orderId: event.orderId,
-      price: event.avgPrice,
-      qty: event.cumExecQty,
-    });
+    try {
+      this.logger.info('WebSocket: Stop Loss filled', {
+        orderId: event.orderId,
+        price: event.avgPrice,
+        qty: event.cumExecQty,
+      });
 
-    // Position will be closed by 'positionClosed' event
-    // Just log the stop loss execution here
+      // Position will be closed by 'positionClosed' event
+      // Just log the stop loss execution here
+    } catch (error) {
+      await ErrorHandler.handle(error, {
+        strategy: RecoveryStrategy.SKIP,
+        logger: this.logger,
+        context: 'WebSocketEventHandler.handleStopLossFilled',
+        onRecover: () => {
+          this.logger.warn('⚠️ SL fill logging failed, continuing', {
+            orderId: event?.orderId,
+          });
+        },
+      });
+    }
   }
 
   /**
    * Handle WebSocket error
    *
+   * Strategy: SKIP (error logging, non-critical)
+   * - Continue monitoring if logging fails
+   * - Last resort error handler
+   *
    * @param error - Error from WebSocket
    */
   async handleError(error: Error): Promise<void> {
-    this.logger.error('WebSocket error', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    try {
+      this.logger.error('WebSocket error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } catch (logError) {
+      // Fallback logging (don't use ErrorHandler here to avoid recursion)
+      console.error('⚠️ WebSocket error logging failed:', {
+        originalError: error instanceof Error ? error.message : String(error),
+        logError: logError instanceof Error ? logError.message : String(logError),
+      });
+    }
   }
 }
