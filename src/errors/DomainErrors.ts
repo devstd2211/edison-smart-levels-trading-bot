@@ -952,3 +952,125 @@ export class PositionPriceFetchError extends TradingError {
     Object.setPrototypeOf(this, PositionPriceFetchError.prototype);
   }
 }
+
+// ============================================================================
+// NOTIFICATION DOMAIN ERRORS (Phase 8.9.5)
+// ============================================================================
+
+/**
+ * Telegram API error
+ * HTTP errors from Telegram Bot API (4xx, 5xx)
+ */
+export class TelegramAPIError extends TradingError {
+  readonly statusCode: number;
+  readonly retryable: boolean;
+
+  constructor(
+    message: string,
+    context: {
+      statusCode: number;
+      endpoint?: string;
+      response?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    const { statusCode } = context;
+    const retryable = statusCode >= 500; // 5xx errors are retryable, 4xx are not
+
+    super(
+      message,
+      'TELEGRAM_API_ERROR',
+      ErrorDomain.NOTIFICATION,
+      retryable ? ErrorSeverity.HIGH : ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    this.statusCode = statusCode;
+    this.retryable = retryable;
+    Object.setPrototypeOf(this, TelegramAPIError.prototype);
+  }
+}
+
+/**
+ * Telegram network error
+ * Network connectivity issues (timeout, DNS, connection refused)
+ */
+export class TelegramNetworkError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      operation: string;
+      reason: string;
+      timeout?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'TELEGRAM_NETWORK_ERROR',
+      ErrorDomain.NOTIFICATION,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, TelegramNetworkError.prototype);
+  }
+}
+
+/**
+ * Telegram message validation error
+ * Message validation failures (too long, invalid HTML, etc)
+ */
+export class TelegramMessageError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      messageLength?: number;
+      maxLength?: number;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'TELEGRAM_MESSAGE_ERROR',
+      ErrorDomain.NOTIFICATION,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, TelegramMessageError.prototype);
+  }
+}
+
+/**
+ * Telegram rate limit error
+ * Rate limit exceeded (429 Too Many Requests)
+ */
+export class TelegramRateLimitError extends TradingError {
+  readonly retryAfterMs: number;
+
+  constructor(
+    message: string,
+    context: {
+      retryAfterMs?: number;
+      [key: string]: unknown;
+    } = {},
+    originalError?: Error,
+  ) {
+    const retryAfterMs = context.retryAfterMs || 60000;
+    super(
+      message,
+      'TELEGRAM_RATE_LIMIT',
+      ErrorDomain.NOTIFICATION,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    this.retryAfterMs = retryAfterMs;
+    Object.setPrototypeOf(this, TelegramRateLimitError.prototype);
+  }
+}

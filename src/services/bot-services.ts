@@ -259,6 +259,7 @@ export class BotServices {
     this.telegram = new TelegramService(
       config.telegram || { enabled: false },
       this.logger,
+      this.errorHandler,
     );
 
     this.timeService = new TimeService(
