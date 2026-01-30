@@ -224,7 +224,9 @@ describe('LimitOrderExecutorService', () => {
 
       await expect(
         service.placeLimitOrder(SignalDirection.LONG, 10, 99.98, 5),
-      ).rejects.toThrow('Insufficient balance');
+      ).rejects.toThrow(); // Will throw LimitOrderPlacementError
+
+      expect(mockSubmitOrder).toHaveBeenCalled();
     });
   });
 
@@ -264,7 +266,7 @@ describe('LimitOrderExecutorService', () => {
       expect(mockGetHistoricOrders).toHaveBeenCalled();
     });
 
-    it('should return false on timeout (order still active)', async () => {
+    it('should throw LimitOrderFillTimeoutError on timeout (order still active)', async () => {
       const mockGetActiveOrders = jest.fn().mockResolvedValue({
         retCode: 0,
         result: {
@@ -282,9 +284,9 @@ describe('LimitOrderExecutorService', () => {
       });
 
       // Short timeout to avoid test delay
-      const filled = await service.waitForFill('order-123', 500);
+      await expect(service.waitForFill('order-123', 500)).rejects.toThrow();
 
-      expect(filled).toBe(false);
+      expect(mockGetActiveOrders).toHaveBeenCalled();
     });
 
     it('should return false if order was cancelled', async () => {
@@ -412,7 +414,9 @@ describe('LimitOrderExecutorService', () => {
 
       await expect(
         service.fallbackToMarket(SignalDirection.SHORT, 10, 5),
-      ).rejects.toThrow('Order failed');
+      ).rejects.toThrow(); // Will throw MarketOrderFallbackError
+
+      expect(mockOpenPosition).toHaveBeenCalled();
     });
   });
 

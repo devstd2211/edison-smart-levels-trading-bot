@@ -1217,3 +1217,97 @@ export class SessionRecordValidationError extends TradingError {
     Object.setPrototypeOf(this, SessionRecordValidationError.prototype);
   }
 }
+
+// ============================================================================
+// LIMIT ORDER EXECUTION ERRORS (Phase 8.9.15)
+// ============================================================================
+
+/**
+ * Limit order placement error
+ * Failed to place limit order on exchange
+ */
+export class LimitOrderPlacementError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      symbol?: string;
+      side: 'Buy' | 'Sell';
+      quantity: number;
+      limitPrice: number;
+      reason: string;
+      retryable?: boolean;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'LIMIT_ORDER_PLACEMENT_ERROR',
+      ErrorDomain.ORDER,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, LimitOrderPlacementError.prototype);
+  }
+}
+
+/**
+ * Limit order fill timeout error
+ * Order was not filled within configured timeout
+ */
+export class LimitOrderFillTimeoutError extends TradingError {
+  readonly timeoutMs: number;
+
+  constructor(
+    message: string,
+    context: {
+      orderId?: string;
+      symbol?: string;
+      limitPrice: number;
+      timeoutMs: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    const { timeoutMs } = context;
+    super(
+      message,
+      'LIMIT_ORDER_FILL_TIMEOUT',
+      ErrorDomain.ORDER,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    this.timeoutMs = timeoutMs;
+    Object.setPrototypeOf(this, LimitOrderFillTimeoutError.prototype);
+  }
+}
+
+/**
+ * Market order fallback error
+ * Fallback to market order failed
+ */
+export class MarketOrderFallbackError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      orderId?: string;
+      symbol?: string;
+      fallbackReason: string;
+      primaryError: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'MARKET_ORDER_FALLBACK_ERROR',
+      ErrorDomain.ORDER,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, MarketOrderFallbackError.prototype);
+  }
+}

@@ -23,6 +23,14 @@ import {
 } from '../types';
 import { BybitService } from './bybit/bybit.service';
 import { MAKER_FEE_PERCENT, TAKER_FEE_PERCENT, ORDER_CHECK_INTERVAL_MS } from '../constants/technical.constants';
+import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
+import {
+  LimitOrderPlacementError,
+  LimitOrderFillTimeoutError,
+  MarketOrderFallbackError,
+  ExchangeConnectionError,
+  ExchangeAPIError,
+} from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -40,6 +48,7 @@ export class LimitOrderExecutorService {
     private config: LimitOrderExecutorConfig,
     private bybitService: BybitService,
     private logger: LoggerService,
+    private errorHandler?: ErrorHandler,
   ) {
     this.logger.info('LimitOrderExecutorService initialized', {
       enabled: config.enabled,
@@ -47,6 +56,7 @@ export class LimitOrderExecutorService {
       slippagePercent: config.slippagePercent,
       fallbackToMarket: config.fallbackToMarket,
       maxRetries: config.maxRetries,
+      errorHandlerEnabled: !!errorHandler,
     });
   }
 
@@ -84,6 +94,8 @@ export class LimitOrderExecutorService {
   /**
    * Place limit order with retry logic
    *
+   * Uses ErrorHandler to track and handle errors if available
+   *
    * @param direction - Signal direction (LONG/SHORT)
    * @param quantity - Order quantity (contracts)
    * @param limitPrice - Limit price
@@ -99,26 +111,28 @@ export class LimitOrderExecutorService {
     const startTime = Date.now();
     let lastError: Error | undefined;
 
-    // Retry logic
+    this.logger.info('📝 Placing limit order', {
+      direction,
+      quantity,
+      limitPrice,
+      leverage,
+    });
+
+    // Set leverage first
+    await this.bybitService.setLeverage(leverage);
+
+    // Round quantity and price to exchange precision
+    const orderQty = this.bybitService.roundQuantity(quantity);
+    const orderPrice = this.bybitService.roundPrice(limitPrice);
+
+    // Retry loop with ErrorHandler tracking
     for (let attempt = 1; attempt <= this.config.maxRetries + 1; attempt++) {
       try {
-        this.logger.info('📝 Placing limit order', {
+        this.logger.info('📝 Placing limit order (attempt)', {
           attempt,
           maxAttempts: this.config.maxRetries + 1,
-          direction,
-          quantity,
-          limitPrice,
-          leverage,
         });
 
-        // Set leverage first
-        await this.bybitService.setLeverage(leverage);
-
-        // Round quantity and price to exchange precision
-        const orderQty = this.bybitService.roundQuantity(quantity);
-        const orderPrice = this.bybitService.roundPrice(limitPrice);
-
-        // Submit limit order
         const response = await this.bybitService.getRestClient().submitOrder({
           category: 'linear',
           symbol: this.bybitService.getSymbol(),
@@ -126,12 +140,30 @@ export class LimitOrderExecutorService {
           orderType: 'Limit',
           qty: orderQty,
           price: orderPrice,
-          timeInForce: 'GTC', // Good Till Cancelled
+          timeInForce: 'GTC',
           positionIdx: POSITION_IDX_ONE_WAY,
         });
 
         if (response.retCode !== BYBIT_SUCCESS_CODE) {
-          throw new Error(`Failed to place limit order: ${response.retMsg}`);
+          const placementError = new LimitOrderPlacementError(
+            `Failed to place limit order: ${response.retMsg}`,
+            {
+              symbol: this.bybitService.getSymbol(),
+              side: direction === SignalDirection.LONG ? 'Buy' : 'Sell',
+              quantity,
+              limitPrice,
+              reason: response.retMsg,
+            },
+          );
+
+          if (this.errorHandler) {
+            await this.errorHandler.handle(placementError, {
+              strategy: RecoveryStrategy.RETRY,
+              context: 'LimitOrderExecutorService.placeLimitOrder',
+            });
+          }
+
+          throw placementError;
         }
 
         const orderId = response.result.orderId;
@@ -147,8 +179,8 @@ export class LimitOrderExecutorService {
 
         return {
           orderId,
-          filled: false, // Order placed but not filled yet
-          feePaid: 0, // Fee will be calculated after fill
+          filled: false,
+          feePaid: 0,
           executionTime,
         };
       } catch (error) {
@@ -157,23 +189,41 @@ export class LimitOrderExecutorService {
           error: error instanceof Error ? error.message : String(error),
         });
 
-        // Retry only if we have attempts left
         if (attempt < this.config.maxRetries + 1) {
-          await this.sleep(500); // Wait 500ms before retry
+          const delayMs = Math.min(500 * attempt, 2000); // Exponential backoff
+          await this.sleep(delayMs);
         }
       }
     }
 
     // All retries failed
-    throw new Error(
-      `Failed to place limit order after ${this.config.maxRetries + 1} attempts: ${lastError?.message}`,
+    const finalError = new LimitOrderPlacementError(
+      `Failed to place limit order after ${this.config.maxRetries + 1} attempts`,
+      {
+        symbol: this.bybitService.getSymbol(),
+        side: direction === SignalDirection.LONG ? 'Buy' : 'Sell',
+        quantity,
+        limitPrice,
+        reason: lastError?.message || 'Unknown error',
+      },
+      lastError,
     );
+
+    if (this.errorHandler) {
+      await this.errorHandler.handle(finalError, {
+        strategy: RecoveryStrategy.THROW,
+        context: 'LimitOrderExecutorService.placeLimitOrder',
+      });
+    }
+
+    throw finalError;
   }
 
   /**
    * Wait for limit order to fill with timeout
    *
    * Checks order status every 200ms until filled or timeout
+   * Uses ErrorHandler for status check retries
    *
    * @param orderId - Order ID to monitor
    * @param timeoutMs - Max wait time (ms)
@@ -190,49 +240,24 @@ export class LimitOrderExecutorService {
 
     while (Date.now() < endTime) {
       try {
-        // Get order status
-        const response = await this.bybitService.getRestClient().getActiveOrders({
-          category: 'linear',
-          symbol: this.bybitService.getSymbol(),
-          orderId,
-        });
+        // Get order status with ErrorHandler RETRY for transient failures
+        const filled = await this.checkOrderStatusWithRetry(orderId);
 
-        if (response.retCode !== BYBIT_SUCCESS_CODE) {
-          this.logger.warn('Failed to check order status', {
-            orderId,
-            error: response.retMsg,
-          });
-          await this.sleep(ORDER_CHECK_INTERVAL_MS);
-          continue;
-        }
-
-        const orders = response.result?.list || [];
-
-        // If order not in active list, it was filled or cancelled
-        if (orders.length === 0) {
-          // Check order history to confirm fill
-          const historyResponse = await this.bybitService.getRestClient().getHistoricOrders({
-            category: 'linear',
-            symbol: this.bybitService.getSymbol(),
-            orderId,
-          });
-
-          if (historyResponse.retCode === BYBIT_SUCCESS_CODE) {
-            const historicOrders = historyResponse.result?.list || [];
-            if (historicOrders.length > 0) {
-              const order = historicOrders[0];
-              const filled = order.orderStatus === 'Filled';
-
-              this.logger.info(filled ? '✅ Limit order filled' : '❌ Limit order not filled', {
-                orderId,
-                status: order.orderStatus,
-                fillPrice: order.avgPrice,
-                executionTime: Date.now() - startTime,
-              });
-
-              return filled;
-            }
+        if (filled !== null) {
+          const executionTime = Date.now() - startTime;
+          if (filled) {
+            this.logger.info('✅ Limit order filled', {
+              orderId,
+              executionTime,
+            });
+          } else {
+            this.logger.info('❌ Limit order not filled', {
+              orderId,
+              status: 'Cancelled',
+              executionTime,
+            });
           }
+          return filled;
         }
 
         // Order still active, wait and check again
@@ -254,11 +279,94 @@ export class LimitOrderExecutorService {
       executionTime,
     });
 
-    return false;
+    throw new LimitOrderFillTimeoutError(
+      `Limit order not filled within ${timeoutMs}ms timeout`,
+      {
+        orderId,
+        symbol: this.bybitService.getSymbol(),
+        limitPrice: 0,
+        timeoutMs,
+      },
+    );
+  }
+
+  /**
+   * Check order status with ErrorHandler tracking
+   * Returns true if filled, false if cancelled, null if still active
+   */
+  private async checkOrderStatusWithRetry(orderId: string): Promise<boolean | null> {
+    let lastError: Error | undefined;
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await this.bybitService.getRestClient().getActiveOrders({
+          category: 'linear',
+          symbol: this.bybitService.getSymbol(),
+          orderId,
+        });
+
+        if (response.retCode !== BYBIT_SUCCESS_CODE) {
+          const checkError = new Error(`Failed to check order status: ${response.retMsg}`);
+
+          if (this.errorHandler) {
+            await this.errorHandler.handle(checkError, {
+              strategy: RecoveryStrategy.RETRY,
+              context: 'LimitOrderExecutorService.checkOrderStatus',
+            });
+          }
+
+          throw checkError;
+        }
+
+        const orders = response.result?.list || [];
+
+        if (orders.length === 0) {
+          // Order not in active list, check history
+          const historyResponse = await this.bybitService.getRestClient().getHistoricOrders({
+            category: 'linear',
+            symbol: this.bybitService.getSymbol(),
+            orderId,
+          });
+
+          if (historyResponse.retCode !== BYBIT_SUCCESS_CODE) {
+            throw new Error(`Failed to check order history: ${historyResponse.retMsg}`);
+          }
+
+          const historicOrders = historyResponse.result?.list || [];
+          if (historicOrders.length > 0) {
+            const order = historicOrders[0];
+            return order.orderStatus === 'Filled';
+          }
+
+          return null;
+        }
+
+        // Order still active
+        return null;
+      } catch (error) {
+        lastError = error as Error;
+
+        if (attempt < maxAttempts) {
+          const delayMs = Math.min(50 * attempt, 200);
+          await this.sleep(delayMs);
+        }
+      }
+    }
+
+    // All retries failed
+    this.logger.warn('Order status check failed after retries', {
+      orderId,
+      error: lastError?.message,
+    });
+
+    return null;
   }
 
   /**
    * Cancel unfilled limit order
+   *
+   * Non-critical operation - uses SKIP strategy to log and continue
    *
    * @param orderId - Order ID to cancel
    * @returns True if cancelled successfully
@@ -274,7 +382,6 @@ export class LimitOrderExecutorService {
       });
 
       if (response.retCode !== BYBIT_SUCCESS_CODE) {
-        // Order might already be filled or cancelled
         if (response.retMsg.includes('not exists') || response.retMsg.includes('too late')) {
           this.logger.warn('Order already filled or cancelled', {
             orderId,
@@ -283,13 +390,23 @@ export class LimitOrderExecutorService {
           return false;
         }
 
-        throw new Error(`Failed to cancel order: ${response.retMsg}`);
+        const cancelError = new Error(`Failed to cancel order: ${response.retMsg}`);
+
+        if (this.errorHandler) {
+          await this.errorHandler.handle(cancelError, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'LimitOrderExecutorService.cancelOrder',
+          });
+        }
+
+        throw cancelError;
       }
 
       this.logger.info('✅ Order cancelled successfully', { orderId });
       return true;
     } catch (error) {
-      this.logger.error('Failed to cancel order', {
+      // SKIP strategy: log and continue
+      this.logger.warn('Order cancellation failed (non-critical, continuing)', {
         orderId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -301,6 +418,7 @@ export class LimitOrderExecutorService {
    * Fallback to market order execution
    *
    * Used when limit order times out or fails
+   * Uses RETRY for transient errors, THROW for critical errors
    *
    * @param direction - Signal direction (LONG/SHORT)
    * @param quantity - Order quantity (contracts)
@@ -313,6 +431,7 @@ export class LimitOrderExecutorService {
     leverage: number,
   ): Promise<MarketOrderResult> {
     const startTime = Date.now();
+    let lastError: Error | undefined;
 
     this.logger.info('🔄 Falling back to market order', {
       direction,
@@ -320,55 +439,79 @@ export class LimitOrderExecutorService {
       leverage,
     });
 
-    try {
-      // Use existing BybitService.openPosition for market order
-      const side = direction === SignalDirection.LONG ? PositionSide.LONG : PositionSide.SHORT;
+    // Retry loop with ErrorHandler tracking
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const side = direction === SignalDirection.LONG ? PositionSide.LONG : PositionSide.SHORT;
 
-      const orderId = await this.bybitService.openPosition({
-        side,
-        quantity,
-        leverage,
-      });
+        const orderId = await this.bybitService.openPosition({
+          side,
+          quantity,
+          leverage,
+        });
 
-      // Get order details to find fill price
-      const response = await this.bybitService.getRestClient().getHistoricOrders({
-        category: 'linear',
-        symbol: this.bybitService.getSymbol(),
-        orderId,
-        limit: 1,
-      });
+        const response = await this.bybitService.getRestClient().getHistoricOrders({
+          category: 'linear',
+          symbol: this.bybitService.getSymbol(),
+          orderId,
+          limit: 1,
+        });
 
-      let fillPrice = 0;
-      if (response.retCode === BYBIT_SUCCESS_CODE && response.result?.list?.length > 0) {
-        const order = response.result.list[0];
-        fillPrice = parseFloat(order.avgPrice || '0');
+        let fillPrice = 0;
+        if (response.retCode === BYBIT_SUCCESS_CODE && response.result?.list?.length > 0) {
+          const order = response.result.list[0];
+          fillPrice = parseFloat(order.avgPrice || '0');
+        }
+
+        const executionTime = Date.now() - startTime;
+        const feePaid = (quantity * fillPrice * TAKER_FEE_PERCENT) / PERCENT_MULTIPLIER;
+
+        this.logger.info('✅ Market order executed', {
+          orderId,
+          fillPrice,
+          feePaid,
+          executionTime,
+        });
+
+        return {
+          orderId: orderId || 'unknown',
+          filled: true as const,
+          fillPrice,
+          feePaid,
+          executionTime,
+        };
+      } catch (error) {
+        lastError = error as Error;
+        this.logger.warn(`Market order attempt ${attempt} failed`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+
+        if (attempt < 2) {
+          const delayMs = 100 * attempt;
+          await this.sleep(delayMs);
+        }
       }
-
-      const executionTime = Date.now() - startTime;
-
-      // Calculate taker fee (0.06%)
-      const feePaid = (quantity * fillPrice * TAKER_FEE_PERCENT) / PERCENT_MULTIPLIER;
-
-      this.logger.info('✅ Market order executed', {
-        orderId,
-        fillPrice,
-        feePaid,
-        executionTime,
-      });
-
-      return {
-        orderId: orderId || 'unknown',
-        filled: true as const, // Market orders are always filled
-        fillPrice,
-        feePaid,
-        executionTime,
-      };
-    } catch (error) {
-      this.logger.error('Failed to execute market order', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
     }
+
+    // All retries failed - throw wrapped error
+    const fallbackError = new MarketOrderFallbackError(
+      'Failed to execute fallback market order after retries',
+      {
+        symbol: this.bybitService.getSymbol(),
+        fallbackReason: 'limit_order_timeout',
+        primaryError: lastError?.message || 'Unknown error',
+      },
+      lastError,
+    );
+
+    if (this.errorHandler) {
+      await this.errorHandler.handle(fallbackError, {
+        strategy: RecoveryStrategy.THROW,
+        context: 'LimitOrderExecutorService.fallbackToMarket',
+      });
+    }
+
+    throw fallbackError;
   }
 
   /**
@@ -376,9 +519,9 @@ export class LimitOrderExecutorService {
    *
    * Main entry point for limit order execution:
    * 1. Calculate limit price
-   * 2. Place limit order
-   * 3. Wait for fill with timeout
-   * 4. If not filled → cancel and fallback to market (if enabled)
+   * 2. Place limit order (RETRY strategy)
+   * 3. Wait for fill with timeout (RETRY strategy for status checks)
+   * 4. If not filled → cancel (SKIP strategy) and fallback to market (if enabled)
    *
    * @param direction - Signal direction (LONG/SHORT)
    * @param quantity - Order quantity (contracts)
@@ -413,11 +556,21 @@ export class LimitOrderExecutorService {
         slippage: this.config.slippagePercent,
       });
 
-      // 2. Place limit order
+      // 2. Place limit order (with RETRY via ErrorHandler)
       const limitResult = await this.placeLimitOrder(direction, quantity, limitPrice, leverage);
 
-      // 3. Wait for fill
-      const filled = await this.waitForFill(limitResult.orderId, this.config.timeoutMs);
+      // 3. Wait for fill (with RETRY for status checks)
+      let filled = false;
+      try {
+        filled = await this.waitForFill(limitResult.orderId, this.config.timeoutMs);
+      } catch (timeoutError) {
+        // LimitOrderFillTimeoutError thrown - continue to cancel and fallback
+        this.logger.warn('Limit order fill timeout - proceeding to cancel and fallback', {
+          orderId: limitResult.orderId,
+          error: timeoutError instanceof Error ? timeoutError.message : String(timeoutError),
+        });
+        filled = false;
+      }
 
       if (filled) {
         // Success! Calculate maker fee (0.01%)
@@ -438,8 +591,8 @@ export class LimitOrderExecutorService {
         };
       }
 
-      // 4. Not filled - cancel and fallback
-      this.logger.warn('Limit order not filled within timeout', {
+      // 4. Not filled - cancel (SKIP strategy) and fallback
+      this.logger.warn('Limit order not filled - attempting cancellation', {
         orderId: limitResult.orderId,
         timeoutMs: this.config.timeoutMs,
       });
@@ -465,7 +618,14 @@ export class LimitOrderExecutorService {
       // If fallback enabled, try market order
       if (this.config.fallbackToMarket) {
         this.logger.info('Attempting market order fallback due to error');
-        return await this.fallbackToMarket(direction, quantity, leverage);
+        try {
+          return await this.fallbackToMarket(direction, quantity, leverage);
+        } catch (fallbackError) {
+          this.logger.error('Market order fallback also failed', {
+            error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+          });
+          throw fallbackError;
+        }
       }
 
       throw error;
