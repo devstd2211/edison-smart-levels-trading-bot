@@ -38,6 +38,7 @@ import {
   BBTrailingMode,
 } from '../types/position-state-machine.interface';
 import { LoggerService } from './logger.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**
  * In-memory state cache
@@ -67,7 +68,10 @@ export class PositionStateMachineService implements IPositionStateMachine {
   private historyFilePath: string;
   private initialized = false;
 
-  constructor(private logger: LoggerService) {
+  constructor(
+    private logger: LoggerService,
+    private errorHandler?: ErrorHandler,
+  ) {
     this.stateFilePath = path.join(process.cwd(), 'data', 'position-states.jsonl');
     this.historyFilePath = path.join(process.cwd(), 'data', 'position-transitions.jsonl');
 
@@ -83,6 +87,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
   /**
    * Initialize state machine and recover states from disk
+   * Phase 8.9.11: ErrorHandler integration with RETRY strategy
    */
   async initialize(): Promise<void> {
     try {
@@ -92,11 +97,57 @@ export class PositionStateMachineService implements IPositionStateMachine {
         await fsPromises.mkdir(dataDir, { recursive: true });
       }
 
-      // Load existing states from disk
-      await this.loadStatesFromDisk();
+      // Phase 8.9.11: RETRY strategy for critical state loading
+      if (this.errorHandler) {
+        const loadResult = await this.errorHandler.executeAsync(
+          () => this.loadStatesFromDisk(),
+          {
+            strategy: RecoveryStrategy.RETRY,
+            retryConfig: {
+              maxAttempts: 3,
+              initialDelayMs: 100,
+              backoffMultiplier: 2,
+              maxDelayMs: 1000,
+            },
+            logger: this.logger,
+            context: 'PositionStateMachineService.initialize.loadStates',
+            onRetry: (attempt, error, delayMs) => {
+              this.logger.warn(`🔄 Retrying state loading (attempt ${attempt}/3)`, {
+                delayMs,
+                error: error.message,
+              });
+            },
+          }
+        );
 
-      // Load transition history for debugging
-      await this.loadTransitionHistoryFromDisk();
+        if (!loadResult.success) {
+          throw loadResult.error || new Error('Failed to load position states after retries');
+        }
+      } else {
+        // Fallback: no ErrorHandler available
+        await this.loadStatesFromDisk();
+      }
+
+      // Phase 8.9.11: GRACEFUL_DEGRADE for history loading (non-critical)
+      if (this.errorHandler) {
+        const historyResult = await this.errorHandler.executeAsync(
+          () => this.loadTransitionHistoryFromDisk(),
+          {
+            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+            logger: this.logger,
+            context: 'PositionStateMachineService.initialize.loadHistory',
+          }
+        );
+
+        if (!historyResult.success && historyResult.error) {
+          this.logger.warn('⚠️ Failed to load transition history (non-critical)', {
+            error: historyResult.error.message,
+          });
+        }
+      } else {
+        // Fallback: no ErrorHandler available
+        await this.loadTransitionHistoryFromDisk();
+      }
 
       this.initialized = true;
 
@@ -112,6 +163,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
   /**
    * Load all states from JSONL file
+   * Phase 8.9.11: GRACEFUL_DEGRADE with backup on corruption
    */
   private async loadStatesFromDisk(): Promise<void> {
     try {
@@ -122,21 +174,62 @@ export class PositionStateMachineService implements IPositionStateMachine {
         return;
       }
 
-      const content = await fsPromises.readFile(this.stateFilePath, 'utf-8');
+      let content: string;
+      try {
+        content = await fsPromises.readFile(this.stateFilePath, 'utf-8');
+      } catch (error) {
+        // Phase 8.9.11: GRACEFUL_DEGRADE - try to use backup if original fails
+        const backupPath = this.stateFilePath + '.backup';
+        if (fs.existsSync(backupPath)) {
+          this.logger.warn('⚠️ Main state file corrupted, attempting backup recovery', {
+            original: this.stateFilePath,
+            backup: backupPath,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          try {
+            content = await fsPromises.readFile(backupPath, 'utf-8');
+            this.logger.info('✅ Recovered states from backup file');
+          } catch (backupError) {
+            this.logger.error('❌ Backup file also corrupted', { error: backupError });
+            throw error; // Throw original error if both fail
+          }
+        } else {
+          throw error;
+        }
+      }
+
       const lines = content.trim().split('\n').filter((line: string) => line.length > 0);
+      let validLines = 0;
+      let invalidLines = 0;
 
       for (const line of lines) {
         try {
           const state = JSON.parse(line) as PositionStateMachineState;
           const key = this.getStateKey(state.symbol, state.positionId);
           this.stateCache.set(key, state);
+          validLines++;
         } catch (err) {
-          this.logger.warn('⚠️ Failed to parse state line', { line, error: err });
+          invalidLines++;
+          this.logger.warn('⚠️ Skipped corrupted state line', {
+            line: line.substring(0, 50) + '...',
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      // Phase 8.9.11: Create backup after successful load
+      if (validLines > 0) {
+        try {
+          await fsPromises.copyFile(this.stateFilePath, this.stateFilePath + '.backup');
+        } catch (backupError) {
+          this.logger.debug('ℹ️ Could not create state backup', { error: backupError });
         }
       }
 
       this.logger.info('📖 Loaded position states from disk', {
         count: this.stateCache.size,
+        validLines,
+        invalidLines,
       });
     } catch (error) {
       this.logger.error('❌ Failed to load states from disk', { error });
@@ -146,6 +239,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
   /**
    * Load transition history from JSONL file (optional, for debugging)
+   * Phase 8.9.11: GRACEFUL_DEGRADE - history is non-critical
    */
   private async loadTransitionHistoryFromDisk(): Promise<void> {
     try {
@@ -158,6 +252,8 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
       // Keep last 1000 transitions per position for memory efficiency
       const maxPerPosition = 1000;
+      let loadedCount = 0;
+      let skippedCount = 0;
 
       for (const line of lines) {
         try {
@@ -170,54 +266,134 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
           const history = this.transitionHistory.get(key)!;
           history.push(entry);
+          loadedCount++;
 
           // Keep only recent transitions
           if (history.length > maxPerPosition) {
             history.shift();
           }
         } catch (err) {
-          this.logger.warn('⚠️ Failed to parse history line', { error: err });
+          skippedCount++;
+          this.logger.debug('ℹ️ Skipped corrupted history line', {
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }
+
+      this.logger.info('📖 Loaded transition history from disk', {
+        loaded: loadedCount,
+        skipped: skippedCount,
+      });
     } catch (error) {
-      this.logger.error('⚠️ Failed to load transition history', { error });
-      // Don't throw - history is optional
+      this.logger.warn('⚠️ Failed to load transition history (non-critical)', { error });
+      // Don't throw - history is optional, just continue
     }
   }
 
   /**
    * Persist state to disk (append-only JSONL)
+   * Phase 8.9.11: RETRY strategy with exponential backoff
    */
   private async persistStateToDisk(state: PositionStateMachineState): Promise<void> {
-    try {
-      const dataDir = path.dirname(this.stateFilePath);
-      if (!fs.existsSync(dataDir)) {
-        await fsPromises.mkdir(dataDir, { recursive: true });
-      }
+    if (!this.errorHandler) {
+      // Fallback: no ErrorHandler available
+      try {
+        const dataDir = path.dirname(this.stateFilePath);
+        if (!fs.existsSync(dataDir)) {
+          await fsPromises.mkdir(dataDir, { recursive: true });
+        }
 
-      const line = JSON.stringify(state) + '\n';
-      await fsPromises.appendFile(this.stateFilePath, line);
-    } catch (error) {
-      this.logger.error('❌ Failed to persist state to disk', { error });
-      throw error;
+        const line = JSON.stringify(state) + '\n';
+        await fsPromises.appendFile(this.stateFilePath, line);
+      } catch (error) {
+        this.logger.error('❌ Failed to persist state to disk', { error });
+        throw error;
+      }
+      return;
+    }
+
+    // Phase 8.9.11: RETRY strategy for I/O operations
+    const persistResult = await this.errorHandler.executeAsync(
+      async () => {
+        const dataDir = path.dirname(this.stateFilePath);
+        if (!fs.existsSync(dataDir)) {
+          await fsPromises.mkdir(dataDir, { recursive: true });
+        }
+
+        const line = JSON.stringify(state) + '\n';
+        await fsPromises.appendFile(this.stateFilePath, line);
+      },
+      {
+        strategy: RecoveryStrategy.RETRY,
+        retryConfig: {
+          maxAttempts: 3,
+          initialDelayMs: 50,
+          backoffMultiplier: 2,
+          maxDelayMs: 500,
+        },
+        logger: this.logger,
+        context: 'PositionStateMachineService.persistState',
+        onRetry: (attempt, error, delayMs) => {
+          this.logger.debug(`🔄 Retrying state persistence (attempt ${attempt}/3)`, {
+            delayMs,
+            error: error.message,
+          });
+        },
+      }
+    );
+
+    if (!persistResult.success) {
+      this.logger.error('❌ Failed to persist state to disk after retries', {
+        error: persistResult.error?.message,
+      });
+      throw persistResult.error || new Error('Failed to persist state to disk');
     }
   }
 
   /**
    * Persist transition to history file
+   * Phase 8.9.11: GRACEFUL_DEGRADE - history is non-critical
    */
   private async persistTransitionToDisk(entry: TransitionHistoryEntry): Promise<void> {
-    try {
-      const dataDir = path.dirname(this.historyFilePath);
-      if (!fs.existsSync(dataDir)) {
-        await fsPromises.mkdir(dataDir, { recursive: true });
-      }
+    if (!this.errorHandler) {
+      // Fallback: no ErrorHandler available
+      try {
+        const dataDir = path.dirname(this.historyFilePath);
+        if (!fs.existsSync(dataDir)) {
+          await fsPromises.mkdir(dataDir, { recursive: true });
+        }
 
-      const line = JSON.stringify(entry) + '\n';
-      await fsPromises.appendFile(this.historyFilePath, line);
-    } catch (error) {
-      this.logger.warn('⚠️ Failed to persist transition to disk', { error });
-      // Don't throw - history is optional
+        const line = JSON.stringify(entry) + '\n';
+        await fsPromises.appendFile(this.historyFilePath, line);
+      } catch (error) {
+        this.logger.debug('ℹ️ Failed to persist transition (non-critical)', { error });
+        // Don't throw - history is optional
+      }
+      return;
+    }
+
+    // Phase 8.9.11: GRACEFUL_DEGRADE for non-critical history
+    const persistResult = await this.errorHandler.executeAsync(
+      async () => {
+        const dataDir = path.dirname(this.historyFilePath);
+        if (!fs.existsSync(dataDir)) {
+          await fsPromises.mkdir(dataDir, { recursive: true });
+        }
+
+        const line = JSON.stringify(entry) + '\n';
+        await fsPromises.appendFile(this.historyFilePath, line);
+      },
+      {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        logger: this.logger,
+        context: 'PositionStateMachineService.persistTransition',
+      }
+    );
+
+    if (!persistResult.success && persistResult.error) {
+      this.logger.debug('ℹ️ Failed to persist transition (non-critical)', {
+        error: persistResult.error.message,
+      });
     }
   }
 
@@ -311,7 +487,8 @@ export class PositionStateMachineService implements IPositionStateMachine {
     // Update cache
     this.stateCache.set(key, newState);
 
-    // Persist to disk (async, don't wait)
+    // Phase 8.9.11: Persist to disk with error handling (async, don't wait)
+    // But use ErrorHandler internally via persistStateToDisk()
     this.persistStateToDisk(newState).catch(err => {
       this.logger.error('❌ Failed to persist state transition', { error: err });
     });
@@ -333,9 +510,10 @@ export class PositionStateMachineService implements IPositionStateMachine {
     }
     this.transitionHistory.get(key)!.push(historyEntry);
 
-    // Persist history (async, don't wait)
+    // Phase 8.9.11: Persist history with GRACEFUL_DEGRADE (async, don't wait)
+    // But use ErrorHandler internally via persistTransitionToDisk()
     this.persistTransitionToDisk(historyEntry).catch(err => {
-      this.logger.warn('⚠️ Failed to persist transition history', { error: err });
+      this.logger.debug('ℹ️ Failed to persist transition history (non-critical)', { error: err });
     });
 
     this.logger.info('📍 Position state transitioned', {
@@ -387,7 +565,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
       state.bbTrailingMode = mode.bbTrailingMode;
     }
 
-    // Persist to disk
+    // Phase 8.9.11: Persist to disk with error handling (async, don't wait)
     this.persistStateToDisk(state).catch(err => {
       this.logger.error('❌ Failed to persist exit mode update', { error: err });
     });
