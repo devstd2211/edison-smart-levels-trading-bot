@@ -26,6 +26,12 @@ import {
   Config,
 } from '../types';
 import { IJournalRepository } from '../repositories/IRepositories';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import {
+  SessionStatsReadError,
+  SessionStatsWriteError,
+  SessionRecordValidationError,
+} from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -51,6 +57,7 @@ export class SessionStatsService {
     logger: LoggerService,
     private readonly journalRepository?: IJournalRepository, // Phase 6.2: Repository pattern
     dataDir: string = DEFAULT_DATA_DIR,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.10: ErrorHandler integration
   ) {
     this.logger = logger;
     this.dataDir = dataDir;
@@ -147,12 +154,34 @@ export class SessionStatsService {
 
   /**
    * Record trade entry
+   * Strategy: THROW for validation errors (fail fast on duplicates)
    * @param trade - Trade record with entry condition
    */
   recordTradeEntry(trade: SessionTradeRecord): void {
     if (this.currentSession === null) {
       this.logger.error('Cannot record trade - no active session');
       return;
+    }
+
+    // Phase 8.9.10: Validate duplicate tradeId
+    const existingTrade = this.currentSession.trades.find((t) => t.tradeId === trade.tradeId);
+    if (existingTrade) {
+      if (this.errorHandler) {
+        throw new SessionRecordValidationError(
+          `Trade ${trade.tradeId} already exists in session`,
+          {
+            field: 'tradeId',
+            value: trade.tradeId,
+            reason: 'Duplicate trade ID in session',
+            tradeId: trade.tradeId,
+            sessionId: this.currentSession.sessionId,
+          },
+        );
+      } else {
+        // Backward compatible: log warning without ErrorHandler
+        this.logger.warn('Duplicate tradeId detected, skipping', { tradeId: trade.tradeId });
+        return;
+      }
     }
 
     // Add trade to current session
@@ -393,9 +422,60 @@ export class SessionStatsService {
   // ==========================================================================
 
   /**
-   * Save database to file
+   * Save database to file with ErrorHandler integration
+   * Strategy: RETRY for transient file I/O errors, then GRACEFUL_DEGRADE
    */
   private save(): void {
+    const data = JSON.stringify(this.database, null, 2);
+
+    if (this.errorHandler) {
+      // Phase 8.9.10: Use ErrorHandler with RETRY → GRACEFUL_DEGRADE
+      const retryConfig = {
+        maxAttempts: 3,
+        initialDelayMs: 100,
+        backoffMultiplier: 2,
+        maxDelayMs: 500,
+      };
+
+      this.errorHandler.wrapSync(
+        () => {
+          // Ensure data directory exists
+          if (!fs.existsSync(this.dataDir)) {
+            fs.mkdirSync(this.dataDir, { recursive: true });
+          }
+
+          // Write to file
+          fs.writeFileSync(this.filePath, data, 'utf-8');
+        },
+        {
+          strategy: RecoveryStrategy.RETRY,
+          context: 'SessionStatsService.save',
+          retryConfig,
+          onRetry: (attempt: number, error: Error) => {
+            this.logger.warn(`⚠️ Session stats save retry ${attempt}/${retryConfig.maxAttempts}`, {
+              error: error.message,
+              path: this.filePath,
+            });
+          },
+          onRecover: () => {
+            this.logger.debug('💾 Session stats saved after retry', {
+              totalSessions: this.database.sessions.length,
+            });
+          },
+          onFailure: (error: Error) => {
+            // Graceful degrade: Log error but don't crash
+            this.logger.error('❌ CRITICAL: Failed to save session stats after retries', {
+              error: error.message,
+              path: this.filePath,
+              totalSessions: this.database.sessions.length,
+            });
+          },
+        },
+      );
+      return;
+    }
+
+    // No error handler - use old behavior for backward compatibility
     try {
       // Ensure data directory exists
       if (!fs.existsSync(this.dataDir)) {
@@ -403,29 +483,55 @@ export class SessionStatsService {
       }
 
       // Write to file
-      fs.writeFileSync(this.filePath, JSON.stringify(this.database, null, 2), 'utf-8');
+      fs.writeFileSync(this.filePath, data, 'utf-8');
 
-      this.logger.debug('Session stats saved', { path: this.filePath });
+      this.logger.debug('💾 Session stats saved', { path: this.filePath });
     } catch (error) {
-      this.logger.error('Failed to save session stats', { error: String(error) });
+      this.logger.error('❌ Failed to save session stats', { error: String(error) });
     }
   }
 
   /**
-   * Load database from file
+   * Load database from file with ErrorHandler integration
+   * Strategy: GRACEFUL_DEGRADE for file read/parse errors with backup
    */
   private load(): void {
     try {
       if (!fs.existsSync(this.filePath)) {
-        this.logger.info('Session stats file not found, creating new database');
-        this.database = { sessions: [] };
+        this.logger.info('📊 Session stats file not found, creating new database');
         return;
       }
 
       const data = fs.readFileSync(this.filePath, 'utf-8');
-      this.database = JSON.parse(data) as SessionDatabase;
 
-      this.logger.info('Session stats loaded', {
+      // Try parsing JSON
+      let parsedData: SessionDatabase;
+      try {
+        parsedData = JSON.parse(data) as SessionDatabase;
+      } catch (parseError) {
+        // Phase 8.9.10: JSON parse error - gracefully degrade with backup
+        this.logger.warn('⚠️ Corrupted session stats file, starting with empty database', {
+          path: this.filePath,
+          backupPath: this.filePath + '.corrupted',
+          reason: parseError instanceof Error ? parseError.message : 'JSON parse error',
+        });
+
+        // Backup corrupted file for manual recovery
+        try {
+          fs.copyFileSync(this.filePath, this.filePath + '.corrupted');
+        } catch (backupError) {
+          this.logger.error('Failed to backup corrupted session stats', {
+            error: backupError instanceof Error ? backupError.message : String(backupError),
+          });
+        }
+
+        return; // Continue with empty database
+      }
+
+      // Load database
+      this.database = parsedData;
+
+      this.logger.info('📊 Session stats loaded', {
         totalSessions: this.database.sessions.length,
         path: this.filePath,
       });
@@ -440,8 +546,13 @@ export class SessionStatsService {
         });
       }
     } catch (error) {
-      this.logger.error('Failed to load session stats', { error: String(error) });
-      this.database = { sessions: [] };
+      // File read error - degrade gracefully
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error('❌ Failed to load session stats', {
+        error: errorMsg,
+        path: this.filePath,
+      });
+      // Service continues with empty database
     }
   }
 }

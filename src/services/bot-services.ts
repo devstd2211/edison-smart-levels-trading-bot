@@ -323,6 +323,8 @@ export class BotServices {
     this.sessionStats = new SessionStatsService(
       this.logger,
       this.journalRepository, // Phase 6.2: Repository parameter
+      undefined,              // dataDir: use default
+      this.errorHandler,      // Phase 8.9.10: ErrorHandler injection
     );
 
     // 4.5 Initialize Reality Check Service (tracks broken assumptions in trades)

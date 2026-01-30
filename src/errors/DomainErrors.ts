@@ -1132,3 +1132,88 @@ export class StrategyParseError extends TradingError {
     Object.setPrototypeOf(this, StrategyParseError.prototype);
   }
 }
+
+// ============================================================================
+// SESSION STATS ERRORS (Phase 8.9.10)
+// ============================================================================
+
+/**
+ * Session stats read error
+ * Failed to load or parse session database file
+ */
+export class SessionStatsReadError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      filePath: string;
+      operation: 'read' | 'parse' | 'corrupt';
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'SESSION_STATS_READ_ERROR',
+      ErrorDomain.PERSISTENCE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, SessionStatsReadError.prototype);
+  }
+}
+
+/**
+ * Session stats write error
+ * Failed to save session database file
+ */
+export class SessionStatsWriteError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      filePath: string;
+      operation: 'write' | 'serialize' | 'directory';
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'SESSION_STATS_WRITE_ERROR',
+      ErrorDomain.PERSISTENCE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, SessionStatsWriteError.prototype);
+  }
+}
+
+/**
+ * Session record validation error
+ * Invalid trade record or duplicate validation failure
+ */
+export class SessionRecordValidationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      field: string;
+      value?: unknown;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'SESSION_RECORD_VALIDATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, SessionRecordValidationError.prototype);
+  }
+}
