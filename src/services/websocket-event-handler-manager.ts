@@ -44,20 +44,35 @@ export class WebSocketEventHandlerManager {
 
   /**
    * Validate orderbook data for required structure and valid values
+   * Handles both snapshot (full orderbook) and delta (partial updates)
    * @private
    */
   private validateOrderbookData(update: any): boolean {
     if (!update) return false;
-    if (!Array.isArray(update.bids) || update.bids.length === 0) return false;
-    if (!Array.isArray(update.asks) || update.asks.length === 0) return false;
-    const firstBid = update.bids[0];
-    const firstAsk = update.asks[0];
-    if (!Array.isArray(firstBid) || firstBid.length < 2) return false;
-    if (!Array.isArray(firstAsk) || firstAsk.length < 2) return false;
-    const bidPrice = parseFloat(String(firstBid[0]));
-    const askPrice = parseFloat(String(firstAsk[0]));
-    if (isNaN(bidPrice) || bidPrice <= 0) return false;
-    if (isNaN(askPrice) || askPrice <= 0) return false;
+
+    // Both bids and asks must exist as arrays (but can be empty for delta updates)
+    if (!Array.isArray(update.bids)) return false;
+    if (!Array.isArray(update.asks)) return false;
+
+    // For delta updates, at least ONE of bids or asks must have data
+    if (update.bids.length === 0 && update.asks.length === 0) return false;
+
+    // Validate first bid if present
+    if (update.bids.length > 0) {
+      const firstBid = update.bids[0];
+      if (!Array.isArray(firstBid) || firstBid.length < 2) return false;
+      const bidPrice = parseFloat(String(firstBid[0]));
+      if (isNaN(bidPrice) || bidPrice <= 0) return false;
+    }
+
+    // Validate first ask if present
+    if (update.asks.length > 0) {
+      const firstAsk = update.asks[0];
+      if (!Array.isArray(firstAsk) || firstAsk.length < 2) return false;
+      const askPrice = parseFloat(String(firstAsk[0]));
+      if (isNaN(askPrice) || askPrice <= 0) return false;
+    }
+
     return true;
   }
 
