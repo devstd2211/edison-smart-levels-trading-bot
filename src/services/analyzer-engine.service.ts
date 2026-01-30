@@ -28,6 +28,7 @@ import { LoggerService } from './logger.service';
 import type { AnalyzerRegistryService } from './analyzer-registry.service';
 import type { StrategyConfig } from '../types/strategy-config.types';
 import type { IAnalyzer } from '../types/analyzer.interface';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================
 // TYPES
@@ -103,6 +104,7 @@ export class AnalyzerEngineService {
   constructor(
     private analyzerRegistry: AnalyzerRegistryService,
     private logger?: LoggerService,
+    private errorHandler?: ErrorHandler,
   ) {}
 
   /**
@@ -321,11 +323,20 @@ export class AnalyzerEngineService {
       return result;
     } catch (error) {
       const executionTimeMs = Date.now() - startTime;
+      const errorMsg = error instanceof Error ? error.message : String(error);
 
       if (this.logger) {
         this.logger.error('[AnalyzerEngine] Critical error during execution', {
-          errorMessage: error instanceof Error ? error.message : String(error),
+          errorMessage: errorMsg,
           executionTimeMs,
+        });
+      }
+
+      // Use ErrorHandler if available (Phase 8.9.13 - GRACEFUL_DEGRADE for registry failures)
+      if (this.errorHandler && mergedConfig.errorHandling === 'lenient') {
+        await this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'AnalyzerEngineService.executeAnalyzers[registry-failure]',
         });
       }
 
@@ -345,7 +356,7 @@ export class AnalyzerEngineService {
         errors: [
           {
             analyzerName: 'system',
-            error: error instanceof Error ? error.message : String(error),
+            error: errorMsg,
           },
         ],
       };
@@ -355,6 +366,7 @@ export class AnalyzerEngineService {
   /**
    * Execute single analyzer with error handling
    * Returns signal or null if error (depending on errorHandling mode)
+   * Uses SKIP recovery strategy for non-critical analyzer failures
    *
    * @private
    */
@@ -392,6 +404,14 @@ export class AnalyzerEngineService {
         analyzerName,
         error: errorMsg,
       });
+
+      // Use ErrorHandler if available (Phase 8.9.13 - SKIP strategy for non-critical failures)
+      if (this.errorHandler) {
+        await this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: `AnalyzerEngineService.executeAnalyzer[${analyzerName}]`,
+        });
+      }
 
       return null;
     }
