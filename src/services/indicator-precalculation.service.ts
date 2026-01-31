@@ -4,6 +4,12 @@ import { IIndicatorCalculator } from '../types/indicator-calculator.interface';
 import { IIndicatorPreCalculationService } from '../types/pre-calculation.interface';
 import { LoggerService } from './logger.service';
 import { TimeframeRole } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import {
+  IndicatorCalculationError,
+  IndicatorCacheSyncError,
+  CandleDataMissingError,
+} from '../errors/DomainErrors';
 
 interface PendingClose {
   timeframe: TimeframeRole;
@@ -52,6 +58,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
     private cache: IIndicatorCache,
     private calculators: IIndicatorCalculator[],
     private logger: LoggerService,
+    private errorHandler?: ErrorHandler, // Phase 8.9.16: Optional for backward compatibility
   ) {}
 
   /**
@@ -210,41 +217,111 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
           if (ind.timeframes.includes(closedTimeframe as unknown as string)) {
             ind.periods.forEach((period) => {
               const cacheKey = `${ind.name}-${period}-${closedTimeframe}`;
-              this.cache.invalidate(cacheKey);
+              if (this.errorHandler) {
+                // Phase 8.9.16: Cache invalidation with SKIP strategy
+                try {
+                  this.cache.invalidate(cacheKey);
+                } catch (error) {
+                  // SKIP - log and continue, don't block calculation
+                  this.errorHandler.handle(
+                    new IndicatorCacheSyncError(
+                      `Failed to invalidate cache for ${cacheKey}`,
+                      {
+                        cacheKey,
+                        operation: 'invalidate',
+                        reason: 'cache_invalidate_failed',
+                      },
+                      error instanceof Error ? error : undefined
+                    ),
+                    {
+                      strategy: RecoveryStrategy.SKIP,
+                      context: 'IndicatorPreCalculationService.invalidateCache',
+                    }
+                  );
+                  this.logger.warn(`Skipped cache invalidation for ${cacheKey}`);
+                }
+              } else {
+                // Original behavior without ErrorHandler
+                this.cache.invalidate(cacheKey);
+              }
             });
           }
         });
       }
 
       // === CALCULATE ===
-      const promises = affectedCalculators.map((calc) =>
-        calc
-          .calculate({
-            candlesByTimeframe: candlesByTf as any,
-            timestamp: Date.now(),
-          })
-          .catch((error) => {
-            this.logger.error(
-              `Calculator ${calc.constructor.name} failed:`,
-              error instanceof Error ? { message: error.message } : {}
-            );
-            return new Map(); // Return empty, don't block others
-          })
-      );
+      const promises = affectedCalculators.map((calc) => {
+        if (this.errorHandler) {
+          // Phase 8.9.16: Calculator execution with SKIP strategy
+          return calc
+            .calculate({
+              candlesByTimeframe: candlesByTf as any,
+              timestamp: Date.now(),
+            })
+            .catch((error: unknown) => {
+              // SKIP - log error and continue with other calculators
+              const classified = this.classifyCalculationError(error, calc);
+              this.errorHandler!.handle(classified, {
+                strategy: RecoveryStrategy.SKIP,
+                context: `IndicatorPreCalculationService.calculate[${calc.constructor.name}]`,
+              });
+              this.logger.warn(
+                `Skipped failed calculator: ${calc.constructor.name}`
+              );
+              return new Map<string, number>(); // Return empty, don't block others
+            });
+        } else {
+          // Original behavior without ErrorHandler
+          return calc
+            .calculate({
+              candlesByTimeframe: candlesByTf as any,
+              timestamp: Date.now(),
+            })
+            .catch((error) => {
+              this.logger.error(
+                `Calculator ${calc.constructor.name} failed:`,
+                error instanceof Error ? { message: error.message } : {}
+              );
+              return new Map(); // Return empty, don't block others
+            });
+        }
+      });
 
       const allResults = await Promise.all(promises);
 
       // === STORE in cache ===
       for (const results of allResults) {
-        results.forEach((value, key) => {
-          this.cache.set(key, value);
+        results.forEach((value: unknown, key: string) => {
+          if (this.errorHandler) {
+            // Phase 8.9.16: Cache storage with SKIP strategy
+            try {
+              this.cache.set(key, value as number);
+            } catch (error) {
+              // SKIP - log and continue, don't block other caches
+              this.errorHandler.handle(
+                new IndicatorCacheSyncError(
+                  `Failed to cache indicator: ${key}`,
+                  { cacheKey: key, value, operation: 'set', reason: 'cache_set_failed' },
+                  error instanceof Error ? error : undefined
+                ),
+                {
+                  strategy: RecoveryStrategy.SKIP,
+                  context: 'IndicatorPreCalculationService.setCache',
+                }
+              );
+              this.logger.warn(`Skipped cache storage for ${key}`);
+            }
+          } else {
+            // Original behavior without ErrorHandler
+            this.cache.set(key, value as number);
+          }
         });
       }
 
       this.logger.debug(`Recalculated indicators for ${closedTimeframe}`, {
         calculatorsRun: affectedCalculators.length,
         entriesUpdated: Array.from(allResults).reduce(
-          (sum, m) => sum + m.size,
+          (sum, m: any) => sum + m.size,
           0
         ),
       });
@@ -254,5 +331,61 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
         error instanceof Error ? { message: error.message } : {}
       );
     }
+  }
+
+  /**
+   * Phase 8.9.16: Classify calculation errors for proper recovery strategy
+   * Maps error types to domain-specific error classes
+   */
+  private classifyCalculationError(
+    error: unknown,
+    calculator: IIndicatorCalculator
+  ): Error {
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+    const calculatorName = calculator.constructor.name;
+
+    // NaN or Infinity results
+    if (
+      errorMessage.includes('NaN') ||
+      errorMessage.includes('Infinity')
+    ) {
+      return new IndicatorCalculationError(
+        `Invalid calculation result from ${calculatorName}`,
+        {
+          calculator: calculatorName,
+          reason: 'invalid_number',
+          error: errorMessage,
+        },
+        error instanceof Error ? error : undefined
+      );
+    }
+
+    // Insufficient data
+    if (
+      errorMessage.includes('not enough candles') ||
+      errorMessage.includes('insufficient')
+    ) {
+      return new CandleDataMissingError(
+        `Insufficient candles for ${calculatorName}`,
+        {
+          calculator: calculatorName,
+          reason: 'insufficient_data',
+          minRequired: 100, // Default, could be extracted from error
+        },
+        error instanceof Error ? error : undefined
+      );
+    }
+
+    // Default - unknown calculation error
+    return new IndicatorCalculationError(
+      `Calculation failed: ${calculatorName}`,
+      {
+        calculator: calculatorName,
+        reason: 'unknown',
+        error: errorMessage,
+      },
+      error instanceof Error ? error : undefined
+    );
   }
 }

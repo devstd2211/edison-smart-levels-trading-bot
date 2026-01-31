@@ -1311,3 +1311,94 @@ export class MarketOrderFallbackError extends TradingError {
     Object.setPrototypeOf(this, MarketOrderFallbackError.prototype);
   }
 }
+
+// ============================================================================
+// PERFORMANCE DOMAIN ERRORS (Phase 8.9.16)
+// ============================================================================
+
+/**
+ * Indicator calculation error
+ * Calculation failed for a specific indicator (NaN, Infinity, insufficient data, etc)
+ */
+export class IndicatorCalculationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      calculator?: string;
+      indicatorName?: string;
+      period?: number;
+      timeframe?: string;
+      reason: string;
+      error?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'INDICATOR_CALCULATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, IndicatorCalculationError.prototype);
+  }
+}
+
+/**
+ * Indicator cache synchronization error
+ * Cache operation (invalidate/set) failed
+ */
+export class IndicatorCacheSyncError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      cacheKey: string;
+      operation: 'invalidate' | 'set' | 'get';
+      reason: string;
+      value?: unknown;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'INDICATOR_CACHE_SYNC_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, IndicatorCacheSyncError.prototype);
+  }
+}
+
+/**
+ * Candle data missing error
+ * Insufficient historical candle data for indicator calculation
+ */
+export class CandleDataMissingError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      calculator?: string;
+      timeframe?: string;
+      minRequired: number;
+      available?: number;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'CANDLE_DATA_MISSING_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, CandleDataMissingError.prototype);
+  }
+}
