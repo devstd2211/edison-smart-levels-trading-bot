@@ -517,7 +517,13 @@ export class BotServices {
     // 9. Initialize WebSocket managers
     const orderExecutionDetector = new OrderExecutionDetectorService(this.logger);
     const authService = new WebSocketAuthenticationService();
-    const deduplicationService = new EventDeduplicationService(100, 60000, this.logger);
+    // Phase 8.9.19: EventDeduplicationService with ErrorHandler integration
+    const deduplicationService = new EventDeduplicationService(
+      100,
+      60000,
+      this.logger,
+      this.errorHandler,
+    );
     const keepAliveService = new WebSocketKeepAliveService(20000, this.logger);
     this.webSocketManager = new WebSocketManagerService(
       config.exchange,
