@@ -9,23 +9,48 @@
  */
 
 import { BybitOrder, ExitType, Position, PositionSide, LoggerService } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**
  * Exit Type Detector Service
  * Analyzes order history to determine position exit reason
+ *
+ * Phase 8.9.18: ErrorHandler integration for robust data validation
+ * - SKIP strategy for missing/malformed order data
+ * - THROW strategy for missing Position object
+ * - Comprehensive logging for debugging
  */
 export class ExitTypeDetectorService {
-  constructor(private readonly logger: LoggerService) {}
+  constructor(
+    private readonly logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler,
+  ) {}
 
   /**
    * Determine position exit type from order history
    * Analyzes filled orders to identify SL/TP/Trailing/Manual close
+   *
+   * Phase 8.9.18: ErrorHandler integration with SKIP strategy
+   * - SKIP on empty order history (use MANUAL fallback)
+   * - SKIP on malformed price parsing (use TP1 default)
    *
    * @param orderHistory - Order history from exchange
    * @param position - Position being analyzed
    * @returns Exit type (SL, TP1/TP2/TP3, TRAILING, MANUAL)
    */
   public determineExitTypeFromHistory(orderHistory: BybitOrder[], position: Position): ExitType {
+    // Phase 8.9.18: Validate input
+    if (!position) {
+      const error = new Error('Position object is required for exit type determination');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.THROW,
+          context: 'ExitTypeDetectorService.determineExitTypeFromHistory.missingPosition',
+        });
+      }
+      throw error;
+    }
+
     // Find filled orders for this symbol
     const filledOrders = orderHistory
       .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled')
@@ -36,6 +61,17 @@ export class ExitTypeDetectorService {
       }); // Most recent first
 
     if (filledOrders.length === 0) {
+      // Phase 8.9.18: SKIP strategy for missing order history
+      if (this.errorHandler) {
+        const error = new Error('No filled orders found in history');
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'ExitTypeDetectorService.determineExitTypeFromHistory.noFilledOrders',
+          onRecover: () => {
+            this.logger.warn('No filled orders found, assuming MANUAL close (fallback)');
+          },
+        });
+      }
       this.logger.warn('No filled orders found in history, assuming MANUAL close');
       return ExitType.MANUAL;
     }
@@ -87,14 +123,44 @@ export class ExitTypeDetectorService {
    * Identify TP level from execution price
    * Returns 1, 2, or 3 based on which TP level price is closest to
    *
+   * Phase 8.9.18: ErrorHandler integration with SKIP strategy
+   * - SKIP on NaN price (use TP1 default)
+   * - SKIP on empty takeProfits array (use TP1 default)
+   *
    * @param price - Execution price
    * @param position - Position with TP levels
    * @returns TP level (1, 2, or 3)
    */
   public identifyTPLevel(price: number, position: Position): number {
+    // Phase 8.9.18: Validate price (NaN check)
+    if (isNaN(price)) {
+      if (this.errorHandler) {
+        const error = new Error('Invalid execution price (NaN) for TP identification');
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'ExitTypeDetectorService.identifyTPLevel.invalidPrice',
+          onRecover: () => {
+            this.logger.warn('Invalid TP price detected, defaulting to TP1');
+          },
+        });
+      }
+      return 1; // Fallback for NaN
+    }
+
     const tpLevels = position.takeProfits;
 
     if (tpLevels.length === 0) {
+      // Phase 8.9.18: SKIP strategy for missing TP levels
+      if (this.errorHandler) {
+        const error = new Error('No TP levels defined in position');
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'ExitTypeDetectorService.identifyTPLevel.noTPLevels',
+          onRecover: () => {
+            this.logger.warn('No TP levels defined, defaulting to TP1');
+          },
+        });
+      }
       return 1; // Fallback if no TP levels defined
     }
 

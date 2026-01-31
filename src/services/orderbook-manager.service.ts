@@ -17,6 +17,7 @@ import { MAX_ORDERBOOK_LEVELS } from '../constants/technical.constants';
  */
 
 import { LoggerService } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { WallTrackerService } from './wall-tracker.service';
 
 // ============================================================================
@@ -54,6 +55,14 @@ export interface OrderbookUpdate {
 // ORDERBOOK MANAGER SERVICE
 // ============================================================================
 
+/**
+ * Orderbook Manager Service
+ *
+ * Phase 8.9.18: ErrorHandler integration
+ * - GRACEFUL_DEGRADE for WallTracker callbacks (prevents orderbook corruption)
+ * - SKIP for NaN price/size validation
+ * - GRACEFUL_DEGRADE for stale snapshot handling
+ */
 export class OrderbookManagerService {
   // Snapshot storage (Map for O(1) lookup/update/delete)
   private bidsMap: Map<number, number> = new Map(); // price -> size
@@ -66,6 +75,7 @@ export class OrderbookManagerService {
     private readonly symbol: string,
     private readonly logger: LoggerService,
     private readonly wallTracker?: WallTrackerService,
+    private readonly errorHandler?: ErrorHandler,
   ) {}
 
   // ==========================================================================
@@ -87,6 +97,9 @@ export class OrderbookManagerService {
   /**
    * Get current orderbook snapshot
    * Returns sorted bids (descending) and asks (ascending)
+   *
+   * Phase 8.9.18: ErrorHandler integration with GRACEFUL_DEGRADE strategy
+   * - GRACEFUL_DEGRADE on stale snapshot (serve with warning instead of null)
    */
   getSnapshot(): OrderbookSnapshot | null {
     if (!this.isInitialized) {
@@ -96,12 +109,29 @@ export class OrderbookManagerService {
 
     // Check if snapshot is stale
     const now = Date.now();
-    if (now - this.lastSnapshotTime > SNAPSHOT_RESET_THRESHOLD_MS) {
-      this.logger.warn('Orderbook snapshot is stale, waiting for new data', {
-        symbol: this.symbol,
-        ageMs: now - this.lastSnapshotTime,
-      });
-      return null;
+    const ageMs = now - this.lastSnapshotTime;
+    if (ageMs > SNAPSHOT_RESET_THRESHOLD_MS) {
+      // Phase 8.9.18: GRACEFUL_DEGRADE for stale snapshot
+      if (this.errorHandler) {
+        const error = new Error(`Orderbook snapshot is stale (age: ${ageMs}ms)`);
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'OrderbookManagerService.getSnapshot.staleSnapshot',
+          onRecover: () => {
+            this.logger.warn('Serving stale orderbook data (degraded mode)', {
+              symbol: this.symbol,
+              ageMs,
+            });
+          },
+        });
+      } else {
+        this.logger.warn('Orderbook snapshot is stale, waiting for new data', {
+          symbol: this.symbol,
+          ageMs,
+        });
+        return null;
+      }
+      // Continue to serve stale data in degraded mode
     }
 
     // Convert Maps to sorted arrays
@@ -223,6 +253,10 @@ export class OrderbookManagerService {
    * Rules:
    * - size = 0 → delete level
    * - size > 0 → insert or update level
+   *
+   * Phase 8.9.18: ErrorHandler integration
+   * - SKIP on NaN price/size (invalid data from WS)
+   * - GRACEFUL_DEGRADE on WallTracker callback errors (continue processing other levels)
    */
   private applyLevels(
     map: Map<number, number>,
@@ -235,21 +269,73 @@ export class OrderbookManagerService {
       const price = parseFloat(priceStr);
       const size = parseFloat(sizeStr);
 
+      // Phase 8.9.18: Validate price and size (NaN check)
+      if (isNaN(price) || isNaN(size)) {
+        if (this.errorHandler) {
+          const error = new Error(`Invalid level data: price=${priceStr}, size=${sizeStr}`);
+          this.errorHandler.handle(error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: `OrderbookManagerService.applyLevels.invalidLevel[${side}]`,
+            onRecover: () => {
+              this.logger.debug(`Skipped invalid level (${side})`, { price: priceStr, size: sizeStr });
+            },
+          });
+        }
+        continue; // Skip this level
+      }
+
       if (size === 0) {
         // Delete level
         map.delete(price);
 
         // PHASE 4: Notify Wall Tracker (wall removed)
+        // Phase 8.9.18: GRACEFUL_DEGRADE on WallTracker error
         if (this.wallTracker) {
-          this.wallTracker.removeWall(price, side);
+          try {
+            this.wallTracker.removeWall(price, side);
+          } catch (error) {
+            if (this.errorHandler) {
+              this.errorHandler.handle(error, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'OrderbookManagerService.applyLevels.wallTrackerRemoveWall',
+                onRecover: () => {
+                  this.logger.warn(`WallTracker removeWall failed (continuing)`, {
+                    price,
+                    side,
+                    error: error instanceof Error ? error.message : String(error),
+                  });
+                },
+              });
+            }
+            // Continue processing other levels despite wall tracker error
+          }
         }
       } else {
         // Insert or update level
         map.set(price, size);
 
         // PHASE 4: Notify Wall Tracker (wall detected/updated)
+        // Phase 8.9.18: GRACEFUL_DEGRADE on WallTracker error
         if (this.wallTracker) {
-          this.wallTracker.detectWall(price, size, side);
+          try {
+            this.wallTracker.detectWall(price, size, side);
+          } catch (error) {
+            if (this.errorHandler) {
+              this.errorHandler.handle(error, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'OrderbookManagerService.applyLevels.wallTrackerDetectWall',
+                onRecover: () => {
+                  this.logger.warn(`WallTracker detectWall failed (continuing)`, {
+                    price,
+                    size,
+                    side,
+                    error: error instanceof Error ? error.message : String(error),
+                  });
+                },
+              });
+            }
+            // Continue processing other levels despite wall tracker error
+          }
         }
       }
     }
