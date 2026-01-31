@@ -1,8 +1,8 @@
 # 🚀 Architecture Quick Start - Current Context
 
-**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.14 ✅** + **Phase 8.9.14 ✅ COMPLETE**
-**Last Updated:** 2026-01-30 (Session 55 - **Phase 8.9.14: AnalyzerEngineService Advanced Error Handling COMPLETE**)
-**Build:** ✅ SUCCESS | **15/15 New Tests Passing** | **4757 Total Tests** | **0 Regressions**
+**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.17 ✅** + **Phase 8.9.17 ✅ COMPLETE**
+**Last Updated:** 2026-01-31 (Session 58 - **Phase 8.9.17: PositionLifecycleService ErrorHandler Integration COMPLETE**)
+**Build:** ✅ SUCCESS | **22/22 New Tests Passing** | **4801 Total Tests** | **0 Regressions**
 
 ---
 
@@ -272,10 +272,24 @@
 |  | - Domain Error Classes (NEW) | ✅ | IndicatorCalculationError, IndicatorCacheSyncError, CandleDataMissingError | - | S57 |
 | **TOTAL S1-9.16** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.16 fully integrated** | **20 new ✅** | **S57** |
 
+| **8.9.17** | **PositionLifecycleService** | ✅ | **RETRY (price/cancel/TP) + GRACEFUL_DEGRADE (journal) + SKIP (stats) + FALLBACK (snapshot)** | **22 tests ✅** | **S58** |
+|  | - getCurrentPrice RETRY | ✅ | 3x retries with exponential backoff (500-2000ms) → FALLBACK to signal.price | 3 ✅ | S58 |
+|  | - cancelAllConditionalOrders RETRY | ✅ | 2x retries → SKIP (non-blocking order cancellation) | 2 ✅ | S58 |
+|  | - updateTakeProfitPartial RETRY | ✅ | 2x retries → SKIP (non-critical secondary TPs) | 3 ✅ | S58 |
+|  | - journal.recordTradeOpen RETRY | ✅ | 2x retries → GRACEFUL_DEGRADE (position opens even if journal fails) | 2 ✅ | S58 |
+|  | - sessionStats.recordTradeEntry SKIP | ✅ | Analytics-only operation (never blocks trading) | 1 ✅ | S58 |
+|  | - journal.getOpenPositionBySymbol GRACEFUL_DEGRADE | ✅ | Sync restoration with fallback (continue without journalId if unavailable) | 2 ✅ | S58 |
+|  | - getPositionSnapshot FALLBACK | ✅ | JSON serialization with fallback to reference copy | 2 ✅ | S58 |
+|  | - ErrorHandler Integration | ✅ | Optional parameter for backward compatibility (graceful fallback) | 2 ✅ | S58 |
+|  | - E2E Cascading Failures | ✅ | Full openPosition() with multiple operation failures | 2 ✅ | S58 |
+|  | - DI Integration | ✅ | ErrorHandler injected via BotServices.ts constructor | - | S58 |
+| **TOTAL S1-9.17** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.17 fully integrated** | **22 new ✅** | **S58** |
+
 ### Future Phases
 | Phase | Component | Status | Details | Notes |
 |-------|-----------|--------|---------|-------|
-| **8.9.17+** | Remaining Services (1+) | ⏳ | OrderbookManager, others | ~30+ tests total |
+| **8.9.17** | PositionLifecycleService | ✅ COMPLETE | RETRY/FALLBACK/GRACEFUL_DEGRADE/SKIP | 22 tests ✅ - **S58** |
+| **8.9.18+** | Remaining Services (2+) | ⏳ | OrderbookManager, ExitTypeDetector, others | ~30+ tests total |
 | **9.2-9.4** | Live Trading Integration | ⏳ | Configuration + E2E tests + chaos | After Phase 8.9 |
 | **15** | Multi-Strategy Config | ⏳ | Config consolidation | After Phase 9 |
 
@@ -690,7 +704,7 @@ Filter Orchestrator
 
 ---
 
-**Version:** 5.17 (Phase 8.9.16 - IndicatorPreCalculationService Error Handling COMPLETE)
-**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.16 ✅)
-**Build Status:** ✅ 0 TypeScript Errors | 🎉 4799 Tests Passing | +20 Phase 8.9.16 tests
-**Session:** 57 | **Status:** Phase 8.9.16 ✅ COMPLETE | Phase 8.9.17+ NEXT (Remaining Services)
+**Version:** 5.18 (Phase 8.9.17 - PositionLifecycleService ErrorHandler Integration COMPLETE)
+**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.17 ✅)
+**Build Status:** ✅ 0 TypeScript Errors | 🎉 4801 Tests Passing | +22 Phase 8.9.17 tests
+**Session:** 58 | **Status:** Phase 8.9.17 ✅ COMPLETE | Phase 8.9.18+ NEXT (Remaining Services)
