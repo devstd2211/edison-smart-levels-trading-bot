@@ -454,6 +454,7 @@ export class BotServices {
     // 8. Initialize position management
     // NOTE: Phase 1.2 - Update PositionLifecycleService to use IExchange
     // Phase 6.2: Add positionRepository parameter (strategyId is optional, used only in Phase 10 multi-strategy)
+    // Phase 8.9.17: Inject ErrorHandler for critical operation error handling
     this.positionManager = new PositionLifecycleService(
       this.bybitService,
       config.trading,
@@ -468,6 +469,7 @@ export class BotServices {
       this.sessionStats,
       undefined, // strategyId - optional, only used in Phase 10 multi-strategy mode
       this.positionRepository, // Phase 6.2: Repository parameter
+      this.errorHandler, // Phase 8.9.17: ErrorHandler for error handling integration
     );
 
     // 8.5 Initialize position exiting service (depends on bybit, journal, configs, positionManager)

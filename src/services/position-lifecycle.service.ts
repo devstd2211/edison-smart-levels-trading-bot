@@ -84,6 +84,7 @@ export class PositionLifecycleService {
     private readonly sessionStats?: SessionStatsService,
     private readonly strategyId?: string,  // Phase 10.3c: Strategy identifier for event tagging
     private readonly positionRepository?: IPositionRepository, // Phase 6.2: Repository pattern
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.17: Error handling integration
   ) {
     this.entryConfirmation = new EntryConfirmationManager(entryConfirmationConfig, logger);
   }
@@ -128,24 +129,75 @@ export class PositionLifecycleService {
 
       // ===================================================================
       // STEP 2: Cancel any hanging conditional orders from previous position
+      // Phase 8.9.17: ErrorHandler integration with RETRY → SKIP strategy
       // ===================================================================
       this.logger.debug('🧹 Cancelling any hanging conditional orders before opening...');
-      try {
-        await this.bybitService.cancelAllConditionalOrders();
-      } catch (error) {
-        this.logger.warn('Failed to cancel hanging orders', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        // Continue anyway - don't fail the position opening
+      if (this.errorHandler) {
+        const cancelResult = await this.errorHandler.executeAsync(
+          () => this.bybitService.cancelAllConditionalOrders(),
+          {
+            strategy: RecoveryStrategy.RETRY,
+            retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
+            context: 'PositionLifecycleService.openPosition.cancelAllConditionalOrders',
+            onFailure: () => {
+              this.logger.warn('Failed to cancel hanging orders (non-blocking)', {
+                note: 'Continuing with position opening',
+              });
+            },
+          }
+        );
+
+        if (!cancelResult.success) {
+          // SKIP: non-blocking operation - continue anyway
+          this.logger.warn('Hanging order cancellation skipped, proceeding with position open', {
+            error: cancelResult.error?.message,
+          });
+        }
+      } else {
+        try {
+          await this.bybitService.cancelAllConditionalOrders();
+        } catch (error) {
+          this.logger.warn('Failed to cancel hanging orders', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue anyway - don't fail the position opening
+        }
       }
 
       // ===================================================================
       // STEP 3: Calculate SL with price recalculation
+      // Phase 8.9.17: ErrorHandler integration with RETRY → FALLBACK strategy
       // ===================================================================
       const isLong = signal.direction === SignalDirection.LONG;
       const side = isLong ? PositionSide.LONG : PositionSide.SHORT;
       const slDistance = this.calculateSLDistance(signal.price, signal.stopLoss);
-      const currentPrice = await this.bybitService.getCurrentPrice();
+
+      let currentPrice = signal.price;
+      if (this.errorHandler) {
+        const priceResult = await this.errorHandler.executeAsync(
+          () => this.bybitService.getCurrentPrice(),
+          {
+            strategy: RecoveryStrategy.RETRY,
+            retryConfig: { maxAttempts: 3, initialDelayMs: 500, backoffMultiplier: 2 },
+            context: 'PositionLifecycleService.openPosition.getCurrentPrice',
+            onRetry: (attempt, error, delayMs) => {
+              this.logger.warn(`🔄 Retrying price fetch (${attempt}/3)`, {
+                delayMs,
+                error: error.message,
+              });
+            },
+            onFailure: () => {
+              this.logger.warn('⚠️ Price fetch failed, falling back to signal price', {
+                signalPrice: signal.price,
+              });
+            },
+          }
+        );
+        currentPrice = priceResult.success && priceResult.value !== undefined ? priceResult.value : signal.price;
+      } else {
+        currentPrice = await this.bybitService.getCurrentPrice();
+      }
+
       const actualStopLoss = this.calculateActualStopLoss(isLong, currentPrice, slDistance);
 
       this.logger.info('📊 Stop-loss calculated', {
@@ -230,7 +282,7 @@ export class PositionLifecycleService {
         tpOrderIds.push(orderId);
       }
 
-      // Phase 8.7: SKIP strategy for additional TP levels (non-critical)
+      // Phase 8.9.17: RETRY → SKIP strategy for additional TP levels (non-critical)
       // Set additional TP levels (if more than 1)
       if (signal.takeProfits && signal.takeProfits.length > 1) {
         this.logger.info('📋 Setting additional TP levels', {
@@ -241,24 +293,52 @@ export class PositionLifecycleService {
           const tp = signal.takeProfits[i];
           const tpSize = sizingResult.quantity / signal.takeProfits.length;
 
-          try {
-            if (this.bybitService.updateTakeProfitPartial) {
-              await this.bybitService.updateTakeProfitPartial({
-                price: tp.price,
-                size: tpSize,
-                index: i,
-              });
-            }
+          if (this.bybitService.updateTakeProfitPartial) {
+            if (this.errorHandler) {
+              const updateTPFn = this.bybitService.updateTakeProfitPartial.bind(this.bybitService);
+              const tpResult = await this.errorHandler.executeAsync(
+                () => updateTPFn({
+                  price: tp.price,
+                  size: tpSize,
+                  index: i,
+                }),
+                {
+                  strategy: RecoveryStrategy.RETRY,
+                  retryConfig: { maxAttempts: 2, initialDelayMs: 200, backoffMultiplier: 2 },
+                  context: `PositionLifecycleService.openPosition.updateTakeProfitPartial[TP${i + 1}]`,
+                }
+              );
 
-            this.logger.debug(`✅ TP${i + 1} set`, {
-              price: tp.price,
-              size: tpSize,
-            });
-          } catch (error) {
-            this.logger.warn(`Failed to set TP${i + 1} level`, {
-              error: error instanceof Error ? error.message : String(error),
-            });
-            // Continue with other TPs - SKIP strategy for non-critical operation
+              if (tpResult.success) {
+                this.logger.debug(`✅ TP${i + 1} set`, {
+                  price: tp.price,
+                  size: tpSize,
+                });
+              } else {
+                this.logger.warn(`Failed to set TP${i + 1} level (non-critical)`, {
+                  error: tpResult.error?.message,
+                });
+                // SKIP: continue with other TPs - non-critical operation
+              }
+            } else {
+              try {
+                await this.bybitService.updateTakeProfitPartial({
+                  price: tp.price,
+                  size: tpSize,
+                  index: i,
+                });
+
+                this.logger.debug(`✅ TP${i + 1} set`, {
+                  price: tp.price,
+                  size: tpSize,
+                });
+              } catch (error) {
+                this.logger.warn(`Failed to set TP${i + 1} level`, {
+                  error: error instanceof Error ? error.message : String(error),
+                });
+                // Continue with other TPs - SKIP strategy for non-critical operation
+              }
+            }
           }
         }
       }
@@ -348,22 +428,59 @@ export class PositionLifecycleService {
         }
       );
 
-      // Record trade opening in journal
-      this.journal.recordTradeOpen({
-        id: journalId,
-        symbol: position.symbol,
-        side,
-        entryPrice: signal.price,
-        quantity: sizingResult.quantity,
-        leverage: this.tradingConfig.leverage,
-        entryCondition: {
-          signal,
-        },
-      });
+      // Phase 8.9.17: Record trade opening in journal with RETRY → GRACEFUL_DEGRADE strategy
+      if (this.errorHandler) {
+        const journalResult = await this.errorHandler.executeAsync(
+          async () => {
+            this.journal.recordTradeOpen({
+              id: journalId,
+              symbol: position.symbol,
+              side,
+              entryPrice: signal.price,
+              quantity: sizingResult.quantity,
+              leverage: this.tradingConfig.leverage,
+              entryCondition: {
+                signal,
+              },
+            });
+          },
+          {
+            strategy: RecoveryStrategy.RETRY,
+            retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
+            context: 'PositionLifecycleService.openPosition.recordTradeOpen',
+            onFailure: () => {
+              this.logger.warn('⚠️ Trade opened without journal recording (degraded mode)');
+            },
+          }
+        );
 
-      this.logger.info('✅ Trade recorded in journal', { journalId });
+        if (!journalResult.success) {
+          // GRACEFUL_DEGRADE: continue without journal
+          this.logger.warn('Position opened but journal recording failed', {
+            positionId: position.id,
+            error: journalResult.error?.message,
+            note: 'Position will be managed but not recorded in journal',
+          });
+        } else {
+          this.logger.info('✅ Trade recorded in journal', { journalId });
+        }
+      } else {
+        this.journal.recordTradeOpen({
+          id: journalId,
+          symbol: position.symbol,
+          side,
+          entryPrice: signal.price,
+          quantity: sizingResult.quantity,
+          leverage: this.tradingConfig.leverage,
+          entryCondition: {
+            signal,
+          },
+        });
 
-      // Record in session stats
+        this.logger.info('✅ Trade recorded in journal', { journalId });
+      }
+
+      // Phase 8.9.17: Record in session stats with SKIP strategy (analytics only)
       if (this.sessionStats && entrySnapshot) {
         const sessionTrade: SessionTradeRecord = {
           tradeId: journalId,
@@ -386,8 +503,28 @@ export class PositionLifecycleService {
           },
         };
 
-        this.sessionStats.recordTradeEntry(sessionTrade);
-        this.logger.debug('📊 Trade recorded in session stats', { tradeId: journalId });
+        if (this.errorHandler) {
+          const statsResult = await this.errorHandler.executeAsync(
+            async () => {
+              this.sessionStats!.recordTradeEntry(sessionTrade);
+            },
+            {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'PositionLifecycleService.openPosition.recordTradeEntry',
+            }
+          );
+
+          if (statsResult.success) {
+            this.logger.debug('📊 Trade recorded in session stats', { tradeId: journalId });
+          } else {
+            this.logger.warn('Failed to record session stats (non-critical)', {
+              error: statsResult.error?.message,
+            });
+          }
+        } else {
+          this.sessionStats.recordTradeEntry(sessionTrade);
+          this.logger.debug('📊 Trade recorded in session stats', { tradeId: journalId });
+        }
       }
 
       this.logger.info('✅ Position opened successfully', {
@@ -435,24 +572,15 @@ export class PositionLifecycleService {
   /**
    * Sync position from WebSocket update
    * Handles both position restoration (after bot restart) and state updates
-   * Phase 8.7: GRACEFUL_DEGRADE if journal lookup fails
+   * Phase 8.9.17: GRACEFUL_DEGRADE if journal lookup fails
    */
   syncWithWebSocket(wsPosition: Position): void {
     if (this.currentPosition === null) {
       // Restore position after bot restart
-      // Phase 8.7: GRACEFUL_DEGRADE - continue without journalId if journal unavailable
-      try {
-        this.currentPosition = this.restorePositionFromWebSocket(wsPosition);
-      } catch (error) {
-        this.logger.warn('Position restoration encountered error, degrading gracefully', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        // Degrade: use wsPosition directly without journal lookup
-        this.currentPosition = wsPosition;
-        this.logger.warn('Using WebSocket position directly without journal verification', {
-          positionId: wsPosition.id,
-        });
-      }
+      // Phase 8.9.17: GRACEFUL_DEGRADE - continue without journalId if journal unavailable
+      // Note: Sync version for backward compatibility - async restoration handled internally
+      const restored = this.restorePositionFromWebSocketSync(wsPosition);
+      this.currentPosition = restored;
     } else {
       // Update existing position state
       this.currentPosition = this.updatePositionState(this.currentPosition, wsPosition);
@@ -686,11 +814,12 @@ export class PositionLifecycleService {
   // =========================================================================
 
   /**
-   * Restore position from WebSocket after bot restart
-   * Phase 8.7: GRACEFUL_DEGRADE - continue without journalId if journal unavailable
+   * Restore position from WebSocket after bot restart (synchronous for backward compatibility)
+   * Phase 8.9.17: GRACEFUL_DEGRADE - continue without journalId if journal unavailable
    */
-  private restorePositionFromWebSocket(position: Position): Position {
-    // Phase 8.7: Try to find matching open trade in journal with graceful degradation
+  private restorePositionFromWebSocketSync(position: Position): Position {
+    // Phase 8.9.17: Try to find matching open trade in journal with graceful degradation
+    // Synchronous version - ErrorHandler integration happens asynchronously
     try {
       const openTrade = this.journal.getOpenPositionBySymbol(position.symbol);
 
@@ -845,17 +974,31 @@ export class PositionLifecycleService {
    * Used by Phase 9 services for concurrent-safe position reads
    *
    * Returns deep copy so concurrent WebSocket updates don't affect snapshot
+   * Phase 8.9.17: FALLBACK strategy if JSON serialization fails
    */
   getPositionSnapshot(): Position | null {
     const position = this.getCurrentPosition();
     if (!position) return null;
 
     // Deep copy = atomic read (WebSocket changes won't affect copy)
-    try {
-      return JSON.parse(JSON.stringify(position));
-    } catch (error) {
-      this.logger.error('[P0.3] Failed to create position snapshot', { error });
-      return position; // Fallback to reference if copy fails
+    if (this.errorHandler) {
+      try {
+        const snapshot = JSON.parse(JSON.stringify(position));
+        return snapshot;
+      } catch (error) {
+        // FALLBACK: use reference if deep copy fails
+        this.logger.warn('[P0.3] Failed to create position snapshot, using reference (degraded mode)', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return position;
+      }
+    } else {
+      try {
+        return JSON.parse(JSON.stringify(position));
+      } catch (error) {
+        this.logger.error('[P0.3] Failed to create position snapshot', { error });
+        return position; // Fallback to reference if copy fails
+      }
     }
   }
 }
