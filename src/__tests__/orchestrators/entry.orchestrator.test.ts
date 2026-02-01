@@ -413,7 +413,8 @@ describe('EntryOrchestrator', () => {
       const result = await brokenOrchestrator.evaluateEntry(signals, 1000, [], createNeutralTrend());
 
       expect(result.decision).toBe(EntryDecision.SKIP);
-      expect(result.reason).toContain('Orchestrator error');
+      // Phase 8.9.24: RiskManager errors are caught at risk check level, not orchestrator level
+      expect(result.reason).toContain('Risk check failed');
     });
   });
 

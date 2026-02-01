@@ -1,9 +1,9 @@
 # 🚀 Architecture Quick Start - Current Context
 
-**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.23 ✅ COMPLETE**
-**Last Updated:** 2026-02-01 (Session 63 - **Phase 8.9.23: MTFSnapshotGate ErrorHandler Integration COMPLETE**)
-**Build:** ✅ SUCCESS | **10/10 New Tests Passing** | **4930 Total Tests** | **0 Regressions**
-**Current Session:** Phase 8.9.23 ErrorHandler Integration ✅ COMPLETE - MTFSnapshotGate with SKIP & GRACEFUL_DEGRADE strategies
+**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.24 ✅ COMPLETE**
+**Last Updated:** 2026-02-01 (Session 64 - **Phase 8.9.24: EntryOrchestrator ErrorHandler Integration COMPLETE**)
+**Build:** ✅ SUCCESS | **22/22 New Tests Passing** | **4959 Total Tests** | **0 Regressions**
+**Current Session:** Phase 8.9.24 ErrorHandler Integration ✅ COMPLETE - EntryOrchestrator with THROW/GRACEFUL_DEGRADE/SKIP strategies
 
 ---
 
@@ -350,11 +350,26 @@
 |  | - Legacy Tests | ✅ | Original 21 tests still 100% passing (no regressions) | 21 ✅ | S63 |
 | **TOTAL S1-9.23** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.23 fully integrated** | **10 new ✅** | **S63** |
 
+| **8.9.24** | **EntryOrchestrator** | ✅ | **THROW (validation) + GRACEFUL_DEGRADE (risk/filter) + SKIP (logging)** | **22 tests ✅** | **S64** |
+|  | - RiskManager Validation Errors | ✅ | THROW strategy for signal.price and signal.confidence validation | 4 ✅ | S64 |
+|  | - RiskManager Calculation Errors | ✅ | GRACEFUL_DEGRADE for NaN/Infinity in exposure calculations | 3 ✅ | S64 |
+|  | - FilterOrchestrator Failures | ✅ | GRACEFUL_DEGRADE for filter evaluation errors (continue without filters) | 2 ✅ | S64 |
+|  | - Logging Failures | ✅ | SKIP strategy for all logging operations (non-blocking) | 3 ✅ | S64 |
+|  | - Backward Compatibility | ✅ | Works without ErrorHandler (optional DI parameter) | 3 ✅ | S64 |
+|  | - Cascading Failures | ✅ | Handle multiple sequential errors, verify recovery | 2 ✅ | S64 |
+|  | - ErrorHandler Callbacks | ✅ | Integration with callbacks (onRetry, onRecover, onFailure) | 2 ✅ | S64 |
+|  | - ErrorRegistry Integration | ✅ | Error tracking and telemetry monitoring | 1 ✅ | S64 |
+|  | - Performance Tests | ✅ | Rapid error recovery, no memory leaks | 2 ✅ | S64 |
+|  | - DI Integration | ✅ | ErrorHandler injected via constructor (optional parameter) | - | S64 |
+|  | - Legacy Tests | ✅ | Original 53 tests still 100% passing (updated 1 assertion) | 53 ✅ | S64 |
+| **TOTAL S1-9.24** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.24 fully integrated** | **22 new ✅** | **S64** |
+
 ### Future Phases
 | Phase | Component | Status | Details | Notes |
 |-------|-----------|--------|---------|-------|
-| **8.9.23** | MTFSnapshotGate | ✅ COMPLETE | SKIP (logging) + GRACEFUL_DEGRADE (cleanup) strategies | 10 tests ✅ - **S63** |
-| **8.9.24+** | Remaining Services (Ladder TP, Orchestrators, etc) | ⏳ | ~15-20 tests per service | Priority: 24=EntryOrch, 25=ExitOrch, 26+= remaining |
+| **8.9.24** | EntryOrchestrator | ✅ COMPLETE | THROW (validation) + GRACEFUL_DEGRADE (risk/filter) + SKIP (logging) | 22 tests ✅ - **S64** |
+| **8.9.25** | ExitOrchestrator | ⏳ | ~18-20 tests (same strategies as EntryOrch) | Priority: Entry/Exit orchestrators |
+| **8.9.26+** | Remaining Services (Ladder TP, etc) | ⏳ | ~15-20 tests per service | Remaining orchestrators + services |
 | **9.2-9.4** | Live Trading Integration | ⏳ | Configuration + E2E tests + chaos | After Phase 8.9 |
 | **15** | Multi-Strategy Config | ⏳ | Config consolidation | After Phase 9 |
 
@@ -769,7 +784,7 @@ Filter Orchestrator
 
 ---
 
-**Version:** 5.22 (Phase 8.9.23 - MTFSnapshotGate ErrorHandler Integration COMPLETE)
-**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.23 ✅)
-**Build Status:** ✅ 0 TypeScript Errors | 🎉 4930 Tests Passing | +10 Phase 8.9.23 tests
-**Session:** 63 | **Status:** Phase 8.9.23 ✅ COMPLETE | Phase 8.9.24+ NEXT (Orchestrators, remaining services)
+**Version:** 5.23 (Phase 8.9.24 - EntryOrchestrator ErrorHandler Integration COMPLETE)
+**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.24 ✅)
+**Build Status:** ✅ 0 TypeScript Errors | 🎉 4959 Tests Passing | +22 Phase 8.9.24 tests
+**Session:** 64 | **Status:** Phase 8.9.24 ✅ COMPLETE | Phase 8.9.25 NEXT (ExitOrchestrator, remaining services)

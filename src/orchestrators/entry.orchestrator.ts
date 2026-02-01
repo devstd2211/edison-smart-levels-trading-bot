@@ -38,6 +38,7 @@ import {
 import type { EntryOrchestrationConfig } from '../types/config.types';
 import { evaluateEntry as evaluateEntryPure, EntryDecisionContext } from '../decision-engine/entry-decisions';
 import { FilterOrchestrator } from './filter.orchestrator';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================
 // DEFAULT CONFIGURATION (Phase 4.10: Config-Driven Constants)
@@ -65,6 +66,7 @@ export class EntryOrchestrator {
     private filterOrchestrator?: FilterOrchestrator,
     orchestrationConfig?: EntryOrchestrationConfig,
     private strategyId?: string,  // Phase 10.3c: Strategy identifier for event tagging
+    private errorHandler?: ErrorHandler,  // Phase 8.9.24: ErrorHandler for resilience
   ) {
     // Phase 4.10: Use provided config or fall back to defaults
     this.orchestrationConfig = orchestrationConfig || DEFAULT_ENTRY_ORCHESTRATION;
@@ -145,28 +147,58 @@ export class EntryOrchestrator {
       const pureDecision = evaluateEntryPure(decisionContext);
 
       // =====================================================================
-      // LOG PURE DECISION RESULTS
+      // LOG PURE DECISION RESULTS (Phase 8.9.24: SKIP errors on logging)
       // =====================================================================
       if (pureDecision.conflictAnalysis) {
-        this.logger.info('📊 Signal conflict analysis', {
-          totalSignals: signals.length,
-          conflictLevel: `${Math.round(pureDecision.conflictAnalysis.conflictLevel * 100)}%`,
-          consensusStrength: `${Math.round(
-            pureDecision.conflictAnalysis.consensusStrength * 100
-          )}%`,
-          direction: pureDecision.conflictAnalysis.direction,
-        });
+        try {
+          this.logger.info('📊 Signal conflict analysis', {
+            totalSignals: signals.length,
+            conflictLevel: `${Math.round(pureDecision.conflictAnalysis.conflictLevel * 100)}%`,
+            consensusStrength: `${Math.round(
+              pureDecision.conflictAnalysis.consensusStrength * 100
+            )}%`,
+            direction: pureDecision.conflictAnalysis.direction,
+          });
+        } catch (logError) {
+          // Phase 8.9.24: SKIP logging failures
+          if (this.errorHandler) {
+            this.errorHandler.handle(logError, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'EntryOrchestrator.evaluateEntry[conflict-log]',
+            });
+          }
+        }
       }
 
       // Log early exits
       if (pureDecision.decision === EntryDecision.SKIP) {
-        this.logger.debug('Entry rejected by pure decision function', {
-          reason: pureDecision.reason,
-        });
+        try {
+          this.logger.debug('Entry rejected by pure decision function', {
+            reason: pureDecision.reason,
+          });
+        } catch (logError) {
+          // Phase 8.9.24: SKIP logging failures
+          if (this.errorHandler) {
+            this.errorHandler.handle(logError, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'EntryOrchestrator.evaluateEntry[skip-log]',
+            });
+          }
+        }
       } else if (pureDecision.decision === EntryDecision.WAIT) {
-        this.logger.warn('⚠️ Entry blocked by market conditions', {
-          reason: pureDecision.reason,
-        });
+        try {
+          this.logger.warn('⚠️ Entry blocked by market conditions', {
+            reason: pureDecision.reason,
+          });
+        } catch (logError) {
+          // Phase 8.9.24: SKIP logging failures
+          if (this.errorHandler) {
+            this.errorHandler.handle(logError, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'EntryOrchestrator.evaluateEntry[wait-log]',
+            });
+          }
+        }
       }
 
       // =====================================================================
@@ -181,42 +213,71 @@ export class EntryOrchestrator {
 
       // =====================================================================
       // STEP 2: Check additional filters (FilterOrchestrator)
+      // Phase 8.9.24: GRACEFUL_DEGRADE strategy for filter failures
       // =====================================================================
       if (this.filterOrchestrator && pureDecision.selectedSignal) {
-        const filterContext = {
-          signal: pureDecision.selectedSignal,
-          accountBalance,
-          openPositions,
-          marketData: { flatMarketAnalysis },
-          fundingRate: undefined, // TODO: Add funding rate from market data
-          lastTPTimestamp: undefined, // TODO: Add TP timestamp from position manager
-          trend: globalTrendBias,
-        };
+        try {
+          const filterContext = {
+            signal: pureDecision.selectedSignal,
+            accountBalance,
+            openPositions,
+            marketData: { flatMarketAnalysis },
+            fundingRate: undefined, // TODO: Add funding rate from market data
+            lastTPTimestamp: undefined, // TODO: Add TP timestamp from position manager
+            trend: globalTrendBias,
+          };
 
-        const filterResult = this.filterOrchestrator.evaluateFilters(filterContext);
+          const filterResult = this.filterOrchestrator.evaluateFilters(filterContext);
 
-        if (!filterResult.allowed) {
-          this.logger.info('🚫 Signal blocked by FilterOrchestrator', {
+          if (!filterResult.allowed) {
+            this.logger.info('🚫 Signal blocked by FilterOrchestrator', {
+              signal: pureDecision.selectedSignal.type,
+              direction: pureDecision.selectedSignal.direction,
+              blockedBy: filterResult.blockedBy,
+              reason: filterResult.reason,
+              appliedFilters: filterResult.appliedFilters.join(', '),
+            });
+            return {
+              decision: EntryDecision.SKIP,
+              reason: `Filter blocked: ${filterResult.reason || filterResult.blockedBy}`,
+            };
+          }
+
+          this.logger.debug('✅ Signal passed all FilterOrchestrator checks', {
             signal: pureDecision.selectedSignal.type,
-            direction: pureDecision.selectedSignal.direction,
-            blockedBy: filterResult.blockedBy,
-            reason: filterResult.reason,
             appliedFilters: filterResult.appliedFilters.join(', '),
           });
-          return {
-            decision: EntryDecision.SKIP,
-            reason: `Filter blocked: ${filterResult.reason || filterResult.blockedBy}`,
-          };
+        } catch (filterError) {
+          // Phase 8.9.24: GRACEFUL_DEGRADE for filter failures
+          if (this.errorHandler) {
+            const handled = await this.errorHandler.handle(filterError, {
+              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+              context: 'EntryOrchestrator.evaluateEntry[filter-evaluation]',
+              onRecover: (result) => {
+                this.logger.warn('🔄 Filter evaluation failed, continuing without filters', {
+                  error: filterError instanceof Error ? filterError.message : String(filterError),
+                  signal: pureDecision.selectedSignal?.type,
+                });
+              },
+            });
+            if (!handled.success) {
+              // GRACEFUL_DEGRADE: Continue without filter
+              this.logger.warn('⚠️ Proceeding without FilterOrchestrator', {
+                reason: 'Filter evaluation error',
+              });
+            }
+          } else {
+            // Fallback if no ErrorHandler
+            this.logger.warn('⚠️ Filter evaluation failed, continuing without filters', {
+              error: filterError instanceof Error ? filterError.message : String(filterError),
+            });
+          }
         }
-
-        this.logger.debug('✅ Signal passed all FilterOrchestrator checks', {
-          signal: pureDecision.selectedSignal.type,
-          appliedFilters: filterResult.appliedFilters.join(', '),
-        });
       }
 
       // =====================================================================
       // STEP 3: Call RiskManager for atomic approval
+      // Phase 8.9.24: GRACEFUL_DEGRADE for risk check failures
       // =====================================================================
       if (!pureDecision.selectedSignal) {
         return {
@@ -225,17 +286,83 @@ export class EntryOrchestrator {
         };
       }
 
-      const riskDecision = await this.riskManager.canTrade(
-        pureDecision.selectedSignal,
-        accountBalance,
-        openPositions,
-      );
+      let riskDecision: Awaited<ReturnType<typeof this.riskManager.canTrade>> = {
+        allowed: false,
+        reason: 'Uninitialized risk decision',
+      };
+
+      try {
+        riskDecision = await this.riskManager.canTrade(
+          pureDecision.selectedSignal,
+          accountBalance,
+          openPositions,
+        );
+      } catch (riskError) {
+        // Phase 8.9.24: Handle RiskManager errors
+        if (this.errorHandler) {
+          // Check error type
+          const isValidationError = riskError instanceof Error &&
+            riskError.constructor.name === 'RiskValidationError';
+
+          if (isValidationError) {
+            // THROW strategy for critical validation errors (fail fast)
+            const handled = await this.errorHandler.handle(riskError, {
+              strategy: RecoveryStrategy.THROW,
+              context: 'EntryOrchestrator.evaluateEntry[risk-validation]',
+              onFailure: () => {
+                this.logger.error('❌ Critical risk validation error, entry BLOCKED', {
+                  error: riskError instanceof Error ? riskError.message : String(riskError),
+                  signal: pureDecision.selectedSignal?.type,
+                });
+              },
+            });
+            if (!handled.success) throw riskError;
+          } else {
+            // GRACEFUL_DEGRADE for non-validation errors
+            const handled = await this.errorHandler.handle(riskError, {
+              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+              context: 'EntryOrchestrator.evaluateEntry[risk-check]',
+              onRecover: (result) => {
+                this.logger.warn('🔄 Risk check failed, treating as SKIP', {
+                  error: riskError instanceof Error ? riskError.message : String(riskError),
+                  signal: pureDecision.selectedSignal?.type,
+                });
+              },
+            });
+
+            // GRACEFUL_DEGRADE: Default to SKIP on error
+            return {
+              decision: EntryDecision.SKIP,
+              reason: `Risk check failed (graceful degrade): ${riskError instanceof Error ? riskError.message : 'unknown error'}`,
+            };
+          }
+        } else {
+          // Fallback if no ErrorHandler
+          this.logger.warn('❌ Risk check failed', {
+            error: riskError instanceof Error ? riskError.message : String(riskError),
+          });
+          return {
+            decision: EntryDecision.SKIP,
+            reason: `Risk check failed: ${riskError instanceof Error ? riskError.message : 'unknown error'}`,
+          };
+        }
+      }
 
       if (!riskDecision.allowed) {
-        this.logger.warn('❌ Trade blocked by RiskManager', {
-          signal: pureDecision.selectedSignal.type,
-          reason: riskDecision.reason,
-        });
+        try {
+          this.logger.warn('❌ Trade blocked by RiskManager', {
+            signal: pureDecision.selectedSignal.type,
+            reason: riskDecision.reason,
+          });
+        } catch (logError) {
+          // Phase 8.9.24: SKIP logging failures
+          if (this.errorHandler) {
+            this.errorHandler.handle(logError, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'EntryOrchestrator.evaluateEntry[risk-blocked-log]',
+            });
+          }
+        }
         return {
           decision: EntryDecision.SKIP,
           reason: `Risk check failed: ${riskDecision.reason}`,
@@ -246,15 +373,25 @@ export class EntryOrchestrator {
       // =====================================================================
       // ALL CHECKS PASSED - APPROVE ENTRY
       // =====================================================================
-      this.logger.info('✅ Entry APPROVED by EntryOrchestrator', {
-        signal: pureDecision.selectedSignal.type,
-        direction: pureDecision.selectedSignal.direction,
-        confidence: pureDecision.selectedSignal.confidence.toFixed(1) + '%',
-        signalAgreement: pureDecision.conflictAnalysis
-          ? `${Math.round(pureDecision.conflictAnalysis.consensusStrength * 100)}%`
-          : 'N/A',
-        adjustedPositionSize: riskDecision.adjustedPositionSize?.toFixed(4),
-      });
+      try {
+        this.logger.info('✅ Entry APPROVED by EntryOrchestrator', {
+          signal: pureDecision.selectedSignal.type,
+          direction: pureDecision.selectedSignal.direction,
+          confidence: pureDecision.selectedSignal.confidence.toFixed(1) + '%',
+          signalAgreement: pureDecision.conflictAnalysis
+            ? `${Math.round(pureDecision.conflictAnalysis.consensusStrength * 100)}%`
+            : 'N/A',
+          adjustedPositionSize: riskDecision.adjustedPositionSize?.toFixed(4),
+        });
+      } catch (logError) {
+        // Phase 8.9.24: SKIP logging failures
+        if (this.errorHandler) {
+          this.errorHandler.handle(logError, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryOrchestrator.evaluateEntry[approve-log]',
+          });
+        }
+      }
 
       return {
         decision: EntryDecision.ENTER,
@@ -265,9 +402,19 @@ export class EntryOrchestrator {
         riskAssessment: riskDecision,
       };
     } catch (error) {
-      this.logger.error('EntryOrchestrator evaluation failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      try {
+        this.logger.error('EntryOrchestrator evaluation failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } catch (logError) {
+        // Phase 8.9.24: SKIP logging failures even in error handler
+        if (this.errorHandler) {
+          this.errorHandler.handle(logError, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryOrchestrator.evaluateEntry[error-log]',
+          });
+        }
+      }
       return {
         decision: EntryDecision.SKIP,
         reason: `Orchestrator error: ${error instanceof Error ? error.message : 'unknown'}`,
