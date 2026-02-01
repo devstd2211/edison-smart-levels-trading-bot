@@ -1,0 +1,811 @@
+/**
+ * MTF Snapshot Gate - ErrorHandler Integration Tests
+ *
+ * Tests the error handling and recovery strategies integrated into MTFSnapshotGate.
+ * Verifies that logging failures are gracefully handled without blocking core operations.
+ */
+
+import { MTFSnapshotGate } from '../../services/mtf-snapshot-gate.service';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { ErrorRegistry } from '../../errors/ErrorRegistry';
+import { LoggerService } from '../../services/logger.service';
+import { Signal, SignalDirection } from '../../types';
+import { TrendBias, SignalType } from '../../types/enums';
+
+// Mock logger
+const createMockLogger = (): LoggerService => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  setContext: jest.fn(),
+} as any);
+
+describe('MTFSnapshotGate - ErrorHandler Integration', () => {
+  let gate: MTFSnapshotGate;
+  let errorHandler: ErrorHandler;
+  let mockLogger: LoggerService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    ErrorRegistry.clear();
+    mockLogger = createMockLogger();
+    errorHandler = new ErrorHandler(mockLogger);
+    gate = new MTFSnapshotGate(mockLogger, errorHandler);
+  });
+
+  afterEach(() => {
+    gate.destroy();
+    jest.useRealTimers();
+    ErrorRegistry.clear();
+  });
+
+  // ========================================================================
+  // SNAPSHOT CREATION - LOGGING FAILURES
+  // ========================================================================
+
+  describe('createSnapshot with logging failures', () => {
+    it('should create snapshot even if logging fails (SKIP strategy)', () => {
+      // Mock logger to throw
+      const failingLogger = createMockLogger();
+      (failingLogger.info as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 85,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test signal',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 995,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Should not throw despite logger failure
+      expect(() => {
+        gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+          bias: TrendBias.BULLISH,
+          strength: 0.8,
+          timeframe: '4h',
+          reasoning: ['HH_HL pattern'],
+          restrictedDirections: [],
+        } as any, signal, candle);
+      }).not.toThrow();
+
+      // Verify snapshot was actually created
+      const snapshot = gateWithFailingLogger.getActiveSnapshot();
+      expect(snapshot).toBeDefined();
+      expect(snapshot?.htfBias).toBe(TrendBias.BULLISH);
+      expect(snapshot?.signal.direction).toBe(SignalDirection.LONG);
+    });
+
+    it('should work without ErrorHandler (backward compatible)', () => {
+      const gateWithoutErrorHandler = new MTFSnapshotGate(mockLogger);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      const snapshot = gateWithoutErrorHandler.createSnapshot(
+        TrendBias.BULLISH,
+        {
+          bias: TrendBias.BULLISH,
+          strength: 0.8,
+          timeframe: '4h',
+          reasoning: [],
+          restrictedDirections: [],
+        } as any,
+        signal,
+        candle
+      );
+
+      expect(snapshot).toBeDefined();
+      expect(gateWithoutErrorHandler.getActiveSnapshot()).toEqual(snapshot);
+    });
+  });
+
+  // ========================================================================
+  // SNAPSHOT VALIDATION - LOGGING FAILURES
+  // ========================================================================
+
+  describe('validateSnapshot with logging failures', () => {
+    it('should validate snapshot even if expired logging fails (SKIP)', () => {
+
+      const failingLogger = createMockLogger();
+      (failingLogger.warn as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      // Advance time past expiration
+      jest.advanceTimersByTime(121000);
+
+      // Should not throw despite logger failure
+      expect(() => {
+        gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
+      }).not.toThrow();
+
+      // Validation result should be correct
+      const result = gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
+      expect(result.valid).toBe(false);
+      expect(result.expired).toBe(true);
+    });
+
+    it('should validate snapshot even if bias mismatch logging fails (SKIP)', () => {
+      const failingLogger = createMockLogger();
+      (failingLogger.warn as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      // Should not throw despite logger failure
+      expect(() => {
+        gateWithFailingLogger.validateSnapshot(TrendBias.BEARISH);
+      }).not.toThrow();
+
+      // Validation result should be correct
+      const result = gateWithFailingLogger.validateSnapshot(TrendBias.BEARISH);
+      expect(result.valid).toBe(false);
+      expect(result.biasMismatch).toBe(true);
+    });
+
+    it('should validate snapshot even if valid logging fails (SKIP)', () => {
+      const failingLogger = createMockLogger();
+      (failingLogger.info as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      // Should not throw despite logger failure
+      expect(() => {
+        gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
+      }).not.toThrow();
+
+      // Validation result should be correct
+      const result = gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  // ========================================================================
+  // SNAPSHOT CLEARING - LOGGING FAILURES
+  // ========================================================================
+
+  describe('clearActiveSnapshot with logging failures', () => {
+    it('should clear snapshot even if logging fails (SKIP strategy)', () => {
+      const failingLogger = createMockLogger();
+      (failingLogger.debug as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      expect(gateWithFailingLogger.getActiveSnapshot()).toBeDefined();
+
+      // Should not throw despite logger failure
+      expect(() => {
+        gateWithFailingLogger.clearActiveSnapshot();
+      }).not.toThrow();
+
+      // Snapshot should be cleared
+      expect(gateWithFailingLogger.getActiveSnapshot()).toBeNull();
+    });
+  });
+
+  // ========================================================================
+  // CLEANUP - GRACEFUL DEGRADATION
+  // ========================================================================
+
+  describe('cleanupExpiredSnapshots with GRACEFUL_DEGRADE', () => {
+    it('should continue cleanup even if logger fails during cleanup', (done) => {
+
+      const failingLogger = createMockLogger();
+      (failingLogger.debug as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure during cleanup');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      // Create multiple snapshots
+      const signal1: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test 1',
+        timestamp: Date.now(),
+      };
+
+      const signal2: Signal = {
+        direction: SignalDirection.SHORT,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 85,
+        price: 2000,
+        stopLoss: 2050,
+        takeProfits: [],
+        reason: 'Test 2',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal1, candle);
+
+      gateWithFailingLogger.createSnapshot(TrendBias.BEARISH, {
+        bias: TrendBias.BEARISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal2, candle);
+
+      expect(gateWithFailingLogger.getSnapshotCount()).toBe(2);
+
+      // Advance time past expiration
+      jest.advanceTimersByTime(121000);
+
+      // Cleanup should happen automatically (interval-based)
+      // Advance timers to trigger cleanup
+      jest.advanceTimersByTime(1000);
+
+      // Even though logger failed, cleanup should have worked
+      // (snapshots should be removed from map)
+      expect(gateWithFailingLogger.getSnapshotCount()).toBe(0);
+
+      done();
+    });
+
+    it('should work without ErrorHandler during cleanup', (done) => {
+
+      const gateWithoutErrorHandler = new MTFSnapshotGate(mockLogger);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      gateWithoutErrorHandler.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      expect(gateWithoutErrorHandler.getSnapshotCount()).toBe(1);
+
+      jest.advanceTimersByTime(121000);
+
+      expect(gateWithoutErrorHandler.getSnapshotCount()).toBe(0);
+
+      done();
+    });
+  });
+
+  // ========================================================================
+  // INTEGRATION SCENARIOS
+  // ========================================================================
+
+  describe('Integration scenarios with ErrorHandler', () => {
+    it('should handle full workflow with logging failures', () => {
+      const failingLogger = createMockLogger();
+      let callCount = 0;
+
+      // Fail on every 2nd logger call
+      (failingLogger.info as jest.Mock).mockImplementation(() => {
+        callCount++;
+        if (callCount % 2 === 0) {
+          throw new Error('Intermittent logger failure');
+        }
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 85,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test signal',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 995,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Create snapshot - may fail on logging but should continue
+      const snapshot = gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: ['HH_HL pattern'],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      expect(snapshot).toBeDefined();
+
+      // Validate snapshot - may fail on logging but should continue
+      const result = gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
+      expect(result.valid).toBe(true);
+
+      // Clear snapshot - may fail on logging but should continue
+      gateWithFailingLogger.clearActiveSnapshot();
+      expect(gateWithFailingLogger.getActiveSnapshot()).toBeNull();
+    });
+
+    it('should maintain snapshot integrity across multiple validations with failures', () => {
+      const failingLogger = createMockLogger();
+      (failingLogger.info as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+      (failingLogger.warn as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Create
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      // Validate multiple times with different biases
+      const result1 = gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
+      expect(result1.valid).toBe(true);
+
+      const result2 = gateWithFailingLogger.validateSnapshot(TrendBias.NEUTRAL);
+      expect(result2.valid).toBe(true);
+
+      const result3 = gateWithFailingLogger.validateSnapshot(TrendBias.BEARISH);
+      expect(result3.valid).toBe(false);
+      expect(result3.biasMismatch).toBe(true);
+
+      // Snapshot data should remain consistent
+      const snapshot = gateWithFailingLogger.getActiveSnapshot();
+      expect(snapshot?.htfBias).toBe(TrendBias.BULLISH);
+    });
+
+    it('should handle parallel snapshot operations with logging failures', () => {
+      const failingLogger = createMockLogger();
+      (failingLogger.info as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Create multiple snapshots rapidly
+      const snapshots = [];
+      for (let i = 0; i < 5; i++) {
+        const signal: Signal = {
+          direction: i % 2 === 0 ? SignalDirection.LONG : SignalDirection.SHORT,
+          type: SignalType.TREND_FOLLOWING,
+          confidence: 75 + i * 2,
+          price: 1000 + i * 100,
+          stopLoss: 990 + i * 100,
+          takeProfits: [],
+          reason: `Signal ${i}`,
+          timestamp: Date.now() + i * 100,
+        };
+
+        const snapshot = gateWithFailingLogger.createSnapshot(
+          i % 2 === 0 ? TrendBias.BULLISH : TrendBias.BEARISH,
+          {
+            bias: i % 2 === 0 ? TrendBias.BULLISH : TrendBias.BEARISH,
+            strength: 0.8,
+            timeframe: '4h',
+            reasoning: [],
+            restrictedDirections: [],
+          } as any,
+          signal,
+          candle
+        );
+
+        snapshots.push(snapshot);
+      }
+
+      // All snapshots should be created successfully
+      expect(snapshots).toHaveLength(5);
+      expect(gateWithFailingLogger.getSnapshotCount()).toBe(1); // Only last one is "active"
+    });
+  });
+
+  // ========================================================================
+  // EDGE CASES
+  // ========================================================================
+
+  describe('Edge cases with error handling', () => {
+    it('should handle non-Error throws from logger', () => {
+      const brokenLogger = createMockLogger();
+      (brokenLogger.info as jest.Mock).mockImplementation(() => {
+        throw 'string error'; // Not an Error object
+      });
+
+      const gateWithBrokenLogger = new MTFSnapshotGate(brokenLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Should not crash even with non-Error throw
+      expect(() => {
+        gateWithBrokenLogger.createSnapshot(TrendBias.BULLISH, {
+          bias: TrendBias.BULLISH,
+          strength: 0.8,
+          timeframe: '4h',
+          reasoning: [],
+          restrictedDirections: [],
+        } as any, signal, candle);
+      }).not.toThrow();
+
+      // Snapshot should still be created
+      expect(gateWithBrokenLogger.getActiveSnapshot()).toBeDefined();
+    });
+
+    it('should handle null logger methods gracefully', () => {
+      const nullLogger = {
+        info: null,
+        warn: null,
+        error: null,
+        debug: null,
+        setContext: null,
+      } as any;
+
+      // Gate should handle null logger gracefully
+      const gateWithNullLogger = new MTFSnapshotGate(nullLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Should not crash
+      expect(() => {
+        gateWithNullLogger.createSnapshot(TrendBias.BULLISH, {
+          bias: TrendBias.BULLISH,
+          strength: 0.8,
+          timeframe: '4h',
+          reasoning: [],
+          restrictedDirections: [],
+        } as any, signal, candle);
+      }).not.toThrow();
+    });
+
+    it('should handle ErrorHandler throw strategy correctly', () => {
+      // If ErrorHandler itself throws (edge case)
+      const throwingErrorHandler = {
+        execute: jest.fn().mockImplementation(() => {
+          throw new Error('ErrorHandler internal failure');
+        }),
+      } as any;
+
+      const gateWithThrowingHandler = new MTFSnapshotGate(mockLogger, throwingErrorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // This would throw, but it's the ErrorHandler's responsibility to not fail
+      // In practice, ErrorHandler is well-tested and shouldn't fail
+      expect(() => {
+        gateWithThrowingHandler.createSnapshot(TrendBias.BULLISH, {
+          bias: TrendBias.BULLISH,
+          strength: 0.8,
+          timeframe: '4h',
+          reasoning: [],
+          restrictedDirections: [],
+        } as any, signal, candle);
+      }).toThrow();
+    });
+  });
+
+  // ========================================================================
+  // ERROR REGISTRY TRACKING
+  // ========================================================================
+
+  describe('Error tracking via ErrorRegistry', () => {
+    it('should track logging failures in ErrorRegistry', () => {
+      const failingLogger = createMockLogger();
+      (failingLogger.info as jest.Mock).mockImplementation(() => {
+        throw new Error('Logger failure');
+      });
+
+      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+
+      const signal: Signal = {
+        direction: SignalDirection.LONG,
+        type: SignalType.TREND_FOLLOWING,
+        confidence: 80,
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [],
+        reason: 'Test',
+        timestamp: Date.now(),
+      };
+
+      const candle = {
+        open: 1000,
+        high: 1010,
+        low: 990,
+        close: 1005,
+        volume: 1000,
+        timestamp: Date.now(),
+      };
+
+      // Create snapshot with failing logger
+      gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '4h',
+        reasoning: [],
+        restrictedDirections: [],
+      } as any, signal, candle);
+
+      // ErrorRegistry should have tracked the logging failure
+      const summary = ErrorRegistry.getSummary();
+      expect(summary.totalErrors).toBeGreaterThan(0);
+    });
+  });
+});

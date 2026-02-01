@@ -41,6 +41,7 @@ import {
   SignalDirection,
   TrendBias,
 } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import * as crypto from 'crypto';
 
 // ============================================================================
@@ -110,15 +111,31 @@ export class MTFSnapshotGate {
   private activeSnapshotId: string | null = null;
   private readonly SNAPSHOT_TTL = 120000; // 120 seconds (FIX: was 60s, too short for PRIMARY→ENTRY delay)
   private readonly SNAPSHOT_CLEANUP_INTERVAL = 60000; // 60 seconds (FIX: was 30s, too aggressive)
+  private cleanupIntervalId?: ReturnType<typeof setInterval>;
 
-  constructor(private logger: LoggerService) {
+  constructor(
+    private logger: LoggerService,
+    private errorHandler?: ErrorHandler
+  ) {
     // Periodically clean up expired snapshots
-    setInterval(() => this.cleanupExpiredSnapshots(), this.SNAPSHOT_CLEANUP_INTERVAL);
+    this.cleanupIntervalId = setInterval(() => this.cleanupExpiredSnapshots(), this.SNAPSHOT_CLEANUP_INTERVAL);
+  }
+
+  /**
+   * Cleanup resources (stop background interval)
+   * Call this when gate is no longer needed (e.g., in test afterEach)
+   */
+  destroy(): void {
+    if (this.cleanupIntervalId !== undefined) {
+      clearInterval(this.cleanupIntervalId);
+    }
   }
 
   /**
    * Create new snapshot at PRIMARY candle close
    * Freezes all trading context for safe ENTRY execution
+   *
+   * Strategy: SKIP for logging failures (non-blocking)
    */
   createSnapshot(
     htfBias: TrendBias,
@@ -164,9 +181,12 @@ export class MTFSnapshotGate {
     this.snapshots.set(id, snapshot);
     this.activeSnapshotId = id;
 
-    this.logger.info(
-      `[MTF-SNAPSHOT] Created snapshot ${id.substring(0, 8)}... ` +
-      `| HTF: ${htfBias} | Signal: ${signal.direction} @ ${signal.price}`
+    // Log creation with SKIP strategy (non-blocking logging)
+    this.logWithSkip(
+      () => this.logger.info(
+        `[MTF-SNAPSHOT] Created snapshot ${id.substring(0, 8)}... ` +
+        `| HTF: ${htfBias} | Signal: ${signal.direction} @ ${signal.price}`
+      )
     );
 
     return snapshot;
@@ -185,6 +205,7 @@ export class MTFSnapshotGate {
    * FIX: Now accepts explicit snapshotId to avoid race conditions with activeSnapshotId
    *
    * Checks: 1) Not expired, 2) HTF bias hasn't reversed against signal
+   * Strategy: SKIP for logging failures (non-blocking)
    *
    * @param currentHTFBias Current HTF bias at ENTRY validation time
    * @param snapshotId Optional explicit snapshot ID (from pendingEntryDecision)
@@ -219,9 +240,13 @@ export class MTFSnapshotGate {
     const expiresInMs = snapshot.expiresAt - now;
 
     if (now > snapshot.expiresAt) {
-      this.logger.warn(
-        `[MTF-SNAPSHOT] Snapshot expired (${Math.round(ageMs / 1000)}s old, TTL=${Math.round(this.SNAPSHOT_TTL / 1000)}s)`
+      // Log with SKIP strategy
+      this.logWithSkip(
+        () => this.logger.warn(
+          `[MTF-SNAPSHOT] Snapshot expired (${Math.round(ageMs / 1000)}s old, TTL=${Math.round(this.SNAPSHOT_TTL / 1000)}s)`
+        )
       );
+
       return {
         valid: false,
         expired: true,
@@ -246,10 +271,14 @@ export class MTFSnapshotGate {
     );
 
     if (!currentBiasAllowsSignal) {
-      this.logger.warn(
-        `[MTF-SNAPSHOT] Bias mismatch! Snapshot: ${snapshot.htfBias} (now ${currentHTFBias}) | ` +
-        `Signal: ${snapshot.signal.direction}`
+      // Log mismatch with SKIP strategy
+      this.logWithSkip(
+        () => this.logger.warn(
+          `[MTF-SNAPSHOT] Bias mismatch! Snapshot: ${snapshot.htfBias} (now ${currentHTFBias}) | ` +
+          `Signal: ${snapshot.signal.direction}`
+        )
       );
+
       return {
         valid: false,
         expired: false,
@@ -271,10 +300,12 @@ export class MTFSnapshotGate {
       };
     }
 
-    // Snapshot is valid!
-    this.logger.info(
-      `[MTF-SNAPSHOT] Snapshot valid (${Math.round(ageMs / 1000)}s old, ${Math.round(expiresInMs / 1000)}s left) | ` +
-      `HTF: ${currentHTFBias} (consistent) | Signal: ${snapshot.signal.direction}`
+    // Snapshot is valid! Log with SKIP strategy
+    this.logWithSkip(
+      () => this.logger.info(
+        `[MTF-SNAPSHOT] Snapshot valid (${Math.round(ageMs / 1000)}s old, ${Math.round(expiresInMs / 1000)}s left) | ` +
+        `HTF: ${currentHTFBias} (consistent) | Signal: ${snapshot.signal.direction}`
+      )
     );
 
     return {
@@ -295,13 +326,18 @@ export class MTFSnapshotGate {
 
   /**
    * Clear active snapshot (call after ENTRY execution or skip)
+   * Strategy: SKIP for logging failures (non-blocking)
    */
   clearActiveSnapshot(): void {
     if (this.activeSnapshotId) {
       const id = this.activeSnapshotId;
       this.snapshots.delete(id);
       this.activeSnapshotId = null;
-      this.logger.debug(`[MTF-SNAPSHOT] Cleared snapshot ${id.substring(0, 8)}...`);
+
+      // Log clearing with SKIP strategy
+      this.logWithSkip(
+        () => this.logger.debug(`[MTF-SNAPSHOT] Cleared snapshot ${id.substring(0, 8)}...`)
+      );
     }
   }
 
@@ -345,20 +381,36 @@ export class MTFSnapshotGate {
 
   /**
    * Clean up expired snapshots
+   * Strategy: GRACEFUL_DEGRADE for cleanup (continue despite failures)
    */
   private cleanupExpiredSnapshots(): void {
-    const now = Date.now();
-    let cleanedCount = 0;
+    try {
+      const now = Date.now();
+      let cleanedCount = 0;
 
-    for (const [id, snapshot] of this.snapshots.entries()) {
-      if (now > snapshot.expiresAt) {
-        this.snapshots.delete(id);
-        cleanedCount++;
+      for (const [id, snapshot] of this.snapshots.entries()) {
+        if (now > snapshot.expiresAt) {
+          this.snapshots.delete(id);
+          cleanedCount++;
+        }
       }
-    }
 
-    if (cleanedCount > 0) {
-      this.logger.debug(`[MTF-SNAPSHOT] Cleaned up ${cleanedCount} expired snapshots`);
+      if (cleanedCount > 0) {
+        this.logWithGracefulDegrade(
+          () => this.logger.debug(`[MTF-SNAPSHOT] Cleaned up ${cleanedCount} expired snapshots`)
+        );
+      }
+    } catch (error) {
+      // Cleanup failure should not stop the service
+      // GRACEFUL_DEGRADE: continue despite errors
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'MTFSnapshotGate.cleanupExpiredSnapshots',
+        }).catch(() => {
+          // Silently continue - cleanup failure is non-critical
+        });
+      }
     }
   }
 
@@ -382,5 +434,47 @@ export class MTFSnapshotGate {
       age: now - snapshot.timestamp,
       expiresIn: snapshot.expiresAt - now,
     };
+  }
+
+  /**
+   * Execute logging function with SKIP strategy (non-blocking)
+   * If logging fails, the failure is silently skipped
+   */
+  private logWithSkip(logFn: () => void): void {
+    try {
+      logFn();
+    } catch (error) {
+      // SKIP strategy: silently continue on logging failure
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'MTFSnapshotGate.logWithSkip',
+        }).catch(() => {
+          // Double-catch to ensure we never fail
+        });
+      }
+      // If no errorHandler, just silently continue
+    }
+  }
+
+  /**
+   * Execute logging function with GRACEFUL_DEGRADE strategy
+   * If logging fails, continue with operation despite the failure
+   */
+  private logWithGracefulDegrade(logFn: () => void): void {
+    try {
+      logFn();
+    } catch (error) {
+      // GRACEFUL_DEGRADE strategy: continue despite logging failure
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'MTFSnapshotGate.logWithGracefulDegrade',
+        }).catch(() => {
+          // Double-catch to ensure we never fail
+        });
+      }
+      // If no errorHandler, just silently continue
+    }
   }
 }
