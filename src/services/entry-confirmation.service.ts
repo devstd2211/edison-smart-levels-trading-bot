@@ -23,9 +23,15 @@ import { TIME_MULTIPLIERS } from '../constants/technical.constants';
  * - Reduces quick stop-outs (< 5min holds)
  * - Confirms price rejection/bounce before entry
  * - Configurable per direction (LONG/SHORT)
+ *
+ * Phase 8.9.21: ErrorHandler Integration
+ * - SKIP strategy for logger failures (non-critical operations)
+ * - Optional ErrorHandler parameter for backward compatibility
+ * - Logging failures never block entry confirmation operations
  */
 
 import { LoggerService, SignalDirection, EntryConfirmationConfig } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 // ============================================================================
 // TYPES
@@ -58,6 +64,7 @@ export class EntryConfirmationManager {
   constructor(
     private config: EntryConfirmationConfig,
     private logger: LoggerService,
+    private errorHandler?: ErrorHandler,
   ) {}
 
   /**
@@ -126,14 +133,22 @@ export class EntryConfirmationManager {
         ? 'candle close above support'
         : 'candle close below resistance';
 
-    this.logger.info(`⏳ ${entry.direction} entry pending confirmation`, {
-      id,
-      symbol: entry.symbol,
-      direction: entry.direction,
-      [`${levelType}Level`]: entry.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-      waitingFor: `Next 1m ${confirmCondition}`,
-      expiresIn: `${expiryMs / TIME_UNITS.MINUTE}min`,
-    });
+    // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+    try {
+      this.logger.info(`⏳ ${entry.direction} entry pending confirmation`, {
+        id,
+        symbol: entry.symbol,
+        direction: entry.direction,
+        [`${levelType}Level`]: entry.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+        waitingFor: `Next 1m ${confirmCondition}`,
+        expiresIn: `${expiryMs / TIME_UNITS.MINUTE}min`,
+      });
+    } catch (error) {
+      this.errorHandler?.handle(error, {
+        strategy: RecoveryStrategy.SKIP,
+        context: 'EntryConfirmationManager.addPending.logging',
+      });
+    }
 
     return id;
   }
@@ -159,13 +174,21 @@ export class EntryConfirmationManager {
     if (Date.now() > pending.expiresAt) {
       const levelType = pending.direction === SignalDirection.LONG ? 'support' : 'resistance';
 
-      this.logger.info(`⏱️ ${pending.direction} entry EXPIRED`, {
-        id,
-        symbol: pending.symbol,
-        direction: pending.direction,
-        [`${levelType}Level`]: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-        reason: 'Confirmation timeout',
-      });
+      // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+      try {
+        this.logger.info(`⏱️ ${pending.direction} entry EXPIRED`, {
+          id,
+          symbol: pending.symbol,
+          direction: pending.direction,
+          [`${levelType}Level`]: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+          reason: 'Confirmation timeout',
+        });
+      } catch (error) {
+        this.errorHandler?.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'EntryConfirmationManager.checkConfirmation.expiredLog',
+        });
+      }
 
       this.pendingEntries.delete(id);
       return {
@@ -189,15 +212,23 @@ export class EntryConfirmationManager {
 
         // Check if bounce is sufficient (if minBouncePercent is configured)
         if (minBouncePercent > 0 && bouncePercent < minBouncePercent) {
-          this.logger.info('⚠️ LONG entry REJECTED - Insufficient bounce', {
-            id,
-            symbol: pending.symbol,
-            supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-            bouncePercent: bouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
-            minRequired: minBouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
-            reason: 'Entry too close to level - weak bounce',
-          });
+          // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+          try {
+            this.logger.info('⚠️ LONG entry REJECTED - Insufficient bounce', {
+              id,
+              symbol: pending.symbol,
+              supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+              candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
+              bouncePercent: bouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
+              minRequired: minBouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
+              reason: 'Entry too close to level - weak bounce',
+            });
+          } catch (error) {
+            this.errorHandler?.handle(error, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'EntryConfirmationManager.checkConfirmation.longWeakBounceLog',
+            });
+          }
 
           this.pendingEntries.delete(id);
           return {
@@ -208,14 +239,22 @@ export class EntryConfirmationManager {
           };
         }
 
-        this.logger.info('✅ LONG entry CONFIRMED', {
-          id,
-          symbol: pending.symbol,
-          supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-          candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-          bouncePercent: bouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
-          toleranceUsed: currentCandleClose < pending.keyLevel,
-        });
+        // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+        try {
+          this.logger.info('✅ LONG entry CONFIRMED', {
+            id,
+            symbol: pending.symbol,
+            supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
+            bouncePercent: bouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
+            toleranceUsed: currentCandleClose < pending.keyLevel,
+          });
+        } catch (error) {
+          this.errorHandler?.handle(error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryConfirmationManager.checkConfirmation.longConfirmedLog',
+          });
+        }
 
         this.pendingEntries.delete(id);
         return {
@@ -228,13 +267,21 @@ export class EntryConfirmationManager {
         };
       } else {
         // Candle closed BELOW support (beyond tolerance) - falling knife!
-        this.logger.info('❌ LONG entry REJECTED', {
-          id,
-          symbol: pending.symbol,
-          supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-          candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-          reason: 'Candle closed below support - falling knife',
-        });
+        // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+        try {
+          this.logger.info('❌ LONG entry REJECTED', {
+            id,
+            symbol: pending.symbol,
+            supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
+            reason: 'Candle closed below support - falling knife',
+          });
+        } catch (error) {
+          this.errorHandler?.handle(error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryConfirmationManager.checkConfirmation.longRejectedLog',
+          });
+        }
 
         this.pendingEntries.delete(id);
         return {
@@ -257,15 +304,23 @@ export class EntryConfirmationManager {
 
         // Check if rejection is sufficient (if minBouncePercent is configured)
         if (minBouncePercent > 0 && rejectionPercent < minBouncePercent) {
-          this.logger.info('⚠️ SHORT entry REJECTED - Insufficient rejection', {
-            id,
-            symbol: pending.symbol,
-            resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-            rejectionPercent: rejectionPercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
-            minRequired: minBouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
-            reason: 'Entry too close to level - weak rejection',
-          });
+          // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+          try {
+            this.logger.info('⚠️ SHORT entry REJECTED - Insufficient rejection', {
+              id,
+              symbol: pending.symbol,
+              resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+              candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
+              rejectionPercent: rejectionPercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
+              minRequired: minBouncePercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
+              reason: 'Entry too close to level - weak rejection',
+            });
+          } catch (error) {
+            this.errorHandler?.handle(error, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'EntryConfirmationManager.checkConfirmation.shortWeakRejectionLog',
+            });
+          }
 
           this.pendingEntries.delete(id);
           return {
@@ -276,14 +331,22 @@ export class EntryConfirmationManager {
           };
         }
 
-        this.logger.info('✅ SHORT entry CONFIRMED', {
-          id,
-          symbol: pending.symbol,
-          resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-          candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-          rejectionPercent: rejectionPercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
-          toleranceUsed: currentCandleClose > pending.keyLevel,
-        });
+        // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+        try {
+          this.logger.info('✅ SHORT entry CONFIRMED', {
+            id,
+            symbol: pending.symbol,
+            resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
+            rejectionPercent: rejectionPercent.toFixed(DECIMAL_PLACES.STRENGTH) + '%',
+            toleranceUsed: currentCandleClose > pending.keyLevel,
+          });
+        } catch (error) {
+          this.errorHandler?.handle(error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryConfirmationManager.checkConfirmation.shortConfirmedLog',
+          });
+        }
 
         this.pendingEntries.delete(id);
         return {
@@ -296,13 +359,21 @@ export class EntryConfirmationManager {
         };
       } else {
         // Candle closed ABOVE resistance (beyond tolerance) - pump continues!
-        this.logger.info('❌ SHORT entry REJECTED', {
-          id,
-          symbol: pending.symbol,
-          resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-          candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-          reason: 'Candle closed above resistance - pump continues',
-        });
+        // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+        try {
+          this.logger.info('❌ SHORT entry REJECTED', {
+            id,
+            symbol: pending.symbol,
+            resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
+            reason: 'Candle closed above resistance - pump continues',
+          });
+        } catch (error) {
+          this.errorHandler?.handle(error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryConfirmationManager.checkConfirmation.shortRejectedLog',
+          });
+        }
 
         this.pendingEntries.delete(id);
         return {
@@ -358,12 +429,20 @@ export class EntryConfirmationManager {
     if (pending) {
       const levelType = pending.direction === SignalDirection.LONG ? 'support' : 'resistance';
 
-      this.logger.info(`🚫 ${pending.direction} entry CANCELLED`, {
-        id,
-        symbol: pending.symbol,
-        direction: pending.direction,
-        [`${levelType}Level`]: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-      });
+      // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+      try {
+        this.logger.info(`🚫 ${pending.direction} entry CANCELLED`, {
+          id,
+          symbol: pending.symbol,
+          direction: pending.direction,
+          [`${levelType}Level`]: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+        });
+      } catch (error) {
+        this.errorHandler?.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'EntryConfirmationManager.cancel.logging',
+        });
+      }
 
       this.pendingEntries.delete(id);
       return true;
@@ -383,11 +462,19 @@ export class EntryConfirmationManager {
 
     for (const [id, entry] of this.pendingEntries.entries()) {
       if (now > entry.expiresAt) {
-        this.logger.debug(`Removing expired pending ${entry.direction}`, {
-          id,
-          symbol: entry.symbol,
-          direction: entry.direction,
-        });
+        // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
+        try {
+          this.logger.debug(`Removing expired pending ${entry.direction}`, {
+            id,
+            symbol: entry.symbol,
+            direction: entry.direction,
+          });
+        } catch (error) {
+          this.errorHandler?.handle(error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'EntryConfirmationManager.cleanupExpired.logging',
+          });
+        }
         this.pendingEntries.delete(id);
         count++;
       }
