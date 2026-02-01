@@ -20,6 +20,7 @@ import {
   LoggerService,
   Candle,
 } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors'; // Phase 8.9.20
 
 // ============================================================================
 // INTERFACES
@@ -58,6 +59,11 @@ const DEFAULT_CONFIG: AntiFlipConfig = {
 // ANTI-FLIP SERVICE
 // ============================================================================
 
+/**
+ * Phase 8.9.20: ErrorHandler integration
+ * - SKIP strategy for all logger failures (non-critical)
+ * - Backward compatible (works without ErrorHandler)
+ */
 export class AntiFlipService {
   private config: AntiFlipConfig;
   private lastSignal: LastSignalInfo | null = null;
@@ -66,6 +72,7 @@ export class AntiFlipService {
   constructor(
     private logger: LoggerService,
     config?: Partial<AntiFlipConfig>,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.20
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -115,46 +122,86 @@ export class AntiFlipService {
       if (this.candlesSinceSignal < this.config.cooldownCandles) {
         // Check for override conditions
         if (confidence >= this.config.overrideConfidenceThreshold) {
-          this.logger.info('🔓 Anti-flip override | High confidence signal', {
-            confidence,
-            threshold: this.config.overrideConfidenceThreshold,
-            newDirection,
-            lastDirection: this.lastSignal.direction,
-          });
+          // Phase 8.9.20: Protect high confidence override log with SKIP strategy
+          try {
+            this.logger.info('🔓 Anti-flip override | High confidence signal', {
+              confidence,
+              threshold: this.config.overrideConfidenceThreshold,
+              newDirection,
+              lastDirection: this.lastSignal.direction,
+            });
+          } catch (error) {
+            if (this.errorHandler) {
+              this.errorHandler.handle(error, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'AntiFlipService.shouldBlockSignal.highConfidenceOverrideLog',
+              });
+            }
+          }
           return { blocked: false, reason: `High confidence override (${confidence}% >= ${this.config.overrideConfidenceThreshold}%)` };
         }
 
         // Check for strong reversal via RSI
         if (this.isStrongReversal(newDirection, rsi)) {
-          this.logger.info('🔓 Anti-flip override | Strong RSI reversal', {
-            rsi,
-            newDirection,
-            threshold: this.config.strongReversalRsiThreshold,
-          });
+          // Phase 8.9.20: Protect RSI reversal log with SKIP strategy
+          try {
+            this.logger.info('🔓 Anti-flip override | Strong RSI reversal', {
+              rsi,
+              newDirection,
+              threshold: this.config.strongReversalRsiThreshold,
+            });
+          } catch (error) {
+            if (this.errorHandler) {
+              this.errorHandler.handle(error, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'AntiFlipService.shouldBlockSignal.rsiReversalLog',
+              });
+            }
+          }
           return { blocked: false, reason: `Strong RSI reversal (RSI: ${rsi?.toFixed(1)})` };
         }
 
         // Check candle confirmation
         if (recentCandles && this.hasConfirmationCandles(newDirection, recentCandles)) {
-          this.logger.info('🔓 Anti-flip override | Candle confirmation', {
-            confirmationCandles: this.config.requiredConfirmationCandles,
-            newDirection,
-          });
+          // Phase 8.9.20: Protect candle confirmation log with SKIP strategy
+          try {
+            this.logger.info('🔓 Anti-flip override | Candle confirmation', {
+              confirmationCandles: this.config.requiredConfirmationCandles,
+              newDirection,
+            });
+          } catch (error) {
+            if (this.errorHandler) {
+              this.errorHandler.handle(error, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'AntiFlipService.shouldBlockSignal.candleConfirmationLog',
+              });
+            }
+          }
           return { blocked: false, reason: `${this.config.requiredConfirmationCandles} confirmation candles` };
         }
 
         const remainingCooldown = this.config.cooldownMs - timeSinceSignal;
         const remainingCandles = this.config.cooldownCandles - this.candlesSinceSignal;
 
-        this.logger.warn('🚫 Anti-flip BLOCKED | Signal flip too soon', {
-          newDirection,
-          lastDirection: this.lastSignal.direction,
-          candlesSince: this.candlesSinceSignal,
-          requiredCandles: this.config.cooldownCandles,
-          msSince: timeSinceSignal,
-          requiredMs: this.config.cooldownMs,
-          confidence,
-        });
+        // Phase 8.9.20: Protect anti-flip blocked warning log with SKIP strategy
+        try {
+          this.logger.warn('🚫 Anti-flip BLOCKED | Signal flip too soon', {
+            newDirection,
+            lastDirection: this.lastSignal.direction,
+            candlesSince: this.candlesSinceSignal,
+            requiredCandles: this.config.cooldownCandles,
+            msSince: timeSinceSignal,
+            requiredMs: this.config.cooldownMs,
+            confidence,
+          });
+        } catch (error) {
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'AntiFlipService.shouldBlockSignal.blockedWarningLog',
+            });
+          }
+        }
 
         return {
           blocked: true,
@@ -228,12 +275,22 @@ export class AntiFlipService {
     };
     this.candlesSinceSignal = 0;
 
-    this.logger.debug('📝 Anti-flip | Signal recorded', {
-      direction,
-      price: price.toFixed(4),
-      cooldownCandles: this.config.cooldownCandles,
-      cooldownMs: this.config.cooldownMs,
-    });
+    // Phase 8.9.20: Protect signal recorded debug log with SKIP strategy
+    try {
+      this.logger.debug('📝 Anti-flip | Signal recorded', {
+        direction,
+        price: price.toFixed(4),
+        cooldownCandles: this.config.cooldownCandles,
+        cooldownMs: this.config.cooldownMs,
+      });
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'AntiFlipService.recordSignal.debugLog',
+        });
+      }
+    }
   }
 
   /**
