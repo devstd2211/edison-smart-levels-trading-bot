@@ -45,6 +45,7 @@ import {
 } from '../types';
 import { evaluateExit, ExitDecisionContext, ExitDecisionResult } from '../decision-engine/exit-decisions';
 import { PositionStateMachineService } from '../services/position-state-machine.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================
 // CONSTANTS (PHASE 4: EXPLICIT CONSTANTS - NO MAGIC NUMBERS)
@@ -100,15 +101,17 @@ export class ExitOrchestrator {
     private logger: LoggerService,
     stateMachine?: PositionStateMachineService,
     private strategyId?: string,  // Phase 10.3c: Strategy identifier for event tagging
+    private errorHandler?: ErrorHandler,  // Phase 8.9.25: Error handling with recovery strategies
   ) {
     // Use injected state machine or create new one
     this.stateMachine = stateMachine || new PositionStateMachineService(logger);
 
-    this.logger.info('🎯 ExitOrchestrator initialized (PHASE 4.5 INTEGRATION)', {
+    this.logger.info('🎯 ExitOrchestrator initialized (PHASE 4.5 INTEGRATION + 8.9.25 ErrorHandler)', {
       role: 'Single position exit state machine',
       statesAvailable: 'OPEN, TP1_HIT, TP2_HIT, TP3_HIT, CLOSED',
       actionsAvailable: 'CLOSE_PERCENT, UPDATE_SL, ACTIVATE_TRAILING, MOVE_SL_TO_BREAKEVEN, CLOSE_ALL',
       stateMachineIntegrated: 'YES (Phase 4.5)',
+      errorHandlerIntegrated: this.errorHandler ? 'YES (Phase 8.9.25)' : 'NO (backward compatible)',
     });
   }
 
@@ -118,6 +121,11 @@ export class ExitOrchestrator {
    *
    * PHASE 5: Uses pure evaluateExit() function for decision logic
    * Keeps side effects (state machine, logging) in orchestrator
+   *
+   * PHASE 8.9.25: ErrorHandler integration with recovery strategies:
+   * - THROW: Position & price validation errors
+   * - GRACEFUL_DEGRADE: Calculation errors (continue with defaults)
+   * - SKIP: Logging failures (non-blocking)
    *
    * @param position - Current position to evaluate
    * @param currentPrice - Current market price
@@ -135,6 +143,19 @@ export class ExitOrchestrator {
     },
   ): Promise<ExitOrchestratorResult> {
     try {
+      // =====================================================================
+      // PHASE 8.9.25: Input validation (THROW on critical errors)
+      // =====================================================================
+      if (!position) {
+        const error = new Error('Position is null or undefined');
+        throw error;
+      }
+
+      if (!Number.isFinite(currentPrice)) {
+        const error = new Error(`Invalid currentPrice: ${currentPrice}`);
+        throw error;
+      }
+
       // =====================================================================
       // PHASE 5: Use pure decision function
       // =====================================================================
@@ -172,90 +193,183 @@ export class ExitOrchestrator {
         // State transition occurred
         const pnL = decisionResult.metadata?.profitPercent ?? 0;
 
-        this.logger.info(`📊 Exit State Transition: ${decisionResult.state}`, {
-          symbol: position.symbol,
-          transition: decisionResult.stateTransition,
-          trigger: decisionResult.metadata?.closureReason || decisionResult.state,
-          profit: pnL.toFixed(2) + '%',
-          profitPercent: pnL.toFixed(2) + '%',
-          timestamp: Date.now(),
-        });
-
-        // Handle special cases for logging
-        if (decisionResult.state === PositionState.TP1_HIT) {
-          this.logger.info('✅ TP1 HIT - moving SL to breakeven', {
+        // PHASE 8.9.25: Logging with SKIP strategy for failures
+        try {
+          this.logger.info(`📊 Exit State Transition: ${decisionResult.state}`, {
             symbol: position.symbol,
-            tp1Price: position.takeProfits[0]?.price.toFixed(8),
-            newSL: decisionResult.actions[1]?.newStopLoss?.toFixed(8),
+            transition: decisionResult.stateTransition,
+            trigger: decisionResult.metadata?.closureReason || decisionResult.state,
+            profit: pnL.toFixed(2) + '%',
+            profitPercent: pnL.toFixed(2) + '%',
+            timestamp: Date.now(),
           });
+        } catch (logError) {
+          // Phase 8.9.25: SKIP logging failures
+          if (this.errorHandler) {
+            await this.errorHandler.handle(logError, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'exit_state_transition_log',
+            });
+          }
+        }
+
+        // Handle special cases for logging & state machine
+        if (decisionResult.state === PositionState.TP1_HIT) {
+          // PHASE 8.9.25: SKIP logging failures
+          try {
+            this.logger.info('✅ TP1 HIT - moving SL to breakeven', {
+              symbol: position.symbol,
+              tp1Price: position.takeProfits[0]?.price.toFixed(8),
+              newSL: decisionResult.actions[1]?.newStopLoss?.toFixed(8),
+            });
+          } catch (logError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(logError, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'tp1_hit_log',
+              });
+            }
+          }
+
           this.activatePreBEMode(position.symbol);
 
-          this.stateMachine.transitionState({
-            symbol: position.symbol,
-            positionId: position.id,
-            targetState: PositionState.TP1_HIT,
-            reason: 'TP1 hit at ' + currentPrice.toFixed(8),
-            metadata: {
-              preBEMode: {
-                activatedAt: Date.now(),
-                candlesWaited: 0,
-                candleCount: EXIT_ORCHESTRATOR_PRE_BE_MAX_CANDLES,
+          // PHASE 8.9.25: GRACEFUL_DEGRADE for state machine errors (continue even if state transition fails)
+          try {
+            this.stateMachine.transitionState({
+              symbol: position.symbol,
+              positionId: position.id,
+              targetState: PositionState.TP1_HIT,
+              reason: 'TP1 hit at ' + currentPrice.toFixed(8),
+              metadata: {
+                preBEMode: {
+                  activatedAt: Date.now(),
+                  candlesWaited: 0,
+                  candleCount: EXIT_ORCHESTRATOR_PRE_BE_MAX_CANDLES,
+                },
               },
-            },
-          });
+            });
+          } catch (stateError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(stateError, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'tp1_state_transition',
+              });
+            }
+          }
         } else if (decisionResult.state === PositionState.TP2_HIT) {
-          this.logger.info('✅ TP2 HIT - activating trailing stop', {
-            symbol: position.symbol,
-            tp2Price: position.takeProfits[1]?.price.toFixed(8),
-            trailingDistance: decisionResult.actions[1]?.trailingDistance?.toFixed(8),
-          });
+          // PHASE 8.9.25: SKIP logging failures
+          try {
+            this.logger.info('✅ TP2 HIT - activating trailing stop', {
+              symbol: position.symbol,
+              tp2Price: position.takeProfits[1]?.price.toFixed(8),
+              trailingDistance: decisionResult.actions[1]?.trailingDistance?.toFixed(8),
+            });
+          } catch (logError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(logError, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'tp2_hit_log',
+              });
+            }
+          }
+
           this.preBEModes.delete(position.symbol);
 
           const trailingPrice = position.side === PositionSide.LONG
             ? currentPrice - (decisionResult.actions[1]?.trailingDistance ?? 0)
             : currentPrice + (decisionResult.actions[1]?.trailingDistance ?? 0);
 
-          this.stateMachine.transitionState({
-            symbol: position.symbol,
-            positionId: position.id,
-            targetState: PositionState.TP2_HIT,
-            reason: 'TP2 hit at ' + currentPrice.toFixed(8),
-            metadata: {
-              trailingMode: {
-                isTrailing: true,
-                currentTrailingPrice: trailingPrice,
-                lastUpdatePrice: currentPrice,
+          // PHASE 8.9.25: GRACEFUL_DEGRADE for state machine errors
+          try {
+            this.stateMachine.transitionState({
+              symbol: position.symbol,
+              positionId: position.id,
+              targetState: PositionState.TP2_HIT,
+              reason: 'TP2 hit at ' + currentPrice.toFixed(8),
+              metadata: {
+                trailingMode: {
+                  isTrailing: true,
+                  currentTrailingPrice: trailingPrice,
+                  lastUpdatePrice: currentPrice,
+                },
               },
-            },
-          });
+            });
+          } catch (stateError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(stateError, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'tp2_state_transition',
+              });
+            }
+          }
         } else if (decisionResult.state === PositionState.TP3_HIT) {
-          this.logger.info('✅ TP3 HIT - closing remaining position', {
-            symbol: position.symbol,
-            tp3Price: position.takeProfits[2]?.price.toFixed(8),
-          });
+          // PHASE 8.9.25: SKIP logging failures
+          try {
+            this.logger.info('✅ TP3 HIT - closing remaining position', {
+              symbol: position.symbol,
+              tp3Price: position.takeProfits[2]?.price.toFixed(8),
+            });
+          } catch (logError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(logError, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'tp3_hit_log',
+              });
+            }
+          }
 
-          this.stateMachine.transitionState({
-            symbol: position.symbol,
-            positionId: position.id,
-            targetState: PositionState.TP3_HIT,
-            reason: 'TP3 hit at ' + currentPrice.toFixed(8),
-          });
+          // PHASE 8.9.25: GRACEFUL_DEGRADE for state machine errors
+          try {
+            this.stateMachine.transitionState({
+              symbol: position.symbol,
+              positionId: position.id,
+              targetState: PositionState.TP3_HIT,
+              reason: 'TP3 hit at ' + currentPrice.toFixed(8),
+            });
+          } catch (stateError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(stateError, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'tp3_state_transition',
+              });
+            }
+          }
         } else if (decisionResult.state === PositionState.CLOSED) {
           // Map closure reason to valid enum value
           const closureReason = (decisionResult.metadata?.closureReason as 'SL_HIT' | 'TP1_HIT' | 'TP2_HIT' | 'TP3_HIT' | 'TRAILING_STOP' | 'MANUAL' | 'OTHER') || 'OTHER';
 
-          this.logger.warn('❌ Position Closed', {
-            symbol: position.symbol,
-            reason: closureReason,
-            closurePrice: currentPrice.toFixed(8),
-            profitPercent: pnL.toFixed(2) + '%',
-          });
+          // PHASE 8.9.25: SKIP logging failures
+          try {
+            this.logger.warn('❌ Position Closed', {
+              symbol: position.symbol,
+              reason: closureReason,
+              closurePrice: currentPrice.toFixed(8),
+              profitPercent: pnL.toFixed(2) + '%',
+            });
+          } catch (logError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(logError, {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'position_closed_log',
+              });
+            }
+          }
 
-          this.stateMachine.closePosition(position.symbol, position.id, decisionResult.reason, {
-            closureReason,
-            closurePrice: currentPrice,
-            closurePnL: pnL,
-          });
+          // PHASE 8.9.25: GRACEFUL_DEGRADE for state machine errors
+          try {
+            this.stateMachine.closePosition(position.symbol, position.id, decisionResult.reason, {
+              closureReason,
+              closurePrice: currentPrice,
+              closurePnL: pnL,
+            });
+          } catch (stateError) {
+            if (this.errorHandler) {
+              await this.errorHandler.handle(stateError, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: 'close_position_state_machine',
+              });
+            }
+          }
         }
       }
 
@@ -266,9 +380,19 @@ export class ExitOrchestrator {
         stateTransition: decisionResult.stateTransition,
       };
     } catch (error) {
-      this.logger.error('ExitOrchestrator evaluation failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      // PHASE 8.9.25: Log error with SKIP strategy (non-blocking)
+      try {
+        this.logger.error('ExitOrchestrator evaluation failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } catch (logError) {
+        if (this.errorHandler) {
+          await this.errorHandler.handle(logError, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'evaluateExit_error',
+          });
+        }
+      }
 
       // Return safe default: close position on error
       return {
