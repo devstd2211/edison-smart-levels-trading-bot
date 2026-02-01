@@ -1,29 +1,30 @@
 import { DECIMAL_PLACES, BYBIT_FEES } from '../constants';
 import { EPSILON } from '../constants/technical.constants';
+import { LoggerService, PositionSide } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { TakeProfitCalculationError } from '../errors/DomainErrors';
+
 /**
- * Take Profit Manager Service
+ * Take Profit Manager Service (Phase 8.9.22)
  *
  * Manages partial take-profit closes and tracks PnL for each TP level.
+ *
+ * Error Handling Integration:
+ * - THROW: Quantity validation (prevents data corruption)
+ * - SKIP: Logger failures (non-blocking notifications)
  *
  * Features:
  * - Track multiple TP levels (TP1, TP2, TP3)
  * - Calculate PnL for each partial close
  * - Accumulate total PnL across all closes
  * - Handle fees calculation per close
- *
- * Usage:
- * 1. Initialize with position details
- * 2. Call recordPartialClose() for each TP hit
- * 3. Get totalPnL() at any time
+ * - Optional ErrorHandler injection for resilience
  */
-
-import { LoggerService, PositionSide } from '../types';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-// Use centralized fee constant from src/constants.ts
 const BYBIT_TAKER_FEE = BYBIT_FEES.TAKER;
 
 // ============================================================================
@@ -61,6 +62,7 @@ export class TakeProfitManagerService {
   constructor(
     config: TakeProfitManagerConfig,
     private readonly logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler,
   ) {
     this.config = config;
   }
@@ -71,26 +73,46 @@ export class TakeProfitManagerService {
 
   /**
    * Record a partial close when TP level is hit
+   *
+   * Error Handling:
+   * - THROW on quantity validation (prevents data corruption)
+   * - SKIP on logger failures (non-critical notifications)
    */
   recordPartialClose(level: number, quantity: number, exitPrice: number): PartialClose {
-    // Validate
+    // VALIDATE: Quantity must not exceed remaining position (THROW strategy)
     if (this.totalQuantityClosed + quantity > this.config.totalQuantity) {
-      throw new Error(
-        `Cannot close ${quantity}: would exceed total quantity ${this.config.totalQuantity}`,
-      );
+      const errorMsg = `Cannot close ${quantity}: would exceed total quantity ${this.config.totalQuantity}`;
+      if (this.errorHandler) {
+        const error = new TakeProfitCalculationError(
+          errorMsg,
+          {
+            positionId: this.config.positionId,
+            level,
+            quantity,
+            exitPrice,
+            entryPrice: this.config.entryPrice,
+            reason: `Total would exceed: ${this.totalQuantityClosed + quantity} > ${this.config.totalQuantity}`,
+          },
+        );
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.THROW,
+          context: 'TakeProfitManager.recordPartialClose[validation]',
+        });
+      }
+      throw new Error(errorMsg);
     }
 
-    // Calculate PnL for this partial close
+    // CALCULATE: PnL for this partial close (synchronous, no error handling)
     const pnlMultiplier = this.config.side === PositionSide.LONG ? 1 : -1;
     const priceDiff = exitPrice - this.config.entryPrice;
     const pnlGross = priceDiff * quantity * pnlMultiplier * this.config.leverage;
 
-    // Calculate fees for this close
+    // Calculate fees
     const entryValue = this.config.entryPrice * quantity;
     const exitValue = exitPrice * quantity;
     const fees = (entryValue + exitValue) * BYBIT_TAKER_FEE;
 
-    // Net PnL after fees
+    // Net PnL
     const pnlNet = pnlGross - fees;
 
     const partialClose: PartialClose = {
@@ -106,13 +128,39 @@ export class TakeProfitManagerService {
     this.partialCloses.push(partialClose);
     this.totalQuantityClosed += quantity;
 
-    this.logger.info('📊 Partial close recorded', {
-      positionId: this.config.positionId,
-      level: `TP${level}`,
-      quantity,
-      exitPrice,
-      pnlNet: pnlNet.toFixed(DECIMAL_PLACES.PRICE),
-    });
+    // LOG: Record partial close (SKIP strategy for logger failures)
+    if (this.errorHandler) {
+      // Fire and forget logging with SKIP strategy (non-blocking)
+      this.errorHandler
+        .executeAsync(
+          async () => {
+            this.logger.info('📊 Partial close recorded', {
+              positionId: this.config.positionId,
+              level: `TP${level}`,
+              quantity,
+              exitPrice,
+              pnlNet: pnlNet.toFixed(DECIMAL_PLACES.PRICE),
+            });
+            return true;
+          },
+          {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'TakeProfitManager.recordPartialClose[logging]',
+          },
+        )
+        .catch(() => {
+          // SKIP strategy: don't block on logging errors
+        });
+    } else {
+      // No ErrorHandler: use original logging
+      this.logger.info('📊 Partial close recorded', {
+        positionId: this.config.positionId,
+        level: `TP${level}`,
+        quantity,
+        exitPrice,
+        pnlNet: pnlNet.toFixed(DECIMAL_PLACES.PRICE),
+      });
+    }
 
     return partialClose;
   }
@@ -140,6 +188,13 @@ export class TakeProfitManagerService {
    */
   getTotalRealizedPnL(): number {
     return this.partialCloses.reduce((sum, close) => sum + close.pnlNet, 0);
+  }
+
+  /**
+   * Get total quantity closed so far
+   */
+  getTotalQuantityClosed(): number {
+    return this.totalQuantityClosed;
   }
 
   /**
@@ -174,6 +229,7 @@ export class TakeProfitManagerService {
 
   /**
    * Calculate final PnL if remaining quantity closes at given price
+   * Pure synchronous calculation (no error handling needed for pure math)
    */
   calculateFinalPnL(finalExitPrice: number): {
     partialPnL: { pnlGross: number; fees: number; pnlNet: number };
@@ -183,7 +239,7 @@ export class TakeProfitManagerService {
     // PnL from partial closes
     const partialPnL = this.getTotalPnL();
 
-    // Calculate PnL for remaining quantity
+    // Calculate PnL for remaining quantity (simple synchronous calculation)
     const remainingQty = this.getRemainingQuantity();
     const pnlMultiplier = this.config.side === PositionSide.LONG ? 1 : -1;
     const priceDiff = finalExitPrice - this.config.entryPrice;

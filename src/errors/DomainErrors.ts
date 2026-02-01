@@ -1402,3 +1402,62 @@ export class CandleDataMissingError extends TradingError {
     Object.setPrototypeOf(this, CandleDataMissingError.prototype);
   }
 }
+
+/**
+ * Take profit calculation error
+ * PnL or fee calculation failed during partial close recording
+ */
+export class TakeProfitCalculationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      positionId?: string;
+      level: number;
+      quantity: number;
+      exitPrice: number;
+      entryPrice?: number;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'TAKE_PROFIT_CALCULATION_ERROR',
+      ErrorDomain.POSITION,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, TakeProfitCalculationError.prototype);
+  }
+}
+
+/**
+ * Take profit recording error
+ * Logging or persistence of partial close failed
+ */
+export class TakeProfitRecordingError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      positionId?: string;
+      level: number;
+      quantity: number;
+      exitPrice: number;
+      operation: string; // 'logging', 'persistence', etc
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'TAKE_PROFIT_RECORDING_ERROR',
+      ErrorDomain.POSITION,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, TakeProfitRecordingError.prototype);
+  }
+}

@@ -399,7 +399,7 @@ export class PositionLifecycleService {
       });
       console.log('[EVENT] position-opened emitted:', position.id);
 
-      // Initialize TakeProfitManager for partial close tracking
+      // Initialize TakeProfitManager for partial close tracking (Phase 8.9.22: ErrorHandler injection)
       this.takeProfitManager = new TakeProfitManagerService(
         {
           positionId: position.id,
@@ -410,6 +410,7 @@ export class PositionLifecycleService {
           leverage: this.tradingConfig.leverage,
         },
         this.logger,
+        this.errorHandler, // Phase 8.9.22: Pass ErrorHandler for resilience
       );
 
       // ===================================================================
