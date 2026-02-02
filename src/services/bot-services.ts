@@ -36,6 +36,7 @@ import { WebSocketAuthenticationService } from './websocket-authentication.servi
 import { EventDeduplicationService } from './event-deduplication.service';
 import { WebSocketKeepAliveService } from './websocket-keep-alive.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';
+import { LadderExitDetectorService } from './ladder-exit-detector.service'; // Phase 8.9.27
 import { PositionPnLCalculatorService } from './position-pnl-calculator.service';
 import { PositionSyncService } from './position-sync.service';
 import { PositionEventHandler, WebSocketEventHandler } from './handlers';
@@ -127,6 +128,7 @@ export class BotServices {
   readonly deltaAnalyzerService?: DeltaAnalyzerService;
   readonly orderbookImbalanceService?: OrderbookImbalanceService;
   readonly wallTrackerService?: WallTrackerService;
+  readonly ladderExitDetector?: LadderExitDetectorService; // Phase 8.9.27: Ladder TP exit detection
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -420,6 +422,16 @@ export class BotServices {
         trackHistory: config.wallTracking.trackHistoryCount,
       });
     }
+
+    // Phase 8.9.27: Initialize Ladder Exit Detector (optional)
+    this.ladderExitDetector = new LadderExitDetectorService(
+      this.logger,
+      this.bybitService,
+      this.errorHandler,
+    );
+    this.logger.debug('✅ Ladder Exit Detector initialized (Phase 8.9.27)', {
+      hasErrorHandler: !!this.errorHandler,
+    });
 
     // 7.5 Initialize RiskManager with proper RiskManagerConfig structure (PHASE 4)
     const riskManagerConfig = {

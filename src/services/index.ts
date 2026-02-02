@@ -9,6 +9,7 @@ export * from './position-exiting.service'; // Handles partial TP, breakeven, tr
 export * from './websocket-manager.service';
 export * from './position-monitor.service';
 export * from './exit-type-detector.service'; // Determines position exit type from order history
+export * from './ladder-exit-detector.service'; // Phase 8.9.27: Detects ladder TP level hits
 export * from './position-pnl-calculator.service'; // Calculates unrealized P&L
 export * from './position-sync.service'; // Syncs position state with exchange
 export * from './trading-journal.service';
