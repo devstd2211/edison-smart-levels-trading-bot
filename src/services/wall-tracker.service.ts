@@ -19,6 +19,8 @@ import { MIN_REFILLS_FOR_ICEBERG, CLUSTER_MIN_WALLS, WALL_LIFETIME_SCORE_MAX, WA
  */
 
 import { WallTrackingConfig, WallEvent, WallLifetime, WallCluster, LoggerService } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { WallTrackingError } from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -39,6 +41,7 @@ export class WallTrackerService {
   constructor(
     private config: WallTrackingConfig,
     private logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.28
   ) {}
 
   /**
@@ -49,44 +52,79 @@ export class WallTrackerService {
       return;
     }
 
-    const key = this.getKey(side, price);
-    const existing = this.activeWalls.get(key);
-
-    if (!existing) {
-      // New wall detected
-      const wall: WallLifetime = {
-        firstSeen: Date.now(),
-        lastSeen: Date.now(),
-        price,
-        side,
-        maxSize: size,
-        currentSize: size,
-        events: [
-          {
-            timestamp: Date.now(),
-            type: 'ADDED',
+    try {
+      // Phase 8.9.28: Validation with error handling
+      if (isNaN(price) || isNaN(size) || price <= 0 || size < 0) {
+        if (this.errorHandler) {
+          // Log validation error but continue (SKIP strategy)
+          const error = new WallTrackingError('Invalid wall parameters', {
+            operation: 'detect',
+            wallPrice: price,
+            wallSide: side,
+            size,
+            issue: 'NaN or negative values',
+          });
+          this.logger.warn('Wall detection skipped due to invalid parameters', {
             price,
             size,
             side,
-          },
-        ],
-        isSpoofing: false,
-        isIceberg: false,
-        absorbedVolume: 0,
-      };
+          });
+        }
+        return; // SKIP: Don't track invalid wall
+      }
 
-      this.activeWalls.set(key, wall);
-      this.addEvent(wall.events[0]);
+      const key = this.getKey(side, price);
+      const existing = this.activeWalls.get(key);
 
-      // Note: Wall detection logging disabled to reduce spam
-      // this.logger.debug('🧱 Wall detected (PHASE 4)', {
-      //   side,
-      //   price: price.toFixed(DECIMAL_PLACES.PRICE),
-      //   size: size.toFixed(DECIMAL_PLACES.PERCENT),
-      // });
-    } else {
-      // Wall still exists - update
-      this.updateWall(existing, size);
+      if (!existing) {
+        // New wall detected
+        const wall: WallLifetime = {
+          firstSeen: Date.now(),
+          lastSeen: Date.now(),
+          price,
+          side,
+          maxSize: size,
+          currentSize: size,
+          events: [
+            {
+              timestamp: Date.now(),
+              type: 'ADDED',
+              price,
+              size,
+              side,
+            },
+          ],
+          isSpoofing: false,
+          isIceberg: false,
+          absorbedVolume: 0,
+        };
+
+        this.activeWalls.set(key, wall);
+        this.addEvent(wall.events[0]);
+
+        // Note: Wall detection logging disabled to reduce spam
+        // this.logger.debug('🧱 Wall detected (PHASE 4)', {
+        //   side,
+        //   price: price.toFixed(DECIMAL_PLACES.PRICE),
+        //   size: size.toFixed(DECIMAL_PLACES.PERCENT),
+        // });
+      } else {
+        // Wall still exists - update
+        this.updateWall(existing, size);
+      }
+    } catch (error) {
+      if (this.errorHandler) {
+        // SKIP strategy: log error but continue processing
+        const errorMsg =
+          error instanceof Error ? error.message : 'Unknown error in detectWall';
+        this.logger.warn('Error in wall detection, skipping wall', {
+          error: errorMsg,
+          price,
+          size,
+          side,
+        });
+      }
+      // Silently continue - wall detection is non-blocking
     }
   }
 
@@ -98,49 +136,69 @@ export class WallTrackerService {
       return;
     }
 
-    const key = this.getKey(side, price);
-    const wall = this.activeWalls.get(key);
+    try {
+      const key = this.getKey(side, price);
+      const wall = this.activeWalls.get(key);
 
-    if (!wall) {
-      return; // Not tracked
-    }
+      if (!wall) {
+        return; // Not tracked
+      }
 
-    const lifetime = Date.now() - wall.firstSeen;
+      // Phase 8.9.28: Calculate lifetime with validation
+      const lifetime = Date.now() - wall.firstSeen;
 
-    // Check for spoofing (removed too quickly)
-    if (lifetime < this.config.spoofingThresholdMs) {
-      wall.isSpoofing = true;
-      /*this.logger.warn('⚠️ Spoofing detected (PHASE 4)', {
+      if (isNaN(lifetime) || !isFinite(lifetime)) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid wall lifetime calculation, skipping removal', {
+            price,
+            side,
+            firstSeen: wall.firstSeen,
+          });
+        }
+        return; // SKIP: Don't remove wall with invalid lifetime
+      }
+
+      // Check for spoofing (removed too quickly)
+      if (lifetime < this.config.spoofingThresholdMs) {
+        wall.isSpoofing = true;
+      }
+
+      // Add REMOVED event
+      const event: WallEvent = {
+        timestamp: Date.now(),
+        type: 'REMOVED',
+        price,
+        size: wall.currentSize,
         side,
-        price: price.toFixed(DECIMAL_PLACES.PRICE),
-        lifetime: `${lifetime}ms`,
-        size: wall.currentSize.toFixed(DECIMAL_PLACES.PERCENT),
-      });*/
+        reason: wall.isSpoofing ? 'spoofing' : 'filled_or_cancelled',
+      };
+
+      wall.events.push(event);
+      this.addEvent(event);
+
+      this.activeWalls.delete(key);
+
+      // Note: Wall removal logging disabled to reduce spam
+      // this.logger.debug('🧱 Wall removed (PHASE 4)', {
+      //   side,
+      //   price: price.toFixed(DECIMAL_PLACES.PRICE),
+      //   lifetime: `${lifetime}ms`,
+      //   isSpoofing: wall.isSpoofing,
+      //   isIceberg: wall.isIceberg,
+      // });
+    } catch (error) {
+      if (this.errorHandler) {
+        // SKIP strategy: log error but continue processing
+        const errorMsg =
+          error instanceof Error ? error.message : 'Unknown error in removeWall';
+        this.logger.warn('Error in wall removal, skipping', {
+          error: errorMsg,
+          price,
+          side,
+        });
+      }
+      // Silently continue - wall removal is non-blocking
     }
-
-    // Add REMOVED event
-    const event: WallEvent = {
-      timestamp: Date.now(),
-      type: 'REMOVED',
-      price,
-      size: wall.currentSize,
-      side,
-      reason: wall.isSpoofing ? 'spoofing' : 'filled_or_cancelled',
-    };
-
-    wall.events.push(event);
-    this.addEvent(event);
-
-    this.activeWalls.delete(key);
-
-    // Note: Wall removal logging disabled to reduce spam
-    // this.logger.debug('🧱 Wall removed (PHASE 4)', {
-    //   side,
-    //   price: price.toFixed(DECIMAL_PLACES.PRICE),
-    //   lifetime: `${lifetime}ms`,
-    //   isSpoofing: wall.isSpoofing,
-    //   isIceberg: wall.isIceberg,
-    // });
   }
 
   /**
@@ -207,19 +265,44 @@ export class WallTrackerService {
       return [];
     }
 
-    const clusters: WallCluster[] = [];
+    try {
+      // Phase 8.9.28: Error handling with SKIP strategy
+      const clusters: WallCluster[] = [];
 
-    // Group walls by side
-    const bidWalls = Array.from(this.activeWalls.values()).filter((w) => w.side === 'BID');
-    const askWalls = Array.from(this.activeWalls.values()).filter((w) => w.side === 'ASK');
+      // Group walls by side
+      const bidWalls = Array.from(this.activeWalls.values()).filter((w) => w.side === 'BID');
+      const askWalls = Array.from(this.activeWalls.values()).filter((w) => w.side === 'ASK');
 
-    // Detect BID clusters
-    clusters.push(...this.findClustersInWalls(bidWalls, 'BID'));
+      if (!bidWalls || !askWalls) {
+        if (this.errorHandler) {
+          this.logger.warn('Failed to group walls by side, returning empty clusters', {
+            bidWallsCount: bidWalls?.length ?? 0,
+            askWallsCount: askWalls?.length ?? 0,
+          });
+        }
+        return []; // SKIP: return empty array
+      }
 
-    // Detect ASK clusters
-    clusters.push(...this.findClustersInWalls(askWalls, 'ASK'));
+      // Detect BID clusters
+      const bidClusters = this.findClustersInWalls(bidWalls, 'BID');
+      clusters.push(...bidClusters);
 
-    return clusters;
+      // Detect ASK clusters
+      const askClusters = this.findClustersInWalls(askWalls, 'ASK');
+      clusters.push(...askClusters);
+
+      return clusters;
+    } catch (error) {
+      if (this.errorHandler) {
+        // SKIP strategy: log error but continue
+        const errorMsg =
+          error instanceof Error ? error.message : 'Unknown error in detectClusters';
+        this.logger.warn('Error detecting wall clusters, returning empty array', {
+          error: errorMsg,
+        });
+      }
+      return []; // SKIP: safe default (empty clusters)
+    }
   }
 
   /**
@@ -366,25 +449,87 @@ export class WallTrackerService {
       return 0;
     }
 
-    let strength = 0;
+    try {
+      // Phase 8.9.28: Error handling with GRACEFUL_DEGRADE strategy
+      let strength = 0;
 
-    // 1. Lifetime score (0-0.4)
-    const lifetime = Date.now() - wall.firstSeen;
-    const lifetimeScore = Math.min(lifetime / this.config.minLifetimeMs, RATIO_MULTIPLIERS.FULL) * WALL_LIFETIME_SCORE_MAX;
-    strength += lifetimeScore;
+      // 1. Lifetime score (0-0.4)
+      const lifetime = Date.now() - wall.firstSeen;
+      if (isNaN(lifetime) || !isFinite(lifetime)) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid lifetime in wall strength calculation', {
+            price,
+            side,
+            firstSeen: wall.firstSeen,
+          });
+        }
+        return 0; // GRACEFUL_DEGRADE: return safe default
+      }
+      const lifetimeScore =
+        Math.min(lifetime / this.config.minLifetimeMs, RATIO_MULTIPLIERS.FULL) *
+        WALL_LIFETIME_SCORE_MAX;
+      strength += lifetimeScore;
 
-    // 2. Size stability score (0-0.3)
-    // High if current size is close to max size
-    const sizeRatio = wall.currentSize / wall.maxSize;
-    const sizeStability = sizeRatio * WALL_SIZE_STABILITY_SCORE_MAX;
-    strength += sizeStability;
+      // 2. Size stability score (0-0.3)
+      // High if current size is close to max size
+      if (wall.maxSize <= 0) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid wall size in strength calculation', {
+            price,
+            side,
+            maxSize: wall.maxSize,
+          });
+        }
+        return 0; // GRACEFUL_DEGRADE: return safe default
+      }
+      const sizeRatio = wall.currentSize / wall.maxSize;
+      if (isNaN(sizeRatio) || !isFinite(sizeRatio)) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid size ratio in wall strength calculation', {
+            price,
+            side,
+            currentSize: wall.currentSize,
+            maxSize: wall.maxSize,
+          });
+        }
+        return 0; // GRACEFUL_DEGRADE: return safe default
+      }
+      const sizeStability = sizeRatio * WALL_SIZE_STABILITY_SCORE_MAX;
+      strength += sizeStability;
 
-    // 3. Iceberg bonus (0-0.3)
-    if (wall.isIceberg) {
-      strength += WALL_ICEBERG_BONUS_SCORE;
+      // 3. Iceberg bonus (0-0.3)
+      if (wall.isIceberg) {
+        strength += WALL_ICEBERG_BONUS_SCORE;
+      }
+
+      const finalScore = Math.min(strength, RATIO_MULTIPLIERS.FULL);
+      if (isNaN(finalScore) || !isFinite(finalScore)) {
+        if (this.errorHandler) {
+          this.logger.warn('Final score calculation resulted in NaN/Infinity', {
+            price,
+            side,
+            lifetimeScore,
+            sizeStability,
+            isIceberg: wall.isIceberg,
+          });
+        }
+        return 0; // GRACEFUL_DEGRADE: return safe default
+      }
+
+      return finalScore;
+    } catch (error) {
+      if (this.errorHandler) {
+        // GRACEFUL_DEGRADE strategy: log error but return safe default
+        const errorMsg =
+          error instanceof Error ? error.message : 'Unknown error in getWallStrength';
+        this.logger.warn('Error calculating wall strength, returning 0', {
+          error: errorMsg,
+          price,
+          side,
+        });
+      }
+      return 0; // GRACEFUL_DEGRADE: safe default
     }
-
-    return Math.min(strength, RATIO_MULTIPLIERS.FULL);
   }
 
   /**

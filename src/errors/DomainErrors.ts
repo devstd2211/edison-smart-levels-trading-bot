@@ -1461,3 +1461,40 @@ export class TakeProfitRecordingError extends TradingError {
     Object.setPrototypeOf(this, TakeProfitRecordingError.prototype);
   }
 }
+
+// ============================================================================
+// WALL TRACKING ERRORS (Phase 8.9.28)
+// ============================================================================
+
+/**
+ * Wall tracking error
+ * Error during orderbook wall detection/tracking
+ */
+export class WallTrackingError extends TradingError {
+  readonly wallPrice?: number;
+  readonly wallSide?: 'BID' | 'ASK';
+
+  constructor(
+    message: string,
+    context: {
+      wallPrice?: number;
+      wallSide?: 'BID' | 'ASK';
+      operation: 'detect' | 'remove' | 'update' | 'score' | 'cluster';
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    const { wallPrice, wallSide } = context;
+    super(
+      message,
+      'WALL_TRACKING_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    this.wallPrice = wallPrice;
+    this.wallSide = wallSide;
+    Object.setPrototypeOf(this, WallTrackingError.prototype);
+  }
+}

@@ -415,6 +415,7 @@ export class BotServices {
       this.wallTrackerService = new WallTrackerService(
         config.wallTracking,
         this.logger,
+        this.errorHandler, // Phase 8.9.28
       );
       this.logger.info('✅ Wall Tracker initialized (PHASE 4)', {
         minLifetime: config.wallTracking.minLifetimeMs + 'ms',
