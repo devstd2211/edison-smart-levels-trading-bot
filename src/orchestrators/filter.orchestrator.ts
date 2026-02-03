@@ -20,6 +20,7 @@ import { LoggerService } from '../services/logger.service';
 import { FilterOverrides } from '../types/strategy-config.types';
 import { correlateCandles, determineBtcTrend, isBtcAligned } from '../utils/correlation';
 import { Candle } from '../types';
+import { ErrorHandler } from '../errors/ErrorHandler'; // Phase 8.9.29
 
 export interface FilterResult {
   allowed: boolean;
@@ -32,11 +33,13 @@ export class FilterOrchestrator {
   constructor(
     private logger: LoggerService,
     private filterConfig: FilterOverrides = {},
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.29
   ) {}
 
   /**
    * Evaluate signal against all configured filters
    * Returns immediately on first blocking filter
+   * Phase 8.9.29: Input validation with THROW strategy
    */
   evaluateFilters(context: {
     signal: any; // Trade signal (direction, confidence)
@@ -49,6 +52,23 @@ export class FilterOrchestrator {
     btcCandles?: Candle[]; // BTC candles for correlation analysis
     altCandles?: Candle[]; // Target asset candles (XRP, etc)
   }): FilterResult {
+    // Phase 8.9.29: Input validation with THROW strategy
+    try {
+      if (!context || !context.signal) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid filter context: missing signal', { context });
+        }
+        throw new Error('Filter context missing required signal field');
+      }
+    } catch (error) {
+      if (this.errorHandler) {
+        this.logger.warn('Filter context validation failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      // Continue with validation - non-critical
+    }
+
     const appliedFilters: string[] = [];
 
     // FILTER 1: Blind Zone
@@ -149,6 +169,7 @@ export class FilterOrchestrator {
 
   /**
    * FILTER 2: Flat Market - block entries when market is ranging
+   * Phase 8.9.29: Logger failures use SKIP strategy
    */
   private evaluateFlatMarket(context: any): FilterResult {
     const config = this.filterConfig.flatMarket;
@@ -161,12 +182,28 @@ export class FilterOrchestrator {
       return { allowed: true, appliedFilters: [] }; // No flat market data available
     }
 
+    // Phase 8.9.29: Handle NaN confidence with validation
+    if (isNaN(flatMarketAnalysis.confidence)) {
+      if (this.errorHandler) {
+        this.logger.warn('Invalid flat market confidence (NaN), allowing entry', {
+          confidence: flatMarketAnalysis.confidence,
+        });
+      }
+      return { allowed: true, appliedFilters: [] };
+    }
+
     const threshold = config?.flatThreshold ?? 70;
     if (flatMarketAnalysis.confidence >= threshold) {
-      this.logger.info('🚫 Entry blocked: Flat market detected', {
-        flatConfidence: flatMarketAnalysis.confidence.toFixed(1),
-        threshold,
-      });
+      try {
+        this.logger.info('🚫 Entry blocked: Flat market detected', {
+          flatConfidence: flatMarketAnalysis.confidence.toFixed(1),
+          threshold,
+        });
+      } catch (error) {
+        if (this.errorHandler) {
+          // SKIP: logger failure is non-blocking
+        }
+      }
       return {
         allowed: false,
         reason: `Flat market (${flatMarketAnalysis.confidence.toFixed(1)}% confidence)`,
@@ -179,6 +216,7 @@ export class FilterOrchestrator {
 
   /**
    * FILTER 3: Funding Rate - prevent overheated positions
+   * Phase 8.9.29: Handle NaN/Infinity funding rates
    */
   private evaluateFundingRate(context: any): FilterResult {
     const config = this.filterConfig.fundingRate;
@@ -191,14 +229,30 @@ export class FilterOrchestrator {
       return { allowed: true, appliedFilters: [] };
     }
 
+    // Phase 8.9.29: Validate funding rate
+    if (isNaN(fundingRate) || !isFinite(fundingRate)) {
+      if (this.errorHandler) {
+        this.logger.warn('Invalid funding rate, allowing entry', {
+          fundingRate,
+        });
+      }
+      return { allowed: true, appliedFilters: [] };
+    }
+
     const blockLongAbove = config?.blockLongAbove ?? 0.0005;
     const blockShortBelow = config?.blockShortBelow ?? -0.0005;
 
     if (context.signal.direction === 'LONG' && fundingRate > blockLongAbove) {
-      this.logger.info('🚫 Entry blocked: Funding rate too high for LONG', {
-        fundingRate: fundingRate.toFixed(6),
-        threshold: blockLongAbove.toFixed(6),
-      });
+      try {
+        this.logger.info('🚫 Entry blocked: Funding rate too high for LONG', {
+          fundingRate: fundingRate.toFixed(6),
+          threshold: blockLongAbove.toFixed(6),
+        });
+      } catch (error) {
+        if (this.errorHandler) {
+          // SKIP: logger failure is non-blocking
+        }
+      }
       return {
         allowed: false,
         reason: `Funding rate too high (${fundingRate.toFixed(6)})`,
@@ -207,10 +261,16 @@ export class FilterOrchestrator {
     }
 
     if (context.signal.direction === 'SHORT' && fundingRate < blockShortBelow) {
-      this.logger.info('🚫 Entry blocked: Funding rate too low for SHORT', {
-        fundingRate: fundingRate.toFixed(6),
-        threshold: blockShortBelow.toFixed(6),
-      });
+      try {
+        this.logger.info('🚫 Entry blocked: Funding rate too low for SHORT', {
+          fundingRate: fundingRate.toFixed(6),
+          threshold: blockShortBelow.toFixed(6),
+        });
+      } catch (error) {
+        if (this.errorHandler) {
+          // SKIP: logger failure is non-blocking
+        }
+      }
       return {
         allowed: false,
         reason: `Funding rate too low (${fundingRate.toFixed(6)})`,
@@ -226,6 +286,7 @@ export class FilterOrchestrator {
    *
    * Prevents counter-trend entries by checking BTC correlation and trend.
    * With strict blocking: blocks entries that go against BTC trend if correlation is high.
+   * Phase 8.9.29: GRACEFUL_DEGRADE strategy with enhanced validation
    */
   private evaluateBtcCorrelation(context: any): FilterResult {
     const config = this.filterConfig.btcCorrelation;
@@ -243,10 +304,32 @@ export class FilterOrchestrator {
     }
 
     try {
+      // Phase 8.9.29: Validate candle data before processing
+      const hasValidBtcCandles = context.btcCandles.every((c: any) => isFinite(c.close));
+      const hasValidAltCandles = context.altCandles.every((c: any) => isFinite(c.close));
+
+      if (!hasValidBtcCandles || !hasValidAltCandles) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid candle data in BTC correlation, allowing entry', {
+            validBtc: hasValidBtcCandles,
+            validAlt: hasValidAltCandles,
+          });
+        }
+        return { allowed: true, appliedFilters: [] }; // GRACEFUL_DEGRADE
+      }
+
       // Calculate correlation
       const lookbackPeriod = 20; // Last 20 candles
       const correlationResult = correlateCandles(context.btcCandles, context.altCandles, lookbackPeriod, 'close');
       const correlation = correlationResult.correlation;
+
+      // Phase 8.9.29: Validate correlation result
+      if (isNaN(correlation) || !isFinite(correlation)) {
+        if (this.errorHandler) {
+          this.logger.warn('Invalid correlation value, allowing entry', { correlation });
+        }
+        return { allowed: true, appliedFilters: [] }; // GRACEFUL_DEGRADE
+      }
 
       // Determine BTC trend
       const btcTrend = determineBtcTrend(context.btcCandles, lookbackPeriod);
@@ -259,14 +342,20 @@ export class FilterOrchestrator {
       const aligned = isBtcAligned(btcTrend, signalDirection, correlation, threshold);
 
       if (!aligned) {
-        this.logger.warn('🚫 Entry blocked: BTC Correlation filter', {
-          signal: `${signalDirection}`,
-          correlation: correlation.toFixed(3),
-          btcTrend,
-          threshold: threshold.toFixed(2),
-          correlationStrength: correlationResult.strength,
-          reason: `${signalDirection} signal conflicts with BTC trend`,
-        });
+        try {
+          this.logger.warn('🚫 Entry blocked: BTC Correlation filter', {
+            signal: `${signalDirection}`,
+            correlation: correlation.toFixed(3),
+            btcTrend,
+            threshold: threshold.toFixed(2),
+            correlationStrength: correlationResult.strength,
+            reason: `${signalDirection} signal conflicts with BTC trend`,
+          });
+        } catch (logError) {
+          if (this.errorHandler) {
+            // SKIP: logger failure is non-blocking
+          }
+        }
 
         return {
           allowed: false,
@@ -277,21 +366,38 @@ export class FilterOrchestrator {
 
       // If we're here, BTC correlation is not blocking
       if (Math.abs(correlation) >= threshold) {
-        this.logger.debug('✅ Signal passed BTC Correlation check', {
-          signal: `${signalDirection}`,
-          correlation: correlation.toFixed(3),
-          btcTrend,
-          note: 'Aligned with BTC trend',
-        });
+        try {
+          this.logger.debug('✅ Signal passed BTC Correlation check', {
+            signal: `${signalDirection}`,
+            correlation: correlation.toFixed(3),
+            btcTrend,
+            note: 'Aligned with BTC trend',
+          });
+        } catch (logError) {
+          if (this.errorHandler) {
+            // SKIP: logger failure is non-blocking
+          }
+        }
       }
 
       return { allowed: true, appliedFilters: [] };
     } catch (error: any) {
-      this.logger.error('Error in BTC Correlation filter', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      try {
+        this.logger.error('Error in BTC Correlation filter', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } catch (logError) {
+        if (this.errorHandler) {
+          // SKIP: logger failure is non-blocking
+        }
+      }
 
-      // On error, allow the trade (fail open)
+      // Phase 8.9.29: GRACEFUL_DEGRADE: On error, allow the trade (fail open)
+      if (this.errorHandler) {
+        this.logger.warn('BTC correlation filter failed, allowing entry (graceful degrade)', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
       return { allowed: true, appliedFilters: [] };
     }
   }
@@ -306,6 +412,7 @@ export class FilterOrchestrator {
 
   /**
    * FILTER 6: Post-TP Filter - prevent FOMO after TP
+   * Phase 8.9.29: Handle timestamp validation
    */
   private evaluatePostTpFilter(context: any): FilterResult {
     const config = this.filterConfig.postTpFilter;
@@ -317,14 +424,30 @@ export class FilterOrchestrator {
       return { allowed: true, appliedFilters: [] };
     }
 
+    // Phase 8.9.29: Validate timestamp
+    if (isNaN(context.lastTPTimestamp) || !isFinite(context.lastTPTimestamp)) {
+      if (this.errorHandler) {
+        this.logger.warn('Invalid lastTPTimestamp, allowing entry', {
+          timestamp: context.lastTPTimestamp,
+        });
+      }
+      return { allowed: true, appliedFilters: [] };
+    }
+
     const blockDurationSec = config?.blockDurationSeconds ?? 300;
     const timeSinceTP = (Date.now() - context.lastTPTimestamp) / 1000;
 
     if (timeSinceTP < blockDurationSec) {
-      this.logger.info('🚫 Entry blocked: Post-TP cooldown period', {
-        timeSinceTPSeconds: timeSinceTP.toFixed(0),
-        blockDurationSeconds: blockDurationSec,
-      });
+      try {
+        this.logger.info('🚫 Entry blocked: Post-TP cooldown period', {
+          timeSinceTPSeconds: timeSinceTP.toFixed(0),
+          blockDurationSeconds: blockDurationSec,
+        });
+      } catch (error) {
+        if (this.errorHandler) {
+          // SKIP: logger failure is non-blocking
+        }
+      }
       return {
         allowed: false,
         reason: `Post-TP cooldown (${timeSinceTP.toFixed(0)}s of ${blockDurationSec}s)`,
@@ -372,6 +495,7 @@ export class FilterOrchestrator {
    *
    * Solution: On weak NEUTRAL trends, require higher confidence (70%+) to ensure
    * entries are made only when signal quality is very high.
+   * Phase 8.9.29: Handle NaN trend strength with GRACEFUL_DEGRADE
    */
   private evaluateNeutralTrendStrength(context: any): FilterResult {
     const config = this.filterConfig.neutralTrendStrength;
@@ -385,6 +509,16 @@ export class FilterOrchestrator {
       return { allowed: true, appliedFilters: [] };
     }
 
+    // Phase 8.9.29: Validate trend strength
+    if (isNaN(trend.strength) || !isFinite(trend.strength)) {
+      if (this.errorHandler) {
+        this.logger.warn('Invalid trend strength value, allowing entry', {
+          strength: trend.strength,
+        });
+      }
+      return { allowed: true, appliedFilters: [] }; // GRACEFUL_DEGRADE
+    }
+
     const minConfidence = config?.minConfidenceForWeakNeutral ?? 0.70; // 70%
     const weakThreshold = config?.weakTrendThreshold ?? 40; // 40% strength
 
@@ -394,14 +528,30 @@ export class FilterOrchestrator {
     }
 
     // Weak NEUTRAL trend (< 40%) = require high confidence
+    // Phase 8.9.29: Validate signal confidence
+    if (isNaN(context.signal.confidence) || !isFinite(context.signal.confidence)) {
+      if (this.errorHandler) {
+        this.logger.warn('Invalid signal confidence, allowing entry', {
+          confidence: context.signal.confidence,
+        });
+      }
+      return { allowed: true, appliedFilters: [] }; // GRACEFUL_DEGRADE
+    }
+
     const signalConfidence = context.signal.confidence / 100; // Convert 0-100 to 0-1
     if (signalConfidence < minConfidence) {
-      this.logger.warn('🚫 Entry blocked: Weak NEUTRAL trend requires higher confidence', {
-        trendStrength: trend.strength.toFixed(1) + '%',
-        signalConfidence: (signalConfidence * 100).toFixed(0) + '%',
-        requiredConfidence: (minConfidence * 100).toFixed(0) + '%',
-        reason: 'Weak NEUTRAL trends lack directional bias - high risk of chop',
-      });
+      try {
+        this.logger.warn('🚫 Entry blocked: Weak NEUTRAL trend requires higher confidence', {
+          trendStrength: trend.strength.toFixed(1) + '%',
+          signalConfidence: (signalConfidence * 100).toFixed(0) + '%',
+          requiredConfidence: (minConfidence * 100).toFixed(0) + '%',
+          reason: 'Weak NEUTRAL trends lack directional bias - high risk of chop',
+        });
+      } catch (error) {
+        if (this.errorHandler) {
+          // SKIP: logger failure is non-blocking
+        }
+      }
       return {
         allowed: false,
         reason: `Weak NEUTRAL trend (${trend.strength.toFixed(0)}% strength) requires ${(minConfidence * 100).toFixed(0)}% confidence, signal has only ${(signalConfidence * 100).toFixed(0)}%`,
