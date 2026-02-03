@@ -1,9 +1,9 @@
 # 🚀 Architecture Quick Start - Current Context
 
-**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.31 ✅ COMPLETE**
-**Last Updated:** 2026-02-03 (Session 69+ - **Phase 8.9.31: ConfigValidatorService ErrorHandler Integration COMPLETE**)
-**Build:** ✅ SUCCESS | **18/18 New Tests Passing** | **5140 Total Tests** | **0 Regressions**
-**Current Session:** Phase 8.9.31 ErrorHandler Integration ✅ COMPLETE - ConfigValidatorService with THROW/SKIP strategies
+**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.33 ✅ COMPLETE**
+**Last Updated:** 2026-02-03 (Session 70+ - **Phase 8.9.33: RiskCalculatorService ErrorHandler Integration COMPLETE**)
+**Build:** ✅ SUCCESS | **37/37 New Tests Passing** | **5193 Total Tests** | **0 Regressions**
+**Current Session:** Phase 8.9.33 ErrorHandler Integration ✅ COMPLETE - RiskCalculatorService with THROW/GRACEFUL_DEGRADE/SKIP strategies
 
 ---
 
@@ -458,13 +458,39 @@
 |  | - Error Handling Tests | ✅ | 18 comprehensive tests (all strategies, edge cases, backward compat) | 18 ✅ | S69 |
 | **TOTAL S1-9.31** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.31 fully integrated** | **18 new ✅** | **S69** |
 
+| **8.9.32** | **FundingRateFilterService** | ✅ | **RETRY (API) + GRACEFUL_DEGRADE (cache) + SKIP (logging)** | **16 tests ✅** | **S70** |
+|  | - RETRY Strategy for API calls | ✅ | ErrorHandler.executeAsync with exponential backoff (3 attempts) | 3 ✅ | S70 |
+|  | - Cache fallback on API failure | ✅ | GRACEFUL_DEGRADE to old cache when API all retries fail | 2 ✅ | S70 |
+|  | - GRACEFUL_DEGRADE cache fallback | ✅ | Use stale cache when API fails (service continuity) | 2 ✅ | S70 |
+|  | - SKIP logger failures | ✅ | Non-blocking logging errors (never block signal check) | 4 ✅ | S70 |
+|  | - SKIP cache clear logging | ✅ | Cache clear tolerates logger errors | 1 ✅ | S70 |
+|  | - Integration scenarios | ✅ | Cascading failures (API → cache → logger) | 2 ✅ | S70 |
+|  | - Backward compatibility | ✅ | Works without ErrorHandler (optional DI) | 3 ✅ | S70 |
+|  | - Domain Error Classes (NEW) | ✅ | FundingRateApiError (HIGH severity), FundingRateCacheError (MEDIUM severity) | - | S70 |
+|  | - Error Handling Tests | ✅ | 16 comprehensive tests (RETRY, GRACEFUL_DEGRADE, SKIP, E2E, backward compat) | 16 ✅ | S70 |
+| **TOTAL S1-9.32** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.32 fully integrated** | **16 new ✅** | **S70** |
+
+| **8.9.33** | **RiskCalculatorService** | ✅ | **THROW (validation) + GRACEFUL_DEGRADE (missing ATR) + SKIP (logging)** | **37 tests ✅** | **S70** |
+|  | - THROW Strategy for input validation | ✅ | Validate entryPrice, referenceLevel, slMultiplier, minSlDistancePercent | 8 ✅ | S70 |
+|  | - GRACEFUL_DEGRADE for missing/invalid ATR | ✅ | Use fallback ATR (1.5%) when ATR is NaN/zero/negative/Infinity | 5 ✅ | S70 |
+|  | - Fallback ATR calculation | ✅ | Correct SL/TP calculation even with fallback value | 5 ✅ | S70 |
+|  | - SKIP logging failures | ✅ | Non-blocking logging errors (never block risk calculation) | 3 ✅ | S70 |
+|  | - calculateFromPercent THROW | ✅ | Validate entryPrice, slPercent, takeProfitConfigs (4 tests) | 4 ✅ | S70 |
+|  | - Integration Scenarios | ✅ | SHORT positions, multiple TPs, minSlDistance constraint, cascading failures | 4 ✅ | S70 |
+|  | - Backward Compatibility | ✅ | Works without ErrorHandler (optional DI parameter) | 4 ✅ | S70 |
+|  | - Domain Error Classes (NEW) | ✅ | RiskCalculationError (HIGH severity, TRADING domain) | - | S70 |
+|  | - Error Context Tracking | ✅ | Detailed error metadata with entryPrice, ATR, SL multiplier context | 2 ✅ | S70 |
+|  | - Edge Cases & Extreme Values | ✅ | Very small/large prices, high SL multipliers, decimal precision | 4 ✅ | S70 |
+|  | - Performance Tests | ✅ | Calculation < 10ms, rapid sequential (100x), no memory leaks | 3 ✅ | S70 |
+|  | - Error Handling Tests | ✅ | 37 comprehensive tests (THROW, GRACEFUL_DEGRADE, SKIP, E2E, edge cases) | 37 ✅ | S70 |
+| **TOTAL S1-9.33** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.33 fully integrated** | **37 new ✅** | **S70** |
+
 ### Future Phases
 | Phase | Component | Status | Details | Notes |
 |-------|-----------|--------|---------|-------|
-| **8.9.32** | FundingRateFilterService | ⏳ | RETRY (API) + GRACEFUL_DEGRADE (cache) + SKIP (invalid data) | ~15-17 tests |
-| **8.9.33** | RiskCalculatorService | ⏳ | THROW (validation) + GRACEFUL_DEGRADE (missing ATR) + SKIP (logging) | ~14-16 tests |
 | **8.9.34** | CircuitBreakerService | ⏳ | SKIP (logging) + GRACEFUL_DEGRADE (history/state) | ~16-18 tests |
-| **8.9.35+** | Tier 2 & 3 Services | ⏳ | DataCollector, PerformanceAnalytics, etc | ~240-424 tests total |
+| **8.9.35** | RiskCalculationCache | ⏳ | GRACEFUL_DEGRADE (cache miss) + SKIP (logging) | ~12-14 tests |
+| **8.9.36+** | Tier 2 & 3 Services | ⏳ | DataCollector, PerformanceAnalytics, etc | ~200-380 tests total |
 | **9.2-9.4** | Live Trading Integration | ⏳ | Configuration + E2E tests + chaos | After Phase 8.9 |
 | **15** | Multi-Strategy Config | ⏳ | Config consolidation | After Phase 9 |
 
@@ -879,7 +905,7 @@ Filter Orchestrator
 
 ---
 
-**Version:** 5.28 (Phase 8.9.31 - ConfigValidatorService ErrorHandler Integration COMPLETE)
-**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.31 ✅)
-**Build Status:** ✅ 0 TypeScript Errors | 🎉 5140 Tests Passing | +18 Phase 8.9.31 tests
-**Session:** 69+ | **Status:** Phase 8.9.31 ✅ COMPLETE | Phase 8.9.32+ NEXT (FundingRateFilterService, remaining services)
+**Version:** 5.30 (Phase 8.9.33 - RiskCalculatorService ErrorHandler Integration COMPLETE)
+**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.33 ✅)
+**Build Status:** ✅ 0 TypeScript Errors | 🎉 5193 Tests Passing | +37 Phase 8.9.33 tests
+**Session:** 70+ | **Status:** Phase 8.9.33 ✅ COMPLETE | Phase 8.9.34+ NEXT (CircuitBreakerService, remaining services)

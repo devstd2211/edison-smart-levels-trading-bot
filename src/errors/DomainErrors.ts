@@ -667,32 +667,6 @@ export class RiskValidationError extends TradingError {
   }
 }
 
-/**
- * Risk calculation error
- * Indicates that risk calculations failed (NaN, Infinity, etc.)
- */
-export class RiskCalculationError extends TradingError {
-  constructor(
-    message: string,
-    context?: {
-      operation?: string;
-      inputValues?: Record<string, unknown>;
-      result?: number | string;
-      [key: string]: unknown;
-    },
-    originalError?: Error,
-  ) {
-    super(
-      message,
-      'RISK_CALCULATION_ERROR',
-      ErrorDomain.TRADING,
-      ErrorSeverity.MEDIUM,
-      originalError,
-      context,
-    );
-    Object.setPrototypeOf(this, RiskCalculationError.prototype);
-  }
-}
 
 /**
  * Insufficient account balance error
@@ -1640,5 +1614,99 @@ export class ConfigStrategyValidationError extends TradingError {
       context,
     );
     Object.setPrototypeOf(this, ConfigStrategyValidationError.prototype);
+  }
+}
+
+// ============================================================================
+// FUNDING RATE ERRORS (Phase 8.9.32)
+// ============================================================================
+
+/**
+ * Funding rate API error
+ * Failed to fetch or parse funding rate from exchange API
+ * Used with RETRY strategy for transient network failures
+ */
+export class FundingRateApiError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      symbol?: string;
+      endpoint?: string;
+      statusCode?: number;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'FUNDING_RATE_API_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, FundingRateApiError.prototype);
+  }
+}
+
+/**
+ * Funding rate cache error
+ * Failed to cache or retrieve cached funding rate data
+ * Used with GRACEFUL_DEGRADE strategy to fall back to older cached data
+ */
+export class FundingRateCacheError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      symbol?: string;
+      cacheKey?: string;
+      operation: 'get' | 'set' | 'invalidate' | 'clear';
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'FUNDING_RATE_CACHE_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, FundingRateCacheError.prototype);
+  }
+}
+
+/**
+ * Risk calculation error
+ * Validation or calculation failure in risk management (SL/TP calculation)
+ * Used with THROW strategy for critical validation, GRACEFUL_DEGRADE for missing ATR
+ */
+export class RiskCalculationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      entryPrice?: number;
+      referenceLevel?: number;
+      slMultiplier?: number;
+      minSlDistancePercent?: number;
+      atrPercent?: number;
+      takeProfitConfigs?: unknown;
+      slPercent?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'RISK_CALCULATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, RiskCalculationError.prototype);
   }
 }

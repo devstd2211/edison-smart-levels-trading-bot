@@ -7,6 +7,11 @@
  * - Take profit percentages from config
  * - Session-based adjustments
  *
+ * Error Handling (Phase 8.9.33):
+ * - THROW: Validation errors (NaN/Infinity in critical fields)
+ * - GRACEFUL_DEGRADE: Missing/invalid ATR (use fallback multiplier)
+ * - SKIP: Logging failures (non-critical)
+ *
  * This service is independent of any strategy and can be used by all analyzers/strategies
  * to calculate SL/TP consistently.
  */
@@ -14,6 +19,8 @@
 import { LoggerService, SignalDirection, SessionBasedSLConfig } from '../types';
 import { SessionDetector } from '../utils/session-detector';
 import { PERCENT_MULTIPLIER, DECIMAL_PLACES } from '../constants';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { RiskCalculationError } from '../errors/DomainErrors';
 
 // ============================================================================
 // TYPES
@@ -54,14 +61,20 @@ export interface RiskCalculationResult {
 // RISK CALCULATOR SERVICE
 // ============================================================================
 
+const FALLBACK_ATR_PERCENT = 1.5; // Fallback ATR if missing/invalid
+
 export class RiskCalculator {
-  constructor(private logger: LoggerService) {}
+  constructor(
+    private logger: LoggerService,
+    private errorHandler?: ErrorHandler,
+  ) {}
 
   /**
    * Calculate SL and TP levels for a trade
    *
    * @param input - Risk calculation input parameters
    * @returns SL and TP levels
+   * @throws RiskCalculationError on validation failure
    */
   calculate(input: RiskCalculationInput): RiskCalculationResult {
     const {
@@ -77,11 +90,71 @@ export class RiskCalculator {
     } = input;
 
     // ========================================================================
+    // INPUT VALIDATION (THROW strategy)
+    // ========================================================================
+
+    // Validate critical fields
+    if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+      throw new RiskCalculationError(
+        'Invalid entryPrice: must be finite positive number',
+        { entryPrice },
+      );
+    }
+
+    if (!Number.isFinite(referenceLevel) || referenceLevel <= 0) {
+      throw new RiskCalculationError(
+        'Invalid referenceLevel: must be finite positive number',
+        { referenceLevel },
+      );
+    }
+
+    if (!Number.isFinite(slMultiplier) || slMultiplier <= 0) {
+      throw new RiskCalculationError(
+        'Invalid slMultiplier: must be finite positive number',
+        { slMultiplier },
+      );
+    }
+
+    if (!Number.isFinite(minSlDistancePercent) || minSlDistancePercent < 0) {
+      throw new RiskCalculationError(
+        'Invalid minSlDistancePercent: must be finite non-negative number',
+        { minSlDistancePercent },
+      );
+    }
+
+    if (!Array.isArray(takeProfitConfigs) || takeProfitConfigs.length === 0) {
+      throw new RiskCalculationError(
+        'takeProfitConfigs must be non-empty array',
+        { takeProfitConfigs },
+      );
+    }
+
+    // ========================================================================
     // STOP LOSS CALCULATION
     // ========================================================================
 
+    // Validate ATR (GRACEFUL_DEGRADE strategy)
+    let effectiveAtrPercent = atrPercent;
+
+    if (!Number.isFinite(atrPercent) || atrPercent <= 0) {
+      // GRACEFUL_DEGRADE: use fallback ATR
+      const atrError = new RiskCalculationError(
+        'Invalid or missing ATR value, using fallback',
+        { atrPercent },
+      );
+
+      if (this.errorHandler) {
+        this.errorHandler.handle(atrError, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'RiskCalculator.calculate.atrValidation',
+        });
+      }
+
+      effectiveAtrPercent = FALLBACK_ATR_PERCENT;
+    }
+
     // Convert ATR from percent to absolute value
-    const atrAbsolute = entryPrice * (atrPercent / PERCENT_MULTIPLIER);
+    const atrAbsolute = entryPrice * (effectiveAtrPercent / PERCENT_MULTIPLIER);
 
     // Select appropriate SL multiplier for direction
     const effectiveSlMultiplier =
@@ -130,16 +203,30 @@ export class RiskCalculator {
       hit: false,
     }));
 
-    this.logger.debug(`RiskCalculator: Calculated ${direction} trade`, {
-      entry: entryPrice.toFixed(DECIMAL_PLACES.PRICE),
-      referenceLevel: referenceLevel.toFixed(DECIMAL_PLACES.PRICE),
-      sl: stopLoss.toFixed(DECIMAL_PLACES.PRICE),
-      slDistance: stopLossDistance.toFixed(DECIMAL_PLACES.PRICE),
-      slPercent: stopLossPercent.toFixed(DECIMAL_PLACES.PERCENT),
-      tpCount: takeProfits.length,
-      atr: atrPercent.toFixed(DECIMAL_PLACES.PERCENT),
-      slMultiplier: effectiveSlMultiplier.toFixed(DECIMAL_PLACES.PERCENT),
-    });
+    // ========================================================================
+    // LOGGING (SKIP strategy - non-blocking)
+    // ========================================================================
+
+    try {
+      this.logger.debug(`RiskCalculator: Calculated ${direction} trade`, {
+        entry: entryPrice.toFixed(DECIMAL_PLACES.PRICE),
+        referenceLevel: referenceLevel.toFixed(DECIMAL_PLACES.PRICE),
+        sl: stopLoss.toFixed(DECIMAL_PLACES.PRICE),
+        slDistance: stopLossDistance.toFixed(DECIMAL_PLACES.PRICE),
+        slPercent: stopLossPercent.toFixed(DECIMAL_PLACES.PERCENT),
+        tpCount: takeProfits.length,
+        atr: effectiveAtrPercent.toFixed(DECIMAL_PLACES.PERCENT),
+        slMultiplier: effectiveSlMultiplier.toFixed(DECIMAL_PLACES.PERCENT),
+      });
+    } catch (logError: any) {
+      // SKIP: ignore logging failures
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'RiskCalculator.calculate.logging',
+        });
+      }
+    }
 
     return {
       stopLoss,
@@ -158,6 +245,7 @@ export class RiskCalculator {
    * @param slPercent - Stop loss as percentage (e.g., 1.0 for 1%)
    * @param takeProfitConfigs - TP configs
    * @returns SL and TP levels
+   * @throws RiskCalculationError on validation failure
    */
   calculateFromPercent(
     entryPrice: number,
@@ -165,6 +253,31 @@ export class RiskCalculator {
     slPercent: number,
     takeProfitConfigs: TakeProfitConfig[],
   ): RiskCalculationResult {
+    // ========================================================================
+    // INPUT VALIDATION (THROW strategy)
+    // ========================================================================
+
+    if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+      throw new RiskCalculationError(
+        'Invalid entryPrice: must be finite positive number',
+        { entryPrice },
+      );
+    }
+
+    if (!Number.isFinite(slPercent) || slPercent < 0) {
+      throw new RiskCalculationError(
+        'Invalid slPercent: must be finite non-negative number',
+        { slPercent },
+      );
+    }
+
+    if (!Array.isArray(takeProfitConfigs) || takeProfitConfigs.length === 0) {
+      throw new RiskCalculationError(
+        'takeProfitConfigs must be non-empty array',
+        { takeProfitConfigs },
+      );
+    }
+
     // Convert percentage to absolute distance
     const stopLossDistance = entryPrice * (slPercent / PERCENT_MULTIPLIER);
 

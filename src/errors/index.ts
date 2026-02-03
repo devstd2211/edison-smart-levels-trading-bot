@@ -44,6 +44,11 @@ export {
   WebSocketConnectionError,
   WebSocketAuthenticationError,
   WebSocketSubscriptionError,
+  // Funding Rate domain (Phase 8.9.32)
+  FundingRateApiError,
+  FundingRateCacheError,
+  // Risk Calculation domain (Phase 8.9.33)
+  RiskCalculationError,
 } from './DomainErrors';
 
 // Result type for type-safe error handling
