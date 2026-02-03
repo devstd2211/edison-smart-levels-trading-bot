@@ -1498,3 +1498,147 @@ export class WallTrackingError extends TradingError {
     Object.setPrototypeOf(this, WallTrackingError.prototype);
   }
 }
+
+// ============================================================================
+// CONFIGURATION DOMAIN ERRORS (Phase 8.9.31)
+// ============================================================================
+
+/**
+ * Configuration validation error
+ * Indicates that a required configuration field is missing or empty
+ * Blocks startup - requires manual configuration fix
+ */
+export class ConfigValidationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      field: string;
+      reason: string;
+      value?: unknown;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'CONFIG_VALIDATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.CRITICAL,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ConfigValidationError.prototype);
+  }
+}
+
+/**
+ * Configuration deprecation error
+ * Indicates that a deprecated configuration key is present
+ * Blocks startup - requires manual removal from config.json
+ */
+export class ConfigDeprecationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      deprecatedKey: string;
+      suggestion?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'CONFIG_DEPRECATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.CRITICAL,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ConfigDeprecationError.prototype);
+  }
+}
+
+/**
+ * Configuration format error
+ * Indicates that a configuration value has invalid format or range
+ * Blocks startup - requires manual correction
+ */
+export class ConfigFormatError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      field: string;
+      value: unknown;
+      expectedFormat: string;
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'CONFIG_FORMAT_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.CRITICAL,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ConfigFormatError.prototype);
+  }
+}
+
+/**
+ * Analyzer configuration validation error
+ * Indicates missing analyzer configuration in strategicWeights
+ * Blocks startup - requires manual configuration
+ */
+export class ConfigAnalyzerValidationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      section: string;
+      analyzers: string[];
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'CONFIG_ANALYZER_VALIDATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.CRITICAL,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ConfigAnalyzerValidationError.prototype);
+  }
+}
+
+/**
+ * Strategy configuration validation error
+ * Indicates missing required strategy configuration
+ * Blocks startup - requires manual configuration
+ */
+export class ConfigStrategyValidationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      strategyName: string;
+      missingFields: string[];
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'CONFIG_STRATEGY_VALIDATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.CRITICAL,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ConfigStrategyValidationError.prototype);
+  }
+}

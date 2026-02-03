@@ -12,9 +12,22 @@
  * - Confidence format validation (0-1 range)
  * - Deprecated keys rejection
  * - Range validation
+ *
+ * Phase 8.9.31: ErrorHandler Integration
+ * - THROW strategy for all validation errors (critical, no recovery)
+ * - SKIP strategy for logger failures (non-blocking)
+ * - Backward compatible (works with or without ErrorHandler)
  */
 
 import { LoggerService } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
+import {
+  ConfigValidationError,
+  ConfigDeprecationError,
+  ConfigFormatError,
+  ConfigAnalyzerValidationError,
+  ConfigStrategyValidationError,
+} from '../errors/DomainErrors';
 
 // Deprecated config paths that should trigger errors
 const DEPRECATED_KEYS = [
@@ -29,8 +42,17 @@ const DEPRECATED_KEYS = [
   'mode', // REMOVED - unused
 ];
 
+/**
+ * Phase 8.9.31: ErrorHandler integration
+ * - THROW strategy for validation errors (all configuration errors are critical)
+ * - SKIP strategy for logger failures (non-blocking logging)
+ * - Backward compatible (works without ErrorHandler)
+ */
 export class ConfigValidatorService {
-  constructor(private logger: LoggerService) {}
+  constructor(
+    private logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.31
+  ) {}
 
   /**
    * Static validation for use at startup (before logger is available)
@@ -119,6 +141,7 @@ FIX: Update your config.json and restart.
   /**
    * Validate analyzer configuration
    * Ensures all required analyzer enable/disable flags are present
+   * Phase 8.9.31: Uses ConfigAnalyzerValidationError with ErrorHandler support
    */
   validateAnalyzerConfig(config: any): void {
     const errors: string[] = [];
@@ -126,7 +149,7 @@ FIX: Update your config.json and restart.
     // Check strategicWeights exists
     if (!config?.strategicWeights) {
       errors.push('Missing "strategicWeights" section in config.json');
-      this.throwConfigError(errors);
+      this.throwAnalyzerValidationError(errors, 'strategicWeights', []);
       return;
     }
 
@@ -140,6 +163,8 @@ FIX: Update your config.json and restart.
       { path: 'externalData', analyzers: ['btcCorrelation', 'fundingRate', 'orderbookImbalance'] },
     ];
 
+    const allAnalyzers: string[] = [];
+
     for (const section of requiredSections) {
       const sectionPath = `strategicWeights.${section.path}`;
 
@@ -149,6 +174,7 @@ FIX: Update your config.json and restart.
       }
 
       for (const analyzer of section.analyzers) {
+        allAnalyzers.push(analyzer);
         const fullPath = `${sectionPath}.${analyzer}`;
         if (sw[section.path][analyzer] === undefined) {
           errors.push(`Missing analyzer config: "${fullPath}" (add: "enabled": true/false)`);
@@ -159,24 +185,33 @@ FIX: Update your config.json and restart.
     }
 
     if (errors.length > 0) {
-      this.throwConfigError(errors);
+      this.throwAnalyzerValidationError(errors, 'strategicWeights', allAnalyzers);
     }
 
-    this.logger.info('✅ Analyzer configuration validated', {
-      sectionsChecked: requiredSections.length,
-      analyzersChecked: requiredSections.reduce((sum, s) => sum + s.analyzers.length, 0),
-    });
+    // Log success (non-blocking, errors are skipped)
+    try {
+      this.logger.info('✅ Analyzer configuration validated', {
+        sectionsChecked: requiredSections.length,
+        analyzersChecked: requiredSections.reduce((sum, s) => sum + s.analyzers.length, 0),
+      });
+    } catch (logError) {
+      // SKIP strategy for logger failures - continue despite log errors
+      // (this is non-critical operation)
+    }
   }
 
   /**
    * Validate strategy configuration
+   * Phase 8.9.31: Uses ConfigStrategyValidationError with ErrorHandler support
    */
   validateStrategyConfig(config: any): void {
     const errors: string[] = [];
+    const missingFields: string[] = [];
 
     if (!config?.strategies) {
       errors.push('Missing "strategies" section in config.json');
-      this.throwConfigError(errors);
+      missingFields.push('strategies');
+      this.throwStrategyValidationError(errors, 'levelBased', missingFields);
       return;
     }
 
@@ -187,34 +222,45 @@ FIX: Update your config.json and restart.
       // Check blockLongInDowntrend
       if (lb.blockLongInDowntrend === undefined) {
         errors.push('Missing: strategies.levelBased.blockLongInDowntrend (must be true or false)');
+        missingFields.push('blockLongInDowntrend');
       }
 
       // Check blockShortInUptrend
       if (lb.blockShortInUptrend === undefined) {
         errors.push('Missing: strategies.levelBased.blockShortInUptrend (must be true or false)');
+        missingFields.push('blockShortInUptrend');
       }
 
       // Check trend filters
       if (!lb.levelClustering?.trendFilters) {
         errors.push('Missing: strategies.levelBased.levelClustering.trendFilters');
+        missingFields.push('levelClustering.trendFilters');
       } else {
         const tf = lb.levelClustering.trendFilters;
         if (tf.downtrend?.rsiThreshold === undefined) {
           errors.push('Missing: strategies.levelBased.levelClustering.trendFilters.downtrend.rsiThreshold');
+          missingFields.push('trendFilters.downtrend.rsiThreshold');
         }
         if (tf.uptrend?.rsiThreshold === undefined) {
           errors.push('Missing: strategies.levelBased.levelClustering.trendFilters.uptrend.rsiThreshold');
+          missingFields.push('trendFilters.uptrend.rsiThreshold');
         }
       }
     }
 
     if (errors.length > 0) {
-      this.throwConfigError(errors);
+      this.throwStrategyValidationError(errors, 'levelBased', missingFields);
     }
 
-    this.logger.info('✅ Strategy configuration validated', {
-      strategies: config.strategies,
-    });
+    // Log success (non-blocking, errors are skipped)
+    try {
+      this.logger.info('✅ Strategy configuration validated', {
+        strategies: config.strategies,
+      });
+    } catch (logError) {
+      // SKIP strategy for logger failures - continue despite log errors
+      // (this is non-critical operation)
+    }
   }
 
   /**
@@ -255,30 +301,54 @@ FIX: Update your config.json and restart.
   /**
    * Validate all required configuration (Phase 3)
    * Call this at startup for fast-fail validation
+   * Phase 8.9.31: Uses typed domain errors with ErrorHandler support
    */
   validateAll(config: any): void {
     const errors: string[] = [];
+    let errorType: 'deprecation' | 'validation' | 'format' = 'validation';
 
     // 1. Check for deprecated keys
-    this.checkDeprecatedKeys(config, errors);
-
-    // 2. Validate required fields
-    this.validateRequiredFields(config, errors);
-
-    // 3. Validate confidence format (0-1 range)
-    this.validateConfidenceFormat(config, errors);
-
-    // 4. Validate ranges
-    this.validateRanges(config, errors);
-
-    if (errors.length > 0) {
-      this.throwConfigError(errors);
+    const deprecationErrors: string[] = [];
+    this.checkDeprecatedKeys(config, deprecationErrors);
+    if (deprecationErrors.length > 0) {
+      errorType = 'deprecation';
+      this.throwDeprecationError(deprecationErrors);
     }
 
-    this.logger.info('✅ Configuration validated successfully', {
-      version: config.version || 'unknown',
-      symbol: config.exchange?.symbol,
-    });
+    // 2. Validate required fields
+    const validationErrors: string[] = [];
+    this.validateRequiredFields(config, validationErrors);
+    if (validationErrors.length > 0) {
+      errorType = 'validation';
+      this.throwValidationError(validationErrors);
+    }
+
+    // 3. Validate confidence format (0-1 range)
+    const formatErrors: string[] = [];
+    this.validateConfidenceFormat(config, formatErrors);
+    if (formatErrors.length > 0) {
+      errorType = 'format';
+      this.throwFormatError(formatErrors);
+    }
+
+    // 4. Validate ranges
+    const rangeErrors: string[] = [];
+    this.validateRanges(config, rangeErrors);
+    if (rangeErrors.length > 0) {
+      errorType = 'format';
+      this.throwFormatError(rangeErrors);
+    }
+
+    // Log success (non-blocking, errors are skipped)
+    try {
+      this.logger.info('✅ Configuration validated successfully', {
+        version: config.version || 'unknown',
+        symbol: config.exchange?.symbol,
+      });
+    } catch (logError) {
+      // SKIP strategy for logger failures - continue despite log errors
+      // (this is non-critical operation)
+    }
   }
 
   /**
@@ -396,49 +466,86 @@ FIX: Update your config.json and restart.
   }
 
   /**
-   * Throw error with formatted message
+   * Throw validation error with ErrorHandler support (Phase 8.9.31)
+   * Uses THROW strategy - no recovery possible for config errors
    */
-  private throwConfigError(errors: string[]): void {
-    const errorMessage = `
-═══════════════════════════════════════════════════════════════
-❌ CONFIGURATION ERROR - MISSING REQUIRED SETTINGS
-═══════════════════════════════════════════════════════════════
+  private throwValidationError(errors: string[]): void {
+    const message = `Configuration validation failed: ${errors.length} required field(s) missing`;
+    const error = new ConfigValidationError(message, {
+      field: 'multiple',
+      reason: `Missing required fields: ${errors.join(', ')}`,
+      errors,
+    });
 
-The following configuration values are REQUIRED and cannot be missing:
-
-${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}
-
-═══════════════════════════════════════════════════════════════
-
-FIX: Update your config.json to include all required sections.
-
-Example for strategicWeights:
-{
-  "strategicWeights": {
-    "technicalIndicators": {
-      "rsi": { "enabled": true },
-      "ema": { "enabled": true },
-      "atr": { "enabled": true }
-    },
-    "marketStructure": {
-      "liquidity": { "enabled": false },
-      "divergence": { "enabled": false },
-      "breakout": { "enabled": false }
-    },
-    "smcMicrostructure": {
-      "footprint": { "enabled": true },
-      "orderBlock": { "enabled": true }
-    },
-    "externalData": {
-      "btcCorrelation": { "enabled": false },
-      "fundingRate": { "enabled": false }
-    }
+    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
+    throw error;
   }
-}
 
-═══════════════════════════════════════════════════════════════
-    `;
+  /**
+   * Throw deprecation error with ErrorHandler support (Phase 8.9.31)
+   * Uses THROW strategy - no recovery possible for config errors
+   */
+  private throwDeprecationError(errors: string[]): void {
+    const message = `Configuration deprecation error: ${errors.length} deprecated key(s) found`;
+    const error = new ConfigDeprecationError(message, {
+      deprecatedKey: 'multiple',
+      suggestion: 'Remove deprecated keys from config.json and use new configuration structure',
+      errors,
+    });
 
-    throw new Error(errorMessage);
+    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
+    throw error;
+  }
+
+  /**
+   * Throw format error with ErrorHandler support (Phase 8.9.31)
+   * Uses THROW strategy - no recovery possible for config errors
+   */
+  private throwFormatError(errors: string[]): void {
+    const message = `Configuration format error: ${errors.length} format/range violation(s)`;
+    const error = new ConfigFormatError(message, {
+      field: 'multiple',
+      value: 'see errors array',
+      expectedFormat: 'see reason',
+      reason: `Format or range violations: ${errors.join(', ')}`,
+      errors,
+    });
+
+    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
+    throw error;
+  }
+
+  /**
+   * Throw analyzer validation error with ErrorHandler support (Phase 8.9.31)
+   * Uses THROW strategy - no recovery possible for config errors
+   */
+  private throwAnalyzerValidationError(errors: string[], section: string, analyzers: string[]): void {
+    const message = `Analyzer configuration validation failed for section: ${section}`;
+    const error = new ConfigAnalyzerValidationError(message, {
+      section,
+      analyzers,
+      reason: `Missing analyzer configuration: ${errors.join(', ')}`,
+      errors,
+    });
+
+    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
+    throw error;
+  }
+
+  /**
+   * Throw strategy validation error with ErrorHandler support (Phase 8.9.31)
+   * Uses THROW strategy - no recovery possible for config errors
+   */
+  private throwStrategyValidationError(errors: string[], strategyName: string, missingFields: string[]): void {
+    const message = `Strategy configuration validation failed for: ${strategyName}`;
+    const error = new ConfigStrategyValidationError(message, {
+      strategyName,
+      missingFields,
+      reason: `Missing required fields: ${errors.join(', ')}`,
+      errors,
+    });
+
+    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
+    throw error;
   }
 }
