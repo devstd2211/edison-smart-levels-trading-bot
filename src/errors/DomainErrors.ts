@@ -1861,3 +1861,64 @@ export class PerformanceCalculationError extends TradingError {
     Object.setPrototypeOf(this, PerformanceCalculationError.prototype);
   }
 }
+
+// ============================================================================
+// EXCHANGE FACTORY DOMAIN ERRORS (Phase 8.9.37)
+// ============================================================================
+
+/**
+ * Exchange factory configuration validation error
+ * Thrown when exchange config is invalid (missing required fields, unsupported exchange)
+ */
+export class ExchangeFactoryConfigError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      exchangeName?: string;
+      symbol?: string;
+      missingField?: string;
+      supportedExchanges?: string[];
+      reason: 'missing_field' | 'unsupported_exchange' | 'invalid_symbol' | 'invalid_config';
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'EXCHANGE_FACTORY_CONFIG_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ExchangeFactoryConfigError.prototype);
+  }
+}
+
+/**
+ * Exchange adapter instantiation error
+ * Thrown when creating exchange adapter (Bybit, Binance) fails
+ */
+export class ExchangeAdapterInstantiationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      exchangeName: string;
+      symbol?: string;
+      operation: 'service_creation' | 'adapter_creation' | 'initialization';
+      reason: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'EXCHANGE_ADAPTER_INSTANTIATION_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ExchangeAdapterInstantiationError.prototype);
+  }
+}
