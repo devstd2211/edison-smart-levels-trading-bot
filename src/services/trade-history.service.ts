@@ -23,6 +23,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService } from '../types';
 import { extractErrorMessage } from '../utils/error-helper';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { JournalWriteError } from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -89,33 +91,52 @@ export class TradeHistoryService {
   private csvPath: string;
   private schemaPath: string;
   private currentSchema: string[] = [];
+  private errorHandler?: ErrorHandler;
 
   constructor(
     private logger: LoggerService,
     private dataDir: string = './data',
+    errorHandler?: ErrorHandler,
   ) {
     this.csvPath = path.join(this.dataDir, 'trade-history.csv');
     this.schemaPath = path.join(this.dataDir, 'csv-schema.json');
+    this.errorHandler = errorHandler;
     this.initialize();
   }
 
   /**
-   * Initialize CSV and schema
+   * Initialize CSV and schema with SKIP strategy for errors
    */
   private initialize(): void {
-    if (!fs.existsSync(this.dataDir)) {
-      fs.mkdirSync(this.dataDir, { recursive: true });
-    }
+    try {
+      if (!fs.existsSync(this.dataDir)) {
+        fs.mkdirSync(this.dataDir, { recursive: true });
+      }
 
-    // Load or create schema
-    this.currentSchema = this.loadSchema();
+      // Load or create schema
+      this.currentSchema = this.loadSchema();
 
-    // Ensure CSV exists
-    if (!fs.existsSync(this.csvPath)) {
-      this.createCSV();
-    } else {
-      // Verify schema matches CSV header
-      this.verifyAndMigrateSchema();
+      // Ensure CSV exists
+      if (!fs.existsSync(this.csvPath)) {
+        this.createCSV();
+      } else {
+        // Verify schema matches CSV header
+        this.verifyAndMigrateSchema();
+      }
+    } catch (error: unknown) {
+      // SKIP strategy: log and continue with default schema
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'TradeHistoryService.initialize',
+        });
+      } else {
+        this.logger.warn('⚠️ Initialization failed, continuing with default schema', {
+          error: extractErrorMessage(error),
+        });
+      }
+      // Set default schema
+      this.currentSchema = [...CORE_FIELDS];
     }
   }
 
@@ -145,7 +166,7 @@ export class TradeHistoryService {
   }
 
   /**
-   * Save schema to file
+   * Save schema to file with SKIP strategy for errors
    */
   private saveSchema(schema: string[]): void {
     try {
@@ -153,7 +174,15 @@ export class TradeHistoryService {
 
       this.logger.debug('📝 Schema saved', { fields: schema.length });
     } catch (error: unknown) {
-      this.logger.error('❌ Failed to save schema', { error, errorMessage: extractErrorMessage(error) });
+      // SKIP strategy: log and continue
+      if (this.errorHandler) {
+        this.errorHandler.handle(new Error('Failed to save schema'), {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'TradeHistoryService.saveSchema',
+        });
+      } else {
+        this.logger.error('❌ Failed to save schema', { error, errorMessage: extractErrorMessage(error) });
+      }
     }
   }
 
@@ -171,7 +200,7 @@ export class TradeHistoryService {
   }
 
   /**
-   * Verify CSV header matches schema, migrate if needed
+   * Verify CSV header matches schema, migrate if needed with SKIP strategy
    */
   private verifyAndMigrateSchema(): void {
     try {
@@ -198,12 +227,20 @@ export class TradeHistoryService {
         this.migrateCSV(existingHeader, newFields);
       }
     } catch (error: unknown) {
-      this.logger.error('❌ Failed to verify schema', { error, errorMessage: extractErrorMessage(error) });
+      // SKIP strategy: log error and continue
+      if (this.errorHandler) {
+        this.errorHandler.handle(new Error('Failed to verify schema'), {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'TradeHistoryService.verifyAndMigrateSchema',
+        });
+      } else {
+        this.logger.error('❌ Failed to verify schema', { error, errorMessage: extractErrorMessage(error) });
+      }
     }
   }
 
   /**
-   * Migrate CSV to new schema (add columns)
+   * Migrate CSV to new schema (add columns) with SKIP strategy
    */
   private migrateCSV(oldHeader: string[], newFields: string[]): void {
     try {
@@ -247,16 +284,24 @@ export class TradeHistoryService {
         newColumns: newHeader.length,
       });
     } catch (error: unknown) {
-      this.logger.error('❌ CSV migration failed', { error, errorMessage: extractErrorMessage(error) });
-      throw error;
+      // SKIP strategy: log migration failure and continue
+      if (this.errorHandler) {
+        this.errorHandler.handle(new Error('CSV migration failed'), {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'TradeHistoryService.migrateCSV',
+        });
+      } else {
+        this.logger.error('❌ CSV migration failed', { error, errorMessage: extractErrorMessage(error) });
+      }
     }
   }
 
   /**
-   * Append trade with dynamic fields
+   * Append trade with dynamic fields with RETRY strategy for write errors
    */
   async appendTrade(record: TradeRecord): Promise<void> {
-    try {
+    // Define the append operation
+    const appendOperation = async () => {
       // Detect new fields in this record
       const recordFields = Object.keys(record);
       const newFields = recordFields.filter((field) => !this.currentSchema.includes(field));
@@ -300,21 +345,64 @@ export class TradeHistoryService {
         fields: recordFields.length,
         newFields: newFields.length,
       });
-    } catch (error: unknown) {
-      this.logger.error('❌ Failed to append trade', {
-        error,
-        errorMessage: extractErrorMessage(error),
-        id: record.id,
+    };
+
+    // Use RETRY strategy for file write operations if ErrorHandler available
+    if (this.errorHandler) {
+      const result = await this.errorHandler.executeAsync(appendOperation, {
+        strategy: RecoveryStrategy.RETRY,
+        retryConfig: {
+          maxAttempts: 3,
+          initialDelayMs: 100,
+          backoffMultiplier: 2,
+          maxDelayMs: 800,
+        },
+        context: `TradeHistoryService.appendTrade[${record.id}]`,
+        onRetry: (attempt: number, error: any, delayMs: number) => {
+          this.logger.warn('🔄 Retrying trade append', {
+            attempt,
+            tradeId: record.id,
+            delayMs,
+            error: extractErrorMessage(error),
+          });
+        },
+        onFailure: (error: any, attempts: number) => {
+          this.logger.error('❌ Failed to append trade after retries', {
+            id: record.id,
+            attempts,
+            error: extractErrorMessage(error),
+          });
+        },
       });
-      throw error;
+
+      if (!result.success) {
+        throw result.error || new JournalWriteError(`Failed to append trade ${record.id}`, {
+          filePath: this.csvPath,
+          operation: 'write',
+          reason: 'appendTrade operation failed',
+          tradeId: record.id,
+        });
+      }
+    } else {
+      // Fallback: no ErrorHandler, just try once
+      try {
+        await appendOperation();
+      } catch (error: unknown) {
+        this.logger.error('❌ Failed to append trade', {
+          error,
+          errorMessage: extractErrorMessage(error),
+          id: record.id,
+        });
+        throw error;
+      }
     }
   }
 
   /**
-   * Read all trades with dynamic schema
+   * Read all trades with dynamic schema with GRACEFUL_DEGRADE strategy
    */
   async readAllTrades(): Promise<TradeRecord[]> {
-    try {
+    const readOperation = async (): Promise<TradeRecord[]> => {
       const content = fs.readFileSync(this.csvPath, 'utf-8');
       const lines = content.split('\n').filter(Boolean);
 
@@ -333,9 +421,31 @@ export class TradeHistoryService {
       }
 
       return trades;
-    } catch (error: unknown) {
-      this.logger.error('❌ Failed to read trades', { error, errorMessage: extractErrorMessage(error) });
-      return [];
+    };
+
+    // Use GRACEFUL_DEGRADE strategy for read operations
+    if (this.errorHandler) {
+      const result = await this.errorHandler.executeAsync(readOperation, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'TradeHistoryService.readAllTrades',
+        onFailure: (error: any, attempts: number) => {
+          this.logger.warn('⚠️ Failed to read trades, returning empty list', {
+            attempts,
+            error: extractErrorMessage(error),
+          });
+        },
+      });
+
+      // Always return value (never throws with GRACEFUL_DEGRADE)
+      return result.value || [];
+    } else {
+      // Fallback: no ErrorHandler, try once
+      try {
+        return await readOperation();
+      } catch (error: unknown) {
+        this.logger.error('❌ Failed to read trades', { error, errorMessage: extractErrorMessage(error) });
+        return [];
+      }
     }
   }
 
@@ -445,7 +555,7 @@ export class TradeHistoryService {
   }
 
   /**
-   * Get statistics from CSV
+   * Get statistics from CSV with GRACEFUL_DEGRADE strategy
    */
   async getStatistics(): Promise<{
     totalTrades: number;
@@ -455,52 +565,108 @@ export class TradeHistoryService {
     byStrategy: { [key: string]: number };
     bySession: { [key: string]: number };
   }> {
-    const trades = await this.readAllTrades();
-
-    if (trades.length === 0) {
-      return {
-        totalTrades: 0,
-        totalPnL: 0,
-        winRate: 0,
-        avgPnL: 0,
-        byStrategy: {},
-        bySession: {},
-      };
-    }
-
-    const wins = trades.filter((t) => t.netPnl > 0).length;
-    const totalPnL = trades.reduce((sum, t) => sum + t.netPnl, 0);
-
-    const byStrategy: { [key: string]: number } = {};
-    const bySession: { [key: string]: number } = {};
-
-    for (const trade of trades) {
-      byStrategy[trade.strategy] = (byStrategy[trade.strategy] || 0) + trade.netPnl;
-      bySession[trade.sessionVersion] = (bySession[trade.sessionVersion] || 0) + trade.netPnl;
-    }
-
-    return {
-      totalTrades: trades.length,
-      totalPnL,
-      winRate: (wins / trades.length) * PERCENT_MULTIPLIER,
-      avgPnL: totalPnL / trades.length,
-      byStrategy,
-      bySession,
+    const defaultStats = {
+      totalTrades: 0,
+      totalPnL: 0,
+      winRate: 0,
+      avgPnL: 0,
+      byStrategy: {},
+      bySession: {},
     };
+
+    const statsOperation = async () => {
+      const trades = await this.readAllTrades();
+
+      if (trades.length === 0) {
+        return defaultStats;
+      }
+
+      const wins = trades.filter((t) => t.netPnl > 0).length;
+      const totalPnL = trades.reduce((sum, t) => sum + t.netPnl, 0);
+
+      const byStrategy: { [key: string]: number } = {};
+      const bySession: { [key: string]: number } = {};
+
+      for (const trade of trades) {
+        byStrategy[trade.strategy] = (byStrategy[trade.strategy] || 0) + trade.netPnl;
+        bySession[trade.sessionVersion] = (bySession[trade.sessionVersion] || 0) + trade.netPnl;
+      }
+
+      return {
+        totalTrades: trades.length,
+        totalPnL,
+        winRate: (wins / trades.length) * PERCENT_MULTIPLIER,
+        avgPnL: totalPnL / trades.length,
+        byStrategy,
+        bySession,
+      };
+    };
+
+    // Use GRACEFUL_DEGRADE strategy for statistics
+    if (this.errorHandler) {
+      const result = await this.errorHandler.executeAsync(statsOperation, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'TradeHistoryService.getStatistics',
+        onFailure: (error: any, attempts: number) => {
+          this.logger.warn('⚠️ Failed to calculate statistics, returning defaults', {
+            attempts,
+            error: extractErrorMessage(error),
+          });
+        },
+      });
+
+      return result.value || defaultStats;
+    } else {
+      try {
+        return await statsOperation();
+      } catch (error: unknown) {
+        this.logger.error('❌ Failed to get statistics', { error, errorMessage: extractErrorMessage(error) });
+        return defaultStats;
+      }
+    }
   }
 
   /**
-   * Get statistics grouped by custom field
+   * Get statistics grouped by custom field with GRACEFUL_DEGRADE strategy
    */
   async getStatisticsByField(fieldName: string): Promise<{ [key: string]: number }> {
-    const trades = await this.readAllTrades();
-    const stats: { [key: string]: number } = {};
+    const statsOperation = async () => {
+      const trades = await this.readAllTrades();
+      const stats: { [key: string]: number } = {};
 
-    for (const trade of trades) {
-      const key = String(trade[fieldName] || 'unknown');
-      stats[key] = (stats[key] || 0) + trade.netPnl;
+      for (const trade of trades) {
+        const key = String(trade[fieldName] || 'unknown');
+        stats[key] = (stats[key] || 0) + trade.netPnl;
+      }
+
+      return stats;
+    };
+
+    // Use GRACEFUL_DEGRADE strategy for field statistics
+    if (this.errorHandler) {
+      const result = await this.errorHandler.executeAsync(statsOperation, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: `TradeHistoryService.getStatisticsByField[${fieldName}]`,
+        onFailure: (error: any, attempts: number) => {
+          this.logger.warn('⚠️ Failed to calculate field statistics, returning empty', {
+            fieldName,
+            attempts,
+            error: extractErrorMessage(error),
+          });
+        },
+      });
+
+      return result.value || {};
+    } else {
+      try {
+        return await statsOperation();
+      } catch (error: unknown) {
+        this.logger.error('❌ Failed to get statistics by field', {
+          fieldName,
+          error: extractErrorMessage(error),
+        });
+        return {};
+      }
     }
-
-    return stats;
   }
 }

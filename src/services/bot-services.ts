@@ -244,8 +244,8 @@ export class BotServices {
     // 1.6 Initialize event bus (depends on logger)
     this.eventBus = new BotEventBus(this.logger);
 
-    // 1.7 Initialize metrics service (depends on logger)
-    this.metrics = new BotMetricsService(this.logger);
+    // 1.7 Initialize metrics service (depends on logger, Phase 8.9.40: ErrorHandler)
+    this.metrics = new BotMetricsService(this.logger, this.errorHandler);
 
     // 1.8 Phase 6.2: Initialize repositories (depends on logger)
     this.positionRepository = new PositionMemoryRepository();

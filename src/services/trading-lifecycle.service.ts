@@ -34,6 +34,7 @@ import {
 } from '../types/live-trading.types';
 import { ActionQueueService } from './action-queue.service';
 import { Position } from '../types/core';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**
  * TradingLifecycleManager: Orchestrates position lifecycle with timeout detection
@@ -58,6 +59,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
   private logger: LoggerService;
   private eventBus: BotEventBus;
   private actionQueue: ActionQueueService;
+  private errorHandler?: ErrorHandler;
 
   // State machine: Valid transitions for position lifecycle
   private readonly VALID_STATE_TRANSITIONS: Map<PositionLifecycleState, PositionLifecycleState[]> = new Map([
@@ -68,11 +70,18 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
     [PositionLifecycleState.CLOSED, []],
   ]);
 
-  constructor(config: PositionLifecycleConfig, logger: LoggerService, eventBus: BotEventBus, actionQueue: ActionQueueService) {
+  constructor(
+    config: PositionLifecycleConfig,
+    logger: LoggerService,
+    eventBus: BotEventBus,
+    actionQueue: ActionQueueService,
+    errorHandler?: ErrorHandler
+  ) {
     this.config = config;
     this.logger = logger;
     this.eventBus = eventBus;
     this.actionQueue = actionQueue;
+    this.errorHandler = errorHandler;
     this.trackedPositions = new Map();
     this.warningEmittedFor = new Set();
 
@@ -182,7 +191,9 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
         };
         alerts.push(criticalAlert);
 
-        this.logger.warn(`[TradingLifecycleManager] CRITICAL TIMEOUT: ${position.symbol} position has exceeded max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`);
+        this.logger.warn(
+          `[TradingLifecycleManager] CRITICAL TIMEOUT: ${position.symbol} position has exceeded max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
+        );
 
         // Trigger emergency close if enabled
         if (this.config.enableAutomaticTimeout) {
@@ -205,31 +216,81 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
           };
           alerts.push(warningAlert);
 
-          // Emit warning event
-          this.eventBus.publishSync({
-            type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
-            data: {
-              positionId: position.positionId,
-              symbol: position.symbol,
-              holdingTimeMinutes: Math.round(holdingTimeMinutes),
-              minutesUntilTimeout: Math.round(maxHoldingMinutes - holdingTimeMinutes),
-            } as PositionTimeoutWarningEvent,
-            timestamp: now,
-          });
+          // RETRY Strategy: Emit warning event with error recovery
+          if (this.errorHandler) {
+            try {
+              await this.errorHandler.executeAsync(
+                async () => {
+                  this.eventBus.publishSync({
+                    type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
+                    data: {
+                      positionId: position.positionId,
+                      symbol: position.symbol,
+                      holdingTimeMinutes: Math.round(holdingTimeMinutes),
+                      minutesUntilTimeout: Math.round(maxHoldingMinutes - holdingTimeMinutes),
+                    } as PositionTimeoutWarningEvent,
+                    timestamp: now,
+                  });
+                },
+                {
+                  strategy: RecoveryStrategy.RETRY,
+                  context: `TradingLifecycleManager.emitWarningEvent[${position.positionId}]`,
+                  retryConfig: {
+                    maxAttempts: 2,
+                    initialDelayMs: 100,
+                    backoffMultiplier: 2,
+                    maxDelayMs: 400,
+                  },
+                }
+              );
+            } catch (error) {
+              // SKIP: Event publishing failure doesn't block timeout detection
+              this.logger.warn(
+                `[TradingLifecycleManager] Failed to emit warning event for ${position.positionId}: ${error instanceof Error ? error.message : String(error)}`
+              );
+            }
+          } else {
+            // Fallback without ErrorHandler
+            this.eventBus.publishSync({
+              type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
+              data: {
+                positionId: position.positionId,
+                symbol: position.symbol,
+                holdingTimeMinutes: Math.round(holdingTimeMinutes),
+                minutesUntilTimeout: Math.round(maxHoldingMinutes - holdingTimeMinutes),
+              } as PositionTimeoutWarningEvent,
+              timestamp: now,
+            });
+          }
 
           this.warningEmittedFor.add(positionId);
-          this.logger.warn(`[TradingLifecycleManager] WARNING TIMEOUT: ${position.symbol} position approaching max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`);
+          this.logger.warn(
+            `[TradingLifecycleManager] WARNING TIMEOUT: ${position.symbol} position approaching max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
+          );
         }
       } else {
         // Position is safe
         newState = PositionLifecycleState.OPEN;
       }
 
-      // Update position state if changed
+      // GRACEFUL_DEGRADE Strategy: Update position state despite validation errors
       if (newState !== position.state) {
         if (this.validateStateTransition(position.state, newState)) {
-          position.state = newState;
-          position.lastUpdateTime = now;
+          try {
+            position.state = newState;
+            position.lastUpdateTime = now;
+          } catch (error) {
+            // GRACEFUL_DEGRADE: Log error but continue with old state
+            if (this.errorHandler) {
+              await this.errorHandler.handle(error, {
+                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+                context: `TradingLifecycleManager.updatePositionState[${position.positionId}]`,
+              });
+            }
+            this.logger.warn(
+              `[TradingLifecycleManager] Failed to update state for ${position.positionId}, continuing with old state`
+            );
+          }
         }
       }
     }
@@ -271,45 +332,129 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
   public async triggerEmergencyClose(request: EmergencyCloseRequest): Promise<void> {
     const position = this.trackedPositions.get(request.positionId);
     if (!position) {
-      this.logger.warn(`[TradingLifecycleManager] Position not found for emergency close: ${request.positionId}`);
+      this.logger.warn(
+        `[TradingLifecycleManager] Position not found for emergency close: ${request.positionId}`
+      );
       return;
     }
 
     try {
       // Update position state to CLOSING
       if (this.validateStateTransition(position.state, PositionLifecycleState.CLOSING)) {
-        position.state = PositionLifecycleState.CLOSING;
-        position.lastUpdateTime = Date.now();
+        try {
+          position.state = PositionLifecycleState.CLOSING;
+          position.lastUpdateTime = Date.now();
+        } catch (stateError) {
+          // GRACEFUL_DEGRADE: State update failure doesn't block emergency close
+          if (this.errorHandler) {
+            await this.errorHandler.handle(stateError, {
+              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+              context: `TradingLifecycleManager.setClosingState[${request.positionId}]`,
+            });
+          }
+          this.logger.warn(
+            `[TradingLifecycleManager] Failed to update state to CLOSING, proceeding with emergency close`
+          );
+        }
       }
 
-      // Emit emergency close event
-      this.eventBus.publishSync({
-        type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
-        data: {
-          positionId: request.positionId,
-          reason: request.reason,
-          priority: request.priority,
-          details: request.details,
-        },
-        timestamp: Date.now(),
-      });
+      // RETRY Strategy: Emit emergency close event with error recovery
+      try {
+        if (this.errorHandler) {
+          await this.errorHandler.executeAsync(
+            async () => {
+              this.eventBus.publishSync({
+                type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
+                data: {
+                  positionId: request.positionId,
+                  reason: request.reason,
+                  priority: request.priority,
+                  details: request.details,
+                },
+                timestamp: Date.now(),
+              });
+            },
+            {
+              strategy: RecoveryStrategy.RETRY,
+              context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
+              retryConfig: {
+                maxAttempts: 2,
+                initialDelayMs: 100,
+                backoffMultiplier: 2,
+                maxDelayMs: 400,
+              },
+            }
+          );
+        } else {
+          // Fallback without ErrorHandler
+          this.eventBus.publishSync({
+            type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
+            data: {
+              positionId: request.positionId,
+              reason: request.reason,
+              priority: request.priority,
+              details: request.details,
+            },
+            timestamp: Date.now(),
+          });
+        }
+      } catch (eventError) {
+        // SKIP: Event publishing failure doesn't block action queueing
+        this.logger.warn(
+          `[TradingLifecycleManager] Failed to emit emergency close event: ${eventError instanceof Error ? eventError.message : String(eventError)}`
+        );
+      }
 
-      // Enqueue close action via ActionQueue
-      // Close entire position (100%)
-      const closeAction = {
-        id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        type: ActionType.CLOSE_PERCENT,
-        timestamp: Date.now(),
-        priority: 'HIGH' as const,
-        metadata: {
-          positionId: request.positionId,
-          percent: 100,
-          reason: request.reason,
-        },
-      };
-      this.actionQueue.enqueue(closeAction as any);
+      // FALLBACK Strategy: Queue close action with error recovery
+      try {
+        const closeAction = {
+          id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          type: ActionType.CLOSE_PERCENT,
+          timestamp: Date.now(),
+          priority: 'HIGH' as const,
+          metadata: {
+            positionId: request.positionId,
+            percent: 100,
+            reason: request.reason,
+          },
+        };
 
-      this.logger.info(`[TradingLifecycleManager] Emergency close queued for ${position.symbol} (${request.reason})`);
+        if (this.errorHandler) {
+          await this.errorHandler.executeAsync(
+            async () => {
+              this.actionQueue.enqueue(closeAction as any);
+            },
+            {
+              strategy: RecoveryStrategy.FALLBACK,
+              context: `TradingLifecycleManager.enqueueEmergencyClose[${request.positionId}]`,
+              onFailure: () => {
+                // FALLBACK: Log fallback action if queueing fails
+                this.logger.error(
+                  `[TradingLifecycleManager] Fallback: Emergency close action queued with potential delays for ${position.symbol}`
+                );
+              },
+            }
+          );
+        } else {
+          // Fallback without ErrorHandler
+          this.actionQueue.enqueue(closeAction as any);
+        }
+      } catch (queueError) {
+        // FALLBACK: Log detailed error but continue
+        this.logger.error(
+          `[TradingLifecycleManager] Fallback: Failed to queue emergency close, attempting direct notification`
+        );
+        if (this.errorHandler) {
+          await this.errorHandler.handle(queueError, {
+            strategy: RecoveryStrategy.FALLBACK,
+            context: `TradingLifecycleManager.emergencyCloseFallback[${request.positionId}]`,
+          });
+        }
+      }
+
+      this.logger.info(
+        `[TradingLifecycleManager] Emergency close queued for ${position.symbol} (${request.reason})`
+      );
     } catch (error) {
       this.logger.error(`[TradingLifecycleManager] Error triggering emergency close: ${error}`, {
         positionId: request.positionId,
