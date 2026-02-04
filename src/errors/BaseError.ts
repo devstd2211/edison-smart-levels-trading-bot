@@ -19,6 +19,7 @@ export enum ErrorDomain {
   PERFORMANCE = 'PERFORMANCE',
   PERSISTENCE = 'PERSISTENCE',
   NOTIFICATION = 'NOTIFICATION',
+  DATA_COLLECTION = 'DATA_COLLECTION', // Phase 8.9.35: Data collector service
 }
 
 export enum ErrorSeverity {

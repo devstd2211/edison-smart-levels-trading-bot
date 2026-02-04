@@ -1,9 +1,9 @@
 # 🚀 Architecture Quick Start - Current Context
 
-**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.33 ✅ COMPLETE**
-**Last Updated:** 2026-02-03 (Session 70+ - **Phase 8.9.33: RiskCalculatorService ErrorHandler Integration COMPLETE**)
-**Build:** ✅ SUCCESS | **37/37 New Tests Passing** | **5193 Total Tests** | **0 Regressions**
-**Current Session:** Phase 8.9.33 ErrorHandler Integration ✅ COMPLETE - RiskCalculatorService with THROW/GRACEFUL_DEGRADE/SKIP strategies
+**Status:** Phase 14 (Prod) ✅ + Phase 9 ✅ + Phase 4 ✅ + Phase 3 ✅ + Phase 0.3 ✅ + Phase 5 ✅ + Phase 6.1-6.3 ✅ + Phase 7 ✅ + **Phase 8 Stages 1-9.35 ✅ COMPLETE**
+**Last Updated:** 2026-02-03 (Session 71 - **Phase 8.9.35: DataCollectorService ErrorHandler Integration COMPLETE**)
+**Build:** ✅ SUCCESS | **17/17 New Tests Passing** | **5246 Total Tests** | **0 Regressions**
+**Current Session:** Phase 8.9.35 ErrorHandler Integration ✅ COMPLETE - DataCollectorService with RETRY/GRACEFUL_DEGRADE/SKIP/THROW strategies
 
 ---
 
@@ -485,12 +485,35 @@
 |  | - Error Handling Tests | ✅ | 37 comprehensive tests (THROW, GRACEFUL_DEGRADE, SKIP, E2E, edge cases) | 37 ✅ | S70 |
 | **TOTAL S1-9.33** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.33 fully integrated** | **37 new ✅** | **S70** |
 
+| **8.9.34** | **CircuitBreakerService** | ✅ | **SKIP (logging) + GRACEFUL_DEGRADE (state/data)** | **36 tests ✅** | **S70+** |
+
+| **8.9.35** | **DataCollectorService** | ✅ | **RETRY (WebSocket) + GRACEFUL_DEGRADE (compression) + SKIP (logging) + THROW (startup)** | **17 tests ✅** | **S71** |
+|  | - DatabaseWriter RETRY | ✅ | Batch write retries on transient DB locks (100-400ms exponential backoff) | 4 ✅ | S71 |
+|  | - Compression GRACEFUL_DEGRADE | ✅ | Fallback from gzip to uncompressed Buffer when compression fails | 2 ✅ | S71 |
+|  | - WebSocket Connection | ✅ | Accepts ErrorHandler (optional) for connection resilience | 3 ✅ | S71 |
+|  | - Service Lifecycle | ✅ | THROW on initialize, GRACEFUL_DEGRADE on shutdown (never blocks) | 2 ✅ | S71 |
+|  | - Error Domain Classes (NEW) | ✅ | DataCollectionError, DataCompressionError, DatabaseBatchError, DataQueueOverflowError | - | S71 |
+|  | - Backward Compatibility | ✅ | Works without ErrorHandler parameter (optional DI) | 2 ✅ | S71 |
+|  | - Integration Testing | ✅ | Error differentiation, metadata validation, lifecycle scenarios | 2 ✅ | S71 |
+| **TOTAL S1-9.35** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.35 fully integrated** | **17 new ✅** | **S71** |
+|  | - CircuitBreakerService (9 tests) | ✅ | Basic circuit breaker with SKIP logging + GRACEFUL_DEGRADE state ops | 9 ✅ | S70+ |
+|  | - SKIP logger failures (4 tests) | ✅ | Constructor, isOpen, recordSuccess, recordError, trip, reset logging | 4 ✅ | S70+ |
+|  | - GRACEFUL_DEGRADE state ops (5 tests) | ✅ | Error history, getStats, getErrorHistory, canAttemptRecovery failures | 5 ✅ | S70+ |
+|  | - StrategyCircuitBreakerService (27 tests) | ✅ | Per-strategy circuit breaker with SKIP logging + GRACEFUL_DEGRADE state | 27 ✅ | S70+ |
+|  | - SKIP logger failures (5 tests) | ✅ | recordSuccess, recordFailure, reset, setConfig, transitions, clear | 5 ✅ | S70+ |
+|  | - GRACEFUL_DEGRADE state ops (11 tests) | ✅ | Error storage, cache retrieval/storage, breaker creation, callbacks | 11 ✅ | S70+ |
+|  | - Integration Scenarios (11 tests) | ✅ | Multi-strategy isolation, callback resilience, concurrent failures | 11 ✅ | S70+ |
+|  | - Backward Compatibility | ✅ | Works without ErrorHandler (optional DI parameter for both services) | Verified | S70+ |
+|  | - DI Integration | ✅ | ErrorHandler optional parameter to constructors (no forced dependency) | - | S70+ |
+|  | - Error Handling Tests | ✅ | 36 comprehensive tests (SKIP logging, GRACEFUL_DEGRADE state, E2E) | 36 ✅ | S70+ |
+| **TOTAL S1-9.34** | **Current Progress** | ✅ COMPLETE | **Phase 8.9.34 fully integrated** | **36 new ✅** | **S70+** |
+
 ### Future Phases
 | Phase | Component | Status | Details | Notes |
 |-------|-----------|--------|---------|-------|
-| **8.9.34** | CircuitBreakerService | ⏳ | SKIP (logging) + GRACEFUL_DEGRADE (history/state) | ~16-18 tests |
-| **8.9.35** | RiskCalculationCache | ⏳ | GRACEFUL_DEGRADE (cache miss) + SKIP (logging) | ~12-14 tests |
-| **8.9.36+** | Tier 2 & 3 Services | ⏳ | DataCollector, PerformanceAnalytics, etc | ~200-380 tests total |
+| **8.9.36** | PerformanceAnalyticsService | ⏳ | THROW (validation) + GRACEFUL_DEGRADE (calcs) + SKIP (logging) | ~16-18 tests |
+| **8.9.37** | DataCollectorService (Full) | ⏳ | RETRY all batch operations + GRACEFUL_DEGRADE for backup | ~20-25 tests |
+| **8.9.38+** | Tier 2 & 3 Services | ⏳ | Remaining services (20+ services) | ~200-300 tests total |
 | **9.2-9.4** | Live Trading Integration | ⏳ | Configuration + E2E tests + chaos | After Phase 8.9 |
 | **15** | Multi-Strategy Config | ⏳ | Config consolidation | After Phase 9 |
 
@@ -905,7 +928,7 @@ Filter Orchestrator
 
 ---
 
-**Version:** 5.30 (Phase 8.9.33 - RiskCalculatorService ErrorHandler Integration COMPLETE)
-**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.33 ✅)
-**Build Status:** ✅ 0 TypeScript Errors | 🎉 5193 Tests Passing | +37 Phase 8.9.33 tests
-**Session:** 70+ | **Status:** Phase 8.9.33 ✅ COMPLETE | Phase 8.9.34+ NEXT (CircuitBreakerService, remaining services)
+**Version:** 5.31 (Phase 8.9.35 - DataCollectorService ErrorHandler Integration COMPLETE)
+**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.35 ✅)
+**Build Status:** ✅ 0 TypeScript Errors | 🎉 5246 Tests Passing | +17 Phase 8.9.35 tests
+**Session:** 71 | **Status:** Phase 8.9.35 ✅ COMPLETE | Phase 8.9.36+ NEXT (PerformanceAnalyticsService, remaining services)

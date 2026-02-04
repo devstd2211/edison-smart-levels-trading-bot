@@ -341,6 +341,7 @@ export class ErrorRegistry {
       [ErrorDomain.PERFORMANCE]: 0,
       [ErrorDomain.PERSISTENCE]: 0,
       [ErrorDomain.NOTIFICATION]: 0,
+      [ErrorDomain.DATA_COLLECTION]: 0, // Phase 8.9.35
     };
   }
 

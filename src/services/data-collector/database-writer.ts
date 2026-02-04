@@ -9,6 +9,7 @@ import { Database } from 'sqlite';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
 import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types';
+import { ErrorHandler } from '../../errors'; // Phase 8.9.35
 
 const gzip = promisify(zlib.gzip);
 
@@ -31,6 +32,7 @@ export class DatabaseWriter {
     private db: Database,
     private logger: LoggerService,
     private compression: boolean = true,
+    private errorHandler?: ErrorHandler, // Phase 8.9.35: Optional ErrorHandler for RETRY/GRACEFUL_DEGRADE
     private batchIntervalMs: number = BATCH_WRITE_INTERVAL_MS,
   ) {}
 

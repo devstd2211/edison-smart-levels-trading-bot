@@ -21,6 +21,7 @@ import {
   CircuitBreakerServiceConfig,
   CircuitBreakerServiceStats,
 } from '../../types/circuit-breaker.types';
+import { ErrorHandler, RecoveryStrategy } from '../../errors'; // Phase 8.9.34: ErrorHandler integration
 
 const DEFAULT_CONFIG: CircuitBreakerConfig = {
   failureThreshold: 5,
@@ -38,7 +39,11 @@ export class StrategyCircuitBreakerService {
   private config: CircuitBreakerServiceConfig;
   private metricsCache: Map<string, CircuitBreakerMetrics> = new Map();
 
-  constructor(private logger?: LoggerService, config?: CircuitBreakerServiceConfig) {
+  constructor(
+    private logger?: LoggerService,
+    config?: CircuitBreakerServiceConfig,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.34: Optional ErrorHandler for resilience
+  ) {
     this.config = {
       defaultConfig: DEFAULT_CONFIG,
       metricsEnabled: true,
@@ -94,11 +99,23 @@ export class StrategyCircuitBreakerService {
     // Invalidate metrics cache
     this.metricsCache.delete(strategyId);
 
-    this.logger?.debug('[CircuitBreaker] Success recorded', {
-      strategyId,
-      status: breaker.status,
-      totalSuccesses: breaker.totalSuccesses,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.debug('[CircuitBreaker] Success recorded', {
+        strategyId,
+        status: breaker.status,
+        totalSuccesses: breaker.totalSuccesses,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.recordSuccess.successLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   /**
@@ -112,23 +129,36 @@ export class StrategyCircuitBreakerService {
     breaker.lastFailureTime = Date.now();
     breaker.successCount = 0;  // Reset success counter
 
-    // Store error information
-    const cbError: CircuitBreakerError = {
-      message: error.message,
-      code: (error as any).code || 'UNKNOWN',
-      timestamp: Date.now(),
-      stackTrace: error.stack,
-    };
+    // Phase 8.9.34: GRACEFUL_DEGRADE for error storage
+    try {
+      // Store error information
+      const cbError: CircuitBreakerError = {
+        message: error.message,
+        code: (error as any).code || 'UNKNOWN',
+        timestamp: Date.now(),
+        stackTrace: error.stack,
+      };
 
-    if (!this.errors.has(strategyId)) {
-      this.errors.set(strategyId, []);
-    }
-    const errorList = this.errors.get(strategyId)!;
-    errorList.push(cbError);
+      if (!this.errors.has(strategyId)) {
+        this.errors.set(strategyId, []);
+      }
+      const errorList = this.errors.get(strategyId)!;
+      errorList.push(cbError);
 
-    // Keep only last 10 errors
-    if (errorList.length > 10) {
-      errorList.shift();
+      // Keep only last 10 errors
+      if (errorList.length > 10) {
+        errorList.shift();
+      }
+    } catch (storageError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(storageError as Error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'StrategyCircuitBreakerService.recordFailure.errorStorage',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+      // Continue despite storage failure - circuit breaker must function
     }
 
     // Check if should open circuit
@@ -143,12 +173,24 @@ export class StrategyCircuitBreakerService {
     // Invalidate metrics cache
     this.metricsCache.delete(strategyId);
 
-    this.logger?.warn('[CircuitBreaker] Failure recorded', {
-      strategyId,
-      status: breaker.status,
-      failureCount: breaker.failureCount,
-      error: error.message,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.warn('[CircuitBreaker] Failure recorded', {
+        strategyId,
+        status: breaker.status,
+        failureCount: breaker.failureCount,
+        error: error.message,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.recordFailure.failureLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   /**
@@ -162,9 +204,22 @@ export class StrategyCircuitBreakerService {
    * Get metrics for circuit breaker
    */
   getMetrics(strategyId: string): CircuitBreakerMetrics {
-    // Check cache
-    if (this.metricsCache.has(strategyId)) {
-      return this.metricsCache.get(strategyId)!;
+    // Phase 8.9.34: GRACEFUL_DEGRADE for cache retrieval
+    try {
+      // Check cache
+      if (this.metricsCache.has(strategyId)) {
+        return this.metricsCache.get(strategyId)!;
+      }
+    } catch (cacheError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(cacheError as Error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'StrategyCircuitBreakerService.getMetrics.cacheRetrieval',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+      // Continue without cache - recalculate metrics
     }
 
     const breaker = this.ensureBreaker(strategyId);
@@ -188,8 +243,21 @@ export class StrategyCircuitBreakerService {
       averageRecoveryTime: 0,  // Would need more tracking
     };
 
+    // Phase 8.9.34: GRACEFUL_DEGRADE for cache storage
     if (this.config.metricsEnabled) {
-      this.metricsCache.set(strategyId, metrics);
+      try {
+        this.metricsCache.set(strategyId, metrics);
+      } catch (cacheError) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(cacheError as Error, {
+            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+            context: 'StrategyCircuitBreakerService.getMetrics.cacheStorage',
+          }).catch(() => {
+            // Silently ignore error handling failures
+          });
+        }
+        // Continue without caching - return metrics anyway
+      }
     }
 
     return metrics;
@@ -231,10 +299,22 @@ export class StrategyCircuitBreakerService {
 
     this.metricsCache.delete(strategyId);
 
-    this.logger?.info('[CircuitBreaker] Reset', {
-      strategyId,
-      previousStatus: oldStatus,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.info('[CircuitBreaker] Reset', {
+        strategyId,
+        previousStatus: oldStatus,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.reset.resetLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
 
     this.emitEvent({
       strategyId,
@@ -253,7 +333,19 @@ export class StrategyCircuitBreakerService {
       this.reset(strategyId);
     }
 
-    this.logger?.info('[CircuitBreaker] Reset all breakers');
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.info('[CircuitBreaker] Reset all breakers');
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.resetAll.resetAllLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   /**
@@ -341,10 +433,22 @@ export class StrategyCircuitBreakerService {
 
     this.configs.set(strategyId, newConfig);
 
-    this.logger?.info('[CircuitBreaker] Config updated', {
-      strategyId,
-      config: newConfig,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.info('[CircuitBreaker] Config updated', {
+        strategyId,
+        config: newConfig,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.setConfig.configLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   /**
@@ -356,7 +460,19 @@ export class StrategyCircuitBreakerService {
     this.errors.clear();
     this.metricsCache.clear();
 
-    this.logger?.info('[CircuitBreaker] Cleared all breakers');
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.info('[CircuitBreaker] Cleared all breakers');
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.clear.clearLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   // =========================================================================
@@ -404,11 +520,23 @@ export class StrategyCircuitBreakerService {
 
     this.metricsCache.delete(strategyId);
 
-    this.logger?.error('[CircuitBreaker] OPENED', {
-      strategyId,
-      failureCount: breaker.failureCount,
-      retryAfter: config.timeout,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.error('[CircuitBreaker] OPENED', {
+        strategyId,
+        failureCount: breaker.failureCount,
+        retryAfter: config.timeout,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.transitionToOpen.openLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
 
     this.emitEvent({
       strategyId,
@@ -431,10 +559,22 @@ export class StrategyCircuitBreakerService {
 
     this.metricsCache.delete(strategyId);
 
-    this.logger?.info('[CircuitBreaker] HALF-OPEN (attempting recovery)', {
-      strategyId,
-      recoveryAttempt: breaker.recoveryAttempts,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.info('[CircuitBreaker] HALF-OPEN (attempting recovery)', {
+        strategyId,
+        recoveryAttempt: breaker.recoveryAttempts,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.transitionToHalfOpen.halfOpenLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
 
     this.emitEvent({
       strategyId,
@@ -457,10 +597,22 @@ export class StrategyCircuitBreakerService {
 
     this.metricsCache.delete(strategyId);
 
-    this.logger?.info('[CircuitBreaker] CLOSED (recovered)', {
-      strategyId,
-      recoveryAttempts: breaker.recoveryAttempts,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger?.info('[CircuitBreaker] CLOSED (recovered)', {
+        strategyId,
+        recoveryAttempts: breaker.recoveryAttempts,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'StrategyCircuitBreakerService.transitionToClosed.closedLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
 
     this.emitEvent({
       strategyId,
@@ -476,9 +628,32 @@ export class StrategyCircuitBreakerService {
       try {
         callback(event);
       } catch (error) {
-        this.logger?.error('[CircuitBreaker] Error in event callback', {
-          error: String(error),
-        });
+        // Phase 8.9.34: GRACEFUL_DEGRADE for callback execution
+        if (this.errorHandler) {
+          this.errorHandler.handle(error as Error, {
+            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+            context: 'StrategyCircuitBreakerService.emitEvent.callbackExecution',
+          }).catch(() => {
+            // Even error handling failure should not interrupt event emission
+            // Fallback to basic logging if available
+            try {
+              this.logger?.error('[CircuitBreaker] Error in event callback', {
+                error: String(error),
+              });
+            } catch {
+              // Silent failure - never interrupt event loop
+            }
+          });
+        } else {
+          // Fallback when ErrorHandler is not available
+          try {
+            this.logger?.error('[CircuitBreaker] Error in event callback', {
+              error: String(error),
+            });
+          } catch {
+            // Silent failure - never interrupt event loop
+          }
+        }
       }
     }
   }

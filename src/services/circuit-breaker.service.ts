@@ -17,6 +17,7 @@
 
 import { LoggerService } from '../types';
 import { TIME_INTERVALS, MAX_ERROR_HISTORY } from '../constants/technical.constants';
+import { ErrorHandler, RecoveryStrategy } from '../errors'; // Phase 8.9.34: ErrorHandler integration
 
 // ============================================================================
 // CONSTANTS
@@ -71,11 +72,24 @@ export class CircuitBreakerService {
   constructor(
     private config: CircuitBreakerConfig,
     private logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.34: Optional ErrorHandler for resilience
   ) {
-    this.logger.info('[CircuitBreaker] Initialized', {
-      errorThreshold: config.errorThreshold,
-      cooldownMs: config.cooldownMs,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger.info('[CircuitBreaker] Initialized', {
+        errorThreshold: config.errorThreshold,
+        cooldownMs: config.cooldownMs,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'CircuitBreakerService.constructor.initialization',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   /**
@@ -90,9 +104,21 @@ export class CircuitBreakerService {
 
       if (timeSinceTrip >= this.config.cooldownMs) {
         // Cooldown period passed, move to HALF_OPEN
-        this.logger.info('[CircuitBreaker] Moving to HALF_OPEN state', {
-          timeSinceTrip,
-        });
+        // Phase 8.9.34: SKIP logging failures
+        try {
+          this.logger.info('[CircuitBreaker] Moving to HALF_OPEN state', {
+            timeSinceTrip,
+          });
+        } catch (logError) {
+          if (this.errorHandler) {
+            this.errorHandler.handle(logError as Error, {
+              strategy: RecoveryStrategy.SKIP,
+              context: 'CircuitBreakerService.isOpen.stateTransitionLog',
+            }).catch(() => {
+              // Silently ignore error handling failures
+            });
+          }
+        }
         this.state = CircuitState.HALF_OPEN;
         return false; // HALF_OPEN still blocks (will allow one test)
       }
@@ -113,14 +139,38 @@ export class CircuitBreakerService {
 
     if (this.state === CircuitState.HALF_OPEN && this.config.autoReset) {
       // Successful call in HALF_OPEN state → close circuit
-      this.logger.info('[CircuitBreaker] Recovery successful, closing circuit', {
-        totalSuccesses: this.totalSuccesses,
-      });
+      // Phase 8.9.34: SKIP logging failures
+      try {
+        this.logger.info('[CircuitBreaker] Recovery successful, closing circuit', {
+          totalSuccesses: this.totalSuccesses,
+        });
+      } catch (logError) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(logError as Error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'CircuitBreakerService.recordSuccess.recoveryLog',
+          }).catch(() => {
+            // Silently ignore error handling failures
+          });
+        }
+      }
       this.state = CircuitState.CLOSED;
     } else if (this.state === CircuitState.CLOSED) {
-      this.logger.debug('[CircuitBreaker] Success recorded', {
-        totalSuccesses: this.totalSuccesses,
-      });
+      // Phase 8.9.34: SKIP logging failures
+      try {
+        this.logger.debug('[CircuitBreaker] Success recorded', {
+          totalSuccesses: this.totalSuccesses,
+        });
+      } catch (logError) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(logError as Error, {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'CircuitBreakerService.recordSuccess.debugLog',
+          }).catch(() => {
+            // Silently ignore error handling failures
+          });
+        }
+      }
     }
   }
 
@@ -134,21 +184,46 @@ export class CircuitBreakerService {
 
     const errorMessage = error instanceof Error ? error.message : error;
 
-    // Add to error history
-    this.errorHistory.push({
-      timestamp: Date.now(),
-      error: errorMessage,
-    });
+    // Phase 8.9.34: GRACEFUL_DEGRADE for error history management
+    try {
+      // Add to error history
+      this.errorHistory.push({
+        timestamp: Date.now(),
+        error: errorMessage,
+      });
 
-    // Limit error history size
-    if (this.errorHistory.length > MAX_ERROR_HISTORY) {
-      this.errorHistory.shift();
+      // Limit error history size
+      if (this.errorHistory.length > MAX_ERROR_HISTORY) {
+        this.errorHistory.shift();
+      }
+    } catch (historyError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(historyError as Error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'CircuitBreakerService.recordError.historyManagement',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+      // Continue despite history failure - circuit breaker must function
     }
 
-    this.logger.warn('[CircuitBreaker] Error recorded', {
-      consecutiveErrors: this.consecutiveErrors,
-      error: errorMessage,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger.warn('[CircuitBreaker] Error recorded', {
+        consecutiveErrors: this.consecutiveErrors,
+        error: errorMessage,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'CircuitBreakerService.recordError.errorLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
 
     // Check if threshold reached
     if (this.consecutiveErrors >= this.config.errorThreshold) {
@@ -168,18 +243,42 @@ export class CircuitBreakerService {
     this.tripCount++;
     this.tripTime = Date.now();
 
-    this.logger.error('[CircuitBreaker] ⚠️ CIRCUIT TRIPPED - Operations paused', {
-      consecutiveErrors: this.consecutiveErrors,
-      tripCount: this.tripCount,
-      cooldownMs: this.config.cooldownMs,
-    });
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger.error('[CircuitBreaker] ⚠️ CIRCUIT TRIPPED - Operations paused', {
+        consecutiveErrors: this.consecutiveErrors,
+        tripCount: this.tripCount,
+        cooldownMs: this.config.cooldownMs,
+      });
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'CircuitBreakerService.trip.circuitTripLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
   }
 
   /**
    * Manually close the circuit (reset)
    */
   reset(): void {
-    this.logger.info('[CircuitBreaker] Manual reset');
+    // Phase 8.9.34: SKIP logging failures
+    try {
+      this.logger.info('[CircuitBreaker] Manual reset');
+    } catch (logError) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(logError as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'CircuitBreakerService.reset.resetLog',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+    }
     this.state = CircuitState.CLOSED;
     this.consecutiveErrors = 0;
     this.tripTime = null;
@@ -189,23 +288,60 @@ export class CircuitBreakerService {
    * Get current circuit breaker statistics
    */
   getStats(): CircuitBreakerStats {
-    return {
-      state: this.state,
-      consecutiveErrors: this.consecutiveErrors,
-      totalErrors: this.totalErrors,
-      totalSuccesses: this.totalSuccesses,
-      lastErrorTime: this.lastErrorTime,
-      lastSuccessTime: this.lastSuccessTime,
-      tripCount: this.tripCount,
-      tripTime: this.tripTime,
-    };
+    // Phase 8.9.34: GRACEFUL_DEGRADE for stats retrieval
+    try {
+      return {
+        state: this.state,
+        consecutiveErrors: this.consecutiveErrors,
+        totalErrors: this.totalErrors,
+        totalSuccesses: this.totalSuccesses,
+        lastErrorTime: this.lastErrorTime,
+        lastSuccessTime: this.lastSuccessTime,
+        tripCount: this.tripCount,
+        tripTime: this.tripTime,
+      };
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'CircuitBreakerService.getStats.statsConstruction',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+      // Return partial stats with safe defaults
+      return {
+        state: this.state,
+        consecutiveErrors: this.consecutiveErrors,
+        totalErrors: this.totalErrors,
+        totalSuccesses: this.totalSuccesses,
+        lastErrorTime: null,
+        lastSuccessTime: null,
+        tripCount: 0,
+        tripTime: null,
+      };
+    }
   }
 
   /**
    * Get error history
    */
   getErrorHistory(): { timestamp: number; error: string }[] {
-    return [...this.errorHistory];
+    // Phase 8.9.34: GRACEFUL_DEGRADE for history retrieval
+    try {
+      return [...this.errorHistory];
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'CircuitBreakerService.getErrorHistory.historyCopy',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+      // Return empty history on error
+      return [];
+    }
   }
 
   /**
@@ -223,8 +359,22 @@ export class CircuitBreakerService {
       return false;
     }
 
-    const now = Date.now();
-    const timeSinceTrip = this.tripTime ? now - this.tripTime : 0;
-    return timeSinceTrip >= this.config.cooldownMs;
+    // Phase 8.9.34: GRACEFUL_DEGRADE for time calculation
+    try {
+      const now = Date.now();
+      const timeSinceTrip = this.tripTime ? now - this.tripTime : 0;
+      return timeSinceTrip >= this.config.cooldownMs;
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'CircuitBreakerService.canAttemptRecovery.timeCalculation',
+        }).catch(() => {
+          // Silently ignore error handling failures
+        });
+      }
+      // Return false (conservative default) on error
+      return false;
+    }
   }
 }

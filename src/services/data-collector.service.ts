@@ -21,6 +21,7 @@ import {
   OrderbookSnapshot,
   LoggerService,
 } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 // Import decomposed components
 import { PingPongHandler } from './data-collector/ping-pong.handler';
@@ -61,6 +62,7 @@ export class DataCollectorService {
   constructor(
     private config: DataCollectionConfig,
     private logger: LoggerService,
+    private errorHandler?: ErrorHandler,
   ) {
     // Initialize components
     this.pingPongHandler = new PingPongHandler(logger);
@@ -90,11 +92,12 @@ export class DataCollectorService {
       // Create tables
       await this.createTables();
 
-      // Initialize DatabaseWriter
+      // Initialize DatabaseWriter with ErrorHandler (Phase 8.9.35)
       this.databaseWriter = new DatabaseWriter(
         this.db,
         this.logger,
         this.config.database.compression,
+        this.errorHandler,
       );
 
       this.logger.info('Database initialized', { path: this.config.database.path });
