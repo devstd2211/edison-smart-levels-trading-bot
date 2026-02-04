@@ -57,9 +57,9 @@ export class TradingJournalService {
     if (tradeHistoryConfig?.enabled) {
       this.tradeHistory = new TradeHistoryService(logger, tradeHistoryConfig.dataDir || this.dataDir);
 
-      // Initialize virtual balance
-      if (baseDeposit && baseDeposit > 0) {
-        this.virtualBalance = new VirtualBalanceService(logger, baseDeposit, tradeHistoryConfig.dataDir || this.dataDir);
+      // Initialize virtual balance (Phase 8.9.43: with ErrorHandler)
+      if (baseDeposit && baseDeposit > 0 && errorHandler) {
+        this.virtualBalance = new VirtualBalanceService(logger, errorHandler, baseDeposit, tradeHistoryConfig.dataDir || this.dataDir);
 
         // Sync virtual balance from history on startup
         this.syncVirtualBalanceAsync();

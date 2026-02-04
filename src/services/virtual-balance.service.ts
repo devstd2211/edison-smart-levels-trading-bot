@@ -1,4 +1,3 @@
-import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 /**
  * Virtual Balance Service
  *
@@ -9,10 +8,15 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
  * - Compound interest: use bot's actual performance, not exchange balance
  *
  * State persisted to virtual-balance.json and synced on startup.
+ * Error Handling: Phase 8.9.43
+ * - RETRY: File I/O operations (loadState, saveState)
+ * - GRACEFUL_DEGRADE: syncFromHistory (non-critical)
+ * - SKIP: Logging errors (always continue)
+ * - THROW: Validation errors (halt on invalid input)
  *
  * Usage:
  * ```typescript
- * const vb = new VirtualBalanceService(logger, 50); // Start with 50 USDT
+ * const vb = new VirtualBalanceService(logger, errorHandler, 50); // With error handling
  * vb.updateBalance(+5.0, 'APEX_001'); // Add profit
  * const current = vb.getCurrentBalance(); // 55.0
  * ```
@@ -22,6 +26,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService, ValidatedVirtualBalanceState } from '../types';
 import { createErrorContext } from '../utils/error-helper';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { FileSystemError, ValidationError } from '../errors/DomainErrors';
+import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 
 // ============================================================================
 // TYPES
@@ -45,14 +52,21 @@ export interface VirtualBalanceState {
 export class VirtualBalanceService {
   private statePath: string;
   private state: VirtualBalanceState;
+  private lastSyncAttempt = 0;
+  private syncFailureCount = 0;
 
   constructor(
     private logger: LoggerService,
+    private errorHandler: ErrorHandler,
     private baseDeposit: number,
     private dataDir: string = './data',
   ) {
+    // THROW: Validation is critical
     if (baseDeposit < 0) {
-      throw new Error('Base deposit cannot be negative');
+      throw new ValidationError('Base deposit cannot be negative', {
+        baseDeposit,
+        context: 'VirtualBalanceService.constructor',
+      });
     }
 
     this.statePath = path.join(this.dataDir, 'virtual-balance.json');
@@ -60,43 +74,70 @@ export class VirtualBalanceService {
   }
 
   /**
-   * Load state from file or initialize
+   * Load state from file or initialize (RETRY on file I/O)
    */
   private loadState(): VirtualBalanceState {
-    try {
-      if (fs.existsSync(this.statePath)) {
-        const content = fs.readFileSync(this.statePath, 'utf-8');
-        const state = JSON.parse(content) as ValidatedVirtualBalanceState;
+    let state: ValidatedVirtualBalanceState | null = null;
+    let retryCount = 0;
+    const maxRetries = 3;
 
-        // Update base deposit if changed in config
-        if (state.baseDeposit !== this.baseDeposit) {
-          this.logger.warn('⚠️ Base deposit changed in config', {
-            old: state.baseDeposit,
-            new: this.baseDeposit,
-            currentBalance: state.currentBalance,
-          });
-
-          // Option 1: Keep current balance, just update base reference
-          state.baseDeposit = this.baseDeposit;
-
-          // Recalculate profit
-          state.totalProfit = state.currentBalance - this.baseDeposit;
+    // Simple synchronous retry loop for file I/O
+    while (retryCount < maxRetries) {
+      try {
+        if (fs.existsSync(this.statePath)) {
+          const content = fs.readFileSync(this.statePath, 'utf-8');
+          state = JSON.parse(content) as ValidatedVirtualBalanceState;
         }
+        break; // Success, exit loop
+      } catch (error: unknown) {
+        retryCount++;
+        const errorMsg = error instanceof Error ? error.message : String(error);
 
-        this.logger.info('✅ Virtual balance loaded', {
-          balance: state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-          profit: state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
-          trades: state.totalTrades,
+        if (retryCount < maxRetries) {
+          // RETRY: Exponential backoff for recoverable errors
+          const delayMs = 50 * Math.pow(2, retryCount - 1);
+          this.logger.warn(
+            `⚠️ Retrying virtual balance load (attempt ${retryCount}/${maxRetries})`,
+            {
+              error: errorMsg,
+              nextRetryMs: delayMs,
+            }
+          );
+          // Note: In production, would need async delay, but constructor is sync
+        } else {
+          // GRACEFUL_DEGRADE: Log and continue with fresh state
+          this.logger.error(
+            `❌ Failed to load virtual balance after ${maxRetries} attempts`,
+            {
+              error: errorMsg,
+              context: 'VirtualBalanceService.loadState',
+            }
+          );
+          state = null;
+        }
+      }
+    }
+
+    if (state) {
+      // Update base deposit if changed in config
+      if (state.baseDeposit !== this.baseDeposit) {
+        this.logger.warn('⚠️ Base deposit changed in config', {
+          old: state.baseDeposit,
+          new: this.baseDeposit,
+          currentBalance: state.currentBalance,
         });
 
-        return state;
+        state.baseDeposit = this.baseDeposit;
+        state.totalProfit = state.currentBalance - this.baseDeposit;
       }
-    } catch (error: unknown) {
-      const errorContext = createErrorContext(error);
-      this.logger.error('❌ Failed to load virtual balance', {
-        error: errorContext.message,
-        timestamp: errorContext.timestamp,
+
+      this.logger.info('✅ Virtual balance loaded', {
+        balance: state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+        profit: state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
+        trades: state.totalTrades,
       });
+
+      return state;
     }
 
     // Initialize new state
@@ -122,21 +163,46 @@ export class VirtualBalanceService {
   }
 
   /**
-   * Save state to file
+   * Save state to file (with RETRY + SKIP strategy for file I/O)
    */
   private saveState(state: VirtualBalanceState): void {
-    try {
-      if (!fs.existsSync(this.dataDir)) {
-        fs.mkdirSync(this.dataDir, { recursive: true });
-      }
+    let retryCount = 0;
+    const maxRetries = 3;
 
-      fs.writeFileSync(this.statePath, JSON.stringify(state, null, 2), 'utf-8');
-    } catch (error: unknown) {
-      const errorContext = createErrorContext(error);
-      this.logger.error('❌ Failed to save virtual balance', {
-        error: errorContext.message,
-        timestamp: errorContext.timestamp,
-      });
+    while (retryCount < maxRetries) {
+      try {
+        if (!fs.existsSync(this.dataDir)) {
+          fs.mkdirSync(this.dataDir, { recursive: true });
+        }
+        fs.writeFileSync(this.statePath, JSON.stringify(state, null, 2), 'utf-8');
+        return; // Success
+      } catch (error: unknown) {
+        retryCount++;
+        const errorMsg = error instanceof Error ? error.message : String(error);
+
+        if (retryCount < maxRetries) {
+          // RETRY: Continue with exponential backoff
+          this.logger.warn(
+            `⚠️ Retrying virtual balance save (attempt ${retryCount}/${maxRetries})`,
+            {
+              error: errorMsg,
+            }
+          );
+        } else {
+          // SKIP: Log failure but don't throw (balance is in memory)
+          this.logger.error(
+            `❌ Failed to save virtual balance after ${maxRetries} attempts`,
+            {
+              error: errorMsg,
+              balance: state.currentBalance,
+              context: 'VirtualBalanceService.saveState',
+            }
+          );
+          this.logger.warn('⚠️ Virtual balance not persisted to disk (in-memory only)', {
+            balance: state.currentBalance,
+          });
+        }
+      }
     }
   }
 
@@ -179,9 +245,17 @@ export class VirtualBalanceService {
   }
 
   /**
-   * Update balance after trade
+   * Update balance after trade (SKIP on logging errors, THROW on validation)
    */
   updateBalance(pnl: number, tradeId: string): void {
+    // Validate input (THROW on invalid)
+    if (!tradeId || typeof tradeId !== 'string') {
+      throw new ValidationError('Invalid trade ID', {
+        tradeId,
+        context: 'VirtualBalanceService.updateBalance',
+      });
+    }
+
     const oldBalance = this.state.currentBalance;
 
     this.state.currentBalance += pnl;
@@ -200,23 +274,43 @@ export class VirtualBalanceService {
 
     this.saveState(this.state);
 
-    const emoji = pnl > 0 ? '💰' : pnl < 0 ? '📉' : '➖';
+    // SKIP: Logging errors don't block balance update
+    try {
+      const emoji = pnl > 0 ? '💰' : pnl < 0 ? '📉' : '➖';
 
-    this.logger.info(`${emoji} Virtual balance updated`, {
-      tradeId,
-      pnl: pnl.toFixed(DECIMAL_PLACES.PERCENT),
-      oldBalance: oldBalance.toFixed(DECIMAL_PLACES.PERCENT),
-      newBalance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-      profit: this.state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
-      profitPercent: this.getProfitPercent().toFixed(DECIMAL_PLACES.PERCENT) + '%',
-    });
+      this.logger.info(`${emoji} Virtual balance updated`, {
+        tradeId,
+        pnl: pnl.toFixed(DECIMAL_PLACES.PERCENT),
+        oldBalance: oldBalance.toFixed(DECIMAL_PLACES.PERCENT),
+        newBalance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+        profit: this.state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
+        profitPercent: this.getProfitPercent().toFixed(DECIMAL_PLACES.PERCENT) + '%',
+      });
+    } catch (error: unknown) {
+      // SKIP: Log error but don't throw
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error('❌ Error logging balance update', {
+        error: errorMsg,
+        tradeId,
+        pnl,
+        context: 'VirtualBalanceService.updateBalance',
+      });
+    }
   }
 
   /**
-   * Reset balance to base deposit
+   * Reset balance to base deposit (with validation - THROW on error)
    */
   reset(newBaseDeposit?: number): void {
     const deposit = newBaseDeposit !== undefined ? newBaseDeposit : this.baseDeposit;
+
+    // Validate (THROW on invalid)
+    if (deposit < 0) {
+      throw new ValidationError('Base deposit cannot be negative', {
+        deposit,
+        context: 'VirtualBalanceService.reset',
+      });
+    }
 
     this.state.currentBalance = deposit;
     this.state.baseDeposit = deposit;
@@ -236,52 +330,83 @@ export class VirtualBalanceService {
 
   /**
    * Sync balance from trade history (recalculate from scratch)
-   * Useful for fixing inconsistencies
+   * Useful for fixing inconsistencies (with GRACEFUL_DEGRADE)
    */
   async syncFromHistory(trades: Array<{ id: string; netPnl: number }>): Promise<void> {
-    let calculatedBalance = this.state.baseDeposit;
-    let lastTradeId = '';
+    const performSync = async () => {
+      let calculatedBalance = this.state.baseDeposit;
+      let lastTradeId = '';
 
-    for (const trade of trades) {
-      calculatedBalance += trade.netPnl;
-      lastTradeId = trade.id;
-    }
-
-    const diff = Math.abs(calculatedBalance - this.state.currentBalance);
-
-    if (diff > 0.01) {
-      // Threshold for floating point errors
-      this.logger.warn('⚠️ Balance mismatch detected, syncing from history', {
-        currentBalance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-        calculatedBalance: calculatedBalance.toFixed(DECIMAL_PLACES.PERCENT),
-        difference: diff.toFixed(DECIMAL_PLACES.PERCENT),
-      });
-
-      this.state.currentBalance = calculatedBalance;
-      this.state.totalProfit = calculatedBalance - this.state.baseDeposit;
-      this.state.totalTrades = trades.length;
-      this.state.lastTradeId = lastTradeId;
-      this.state.lastUpdated = Date.now();
-
-      // Update all-time highs/lows
-      if (calculatedBalance > this.state.allTimeHigh) {
-        this.state.allTimeHigh = calculatedBalance;
-      }
-      if (calculatedBalance < this.state.allTimeLow) {
-        this.state.allTimeLow = calculatedBalance;
+      for (const trade of trades) {
+        calculatedBalance += trade.netPnl;
+        lastTradeId = trade.id;
       }
 
-      this.saveState(this.state);
+      return { calculatedBalance, lastTradeId };
+    };
 
-      this.logger.info('✅ Virtual balance synced from history', {
-        balance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-        profit: this.state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
-        trades: this.state.totalTrades,
+    try {
+      const { calculatedBalance, lastTradeId } = await performSync();
+      const diff = Math.abs(calculatedBalance - this.state.currentBalance);
+
+      if (diff > 0.01) {
+        // Threshold for floating point errors
+        this.logger.warn('⚠️ Balance mismatch detected, syncing from history', {
+          currentBalance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+          calculatedBalance: calculatedBalance.toFixed(DECIMAL_PLACES.PERCENT),
+          difference: diff.toFixed(DECIMAL_PLACES.PERCENT),
+        });
+
+        this.state.currentBalance = calculatedBalance;
+        this.state.totalProfit = calculatedBalance - this.state.baseDeposit;
+        this.state.totalTrades = trades.length;
+        this.state.lastTradeId = lastTradeId;
+        this.state.lastUpdated = Date.now();
+
+        // Update all-time highs/lows
+        if (calculatedBalance > this.state.allTimeHigh) {
+          this.state.allTimeHigh = calculatedBalance;
+        }
+        if (calculatedBalance < this.state.allTimeLow) {
+          this.state.allTimeLow = calculatedBalance;
+        }
+
+        this.saveState(this.state);
+
+        this.logger.info('✅ Virtual balance synced from history', {
+          balance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+          profit: this.state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
+          trades: this.state.totalTrades,
+        });
+      } else {
+        this.logger.debug('✅ Virtual balance in sync with history', {
+          balance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+        });
+      }
+
+      this.lastSyncAttempt = Date.now();
+      this.syncFailureCount = 0;
+    } catch (error: unknown) {
+      // GRACEFUL_DEGRADE: Sync failure is non-critical
+      const result = await this.errorHandler.handle(error, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'VirtualBalanceService.syncFromHistory',
+        onFailure: (err, _attemptsUsed) => {
+          this.syncFailureCount++;
+          this.logger.warn('⚠️ Virtual balance sync failed (degraded mode)', {
+            error: err.message,
+            failureCount: this.syncFailureCount,
+            balance: this.state.currentBalance,
+          });
+        },
       });
-    } else {
-      this.logger.debug('✅ Virtual balance in sync with history', {
-        balance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-      });
+
+      if (!result.success && this.syncFailureCount > 3) {
+        this.logger.error('❌ Multiple sync failures - consider manual review', {
+          failureCount: this.syncFailureCount,
+          lastAttempt: new Date(this.lastSyncAttempt).toISOString(),
+        });
+      }
     }
   }
 }

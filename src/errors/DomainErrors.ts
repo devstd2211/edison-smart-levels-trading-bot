@@ -2035,3 +2035,55 @@ export class TimeSyncTimeoutError extends TradingError {
     Object.setPrototypeOf(this, TimeSyncTimeoutError.prototype);
   }
 }
+
+/**
+ * File system operation error
+ * Indicates that a file I/O operation failed
+ * Phase 8.9.43: VirtualBalanceService error handling
+ */
+export class FileSystemError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      operation: string;
+      filePath?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'FILE_SYSTEM_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, FileSystemError.prototype);
+  }
+}
+
+/**
+ * Validation error
+ * Indicates that input validation failed
+ * Phase 8.9.43: VirtualBalanceService error handling
+ */
+export class ValidationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'VALIDATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, ValidationError.prototype);
+  }
+}
