@@ -38,6 +38,15 @@ function getMinimalConfig(): Config {
     dataSubscriptions: { candles: { enabled: true } },
     system: { timeSyncIntervalMs: 60000, timeSyncMaxFailures: 3 },
     indicators: { rsiPeriod: 14, slowEmaPeriod: 50 },
+    // Required by BotServices constructor
+    entryConfig: {
+      divergenceDetector: false,
+    },
+    strategy: {
+      priceAction: false,
+    },
+    strategies: {},
+    analyzers: [],
   } as any;
 }
 
@@ -45,30 +54,9 @@ describe('BotFactory - DI Container for BotServices', () => {
   let config: Config;
 
   beforeAll(() => {
-    // Load real config if available
-    // Try multiple locations: project root, src root
-    let configPath = path.resolve(process.cwd(), 'config.json');
-    if (!fs.existsSync(configPath)) {
-      configPath = path.resolve(__dirname, '../../config.json');
-    }
-    if (!fs.existsSync(configPath)) {
-      configPath = path.resolve(__dirname, '../../../config.json');
-    }
-
-    if (fs.existsSync(configPath)) {
-      try {
-        const rawConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-        config = rawConfig as Config;
-      } catch (e) {
-        // Use minimal config if parse fails
-        console.warn('Failed to parse config.json, using minimal config');
-        config = getMinimalConfig();
-      }
-    } else {
-      // Use minimal config
-      console.warn('config.json not found, using minimal config');
-      config = getMinimalConfig();
-    }
+    // Always use minimal config for backward compatibility with legacy tests
+    // Error handling tests use their own config validation
+    config = getMinimalConfig();
   });
 
   describe('Basic Factory Operations', () => {

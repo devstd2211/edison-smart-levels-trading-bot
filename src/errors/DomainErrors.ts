@@ -1922,3 +1922,116 @@ export class ExchangeAdapterInstantiationError extends TradingError {
     Object.setPrototypeOf(this, ExchangeAdapterInstantiationError.prototype);
   }
 }
+
+/**
+ * BotFactory configuration validation error
+ * Thrown when bot config is missing required fields or has invalid values
+ * Phase 8.9.41: Factory config validation
+ */
+export class BotFactoryConfigValidationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      missingField?: string;
+      field?: string;
+      received?: unknown;
+      type?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'BOT_FACTORY_CONFIG_VALIDATION_ERROR',
+      ErrorDomain.CONFIGURATION,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, BotFactoryConfigValidationError.prototype);
+  }
+}
+
+/**
+ * BotFactory service initialization error
+ * Thrown when BotServices fails to initialize
+ * Phase 8.9.41: Factory initialization
+ */
+export class BotFactoryInitializationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      originalError?: string;
+      failedService?: string;
+      phase?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'BOT_FACTORY_INITIALIZATION_ERROR',
+      ErrorDomain.INTERNAL,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, BotFactoryInitializationError.prototype);
+  }
+}
+
+/**
+ * Time synchronization with exchange failed
+ * Indicates failure to sync local time with exchange server time
+ * Phase 8.9.42: TimeService error handling
+ */
+export class TimeSyncError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      reason: string;
+      failureCount?: number;
+      maxAttempts?: number;
+      lastKnownOffset?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'TIME_SYNC_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.HIGH,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, TimeSyncError.prototype);
+  }
+}
+
+/**
+ * Time synchronization timeout
+ * Indicates that time sync operation exceeded timeout threshold
+ * Phase 8.9.42: TimeService error handling
+ */
+export class TimeSyncTimeoutError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      timeoutMs: number;
+      elapsedMs: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'TIME_SYNC_TIMEOUT_ERROR',
+      ErrorDomain.EXCHANGE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, TimeSyncTimeoutError.prototype);
+  }
+}
