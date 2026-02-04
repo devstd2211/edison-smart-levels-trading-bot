@@ -49,6 +49,13 @@ export {
   FundingRateCacheError,
   // Risk Calculation domain (Phase 8.9.33)
   RiskCalculationError,
+  // Data Collection domain (Phase 8.9.35)
+  DataCollectionError,
+  DataCompressionError,
+  DatabaseBatchError,
+  DataQueueOverflowError,
+  // Performance Analytics domain (Phase 8.9.36)
+  PerformanceCalculationError,
 } from './DomainErrors';
 
 // Result type for type-safe error handling

@@ -1710,3 +1710,154 @@ export class RiskCalculationError extends TradingError {
     Object.setPrototypeOf(this, RiskCalculationError.prototype);
   }
 }
+
+// ============================================================================
+// DATA COLLECTION DOMAIN ERRORS (Phase 8.9.35)
+// ============================================================================
+
+/**
+ * Data collection operation error
+ * Indicates failure during market data collection (WebSocket, queuing)
+ * Used with RETRY strategy for transient network failures
+ */
+export class DataCollectionError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      operation: string;
+      recordsLost?: number;
+      retryable?: boolean;
+      symbol?: string;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'DATA_COLLECTION_ERROR',
+      ErrorDomain.DATA_COLLECTION,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, DataCollectionError.prototype);
+  }
+}
+
+/**
+ * Data compression error
+ * Indicates failure during compression of orderbook/trade data
+ * Used with GRACEFUL_DEGRADE strategy for fallback to uncompressed
+ */
+export class DataCompressionError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      compressionType: string;
+      originalSize?: number;
+      compressedSize?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'DATA_COMPRESSION_ERROR',
+      ErrorDomain.DATA_COLLECTION,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, DataCompressionError.prototype);
+  }
+}
+
+/**
+ * Database batch write error
+ * Indicates failure during batch INSERT operations in DataCollectorService
+ * Used with RETRY strategy for transient database locks
+ */
+export class DatabaseBatchError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      batchType: 'candles' | 'orderbooks' | 'ticks';
+      batchSize: number;
+      recordsLost?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'DATABASE_BATCH_ERROR',
+      ErrorDomain.PERSISTENCE,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, DatabaseBatchError.prototype);
+  }
+}
+
+/**
+ * Data queue overflow error
+ * Indicates queue memory pressure during high-frequency data collection
+ * Used with GRACEFUL_DEGRADE strategy to drop excess data
+ */
+export class DataQueueOverflowError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      queueType: 'candles' | 'orderbooks' | 'ticks';
+      maxSize: number;
+      currentSize: number;
+      droppedCount?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'DATA_QUEUE_OVERFLOW_ERROR',
+      ErrorDomain.DATA_COLLECTION,
+      ErrorSeverity.LOW,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, DataQueueOverflowError.prototype);
+  }
+}
+
+// ============================================================================
+// PERFORMANCE ANALYTICS DOMAIN ERRORS
+// ============================================================================
+
+/**
+ * Phase 8.9.36: PerformanceCalculationError
+ * Thrown when performance metric calculations fail
+ */
+export class PerformanceCalculationError extends TradingError {
+  constructor(
+    message: string,
+    context: {
+      operation: string;
+      tradesProvided?: unknown;
+      period?: number | string;
+      validPeriods?: string[];
+      limit?: number;
+      [key: string]: unknown;
+    },
+    originalError?: Error,
+  ) {
+    super(
+      message,
+      'PERFORMANCE_CALCULATION_ERROR',
+      ErrorDomain.TRADING,
+      ErrorSeverity.MEDIUM,
+      originalError,
+      context,
+    );
+    Object.setPrototypeOf(this, PerformanceCalculationError.prototype);
+  }
+}
