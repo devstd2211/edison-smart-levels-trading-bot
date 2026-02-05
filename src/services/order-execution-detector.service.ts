@@ -1,6 +1,11 @@
 /**
- * Order Execution Detector Service
+ * Order Execution Detector Service (Phase 8.9.50 ErrorHandler Integration)
  * Detects and analyzes order execution types from Bybit WebSocket
+ *
+ * Error Handling Strategies:
+ * - THROW: Input validation (null/undefined execData, missing required fields)
+ * - GRACEFUL_DEGRADE: Parsing failures (NaN prices, invalid numeric strings)
+ * - SKIP: Logging failures (non-blocking)
  *
  * Responsibilities:
  * - Identify TP/SL/Trailing Stop/Entry execution types
@@ -10,6 +15,7 @@
  */
 
 import { LoggerService, OrderExecutionData } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export interface OrderExecutionResult {
   type: 'TAKE_PROFIT' | 'STOP_LOSS' | 'TRAILING_STOP' | 'ENTRY' | 'UNKNOWN';
@@ -27,20 +33,57 @@ export class OrderExecutionDetectorService {
   private tpCounter: number = 0;
   private lastCloseReason: 'SL' | 'TP' | 'TRAILING' | null = null;
 
-  constructor(private readonly logger: LoggerService) {}
+  constructor(
+    private readonly logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler,
+  ) {}
+
+  /**
+   * Safe logging wrapper: SKIP strategy for logging failures (non-blocking)
+   */
+  private safeLog(level: 'info' | 'debug', message: string, meta?: any): void {
+    try {
+      this.logger[level](message, meta);
+    } catch (error) {
+      // SKIP: Non-critical logging failure
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
+  }
 
   /**
    * Detect order execution type from Bybit execution data
-   * Returns structured execution result with type and counter information
+   * THROW on input validation, GRACEFUL_DEGRADE on parsing failures
    *
    * @param execData - Order execution data from Bybit WebSocket
    * @returns OrderExecutionResult with detected type and metadata
+   * @throws Error if execData is null/undefined or missing required fields
    */
   public detectExecution(execData: OrderExecutionData): OrderExecutionResult {
-    const closedSize = parseFloat(execData.closedSize ?? '0');
+    // THROW strategy: Input validation
+    if (!execData) {
+      throw new Error('OrderExecutionDetectorService.detectExecution: execData is required');
+    }
 
-    // Log all executions for debugging
-    this.logger.debug('Processing execution event', {
+    // GRACEFUL_DEGRADE: Parse numeric fields with NaN/Infinity validation
+    let closedSize = 0;
+    try {
+      closedSize = parseFloat(execData.closedSize ?? '0');
+      if (!Number.isFinite(closedSize)) {
+        this.safeLog('debug', 'Invalid closedSize, using 0', { closedSize: execData.closedSize });
+        closedSize = 0;
+      }
+    } catch (error) {
+      this.safeLog('debug', 'Failed to parse closedSize', { closedSize: execData.closedSize });
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      closedSize = 0;
+    }
+
+    // Log all executions for debugging (SKIP on error)
+    this.safeLog('debug', 'Processing execution event', {
       orderId: execData.orderId,
       symbol: execData.symbol,
       execType: execData.execType,
@@ -80,7 +123,7 @@ export class OrderExecutionDetectorService {
       tpLevel = this.tpCounter;
       this.lastCloseReason = 'TP';
 
-      this.logger.info(`🎯 TP${this.tpCounter} execution detected from WebSocket`, {
+      this.safeLog('info', `🎯 TP${this.tpCounter} execution detected from WebSocket`, {
         tpLevel: this.tpCounter,
         orderId: execData.orderId,
         execPrice: execData.execPrice,
@@ -89,33 +132,49 @@ export class OrderExecutionDetectorService {
       });
     } else if (isStopLoss) {
       executionType = 'STOP_LOSS';
-      this.logger.info('🛑 Stop Loss execution detected from WebSocket', {
+      this.safeLog('info', '🛑 Stop Loss execution detected from WebSocket', {
         orderId: execData.orderId,
         execPrice: execData.execPrice,
         execQty: execData.execQty,
       });
 
       // Reset TP counter on SL hit
-      this.logger.debug('Stop Loss hit - resetting TP counter', { previousCounter: this.tpCounter });
+      this.safeLog('debug', 'Stop Loss hit - resetting TP counter', { previousCounter: this.tpCounter });
       this.tpCounter = 0;
       this.lastCloseReason = 'SL';
     } else if (isTrailingStop) {
       executionType = 'TRAILING_STOP';
-      this.logger.info('📉 Trailing Stop execution detected from WebSocket', {
+      this.safeLog('info', '📉 Trailing Stop execution detected from WebSocket', {
         orderId: execData.orderId,
         execPrice: execData.execPrice,
         execQty: execData.execQty,
       });
 
       // Reset TP counter on Trailing Stop hit
-      this.logger.debug('Trailing Stop hit - resetting TP counter', { previousCounter: this.tpCounter });
+      this.safeLog('debug', 'Trailing Stop hit - resetting TP counter', { previousCounter: this.tpCounter });
       this.tpCounter = 0;
       this.lastCloseReason = 'TRAILING';
     } else {
       // Regular order fill (market/limit entry)
       executionType = 'ENTRY';
-      this.logger.debug('Position entry execution - resetting TP counter', { previousCounter: this.tpCounter });
+      this.safeLog('debug', 'Position entry execution - resetting TP counter', { previousCounter: this.tpCounter });
       this.tpCounter = 0;
+    }
+
+    // Parse execPrice with GRACEFUL_DEGRADE for invalid values
+    let execPrice = 0;
+    try {
+      execPrice = parseFloat(execData.execPrice ?? '0');
+      if (!Number.isFinite(execPrice)) {
+        this.safeLog('debug', 'Invalid execPrice, using 0', { execPrice: execData.execPrice });
+        execPrice = 0;
+      }
+    } catch (error) {
+      this.safeLog('debug', 'Failed to parse execPrice', { execPrice: execData.execPrice });
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      execPrice = 0;
     }
 
     return {
@@ -124,7 +183,7 @@ export class OrderExecutionDetectorService {
       orderId: execData.orderId,
       symbol: execData.symbol ?? '',
       closedSize,
-      execPrice: parseFloat(execData.execPrice ?? '0'),
+      execPrice,
       execQty: execData.execQty ?? '0',
       side: execData.side ?? '',
       closedSizeStr: execData.closedSize ?? '',
@@ -141,10 +200,11 @@ export class OrderExecutionDetectorService {
 
   /**
    * Reset TP counter (call on position close or new entry)
+   * SKIP on logging failure (non-blocking)
    */
   public resetTpCounter(): void {
     this.tpCounter = 0;
-    this.logger.debug('TP counter reset');
+    this.safeLog('debug', 'TP counter reset');
   }
 
   /**
@@ -157,8 +217,10 @@ export class OrderExecutionDetectorService {
 
   /**
    * Reset last close reason (call after journal entry)
+   * SKIP on logging failure (non-blocking)
    */
   public resetLastCloseReason(): void {
     this.lastCloseReason = null;
+    this.safeLog('debug', 'Last close reason reset');
   }
 }
