@@ -21,6 +21,7 @@ import {
   TrendBias,
 } from '../types';
 import { SwingPointDetectorService } from './swing-point-detector.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================
 // CONSTANTS
@@ -36,8 +37,13 @@ export class MultiTimeframeTrendService {
   constructor(
     private readonly logger: LoggerService,
     private readonly swingPointDetector: SwingPointDetectorService,
+    private readonly errorHandler?: ErrorHandler,
   ) {
-    this.logger.info('✅ MultiTimeframeTrendService initialized');
+    try {
+      this.logger.info('✅ MultiTimeframeTrendService initialized');
+    } catch {
+      // Ignore logger errors on initialization
+    }
   }
 
   /**
@@ -48,53 +54,138 @@ export class MultiTimeframeTrendService {
    */
   async analyze(multiTFData: MultiTimeframeData): Promise<MultiTimeframeAnalysis> {
     // ========================================================================
-    // VALIDATION
+    // VALIDATION (THROW STRATEGY)
     // ========================================================================
 
     if (!multiTFData) {
-      this.logger.warn('Invalid multi-timeframe data input');
-      return this.getEmptyAnalysis();
+      const error = new Error('MultiTimeframe: null or undefined input data received');
+      if (this.errorHandler) {
+        await this.errorHandler.executeAsync(
+          async () => {
+            throw error;
+          },
+          { strategy: RecoveryStrategy.THROW },
+        );
+      }
+      throw error;
     }
 
     // ========================================================================
-    // ANALYZE EACH TIMEFRAME
+    // ANALYZE EACH TIMEFRAME (GRACEFUL_DEGRADE)
     // ========================================================================
 
-    const byTimeframe: MultiTimeframeAnalysis['byTimeframe'] = {
-      '5m': this.analyzeTimeframe(multiTFData.candles5m, '5m'),
-      '15m': this.analyzeTimeframe(multiTFData.candles15m, '15m'),
-      '1h': this.analyzeTimeframe(multiTFData.candles1h, '1h'),
-      '4h': this.analyzeTimeframe(multiTFData.candles4h, '4h'),
-    };
+    let byTimeframe: MultiTimeframeAnalysis['byTimeframe'];
+
+    if (this.errorHandler) {
+      const result = await this.errorHandler.executeAsync(
+        async () => ({
+          '5m': this.analyzeTimeframe((multiTFData as any).candles5m || [], '5m'),
+          '15m': this.analyzeTimeframe((multiTFData as any).candles15m || [], '15m'),
+          '1h': this.analyzeTimeframe((multiTFData as any).candles1h || [], '1h'),
+          '4h': this.analyzeTimeframe((multiTFData as any).candles4h || [], '4h'),
+        }),
+        { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+      );
+
+      if (result.success && result.value) {
+        byTimeframe = result.value;
+      } else {
+        byTimeframe = {
+          '5m': { timeframe: '5m', bias: TrendBias.NEUTRAL, strength: 0.3, swingHighsCount: 0, swingLowsCount: 0 },
+          '15m': { timeframe: '15m', bias: TrendBias.NEUTRAL, strength: 0.3, swingHighsCount: 0, swingLowsCount: 0 },
+          '1h': { timeframe: '1h', bias: TrendBias.NEUTRAL, strength: 0.3, swingHighsCount: 0, swingLowsCount: 0 },
+          '4h': { timeframe: '4h', bias: TrendBias.NEUTRAL, strength: 0.3, swingHighsCount: 0, swingLowsCount: 0 },
+        };
+      }
+    } else {
+      byTimeframe = {
+        '5m': this.analyzeTimeframe((multiTFData as any).candles5m || [], '5m'),
+        '15m': this.analyzeTimeframe((multiTFData as any).candles15m || [], '15m'),
+        '1h': this.analyzeTimeframe((multiTFData as any).candles1h || [], '1h'),
+        '4h': this.analyzeTimeframe((multiTFData as any).candles4h || [], '4h'),
+      };
+    }
 
     // ========================================================================
-    // LOG INDIVIDUAL TIMEFRAME RESULTS
+    // LOG INDIVIDUAL TIMEFRAME RESULTS (SKIP STRATEGY)
     // ========================================================================
 
-    this.logger.debug('📊 Multi-timeframe analysis complete', {
-      '5m': `${byTimeframe['5m'].bias} (${byTimeframe['5m'].strength.toFixed(2)}, ${byTimeframe['5m'].swingHighsCount}H/${byTimeframe['5m'].swingLowsCount}L)`,
-      '15m': `${byTimeframe['15m'].bias} (${byTimeframe['15m'].strength.toFixed(2)}, ${byTimeframe['15m'].swingHighsCount}H/${byTimeframe['15m'].swingLowsCount}L)`,
-      '1h': `${byTimeframe['1h'].bias} (${byTimeframe['1h'].strength.toFixed(2)}, ${byTimeframe['1h'].swingHighsCount}H/${byTimeframe['1h'].swingLowsCount}L)`,
-      '4h': `${byTimeframe['4h'].bias} (${byTimeframe['4h'].strength.toFixed(2)}, ${byTimeframe['4h'].swingHighsCount}H/${byTimeframe['4h'].swingLowsCount}L)`,
-    });
+    if (this.errorHandler) {
+      await this.errorHandler.executeAsync(
+        async () => {
+          this.logger.debug('📊 Multi-timeframe analysis complete', {
+            '5m': `${byTimeframe['5m'].bias} (${byTimeframe['5m'].strength.toFixed(2)}, ${byTimeframe['5m'].swingHighsCount}H/${byTimeframe['5m'].swingLowsCount}L)`,
+            '15m': `${byTimeframe['15m'].bias} (${byTimeframe['15m'].strength.toFixed(2)}, ${byTimeframe['15m'].swingHighsCount}H/${byTimeframe['15m'].swingLowsCount}L)`,
+            '1h': `${byTimeframe['1h'].bias} (${byTimeframe['1h'].strength.toFixed(2)}, ${byTimeframe['1h'].swingHighsCount}H/${byTimeframe['1h'].swingLowsCount}L)`,
+            '4h': `${byTimeframe['4h'].bias} (${byTimeframe['4h'].strength.toFixed(2)}, ${byTimeframe['4h'].swingHighsCount}H/${byTimeframe['4h'].swingLowsCount}L)`,
+          });
+        },
+        { strategy: RecoveryStrategy.SKIP },
+      );
+    } else {
+      this.logger.debug('📊 Multi-timeframe analysis complete', {
+        '5m': `${byTimeframe['5m'].bias} (${byTimeframe['5m'].strength.toFixed(2)}, ${byTimeframe['5m'].swingHighsCount}H/${byTimeframe['5m'].swingLowsCount}L)`,
+        '15m': `${byTimeframe['15m'].bias} (${byTimeframe['15m'].strength.toFixed(2)}, ${byTimeframe['15m'].swingHighsCount}H/${byTimeframe['15m'].swingLowsCount}L)`,
+        '1h': `${byTimeframe['1h'].bias} (${byTimeframe['1h'].strength.toFixed(2)}, ${byTimeframe['1h'].swingHighsCount}H/${byTimeframe['1h'].swingLowsCount}L)`,
+        '4h': `${byTimeframe['4h'].bias} (${byTimeframe['4h'].strength.toFixed(2)}, ${byTimeframe['4h'].swingHighsCount}H/${byTimeframe['4h'].swingLowsCount}L)`,
+      });
+    }
 
     // ========================================================================
-    // CALCULATE CONSENSUS
+    // CALCULATE CONSENSUS (GRACEFUL_DEGRADE)
     // ========================================================================
 
-    const primaryTrend = byTimeframe['4h'].bias;        // Longest timeframe
-    const currentTrend = byTimeframe['1h'].bias;        // Immediate trend
-    const entryTrend = this.getEntryTrend(byTimeframe); // Shortest timeframes (5m/15m)
-    const alignment = this.detectAlignment(byTimeframe);
-    const strength = this.calculateConsensusStrength(byTimeframe);
+    let primaryTrend = byTimeframe['4h'].bias;
+    let currentTrend = byTimeframe['1h'].bias;
+    let entryTrend = byTimeframe['5m'].bias;
+    let alignment: 'ALIGNED' | 'CONFLICTED' | 'MIXED' = 'MIXED';
+    let strength = 0.3;
 
-    this.logger.info('🎯 Consensus formed', {
-      primaryTrend,
-      currentTrend,
-      entryTrend,
-      alignment,
-      strength: strength.toFixed(2),
-    });
+    if (this.errorHandler) {
+      await this.errorHandler.executeAsync(
+        async () => {
+          primaryTrend = byTimeframe['4h'].bias;
+          currentTrend = byTimeframe['1h'].bias;
+          entryTrend = this.getEntryTrend(byTimeframe);
+          alignment = this.detectAlignment(byTimeframe);
+          strength = this.calculateConsensusStrength(byTimeframe);
+        },
+        { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+      );
+    } else {
+      primaryTrend = byTimeframe['4h'].bias;
+      currentTrend = byTimeframe['1h'].bias;
+      entryTrend = this.getEntryTrend(byTimeframe);
+      alignment = this.detectAlignment(byTimeframe);
+      strength = this.calculateConsensusStrength(byTimeframe);
+    }
+
+    // ========================================================================
+    // LOG CONSENSUS (SKIP STRATEGY)
+    // ========================================================================
+
+    if (this.errorHandler) {
+      await this.errorHandler.executeAsync(
+        async () => {
+          this.logger.info('🎯 Consensus formed', {
+            primaryTrend,
+            currentTrend,
+            entryTrend,
+            alignment,
+            strength: strength.toFixed(2),
+          });
+        },
+        { strategy: RecoveryStrategy.SKIP },
+      );
+    } else {
+      this.logger.info('🎯 Consensus formed', {
+        primaryTrend,
+        currentTrend,
+        entryTrend,
+        alignment,
+        strength: strength.toFixed(2),
+      });
+    }
 
     // ========================================================================
     // RETURN ANALYSIS
@@ -121,14 +212,19 @@ export class MultiTimeframeTrendService {
    */
   private analyzeTimeframe(candles: Candle[], timeframe: string): TimeframeAnalysis {
     // ========================================================================
-    // VALIDATE INPUT
+    // VALIDATE INPUT (GRACEFUL_DEGRADE)
     // ========================================================================
 
     if (!candles || candles.length < 5) {
-      this.logger.debug(`Insufficient candles for ${timeframe} analysis`, {
-        required: 5,
-        got: candles?.length || 0,
-      });
+      try {
+        this.logger.debug(`Insufficient candles for ${timeframe} analysis`, {
+          required: 5,
+          got: candles?.length || 0,
+        });
+      } catch {
+        // Ignore logger errors
+      }
+
       return {
         timeframe,
         bias: TrendBias.NEUTRAL,
@@ -139,39 +235,60 @@ export class MultiTimeframeTrendService {
     }
 
     // ========================================================================
-    // DETECT SWING POINTS
+    // DETECT SWING POINTS (GRACEFUL_DEGRADE)
     // ========================================================================
 
-    const { highs, lows } = this.swingPointDetector.detectSwingPoints(candles);
+    let highs: { price: number; timestamp: number }[] = [];
+    let lows: { price: number; timestamp: number }[] = [];
+
+    try {
+      const result = this.swingPointDetector.detectSwingPoints(candles);
+      highs = result.highs;
+      lows = result.lows;
+    } catch {
+      // Return safe defaults on detection failure
+      highs = [];
+      lows = [];
+    }
 
     // ========================================================================
-    // CALCULATE TREND BIAS
+    // CALCULATE TREND BIAS (GRACEFUL_DEGRADE)
     // ========================================================================
 
-    const bias = this.calculateBias(highs, lows, candles);
-    const pattern = this.getPattern(highs, lows);
+    let bias = this.calculateBias(highs, lows, candles);
+    let pattern = this.getPattern(highs, lows) || 'FLAT';
 
     // ========================================================================
-    // CALCULATE STRENGTH
+    // CALCULATE STRENGTH (GRACEFUL_DEGRADE)
     // ========================================================================
 
-    const strength = this.swingPointDetector.calculateStrengthFromSwingPoints(
-      bias,
-      highs,
-      lows,
-    );
+    let strength = 0.3;
+    try {
+      strength = this.swingPointDetector.calculateStrengthFromSwingPoints(
+        bias,
+        highs as any,
+        lows as any,
+      );
+    } catch {
+      // Return safe default on strength calculation failure
+      strength = 0.3;
+    }
 
     // ========================================================================
-    // LOG AND RETURN
+    // LOG AND RETURN (SKIP LOGGING)
     // ========================================================================
 
-    this.logger.debug(`${timeframe} analysis`, {
-      bias,
-      pattern,
-      strength: strength.toFixed(2),
-      swingHighs: highs.length,
-      swingLows: lows.length,
-    });
+    try {
+      this.logger.debug(`${timeframe} analysis`, {
+        bias,
+        pattern,
+        strength: strength.toFixed(2),
+        swingHighs: highs.length,
+        swingLows: lows.length,
+      });
+    } catch {
+      // Ignore logger errors
+    }
 
     return {
       timeframe,
@@ -196,12 +313,43 @@ export class MultiTimeframeTrendService {
     lows: { price: number; timestamp: number }[],
     candles: Candle[],
   ): TrendBias {
+    // ========================================================================
+    // VALIDATE NaN/INVALID VALUES (GRACEFUL_DEGRADE)
+    // ========================================================================
+
+    if (!highs || !lows) {
+      return TrendBias.NEUTRAL;
+    }
+
+    // Validate prices are valid numbers
+    for (const high of highs) {
+      if (!Number.isFinite(high.price)) {
+        return TrendBias.NEUTRAL;
+      }
+    }
+
+    for (const low of lows) {
+      if (!Number.isFinite(low.price)) {
+        return TrendBias.NEUTRAL;
+      }
+    }
+
+    // ========================================================================
+    // ANALYZE PATTERN
+    // ========================================================================
+
     // Need at least 2 highs and 2 lows to detect pattern
     if (highs.length < 2 || lows.length < 2) {
       // Check overall price direction
-      if (candles.length >= 2) {
+      if (candles && candles.length >= 2) {
         const first = candles[0].close;
         const last = candles[candles.length - 1].close;
+
+        // Validate prices
+        if (!Number.isFinite(first) || !Number.isFinite(last)) {
+          return TrendBias.NEUTRAL;
+        }
+
         if (last > first) return TrendBias.BULLISH;
         if (last < first) return TrendBias.BEARISH;
       }
@@ -238,7 +386,26 @@ export class MultiTimeframeTrendService {
     highs: { price: number }[],
     lows: { price: number }[],
   ): string | undefined {
+    // ========================================================================
+    // VALIDATE INPUT
+    // ========================================================================
+
+    if (!highs || !lows) return 'FLAT';
+
     if (highs.length < 2 || lows.length < 2) return 'FLAT';
+
+    // Validate prices are valid numbers
+    for (const high of highs) {
+      if (!Number.isFinite(high.price)) return 'FLAT';
+    }
+
+    for (const low of lows) {
+      if (!Number.isFinite(low.price)) return 'FLAT';
+    }
+
+    // ========================================================================
+    // DETECT PATTERN
+    // ========================================================================
 
     const lastHigh = highs[highs.length - 1].price;
     const prevHigh = highs[highs.length - 2].price;
@@ -257,7 +424,19 @@ export class MultiTimeframeTrendService {
    * @returns Entry trend
    */
   private getEntryTrend(byTimeframe: MultiTimeframeAnalysis['byTimeframe']): TrendBias {
+    // ========================================================================
+    // VALIDATE INPUT (GRACEFUL_DEGRADE)
+    // ========================================================================
+
+    if (!byTimeframe || !byTimeframe['5m'] || !byTimeframe['15m']) {
+      return TrendBias.NEUTRAL;
+    }
+
     const shortTFTrends = [byTimeframe['5m'].bias, byTimeframe['15m'].bias];
+
+    // ========================================================================
+    // DETERMINE ENTRY TREND
+    // ========================================================================
 
     // If both agree
     if (shortTFTrends[0] === shortTFTrends[1]) {
@@ -265,8 +444,12 @@ export class MultiTimeframeTrendService {
     }
 
     // If different, check which is stronger
-    const strength5m = byTimeframe['5m'].strength;
-    const strength15m = byTimeframe['15m'].strength;
+    const strength5m = byTimeframe['5m'].strength ?? 0;
+    const strength15m = byTimeframe['15m'].strength ?? 0;
+
+    if (!Number.isFinite(strength5m) || !Number.isFinite(strength15m)) {
+      return TrendBias.NEUTRAL;
+    }
 
     if (strength5m > strength15m) {
       return byTimeframe['5m'].bias;
@@ -288,6 +471,28 @@ export class MultiTimeframeTrendService {
   private detectAlignment(
     byTimeframe: MultiTimeframeAnalysis['byTimeframe'],
   ): 'ALIGNED' | 'CONFLICTED' | 'MIXED' {
+    // ========================================================================
+    // VALIDATE INPUT (GRACEFUL_DEGRADE)
+    // ========================================================================
+
+    if (!byTimeframe) {
+      return 'MIXED';
+    }
+
+    // Validate all timeframes exist
+    if (
+      !byTimeframe['5m'] ||
+      !byTimeframe['15m'] ||
+      !byTimeframe['1h'] ||
+      !byTimeframe['4h']
+    ) {
+      return 'MIXED';
+    }
+
+    // ========================================================================
+    // COUNT BIASES
+    // ========================================================================
+
     const trends = [
       byTimeframe['5m'].bias,
       byTimeframe['15m'].bias,
@@ -300,6 +505,10 @@ export class MultiTimeframeTrendService {
     const bearishCount = trends.filter((t) => t === TrendBias.BEARISH).length;
     const neutralCount = trends.filter((t) => t === TrendBias.NEUTRAL).length;
 
+    // ========================================================================
+    // DETERMINE ALIGNMENT
+    // ========================================================================
+
     // All aligned in same direction
     if (bullishCount === 4 || bearishCount === 4) {
       return 'ALIGNED';
@@ -307,8 +516,10 @@ export class MultiTimeframeTrendService {
 
     // Check for key conflicts (e.g., 4h vs 1h disagree)
     if (
-      (byTimeframe['4h'].bias === TrendBias.BULLISH && byTimeframe['1h'].bias === TrendBias.BEARISH) ||
-      (byTimeframe['4h'].bias === TrendBias.BEARISH && byTimeframe['1h'].bias === TrendBias.BULLISH)
+      (byTimeframe['4h'].bias === TrendBias.BULLISH &&
+        byTimeframe['1h'].bias === TrendBias.BEARISH) ||
+      (byTimeframe['4h'].bias === TrendBias.BEARISH &&
+        byTimeframe['1h'].bias === TrendBias.BULLISH)
     ) {
       return 'CONFLICTED';
     }
@@ -331,12 +542,37 @@ export class MultiTimeframeTrendService {
   private calculateConsensusStrength(
     byTimeframe: MultiTimeframeAnalysis['byTimeframe'],
   ): number {
+    // ========================================================================
+    // VALIDATE INPUT (GRACEFUL_DEGRADE)
+    // ========================================================================
+
+    if (!byTimeframe) {
+      return 0.3;
+    }
+
+    // Validate all timeframes exist with valid strength values
+    const strength4h = byTimeframe['4h']?.strength ?? 0.3;
+    const strength1h = byTimeframe['1h']?.strength ?? 0.3;
+    const strength15m = byTimeframe['15m']?.strength ?? 0.3;
+    const strength5m = byTimeframe['5m']?.strength ?? 0.3;
+
+    // Check for NaN/Infinity values
+    if (
+      !Number.isFinite(strength4h) ||
+      !Number.isFinite(strength1h) ||
+      !Number.isFinite(strength15m) ||
+      !Number.isFinite(strength5m)
+    ) {
+      return 0.3;
+    }
+
+    // ========================================================================
+    // CALCULATE WEIGHTED AVERAGE
+    // ========================================================================
+
     // Weighted average: 4h=40%, 1h=30%, 15m=20%, 5m=10%
     const weighted =
-      byTimeframe['4h'].strength * 0.4 +
-      byTimeframe['1h'].strength * 0.3 +
-      byTimeframe['15m'].strength * 0.2 +
-      byTimeframe['5m'].strength * 0.1;
+      strength4h * 0.4 + strength1h * 0.3 + strength15m * 0.2 + strength5m * 0.1;
 
     // Clamp to [0, 1]
     return Math.max(0, Math.min(1, weighted));
