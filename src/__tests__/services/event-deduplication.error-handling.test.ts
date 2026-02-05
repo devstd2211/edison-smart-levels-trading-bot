@@ -298,7 +298,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.13: Should handle mixed logger/cleanup failures', () => {
-      service = new EventDeduplicationService(3, 100, logger, errorHandler);
+      service = new EventDeduplicationService(3, 5000, logger, errorHandler); // 5s TTL to prevent expiry
 
       // Mock logger to fail sometimes
       let logCallCount = 0;
@@ -310,15 +310,15 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
       });
 
       // Add events, some will fail to log but service continues
+      const timestamp = Date.now();
       for (let i = 0; i < 5; i++) {
-        const timestamp = Date.now();
         service.isDuplicate('TP', `order-${i}`, timestamp);
         service.isDuplicate('TP', `order-${i}`, timestamp); // Duplicate
       }
 
-      // Service should still work
-      const result = service.isDuplicate('TP', 'order-0', Date.now());
-      expect(result).toBe(true);
+      // Service should still work - use same timestamp to prevent TTL expiry
+      const result = service.isDuplicate('TP', 'order-0', timestamp);
+      expect(result).toBe(true); // Should be true (duplicate of order-0)
     });
 
     it('test-8.9.19.14: Should work with optional ErrorHandler parameter', () => {
