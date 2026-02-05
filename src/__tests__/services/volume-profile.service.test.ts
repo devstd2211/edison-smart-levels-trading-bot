@@ -19,7 +19,7 @@ describe('VolumeProfileService', () => {
       valueAreaPercent: 70, // 70% of volume for value area
       priceTickSize: 0.01, // Price granularity
     };
-    service = new VolumeProfileService(config, logger);
+    service = new VolumeProfileService(logger, config);
   });
 
   const createCandle = (low: number, high: number, close: number, volume: number): Candle => ({
@@ -38,7 +38,7 @@ describe('VolumeProfileService', () => {
 
     it('should initialize with disabled config', () => {
       const disabledConfig = { ...config, enabled: false };
-      const disabledService = new VolumeProfileService(disabledConfig, logger);
+      const disabledService = new VolumeProfileService(logger, disabledConfig);
       expect(disabledService).toBeDefined();
     });
   });
@@ -135,7 +135,7 @@ describe('VolumeProfileService', () => {
       ];
 
       const config2Candles = { ...config, lookbackCandles: 2 };
-      const service2Candles = new VolumeProfileService(config2Candles, logger);
+      const service2Candles = new VolumeProfileService(logger, config2Candles);
       const result = service2Candles.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -150,7 +150,7 @@ describe('VolumeProfileService', () => {
       ];
 
       const config100Candles = { ...config, lookbackCandles: 100 };
-      const service100Candles = new VolumeProfileService(config100Candles, logger);
+      const service100Candles = new VolumeProfileService(logger, config100Candles);
       const result = service100Candles.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -161,9 +161,10 @@ describe('VolumeProfileService', () => {
 
   describe('calculate() - edge cases', () => {
     it('should handle empty candles array', () => {
-      const result = service.calculate([]);
-
-      expect(result).toBeNull();
+      // Phase 8.9.47: Now throws ValidationError instead of returning null
+      expect(() => {
+        service.calculate([]);
+      }).toThrow();
     });
 
     it('should handle single candle', () => {
@@ -206,7 +207,7 @@ describe('VolumeProfileService', () => {
       const candles = [createCandle(100, 100.1, 100.05, 1000)]; // 0.1 range
 
       const config01Tick = { ...config, priceTickSize: 0.1 };
-      const service01Tick = new VolumeProfileService(config01Tick, logger);
+      const service01Tick = new VolumeProfileService(logger, config01Tick);
       const result = service01Tick.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -218,11 +219,11 @@ describe('VolumeProfileService', () => {
       const candles = [createCandle(100, 101, 100.5, 1000)]; // 1.0 range
 
       const config01Tick = { ...config, priceTickSize: 0.1 };
-      const service01Tick = new VolumeProfileService(config01Tick, logger);
+      const service01Tick = new VolumeProfileService(logger, config01Tick);
       const result01 = service01Tick.calculate(candles);
 
       const config001Tick = { ...config, priceTickSize: 0.01 };
-      const service001Tick = new VolumeProfileService(config001Tick, logger);
+      const service001Tick = new VolumeProfileService(logger, config001Tick);
       const result001 = service001Tick.calculate(candles);
 
       expect(result01).not.toBeNull();
@@ -269,7 +270,7 @@ describe('VolumeProfileService', () => {
   describe('calculate() - disabled mode', () => {
     it('should return null when disabled', () => {
       const disabledConfig = { ...config, enabled: false };
-      const disabledService = new VolumeProfileService(disabledConfig, logger);
+      const disabledService = new VolumeProfileService(logger, disabledConfig);
 
       const candles = [createCandle(100, 110, 105, 1000)];
       const result = disabledService.calculate(candles);
