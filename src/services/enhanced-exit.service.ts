@@ -22,6 +22,7 @@ import {
 } from '../types';
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // Local Level type definition
 interface Level {
@@ -236,8 +237,144 @@ export class EnhancedExitService {
   constructor(
     private logger: LoggerService,
     config?: Partial<EnhancedExitConfig>,
+    private errorHandler?: ErrorHandler,
   ) {
     this.config = this.mergeConfig(DEFAULT_CONFIG, config);
+    this.validateConfig();
+  }
+
+  /**
+   * Validate configuration on construction
+   * THROW: Invalid config parameters prevent service creation
+   */
+  private validateConfig(): void {
+    // Validate riskRewardGate config
+    if (this.config.riskRewardGate.enabled) {
+      if (this.config.riskRewardGate.minRR <= 0 || this.config.riskRewardGate.minRR > 10) {
+        const error = new Error(
+          `Invalid riskRewardGate.minRR: ${this.config.riskRewardGate.minRR}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (this.config.riskRewardGate.preferredRR <= 0 || this.config.riskRewardGate.preferredRR > 10) {
+        const error = new Error(
+          `Invalid riskRewardGate.preferredRR: ${this.config.riskRewardGate.preferredRR}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate structureBasedTP config
+    if (this.config.structureBasedTP.enabled) {
+      if (this.config.structureBasedTP.offsetPercent < 0 || this.config.structureBasedTP.offsetPercent > 5) {
+        const error = new Error(
+          `Invalid structureBasedTP.offsetPercent: ${this.config.structureBasedTP.offsetPercent}. Must be between 0 and 5.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (this.config.structureBasedTP.fallbackPercent <= 0 || this.config.structureBasedTP.fallbackPercent > 10) {
+        const error = new Error(
+          `Invalid structureBasedTP.fallbackPercent: ${this.config.structureBasedTP.fallbackPercent}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate atrBasedTP config
+    if (this.config.atrBasedTP.enabled) {
+      if (this.config.atrBasedTP.tp1AtrMultiplier <= 0 || this.config.atrBasedTP.tp1AtrMultiplier > 10) {
+        const error = new Error(
+          `Invalid atrBasedTP.tp1AtrMultiplier: ${this.config.atrBasedTP.tp1AtrMultiplier}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (this.config.atrBasedTP.minTPPercent <= 0 || this.config.atrBasedTP.minTPPercent > 10) {
+        const error = new Error(
+          `Invalid atrBasedTP.minTPPercent: ${this.config.atrBasedTP.minTPPercent}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (this.config.atrBasedTP.maxTPPercent <= 0 || this.config.atrBasedTP.maxTPPercent > 50) {
+        const error = new Error(
+          `Invalid atrBasedTP.maxTPPercent: ${this.config.atrBasedTP.maxTPPercent}. Must be between 0 and 50.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate dynamicBreakeven config
+    if (this.config.dynamicBreakeven.enabled) {
+      if (this.config.dynamicBreakeven.activationPercent <= 0 || this.config.dynamicBreakeven.activationPercent > 10) {
+        const error = new Error(
+          `Invalid dynamicBreakeven.activationPercent: ${this.config.dynamicBreakeven.activationPercent}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate adaptiveTrailing config
+    if (this.config.adaptiveTrailing.enabled) {
+      if (this.config.adaptiveTrailing.activationPercent <= 0 || this.config.adaptiveTrailing.activationPercent > 20) {
+        const error = new Error(
+          `Invalid adaptiveTrailing.activationPercent: ${this.config.adaptiveTrailing.activationPercent}. Must be between 0 and 20.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (this.config.adaptiveTrailing.trailingDistancePercent <= 0 || this.config.adaptiveTrailing.trailingDistancePercent > 10) {
+        const error = new Error(
+          `Invalid adaptiveTrailing.trailingDistancePercent: ${this.config.adaptiveTrailing.trailingDistancePercent}. Must be between 0 and 10.`,
+        );
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Safe logging wrapper - SKIP logging failures
+   */
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, context?: any): void {
+    try {
+      this.logger[level](message, context);
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
   }
 
   /**
@@ -275,46 +412,143 @@ export class EnhancedExitService {
   ): RiskRewardValidation {
     const config = this.config.riskRewardGate;
 
-    if (!config.enabled) {
+    try {
+      // GRACEFUL_DEGRADE validation for inputs (return invalid instead of throwing)
+      if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(
+            new Error(`Invalid entryPrice: ${entryPrice}`),
+            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+          );
+        }
+        return {
+          valid: false,
+          riskRewardRatio: 0,
+          riskPercent: 0,
+          rewardPercent: 0,
+          recommendation: 'Invalid entry price - trade blocked',
+        };
+      }
+
+      if (!Number.isFinite(stopLoss)) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(
+            new Error(`Invalid stopLoss: ${stopLoss}`),
+            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+          );
+        }
+        return {
+          valid: false,
+          riskRewardRatio: 0,
+          riskPercent: 0,
+          rewardPercent: 0,
+          recommendation: 'Invalid stop loss - trade blocked',
+        };
+      }
+
+      if (!Number.isFinite(takeProfit)) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(
+            new Error(`Invalid takeProfit: ${takeProfit}`),
+            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+          );
+        }
+        return {
+          valid: false,
+          riskRewardRatio: 0,
+          riskPercent: 0,
+          rewardPercent: 0,
+          recommendation: 'Invalid take profit - trade blocked',
+        };
+      }
+
+      if (!config.enabled) {
+        return {
+          valid: true,
+          riskRewardRatio: 0,
+          riskPercent: 0,
+          rewardPercent: 0,
+          recommendation: 'R:R Gate disabled',
+        };
+      }
+
+      const riskDistance = Math.abs(entryPrice - stopLoss);
+      const rewardDistance = Math.abs(takeProfit - entryPrice);
+
+      // GRACEFUL_DEGRADE: Check for division by zero
+      if (riskDistance === 0) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(
+            new Error('Risk distance is zero (SL = entry)'),
+            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+          );
+        }
+        return {
+          valid: false,
+          riskRewardRatio: 0,
+          riskPercent: 0,
+          rewardPercent: 0,
+          recommendation: 'SL equals entry - trade blocked',
+        };
+      }
+
+      const riskPercent = (riskDistance / entryPrice) * PERCENT_MULTIPLIER;
+      const rewardPercent = (rewardDistance / entryPrice) * PERCENT_MULTIPLIER;
+
+      // Validate calculations
+      if (!Number.isFinite(riskPercent) || !Number.isFinite(rewardPercent)) {
+        if (this.errorHandler) {
+          this.errorHandler.handle(
+            new Error(`Calculation produced non-finite values`),
+            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+          );
+        }
+        return {
+          valid: false,
+          riskRewardRatio: 0,
+          riskPercent: 0,
+          rewardPercent: 0,
+          recommendation: 'Calculation error - position blocked for safety',
+        };
+      }
+
+      const riskRewardRatio = rewardDistance / riskDistance;
+
+      if (riskRewardRatio < config.minRR) {
+        return {
+          valid: false,
+          riskRewardRatio,
+          riskPercent,
+          rewardPercent,
+          recommendation: `R:R ${riskRewardRatio.toFixed(2)} < minimum ${config.minRR}. Skip trade.`,
+        };
+      }
+
+      const recommendation =
+        riskRewardRatio >= config.preferredRR
+          ? `Excellent R:R ${riskRewardRatio.toFixed(2)} >= preferred ${config.preferredRR}`
+          : `Acceptable R:R ${riskRewardRatio.toFixed(2)} >= minimum ${config.minRR}`;
+
       return {
         valid: true,
-        riskRewardRatio: 0,
-        riskPercent: 0,
-        rewardPercent: 0,
-        recommendation: 'R:R Gate disabled',
-      };
-    }
-
-    const riskDistance = Math.abs(entryPrice - stopLoss);
-    const rewardDistance = Math.abs(takeProfit - entryPrice);
-
-    const riskPercent = (riskDistance / entryPrice) * PERCENT_MULTIPLIER;
-    const rewardPercent = (rewardDistance / entryPrice) * PERCENT_MULTIPLIER;
-
-    const riskRewardRatio = rewardDistance / riskDistance;
-
-    if (riskRewardRatio < config.minRR) {
-      return {
-        valid: false,
         riskRewardRatio,
         riskPercent,
         rewardPercent,
-        recommendation: `R:R ${riskRewardRatio.toFixed(2)} < minimum ${config.minRR}. Skip trade.`,
+        recommendation,
+      };
+    } catch (error) {
+      // Catch-all for unexpected errors
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      return {
+        valid: false,
+        riskRewardRatio: 0,
+        riskPercent: 0,
+        rewardPercent: 0,
+        recommendation: 'Unexpected error - trade blocked',
       };
     }
-
-    const recommendation =
-      riskRewardRatio >= config.preferredRR
-        ? `Excellent R:R ${riskRewardRatio.toFixed(2)} >= preferred ${config.preferredRR}`
-        : `Acceptable R:R ${riskRewardRatio.toFixed(2)} >= minimum ${config.minRR}`;
-
-    return {
-      valid: true,
-      riskRewardRatio,
-      riskPercent,
-      rewardPercent,
-      recommendation,
-    };
   }
 
   // ==========================================================================
@@ -363,7 +597,7 @@ export class EnhancedExitService {
         hit: false,
       });
 
-      this.logger.debug('Structure-Based TP1', {
+      this.safeLog('debug', 'Structure-Based TP1', {
         nextLevel: nextLevel.price.toFixed(DECIMAL_PLACES.PRICE),
         tp1Price: tp1Price.toFixed(DECIMAL_PLACES.PRICE),
         tp1Percent: tp1Percent.toFixed(2) + '%',
@@ -390,7 +624,7 @@ export class EnhancedExitService {
       }
     } else {
       // Fallback: use percentage-based TP
-      this.logger.debug('No structural level found, using fallback %', {
+      this.safeLog('debug', 'No structural level found, using fallback %', {
         direction,
         fallbackPercent: config.fallbackPercent,
       });
@@ -525,7 +759,7 @@ export class EnhancedExitService {
       reason = 'Enforced minimum 1% SL distance';
     }
 
-    this.logger.debug('Liquidity-Aware SL', {
+    this.safeLog('debug', 'Liquidity-Aware SL', {
       entryPrice: entryPrice.toFixed(DECIMAL_PLACES.PRICE),
       stopLoss: candidateSL.toFixed(DECIMAL_PLACES.PRICE),
       slType,
@@ -618,7 +852,7 @@ export class EnhancedExitService {
       });
     }
 
-    this.logger.debug('ATR-Based TP', {
+    this.safeLog('debug', 'ATR-Based TP', {
       atrPercent: atrPercent.toFixed(2) + '%',
       tp1: tp1Percent.toFixed(2) + '%',
       tp2: tp2Percent.toFixed(2) + '%',
@@ -662,7 +896,7 @@ export class EnhancedExitService {
         break;
     }
 
-    this.logger.debug('Session-Based TP Multiplier', {
+    this.safeLog('debug', 'Session-Based TP Multiplier', {
       session,
       multiplier,
     });
@@ -937,11 +1171,25 @@ export class EnhancedExitService {
    * Update configuration dynamically
    */
   updateConfig(updates: Partial<EnhancedExitConfig>): void {
-    this.config = this.mergeConfig(this.config, updates);
-    this.logger.info('EnhancedExitService config updated', {
-      riskRewardGateEnabled: this.config.riskRewardGate.enabled,
-      structureBasedTPEnabled: this.config.structureBasedTP.enabled,
-      liquidityAwareSLEnabled: this.config.liquidityAwareSL.enabled,
-    });
+    const oldConfig = this.config;
+    try {
+      // Try to merge and validate new config
+      const mergedConfig = this.mergeConfig(this.config, updates);
+      this.config = mergedConfig;
+      this.validateConfig(); // Validate new config - throws if invalid
+
+      this.safeLog('info', 'EnhancedExitService config updated', {
+        riskRewardGateEnabled: this.config.riskRewardGate.enabled,
+        structureBasedTPEnabled: this.config.structureBasedTP.enabled,
+        liquidityAwareSLEnabled: this.config.liquidityAwareSL.enabled,
+      });
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Keep existing config on validation failure
+      this.config = oldConfig;
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      this.safeLog('warn', 'Config update failed, reverting to existing config', { error: (error as Error).message });
+    }
   }
 }
