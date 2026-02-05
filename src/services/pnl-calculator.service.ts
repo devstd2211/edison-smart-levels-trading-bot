@@ -41,6 +41,36 @@ export interface PnLResult {
 
 export class PnLCalculatorService {
   /**
+   * Validate input parameters
+   * THROW: Invalid inputs prevent calculation
+   */
+  private static validateInputs(
+    entryPrice: number,
+    exitPrice: number,
+    quantity: number,
+    feeRate: number,
+  ): void {
+    // Validate prices
+    if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+      throw new Error(`Invalid entryPrice: ${entryPrice}. Must be a positive finite number.`);
+    }
+
+    if (!Number.isFinite(exitPrice) || exitPrice <= 0) {
+      throw new Error(`Invalid exitPrice: ${exitPrice}. Must be a positive finite number.`);
+    }
+
+    // Validate quantity
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw new Error(`Invalid quantity: ${quantity}. Must be a positive finite number.`);
+    }
+
+    // Validate fee rate
+    if (!Number.isFinite(feeRate) || feeRate < 0 || feeRate > 1.0) {
+      throw new Error(`Invalid fee rate: ${feeRate}. Must be between 0 and 1.0.`);
+    }
+  }
+
+  /**
    * Calculate PnL for a trade
    * @param side - Position side (LONG or SHORT)
    * @param entryPrice - Entry price
@@ -55,6 +85,9 @@ export class PnLCalculatorService {
     quantity: number,
     feeRate: number = BYBIT_TAKER_FEE,
   ): PnLResult {
+    // Validate all inputs before calculation
+    this.validateInputs(entryPrice, exitPrice, quantity, feeRate);
+
     // Calculate gross PnL
     const priceDiff = exitPrice - entryPrice;
     const directionMultiplier = side === PositionSide.LONG ? 1 : -1;
@@ -88,10 +121,33 @@ export class PnLCalculatorService {
     closes: Array<{ quantity: number; exitPrice: number }>,
     feeRate: number = BYBIT_TAKER_FEE,
   ): PnLResult {
+    // Validate entry price and fee rate once
+    if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
+      throw new Error(`Invalid entryPrice: ${entryPrice}. Must be a positive finite number.`);
+    }
+
+    if (!Number.isFinite(feeRate) || feeRate < 0 || feeRate > 1.0) {
+      throw new Error(`Invalid fee rate: ${feeRate}. Must be between 0 and 1.0.`);
+    }
+
+    // Validate closes array
+    if (!closes || closes.length === 0) {
+      throw new Error('Invalid closes array. Must contain at least one close.');
+    }
+
     let totalPnlGross = 0;
     let totalFees = 0;
 
-    closes.forEach((close) => {
+    // Validate and process each close
+    closes.forEach((close, index) => {
+      if (!close || !Number.isFinite(close.exitPrice) || close.exitPrice <= 0) {
+        throw new Error(`Invalid exitPrice at close ${index}: ${close?.exitPrice}. Must be a positive finite number.`);
+      }
+
+      if (!Number.isFinite(close.quantity) || close.quantity <= 0) {
+        throw new Error(`Invalid quantity at close ${index}: ${close.quantity}. Must be a positive finite number.`);
+      }
+
       const result = this.calculate(side, entryPrice, close.exitPrice, close.quantity, feeRate);
       totalPnlGross += result.pnlGross;
       totalFees += result.fees;
