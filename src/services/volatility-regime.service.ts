@@ -22,6 +22,8 @@ import {
   VolatilityRegimeAnalysis,
 } from '../types';
 import { SessionDetector, TradingSession } from '../utils/session-detector';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ValidationError, ConfigurationError } from '../errors/DomainErrors';
 
 // ============================================================================
 // CONSTANTS
@@ -76,8 +78,66 @@ export class VolatilityRegimeService {
   constructor(
     private logger: LoggerService,
     config?: Partial<VolatilityRegimeConfig>,
+    private readonly errorHandler?: ErrorHandler, // Phase 8.9.46
   ) {
     this.config = this.mergeConfig(DEFAULT_CONFIG, config);
+
+    // Validate config structure
+    if (config && this.config.thresholds) {
+      const { lowAtrPercent, highAtrPercent } = this.config.thresholds;
+
+      if (
+        !Number.isFinite(lowAtrPercent) ||
+        !Number.isFinite(highAtrPercent) ||
+        lowAtrPercent < 0 ||
+        highAtrPercent < 0
+      ) {
+        const error = new ValidationError(
+          'VolatilityRegimeService: Invalid threshold values',
+          {
+            field: 'thresholds',
+            lowAtrPercent,
+            highAtrPercent,
+            reason: 'ATR thresholds must be valid positive numbers',
+          }
+        );
+
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, {
+            strategy: RecoveryStrategy.THROW,
+            context: 'VolatilityRegimeService.constructor',
+          });
+        }
+        throw error;
+      }
+    }
+
+    this.safeLog('info', '✅ VolatilityRegimeService initialized', {
+      enabled: this.config.enabled,
+      lowAtrPercent: this.config.thresholds.lowAtrPercent,
+      highAtrPercent: this.config.thresholds.highAtrPercent,
+    });
+  }
+
+  /**
+   * Safe logging wrapper with SKIP strategy - Phase 8.9.46
+   */
+  private safeLog(
+    level: 'info' | 'debug' | 'warn' | 'error',
+    message: string,
+    meta?: any
+  ): void {
+    try {
+      this.logger[level](message, meta);
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: `VolatilityRegimeService.${level}`,
+        });
+      }
+      // Silently skip logging errors
+    }
   }
 
   /**
@@ -107,51 +167,117 @@ export class VolatilityRegimeService {
 
   /**
    * Analyze current volatility and return regime with appropriate params
+   * Phase 8.9.46: Added ErrorHandler with THROW (validation) + GRACEFUL_DEGRADE (analysis failures)
    *
    * @param atrPercent - Current ATR as percentage of price
    * @returns Volatility regime analysis with params
    */
   analyze(atrPercent: number): VolatilityRegimeAnalysis {
-    if (!this.config.enabled) {
-      // Return MEDIUM with default params when disabled
+    // ========================================================================
+    // VALIDATION - Phase 8.9.46 (OUTSIDE try-catch to propagate THROW errors)
+    // ========================================================================
+
+    if (!Number.isFinite(atrPercent) || atrPercent < 0) {
+      const error = new ValidationError(
+        'VolatilityRegimeService: Invalid ATR percent',
+        {
+          field: 'atrPercent',
+          value: atrPercent,
+          reason: 'ATR percent must be a valid positive number',
+        }
+      );
+
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.THROW,
+          context: 'VolatilityRegimeService.analyze',
+        });
+      }
+      throw error;
+    }
+
+    try {
+
+      if (!this.config.enabled) {
+        // Return MEDIUM with default params when disabled
+        return {
+          regime: VolatilityRegime.MEDIUM,
+          atrPercent,
+          params: this.config.regimes.MEDIUM,
+          reason: 'Volatility regime detection disabled',
+        };
+      }
+
+      // Determine regime based on ATR thresholds
+      const regime = this.detectRegime(atrPercent);
+      const params = this.config.regimes[regime];
+
+      // Track regime changes
+      if (regime !== this.lastRegime) {
+        this.regimeChangeCount++;
+        this.safeLog('info', '🔄 Volatility regime changed', {
+          from: this.lastRegime,
+          to: regime,
+          atrPercent: atrPercent.toFixed(3),
+          changeCount: this.regimeChangeCount,
+        });
+        this.lastRegime = regime;
+      }
+
+      const reason = this.buildReason(regime, atrPercent);
+
+      this.safeLog('debug', '📊 Volatility regime analysis', {
+        regime,
+        atrPercent: atrPercent.toFixed(3),
+        params,
+      });
+
+      return {
+        regime,
+        atrPercent,
+        params,
+        reason,
+      };
+    } catch (error) {
+      // ========================================================================
+      // ERROR RECOVERY - Phase 8.9.46
+      // ========================================================================
+
+      const tradingError = new ValidationError(
+        'VolatilityRegimeService: Analysis failed',
+        {
+          field: 'analyze',
+          value: atrPercent,
+          reason: (error as Error).message,
+        },
+        error as Error
+      );
+
+      if (this.errorHandler) {
+        this.errorHandler.handle(tradingError, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'VolatilityRegimeService.analyze',
+          onRecover: () => {
+            this.safeLog('warn', 'Analysis failed - returning safe defaults', {
+              atrPercent,
+              reason: (error as Error).message,
+            });
+          },
+        });
+      } else {
+        this.safeLog('warn', 'Analysis failed - returning safe defaults', {
+          atrPercent,
+        });
+      }
+
+      // GRACEFUL_DEGRADE: Return safe defaults
       return {
         regime: VolatilityRegime.MEDIUM,
-        atrPercent,
+        atrPercent: 0.5, // Safe middle value
         params: this.config.regimes.MEDIUM,
-        reason: 'Volatility regime detection disabled',
+        reason: 'Safe defaults after analysis failure',
       };
     }
-
-    // Determine regime based on ATR thresholds
-    const regime = this.detectRegime(atrPercent);
-    const params = this.config.regimes[regime];
-
-    // Track regime changes
-    if (regime !== this.lastRegime) {
-      this.regimeChangeCount++;
-      this.logger.info('🔄 Volatility regime changed', {
-        from: this.lastRegime,
-        to: regime,
-        atrPercent: atrPercent.toFixed(3),
-        changeCount: this.regimeChangeCount,
-      });
-      this.lastRegime = regime;
-    }
-
-    const reason = this.buildReason(regime, atrPercent);
-
-    this.logger.debug('📊 Volatility regime analysis', {
-      regime,
-      atrPercent: atrPercent.toFixed(3),
-      params,
-    });
-
-    return {
-      regime,
-      atrPercent,
-      params,
-      reason,
-    };
   }
 
   /**
@@ -326,14 +452,60 @@ export class VolatilityRegimeService {
   }
 
   /**
-   * Update configuration
+   * Update configuration - Phase 8.9.46: Using safeLog
    */
   updateConfig(config: Partial<VolatilityRegimeConfig>): void {
-    this.config = this.mergeConfig(this.config, config);
-    this.logger.info('⚙️ Volatility regime config updated', {
-      enabled: this.config.enabled,
-      thresholds: this.config.thresholds,
-    });
+    try {
+      if (config && config.thresholds) {
+        const { lowAtrPercent, highAtrPercent } = config.thresholds;
+
+        if (!Number.isFinite(lowAtrPercent) || !Number.isFinite(highAtrPercent)) {
+          const error = new ValidationError(
+            'VolatilityRegimeService: Invalid threshold values in config update',
+            {
+              field: 'thresholds',
+              lowAtrPercent,
+              highAtrPercent,
+              reason: 'ATR thresholds must be valid numbers',
+            }
+          );
+
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, {
+              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+              context: 'VolatilityRegimeService.updateConfig',
+              onRecover: () => {
+                this.safeLog('warn', 'Config update failed - keeping existing config', {
+                  lowAtrPercent,
+                  highAtrPercent,
+                });
+              },
+            });
+          } else {
+            this.safeLog('warn', 'Config update failed - keeping existing config', {
+              lowAtrPercent,
+              highAtrPercent,
+            });
+          }
+
+          return; // Skip config update on validation error
+        }
+      }
+
+      this.config = this.mergeConfig(this.config, config);
+      this.safeLog('info', '⚙️ Volatility regime config updated', {
+        enabled: this.config.enabled,
+        thresholds: this.config.thresholds,
+      });
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'VolatilityRegimeService.updateConfig',
+        });
+      }
+      // Silently skip on unexpected error
+    }
   }
 
   /**

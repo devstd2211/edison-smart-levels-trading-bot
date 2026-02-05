@@ -299,9 +299,10 @@ describe('VolatilityRegimeService', () => {
       expect(result.regime).toBe(VolatilityRegime.LOW);
     });
 
-    it('should handle negative ATR (invalid input)', () => {
-      const result = service.analyze(-0.5);
-      expect(result.regime).toBe(VolatilityRegime.LOW);
+    it('should throw on negative ATR (invalid input)', () => {
+      expect(() => {
+        service.analyze(-0.5);
+      }).toThrow();
     });
 
     it('should handle very small ATR', () => {
