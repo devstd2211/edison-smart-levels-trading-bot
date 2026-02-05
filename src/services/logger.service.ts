@@ -7,8 +7,9 @@
  * - Console logging with colors
  * - Async queue-based file writes
  * - 7-day log cleanup
+ * - ErrorHandler integration (Phase 8.9.55)
  *
- * RULE: NO fallbacks, FAIL FAST
+ * RULE: NO fallbacks, FAIL FAST (for validation), GRACEFUL_DEGRADE for file operations
  */
 
 import { existsSync, mkdirSync } from 'fs';
@@ -16,6 +17,7 @@ import { appendFile } from 'fs/promises';
 import { join } from 'path';
 import { LogLevel, LogEntry } from '../types';
 import { TIME_INTERVALS } from '../constants/technical.constants';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   [LogLevel.DEBUG]: 0,
@@ -37,15 +39,31 @@ export class LoggerService {
   private writeQueue: WriteQueueItem[] = [];
   private isProcessingQueue: boolean = false;
   private enableConsoleOutput: boolean = true; // Can be disabled for dashboard
+  private readonly errorHandler?: ErrorHandler;
 
   constructor(
-    minLevel: LogLevel = LogLevel.INFO,
+    minLevel: LogLevel | string = LogLevel.INFO,
     logDir: string = './logs',
     logToFile: boolean = true,
+    errorHandler?: ErrorHandler,
   ) {
-    this.minLevel = minLevel;
+    // THROW: Validate minLevel (Phase 8.9.55)
+    this.validateLogLevel(minLevel);
+
+    // THROW: Validate logDir when logging to file
+    if (logToFile && !this.isValidLogDir(logDir)) {
+      throw new Error(`Invalid log directory: ${logDir}`);
+    }
+
+    // Normalize string to enum (for config compatibility)
+    const normalizedLevel = typeof minLevel === 'string'
+      ? (minLevel.toUpperCase() as LogLevel)
+      : minLevel;
+
+    this.minLevel = normalizedLevel;
     this.logDir = logDir;
     this.logToFile = logToFile;
+    this.errorHandler = errorHandler;
 
     if (this.logToFile) {
       this.ensureLogDirectory();
@@ -55,22 +73,86 @@ export class LoggerService {
   }
 
   /**
-   * Ensure log directory exists
+   * Validate that minLevel is a valid LogLevel value (accept both enum and string)
+   */
+  private validateLogLevel(level: any): void {
+    const validLevels = Object.values(LogLevel);
+
+    // Accept both enum values
+    if (validLevels.includes(level)) {
+      return;
+    }
+
+    // Accept uppercase strings (for config compatibility)
+    if (typeof level === 'string') {
+      const upperLevel = level.toUpperCase();
+      if (validLevels.includes(upperLevel as LogLevel)) {
+        return;
+      }
+    }
+
+    throw new Error(`Invalid log level: ${level}. Must be one of: ${validLevels.join(', ')}`);
+  }
+
+  /**
+   * Validate that logDir is a valid directory path
+   */
+  private isValidLogDir(logDir: any): boolean {
+    if (typeof logDir !== 'string') {
+      return false;
+    }
+    if (logDir.length === 0) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Ensure log directory exists (GRACEFUL_DEGRADE on creation failure)
    */
   private ensureLogDirectory(): void {
-    if (!existsSync(this.logDir)) {
-      mkdirSync(this.logDir, { recursive: true });
-      console.log(`📁 Created log directory: ${this.logDir}`);
+    try {
+      if (!existsSync(this.logDir)) {
+        mkdirSync(this.logDir, { recursive: true });
+        this.safeLog(() => {
+          console.log(`📁 Created log directory: ${this.logDir}`);
+        });
+      }
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Log directory creation failure
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      } else {
+        this.safeLog(() => {
+          console.error(`Failed to create log directory: ${this.logDir}`, error);
+        });
+      }
+      // Continue execution - logging can work without file system
     }
   }
 
   /**
-   * Clean old log files (>7 days)
+   * Clean old log files (>7 days) - GRACEFUL_DEGRADE on failures
    */
   private async cleanOldLogs(): Promise<void> {
     try {
       const { readdir, stat, unlink } = await import('fs/promises');
-      const files = await readdir(this.logDir);
+
+      let files: string[];
+      try {
+        files = await readdir(this.logDir);
+      } catch (error) {
+        // GRACEFUL_DEGRADE: Cannot read directory
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        } else {
+          this.safeLog(() => {
+            console.error(`Failed to read log directory: ${this.logDir}`, error);
+          });
+        }
+        return;
+      }
+
       const now = Date.now();
       const maxAge = TIME_INTERVALS.MS_PER_7_DAYS; // 7 days in milliseconds
 
@@ -87,14 +169,30 @@ export class LoggerService {
           if (age > maxAge) {
             await unlink(filePath);
             const daysOld = Math.floor(age / TIME_INTERVALS.MS_PER_DAY);
-            console.log(`🗑️ Deleted old log file: ${file} (${daysOld} days old)`);
+            this.safeLog(() => {
+              console.log(`🗑️ Deleted old log file: ${file} (${daysOld} days old)`);
+            });
           }
         } catch (fileError) {
-          console.error(`Failed to process log file ${file}:`, fileError);
+          // GRACEFUL_DEGRADE: Continue if individual file operations fail
+          if (this.errorHandler) {
+            this.errorHandler.handle(fileError, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+          } else {
+            this.safeLog(() => {
+              console.error(`Failed to process log file ${file}:`, fileError);
+            });
+          }
         }
       }
     } catch (error) {
-      console.error('Failed to clean old log files:', error);
+      // GRACEFUL_DEGRADE: Cleanup failure should not block logging
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      } else {
+        this.safeLog(() => {
+          console.error('Failed to clean old log files:', error);
+        });
+      }
     }
   }
 
@@ -136,7 +234,7 @@ export class LoggerService {
   }
 
   /**
-   * Process write queue asynchronously
+   * Process write queue asynchronously - GRACEFUL_DEGRADE on write failures
    */
   private async processWriteQueue(): Promise<void> {
     if (this.isProcessingQueue || this.writeQueue.length === 0) {
@@ -167,12 +265,28 @@ export class LoggerService {
             const combinedContent = contents.join('');
             await appendFile(filePath, combinedContent);
           } catch (error) {
-            console.error(`Failed to write to log file ${filePath}:`, error);
+            // GRACEFUL_DEGRADE: Continue if individual file writes fail
+            if (this.errorHandler) {
+              this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+            } else {
+              this.safeLog(() => {
+                console.error(`Failed to write to log file ${filePath}:`, error);
+              });
+            }
           }
         },
       );
 
       await Promise.all(writePromises);
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Queue processing failure should not block logging
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      } else {
+        this.safeLog(() => {
+          console.error('Failed to process write queue:', error);
+        });
+      }
     } finally {
       this.isProcessingQueue = false;
 
@@ -184,7 +298,22 @@ export class LoggerService {
   }
 
   /**
-   * Write log entry to console with colors
+   * Safely log without triggering recursive errors (SKIP strategy)
+   */
+  private safeLog(logFn: () => void): void {
+    try {
+      logFn();
+    } catch (error) {
+      // SKIP: Console errors should not propagate
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      }
+      // Silent fail for console operations
+    }
+  }
+
+  /**
+   * Write log entry to console with colors - SKIP on console errors
    */
   private writeToConsole(entry: LogEntry): void {
     // Skip console output if disabled (for dashboard mode)
@@ -192,23 +321,25 @@ export class LoggerService {
       return;
     }
 
-    const formattedMessage = this.formatLogEntry(entry);
+    this.safeLog(() => {
+      const formattedMessage = this.formatLogEntry(entry);
 
-    // Use template literals instead of %s formatting to avoid console wrapping issues
-    switch (entry.level) {
-    case LogLevel.DEBUG:
-      console.debug(`\x1b[36m${formattedMessage}\x1b[0m`); // Cyan
-      break;
-    case LogLevel.INFO:
-      console.info(`\x1b[32m${formattedMessage}\x1b[0m`); // Green
-      break;
-    case LogLevel.WARN:
-      console.warn(`\x1b[33m${formattedMessage}\x1b[0m`); // Yellow
-      break;
-    case LogLevel.ERROR:
-      console.error(`\x1b[31m${formattedMessage}\x1b[0m`); // Red
-      break;
-    }
+      // Use template literals instead of %s formatting to avoid console wrapping issues
+      switch (entry.level) {
+      case LogLevel.DEBUG:
+        console.debug(`\x1b[36m${formattedMessage}\x1b[0m`); // Cyan
+        break;
+      case LogLevel.INFO:
+        console.info(`\x1b[32m${formattedMessage}\x1b[0m`); // Green
+        break;
+      case LogLevel.WARN:
+        console.warn(`\x1b[33m${formattedMessage}\x1b[0m`); // Yellow
+        break;
+      case LogLevel.ERROR:
+        console.error(`\x1b[31m${formattedMessage}\x1b[0m`); // Red
+        break;
+      }
+    });
   }
 
   /**
@@ -216,6 +347,9 @@ export class LoggerService {
    */
   public disableConsoleOutput(): void {
     this.enableConsoleOutput = false;
+    this.safeLog(() => {
+      console.log('[LOGGER] 🎨 Console output disabled (dashboard mode)');
+    });
   }
 
   /**
@@ -304,9 +438,11 @@ export class LoggerService {
    */
   setConsoleOutputEnabled(enabled: boolean): void {
     this.enableConsoleOutput = enabled;
-    if (!enabled) {
-      console.log('[LOGGER] 🎨 Console output disabled - logs will be file-only (dashboard mode)');
-    }
+    this.safeLog(() => {
+      if (!enabled) {
+        console.log('[LOGGER] 🎨 Console output disabled - logs will be file-only (dashboard mode)');
+      }
+    });
   }
 
   /**
