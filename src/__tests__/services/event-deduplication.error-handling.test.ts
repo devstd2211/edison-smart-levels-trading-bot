@@ -213,13 +213,19 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
       // No ErrorHandler
       service = new EventDeduplicationService(5, 100, logger, undefined);
 
-      // Add events to trigger cleanup
-      for (let i = 0; i < 10; i++) {
-        service.isDuplicate('TP', `order-${i}`, Date.now());
+      const timestamp = Date.now();
+
+      // Add first event
+      service.isDuplicate('TP', 'order-0', timestamp);
+
+      // Add more events to trigger cleanup
+      for (let i = 1; i < 10; i++) {
+        service.isDuplicate('TP', `order-${i}`, timestamp);
       }
 
       // Service should work despite no ErrorHandler
-      const duplicate = service.isDuplicate('TP', 'order-0', Date.now());
+      // order-0 should still be in cache with same timestamp
+      const duplicate = service.isDuplicate('TP', 'order-0', timestamp);
       expect(duplicate).toBe(true);
     });
 
