@@ -863,6 +863,7 @@
 | **8.9.67** | **candle-aggregator.service.ts** | MEDIUM | **30** | ✅ DONE | Timeframe candle aggregation |
 | **8.9.68** | **ml-feature-extractor.service.ts** | HIGH | **32** | ✅ DONE | ML feature extraction |
 | **8.9.69** | **tf-alignment.service.ts** | MEDIUM | **33** | ✅ DONE | Timeframe alignment scoring |
+| **8.9.70** | **timeframe-weighting.service.ts** | MEDIUM | **27** | ✅ DONE | Timeframe weight application |
 | **8.9.70** | **timeframe-weighting.service.ts** | MEDIUM | ~16 | ⏳ | Timeframe weight application |
 | **8.9.71** | **fractal-smc-weighting.service.ts** | HIGH | ~20 | ⏳ | Fractal + SMC signal weighting |
 | **8.9.72** | **console-dashboard.service.ts** | HIGH | ~24 | ⏳ | Blessed dashboard UI rendering |
@@ -873,28 +874,28 @@
 
 ---
 
-## 🎯 NEXT PHASE: 8.9.70+ ErrorHandler Integration (Remaining 9 Services)
+## 🎯 NEXT PHASE: 8.9.71+ ErrorHandler Integration (Remaining 8 Services)
 
-### Phase 8.9.70: TimeframeWeightingService ⏳ NEXT
+### Phase 8.9.71: FractalSMCWeightingService ⏳ NEXT
 **Status:** Ready to implement
-**Complexity:** MEDIUM | **Est. Tests:** ~18
-**Strategy:** THROW (validation) + GRACEFUL_DEGRADE (weighting) + SKIP (logging)
-- Input validation: null/invalid weights, candles, direction
-- Weight application: Apply multi-timeframe weights to signals
-- GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity in weights)
+**Complexity:** HIGH | **Est. Tests:** ~20
+**Strategy:** THROW (validation) + GRACEFUL_DEGRADE (SMC analysis) + SKIP (logging)
+- Input validation: null/invalid candles, SMC levels, fractal data
+- SMC weighting: Apply Smart Money Concepts weighting to levels
+- GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity in levels)
 - SKIP: Logging failures
-- Methods: applyWeights(), calculateWeightedScore(), reweightSignal()
-- Integration: Weight-adjusted signal generation for entry/exit decisions
+- Methods: calculateSMCWeight(), evaluateFractals(), applySMCWeighting()
+- Integration: SMC-informed signal weighting for entries/exits
 
-### Phase 8.9.71-8.9.78: Remaining Services (8 more)
-**Total Remaining:** 8 services × ~17 tests avg = **~136 additional tests**
-**Estimated Completion:** Session 96-99
-**Services in Queue (9 remaining):**
+### Phase 8.9.72-8.9.78: Remaining Services (7 more)
+**Total Remaining:** 7 services × ~17 tests avg = **~119 additional tests**
+**Estimated Completion:** Session 97-100
+**Services in Queue (8 remaining):**
 - ✅ 8.9.67: candle-aggregator.service.ts (30 tests) - COMPLETE
 - ✅ 8.9.68: ml-feature-extractor.service.ts (32 tests) - COMPLETE
 - ✅ 8.9.69: tf-alignment.service.ts (33 tests) - COMPLETE
-- 🎯 8.9.70: timeframe-weighting.service.ts (weight application) - NEXT
-- 8.9.71: fractal-smc-weighting.service.ts (SMC weighting)
+- ✅ 8.9.70: timeframe-weighting.service.ts (27 tests) - COMPLETE
+- 🎯 8.9.71: fractal-smc-weighting.service.ts (SMC weighting) - NEXT
 - 8.9.72: console-dashboard.service.ts (UI rendering)
 - 8.9.73-8.9.78: Reserved for future services
 
@@ -1426,7 +1427,7 @@ Filter Orchestrator
 
 ---
 
-**Version:** 5.49 (Phase 8.9.69 - TimeframeAlignmentService ✅)
-**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.69 ✅)
-**Build Status:** ✅ 0 TypeScript Errors | 🎉 6103 Tests Passing (+33 Phase 8.9.69) | **69/78 services with ErrorHandler integration** | 269 Test Files
-**Session:** 90 | **Status:** Phase 8.9.69 ✅ COMPLETE (TimeframeAlignmentService) | **Phase 8.9.70 NEXT** (timeframe-weighting.service.ts) | **Priority: Remaining 9 Services**
+**Version:** 5.50 (Phase 8.9.70 - TimeframeWeightingService ✅)
+**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.70 ✅)
+**Build Status:** ✅ 0 TypeScript Errors | 🎉 6130 Tests Passing (+27 Phase 8.9.70) | **70/78 services with ErrorHandler integration** | 270 Test Files
+**Session:** 90 | **Status:** Phase 8.9.70 ✅ COMPLETE (TimeframeWeightingService) | **Phase 8.9.71 NEXT** (fractal-smc-weighting.service.ts) | **Priority: Remaining 8 Services**

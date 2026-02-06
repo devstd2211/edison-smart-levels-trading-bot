@@ -1,5 +1,5 @@
 /**
- * Timeframe Weighting Service
+ * Timeframe Weighting Service (Phase 8.9.70)
  *
  * Applies weights to multi-timeframe analysis based on trading goal.
  * Combines trends from different timeframes using weights appropriate for:
@@ -11,9 +11,16 @@
  * - Store weighting strategies for different trading modes
  * - Combine weighted trends to calculate final bias
  * - Calculate consensus strength based on weighted average
+ *
+ * Error Handling Strategy (Phase 8.9.70):
+ * - THROW: Input validation (null multiTF, invalid trading mode)
+ * - THROW: Data validation (null timeframes, invalid bias/strength values)
+ * - GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity, division by zero) → safe defaults
+ * - SKIP: Logging errors (silent fail for non-critical logging)
  */
 
 import { LoggerService, MultiTimeframeAnalysis, TradingMode, TrendBias } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // TrendBias enum values for comparisons
 
@@ -64,8 +71,11 @@ const TRADING_MODE_WEIGHTS: Record<TradingMode, TimeframeWeights> = {
 // ============================================================================
 
 export class TimeframeWeightingService {
-  constructor(private readonly logger: LoggerService) {
-    this.logger.info('✅ TimeframeWeightingService initialized');
+  constructor(
+    private readonly logger?: LoggerService,
+    private readonly errorHandler?: ErrorHandler,
+  ) {
+    this.safeLog('info', '✅ TimeframeWeightingService initialized');
   }
 
   /**
@@ -74,75 +84,156 @@ export class TimeframeWeightingService {
    * @param multiTF - Multi-timeframe analysis result
    * @param tradingMode - Trading mode (swing, day, scalp)
    * @returns Weighted trend result with bias and strength
+   * @throws On null/invalid multiTF or trading mode
    */
   combine(multiTF: MultiTimeframeAnalysis, tradingMode: TradingMode): WeightedTrendResult {
-    // ========================================================================
-    // GET WEIGHTS FOR TRADING MODE
-    // ========================================================================
+    // THROW: Input validation
+    this.validateCombineInput(multiTF, tradingMode);
 
-    const weights = TRADING_MODE_WEIGHTS[tradingMode];
+    try {
+      // ========================================================================
+      // GET WEIGHTS FOR TRADING MODE
+      // ========================================================================
 
-    this.logger.debug(`⚖️  Combining trends for ${tradingMode} trading`, {
-      weights,
-    });
+      const weights = TRADING_MODE_WEIGHTS[tradingMode];
 
-    // ========================================================================
-    // EXTRACT BIASES AND STRENGTHS
-    // ========================================================================
+      this.safeLog('debug', `⚖️  Combining trends for ${tradingMode} trading`, {
+        weights,
+      });
 
-    const trends = {
-      '5m': {
-        bias: multiTF.byTimeframe['5m'].bias,
-        strength: multiTF.byTimeframe['5m'].strength,
-      },
-      '15m': {
-        bias: multiTF.byTimeframe['15m'].bias,
-        strength: multiTF.byTimeframe['15m'].strength,
-      },
-      '1h': {
-        bias: multiTF.byTimeframe['1h'].bias,
-        strength: multiTF.byTimeframe['1h'].strength,
-      },
-      '4h': {
-        bias: multiTF.byTimeframe['4h'].bias,
-        strength: multiTF.byTimeframe['4h'].strength,
-      },
-    };
+      // ========================================================================
+      // EXTRACT BIASES AND STRENGTHS
+      // ========================================================================
 
-    // ========================================================================
-    // CALCULATE WEIGHTED STRENGTH
-    // ========================================================================
+      const trends = {
+        '5m': {
+          bias: multiTF.byTimeframe['5m'].bias,
+          strength: multiTF.byTimeframe['5m'].strength,
+        },
+        '15m': {
+          bias: multiTF.byTimeframe['15m'].bias,
+          strength: multiTF.byTimeframe['15m'].strength,
+        },
+        '1h': {
+          bias: multiTF.byTimeframe['1h'].bias,
+          strength: multiTF.byTimeframe['1h'].strength,
+        },
+        '4h': {
+          bias: multiTF.byTimeframe['4h'].bias,
+          strength: multiTF.byTimeframe['4h'].strength,
+        },
+      };
 
-    const weightedStrength = this.calculateWeightedStrength(trends, weights);
+      // ========================================================================
+      // CALCULATE WEIGHTED STRENGTH
+      // ========================================================================
 
-    // ========================================================================
-    // DETERMINE FINAL BIAS USING VOTING + WEIGHTING
-    // ========================================================================
+      const weightedStrength = this.calculateWeightedStrength(trends, weights);
 
-    const finalBias = this.determineBiasByWeightedVoting(trends, weights);
+      // Validate strength
+      if (!Number.isFinite(weightedStrength)) {
+        throw new Error('Weighted strength calculation resulted in invalid value');
+      }
 
-    // ========================================================================
-    // BUILD REASONING
-    // ========================================================================
+      // ========================================================================
+      // DETERMINE FINAL BIAS USING VOTING + WEIGHTING
+      // ========================================================================
 
-    const reasoning = this.buildReasoning(trends, weights, finalBias);
+      const finalBias = this.determineBiasByWeightedVoting(trends, weights);
 
-    // ========================================================================
-    // LOG AND RETURN
-    // ========================================================================
+      // ========================================================================
+      // BUILD REASONING
+      // ========================================================================
 
-    this.logger.info('✅ Weighted combination complete', {
-      tradingMode,
-      finalBias,
-      weightedStrength: weightedStrength.toFixed(2),
-      reasoning,
-    });
+      const reasoning = this.buildReasoning(trends, weights, finalBias);
 
-    return {
-      bias: finalBias,
-      strength: weightedStrength,
-      reasoning,
-    };
+      // ========================================================================
+      // LOG AND RETURN
+      // ========================================================================
+
+      this.safeLog('info', '✅ Weighted combination complete', {
+        tradingMode,
+        finalBias,
+        weightedStrength: weightedStrength.toFixed(2),
+        reasoning,
+      });
+
+      return {
+        bias: finalBias,
+        strength: weightedStrength,
+        reasoning,
+      };
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Combination failures
+      this.safeLog('error', `Weighting combination failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      // Return safe default
+      return {
+        bias: TrendBias.NEUTRAL,
+        strength: 0.5,
+        reasoning: 'Combination failed, returning neutral',
+      };
+    }
+  }
+
+  /**
+   * Validate combine input
+   * @throws On invalid input
+   */
+  private validateCombineInput(multiTF: MultiTimeframeAnalysis, tradingMode: TradingMode): void {
+    if (!multiTF || typeof multiTF !== 'object') {
+      const error = new Error('MultiTF must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (!multiTF.byTimeframe || typeof multiTF.byTimeframe !== 'object') {
+      const error = new Error('MultiTF.byTimeframe must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    const requiredTimeframes = ['5m', '15m', '1h', '4h'] as const;
+    for (const tf of requiredTimeframes) {
+      if (!multiTF.byTimeframe[tf]) {
+        const error = new Error(`MultiTF.byTimeframe[${tf}] is missing`);
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      const tfData = multiTF.byTimeframe[tf];
+      if (!tfData.bias || !Number.isFinite(tfData.strength)) {
+        const error = new Error(`Invalid data for timeframe ${tf}: bias or strength is invalid`);
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (tfData.strength < 0 || tfData.strength > 1) {
+        const error = new Error(`Strength for ${tf} must be between 0 and 1, got ${tfData.strength}`);
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    if (!tradingMode || !Object.values(TradingMode).includes(tradingMode)) {
+      const error = new Error(`Invalid trading mode: ${tradingMode}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
   }
 
   /**
@@ -275,5 +366,21 @@ export class TimeframeWeightingService {
     parts.push(`→ Final=${finalBias}`);
 
     return parts.join(' ');
+  }
+
+  /**
+   * Safe logging wrapper - SKIP strategy for logging errors
+   */
+  private safeLog(level: string, message: string, meta?: any): void {
+    try {
+      if (this.logger) {
+        (this.logger as any)[level]?.(message, meta);
+      }
+    } catch (error) {
+      // SKIP: Logging failures never block execution
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
   }
 }
