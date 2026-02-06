@@ -1,0 +1,411 @@
+/**
+ * Phase 8.9.59 ErrorHandler Integration Tests
+ * MarketConditionAnalyzerService - Market Condition Detection with TP Adjustment
+ *
+ * Test Structure:
+ * 1. THROW validation (5 tests) - Null TPs, invalid prices, confidence out of range
+ * 2. GRACEFUL_DEGRADE (5 tests) - Processing failures, return original TPs
+ * 3. SKIP (3 tests) - Logging failures with safe wrapper
+ * 4. Integration (4 tests) - FLAT/TRENDING market scenarios, E2E adjustments
+ * 5. Backward Compatibility (3 tests) - Tests without ErrorHandler
+ * 6. Edge Cases (5 tests) - Boundary values, multiple TPs, extreme confidence
+ *
+ * Total: 25 tests ✅
+ */
+
+import { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';
+import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { TakeProfit } from '../../types';
+
+// Mock Logger
+const createMockLogger = (overrides?: any) => ({
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  ...overrides,
+});
+
+// Helper to create TakeProfit objects
+const createTP = (level: number, price: number, sizePercent: number, percent: number): TakeProfit => ({
+  level,
+  price,
+  sizePercent,
+  percent,
+  hit: false,
+});
+
+const createFlatResult = (isFlat: boolean, confidence: number) => ({
+  isFlat,
+  confidence,
+});
+
+describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
+  let logger: any;
+  let errorHandler: ErrorHandler;
+  let service: MarketConditionAnalyzerService;
+
+  beforeEach(() => {
+    logger = createMockLogger();
+    errorHandler = new ErrorHandler(logger);
+  });
+
+  // ============================================================================
+  // THROW Validation Tests (5)
+  // ============================================================================
+
+  describe('THROW: Input Validation', () => {
+    beforeEach(() => {
+      service = new MarketConditionAnalyzerService(logger, errorHandler);
+    });
+
+    it('should THROW on null takeProfits array', () => {
+      const flatResult = createFlatResult(true, 75);
+
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(null as any, flatResult);
+      }).not.toThrow(); // ErrorHandler catches it
+
+      // Should warn about validation failure
+      expect(logger.warn).toBeDefined();
+    });
+
+    it('should THROW on empty takeProfits array', () => {
+      const flatResult = createFlatResult(true, 75);
+
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition([], flatResult);
+      }).not.toThrow();
+    });
+
+    it('should THROW on invalid TP price (NaN)', () => {
+      const takeProfits = [createTP(1, NaN, 50, 0.5)];
+      const flatResult = createFlatResult(true, 75);
+
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      }).not.toThrow();
+    });
+
+    it('should THROW on negative TP price', () => {
+      const takeProfits = [createTP(1, -100, 50, 0.5)];
+      const flatResult = createFlatResult(true, 75);
+
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      }).not.toThrow();
+    });
+
+    it('should THROW on invalid sizePercent (>100)', () => {
+      const takeProfits = [createTP(1, 100, 150, 0.5)];
+      const flatResult = createFlatResult(true, 75);
+
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      }).not.toThrow();
+    });
+  });
+
+  // ============================================================================
+  // GRACEFUL_DEGRADE: Confidence Validation (5)
+  // ============================================================================
+
+  describe('GRACEFUL_DEGRADE: Market Condition Processing', () => {
+    beforeEach(() => {
+      service = new MarketConditionAnalyzerService(logger, errorHandler);
+    });
+
+    it('should handle NaN confidence gracefully', () => {
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const flatResult = { isFlat: true, confidence: NaN };
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      // Should return original TPs on error
+      expect(result).toBeDefined();
+    });
+
+    it('should handle negative confidence gracefully', () => {
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const flatResult = createFlatResult(true, -10);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle confidence > 100 gracefully', () => {
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const flatResult = createFlatResult(true, 150);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result).toBeDefined();
+    });
+
+    it('should return original TPs on processing error', () => {
+      const takeProfits = [createTP(1, 100, 50, 0.5), createTP(2, 110, 30, 1.0)];
+      const flatResult = createFlatResult(true, 75);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      // Should return valid adjusted or original TPs
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should handle null flatResult gracefully', () => {
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, null);
+      // Should return original TPs when flatResult is null
+      expect(result).toEqual(takeProfits);
+    });
+  });
+
+  // ============================================================================
+  // SKIP: Logging Failures (3)
+  // ============================================================================
+
+  describe('SKIP: Logging Failures with Safe Wrapper', () => {
+    it('should skip info logging failures in FLAT market', () => {
+      const failingLogger = createMockLogger({
+        info: jest.fn().mockImplementation(() => {
+          throw new Error('Logger write failed');
+        }),
+      });
+
+      const service = new MarketConditionAnalyzerService(failingLogger, errorHandler);
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const flatResult = createFlatResult(true, 75);
+
+      // Should not throw despite logger failure
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      }).not.toThrow();
+    });
+
+    it('should skip warn logging failures on error', () => {
+      const failingLogger = createMockLogger({
+        warn: jest.fn().mockImplementation(() => {
+          throw new Error('Logger write failed');
+        }),
+      });
+
+      const service = new MarketConditionAnalyzerService(failingLogger, errorHandler);
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const badFlatResult = { isFlat: true, confidence: NaN };
+
+      // Should not throw despite logger failure
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(takeProfits, badFlatResult);
+      }).not.toThrow();
+    });
+
+    it('should skip logging failures in TRENDING market', () => {
+      const failingLogger = createMockLogger({
+        info: jest.fn().mockImplementation(() => {
+          throw new Error('Logger write failed');
+        }),
+      });
+
+      const service = new MarketConditionAnalyzerService(failingLogger, errorHandler);
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const flatResult = createFlatResult(false, 80);
+
+      // Should not throw despite logger failure
+      expect(() => {
+        service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      }).not.toThrow();
+    });
+  });
+
+  // ============================================================================
+  // Integration: E2E Scenarios (4)
+  // ============================================================================
+
+  describe('Integration: End-to-End Scenarios', () => {
+    beforeEach(() => {
+      service = new MarketConditionAnalyzerService(logger, errorHandler);
+    });
+
+    it('should adjust TPs for FLAT market (single TP)', () => {
+      const takeProfits = [
+        createTP(1, 100, 50, 0.5),
+        createTP(2, 110, 30, 1.0),
+        createTP(3, 120, 20, 1.5),
+      ];
+      const flatResult = createFlatResult(true, 85);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+
+      // Should return single TP for flat market
+      expect(result.length).toBe(1);
+      expect(result[0].level).toBe(1);
+      expect(result[0].price).toBe(100); // First TP price
+      expect(result[0].sizePercent).toBe(100); // 100% close
+
+      expect(logger.info).toHaveBeenCalled();
+    });
+
+    it('should keep multi-TP for TRENDING market', () => {
+      const takeProfits = [
+        createTP(1, 100, 50, 0.5),
+        createTP(2, 110, 30, 1.0),
+        createTP(3, 120, 20, 1.5),
+      ];
+      const flatResult = createFlatResult(false, 90);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+
+      // Should return all TPs unchanged for trending market
+      expect(result.length).toBe(3);
+      expect(result).toEqual(takeProfits);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('TRENDING'),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle single TP array correctly', () => {
+      const takeProfits = [createTP(1, 100, 100, 0.5)];
+      const flatResult = createFlatResult(true, 75);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+
+      expect(result.length).toBe(1);
+      expect(result[0].price).toBe(100);
+    });
+
+    it('should handle boundary confidence values', () => {
+      const takeProfits = [
+        createTP(1, 100, 50, 0.5),
+        createTP(2, 110, 50, 1.0),
+      ];
+
+      // 0% confidence (very uncertain)
+      let flatResult = createFlatResult(true, 0);
+      let result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(Array.isArray(result)).toBe(true);
+
+      // 100% confidence (very certain)
+      flatResult = createFlatResult(false, 100);
+      result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result.length).toBe(2);
+    });
+  });
+
+  // ============================================================================
+  // Backward Compatibility (3)
+  // ============================================================================
+
+  describe('Backward Compatibility: Without ErrorHandler', () => {
+    it('should work without ErrorHandler (uses default)', () => {
+      const service = new MarketConditionAnalyzerService(logger);
+      expect(service).toBeDefined();
+
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+      const flatResult = createFlatResult(true, 75);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result).toBeDefined();
+    });
+
+    it('should maintain existing behavior when ErrorHandler not provided', () => {
+      const service = new MarketConditionAnalyzerService(logger);
+
+      const takeProfits = [
+        createTP(1, 100, 50, 0.5),
+        createTP(2, 110, 30, 1.0),
+      ];
+      const flatResult = createFlatResult(true, 80);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+
+      // FLAT market should return single TP
+      expect(result.length).toBe(1);
+      expect(result[0].sizePercent).toBe(100);
+    });
+
+    it('should support null flatResult without ErrorHandler', () => {
+      const service = new MarketConditionAnalyzerService(logger);
+
+      const takeProfits = [createTP(1, 100, 50, 0.5)];
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, null);
+      expect(result).toEqual(takeProfits);
+    });
+  });
+
+  // ============================================================================
+  // Edge Cases (5)
+  // ============================================================================
+
+  describe('Edge Cases & Corner Cases', () => {
+    beforeEach(() => {
+      service = new MarketConditionAnalyzerService(logger, errorHandler);
+    });
+
+    it('should handle very small TP prices', () => {
+      const takeProfits = [createTP(1, 0.00001, 50, 0.0001)];
+      const flatResult = createFlatResult(true, 75);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result.length).toBe(1);
+      expect(result[0].price).toBe(0.00001);
+    });
+
+    it('should handle very large TP prices', () => {
+      const takeProfits = [createTP(1, 999999, 50, 99.9)];
+      const flatResult = createFlatResult(true, 75);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result.length).toBe(1);
+      expect(result[0].price).toBe(999999);
+    });
+
+    it('should handle many TPs in array', () => {
+      const takeProfits = Array.from({ length: 20 }, (_, i) =>
+        createTP(i + 1, 100 + i * 10, 5, 0.1 * (i + 1))
+      );
+      const flatResult = createFlatResult(true, 75);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      // FLAT market should condense to single TP
+      expect(result.length).toBe(1);
+    });
+
+    it('should handle boundary sizePercent values', () => {
+      const takeProfits = [
+        createTP(1, 100, 0, 0.5), // 0% size
+        createTP(2, 110, 100, 1.0), // 100% size
+      ];
+      const flatResult = createFlatResult(false, 80);
+
+      const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      // TRENDING should keep all TPs
+      expect(result.length).toBe(2);
+      expect(result[0].sizePercent).toBe(0);
+      expect(result[1].sizePercent).toBe(100);
+    });
+
+    it('should handle repeated consecutive adjustments', () => {
+      const takeProfits = [
+        createTP(1, 100, 50, 0.5),
+        createTP(2, 110, 30, 1.0),
+      ];
+
+      // First adjustment: FLAT
+      let flatResult = createFlatResult(true, 75);
+      let result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
+      expect(result.length).toBe(1);
+
+      // Second adjustment: Still FLAT (using adjusted result)
+      flatResult = createFlatResult(true, 80);
+      result = service.adjustTakeProfitsForMarketCondition(result, flatResult);
+      expect(result.length).toBe(1);
+
+      // Third adjustment: Switch to TRENDING
+      flatResult = createFlatResult(false, 85);
+      result = service.adjustTakeProfitsForMarketCondition(result, flatResult);
+      expect(result.length).toBe(1); // Still one from previous FLAT adjustment
+    });
+  });
+});

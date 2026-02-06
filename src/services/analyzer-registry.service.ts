@@ -14,6 +14,7 @@
 
 import { LoggerService } from './logger.service';
 import { SwingPointDetectorService } from './swing-point-detector.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { StrategyAnalyzerConfig } from '../types/strategy-config.types';
 import { IIndicator } from '../types/indicator.interface';
 import { IndicatorType } from '../types/indicator-type.enum';
@@ -45,11 +46,24 @@ export class AnalyzerRegistryService {
   private analyzerClasses: Map<string, any> = new Map();
   private swingPointDetector: SwingPointDetectorService;
   private indicators: Map<IndicatorType, IIndicator> = new Map();
+  private errorHandler: ErrorHandler;
 
-  constructor(private logger: LoggerService) {
+  constructor(private logger: LoggerService, errorHandler?: ErrorHandler) {
+    this.errorHandler = errorHandler || new ErrorHandler(logger);
     this.initializeAnalyzerMap();
     // Initialize SwingPointDetectorService for analyzers that need it
     this.swingPointDetector = new SwingPointDetectorService(this.logger, 2);
+  }
+
+  /**
+   * Safe logging wrapper - SKIP strategy for all logger errors
+   */
+  private safeLog(level: 'debug' | 'warn' | 'error', message: string, data?: any): void {
+    try {
+      this.logger[level](message, data);
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+    }
   }
 
   /**
@@ -59,7 +73,7 @@ export class AnalyzerRegistryService {
    */
   setIndicators(indicators: Map<IndicatorType, IIndicator>): void {
     this.indicators = indicators;
-    this.logger.debug('📊 Indicators set in AnalyzerRegistry', {
+    this.safeLog('debug', '📊 Indicators set in AnalyzerRegistry', {
       count: indicators.size,
       types: Array.from(indicators.keys()),
     });
@@ -187,9 +201,12 @@ export class AnalyzerRegistryService {
 
   /**
    * Get or create analyzer instance
+   * THROW: Invalid analyzer name (must exist in registry)
+   * GRACEFUL_DEGRADE: Load failures (return null, continue with other analyzers)
+   * SKIP: Logging failures
    * @param config Base config with indicators and analyzerDefaults
    * @param analyzerConfig Specific analyzer config with name and parameters
-   * @returns Analyzer instance
+   * @returns Analyzer instance or null if not found/failed to load
    */
   async getAnalyzerInstance(
     config: any,
@@ -197,12 +214,16 @@ export class AnalyzerRegistryService {
   ): Promise<AnalyzerInstance | null> {
     const analyzerName = analyzerConfig.name;
 
-    // Validate analyzer exists in registry
+    // THROW: Validate analyzer exists in registry
     if (!this.analyzerClasses.has(analyzerName)) {
-      this.logger.warn(`Unknown analyzer: ${analyzerName}`, {
+      this.safeLog('warn', `Unknown analyzer: ${analyzerName}`, {
         availableAnalyzers: Array.from(this.analyzerClasses.keys()),
       });
-      return null;
+      // THROW strategy - invalid analyzer configuration
+      return this.errorHandler.handle(
+        new Error(`Analyzer not found: ${analyzerName}`),
+        { strategy: RecoveryStrategy.THROW }
+      ) as any;
     }
 
     // Check cache
@@ -210,6 +231,7 @@ export class AnalyzerRegistryService {
       return this.loadedAnalyzers.get(analyzerName)!;
     }
 
+    // GRACEFUL_DEGRADE: Load failures continue with null
     try {
       // Load analyzer class
       const loaderFn = this.analyzerClasses.get(analyzerName);
@@ -235,13 +257,16 @@ export class AnalyzerRegistryService {
       // Cache instance for reuse
       this.loadedAnalyzers.set(analyzerName, instance);
 
-      this.logger.debug(`Loaded analyzer: ${analyzerName}`);
+      this.safeLog('debug', `Loaded analyzer: ${analyzerName}`);
       return instance;
     } catch (error) {
-      this.logger.error(`Failed to load analyzer: ${analyzerName}`, {
+      this.safeLog('error', `Failed to load analyzer: ${analyzerName}`, {
         error: error instanceof Error ? error.message : String(error),
       });
-      return null;
+      // GRACEFUL_DEGRADE: Return null instead of throwing (allow partial loading)
+      return this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE }) === null
+        ? null
+        : null;
     }
   }
 
@@ -295,6 +320,7 @@ export class AnalyzerRegistryService {
 
   /**
    * Get all enabled analyzers from strategy config
+   * GRACEFUL_DEGRADE: Partial analyzer loading (continue with available analyzers)
    * @param analyzerConfigs Array of analyzer configurations from strategy
    * @param config Full config object to pass to analyzers
    * @returns Map of enabled analyzers by name
@@ -308,13 +334,19 @@ export class AnalyzerRegistryService {
     for (const analyzerCfg of analyzerConfigs) {
       if (!analyzerCfg.enabled) continue;
 
-      const instance = await this.getAnalyzerInstance(config, analyzerCfg);
-      if (instance) {
-        enabledAnalyzers.set(analyzerCfg.name, {
-          instance,
-          weight: analyzerCfg.weight,
-          priority: analyzerCfg.priority,
-        });
+      try {
+        const instance = await this.getAnalyzerInstance(config, analyzerCfg);
+        if (instance) {
+          enabledAnalyzers.set(analyzerCfg.name, {
+            instance,
+            weight: analyzerCfg.weight,
+            priority: analyzerCfg.priority,
+          });
+        }
+      } catch (error) {
+        // GRACEFUL_DEGRADE: Continue loading other analyzers even if one fails
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.safeLog('warn', `Skipping failed analyzer: ${analyzerCfg.name}`);
       }
     }
 
@@ -355,6 +387,7 @@ export class AnalyzerRegistryService {
   /**
    * Get the indicator instance for a basic analyzer
    * Maps analyzer names to their corresponding IndicatorType
+   * SKIP: Logging failures
    * @param analyzerName Name of the basic analyzer
    * @returns Indicator instance or null if not available
    */
@@ -375,7 +408,7 @@ export class AnalyzerRegistryService {
 
     const indicator = this.getIndicator(indicatorType);
     if (!indicator) {
-      this.logger.warn(`Indicator ${indicatorType} not available for ${analyzerName}`);
+      this.safeLog('warn', `Indicator ${indicatorType} not available for ${analyzerName}`);
     }
     return indicator;
   }

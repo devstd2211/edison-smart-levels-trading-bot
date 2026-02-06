@@ -1,4 +1,6 @@
 import { IndicatorType } from '../types/indicator-type.enum';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { LoggerService } from './logger.service';
 
 /**
  * Indicator Registry Service
@@ -28,71 +30,170 @@ export interface IIndicatorMetadata {
 
 export class IndicatorRegistry {
   private registered = new Map<IndicatorType, IIndicatorMetadata>();
+  private errorHandler: ErrorHandler;
+  private logger?: LoggerService;
+
+  constructor(logger?: LoggerService, errorHandler?: ErrorHandler) {
+    this.logger = logger;
+    this.errorHandler = errorHandler || new ErrorHandler(logger || ({} as any));
+  }
+
+  /**
+   * Safe logging wrapper - SKIP strategy for all logger errors
+   */
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, data?: any): void {
+    if (!this.logger) return;
+    try {
+      this.logger[level](message, data);
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+    }
+  }
 
   /**
    * Register an indicator type
+   * THROW: On invalid type or duplicate registration
    * Called during bot initialization
    *
    * @param type Indicator type (IndicatorType enum)
    * @param metadata Indicator metadata
    */
   register(type: IndicatorType, metadata: IIndicatorMetadata): void {
+    // THROW: Validate type is not null/undefined
+    if (!type) {
+      return this.errorHandler.handle(
+        new Error('Indicator type cannot be null or undefined'),
+        { strategy: RecoveryStrategy.THROW }
+      ) as any;
+    }
+
+    // THROW: Validate metadata
+    if (!metadata || !metadata.name) {
+      return this.errorHandler.handle(
+        new Error(`Invalid indicator metadata for type ${type}`),
+        { strategy: RecoveryStrategy.THROW }
+      ) as any;
+    }
+
+    // THROW: Check for duplicate registration
+    if (this.registered.has(type)) {
+      return this.errorHandler.handle(
+        new Error(`Indicator type ${type} is already registered`),
+        { strategy: RecoveryStrategy.THROW }
+      ) as any;
+    }
+
     this.registered.set(type, metadata);
+    this.safeLog('debug', `Registered indicator: ${type}`, { name: metadata.name });
   }
 
   /**
    * Check if indicator type is registered
+   * SKIP: Logging failures
    *
    * @param type Indicator type
    * @returns true if registered, false otherwise
    */
   isRegistered(type: IndicatorType): boolean {
-    return this.registered.has(type);
+    try {
+      return this.registered.has(type);
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      return false;
+    }
   }
 
   /**
    * Get metadata for indicator type
+   * GRACEFUL_DEGRADE: Return null for unregistered indicators (continue operation)
    *
    * @param type Indicator type
    * @returns Metadata or null if not registered
    */
   getMetadata(type: IndicatorType): IIndicatorMetadata | null {
-    return this.registered.get(type) || null;
+    try {
+      if (!type) {
+        this.safeLog('warn', 'Attempted to get metadata for null/undefined indicator type');
+        return null;
+      }
+
+      const metadata = this.registered.get(type);
+      if (!metadata) {
+        this.safeLog('debug', `Indicator type ${type} not registered`, {
+          availableTypes: Array.from(this.registered.keys()),
+        });
+        // GRACEFUL_DEGRADE: Return null instead of throwing
+        return null;
+      }
+
+      return metadata;
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      return null;
+    }
   }
 
   /**
    * Get all registered indicator types
+   * SKIP: Logging failures
    *
    * @returns Array of type names (IndicatorType enum values)
    */
   getAll(): IndicatorType[] {
-    return Array.from(this.registered.keys());
+    try {
+      const all = Array.from(this.registered.keys());
+      this.safeLog('debug', `Retrieved all registered indicators`, { count: all.length });
+      return all;
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      return [];
+    }
   }
 
   /**
    * Get only enabled indicators
+   * SKIP: Logging failures
    *
    * @returns Array of enabled type names
    */
   getEnabled(): IndicatorType[] {
-    return Array.from(this.registered.values())
-      .filter(meta => meta.enabled)
-      .map(meta => meta.type);
+    try {
+      const enabled = Array.from(this.registered.values())
+        .filter(meta => meta.enabled)
+        .map(meta => meta.type);
+      this.safeLog('debug', `Retrieved enabled indicators`, { count: enabled.length });
+      return enabled;
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      return [];
+    }
   }
 
   /**
    * Get indicator count
+   * SKIP: Logging failures
    *
    * @returns Total registered count
    */
   getCount(): number {
-    return this.registered.size;
+    try {
+      return this.registered.size;
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      return 0;
+    }
   }
 
   /**
    * Clear all registrations (for testing)
+   * SKIP: Logging failures
    */
   clear(): void {
-    this.registered.clear();
+    try {
+      this.registered.clear();
+      this.safeLog('debug', 'Indicator registry cleared');
+    } catch (error) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+    }
   }
 }
