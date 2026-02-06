@@ -8,6 +8,8 @@ import {
   SignalDirection,
   LoggerService,
 } from '../types';
+import { ErrorHandler } from '../errors/ErrorHandler';
+import { RecoveryStrategy } from '../errors/ErrorHandler';
 
 /**
  * Weight Matrix Calculator Service
@@ -43,12 +45,104 @@ export class WeightMatrixCalculatorService {
   constructor(
     private config: WeightMatrixConfig,
     private logger: LoggerService,
+    private errorHandler?: ErrorHandler,
   ) {
-    this.logger.info('WeightMatrixCalculatorService initialized', {
-      enabled: config.enabled,
-      minConfidenceToEnter: config.minConfidenceToEnter,
-      minConfidenceForReducedSize: config.minConfidenceForReducedSize,
+    // THROW: Config validation
+    this.validateConfig(config);
+
+    this.safeLog(() => {
+      this.logger.info('WeightMatrixCalculatorService initialized', {
+        enabled: config.enabled,
+        minConfidenceToEnter: config.minConfidenceToEnter,
+        minConfidenceForReducedSize: config.minConfidenceForReducedSize,
+      });
     });
+  }
+
+  /**
+   * Safe logging wrapper - SKIP strategy for logger errors
+   */
+  private safeLog(logFn: () => void): void {
+    try {
+      logFn();
+    } catch (error) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
+  }
+
+  /**
+   * Validate config on construction
+   * THROW on invalid configuration
+   *
+   * @param config - The weight matrix configuration
+   * @throws If configuration is invalid
+   */
+  private validateConfig(config: WeightMatrixConfig): void {
+    // THROW: null/undefined config
+    if (!config) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          new Error('WeightMatrixConfig cannot be null or undefined'),
+          { strategy: RecoveryStrategy.THROW }
+        );
+      }
+      throw new Error('WeightMatrixConfig cannot be null or undefined');
+    }
+
+    // THROW: Invalid confidence thresholds (percentage: 0-100)
+    if (typeof config.minConfidenceToEnter !== 'number' || config.minConfidenceToEnter < 0 || config.minConfidenceToEnter > 100) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          new Error(`minConfidenceToEnter must be 0-100 (got ${config.minConfidenceToEnter})`),
+          { strategy: RecoveryStrategy.THROW }
+        );
+      }
+      throw new Error(`minConfidenceToEnter must be 0-100 (got ${config.minConfidenceToEnter})`);
+    }
+
+    if (typeof config.minConfidenceForReducedSize !== 'number' || config.minConfidenceForReducedSize < 0 || config.minConfidenceForReducedSize > 100) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          new Error(`minConfidenceForReducedSize must be 0-100 (got ${config.minConfidenceForReducedSize})`),
+          { strategy: RecoveryStrategy.THROW }
+        );
+      }
+      throw new Error(`minConfidenceForReducedSize must be 0-100 (got ${config.minConfidenceForReducedSize})`);
+    }
+  }
+
+  /**
+   * Validate input parameters
+   * THROW on invalid inputs
+   *
+   * @param input - Market data input
+   * @param direction - Signal direction
+   * @throws If validation fails
+   */
+  private validateInputs(input: WeightMatrixInput, direction: SignalDirection): void {
+    // THROW: null/undefined input
+    if (!input) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          new Error('WeightMatrixInput cannot be null or undefined'),
+          { strategy: RecoveryStrategy.THROW }
+        );
+      }
+      throw new Error('WeightMatrixInput cannot be null or undefined');
+    }
+
+    // THROW: null/undefined direction
+    if (!direction || (direction !== SignalDirection.LONG && direction !== SignalDirection.SHORT)) {
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          new Error(`SignalDirection must be LONG or SHORT (got ${direction})`),
+          { strategy: RecoveryStrategy.THROW }
+        );
+      }
+      throw new Error(`SignalDirection must be LONG or SHORT (got ${direction})`);
+    }
   }
 
   /**
@@ -56,20 +150,25 @@ export class WeightMatrixCalculatorService {
    * @param input - Market data from analyzers/indicators
    * @param direction - Signal direction (LONG/SHORT)
    * @returns Score breakdown with confidence percentage
+   * @throws If input validation fails
    */
   calculateScore(
     input: WeightMatrixInput,
     direction: SignalDirection,
   ): SignalScoreBreakdown {
-    if (!this.config.enabled) {
-      // Weight matrix disabled - return perfect score
-      return {
-        totalScore: MATH_BOUNDS.MAX_PERCENTAGE as number,
-        maxPossibleScore: MATH_BOUNDS.MAX_PERCENTAGE as number,
-        confidence: MATH_BOUNDS.MAX_PERCENTAGE as number,
-        contributions: {},
-      };
-    }
+    // Validation happens outside try-catch to propagate THROW errors
+    this.validateInputs(input, direction);
+
+    try {
+      if (!this.config.enabled) {
+        // Weight matrix disabled - return perfect score
+        return {
+          totalScore: MATH_BOUNDS.MAX_PERCENTAGE as number,
+          maxPossibleScore: MATH_BOUNDS.MAX_PERCENTAGE as number,
+          confidence: MATH_BOUNDS.MAX_PERCENTAGE as number,
+          contributions: {},
+        };
+      }
 
     const contributions: SignalScoreBreakdown['contributions'] = {};
     let totalScore = 0;
@@ -266,22 +365,36 @@ export class WeightMatrixCalculatorService {
       maxPossibleScore += score.maxPoints;
     }
 
-    // Calculate confidence as decimal (0.0-1.0) - NOT percentage!
-    const confidence = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) : 0;
+      // Calculate confidence as decimal (0.0-1.0) - NOT percentage!
+      const confidence = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) : 0;
 
-    this.logger.debug('Signal score calculated', {
-      totalScore,
-      maxPossibleScore,
-      confidence: (confidence * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PERCENT) + '%',
-      factorsEvaluated: Object.keys(contributions).length,
-    });
+      this.safeLog(() => {
+        this.logger.debug('Signal score calculated', {
+          totalScore,
+          maxPossibleScore,
+          confidence: (confidence * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PERCENT) + '%',
+          factorsEvaluated: Object.keys(contributions).length,
+        });
+      });
 
-    return {
-      totalScore,
-      maxPossibleScore,
-      confidence,
-      contributions,
-    };
+      return {
+        totalScore,
+        maxPossibleScore,
+        confidence,
+        contributions,
+      };
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Calculation failed, return safe default with zero confidence
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      return {
+        totalScore: 0,
+        maxPossibleScore: 1,
+        confidence: 0,
+        contributions: {},
+      };
+    }
   }
 
   /**
@@ -428,7 +541,25 @@ export class WeightMatrixCalculatorService {
     }
 
     // Calculate distance to EMA (%)
+    // GRACEFUL_DEGRADE: Handle invalid fast EMA
+    if (!Number.isFinite(fast) || fast <= 0) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'EMA invalid fast value',
+      };
+    }
+
     const distance = Math.abs((price - fast) / fast) * PERCENT_MULTIPLIER;
+
+    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
+    if (!Number.isFinite(distance)) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'EMA distance calculation failed',
+      };
+    }
 
     if (thresholds.excellent && distance <= thresholds.excellent) {
       return {
@@ -514,7 +645,25 @@ export class WeightMatrixCalculatorService {
     const { maxPoints, thresholds } = weight;
     const { current, average } = atr;
 
+    // GRACEFUL_DEGRADE: Handle division by zero
+    if (!Number.isFinite(current) || !Number.isFinite(average) || average <= 0) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'ATR invalid values',
+      };
+    }
+
     const ratio = current / average;
+
+    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
+    if (!Number.isFinite(ratio)) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'ATR calculation failed',
+      };
+    }
 
     if (thresholds.excellent && ratio >= thresholds.excellent) {
       return {
@@ -554,7 +703,25 @@ export class WeightMatrixCalculatorService {
     const { maxPoints, thresholds } = weight;
     const { current, average } = volume;
 
+    // GRACEFUL_DEGRADE: Handle division by zero
+    if (!Number.isFinite(current) || !Number.isFinite(average) || average <= 0) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'Volume invalid values',
+      };
+    }
+
     const ratio = current / average;
+
+    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
+    if (!Number.isFinite(ratio)) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'Volume calculation failed',
+      };
+    }
 
     if (thresholds.excellent && ratio >= thresholds.excellent) {
       return {
@@ -602,8 +769,28 @@ export class WeightMatrixCalculatorService {
     const { maxPoints, thresholds } = weight;
     const { buyPressure, sellPressure } = delta;
 
+    // GRACEFUL_DEGRADE: Handle division by zero
+    if (!Number.isFinite(buyPressure) || !Number.isFinite(sellPressure) ||
+        (direction === SignalDirection.LONG && sellPressure <= 0) ||
+        (direction === SignalDirection.SHORT && buyPressure <= 0)) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'Delta invalid values',
+      };
+    }
+
     const isLong = direction === SignalDirection.LONG;
     const ratio = isLong ? buyPressure / sellPressure : sellPressure / buyPressure;
+
+    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
+    if (!Number.isFinite(ratio)) {
+      return {
+        points: 0,
+        maxPoints,
+        reason: 'Delta calculation failed',
+      };
+    }
 
     if (thresholds.excellent && ratio >= thresholds.excellent) {
       return {
