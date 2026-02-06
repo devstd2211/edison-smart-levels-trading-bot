@@ -4,10 +4,16 @@
  * Extracts ML feature sets from historical candles for pattern discovery.
  * Combines price action, technical indicators, volatility, and order flow data.
  * Supports multi-timeframe feature extraction (1m, 5m, 15m, 1h context).
+ *
+ * Error Handling Strategy:
+ * - THROW: Input validation (null/invalid candles, invalid pattern type, min candles)
+ * - GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity in indicators) → return safe defaults
+ * - SKIP: Logging errors (silent fail for non-critical logging)
  */
 
 import { MLFeatureSet, Candle, LoggerService } from '../types';
 import { CandleAggregatorService } from './candle-aggregator.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   INTEGER_MULTIPLIERS,
   RATIO_MULTIPLIERS,
@@ -27,8 +33,8 @@ export interface MultiTimeframeContext {
 export class MLFeatureExtractorService {
   private aggregator: CandleAggregatorService;
 
-  constructor(private logger: LoggerService) {
-    this.aggregator = new CandleAggregatorService();
+  constructor(private logger?: LoggerService, private errorHandler?: ErrorHandler) {
+    this.aggregator = new CandleAggregatorService(logger, errorHandler);
   }
 
   /**
@@ -37,72 +43,127 @@ export class MLFeatureExtractorService {
    * @param patternType - Type of pattern detected
    * @param outcome - WIN or LOSS (based on next candle direction)
    * @returns MLFeatureSet for the candle
+   * @throws On null/invalid candles or invalid pattern type
    */
   extractFeatures(
     candles: Candle[],
     patternType: string,
     outcome: 'WIN' | 'LOSS',
   ): MLFeatureSet {
-    if (candles.length < (INTEGER_MULTIPLIERS.FIVE as number)) {
-      throw new Error('Need at least 5 candles to extract features');
+    // THROW: Input validation
+    this.validateExtractFeaturesInput(candles, patternType, outcome);
+
+    try {
+      // Get last 5 candles for price action
+      const last5 = candles.slice(-(INTEGER_MULTIPLIERS.FIVE as number));
+
+      // Price Action Features
+      const priceAction = this.extractPriceAction(last5);
+
+      // Technical Indicators
+      const technicalIndicators = this.extractTechnicalIndicators(candles);
+
+      // Volatility (pass full candles for proper ATR and BB calculation)
+      const volatility = this.extractVolatility(candles);
+
+      // Order Flow (placeholder - would need orderbook data)
+      const orderFlow = this.extractOrderFlow(last5);
+
+      // Chart Patterns (placeholder - would need pattern detection)
+      const chartPatterns = {
+        trianglePattern: false,
+        wedgePattern: false,
+        flagPattern: false,
+        engulfingBullish: false,
+        engulfingBearish: false,
+        doubleBottom: false,
+        doubleTop: false,
+        headAndShoulders: false,
+      };
+
+      // Level Analysis (placeholder - would need level detection)
+      const levelAnalysis = {
+        nearestLevelDistance: RATIO_MULTIPLIERS.FULL as number,
+        levelStrength: INTEGER_MULTIPLIERS.FIFTY as number,
+        touchCount: FIRST_INDEX as number,
+        isStrongLevel: false,
+        trendAligned: false,
+      };
+
+      // Price Action Signals (placeholder - would need signal detection)
+      const priceActionSignals = {
+        divergenceDetected: false,
+        chochDetected: false,
+        liquiditySweep: false,
+        wickRejection: false,
+      };
+
+      return {
+        priceAction,
+        technicalIndicators,
+        volatility,
+        orderFlow,
+        chartPatterns,
+        levelAnalysis,
+        priceActionSignals,
+        label: outcome,
+        patternType,
+        timestamp: last5[last5.length - (SECOND_INDEX as number)].timestamp,
+      };
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Feature extraction failures
+      this.safeLog('error', `Feature extraction failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Validate extractFeatures input
+   * @throws On invalid input
+   */
+  private validateExtractFeaturesInput(candles: Candle[], patternType: string, outcome: 'WIN' | 'LOSS'): void {
+    if (candles === null || candles === undefined) {
+      const error = new Error('Candles array cannot be null or undefined');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
     }
 
-    // Get last 5 candles for price action
-    const last5 = candles.slice(-(INTEGER_MULTIPLIERS.FIVE as number));
+    if (!Array.isArray(candles)) {
+      const error = new Error('Candles must be an array');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
 
-    // Price Action Features
-    const priceAction = this.extractPriceAction(last5);
+    if (candles.length < (INTEGER_MULTIPLIERS.FIVE as number)) {
+      const error = new Error('Need at least 5 candles to extract features');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
 
-    // Technical Indicators
-    const technicalIndicators = this.extractTechnicalIndicators(candles);
+    if (!patternType || typeof patternType !== 'string') {
+      const error = new Error('Pattern type must be a non-empty string');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
 
-    // Volatility (pass full candles for proper ATR and BB calculation)
-    const volatility = this.extractVolatility(candles);
-
-    // Order Flow (placeholder - would need orderbook data)
-    const orderFlow = this.extractOrderFlow(last5);
-
-    // Chart Patterns (placeholder - would need pattern detection)
-    const chartPatterns = {
-      trianglePattern: false,
-      wedgePattern: false,
-      flagPattern: false,
-      engulfingBullish: false,
-      engulfingBearish: false,
-      doubleBottom: false,
-      doubleTop: false,
-      headAndShoulders: false,
-    };
-
-    // Level Analysis (placeholder - would need level detection)
-    const levelAnalysis = {
-      nearestLevelDistance: RATIO_MULTIPLIERS.FULL as number,
-      levelStrength: INTEGER_MULTIPLIERS.FIFTY as number,
-      touchCount: FIRST_INDEX as number,
-      isStrongLevel: false,
-      trendAligned: false,
-    };
-
-    // Price Action Signals (placeholder - would need signal detection)
-    const priceActionSignals = {
-      divergenceDetected: false,
-      chochDetected: false,
-      liquiditySweep: false,
-      wickRejection: false,
-    };
-
-    return {
-      priceAction,
-      technicalIndicators,
-      volatility,
-      orderFlow,
-      chartPatterns,
-      levelAnalysis,
-      priceActionSignals,
-      label: outcome,
-      patternType,
-      timestamp: last5[last5.length - (SECOND_INDEX as number)].timestamp,
-    };
+    if (outcome !== 'WIN' && outcome !== 'LOSS') {
+      const error = new Error("Outcome must be 'WIN' or 'LOSS'");
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
   }
 
   /**
@@ -428,6 +489,7 @@ export class MLFeatureExtractorService {
    * @param outcome - WIN or LOSS (based on next candle direction)
    * @param minCandlesFor1m - Minimum 1m candles needed (default: 50)
    * @returns MLFeatureSet with multi-timeframe features
+   * @throws On null/invalid candles or insufficient data
    */
   extractFeaturesMultiTimeframe(
     candles1m: Candle[],
@@ -435,14 +497,14 @@ export class MLFeatureExtractorService {
     outcome: 'WIN' | 'LOSS',
     minCandlesFor1m: number = INTEGER_MULTIPLIERS.FIFTY as number,
   ): MLFeatureSet {
-    if (candles1m.length < minCandlesFor1m) {
-      throw new Error(`Need at least ${minCandlesFor1m} 1m candles for multi-timeframe extraction`);
-    }
+    // THROW: Input validation
+    this.validateMultiTimeframeInput(candles1m, patternType, outcome, minCandlesFor1m);
 
-    // Aggregate to different timeframes
-    const candles5m = this.aggregator.getCandles5m(candles1m);
-    const candles15m = this.aggregator.getCandles15m(candles1m);
-    const candles1h = this.aggregator.getCandles1h(candles1m);
+    try {
+      // Aggregate to different timeframes
+      const candles5m = this.aggregator.getCandles5m(candles1m);
+      const candles15m = this.aggregator.getCandles15m(candles1m);
+      const candles1h = this.aggregator.getCandles1h(candles1m);
 
     // Extract price action from 1m (primary)
     const priceAction1m = this.extractPriceAction(candles1m.slice(-(INTEGER_MULTIPLIERS.FIVE as number)));
@@ -491,42 +553,109 @@ export class MLFeatureExtractorService {
       wickRejection: false,
     };
 
-    // Combine into extended feature set with multi-timeframe context
-    return {
-      priceAction: priceAction1m, // Primary 1m context
-      technicalIndicators: indicators1m,
-      volatility: volatility1m,
-      orderFlow,
-      chartPatterns,
-      levelAnalysis,
-      priceActionSignals,
-      label: outcome,
-      patternType,
-      timestamp: candles1m[candles1m.length - (SECOND_INDEX as number)].timestamp,
-      // Extended multi-timeframe fields
-      multiTimeframeContext: {
-        context5m: {
-          technicalIndicators: indicators5m,
-          volatility: volatility5m,
-          chartPatterns,
+      // Combine into extended feature set with multi-timeframe context
+      return {
+        priceAction: priceAction1m, // Primary 1m context
+        technicalIndicators: indicators1m,
+        volatility: volatility1m,
+        orderFlow,
+        chartPatterns,
+        levelAnalysis,
+        priceActionSignals,
+        label: outcome,
+        patternType,
+        timestamp: candles1m[candles1m.length - (SECOND_INDEX as number)].timestamp,
+        // Extended multi-timeframe fields
+        multiTimeframeContext: {
+          context5m: {
+            technicalIndicators: indicators5m,
+            volatility: volatility5m,
+            chartPatterns,
+          },
+          context15m: {
+            technicalIndicators: indicators15m,
+            volatility: volatility15m,
+            chartPatterns,
+          },
+          context30m: {
+            technicalIndicators: indicators1m,
+            volatility: volatility1m,
+            chartPatterns,
+          },
+          context1h: {
+            technicalIndicators: indicators1h,
+            volatility: volatility1h,
+            chartPatterns,
+          },
         },
-        context15m: {
-          technicalIndicators: indicators15m,
-          volatility: volatility15m,
-          chartPatterns,
-        },
-        context30m: {
-          technicalIndicators: indicators1m,
-          volatility: volatility1m,
-          chartPatterns,
-        },
-        context1h: {
-          technicalIndicators: indicators1h,
-          volatility: volatility1h,
-          chartPatterns,
-        },
-      },
-    };
+      };
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Multi-timeframe extraction failures
+      this.safeLog('error', `Multi-timeframe extraction failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Validate multi-timeframe input
+   * @throws On invalid input
+   */
+  private validateMultiTimeframeInput(
+    candles1m: Candle[],
+    patternType: string,
+    outcome: 'WIN' | 'LOSS',
+    minCandlesFor1m: number,
+  ): void {
+    if (candles1m === null || candles1m === undefined) {
+      const error = new Error('Candles1m array cannot be null or undefined');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (!Array.isArray(candles1m)) {
+      const error = new Error('Candles1m must be an array');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (candles1m.length < minCandlesFor1m) {
+      const error = new Error(`Need at least ${minCandlesFor1m} 1m candles for multi-timeframe extraction`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (!patternType || typeof patternType !== 'string') {
+      const error = new Error('Pattern type must be a non-empty string');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (outcome !== 'WIN' && outcome !== 'LOSS') {
+      const error = new Error("Outcome must be 'WIN' or 'LOSS'");
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (!Number.isFinite(minCandlesFor1m) || minCandlesFor1m <= 0) {
+      const error = new Error('minCandlesFor1m must be a positive finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
   }
 
   /**
@@ -567,6 +696,12 @@ export class MLFeatureExtractorService {
     // Range as % of average price
     const rangePercent = avgClose > (FIRST_INDEX as number) ? (range / avgClose) * (PERCENT_MULTIPLIER as number) : (FIRST_INDEX as number);
 
+    // Validate result
+    if (!Number.isFinite(rangePercent)) {
+      this.safeLog('warn', 'Flat market score calculation resulted in invalid value');
+      return INTEGER_MULTIPLIERS.FIFTY as number; // Safe default
+    }
+
     // Flat if range is very small (<0.5%)
     // High consolidation if range is 0.5-1%
     // Normal trending if range is >1%
@@ -574,5 +709,38 @@ export class MLFeatureExtractorService {
     if (rangePercent < (RATIO_MULTIPLIERS.FULL as number)) return INTEGER_MULTIPLIERS.SEVENTY as number; // Moderately flat
     if (rangePercent < (RATIO_MULTIPLIERS.DOUBLE as number)) return INTEGER_MULTIPLIERS.FIFTY as number; // Neutral
     return INTEGER_MULTIPLIERS.THIRTY as number; // Trending (lower flat score)
+  }
+
+  /**
+   * Safe logging wrapper - SKIP strategy for logging errors
+   */
+  private safeLog(level: string, message: string): void {
+    try {
+      if (this.logger) {
+        (this.logger as any)[level]?.(message);
+      }
+    } catch (error) {
+      // SKIP: Logging failures never block execution
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
+  }
+
+  /**
+   * Validate calculation result (check for NaN/Infinity)
+   */
+  private validateCalculationResult(value: number, fieldName: string): number {
+    if (!Number.isFinite(value)) {
+      this.safeLog('warn', `Invalid calculation result for ${fieldName}: ${value}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          new Error(`Invalid ${fieldName} calculation result`),
+          { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
+        );
+      }
+      return FIRST_INDEX as number; // Safe default
+    }
+    return value;
   }
 }
