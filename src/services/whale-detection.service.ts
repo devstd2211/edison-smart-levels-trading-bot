@@ -24,6 +24,7 @@ import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS,
  */
 
 import { LoggerService, SignalDirection, OrderBookAnalysis } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================
 // CONSTANTS
@@ -149,9 +150,144 @@ export class WhaleDetectionService {
 
   constructor(
     private config: WhaleDetectorConfig,
-    private logger: LoggerService,
+    private logger?: LoggerService,
     private strategy: 'BREAKOUT' | 'FOLLOW' = 'BREAKOUT', // Pluggable strategy (default: BREAKOUT)
-  ) {}
+    private errorHandler?: ErrorHandler
+  ) {
+    // THROW: Config validation
+    this.validateConfig();
+  }
+
+  /**
+   * Validate configuration values
+   * @throws On invalid config
+   */
+  private validateConfig(): void {
+    if (!this.config || typeof this.config !== 'object') {
+      const error = new Error('Config must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    // Validate wall break config
+    if (this.config.modes?.wallBreak) {
+      const wb = this.config.modes.wallBreak;
+      if (typeof wb.enabled !== 'boolean') {
+        const error = new Error('wallBreak.enabled must be a boolean');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof wb.minWallSize !== 'number' || wb.minWallSize < 0) {
+        const error = new Error('wallBreak.minWallSize must be non-negative number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof wb.breakConfirmationMs !== 'number' || wb.breakConfirmationMs < 0) {
+        const error = new Error('wallBreak.breakConfirmationMs must be non-negative number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof wb.maxConfidence !== 'number' || wb.maxConfidence < 0 || wb.maxConfidence > 100) {
+        const error = new Error('wallBreak.maxConfidence must be between 0 and 100');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate wall disappearance config
+    if (this.config.modes?.wallDisappearance) {
+      const wd = this.config.modes.wallDisappearance;
+      if (typeof wd.enabled !== 'boolean') {
+        const error = new Error('wallDisappearance.enabled must be a boolean');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof wd.minWallSize !== 'number' || wd.minWallSize < 0) {
+        const error = new Error('wallDisappearance.minWallSize must be non-negative number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof wd.maxConfidence !== 'number' || wd.maxConfidence < 0 || wd.maxConfidence > 100) {
+        const error = new Error('wallDisappearance.maxConfidence must be between 0 and 100');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate imbalance spike config
+    if (this.config.modes?.imbalanceSpike) {
+      const is = this.config.modes.imbalanceSpike;
+      if (typeof is.enabled !== 'boolean') {
+        const error = new Error('imbalanceSpike.enabled must be a boolean');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof is.minRatioChange !== 'number' || is.minRatioChange <= 0) {
+        const error = new Error('imbalanceSpike.minRatioChange must be positive number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (typeof is.maxConfidence !== 'number' || is.maxConfidence < 0 || is.maxConfidence > 100) {
+        const error = new Error('imbalanceSpike.maxConfidence must be between 0 and 100');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate general config
+    if (typeof this.config.maxImbalanceHistory !== 'number' || this.config.maxImbalanceHistory <= 0) {
+      const error = new Error('maxImbalanceHistory must be positive number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof this.config.wallExpiryMs !== 'number' || this.config.wallExpiryMs < 0) {
+      const error = new Error('wallExpiryMs must be non-negative number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof this.config.breakExpiryMs !== 'number' || this.config.breakExpiryMs < 0) {
+      const error = new Error('breakExpiryMs must be non-negative number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+  }
 
   /**
    * Detect whale activity from order book analysis
@@ -161,6 +297,7 @@ export class WhaleDetectionService {
    * @param btcMomentum - BTC momentum (0-1, from BTCAnalysis)
    * @param btcDirection - BTC direction ('UP'/'DOWN'/'NEUTRAL')
    * @returns Whale signal (detected or not)
+   * @throws On null/invalid analysis or price
    */
   detectWhale(
     analysis: OrderBookAnalysis,
@@ -168,22 +305,41 @@ export class WhaleDetectionService {
     btcMomentum?: number,
     btcDirection?: string,
   ): WhaleSignal {
-    // Update tracked data
-    this.updateTrackedWalls(analysis);
-    this.updateImbalanceHistory(analysis);
-    this.cleanupExpiredData();
+    // THROW: Input validation (OUTSIDE try-catch to propagate errors)
+    this.validateDetectionInput(analysis, currentPrice, btcMomentum);
 
-    // Log current orderbook state (every 10th call to avoid spam)
-    if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_DETECTION_PROBABILITY) {
-      this.logger.debug('🐋 Whale Detector State', {
-        trackedBids: this.trackedBidWalls.size,
-        trackedAsks: this.trackedAskWalls.size,
-        imbalanceHistory: this.imbalanceHistory.length,
-        currentRatio: analysis.imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
-        walls: analysis.walls.length,
-        btcMomentum: btcMomentum?.toFixed(DECIMAL_PLACES.PERCENT),
-        btcDirection,
-      });
+    try {
+      // Update tracked data
+      this.updateTrackedWalls(analysis);
+      this.updateImbalanceHistory(analysis);
+      this.cleanupExpiredData();
+
+      // Log current orderbook state (every 10th call to avoid spam)
+      if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_DETECTION_PROBABILITY) {
+        this.safeLog('debug', '🐋 Whale Detector State', {
+          trackedBids: this.trackedBidWalls.size,
+          trackedAsks: this.trackedAskWalls.size,
+          imbalanceHistory: this.imbalanceHistory.length,
+          currentRatio: analysis.imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
+          walls: analysis.walls.length,
+          btcMomentum: btcMomentum?.toFixed(DECIMAL_PLACES.PERCENT),
+          btcDirection,
+        });
+      }
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Detection setup failures
+      this.safeLog('error', `Whale detection setup failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      return {
+        detected: false,
+        mode: null,
+        direction: null,
+        confidence: 0,
+        reason: 'Whale detection failed',
+        metadata: {},
+      };
     }
 
     // MODE 3: Imbalance Spike (highest priority - immediate action)
@@ -215,7 +371,7 @@ export class WhaleDetectionService {
 
     // No whale detected - log summary (every 20th call)
     if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_NO_DETECTION_PROBABILITY) {
-      this.logger.debug('🐋 No whale activity', {
+      this.safeLog('debug', '🐋 No whale activity', {
         wallsDetected: analysis.walls.length,
         imbalanceRatio: analysis.imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
         imbalanceDirection: analysis.imbalance.direction,
@@ -230,6 +386,58 @@ export class WhaleDetectionService {
       reason: 'No whale activity detected',
       metadata: {},
     };
+  }
+
+  /**
+   * Validate detection input
+   * @throws On invalid inputs
+   */
+  private validateDetectionInput(
+    analysis: OrderBookAnalysis,
+    currentPrice: number,
+    btcMomentum?: number
+  ): void {
+    if (!analysis || typeof analysis !== 'object') {
+      const error = new Error('Analysis must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof currentPrice !== 'number' || !Number.isFinite(currentPrice)) {
+      const error = new Error('Current price must be a finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (currentPrice < 0) {
+      const error = new Error('Current price must be non-negative');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (btcMomentum !== undefined) {
+      if (typeof btcMomentum !== 'number' || !Number.isFinite(btcMomentum)) {
+        const error = new Error('BTC momentum must be a finite number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+
+      if (btcMomentum < 0 || btcMomentum > 1) {
+        const error = new Error('BTC momentum must be between 0 and 1');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
   }
 
   // ==========================================================================
@@ -688,7 +896,7 @@ export class WhaleDetectionService {
           btcMomentum * PERCENT_MULTIPLIER
         ).toFixed(0)}%) - Whales done accumulating → continue UP (skip SHORT)`;
         // Block this signal (it goes against trend)
-        this.logger.debug('⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
+        this.safeLog('debug', '⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
           wallSide,
           btcDirection,
           btcMomentum: btcMomentum.toFixed(DECIMAL_PLACES.PERCENT),
@@ -702,7 +910,7 @@ export class WhaleDetectionService {
           btcMomentum * PERCENT_MULTIPLIER
         ).toFixed(0)}%) - Whales done distributing → continue DOWN (skip LONG)`;
         // Block this signal (it goes against trend)
-        this.logger.debug('⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
+        this.safeLog('debug', '⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
           wallSide,
           btcDirection,
           btcMomentum: btcMomentum.toFixed(DECIMAL_PLACES.PERCENT),
@@ -780,7 +988,7 @@ export class WhaleDetectionService {
    * Log whale detection
    */
   private logWhaleDetection(signal: WhaleSignal): void {
-    this.logger.info(`🐋 WHALE DETECTED [${signal.mode}]`, {
+    this.safeLog('info', `🐋 WHALE DETECTED [${signal.mode}]`, {
       direction: signal.direction,
       confidence: `${signal.confidence.toFixed(0)}%`,
       reason: signal.reason,
@@ -806,13 +1014,39 @@ export class WhaleDetectionService {
   }
 
   /**
+   * Safe log wrapper - failures never block execution
+   * @param level - Log level
+   * @param message - Log message
+   * @param meta - Optional metadata
+   */
+  private safeLog(level: string, message: string, meta?: any): void {
+    try {
+      if (this.logger) {
+        (this.logger as any)[level]?.(message, meta);
+      }
+    } catch (error) {
+      // SKIP: Logging failures never block execution
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
+  }
+
+  /**
    * Clear all tracked data
    */
   clear(): void {
-    this.trackedBidWalls.clear();
-    this.trackedAskWalls.clear();
-    this.recentlyBrokenWalls.clear();
-    this.imbalanceHistory = [];
-    this.logger.debug('WhaleDetector data cleared');
+    try {
+      this.trackedBidWalls.clear();
+      this.trackedAskWalls.clear();
+      this.recentlyBrokenWalls.clear();
+      this.imbalanceHistory = [];
+      this.safeLog('debug', 'WhaleDetector data cleared');
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Clear failure
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+    }
   }
 }
