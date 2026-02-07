@@ -1350,7 +1350,8 @@ Filter Orchestrator
 | 47 | **IndicatorRegistry** | **8.9.57** | **THROW (duplicate/null) + GRACEFUL_DEGRADE (unregistered) + SKIP (logging)** | **25** | **✅** |
 | 48 | **IndicatorCacheService** | **8.9.58** | **THROW (key/value) + GRACEFUL_DEGRADE (repo errors) + SKIP (logging)** | **25** | **✅** |
 | 49 | **MarketConditionAnalyzerService** | **8.9.59** | **THROW (TP/confidence validation) + GRACEFUL_DEGRADE (processing) + SKIP (logging)** | **25** | **✅** |
-| 50-53 | **Next Phase Services (4)** | 8.9.60+ | - | ~75 | ⏳ PENDING |
+| 50 | **FractalSmcWeightingService** | **8.9.71** | **THROW (config/input) + GRACEFUL_DEGRADE (calc) + SKIP (logging)** | **25** | **✅** |
+| 51-53 | **Next Phase Services (3)** | 8.9.72+ | - | ~50 | ⏳ PENDING |
 
 **Tier 1 (Critical/Core)** - ✅ COMPLETE
 - BybitService, OrderExecutionPipelineService, GracefulShutdownService
@@ -1391,8 +1392,8 @@ Filter Orchestrator
 
 **Priority 3 (Technical Indicators)**
 - [ ] `tf-alignment.service.ts` - Timeframe alignment
-- [ ] `timeframe-weighting.service.ts` - Timeframe weighting
-- [ ] `fractal-smc-weighting.service.ts` - Smart Money Concepts
+- [x] `timeframe-weighting.service.ts` - Timeframe weighting ✅ Phase 8.9.70
+- [x] `fractal-smc-weighting.service.ts` - Smart Money Concepts ✅ Phase 8.9.71
 - [ ] `swing-point-detector.service.ts` - Swing point detection
 - [ ] `candle-aggregator.service.ts` - Candle aggregation
 - [ ] `delta-analyzer.service.ts` - Delta analysis
@@ -1427,7 +1428,7 @@ Filter Orchestrator
 
 ---
 
-**Version:** 5.50 (Phase 8.9.70 - TimeframeWeightingService ✅)
-**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.70 ✅)
-**Build Status:** ✅ 0 TypeScript Errors | 🎉 6130 Tests Passing (+27 Phase 8.9.70) | **70/78 services with ErrorHandler integration** | 270 Test Files
-**Session:** 90 | **Status:** Phase 8.9.70 ✅ COMPLETE (TimeframeWeightingService) | **Phase 8.9.71 NEXT** (fractal-smc-weighting.service.ts) | **Priority: Remaining 8 Services**
+**Version:** 5.51 (Phase 8.9.71 - FractalSmcWeightingService ✅)
+**Architecture:** Modular LEGO-like Trading System (100% Phase 9 + 100% Phase 0-2.3 + Phase 8.9.1-8.9.71 ✅)
+**Build Status:** ✅ 0 TypeScript Errors | 🎉 6155 Tests Passing (+25 Phase 8.9.71) | **71/78 services with ErrorHandler integration** | 271 Test Files
+**Session:** 90 | **Status:** Phase 8.9.71 ✅ COMPLETE (FractalSmcWeightingService) | **Phase 8.9.72 NEXT** (console-dashboard.service.ts) | **Priority: Remaining 7 Services**

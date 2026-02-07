@@ -22,6 +22,7 @@ import {
   ConfidenceLevel
 } from '../types/fractal-strategy.types';
 import { INTEGER_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class FractalSmcWeightingService {
   // Fractal weights (total max: 125 normalized points)
@@ -49,41 +50,158 @@ export class FractalSmcWeightingService {
 
   constructor(
     private config: WeightedSignalConfig,
-    private logger: LoggerService
-  ) {}
+    private logger?: LoggerService,
+    private errorHandler?: ErrorHandler
+  ) {
+    // THROW: Config validation
+    this.validateConfig();
+    this.safeLog('info', '✅ FractalSmcWeightingService initialized');
+  }
+
+  /**
+   * Validate configuration values
+   * @throws On invalid config
+   */
+  private validateConfig(): void {
+    if (!this.config || typeof this.config !== 'object') {
+      const error = new Error('Config must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof this.config.threshold !== 'number' || !Number.isFinite(this.config.threshold)) {
+      const error = new Error('Config.threshold must be a finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (this.config.threshold < 0 || this.config.threshold > 220) {
+      const error = new Error('Config.threshold must be between 0 and 220');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof this.config.highConfidenceThreshold !== 'number' || !Number.isFinite(this.config.highConfidenceThreshold)) {
+      const error = new Error('Config.highConfidenceThreshold must be a finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (this.config.highConfidenceThreshold < this.config.threshold || this.config.highConfidenceThreshold > 220) {
+      const error = new Error('Config.highConfidenceThreshold must be >= threshold and <= 220');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof this.config.maxFractalScore !== 'number' || this.config.maxFractalScore <= 0) {
+      const error = new Error('Config.maxFractalScore must be a positive number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof this.config.maxSmcScore !== 'number' || this.config.maxSmcScore <= 0) {
+      const error = new Error('Config.maxSmcScore must be a positive number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+  }
 
   /**
    * Calculate comprehensive weighted score
+   * @throws On invalid setup/data
    */
   calculateWeightedScore(setup: FractalSetup, data: StrategyMarketData): WeightedSignal {
-    const fractalScore = this.calculateFractalScore(setup);
-    const smcScore = this.calculateSmcScore(setup, data);
-    const combinedScore = fractalScore + smcScore;
-    const passesThreshold = combinedScore >= this.config.threshold;
-    const confidence = this.determineConfidence(combinedScore);
-    const positionSize = this.getPositionSize(confidence);
-    const reasoning = this.buildReasoning(setup, data, fractalScore, smcScore, confidence);
+    // THROW: Input validation
+    this.validateInputs(setup, data);
 
-    this.logger.info('Weighted score calculated', {
-      fractalScore: fractalScore.toFixed(1),
-      smcScore: smcScore.toFixed(1),
-      combined: combinedScore.toFixed(1),
-      threshold: this.config.threshold,
-      confidence,
-      positionSize: (positionSize * INTEGER_MULTIPLIERS.ONE_HUNDRED).toFixed(0) + '%',
-      passes: passesThreshold
-    });
+    try {
+      const fractalScore = this.calculateFractalScore(setup);
+      const smcScore = this.calculateSmcScore(setup, data);
+      const combinedScore = fractalScore + smcScore;
+      const passesThreshold = combinedScore >= this.config.threshold;
+      const confidence = this.determineConfidence(combinedScore);
+      const positionSize = this.getPositionSize(confidence);
+      const reasoning = this.buildReasoning(setup, data, fractalScore, smcScore, confidence);
 
-    return {
-      fractalScore,
-      smcScore,
-      combinedScore,
-      threshold: this.config.threshold,
-      passesThreshold,
-      confidence,
-      positionSize,
-      reasoning
-    };
+      // Validate scores
+      if (!Number.isFinite(combinedScore) || combinedScore < 0 || combinedScore > 220) {
+        throw new Error(`Invalid combined score: ${combinedScore}`);
+      }
+
+      this.safeLog('info', 'Weighted score calculated', {
+        fractalScore: fractalScore.toFixed(1),
+        smcScore: smcScore.toFixed(1),
+        combined: combinedScore.toFixed(1),
+        threshold: this.config.threshold,
+        confidence,
+        positionSize: (positionSize * INTEGER_MULTIPLIERS.ONE_HUNDRED).toFixed(0) + '%',
+        passes: passesThreshold
+      });
+
+      return {
+        fractalScore,
+        smcScore,
+        combinedScore,
+        threshold: this.config.threshold,
+        passesThreshold,
+        confidence,
+        positionSize,
+        reasoning
+      };
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Calculation failures
+      this.safeLog('error', `Weighted score calculation failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      // Return safe default
+      return {
+        fractalScore: 0,
+        smcScore: 0,
+        combinedScore: 0,
+        threshold: this.config.threshold,
+        passesThreshold: false,
+        confidence: ConfidenceLevel.LOW,
+        positionSize: 0.5,
+        reasoning: ['Calculation failed, returning safe defaults']
+      };
+    }
+  }
+
+  /**
+   * Validate input parameters
+   * @throws On invalid inputs
+   */
+  private validateInputs(setup: FractalSetup, data: StrategyMarketData): void {
+    if (!setup || typeof setup !== 'object') {
+      const error = new Error('Setup must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (!data || typeof data !== 'object') {
+      const error = new Error('Data must be a valid object');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
   }
 
   /**
@@ -97,8 +215,14 @@ export class FractalSmcWeightingService {
     // 1. Breakout Confirmed
     if (setup.breakout && setup.breakout.confirmedByClose) {
       const strength = setup.breakout.strength * INTEGER_MULTIPLIERS.ONE_HUNDRED; // Convert to basis points
+      if (!Number.isFinite(strength)) {
+        throw new Error('Invalid breakout strength value');
+      }
       const basePoints = Math.min(this.FRACTAL_WEIGHTS.BREAKOUT_CONFIRMED.base, strength / 0.04);
       const weighted = basePoints * this.FRACTAL_WEIGHTS.BREAKOUT_CONFIRMED.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted breakout points');
+      }
       rawScore += weighted;
       details.push(`Breakout: ${weighted.toFixed(1)} pts (${(strength * 0.01).toFixed(DECIMAL_PLACES.PERCENT)}% strength)`);
     }
@@ -108,6 +232,9 @@ export class FractalSmcWeightingService {
       const touchBonus = Math.min(5, setup.retest.touchCount - 1);
       const basePoints = this.FRACTAL_WEIGHTS.RETEST_ZONE.base + touchBonus;
       const weighted = basePoints * this.FRACTAL_WEIGHTS.RETEST_ZONE.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted retest points');
+      }
       rawScore += weighted;
       details.push(`Retest: ${weighted.toFixed(1)} pts (${setup.retest.touchCount} touches)`);
     }
@@ -115,6 +242,9 @@ export class FractalSmcWeightingService {
     // 3. Reversal Candle (MOST IMPORTANT)
     if (setup.reversal && setup.reversal.strongCandleBody) {
       const weighted = this.FRACTAL_WEIGHTS.REVERSAL_CANDLE.base * this.FRACTAL_WEIGHTS.REVERSAL_CANDLE.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted reversal points');
+      }
       rawScore += weighted;
       details.push(`Reversal candle: ${weighted.toFixed(1)} pts`);
     }
@@ -126,15 +256,24 @@ export class FractalSmcWeightingService {
         setup.reversal.confirmationBars * 7.5
       );
       const weighted = basePoints * this.FRACTAL_WEIGHTS.CONFIRMATION_BARS.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted confirmation points');
+      }
       rawScore += weighted;
       details.push(`Confirmation: ${weighted.toFixed(1)} pts (${setup.reversal.confirmationBars} bars)`);
     }
 
     // 5. Volume
     if (setup.breakout && setup.breakout.volumeRatio > 1.0) {
+      if (!Number.isFinite(setup.breakout.volumeRatio)) {
+        throw new Error('Invalid volume ratio');
+      }
       const volumeBonus = Math.min(INTEGER_MULTIPLIERS.TEN, (setup.breakout.volumeRatio - 1) * INTEGER_MULTIPLIERS.TEN);
       const basePoints = this.FRACTAL_WEIGHTS.VOLUME.base + volumeBonus;
       const weighted = basePoints * this.FRACTAL_WEIGHTS.VOLUME.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted volume points');
+      }
       rawScore += weighted;
       details.push(`Volume: ${weighted.toFixed(1)} pts (${setup.breakout.volumeRatio.toFixed(DECIMAL_PLACES.PERCENT)}x avg)`);
     }
@@ -142,14 +281,26 @@ export class FractalSmcWeightingService {
     // 6. Price Action Pattern
     if (setup.reversal && setup.reversal.priceActionPattern) {
       const weighted = this.FRACTAL_WEIGHTS.PRICE_ACTION.base * this.FRACTAL_WEIGHTS.PRICE_ACTION.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted price action points');
+      }
       rawScore += weighted;
       details.push(`Pattern ${setup.reversal.priceActionPattern}: ${weighted.toFixed(1)} pts`);
+    }
+
+    // Validate raw score
+    if (!Number.isFinite(rawScore)) {
+      throw new Error('Invalid fractal raw score');
     }
 
     // Normalize to 125 points max
     const normalized = (rawScore / this.FRACTAL_MAX_RAW_SCORE) * this.config.maxFractalScore;
 
-    this.logger.debug('Fractal score breakdown', {
+    if (!Number.isFinite(normalized)) {
+      throw new Error('Invalid fractal normalized score');
+    }
+
+    this.safeLog('debug', 'Fractal score breakdown', {
       rawScore: rawScore.toFixed(1),
       normalized: normalized.toFixed(1),
       details
@@ -172,6 +323,9 @@ export class FractalSmcWeightingService {
     // 1. Structure Alignment (from entry refinement)
     if (setup.reversal && setup.reversal.structureAligned) {
       const weighted = this.SMC_WEIGHTS.STRUCTURE_ALIGNMENT.base * this.SMC_WEIGHTS.STRUCTURE_ALIGNMENT.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted structure alignment points');
+      }
       rawScore += weighted;
       details.push(`Structure alignment: ${weighted.toFixed(1)} pts`);
     }
@@ -179,6 +333,9 @@ export class FractalSmcWeightingService {
     // 2. Check for liquidity analysis in data
     if (data.liquidity?.strongZones && data.liquidity.strongZones.length > 0) {
       const weighted = this.SMC_WEIGHTS.ORDER_BLOCK.base * this.SMC_WEIGHTS.ORDER_BLOCK.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted order block points');
+      }
       rawScore += weighted;
       details.push(`Order block zone: ${weighted.toFixed(1)} pts`);
     }
@@ -186,6 +343,9 @@ export class FractalSmcWeightingService {
     // 3. Check for recent liquidity sweep (MOST IMPORTANT)
     if (data.liquidity?.recentSweep?.detected) {
       const weighted = this.SMC_WEIGHTS.LIQUIDITY_GRAB.base * this.SMC_WEIGHTS.LIQUIDITY_GRAB.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted liquidity grab points');
+      }
       rawScore += weighted;
       details.push(`Liquidity grab: ${weighted.toFixed(1)} pts`);
     }
@@ -193,14 +353,26 @@ export class FractalSmcWeightingService {
     // 4. Volume confirmation as proxy for SMC interest
     if (setup.reversal && setup.reversal.volumeConfirmed) {
       const weighted = this.SMC_WEIGHTS.FAIR_VALUE_GAP.base * this.SMC_WEIGHTS.FAIR_VALUE_GAP.weight;
+      if (!Number.isFinite(weighted)) {
+        throw new Error('Invalid weighted fair value gap points');
+      }
       rawScore += weighted;
       details.push(`Volume confirmed: ${weighted.toFixed(1)} pts`);
+    }
+
+    // Validate raw score
+    if (!Number.isFinite(rawScore)) {
+      throw new Error('Invalid SMC raw score');
     }
 
     // Normalize to 110 points max
     const normalized = (rawScore / this.SMC_MAX_RAW_SCORE) * this.config.maxSmcScore;
 
-    this.logger.debug('SMC score breakdown', {
+    if (!Number.isFinite(normalized)) {
+      throw new Error('Invalid SMC normalized score');
+    }
+
+    this.safeLog('debug', 'SMC score breakdown', {
       rawScore: rawScore.toFixed(1),
       normalized: normalized.toFixed(1),
       details
@@ -271,5 +443,24 @@ export class FractalSmcWeightingService {
     }
 
     return reasoning;
+  }
+
+  /**
+   * Safe logging wrapper - failures never block execution
+   * @param level - Log level (info, warn, error, debug, silly)
+   * @param message - Log message
+   * @param meta - Optional metadata
+   */
+  private safeLog(level: string, message: string, meta?: any): void {
+    try {
+      if (this.logger) {
+        (this.logger as any)[level]?.(message, meta);
+      }
+    } catch (error) {
+      // SKIP: Logging failures never block execution
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
   }
 }
