@@ -1,11 +1,16 @@
 /**
- * STRATEGY MANAGER SERVICE
- * Central service for strategy management
+ * STRATEGY MANAGER SERVICE (Phase 8.9.75)
+ * Central service for strategy management with ErrorHandler integration
  *
  * Responsibilities:
  * 1. Load strategy from JSON at startup
  * 2. Merge strategy overrides with main config
  * 3. Provide strategy to services (weights, analyzer selection)
+ *
+ * Error Handling:
+ * - THROW: Input validation (null/empty strategyName, null mainConfig)
+ * - GRACEFUL_DEGRADE: Loader/merger failures (propagate errors, allow fallback)
+ * - SKIP: Console logging failures (non-blocking)
  *
  * Bot integration point:
  * - Load strategy once at startup
@@ -17,6 +22,7 @@ import { StrategyLoaderService } from './strategy-loader.service';
 import { StrategyConfigMergerService } from './strategy-config-merger.service';
 import { StrategyConfig } from '../types/strategy-config.types';
 import { ConfigNew } from '../types/config-new.types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class StrategyManagerService {
   private strategy: StrategyConfig | null = null;
@@ -26,6 +32,7 @@ export class StrategyManagerService {
   constructor(
     private loader: StrategyLoaderService,
     private merger: StrategyConfigMergerService,
+    private errorHandler?: ErrorHandler,
   ) {}
 
   /**
@@ -34,31 +41,61 @@ export class StrategyManagerService {
    *
    * @param strategyName - Name of strategy to load (e.g., "level-trading")
    * @param mainConfig - Main config from config.json
+   *
+   * Error Handling:
+   * - THROW: Input validation (null/empty strategyName, null mainConfig)
+   * - GRACEFUL_DEGRADE: Loader/merger failures (propagate to caller)
+   * - SKIP: Console logging failures (non-blocking)
    */
   async initialize(strategyName: string, mainConfig: ConfigNew | any): Promise<void> {
-    console.log(`[StrategyManager] Loading strategy: ${strategyName}`);
+    // THROW: Input validation
+    if (strategyName === null || strategyName === undefined) {
+      throw new Error('StrategyName is required');
+    }
 
-    // Load strategy from JSON
+    if (typeof strategyName !== 'string' || strategyName.trim() === '') {
+      throw new Error('StrategyName cannot be empty');
+    }
+
+    if (mainConfig === null || mainConfig === undefined) {
+      throw new Error('Main config is required');
+    }
+
+    if (typeof mainConfig !== 'object') {
+      throw new Error('Main config must be an object');
+    }
+
+    // Safe console.log with SKIP strategy
+    this.safeLog(`[StrategyManager] Loading strategy: ${strategyName}`);
+
+    // Load strategy from JSON (GRACEFUL_DEGRADE: propagate errors)
     this.strategy = await this.loader.loadStrategy(strategyName);
+
+    // Validate loaded strategy
+    if (!this.strategy) {
+      throw new Error('Strategy loaded but is null/undefined');
+    }
 
     // Merge with main config (supports both Config and ConfigNew types)
     this.mergedConfigGeneric = this.merger.mergeConfigs(mainConfig, this.strategy);
 
     // Log what changed
     const changeReport = this.merger.getChangeReport(mainConfig, this.strategy);
-    console.log(
+    this.safeLog(
       `[StrategyManager] Applied ${changeReport.changesCount} config overrides from strategy`,
     );
 
     if (changeReport.changesCount > 0) {
       changeReport.changes.forEach((change) => {
-        console.log(
+        this.safeLog(
           `  - ${change.path}: ${JSON.stringify(change.original)} → ${JSON.stringify(change.overridden)}`,
         );
       });
     }
 
-    console.log(`[StrategyManager] Strategy ready: ${this.strategy.metadata.name} v${this.strategy.metadata.version}`);
+    this.safeLog(
+      `[StrategyManager] Strategy ready: ${this.strategy.metadata.name} v${this.strategy.metadata.version}`
+    );
   }
 
   /**
@@ -132,5 +169,24 @@ export class StrategyManagerService {
    */
   isReady(): boolean {
     return this.strategy !== null && this.mergedConfigGeneric !== null;
+  }
+
+  // ============================================================================
+  // PRIVATE METHODS
+  // ============================================================================
+
+  /**
+   * Safe console.log with SKIP strategy for logger failures (non-blocking)
+   */
+  private safeLog(message: string): void {
+    try {
+      console.log(message);
+    } catch (error: unknown) {
+      // SKIP strategy: non-blocking console failure (never throw)
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+      // Silent failure - continue regardless
+    }
   }
 }
