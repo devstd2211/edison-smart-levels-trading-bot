@@ -14,6 +14,7 @@
 
 import { LoggerService, SignalDirection, OrderBookWall, TakeProfit } from '../types';
 import { WallTrackerService } from './wall-tracker.service';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 
 // ============================================================================
@@ -135,12 +136,124 @@ export class WhaleWallTPService {
     private logger: LoggerService,
     config?: Partial<WhaleWallTPConfig>,
     private wallTracker?: WallTrackerService,
+    private errorHandler?: ErrorHandler,
   ) {
+    // THROW: Config validation
+    this.validateConfig(config);
+
     this.config = this.mergeConfig(DEFAULT_CONFIG, config);
 
     // Enable quality validation if WallTrackerService is provided
     if (wallTracker && !config?.qualityValidation) {
       this.config.qualityValidation.enabled = true;
+    }
+  }
+
+  /**
+   * Validate configuration parameters (THROW)
+   */
+  private validateConfig(config?: Partial<WhaleWallTPConfig>): void {
+    if (!config) return;
+
+    // Validate wall filtering percentages
+    if (config.minWallPercent !== undefined) {
+      if (typeof config.minWallPercent !== 'number' || config.minWallPercent < 0 || config.minWallPercent > 100) {
+        const error = new Error('minWallPercent must be between 0 and 100');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    if (config.maxDistancePercent !== undefined) {
+      if (typeof config.maxDistancePercent !== 'number' || config.maxDistancePercent <= 0) {
+        const error = new Error('maxDistancePercent must be positive number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    if (config.minDistancePercent !== undefined) {
+      if (typeof config.minDistancePercent !== 'number' || config.minDistancePercent < 0) {
+        const error = new Error('minDistancePercent must be non-negative number');
+        if (this.errorHandler) {
+          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+        }
+        throw error;
+      }
+    }
+
+    // Validate TP targeting config
+    if (config.tpTargeting) {
+      if (config.tpTargeting.alignmentThresholdPercent !== undefined) {
+        if (typeof config.tpTargeting.alignmentThresholdPercent !== 'number' ||
+            config.tpTargeting.alignmentThresholdPercent < 0 ||
+            config.tpTargeting.alignmentThresholdPercent > 100) {
+          const error = new Error('tpTargeting.alignmentThresholdPercent must be between 0 and 100');
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+          }
+          throw error;
+        }
+      }
+      if (config.tpTargeting.minWallSizeForTP !== undefined) {
+        if (typeof config.tpTargeting.minWallSizeForTP !== 'number' || config.tpTargeting.minWallSizeForTP < 0) {
+          const error = new Error('tpTargeting.minWallSizeForTP must be non-negative number');
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+          }
+          throw error;
+        }
+      }
+    }
+
+    // Validate SL protection config
+    if (config.slProtection) {
+      if (config.slProtection.bufferPercent !== undefined) {
+        if (typeof config.slProtection.bufferPercent !== 'number' || config.slProtection.bufferPercent < 0) {
+          const error = new Error('slProtection.bufferPercent must be non-negative number');
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+          }
+          throw error;
+        }
+      }
+      if (config.slProtection.minWallSizeForSL !== undefined) {
+        if (typeof config.slProtection.minWallSizeForSL !== 'number' || config.slProtection.minWallSizeForSL < 0) {
+          const error = new Error('slProtection.minWallSizeForSL must be non-negative number');
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+          }
+          throw error;
+        }
+      }
+    }
+
+    // Validate quality validation config
+    if (config.qualityValidation) {
+      if (config.qualityValidation.minStrength !== undefined) {
+        if (typeof config.qualityValidation.minStrength !== 'number' ||
+            config.qualityValidation.minStrength < 0 ||
+            config.qualityValidation.minStrength > 1) {
+          const error = new Error('qualityValidation.minStrength must be between 0 and 1');
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+          }
+          throw error;
+        }
+      }
+      if (config.qualityValidation.icebergBoostFactor !== undefined) {
+        if (typeof config.qualityValidation.icebergBoostFactor !== 'number' || config.qualityValidation.icebergBoostFactor <= 0) {
+          const error = new Error('qualityValidation.icebergBoostFactor must be positive number');
+          if (this.errorHandler) {
+            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+          }
+          throw error;
+        }
+      }
     }
   }
 
@@ -180,83 +293,170 @@ export class WhaleWallTPService {
     originalTP: number,
     originalSL: number,
   ): WhaleWallTPResult {
-    if (!this.config.enabled) {
-      return this.noAdjustment('Whale Wall TP disabled');
-    }
+    // THROW: Input validation (OUTSIDE try-catch)
+    this.validateAdjustTPSLInput(walls, entryPrice, direction, originalTP, originalSL);
 
-    // Filter walls by basic criteria
-    const relevantWalls = this.filterWalls(walls, entryPrice, direction);
-
-    if (relevantWalls.length === 0) {
-      return this.noAdjustment('No relevant walls found');
-    }
-
-    // Analyze wall quality
-    const analyzedWalls = relevantWalls.map((wall) => this.analyzeWall(wall, entryPrice));
-    const qualifiedWalls = analyzedWalls.filter((w) => w.isQualified);
-
-    this.logger.debug('🐋 Whale Wall Analysis', {
-      total: walls.length,
-      relevant: relevantWalls.length,
-      qualified: qualifiedWalls.length,
-    });
-
-    const result: WhaleWallTPResult = {
-      tpAdjusted: false,
-      slAdjusted: false,
-      wallsAnalyzed: walls.length,
-      qualifiedWalls: qualifiedWalls.length,
-    };
-
-    // TP targeting
-    if (this.config.tpTargeting.enabled) {
-      const tpResult = this.calculateWallBasedTP(
-        qualifiedWalls,
-        entryPrice,
-        direction,
-        originalTP,
-      );
-      if (tpResult.adjusted) {
-        result.tpAdjusted = true;
-        result.originalTPPrice = originalTP;
-        result.adjustedTPPrice = tpResult.price;
-        result.tpWall = tpResult.wall;
-        result.tpReason = tpResult.reason;
+    try {
+      if (!this.config.enabled) {
+        return this.noAdjustment('Whale Wall TP disabled');
       }
-    }
 
-    // SL protection
-    if (this.config.slProtection.enabled) {
-      const slResult = this.calculateWallProtectedSL(
-        qualifiedWalls,
-        entryPrice,
-        direction,
-        originalSL,
-      );
-      if (slResult.adjusted) {
-        result.slAdjusted = true;
-        result.originalSLPrice = originalSL;
-        result.adjustedSLPrice = slResult.price;
-        result.slWall = slResult.wall;
-        result.slReason = slResult.reason;
+      // Filter walls by basic criteria
+      const relevantWalls = this.filterWalls(walls, entryPrice, direction);
+
+      if (relevantWalls.length === 0) {
+        return this.noAdjustment('No relevant walls found');
       }
-    }
 
-    // Log results
-    if (result.tpAdjusted || result.slAdjusted) {
-      this.logger.info('🐋 Whale Wall Adjustment', {
-        tpAdjusted: result.tpAdjusted,
-        slAdjusted: result.slAdjusted,
-        tpChange: result.tpAdjusted
-          ? `${originalTP.toFixed(DECIMAL_PLACES.PRICE)} → ${result.adjustedTPPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
-          : 'N/A',
-        slChange: result.slAdjusted
-          ? `${originalSL.toFixed(DECIMAL_PLACES.PRICE)} → ${result.adjustedSLPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
-          : 'N/A',
+      // Analyze wall quality
+      const analyzedWalls = relevantWalls.map((wall) => this.analyzeWall(wall, entryPrice));
+      const qualifiedWalls = analyzedWalls.filter((w) => w.isQualified);
+
+      this.safeLog('debug', '🐋 Whale Wall Analysis', {
+        total: walls.length,
+        relevant: relevantWalls.length,
+        qualified: qualifiedWalls.length,
       });
+
+      const result: WhaleWallTPResult = {
+        tpAdjusted: false,
+        slAdjusted: false,
+        wallsAnalyzed: walls.length,
+        qualifiedWalls: qualifiedWalls.length,
+      };
+
+      // TP targeting
+      if (this.config.tpTargeting.enabled) {
+        const tpResult = this.calculateWallBasedTP(
+          qualifiedWalls,
+          entryPrice,
+          direction,
+          originalTP,
+        );
+        if (tpResult.adjusted) {
+          result.tpAdjusted = true;
+          result.originalTPPrice = originalTP;
+          result.adjustedTPPrice = tpResult.price;
+          result.tpWall = tpResult.wall;
+          result.tpReason = tpResult.reason;
+        }
+      }
+
+      // SL protection
+      if (this.config.slProtection.enabled) {
+        const slResult = this.calculateWallProtectedSL(
+          qualifiedWalls,
+          entryPrice,
+          direction,
+          originalSL,
+        );
+        if (slResult.adjusted) {
+          result.slAdjusted = true;
+          result.originalSLPrice = originalSL;
+          result.adjustedSLPrice = slResult.price;
+          result.slWall = slResult.wall;
+          result.slReason = slResult.reason;
+        }
+      }
+
+      // Log results
+      if (result.tpAdjusted || result.slAdjusted) {
+        this.safeLog('info', '🐋 Whale Wall Adjustment', {
+          tpAdjusted: result.tpAdjusted,
+          slAdjusted: result.slAdjusted,
+          tpChange: result.tpAdjusted
+            ? `${originalTP.toFixed(DECIMAL_PLACES.PRICE)} → ${result.adjustedTPPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
+            : 'N/A',
+          slChange: result.slAdjusted
+            ? `${originalSL.toFixed(DECIMAL_PLACES.PRICE)} → ${result.adjustedSLPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
+            : 'N/A',
+        });
+      }
+
+      return result;
+    } catch (error) {
+      // GRACEFUL_DEGRADE: Adjustment operation failure
+      this.safeLog('error', `Whale wall adjustment failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+      }
+      return this.noAdjustment('Wall adjustment failed');
+    }
+  }
+
+  /**
+   * Validate adjustTPSL input parameters (THROW)
+   */
+  private validateAdjustTPSLInput(
+    walls: OrderBookWall[],
+    entryPrice: number,
+    direction: SignalDirection,
+    originalTP: number,
+    originalSL: number,
+  ): void {
+    if (!Array.isArray(walls)) {
+      const error = new Error('Walls must be a valid array');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
     }
 
-    return result;
+    if (typeof entryPrice !== 'number' || !Number.isFinite(entryPrice)) {
+      const error = new Error('Entry price must be a finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (entryPrice <= 0) {
+      const error = new Error('Entry price must be positive');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (!direction) {
+      const error = new Error('Direction must be specified (LONG or SHORT)');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof originalTP !== 'number' || !Number.isFinite(originalTP)) {
+      const error = new Error('Original TP must be a finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (originalTP <= 0) {
+      const error = new Error('Original TP must be positive');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (typeof originalSL !== 'number' || !Number.isFinite(originalSL)) {
+      const error = new Error('Original SL must be a finite number');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
+
+    if (originalSL <= 0) {
+      const error = new Error('Original SL must be positive');
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+      }
+      throw error;
+    }
   }
 
   /**
@@ -558,5 +758,24 @@ export class WhaleWallTPService {
    */
   getConfig(): WhaleWallTPConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Safe logging wrapper (SKIP strategy for logging failures)
+   * @param level - Log level (debug, info, warn, error)
+   * @param message - Log message
+   * @param meta - Optional metadata
+   */
+  private safeLog(level: string, message: string, meta?: any): void {
+    try {
+      if (this.logger) {
+        (this.logger as any)[level]?.(message, meta);
+      }
+    } catch (error) {
+      // SKIP: Logging failures never block execution
+      if (this.errorHandler) {
+        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+      }
+    }
   }
 }
