@@ -12,15 +12,21 @@ import { DECIMAL_PLACES } from '../constants';
  * - Configurable reinvestment percentage
  * - Risk limits per trade
  *
+ * Error Handling (Phase 8.9.76):
+ * - THROW: Config validation errors (negative amounts, invalid percentages)
+ * - GRACEFUL_DEGRADE: Calculation failures (getBalance rejection, NaN/Infinity handling)
+ * - SKIP: Logging failures (non-blocking via safeLog wrapper)
+ *
  * Example Usage:
  * ```typescript
- * const calculator = new CompoundInterestCalculatorService(config, logger, bybitService);
+ * const calculator = new CompoundInterestCalculatorService(config, logger, getBalance, errorHandler);
  * const result = await calculator.calculatePositionSize();
  * console.log(`Position size: ${result.positionSize} USDT`);
  * ```
  */
 
 import { CompoundInterestConfig, LoggerService } from '../types';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   calculateCompoundPositionSize,
   validateCompoundConfig,
@@ -32,11 +38,12 @@ export class CompoundInterestCalculatorService {
     private config: CompoundInterestConfig,
     private logger: LoggerService,
     private getBalance: () => Promise<number>, // Function to get current balance from exchange
+    private errorHandler?: ErrorHandler, // Optional ErrorHandler for error recovery
   ) {
-    // Validate config on initialization
+    // Validate config on initialization - THROW on validation errors
     try {
       validateCompoundConfig(config);
-      this.logger.info('✅ CompoundInterestCalculator initialized', {
+      this.safeLog('info', '✅ CompoundInterestCalculator initialized', {
         enabled: config.enabled,
         baseDeposit: config.baseDeposit,
         reinvestmentPercent: config.reinvestmentPercent,
@@ -45,7 +52,7 @@ export class CompoundInterestCalculatorService {
         maxSize: config.maxPositionSize,
       });
     } catch (error: unknown) {
-      this.logger.error('❌ Invalid CompoundInterest config', {
+      this.safeLog('error', '❌ Invalid CompoundInterest config', {
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
@@ -57,26 +64,71 @@ export class CompoundInterestCalculatorService {
    * Calculate position size based on current balance and compound interest rules
    *
    * @returns Calculation result with position size and breakdown
+   * GRACEFUL_DEGRADE: Returns safe default on getBalance failure or NaN/Infinity values
    */
   async calculatePositionSize(): Promise<CompoundCalculationResult> {
+    // If ErrorHandler provided, use executeAsync for GRACEFUL_DEGRADE on NaN/Infinity
+    if (this.errorHandler) {
+      const result = await this.errorHandler.executeAsync(
+        async () => {
+          // Get current balance from exchange
+          const currentBalance = await this.getBalance();
+
+          this.safeLog('debug', 'Calculating compound position size', {
+            currentBalance,
+            baseDeposit: this.config.baseDeposit,
+          });
+
+          // Calculate using helpers (will throw on negative balance)
+          const calcResult = calculateCompoundPositionSize(currentBalance, this.config);
+
+          // Log result
+          this.logCalculationResult(calcResult);
+
+          return calcResult;
+        },
+        { strategy: RecoveryStrategy.GRACEFUL_DEGRADE }
+      );
+
+      if (result.success && result.value) {
+        return result.value;
+      } else {
+        // GRACEFUL_DEGRADE: Return safe default on failure (NaN/Infinity calculation issues)
+        this.safeLog('warn', '⚠️ Compound calculation failed, using safe defaults', {
+          error: result.error?.message,
+        });
+        return {
+          positionSize: this.config.minPositionSize,
+          currentBalance: 0,
+          totalProfit: 0,
+          lockedProfit: 0,
+          availableProfit: 0,
+          reinvestedAmount: 0,
+          protectionActive: true,
+          limitApplied: 'none',
+        };
+      }
+    }
+
+    // Fallback without ErrorHandler (backward compatible)
     try {
       // Get current balance from exchange
       const currentBalance = await this.getBalance();
 
-      this.logger.debug('Calculating compound position size', {
+      this.safeLog('debug', 'Calculating compound position size', {
         currentBalance,
         baseDeposit: this.config.baseDeposit,
       });
 
-      // Calculate using helpers
-      const result = calculateCompoundPositionSize(currentBalance, this.config);
+      // Calculate using helpers (will throw on negative balance, pass through NaN/Infinity)
+      const calcResult = calculateCompoundPositionSize(currentBalance, this.config);
 
       // Log result
-      this.logCalculationResult(result);
+      this.logCalculationResult(calcResult);
 
-      return result;
+      return calcResult;
     } catch (error: unknown) {
-      this.logger.error('Error calculating compound position size', {
+      this.safeLog('error', 'Error calculating compound position size', {
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
@@ -95,18 +147,22 @@ export class CompoundInterestCalculatorService {
    * Update configuration (useful for dynamic adjustments)
    *
    * @param newConfig - New configuration
+   * GRACEFUL_DEGRADE: Reverts to old config if validation fails
    */
   updateConfig(newConfig: Partial<CompoundInterestConfig>): void {
+    const oldConfig = { ...this.config };
     this.config = { ...this.config, ...newConfig };
 
     try {
       validateCompoundConfig(this.config);
-      this.logger.info('✅ CompoundInterest config updated', {
+      this.safeLog('info', '✅ CompoundInterest config updated', {
         enabled: this.config.enabled,
         reinvestmentPercent: this.config.reinvestmentPercent,
       });
     } catch (error: unknown) {
-      this.logger.error('❌ Invalid config update', {
+      // GRACEFUL_DEGRADE: Revert to old config on validation failure
+      this.config = oldConfig;
+      this.safeLog('error', '❌ Invalid config update, reverted to previous', {
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
@@ -149,6 +205,7 @@ export class CompoundInterestCalculatorService {
    *
    * @param currentBalance - Current balance
    * @returns Growth metrics
+   * GRACEFUL_DEGRADE: Returns safe defaults on calculation failures (negative balance, etc)
    */
   calculateGrowthMetrics(currentBalance: number): {
     currentSize: number;
@@ -156,28 +213,47 @@ export class CompoundInterestCalculatorService {
     maxPossibleSize: number;
     growthFactor: number; // Current size / min size
   } {
-    const currentResult = calculateCompoundPositionSize(currentBalance, this.config);
+    try {
+      const currentResult = calculateCompoundPositionSize(currentBalance, this.config);
 
-    // Calculate profit needed for 10% position increase
-    const targetSize = currentResult.positionSize * 1.1;
-    let profitNeeded = 0;
+      // Calculate profit needed for 10% position increase
+      const targetSize = currentResult.positionSize * 1.1;
+      let profitNeeded = 0;
 
-    // Binary search for required profit
-    for (let profit = 0; profit < this.config.maxPositionSize; profit += 0.1) {
-      const testBalance = currentBalance + profit;
-      const testResult = calculateCompoundPositionSize(testBalance, this.config);
-      if (testResult.positionSize >= targetSize) {
-        profitNeeded = profit;
-        break;
+      // Binary search for required profit (handles NaN/Infinity gracefully)
+      for (let profit = 0; profit < this.config.maxPositionSize; profit += 0.1) {
+        const testBalance = currentBalance + profit;
+        const testResult = calculateCompoundPositionSize(testBalance, this.config);
+        if (testResult.positionSize >= targetSize) {
+          profitNeeded = profit;
+          break;
+        }
       }
-    }
 
-    return {
-      currentSize: currentResult.positionSize,
-      profitToNextLevel: profitNeeded,
-      maxPossibleSize: this.config.maxPositionSize,
-      growthFactor: currentResult.positionSize / this.config.minPositionSize,
-    };
+      // Handle NaN/Infinity in growth factor
+      let growthFactor = currentResult.positionSize / this.config.minPositionSize;
+      if (!Number.isFinite(growthFactor)) {
+        growthFactor = 1; // Safe default for NaN/Infinity
+      }
+
+      return {
+        currentSize: currentResult.positionSize,
+        profitToNextLevel: profitNeeded,
+        maxPossibleSize: this.config.maxPositionSize,
+        growthFactor,
+      };
+    } catch (error: unknown) {
+      // GRACEFUL_DEGRADE: Return safe defaults on error (e.g., negative balance)
+      this.safeLog('warn', '⚠️ Growth metrics calculation failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        currentSize: this.config.minPositionSize,
+        profitToNextLevel: 0,
+        maxPossibleSize: this.config.maxPositionSize,
+        growthFactor: 1,
+      };
+    }
   }
 
   // ============================================================================
@@ -185,7 +261,44 @@ export class CompoundInterestCalculatorService {
   // ============================================================================
 
   /**
-   * Log calculation result with appropriate level
+   * Safe logger wrapper - SKIP strategy for logging failures
+   * Prevents logging errors from interrupting calculations
+   */
+  private safeLog(
+    level: 'debug' | 'info' | 'warn' | 'error',
+    message: string,
+    data?: Record<string, unknown> | unknown
+  ): void {
+    try {
+      const logData = data as Record<string, unknown> | undefined;
+      switch (level) {
+        case 'debug':
+          this.logger.debug(message, logData);
+          break;
+        case 'info':
+          this.logger.info(message, logData);
+          break;
+        case 'warn':
+          this.logger.warn(message, logData);
+          break;
+        case 'error':
+          this.logger.error(message, logData);
+          break;
+      }
+    } catch (logError: unknown) {
+      // SKIP: Silently ignore logging failures - never block operations
+      if (this.errorHandler) {
+        this.errorHandler.handle(
+          logError instanceof Error ? logError : new Error(String(logError)),
+          { strategy: RecoveryStrategy.SKIP }
+        );
+      }
+      // If no ErrorHandler, just silently ignore
+    }
+  }
+
+  /**
+   * Log calculation result with appropriate level (with SKIP error handling)
    */
   private logCalculationResult(result: CompoundCalculationResult): void {
     const {
@@ -208,11 +321,11 @@ export class CompoundInterestCalculatorService {
     };
 
     if (protectionActive) {
-      this.logger.warn('🛡️ Deposit protection ACTIVE', logData);
+      this.safeLog('warn', '🛡️ Deposit protection ACTIVE', logData);
     } else if (limitApplied !== 'none') {
-      this.logger.info(`⚠️ Position limit applied: ${limitApplied}`, logData);
+      this.safeLog('info', `⚠️ Position limit applied: ${limitApplied}`, logData);
     } else {
-      this.logger.debug('💰 Compound position calculated', logData);
+      this.safeLog('debug', '💰 Compound position calculated', logData);
     }
   }
 }
