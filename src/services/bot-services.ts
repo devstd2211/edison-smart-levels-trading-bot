@@ -51,6 +51,7 @@ import { RetestEntryService } from './retest-entry.service';
 import { DeltaAnalyzerService } from './delta-analyzer.service';
 import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { WallTrackerService } from './wall-tracker.service';
+import { AdvancedOrderFlowService } from './advanced-order-flow.service'; // Phase 10.1
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -129,6 +130,7 @@ export class BotServices {
   readonly orderbookImbalanceService?: OrderbookImbalanceService;
   readonly wallTrackerService?: WallTrackerService;
   readonly ladderExitDetector?: LadderExitDetectorService; // Phase 8.9.27: Ladder TP exit detection
+  readonly advancedOrderFlowService?: AdvancedOrderFlowService; // Phase 10.1: Advanced order flow analysis
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -421,6 +423,20 @@ export class BotServices {
         minLifetime: config.wallTracking.minLifetimeMs + 'ms',
         spoofingThreshold: config.wallTracking.spoofingThresholdMs + 'ms',
         trackHistory: config.wallTracking.trackHistoryCount,
+      });
+    }
+
+    // Phase 10.1: Initialize Advanced Order Flow Service (optional)
+    if (config.advancedOrderFlow?.enabled) {
+      this.advancedOrderFlowService = new AdvancedOrderFlowService(
+        config.advancedOrderFlow,
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Advanced Order Flow Service initialized (Phase 10.1)', {
+        tickWindowMs: config.advancedOrderFlow.tickWindowMs,
+        enableSpoofing: config.advancedOrderFlow.enableSpoofingDetection,
+        enableMomentum: config.advancedOrderFlow.enableMomentum,
       });
     }
 

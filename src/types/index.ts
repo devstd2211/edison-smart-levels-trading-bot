@@ -62,6 +62,7 @@ export type {
 // Re-export config types - NEW SIMPLIFIED STRUCTURE
 export type {
   BotConfig,
+  Config, // Type alias for BotConfig (backward compatibility)
   ConfigMeta,
   ExchangeConfig,
   TradingConfig,
@@ -79,6 +80,7 @@ export type {
   StrategiesConfig,
   ServicesConfig,
   MonitoringConfig,
+  AdvancedOrderFlowConfigType, // Phase 10.1
 } from './config.types';
 
 // Re-export old config types (deprecated - for backward compatibility)

@@ -347,6 +347,14 @@ export class WebSocketEventHandlerManager {
           });
         }
 
+        // Phase 10.1: Feed orderbook snapshot to Advanced Order Flow Service
+        if (this.services.advancedOrderFlowService) {
+          this.services.advancedOrderFlowService.processOrderbook({
+            bids: snapshot.bids.map((b: any) => [b.price, b.size]),
+            asks: snapshot.asks.map((a: any) => [a.price, a.size]),
+          });
+        }
+
         const orderbookSnapshot: OrderBook = {
           symbol: update.symbol || this.config.exchange.symbol,
           bids: snapshot.bids,
@@ -396,13 +404,24 @@ export class WebSocketEventHandlerManager {
     }
 
     try {
+      // Normalize side
+      const normalizedSide = trade.side === 'Buy' || trade.side === 'BUY' ? 'BUY' : 'SELL';
+
       if (this.services.deltaAnalyzerService) {
-        // Normalize side
-        const normalizedSide = trade.side === 'Buy' || trade.side === 'BUY' ? 'BUY' : 'SELL';
         this.services.deltaAnalyzerService.addTick({
           timestamp: trade.timestamp,
           price: trade.price,
           quantity: trade.quantity,
+          side: normalizedSide as 'BUY' | 'SELL',
+        });
+      }
+
+      // Phase 10.1: Feed ticks to Advanced Order Flow Service
+      if (this.services.advancedOrderFlowService) {
+        this.services.advancedOrderFlowService.addTick({
+          timestamp: trade.timestamp,
+          price: trade.price,
+          size: trade.quantity,
           side: normalizedSide as 'BUY' | 'SELL',
         });
       }

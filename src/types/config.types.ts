@@ -22,6 +22,7 @@ export interface BotConfig {
   services: ServicesConfig;
   monitoring: MonitoringConfig;
   liveTrading?: LiveTradingConfig; // Phase 9: Live Trading Engine (optional)
+  advancedOrderFlow?: AdvancedOrderFlowConfigType; // Phase 10.1: Advanced order flow analysis (optional)
 }
 
 // ============================================================================
@@ -484,3 +485,26 @@ export interface AntiFlipConfig {
   overrideConfidenceThreshold: number;
   strongReversalRsiThreshold: number;
 }
+
+// ============================================================================
+// PHASE 10.1: ADVANCED ORDER FLOW
+// ============================================================================
+
+/**
+ * Advanced Order Flow Service Configuration (Phase 10.1)
+ * Tick-level order flow analysis with ErrorHandler integration
+ */
+export interface AdvancedOrderFlowConfigType {
+  enabled: boolean;
+  tickWindowMs: number;
+  orderbookLevels: number;
+  imbalanceThreshold: number;
+  spoofingThreshold: number;
+  minVolumeUSDT: number;
+  maxConfidence: number;
+  enableSpoofingDetection: boolean;
+  enableMomentum: boolean;
+}
+
+// Type alias for backward compatibility
+export type Config = BotConfig;
