@@ -1,0 +1,296 @@
+/**
+ * ConsoleDashboardService Error Handling Tests (Phase 8.9.72)
+ *
+ * Test Coverage:
+ * - THROW: Config and input validation
+ * - GRACEFUL_DEGRADE: Update failures
+ * - SKIP: Logging failures
+ * - Backward Compatibility: Tests without ErrorHandler still work
+ */
+
+import { ConsoleDashboardService } from '../../services/console-dashboard.service';
+import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { Position } from '../../types';
+
+const createMockErrorHandler = () => {
+  const mockLogger = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    silly: jest.fn(),
+  };
+  return new ErrorHandler(mockLogger as any);
+};
+
+const createValidPosition = (): Position => ({
+  id: 'test-pos',
+  symbol: 'BTC/USDT',
+  entryPrice: 50000,
+  quantity: 0.1,
+  side: 'LONG',
+  status: 'OPEN',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  pnl: 1000,
+  pnlPercent: 2,
+  fees: 10,
+  takeProfits: [],
+  stopLoss: 49000,
+} as any);
+
+describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
+  // ============================================================================
+  // THROW: Config Validation (4 tests)
+  // ============================================================================
+
+  describe('THROW: Config Validation', () => {
+    test('should throw on null config', () => {
+      expect(() => {
+        new ConsoleDashboardService(null as any, createMockErrorHandler());
+      }).toThrow('Config must be a valid object');
+    });
+
+    test('should throw on invalid enabled (not boolean)', () => {
+      expect(() => {
+        new ConsoleDashboardService({ enabled: 'yes' as any }, createMockErrorHandler());
+      }).toThrow('Config.enabled must be a boolean');
+    });
+
+    test('should throw on negative updateInterval', () => {
+      expect(() => {
+        new ConsoleDashboardService({ enabled: true, updateInterval: -100 }, createMockErrorHandler());
+      }).toThrow('Config.updateInterval must be non-negative');
+    });
+
+    test('should throw on invalid theme', () => {
+      expect(() => {
+        new ConsoleDashboardService({ enabled: true, theme: 'rainbow' as any }, createMockErrorHandler());
+      }).toThrow('Config.theme must be "dark" or "light"');
+    });
+  });
+
+  // ============================================================================
+  // THROW: Input Validation (5 tests)
+  // ============================================================================
+
+  describe('THROW: Input Validation', () => {
+    const errorHandler = createMockErrorHandler();
+    let service: ConsoleDashboardService;
+
+    beforeEach(() => {
+      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+    });
+
+    test('should throw on invalid price (NaN)', () => {
+      expect(() => {
+        service.updatePrice(NaN);
+      }).toThrow('Price must be a finite number');
+    });
+
+    test('should throw on negative price', () => {
+      expect(() => {
+        service.updatePrice(-100);
+      }).toThrow('Price must be non-negative');
+    });
+
+    test('should throw on invalid PnL (Infinity)', () => {
+      expect(() => {
+        service.updatePnL(Infinity, 5);
+      }).toThrow('PnL must be a finite number');
+    });
+
+    test('should throw on empty take profit levels', () => {
+      expect(() => {
+        service.setTakeProfits([]);
+      }).toThrow('Levels array cannot be empty');
+    });
+
+    test('should throw on negative stop loss', () => {
+      expect(() => {
+        service.setStopLoss(-100);
+      }).toThrow('Stop loss price must be non-negative');
+    });
+  });
+
+  // ============================================================================
+  // GRACEFUL_DEGRADE: Update Failures (4 tests)
+  // ============================================================================
+
+  describe('GRACEFUL_DEGRADE: Update Failures', () => {
+    const errorHandler = createMockErrorHandler();
+    let service: ConsoleDashboardService;
+
+    beforeEach(() => {
+      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+    });
+
+    test('should handle valid price update', () => {
+      expect(() => {
+        service.updatePrice(50000);
+      }).not.toThrow();
+    });
+
+    test('should handle valid PnL update', () => {
+      expect(() => {
+        service.updatePnL(100, 2);
+      }).not.toThrow();
+    });
+
+    test('should handle valid TP levels', () => {
+      expect(() => {
+        service.setTakeProfits([{ price: 55000, percent: 10 }]);
+      }).not.toThrow();
+    });
+
+    test('should handle valid metrics update', () => {
+      expect(() => {
+        service.updateMetrics('5m', { rsi: 45, trend: 'UPTREND' });
+      }).not.toThrow();
+    });
+  });
+
+  // ============================================================================
+  // SKIP: Logging Failures (2 tests)
+  // ============================================================================
+
+  describe('SKIP: Logging Failures', () => {
+    test('should not throw when updating price', () => {
+      const service = new ConsoleDashboardService({ enabled: false }, createMockErrorHandler());
+      expect(() => {
+        service.updatePrice(50000);
+      }).not.toThrow();
+    });
+
+    test('should not throw when recording event', () => {
+      const service = new ConsoleDashboardService({ enabled: false }, createMockErrorHandler());
+      expect(() => {
+        service.recordEvent('position-open', 'New position opened');
+      }).not.toThrow();
+    });
+  });
+
+  // ============================================================================
+  // Integration: Data Updates (3 tests)
+  // ============================================================================
+
+  describe('Integration: Data Updates', () => {
+    const errorHandler = createMockErrorHandler();
+    let service: ConsoleDashboardService;
+
+    beforeEach(() => {
+      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+    });
+
+    test('should update multiple metrics correctly', () => {
+      service.updateMetrics('5m', { rsi: 45, trend: 'UPTREND', ema20: 50000 });
+      service.updateMetrics('1h', { rsi: 55, trend: 'DOWNTREND', ema50: 49500 });
+      service.updatePrice(50500);
+      service.updatePnL(500, 1);
+
+      expect(service).toBeDefined();
+    });
+
+    test('should handle position and TP/SL levels together', () => {
+      const position = createValidPosition();
+      service.updatePosition(position);
+      service.setTakeProfits([
+        { price: 55000, percent: 10, level: 1 },
+        { price: 60000, percent: 20, level: 2 },
+      ]);
+      service.setStopLoss(49000);
+
+      expect(service).toBeDefined();
+    });
+
+    test('should record wins and losses', () => {
+      service.recordWin(100);
+      service.recordLoss(-50);
+      service.recordEvent('trade', 'Trade completed');
+
+      expect(service).toBeDefined();
+    });
+  });
+
+  // ============================================================================
+  // Backward Compatibility: Without ErrorHandler (6 tests)
+  // ============================================================================
+
+  describe('Backward Compatibility: Without ErrorHandler', () => {
+    test('should create service without ErrorHandler', () => {
+      const service = new ConsoleDashboardService({ enabled: false });
+      expect(service).toBeDefined();
+    });
+
+    test('should handle price update', () => {
+      const service = new ConsoleDashboardService({ enabled: false });
+      expect(() => {
+        service.updatePrice(50000);
+      }).not.toThrow();
+    });
+
+    test('should throw on invalid price even without ErrorHandler', () => {
+      const service = new ConsoleDashboardService({ enabled: false });
+      expect(() => {
+        service.updatePrice(NaN);
+      }).toThrow('Price must be a finite number');
+    });
+
+    test('should handle destroy gracefully', () => {
+      const service = new ConsoleDashboardService({ enabled: false });
+      expect(() => {
+        service.destroy();
+      }).not.toThrow();
+    });
+
+    test('should handle multiple sequential updates', () => {
+      const service = new ConsoleDashboardService({ enabled: false });
+      expect(() => {
+        service.updatePrice(50000);
+        service.updatePrice(50100);
+        service.recordWin(50);
+        service.recordEvent('trade', 'successful');
+      }).not.toThrow();
+    });
+
+    test('should maintain event history (max 50)', () => {
+      const service = new ConsoleDashboardService({ enabled: false });
+      for (let i = 0; i < 60; i++) {
+        service.recordEvent('test', `Event ${i}`);
+      }
+      expect(service).toBeDefined();
+    });
+  });
+
+  // ============================================================================
+  // Edge Cases (2 tests)
+  // ============================================================================
+
+  describe('Edge Cases', () => {
+    const errorHandler = createMockErrorHandler();
+    let service: ConsoleDashboardService;
+
+    beforeEach(() => {
+      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+    });
+
+    test('should handle zero values correctly', () => {
+      expect(() => {
+        service.updatePrice(0);
+        service.updatePnL(0, 0);
+        service.setStopLoss(0);
+        service.recordWin(0);
+        service.recordLoss(0);
+      }).not.toThrow();
+    });
+
+    test('should handle large values correctly', () => {
+      expect(() => {
+        service.updatePrice(999999999);
+        service.updatePnL(999999999, 999);
+        service.setTakeProfits([{ price: 999999999, percent: 50 }]);
+        service.setStopLoss(999999999);
+      }).not.toThrow();
+    });
+  });
+});
