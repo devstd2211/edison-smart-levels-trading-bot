@@ -1,84 +1,116 @@
 /**
- * Phase 10 Constants
+ * Phase 10 Constants - TECHNICAL ONLY
  *
- * Centralized constants for all Phase 10 services to eliminate magic numbers
- * and improve maintainability. All threshold values, weights, and limits
- * are defined here with clear documentation.
+ * Strategic parameters have been moved to config.json (see config sections):
+ * - orderFlowAnalysis: Momentum and pattern detection thresholds
+ * - liquidityAnalysis: Zone classification
+ * - smartOrderPlacement: Execution strategy selection
+ * - signalValidation: ML-based confidence thresholds
+ * - patternRecognition: Candlestick pattern and zone detection
+ * - anomalyDetection: Statistical anomaly and manipulation detection
  *
- * Organization:
- * - Each service has its own namespace
- * - Constants are grouped by functionality
- * - All values include JSDoc comments explaining their purpose
+ * This file contains ONLY technical constants (internal limits, formulas, weights)
+ * that are not intended to be configurable by end users.
  */
 
+import type {
+  OrderFlowAnalysisConfig,
+  LiquidityAnalysisConfig,
+  SmartOrderPlacementConfig,
+  SignalValidationConfig,
+  PatternRecognitionStrategicConfig,
+  AnomalyDetectionStrategicConfig,
+} from '../types';
+
 // =============================================================================
-// ADVANCED ORDER FLOW SERVICE CONSTANTS
+// DEFAULT VALUES (used when config not provided)
 // =============================================================================
 
-export const ADVANCED_ORDER_FLOW = {
-  /**
-   * Momentum thresholds for directional signals
-   */
-  MOMENTUM: {
-    /** Momentum above this value triggers LONG signal */
-    LONG_THRESHOLD: 20,
-    /** Momentum below this value triggers SHORT signal */
-    SHORT_THRESHOLD: -20,
-  },
+export const DEFAULT_ORDER_FLOW_ANALYSIS: OrderFlowAnalysisConfig = {
+  momentumLongThreshold: 20,
+  momentumShortThreshold: -20,
+  accumulationThreshold: 65,
+  distributionThreshold: 30,
+  spoofingConfidence: 75,
+};
 
-  /**
-   * Pattern detection thresholds
-   */
-  PATTERN: {
-    /** Buy pressure threshold for accumulation pattern (%) */
-    ACCUMULATION_THRESHOLD: 65,
-    /** Sell pressure threshold for distribution pattern (%) */
-    DISTRIBUTION_THRESHOLD: 30,
-  },
+export const DEFAULT_LIQUIDITY_ANALYSIS: LiquidityAnalysisConfig = {
+  neutralZoneThreshold: 35,
+};
 
-  /**
-   * Spoofing detection confidence
-   */
-  SPOOFING: {
-    /** Confidence score when spoofing is detected */
-    DETECTION_CONFIDENCE: 75,
-  },
+export const DEFAULT_SMART_ORDER_PLACEMENT: SmartOrderPlacementConfig = {
+  patientThreshold: 80,
+  immediateThreshold: 50,
+  highRiskSlippageMultiplier: 1.5,
+  highRiskFillMultiplier: 0.7,
+};
 
+export const DEFAULT_SIGNAL_VALIDATION: SignalValidationConfig = {
+  strongActionThreshold: 80,
+  actionThreshold: 60,
+  lowRiskConfidence: 70,
+  mediumRiskConfidence: 50,
+  volatilityMultiplier: 1.5,
+};
+
+export const DEFAULT_PATTERN_RECOGNITION: PatternRecognitionStrategicConfig = {
+  supportResistanceDistance: 0.2,
+  fibonacciTestThreshold: 0.005,
+  highTouchThreshold: 5,
+  mediumTouchThreshold: 3,
+};
+
+export const DEFAULT_ANOMALY_DETECTION: AnomalyDetectionStrategicConfig = {
+  zScoreCritical: 4.0,
+  zScoreHigh: 3.5,
+  zScoreMedium: 3.0,
+  whaleAccumulationRatio: 2.0,
+  washTradingSimilarity: 0.7,
+  pumpDumpDecrease: 0.08,
+};
+
+// =============================================================================
+// TECHNICAL CONSTANTS (internal limits and formulas)
+// =============================================================================
+
+/**
+ * Advanced Order Flow Service - Technical Constants
+ * Internal memory limits and buffer management
+ */
+export const ADVANCED_ORDER_FLOW_TECHNICAL = {
   /**
    * Memory management limits
    */
   LIMITS: {
-    /** Maximum number of ticks to keep in buffer */
+    /** Maximum number of ticks to keep in buffer (prevents memory leak) */
     MAX_TICK_BUFFER_SIZE: 10000,
     /** Maximum number of orderbook snapshots to store */
     MAX_ORDERBOOK_HISTORY: 100,
   },
 } as const;
 
-// =============================================================================
-// LIQUIDITY HEATMAP SERVICE CONSTANTS
-// =============================================================================
-
-export const LIQUIDITY_HEATMAP = {
+/**
+ * Liquidity Heatmap Service - Technical Constants
+ * Internal formulas for strength calculation and data validation
+ */
+export const LIQUIDITY_HEATMAP_TECHNICAL = {
   /**
-   * Zone strength calculation
+   * Zone strength calculation formulas
    */
   STRENGTH: {
-    /** Multiplier for order cluster bonus (per order) */
+    /** Multiplier for order cluster bonus (per order) - internal formula */
     CLUSTER_BONUS_MULTIPLIER: 0.5,
-    /** Maximum bonus from order clustering */
+    /** Maximum bonus from order clustering - prevents overflow */
     MAX_CLUSTER_BONUS: 30,
-    /** Penalty per level of distance from best price */
+    /** Penalty per level of distance from best price - decay formula */
     DISTANCE_PENALTY_PER_LEVEL: 0.3,
-    /** Threshold below which zone is considered neutral */
-    NEUTRAL_ZONE_THRESHOLD: 35,
   },
 
   /**
    * Spread and cost estimation
    */
   SPREAD: {
-    /** Spread value (in BPS) indicating very wide/illiquid market */
+    /** Spread value (in BPS) indicating very wide/illiquid market - error fallback */
     VERY_WIDE_SPREAD_BPS: 10000,
   },
 
@@ -91,11 +123,11 @@ export const LIQUIDITY_HEATMAP = {
   },
 } as const;
 
-// =============================================================================
-// SMART ORDER PLACEMENT SERVICE CONSTANTS
-// =============================================================================
-
-export const SMART_ORDER_PLACEMENT = {
+/**
+ * Smart Order Placement Service - Technical Constants
+ * Internal limits and formula weights
+ */
+export const SMART_ORDER_PLACEMENT_TECHNICAL = {
   /**
    * Order splitting configuration
    */
@@ -108,11 +140,11 @@ export const SMART_ORDER_PLACEMENT = {
    * Improvement estimation (when splitting large orders)
    */
   IMPROVEMENT: {
-    /** Maximum slippage reduction from splitting (BPS) */
+    /** Maximum slippage reduction from splitting (BPS) - calculation cap */
     MAX_SLIPPAGE_REDUCTION_BPS: 50,
-    /** Maximum fill probability increase from splitting (%) */
+    /** Maximum fill probability increase from splitting (%) - calculation cap */
     MAX_FILL_PROBABILITY_INCREASE: 20,
-    /** Maximum market impact reduction from splitting (%) */
+    /** Maximum market impact reduction from splitting (%) - calculation cap */
     MAX_IMPACT_REDUCTION: 30,
   },
 
@@ -120,32 +152,13 @@ export const SMART_ORDER_PLACEMENT = {
    * Liquidity scoring
    */
   LIQUIDITY: {
-    /** Penalty points per level of depth from best price */
+    /** Penalty points per level of depth from best price - scoring formula */
     DEPTH_PENALTY_PER_LEVEL: 2,
   },
 
   /**
-   * Priority determination thresholds
-   */
-  PRIORITY: {
-    /** Fill probability threshold for patient execution */
-    PATIENT_THRESHOLD: 80,
-    /** Fill probability threshold for immediate execution */
-    IMMEDIATE_THRESHOLD: 50,
-  },
-
-  /**
-   * Risk assessment multipliers
-   */
-  RISK: {
-    /** Slippage multiplier for high risk classification */
-    HIGH_RISK_SLIPPAGE_MULTIPLIER: 1.5,
-    /** Fill probability multiplier for high risk classification */
-    HIGH_RISK_FILL_MULTIPLIER: 0.7,
-  },
-
-  /**
    * Fill probability weights (must sum to 1.0)
+   * Internal ML model weights - not user-configurable
    */
   FILL_PROBABILITY_WEIGHTS: {
     /** Weight for liquidity factor */
@@ -159,54 +172,33 @@ export const SMART_ORDER_PLACEMENT = {
   },
 } as const;
 
-// =============================================================================
-// ML SIGNAL VALIDATOR SERVICE CONSTANTS
-// =============================================================================
-
-export const ML_SIGNAL_VALIDATOR = {
+/**
+ * ML Signal Validator Service - Technical Constants
+ * Internal formula weights and boost multipliers
+ */
+export const ML_SIGNAL_VALIDATOR_TECHNICAL = {
   /**
-   * Confidence thresholds for recommended actions
-   */
-  ACTION: {
-    /** Confidence threshold for strong buy/sell signals */
-    STRONG_ACTION_THRESHOLD: 80,
-    /** Confidence threshold for buy/sell signals */
-    ACTION_THRESHOLD: 60,
-  },
-
-  /**
-   * Risk level thresholds
-   */
-  RISK: {
-    /** Confidence threshold for low risk classification */
-    LOW_RISK_CONFIDENCE: 70,
-    /** Confidence threshold for medium risk classification */
-    MEDIUM_RISK_CONFIDENCE: 50,
-    /** Volatility multiplier for risk assessment */
-    VOLATILITY_MULTIPLIER: 1.5,
-  },
-
-  /**
-   * Regime alignment multipliers
+   * Regime alignment multipliers - internal confidence boost formulas
    */
   REGIME: {
-    /** Confidence boost when signal matches regime */
+    /** Confidence boost when signal matches regime - multiplicative formula */
     MATCH_BOOST: 1.2,
-    /** Confidence boost during regime transitions */
+    /** Confidence boost during regime transitions - multiplicative formula */
     TRANSITION_BOOST: 1.1,
   },
 
   /**
-   * Quality scoring weights
+   * Quality scoring weights (must sum to 100)
+   * Internal ML model weights - not user-configurable
    */
   QUALITY_WEIGHTS: {
     /** Weight for historical performance */
     PERFORMANCE: 30,
-    /** Center offset for performance score */
+    /** Center offset for performance score - normalization constant */
     PERFORMANCE_CENTER: 15,
     /** Weight for signal confidence */
     CONFIDENCE: 25,
-    /** Center offset for confidence score */
+    /** Center offset for confidence score - normalization constant */
     CONFIDENCE_CENTER: 12.5,
     /** Weight for regime alignment */
     REGIME: 25,
@@ -215,28 +207,26 @@ export const ML_SIGNAL_VALIDATOR = {
   },
 } as const;
 
-// =============================================================================
-// PATTERN RECOGNITION SERVICE CONSTANTS
-// =============================================================================
-
-export const PATTERN_RECOGNITION = {
+/**
+ * Pattern Recognition Service - Technical Constants
+ * Internal pattern definitions and formula weights
+ */
+export const PATTERN_RECOGNITION_TECHNICAL = {
   /**
-   * Candlestick pattern thresholds
+   * Candlestick pattern mathematical definitions
    */
   PATTERN: {
-    /** Minimum lower shadow ratio for hammer pattern */
+    /** Minimum lower shadow ratio for hammer pattern - mathematical definition */
     HAMMER_LOWER_SHADOW_RATIO: 0.6,
-    /** Maximum upper shadow ratio for hammer pattern */
+    /** Maximum upper shadow ratio for hammer pattern - mathematical definition */
     HAMMER_UPPER_SHADOW_MAX_RATIO: 0.3,
   },
 
   /**
-   * Support/Resistance detection
+   * Support/Resistance calculation
    */
   SUPPORT_RESISTANCE: {
-    /** Maximum distance from S/R level for detection (ratio) */
-    DISTANCE_THRESHOLD: 0.2,
-    /** Strength bonus when near support/resistance */
+    /** Strength bonus when near support/resistance - internal formula */
     LEVEL_BONUS: 10,
   },
 
@@ -244,9 +234,7 @@ export const PATTERN_RECOGNITION = {
    * Fibonacci level configuration
    */
   FIBONACCI: {
-    /** Maximum distance from price for level testing (ratio) */
-    TEST_THRESHOLD: 0.005, // 0.5%
-    /** Strength scores for key fibonacci levels */
+    /** Strength scores for key fibonacci levels - mathematical constants */
     LEVEL_STRENGTHS: {
       50: 90,
       61.8: 85,
@@ -264,21 +252,17 @@ export const PATTERN_RECOGNITION = {
    * Swing point detection
    */
   SWING: {
-    /** Lookback period for swing confirmation (candles) */
+    /** Lookback period for swing confirmation (candles) - algorithm parameter */
     LOOKBACK_PERIOD: 5,
   },
 
   /**
-   * Zone touch analysis
+   * Zone touch analysis - internal strength bonuses
    */
   ZONE_TOUCHES: {
-    /** Touch count threshold for maximum strength bonus */
-    HIGH_TOUCH_THRESHOLD: 5,
-    /** Strength bonus for high touch count */
+    /** Strength bonus for high touch count - internal formula */
     HIGH_TOUCH_BONUS: 30,
-    /** Touch count threshold for medium strength bonus */
-    MEDIUM_TOUCH_THRESHOLD: 3,
-    /** Strength bonus for medium touch count */
+    /** Strength bonus for medium touch count - internal formula */
     MEDIUM_TOUCH_BONUS: 20,
   },
 
@@ -286,64 +270,40 @@ export const PATTERN_RECOGNITION = {
    * Pattern confirmation
    */
   CONFIRMATION: {
-    /** Reliability bonus when pattern is confirmed */
+    /** Reliability bonus when pattern is confirmed - internal formula */
     BONUS: 15,
   },
 } as const;
 
-// =============================================================================
-// ANOMALY DETECTION SERVICE CONSTANTS
-// =============================================================================
-
-export const ANOMALY_DETECTION = {
+/**
+ * Anomaly Detection Service - Technical Constants
+ * Internal statistical analysis limits and formula weights
+ */
+export const ANOMALY_DETECTION_TECHNICAL = {
   /**
-   * Z-score thresholds for severity classification
-   */
-  Z_SCORE: {
-    /** Z-score threshold for critical severity */
-    CRITICAL: 4.0,
-    /** Z-score threshold for high severity */
-    HIGH: 3.5,
-    /** Z-score threshold for medium severity */
-    MEDIUM: 3.0,
-  },
-
-  /**
-   * Whale activity detection
-   */
-  WHALE: {
-    /** Trade size ratio threshold for accumulation/distribution */
-    ACCUMULATION_RATIO_THRESHOLD: 2.0,
-  },
-
-  /**
-   * Market manipulation detection
+   * Market manipulation detection - minimum sample sizes
    */
   MANIPULATION: {
-    /** Similarity threshold for wash trading detection (ratio) */
-    WASH_TRADING_SIMILARITY: 0.7,
-    /** Price decrease threshold for pump & dump detection (ratio) */
-    PUMP_DUMP_DECREASE: 0.08,
-    /** Minimum number of trades for manipulation detection */
+    /** Minimum number of trades for statistical analysis */
     MIN_TRADES: 5,
     /** Minimum volume history samples for detection */
     MIN_VOLUME_HISTORY: 10,
   },
 
   /**
-   * Severity ratio thresholds
+   * Severity ratio thresholds - internal severity mapping formulas
    */
   SEVERITY_RATIOS: {
-    /** Ratio threshold for critical severity */
+    /** Ratio threshold for critical severity - calculation formula */
     CRITICAL: 20,
-    /** Ratio threshold for high severity */
+    /** Ratio threshold for high severity - calculation formula */
     HIGH: 10,
-    /** Ratio threshold for medium severity */
+    /** Ratio threshold for medium severity - calculation formula */
     MEDIUM: 5,
   },
 
   /**
-   * Manipulation likelihood weights
+   * Manipulation likelihood weights - internal scoring formula
    */
   LIKELIHOOD_WEIGHTS: {
     /** Likelihood increase for wash trading evidence */
@@ -358,13 +318,13 @@ export const ANOMALY_DETECTION = {
 // =============================================================================
 
 /**
- * Type-safe access to all Phase 10 constants
+ * Type-safe access to all Phase 10 technical constants
  */
-export type Phase10Constants = {
-  ADVANCED_ORDER_FLOW: typeof ADVANCED_ORDER_FLOW;
-  LIQUIDITY_HEATMAP: typeof LIQUIDITY_HEATMAP;
-  SMART_ORDER_PLACEMENT: typeof SMART_ORDER_PLACEMENT;
-  ML_SIGNAL_VALIDATOR: typeof ML_SIGNAL_VALIDATOR;
-  PATTERN_RECOGNITION: typeof PATTERN_RECOGNITION;
-  ANOMALY_DETECTION: typeof ANOMALY_DETECTION;
+export type Phase10TechnicalConstants = {
+  ADVANCED_ORDER_FLOW_TECHNICAL: typeof ADVANCED_ORDER_FLOW_TECHNICAL;
+  LIQUIDITY_HEATMAP_TECHNICAL: typeof LIQUIDITY_HEATMAP_TECHNICAL;
+  SMART_ORDER_PLACEMENT_TECHNICAL: typeof SMART_ORDER_PLACEMENT_TECHNICAL;
+  ML_SIGNAL_VALIDATOR_TECHNICAL: typeof ML_SIGNAL_VALIDATOR_TECHNICAL;
+  PATTERN_RECOGNITION_TECHNICAL: typeof PATTERN_RECOGNITION_TECHNICAL;
+  ANOMALY_DETECTION_TECHNICAL: typeof ANOMALY_DETECTION_TECHNICAL;
 };

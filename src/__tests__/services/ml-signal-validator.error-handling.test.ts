@@ -64,7 +64,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
   beforeEach(() => {
     logger = new LoggerService(LogLevel.ERROR, './logs', false);
     errorHandler = new ErrorHandler(logger);
-    service = new MLSignalValidatorService(undefined, logger, errorHandler);
+    service = new MLSignalValidatorService(undefined, undefined, logger, errorHandler);
   });
 
   afterEach(() => {
@@ -78,33 +78,32 @@ describe('MLSignalValidatorService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new MLSignalValidatorService('invalid' as any, logger, errorHandler);
+        new MLSignalValidatorService('invalid' as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new MLSignalValidatorService(123 as any, logger, errorHandler);
+        new MLSignalValidatorService(123 as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new MLSignalValidatorService([] as any, logger, errorHandler);
+        new MLSignalValidatorService([] as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        new MLSignalValidatorService(undefined, logger, errorHandler);
+        new MLSignalValidatorService(undefined, undefined, logger, errorHandler);
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
         new MLSignalValidatorService(
-          { minHistoricalSamples: 50 },
-          logger,
+          { minHistoricalSamples: 50 }, undefined, logger,
           errorHandler,
         );
       }).not.toThrow();
@@ -305,7 +304,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       } as any;
 
       expect(() => {
-        new MLSignalValidatorService(undefined, badLogger, errorHandler);
+        new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
       }).not.toThrow();
     });
 
@@ -319,7 +318,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new MLSignalValidatorService(undefined, badLogger, errorHandler);
+      const testService = new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
 
       // Force validation to log a warning
       jest.spyOn(testService as any, 'performValidation').mockImplementation(() => {
@@ -344,7 +343,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new MLSignalValidatorService(undefined, badLogger, errorHandler);
+      const testService = new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
 
       expect(() => {
         testService.addSignalRecord(createMockSignalRecord());
@@ -361,7 +360,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new MLSignalValidatorService(undefined, badLogger, errorHandler);
+      const testService = new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
 
       expect(() => {
         testService.clearHistory();
@@ -647,7 +646,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
 
     beforeEach(() => {
       const testLogger = new LoggerService(LogLevel.ERROR, './logs', false);
-      serviceWithoutEH = new MLSignalValidatorService(undefined, testLogger);
+      serviceWithoutEH = new MLSignalValidatorService(undefined, undefined, testLogger);
     });
 
     afterEach(() => {

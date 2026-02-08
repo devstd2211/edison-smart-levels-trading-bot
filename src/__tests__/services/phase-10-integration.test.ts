@@ -49,7 +49,7 @@ describe('Phase 10 Integration Tests', () => {
       enableSpoofingDetection: true,
       enableMomentum: true,
     };
-    orderFlowService = new AdvancedOrderFlowService(orderFlowConfig, logger, errorHandler);
+    orderFlowService = new AdvancedOrderFlowService(orderFlowConfig, undefined, logger, errorHandler);
 
     liquidityService = new LiquidityHeatmapService(
       {
@@ -60,6 +60,7 @@ describe('Phase 10 Integration Tests', () => {
         enableSlippageCalc: true,
         enableExecutionCost: true,
       },
+      undefined,
       logger,
       errorHandler
     );
@@ -73,6 +74,7 @@ describe('Phase 10 Integration Tests', () => {
         enableAdaptive: true,
         executionTimeHorizon: 60000,
       },
+      undefined,
       logger,
       errorHandler
     );
@@ -83,6 +85,7 @@ describe('Phase 10 Integration Tests', () => {
         minHistoricalSamples: 30,
         timeDecayFactor: 0.95,
       },
+      undefined,
       logger,
       errorHandler
     );
@@ -92,6 +95,7 @@ describe('Phase 10 Integration Tests', () => {
         minPatternStrength: 40,
         minPatternReliability: 50,
       },
+      undefined,
       logger,
       errorHandler
     );
@@ -104,6 +108,7 @@ describe('Phase 10 Integration Tests', () => {
         volumeWindowSize: 50,
         volatilityWindowSize: 50,
       },
+      undefined,
       logger,
       errorHandler
     );

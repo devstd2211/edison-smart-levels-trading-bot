@@ -24,8 +24,11 @@ import {
   ExecutionCost,
 } from '../types/liquidity-heatmap.interface';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LoggerService } from '../types';
-import { LIQUIDITY_HEATMAP } from '../constants/phase-10-constants';
+import { LoggerService, LiquidityAnalysisConfig } from '../types';
+import {
+  DEFAULT_LIQUIDITY_ANALYSIS,
+  LIQUIDITY_HEATMAP_TECHNICAL,
+} from '../constants/phase-10-constants';
 
 /**
  * LiquidityHeatmapService - Orderbook liquidity analysis with ErrorHandler integration
@@ -36,11 +39,17 @@ import { LIQUIDITY_HEATMAP } from '../constants/phase-10-constants';
  * - Backward compatible (works without ErrorHandler)
  */
 export class LiquidityHeatmapService {
+  private strategicConfig: LiquidityAnalysisConfig;
+
   constructor(
     private config: LiquidityHeatmapConfig,
-    private logger: LoggerService,
+    strategicConfig?: LiquidityAnalysisConfig,
+    private logger?: LoggerService,
     private errorHandler?: ErrorHandler,
   ) {
+    // Merge strategic config with defaults
+    this.strategicConfig = { ...DEFAULT_LIQUIDITY_ANALYSIS, ...strategicConfig };
+
     // THROW: Config validation OUTSIDE try-catch
     this.validateConfig(config);
 
@@ -49,6 +58,7 @@ export class LiquidityHeatmapService {
       maxLevels: config.maxLevels,
       minStrengthThreshold: config.minStrengthThreshold,
       clusteringTolerance: config.clusteringTolerance,
+      strategicThresholds: this.strategicConfig,
     });
   }
 
@@ -148,7 +158,7 @@ export class LiquidityHeatmapService {
     const totalLevels = orderbook.bids.length + orderbook.asks.length;
     const invalidLevels = invalidBids + invalidAsks;
 
-    if (totalLevels > 0 && invalidLevels / totalLevels > LIQUIDITY_HEATMAP.QUALITY.CORRUPT_DATA_THRESHOLD) {
+    if (totalLevels > 0 && invalidLevels / totalLevels > LIQUIDITY_HEATMAP_TECHNICAL.QUALITY.CORRUPT_DATA_THRESHOLD) {
       throw new Error(
         `Orderbook data is corrupt (${invalidLevels}/${totalLevels} invalid levels)`,
       );
@@ -435,10 +445,10 @@ export class LiquidityHeatmapService {
     const volumeStrength = (safeVolume / totalVolume) * 100;
 
     // Bonus for order clustering (increased multiplier for stronger zones)
-    const clusterBonus = level.orderCount ? Math.min(level.orderCount * LIQUIDITY_HEATMAP.STRENGTH.CLUSTER_BONUS_MULTIPLIER, LIQUIDITY_HEATMAP.STRENGTH.MAX_CLUSTER_BONUS) : 0;
+    const clusterBonus = level.orderCount ? Math.min(level.orderCount * LIQUIDITY_HEATMAP_TECHNICAL.STRENGTH.CLUSTER_BONUS_MULTIPLIER, LIQUIDITY_HEATMAP_TECHNICAL.STRENGTH.MAX_CLUSTER_BONUS) : 0;
 
     // Penalty for being far from top of book (reduced penalty)
-    const distancePenalty = index * LIQUIDITY_HEATMAP.STRENGTH.DISTANCE_PENALTY_PER_LEVEL;
+    const distancePenalty = index * LIQUIDITY_HEATMAP_TECHNICAL.STRENGTH.DISTANCE_PENALTY_PER_LEVEL;
 
     const rawStrength = volumeStrength + clusterBonus - distancePenalty;
 
@@ -452,7 +462,7 @@ export class LiquidityHeatmapService {
     side: 'bid' | 'ask',
   ): 'support' | 'resistance' | 'neutral' {
     // Lowered threshold to allow more zones to be classified
-    if (strength < LIQUIDITY_HEATMAP.STRENGTH.NEUTRAL_ZONE_THRESHOLD) return 'neutral';
+    if (strength < this.strategicConfig.neutralZoneThreshold) return 'neutral';
     return side === 'bid' ? 'support' : 'resistance';
   }
 
@@ -611,7 +621,7 @@ export class LiquidityHeatmapService {
 
   private calculateSpread(orderbook: Orderbook): number {
     if (orderbook.bids.length === 0 || orderbook.asks.length === 0) {
-      return LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS; // Very wide spread
+      return LIQUIDITY_HEATMAP_TECHNICAL.SPREAD.VERY_WIDE_SPREAD_BPS; // Very wide spread
     }
 
     const bestBid = orderbook.bids[0].price;
@@ -619,15 +629,15 @@ export class LiquidityHeatmapService {
 
     // Handle NaN/Infinity prices
     if (!Number.isFinite(bestBid) || !Number.isFinite(bestAsk)) {
-      return LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS; // Very wide spread
+      return LIQUIDITY_HEATMAP_TECHNICAL.SPREAD.VERY_WIDE_SPREAD_BPS; // Very wide spread
     }
 
     const midPrice = (bestBid + bestAsk) / 2;
-    if (midPrice === 0) return LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS;
+    if (midPrice === 0) return LIQUIDITY_HEATMAP_TECHNICAL.SPREAD.VERY_WIDE_SPREAD_BPS;
 
     const spread = ((bestAsk - bestBid) / midPrice) * 10000;
 
-    return Number.isFinite(spread) ? spread : LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS;
+    return Number.isFinite(spread) ? spread : LIQUIDITY_HEATMAP_TECHNICAL.SPREAD.VERY_WIDE_SPREAD_BPS;
   }
 
   private calculateLiquidityScore(
@@ -639,7 +649,7 @@ export class LiquidityHeatmapService {
     // Handle NaN/Infinity in inputs
     const safeBidDepth = Number.isFinite(bidDepth) ? bidDepth : 0;
     const safeAskDepth = Number.isFinite(askDepth) ? askDepth : 0;
-    const safeSpreadBps = Number.isFinite(spreadBps) ? spreadBps : LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS;
+    const safeSpreadBps = Number.isFinite(spreadBps) ? spreadBps : LIQUIDITY_HEATMAP_TECHNICAL.SPREAD.VERY_WIDE_SPREAD_BPS;
     const safeZoneCount = Number.isFinite(zoneCount) ? zoneCount : 0;
 
     const totalDepth = safeBidDepth + safeAskDepth;
@@ -669,7 +679,7 @@ export class LiquidityHeatmapService {
       timestamp: orderbook.timestamp,
       zones: [],
       supportResistance: null,
-      spreadBps: LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS,
+      spreadBps: LIQUIDITY_HEATMAP_TECHNICAL.SPREAD.VERY_WIDE_SPREAD_BPS,
       totalBidDepth: 0,
       totalAskDepth: 0,
       imbalanceRatio: 0,
@@ -728,12 +738,13 @@ export class LiquidityHeatmapService {
     message: string,
     meta?: any,
   ): void {
+    if (!this.logger) return;
     if (this.errorHandler) {
       this.errorHandler.handle(
         () => {
-          if (level === 'error') this.logger.error(message, meta);
-          else if (level === 'warn') this.logger.warn(message, meta);
-          else this.logger.info(message, meta);
+          if (level === 'error') this.logger!.error(message, meta);
+          else if (level === 'warn') this.logger!.warn(message, meta);
+          else this.logger!.info(message, meta);
         },
         { strategy: RecoveryStrategy.SKIP },
       );

@@ -25,8 +25,11 @@ import {
 } from '../types/smart-order-placement.interface';
 import { Orderbook } from '../types/liquidity-heatmap.interface';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LoggerService } from '../types';
-import { SMART_ORDER_PLACEMENT } from '../constants/phase-10-constants';
+import { LoggerService, SmartOrderPlacementConfig as SmartOrderPlacementStrategicConfig } from '../types';
+import {
+  DEFAULT_SMART_ORDER_PLACEMENT,
+  SMART_ORDER_PLACEMENT_TECHNICAL,
+} from '../constants/phase-10-constants';
 
 /**
  * SmartOrderPlacementService - Intelligent order placement with ErrorHandler integration
@@ -37,11 +40,17 @@ import { SMART_ORDER_PLACEMENT } from '../constants/phase-10-constants';
  * - Backward compatible (works without ErrorHandler)
  */
 export class SmartOrderPlacementService {
+  private strategicConfig: SmartOrderPlacementStrategicConfig;
+
   constructor(
     private config: SmartOrderPlacementConfig,
-    private logger: LoggerService,
+    strategicConfig?: SmartOrderPlacementStrategicConfig,
+    private logger?: LoggerService,
     private errorHandler?: ErrorHandler,
   ) {
+    // Merge strategic config with defaults
+    this.strategicConfig = { ...DEFAULT_SMART_ORDER_PLACEMENT, ...strategicConfig };
+
     // THROW: Config validation OUTSIDE try-catch
     this.validateConfig(config);
 
@@ -50,6 +59,7 @@ export class SmartOrderPlacementService {
       maxOrderSize: config.maxOrderSize,
       maxSlippageBps: config.maxSlippageBps,
       minFillProbability: config.minFillProbability,
+      strategicThresholds: this.strategicConfig,
     });
   }
 
@@ -429,7 +439,7 @@ export class SmartOrderPlacementService {
     const numSplits = Math.min(
       Math.ceil(size / this.config.maxOrderSize),
       levels.length,
-      SMART_ORDER_PLACEMENT.SPLITTING.MAX_SPLITS, // Max splits to avoid over-fragmentation
+      SMART_ORDER_PLACEMENT_TECHNICAL.SPLITTING.MAX_SPLITS, // Max splits to avoid over-fragmentation
     );
 
     // Calculate sub-order sizes (weighted by liquidity)
@@ -610,12 +620,12 @@ export class SmartOrderPlacementService {
     }
 
     // High probability + favorable conditions = patient
-    if (fillProbability > SMART_ORDER_PLACEMENT.PRIORITY.PATIENT_THRESHOLD && conditions.isFavorable) {
+    if (fillProbability > this.strategicConfig.patientThreshold && conditions.isFavorable) {
       return 'patient';
     }
 
     // Low probability or unfavorable = immediate
-    if (fillProbability < SMART_ORDER_PLACEMENT.PRIORITY.IMMEDIATE_THRESHOLD || !conditions.isFavorable) {
+    if (fillProbability < this.strategicConfig.immediateThreshold || !conditions.isFavorable) {
       return 'immediate';
     }
 
@@ -695,8 +705,8 @@ export class SmartOrderPlacementService {
   ): 'low' | 'medium' | 'high' {
     // High slippage or low fill probability = high risk
     if (
-      slippage > this.config.maxSlippageBps * SMART_ORDER_PLACEMENT.RISK.HIGH_RISK_SLIPPAGE_MULTIPLIER ||
-      fillProbability < this.config.minFillProbability * SMART_ORDER_PLACEMENT.RISK.HIGH_RISK_FILL_MULTIPLIER
+      slippage > this.config.maxSlippageBps * this.strategicConfig.highRiskSlippageMultiplier ||
+      fillProbability < this.config.minFillProbability * this.strategicConfig.highRiskFillMultiplier
     ) {
       return 'high';
     }
@@ -770,9 +780,9 @@ export class SmartOrderPlacementService {
       subOrderSizes.reduce((sum, s) => sum + s, 0) / subOrderSizes.length;
     const sizeRatio = avgSubOrderSize / originalSize;
 
-    const slippageReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT.IMPROVEMENT.MAX_SLIPPAGE_REDUCTION_BPS;
-    const fillProbabilityIncrease = (1 - sizeRatio) * SMART_ORDER_PLACEMENT.IMPROVEMENT.MAX_FILL_PROBABILITY_INCREASE;
-    const impactReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT.IMPROVEMENT.MAX_IMPACT_REDUCTION;
+    const slippageReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT_TECHNICAL.IMPROVEMENT.MAX_SLIPPAGE_REDUCTION_BPS;
+    const fillProbabilityIncrease = (1 - sizeRatio) * SMART_ORDER_PLACEMENT_TECHNICAL.IMPROVEMENT.MAX_FILL_PROBABILITY_INCREASE;
+    const impactReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT_TECHNICAL.IMPROVEMENT.MAX_IMPACT_REDUCTION;
 
     return {
       slippageReduction: Math.max(0, slippageReduction),
@@ -790,7 +800,7 @@ export class SmartOrderPlacementService {
     if (totalVolume === 0) return 0;
 
     const volumeScore = (level.volume / totalVolume) * 100;
-    const depthPenalty = index * SMART_ORDER_PLACEMENT.LIQUIDITY.DEPTH_PENALTY_PER_LEVEL; // Penalty for deeper levels
+    const depthPenalty = index * SMART_ORDER_PLACEMENT_TECHNICAL.LIQUIDITY.DEPTH_PENALTY_PER_LEVEL; // Penalty for deeper levels
 
     const finalScore = Math.max(0, volumeScore - depthPenalty);
     return Number.isFinite(finalScore) ? Math.min(100, finalScore) : 0;
@@ -878,7 +888,7 @@ export class SmartOrderPlacementService {
     sizeImpact: number,
   ): number {
     // Weighted combination
-    const weights = SMART_ORDER_PLACEMENT.FILL_PROBABILITY_WEIGHTS;
+    const weights = SMART_ORDER_PLACEMENT_TECHNICAL.FILL_PROBABILITY_WEIGHTS;
 
     // Lower volatility = higher probability
     const volatilityScore = 100 - volatility;
@@ -1015,12 +1025,13 @@ export class SmartOrderPlacementService {
     message: string,
     meta?: any,
   ): void {
+    if (!this.logger) return;
     if (this.errorHandler) {
       this.errorHandler.handle(
         () => {
-          if (level === 'error') this.logger.error(message, meta);
-          else if (level === 'warn') this.logger.warn(message, meta);
-          else this.logger.info(message, meta);
+          if (level === 'error') this.logger!.error(message, meta);
+          else if (level === 'warn') this.logger!.warn(message, meta);
+          else this.logger!.info(message, meta);
         },
         { strategy: RecoveryStrategy.SKIP },
       );

@@ -866,6 +866,98 @@ export interface StrategiesConfig {
   levelBased: LevelBasedConfig;
 }
 
+/**
+ * Order Flow Analysis Configuration
+ * Controls order flow momentum and pattern detection thresholds
+ */
+export interface OrderFlowAnalysisConfig {
+  /** Momentum threshold for LONG signals (default: 20) */
+  momentumLongThreshold: number;
+  /** Momentum threshold for SHORT signals (default: -20) */
+  momentumShortThreshold: number;
+  /** Buy pressure threshold for accumulation pattern (default: 65) */
+  accumulationThreshold: number;
+  /** Sell pressure threshold for distribution pattern (default: 30) */
+  distributionThreshold: number;
+  /** Confidence score when spoofing detected (default: 75) */
+  spoofingConfidence: number;
+}
+
+/**
+ * Liquidity Analysis Configuration
+ * Controls liquidity heatmap zone classification
+ */
+export interface LiquidityAnalysisConfig {
+  /** Strength threshold below which zone is neutral (default: 35) */
+  neutralZoneThreshold: number;
+}
+
+/**
+ * Smart Order Placement Configuration
+ * Controls order execution strategy selection
+ */
+export interface SmartOrderPlacementConfig {
+  /** Fill probability threshold for patient execution (default: 80) */
+  patientThreshold: number;
+  /** Fill probability threshold for immediate execution (default: 50) */
+  immediateThreshold: number;
+  /** Slippage multiplier for high risk classification (default: 1.5) */
+  highRiskSlippageMultiplier: number;
+  /** Fill probability multiplier for high risk classification (default: 0.7) */
+  highRiskFillMultiplier: number;
+}
+
+/**
+ * Signal Validation Configuration
+ * Controls ML-based signal validation thresholds
+ */
+export interface SignalValidationConfig {
+  /** Confidence threshold for strong buy/sell signals (default: 80) */
+  strongActionThreshold: number;
+  /** Confidence threshold for buy/sell signals (default: 60) */
+  actionThreshold: number;
+  /** Confidence threshold for low risk classification (default: 70) */
+  lowRiskConfidence: number;
+  /** Confidence threshold for medium risk classification (default: 50) */
+  mediumRiskConfidence: number;
+  /** Volatility multiplier for risk assessment (default: 1.5) */
+  volatilityMultiplier: number;
+}
+
+/**
+ * Pattern Recognition Strategic Configuration
+ * Controls candlestick pattern and zone detection thresholds (user-configurable)
+ */
+export interface PatternRecognitionStrategicConfig {
+  /** Distance ratio threshold for support/resistance detection (default: 0.2) */
+  supportResistanceDistance: number;
+  /** Distance ratio threshold for fibonacci level testing (default: 0.005) */
+  fibonacciTestThreshold: number;
+  /** Touch count threshold for high strength zones (default: 5) */
+  highTouchThreshold: number;
+  /** Touch count threshold for medium strength zones (default: 3) */
+  mediumTouchThreshold: number;
+}
+
+/**
+ * Anomaly Detection Strategic Configuration
+ * Controls statistical anomaly and manipulation detection thresholds (user-configurable)
+ */
+export interface AnomalyDetectionStrategicConfig {
+  /** Z-score threshold for critical severity (default: 4.0) */
+  zScoreCritical: number;
+  /** Z-score threshold for high severity (default: 3.5) */
+  zScoreHigh: number;
+  /** Z-score threshold for medium severity (default: 3.0) */
+  zScoreMedium: number;
+  /** Volume ratio threshold for whale accumulation detection (default: 2.0) */
+  whaleAccumulationRatio: number;
+  /** Price similarity threshold for wash trading detection (default: 0.7) */
+  washTradingSimilarity: number;
+  /** Price decrease threshold for pump & dump detection (default: 0.08) */
+  pumpDumpDecrease: number;
+}
+
 export interface Config {
   meta?: {
     description?: string;
@@ -957,6 +1049,13 @@ export interface Config {
   analysisConfig?: AnalysisConfig; // Configuration for all analyzers and pattern detectors (optional)
   // Phase 6: Structure-Aware Exit Strategy (optional)
   structureAwareExit?: StructureAwareExitConfig; // Dynamic TP2 from structure levels + trailing stop (optional)
+  // Phase 10: Advanced Analysis Configuration (optional)
+  orderFlowAnalysis?: OrderFlowAnalysisConfig; // Order flow momentum and pattern detection thresholds (optional)
+  liquidityAnalysis?: LiquidityAnalysisConfig; // Liquidity heatmap zone classification (optional)
+  smartOrderPlacement?: SmartOrderPlacementConfig; // Order execution strategy selection (optional)
+  signalValidation?: SignalValidationConfig; // ML-based signal validation thresholds (optional)
+  patternRecognitionStrategic?: PatternRecognitionStrategicConfig; // Candlestick pattern and zone detection (optional)
+  anomalyDetectionStrategic?: AnomalyDetectionStrategicConfig; // Statistical anomaly and manipulation detection (optional)
 }
 
 /**

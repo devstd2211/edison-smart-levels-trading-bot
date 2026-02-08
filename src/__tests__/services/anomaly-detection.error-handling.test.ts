@@ -34,7 +34,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   beforeEach(() => {
     logger = new LoggerService(LogLevel.ERROR, './logs', false);
     errorHandler = new ErrorHandler(logger);
-    service = new AnomalyDetectionService(undefined, logger, errorHandler);
+    service = new AnomalyDetectionService(undefined, undefined, logger, errorHandler);
   });
 
   afterEach(() => {
@@ -48,25 +48,25 @@ describe('AnomalyDetectionService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new AnomalyDetectionService('invalid' as any, logger, errorHandler);
+        new AnomalyDetectionService('invalid' as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new AnomalyDetectionService(123 as any, logger, errorHandler);
+        new AnomalyDetectionService(123 as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new AnomalyDetectionService([] as any, logger, errorHandler);
+        new AnomalyDetectionService([] as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        new AnomalyDetectionService(undefined, logger, errorHandler);
+        new AnomalyDetectionService(undefined, undefined, logger, errorHandler);
       }).not.toThrow();
     });
 
@@ -74,6 +74,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       expect(() => {
         new AnomalyDetectionService(
           { volumeAnomalyThreshold: 3.0 },
+          undefined,
           logger,
           errorHandler,
         );
@@ -212,7 +213,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       } as any;
 
       expect(() => {
-        new AnomalyDetectionService(undefined, badLogger, errorHandler);
+        new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
       }).not.toThrow();
     });
 
@@ -226,7 +227,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new AnomalyDetectionService(undefined, badLogger, errorHandler);
+      const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
 
       // Force detection to log a warning
       jest.spyOn(testService as any, 'performVolumeAnomalyDetection').mockImplementation(() => {
@@ -248,7 +249,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new AnomalyDetectionService(undefined, badLogger, errorHandler);
+      const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
 
       expect(() => {
         testService.clearHistory();
@@ -319,7 +320,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const config: Partial<AnomalyDetectionConfig> = {
         whaleTradeThreshold: 3.0, // Lower threshold (300% vs default 500%)
       };
-      const testService = new AnomalyDetectionService(config, logger, errorHandler);
+      const testService = new AnomalyDetectionService(config, undefined, logger, errorHandler);
 
       const trades: Trade[] = [
         createMockTrade({ size: 0.1, price: 50000 }), // $5k
@@ -452,7 +453,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     beforeEach(() => {
       const testLogger = new LoggerService(LogLevel.ERROR, './logs', false);
-      serviceWithoutEH = new AnomalyDetectionService(undefined, testLogger);
+      serviceWithoutEH = new AnomalyDetectionService(undefined, undefined, testLogger);
     });
 
     afterEach(() => {

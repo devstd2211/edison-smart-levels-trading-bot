@@ -132,7 +132,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new AdvancedOrderFlowService(null as any, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(null as any, undefined, mockLogger, errorHandler);
       }).toThrow(/cannot be null or undefined/i);
     });
 
@@ -141,7 +141,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.tickWindowMs = 0;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
       }).toThrow(/invalid tickwindowms/i);
     });
 
@@ -150,7 +150,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.tickWindowMs = NaN;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
       }).toThrow(/invalid tickwindowms/i);
     });
 
@@ -159,7 +159,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.orderbookLevels = 0;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
       }).toThrow(/invalid orderbooklevels/i);
     });
 
@@ -168,7 +168,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.imbalanceThreshold = 1.5;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
       }).toThrow(/invalid imbalancethreshold/i);
     });
 
@@ -177,7 +177,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.spoofingThreshold = 0;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
       }).toThrow(/invalid spoofingthreshold/i);
     });
   });
@@ -190,6 +190,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     beforeEach(() => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -251,6 +252,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     beforeEach(() => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -335,6 +337,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       expect(() => {
         service = new AdvancedOrderFlowService(
           createValidConfig(),
+          undefined,
           badLogger,
           errorHandler,
         );
@@ -347,6 +350,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const badLogger = createMockLogger('warn');
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         badLogger,
         errorHandler,
       );
@@ -362,6 +366,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const badLogger = createMockLogger('debug');
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         badLogger,
         errorHandler,
       );
@@ -376,6 +381,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const badLogger = createMockLogger('info');
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         badLogger,
         errorHandler,
       );
@@ -395,6 +401,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     beforeEach(() => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -495,12 +502,13 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       badConfig.tickWindowMs = -1; // Invalid
 
       expect(() => {
-        new AdvancedOrderFlowService(badConfig, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(badConfig, undefined, mockLogger, errorHandler);
       }).toThrow();
 
       // But valid service continues to work
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -519,6 +527,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       // No error handler provided
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         undefined,
       );
@@ -534,6 +543,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     it('should throw validation errors without ErrorHandler', () => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         undefined,
       );
@@ -546,6 +556,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     it('should preserve legacy behavior', () => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -565,6 +576,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     it('should handle partial config updates', () => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -586,6 +598,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     beforeEach(() => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -639,6 +652,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       // After analyze(), cleanup should run and remove old tick
       const cleanup = new AdvancedOrderFlowService(
         { ...createValidConfig(), tickWindowMs: 5000 },
+        undefined,
         mockLogger,
       );
       cleanup.addTick(tickInWindow);
@@ -662,6 +676,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         throwingErrorHandler,
       );
@@ -681,6 +696,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     beforeEach(() => {
       service = new AdvancedOrderFlowService(
         createValidConfig(),
+        undefined,
         mockLogger,
         errorHandler,
       );
@@ -715,7 +731,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const config = createValidConfig();
       config.enableSpoofingDetection = false;
 
-      service = new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+      service = new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
 
       const result = service.getSpoofing();
       expect(result).not.toBeNull();
@@ -726,7 +742,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const config = createValidConfig();
       config.enableMomentum = false;
 
-      service = new AdvancedOrderFlowService(config, mockLogger, errorHandler);
+      service = new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
 
       const result = service.getMomentum();
       expect(result).not.toBeNull();

@@ -11,7 +11,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LogLevel } from '../types';
+import { LogLevel, AnomalyDetectionStrategicConfig } from '../types';
 import {
   AnomalyResult,
   AnomalyType,
@@ -26,7 +26,10 @@ import {
   AnomalyDetectionConfig,
   DEFAULT_ANOMALY_DETECTION_CONFIG,
 } from '../types/anomaly-detection.interface';
-import { ANOMALY_DETECTION } from '../constants/phase-10-constants';
+import {
+  DEFAULT_ANOMALY_DETECTION,
+  ANOMALY_DETECTION_TECHNICAL,
+} from '../constants/phase-10-constants';
 
 /**
  * AnomalyDetectionService
@@ -40,6 +43,7 @@ import { ANOMALY_DETECTION } from '../constants/phase-10-constants';
  */
 export class AnomalyDetectionService {
   private config: AnomalyDetectionConfig;
+  private strategicConfig: AnomalyDetectionStrategicConfig;
   private logger: LoggerService;
   private errorHandler: ErrorHandler | null;
 
@@ -57,6 +61,7 @@ export class AnomalyDetectionService {
 
   constructor(
     config?: Partial<AnomalyDetectionConfig>,
+    strategicConfig?: AnomalyDetectionStrategicConfig,
     logger?: LoggerService,
     errorHandler?: ErrorHandler,
   ) {
@@ -66,12 +71,14 @@ export class AnomalyDetectionService {
     }
 
     this.config = { ...DEFAULT_ANOMALY_DETECTION_CONFIG, ...config };
+    this.strategicConfig = { ...DEFAULT_ANOMALY_DETECTION, ...strategicConfig };
     this.logger = logger || new LoggerService(LogLevel.ERROR, './logs', false);
     this.errorHandler = errorHandler || null;
 
     this.safeLog('info', 'AnomalyDetectionService initialized', {
       volumeThreshold: this.config.volumeAnomalyThreshold,
       volatilityThreshold: this.config.volatilitySpikeThreshold,
+      strategicThresholds: this.strategicConfig,
     });
   }
 
@@ -318,9 +325,9 @@ export class AnomalyDetectionService {
     const deviation = volume / stats.average;
 
     let severity: AnomalySeverity = 'low';
-    if (Math.abs(zScore) > ANOMALY_DETECTION.Z_SCORE.CRITICAL) severity = 'critical';
-    else if (Math.abs(zScore) > ANOMALY_DETECTION.Z_SCORE.HIGH) severity = 'high';
-    else if (Math.abs(zScore) > ANOMALY_DETECTION.Z_SCORE.MEDIUM) severity = 'medium';
+    if (Math.abs(zScore) > this.strategicConfig.zScoreCritical) severity = 'critical';
+    else if (Math.abs(zScore) > this.strategicConfig.zScoreHigh) severity = 'high';
+    else if (Math.abs(zScore) > this.strategicConfig.zScoreMedium) severity = 'medium';
 
     const confidence = Math.min(100, Math.abs(zScore) * 20);
 
@@ -365,9 +372,9 @@ export class AnomalyDetectionService {
     const detected = zScore > this.config.volatilitySpikeThreshold;
 
     let severity: AnomalySeverity = 'low';
-    if (zScore > ANOMALY_DETECTION.Z_SCORE.CRITICAL) severity = 'critical';
-    else if (zScore > ANOMALY_DETECTION.Z_SCORE.HIGH) severity = 'high';
-    else if (zScore > ANOMALY_DETECTION.Z_SCORE.MEDIUM) severity = 'medium';
+    if (zScore > this.strategicConfig.zScoreCritical) severity = 'critical';
+    else if (zScore > this.strategicConfig.zScoreHigh) severity = 'high';
+    else if (zScore > this.strategicConfig.zScoreMedium) severity = 'medium';
 
     return {
       detected,
@@ -432,7 +439,7 @@ export class AnomalyDetectionService {
     const totalBuyVolume = buyTrades.reduce((sum, t) => sum + t.size * t.price, 0);
     const ratio = totalBuyVolume / (avgSize * trades.length);
 
-    if (ratio > ANOMALY_DETECTION.WHALE.ACCUMULATION_RATIO_THRESHOLD) {
+    if (ratio > this.strategicConfig.whaleAccumulationRatio) {
       return {
         type: 'accumulation',
         severity: this.getSeverityFromRatio(ratio),
@@ -459,7 +466,7 @@ export class AnomalyDetectionService {
     const totalSellVolume = sellTrades.reduce((sum, t) => sum + t.size * t.price, 0);
     const ratio = totalSellVolume / (avgSize * trades.length);
 
-    if (ratio > ANOMALY_DETECTION.WHALE.ACCUMULATION_RATIO_THRESHOLD) {
+    if (ratio > this.strategicConfig.whaleAccumulationRatio) {
       return {
         type: 'distribution',
         severity: this.getSeverityFromRatio(ratio),
@@ -491,7 +498,7 @@ export class AnomalyDetectionService {
     };
 
     // Need sufficient data
-    if (this.recentTrades.length < ANOMALY_DETECTION.MANIPULATION.MIN_TRADES || this.volumeHistory.length < ANOMALY_DETECTION.MANIPULATION.MIN_VOLUME_HISTORY) {
+    if (this.recentTrades.length < ANOMALY_DETECTION_TECHNICAL.MANIPULATION.MIN_TRADES || this.volumeHistory.length < ANOMALY_DETECTION_TECHNICAL.MANIPULATION.MIN_VOLUME_HISTORY) {
       return flags;
     }
 
@@ -499,14 +506,14 @@ export class AnomalyDetectionService {
     flags.washTrading = this.detectWashTrading();
     if (flags.washTrading) {
       flags.evidence.push('Wash trading: Trades clustered at similar prices');
-      flags.likelihood += ANOMALY_DETECTION.LIKELIHOOD_WEIGHTS.WASH_TRADING;
+      flags.likelihood += ANOMALY_DETECTION_TECHNICAL.LIKELIHOOD_WEIGHTS.WASH_TRADING;
     }
 
     // Check pump and dump (rapid price increase then decrease)
     flags.pumpAndDump = this.detectPumpAndDump();
     if (flags.pumpAndDump) {
       flags.evidence.push('Pump and dump: Rapid price movement detected');
-      flags.likelihood += ANOMALY_DETECTION.LIKELIHOOD_WEIGHTS.PUMP_DUMP;
+      flags.likelihood += ANOMALY_DETECTION_TECHNICAL.LIKELIHOOD_WEIGHTS.PUMP_DUMP;
     }
 
     // Determine severity
@@ -535,7 +542,7 @@ export class AnomalyDetectionService {
     );
 
     // If >threshold of trades are at similar prices, flag as suspicious
-    return similarPrices.length / prices.length > ANOMALY_DETECTION.MANIPULATION.WASH_TRADING_SIMILARITY;
+    return similarPrices.length / prices.length > this.strategicConfig.washTradingSimilarity;
   }
 
   /**
@@ -553,7 +560,7 @@ export class AnomalyDetectionService {
     const priceDecrease = (maxPrice - lastPrice) / maxPrice;
 
     // Pump and dump: rapid increase >threshold%, then decrease >threshold%
-    return priceIncrease > this.config.pumpDumpThreshold && priceDecrease > ANOMALY_DETECTION.MANIPULATION.PUMP_DUMP_DECREASE;
+    return priceIncrease > this.config.pumpDumpThreshold && priceDecrease > this.strategicConfig.pumpDumpDecrease;
   }
 
   /**
@@ -581,9 +588,9 @@ export class AnomalyDetectionService {
    * Get severity from ratio
    */
   private getSeverityFromRatio(ratio: number): AnomalySeverity {
-    if (ratio > ANOMALY_DETECTION.SEVERITY_RATIOS.CRITICAL) return 'critical';
-    if (ratio > ANOMALY_DETECTION.SEVERITY_RATIOS.HIGH) return 'high';
-    if (ratio > ANOMALY_DETECTION.SEVERITY_RATIOS.MEDIUM) return 'medium';
+    if (ratio > ANOMALY_DETECTION_TECHNICAL.SEVERITY_RATIOS.CRITICAL) return 'critical';
+    if (ratio > ANOMALY_DETECTION_TECHNICAL.SEVERITY_RATIOS.HIGH) return 'high';
+    if (ratio > ANOMALY_DETECTION_TECHNICAL.SEVERITY_RATIOS.MEDIUM) return 'medium';
     return 'low';
   }
 

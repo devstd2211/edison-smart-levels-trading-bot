@@ -12,7 +12,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { Candle, LogLevel } from '../types';
+import { Candle, LogLevel, PatternRecognitionStrategicConfig } from '../types';
 import {
   Pattern,
   PatternType,
@@ -26,7 +26,10 @@ import {
   DEFAULT_PATTERN_RECOGNITION_CONFIG,
   PatternRecognitionResult,
 } from '../types/pattern-recognition.interface';
-import { PATTERN_RECOGNITION } from '../constants/phase-10-constants';
+import {
+  DEFAULT_PATTERN_RECOGNITION,
+  PATTERN_RECOGNITION_TECHNICAL,
+} from '../constants/phase-10-constants';
 
 /**
  * PatternRecognitionService
@@ -41,6 +44,7 @@ import { PATTERN_RECOGNITION } from '../constants/phase-10-constants';
  */
 export class PatternRecognitionService {
   private config: PatternRecognitionConfig;
+  private strategicConfig: PatternRecognitionStrategicConfig;
   private logger: LoggerService;
   private errorHandler: ErrorHandler | null;
 
@@ -52,6 +56,7 @@ export class PatternRecognitionService {
 
   constructor(
     config?: Partial<PatternRecognitionConfig>,
+    strategicConfig?: PatternRecognitionStrategicConfig,
     logger?: LoggerService,
     errorHandler?: ErrorHandler,
   ) {
@@ -61,12 +66,14 @@ export class PatternRecognitionService {
     }
 
     this.config = { ...DEFAULT_PATTERN_RECOGNITION_CONFIG, ...config };
+    this.strategicConfig = { ...DEFAULT_PATTERN_RECOGNITION, ...strategicConfig };
     this.logger = logger || new LoggerService(LogLevel.ERROR, './logs', false);
     this.errorHandler = errorHandler || null;
 
     this.safeLog('info', 'PatternRecognitionService initialized', {
       minCandlesRequired: this.config.minCandlesRequired,
       minPatternStrength: this.config.minPatternStrength,
+      strategicThresholds: this.strategicConfig,
     });
   }
 
@@ -427,8 +434,8 @@ export class PatternRecognitionService {
     // Hammer: small body at top, long lower shadow
     return (
       bodyRatio <= this.config.hammerBodyRatio &&
-      lowerShadowRatio >= PATTERN_RECOGNITION.PATTERN.HAMMER_LOWER_SHADOW_RATIO &&
-      upperShadow < body * (PATTERN_RECOGNITION.PATTERN.HAMMER_UPPER_SHADOW_MAX_RATIO / this.config.hammerBodyRatio) &&
+      lowerShadowRatio >= PATTERN_RECOGNITION_TECHNICAL.PATTERN.HAMMER_LOWER_SHADOW_RATIO &&
+      upperShadow < body * (PATTERN_RECOGNITION_TECHNICAL.PATTERN.HAMMER_UPPER_SHADOW_MAX_RATIO / this.config.hammerBodyRatio) &&
       prev.close > prev.open // Previous candle should be bearish
     );
   }
@@ -613,13 +620,13 @@ export class PatternRecognitionService {
         // Bullish patterns at support are stronger
         if (pattern.direction === 'bullish') {
           const distanceFromLow = (pattern.priceLevel - recentLow) / range;
-          if (distanceFromLow < PATTERN_RECOGNITION.SUPPORT_RESISTANCE.DISTANCE_THRESHOLD) strength += PATTERN_RECOGNITION.SUPPORT_RESISTANCE.LEVEL_BONUS; // Near support
+          if (distanceFromLow < this.strategicConfig.supportResistanceDistance) strength += PATTERN_RECOGNITION_TECHNICAL.SUPPORT_RESISTANCE.LEVEL_BONUS; // Near support
         }
 
         // Bearish patterns at resistance are stronger
         if (pattern.direction === 'bearish') {
           const distanceFromHigh = (recentHigh - pattern.priceLevel) / range;
-          if (distanceFromHigh < PATTERN_RECOGNITION.SUPPORT_RESISTANCE.DISTANCE_THRESHOLD) strength += PATTERN_RECOGNITION.SUPPORT_RESISTANCE.LEVEL_BONUS; // Near resistance
+          if (distanceFromHigh < this.strategicConfig.supportResistanceDistance) strength += PATTERN_RECOGNITION_TECHNICAL.SUPPORT_RESISTANCE.LEVEL_BONUS; // Near resistance
         }
       }
     }
@@ -655,7 +662,7 @@ export class PatternRecognitionService {
         : low + (range * level) / 100;
 
       const distanceFromPrice = Math.abs(this.currentPrice - price) / this.currentPrice;
-      const isBeingTested = distanceFromPrice < PATTERN_RECOGNITION.FIBONACCI.TEST_THRESHOLD; // Within threshold
+      const isBeingTested = distanceFromPrice < this.strategicConfig.fibonacciTestThreshold; // Within threshold
 
       levels.push({
         level,
@@ -712,7 +719,7 @@ export class PatternRecognitionService {
    */
   private calculateFibStrength(level: number): number {
     // Key levels are stronger - use constants
-    const levelStrength = PATTERN_RECOGNITION.FIBONACCI.LEVEL_STRENGTHS[level];
+    const levelStrength = PATTERN_RECOGNITION_TECHNICAL.FIBONACCI.LEVEL_STRENGTHS[level];
     if (levelStrength !== undefined) {
       return levelStrength;
     }
@@ -751,7 +758,7 @@ export class PatternRecognitionService {
    */
   private findSwingPoints(type: SwingPointType): SwingPoint[] {
     const swings: SwingPoint[] = [];
-    const lookback = PATTERN_RECOGNITION.SWING.LOOKBACK_PERIOD;
+    const lookback = PATTERN_RECOGNITION_TECHNICAL.SWING.LOOKBACK_PERIOD;
 
     for (let i = lookback; i < this.candleHistory.length - lookback; i++) {
       const candle = this.candleHistory[i];
@@ -853,8 +860,8 @@ export class PatternRecognitionService {
     let strength = 50;
 
     // More touches = stronger zone (up to a point)
-    if (touches >= PATTERN_RECOGNITION.ZONE_TOUCHES.HIGH_TOUCH_THRESHOLD) strength += PATTERN_RECOGNITION.ZONE_TOUCHES.HIGH_TOUCH_BONUS;
-    else if (touches >= PATTERN_RECOGNITION.ZONE_TOUCHES.MEDIUM_TOUCH_THRESHOLD) strength += PATTERN_RECOGNITION.ZONE_TOUCHES.MEDIUM_TOUCH_BONUS;
+    if (touches >= this.strategicConfig.highTouchThreshold) strength += PATTERN_RECOGNITION_TECHNICAL.ZONE_TOUCHES.HIGH_TOUCH_BONUS;
+    else if (touches >= this.strategicConfig.mediumTouchThreshold) strength += PATTERN_RECOGNITION_TECHNICAL.ZONE_TOUCHES.MEDIUM_TOUCH_BONUS;
     else if (touches >= 2) strength += 10;
 
     // Higher volume = stronger zone
@@ -878,9 +885,9 @@ export class PatternRecognitionService {
 
       // Check if next candle confirms pattern direction
       if (pattern.direction === 'bullish' && confirmationCandle.close > confirmationCandle.open) {
-        reliability += PATTERN_RECOGNITION.CONFIRMATION.BONUS;
+        reliability += PATTERN_RECOGNITION_TECHNICAL.CONFIRMATION.BONUS;
       } else if (pattern.direction === 'bearish' && confirmationCandle.close < confirmationCandle.open) {
-        reliability += PATTERN_RECOGNITION.CONFIRMATION.BONUS;
+        reliability += PATTERN_RECOGNITION_TECHNICAL.CONFIRMATION.BONUS;
       }
     }
 

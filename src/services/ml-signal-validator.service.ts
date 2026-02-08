@@ -12,7 +12,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { Signal, SignalType } from '../types';
+import { Signal, SignalType, SignalValidationConfig } from '../types';
 import {
   MarketContext,
   MarketRegime,
@@ -24,7 +24,10 @@ import {
   RecommendedAction,
   RiskLevel,
 } from '../types/ml-signal-validator.interface';
-import { ML_SIGNAL_VALIDATOR } from '../constants/phase-10-constants';
+import {
+  DEFAULT_SIGNAL_VALIDATION,
+  ML_SIGNAL_VALIDATOR_TECHNICAL,
+} from '../constants/phase-10-constants';
 
 /**
  * MLSignalValidatorService
@@ -40,6 +43,7 @@ import { ML_SIGNAL_VALIDATOR } from '../constants/phase-10-constants';
  */
 export class MLSignalValidatorService {
   private config: MLSignalValidatorConfig;
+  private strategicConfig: SignalValidationConfig;
   private logger: LoggerService;
   private errorHandler: ErrorHandler | null;
 
@@ -57,6 +61,7 @@ export class MLSignalValidatorService {
 
   constructor(
     config?: Partial<MLSignalValidatorConfig>,
+    strategicConfig?: SignalValidationConfig,
     logger?: LoggerService,
     errorHandler?: ErrorHandler,
   ) {
@@ -66,12 +71,14 @@ export class MLSignalValidatorService {
     }
 
     this.config = { ...DEFAULT_ML_SIGNAL_VALIDATOR_CONFIG, ...config };
+    this.strategicConfig = { ...DEFAULT_SIGNAL_VALIDATION, ...strategicConfig };
     this.logger = logger || new LoggerService('MLSignalValidator');
     this.errorHandler = errorHandler || null;
 
     this.safeLog('info', 'MLSignalValidatorService initialized', {
       minSamples: this.config.minHistoricalSamples,
       timeDecayFactor: this.config.timeDecayFactor,
+      strategicThresholds: this.strategicConfig,
     });
   }
 
@@ -433,21 +440,21 @@ export class MLSignalValidatorService {
 
     // Factor 1: Historical performance (weight from constants)
     if (stats && stats.totalSignals >= this.config.minHistoricalSamples) {
-      const performanceScore = (stats.winRate / 100) * ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.PERFORMANCE;
-      score += performanceScore - ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.PERFORMANCE_CENTER; // Centered at 50
+      const performanceScore = (stats.winRate / 100) * ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.PERFORMANCE;
+      score += performanceScore - ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.PERFORMANCE_CENTER; // Centered at 50
     }
 
     // Factor 2: Signal confidence (weight from constants)
-    const confidenceScore = (signal.confidence / 100) * ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.CONFIDENCE;
-    score += confidenceScore - ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.CONFIDENCE_CENTER;
+    const confidenceScore = (signal.confidence / 100) * ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.CONFIDENCE;
+    score += confidenceScore - ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.CONFIDENCE_CENTER;
 
     // Factor 3: Regime alignment (weight from constants)
-    const regimeScore = this.getRegimeAlignmentScore(signal.type, context.regime) * ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.REGIME;
-    score += regimeScore - (ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.REGIME / 2);
+    const regimeScore = this.getRegimeAlignmentScore(signal.type, context.regime) * ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.REGIME;
+    score += regimeScore - (ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.REGIME / 2);
 
     // Factor 4: Risk-reward ratio (weight from constants)
-    const rrScore = stats ? Math.min(stats.avgRR / 4, 1) * ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.RISK_REWARD : (ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.RISK_REWARD / 2);
-    score += rrScore - (ML_SIGNAL_VALIDATOR.QUALITY_WEIGHTS.RISK_REWARD / 2);
+    const rrScore = stats ? Math.min(stats.avgRR / 4, 1) * ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.RISK_REWARD : (ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.RISK_REWARD / 2);
+    score += rrScore - (ML_SIGNAL_VALIDATOR_TECHNICAL.QUALITY_WEIGHTS.RISK_REWARD / 2);
 
     // Validate and clamp
     if (!isFinite(score) || isNaN(score)) {
@@ -464,7 +471,7 @@ export class MLSignalValidatorService {
     // Trend-following signals work best in trending markets
     if (signalType === SignalType.TREND_FOLLOWING) {
       if (regime === 'trending_up' || regime === 'trending_down') {
-        return ML_SIGNAL_VALIDATOR.REGIME.MATCH_BOOST; // Boost confidence
+        return ML_SIGNAL_VALIDATOR_TECHNICAL.REGIME.MATCH_BOOST; // Boost confidence
       }
       if (regime === 'range_bound') {
         return this.config.regimeMismatchPenalty; // Penalty
@@ -474,7 +481,7 @@ export class MLSignalValidatorService {
     // Counter-trend signals work best in range-bound markets
     if (signalType === SignalType.COUNTER_TREND) {
       if (regime === 'range_bound') {
-        return ML_SIGNAL_VALIDATOR.REGIME.MATCH_BOOST;
+        return ML_SIGNAL_VALIDATOR_TECHNICAL.REGIME.MATCH_BOOST;
       }
       if (regime === 'trending_up' || regime === 'trending_down') {
         return this.config.regimeMismatchPenalty;
@@ -484,7 +491,7 @@ export class MLSignalValidatorService {
     // Reversal signals work best at regime transitions
     if (signalType === SignalType.REVERSAL) {
       if (regime === 'volatile') {
-        return ML_SIGNAL_VALIDATOR.REGIME.TRANSITION_BOOST;
+        return ML_SIGNAL_VALIDATOR_TECHNICAL.REGIME.TRANSITION_BOOST;
       }
     }
 
@@ -498,7 +505,7 @@ export class MLSignalValidatorService {
     const multiplier = this.getRegimeMultiplier(signalType, regime);
 
     // Convert multiplier to 0-1 score
-    if (multiplier >= ML_SIGNAL_VALIDATOR.REGIME.MATCH_BOOST) return 1.0; // Perfect alignment
+    if (multiplier >= ML_SIGNAL_VALIDATOR_TECHNICAL.REGIME.MATCH_BOOST) return 1.0; // Perfect alignment
     if (multiplier >= 1.0) return 0.7; // Neutral
     if (multiplier >= 0.8) return 0.3; // Misalignment
     return 0.0; // Strong misalignment
@@ -510,10 +517,10 @@ export class MLSignalValidatorService {
   private getRecommendedAction(confidence: number, direction: string): RecommendedAction {
     const isLong = direction === 'LONG' || direction === 'long';
 
-    if (confidence >= ML_SIGNAL_VALIDATOR.ACTION.STRONG_ACTION_THRESHOLD) {
+    if (confidence >= this.strategicConfig.strongActionThreshold) {
       return isLong ? 'strong_buy' : 'strong_sell';
     }
-    if (confidence >= ML_SIGNAL_VALIDATOR.ACTION.ACTION_THRESHOLD) {
+    if (confidence >= this.strategicConfig.actionThreshold) {
       return isLong ? 'buy' : 'sell';
     }
     return 'hold';
@@ -523,10 +530,10 @@ export class MLSignalValidatorService {
    * Get risk level based on confidence and volatility
    */
   private getRiskLevel(confidence: number, volatility: number): RiskLevel {
-    if (confidence >= ML_SIGNAL_VALIDATOR.RISK.LOW_RISK_CONFIDENCE && volatility < this.config.highVolatilityThreshold) {
+    if (confidence >= this.strategicConfig.lowRiskConfidence && volatility < this.config.highVolatilityThreshold) {
       return 'low';
     }
-    if (confidence >= ML_SIGNAL_VALIDATOR.RISK.MEDIUM_RISK_CONFIDENCE && volatility < this.config.highVolatilityThreshold * ML_SIGNAL_VALIDATOR.RISK.VOLATILITY_MULTIPLIER) {
+    if (confidence >= this.strategicConfig.mediumRiskConfidence && volatility < this.config.highVolatilityThreshold * this.strategicConfig.volatilityMultiplier) {
       return 'medium';
     }
     return 'high';

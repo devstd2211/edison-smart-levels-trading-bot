@@ -26,8 +26,11 @@ import {
   MomentumMetric,
 } from '../types/advanced-order-flow.interface';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LoggerService } from '../types';
-import { ADVANCED_ORDER_FLOW } from '../constants/phase-10-constants';
+import { LoggerService, OrderFlowAnalysisConfig } from '../types';
+import {
+  DEFAULT_ORDER_FLOW_ANALYSIS,
+  ADVANCED_ORDER_FLOW_TECHNICAL,
+} from '../constants/phase-10-constants';
 
 /**
  * AdvancedOrderFlowService - Modular order flow analysis with ErrorHandler integration
@@ -43,12 +46,17 @@ export class AdvancedOrderFlowService {
   private orderbookHistory: OrderBook[] = [];
   private lastSpoofingLevel: number | null = null;
   private accumulatedMomentum: number = 0;
+  private strategicConfig: OrderFlowAnalysisConfig;
 
   constructor(
     private config: AdvancedOrderFlowConfig,
-    private logger: LoggerService,
+    strategicConfig?: OrderFlowAnalysisConfig,
+    private logger?: LoggerService,
     private errorHandler?: ErrorHandler,
   ) {
+    // Merge strategic config with defaults
+    this.strategicConfig = { ...DEFAULT_ORDER_FLOW_ANALYSIS, ...strategicConfig };
+
     // THROW: Config validation OUTSIDE try-catch
     this.validateConfig(config);
 
@@ -58,6 +66,7 @@ export class AdvancedOrderFlowService {
       orderbookLevels: config.orderbookLevels,
       enableSpoofing: config.enableSpoofingDetection,
       enableMomentum: config.enableMomentum,
+      strategicThresholds: this.strategicConfig,
     });
   }
 
@@ -201,6 +210,7 @@ export class AdvancedOrderFlowService {
     message: string,
     meta?: any,
   ): void {
+    if (!this.logger) return;
     try {
       this.logger[level](message, meta);
     } catch (error) {
@@ -248,8 +258,8 @@ export class AdvancedOrderFlowService {
       this.orderbookHistory.push(orderbook);
 
       // Keep only last N orderbooks
-      if (this.orderbookHistory.length > ADVANCED_ORDER_FLOW.LIMITS.MAX_ORDERBOOK_HISTORY) {
-        this.orderbookHistory = this.orderbookHistory.slice(-ADVANCED_ORDER_FLOW.LIMITS.MAX_ORDERBOOK_HISTORY);
+      if (this.orderbookHistory.length > ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_ORDERBOOK_HISTORY) {
+        this.orderbookHistory = this.orderbookHistory.slice(-ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_ORDERBOOK_HISTORY);
       }
     } catch (error) {
       this.safeLog('error', 'Error processing orderbook', { error });
@@ -367,10 +377,10 @@ export class AdvancedOrderFlowService {
       let pattern: 'accumulation' | 'distribution' | 'neutral' = 'neutral';
       let confidence = 0;
 
-      if (buyPressure > ADVANCED_ORDER_FLOW.PATTERN.ACCUMULATION_THRESHOLD) {
+      if (buyPressure > this.strategicConfig.accumulationThreshold) {
         pattern = 'accumulation';
         confidence = buyPressure;
-      } else if (sellPressure > ADVANCED_ORDER_FLOW.PATTERN.ACCUMULATION_THRESHOLD) {
+      } else if (sellPressure > (100 - this.strategicConfig.distributionThreshold)) {
         pattern = 'distribution';
         confidence = sellPressure;
       }
@@ -474,7 +484,7 @@ export class AdvancedOrderFlowService {
         side,
         suspiciousLevel,
         volumeChange,
-        confidence: detected ? ADVANCED_ORDER_FLOW.SPOOFING.DETECTION_CONFIDENCE : 0,
+        confidence: detected ? this.strategicConfig.spoofingConfidence : 0,
       };
     } catch (error) {
       if (this.errorHandler) {
@@ -551,8 +561,8 @@ export class AdvancedOrderFlowService {
 
       // Determine direction
       let direction: 'LONG' | 'SHORT' | 'NEUTRAL' = 'NEUTRAL';
-      if (momentum > ADVANCED_ORDER_FLOW.MOMENTUM.LONG_THRESHOLD) direction = 'LONG';
-      else if (momentum < ADVANCED_ORDER_FLOW.MOMENTUM.SHORT_THRESHOLD) direction = 'SHORT';
+      if (momentum > this.strategicConfig.momentumLongThreshold) direction = 'LONG';
+      else if (momentum < this.strategicConfig.momentumShortThreshold) direction = 'SHORT';
 
       const confidence = Math.min(100, Math.abs(momentum));
 
@@ -755,8 +765,8 @@ export class AdvancedOrderFlowService {
     this.tickBuffer = this.tickBuffer.filter(tick => tick.timestamp >= cutoff);
 
     // Limit buffer size to prevent memory bloat
-    if (this.tickBuffer.length > ADVANCED_ORDER_FLOW.LIMITS.MAX_TICK_BUFFER_SIZE) {
-      this.tickBuffer = this.tickBuffer.slice(-ADVANCED_ORDER_FLOW.LIMITS.MAX_TICK_BUFFER_SIZE);
+    if (this.tickBuffer.length > ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_TICK_BUFFER_SIZE) {
+      this.tickBuffer = this.tickBuffer.slice(-ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_TICK_BUFFER_SIZE);
     }
   }
 }

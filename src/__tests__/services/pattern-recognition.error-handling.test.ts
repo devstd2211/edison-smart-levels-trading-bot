@@ -71,7 +71,7 @@ describe('PatternRecognitionService - Error Handling', () => {
   beforeEach(() => {
     logger = new LoggerService(LogLevel.ERROR, './logs', false);
     errorHandler = new ErrorHandler(logger);
-    service = new PatternRecognitionService(undefined, logger, errorHandler);
+    service = new PatternRecognitionService(undefined, undefined, logger, errorHandler);
   });
 
   afterEach(() => {
@@ -85,33 +85,32 @@ describe('PatternRecognitionService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new PatternRecognitionService('invalid' as any, logger, errorHandler);
+        new PatternRecognitionService('invalid' as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new PatternRecognitionService(123 as any, logger, errorHandler);
+        new PatternRecognitionService(123 as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new PatternRecognitionService([] as any, logger, errorHandler);
+        new PatternRecognitionService([] as any, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        new PatternRecognitionService(undefined, logger, errorHandler);
+        new PatternRecognitionService(undefined, undefined, logger, errorHandler);
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
         new PatternRecognitionService(
-          { minCandlesRequired: 20 },
-          logger,
+          { minCandlesRequired: 20 }, undefined, logger,
           errorHandler,
         );
       }).not.toThrow();
@@ -302,7 +301,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       } as any;
 
       expect(() => {
-        new PatternRecognitionService(undefined, badLogger, errorHandler);
+        new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
       }).not.toThrow();
     });
 
@@ -316,7 +315,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new PatternRecognitionService(undefined, badLogger, errorHandler);
+      const testService = new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
 
       // Force pattern recognition to log a warning
       jest.spyOn(testService as any, 'performPatternRecognition').mockImplementation(() => {
@@ -340,7 +339,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new PatternRecognitionService(undefined, badLogger, errorHandler);
+      const testService = new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
 
       expect(() => {
         testService.updateCandles(createCandleArray(10));
@@ -357,7 +356,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         error: jest.fn(),
       } as any;
 
-      const testService = new PatternRecognitionService(undefined, badLogger, errorHandler);
+      const testService = new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
 
       expect(() => {
         testService.clearHistory();
@@ -375,7 +374,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       const config: Partial<PatternRecognitionConfig> = {
         minPatternReliability: 40, // Doji has 45 reliability
       };
-      const testService = new PatternRecognitionService(config, logger, errorHandler);
+      const testService = new PatternRecognitionService(config, undefined, logger, errorHandler);
 
       const candles = createCandleArray(15);
 
@@ -555,7 +554,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         minPatternReliability: 0,
       };
 
-      const testService = new PatternRecognitionService(config, logger, errorHandler);
+      const testService = new PatternRecognitionService(config, undefined, logger, errorHandler);
 
       const candles = createCandleArray(15);
       // Add various patterns
@@ -637,7 +636,7 @@ describe('PatternRecognitionService - Error Handling', () => {
 
     beforeEach(() => {
       const testLogger = new LoggerService(LogLevel.ERROR, './logs', false);
-      serviceWithoutEH = new PatternRecognitionService(undefined, testLogger);
+      serviceWithoutEH = new PatternRecognitionService(undefined, undefined, testLogger);
     });
 
     afterEach(() => {

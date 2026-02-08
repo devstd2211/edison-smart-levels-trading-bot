@@ -430,6 +430,7 @@ export class BotServices {
     if (config.advancedOrderFlow?.enabled) {
       this.advancedOrderFlowService = new AdvancedOrderFlowService(
         config.advancedOrderFlow,
+        config.orderFlowAnalysis,
         this.logger,
         this.errorHandler,
       );
