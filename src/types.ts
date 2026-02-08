@@ -247,6 +247,22 @@ export type {
 } from './types/ml-signal-validator.interface';
 export { DEFAULT_ML_SIGNAL_VALIDATOR_CONFIG } from './types/ml-signal-validator.interface';
 
+// Phase 10.2: Pattern Recognition Types
+export type {
+  PatternType,
+  PatternDirection,
+  SwingPointType,
+  ZoneType,
+  Pattern,
+  FibLevel,
+  SwingPoint,
+  Zone,
+  PatternRecognitionResult,
+  PatternRecognitionConfig,
+  PatternStats,
+} from './types/pattern-recognition.interface';
+export { DEFAULT_PATTERN_RECOGNITION_CONFIG } from './types/pattern-recognition.interface';
+
 /**
  * Types and Enums for Trading Bot
  * ALL types in ONE file - NO duplication!
