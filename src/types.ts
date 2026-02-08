@@ -169,6 +169,9 @@ import type {
   PatternValidationConfig,
 } from './types/config';
 
+// Phase 10.1: Advanced Order Flow (import from config.types)
+import type { AdvancedOrderFlowConfigType } from './types/config.types';
+
 export type {
   LoggingConfig,
   SystemConfig,
@@ -227,6 +230,9 @@ export type {
   TrendConfirmationConfig,
   PatternValidationConfig,
 };
+
+// Phase 10.1: Re-export Advanced Order Flow Config
+export type { AdvancedOrderFlowConfigType };
 
 /**
  * Types and Enums for Trading Bot
@@ -881,6 +887,8 @@ export interface Config {
   delta?: DeltaConfig; // Delta analysis (buy/sell pressure from tick trades) (optional)
   orderbookImbalance?: OrderbookImbalanceConfig; // Orderbook imbalance detection (bid/ask ratio) (optional)
   volumeProfile?: VolumeProfileConfig; // Volume profile analysis (POC, VAH, VAL) (optional)
+  // Phase 10.1: Advanced Order Flow Analysis (optional)
+  advancedOrderFlow?: AdvancedOrderFlowConfigType; // Tick-level order flow with spoofing detection (optional)
   // SMC Microstructure (FVG, Order Block, Footprint) (optional)
   smcMicrostructure?: SMCMicrostructureConfig; // Smart Money Concepts microstructure settings (optional)
   // Phase 6: Multi-Timeframe Alignment (optional)

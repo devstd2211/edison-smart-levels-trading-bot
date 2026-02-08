@@ -12,7 +12,7 @@
  */
 
 import { Config, LoggerService, Candle } from '../types';
-import { IExchange } from '../interfaces/IExchange';
+import { IExchange } from '../interfaces';
 import {
   BybitService,
   PositionLifecycleService,
