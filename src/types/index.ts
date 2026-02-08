@@ -62,7 +62,7 @@ export type {
 // Re-export config types - NEW SIMPLIFIED STRUCTURE
 export type {
   BotConfig,
-  Config, // Type alias for BotConfig (backward compatibility)
+  Config, // Extended with advancedOrderFlow field
   ConfigMeta,
   ExchangeConfig,
   TradingConfig,

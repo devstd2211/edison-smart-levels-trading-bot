@@ -4,6 +4,30 @@
 
 import type { LiveTradingConfig } from './live-trading.types';
 
+// ============================================================================
+// PHASE 10.1: ADVANCED ORDER FLOW CONFIG (defined before BotConfig)
+// ============================================================================
+
+/**
+ * Advanced Order Flow Service Configuration (Phase 10.1)
+ * Tick-level order flow analysis with ErrorHandler integration
+ */
+export interface AdvancedOrderFlowConfigType {
+  enabled: boolean;
+  tickWindowMs: number;
+  orderbookLevels: number;
+  imbalanceThreshold: number;
+  spoofingThreshold: number;
+  minVolumeUSDT: number;
+  maxConfidence: number;
+  enableSpoofingDetection: boolean;
+  enableMomentum: boolean;
+}
+
+// ============================================================================
+// BOT CONFIG (main config interface)
+// ============================================================================
+
 export interface BotConfig {
   version: number;
   meta: ConfigMeta;
@@ -489,22 +513,27 @@ export interface AntiFlipConfig {
 // ============================================================================
 // PHASE 10.1: ADVANCED ORDER FLOW
 // ============================================================================
+// CONFIG INTERFACE (for backward compatibility)
+// ============================================================================
 
-/**
- * Advanced Order Flow Service Configuration (Phase 10.1)
- * Tick-level order flow analysis with ErrorHandler integration
- */
-export interface AdvancedOrderFlowConfigType {
-  enabled: boolean;
-  tickWindowMs: number;
-  orderbookLevels: number;
-  imbalanceThreshold: number;
-  spoofingThreshold: number;
-  minVolumeUSDT: number;
-  maxConfidence: number;
-  enableSpoofingDetection: boolean;
-  enableMomentum: boolean;
+// Config interface - explicitly includes all BotConfig fields
+export interface Config {
+  version: number;
+  meta: ConfigMeta;
+  exchange: ExchangeConfig;
+  trading: TradingConfig;
+  riskManagement: RiskManagementConfig;
+  timeframes: TimeframesConfig;
+  indicators: IndicatorsConfig;
+  analyzers: AnalyzersConfig;
+  filters: FiltersConfig;
+  confidence: ConfidenceConfig;
+  orchestration: OrchestrationConfig;
+  trendAnalysis: TrendAnalysisConfig;
+  analyzerParameters: AnalyzerParametersConfig;
+  strategies: StrategiesConfig;
+  services: ServicesConfig;
+  monitoring: MonitoringConfig;
+  liveTrading?: LiveTradingConfig;
+  advancedOrderFlow?: AdvancedOrderFlowConfigType; // Phase 10.1
 }
-
-// Type alias for backward compatibility
-export type Config = BotConfig;
