@@ -26,6 +26,7 @@ import {
   AnomalyDetectionConfig,
   DEFAULT_ANOMALY_DETECTION_CONFIG,
 } from '../types/anomaly-detection.interface';
+import { ANOMALY_DETECTION } from '../constants/phase-10-constants';
 
 /**
  * AnomalyDetectionService
@@ -317,9 +318,9 @@ export class AnomalyDetectionService {
     const deviation = volume / stats.average;
 
     let severity: AnomalySeverity = 'low';
-    if (Math.abs(zScore) > 4.0) severity = 'critical';
-    else if (Math.abs(zScore) > 3.5) severity = 'high';
-    else if (Math.abs(zScore) > 3.0) severity = 'medium';
+    if (Math.abs(zScore) > ANOMALY_DETECTION.Z_SCORE.CRITICAL) severity = 'critical';
+    else if (Math.abs(zScore) > ANOMALY_DETECTION.Z_SCORE.HIGH) severity = 'high';
+    else if (Math.abs(zScore) > ANOMALY_DETECTION.Z_SCORE.MEDIUM) severity = 'medium';
 
     const confidence = Math.min(100, Math.abs(zScore) * 20);
 
@@ -364,9 +365,9 @@ export class AnomalyDetectionService {
     const detected = zScore > this.config.volatilitySpikeThreshold;
 
     let severity: AnomalySeverity = 'low';
-    if (zScore > 4.0) severity = 'critical';
-    else if (zScore > 3.5) severity = 'high';
-    else if (zScore > 3.0) severity = 'medium';
+    if (zScore > ANOMALY_DETECTION.Z_SCORE.CRITICAL) severity = 'critical';
+    else if (zScore > ANOMALY_DETECTION.Z_SCORE.HIGH) severity = 'high';
+    else if (zScore > ANOMALY_DETECTION.Z_SCORE.MEDIUM) severity = 'medium';
 
     return {
       detected,
@@ -431,7 +432,7 @@ export class AnomalyDetectionService {
     const totalBuyVolume = buyTrades.reduce((sum, t) => sum + t.size * t.price, 0);
     const ratio = totalBuyVolume / (avgSize * trades.length);
 
-    if (ratio > 2.0) {
+    if (ratio > ANOMALY_DETECTION.WHALE.ACCUMULATION_RATIO_THRESHOLD) {
       return {
         type: 'accumulation',
         severity: this.getSeverityFromRatio(ratio),
@@ -458,7 +459,7 @@ export class AnomalyDetectionService {
     const totalSellVolume = sellTrades.reduce((sum, t) => sum + t.size * t.price, 0);
     const ratio = totalSellVolume / (avgSize * trades.length);
 
-    if (ratio > 2.0) {
+    if (ratio > ANOMALY_DETECTION.WHALE.ACCUMULATION_RATIO_THRESHOLD) {
       return {
         type: 'distribution',
         severity: this.getSeverityFromRatio(ratio),
@@ -490,7 +491,7 @@ export class AnomalyDetectionService {
     };
 
     // Need sufficient data
-    if (this.recentTrades.length < 5 || this.volumeHistory.length < 10) {
+    if (this.recentTrades.length < ANOMALY_DETECTION.MANIPULATION.MIN_TRADES || this.volumeHistory.length < ANOMALY_DETECTION.MANIPULATION.MIN_VOLUME_HISTORY) {
       return flags;
     }
 
@@ -498,14 +499,14 @@ export class AnomalyDetectionService {
     flags.washTrading = this.detectWashTrading();
     if (flags.washTrading) {
       flags.evidence.push('Wash trading: Trades clustered at similar prices');
-      flags.likelihood += 30;
+      flags.likelihood += ANOMALY_DETECTION.LIKELIHOOD_WEIGHTS.WASH_TRADING;
     }
 
     // Check pump and dump (rapid price increase then decrease)
     flags.pumpAndDump = this.detectPumpAndDump();
     if (flags.pumpAndDump) {
       flags.evidence.push('Pump and dump: Rapid price movement detected');
-      flags.likelihood += 40;
+      flags.likelihood += ANOMALY_DETECTION.LIKELIHOOD_WEIGHTS.PUMP_DUMP;
     }
 
     // Determine severity
@@ -525,13 +526,16 @@ export class AnomalyDetectionService {
     const prices = this.recentTrades.map((t) => t.price);
     const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
 
+    // Cannot detect wash trading with zero average price
+    if (avgPrice === 0) return false;
+
     // Count trades within tolerance
     const similarPrices = prices.filter(
       (p) => Math.abs(p - avgPrice) / avgPrice < this.config.washTradingPriceTolerance,
     );
 
-    // If >70% of trades are at similar prices, flag as suspicious
-    return similarPrices.length / prices.length > 0.7;
+    // If >threshold of trades are at similar prices, flag as suspicious
+    return similarPrices.length / prices.length > ANOMALY_DETECTION.MANIPULATION.WASH_TRADING_SIMILARITY;
   }
 
   /**
@@ -548,8 +552,8 @@ export class AnomalyDetectionService {
     const priceIncrease = (maxPrice - firstPrice) / firstPrice;
     const priceDecrease = (maxPrice - lastPrice) / maxPrice;
 
-    // Pump and dump: rapid increase >10%, then decrease >8%
-    return priceIncrease > this.config.pumpDumpThreshold && priceDecrease > 0.08;
+    // Pump and dump: rapid increase >threshold%, then decrease >threshold%
+    return priceIncrease > this.config.pumpDumpThreshold && priceDecrease > ANOMALY_DETECTION.MANIPULATION.PUMP_DUMP_DECREASE;
   }
 
   /**
@@ -577,9 +581,9 @@ export class AnomalyDetectionService {
    * Get severity from ratio
    */
   private getSeverityFromRatio(ratio: number): AnomalySeverity {
-    if (ratio > 20) return 'critical';
-    if (ratio > 10) return 'high';
-    if (ratio > 5) return 'medium';
+    if (ratio > ANOMALY_DETECTION.SEVERITY_RATIOS.CRITICAL) return 'critical';
+    if (ratio > ANOMALY_DETECTION.SEVERITY_RATIOS.HIGH) return 'high';
+    if (ratio > ANOMALY_DETECTION.SEVERITY_RATIOS.MEDIUM) return 'medium';
     return 'low';
   }
 

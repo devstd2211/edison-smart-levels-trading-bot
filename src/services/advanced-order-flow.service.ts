@@ -27,6 +27,7 @@ import {
 } from '../types/advanced-order-flow.interface';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from '../types';
+import { ADVANCED_ORDER_FLOW } from '../constants/phase-10-constants';
 
 /**
  * AdvancedOrderFlowService - Modular order flow analysis with ErrorHandler integration
@@ -246,9 +247,9 @@ export class AdvancedOrderFlowService {
     try {
       this.orderbookHistory.push(orderbook);
 
-      // Keep only last 100 orderbooks
-      if (this.orderbookHistory.length > 100) {
-        this.orderbookHistory = this.orderbookHistory.slice(-100);
+      // Keep only last N orderbooks
+      if (this.orderbookHistory.length > ADVANCED_ORDER_FLOW.LIMITS.MAX_ORDERBOOK_HISTORY) {
+        this.orderbookHistory = this.orderbookHistory.slice(-ADVANCED_ORDER_FLOW.LIMITS.MAX_ORDERBOOK_HISTORY);
       }
     } catch (error) {
       this.safeLog('error', 'Error processing orderbook', { error });
@@ -366,10 +367,10 @@ export class AdvancedOrderFlowService {
       let pattern: 'accumulation' | 'distribution' | 'neutral' = 'neutral';
       let confidence = 0;
 
-      if (buyPressure > 65) {
+      if (buyPressure > ADVANCED_ORDER_FLOW.PATTERN.ACCUMULATION_THRESHOLD) {
         pattern = 'accumulation';
         confidence = buyPressure;
-      } else if (sellPressure > 65) {
+      } else if (sellPressure > ADVANCED_ORDER_FLOW.PATTERN.ACCUMULATION_THRESHOLD) {
         pattern = 'distribution';
         confidence = sellPressure;
       }
@@ -473,7 +474,7 @@ export class AdvancedOrderFlowService {
         side,
         suspiciousLevel,
         volumeChange,
-        confidence: detected ? 75 : 0,
+        confidence: detected ? ADVANCED_ORDER_FLOW.SPOOFING.DETECTION_CONFIDENCE : 0,
       };
     } catch (error) {
       if (this.errorHandler) {
@@ -550,8 +551,8 @@ export class AdvancedOrderFlowService {
 
       // Determine direction
       let direction: 'LONG' | 'SHORT' | 'NEUTRAL' = 'NEUTRAL';
-      if (momentum > 20) direction = 'LONG';
-      else if (momentum < -20) direction = 'SHORT';
+      if (momentum > ADVANCED_ORDER_FLOW.MOMENTUM.LONG_THRESHOLD) direction = 'LONG';
+      else if (momentum < ADVANCED_ORDER_FLOW.MOMENTUM.SHORT_THRESHOLD) direction = 'SHORT';
 
       const confidence = Math.min(100, Math.abs(momentum));
 
@@ -754,8 +755,8 @@ export class AdvancedOrderFlowService {
     this.tickBuffer = this.tickBuffer.filter(tick => tick.timestamp >= cutoff);
 
     // Limit buffer size to prevent memory bloat
-    if (this.tickBuffer.length > 10000) {
-      this.tickBuffer = this.tickBuffer.slice(-10000);
+    if (this.tickBuffer.length > ADVANCED_ORDER_FLOW.LIMITS.MAX_TICK_BUFFER_SIZE) {
+      this.tickBuffer = this.tickBuffer.slice(-ADVANCED_ORDER_FLOW.LIMITS.MAX_TICK_BUFFER_SIZE);
     }
   }
 }

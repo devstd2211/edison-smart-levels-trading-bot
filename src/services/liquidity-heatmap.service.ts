@@ -25,6 +25,7 @@ import {
 } from '../types/liquidity-heatmap.interface';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from '../types';
+import { LIQUIDITY_HEATMAP } from '../constants/phase-10-constants';
 
 /**
  * LiquidityHeatmapService - Orderbook liquidity analysis with ErrorHandler integration
@@ -147,7 +148,7 @@ export class LiquidityHeatmapService {
     const totalLevels = orderbook.bids.length + orderbook.asks.length;
     const invalidLevels = invalidBids + invalidAsks;
 
-    if (totalLevels > 0 && invalidLevels / totalLevels > 0.5) {
+    if (totalLevels > 0 && invalidLevels / totalLevels > LIQUIDITY_HEATMAP.QUALITY.CORRUPT_DATA_THRESHOLD) {
       throw new Error(
         `Orderbook data is corrupt (${invalidLevels}/${totalLevels} invalid levels)`,
       );
@@ -434,10 +435,10 @@ export class LiquidityHeatmapService {
     const volumeStrength = (safeVolume / totalVolume) * 100;
 
     // Bonus for order clustering (increased multiplier for stronger zones)
-    const clusterBonus = level.orderCount ? Math.min(level.orderCount * 0.5, 30) : 0;
+    const clusterBonus = level.orderCount ? Math.min(level.orderCount * LIQUIDITY_HEATMAP.STRENGTH.CLUSTER_BONUS_MULTIPLIER, LIQUIDITY_HEATMAP.STRENGTH.MAX_CLUSTER_BONUS) : 0;
 
     // Penalty for being far from top of book (reduced penalty)
-    const distancePenalty = index * 0.3;
+    const distancePenalty = index * LIQUIDITY_HEATMAP.STRENGTH.DISTANCE_PENALTY_PER_LEVEL;
 
     const rawStrength = volumeStrength + clusterBonus - distancePenalty;
 
@@ -450,8 +451,8 @@ export class LiquidityHeatmapService {
     strength: number,
     side: 'bid' | 'ask',
   ): 'support' | 'resistance' | 'neutral' {
-    // Lowered threshold to 35 to allow more zones to be classified
-    if (strength < 35) return 'neutral';
+    // Lowered threshold to allow more zones to be classified
+    if (strength < LIQUIDITY_HEATMAP.STRENGTH.NEUTRAL_ZONE_THRESHOLD) return 'neutral';
     return side === 'bid' ? 'support' : 'resistance';
   }
 
@@ -544,9 +545,11 @@ export class LiquidityHeatmapService {
       fillablePercent = ((size - remainingSize) / size) * 100;
     }
 
-    const avgExecutionPrice = totalCost / (size - remainingSize || 1);
+    // Avoid division by zero: if no size was filled, use bestPrice as fallback
+    const filledSize = size - remainingSize;
+    const avgExecutionPrice = filledSize > 0 ? totalCost / filledSize : bestPrice;
     const slippageBps =
-      ((Math.abs(avgExecutionPrice - bestPrice) / bestPrice) * 10000) || 0;
+      bestPrice > 0 ? ((Math.abs(avgExecutionPrice - bestPrice) / bestPrice) * 10000) : 0;
 
     return {
       orderSize: size,
@@ -608,7 +611,7 @@ export class LiquidityHeatmapService {
 
   private calculateSpread(orderbook: Orderbook): number {
     if (orderbook.bids.length === 0 || orderbook.asks.length === 0) {
-      return 10000; // Very wide spread
+      return LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS; // Very wide spread
     }
 
     const bestBid = orderbook.bids[0].price;
@@ -616,15 +619,15 @@ export class LiquidityHeatmapService {
 
     // Handle NaN/Infinity prices
     if (!Number.isFinite(bestBid) || !Number.isFinite(bestAsk)) {
-      return 10000; // Very wide spread
+      return LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS; // Very wide spread
     }
 
     const midPrice = (bestBid + bestAsk) / 2;
-    if (midPrice === 0) return 10000;
+    if (midPrice === 0) return LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS;
 
     const spread = ((bestAsk - bestBid) / midPrice) * 10000;
 
-    return Number.isFinite(spread) ? spread : 10000;
+    return Number.isFinite(spread) ? spread : LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS;
   }
 
   private calculateLiquidityScore(
@@ -636,7 +639,7 @@ export class LiquidityHeatmapService {
     // Handle NaN/Infinity in inputs
     const safeBidDepth = Number.isFinite(bidDepth) ? bidDepth : 0;
     const safeAskDepth = Number.isFinite(askDepth) ? askDepth : 0;
-    const safeSpreadBps = Number.isFinite(spreadBps) ? spreadBps : 10000;
+    const safeSpreadBps = Number.isFinite(spreadBps) ? spreadBps : LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS;
     const safeZoneCount = Number.isFinite(zoneCount) ? zoneCount : 0;
 
     const totalDepth = safeBidDepth + safeAskDepth;
@@ -666,7 +669,7 @@ export class LiquidityHeatmapService {
       timestamp: orderbook.timestamp,
       zones: [],
       supportResistance: null,
-      spreadBps: 10000,
+      spreadBps: LIQUIDITY_HEATMAP.SPREAD.VERY_WIDE_SPREAD_BPS,
       totalBidDepth: 0,
       totalAskDepth: 0,
       imbalanceRatio: 0,

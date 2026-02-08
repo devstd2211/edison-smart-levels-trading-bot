@@ -12,7 +12,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { Candle } from '../types';
+import { Candle, LogLevel } from '../types';
 import {
   Pattern,
   PatternType,
@@ -26,6 +26,7 @@ import {
   DEFAULT_PATTERN_RECOGNITION_CONFIG,
   PatternRecognitionResult,
 } from '../types/pattern-recognition.interface';
+import { PATTERN_RECOGNITION } from '../constants/phase-10-constants';
 
 /**
  * PatternRecognitionService
@@ -426,8 +427,8 @@ export class PatternRecognitionService {
     // Hammer: small body at top, long lower shadow
     return (
       bodyRatio <= this.config.hammerBodyRatio &&
-      lowerShadowRatio >= 0.6 &&
-      upperShadow < body &&
+      lowerShadowRatio >= PATTERN_RECOGNITION.PATTERN.HAMMER_LOWER_SHADOW_RATIO &&
+      upperShadow < body * (PATTERN_RECOGNITION.PATTERN.HAMMER_UPPER_SHADOW_MAX_RATIO / this.config.hammerBodyRatio) &&
       prev.close > prev.open // Previous candle should be bearish
     );
   }
@@ -612,13 +613,13 @@ export class PatternRecognitionService {
         // Bullish patterns at support are stronger
         if (pattern.direction === 'bullish') {
           const distanceFromLow = (pattern.priceLevel - recentLow) / range;
-          if (distanceFromLow < 0.2) strength += 10; // Near support
+          if (distanceFromLow < PATTERN_RECOGNITION.SUPPORT_RESISTANCE.DISTANCE_THRESHOLD) strength += PATTERN_RECOGNITION.SUPPORT_RESISTANCE.LEVEL_BONUS; // Near support
         }
 
         // Bearish patterns at resistance are stronger
         if (pattern.direction === 'bearish') {
           const distanceFromHigh = (recentHigh - pattern.priceLevel) / range;
-          if (distanceFromHigh < 0.2) strength += 10; // Near resistance
+          if (distanceFromHigh < PATTERN_RECOGNITION.SUPPORT_RESISTANCE.DISTANCE_THRESHOLD) strength += PATTERN_RECOGNITION.SUPPORT_RESISTANCE.LEVEL_BONUS; // Near resistance
         }
       }
     }
@@ -654,7 +655,7 @@ export class PatternRecognitionService {
         : low + (range * level) / 100;
 
       const distanceFromPrice = Math.abs(this.currentPrice - price) / this.currentPrice;
-      const isBeingTested = distanceFromPrice < 0.005; // Within 0.5%
+      const isBeingTested = distanceFromPrice < PATTERN_RECOGNITION.FIBONACCI.TEST_THRESHOLD; // Within threshold
 
       levels.push({
         level,
@@ -710,12 +711,11 @@ export class PatternRecognitionService {
    * Calculate fibonacci level strength
    */
   private calculateFibStrength(level: number): number {
-    // Key levels are stronger
-    if (level === 50) return 90;
-    if (level === 61.8) return 85;
-    if (level === 38.2) return 80;
-    if (level === 23.6 || level === 78.6) return 70;
-    if (level === 0 || level === 100) return 60;
+    // Key levels are stronger - use constants
+    const levelStrength = PATTERN_RECOGNITION.FIBONACCI.LEVEL_STRENGTHS[level];
+    if (levelStrength !== undefined) {
+      return levelStrength;
+    }
 
     return 50; // Default for extension levels
   }
@@ -751,7 +751,7 @@ export class PatternRecognitionService {
    */
   private findSwingPoints(type: SwingPointType): SwingPoint[] {
     const swings: SwingPoint[] = [];
-    const lookback = 5;
+    const lookback = PATTERN_RECOGNITION.SWING.LOOKBACK_PERIOD;
 
     for (let i = lookback; i < this.candleHistory.length - lookback; i++) {
       const candle = this.candleHistory[i];
@@ -853,8 +853,8 @@ export class PatternRecognitionService {
     let strength = 50;
 
     // More touches = stronger zone (up to a point)
-    if (touches >= 5) strength += 30;
-    else if (touches >= 3) strength += 20;
+    if (touches >= PATTERN_RECOGNITION.ZONE_TOUCHES.HIGH_TOUCH_THRESHOLD) strength += PATTERN_RECOGNITION.ZONE_TOUCHES.HIGH_TOUCH_BONUS;
+    else if (touches >= PATTERN_RECOGNITION.ZONE_TOUCHES.MEDIUM_TOUCH_THRESHOLD) strength += PATTERN_RECOGNITION.ZONE_TOUCHES.MEDIUM_TOUCH_BONUS;
     else if (touches >= 2) strength += 10;
 
     // Higher volume = stronger zone
@@ -878,9 +878,9 @@ export class PatternRecognitionService {
 
       // Check if next candle confirms pattern direction
       if (pattern.direction === 'bullish' && confirmationCandle.close > confirmationCandle.open) {
-        reliability += 15;
+        reliability += PATTERN_RECOGNITION.CONFIRMATION.BONUS;
       } else if (pattern.direction === 'bearish' && confirmationCandle.close < confirmationCandle.open) {
-        reliability += 15;
+        reliability += PATTERN_RECOGNITION.CONFIRMATION.BONUS;
       }
     }
 
@@ -905,6 +905,3 @@ export class PatternRecognitionService {
     }
   }
 }
-
-// Re-export LogLevel for service usage
-import { LogLevel } from '../types';

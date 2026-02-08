@@ -26,6 +26,7 @@ import {
 import { Orderbook } from '../types/liquidity-heatmap.interface';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from '../types';
+import { SMART_ORDER_PLACEMENT } from '../constants/phase-10-constants';
 
 /**
  * SmartOrderPlacementService - Intelligent order placement with ErrorHandler integration
@@ -428,7 +429,7 @@ export class SmartOrderPlacementService {
     const numSplits = Math.min(
       Math.ceil(size / this.config.maxOrderSize),
       levels.length,
-      5, // Max 5 splits to avoid over-fragmentation
+      SMART_ORDER_PLACEMENT.SPLITTING.MAX_SPLITS, // Max splits to avoid over-fragmentation
     );
 
     // Calculate sub-order sizes (weighted by liquidity)
@@ -609,12 +610,12 @@ export class SmartOrderPlacementService {
     }
 
     // High probability + favorable conditions = patient
-    if (fillProbability > 80 && conditions.isFavorable) {
+    if (fillProbability > SMART_ORDER_PLACEMENT.PRIORITY.PATIENT_THRESHOLD && conditions.isFavorable) {
       return 'patient';
     }
 
     // Low probability or unfavorable = immediate
-    if (fillProbability < 50 || !conditions.isFavorable) {
+    if (fillProbability < SMART_ORDER_PLACEMENT.PRIORITY.IMMEDIATE_THRESHOLD || !conditions.isFavorable) {
       return 'immediate';
     }
 
@@ -694,8 +695,8 @@ export class SmartOrderPlacementService {
   ): 'low' | 'medium' | 'high' {
     // High slippage or low fill probability = high risk
     if (
-      slippage > this.config.maxSlippageBps * 1.5 ||
-      fillProbability < this.config.minFillProbability * 0.7
+      slippage > this.config.maxSlippageBps * SMART_ORDER_PLACEMENT.RISK.HIGH_RISK_SLIPPAGE_MULTIPLIER ||
+      fillProbability < this.config.minFillProbability * SMART_ORDER_PLACEMENT.RISK.HIGH_RISK_FILL_MULTIPLIER
     ) {
       return 'high';
     }
@@ -769,9 +770,9 @@ export class SmartOrderPlacementService {
       subOrderSizes.reduce((sum, s) => sum + s, 0) / subOrderSizes.length;
     const sizeRatio = avgSubOrderSize / originalSize;
 
-    const slippageReduction = (1 - sizeRatio) * 50; // Up to 50 bps reduction
-    const fillProbabilityIncrease = (1 - sizeRatio) * 20; // Up to 20% increase
-    const impactReduction = (1 - sizeRatio) * 30; // Up to 30% impact reduction
+    const slippageReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT.IMPROVEMENT.MAX_SLIPPAGE_REDUCTION_BPS;
+    const fillProbabilityIncrease = (1 - sizeRatio) * SMART_ORDER_PLACEMENT.IMPROVEMENT.MAX_FILL_PROBABILITY_INCREASE;
+    const impactReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT.IMPROVEMENT.MAX_IMPACT_REDUCTION;
 
     return {
       slippageReduction: Math.max(0, slippageReduction),
@@ -789,7 +790,7 @@ export class SmartOrderPlacementService {
     if (totalVolume === 0) return 0;
 
     const volumeScore = (level.volume / totalVolume) * 100;
-    const depthPenalty = index * 2; // Penalty for deeper levels
+    const depthPenalty = index * SMART_ORDER_PLACEMENT.LIQUIDITY.DEPTH_PENALTY_PER_LEVEL; // Penalty for deeper levels
 
     const finalScore = Math.max(0, volumeScore - depthPenalty);
     return Number.isFinite(finalScore) ? Math.min(100, finalScore) : 0;
@@ -877,21 +878,16 @@ export class SmartOrderPlacementService {
     sizeImpact: number,
   ): number {
     // Weighted combination
-    const weights = {
-      liquidity: 0.4,
-      aggressiveness: 0.2,
-      volatility: 0.2,
-      sizeImpact: 0.2,
-    };
+    const weights = SMART_ORDER_PLACEMENT.FILL_PROBABILITY_WEIGHTS;
 
     // Lower volatility = higher probability
     const volatilityScore = 100 - volatility;
 
     const probability =
-      liquidity * weights.liquidity +
-      aggressiveness * weights.aggressiveness +
-      volatilityScore * weights.volatility +
-      sizeImpact * weights.sizeImpact;
+      liquidity * weights.LIQUIDITY +
+      aggressiveness * weights.AGGRESSIVENESS +
+      volatilityScore * weights.VOLATILITY +
+      sizeImpact * weights.SIZE_IMPACT;
 
     return Number.isFinite(probability) ? Math.min(100, Math.max(0, probability)) : 50;
   }
