@@ -234,6 +234,19 @@ export type {
 // Phase 10.1: Re-export Advanced Order Flow Config
 export type { AdvancedOrderFlowConfigType };
 
+// Phase 10.2: ML Signal Validator Types
+export type {
+  MarketRegime,
+  RecommendedAction,
+  RiskLevel,
+  MarketContext,
+  ValidationResult,
+  SignalRecord,
+  SignalTypeStats,
+  MLSignalValidatorConfig,
+} from './types/ml-signal-validator.interface';
+export { DEFAULT_ML_SIGNAL_VALIDATOR_CONFIG } from './types/ml-signal-validator.interface';
+
 /**
  * Types and Enums for Trading Bot
  * ALL types in ONE file - NO duplication!
