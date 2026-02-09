@@ -57,6 +57,7 @@ import { PositionScalingService } from './position-scaling.service'; // Phase 11
 import { SmartOrderExecutionService } from './smart-order-execution.service'; // Phase 13.1
 import { AdvancedOrderStateMachineService } from './advanced-order-state-machine.service'; // Phase 13.2
 import { PrometheusMetricsService } from './prometheus-metrics.service'; // Phase 14.1.1
+import { HealthCheckService } from './health-check.service'; // Phase 14.1.2
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -141,6 +142,7 @@ export class BotServices {
   readonly smartOrderExecution?: SmartOrderExecutionService; // Phase 13.1: Smart order execution
   readonly orderStateMachine?: AdvancedOrderStateMachineService; // Phase 13.2: Order state machine
   readonly metricsService?: PrometheusMetricsService; // Phase 14.1.1: Prometheus metrics
+  readonly healthCheckService?: HealthCheckService; // Phase 14.1.2: Health checks
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -827,6 +829,28 @@ export class BotServices {
     if (config.btcConfirmation?.enabled) {
       this.publicWebSocket.setBtcCandlesStore(this);
       this.logger.info('🔗 BTC candles store linked to PublicWebSocket');
+    }
+
+    // Phase 14.1.2: Initialize Health Check Service (optional)
+    if ((config as any).monitoring?.healthCheckEnabled) {
+      this.healthCheckService = new HealthCheckService(
+        this.bybitService,
+        this.webSocketManager,
+        {
+          enabled: true,
+          thresholds: {
+            memoryUsagePercent: (config as any).monitoring?.thresholds?.memoryUsagePercent || 90,
+            cpuUsagePercent: (config as any).monitoring?.thresholds?.cpuUsagePercent || 80,
+            diskUsagePercent: (config as any).monitoring?.thresholds?.diskUsagePercent || 90,
+          },
+        },
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Health Check Service initialized (Phase 14.1.2)', {
+        memoryThreshold: (config as any).monitoring?.thresholds?.memoryUsagePercent || 90,
+        cpuThreshold: (config as any).monitoring?.thresholds?.cpuUsagePercent || 80,
+      });
     }
 
     this.logger.info('✅ BotServices initialized - all dependencies ready');
