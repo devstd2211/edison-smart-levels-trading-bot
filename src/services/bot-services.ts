@@ -52,6 +52,8 @@ import { DeltaAnalyzerService } from './delta-analyzer.service';
 import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { WallTrackerService } from './wall-tracker.service';
 import { AdvancedOrderFlowService } from './advanced-order-flow.service'; // Phase 10.1
+import { DynamicPositionSizerService } from './dynamic-position-sizer.service'; // Phase 11.1
+import { PositionScalingService } from './position-scaling.service'; // Phase 11.2
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -131,6 +133,8 @@ export class BotServices {
   readonly wallTrackerService?: WallTrackerService;
   readonly ladderExitDetector?: LadderExitDetectorService; // Phase 8.9.27: Ladder TP exit detection
   readonly advancedOrderFlowService?: AdvancedOrderFlowService; // Phase 10.1: Advanced order flow analysis
+  readonly dynamicPositionSizer?: DynamicPositionSizerService; // Phase 11.1: Kelly Criterion position sizing
+  readonly positionScalingService?: PositionScalingService; // Phase 11.2: Dynamic pyramiding
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -441,6 +445,34 @@ export class BotServices {
       });
     }
 
+    // Phase 11.1: Initialize Dynamic Position Sizer (optional)
+    if ((config as any).dynamicPositionSizing?.enabled) {
+      this.dynamicPositionSizer = new DynamicPositionSizerService(
+        (config as any).dynamicPositionSizing,
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Dynamic Position Sizer initialized (Phase 11.1)', {
+        baseRiskPercent: (config as any).dynamicPositionSizing.baseRiskPercent,
+        maxRiskPercent: (config as any).dynamicPositionSizing.maxRiskPercent,
+        volatilityMultiplier: (config as any).dynamicPositionSizing.volatilityMultiplier,
+      });
+    }
+
+    // Phase 11.2: Initialize Position Scaling Service (optional)
+    if ((config as any).positionScaling?.enabled) {
+      this.positionScalingService = new PositionScalingService(
+        (config as any).positionScaling,
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Position Scaling Service initialized (Phase 11.2)', {
+        scaleInThreshold: (config as any).positionScaling.scaleInThreshold,
+        maxScales: (config as any).positionScaling.maxScales,
+        scaleReduction: (config as any).positionScaling.scaleReduction,
+      });
+    }
+
     // Phase 8.9.27: Initialize Ladder Exit Detector (optional)
     this.ladderExitDetector = new LadderExitDetectorService(
       this.logger,
@@ -500,6 +532,8 @@ export class BotServices {
       undefined, // strategyId - optional, only used in Phase 10 multi-strategy mode
       this.positionRepository, // Phase 6.2: Repository parameter
       this.errorHandler, // Phase 8.9.17: ErrorHandler for error handling integration
+      this.dynamicPositionSizer, // Phase 11.1: Kelly Criterion position sizing
+      this.positionScalingService, // Phase 11.2: Dynamic pyramiding
     );
 
     // 8.5 Initialize position exiting service (depends on bybit, journal, configs, positionManager)

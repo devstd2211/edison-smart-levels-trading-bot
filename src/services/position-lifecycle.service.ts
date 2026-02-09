@@ -85,6 +85,8 @@ export class PositionLifecycleService {
     private readonly strategyId?: string,  // Phase 10.3c: Strategy identifier for event tagging
     private readonly positionRepository?: IPositionRepository, // Phase 6.2: Repository pattern
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.17: Error handling integration
+    private readonly dynamicPositionSizer?: any, // Phase 11.1: Kelly Criterion position sizing
+    private readonly positionScalingService?: any, // Phase 11.2: Dynamic pyramiding
   ) {
     this.entryConfirmation = new EntryConfirmationManager(entryConfirmationConfig, logger);
   }
@@ -772,8 +774,63 @@ export class PositionLifecycleService {
         sizingChain.push('COMPOUND_INTEREST_FAILED');
         sizingChain.push('FALLBACK_FIXED');
       }
+    }
+    // Priority 2: Dynamic Position Sizing (Phase 11.1 - Kelly Criterion)
+    else if (this.dynamicPositionSizer && (this.fullConfig as any).dynamicPositionSizing?.enabled) {
+      try {
+        // Get account balance
+        const balanceInfo = await this.bybitService.getBalance();
+        const accountBalance = balanceInfo.walletBalance || 10000; // Fallback
+
+        // Calculate RR ratio
+        const stopDistance = Math.abs(signal.price - signal.stopLoss);
+        const firstTP = signal.takeProfits && signal.takeProfits[0]
+          ? signal.price * (1 + signal.takeProfits[0].percent / 100 * (signal.direction === 'LONG' ? 1 : -1))
+          : signal.price * 1.01;
+        const tpDistance = Math.abs(firstTP - signal.price);
+        const rrRatio = stopDistance > 0 ? tpDistance / stopDistance : 1.5;
+
+        // Get ATR if available (optional)
+        const currentATR = (signal as any).atr;
+        const averageATR = (signal as any).averageATR;
+
+        const sizingResult = await this.dynamicPositionSizer.calculateOptimalSize(
+          signal.price,           // entry price
+          signal.stopLoss,        // stop loss price
+          accountBalance,         // current balance
+          signal.confidence || 0.7, // signal confidence (0-1)
+          currentATR,            // current ATR (optional)
+          averageATR,            // average ATR (optional)
+          rrRatio                // risk/reward ratio
+        );
+
+        positionSizeUsdt = sizingResult.adjustedSize;
+        sizingChain.push('KELLY_CRITERION');
+        sizingChain.push(`CONF_${(signal.confidence || 0.7) * 100}%`);
+        sizingChain.push(`RISK_${sizingResult.riskPercent.toFixed(2)}%`);
+        if (currentATR && averageATR) {
+          sizingChain.push(`ATR_${sizingResult.volatilityAdjustment.toFixed(2)}x`);
+        }
+
+        this.logger.info('🎲 Position sizing: Kelly Criterion', {
+          baseSize: sizingResult.baseSize,
+          adjustedSize: sizingResult.adjustedSize,
+          riskPercent: sizingResult.riskPercent,
+          confidence: signal.confidence || 0.7,
+          volatilityAdj: sizingResult.volatilityAdjustment,
+          recommendation: sizingResult.recommendation,
+        });
+      } catch (error) {
+        // FALLBACK to fixed size if Kelly fails
+        this.logger.warn('Kelly Criterion calculation failed, falling back to fixed size', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        positionSizeUsdt = this.riskConfig.positionSizeUsdt;
+        sizingChain.push('KELLY_FAILED');
+        sizingChain.push('FALLBACK_FIXED');
+      }
     } else {
-      // Priority 2: Fixed position size from config
+      // Priority 3: Fixed position size from config
       positionSizeUsdt = this.riskConfig.positionSizeUsdt;
       sizingChain.push('FIXED');
     }
