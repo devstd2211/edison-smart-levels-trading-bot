@@ -58,6 +58,7 @@ import { SmartOrderExecutionService } from './smart-order-execution.service'; //
 import { AdvancedOrderStateMachineService } from './advanced-order-state-machine.service'; // Phase 13.2
 import { PrometheusMetricsService } from './prometheus-metrics.service'; // Phase 14.1.1
 import { HealthCheckService } from './health-check.service'; // Phase 14.1.2
+import { MonitoringServer } from './monitoring-server.service'; // Phase 14.1.3
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -143,6 +144,7 @@ export class BotServices {
   readonly orderStateMachine?: AdvancedOrderStateMachineService; // Phase 13.2: Order state machine
   readonly metricsService?: PrometheusMetricsService; // Phase 14.1.1: Prometheus metrics
   readonly healthCheckService?: HealthCheckService; // Phase 14.1.2: Health checks
+  readonly monitoringServer?: MonitoringServer; // Phase 14.1.3: HTTP monitoring endpoints
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -850,6 +852,34 @@ export class BotServices {
       this.logger.info('✅ Health Check Service initialized (Phase 14.1.2)', {
         memoryThreshold: (config as any).monitoring?.thresholds?.memoryUsagePercent || 90,
         cpuThreshold: (config as any).monitoring?.thresholds?.cpuUsagePercent || 80,
+      });
+    }
+
+    // Phase 14.1.3: Initialize Monitoring Server (optional)
+    if ((config as any).monitoring?.serverEnabled && (this.metricsService || this.healthCheckService)) {
+      this.monitoringServer = new MonitoringServer(
+        this.metricsService,
+        this.healthCheckService,
+        {
+          enabled: true,
+          port: (config as any).monitoring?.port || 9090,
+          metricsPath: (config as any).monitoring?.metricsPath || '/metrics',
+          healthPath: (config as any).monitoring?.healthPath || '/health',
+          cors: (config as any).monitoring?.cors ?? true,
+        },
+        this.logger,
+        this.errorHandler,
+      );
+
+      // Start server asynchronously (non-blocking)
+      this.monitoringServer.start().catch((error) => {
+        this.logger.error('Failed to start monitoring server', { error: error instanceof Error ? error.message : String(error) });
+      });
+
+      this.logger.info('✅ Monitoring Server initialized (Phase 14.1.3)', {
+        port: (config as any).monitoring?.port || 9090,
+        metricsPath: (config as any).monitoring?.metricsPath || '/metrics',
+        healthPath: (config as any).monitoring?.healthPath || '/health',
       });
     }
 
