@@ -56,6 +56,7 @@ import { DynamicPositionSizerService } from './dynamic-position-sizer.service'; 
 import { PositionScalingService } from './position-scaling.service'; // Phase 11.2
 import { SmartOrderExecutionService } from './smart-order-execution.service'; // Phase 13.1
 import { AdvancedOrderStateMachineService } from './advanced-order-state-machine.service'; // Phase 13.2
+import { PrometheusMetricsService } from './prometheus-metrics.service'; // Phase 14.1.1
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -139,6 +140,7 @@ export class BotServices {
   readonly positionScalingService?: PositionScalingService; // Phase 11.2: Dynamic pyramiding
   readonly smartOrderExecution?: SmartOrderExecutionService; // Phase 13.1: Smart order execution
   readonly orderStateMachine?: AdvancedOrderStateMachineService; // Phase 13.2: Order state machine
+  readonly metricsService?: PrometheusMetricsService; // Phase 14.1.1: Prometheus metrics
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -499,6 +501,24 @@ export class BotServices {
       );
       this.logger.info('✅ Order State Machine initialized (Phase 13.2)', {
         hasErrorHandler: !!this.errorHandler,
+      });
+    }
+
+    // Phase 14.1.1: Initialize Prometheus Metrics (optional)
+    if ((config as any).monitoring?.metricsEnabled) {
+      this.metricsService = new PrometheusMetricsService(
+        {
+          enabled: true,
+          prefix: (config as any).monitoring?.metricsPrefix || 'trading_bot_',
+          collectInterval: (config as any).monitoring?.collectInterval || 10000,
+          defaultLabels: (config as any).monitoring?.defaultLabels,
+        },
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Prometheus Metrics initialized (Phase 14.1.1)', {
+        prefix: (config as any).monitoring?.metricsPrefix || 'trading_bot_',
+        collectInterval: (config as any).monitoring?.collectInterval || 10000,
       });
     }
 
