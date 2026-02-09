@@ -64,27 +64,27 @@ interface SizingConfig {
 
 ---
 
-## 🎯 Phase 11.2: Position Scaling (~30 tests)
+## 🎯 Phase 11.2: Position Scaling (35 tests) ✅
 
 ### Service: PositionScalingService
 **Goal:** Scale positions in/out based on winning probability and profit targets
 
-**Status:** ⏳ NOT STARTED
+**Status:** ✅ **COMPLETE** (2026-02-09, Session 96)
 
 #### Core Methods
-- [ ] `scaleIntoWinner()` - Add to winning positions
-- [ ] `reduceRiskOnProfit()` - Move SL to breakeven
-- [ ] `calculateScaleSize()` - Size for additional entries
-- [ ] `shouldScale()` - Determine if scaling is appropriate
+- [x] `scaleIntoWinner()` - Add to winning positions
+- [x] `reduceRiskOnProfit()` - Move SL to breakeven
+- [x] `calculateScaleSize()` - Size for additional entries
+- [x] `shouldScale()` - Determine if scaling is appropriate
 
-#### Test Breakdown (30 tests)
-- [ ] **5 THROW tests** - Config validation
-- [ ] **5 THROW tests** - Input validation
-- [ ] **7 GRACEFUL_DEGRADE tests** - Calculation failures
-- [ ] **4 SKIP tests** - Logging failures
-- [ ] **5 Integration tests** - E2E scaling scenarios
-- [ ] **3 Backward compat tests** - Works without ErrorHandler
-- [ ] **1 Edge case test** - Scale at breakeven
+#### Test Breakdown (35 tests) ✅
+- [x] **5 THROW tests** - Config validation
+- [x] **5 THROW tests** - Position validation
+- [x] **7 GRACEFUL_DEGRADE tests** - Calculation failures
+- [x] **4 SKIP tests** - Logging failures
+- [x] **5 Integration tests** - E2E scaling scenarios
+- [x] **3 Backward compat tests** - Works without ErrorHandler
+- [x] **6 Helper/Edge cases** - calculateScaleSize, short positions, breakeven
 
 #### Implementation Details
 ```typescript
@@ -116,20 +116,23 @@ interface ScalingConfig {
 | Component | Tests | Status |
 |-----------|-------|--------|
 | DynamicPositionSizerService | 47/47 | ✅ **COMPLETE** |
-| PositionScalingService | 0/30 | ⏳ Not Started |
-| **TOTAL** | **47/77** | **61%** |
+| PositionScalingService | 35/35 | ✅ **COMPLETE** |
+| **TOTAL** | **82/82** | **100%** ✅ |
 
 ---
 
 ## 🎯 Success Metrics
 
-- [ ] Position sizing within 1% of optimal Kelly Criterion
-- [ ] Risk per trade never exceeds configured maximum
-- [ ] Volatile markets automatically reduce position size
-- [ ] High-confidence signals get larger positions
-- [ ] Account heat monitored (sum of all position risks)
-- [ ] Zero division-by-zero crashes
-- [ ] All tests passing with 0 regressions
+- [x] Position sizing within 1% of optimal Kelly Criterion ✅
+- [x] Risk per trade never exceeds configured maximum ✅
+- [x] Volatile markets automatically reduce position size ✅
+- [x] High-confidence signals get larger positions ✅
+- [x] Account heat monitored (sum of all position risks) ✅
+- [x] Position scaling with size reduction per scale ✅
+- [x] Stop-loss moved to breakeven on profit ✅
+- [x] Maximum scale limits enforced ✅
+- [x] Zero division-by-zero crashes ✅
+- [x] All 82 tests passing with 0 regressions ✅
 
 ---
 

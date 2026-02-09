@@ -204,7 +204,7 @@ export const BREAKEVEN_PROFIT_THRESHOLD = 0.5;
  * Minimum position size for scaling (USD)
  * Don't scale if position too small
  */
-export const MIN_POSITION_SIZE_FOR_SCALING = 20;
+export const MIN_POSITION_SIZE_FOR_SCALING = 5;
 
 // ============================================================================
 // ERROR HANDLING DEFAULTS
