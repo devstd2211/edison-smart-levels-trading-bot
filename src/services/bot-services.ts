@@ -54,6 +54,8 @@ import { WallTrackerService } from './wall-tracker.service';
 import { AdvancedOrderFlowService } from './advanced-order-flow.service'; // Phase 10.1
 import { DynamicPositionSizerService } from './dynamic-position-sizer.service'; // Phase 11.1
 import { PositionScalingService } from './position-scaling.service'; // Phase 11.2
+import { SmartOrderExecutionService } from './smart-order-execution.service'; // Phase 13.1
+import { AdvancedOrderStateMachineService } from './advanced-order-state-machine.service'; // Phase 13.2
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -135,6 +137,8 @@ export class BotServices {
   readonly advancedOrderFlowService?: AdvancedOrderFlowService; // Phase 10.1: Advanced order flow analysis
   readonly dynamicPositionSizer?: DynamicPositionSizerService; // Phase 11.1: Kelly Criterion position sizing
   readonly positionScalingService?: PositionScalingService; // Phase 11.2: Dynamic pyramiding
+  readonly smartOrderExecution?: SmartOrderExecutionService; // Phase 13.1: Smart order execution
+  readonly orderStateMachine?: AdvancedOrderStateMachineService; // Phase 13.2: Order state machine
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -470,6 +474,31 @@ export class BotServices {
         scaleInThreshold: (config as any).positionScaling.scaleInThreshold,
         maxScales: (config as any).positionScaling.maxScales,
         scaleReduction: (config as any).positionScaling.scaleReduction,
+      });
+    }
+
+    // Phase 13.1: Initialize Smart Order Execution (optional)
+    if ((config as any).smartOrderExecution?.enabled) {
+      this.smartOrderExecution = new SmartOrderExecutionService(
+        (config as any).smartOrderExecution,
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Smart Order Execution initialized (Phase 13.1)', {
+        maxSlippagePercent: (config as any).smartOrderExecution.maxSlippagePercent,
+        executionStrategy: (config as any).smartOrderExecution.executionStrategy,
+        adaptiveExecution: (config as any).smartOrderExecution.adaptiveExecution,
+      });
+    }
+
+    // Phase 13.2: Initialize Order State Machine (optional)
+    if ((config as any).orderStateMachine?.enabled) {
+      this.orderStateMachine = new AdvancedOrderStateMachineService(
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Order State Machine initialized (Phase 13.2)', {
+        hasErrorHandler: !!this.errorHandler,
       });
     }
 

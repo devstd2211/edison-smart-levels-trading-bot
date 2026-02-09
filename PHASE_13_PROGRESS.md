@@ -365,8 +365,51 @@ if (executionReport.status === 'completed') {
 
 ---
 
-**Version:** 1.2
+## 🔌 Integration Status (Session 98)
+
+**✅ INTEGRATED into bot-services.ts**
+
+Both Phase 13 services are now integrated into the DI container:
+
+```typescript
+// bot-services.ts:
+readonly smartOrderExecution?: SmartOrderExecutionService;    // Phase 13.1
+readonly orderStateMachine?: AdvancedOrderStateMachineService; // Phase 13.2
+
+// Initialization (only if enabled in config):
+if (config.smartOrderExecution?.enabled) {
+  this.smartOrderExecution = new SmartOrderExecutionService(...);
+}
+
+if (config.orderStateMachine?.enabled) {
+  this.orderStateMachine = new AdvancedOrderStateMachineService(...);
+}
+```
+
+**Config control:**
+```json
+{
+  "smartOrderExecution": {
+    "enabled": false,  // ← OFF by default
+    "maxSlippagePercent": 0.1,
+    "executionStrategy": "adaptive"
+  },
+  "orderStateMachine": {
+    "enabled": false   // ← OFF by default
+  }
+}
+```
+
+**Architecture:**
+- ✅ **Optional dependencies** - Zero impact when disabled
+- ✅ **No conflicts** - SmartOrderExecution uses BybitService internally
+- ✅ **Modular** - Enable/disable via config.json
+- ✅ **Backward compatible** - All existing code works unchanged
+
+---
+
+**Version:** 1.3
 **Created:** 2026-02-09 (Session 97)
-**Updated:** 2026-02-09 (Session 98)
-**Status:** 🎉 **PHASE 13 COMPLETE!** (85/85 tests, 100%) 🎉
+**Updated:** 2026-02-09 (Session 98 - Integrated)
+**Status:** 🎉 **PHASE 13 COMPLETE & INTEGRATED!** (85/85 tests, 100%) 🎉
 **Next Task:** Phase 14 - Production Hardening & Monitoring (Session 99)
