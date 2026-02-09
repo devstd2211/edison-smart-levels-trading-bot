@@ -221,7 +221,11 @@ Methods:
 
 ---
 
-## 🔄 Phase 12: Multi-Exchange Coordination (3-4 Weeks)
+## 🔄 Phase 12: Multi-Exchange Coordination (3-4 Weeks) ⏸️ **POSTPONED**
+
+> **⚠️ POSTPONED:** Phase 12 отложена до завершения всех остальных фаз.
+> **Причина:** Требует значительный капитал (>$50k), сложность не оправдана для текущего этапа.
+> **Когда делать:** После Phase 13-15, когда основной функционал полностью готов.
 
 ### 12.1 Cross-Exchange Signal Validation (~40 tests)
 ```typescript
