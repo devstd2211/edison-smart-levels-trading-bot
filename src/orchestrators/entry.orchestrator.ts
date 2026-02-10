@@ -128,6 +128,8 @@ export class EntryOrchestrator {
     openPositions: Position[],
     globalTrendBias: TrendAnalysis,  // REQUIRED - no longer optional!
     flatMarketAnalysis?: FlatMarketResult,
+    fundingRate?: number,  // Optional funding rate from exchange
+    lastTPTimestamp?: number,  // Optional timestamp of last TP hit
   ): Promise<EntryOrchestratorDecision> {
     try {
       // =====================================================================
@@ -222,8 +224,8 @@ export class EntryOrchestrator {
             accountBalance,
             openPositions,
             marketData: { flatMarketAnalysis },
-            fundingRate: undefined, // TODO: Add funding rate from market data
-            lastTPTimestamp: undefined, // TODO: Add TP timestamp from position manager
+            fundingRate,
+            lastTPTimestamp,
             trend: globalTrendBias,
           };
 

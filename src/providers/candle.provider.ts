@@ -41,6 +41,13 @@ export class CandleProvider {
   }
 
   /**
+   * Get trading symbol (e.g., "XRPUSDT")
+   */
+  getSymbol(): string {
+    return this.symbol;
+  }
+
+  /**
    * Initialize last-update tracking for all enabled timeframes
    * Phase 6.2: Repository manages actual cache storage
    */

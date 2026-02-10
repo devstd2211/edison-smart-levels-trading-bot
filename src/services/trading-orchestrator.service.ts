@@ -427,11 +427,28 @@ export class TradingOrchestrator {
                         : [],
                 };
 
+                // Get funding rate for entry filters (optional)
+                let fundingRate: number | undefined;
+                try {
+                  if (this.bybitService.getFundingRate) {
+                    const symbol = this.candleProvider.getSymbol();
+                    fundingRate = await this.bybitService.getFundingRate(symbol);
+                  }
+                } catch (error) {
+                  // Funding rate is optional, continue without it
+                  this.logger.debug('Could not fetch funding rate, continuing without it', {
+                    error: error instanceof Error ? error.message : String(error),
+                  });
+                }
+
                 const entryDecision = await this.entryOrchestrator.evaluateEntry(
                   signals,
                   currentBalance,
                   openPositions,
                   trendAnalysis,
+                  undefined, // flatMarketAnalysis
+                  fundingRate,
+                  undefined, // lastTPTimestamp - TODO: wire up from session stats
                 );
 
                 this.logger.info('📋 EntryOrchestrator decision (PRIMARY)', {

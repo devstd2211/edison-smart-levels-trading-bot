@@ -43,6 +43,8 @@ import {
   LiveTradingEventType,
 } from '../types/live-trading.types';
 
+import { ActionType, ClosePercentAction } from '../types/architecture.types';
+
 /**
  * GracefulShutdownManager: Safe bot shutdown with state persistence
  *
@@ -255,17 +257,17 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
 
     try {
       // Enqueue close action for current position
-      this.actionQueue.enqueue({
+      const closeAction: ClosePercentAction = {
         id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        type: 'CLOSE_PERCENT' as any, // TODO: Fix action type
+        type: ActionType.CLOSE_PERCENT,
         timestamp: Date.now(),
         priority: 'HIGH' as const,
-        metadata: {
-          positionId: position.id,
-          percent: 100,
-          reason,
-        },
-      });
+        positionId: position.id,
+        percent: 100,
+        reason,
+        metadata: {},
+      };
+      this.actionQueue.enqueue(closeAction);
 
       // Wait briefly for action to process
       await new Promise((resolve) => setTimeout(resolve, 500));

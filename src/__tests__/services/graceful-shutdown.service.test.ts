@@ -25,6 +25,7 @@ import {
   EmergencyCloseReason,
   LiveTradingEventType,
 } from '../../types/live-trading.types';
+import { ActionType } from '../../types/architecture.types';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -383,12 +384,10 @@ describe('GracefulShutdownManager', () => {
 
       expect(mockActionQueue.enqueue).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'CLOSE_PERCENT',
-          metadata: expect.objectContaining({
-            positionId: 'pos-123',
-            percent: 100,
-            reason: EmergencyCloseReason.BOT_SHUTDOWN,
-          }),
+          type: ActionType.CLOSE_PERCENT,
+          positionId: 'pos-123',
+          percent: 100,
+          reason: EmergencyCloseReason.BOT_SHUTDOWN,
         })
       );
     });

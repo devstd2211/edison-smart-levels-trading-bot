@@ -254,7 +254,12 @@ export class TradingJournalService {
     };
 
     // Phase 6.2: Store in Map (repository type compatibility pending)
-    // TODO: Adapt TradeRecord type for full repository integration
+    // TODO: Repository Integration (Low Priority)
+    // Current: Uses Map + file-based storage (works correctly)
+    // Future: Adapt TradeRecord to match IJournalRepository interface
+    //   - Map extended TradeRecord (with entryCondition) to base TradeRecord
+    //   - Use this.journalRepository.save(mappedTrade) instead of saveJournal()
+    //   - Add adapter methods: toRepositoryFormat() and fromRepositoryFormat()
     this.trades.set(params.id, trade);
     this.saveJournal();
 
