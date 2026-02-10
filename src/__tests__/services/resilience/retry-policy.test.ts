@@ -16,6 +16,8 @@ describe('RetryPolicyService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
 
+  let service: RetryPolicyService | undefined;
+
   beforeEach(() => {
     logger = {
       info: jest.fn(),
@@ -28,6 +30,13 @@ describe('RetryPolicyService', () => {
   });
 
   afterEach(() => {
+    // Clean up service to stop intervals
+    if (service) {
+      service.stop();
+      service = undefined;
+    }
+    // Always restore real timers
+    jest.useRealTimers();
     jest.clearAllTimers();
   });
 
@@ -37,14 +46,12 @@ describe('RetryPolicyService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      const service = new RetryPolicyService();
+      service = new RetryPolicyService();
       expect(service).toBeDefined();
 
       const stats = service.getStats();
       expect(stats.totalOperations).toBe(0);
       expect(stats.totalRetries).toBe(0);
-
-      service.stop();
     });
 
     it('should throw on invalid maxAttempts', () => {
@@ -80,7 +87,7 @@ describe('RetryPolicyService', () => {
 
   describe('Exponential Backoff', () => {
     it('should calculate exponential backoff correctly', () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: false,
@@ -94,12 +101,10 @@ describe('RetryPolicyService', () => {
 
       // Attempt 3: 100 * 2^2 = 400ms
       expect(service.getBackoffDelay(3, 100, { jitterEnabled: false })).toBe(400);
-
-      service.stop();
     });
 
     it('should add jitter when enabled', () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: true,
@@ -119,12 +124,10 @@ describe('RetryPolicyService', () => {
         expect(delay).toBeGreaterThan(150);
         expect(delay).toBeLessThan(250);
       });
-
-      service.stop();
     });
 
     it('should respect maximum delay', () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 10,
         maxDelayMs: 500,
@@ -134,12 +137,10 @@ describe('RetryPolicyService', () => {
       // Attempt 5: 100 * 10^4 = 100000ms, but should cap at 500ms
       const delay = service.getBackoffDelay(5, 100, { maxDelayMs: 500, jitterEnabled: false });
       expect(delay).toBe(500);
-
-      service.stop();
     });
 
     it('should respect minimum delay', () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         baseDelayMs: 1,
         exponentialBase: 1,
         jitterEnabled: false,
@@ -148,12 +149,10 @@ describe('RetryPolicyService', () => {
       // Should never go below MIN_RETRY_DELAY_MS (10ms)
       const delay = service.getBackoffDelay(1, 1, { jitterEnabled: false });
       expect(delay).toBeGreaterThanOrEqual(10);
-
-      service.stop();
     });
 
     it('should handle custom exponential base', () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 3,
         jitterEnabled: false,
@@ -167,8 +166,6 @@ describe('RetryPolicyService', () => {
 
       // Attempt 3: 100 * 3^2 = 900ms
       expect(service.getBackoffDelay(3, 100, { exponentialBase: 3, jitterEnabled: false })).toBe(900);
-
-      service.stop();
     });
   });
 
@@ -177,8 +174,8 @@ describe('RetryPolicyService', () => {
   // ============================================================================
 
   describe('Retry Budget', () => {
-    it.skip('should track retry budget correctly', async () => {
-      const service = new RetryPolicyService({
+    it('should track retry budget correctly', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5, // 50% of operations can retry
         baseDelayMs: 10,
@@ -199,12 +196,10 @@ describe('RetryPolicyService', () => {
       expect(stats.totalRetries).toBe(2);
       expect(stats.budgetUsage).toBe(2);
       expect(stats.budgetLimit).toBe(0); // 50% of 1 = 0.5 → 0
+    }, 10000);
 
-      service.stop();
-    });
-
-    it.skip('should throw RetryBudgetExceededError when budget exhausted', async () => {
-      const service = new RetryPolicyService({
+    it('should throw RetryBudgetExceededError when budget exhausted', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10% budget
         baseDelayMs: 10,
@@ -233,34 +228,22 @@ describe('RetryPolicyService', () => {
       // Second retry should exceed budget
       await expect(service.executeWithRetry(alwaysFail))
         .rejects.toThrow(RetryBudgetExceededError);
+    }, 10000);
 
-      service.stop();
-    });
-
-    it.skip('should reset budget periodically', async () => {
+    it('should reset budget periodically', () => {
       jest.useFakeTimers();
 
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         maxAttempts: 3,
         retryBudgetPercent: 0.1,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
 
-      // Exhaust budget
-      for (let i = 0; i < 10; i++) {
-        await service.executeWithRetry(async () => 'success');
-      }
+      // Manually set budget usage
+      service['stats'].budgetUsage = 5;
+      service['stats'].totalOperations = 10;
 
-      let callCount = 0;
-      const failOnce = async () => {
-        callCount++;
-        if (callCount <= 1) throw new Error('Fail');
-        return 'success';
-      };
-
-      await service.executeWithRetry(failOnce);
-
-      expect(service.getBudgetUsage()).toBeGreaterThan(0);
+      expect(service.getBudgetUsage()).toBe(5);
 
       // Fast-forward budget reset interval (60 seconds)
       jest.advanceTimersByTime(60000);
@@ -268,11 +251,10 @@ describe('RetryPolicyService', () => {
       expect(service.getBudgetUsage()).toBe(0);
 
       jest.useRealTimers();
-      service.stop();
     });
 
-    it.skip('should manually reset budget', async () => {
-      const service = new RetryPolicyService({
+    it('should manually reset budget', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5,
         baseDelayMs: 10,
@@ -292,12 +274,10 @@ describe('RetryPolicyService', () => {
       service.resetBudget();
 
       expect(service.getBudgetUsage()).toBe(0);
+    }, 10000);
 
-      service.stop();
-    });
-
-    it.skip('should calculate budget limit correctly', async () => {
-      const service = new RetryPolicyService({
+    it('should calculate budget limit correctly', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10%
         baseDelayMs: 10,
@@ -317,9 +297,7 @@ describe('RetryPolicyService', () => {
         await service.executeWithRetry(async () => 'success');
       }
       expect(service.getStats().budgetLimit).toBe(10);
-
-      service.stop();
-    });
+    }, 15000);
   });
 
   // ============================================================================
@@ -328,7 +306,7 @@ describe('RetryPolicyService', () => {
 
   describe('Conditional Retry', () => {
     it('should retry on transient errors (network errors)', async () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
@@ -347,12 +325,10 @@ describe('RetryPolicyService', () => {
       const result = await service.executeWithRetry(transientError);
       expect(result).toBe('success');
       expect(callCount).toBe(3); // Original + 2 retries
-
-      service.stop();
     });
 
     it('should retry on retryable HTTP errors (429, 5xx)', async () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
@@ -371,12 +347,10 @@ describe('RetryPolicyService', () => {
       const result = await service.executeWithRetry(http429Error);
       expect(result).toBe('success');
       expect(callCount).toBe(3);
-
-      service.stop();
     });
 
     it('should not retry on non-retryable HTTP errors (4xx)', async () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
@@ -393,8 +367,6 @@ describe('RetryPolicyService', () => {
         .rejects.toThrow('Not Found');
 
       expect(callCount).toBe(1); // No retries
-
-      service.stop();
     });
   });
 
@@ -404,7 +376,7 @@ describe('RetryPolicyService', () => {
 
   describe('Integration Tests', () => {
     it('should succeed after retries', async () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
@@ -423,12 +395,10 @@ describe('RetryPolicyService', () => {
       const stats = service.getStats();
       expect(stats.successfulOperations).toBe(1);
       expect(stats.totalRetries).toBe(2);
-
-      service.stop();
     });
 
-    it.skip('should throw MaxRetriesExceededError when all retries fail', async () => {
-      const service = new RetryPolicyService({
+    it('should throw MaxRetriesExceededError when all retries fail', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
@@ -446,12 +416,10 @@ describe('RetryPolicyService', () => {
 
       const stats = service.getStats();
       expect(stats.failedOperations).toBe(1);
-
-      service.stop();
-    });
+    }, 10000);
 
     it('should handle immediate success (no retries)', async () => {
-      const service = new RetryPolicyService({
+      service = new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
@@ -464,12 +432,10 @@ describe('RetryPolicyService', () => {
       const stats = service.getStats();
       expect(stats.totalRetries).toBe(0);
       expect(stats.successfulOperations).toBe(1);
-
-      service.stop();
     });
 
-    it.skip('should track statistics correctly', async () => {
-      const service = new RetryPolicyService({
+    it('should track statistics correctly', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -494,12 +460,10 @@ describe('RetryPolicyService', () => {
       expect(stats.totalOperations).toBe(5);
       expect(stats.successfulOperations).toBe(5);
       expect(stats.totalRetries).toBe(2);
+    }, 10000);
 
-      service.stop();
-    });
-
-    it.skip('should work with custom config per operation', async () => {
-      const service = new RetryPolicyService({
+    it('should work with custom config per operation', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 1,
         baseDelayMs: 100,
       }, logger as LoggerService, errorHandler);
@@ -515,9 +479,7 @@ describe('RetryPolicyService', () => {
       const result = await service.executeWithRetry(failTwice, { maxAttempts: 3 });
       expect(result).toBe('success');
       expect(callCount).toBe(3);
-
-      service.stop();
-    });
+    }, 10000);
   });
 
   // ============================================================================
@@ -525,8 +487,8 @@ describe('RetryPolicyService', () => {
   // ============================================================================
 
   describe('Backward Compatibility', () => {
-    it.skip('should work without ErrorHandler', async () => {
-      const service = new RetryPolicyService({
+    it('should work without ErrorHandler', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -540,13 +502,12 @@ describe('RetryPolicyService', () => {
       };
 
       const result = await service.executeWithRetry(failOnce);
-      service.stop(); // Stop before assertions to cleanup timers
 
       expect(result).toBe('success');
-    }, 10000); // Increase timeout
+    }, 10000);
 
-    it.skip('should work without Logger', async () => {
-      const service = new RetryPolicyService({
+    it('should work without Logger', async () => {
+      service = new RetryPolicyService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -560,9 +521,8 @@ describe('RetryPolicyService', () => {
       };
 
       const result = await service.executeWithRetry(failOnce);
-      service.stop(); // Stop before assertions to cleanup timers
 
       expect(result).toBe('success');
-    }, 10000); // Increase timeout
+    }, 10000);
   });
 });

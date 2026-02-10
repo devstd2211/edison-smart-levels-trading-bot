@@ -267,13 +267,22 @@ export class RetryPolicyService {
    * Get retry statistics
    */
   getStats(): RetryStats {
+    // Update budget limit before returning stats
+    this.updateBudgetLimit();
     return { ...this.stats };
   }
 
   /**
-   * Get retry budget usage (0-1)
+   * Get retry budget usage (absolute count)
    */
   getBudgetUsage(): number {
+    return this.stats.budgetUsage;
+  }
+
+  /**
+   * Get retry budget usage ratio (0-1)
+   */
+  getBudgetUsageRatio(): number {
     if (this.stats.budgetLimit === 0) return 0;
     return this.stats.budgetUsage / this.stats.budgetLimit;
   }
