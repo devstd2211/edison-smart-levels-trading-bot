@@ -399,7 +399,7 @@ export class PositionLifecycleService {
         position,
         strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
       });
-      console.log('[EVENT] position-opened emitted:', position.id);
+      this.logger.debug('[EVENT] position-opened emitted', { positionId: position.id });
 
       // Initialize TakeProfitManager for partial close tracking (Phase 8.9.22: ErrorHandler injection)
       this.takeProfitManager = new TakeProfitManagerService(

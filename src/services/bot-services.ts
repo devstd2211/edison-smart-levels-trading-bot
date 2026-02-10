@@ -59,6 +59,11 @@ import { AdvancedOrderStateMachineService } from './advanced-order-state-machine
 import { PrometheusMetricsService } from './prometheus-metrics.service'; // Phase 14.1.1
 import { HealthCheckService } from './health-check.service'; // Phase 14.1.2
 import { MonitoringServer } from './monitoring-server.service'; // Phase 14.1.3
+import { CircuitBreakerService } from './resilience/circuit-breaker.service'; // Phase 14.2.1
+import { RateLimiterService } from './resilience/rate-limiter.service'; // Phase 14.2.2
+import { RetryPolicyService } from './resilience/retry-policy.service'; // Phase 14.2.3
+import { BulkheadService } from './resilience/bulkhead.service'; // Phase 14.2.4
+import { ResilienceCoordinator } from './resilience/resilience-coordinator.service'; // Phase 14.2.5
 import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
@@ -145,6 +150,11 @@ export class BotServices {
   readonly metricsService?: PrometheusMetricsService; // Phase 14.1.1: Prometheus metrics
   readonly healthCheckService?: HealthCheckService; // Phase 14.1.2: Health checks
   readonly monitoringServer?: MonitoringServer; // Phase 14.1.3: HTTP monitoring endpoints
+  readonly circuitBreaker?: CircuitBreakerService; // Phase 14.2.1: Circuit breaker pattern
+  readonly rateLimiter?: RateLimiterService; // Phase 14.2.2: Adaptive rate limiting
+  readonly retryPolicy?: RetryPolicyService; // Phase 14.2.3: Advanced retry strategies
+  readonly bulkhead?: BulkheadService; // Phase 14.2.4: Resource isolation
+  readonly resilienceCoordinator?: ResilienceCoordinator; // Phase 14.2.5: Unified resilience layer
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -883,6 +893,92 @@ export class BotServices {
       });
     }
 
+    // Phase 14.2: Initialize Resilience Patterns (optional)
+    if ((config as any).resilience?.enabled) {
+      // Phase 14.2.1: Circuit Breaker
+      this.circuitBreaker = new CircuitBreakerService(
+        (config as any).resilience?.circuitBreaker || {
+          failureThreshold: 5,
+          failureRateThreshold: 0.5,
+          successThreshold: 2,
+          timeout: 60000,
+          volumeThreshold: 10,
+        },
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Circuit Breaker initialized (Phase 14.2.1)', {
+        failureThreshold: (config as any).resilience?.circuitBreaker?.failureThreshold || 5,
+        timeout: (config as any).resilience?.circuitBreaker?.timeout || 60000,
+      });
+
+      // Phase 14.2.2: Rate Limiter
+      this.rateLimiter = new RateLimiterService(
+        (config as any).resilience?.rateLimiter || {
+          bybit: {
+            maxRequests: 10,
+            windowMs: 1000,
+            burstSize: 15,
+            queueSize: 50,
+          },
+        },
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Rate Limiter initialized (Phase 14.2.2)', {
+        configs: Object.keys((config as any).resilience?.rateLimiter || { bybit: {} }),
+      });
+
+      // Phase 14.2.3: Retry Policy
+      this.retryPolicy = new RetryPolicyService(
+        (config as any).resilience?.retry || {
+          maxAttempts: 3,
+          baseDelayMs: 100,
+          maxDelayMs: 5000,
+          exponentialBase: 2,
+          jitterEnabled: true,
+          retryBudgetPercent: 10,
+        },
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Retry Policy initialized (Phase 14.2.3)', {
+        maxAttempts: (config as any).resilience?.retry?.maxAttempts || 3,
+        retryBudget: `${(config as any).resilience?.retry?.retryBudgetPercent || 10}%`,
+      });
+
+      // Phase 14.2.4: Bulkhead
+      this.bulkhead = new BulkheadService(
+        (config as any).resilience?.bulkhead || {
+          trading: {
+            maxConcurrent: 10,
+            queueSize: 20,
+            timeoutMs: 5000,
+          },
+        },
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Bulkhead initialized (Phase 14.2.4)', {
+        pools: Object.keys((config as any).resilience?.bulkhead || { trading: {} }),
+      });
+
+      // Phase 14.2.5: Resilience Coordinator
+      this.resilienceCoordinator = new ResilienceCoordinator(
+        this.circuitBreaker,
+        this.rateLimiter,
+        this.retryPolicy,
+        this.bulkhead,
+        this.metricsService,
+        this.logger,
+        this.errorHandler,
+      );
+      this.logger.info('✅ Resilience Coordinator initialized (Phase 14.2.5)', {
+        patterns: ['circuitBreaker', 'rateLimiter', 'retryPolicy', 'bulkhead'],
+        hasMetrics: !!this.metricsService,
+      });
+    }
+
     this.logger.info('✅ BotServices initialized - all dependencies ready');
   }
 
@@ -920,6 +1016,15 @@ export class BotServices {
       deltaAnalyzerService: this.deltaAnalyzerService,
       orderbookImbalanceService: this.orderbookImbalanceService,
       wallTrackerService: this.wallTrackerService,
+      // Phase 14: Production Hardening
+      metricsService: this.metricsService, // Phase 14.1.1
+      healthCheckService: this.healthCheckService, // Phase 14.1.2
+      monitoringServer: this.monitoringServer, // Phase 14.1.3
+      circuitBreaker: this.circuitBreaker, // Phase 14.2.1
+      rateLimiter: this.rateLimiter, // Phase 14.2.2
+      retryPolicy: this.retryPolicy, // Phase 14.2.3
+      bulkhead: this.bulkhead, // Phase 14.2.4
+      resilienceCoordinator: this.resilienceCoordinator, // Phase 14.2.5
     };
   }
 }

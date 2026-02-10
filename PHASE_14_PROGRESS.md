@@ -827,10 +827,68 @@ if (config.resilience?.enabled) {
 
 ---
 
-**Version:** 3.0
+## 🔗 Phase 14.2 Integration Status ✅ **COMPLETE**
+
+**Status:** ✅ **FULLY INTEGRATED** (Session 100)
+
+### Integration Checklist ✅
+- [x] **Exports:** All 5 services exported from `src/services/index.ts`
+- [x] **Imports:** All 5 services imported in `bot-services.ts`
+- [x] **Properties:** Optional properties added to `BotServices` class
+- [x] **Initialization:** Constructor initializes all services when `config.resilience.enabled = true`
+- [x] **Dependency Injection:** All services added to `toObject()` method
+- [x] **Configuration:** Example config documented in `config.json` format
+- [x] **Tests:** All 6904 tests passing (0 regressions)
+
+### Integration Files Updated ✅
+- `src/services/index.ts` - Phase 14.2 exports added
+- `src/services/bot-services.ts` - Imports, properties, initialization, toObject()
+
+### Configuration Example
+```json
+{
+  "resilience": {
+    "enabled": false,  // Set to true to enable
+    "circuitBreaker": {
+      "failureThreshold": 5,
+      "failureRateThreshold": 0.5,
+      "successThreshold": 2,
+      "timeout": 60000,
+      "volumeThreshold": 10
+    },
+    "rateLimiter": {
+      "bybit": {
+        "maxRequests": 10,
+        "windowMs": 1000,
+        "burstSize": 15,
+        "queueSize": 50
+      }
+    },
+    "retry": {
+      "maxAttempts": 3,
+      "baseDelayMs": 100,
+      "maxDelayMs": 5000,
+      "exponentialBase": 2,
+      "jitterEnabled": true,
+      "retryBudgetPercent": 10
+    },
+    "bulkhead": {
+      "trading": {
+        "maxConcurrent": 10,
+        "queueSize": 20,
+        "timeoutMs": 5000
+      }
+    }
+  }
+}
+```
+
+---
+
+**Version:** 3.1
 **Created:** 2026-02-09 (Session 98)
-**Updated:** 2026-02-10 (Session 99)
+**Updated:** 2026-02-10 (Session 100)
 **Phase 14.1:** ✅ **COMPLETE** (68/68 tests, 100%)
-**Phase 14.2:** ✅ **COMPLETE** (117/100 tests, 117%) 🎉🎉🎉
+**Phase 14.2:** ✅ **COMPLETE & INTEGRATED** (117/100 tests, 117%) 🎉🎉🎉
 **Total Tests:** 6904 passing (296 test suites, +117 Phase 14.2, 0 regressions)
 **Next Phase:** Phase 15 - Code Quality & Documentation

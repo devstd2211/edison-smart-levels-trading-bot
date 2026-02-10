@@ -31,3 +31,10 @@ export * from './reality-check.service'; // Tracks when bot logic was right but 
 export * from './bot-factory.service'; // DI container for creating BotServices
 export * from './bot-services'; // DI container for all services
 export * from './bot-initializer'; // Manages bot lifecycle
+
+// Phase 14.2: Resilience Patterns (Production Hardening)
+export * from './resilience/circuit-breaker.service'; // Circuit breaker pattern for cascading failure prevention
+export * from './resilience/rate-limiter.service'; // Adaptive rate limiting for API calls
+export * from './resilience/retry-policy.service'; // Advanced retry strategies with backoff and budgets
+export * from './resilience/bulkhead.service'; // Resource isolation to prevent thread pool exhaustion
+export * from './resilience/resilience-coordinator.service'; // Unified resilience layer combining all patterns

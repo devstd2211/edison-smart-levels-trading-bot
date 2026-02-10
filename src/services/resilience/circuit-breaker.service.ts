@@ -215,6 +215,21 @@ export class CircuitBreakerService {
   }
 
   /**
+   * Get all circuit statistics (Phase 15.2: Added for ResilienceCoordinator)
+   */
+  getAllStats(): Record<string, { state: string; failures: number; successes: number }> {
+    const stats: Record<string, { state: string; failures: number; successes: number }> = {};
+    for (const [name, circuit] of this.circuits.entries()) {
+      stats[name] = {
+        state: circuit.state,
+        failures: circuit.failureCount,
+        successes: circuit.successCount,
+      };
+    }
+    return stats;
+  }
+
+  /**
    * Clear all circuits (for testing)
    */
   clearAll(): void {

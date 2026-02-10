@@ -24,7 +24,7 @@
  */
 
 import { LoggerService } from '../types';
-// import { BybitService } from './bybit.service'; // TODO: Add import when available
+import { IExchange } from '../interfaces';
 import {
   OrderExecutionConfig,
   OrderRequest,
@@ -54,13 +54,13 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
  */
 export class OrderExecutionPipeline implements IOrderExecutionPipeline {
   private config: OrderExecutionConfig;
-  private bybitService: any; // TODO: Replace with proper BybitService type
+  private exchangeService: IExchange; // Phase 15.2: Properly typed exchange service
   private logger: LoggerService;
   private metrics: ExecutionMetrics;
 
-  constructor(config: OrderExecutionConfig, bybitService: any, logger: LoggerService) {
+  constructor(config: OrderExecutionConfig, exchangeService: IExchange, logger: LoggerService) {
     this.config = config;
-    this.bybitService = bybitService;
+    this.exchangeService = exchangeService;
     this.logger = logger;
     this.metrics = {
       totalOrders: 0,
@@ -99,8 +99,8 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     // Phase 8.3: Use ErrorHandler.executeAsync for order placement with exponential backoff
     const placeOrderResult = await ErrorHandler.executeAsync(
       async () => {
-        // Place order via BybitService
-        return await this.bybitService.placeOrder({
+        // Place order via Exchange Service (Phase 15.2: Using IExchange interface)
+        return await this.exchangeService.placeOrder({
           symbol: order.symbol,
           side: order.side,
           orderType: order.orderType,
@@ -237,7 +237,7 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
   public async verifyOrderPlacement(orderId: string): Promise<OrderStatus> {
     try {
       // Query order status from exchange
-      const orderStatus = await this.bybitService.getOrderStatus(orderId);
+      const orderStatus = await this.exchangeService.getOrderStatus(orderId);
       return this.mapOrderStatus(orderStatus);
     } catch (error) {
       this.logger.error(`[OrderExecutionPipeline] Error verifying order: ${error}`);
@@ -311,8 +311,14 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
 
   /**
    * Helper: Map exchange order status to OrderStatus enum
+   * Phase 15.2: Updated to handle IExchange.getOrderStatus() response object
    */
-  private mapOrderStatus(exchangeStatus: string): OrderStatus {
+  private mapOrderStatus(
+    exchangeStatus: string | { orderId: string; status: string; filledQuantity: number; averagePrice: number }
+  ): OrderStatus {
+    // Handle object response from IExchange.getOrderStatus()
+    const statusString = typeof exchangeStatus === 'string' ? exchangeStatus : exchangeStatus.status;
+
     const statusMap: Record<string, OrderStatus> = {
       'Created': OrderStatus.PENDING,
       'Rejected': OrderStatus.FAILED,
@@ -324,9 +330,14 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       'Deactivated': OrderStatus.CANCELLED,
       'Triggered': OrderStatus.PENDING,
       'Active': OrderStatus.PENDING,
+      // Phase 15.2: IExchange standard status values
+      'PENDING': OrderStatus.PENDING,
+      'FILLED': OrderStatus.FILLED,
+      'CANCELLED': OrderStatus.CANCELLED,
+      'REJECTED': OrderStatus.FAILED,
     };
 
-    return statusMap[exchangeStatus] || OrderStatus.PENDING;
+    return statusMap[statusString] || OrderStatus.PENDING;
   }
 
   /**

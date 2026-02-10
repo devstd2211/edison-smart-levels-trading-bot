@@ -176,7 +176,20 @@ export interface OrderParams {
 }
 
 /**
- * Order result
+ * Place order parameters (Phase 15.2)
+ */
+export interface PlaceOrderParams {
+  symbol: string;
+  side: 'BUY' | 'SELL' | 'Buy' | 'Sell'; // Support both formats
+  orderType: 'MARKET' | 'LIMIT';
+  quantity: number;
+  price?: number; // Required for LIMIT orders
+  timeInForce?: 'GTC' | 'IOC' | 'FOK';
+  clientOrderId?: string;
+}
+
+/**
+ * Order result (Phase 15.2: Extended for full order execution support)
  */
 export interface OrderResult {
   orderId: string;
@@ -184,12 +197,21 @@ export interface OrderResult {
   side: string;
   quantity: number;
   timestamp: number;
+  // Optional fields for execution details
+  price?: number; // Filled price
+  filledQuantity?: number; // Actual filled quantity (may differ from requested)
+  status?: 'PENDING' | 'FILLED' | 'CANCELLED' | 'REJECTED' | 'PARTIAL';
 }
 
 /**
  * Exchange order methods
  */
 export interface IExchangeOrders {
+  /**
+   * Place order (market or limit) - Phase 15.2
+   */
+  placeOrder(params: PlaceOrderParams): Promise<OrderResult>;
+
   /**
    * Create conditional order (stop loss with take profit)
    */

@@ -171,6 +171,21 @@ export class BulkheadService {
   }
 
   /**
+   * Get all pool statistics (Phase 15.2: Added for ResilienceCoordinator)
+   */
+  getAllStats(): Record<string, { activeWorkers: number; queuedRequests: number; totalCompleted: number }> {
+    const allStats: Record<string, { activeWorkers: number; queuedRequests: number; totalCompleted: number }> = {};
+    for (const [poolName, pool] of this.pools.entries()) {
+      allStats[poolName] = {
+        activeWorkers: pool.stats.activeWorkers,
+        queuedRequests: pool.stats.queuedRequests,
+        totalCompleted: pool.stats.totalCompleted,
+      };
+    }
+    return allStats;
+  }
+
+  /**
    * Reset a pool (clear queue, reset stats)
    */
   reset(poolName: string): void {

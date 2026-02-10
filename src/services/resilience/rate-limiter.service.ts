@@ -293,6 +293,21 @@ export class RateLimiterService {
   }
 
   /**
+   * Get all rate limiter statistics (Phase 15.2: Added for ResilienceCoordinator)
+   */
+  getAllStats(): Record<string, { currentTokens: number; queueSize: number }> {
+    const allStats: Record<string, { currentTokens: number; queueSize: number }> = {};
+    for (const [key, bucket] of this.buckets.entries()) {
+      this.refillTokens(bucket);
+      allStats[key] = {
+        currentTokens: Math.floor(bucket.tokens),
+        queueSize: bucket.queue.length,
+      };
+    }
+    return allStats;
+  }
+
+  /**
    * Clear all rate limiters (for testing)
    */
   clearAll(): void {

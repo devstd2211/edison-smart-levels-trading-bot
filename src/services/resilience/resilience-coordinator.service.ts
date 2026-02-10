@@ -380,24 +380,18 @@ export class ResilienceCoordinator {
   // === Private helper methods ===
 
   private getCircuitBreakerStats(): Record<string, { state: string; failures: number; successes: number }> {
-    // Note: CircuitBreakerService doesn't expose getAllStats yet
-    // For now, return empty object
-    // TODO: Add getAllStats() method to CircuitBreakerService if needed
-    return {};
+    // Phase 15.2: Now using getAllStats() method added to CircuitBreakerService
+    return this.circuitBreaker.getAllStats();
   }
 
   private getRateLimiterStats(): Record<string, { currentTokens: number; queueSize: number }> {
-    // Note: RateLimiterService doesn't expose getAllStats yet
-    // For now, return empty object
-    // TODO: Add getAllStats() method to RateLimiterService if needed
-    return {};
+    // Phase 15.2: Now using getAllStats() method added to RateLimiterService
+    return this.rateLimiter.getAllStats();
   }
 
   private getBulkheadStats(): Record<string, { activeWorkers: number; queuedRequests: number; totalCompleted: number }> {
-    // Note: BulkheadService doesn't expose getAllStats yet
-    // For now, return empty object
-    // TODO: Add getAllStats() method to BulkheadService if needed
-    return {};
+    // Phase 15.2: Now using getAllStats() method added to BulkheadService
+    return this.bulkhead.getAllStats();
   }
 
   private recordSuccess(operationName: string, durationMs: number): void {
