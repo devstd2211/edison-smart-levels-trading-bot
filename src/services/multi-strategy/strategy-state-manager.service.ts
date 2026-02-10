@@ -20,16 +20,31 @@ import type {
   PnLMetrics,
 } from '../../types/multi-strategy-types';
 import type { IsolatedStrategyContext } from '../../types/multi-strategy-types';
+import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class StrategyStateManagerService {
   private stateDirectory = './strategy-states';
   private switchInProgress = false;
+  private logger?: ILogger;
 
-  constructor(stateDir?: string) {
+  constructor(stateDir?: string, logger?: ILogger) {
+    this.logger = logger;
     if (stateDir) {
       this.stateDirectory = stateDir;
     }
   }
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, any>): void {
+    if (this.logger) {
+      this.logger[level](message, meta);
+    } else {
+      const prefix = '[StrategyStateManagerService]';
+      const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+      if (level === 'warn') console.warn(`${prefix} ${message}${metaStr}`);
+      else if (level === 'error') console.error(`${prefix} ${message}${metaStr}`);
+      else console.log(`${prefix} ${message}${metaStr}`);
+    }
+  }
+
 
   /**
    * Switch from one active strategy to another
@@ -55,9 +70,7 @@ export class StrategyStateManagerService {
     const fromId = currentContext?.strategyId || 'none';
     const toId = targetContext.strategyId;
 
-    console.log(
-      `[StrategyStateManager] Switching from ${fromId} to ${toId}`,
-    );
+    this.log('info', `[StrategyStateManager] Switching from ${fromId} to ${toId}`);
 
     try {
       this.switchInProgress = true;
@@ -68,13 +81,9 @@ export class StrategyStateManagerService {
         try {
           savedState = currentContext.getSnapshot();
           await this.persistState(fromId, savedState);
-          console.log(
-            `[StrategyStateManager] Saved state for ${fromId}`,
-          );
+          this.log('info', `[StrategyStateManager] Saved state for ${fromId}`);
         } catch (error) {
-          console.warn(
-            `[StrategyStateManager] Failed to save state: ${error}`,
-          );
+          this.log('warn', `[StrategyStateManager] Failed to save state: ${error}`);
         }
       }
 
@@ -91,13 +100,9 @@ export class StrategyStateManagerService {
       // Restore previous state if available
       try {
         await this.restoreState(toId, targetContext);
-        console.log(
-          `[StrategyStateManager] Restored state for ${toId}`,
-        );
+        this.log('info', `[StrategyStateManager] Restored state for ${toId}`);
       } catch (error) {
-        console.warn(
-          `[StrategyStateManager] Failed to restore state: ${error}`,
-        );
+        this.log('warn', `[StrategyStateManager] Failed to restore state: ${error}`);
       }
 
       const switchTime = Date.now() - startTime;
@@ -108,9 +113,7 @@ export class StrategyStateManagerService {
         );
       }
 
-      console.log(
-        `[StrategyStateManager] ✅ Switched to ${toId} in ${switchTime}ms`,
-      );
+      this.log('info', `[StrategyStateManager] ✅ Switched to ${toId} in ${switchTime}ms`);
 
       return {
         success: true,
@@ -121,9 +124,7 @@ export class StrategyStateManagerService {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error(
-        `[StrategyStateManager] ❌ Switch failed: ${errorMsg}`,
-      );
+      this.log('error', `[StrategyStateManager] ❌ Switch failed: ${errorMsg}`);
 
       return {
         success: false,
@@ -148,9 +149,7 @@ export class StrategyStateManagerService {
       const filename = `${this.stateDirectory}/${strategyId}-snapshot-${Date.now()}.json`;
 
       // In real implementation, would write to file
-      console.log(
-        `[StrategyStateManager] Saving state to ${filename}`,
-      );
+      this.log('info', `[StrategyStateManager] Saving state to ${filename}`);
 
       // Placeholder: actual file I/O would happen here
       // await fs.writeFile(filename, JSON.stringify(snapshot, null, 2));
@@ -170,9 +169,7 @@ export class StrategyStateManagerService {
   ): Promise<void> {
     try {
       // In real implementation, would read from file
-      console.log(
-        `[StrategyStateManager] Restoring state for ${strategyId}`,
-      );
+      this.log('info', `[StrategyStateManager] Restoring state for ${strategyId}`);
 
       // Placeholder: actual file I/O would happen here
       // const snapshot = await loadLatestSnapshot(strategyId);
@@ -265,15 +262,11 @@ export class StrategyStateManagerService {
         snapshots.push(snapshot);
         await this.persistState(context.strategyId, snapshot);
       } catch (error) {
-        console.warn(
-          `[StrategyStateManager] Failed to snapshot ${context.strategyId}: ${error}`,
-        );
+        this.log('warn', `[StrategyStateManager] Failed to snapshot ${context.strategyId}: ${error}`);
       }
     }
 
-    console.log(
-      `[StrategyStateManager] ✅ Snapshotted ${snapshots.length} strategies`,
-    );
+    this.log('info', `[StrategyStateManager] ✅ Snapshotted ${snapshots.length} strategies`);
 
     return snapshots;
   }

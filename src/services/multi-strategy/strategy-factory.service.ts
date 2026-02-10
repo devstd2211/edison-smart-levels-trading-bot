@@ -26,6 +26,7 @@ import type { StrategyConfig } from '../../types/strategy-config.types';
 import type { ConfigNew } from '../../types/config-new.types';
 import type { IExchange } from '../../interfaces/IExchange';
 import type { IAnalyzer } from '../../types/analyzer.interface';
+import type { ILogger } from '../../interfaces/IMonitoring';
 
 /**
  * Internal strategy context implementation
@@ -83,13 +84,13 @@ class StrategyContextImpl implements IsolatedStrategyContext {
 
   async restoreFromSnapshot() {
     // Placeholder for restoration logic
-    console.log(
+    this.log('info',
       `[StrategyContext] Restoring state for ${this.strategyId}`,
     );
   }
 
   async cleanup(): Promise<void> {
-    console.log(`[StrategyContext] Cleaning up ${this.strategyId}`);
+    this.log('info', `[StrategyContext] Cleaning up ${this.strategyId}`);
     this.isActive = false;
   }
 }
@@ -98,14 +99,29 @@ export class StrategyFactoryService {
   private contextCache = new Map<string, IsolatedStrategyContext>();
   private strategyLoader: StrategyLoaderService;
   private configMerger: ConfigMergerService;
+  private logger?: ILogger;
 
   constructor(
     private config: StrategyFactoryConfig,
     loaderService: StrategyLoaderService,
     mergerService: ConfigMergerService,
+    logger?: ILogger,
   ) {
     this.strategyLoader = loaderService;
+    this.logger = logger;
     this.configMerger = mergerService;
+  }
+
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, any>): void {
+    if (this.logger) {
+      this.logger[level](message, meta);
+    } else {
+      const prefix = '[StrategyFactory]';
+      const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+      if (level === 'warn') console.warn(`${prefix} ${message}${metaStr}`);
+      else if (level === 'error') console.error(`${prefix} ${message}${metaStr}`);
+      else console.log(`${prefix} ${message}${metaStr}`);
+    }
   }
 
   /**
@@ -121,7 +137,7 @@ export class StrategyFactoryService {
     symbol: string,
     options?: StrategyLoadingOptions,
   ): Promise<IsolatedStrategyContext> {
-    console.log(`[StrategyFactory] Creating context for ${strategyName}`);
+    this.log('info', `[StrategyFactory] Creating context for ${strategyName}`);
 
     // Validate
     if (this.config.registry.validateOnRegister && options?.validate) {
@@ -172,7 +188,7 @@ export class StrategyFactoryService {
     // Cache context
     this.contextCache.set(contextId, context);
 
-    console.log(
+    this.log('info',
       `[StrategyFactory] ✅ Created context: ${contextId}`,
     );
 
@@ -180,9 +196,9 @@ export class StrategyFactoryService {
     if (options?.restorePreviousState) {
       try {
         // Restoration logic would happen here
-        console.log(`[StrategyFactory] Restored previous state for ${contextId}`);
+        this.log('info', `[StrategyFactory] Restored previous state for ${contextId}`);
       } catch (error) {
-        console.warn(
+        this.log('warn',
           `[StrategyFactory] Could not restore previous state: ${error}`,
         );
       }
@@ -223,16 +239,16 @@ export class StrategyFactoryService {
       throw new Error(`[StrategyFactory] Context not found: ${contextId}`);
     }
 
-    console.log(`[StrategyFactory] Destroying context: ${contextId}`);
+    this.log('info', `[StrategyFactory] Destroying context: ${contextId}`);
 
     // Save final state if requested
     if (options?.saveFinalState) {
       try {
         const snapshot = context.getSnapshot();
         // Save snapshot logic would happen here
-        console.log(`[StrategyFactory] Saved final state for ${contextId}`);
+        this.log('info', `[StrategyFactory] Saved final state for ${contextId}`);
       } catch (error) {
-        console.warn(`[StrategyFactory] Failed to save final state: ${error}`);
+        this.log('warn', `[StrategyFactory] Failed to save final state: ${error}`);
       }
     }
 
@@ -240,9 +256,9 @@ export class StrategyFactoryService {
     if (options?.closePositions) {
       try {
         // Position closure logic would happen here
-        console.log(`[StrategyFactory] Closed positions for ${contextId}`);
+        this.log('info', `[StrategyFactory] Closed positions for ${contextId}`);
       } catch (error) {
-        console.warn(`[StrategyFactory] Failed to close positions: ${error}`);
+        this.log('warn', `[StrategyFactory] Failed to close positions: ${error}`);
       }
     }
 
@@ -252,7 +268,7 @@ export class StrategyFactoryService {
     // Remove from cache
     this.contextCache.delete(contextId);
 
-    console.log(`[StrategyFactory] ✅ Destroyed context: ${contextId}`);
+    this.log('info', `[StrategyFactory] ✅ Destroyed context: ${contextId}`);
   }
 
   /**
@@ -273,7 +289,7 @@ export class StrategyFactoryService {
    * Clear cache (be careful!)
    */
   clearCache(): void {
-    console.warn('[StrategyFactory] Clearing context cache');
+    this.log('warn','[StrategyFactory] Clearing context cache');
     this.contextCache.clear();
   }
 

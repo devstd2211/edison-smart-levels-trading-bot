@@ -51,6 +51,8 @@ export class StrategyOrchestratorService {
     positionExitingService: PositionExitingService;
   } | null = null;
 
+
+
   constructor(
     private registry: StrategyRegistryService,
     private factory: StrategyFactoryService,
@@ -61,6 +63,19 @@ export class StrategyOrchestratorService {
     this.orchestratorCache = new StrategyOrchestratorCacheService(this.logger);
   }
 
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, any>): void {
+    if (this.logger) {
+      this.logger[level](message, meta);
+    } else {
+      const prefix = '[StrategyOrchestratorService]';
+      const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+      if (level === 'warn') console.warn(`${prefix} ${message}${metaStr}`);
+      else if (level === 'error') console.error(`${prefix} ${message}${metaStr}`);
+      else console.log(`${prefix} ${message}${metaStr}`);
+    }
+  }
+
+
   /**
    * Load initial strategy at startup
    *
@@ -68,7 +83,7 @@ export class StrategyOrchestratorService {
    * @returns Strategy context
    */
   async loadStrategy(strategyName: string): Promise<IsolatedStrategyContext> {
-    console.log(`[StrategyOrchestrator] Loading strategy: ${strategyName}`);
+    this.log('info', `[StrategyOrchestrator] Loading strategy: ${strategyName}`);
 
     const context = await this.factory.createContext(strategyName, 'default');
 
@@ -87,9 +102,7 @@ export class StrategyOrchestratorService {
     };
     this.registry.registerStrategy(context.strategyId, metadata);
 
-    console.log(
-      `[StrategyOrchestrator] ✅ Loaded strategy: ${strategyName} (${context.strategyId})`,
-    );
+    this.log('info', `[StrategyOrchestrator] ✅ Loaded strategy: ${strategyName} (${context.strategyId})`);
 
     return context;
   }
@@ -103,9 +116,7 @@ export class StrategyOrchestratorService {
     strategyName: string,
     symbol?: string,
   ): Promise<string> {
-    console.log(
-      `[StrategyOrchestrator] Adding strategy: ${strategyName}`,
-    );
+    this.log('info', `[StrategyOrchestrator] Adding strategy: ${strategyName}`);
 
     const context = await this.factory.createContext(
       strategyName,
@@ -126,9 +137,7 @@ export class StrategyOrchestratorService {
     };
     this.registry.registerStrategy(context.strategyId, metadata);
 
-    console.log(
-      `[StrategyOrchestrator] ✅ Added strategy: ${strategyName} (${context.strategyId})`,
-    );
+    this.log('info', `[StrategyOrchestrator] ✅ Added strategy: ${strategyName} (${context.strategyId})`);
 
     return context.strategyId;
   }
@@ -139,9 +148,7 @@ export class StrategyOrchestratorService {
    * Closes positions and saves state.
    */
   async removeStrategy(strategyId: string): Promise<void> {
-    console.log(
-      `[StrategyOrchestrator] Removing strategy: ${strategyId}`,
-    );
+    this.log('info', `[StrategyOrchestrator] Removing strategy: ${strategyId}`);
 
     const context = this.contextMap.get(strategyId);
     if (!context) {
@@ -172,9 +179,7 @@ export class StrategyOrchestratorService {
     // [Phase 10.3b] Remove from orchestrator cache
     this.orchestratorCache.removeOrchestrator(strategyId);
 
-    console.log(
-      `[StrategyOrchestrator] ✅ Removed strategy: ${strategyId}`,
-    );
+    this.log('info', `[StrategyOrchestrator] ✅ Removed strategy: ${strategyId}`);
   }
 
   /**
@@ -183,9 +188,7 @@ export class StrategyOrchestratorService {
    * @param strategyId ID of strategy to activate
    */
   async switchTradingStrategy(strategyId: string): Promise<void> {
-    console.log(
-      `[StrategyOrchestrator] Switching to strategy: ${strategyId}`,
-    );
+    this.log('info', `[StrategyOrchestrator] Switching to strategy: ${strategyId}`);
 
     const targetContext = this.contextMap.get(strategyId);
     if (!targetContext) {
@@ -210,9 +213,7 @@ export class StrategyOrchestratorService {
     // Update registry
     this.registry.setActive(strategyId, true);
 
-    console.log(
-      `[StrategyOrchestrator] ✅ Switched to strategy: ${strategyId}`,
-    );
+    this.log('info', `[StrategyOrchestrator] ✅ Switched to strategy: ${strategyId}`);
   }
 
   /**
@@ -429,9 +430,7 @@ export class StrategyOrchestratorService {
    * For system-wide events that should notify all strategies.
    */
   async broadcastEvent(event: any): Promise<void> {
-    console.log(
-      `[StrategyOrchestrator] Broadcasting event to ${this.contextMap.size} strategies`,
-    );
+    this.log('info', `[StrategyOrchestrator] Broadcasting event to ${this.contextMap.size} strategies`);
 
     const promises = Array.from(this.contextMap.values()).map(
       async (context) => {
@@ -439,11 +438,9 @@ export class StrategyOrchestratorService {
           // Each strategy would handle the event
           // Actual implementation would use EventBus
         } catch (error) {
-          console.warn(
-            `[StrategyOrchestrator] Event handling failed for ${context.strategyId}: ${error}`,
-          );
+          this.log('warn', `[StrategyOrchestrator] Event handling failed for ${context.strategyId}: ${error}`);
         }
-      },
+      }
     );
 
     await Promise.all(promises);

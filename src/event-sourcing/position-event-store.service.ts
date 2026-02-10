@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AnyPositionEvent, PositionEventRecord } from './position.events';
 import { IPositionEventStore } from './position-event-store.interface';
+import type { ILogger } from '../interfaces/IMonitoring';
 
 export class PositionEventStore implements IPositionEventStore {
   private events: PositionEventRecord[] = [];
@@ -21,9 +22,11 @@ export class PositionEventStore implements IPositionEventStore {
 
   private storagePath: string;
   private isInitialized = false;
+  private logger?: ILogger;
 
-  constructor(storagePath: string = './data/position-events.jsonl') {
+  constructor(storagePath: string = './data/position-events.jsonl', logger?: ILogger) {
     this.storagePath = storagePath;
+    this.logger = logger;
   }
 
   /**
@@ -62,13 +65,28 @@ export class PositionEventStore implements IPositionEventStore {
           this.registerEventRecord(record);
         } catch (e) {
           // Skip malformed lines
-          console.warn('Skipping malformed event record:', e);
+          if (this.logger) {
+            this.logger.warn('Skipping malformed event record', { error: e });
+          } else {
+            console.warn('Skipping malformed event record:', e);
+          }
         }
       }
 
-      console.log(`Loaded ${this.events.length} events from ${this.storagePath}`);
+      if (this.logger) {
+        this.logger.info('Loaded events from event store', {
+          count: this.events.length,
+          path: this.storagePath,
+        });
+      } else {
+        console.log(`Loaded ${this.events.length} events from ${this.storagePath}`);
+      }
     } catch (e) {
-      console.error('Error loading event store:', e);
+      if (this.logger) {
+        this.logger.error('Error loading event store', { error: e, path: this.storagePath });
+      } else {
+        console.error('Error loading event store:', e);
+      }
       throw e;
     }
   }
@@ -128,7 +146,11 @@ export class PositionEventStore implements IPositionEventStore {
       const line = JSON.stringify(record) + '\n';
       fs.appendFileSync(this.storagePath, line, 'utf-8');
     } catch (e) {
-      console.error('Error persisting event to disk:', e);
+      if (this.logger) {
+        this.logger.error('Error persisting event to disk', { error: e, path: this.storagePath });
+      } else {
+        console.error('Error persisting event to disk:', e);
+      }
       throw e;
     }
   }

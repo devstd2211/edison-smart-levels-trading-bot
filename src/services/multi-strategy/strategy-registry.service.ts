@@ -16,15 +16,30 @@
  */
 
 import type { StrategyMetadata, StrategyRegistryConfig } from '../../types/multi-strategy-types';
+import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class StrategyRegistryService {
   private strategies = new Map<string, StrategyMetadata>();
   private activeStrategyId: string | null = null;
   private history: Array<{ timestamp: Date; action: string; strategyId: string }> = [];
+  private logger?: ILogger;
 
-  constructor(private config: StrategyRegistryConfig = getDefaultConfig()) {
+  constructor(private config: StrategyRegistryConfig = getDefaultConfig(), logger?: ILogger) {
+    this.logger = logger;
     this.validateConfig();
   }
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, any>): void {
+    if (this.logger) {
+      this.logger[level](message, meta);
+    } else {
+      const prefix = '[StrategyRegistryService]';
+      const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+      if (level === 'warn') console.warn(`${prefix} ${message}${metaStr}`);
+      else if (level === 'error') console.error(`${prefix} ${message}${metaStr}`);
+      else console.log(`${prefix} ${message}${metaStr}`);
+    }
+  }
+
 
   /**
    * Register a new strategy in the registry
@@ -68,9 +83,7 @@ export class StrategyRegistryService {
       });
     }
 
-    console.log(
-      `[StrategyRegistry] ✅ Registered strategy: ${id} (${metadata.name})`,
-    );
+    this.log('info', `[StrategyRegistry] ✅ Registered strategy: ${id} (${metadata.name})`);
   }
 
   /**
@@ -167,7 +180,7 @@ export class StrategyRegistryService {
         });
       }
 
-      console.log(`[StrategyRegistry] ✅ Activated strategy: ${id}`);
+      this.log('info', `[StrategyRegistry] ✅ Activated strategy: ${id}`);
     } else {
       strategy.isActive = false;
 
@@ -183,7 +196,7 @@ export class StrategyRegistryService {
         });
       }
 
-      console.log(`[StrategyRegistry] ✅ Deactivated strategy: ${id}`);
+      this.log('info', `[StrategyRegistry] ✅ Deactivated strategy: ${id}`);
     }
   }
 
@@ -213,7 +226,7 @@ export class StrategyRegistryService {
       });
     }
 
-    console.log(`[StrategyRegistry] ✅ Unregistered strategy: ${id}`);
+    this.log('info', `[StrategyRegistry] ✅ Unregistered strategy: ${id}`);
   }
 
   /**
@@ -237,9 +250,7 @@ export class StrategyRegistryService {
 
     // Don't allow changing name or version
     if (updates.name && updates.name !== strategy.name) {
-      console.warn(
-        `[StrategyRegistry] Ignoring attempt to change strategy name from ${strategy.name} to ${updates.name}`,
-      );
+      this.log('warn', `[StrategyRegistry] Ignoring attempt to change strategy name from ${strategy.name} to ${updates.name}`);
     }
 
     if (this.config.trackHistory) {
@@ -302,7 +313,7 @@ export class StrategyRegistryService {
       });
     }
 
-    console.log('[StrategyRegistry] ✅ Cleared all strategies');
+    this.log('info', '[StrategyRegistry] ✅ Cleared all strategies');
   }
 
   /**

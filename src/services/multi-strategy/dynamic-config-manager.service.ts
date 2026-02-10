@@ -22,12 +22,19 @@ import type {
   ConfigMergeChange,
 } from '../../types/multi-strategy-types';
 import type { ConfigNew } from '../../types/config-new.types';
+import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class DynamicConfigManagerService {
   private configCache = new Map<string, StrategyConfig>();
   private watchers = new Map<string, () => void>();
+  private logger?: ILogger;
 
-  constructor(private strategyDir: string = './strategies/json') {}
+  constructor(
+    private strategyDir: string = './strategies/json',
+    logger?: ILogger,
+  ) {
+    this.logger = logger;
+  }
 
   /**
    * Load strategy configuration from file
@@ -41,9 +48,11 @@ export class DynamicConfigManagerService {
       return this.configCache.get(strategyName)!;
     }
 
-    console.log(
-      `[DynamicConfigManager] Loading config for ${strategyName}`,
-    );
+    if (this.logger) {
+      this.logger.info('Loading strategy config', { strategyName });
+    } else {
+      console.log(`[DynamicConfigManager] Loading config for ${strategyName}`);
+    }
 
     try {
       // In real implementation:
@@ -72,9 +81,11 @@ export class DynamicConfigManagerService {
       // Cache
       this.configCache.set(strategyName, config);
 
-      console.log(
-        `[DynamicConfigManager] ✅ Loaded config: ${strategyName}`,
-      );
+      if (this.logger) {
+        this.logger.info('Loaded strategy config', { strategyName });
+      } else {
+        console.log(`[DynamicConfigManager] ✅ Loaded config: ${strategyName}`);
+      }
 
       return config;
     } catch (error) {
@@ -95,9 +106,11 @@ export class DynamicConfigManagerService {
     strategyId: string,
     updates: Partial<StrategyConfig>,
   ): Promise<void> {
-    console.log(
-      `[DynamicConfigManager] Updating config for ${strategyId}`,
-    );
+    if (this.logger) {
+      this.logger.info('Updating strategy config', { strategyId });
+    } else {
+      console.log(`[DynamicConfigManager] Updating config for ${strategyId}`);
+    }
 
     try {
       // Merge updates
@@ -121,16 +134,20 @@ export class DynamicConfigManagerService {
 
       // Check warnings
       if (validation.warnings.length > 0) {
-        console.warn(
-          `[DynamicConfigManager] Warnings: ${validation.warnings.join(', ')}`,
-        );
+        if (this.logger) {
+          this.logger.warn('Config validation warnings', { warnings: validation.warnings });
+        } else {
+          console.warn(`[DynamicConfigManager] Warnings: ${validation.warnings.join(', ')}`);
+        }
       }
 
       // In real implementation: would update the strategy context config
       // For now, just log the change
-      console.log(
-        `[DynamicConfigManager] ✅ Updated config for ${strategyId}`,
-      );
+      if (this.logger) {
+        this.logger.info('Updated strategy config', { strategyId });
+      } else {
+        console.log(`[DynamicConfigManager] ✅ Updated config for ${strategyId}`);
+      }
     } catch (error) {
       throw new Error(
         `[DynamicConfigManager] Failed to update config: ${error}`,
@@ -257,9 +274,11 @@ export class DynamicConfigManagerService {
     // });
     // this.watchers.set(strategyName, () => watcher.close());
 
-    console.log(
-      `[DynamicConfigManager] Watching config file: ${strategyName}`,
-    );
+    if (this.logger) {
+      this.logger.info('Watching config file', { strategyName });
+    } else {
+      console.log(`[DynamicConfigManager] Watching config file: ${strategyName}`);
+    }
 
     this.watchers.set(strategyName, callback);
   }
@@ -280,7 +299,11 @@ export class DynamicConfigManagerService {
    */
   clearCache(): void {
     this.configCache.clear();
-    console.log('[DynamicConfigManager] Cleared config cache');
+    if (this.logger) {
+      this.logger.info('Cleared config cache');
+    } else {
+      console.log('[DynamicConfigManager] Cleared config cache');
+    }
   }
 
   /**
