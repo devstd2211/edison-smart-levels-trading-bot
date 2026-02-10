@@ -3,7 +3,7 @@
 **Status:** ✅ **PHASE 14.1 COMPLETE** | 🚧 **Phase 14.2 IN PROGRESS** (Session 99)
 **Started:** 2026-02-09
 **Phase 14.1:** ✅ COMPLETE (68/68 tests, 100%)
-**Phase 14.2:** 🚧 **IN PROGRESS** (77/100 tests, 77%)
+**Phase 14.2:** 🚧 **IN PROGRESS** (93/100 tests, 93%)
 
 ---
 
@@ -524,44 +524,74 @@ class RetryPolicyService {
 
 ---
 
-### 14.2.4: BulkheadService (15 tests)
+### 14.2.4: BulkheadService (16 tests) ✅
 
 **Goal:** Resource isolation to prevent thread pool exhaustion
 
-#### Features
-- Separate thread pools/queues per service
-- Configurable pool sizes
-- Queue management (bounded queues)
-- Rejection policy (fail fast, queue, timeout)
-- Metrics: active workers, queue size, rejections
+**Status:** ✅ **COMPLETE** (2026-02-10, Session 99)
+**Tests:** 16/15 passing (107% of target - 1 bonus test)
+
+#### Features ✅
+- [x] Separate resource pools per service (API, WebSocket, etc.)
+- [x] Configurable max concurrent operations + queue size
+- [x] Queue management with bounded queues (FIFO order)
+- [x] Rejection policies: FAIL_FAST, QUEUE, TIMEOUT
+- [x] Automatic timeout handling for queued operations
+- [x] Pool isolation (multiple independent pools)
+- [x] Metrics: active workers, queued requests, completed, rejected, timed out
+- [x] Pool lifecycle: create, reset, remove
+- [x] Max pools limit (50) to prevent memory leaks
+- [x] Periodic queue checker for timeout enforcement
+- [x] ErrorHandler integration (SKIP for logging)
+- [x] Backward compatibility (works without ErrorHandler/Logger)
 
 #### Implementation
 ```typescript
+export type RejectPolicy = 'FAIL_FAST' | 'QUEUE' | 'TIMEOUT';
+
 interface BulkheadConfig {
   maxConcurrent: number;       // 10 concurrent
   queueSize: number;           // Queue 20 requests
   timeoutMs: number;           // 5000ms timeout
-  rejectPolicy: 'FAIL_FAST' | 'QUEUE' | 'TIMEOUT';
+  rejectPolicy: RejectPolicy;  // Rejection policy
 }
+
+interface BulkheadStats {
+  activeWorkers: number;
+  queuedRequests: number;
+  totalCompleted: number;
+  totalRejected: number;
+  totalTimedOut: number;
+}
+
+export class BulkheadRejectedException extends Error;
+export class BulkheadTimeoutError extends Error;
 
 class BulkheadService {
   private pools: Map<string, ResourcePool>;
 
   async execute<T>(
     poolName: string,
-    operation: () => Promise<T>
+    operation: () => Promise<T>,
+    config?: Partial<BulkheadConfig>
   ): Promise<T>;
 
-  getActiveCount(poolName: string): number;
+  getActiveWorkers(poolName: string): number;
   getQueueSize(poolName: string): number;
-  shutdown(poolName: string): Promise<void>;
+  getStats(poolName: string): BulkheadStats | null;
+  reset(poolName: string): void;
+  removePool(poolName: string): void;
+  stop(): void;
 }
 ```
 
-#### Test Breakdown (15 tests)
-- **5 Concurrency tests** - Max concurrent, queue overflow
-- **5 Rejection policy tests** - Fail fast, queue, timeout
-- **5 Integration tests** - Multiple pools, shutdown
+#### Test Breakdown (16 tests) ✅
+- [x] **3 Initialization tests** - Config validation (THROW strategy), default config
+- [x] **2 Pool management tests** - Pool creation, max pools limit
+- [x] **5 Execution tests** - Immediate execution, active workers tracking, error handling, FIFO queue, custom config
+- [x] **3 Rejection policy tests** - FAIL_FAST, QUEUE, TIMEOUT policies
+- [x] **2 Integration tests** - Multiple pools independence, pool reset
+- [x] **1 Backward compatibility test** - Works without ErrorHandler/Logger
 
 ---
 
@@ -616,9 +646,9 @@ interface ResilienceOptions {
 | CircuitBreakerService | 27/25 | ✅ **COMPLETE** (108%) |
 | RateLimiterService | 25/20 | ✅ **COMPLETE** (125%) |
 | RetryPolicyService | 25/20 | ✅ **COMPLETE** (125%) |
-| BulkheadService | 0/15 | ⏳ PENDING |
+| BulkheadService | 16/15 | ✅ **COMPLETE** (107%) |
 | ResilienceCoordinator | 0/20 | ⏳ PENDING |
-| **TOTAL** | **77/100** | **77%** |
+| **TOTAL** | **93/100** | **93%** |
 
 ---
 
