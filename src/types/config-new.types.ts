@@ -289,7 +289,11 @@ export interface DivergenceAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 }
 
 export interface BreakoutAnalyzerConfigNew extends BaseAnalyzerConfigNew {
-  // No additional params required
+  minCandlesForBreakout?: number;
+  minConfidence?: number;
+  maxConfidence?: number;
+  resistanceLookback?: number;
+  volatilityThreshold?: number;
 }
 
 export interface WickAnalyzerConfigNew extends BaseAnalyzerConfigNew {

@@ -70,7 +70,7 @@ describe('BreakoutAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 40 }, (_, i) => 100 + i * 0.5));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('BREAKOUT_ANALYZER');
+    expect(signal.source).toBe('BREAKOUT_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(0);
     expect(signal.weight).toBe(0.75);
   });

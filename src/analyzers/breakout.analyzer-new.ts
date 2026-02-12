@@ -24,11 +24,11 @@ import { AnalyzerType } from '../types/analyzer-type.enum';
 // CONSTANTS
 // ============================================================================
 
-const MIN_CANDLES_FOR_BREAKOUT = 30;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
-const RESISTANCE_LOOKBACK = 20; // Look back to find resistance/support
-const VOLATILITY_THRESHOLD = 1.5; // ATR multiple for breakout confirmation
+const DEFAULT_MIN_CANDLES_FOR_BREAKOUT = 30;
+const DEFAULT_MIN_CONFIDENCE = 0.1;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_RESISTANCE_LOOKBACK = 20; // Look back to find resistance/support
+const DEFAULT_VOLATILITY_THRESHOLD = 1.5; // ATR multiple for breakout confirmation (currently unused)
 
 // ============================================================================
 // BREAKOUT ANALYZER - NEW VERSION
@@ -38,7 +38,11 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = MAX_CONFIDENCE;
+  private readonly minCandlesForBreakout: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly resistanceLookback: number;
+  private readonly volatilityThreshold: number;
 
   private lastSignal: AnalyzerSignal | null = null;
   private lastHigh: number = 0;
@@ -50,7 +54,13 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
    * STRICT - Throws if config is invalid
    */
   constructor(
-    config: BreakoutAnalyzerConfigNew,
+    config: BreakoutAnalyzerConfigNew & {
+      minCandlesForBreakout?: number;
+      minConfidence?: number;
+      maxConfidence?: number;
+      resistanceLookback?: number;
+      volatilityThreshold?: number;
+    },
     private logger?: LoggerService,
   ) {
     // Validate analyzer config
@@ -67,6 +77,13 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+
+    // Configurable parameters with defaults
+    this.minCandlesForBreakout = config.minCandlesForBreakout ?? DEFAULT_MIN_CANDLES_FOR_BREAKOUT;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.resistanceLookback = config.resistanceLookback ?? DEFAULT_RESISTANCE_LOOKBACK;
+    this.volatilityThreshold = config.volatilityThreshold ?? DEFAULT_VOLATILITY_THRESHOLD;
   }
 
   /**
@@ -85,9 +102,9 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
       throw new Error('[BREAKOUT_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_BREAKOUT) {
+    if (candles.length < this.minCandlesForBreakout) {
       throw new Error(
-        `[BREAKOUT_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_BREAKOUT}, got ${candles.length}`,
+        `[BREAKOUT_ANALYZER] Not enough candles. Need ${this.minCandlesForBreakout}, got ${candles.length}`,
       );
     }
 
@@ -112,7 +129,7 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'BREAKOUT_ANALYZER',
+      source: 'BREAKOUT_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -143,7 +160,7 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
    * @returns Levels object with resistance and support
    */
   private calculateLevels(candles: Candle[]): { resistance: number; support: number } {
-    const lookback = Math.min(RESISTANCE_LOOKBACK, candles.length);
+    const lookback = Math.min(this.resistanceLookback, candles.length);
     const recentCandles = candles.slice(-lookback);
 
     const highs = recentCandles.map((c) => c.high);
@@ -261,12 +278,12 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
     let confidence: number;
 
     if (breakout.type === 'NONE') {
-      confidence = MIN_CONFIDENCE;
+      confidence = this.minConfidence;
     } else {
-      confidence = MIN_CONFIDENCE + breakout.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE);
+      confidence = this.minConfidence + breakout.strength * (this.maxConfidence - this.minConfidence);
     }
 
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
     return Math.round(confidence * 100);
   }
 
@@ -332,14 +349,14 @@ export class BreakoutAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_BREAKOUT;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForBreakout;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_BREAKOUT;
+    return this.minCandlesForBreakout;
   }
 
   /**

@@ -303,9 +303,16 @@
     },
     "BREAKOUT_ANALYZER_NEW": {
       "_comment": "Breakout analyzer: price breaks support/resistance",
-      "minBars": 5,
-      "breakoutThresholdPercent": 0.1,
-      "maxConfidence": 0.9
+      "minCandlesForBreakout": 30,
+      "_minCandlesForBreakout_comment": "Min candles for breakout detection (default: 30, range: 20-50)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Min confidence for signals (default: 0.1, range: 0.0-0.5)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence for signals (default: 0.95, range: 0.5-1.0)",
+      "resistanceLookback": 20,
+      "_resistanceLookback_comment": "Lookback period for resistance/support (default: 20, range: 10-50)",
+      "volatilityThreshold": 1.5,
+      "_volatilityThreshold_comment": "ATR multiple for breakout confirmation (default: 1.5, currently unused)"
     },
     "WICK_ANALYZER_NEW": {
       "_comment": "Wick analyzer: candle wicks touch and bounce from levels",

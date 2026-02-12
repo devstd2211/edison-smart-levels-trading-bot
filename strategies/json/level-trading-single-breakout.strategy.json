@@ -1,68 +1,33 @@
 {
   "version": 1,
   "metadata": {
-    "name": "Level Trading - Optimized Multi-Analyzer",
-    "version": "2.0.0",
-    "description": "Multi-analyzer approach combining 6 complementary signals for robust trading. Targets >60% win rate with 2/1 risk-reward.",
+    "name": "Level Trading - Single BREAKOUT Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify entry/exit logic. BREAKOUT only, entry threshold lowered to 40% to allow more signal participation.",
     "author": "Edison Trading Bot",
-    "createdAt": "2026-01-10T00:00:00Z",
-    "lastModified": "2026-01-10T00:00:00Z",
-    "tags": ["level-trading", "multi-analyzer", "5m-intraday", "optimized"]
+    "createdAt": "2026-02-12T00:00:00Z",
+    "lastModified": "2026-02-12T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "breakout-only"]
   },
+  "entryThreshold": 40,
   "analyzers": [
-    {
-      "name": "LEVEL_ANALYZER_NEW",
-      "enabled": true,
-      "weight": 0.25,
-      "priority": 1,
-      "minConfidence": 0.40,
-      "maxConfidence": 0.95
-    },
-    {
-      "name": "PRICE_MOMENTUM_ANALYZER_NEW",
-      "enabled": true,
-      "weight": 0.20,
-      "priority": 2,
-      "minConfidence": 0.40,
-      "maxConfidence": 0.95
-    },
-    {
-      "name": "EMA_ANALYZER_NEW",
-      "enabled": true,
-      "weight": 0.20,
-      "priority": 3,
-      "minConfidence": 0.35,
-      "maxConfidence": 1.0
-    },
-    {
-      "name": "DIVERGENCE_ANALYZER_NEW",
-      "enabled": true,
-      "weight": 0.15,
-      "priority": 4,
-      "minConfidence": 0.45,
-      "maxConfidence": 0.95
-    },
     {
       "name": "BREAKOUT_ANALYZER_NEW",
       "enabled": true,
-      "weight": 0.10,
-      "priority": 5,
-      "minConfidence": 0.50,
-      "maxConfidence": 0.95
-    },
-    {
-      "name": "RSI_ANALYZER_NEW",
-      "enabled": true,
-      "weight": 0.10,
-      "priority": 6,
-      "minConfidence": 0.40,
-      "maxConfidence": 0.90
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
     }
   ],
   "indicators": {
     "ema": {
+      "enabled": true,
+      "_comment": "EMA indicator periods (Session 105+ calibration: now configurable)",
       "fastPeriod": 12,
+      "_fastPeriod_comment": "Fast EMA period (default: 9, common: 9, 12, 21)",
       "slowPeriod": 26,
+      "_slowPeriod_comment": "Slow EMA period (default: 21, common: 21, 26, 50)",
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5
     },
@@ -87,24 +52,8 @@
     }
   },
   "analyzerDefaults": {
-    "LEVEL_ANALYZER_NEW": {
-      "minTouches": 2,
-      "maxConfidence": 0.95
-    },
-    "PRICE_MOMENTUM_ANALYZER_NEW": {
-      "minMomentum": 0.05,
-      "maxConfidence": 0.9
-    },
-    "EMA_ANALYZER_NEW": {
-      "baseConfidence": 0.8,
-      "strengthMultiplier": 1.5,
-      "maxConfidence": 0.95
-    },
-    "DIVERGENCE_ANALYZER_NEW": {
-      "lookbackPeriod": 20,
-      "maxConfidence": 0.9
-    },
     "BREAKOUT_ANALYZER_NEW": {
+      "_comment": "Calibration parameters (Session 105+): all constants now configurable",
       "minCandlesForBreakout": 30,
       "_minCandlesForBreakout_comment": "Min candles for breakout detection (default: 30, range: 20-50)",
       "minConfidence": 0.1,
@@ -115,10 +64,6 @@
       "_resistanceLookback_comment": "Lookback period for resistance/support (default: 20, range: 10-50)",
       "volatilityThreshold": 1.5,
       "_volatilityThreshold_comment": "ATR multiple for breakout confirmation (default: 1.5, currently unused)"
-    },
-    "RSI_ANALYZER_NEW": {
-      "extremeThreshold": 5,
-      "maxConfidence": 0.9
     }
   },
   "filters": {
@@ -179,5 +124,5 @@
       "activationLevel": 2.0
     }
   },
-  "notes": "Optimized multi-analyzer strategy targeting >60% win rate. 6 complementary analyzers with weighted voting. Minimal filtering for maximum signal diversity. Entry on single signal, weighted by analyzer confidence."
+  "notes": "DEBUG: Single BREAKOUT analyzer with high confidence to pass EntryOrchestrator's 60% minimum threshold. All filters disabled. Session 105+ calibration test."
 }
