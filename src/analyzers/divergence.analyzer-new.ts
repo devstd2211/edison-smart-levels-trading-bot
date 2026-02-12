@@ -27,15 +27,25 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// DEFAULT CONSTANTS (can be overridden via config)
 // ============================================================================
 
-const MIN_CANDLES_FOR_DIVERGENCE = 50; // Need enough candles to find swing points
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const MAX_CONFIDENCE = 0.95; // Maximum confidence (from config)
-const MIN_PRICE_DIFF_PERCENT = 1.0; // Minimum price movement for divergence
-const MIN_RSI_DIFF_POINTS = 5; // Minimum RSI movement for divergence
-const SWING_LOOKBACK = 10; // Look back N candles to find swing points
+const DEFAULT_MIN_CANDLES = 50; // Need enough candles to find swing points
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_MAX_CONFIDENCE = 0.95; // Maximum confidence
+const DEFAULT_MIN_PRICE_DIFF_PERCENT = 1.0; // Minimum price movement for divergence
+const DEFAULT_MIN_RSI_DIFF_POINTS = 5; // Minimum RSI movement for divergence
+const DEFAULT_SWING_LOOKBACK = 10; // Look back N candles to find swing points
+
+// RSI Indicator Defaults
+const DEFAULT_RSI_PERIOD = 14;
+const DEFAULT_RSI_OVERSOLD = 30;
+const DEFAULT_RSI_OVERBOUGHT = 70;
+const DEFAULT_RSI_EXTREME_LOW = 5;
+const DEFAULT_RSI_EXTREME_HIGH = 95;
+const DEFAULT_RSI_NEUTRAL_MIN = 40;
+const DEFAULT_RSI_NEUTRAL_MAX = 60;
+const DEFAULT_RSI_MAX_CONFIDENCE = 0.95;
 
 // ============================================================================
 // DIVERGENCE ANALYZER - NEW VERSION
@@ -47,6 +57,23 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
   private readonly priority: number;
   private readonly maxConfidence: number;
 
+  // Configurable parameters
+  private readonly minCandles: number;
+  private readonly minConfidence: number;
+  private readonly minPriceDiffPercent: number;
+  private readonly minRsiDiffPoints: number;
+  private readonly swingLookback: number;
+
+  // RSI Indicator parameters
+  private readonly rsiPeriod: number;
+  private readonly rsiOversold: number;
+  private readonly rsiOverbought: number;
+  private readonly rsiExtremeLow: number;
+  private readonly rsiExtremeHigh: number;
+  private readonly rsiNeutralMin: number;
+  private readonly rsiNeutralMax: number;
+  private readonly rsiMaxConfidence: number;
+
   private rsiIndicator: RSIIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -56,7 +83,21 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
    * STRICT - Throws if config is invalid
    */
   constructor(
-    config: DivergenceAnalyzerConfigNew,
+    config: DivergenceAnalyzerConfigNew & {
+      minCandles?: number;
+      minConfidence?: number;
+      minPriceDiffPercent?: number;
+      minRsiDiffPoints?: number;
+      swingLookback?: number;
+      rsiPeriod?: number;
+      rsiOversold?: number;
+      rsiOverbought?: number;
+      rsiExtremeLow?: number;
+      rsiExtremeHigh?: number;
+      rsiNeutralMin?: number;
+      rsiNeutralMax?: number;
+      rsiMaxConfidence?: number;
+    },
     private logger?: LoggerService,
   ) {
     // Validate analyzer config
@@ -78,15 +119,32 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.maxConfidence = config.maxConfidence;
 
-    // Create RSI indicator for divergence detection
+    // Initialize configurable parameters with defaults
+    this.minCandles = config.minCandles ?? DEFAULT_MIN_CANDLES;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.minPriceDiffPercent = config.minPriceDiffPercent ?? DEFAULT_MIN_PRICE_DIFF_PERCENT;
+    this.minRsiDiffPoints = config.minRsiDiffPoints ?? DEFAULT_MIN_RSI_DIFF_POINTS;
+    this.swingLookback = config.swingLookback ?? DEFAULT_SWING_LOOKBACK;
+
+    // RSI Indicator parameters
+    this.rsiPeriod = config.rsiPeriod ?? DEFAULT_RSI_PERIOD;
+    this.rsiOversold = config.rsiOversold ?? DEFAULT_RSI_OVERSOLD;
+    this.rsiOverbought = config.rsiOverbought ?? DEFAULT_RSI_OVERBOUGHT;
+    this.rsiExtremeLow = config.rsiExtremeLow ?? DEFAULT_RSI_EXTREME_LOW;
+    this.rsiExtremeHigh = config.rsiExtremeHigh ?? DEFAULT_RSI_EXTREME_HIGH;
+    this.rsiNeutralMin = config.rsiNeutralMin ?? DEFAULT_RSI_NEUTRAL_MIN;
+    this.rsiNeutralMax = config.rsiNeutralMax ?? DEFAULT_RSI_NEUTRAL_MAX;
+    this.rsiMaxConfidence = config.rsiMaxConfidence ?? DEFAULT_RSI_MAX_CONFIDENCE;
+
+    // Create RSI indicator with configurable parameters
     this.rsiIndicator = new RSIIndicatorNew({
       enabled: true,
-      period: 14,
-      oversold: 30,
-      overbought: 70,
-      extreme: { low: 5, high: 95 },
-      neutralZone: { min: 40, max: 60 },
-      maxConfidence: 0.95,
+      period: this.rsiPeriod,
+      oversold: this.rsiOversold,
+      overbought: this.rsiOverbought,
+      extreme: { low: this.rsiExtremeLow, high: this.rsiExtremeHigh },
+      neutralZone: { min: this.rsiNeutralMin, max: this.rsiNeutralMax },
+      maxConfidence: this.rsiMaxConfidence,
     });
   }
 
@@ -106,9 +164,9 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
       throw new Error('[DIVERGENCE_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_DIVERGENCE) {
+    if (candles.length < this.minCandles) {
       throw new Error(
-        `[DIVERGENCE_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_DIVERGENCE}, got ${candles.length}`,
+        `[DIVERGENCE_ANALYZER] Not enough candles. Need ${this.minCandles}, got ${candles.length}`,
       );
     }
 
@@ -138,7 +196,7 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'DIVERGENCE_ANALYZER',
+      source: 'DIVERGENCE_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -202,7 +260,7 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
     rsiDiff: number;
   } {
     // Find swing points (local highs and lows)
-    const lastN = Math.min(SWING_LOOKBACK, candles.length - 1);
+    const lastN = Math.min(this.swingLookback, candles.length - 1);
     const recentCandles = candles.slice(-lastN);
     const recentRsi = rsiValues.slice(-lastN);
 
@@ -319,7 +377,7 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
       const rsiDiff = Math.abs(oldHigh.rsi - recentHigh.rsi);
 
       // Check if differences are significant
-      if (priceDiff >= MIN_PRICE_DIFF_PERCENT && rsiDiff >= MIN_RSI_DIFF_POINTS) {
+      if (priceDiff >= this.minPriceDiffPercent && rsiDiff >= this.minRsiDiffPoints) {
         const strength = this.calculateDivergenceStrength(priceDiff, rsiDiff);
         return {
           type: 'BEARISH',
@@ -359,7 +417,7 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
       const rsiDiff = Math.abs(recentLow.rsi - oldLow.rsi);
 
       // Check if differences are significant
-      if (priceDiff >= MIN_PRICE_DIFF_PERCENT && rsiDiff >= MIN_RSI_DIFF_POINTS) {
+      if (priceDiff >= this.minPriceDiffPercent && rsiDiff >= this.minRsiDiffPoints) {
         const strength = this.calculateDivergenceStrength(priceDiff, rsiDiff);
         return {
           type: 'BULLISH',
@@ -391,7 +449,7 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
     // Average of both scores
     const strength = (priceScore + rsiScore) / 2;
 
-    return Math.max(MIN_CONFIDENCE, Math.min(strength, 1));
+    return Math.max(this.minConfidence, Math.min(strength, 1));
   }
 
   /**
@@ -429,14 +487,14 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
 
     if (divergence.type === 'NONE') {
       // No divergence: low confidence
-      confidence = MIN_CONFIDENCE;
+      confidence = this.minConfidence;
     } else {
       // Divergence found: confidence based on strength
-      confidence = MIN_CONFIDENCE + divergence.strength * (this.maxConfidence - MIN_CONFIDENCE);
+      confidence = this.minConfidence + divergence.strength * (this.maxConfidence - this.minConfidence);
     }
 
     // Clamp to bounds
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(this.maxConfidence, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
 
     // Convert to 0-100 scale
     return Math.round(confidence * 100);
@@ -505,14 +563,14 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_DIVERGENCE;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandles;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_DIVERGENCE;
+    return this.minCandles;
   }
 
   /**

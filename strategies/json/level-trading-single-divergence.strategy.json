@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single Divergence Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify divergence detection logic. Divergence only, entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-12T00:00:00Z",
+    "lastModified": "2026-02-12T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "divergence-only"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "DIVERGENCE_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "ema": {
+      "fastPeriod": 9,
+      "slowPeriod": 21
+    },
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "DIVERGENCE_ANALYZER_NEW": {
+      "_comment": "Calibration parameters (Session 105+): All divergence-specific constants",
+      "minCandles": 50,
+      "_minCandles_comment": "Min candles for divergence detection (default: 50, range: 30-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Min confidence floor (default: 0.1, range: 0.0-0.3)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence ceiling (default: 0.95, range: 0.5-1.0)",
+      "minPriceDiffPercent": 1.0,
+      "_minPriceDiffPercent_comment": "Min price movement for divergence (default: 1.0%, range: 0.5-3.0)",
+      "minRsiDiffPoints": 5,
+      "_minRsiDiffPoints_comment": "Min RSI movement for divergence (default: 5, range: 3-15)",
+      "swingLookback": 10,
+      "_swingLookback_comment": "Lookback period for swing points (default: 10, range: 5-20)",
+      "rsiPeriod": 14,
+      "_rsiPeriod_comment": "RSI calculation period (default: 14, range: 7-28)",
+      "rsiOversold": 30,
+      "_rsiOversold_comment": "RSI oversold threshold (default: 30, range: 20-35)",
+      "rsiOverbought": 70,
+      "_rsiOverbought_comment": "RSI overbought threshold (default: 70, range: 65-80)",
+      "rsiExtremeLow": 5,
+      "_rsiExtremeLow_comment": "RSI extreme low threshold (default: 5, range: 0-10)",
+      "rsiExtremeHigh": 95,
+      "_rsiExtremeHigh_comment": "RSI extreme high threshold (default: 95, range: 90-100)",
+      "rsiNeutralMin": 40,
+      "_rsiNeutralMin_comment": "RSI neutral zone minimum (default: 40, range: 35-45)",
+      "rsiNeutralMax": 60,
+      "_rsiNeutralMax_comment": "RSI neutral zone maximum (default: 60, range: 55-65)",
+      "rsiMaxConfidence": 0.95,
+      "_rsiMaxConfidence_comment": "RSI max confidence (default: 0.95, range: 0.5-1.0)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "DEBUG: Single DIVERGENCE analyzer to test divergence detection. All filters disabled."
+}
