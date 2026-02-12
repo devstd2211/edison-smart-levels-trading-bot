@@ -70,7 +70,7 @@ describe('ChochBosAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 35 }, (_, i) => 100 + i * 0.5));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('CHOCH_BOS_ANALYZER');
+    expect(signal.source).toBe('CHOCH_BOS_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 

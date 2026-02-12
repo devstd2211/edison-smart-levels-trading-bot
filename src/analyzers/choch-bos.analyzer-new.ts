@@ -17,15 +17,21 @@ import type { LoggerService } from '../services/logger.service';
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_CHOCH_BOS = 30;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
+const DEFAULT_MIN_CANDLES_FOR_CHOCH_BOS = 30;
+const DEFAULT_MIN_CONFIDENCE = 0.1;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_LOOKBACK_BARS = 20;
+const DEFAULT_STRENGTH_MULTIPLIER = 10;
 
 export class ChochBosAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = MAX_CONFIDENCE;
+  private readonly minCandlesForChochBos: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly lookbackBars: number;
+  private readonly strengthMultiplier: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
@@ -40,12 +46,17 @@ export class ChochBosAnalyzerNew implements IAnalyzer {
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandlesForChochBos = config.minCandlesForChochBos ?? DEFAULT_MIN_CANDLES_FOR_CHOCH_BOS;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.lookbackBars = config.lookbackBars ?? DEFAULT_LOOKBACK_BARS;
+    this.strengthMultiplier = config.strengthMultiplier ?? DEFAULT_STRENGTH_MULTIPLIER;
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[CHOCH_BOS] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[CHOCH_BOS] Invalid candles input (must be array)');
-    if (candles.length < MIN_CANDLES_FOR_CHOCH_BOS) throw new Error(`[CHOCH_BOS] Not enough candles. Need ${MIN_CANDLES_FOR_CHOCH_BOS}, got ${candles.length}`);
+    if (candles.length < this.minCandlesForChochBos) throw new Error(`[CHOCH_BOS] Not enough candles. Need ${this.minCandlesForChochBos}, got ${candles.length}`);
 
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].high !== 'number' || typeof candles[i].low !== 'number')
@@ -54,10 +65,10 @@ export class ChochBosAnalyzerNew implements IAnalyzer {
 
     const structure = this.detectStructure(candles);
     const direction = structure.type === 'BULLISH_BOS' ? SignalDirectionEnum.LONG : structure.type === 'BEARISH_BOS' ? SignalDirectionEnum.SHORT : SignalDirectionEnum.HOLD;
-    const confidence = structure.type === 'NONE' ? Math.round(MIN_CONFIDENCE * 100) : Math.round((MIN_CONFIDENCE + structure.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE)) * 100);
+    const confidence = structure.type === 'NONE' ? Math.round(this.minConfidence * 100) : Math.round((this.minConfidence + structure.strength * (this.maxConfidence - this.minConfidence)) * 100);
 
     const signal: AnalyzerSignal = {
-      source: 'CHOCH_BOS_ANALYZER',
+      source: 'CHOCH_BOS_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -71,22 +82,22 @@ export class ChochBosAnalyzerNew implements IAnalyzer {
   }
 
   private detectStructure(candles: Candle[]): { type: 'NONE' | 'BULLISH_BOS' | 'BEARISH_BOS'; strength: number } {
-    const lookback = Math.min(20, candles.length - 1);
+    const lookback = Math.min(this.lookbackBars, candles.length - 1);
     const recent = candles.slice(-lookback);
-    
+
     const lows = recent.map(c => c.low);
     const highs = recent.map(c => c.high);
-    
+
     const lowestLow = Math.min(...lows.slice(0, -1));
     const highestHigh = Math.max(...highs.slice(0, -1));
-    
+
     const current = candles[candles.length - 1];
 
     if (current.low < lowestLow) {
-      return { type: 'BULLISH_BOS', strength: Math.min(1, Math.abs(current.low - lowestLow) / lowestLow * 10) };
+      return { type: 'BULLISH_BOS', strength: Math.min(1, Math.abs(current.low - lowestLow) / lowestLow * this.strengthMultiplier) };
     }
     if (current.high > highestHigh) {
-      return { type: 'BEARISH_BOS', strength: Math.min(1, Math.abs(current.high - highestHigh) / highestHigh * 10) };
+      return { type: 'BEARISH_BOS', strength: Math.min(1, Math.abs(current.high - highestHigh) / highestHigh * this.strengthMultiplier) };
     }
 
     return { type: 'NONE', strength: 0 };
@@ -103,14 +114,14 @@ export class ChochBosAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_CHOCH_BOS;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForChochBos;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_CHOCH_BOS;
+    return this.minCandlesForChochBos;
   }
 
   /**

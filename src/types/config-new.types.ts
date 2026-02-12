@@ -313,7 +313,11 @@ export interface TrendDetectorConfigNew extends BaseAnalyzerConfigNew {
 }
 
 export interface ChochBosAnalyzerConfigNew extends BaseAnalyzerConfigNew {
-  // No additional params required
+  minCandlesForChochBos?: number;
+  minConfidence?: number;
+  maxConfidence?: number;
+  lookbackBars?: number;
+  strengthMultiplier?: number;
 }
 
 export interface SwingAnalyzerConfigNew extends BaseAnalyzerConfigNew {

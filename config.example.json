@@ -369,8 +369,16 @@
     },
     "CHOCH_BOS_ANALYZER_NEW": {
       "_comment": "CHOCH/BOS analyzer: Change of Character / Break of Structure",
-      "minSwingPercent": 0.5,
-      "maxConfidence": 0.85
+      "minCandlesForChochBos": 30,
+      "_minCandlesForChochBos_comment": "Minimum candles required (default: 30, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence for signals (default: 0.1, range: 0.0-0.5)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence cap (default: 0.95, range: 0.7-1.0)",
+      "lookbackBars": 20,
+      "_lookbackBars_comment": "Lookback period for structure detection (default: 20, range: 10-50)",
+      "strengthMultiplier": 10,
+      "_strengthMultiplier_comment": "Strength multiplier for price breaks (default: 10, range: 5-20)"
     },
     "LIQUIDITY_SWEEP_ANALYZER_NEW": {
       "_comment": "Liquidity sweep analyzer: high volume penetration",
