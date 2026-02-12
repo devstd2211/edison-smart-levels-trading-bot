@@ -26,13 +26,14 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// DEFAULT CONSTANTS (can be overridden by config)
 // ============================================================================
 
-const MIN_CANDLES_FOR_ATR = 50; // Need at least period + buffer
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const NEUTRAL_CONFIDENCE_MULTIPLIER = 0.3; // Neutral zone gets 30% of max confidence
-const MAX_ATR_ESTIMATE = 100; // Upper bound for ATR value (for scaling)
+const DEFAULT_MIN_CANDLES_FOR_ATR = 50; // Need at least period + buffer
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_NEUTRAL_CONFIDENCE_MULTIPLIER = 0.3; // Neutral zone gets 30% of max confidence
+const DEFAULT_HIGH_THRESHOLD = 2.5; // High volatility threshold
+const DEFAULT_LOW_THRESHOLD = 0.8; // Low volatility threshold
 
 // ============================================================================
 // ATR ANALYZER - NEW VERSION
@@ -44,6 +45,11 @@ export class AtrAnalyzerNew implements IAnalyzer {
   private readonly priority: number;
   private readonly confidenceMultiplier: number;
   private readonly maxConfidence: number;
+  private readonly minCandlesForAtr: number;
+  private readonly minConfidence: number;
+  private readonly neutralConfidenceMultiplier: number;
+  private readonly highThreshold: number;
+  private readonly lowThreshold: number;
 
   private indicator: ATRIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
@@ -84,6 +90,11 @@ export class AtrAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.confidenceMultiplier = config.confidenceMultiplier;
     this.maxConfidence = config.maxConfidence;
+    this.minCandlesForAtr = config.minCandlesForAtr ?? DEFAULT_MIN_CANDLES_FOR_ATR;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.neutralConfidenceMultiplier = config.neutralConfidenceMultiplier ?? DEFAULT_NEUTRAL_CONFIDENCE_MULTIPLIER;
+    this.highThreshold = config.highThreshold ?? DEFAULT_HIGH_THRESHOLD;
+    this.lowThreshold = config.lowThreshold ?? DEFAULT_LOW_THRESHOLD;
 
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof ATRIndicatorNew) {
@@ -118,9 +129,9 @@ export class AtrAnalyzerNew implements IAnalyzer {
       throw new Error('[ATR_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_ATR) {
+    if (candles.length < this.minCandlesForAtr) {
       throw new Error(
-        `[ATR_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_ATR}, got ${candles.length}`,
+        `[ATR_ANALYZER] Not enough candles. Need ${this.minCandlesForAtr}, got ${candles.length}`,
       );
     }
 
@@ -142,7 +153,7 @@ export class AtrAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'ATR_ANALYZER',
+      source: 'ATR_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -170,15 +181,11 @@ export class AtrAnalyzerNew implements IAnalyzer {
    * @returns SignalDirection (LONG, SHORT, or HOLD)
    */
   private getDirection(atr: number): SignalDirection {
-    // Phase 4.10: Thresholds can be configured via analyzerParameters in strategy.json
-    // Default values: highThreshold = 2.5, lowThreshold = 0.8
-    const highThreshold = 2.5;
-    const lowThreshold = 0.8;
-
-    if (atr > highThreshold) {
+    // Thresholds are now configurable via constructor config
+    if (atr > this.highThreshold) {
       // High volatility - good trading environment
       return SignalDirectionEnum.LONG;
-    } else if (atr < lowThreshold) {
+    } else if (atr < this.lowThreshold) {
       // Low volatility - consolidation zone, potential breakout
       return SignalDirectionEnum.SHORT;
     } else {
@@ -197,27 +204,23 @@ export class AtrAnalyzerNew implements IAnalyzer {
   private calculateConfidence(atr: number): number {
     let confidence: number;
 
-    // Phase 4.10: Thresholds can be configured via analyzerParameters in strategy.json
-    const highThreshold = 2.5;
-    const lowThreshold = 0.8;
-
-    if (atr > highThreshold) {
+    if (atr > this.highThreshold) {
       // High ATR: stronger signal as ATR goes higher
       // At highThreshold: 0% strength, at highThreshold * 2: maxConfidence
-      const strength = Math.min((atr - highThreshold) / highThreshold, 1);
+      const strength = Math.min((atr - this.highThreshold) / this.highThreshold, 1);
       confidence = this.maxConfidence * strength * this.confidenceMultiplier;
-    } else if (atr < lowThreshold) {
+    } else if (atr < this.lowThreshold) {
       // Low ATR: consolidation signal
       // At 0: maxConfidence, at lowThreshold: 0% strength
-      const strength = (lowThreshold - atr) / lowThreshold;
+      const strength = (this.lowThreshold - atr) / this.lowThreshold;
       confidence = this.maxConfidence * strength * this.confidenceMultiplier;
     } else {
       // Neutral zone: lower confidence
-      confidence = this.maxConfidence * NEUTRAL_CONFIDENCE_MULTIPLIER;
+      confidence = this.maxConfidence * this.neutralConfidenceMultiplier;
     }
 
     // Clamp to configured bounds
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(this.maxConfidence, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
 
     // Convert to 0-100 scale
     return Math.round(confidence * 100);
@@ -231,7 +234,7 @@ export class AtrAnalyzerNew implements IAnalyzer {
    * @throws {Error} If not enough candles
    */
   getAtrValue(candles: Candle[]): number {
-    if (!Array.isArray(candles) || candles.length < MIN_CANDLES_FOR_ATR) {
+    if (!Array.isArray(candles) || candles.length < this.minCandlesForAtr) {
       throw new Error(`[ATR_ANALYZER] Not enough candles for ATR calculation`);
     }
 
@@ -245,9 +248,9 @@ export class AtrAnalyzerNew implements IAnalyzer {
    * @param threshold - High threshold (default 2.5)
    * @returns true if ATR > threshold
    */
-  isHighVolatility(candles: Candle[], threshold: number = 2.5): boolean {
+  isHighVolatility(candles: Candle[], threshold?: number): boolean {
     const atr = this.getAtrValue(candles);
-    return atr > threshold;
+    return atr > (threshold ?? this.highThreshold);
   }
 
   /**
@@ -257,9 +260,9 @@ export class AtrAnalyzerNew implements IAnalyzer {
    * @param threshold - Low threshold (default 0.8)
    * @returns true if ATR < threshold
    */
-  isLowVolatility(candles: Candle[], threshold: number = 0.8): boolean {
+  isLowVolatility(candles: Candle[], threshold?: number): boolean {
     const atr = this.getAtrValue(candles);
-    return atr < threshold;
+    return atr < (threshold ?? this.lowThreshold);
   }
 
   /**
@@ -316,7 +319,7 @@ export class AtrAnalyzerNew implements IAnalyzer {
    * @returns true if enough candles, false otherwise
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_ATR;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForAtr;
   }
 
   /**
@@ -324,7 +327,7 @@ export class AtrAnalyzerNew implements IAnalyzer {
    * @returns Min candle count needed
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_ATR;
+    return this.minCandlesForAtr;
   }
 
   /**

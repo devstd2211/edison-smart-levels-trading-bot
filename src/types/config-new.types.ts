@@ -262,6 +262,11 @@ export interface RsiAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 export interface AtrAnalyzerConfigNew extends BaseAnalyzerConfigNew {
   confidenceMultiplier: number;
   maxConfidence: number;
+  minCandlesForAtr?: number;
+  minConfidence?: number;
+  neutralConfidenceMultiplier?: number;
+  highThreshold?: number;
+  lowThreshold?: number;
 }
 
 export interface VolumeAnalyzerConfigNew extends BaseAnalyzerConfigNew {

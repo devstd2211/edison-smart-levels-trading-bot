@@ -237,9 +237,19 @@
       "maxConfidence": 0.9
     },
     "ATR_ANALYZER_NEW": {
-      "_comment": "ATR analyzer: volatility-based stop loss sizing",
+      "_comment": "ATR analyzer: volatility-based signal generation (calibrated Session 105+)",
       "confidenceMultiplier": 2.0,
-      "maxConfidence": 0.95
+      "maxConfidence": 0.95,
+      "minCandlesForAtr": 50,
+      "_minCandlesForAtr_comment": "Min candles for ATR calculation (default: 50, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Min confidence floor (default: 0.1, range: 0.05-0.3)",
+      "neutralConfidenceMultiplier": 0.3,
+      "_neutralConfidenceMultiplier_comment": "Neutral zone confidence multiplier (default: 0.3, range: 0.1-0.5)",
+      "highThreshold": 2.5,
+      "_highThreshold_comment": "High volatility threshold (default: 2.5, range: 1.5-5.0)",
+      "lowThreshold": 0.8,
+      "_lowThreshold_comment": "Low volatility threshold (default: 0.8, range: 0.3-1.5)"
     },
     "VOLUME_ANALYZER_NEW": {
       "_comment": "Volume analyzer: unusual volume activity",
