@@ -19,9 +19,11 @@ import { SwingPointDetectorService } from '../services/swing-point-detector.serv
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_LEVEL = 30;
-const MIN_CONFIDENCE = 0.15;
-const MAX_CONFIDENCE = 0.95;
+// Default constants - can be overridden by config
+const DEFAULT_MIN_CANDLES = 30;
+const DEFAULT_MIN_CONFIDENCE = 0.15;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_PROXIMITY_PERCENT = 0.5;
 
 interface Level {
   price: number;
@@ -36,12 +38,24 @@ export class LevelAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = MAX_CONFIDENCE;
+  private readonly proximityPercent: number;
+  private readonly minCandlesForLevel: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly lookbackBars: number;
+  private readonly minTouchCount: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
   constructor(
-    config: LevelAnalyzerConfigNew,
+    config: LevelAnalyzerConfigNew & {
+      proximityPercent?: number;
+      minCandlesForLevel?: number;
+      minConfidence?: number;
+      maxConfidence?: number;
+      lookbackBars?: number;
+      minTouchCount?: number;
+    },
     private logger?: LoggerService,
     private swingPointDetector?: SwingPointDetectorService,
   ) {
@@ -54,16 +68,29 @@ export class LevelAnalyzerNew implements IAnalyzer {
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.proximityPercent = config.proximityPercent ?? DEFAULT_PROXIMITY_PERCENT;
+    this.minCandlesForLevel = config.minCandlesForLevel ?? DEFAULT_MIN_CANDLES;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.lookbackBars = config.lookbackBars ?? 100;
+    this.minTouchCount = config.minTouchCount ?? 2;
 
     if (this.logger && this.swingPointDetector) {
-      this.logger.debug('[LEVEL] Initialized with SwingPointDetectorService');
+      this.logger.debug('[LEVEL] Initialized with SwingPointDetectorService', {
+        proximityPercent: this.proximityPercent,
+        minCandlesForLevel: this.minCandlesForLevel,
+        minConfidence: this.minConfidence,
+        maxConfidence: this.maxConfidence,
+        lookbackBars: this.lookbackBars,
+        minTouchCount: this.minTouchCount,
+      });
     }
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[LEVEL] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[LEVEL] Invalid candles input');
-    if (candles.length < MIN_CANDLES_FOR_LEVEL) throw new Error(`[LEVEL] Not enough candles`);
+    if (candles.length < this.minCandlesForLevel) throw new Error(`[LEVEL] Not enough candles (need ${this.minCandlesForLevel}, got ${candles.length})`);
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].close !== 'number')
         throw new Error(`[LEVEL] Invalid candle`);
@@ -101,7 +128,7 @@ export class LevelAnalyzerNew implements IAnalyzer {
 
     // Analyze proximity and generate signal
     const range = this.calculateRange(candles);
-    const proximityThreshold = range * 0.02; // 2% of range
+    const proximityThreshold = range * (this.proximityPercent / 100); // Use configured proximity %
 
     const nearSupport = supportLevels.some((s) => Math.abs(current.close - s.price) < proximityThreshold);
     const nearResistance = resistanceLevels.some((r) => Math.abs(current.close - r.price) < proximityThreshold);
@@ -131,40 +158,52 @@ export class LevelAnalyzerNew implements IAnalyzer {
       });
     }
 
+    // DEBUG: Log level detection (first 3 calls only)
+    if (this.logger && !this.initialized) {
+      this.logger.info(`[LEVEL DEBUG] Levels detected`, {
+        supportCount: supportLevels.length,
+        resistanceCount: resistanceLevels.length,
+        nearSupport,
+        nearResistance,
+        trend,
+        proximityThreshold: Math.round(proximityThreshold * 10000) / 10000,
+      });
+    }
+
     // Determine direction
     let direction = SignalDirection.HOLD;
-    let confidence = MIN_CONFIDENCE;
+    let confidence = this.minConfidence;
     let reason = 'No signal condition met';
 
     if (nearSupport && (trend === 'up' || trend === 'neutral')) {
       direction = SignalDirection.LONG;
       const topSupport = supportLevels[0];
       confidence = Math.min(
-        MAX_CONFIDENCE,
-        MIN_CONFIDENCE + topSupport.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE),
+        this.maxConfidence,
+        this.minConfidence + topSupport.strength * (this.maxConfidence - this.minConfidence),
       );
       reason = `Support bounce: price=${current.close}, support=${topSupport.price}, trend=${trend}`;
     } else if (nearResistance && (trend === 'down' || trend === 'neutral')) {
       direction = SignalDirection.SHORT;
       const topResistance = resistanceLevels[0];
       confidence = Math.min(
-        MAX_CONFIDENCE,
-        MIN_CONFIDENCE + topResistance.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE),
+        this.maxConfidence,
+        this.minConfidence + topResistance.strength * (this.maxConfidence - this.minConfidence),
       );
       reason = `Resistance pullback: price=${current.close}, resistance=${topResistance.price}, trend=${trend}`;
-    } else if (nearSupport && trend === 'down' && supportLevels[0]?.touches >= 2) {
+    } else if (nearSupport && trend === 'down' && supportLevels[0]?.touches >= this.minTouchCount) {
       direction = SignalDirection.LONG;
-      confidence = MIN_CONFIDENCE + 0.3;
+      confidence = this.minConfidence + 0.3;
       reason = `Reversal at support: price=${current.close}, support=${supportLevels[0].price}, touches=${supportLevels[0].touches}`;
-    } else if (nearResistance && trend === 'up' && resistanceLevels[0]?.touches >= 2) {
+    } else if (nearResistance && trend === 'up' && resistanceLevels[0]?.touches >= this.minTouchCount) {
       direction = SignalDirection.SHORT;
-      confidence = MIN_CONFIDENCE + 0.3;
+      confidence = this.minConfidence + 0.3;
       reason = `Reversal at resistance: price=${current.close}, resistance=${resistanceLevels[0].price}, touches=${resistanceLevels[0].touches}`;
     } else {
-      confidence = MIN_CONFIDENCE + (supportLevels.length + resistanceLevels.length) * 0.05;
+      confidence = this.minConfidence + (supportLevels.length + resistanceLevels.length) * 0.05;
       // Provide detailed reason for HOLD
       if (supportLevels.length === 0 && resistanceLevels.length === 0) {
-        reason = `HOLD: No levels detected (min ${MIN_CANDLES_FOR_LEVEL} candles needed)`;
+        reason = `HOLD: No levels detected (min ${this.minCandlesForLevel} candles needed)`;
       } else if (!nearSupport && !nearResistance) {
         reason = `HOLD: Price not near support/resistance (threshold=${Math.round(proximityThreshold * 100) / 100})`;
       } else if (nearSupport && trend === 'down') {
@@ -177,7 +216,7 @@ export class LevelAnalyzerNew implements IAnalyzer {
     }
 
     const signal: AnalyzerSignal = {
-      source: 'LEVEL_ANALYZER',
+      source: 'LEVEL_ANALYZER_NEW',
       direction,
       confidence: Math.round(confidence * 100),
       weight: this.weight,
@@ -414,14 +453,14 @@ export class LevelAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_LEVEL;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForLevel;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_LEVEL;
+    return this.minCandlesForLevel;
   }
 
   /**

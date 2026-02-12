@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Minimal",
+    "version": "1.0.0",
+    "description": "Minimal viable strategy - pure level trading, no complexity",
+    "author": "Trading Bot",
+    "createdAt": "2026-02-12T00:00:00Z",
+    "lastModified": "2026-02-12T15:50:00Z",
+    "tags": ["levels", "support-resistance", "minimal", "mvp"],
+    "backtest": {
+      "winRate": 0,
+      "profitFactor": 0,
+      "trades": 0,
+      "period": "Not tested yet"
+    }
+  },
+  "analyzers": [
+    {
+      "name": "LEVEL_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.50,
+      "maxConfidence": 1.0,
+      "params": {
+        "lookbackBars": 50,
+        "minTouchCount": 1,
+        "proximityPercent": 20.0
+      }
+    }
+  ],
+  "indicators": {
+    "ema": {
+      "enabled": false,
+      "fastPeriod": 9,
+      "slowPeriod": 19
+    },
+    "rsi": {
+      "enabled": false,
+      "period": 14
+    },
+    "atr": {
+      "enabled": true,
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    },
+    "volume": {
+      "enabled": false,
+      "period": 20
+    },
+    "stochastic": {
+      "enabled": false
+    },
+    "bollingerBands": {
+      "enabled": false
+    }
+  },
+  "entryThreshold": 30,
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 1,
+      "minSignalsForShort": 1,
+      "longPenalty": 1.0,
+      "shortPenalty": 1.0
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "nightTrading": {
+      "enabled": false
+    },
+    "atr": {
+      "enabled": true,
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "percent": 2.0,
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 0.5,
+        "sizePercent": 33
+      },
+      {
+        "level": 2,
+        "percent": 1.0,
+        "sizePercent": 33
+      },
+      {
+        "level": 3,
+        "percent": 1.5,
+        "sizePercent": 34
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    },
+    "breakeven": {
+      "enabled": true,
+      "offsetPercent": 0.3
+    }
+  },
+  "notes": "MINIMAL VIABLE STRATEGY: Pure level trading. Only LEVEL_ANALYZER (weight 1.0). No extra indicators. No penalties. Start simple, add complexity only if needed."
+}

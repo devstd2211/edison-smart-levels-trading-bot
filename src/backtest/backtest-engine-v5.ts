@@ -368,6 +368,19 @@ export class BacktestEngineV5 {
         // ✨ Phase 3.2: Aggregate signals using weighted average
         const aggregationResult = aggregateSignalsWeighted(analyzerSignals, this.aggregationConfig);
 
+        // DEBUG: Log aggregation result every 100 candles
+        if (i % 100 === 0 && analyzerSignals.length > 0) {
+          this.logger.info('🔍 Aggregation Result', {
+            direction: aggregationResult.direction,
+            totalScore: aggregationResult.totalScore.toFixed(3),
+            confidence: aggregationResult.confidence.toFixed(3),
+            signalCount: aggregationResult.signalCount,
+            appliedPenalty: aggregationResult.appliedPenalty,
+            conflictLevel: aggregationResult.conflictAnalysis.conflictLevel.toFixed(3),
+            shouldWait: aggregationResult.conflictAnalysis.shouldWait,
+          });
+        }
+
         // Convert to Signal format expected by EntryOrchestrator
         // Use aggregated signal if direction is determined
         const convertedSignals: any[] = aggregationResult.direction
