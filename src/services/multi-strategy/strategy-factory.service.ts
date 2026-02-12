@@ -43,6 +43,7 @@ class StrategyContextImpl implements IsolatedStrategyContext {
   lastTradedAt?: Date;
   lastCandleTime?: Date;
   isActive: boolean;
+  private logger?: ILogger;
 
   constructor(
     strategyId: string,
@@ -52,6 +53,7 @@ class StrategyContextImpl implements IsolatedStrategyContext {
     strategy: StrategyConfig,
     exchange: IExchange,
     analyzers: IAnalyzer[],
+    logger?: ILogger,
   ) {
     this.strategyId = strategyId;
     this.strategyName = strategyName;
@@ -62,6 +64,13 @@ class StrategyContextImpl implements IsolatedStrategyContext {
     this.analyzers = analyzers;
     this.createdAt = new Date();
     this.isActive = false;
+    this.logger = logger;
+  }
+
+  private log(level: 'info' | 'warn' | 'error', message: string): void {
+    if (this.logger) {
+      this.logger[level](message);
+    }
   }
 
   getSnapshot() {
@@ -183,6 +192,7 @@ export class StrategyFactoryService {
       strategy,
       exchange,
       analyzers,
+      this.logger,
     );
 
     // Cache context
