@@ -207,6 +207,20 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
     this.lastSignal = signal;
     this.initialized = true;
 
+    // DEBUG: Log divergence detection
+    if (divergence.type !== 'NONE') {
+      console.log('[🎯 DIVERGENCE FOUND!]', {
+        type: divergence.type,
+        direction: signal.direction,
+        confidence: signal.confidence,
+        strength: divergence.strength,
+        priceDiff: divergence.priceDiff.toFixed(2) + '%',
+        rsiDiff: divergence.rsiDiff.toFixed(1),
+        weight: signal.weight,
+        score: signal.score,
+      });
+    }
+
     this.logger?.debug('[DIVERGENCE_ANALYZER] Generated signal', {
       direction,
       confidence,

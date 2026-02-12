@@ -9,7 +9,7 @@
     "lastModified": "2026-02-12T00:00:00Z",
     "tags": ["debug", "single-analyzer", "divergence-only"]
   },
-  "entryThreshold": 40,
+  "entryThreshold": 1,
   "analyzers": [
     {
       "name": "DIVERGENCE_ANALYZER_NEW",
@@ -47,19 +47,19 @@
   },
   "analyzerDefaults": {
     "DIVERGENCE_ANALYZER_NEW": {
-      "_comment": "Calibration parameters (Session 105+): All divergence-specific constants",
+      "_comment": "Calibration parameters (Session 105+): TUNED for more sensitive detection",
       "minCandles": 50,
       "_minCandles_comment": "Min candles for divergence detection (default: 50, range: 30-100)",
       "minConfidence": 0.1,
       "_minConfidence_comment": "Min confidence floor (default: 0.1, range: 0.0-0.3)",
       "maxConfidence": 0.95,
       "_maxConfidence_comment": "Max confidence ceiling (default: 0.95, range: 0.5-1.0)",
-      "minPriceDiffPercent": 1.0,
-      "_minPriceDiffPercent_comment": "Min price movement for divergence (default: 1.0%, range: 0.5-3.0)",
-      "minRsiDiffPoints": 5,
-      "_minRsiDiffPoints_comment": "Min RSI movement for divergence (default: 5, range: 3-15)",
-      "swingLookback": 10,
-      "_swingLookback_comment": "Lookback period for swing points (default: 10, range: 5-20)",
+      "minPriceDiffPercent": 0.3,
+      "_minPriceDiffPercent_comment": "Min price movement for divergence (TUNED: 0.3% from 1.0%)",
+      "minRsiDiffPoints": 2,
+      "_minRsiDiffPoints_comment": "Min RSI movement for divergence (TUNED: 2 from 5)",
+      "swingLookback": 30,
+      "_swingLookback_comment": "Lookback period for swing points (TUNED: 30 from 10)",
       "rsiPeriod": 14,
       "_rsiPeriod_comment": "RSI calculation period (default: 14, range: 7-28)",
       "rsiOversold": 30,
