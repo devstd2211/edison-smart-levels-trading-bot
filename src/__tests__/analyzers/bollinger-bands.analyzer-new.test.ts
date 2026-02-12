@@ -143,7 +143,7 @@ describe('BollingerBandsAnalyzerNew - Signal Generation Tests', () => {
     const signal = analyzer.analyze(candles);
     expect(signal.direction).toBeDefined();
     expect(signal.confidence).toBeGreaterThan(0);
-    expect(signal.source).toBe('BOLLINGER_BANDS_ANALYZER');
+    expect(signal.source).toBe('BOLLINGER_BANDS_ANALYZER_NEW');
   });
 
   test('should generate SHORT signal on overbought (%B > 80)', () => {

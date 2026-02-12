@@ -262,9 +262,25 @@
       "maxConfidence": 0.9
     },
     "BOLLINGER_BANDS_ANALYZER_NEW": {
-      "_comment": "Bollinger Bands analyzer: band touches and breakouts",
-      "bandTouchConfidence": 0.5,
-      "maxConfidence": 0.9
+      "_comment": "Bollinger Bands analyzer: band touches and breakouts (Session 105+ calibration: all thresholds configurable)",
+      "minCandlesForBollingerBands": 25,
+      "_minCandlesForBollingerBands_comment": "Minimum candles needed for BB calculation (default: 25, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "oversoldThreshold": 20,
+      "_oversoldThreshold_comment": "%B threshold for oversold (default: 20, range: 10-30)",
+      "overboughtThreshold": 80,
+      "_overboughtThreshold_comment": "%B threshold for overbought (default: 80, range: 70-90)",
+      "neutralLower": 40,
+      "_neutralLower_comment": "Lower bound of neutral zone (default: 40, range: 30-50)",
+      "neutralUpper": 60,
+      "_neutralUpper_comment": "Upper bound of neutral zone (default: 60, range: 50-70)",
+      "squeezeThreshold": 5,
+      "_squeezeThreshold_comment": "Bandwidth threshold for squeeze detection (default: 5%, range: 3-10)",
+      "expansionThreshold": 10,
+      "_expansionThreshold_comment": "Bandwidth threshold for expansion detection (default: 10%, range: 8-15)"
     },
     "DIVERGENCE_ANALYZER_NEW": {
       "_comment": "Divergence analyzer: price vs indicator mismatch (reversal signal)",

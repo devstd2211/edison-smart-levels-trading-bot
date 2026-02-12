@@ -26,16 +26,18 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// DEFAULT CONSTANTS (can be overridden via config)
 // ============================================================================
 
-const MIN_CANDLES_FOR_BOLLINGER_BANDS = 25; // Need at least period (20) + some history
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const OVERSOLD_THRESHOLD = 20; // %B < 20 = near lower band
-const OVERBOUGHT_THRESHOLD = 80; // %B > 80 = near upper band
-const NEUTRAL_LOWER = 40; // %B range for neutral zone
-const NEUTRAL_UPPER = 60;
-const SQUEEZE_THRESHOLD = 5; // Bandwidth < 5% = squeezing
+const DEFAULT_MIN_CANDLES_FOR_BOLLINGER_BANDS = 25; // Need at least period (20) + some history
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_MAX_CONFIDENCE = 0.95; // Maximum confidence ceiling (95%)
+const DEFAULT_OVERSOLD_THRESHOLD = 20; // %B < 20 = near lower band
+const DEFAULT_OVERBOUGHT_THRESHOLD = 80; // %B > 80 = near upper band
+const DEFAULT_NEUTRAL_LOWER = 40; // %B range for neutral zone
+const DEFAULT_NEUTRAL_UPPER = 60;
+const DEFAULT_SQUEEZE_THRESHOLD = 5; // Bandwidth < 5% = squeezing
+const DEFAULT_EXPANSION_THRESHOLD = 10; // Bandwidth > 10% = expanding
 
 // ============================================================================
 // BOLLINGER BANDS ANALYZER - NEW VERSION
@@ -47,6 +49,17 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
   private readonly priority: number;
   private readonly period: number;
   private readonly stdDev: number;
+
+  // Configurable thresholds
+  private readonly minCandlesForBollingerBands: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly oversoldThreshold: number;
+  private readonly overboughtThreshold: number;
+  private readonly neutralLower: number;
+  private readonly neutralUpper: number;
+  private readonly squeezeThreshold: number;
+  private readonly expansionThreshold: number;
 
   private indicator: BollingerBandsIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
@@ -62,7 +75,17 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @param indicatorDI Bollinger Bands indicator instance via DI (optional, will create if not provided)
    */
   constructor(
-    config: BollingerBandsAnalyzerConfigNew,
+    config: BollingerBandsAnalyzerConfigNew & {
+      minCandlesForBollingerBands?: number;
+      minConfidence?: number;
+      maxConfidence?: number;
+      oversoldThreshold?: number;
+      overboughtThreshold?: number;
+      neutralLower?: number;
+      neutralUpper?: number;
+      squeezeThreshold?: number;
+      expansionThreshold?: number;
+    },
     private logger?: LoggerService,
     indicatorDI?: IIndicator | null,
   ) {
@@ -88,6 +111,17 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.period = config.period;
     this.stdDev = config.stdDev;
+
+    // Initialize configurable thresholds with defaults
+    this.minCandlesForBollingerBands = config.minCandlesForBollingerBands ?? DEFAULT_MIN_CANDLES_FOR_BOLLINGER_BANDS;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.oversoldThreshold = config.oversoldThreshold ?? DEFAULT_OVERSOLD_THRESHOLD;
+    this.overboughtThreshold = config.overboughtThreshold ?? DEFAULT_OVERBOUGHT_THRESHOLD;
+    this.neutralLower = config.neutralLower ?? DEFAULT_NEUTRAL_LOWER;
+    this.neutralUpper = config.neutralUpper ?? DEFAULT_NEUTRAL_UPPER;
+    this.squeezeThreshold = config.squeezeThreshold ?? DEFAULT_SQUEEZE_THRESHOLD;
+    this.expansionThreshold = config.expansionThreshold ?? DEFAULT_EXPANSION_THRESHOLD;
 
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof BollingerBandsIndicatorNew) {
@@ -124,9 +158,9 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
       throw new Error('[BOLLINGER_BANDS_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_BOLLINGER_BANDS) {
+    if (candles.length < this.minCandlesForBollingerBands) {
       throw new Error(
-        `[BOLLINGER_BANDS_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_BOLLINGER_BANDS}, got ${candles.length}`,
+        `[BOLLINGER_BANDS_ANALYZER] Not enough candles. Need ${this.minCandlesForBollingerBands}, got ${candles.length}`,
       );
     }
 
@@ -148,7 +182,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'BOLLINGER_BANDS_ANALYZER',
+      source: 'BOLLINGER_BANDS_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -180,11 +214,11 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    */
   private getDirection(percentB: number, bandwidth: number): SignalDirection {
     // Oversold with expanding bands: LONG signal
-    if (percentB < OVERSOLD_THRESHOLD && bandwidth > SQUEEZE_THRESHOLD) {
+    if (percentB < this.oversoldThreshold && bandwidth > this.squeezeThreshold) {
       return SignalDirectionEnum.LONG;
     }
     // Overbought with expanding bands: SHORT signal
-    else if (percentB > OVERBOUGHT_THRESHOLD && bandwidth > SQUEEZE_THRESHOLD) {
+    else if (percentB > this.overboughtThreshold && bandwidth > this.squeezeThreshold) {
       return SignalDirectionEnum.SHORT;
     }
     // Middle zone: HOLD
@@ -202,39 +236,38 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @returns Confidence value (0-100 scale)
    */
   private calculateConfidence(percentB: number, bandwidth: number): number {
-    const MAX_CONFIDENCE = 0.95;
     let confidence: number;
 
     // Distance from neutral zone (40-60)
     const distanceFromNeutral = Math.max(
       0,
-      Math.min(Math.abs(percentB - NEUTRAL_LOWER), Math.abs(percentB - NEUTRAL_UPPER)),
+      Math.min(Math.abs(percentB - this.neutralLower), Math.abs(percentB - this.neutralUpper)),
     );
 
     // Normalize distance (0 = neutral, 1 = extreme)
     const normalizedDistance = Math.min(1, distanceFromNeutral / 40);
 
     // Bandwidth factor: Expanding = stronger signals, Squeeze = weaker
-    const bandwidthFactor = Math.min(1, bandwidth / SQUEEZE_THRESHOLD);
+    const bandwidthFactor = Math.min(1, bandwidth / this.squeezeThreshold);
 
-    if (percentB < OVERSOLD_THRESHOLD) {
+    if (percentB < this.oversoldThreshold) {
       // Bullish: confidence based on how oversold + bandwidth expansion
-      const oversoldStrength = (OVERSOLD_THRESHOLD - percentB) / OVERSOLD_THRESHOLD;
-      confidence = MAX_CONFIDENCE * oversoldStrength * bandwidthFactor;
-    } else if (percentB > OVERBOUGHT_THRESHOLD) {
+      const oversoldStrength = (this.oversoldThreshold - percentB) / this.oversoldThreshold;
+      confidence = this.maxConfidence * oversoldStrength * bandwidthFactor;
+    } else if (percentB > this.overboughtThreshold) {
       // Bearish: confidence based on how overbought + bandwidth expansion
-      const overboughtStrength = (percentB - OVERBOUGHT_THRESHOLD) / (100 - OVERBOUGHT_THRESHOLD);
-      confidence = MAX_CONFIDENCE * overboughtStrength * bandwidthFactor;
-    } else if (percentB > NEUTRAL_LOWER && percentB < NEUTRAL_UPPER) {
+      const overboughtStrength = (percentB - this.overboughtThreshold) / (100 - this.overboughtThreshold);
+      confidence = this.maxConfidence * overboughtStrength * bandwidthFactor;
+    } else if (percentB > this.neutralLower && percentB < this.neutralUpper) {
       // Neutral zone: low confidence
-      confidence = MAX_CONFIDENCE * 0.2 * bandwidthFactor;
+      confidence = this.maxConfidence * 0.2 * bandwidthFactor;
     } else {
       // Low/High zone but not extreme: moderate confidence
-      confidence = MAX_CONFIDENCE * 0.4 * bandwidthFactor;
+      confidence = this.maxConfidence * 0.4 * bandwidthFactor;
     }
 
     // Clamp to configured bounds
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
 
     // Convert to 0-100 scale
     return Math.round(confidence * 100);
@@ -254,7 +287,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
     percentB: number;
     bandwidth: number;
   } {
-    if (!Array.isArray(candles) || candles.length < MIN_CANDLES_FOR_BOLLINGER_BANDS) {
+    if (!Array.isArray(candles) || candles.length < this.minCandlesForBollingerBands) {
       throw new Error(
         `[BOLLINGER_BANDS_ANALYZER] Not enough candles for Bollinger Bands calculation`,
       );
@@ -270,7 +303,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @param threshold - %B threshold for overbought (default 80)
    * @returns true if %B > threshold
    */
-  isOverbought(candles: Candle[], threshold: number = OVERBOUGHT_THRESHOLD): boolean {
+  isOverbought(candles: Candle[], threshold: number = this.overboughtThreshold): boolean {
     const values = this.getBollingerBandsValues(candles);
     return values.percentB > threshold;
   }
@@ -282,7 +315,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @param threshold - %B threshold for oversold (default 20)
    * @returns true if %B < threshold
    */
-  isOversold(candles: Candle[], threshold: number = OVERSOLD_THRESHOLD): boolean {
+  isOversold(candles: Candle[], threshold: number = this.oversoldThreshold): boolean {
     const values = this.getBollingerBandsValues(candles);
     return values.percentB < threshold;
   }
@@ -294,7 +327,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @param threshold - Bandwidth threshold for squeeze (default 5%)
    * @returns true if bandwidth < threshold
    */
-  isSqueezing(candles: Candle[], threshold: number = SQUEEZE_THRESHOLD): boolean {
+  isSqueezing(candles: Candle[], threshold: number = this.squeezeThreshold): boolean {
     const values = this.getBollingerBandsValues(candles);
     return values.bandwidth < threshold;
   }
@@ -306,7 +339,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @param threshold - Bandwidth threshold for expansion (default 10%)
    * @returns true if bandwidth > threshold
    */
-  isExpanding(candles: Candle[], threshold: number = 10): boolean {
+  isExpanding(candles: Candle[], threshold: number = this.expansionThreshold): boolean {
     const values = this.getBollingerBandsValues(candles);
     return values.bandwidth > threshold;
   }
@@ -384,7 +417,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @returns true if enough candles, false otherwise
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_BOLLINGER_BANDS;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForBollingerBands;
   }
 
   /**
@@ -392,7 +425,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @returns Min candle count needed
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_BOLLINGER_BANDS;
+    return this.minCandlesForBollingerBands;
   }
 
   /**
@@ -416,7 +449,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @returns Max confidence 0.0-1.0
    */
   getMaxConfidence(): number {
-    return 0.95;
+    return this.maxConfidence;
   }
 
 

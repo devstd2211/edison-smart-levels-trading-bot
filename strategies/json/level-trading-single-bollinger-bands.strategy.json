@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single Bollinger Bands Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify Bollinger Bands calibration. BB only, entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-12T00:00:00Z",
+    "lastModified": "2026-02-12T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "bollinger-bands-only", "calibration"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "BOLLINGER_BANDS_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "period": 20,
+      "stdDev": 2.0,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "bollingerBands": {
+      "enabled": true,
+      "_comment": "Bollinger Bands indicator configuration (Session 105+ calibration: now configurable)",
+      "period": 20,
+      "_period_comment": "BB period (default: 20, common: 20, 50)",
+      "stdDev": 2.0,
+      "_stdDev_comment": "Standard deviation multiplier (default: 2.0, range: 1.0-3.0)"
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "BOLLINGER_BANDS_ANALYZER_NEW": {
+      "_comment": "Calibration parameters (Session 105+): All BB thresholds now configurable",
+      "minCandlesForBollingerBands": 25,
+      "_minCandlesForBollingerBands_comment": "Minimum candles needed for BB calculation (default: 25, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "oversoldThreshold": 20,
+      "_oversoldThreshold_comment": "%B threshold for oversold (default: 20, range: 10-30)",
+      "overboughtThreshold": 80,
+      "_overboughtThreshold_comment": "%B threshold for overbought (default: 80, range: 70-90)",
+      "neutralLower": 40,
+      "_neutralLower_comment": "Lower bound of neutral zone (default: 40, range: 30-50)",
+      "neutralUpper": 60,
+      "_neutralUpper_comment": "Upper bound of neutral zone (default: 60, range: 50-70)",
+      "squeezeThreshold": 5,
+      "_squeezeThreshold_comment": "Bandwidth threshold for squeeze detection (default: 5%, range: 3-10)",
+      "expansionThreshold": 10,
+      "_expansionThreshold_comment": "Bandwidth threshold for expansion detection (default: 10%, range: 8-15)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "DEBUG: Single Bollinger Bands analyzer with calibrated thresholds. All filters disabled for pure BB signal testing."
+}
