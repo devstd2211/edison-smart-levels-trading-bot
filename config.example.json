@@ -449,6 +449,23 @@
       "confidenceMultiplier": 0.85,
       "_confidenceMultiplier_comment": "Gap strength confidence multiplier (default: 0.85, range: 0.5-1.0)"
     },
+    "FOOTPRINT_ANALYZER_NEW": {
+      "_comment": "Footprint analyzer: volume-based pattern detection (Session 106 calibration)",
+      "minCandlesForFootprint": 25,
+      "_minCandlesForFootprint_comment": "Min candles required (default: 25, range: 15-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence before volume strength multiplier (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Volume strength confidence multiplier (default: 0.85, range: 0.5-1.0)",
+      "lookbackWindow": 10,
+      "_lookbackWindow_comment": "Number of recent candles for volume analysis (default: 10, range: 5-30)",
+      "volumeMultiplierThreshold": 1.5,
+      "_volumeMultiplierThreshold_comment": "Volume spike detection threshold (default: 1.5, range: 1.2-3.0)",
+      "strengthDivisor": 3,
+      "_strengthDivisor_comment": "Divisor for strength calculation (default: 3, range: 2-5)"
+    },
     "TICK_DELTA_ANALYZER_NEW": {
       "_comment": "Tick delta analyzer: individual trade direction flow",
       "minTickDelta": 5,

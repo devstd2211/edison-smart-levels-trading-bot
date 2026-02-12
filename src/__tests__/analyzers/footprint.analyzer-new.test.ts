@@ -50,7 +50,7 @@ describe('FootprintAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 50 }, (_, i) => 100 + i * 0.5));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('FOOTPRINT_ANALYZER');
+    expect(signal.source).toBe('FOOTPRINT_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 
