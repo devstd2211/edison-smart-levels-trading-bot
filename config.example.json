@@ -438,6 +438,17 @@
       "lookbackWindow": 10,
       "_lookbackWindow_comment": "Number of recent candles for delta calculation (default: 10, range: 5-30)"
     },
+    "FAIR_VALUE_GAP_ANALYZER_NEW": {
+      "_comment": "Fair Value Gap analyzer: detects gaps in price (Session 106 calibration)",
+      "minCandlesForFairValueGap": 25,
+      "_minCandlesForFairValueGap_comment": "Min candles required (default: 25, range: 15-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence before gap strength multiplier (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Gap strength confidence multiplier (default: 0.85, range: 0.5-1.0)"
+    },
     "TICK_DELTA_ANALYZER_NEW": {
       "_comment": "Tick delta analyzer: individual trade direction flow",
       "minTickDelta": 5,

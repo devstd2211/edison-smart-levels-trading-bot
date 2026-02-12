@@ -5,37 +5,47 @@ import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_FAIR_VALUE_GAP = 25;
+const DEFAULT_MIN_CANDLES_FOR_FAIR_VALUE_GAP = 25;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_BASE_CONFIDENCE = 0.1;
+const DEFAULT_CONFIDENCE_MULTIPLIER = 0.85;
 
 export class FairValueGapAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = 0.95;
+  private readonly minCandlesForFairValueGap: number;
+  private readonly maxConfidence: number;
+  private readonly baseConfidence: number;
+  private readonly confidenceMultiplier: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
-  constructor(config: BreakoutAnalyzerConfigNew, private logger?: any) {
+  constructor(config: BreakoutAnalyzerConfigNew & { minCandlesForFairValueGap?: number; maxConfidence?: number; baseConfidence?: number; confidenceMultiplier?: number }, private logger?: any) {
     if (typeof config.enabled !== 'boolean') throw new Error('[FVG] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[FVG] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[FVG] Missing or invalid: priority');
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandlesForFairValueGap = config.minCandlesForFairValueGap ?? DEFAULT_MIN_CANDLES_FOR_FAIR_VALUE_GAP;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.baseConfidence = config.baseConfidence ?? DEFAULT_BASE_CONFIDENCE;
+    this.confidenceMultiplier = config.confidenceMultiplier ?? DEFAULT_CONFIDENCE_MULTIPLIER;
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[FVG] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[FVG] Invalid candles input');
-    if (candles.length < MIN_CANDLES_FOR_FAIR_VALUE_GAP) throw new Error('[FVG] Not enough candles');
+    if (candles.length < this.minCandlesForFairValueGap) throw new Error('[FVG] Not enough candles');
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].high !== 'number' || typeof candles[i].low !== 'number') throw new Error('[FVG] Invalid candle');
     }
 
     const fvg = this.detectFVG(candles);
     const direction = fvg.type === 'BULLISH' ? SignalDirectionEnum.LONG : fvg.type === 'BEARISH' ? SignalDirectionEnum.SHORT : SignalDirectionEnum.HOLD;
-    const confidence = Math.round((0.1 + fvg.strength * 0.85) * 100);
-    const signal: AnalyzerSignal = { source: 'FVG_ANALYZER', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
+    const confidence = Math.round((this.baseConfidence + fvg.strength * this.confidenceMultiplier) * 100);
+    const signal: AnalyzerSignal = { source: 'FAIR_VALUE_GAP_ANALYZER_NEW', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
     this.lastSignal = signal;
     this.initialized = true;
     return signal;
@@ -63,14 +73,14 @@ export class FairValueGapAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_FAIR_VALUE_GAP;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForFairValueGap;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_FAIR_VALUE_GAP;
+    return this.minCandlesForFairValueGap;
   }
 
   /**

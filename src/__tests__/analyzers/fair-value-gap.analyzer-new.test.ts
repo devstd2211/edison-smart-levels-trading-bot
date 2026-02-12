@@ -61,7 +61,7 @@ describe('FairValueGapAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 50 }, (_, i) => 100 + i * 0.5));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('FVG_ANALYZER');
+    expect(signal.source).toBe('FAIR_VALUE_GAP_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
     expect(signal.weight).toBe(0.7);
   });
