@@ -120,6 +120,7 @@ export class EmaAnalyzerNew implements IAnalyzer {
     this.minConfidence = config.minConfidence;
     this.maxConfidence = config.maxConfidence;
 
+
     // Extract strategic constants from config (with defaults)
     this.minCandlesForEma = config.minCandlesForEma ?? DEFAULT_MIN_CANDLES_FOR_EMA;
     this.minimumGapPercent = config.minimumGapPercent ?? DEFAULT_MINIMUM_GAP_PERCENT;
@@ -140,8 +141,8 @@ export class EmaAnalyzerNew implements IAnalyzer {
         enabled: true,
         fastPeriod: this.fastPeriod,
         slowPeriod: this.slowPeriod,
-        baseConfidence: 0,
-        strengthMultiplier: 0,
+        baseConfidence: this.baseConfidence,
+        strengthMultiplier: this.strengthMultiplier,
       });
     }
   }

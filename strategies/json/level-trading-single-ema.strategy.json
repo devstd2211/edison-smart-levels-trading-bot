@@ -22,6 +22,7 @@
   ],
   "indicators": {
     "ema": {
+      "enabled": true,
       "_comment": "EMA indicator periods (Session 105+ calibration: now configurable)",
       "fastPeriod": 12,
       "_fastPeriod_comment": "Fast EMA period (default: 9, common: 9, 12, 21)",
