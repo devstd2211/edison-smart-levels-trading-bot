@@ -38,6 +38,13 @@ const DEFAULT_NEUTRAL_LOWER = 40; // %B range for neutral zone
 const DEFAULT_NEUTRAL_UPPER = 60;
 const DEFAULT_SQUEEZE_THRESHOLD = 5; // Bandwidth < 5% = squeezing
 const DEFAULT_EXPANSION_THRESHOLD = 10; // Bandwidth > 10% = expanding
+const DEFAULT_NEUTRAL_CONFIDENCE_MULTIPLIER = 0.2; // Neutral zone confidence multiplier
+const DEFAULT_MODERATE_CONFIDENCE_MULTIPLIER = 0.4; // Moderate zone confidence multiplier
+const DEFAULT_DISTANCE_NORMALIZATION_DIVISOR = 40; // Distance normalization divisor
+const DEFAULT_VOLATILITY_VERY_LOW_THRESHOLD = 3; // Bandwidth < 3% = very low volatility
+const DEFAULT_VOLATILITY_LOW_THRESHOLD = 6; // Bandwidth < 6% = low volatility
+const DEFAULT_VOLATILITY_NORMAL_THRESHOLD = 10; // Bandwidth < 10% = normal volatility
+const DEFAULT_VOLATILITY_HIGH_THRESHOLD = 15; // Bandwidth < 15% = high volatility
 
 // ============================================================================
 // BOLLINGER BANDS ANALYZER - NEW VERSION
@@ -60,6 +67,13 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
   private readonly neutralUpper: number;
   private readonly squeezeThreshold: number;
   private readonly expansionThreshold: number;
+  private readonly neutralConfidenceMultiplier: number;
+  private readonly moderateConfidenceMultiplier: number;
+  private readonly distanceNormalizationDivisor: number;
+  private readonly volatilityVeryLowThreshold: number;
+  private readonly volatilityLowThreshold: number;
+  private readonly volatilityNormalThreshold: number;
+  private readonly volatilityHighThreshold: number;
 
   private indicator: BollingerBandsIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
@@ -85,6 +99,13 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
       neutralUpper?: number;
       squeezeThreshold?: number;
       expansionThreshold?: number;
+      neutralConfidenceMultiplier?: number;
+      moderateConfidenceMultiplier?: number;
+      distanceNormalizationDivisor?: number;
+      volatilityVeryLowThreshold?: number;
+      volatilityLowThreshold?: number;
+      volatilityNormalThreshold?: number;
+      volatilityHighThreshold?: number;
     },
     private logger?: LoggerService,
     indicatorDI?: IIndicator | null,
@@ -122,6 +143,13 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
     this.neutralUpper = config.neutralUpper ?? DEFAULT_NEUTRAL_UPPER;
     this.squeezeThreshold = config.squeezeThreshold ?? DEFAULT_SQUEEZE_THRESHOLD;
     this.expansionThreshold = config.expansionThreshold ?? DEFAULT_EXPANSION_THRESHOLD;
+    this.neutralConfidenceMultiplier = config.neutralConfidenceMultiplier ?? DEFAULT_NEUTRAL_CONFIDENCE_MULTIPLIER;
+    this.moderateConfidenceMultiplier = config.moderateConfidenceMultiplier ?? DEFAULT_MODERATE_CONFIDENCE_MULTIPLIER;
+    this.distanceNormalizationDivisor = config.distanceNormalizationDivisor ?? DEFAULT_DISTANCE_NORMALIZATION_DIVISOR;
+    this.volatilityVeryLowThreshold = config.volatilityVeryLowThreshold ?? DEFAULT_VOLATILITY_VERY_LOW_THRESHOLD;
+    this.volatilityLowThreshold = config.volatilityLowThreshold ?? DEFAULT_VOLATILITY_LOW_THRESHOLD;
+    this.volatilityNormalThreshold = config.volatilityNormalThreshold ?? DEFAULT_VOLATILITY_NORMAL_THRESHOLD;
+    this.volatilityHighThreshold = config.volatilityHighThreshold ?? DEFAULT_VOLATILITY_HIGH_THRESHOLD;
 
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof BollingerBandsIndicatorNew) {
@@ -245,7 +273,7 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
     );
 
     // Normalize distance (0 = neutral, 1 = extreme)
-    const normalizedDistance = Math.min(1, distanceFromNeutral / 40);
+    const normalizedDistance = Math.min(1, distanceFromNeutral / this.distanceNormalizationDivisor);
 
     // Bandwidth factor: Expanding = stronger signals, Squeeze = weaker
     const bandwidthFactor = Math.min(1, bandwidth / this.squeezeThreshold);
@@ -260,10 +288,10 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
       confidence = this.maxConfidence * overboughtStrength * bandwidthFactor;
     } else if (percentB > this.neutralLower && percentB < this.neutralUpper) {
       // Neutral zone: low confidence
-      confidence = this.maxConfidence * 0.2 * bandwidthFactor;
+      confidence = this.maxConfidence * this.neutralConfidenceMultiplier * bandwidthFactor;
     } else {
       // Low/High zone but not extreme: moderate confidence
-      confidence = this.maxConfidence * 0.4 * bandwidthFactor;
+      confidence = this.maxConfidence * this.moderateConfidenceMultiplier * bandwidthFactor;
     }
 
     // Clamp to configured bounds
@@ -356,10 +384,10 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
     const values = this.getBollingerBandsValues(candles);
     const bw = values.bandwidth;
 
-    if (bw < 3) return 'very_low';
-    if (bw < 6) return 'low';
-    if (bw < 10) return 'normal';
-    if (bw < 15) return 'high';
+    if (bw < this.volatilityVeryLowThreshold) return 'very_low';
+    if (bw < this.volatilityLowThreshold) return 'low';
+    if (bw < this.volatilityNormalThreshold) return 'normal';
+    if (bw < this.volatilityHighThreshold) return 'high';
     return 'very_high';
   }
 

@@ -280,7 +280,21 @@
       "squeezeThreshold": 5,
       "_squeezeThreshold_comment": "Bandwidth threshold for squeeze detection (default: 5%, range: 3-10)",
       "expansionThreshold": 10,
-      "_expansionThreshold_comment": "Bandwidth threshold for expansion detection (default: 10%, range: 8-15)"
+      "_expansionThreshold_comment": "Bandwidth threshold for expansion detection (default: 10%, range: 8-15)",
+      "neutralConfidenceMultiplier": 0.2,
+      "_neutralConfidenceMultiplier_comment": "Confidence multiplier for neutral zone (default: 0.2 = 20%, range: 0.1-0.3)",
+      "moderateConfidenceMultiplier": 0.4,
+      "_moderateConfidenceMultiplier_comment": "Confidence multiplier for moderate zone (default: 0.4 = 40%, range: 0.3-0.6)",
+      "distanceNormalizationDivisor": 40,
+      "_distanceNormalizationDivisor_comment": "Distance normalization divisor (default: 40, range: 20-60)",
+      "volatilityVeryLowThreshold": 3,
+      "_volatilityVeryLowThreshold_comment": "Bandwidth threshold for very low volatility (default: 3%, range: 1-5)",
+      "volatilityLowThreshold": 6,
+      "_volatilityLowThreshold_comment": "Bandwidth threshold for low volatility (default: 6%, range: 4-8)",
+      "volatilityNormalThreshold": 10,
+      "_volatilityNormalThreshold_comment": "Bandwidth threshold for normal volatility (default: 10%, range: 8-12)",
+      "volatilityHighThreshold": 15,
+      "_volatilityHighThreshold_comment": "Bandwidth threshold for high volatility (default: 15%, range: 12-20)"
     },
     "DIVERGENCE_ANALYZER_NEW": {
       "_comment": "Divergence analyzer: price vs indicator mismatch (reversal signal)",
