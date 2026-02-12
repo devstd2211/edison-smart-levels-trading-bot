@@ -54,7 +54,7 @@ describe('BollingerBandsAnalyzerNew - Functional: Squeeze Breakout Upward', () =
     // Squeeze breakout can generate various signals depending on final %B position
     expect(signal.direction).toBeDefined();
     expect(signal.confidence).toBeGreaterThan(0);
-    expect(signal.source).toBe('BOLLINGER_BANDS_ANALYZER');
+    expect(signal.source).toBe('BOLLINGER_BANDS_ANALYZER_NEW');
   });
 
   it('should show increasing confidence as price extends from lower band', () => {

@@ -427,8 +427,16 @@
     },
     "DELTA_ANALYZER_NEW": {
       "_comment": "Delta analyzer: buy volume vs sell volume ratio",
-      "minDeltaPercent": 10,
-      "maxConfidence": 0.9
+      "minCandlesForDelta": 15,
+      "_minCandlesForDelta_comment": "Min candles required (default: 15, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence before delta multiplier (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Delta confidence multiplier (default: 0.85, range: 0.5-1.0)",
+      "lookbackWindow": 10,
+      "_lookbackWindow_comment": "Number of recent candles for delta calculation (default: 10, range: 5-30)"
     },
     "TICK_DELTA_ANALYZER_NEW": {
       "_comment": "Tick delta analyzer: individual trade direction flow",
