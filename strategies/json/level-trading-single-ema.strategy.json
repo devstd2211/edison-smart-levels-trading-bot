@@ -22,8 +22,11 @@
   ],
   "indicators": {
     "ema": {
+      "_comment": "EMA indicator periods (Session 105+ calibration: now configurable)",
       "fastPeriod": 12,
+      "_fastPeriod_comment": "Fast EMA period (default: 9, common: 9, 12, 21)",
       "slowPeriod": 26,
+      "_slowPeriod_comment": "Slow EMA period (default: 21, common: 21, 26, 50)",
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5
     },
@@ -51,7 +54,12 @@
     "EMA_ANALYZER_NEW": {
       "baseConfidence": 0.8,
       "strengthMultiplier": 1.5,
-      "maxConfidence": 1.0
+      "maxConfidence": 1.0,
+      "_comment": "Calibration parameters (Session 105+): minCandlesForEma, minimumGapPercent",
+      "minCandlesForEma": 50,
+      "_minCandlesForEma_comment": "Minimum candles needed for EMA calculation (default: 50, range: 20-200)",
+      "minimumGapPercent": 0.01,
+      "_minimumGapPercent_comment": "Minimum EMA gap % to register signal (default: 0.01 = 0.01%, range: 0.005-0.05)"
     }
   },
   "filters": {
