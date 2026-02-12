@@ -27,11 +27,13 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS (Configurable Defaults)
 // ============================================================================
 
-const MIN_CANDLES_FOR_EMA = 50; // Need at least slow period + buffer
-const MINIMUM_EMA_GAP_PERCENT = 0.01; // 0.01% minimum gap to register signal
+const DEFAULT_MIN_CANDLES_FOR_EMA = 50; // Need at least slow period + buffer
+const DEFAULT_MINIMUM_GAP_PERCENT = 0.01; // 0.01% minimum gap to register signal
+const DEFAULT_FAST_PERIOD = 9;
+const DEFAULT_SLOW_PERIOD = 21;
 
 // ============================================================================
 // EMA ANALYZER - NEW VERSION
@@ -45,6 +47,10 @@ export class EmaAnalyzerNew implements IAnalyzer {
   private readonly strengthMultiplier: number;
   private readonly minConfidence: number;
   private readonly maxConfidence: number;
+  private readonly minCandlesForEma: number;
+  private readonly minimumGapPercent: number;
+  private readonly fastPeriod: number;
+  private readonly slowPeriod: number;
 
   private indicator: EMAIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
@@ -54,12 +60,17 @@ export class EmaAnalyzerNew implements IAnalyzer {
    * Constructor with ConfigNew
    * STRICT - Throws if config is invalid
    *
-   * @param config Analyzer configuration
+   * @param config Analyzer configuration with optional strategic params
    * @param logger Logger service (optional)
    * @param indicatorDI EMA indicator instance via DI (optional, will create if not provided)
    */
   constructor(
-    config: EmaAnalyzerConfigNew,
+    config: EmaAnalyzerConfigNew & {
+      minCandlesForEma?: number;
+      minimumGapPercent?: number;
+      fastPeriod?: number;
+      slowPeriod?: number;
+    },
     private logger?: LoggerService,
     indicatorDI?: IIndicator | null,
   ) {
@@ -109,24 +120,26 @@ export class EmaAnalyzerNew implements IAnalyzer {
     this.minConfidence = config.minConfidence;
     this.maxConfidence = config.maxConfidence;
 
+    // Extract strategic constants from config (with defaults)
+    this.minCandlesForEma = config.minCandlesForEma ?? DEFAULT_MIN_CANDLES_FOR_EMA;
+    this.minimumGapPercent = config.minimumGapPercent ?? DEFAULT_MINIMUM_GAP_PERCENT;
+    this.fastPeriod = config.fastPeriod ?? DEFAULT_FAST_PERIOD;
+    this.slowPeriod = config.slowPeriod ?? DEFAULT_SLOW_PERIOD;
+
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof EMAIndicatorNew) {
       this.indicator = indicatorDI;
       this.logger?.info('[EMA_ANALYZER] Using injected EMA indicator via DI');
     } else {
-      // Fallback: Create EMA indicator with periods from config (or defaults if not provided)
-      const fastPeriod = (config as any).fastPeriod || 9;
-      const slowPeriod = (config as any).slowPeriod || 21;
-
       this.logger?.info('[EMA_ANALYZER] Creating new EMA indicator with periods', {
-        fastPeriod,
-        slowPeriod,
+        fastPeriod: this.fastPeriod,
+        slowPeriod: this.slowPeriod,
       });
 
       this.indicator = new EMAIndicatorNew({
         enabled: true,
-        fastPeriod,
-        slowPeriod,
+        fastPeriod: this.fastPeriod,
+        slowPeriod: this.slowPeriod,
         baseConfidence: 0,
         strengthMultiplier: 0,
       });
@@ -149,9 +162,9 @@ export class EmaAnalyzerNew implements IAnalyzer {
       throw new Error('[EMA_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_EMA) {
+    if (candles.length < this.minCandlesForEma) {
       throw new Error(
-        `[EMA_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_EMA}, got ${candles.length}`,
+        `[EMA_ANALYZER] Not enough candles. Need ${this.minCandlesForEma}, got ${candles.length}`,
       );
     }
 
@@ -210,7 +223,7 @@ export class EmaAnalyzerNew implements IAnalyzer {
     const gapPercent = Math.abs(gap / slowEma);
 
     // Ignore very small gaps (noise)
-    if (gapPercent < MINIMUM_EMA_GAP_PERCENT) {
+    if (gapPercent < this.minimumGapPercent) {
       return SignalDirectionEnum.HOLD;
     }
 
@@ -255,7 +268,7 @@ export class EmaAnalyzerNew implements IAnalyzer {
     fast: number;
     slow: number;
   } {
-    if (!Array.isArray(candles) || candles.length < MIN_CANDLES_FOR_EMA) {
+    if (!Array.isArray(candles) || candles.length < this.minCandlesForEma) {
       throw new Error(`[EMA_ANALYZER] Not enough candles for EMA calculation`);
     }
 
@@ -331,7 +344,7 @@ export class EmaAnalyzerNew implements IAnalyzer {
    * @returns true if enough candles, false otherwise
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_EMA;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForEma;
   }
 
   /**
@@ -339,7 +352,7 @@ export class EmaAnalyzerNew implements IAnalyzer {
    * @returns Min candle count needed
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_EMA;
+    return this.minCandlesForEma;
   }
 
   /**
