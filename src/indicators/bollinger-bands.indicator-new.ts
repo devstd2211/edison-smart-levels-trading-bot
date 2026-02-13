@@ -32,12 +32,6 @@ import { validateIndicatorConfig } from '../types/config-new.types';
 import { IndicatorType } from '../types/indicator-type.enum';
 
 // ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const MIN_CANDLES_FOR_BOLLINGER = 1; // Need at least 1 candle
-
-// ============================================================================
 // BOLLINGER BANDS CALCULATOR - NEW VERSION
 // ============================================================================
 
