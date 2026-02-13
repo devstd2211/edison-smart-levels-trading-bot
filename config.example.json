@@ -381,9 +381,19 @@
       "_strengthMultiplier_comment": "Strength multiplier for price breaks (default: 10, range: 5-20)"
     },
     "LIQUIDITY_SWEEP_ANALYZER_NEW": {
-      "_comment": "Liquidity sweep analyzer: high volume penetration",
-      "minVolumeMultiplier": 1.5,
-      "maxConfidence": 0.9
+      "_comment": "Liquidity sweep analyzer: detects stop-loss hunting patterns",
+      "minCandlesForLiquiditySweep": 25,
+      "_minCandlesForLiquiditySweep_comment": "Min candles required (default: 25, range: 15-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence cap (default: 0.95, range: 0.5-1.0)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence for sweeps (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Confidence boost multiplier (default: 0.85, range: 0.5-1.0)",
+      "lookbackWindow": 20,
+      "_lookbackWindow_comment": "Candles to check for highs/lows (default: 20, range: 10-50)",
+      "sweepThreshold": 0.002,
+      "_sweepThreshold_comment": "Price recovery threshold % (default: 0.002 = 0.2%, range: 0.001-0.01)"
     },
     "LIQUIDITY_ZONE_ANALYZER_NEW": {
       "_comment": "Liquidity zone analyzer: price trades near zones",
