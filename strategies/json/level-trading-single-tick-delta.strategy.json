@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single Tick Delta Analyzer",
+    "version": "1.0.0",
+    "description": "Minimal strategy for calibration testing - TICK_DELTA_ANALYZER_NEW only",
+    "author": "Edison Trading Bot - Calibration",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["calibration", "tick-delta", "single-analyzer"]
+  },
+  "entryThreshold": 60,
+  "analyzers": [
+    {
+      "name": "TICK_DELTA_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.10,
+      "maxConfidence": 0.95
+    }
+  ],
+  "indicators": {},
+  "analyzerDefaults": {
+    "TICK_DELTA_ANALYZER_NEW": {
+      "minCandlesForTickDelta": 15,
+      "_minCandlesForTickDelta_comment": "Min candles for tick delta analysis (default: 15, range: 10-30)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence for signals (default: 0.95, range: 0.5-1.0)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence value (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Multiplier for confidence calculation (default: 0.85, range: 0.5-1.0)",
+      "lookbackWindow": 10,
+      "_lookbackWindow_comment": "Number of recent candles for delta calculation (default: 10, range: 5-20)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 1,
+      "minSignalsForShort": 1,
+      "longPenalty": 0.80,
+      "shortPenalty": 0.85
+    },
+    "flatMarket": { "enabled": false },
+    "fundingRate": { "enabled": false },
+    "btcCorrelation": { "enabled": false },
+    "trendAlignment": { "enabled": false },
+    "postTpFilter": { "enabled": false },
+    "volatilityRegime": { "enabled": false },
+    "neutralTrendStrength": { "enabled": false },
+    "timeBasedFilter": { "enabled": false }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.25
+    },
+    "takeProfits": [
+      { "level": 1, "percent": 0.5, "sizePercent": 50 },
+      { "level": 2, "percent": 1.0, "sizePercent": 35 },
+      { "level": 3, "percent": 1.5, "sizePercent": 15 }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 0.3,
+      "activationLevel": 0.8
+    }
+  },
+  "notes": "Calibration strategy - TICK_DELTA_ANALYZER_NEW only. Analyzes tick-level price movements for momentum signals."
+}
