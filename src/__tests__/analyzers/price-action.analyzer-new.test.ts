@@ -85,7 +85,7 @@ describe('PriceActionAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 20 }, (_, i) => 100 + i * 0.5));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('PRICE_ACTION_ANALYZER');
+    expect(signal.source).toBe('PRICE_ACTION_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
     expect(signal.weight).toBe(0.6);
   });
