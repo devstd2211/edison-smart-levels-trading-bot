@@ -447,9 +447,17 @@
       "maxConfidence": 0.9
     },
     "MICRO_WALL_ANALYZER_NEW": {
-      "_comment": "Micro wall analyzer: small order clusters at price",
-      "minWallSizePercent": 0.5,
-      "maxConfidence": 0.85
+      "_comment": "Micro wall analyzer: detects volume walls (Session 106 calibration)",
+      "minCandlesForMicroWall": 20,
+      "_minCandlesForMicroWall_comment": "Min candles required (default: 20, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence cap (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence level (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Confidence multiplier based on wall strength (default: 0.85, range: 0.5-1.0)",
+      "recentWindow": 5,
+      "_recentWindow_comment": "Number of recent candles to check for volume wall (default: 5, range: 3-10)"
     },
     "DELTA_ANALYZER_NEW": {
       "_comment": "Delta analyzer: buy volume vs sell volume ratio",

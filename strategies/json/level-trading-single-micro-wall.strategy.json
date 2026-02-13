@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single MICRO_WALL Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify MICRO_WALL calibration. Entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "micro-wall-only", "calibration"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "MICRO_WALL_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "MICRO_WALL_ANALYZER_NEW": {
+      "_comment": "Calibration parameters (Session 106): All 5 constants now configurable",
+      "minCandlesForMicroWall": 20,
+      "_minCandlesForMicroWall_comment": "Min candles required (default: 20, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence cap (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence level (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Confidence multiplier based on wall strength (default: 0.85, range: 0.5-1.0)",
+      "recentWindow": 5,
+      "_recentWindow_comment": "Number of recent candles to check for volume wall (default: 5, range: 3-10)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "DEBUG: Single MICRO_WALL analyzer for calibration validation. All filters disabled."
+}

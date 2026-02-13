@@ -49,7 +49,7 @@ describe('MicroWallAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 30 }, (_, i) => 100 + i * 0.3));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('MICRO_WALL_ANALYZER');
+    expect(signal.source).toBe('MICRO_WALL_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
