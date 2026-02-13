@@ -12,15 +12,25 @@ import type { LoggerService } from '../services/logger.service';
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_TREND_CONFLICT = 20;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
+const DEFAULT_MIN_CANDLES_FOR_TREND_CONFLICT = 20;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_CONFLICT_CONFIDENCE = 30;
+const DEFAULT_NO_CONFLICT_CONFIDENCE = 10;
+const DEFAULT_RECENT_LOOKBACK_WINDOW = 20;
+const DEFAULT_SHORT_MA_PERIOD = 5;
+const DEFAULT_CONFLICT_STRENGTH = 0.5;
 
 export class TrendConflictAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = MAX_CONFIDENCE;
+  private readonly minCandlesForTrendConflict: number;
+  private readonly maxConfidence: number;
+  private readonly conflictConfidence: number;
+  private readonly noConflictConfidence: number;
+  private readonly recentLookbackWindow: number;
+  private readonly shortMaPeriod: number;
+  private readonly conflictStrength: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
@@ -32,12 +42,19 @@ export class TrendConflictAnalyzerNew implements IAnalyzer {
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandlesForTrendConflict = config.minCandlesForTrendConflict ?? DEFAULT_MIN_CANDLES_FOR_TREND_CONFLICT;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.conflictConfidence = config.conflictConfidence ?? DEFAULT_CONFLICT_CONFIDENCE;
+    this.noConflictConfidence = config.noConflictConfidence ?? DEFAULT_NO_CONFLICT_CONFIDENCE;
+    this.recentLookbackWindow = config.recentLookbackWindow ?? DEFAULT_RECENT_LOOKBACK_WINDOW;
+    this.shortMaPeriod = config.shortMaPeriod ?? DEFAULT_SHORT_MA_PERIOD;
+    this.conflictStrength = config.conflictStrength ?? DEFAULT_CONFLICT_STRENGTH;
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[TREND_CONFLICT] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[TREND_CONFLICT] Invalid candles input (must be array)');
-    if (candles.length < MIN_CANDLES_FOR_TREND_CONFLICT) throw new Error(`[TREND_CONFLICT] Not enough candles. Need ${MIN_CANDLES_FOR_TREND_CONFLICT}, got ${candles.length}`);
+    if (candles.length < this.minCandlesForTrendConflict) throw new Error(`[TREND_CONFLICT] Not enough candles. Need ${this.minCandlesForTrendConflict}, got ${candles.length}`);
 
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].close !== 'number') throw new Error(`[TREND_CONFLICT] Invalid candle at index ${i}`);
@@ -45,25 +62,25 @@ export class TrendConflictAnalyzerNew implements IAnalyzer {
 
     const conflict = this.detectConflict(candles);
     const direction = SignalDirectionEnum.HOLD;
-    const confidence = conflict.hasConflict ? 30 : 10;
+    const confidence = conflict.hasConflict ? this.conflictConfidence : this.noConflictConfidence;
 
-    const signal: AnalyzerSignal = { source: 'TREND_CONFLICT_ANALYZER', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
+    const signal: AnalyzerSignal = { source: 'TREND_CONFLICT_ANALYZER_NEW', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
     this.lastSignal = signal;
     this.initialized = true;
     return signal;
   }
 
   private detectConflict(candles: Candle[]): { hasConflict: boolean; strength: number } {
-    const recent = candles.slice(-20);
+    const recent = candles.slice(-this.recentLookbackWindow);
     const closes = recent.map(c => c.close);
-    
-    const shortMA = closes.slice(-5).reduce((a, b) => a + b) / 5;
+
+    const shortMA = closes.slice(-this.shortMaPeriod).reduce((a, b) => a + b) / this.shortMaPeriod;
     const longMA = closes.reduce((a, b) => a + b) / closes.length;
-    
-    const hasConflict = (closes[closes.length - 1] > shortMA && longMA < shortMA) || 
+
+    const hasConflict = (closes[closes.length - 1] > shortMA && longMA < shortMA) ||
                         (closes[closes.length - 1] < shortMA && longMA > shortMA);
 
-    return { hasConflict, strength: hasConflict ? 0.5 : 0 };
+    return { hasConflict, strength: hasConflict ? this.conflictStrength : 0 };
   }
 
   /**
@@ -77,14 +94,14 @@ export class TrendConflictAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_TREND_CONFLICT;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForTrendConflict;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_TREND_CONFLICT;
+    return this.minCandlesForTrendConflict;
   }
 
   /**

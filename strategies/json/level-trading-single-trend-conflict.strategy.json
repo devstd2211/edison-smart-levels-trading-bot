@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single Trend Conflict Analyzer",
+    "version": "1.0.0",
+    "description": "Minimal strategy for calibration testing - TREND_CONFLICT_ANALYZER_NEW only",
+    "author": "Edison Trading Bot - Calibration",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["calibration", "trend-conflict", "single-analyzer"]
+  },
+  "entryThreshold": 5,
+  "analyzers": [
+    {
+      "name": "TREND_CONFLICT_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.05,
+      "maxConfidence": 0.95
+    }
+  ],
+  "indicators": {},
+  "analyzerDefaults": {
+    "TREND_CONFLICT_ANALYZER_NEW": {
+      "minCandlesForTrendConflict": 20,
+      "_minCandlesForTrendConflict_comment": "Minimum candles required (default: 20, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence value (default: 0.95, range: 0.5-1.0)",
+      "conflictConfidence": 30,
+      "_conflictConfidence_comment": "Confidence when conflict detected (default: 30, range: 10-50)",
+      "noConflictConfidence": 10,
+      "_noConflictConfidence_comment": "Confidence when no conflict (default: 10, range: 5-30)",
+      "recentLookbackWindow": 20,
+      "_recentLookbackWindow_comment": "Recent candles lookback window (default: 20, range: 10-50)",
+      "shortMaPeriod": 5,
+      "_shortMaPeriod_comment": "Short MA period (default: 5, range: 3-20)",
+      "conflictStrength": 0.5,
+      "_conflictStrength_comment": "Conflict strength value (default: 0.5, range: 0.3-1.0)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 1,
+      "minSignalsForShort": 1,
+      "longPenalty": 0.80,
+      "shortPenalty": 0.85
+    },
+    "flatMarket": { "enabled": false },
+    "fundingRate": { "enabled": false },
+    "btcCorrelation": { "enabled": false },
+    "trendAlignment": { "enabled": false },
+    "postTpFilter": { "enabled": false },
+    "volatilityRegime": { "enabled": false },
+    "neutralTrendStrength": { "enabled": false },
+    "timeBasedFilter": { "enabled": false }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.25
+    },
+    "takeProfits": [
+      { "level": 1, "percent": 0.5, "sizePercent": 50 },
+      { "level": 2, "percent": 1.0, "sizePercent": 35 },
+      { "level": 3, "percent": 1.5, "sizePercent": 15 }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 0.3,
+      "activationLevel": 0.8
+    }
+  },
+  "notes": "Calibration strategy - TREND_CONFLICT_ANALYZER_NEW only. Detects conflicts between short and long MAs."
+}

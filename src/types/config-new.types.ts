@@ -328,7 +328,13 @@ export interface SwingAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 }
 
 export interface TrendConflictAnalyzerConfigNew extends BaseAnalyzerConfigNew {
-  // No additional params required
+  minCandlesForTrendConflict?: number;
+  maxConfidence?: number;
+  conflictConfidence?: number;
+  noConflictConfidence?: number;
+  recentLookbackWindow?: number;
+  shortMaPeriod?: number;
+  conflictStrength?: number;
 }
 
 // ===== LEVEL ANALYSIS (2) =====

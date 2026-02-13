@@ -595,8 +595,20 @@
     },
     "TREND_CONFLICT_ANALYZER_NEW": {
       "_comment": "Trend conflict analyzer: conflicting signals detection",
-      "minConflictPercent": 10,
-      "maxConfidence": 0.8
+      "minCandlesForTrendConflict": 20,
+      "_minCandlesForTrendConflict_comment": "Minimum candles required (default: 20, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence value (default: 0.95, range: 0.5-1.0)",
+      "conflictConfidence": 30,
+      "_conflictConfidence_comment": "Confidence when conflict detected (default: 30, range: 10-50)",
+      "noConflictConfidence": 10,
+      "_noConflictConfidence_comment": "Confidence when no conflict (default: 10, range: 5-30)",
+      "recentLookbackWindow": 20,
+      "_recentLookbackWindow_comment": "Recent candles lookback window (default: 20, range: 10-50)",
+      "shortMaPeriod": 5,
+      "_shortMaPeriod_comment": "Short MA period (default: 5, range: 3-20)",
+      "conflictStrength": 0.5,
+      "_conflictStrength_comment": "Conflict strength value (default: 0.5, range: 0.3-1.0)"
     },
     "VOLATILITY_SPIKE_ANALYZER_NEW": {
       "_comment": "Volatility spike analyzer: sudden volatility increase",
