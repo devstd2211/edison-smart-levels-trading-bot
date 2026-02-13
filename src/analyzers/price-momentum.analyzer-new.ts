@@ -21,14 +21,16 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS (DEFAULTS)
 // ============================================================================
 
-const MIN_CANDLES_FOR_MOMENTUM = 20;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
-const MOMENTUM_LOOKBACK = 5; // Look back N candles for momentum
-const ACCELERATION_LOOKBACK = 3; // Look back for acceleration
+const DEFAULT_MIN_CANDLES_FOR_MOMENTUM = 20;
+const DEFAULT_MIN_CONFIDENCE = 0.1;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_MOMENTUM_LOOKBACK = 5; // Look back N candles for momentum
+const DEFAULT_ACCELERATION_LOOKBACK = 3; // Look back for acceleration
+const DEFAULT_NEUTRAL_THRESHOLD = 0.1; // Price change % threshold for neutral classification
+const DEFAULT_STRONG_MOMENTUM_THRESHOLD = 0.5; // Price change % threshold for strong momentum
 
 // ============================================================================
 // PRICE MOMENTUM ANALYZER - NEW VERSION
@@ -40,6 +42,11 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
   private readonly priority: number;
   private readonly minConfidence: number;
   private readonly maxConfidence: number;
+  private readonly minCandlesForMomentum: number;
+  private readonly momentumLookback: number;
+  private readonly accelerationLookback: number;
+  private readonly neutralThreshold: number;
+  private readonly strongMomentumThreshold: number;
 
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -49,7 +56,13 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
    * STRICT - Throws if config is invalid
    */
   constructor(
-    config: PriceMomentumAnalyzerConfigNew,
+    config: PriceMomentumAnalyzerConfigNew & {
+      minCandlesForMomentum?: number;
+      momentumLookback?: number;
+      accelerationLookback?: number;
+      neutralThreshold?: number;
+      strongMomentumThreshold?: number;
+    },
     private logger?: LoggerService,
   ) {
     // Validate analyzer config
@@ -74,6 +87,11 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.minConfidence = config.minConfidence;
     this.maxConfidence = config.maxConfidence;
+    this.minCandlesForMomentum = config.minCandlesForMomentum ?? DEFAULT_MIN_CANDLES_FOR_MOMENTUM;
+    this.momentumLookback = config.momentumLookback ?? DEFAULT_MOMENTUM_LOOKBACK;
+    this.accelerationLookback = config.accelerationLookback ?? DEFAULT_ACCELERATION_LOOKBACK;
+    this.neutralThreshold = config.neutralThreshold ?? DEFAULT_NEUTRAL_THRESHOLD;
+    this.strongMomentumThreshold = config.strongMomentumThreshold ?? DEFAULT_STRONG_MOMENTUM_THRESHOLD;
   }
 
   /**
@@ -92,9 +110,9 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
       throw new Error('[PRICE_MOMENTUM_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_MOMENTUM) {
+    if (candles.length < this.minCandlesForMomentum) {
       throw new Error(
-        `[PRICE_MOMENTUM_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_MOMENTUM}, got ${candles.length}`,
+        `[PRICE_MOMENTUM_ANALYZER] Not enough candles. Need ${this.minCandlesForMomentum}, got ${candles.length}`,
       );
     }
 
@@ -116,7 +134,7 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'PRICE_MOMENTUM_ANALYZER',
+      source: 'PRICE_MOMENTUM_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -150,7 +168,7 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
     type: 'STRONG_UP' | 'WEAK_UP' | 'STRONG_DOWN' | 'WEAK_DOWN' | 'NEUTRAL';
   } {
     // Calculate recent momentum (last N candles)
-    const lookback = Math.min(MOMENTUM_LOOKBACK, candles.length - 1);
+    const lookback = Math.min(this.momentumLookback, candles.length - 1);
     const recentCandles = candles.slice(-lookback - 1);
 
     // Calculate price change
@@ -160,7 +178,7 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
     const priceChangePercent = (priceChange / startPrice) * 100;
 
     // Calculate acceleration (momentum change)
-    const accelLookback = Math.min(ACCELERATION_LOOKBACK, candles.length - 1);
+    const accelLookback = Math.min(this.accelerationLookback, candles.length - 1);
     const accelCandles = candles.slice(-accelLookback - 1);
 
     const accelStart = accelCandles[0].close;
@@ -170,11 +188,11 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
 
     // Classify momentum type
     let type: 'STRONG_UP' | 'WEAK_UP' | 'STRONG_DOWN' | 'WEAK_DOWN' | 'NEUTRAL';
-    if (Math.abs(priceChangePercent) < 0.1) {
+    if (Math.abs(priceChangePercent) < this.neutralThreshold) {
       type = 'NEUTRAL';
-    } else if (priceChangePercent > 0.5) {
+    } else if (priceChangePercent > this.strongMomentumThreshold) {
       type = accelerationPercent > priceChangePercent * 0.5 ? 'STRONG_UP' : 'WEAK_UP';
-    } else if (priceChangePercent < -0.5) {
+    } else if (priceChangePercent < -this.strongMomentumThreshold) {
       type = accelerationPercent < priceChangePercent * 0.5 ? 'STRONG_DOWN' : 'WEAK_DOWN';
     } else {
       type = priceChangePercent > 0 ? 'WEAK_UP' : 'WEAK_DOWN';
@@ -232,11 +250,11 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
         break;
       case 'NEUTRAL':
       default:
-        confidence = MIN_CONFIDENCE;
+        confidence = this.minConfidence;
         break;
     }
 
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
     return Math.round(confidence * 100);
   }
 
@@ -295,14 +313,14 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_MOMENTUM;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForMomentum;
   }
 
   /**
    * Get minimum candles required for analysis
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_MOMENTUM;
+    return this.minCandlesForMomentum;
   }
 
   /**

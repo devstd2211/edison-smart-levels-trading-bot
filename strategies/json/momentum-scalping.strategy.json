@@ -37,8 +37,8 @@
       "enabled": true,
       "weight": 0.25,
       "priority": 3,
-      "minConfidence": 45,
-      "maxConfidence": 100
+      "minConfidence": 0.45,
+      "maxConfidence": 1.0
     },
     {
       "name": "VOLUME_ANALYZER_NEW",
