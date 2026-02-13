@@ -26,12 +26,14 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS (Defaults - configurable via constructor)
 // ============================================================================
 
-const MIN_CANDLES_FOR_RSI = 50; // Need at least period + buffer
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const NEUTRAL_CONFIDENCE_MULTIPLIER = 0.3; // Neutral zone gets 30% of max confidence
+const DEFAULT_MIN_CANDLES_FOR_RSI = 50; // Need at least period + buffer
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_NEUTRAL_CONFIDENCE_MULTIPLIER = 0.3; // Neutral zone gets 30% of max confidence
+const DEFAULT_EXTREME_LOW = 10; // Extreme RSI low threshold
+const DEFAULT_EXTREME_HIGH = 90; // Extreme RSI high threshold
 
 // ============================================================================
 // RSI ANALYZER - NEW VERSION
@@ -46,6 +48,13 @@ export class RsiAnalyzerNew implements IAnalyzer {
   private readonly overbought: number;
   private readonly maxConfidence: number;
 
+  // Configurable constants
+  private readonly minCandlesForRsi: number;
+  private readonly minConfidence: number;
+  private readonly neutralConfidenceMultiplier: number;
+  private readonly extremeLow: number;
+  private readonly extremeHigh: number;
+
   private indicator: RSIIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -59,7 +68,13 @@ export class RsiAnalyzerNew implements IAnalyzer {
    * @param indicatorDI RSI indicator instance via DI (optional, will create if not provided)
    */
   constructor(
-    config: RsiAnalyzerConfigNew,
+    config: RsiAnalyzerConfigNew & {
+      minCandlesForRsi?: number;
+      minConfidence?: number;
+      neutralConfidenceMultiplier?: number;
+      extremeLow?: number;
+      extremeHigh?: number;
+    },
     private logger?: LoggerService,
     indicatorDI?: IIndicator | null,
   ) {
@@ -97,6 +112,14 @@ export class RsiAnalyzerNew implements IAnalyzer {
     this.overbought = config.overbought;
     this.maxConfidence = config.maxConfidence;
 
+    // Extract configurable constants (with defaults)
+    this.minCandlesForRsi = config.minCandlesForRsi ?? DEFAULT_MIN_CANDLES_FOR_RSI;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.neutralConfidenceMultiplier =
+      config.neutralConfidenceMultiplier ?? DEFAULT_NEUTRAL_CONFIDENCE_MULTIPLIER;
+    this.extremeLow = config.extremeLow ?? DEFAULT_EXTREME_LOW;
+    this.extremeHigh = config.extremeHigh ?? DEFAULT_EXTREME_HIGH;
+
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof RSIIndicatorNew) {
       this.indicator = indicatorDI;
@@ -113,8 +136,8 @@ export class RsiAnalyzerNew implements IAnalyzer {
         oversold: this.oversold,
         overbought: this.overbought,
         extreme: {
-          low: 10,
-          high: 90,
+          low: this.extremeLow,
+          high: this.extremeHigh,
         },
         neutralZone: {
           min: this.oversold,
@@ -141,9 +164,9 @@ export class RsiAnalyzerNew implements IAnalyzer {
       throw new Error('[RSI_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_RSI) {
+    if (candles.length < this.minCandlesForRsi) {
       throw new Error(
-        `[RSI_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_RSI}, got ${candles.length}`,
+        `[RSI_ANALYZER] Not enough candles. Need ${this.minCandlesForRsi}, got ${candles.length}`,
       );
     }
 
@@ -165,7 +188,7 @@ export class RsiAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'RSI_ANALYZER',
+      source: 'RSI_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -227,11 +250,11 @@ export class RsiAnalyzerNew implements IAnalyzer {
       confidence = this.maxConfidence * overboughtStrength;
     } else {
       // Neutral zone: lower confidence
-      confidence = this.maxConfidence * NEUTRAL_CONFIDENCE_MULTIPLIER;
+      confidence = this.maxConfidence * this.neutralConfidenceMultiplier;
     }
 
     // Clamp to configured bounds
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(this.maxConfidence, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
 
     // Convert to 0-100 scale
     return Math.round(confidence * 100);
@@ -245,7 +268,7 @@ export class RsiAnalyzerNew implements IAnalyzer {
    * @throws {Error} If not enough candles
    */
   getRsiValue(candles: Candle[]): number {
-    if (!Array.isArray(candles) || candles.length < MIN_CANDLES_FOR_RSI) {
+    if (!Array.isArray(candles) || candles.length < this.minCandlesForRsi) {
       throw new Error(`[RSI_ANALYZER] Not enough candles for RSI calculation`);
     }
 
@@ -345,7 +368,7 @@ export class RsiAnalyzerNew implements IAnalyzer {
    * @returns true if enough candles, false otherwise
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_RSI;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForRsi;
   }
 
   /**
@@ -353,7 +376,7 @@ export class RsiAnalyzerNew implements IAnalyzer {
    * @returns Min candle count needed
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_RSI;
+    return this.minCandlesForRsi;
   }
 
   /**

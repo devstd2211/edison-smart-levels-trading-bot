@@ -175,7 +175,7 @@ describe('RsiAnalyzerNew - Signal Generation Tests', () => {
     const signal = analyzer.analyze(candles);
 
     expect(signal.direction).toBe(SignalDirection.LONG);
-    expect(signal.source).toBe('RSI_ANALYZER');
+    expect(signal.source).toBe('RSI_ANALYZER_NEW');
     expect(signal.weight).toBe(config.weight);
     expect(signal.priority).toBe(config.priority);
   });
@@ -190,7 +190,7 @@ describe('RsiAnalyzerNew - Signal Generation Tests', () => {
     const signal = analyzer.analyze(candles);
 
     expect(signal.direction).toBe(SignalDirection.SHORT);
-    expect(signal.source).toBe('RSI_ANALYZER');
+    expect(signal.source).toBe('RSI_ANALYZER_NEW');
   });
 
   it('should generate HOLD signal when RSI in neutral zone', () => {

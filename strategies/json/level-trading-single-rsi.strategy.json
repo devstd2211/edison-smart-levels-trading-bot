@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single RSI Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify RSI calibration. Entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "rsi-only", "calibration"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "RSI_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "maxConfidence": 0.9
+    }
+  ],
+  "indicators": {
+    "rsi": {
+      "enabled": true,
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 10,
+        "high": 90
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "RSI_ANALYZER_NEW": {
+      "_comment": "Calibration parameters (Session 106): All 5 constants now configurable",
+      "minCandlesForRsi": 50,
+      "_minCandlesForRsi_comment": "Min candles for RSI calculation (default: 50, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Min confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "neutralConfidenceMultiplier": 0.3,
+      "_neutralConfidenceMultiplier_comment": "Confidence multiplier for neutral zone (default: 0.3 = 30%, range: 0.1-0.5)",
+      "extremeLow": 10,
+      "_extremeLow_comment": "Extreme RSI low threshold (default: 10, range: 0-20)",
+      "extremeHigh": 90,
+      "_extremeHigh_comment": "Extreme RSI high threshold (default: 90, range: 80-100)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "DEBUG: Single RSI analyzer for calibration validation. All filters disabled."
+}
