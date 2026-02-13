@@ -5,29 +5,68 @@ import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_ORDER_BLOCK = 25;
+const DEFAULT_MIN_CANDLES_FOR_ORDER_BLOCK = 25;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_BASE_CONFIDENCE = 0.15;
+const DEFAULT_CONFIDENCE_MULTIPLIER = 0.8;
+const DEFAULT_RECENT_WINDOW = 10;
+const DEFAULT_WICK_RATIO_THRESHOLD = 1.5;
+const DEFAULT_MAX_DISTANCE_THRESHOLD = 0.05;
+const DEFAULT_MAX_REJECTION_COUNT = 5;
+const DEFAULT_DISTANCE_PENALTY_MULTIPLIER = 0.5;
+const DEFAULT_MAX_DISTANCE_FOR_RELEVANCE = 0.1;
 
 export class OrderBlockAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = 0.95;
+  private readonly maxConfidence: number;
+  private readonly baseConfidence: number;
+  private readonly confidenceMultiplier: number;
+  private readonly recentWindow: number;
+  private readonly wickRatioThreshold: number;
+  private readonly maxDistanceThreshold: number;
+  private readonly maxRejectionCount: number;
+  private readonly distancePenaltyMultiplier: number;
+  private readonly maxDistanceForRelevance: number;
+  private readonly minCandlesForOrderBlock: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
-  constructor(config: BreakoutAnalyzerConfigNew, private logger?: any) {
+  constructor(config: BreakoutAnalyzerConfigNew & {
+    minCandlesForOrderBlock?: number;
+    maxConfidence?: number;
+    baseConfidence?: number;
+    confidenceMultiplier?: number;
+    recentWindow?: number;
+    wickRatioThreshold?: number;
+    maxDistanceThreshold?: number;
+    maxRejectionCount?: number;
+    distancePenaltyMultiplier?: number;
+    maxDistanceForRelevance?: number;
+  }, private logger?: any) {
     if (typeof config.enabled !== 'boolean') throw new Error('[ORDER_BLOCK] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[ORDER_BLOCK] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[ORDER_BLOCK] Missing or invalid: priority');
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandlesForOrderBlock = config.minCandlesForOrderBlock ?? DEFAULT_MIN_CANDLES_FOR_ORDER_BLOCK;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.baseConfidence = config.baseConfidence ?? DEFAULT_BASE_CONFIDENCE;
+    this.confidenceMultiplier = config.confidenceMultiplier ?? DEFAULT_CONFIDENCE_MULTIPLIER;
+    this.recentWindow = config.recentWindow ?? DEFAULT_RECENT_WINDOW;
+    this.wickRatioThreshold = config.wickRatioThreshold ?? DEFAULT_WICK_RATIO_THRESHOLD;
+    this.maxDistanceThreshold = config.maxDistanceThreshold ?? DEFAULT_MAX_DISTANCE_THRESHOLD;
+    this.maxRejectionCount = config.maxRejectionCount ?? DEFAULT_MAX_REJECTION_COUNT;
+    this.distancePenaltyMultiplier = config.distancePenaltyMultiplier ?? DEFAULT_DISTANCE_PENALTY_MULTIPLIER;
+    this.maxDistanceForRelevance = config.maxDistanceForRelevance ?? DEFAULT_MAX_DISTANCE_FOR_RELEVANCE;
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[ORDER_BLOCK] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[ORDER_BLOCK] Invalid candles input');
-    if (candles.length < MIN_CANDLES_FOR_ORDER_BLOCK) throw new Error('[ORDER_BLOCK] Not enough candles');
+    if (candles.length < this.minCandlesForOrderBlock) throw new Error('[ORDER_BLOCK] Not enough candles');
 
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].close !== 'number') {
@@ -40,7 +79,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
     // FIX #1: Only generate signal if block is relevant (close to current price)
     if (block.type === 'NONE' || !block.isRelevant) {
       const signal: AnalyzerSignal = {
-        source: 'ORDER_BLOCK_ANALYZER',
+        source: 'ORDER_BLOCK_ANALYZER_NEW',
         direction: SignalDirectionEnum.HOLD,
         confidence: 0,
         weight: this.weight,
@@ -58,29 +97,29 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
     /**
      * CONFIDENCE SCORING: Evidence-based calculation for Order Blocks
      *
-     * Why 0.15 baseline + 0.8 multiplier?
-     * - 0.15 baseline (15%): Even with low strength, we detected a rejection pattern
-     *   (wick ratio >= 1.5x body) which has meaning
-     * - 0.8 multiplier: Maximum possible is 95% (Bayesian skepticism)
+     * Why baseline + multiplier?
+     * - Baseline: Even with low strength, we detected a rejection pattern
+     *   (wick ratio >= threshold) which has meaning
+     * - Multiplier: Maximum possible is maxConfidence (Bayesian skepticism)
      *
-     * Range: [15%, 95%]
-     * - strength=0: confidence = 15% (block detected but very weak)
-     * - strength=1: confidence = 95% (multiple strong rejections at same level, price near block)
+     * Range: [baseline%, maxConfidence%]
+     * - strength=0: confidence = baseline (block detected but very weak)
+     * - strength=1: confidence = maxConfidence (multiple strong rejections at same level, price near block)
      *
      * Why different from LiquidityZone?
      * - Order blocks require explicit wick rejection (higher bar)
-     * - Start at 15% instead of 25% (harder to confirm)
-     * - But when strong, reach same 95% max (both analyzers equal weight)
+     * - Start at lower baseline (harder to confirm)
+     * - But when strong, reach same maxConfidence (both analyzers equal weight)
      *
      * Applied because:
      * ✓ Reflects SMC theory: rejections are meaningful pattern
      * ✓ Distance penalty already applied in strength calculation
      * ✓ Prevents overconfidence in noisy wicks
      */
-    const confidence = Math.round((0.15 + block.strength * 0.8) * 100);
+    const confidence = Math.round((this.baseConfidence + block.strength * this.confidenceMultiplier) * 100);
 
     const signal: AnalyzerSignal = {
-      source: 'ORDER_BLOCK_ANALYZER',
+      source: 'ORDER_BLOCK_ANALYZER_NEW',
       direction,
       confidence: Math.max(0, Math.min(100, confidence)),
       weight: this.weight,
@@ -115,7 +154,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
     distance?: number;
     isRelevant: boolean;
   } {
-    const recent = candles.slice(-10);
+    const recent = candles.slice(-this.recentWindow);
     const lastCandle = candles[candles.length - 1];
 
     if (recent.length < 3) {
@@ -137,7 +176,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
       };
     };
 
-    // FIX #4: Find rejections (wick > 1.5x body)
+    // FIX #4: Find rejections (wick > threshold * body)
     // BEARISH rejection: upper wick (price went up, got rejected)
     const bearishRejections = recent
       .map((c, i) => {
@@ -148,7 +187,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
           level: c.high, // Top of rejection wick
           wickRatio: wick.upper,
           body: wick.body,
-          isRejection: wick.upper >= 1.5 && wick.body > 0,
+          isRejection: wick.upper >= this.wickRatioThreshold && wick.body > 0,
         };
       })
       .filter((x) => x.isRejection);
@@ -163,7 +202,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
           level: c.low, // Bottom of rejection wick
           wickRatio: wick.lower,
           body: wick.body,
-          isRejection: wick.lower >= 1.5 && wick.body > 0,
+          isRejection: wick.lower >= this.wickRatioThreshold && wick.body > 0,
         };
       })
       .filter((x) => x.isRejection);
@@ -221,25 +260,23 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
     // Strength = f(rejectionCount, distance)
     // More rejections = stronger
     // Closer distance = stronger
-    const maxDistanceThreshold = 0.05; // 5% distance = full strength
-    const maxRejectionCount = 5; // 5+ rejections = max strength
 
     // Distance factor: 0 at block, 1 when too far
-    const distanceFactor = Math.min(1, bestBlock.distance / maxDistanceThreshold);
+    const distanceFactor = Math.min(1, bestBlock.distance / this.maxDistanceThreshold);
 
     // Rejection factor: 0 with no rejections, 1 with many
-    const rejectionFactor = Math.min(1, bestBlock.rejections.length / maxRejectionCount);
+    const rejectionFactor = Math.min(1, bestBlock.rejections.length / this.maxRejectionCount);
 
     // Combined strength: both matter equally
     // At block (distance=0) with many rejections (ratio=1): strength ≈ 1.0
     // Far from block (distance=max) with few rejections: strength ≈ 0
-    const strength = (1 - distanceFactor * 0.5) * rejectionFactor;
+    const strength = (1 - distanceFactor * this.distancePenaltyMultiplier) * rejectionFactor;
 
     // Only consider block relevant if:
     // 1. It has at least 1 rejection (confirmed)
-    // 2. Price is within 10% of block level
+    // 2. Price is within threshold of block level
     const isRelevant =
-      bestBlock.rejections.length >= 1 && bestBlock.distance <= 0.1;
+      bestBlock.rejections.length >= 1 && bestBlock.distance <= this.maxDistanceForRelevance;
 
     return {
       type: bestBlock.type,
@@ -261,14 +298,14 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_ORDER_BLOCK;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForOrderBlock;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_ORDER_BLOCK;
+    return this.minCandlesForOrderBlock;
   }
 
   /**

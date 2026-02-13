@@ -418,8 +418,26 @@
     },
     "ORDER_BLOCK_ANALYZER_NEW": {
       "_comment": "Order block analyzer: institutional order clusters",
-      "minBars": 5,
-      "maxConfidence": 0.9
+      "minCandlesForOrderBlock": 25,
+      "_minCandlesForOrderBlock_comment": "Min candles required (default: 25, range: 10-100)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.5-1.0)",
+      "baseConfidence": 0.15,
+      "_baseConfidence_comment": "Baseline confidence for weak blocks (default: 0.15, range: 0.1-0.3)",
+      "confidenceMultiplier": 0.8,
+      "_confidenceMultiplier_comment": "Confidence multiplier for strong blocks (default: 0.8, range: 0.5-0.9)",
+      "recentWindow": 10,
+      "_recentWindow_comment": "Recent candles to check for rejections (default: 10, range: 5-20)",
+      "wickRatioThreshold": 1.5,
+      "_wickRatioThreshold_comment": "Min wick-to-body ratio for rejection (default: 1.5, range: 1.0-3.0)",
+      "maxDistanceThreshold": 0.05,
+      "_maxDistanceThreshold_comment": "Max distance for full strength (default: 0.05=5%, range: 0.01-0.1)",
+      "maxRejectionCount": 5,
+      "_maxRejectionCount_comment": "Rejection count for max strength (default: 5, range: 2-10)",
+      "distancePenaltyMultiplier": 0.5,
+      "_distancePenaltyMultiplier_comment": "Distance penalty multiplier (default: 0.5, range: 0.3-0.7)",
+      "maxDistanceForRelevance": 0.1,
+      "_maxDistanceForRelevance_comment": "Max distance for block relevance (default: 0.1=10%, range: 0.05-0.2)"
     },
     "FAIR_VALUE_GAP_ANALYZER_NEW": {
       "_comment": "Fair value gap analyzer: unfilled price gaps",
