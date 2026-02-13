@@ -641,6 +641,23 @@
       "_neutralConfidence_comment": "Confidence for normal volatility (default: 0.2, range: 0.1-0.5)",
       "maxAtrEstimate": 100,
       "_maxAtrEstimate_comment": "Upper bound for ATR scaling (default: 100, range: 50-500)"
+    },
+    "WHALE_ANALYZER_NEW": {
+      "_comment": "Whale analyzer: large volume spike detection (Session 106: fully calibrated)",
+      "minCandlesForWhale": 25,
+      "_minCandlesForWhale_comment": "Minimum candles needed for whale detection (default: 25, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence cap (default: 0.95, range: 0.7-1.0)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence when whale detected (default: 0.1, range: 0.05-0.3)",
+      "strengthMultiplier": 0.85,
+      "_strengthMultiplier_comment": "Strength multiplier for confidence calculation (default: 0.85, range: 0.5-1.0)",
+      "recentCandlesWindow": 30,
+      "_recentCandlesWindow_comment": "Number of recent candles to analyze for volume spikes (default: 30, range: 10-100)",
+      "volumeThresholdMultiplier": 3,
+      "_volumeThresholdMultiplier_comment": "Volume spike threshold (volume > avg * multiplier) (default: 3, range: 1.5-5.0)",
+      "strengthDenominator": 5,
+      "_strengthDenominator_comment": "Strength calculation denominator (default: 5, range: 2-10)"
     }
   },
 

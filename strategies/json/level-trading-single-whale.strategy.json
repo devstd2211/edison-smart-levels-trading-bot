@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single WHALE Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify whale detection logic. Entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "whale-only", "calibration"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "WHALE_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {},
+  "analyzerDefaults": {
+    "WHALE_ANALYZER_NEW": {
+      "_comment": "Whale analyzer calibration parameters (Session 106+)",
+      "minCandlesForWhale": 25,
+      "_minCandlesForWhale_comment": "Minimum candles needed for whale detection (default: 25, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence cap (default: 0.95, range: 0.7-1.0)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence when whale detected (default: 0.1, range: 0.05-0.3)",
+      "strengthMultiplier": 0.85,
+      "_strengthMultiplier_comment": "Strength multiplier for confidence calculation (default: 0.85, range: 0.5-1.0)",
+      "recentCandlesWindow": 30,
+      "_recentCandlesWindow_comment": "Number of recent candles to analyze for volume spikes (default: 30, range: 10-100)",
+      "volumeThresholdMultiplier": 3,
+      "_volumeThresholdMultiplier_comment": "Volume spike threshold (volume > avg * multiplier) (default: 3, range: 1.5-5.0)",
+      "strengthDenominator": 5,
+      "_strengthDenominator_comment": "Strength calculation denominator (default: 5, range: 2-10)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfit": {
+      "levels": [
+        {
+          "distancePercent": 0.5,
+          "closePercent": 30
+        },
+        {
+          "distancePercent": 1.0,
+          "closePercent": 40
+        },
+        {
+          "distancePercent": 1.5,
+          "closePercent": 30
+        }
+      ]
+    },
+    "trailingStop": {
+      "enabled": false
+    },
+    "breakeven": {
+      "enabled": false
+    }
+  }
+}
