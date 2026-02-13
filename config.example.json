@@ -397,7 +397,11 @@
       "_comment": "Trend detector: EMA gap indicates trend strength",
       "minEmaGapPercent": 0.5,
       "minConfidence": 0.3,
-      "maxConfidence": 0.95
+      "maxConfidence": 0.95,
+      "minCandlesForTrend": 20,
+      "_minCandlesForTrend_comment": "Min candles required (default: 20, range: 10-50)",
+      "trendLookback": 15,
+      "_trendLookback_comment": "Lookback period for trend analysis (default: 15, range: 5-30)"
     },
     "SWING_ANALYZER_NEW": {
       "_comment": "Swing analyzer: higher highs/lows in direction",

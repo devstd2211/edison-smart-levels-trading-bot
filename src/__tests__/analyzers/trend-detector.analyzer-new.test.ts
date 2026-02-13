@@ -71,7 +71,7 @@ describe('TrendDetectorAnalyzerNew - Signal Generation Tests', () => {
     const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i * 0.5));
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('TREND_DETECTOR');
+    expect(signal.source).toBe('TREND_DETECTOR_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 

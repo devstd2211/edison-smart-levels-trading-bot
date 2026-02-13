@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single Trend Detector Analyzer",
+    "version": "1.0.0",
+    "description": "Minimal strategy for calibration testing - TREND_DETECTOR_ANALYZER_NEW only",
+    "author": "Edison Trading Bot - Calibration",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["calibration", "trend-detector", "single-analyzer"]
+  },
+  "entryThreshold": 60,
+  "analyzers": [
+    {
+      "name": "TREND_DETECTOR_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.10,
+      "maxConfidence": 0.95
+    }
+  ],
+  "indicators": {},
+  "analyzerDefaults": {
+    "TREND_DETECTOR_ANALYZER_NEW": {
+      "minEmaGapPercent": 0.5,
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Min confidence for signals (default: 0.1, range: 0.0-0.5)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence for signals (default: 0.95, range: 0.5-1.0)",
+      "minCandlesForTrend": 20,
+      "_minCandlesForTrend_comment": "Min candles required (default: 20, range: 10-50)",
+      "trendLookback": 15,
+      "_trendLookback_comment": "Lookback period for trend analysis (default: 15, range: 5-30)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 1,
+      "minSignalsForShort": 1,
+      "longPenalty": 0.80,
+      "shortPenalty": 0.85
+    },
+    "flatMarket": { "enabled": false },
+    "fundingRate": { "enabled": false },
+    "btcCorrelation": { "enabled": false },
+    "trendAlignment": { "enabled": false },
+    "postTpFilter": { "enabled": false },
+    "volatilityRegime": { "enabled": false },
+    "neutralTrendStrength": { "enabled": false },
+    "timeBasedFilter": { "enabled": false }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.25
+    },
+    "takeProfits": [
+      { "level": 1, "percent": 0.5, "sizePercent": 50 },
+      { "level": 2, "percent": 1.0, "sizePercent": 35 },
+      { "level": 3, "percent": 1.5, "sizePercent": 15 }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 0.3,
+      "activationLevel": 0.8
+    }
+  },
+  "notes": "Calibration strategy - TREND_DETECTOR_ANALYZER_NEW only. Detects trend direction (uptrend, downtrend, consolidation)."
+}

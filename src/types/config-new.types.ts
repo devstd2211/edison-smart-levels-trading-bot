@@ -310,6 +310,8 @@ export interface TrendDetectorConfigNew extends BaseAnalyzerConfigNew {
   minEmaGapPercent: number;
   minConfidence: number;
   maxConfidence: number;
+  minCandlesForTrend?: number;
+  trendLookback?: number;
 }
 
 export interface ChochBosAnalyzerConfigNew extends BaseAnalyzerConfigNew {

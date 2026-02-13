@@ -21,13 +21,13 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS - Configurable Defaults
 // ============================================================================
 
-const MIN_CANDLES_FOR_TREND = 20;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
-const TREND_LOOKBACK = 15; // Look back for trend analysis
+const DEFAULT_MIN_CANDLES_FOR_TREND = 20;
+const DEFAULT_MIN_CONFIDENCE = 0.1;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_TREND_LOOKBACK = 15; // Look back for trend analysis
 
 // ============================================================================
 // TREND DETECTOR ANALYZER - NEW VERSION
@@ -40,6 +40,8 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
   private readonly minEmaGapPercent: number;
   private readonly minConfidence: number;
   private readonly maxConfidence: number;
+  private readonly minCandlesForTrend: number;
+  private readonly trendLookback: number;
 
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -78,6 +80,8 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
     this.minEmaGapPercent = config.minEmaGapPercent;
     this.minConfidence = config.minConfidence;
     this.maxConfidence = config.maxConfidence;
+    this.minCandlesForTrend = config.minCandlesForTrend ?? DEFAULT_MIN_CANDLES_FOR_TREND;
+    this.trendLookback = config.trendLookback ?? DEFAULT_TREND_LOOKBACK;
   }
 
   /**
@@ -96,8 +100,8 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
       throw new Error('[TREND_DETECTOR] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_TREND) {
-      throw new Error(`[TREND_DETECTOR] Not enough candles. Need ${MIN_CANDLES_FOR_TREND}, got ${candles.length}`);
+    if (candles.length < this.minCandlesForTrend) {
+      throw new Error(`[TREND_DETECTOR] Not enough candles. Need ${this.minCandlesForTrend}, got ${candles.length}`);
     }
 
     // Validate candles
@@ -118,7 +122,7 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'TREND_DETECTOR',
+      source: 'TREND_DETECTOR_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -152,7 +156,7 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
     highCount: number;
     lowCount: number;
   } {
-    const lookback = Math.min(TREND_LOOKBACK, candles.length - 1);
+    const lookback = Math.min(this.trendLookback, candles.length - 1);
     const recentCandles = candles.slice(-lookback);
 
     // Find swing highs and lows
@@ -228,12 +232,12 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
     let confidence: number;
 
     if (trend.type === 'CONSOLIDATION') {
-      confidence = Math.min(0.5, MIN_CONFIDENCE + trend.strength * 0.3);
+      confidence = Math.min(0.5, this.minConfidence + trend.strength * 0.3);
     } else {
-      confidence = Math.min(MAX_CONFIDENCE, MIN_CONFIDENCE + trend.strength * 0.8);
+      confidence = Math.min(this.maxConfidence, this.minConfidence + trend.strength * 0.8);
     }
 
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
     return Math.round(confidence * 100);
   }
 
@@ -297,14 +301,14 @@ export class TrendDetectorAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_TREND;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForTrend;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_TREND;
+    return this.minCandlesForTrend;
   }
 
   /**
