@@ -21,13 +21,13 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS (Defaults)
 // ============================================================================
 
-const MIN_CANDLES_FOR_WICK = 20;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
-const MIN_BODY_TO_WICK_RATIO = 0.3; // Wick should be at least 3x body
+const DEFAULT_MIN_CANDLES_FOR_WICK = 20;
+const DEFAULT_MIN_CONFIDENCE = 0.1;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_MIN_BODY_TO_WICK_RATIO = 0.3; // Wick should be at least 3x body
 
 // ============================================================================
 // WICK ANALYZER - NEW VERSION
@@ -37,7 +37,10 @@ export class WickAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = MAX_CONFIDENCE;
+  private readonly minCandlesForWick: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly minBodyToWickRatio: number;
 
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -47,7 +50,12 @@ export class WickAnalyzerNew implements IAnalyzer {
    * STRICT - Throws if config is invalid
    */
   constructor(
-    config: WickAnalyzerConfigNew,
+    config: WickAnalyzerConfigNew & {
+      minCandlesForWick?: number;
+      minConfidence?: number;
+      maxConfidence?: number;
+      minBodyToWickRatio?: number;
+    },
     private logger?: LoggerService,
   ) {
     // Validate analyzer config
@@ -64,6 +72,10 @@ export class WickAnalyzerNew implements IAnalyzer {
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandlesForWick = config.minCandlesForWick ?? DEFAULT_MIN_CANDLES_FOR_WICK;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.minBodyToWickRatio = config.minBodyToWickRatio ?? DEFAULT_MIN_BODY_TO_WICK_RATIO;
   }
 
   /**
@@ -82,8 +94,8 @@ export class WickAnalyzerNew implements IAnalyzer {
       throw new Error('[WICK_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_WICK) {
-      throw new Error(`[WICK_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_WICK}, got ${candles.length}`);
+    if (candles.length < this.minCandlesForWick) {
+      throw new Error(`[WICK_ANALYZER] Not enough candles. Need ${this.minCandlesForWick}, got ${candles.length}`);
     }
 
     // Validate candles
@@ -104,7 +116,7 @@ export class WickAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'WICK_ANALYZER',
+      source: 'WICK_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -150,8 +162,8 @@ export class WickAnalyzerNew implements IAnalyzer {
     // Check for bullish wick (long lower wick)
     if (lowerWick > 0 && body > 0) {
       const ratio = lowerWick / body;
-      if (ratio > MIN_BODY_TO_WICK_RATIO) {
-        const strength = Math.min(1, ratio / (MIN_BODY_TO_WICK_RATIO * 2));
+      if (ratio > this.minBodyToWickRatio) {
+        const strength = Math.min(1, ratio / (this.minBodyToWickRatio * 2));
         return { type: 'BULLISH_WICK', ratio, strength };
       }
     }
@@ -159,8 +171,8 @@ export class WickAnalyzerNew implements IAnalyzer {
     // Check for bearish wick (long upper wick)
     if (upperWick > 0 && body > 0) {
       const ratio = upperWick / body;
-      if (ratio > MIN_BODY_TO_WICK_RATIO) {
-        const strength = Math.min(1, ratio / (MIN_BODY_TO_WICK_RATIO * 2));
+      if (ratio > this.minBodyToWickRatio) {
+        const strength = Math.min(1, ratio / (this.minBodyToWickRatio * 2));
         return { type: 'BEARISH_WICK', ratio, strength };
       }
     }
@@ -196,12 +208,12 @@ export class WickAnalyzerNew implements IAnalyzer {
     let confidence: number;
 
     if (wick.type === 'NONE') {
-      confidence = MIN_CONFIDENCE;
+      confidence = this.minConfidence;
     } else {
-      confidence = MIN_CONFIDENCE + wick.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE);
+      confidence = this.minConfidence + wick.strength * (this.maxConfidence - this.minConfidence);
     }
 
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
     return Math.round(confidence * 100);
   }
 
@@ -265,14 +277,14 @@ export class WickAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_WICK;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForWick;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_WICK;
+    return this.minCandlesForWick;
   }
 
   /**
@@ -293,7 +305,7 @@ export class WickAnalyzerNew implements IAnalyzer {
    * Get maximum confidence
    */
   getMaxConfidence(): number {
-    return this.maxConfidence;
+    return Math.round(this.maxConfidence * 100);
   }
 
   /**

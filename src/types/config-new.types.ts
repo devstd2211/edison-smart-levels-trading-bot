@@ -297,7 +297,10 @@ export interface BreakoutAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 }
 
 export interface WickAnalyzerConfigNew extends BaseAnalyzerConfigNew {
-  // No additional params required
+  minCandlesForWick?: number;
+  minConfidence?: number;
+  maxConfidence?: number;
+  minBodyToWickRatio?: number;
 }
 
 export interface PriceMomentumAnalyzerConfigNew extends BaseAnalyzerConfigNew {

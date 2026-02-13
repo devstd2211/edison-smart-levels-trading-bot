@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "WICK Trading - Minimal",
+    "version": "1.0.0",
+    "description": "Minimal viable strategy - pure WICK rejection trading for calibration testing",
+    "author": "Trading Bot",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T19:54:00Z",
+    "tags": ["wick", "rejection", "minimal", "calibration"],
+    "backtest": {
+      "winRate": 0,
+      "profitFactor": 0,
+      "trades": 0,
+      "period": "Not tested yet"
+    }
+  },
+  "analyzers": [
+    {
+      "name": "WICK_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1
+    }
+  ],
+  "analyzerDefaults": {
+    "WICK_ANALYZER_NEW": {
+      "minCandlesForWick": 20,
+      "_minCandlesForWick_comment": "Min candles required (default: 20, range: 10-50)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence level (default: 0.1, range: 0.0-1.0)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence level (default: 0.95, range: 0.0-1.0)",
+      "minBodyToWickRatio": 0.3,
+      "_minBodyToWickRatio_comment": "Min wick/body ratio for signal (default: 0.3, range: 0.1-1.0)"
+    }
+  },
+  "indicators": {
+    "ema": {
+      "enabled": false
+    },
+    "rsi": {
+      "enabled": false
+    },
+    "atr": {
+      "enabled": false
+    },
+    "volume": {
+      "enabled": false
+    },
+    "stochastic": {
+      "enabled": false
+    },
+    "bollingerBands": {
+      "enabled": false
+    }
+  },
+  "entryThreshold": 30,
+  "_entryThreshold_comment": "Min confidence for entry (default: 30, range: 20-80)",
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 1,
+      "minSignalsForShort": 1,
+      "longPenalty": 1.0,
+      "shortPenalty": 1.0
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "nightTrading": {
+      "enabled": false
+    },
+    "atr": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "percent": 2.0,
+      "atrMultiplier": 1.5,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 0.5,
+        "sizePercent": 33
+      },
+      {
+        "level": 2,
+        "percent": 1.0,
+        "sizePercent": 33
+      },
+      {
+        "level": 3,
+        "percent": 1.5,
+        "sizePercent": 34
+      }
+    ],
+    "positionSizing": {
+      "method": "FIXED_PERCENTAGE",
+      "riskPercentage": 2.0,
+      "minSizeUSDT": 10,
+      "maxSizeUSDT": 1000
+    },
+    "breakeven": {
+      "enabled": true,
+      "triggerProfitPercent": 0.5,
+      "lockProfitPercent": 0.1
+    },
+    "trailingStop": {
+      "enabled": true,
+      "activationProfitPercent": 0.75,
+      "callbackPercent": 0.3
+    }
+  }
+}

@@ -56,10 +56,11 @@
       "enabled": true,
       "weight": 0.04,
       "priority": 4,
-      "minConfidence": 0.50,
-      "maxConfidence": 1.0,
       "params": {
-        "minWickPercent": 1.0
+        "minCandlesForWick": 20,
+        "minConfidence": 0.1,
+        "maxConfidence": 0.95,
+        "minBodyToWickRatio": 0.3
       }
     }
   ],

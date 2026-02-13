@@ -338,8 +338,14 @@
       "_volatilityThreshold_comment": "ATR multiple for breakout confirmation (default: 1.5, currently unused)"
     },
     "WICK_ANALYZER_NEW": {
-      "minWickPercent": 0.5,
-      "maxConfidence": 0.85
+      "minCandlesForWick": 20,
+      "_minCandlesForWick_comment": "Min candles required (default: 20, range: 10-50)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence level (default: 0.1, range: 0.0-1.0)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence level (default: 0.95, range: 0.0-1.0)",
+      "minBodyToWickRatio": 0.3,
+      "_minBodyToWickRatio_comment": "Min wick/body ratio for signal (default: 0.3, range: 0.1-1.0)"
     },
     "PRICE_MOMENTUM_ANALYZER_NEW": {
       "minMomentum": 0.1,
