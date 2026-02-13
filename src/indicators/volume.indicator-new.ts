@@ -25,7 +25,6 @@ import { IndicatorType } from '../types/indicator-type.enum';
 // CONSTANTS
 // ============================================================================
 
-const MIN_CANDLES_FOR_VOLUME = 1; // Need at least 1 candle
 const MIN_VOLUME_VALUE = 0.00001; // Minimum volume threshold to avoid division by zero
 
 // ============================================================================
