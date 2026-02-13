@@ -29,7 +29,7 @@
 - ✅ **Phase 16.3:** Monitoring & Alerting (12 tests - **COMPLETE** 🎉)
 - ✅ **Phase 16.4:** Deployment Readiness (Documentation - **COMPLETE** 🎉)
 - ✅ **Phase 16.5:** Load Testing & Performance (13 tests - **COMPLETE** 🎉)
-- 🔄 **Phase 16.6:** Analyzer Calibration (25/34 components - **IN PROGRESS** - Session 105-106)
+- 🔄 **Phase 16.6:** Analyzer Calibration (26/34 components - **IN PROGRESS** - Session 105-106)
   - ✅ EMA_ANALYZER_NEW (4 constants)
   - ✅ LEVEL_ANALYZER_NEW (6 constants)
   - ✅ ATR_ANALYZER_NEW (5 constants)
@@ -55,7 +55,8 @@
   - ✅ TREND_DETECTOR_ANALYZER_NEW (4 constants)
   - ✅ VOLATILITY_SPIKE_ANALYZER_NEW (6 constants)
   - ✅ VOLUME_PROFILE_ANALYZER_NEW (7 constants)
-  - **Progress:** 162 constants calibrated (73.5% complete - past 70%! 🎉)
+  - ✅ VOLUME_ANALYZER_NEW (6 constants)
+  - **Progress:** 168 constants calibrated (76.5% complete - approaching 80%! 🎉)
 
 **🎉 Current Status:** Phase 16.5 ✅ **COMPLETE** | Phase 16.6 🔄 **IN PROGRESS** (Calibration 25/34, 73.5% - past 70%! 🎉) | Core Infrastructure Ready!
 
@@ -318,10 +319,10 @@ Pre-existing TypeScript errors in test utilities (non-production code) don't aff
   - 🎯 Stability: 100% uptime (target ≥90%)
 - 🔄 **Phase 16.6:** Analyzer Calibration - **IN PROGRESS** (Session 105-106)
   - **Goal:** Make all hardcoded constants configurable (34 components: 28 analyzers + 6 indicators)
-  - **Progress:** 20/34 (58.8%) - 133 constants calibrated
-  - **Completed:** EMA, LEVEL, ATR, BOLLINGER_BANDS, BREAKOUT, DIVERGENCE, CHOCH_BOS, DELTA, FAIR_VALUE_GAP, FOOTPRINT, LIQUIDITY_SWEEP, LIQUIDITY_ZONE, MICRO_WALL, ORDER_BLOCK, ORDER_FLOW, PRICE_ACTION, PRICE_MOMENTUM, RSI, STOCHASTIC, SWING
-  - **Next:** tick-delta.analyzer-new.ts
-  - **Backtest Results:** Best performers: FOOTPRINT (4 trades, 100% WR, +$43), ORDER_FLOW (9 trades, 66.7% WR, PF 1.85), PRICE_ACTION (7 trades, 85.7% WR, PF 9.67)
+  - **Progress:** 26/34 (76.5%) - 168 constants calibrated
+  - **Completed:** EMA, LEVEL, ATR, BOLLINGER_BANDS, BREAKOUT, DIVERGENCE, CHOCH_BOS, DELTA, FAIR_VALUE_GAP, FOOTPRINT, LIQUIDITY_SWEEP, LIQUIDITY_ZONE, MICRO_WALL, ORDER_BLOCK, ORDER_FLOW, PRICE_ACTION, PRICE_MOMENTUM, RSI, STOCHASTIC, SWING, TICK_DELTA, TREND_CONFLICT, TREND_DETECTOR, VOLATILITY_SPIKE, VOLUME_PROFILE, VOLUME
+  - **Next:** whale.analyzer-new.ts
+  - **Backtest Results:** Best performers: FOOTPRINT (4 trades, 100% WR, +$43), ORDER_FLOW (9 trades, 66.7% WR, PF 1.85), PRICE_ACTION (7 trades, 85.7% WR, PF 9.67), VOLUME (8 trades, 12.5% WR)
 - 🎯 **Phase 16.7:** Strategy Development & Backtesting - NEXT (after calibration)
 - 🎯 **Phase 16.8:** Paper Trading & Validation - FUTURE
 
@@ -330,4 +331,4 @@ See `CALIBRATION_CHECKLIST.md`, `PHASE_10_ROADMAP.md`, `PHASE_11_PROGRESS.md`, `
 ---
 
 **Last Updated:** 2026-02-13 | **Session:** 106
-**Status:** 🔄 **Phase 16.6 IN PROGRESS** (Analyzer Calibration 20/34, 58.8% - past halfway! 🎉) | 7014 Tests Passing | **Core Infrastructure Ready!** | **Next: Complete Calibration → Strategy Development**
+**Status:** 🔄 **Phase 16.6 IN PROGRESS** (Analyzer Calibration 26/34, 76.5% - approaching 80%! 🎉) | 7014 Tests Passing | **Core Infrastructure Ready!** | **Next: Complete Calibration → Strategy Development**
