@@ -32,8 +32,7 @@ import { IndicatorType } from '../types/indicator-type.enum';
 // CONSTANTS
 // ============================================================================
 
-const MIN_CANDLES_FOR_STOCHASTIC = 1; // Need at least 1 candle
-const STOCHASTIC_RANGE = 100; // 0-100 scale
+const STOCHASTIC_RANGE = 100; // 0-100 scale (mathematical constant)
 
 // ============================================================================
 // STOCHASTIC CALCULATOR - NEW VERSION
