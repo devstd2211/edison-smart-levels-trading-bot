@@ -396,9 +396,25 @@
       "_sweepThreshold_comment": "Price recovery threshold % (default: 0.002 = 0.2%, range: 0.001-0.01)"
     },
     "LIQUIDITY_ZONE_ANALYZER_NEW": {
-      "_comment": "Liquidity zone analyzer: price trades near zones",
-      "zoneDepthPercent": 0.5,
-      "maxConfidence": 0.85
+      "_comment": "Liquidity zone analyzer: detects high-volume support/resistance zones",
+      "minCandlesForLiquidityZone": 25,
+      "_minCandlesForLiquidityZone_comment": "Min candles required (default: 25, range: 15-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence cap (default: 0.95, range: 0.5-1.0)",
+      "recentWindow": 30,
+      "_recentWindow_comment": "Recent candles to analyze for zones (default: 30, range: 20-50)",
+      "zonePercentage": 0.1,
+      "_zonePercentage_comment": "Top/bottom % of price range for zones (default: 0.1 = 10%, range: 0.05-0.2)",
+      "minCandlesForZone": 2,
+      "_minCandlesForZone_comment": "Min candles needed to confirm a zone (default: 2, range: 1-5)",
+      "highLowBaseline": 0.25,
+      "_highLowBaseline_comment": "Baseline confidence for single zones (default: 0.25, range: 0.1-0.4)",
+      "highLowMultiplier": 0.7,
+      "_highLowMultiplier_comment": "Strength multiplier for single zones (default: 0.7, range: 0.5-0.9)",
+      "bothBaseline": 0.15,
+      "_bothBaseline_comment": "Baseline confidence for consolidation (default: 0.15, range: 0.05-0.3)",
+      "bothMultiplier": 0.6,
+      "_bothMultiplier_comment": "Strength multiplier for consolidation (default: 0.6, range: 0.4-0.8)"
     },
     "ORDER_BLOCK_ANALYZER_NEW": {
       "_comment": "Order block analyzer: institutional order clusters",

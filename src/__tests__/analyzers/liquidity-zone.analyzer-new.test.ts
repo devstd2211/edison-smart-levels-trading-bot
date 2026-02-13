@@ -80,7 +80,7 @@ describe('LiquidityZoneAnalyzerNew - Signal Generation Tests', () => {
 
     const signal = analyzer.analyze(candles);
     expect(signal).toBeDefined();
-    expect(signal.source).toBe('LIQUIDITY_ZONE_ANALYZER');
+    expect(signal.source).toBe('LIQUIDITY_ZONE_ANALYZER_NEW');
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 
