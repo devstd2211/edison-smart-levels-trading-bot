@@ -616,7 +616,19 @@
     },
     "VOLATILITY_SPIKE_ANALYZER_NEW": {
       "_comment": "Volatility spike analyzer: sudden volatility increase",
-      "maxConfidence": 0.95
+      "maxConfidence": 0.95,
+      "minCandlesForVolatility": 50,
+      "_minCandlesForVolatility_comment": "Min candles for volatility calculation (default: 50, range: 20-200)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1, range: 0.05-0.3)",
+      "volatilityHighMultiplier": 1.5,
+      "_volatilityHighMultiplier_comment": "High volatility threshold multiplier (default: 1.5, range: 1.2-3.0)",
+      "volatilityLowMultiplier": 0.5,
+      "_volatilityLowMultiplier_comment": "Low volatility threshold multiplier (default: 0.5, range: 0.2-0.8)",
+      "neutralConfidence": 0.2,
+      "_neutralConfidence_comment": "Confidence for normal volatility (default: 0.2, range: 0.1-0.5)",
+      "maxAtrEstimate": 100,
+      "_maxAtrEstimate_comment": "Upper bound for ATR scaling (default: 100, range: 50-500)"
     }
   },
 

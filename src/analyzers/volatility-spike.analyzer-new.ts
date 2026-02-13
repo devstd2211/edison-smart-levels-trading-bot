@@ -24,15 +24,15 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS (Defaults)
 // ============================================================================
 
-const MIN_CANDLES_FOR_VOLATILITY = 50; // Need enough candles for ATR average
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const VOLATILITY_HIGH_MULTIPLIER = 1.5; // 1.5x average = spike
-const VOLATILITY_LOW_MULTIPLIER = 0.5; // 0.5x average = low volatility
-const NEUTRAL_CONFIDENCE = 0.2; // Low confidence for neutral/normal volatility
-const MAX_ATR_ESTIMATE = 100; // Upper bound for ATR scaling
+const DEFAULT_MIN_CANDLES_FOR_VOLATILITY = 50; // Need enough candles for ATR average
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_VOLATILITY_HIGH_MULTIPLIER = 1.5; // 1.5x average = spike
+const DEFAULT_VOLATILITY_LOW_MULTIPLIER = 0.5; // 0.5x average = low volatility
+const DEFAULT_NEUTRAL_CONFIDENCE = 0.2; // Low confidence for neutral/normal volatility
+const DEFAULT_MAX_ATR_ESTIMATE = 100; // Upper bound for ATR scaling
 
 // ============================================================================
 // VOLATILITY SPIKE ANALYZER - NEW VERSION
@@ -43,6 +43,14 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
   private readonly weight: number;
   private readonly priority: number;
   private readonly maxConfidence: number;
+
+  // Configurable parameters
+  private readonly minCandlesForVolatility: number;
+  private readonly minConfidence: number;
+  private readonly volatilityHighMultiplier: number;
+  private readonly volatilityLowMultiplier: number;
+  private readonly neutralConfidence: number;
+  private readonly maxAtrEstimate: number;
 
   private indicator: ATRIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
@@ -72,6 +80,14 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.maxConfidence = config.maxConfidence ?? 0.95;
 
+    // Initialize configurable parameters
+    this.minCandlesForVolatility = config.minCandlesForVolatility ?? DEFAULT_MIN_CANDLES_FOR_VOLATILITY;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.volatilityHighMultiplier = config.volatilityHighMultiplier ?? DEFAULT_VOLATILITY_HIGH_MULTIPLIER;
+    this.volatilityLowMultiplier = config.volatilityLowMultiplier ?? DEFAULT_VOLATILITY_LOW_MULTIPLIER;
+    this.neutralConfidence = config.neutralConfidence ?? DEFAULT_NEUTRAL_CONFIDENCE;
+    this.maxAtrEstimate = config.maxAtrEstimate ?? DEFAULT_MAX_ATR_ESTIMATE;
+
     // Create ATR indicator for volatility measurement
     this.indicator = new ATRIndicatorNew({
       enabled: true,
@@ -97,9 +113,9 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
       throw new Error('[VOLATILITY_SPIKE] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_VOLATILITY) {
+    if (candles.length < this.minCandlesForVolatility) {
       throw new Error(
-        `[VOLATILITY_SPIKE] Not enough candles. Need ${MIN_CANDLES_FOR_VOLATILITY}, got ${candles.length}`,
+        `[VOLATILITY_SPIKE] Not enough candles. Need ${this.minCandlesForVolatility}, got ${candles.length}`,
       );
     }
 
@@ -145,8 +161,8 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
    * Determine signal direction based on volatility spike
    */
   private getDirection(currentATR: number, avgATR: number): SignalDirection {
-    const highThreshold = avgATR * VOLATILITY_HIGH_MULTIPLIER;
-    const lowThreshold = avgATR * VOLATILITY_LOW_MULTIPLIER;
+    const highThreshold = avgATR * this.volatilityHighMultiplier;
+    const lowThreshold = avgATR * this.volatilityLowMultiplier;
 
     if (currentATR >= highThreshold) {
       return SignalDirectionEnum.LONG; // Volatility spike = breakout opportunity
@@ -161,14 +177,14 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
    * Calculate confidence based on volatility level
    */
   private calculateConfidence(currentATR: number, avgATR: number): number {
-    const highThreshold = avgATR * VOLATILITY_HIGH_MULTIPLIER;
-    const lowThreshold = avgATR * VOLATILITY_LOW_MULTIPLIER;
+    const highThreshold = avgATR * this.volatilityHighMultiplier;
+    const lowThreshold = avgATR * this.volatilityLowMultiplier;
 
     let confidence: number;
 
     if (currentATR >= highThreshold) {
       // High volatility: scale from threshold to max
-      const range = MAX_ATR_ESTIMATE - highThreshold;
+      const range = this.maxAtrEstimate - highThreshold;
       const position = Math.min(currentATR - highThreshold, range);
       confidence = (position / range) * this.maxConfidence;
     } else if (currentATR <= lowThreshold) {
@@ -178,11 +194,11 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
       confidence = (position / range) * this.maxConfidence;
     } else {
       // Normal volatility: low confidence
-      confidence = NEUTRAL_CONFIDENCE;
+      confidence = this.neutralConfidence;
     }
 
-    // Clamp to range [MIN_CONFIDENCE, maxConfidence]
-    return Math.max(MIN_CONFIDENCE, Math.min(this.maxConfidence, confidence));
+    // Clamp to range [this.minConfidence, maxConfidence]
+    return Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
   }
 
   /**
@@ -196,14 +212,14 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_VOLATILITY;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForVolatility;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_VOLATILITY;
+    return this.minCandlesForVolatility;
   }
 
   /**
