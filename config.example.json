@@ -451,8 +451,16 @@
     },
     "ORDER_FLOW_ANALYZER_NEW": {
       "_comment": "Order flow analyzer: buy/sell imbalance",
-      "minDeltaPercent": 5,
-      "maxConfidence": 0.9
+      "minCandles": 15,
+      "_minCandles_comment": "Min candles for order flow (default: 15, range: 10-30)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence level (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Confidence multiplier (default: 0.85, range: 0.5-0.95)",
+      "recentWindowSize": 8,
+      "_recentWindowSize_comment": "Recent candles window (default: 8, range: 5-20)"
     },
     "FOOTPRINT_ANALYZER_NEW": {
       "_comment": "Footprint analyzer: detailed order activity pattern",

@@ -5,44 +5,67 @@ import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_ORDER_FLOW = 15;
+// Default configuration values
+const DEFAULT_MIN_CANDLES = 15;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_BASE_CONFIDENCE = 0.1;
+const DEFAULT_CONFIDENCE_MULTIPLIER = 0.85;
+const DEFAULT_RECENT_WINDOW_SIZE = 8;
 
 export class OrderFlowAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = 0.95;
+  private readonly minCandles: number;
+  private readonly maxConfidence: number;
+  private readonly baseConfidence: number;
+  private readonly confidenceMultiplier: number;
+  private readonly recentWindowSize: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
-  constructor(config: BreakoutAnalyzerConfigNew, private logger?: any) {
+  constructor(
+    config: BreakoutAnalyzerConfigNew & {
+      minCandles?: number;
+      maxConfidence?: number;
+      baseConfidence?: number;
+      confidenceMultiplier?: number;
+      recentWindowSize?: number;
+    },
+    private logger?: any
+  ) {
     if (typeof config.enabled !== 'boolean') throw new Error('[ORDER_FLOW] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[ORDER_FLOW] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[ORDER_FLOW] Missing or invalid: priority');
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandles = config.minCandles ?? DEFAULT_MIN_CANDLES;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.baseConfidence = config.baseConfidence ?? DEFAULT_BASE_CONFIDENCE;
+    this.confidenceMultiplier = config.confidenceMultiplier ?? DEFAULT_CONFIDENCE_MULTIPLIER;
+    this.recentWindowSize = config.recentWindowSize ?? DEFAULT_RECENT_WINDOW_SIZE;
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[ORDER_FLOW] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[ORDER_FLOW] Invalid candles input');
-    if (candles.length < MIN_CANDLES_FOR_ORDER_FLOW) throw new Error('[ORDER_FLOW] Not enough candles');
+    if (candles.length < this.minCandles) throw new Error('[ORDER_FLOW] Not enough candles');
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].volume !== 'number') throw new Error('[ORDER_FLOW] Invalid candle');
     }
 
     const flow = this.analyzeFlow(candles);
     const direction = flow.type === 'BULLISH' ? SignalDirectionEnum.LONG : flow.type === 'BEARISH' ? SignalDirectionEnum.SHORT : SignalDirectionEnum.HOLD;
-    const confidence = Math.round((0.1 + flow.strength * 0.85) * 100);
-    const signal: AnalyzerSignal = { source: 'ORDER_FLOW_ANALYZER', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
+    const confidence = Math.round((this.baseConfidence + flow.strength * this.confidenceMultiplier) * 100);
+    const signal: AnalyzerSignal = { source: 'ORDER_FLOW_ANALYZER_NEW', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
     this.lastSignal = signal;
     this.initialized = true;
     return signal;
   }
 
   private analyzeFlow(candles: Candle[]): { type: 'BULLISH' | 'BEARISH' | 'NONE'; strength: number } {
-    const recent = candles.slice(-8);
+    const recent = candles.slice(-this.recentWindowSize);
     let bullishVol = 0;
     let bearishVol = 0;
 
@@ -70,14 +93,14 @@ export class OrderFlowAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_ORDER_FLOW;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandles;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_ORDER_FLOW;
+    return this.minCandles;
   }
 
   /**
