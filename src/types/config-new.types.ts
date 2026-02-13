@@ -345,7 +345,13 @@ export interface LevelAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 }
 
 export interface VolumeProfileAnalyzerConfigNew extends BaseAnalyzerConfigNew {
-  // No additional params required
+  minCandlesForVolumeProfile?: number;
+  maxConfidence?: number;
+  baseConfidence?: number;
+  confidenceMultiplier?: number;
+  recentWindow?: number;
+  volumeMultiplierThreshold?: number;
+  strengthDivisor?: number;
 }
 
 // ===== LIQUIDITY & SMC (8) =====

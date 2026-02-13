@@ -366,8 +366,20 @@
       "maxConfidence": 0.85
     },
     "VOLUME_PROFILE_ANALYZER_NEW": {
-      "pocConfidence": 0.7,
-      "maxConfidence": 0.9
+      "minCandlesForVolumeProfile": 20,
+      "_minCandlesForVolumeProfile_comment": "Min candles required (default: 20, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence (default: 0.1, range: 0.05-0.3)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Confidence multiplier (default: 0.85, range: 0.5-1.0)",
+      "recentWindow": 20,
+      "_recentWindow_comment": "Recent candles window (default: 20, range: 10-50)",
+      "volumeMultiplierThreshold": 1.5,
+      "_volumeMultiplierThreshold_comment": "Volume spike threshold (default: 1.5, range: 1.2-3.0)",
+      "strengthDivisor": 3,
+      "_strengthDivisor_comment": "Strength calculation divisor (default: 3, range: 2-5)"
     },
     "ORDER_FLOW_ANALYZER_NEW": {
       "minDeltaPercent": 5,
