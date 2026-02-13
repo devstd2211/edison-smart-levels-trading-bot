@@ -25,12 +25,6 @@ import { validateIndicatorConfig } from '../types/config-new.types';
 import { IndicatorType } from '../types/indicator-type.enum';
 
 // ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const MIN_CANDLES_FOR_TR = 2; // Need at least 2 candles for TR calculation
-
-// ============================================================================
 // ATR CALCULATOR - NEW VERSION
 // ============================================================================
 
