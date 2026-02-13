@@ -298,7 +298,20 @@
     },
     "VOLUME_ANALYZER_NEW": {
       "neutralConfidence": 0.2,
-      "maxConfidence": 0.95
+      "_neutralConfidence_comment": "Confidence for neutral volume zone (35-65 strength)",
+      "_comment": "Calibration parameters (Session 106): All volume thresholds and limits now configurable",
+      "minCandlesForVolume": 20,
+      "_minCandlesForVolume_comment": "Minimum candles needed for volume calculation (default: 20, range: 10-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "highStrengthThreshold": 65,
+      "_highStrengthThreshold_comment": "High volume strength threshold (default: 65, range: 50-80, 0-100 scale)",
+      "lowStrengthThreshold": 35,
+      "_lowStrengthThreshold_comment": "Low volume strength threshold (default: 35, range: 20-50, 0-100 scale)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "indicatorPeriod": 14,
+      "_indicatorPeriod_comment": "Fallback indicator period if not injected (default: 14, range: 5-50)"
     },
     "STOCHASTIC_ANALYZER_NEW": {
       "extremeThreshold": 5,

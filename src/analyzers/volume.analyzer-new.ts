@@ -26,13 +26,15 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// DEFAULT CONSTANTS (configurable via constructor)
 // ============================================================================
 
-const MIN_CANDLES_FOR_VOLUME = 20; // Need at least period for volume calculation
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const HIGH_STRENGTH_THRESHOLD = 65; // 0-100 scale
-const LOW_STRENGTH_THRESHOLD = 35; // 0-100 scale
+const DEFAULT_MIN_CANDLES_FOR_VOLUME = 20; // Need at least period for volume calculation
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_HIGH_STRENGTH_THRESHOLD = 65; // 0-100 scale
+const DEFAULT_LOW_STRENGTH_THRESHOLD = 35; // 0-100 scale
+const DEFAULT_MAX_CONFIDENCE = 0.95; // Maximum confidence ceiling (95%)
+const DEFAULT_INDICATOR_PERIOD = 14; // Standard volume period for fallback indicator
 
 // ============================================================================
 // VOLUME ANALYZER - NEW VERSION
@@ -44,6 +46,14 @@ export class VolumeAnalyzerNew implements IAnalyzer {
   private readonly priority: number;
   private readonly neutralConfidence: number;
 
+  // Configurable parameters
+  private readonly minCandlesForVolume: number;
+  private readonly minConfidence: number;
+  private readonly highStrengthThreshold: number;
+  private readonly lowStrengthThreshold: number;
+  private readonly maxConfidence: number;
+  private readonly indicatorPeriod: number;
+
   private indicator: VolumeIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -52,12 +62,19 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * Constructor with ConfigNew
    * STRICT - Throws if config is invalid
    *
-   * @param config Analyzer configuration
+   * @param config Analyzer configuration (with optional calibration params)
    * @param logger Logger service (optional)
    * @param indicatorDI Volume indicator instance via DI (optional, will create if not provided)
    */
   constructor(
-    config: VolumeAnalyzerConfigNew,
+    config: VolumeAnalyzerConfigNew & {
+      minCandlesForVolume?: number;
+      minConfidence?: number;
+      highStrengthThreshold?: number;
+      lowStrengthThreshold?: number;
+      maxConfidence?: number;
+      indicatorPeriod?: number;
+    },
     private logger?: LoggerService,
     indicatorDI?: IIndicator | null,
   ) {
@@ -80,17 +97,25 @@ export class VolumeAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.neutralConfidence = config.neutralConfidence;
 
+    // Initialize configurable parameters with defaults
+    this.minCandlesForVolume = config.minCandlesForVolume ?? DEFAULT_MIN_CANDLES_FOR_VOLUME;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.highStrengthThreshold = config.highStrengthThreshold ?? DEFAULT_HIGH_STRENGTH_THRESHOLD;
+    this.lowStrengthThreshold = config.lowStrengthThreshold ?? DEFAULT_LOW_STRENGTH_THRESHOLD;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.indicatorPeriod = config.indicatorPeriod ?? DEFAULT_INDICATOR_PERIOD;
+
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof VolumeIndicatorNew) {
       this.indicator = indicatorDI;
       this.logger?.info('[VOLUME_ANALYZER] Using injected Volume indicator via DI');
     } else {
-      // Fallback: Create Volume indicator with standard period
-      this.logger?.info('[VOLUME_ANALYZER] Creating new Volume indicator with period 14');
+      // Fallback: Create Volume indicator with configured period
+      this.logger?.info(`[VOLUME_ANALYZER] Creating new Volume indicator with period ${this.indicatorPeriod}`);
 
       this.indicator = new VolumeIndicatorNew({
         enabled: true,
-        period: 14, // Standard volume period
+        period: this.indicatorPeriod,
       });
     }
   }
@@ -111,9 +136,9 @@ export class VolumeAnalyzerNew implements IAnalyzer {
       throw new Error('[VOLUME_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_VOLUME) {
+    if (candles.length < this.minCandlesForVolume) {
       throw new Error(
-        `[VOLUME_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_VOLUME}, got ${candles.length}`,
+        `[VOLUME_ANALYZER] Not enough candles. Need ${this.minCandlesForVolume}, got ${candles.length}`,
       );
     }
 
@@ -135,7 +160,7 @@ export class VolumeAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'VOLUME_ANALYZER',
+      source: 'VOLUME_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -164,10 +189,10 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @returns SignalDirection (LONG, SHORT, or HOLD)
    */
   private getDirection(strength: number): SignalDirection {
-    if (strength > HIGH_STRENGTH_THRESHOLD) {
+    if (strength > this.highStrengthThreshold) {
       // Strong volume - trend confirmation
       return SignalDirectionEnum.LONG;
-    } else if (strength < LOW_STRENGTH_THRESHOLD) {
+    } else if (strength < this.lowStrengthThreshold) {
       // Weak volume - lack of conviction
       return SignalDirectionEnum.SHORT;
     } else {
@@ -184,26 +209,25 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @returns Confidence value (0-100 scale)
    */
   private calculateConfidence(strength: number): number {
-    const MAX_CONFIDENCE = 0.95; // Default maximum confidence
     let confidence: number;
 
-    if (strength > HIGH_STRENGTH_THRESHOLD) {
+    if (strength > this.highStrengthThreshold) {
       // High strength: increasing confidence as volume gets stronger
-      // At 65: 0%, at 100: maxConfidence
-      const normalizedStrength = (strength - HIGH_STRENGTH_THRESHOLD) / (100 - HIGH_STRENGTH_THRESHOLD);
-      confidence = MAX_CONFIDENCE * normalizedStrength;
-    } else if (strength < LOW_STRENGTH_THRESHOLD) {
+      // At threshold: 0%, at 100: maxConfidence
+      const normalizedStrength = (strength - this.highStrengthThreshold) / (100 - this.highStrengthThreshold);
+      confidence = this.maxConfidence * normalizedStrength;
+    } else if (strength < this.lowStrengthThreshold) {
       // Low strength: volume weakness signal
-      // At 35: 0%, at 0: maxConfidence
-      const normalizedStrength = (LOW_STRENGTH_THRESHOLD - strength) / LOW_STRENGTH_THRESHOLD;
-      confidence = MAX_CONFIDENCE * normalizedStrength;
+      // At threshold: 0%, at 0: maxConfidence
+      const normalizedStrength = (this.lowStrengthThreshold - strength) / this.lowStrengthThreshold;
+      confidence = this.maxConfidence * normalizedStrength;
     } else {
       // Neutral zone: use configured neutral confidence
       confidence = this.neutralConfidence;
     }
 
     // Clamp to configured bounds
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
 
     // Convert to 0-100 scale
     return Math.round(confidence * 100);
@@ -217,7 +241,7 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @throws {Error} If not enough candles
    */
   getVolumeStrength(candles: Candle[]): number {
-    if (!Array.isArray(candles) || candles.length < MIN_CANDLES_FOR_VOLUME) {
+    if (!Array.isArray(candles) || candles.length < this.minCandlesForVolume) {
       throw new Error(`[VOLUME_ANALYZER] Not enough candles for volume calculation`);
     }
 
@@ -231,21 +255,21 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @param threshold - Strong threshold (default 0.65)
    * @returns true if volume strength > threshold
    */
-  isStrongVolume(candles: Candle[], threshold: number = HIGH_STRENGTH_THRESHOLD): boolean {
+  isStrongVolume(candles: Candle[], threshold?: number): boolean {
     const strength = this.getVolumeStrength(candles);
-    return strength > threshold;
+    return strength > (threshold ?? this.highStrengthThreshold);
   }
 
   /**
    * Check if volume is weak (below threshold)
    *
    * @param candles - Array of candles
-   * @param threshold - Weak threshold (default 0.35)
+   * @param threshold - Weak threshold (default from config)
    * @returns true if volume strength < threshold
    */
-  isWeakVolume(candles: Candle[], threshold: number = LOW_STRENGTH_THRESHOLD): boolean {
+  isWeakVolume(candles: Candle[], threshold?: number): boolean {
     const strength = this.getVolumeStrength(candles);
-    return strength < threshold;
+    return strength < (threshold ?? this.lowStrengthThreshold);
   }
 
   /**
@@ -300,7 +324,7 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @returns true if enough candles, false otherwise
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_VOLUME;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForVolume;
   }
 
   /**
@@ -308,7 +332,7 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @returns Min candle count needed
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_VOLUME;
+    return this.minCandlesForVolume;
   }
 
   /**
@@ -332,7 +356,7 @@ export class VolumeAnalyzerNew implements IAnalyzer {
    * @returns Max confidence 0.0-1.0
    */
   getMaxConfidence(): number {
-    return 0.95;
+    return this.maxConfidence;
   }
 
 

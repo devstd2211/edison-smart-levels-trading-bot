@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single VOLUME Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify entry/exit logic. VOLUME only, entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "volume-only", "calibration"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "VOLUME_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "volume": {
+      "enabled": true,
+      "_comment": "Volume indicator (Session 106 calibration: now configurable)",
+      "period": 14,
+      "_period_comment": "Volume MA period (default: 14, range: 5-50)"
+    },
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "VOLUME_ANALYZER_NEW": {
+      "neutralConfidence": 0.2,
+      "_neutralConfidence_comment": "Confidence for neutral volume zone (35-65 strength)",
+      "_comment": "Calibration parameters (Session 106): All volume thresholds and limits now configurable",
+      "minCandlesForVolume": 20,
+      "_minCandlesForVolume_comment": "Minimum candles needed for volume calculation (default: 20, range: 10-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "highStrengthThreshold": 65,
+      "_highStrengthThreshold_comment": "High volume strength threshold (default: 65, range: 50-80, 0-100 scale)",
+      "lowStrengthThreshold": 35,
+      "_lowStrengthThreshold_comment": "Low volume strength threshold (default: 35, range: 20-50, 0-100 scale)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "indicatorPeriod": 14,
+      "_indicatorPeriod_comment": "Fallback indicator period if not injected (default: 14, range: 5-50)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "DEBUG: Single VOLUME analyzer. Configured with Session 106 calibration parameters. All filters disabled for maximum signal visibility."
+}
