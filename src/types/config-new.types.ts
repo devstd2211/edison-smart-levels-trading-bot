@@ -321,7 +321,10 @@ export interface ChochBosAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 }
 
 export interface SwingAnalyzerConfigNew extends BaseAnalyzerConfigNew {
-  // No additional params required
+  minCandlesForSwing?: number;
+  minConfidence?: number;
+  maxConfidence?: number;
+  strengthMultiplier?: number;
 }
 
 export interface TrendConflictAnalyzerConfigNew extends BaseAnalyzerConfigNew {

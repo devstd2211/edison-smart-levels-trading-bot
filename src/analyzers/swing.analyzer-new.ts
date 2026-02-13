@@ -12,15 +12,19 @@ import type { LoggerService } from '../services/logger.service';
 import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
-const MIN_CANDLES_FOR_SWING = 25;
-const MIN_CONFIDENCE = 0.1;
-const MAX_CONFIDENCE = 0.95;
+const DEFAULT_MIN_CANDLES_FOR_SWING = 25;
+const DEFAULT_MIN_CONFIDENCE = 0.1;
+const DEFAULT_MAX_CONFIDENCE = 0.95;
+const DEFAULT_STRENGTH_MULTIPLIER = 10;
 
 export class SwingAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
   private readonly priority: number;
-  private maxConfidence: number = MAX_CONFIDENCE;
+  private readonly minCandlesForSwing: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly strengthMultiplier: number;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
@@ -32,12 +36,16 @@ export class SwingAnalyzerNew implements IAnalyzer {
     this.enabled = config.enabled;
     this.weight = config.weight;
     this.priority = config.priority;
+    this.minCandlesForSwing = config.minCandlesForSwing ?? DEFAULT_MIN_CANDLES_FOR_SWING;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.strengthMultiplier = config.strengthMultiplier ?? DEFAULT_STRENGTH_MULTIPLIER;
   }
 
   analyze(candles: Candle[]): AnalyzerSignal {
     if (!this.enabled) throw new Error('[SWING] Analyzer is disabled');
     if (!Array.isArray(candles)) throw new Error('[SWING] Invalid candles input (must be array)');
-    if (candles.length < MIN_CANDLES_FOR_SWING) throw new Error(`[SWING] Not enough candles. Need ${MIN_CANDLES_FOR_SWING}, got ${candles.length}`);
+    if (candles.length < this.minCandlesForSwing) throw new Error(`[SWING] Not enough candles. Need ${this.minCandlesForSwing}, got ${candles.length}`);
 
     for (let i = 0; i < candles.length; i++) {
       if (!candles[i] || typeof candles[i].high !== 'number' || typeof candles[i].low !== 'number')
@@ -46,9 +54,9 @@ export class SwingAnalyzerNew implements IAnalyzer {
 
     const swing = this.detectSwing(candles);
     const direction = swing.type === 'HIGH' ? SignalDirectionEnum.SHORT : swing.type === 'LOW' ? SignalDirectionEnum.LONG : SignalDirectionEnum.HOLD;
-    const confidence = swing.type === 'NONE' ? Math.round(MIN_CONFIDENCE * 100) : Math.round((MIN_CONFIDENCE + swing.strength * (MAX_CONFIDENCE - MIN_CONFIDENCE)) * 100);
+    const confidence = swing.type === 'NONE' ? Math.round(this.minConfidence * 100) : Math.round((this.minConfidence + swing.strength * (this.maxConfidence - this.minConfidence)) * 100);
 
-    const signal: AnalyzerSignal = { source: 'SWING_ANALYZER', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
+    const signal: AnalyzerSignal = { source: 'SWING_ANALYZER_NEW', direction, confidence, weight: this.weight, priority: this.priority, score: (confidence / 100) * this.weight };
     this.lastSignal = signal;
     this.initialized = true;
     return signal;
@@ -60,10 +68,10 @@ export class SwingAnalyzerNew implements IAnalyzer {
     const prev2 = candles[candles.length - 3] || prev1;
 
     if (current.high > prev1.high && prev1.high > prev2.high) {
-      return { type: 'HIGH', strength: Math.min(1, (current.high - prev2.high) / prev2.high * 10) };
+      return { type: 'HIGH', strength: Math.min(1, (current.high - prev2.high) / prev2.high * this.strengthMultiplier) };
     }
     if (current.low < prev1.low && prev1.low < prev2.low) {
-      return { type: 'LOW', strength: Math.min(1, (prev2.low - current.low) / prev2.low * 10) };
+      return { type: 'LOW', strength: Math.min(1, (prev2.low - current.low) / prev2.low * this.strengthMultiplier) };
     }
 
     return { type: 'NONE', strength: 0 };
@@ -80,14 +88,14 @@ export class SwingAnalyzerNew implements IAnalyzer {
    * Check if analyzer has enough data
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_SWING;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForSwing;
   }
 
   /**
    * Get minimum candles required
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_SWING;
+    return this.minCandlesForSwing;
   }
 
   /**

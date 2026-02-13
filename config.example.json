@@ -281,6 +281,17 @@
       "midpoint": 50,
       "_midpoint_comment": "Midpoint level for distance calculation (default: 50, range: 40-60)"
     },
+    "SWING_ANALYZER_NEW": {
+      "_comment": "Swing analyzer: detects swing highs and lows for reversal signals (Session 106+ calibration: all constants configurable)",
+      "minCandlesForSwing": 25,
+      "_minCandlesForSwing_comment": "Minimum candles for swing detection (default: 25, range: 10-50)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "strengthMultiplier": 10,
+      "_strengthMultiplier_comment": "Multiplier for strength calculation (default: 10, range: 5-20)"
+    },
     "BOLLINGER_BANDS_ANALYZER_NEW": {
       "_comment": "Bollinger Bands analyzer: band touches and breakouts (Session 105+ calibration: all thresholds configurable)",
       "minCandlesForBollingerBands": 25,
