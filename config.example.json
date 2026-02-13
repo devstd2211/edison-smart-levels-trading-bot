@@ -267,9 +267,19 @@
       "maxConfidence": 0.95
     },
     "STOCHASTIC_ANALYZER_NEW": {
-      "_comment": "Stochastic analyzer: momentum via stochastic oscillator",
-      "extremeThreshold": 5,
-      "maxConfidence": 0.9
+      "_comment": "Stochastic analyzer: momentum via stochastic oscillator (Session 106+ calibration: all constants configurable)",
+      "minCandlesForStochastic": 50,
+      "_minCandlesForStochastic_comment": "Minimum candles needed for Stochastic calculation (default: 50, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Minimum confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Maximum confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "oversoldLevel": 20,
+      "_oversoldLevel_comment": "Oversold threshold level (default: 20, range: 10-30)",
+      "overboughtLevel": 80,
+      "_overboughtLevel_comment": "Overbought threshold level (default: 80, range: 70-90)",
+      "midpoint": 50,
+      "_midpoint_comment": "Midpoint level for distance calculation (default: 50, range: 40-60)"
     },
     "BOLLINGER_BANDS_ANALYZER_NEW": {
       "_comment": "Bollinger Bands analyzer: band touches and breakouts (Session 105+ calibration: all thresholds configurable)",

@@ -139,7 +139,7 @@ describe('StochasticAnalyzerNew - Signal Generation Tests', () => {
     const signal = analyzer.analyze(candles);
     expect(signal.direction).toBeDefined();
     expect(signal.confidence).toBeGreaterThan(0);
-    expect(signal.source).toBe('STOCHASTIC_ANALYZER');
+    expect(signal.source).toBe('STOCHASTIC_ANALYZER_NEW');
   });
 
   test('should generate SHORT signal on %K < %D in overbought zone', () => {

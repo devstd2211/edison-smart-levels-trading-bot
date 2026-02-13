@@ -24,14 +24,15 @@ import { IAnalyzer } from '../types/analyzer.interface';
 import { AnalyzerType } from '../types/analyzer-type.enum';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS (Defaults - configurable via constructor)
 // ============================================================================
 
-const MIN_CANDLES_FOR_STOCHASTIC = 50; // Need at least kPeriod + dPeriod
-const MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
-const OVERSOLD_LEVEL = 20;
-const OVERBOUGHT_LEVEL = 80;
-const MIDPOINT = 50;
+const DEFAULT_MIN_CANDLES_FOR_STOCHASTIC = 50; // Need at least kPeriod + dPeriod
+const DEFAULT_MIN_CONFIDENCE = 0.1; // Minimum confidence floor (10%)
+const DEFAULT_MAX_CONFIDENCE = 0.95; // Maximum confidence ceiling (95%)
+const DEFAULT_OVERSOLD_LEVEL = 20;
+const DEFAULT_OVERBOUGHT_LEVEL = 80;
+const DEFAULT_MIDPOINT = 50;
 
 // ============================================================================
 // STOCHASTIC ANALYZER - NEW VERSION
@@ -44,6 +45,14 @@ export class StochasticAnalyzerNew implements IAnalyzer {
   private readonly kPeriod: number;
   private readonly dPeriod: number;
 
+  // Configurable constants
+  private readonly minCandlesForStochastic: number;
+  private readonly minConfidence: number;
+  private readonly maxConfidence: number;
+  private readonly oversoldLevel: number;
+  private readonly overboughtLevel: number;
+  private readonly midpoint: number;
+
   private indicator: StochasticIndicatorNew;
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
@@ -52,12 +61,19 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * Constructor with ConfigNew
    * STRICT - Throws if config is invalid
    *
-   * @param config Analyzer configuration
+   * @param config Analyzer configuration with optional calibration parameters
    * @param logger Logger service (optional)
    * @param indicatorDI Stochastic indicator instance via DI (optional, will create if not provided)
    */
   constructor(
-    config: StochasticAnalyzerConfigNew,
+    config: StochasticAnalyzerConfigNew & {
+      minCandlesForStochastic?: number;
+      minConfidence?: number;
+      maxConfidence?: number;
+      oversoldLevel?: number;
+      overboughtLevel?: number;
+      midpoint?: number;
+    },
     private logger?: LoggerService,
     indicatorDI?: IIndicator | null,
   ) {
@@ -83,6 +99,14 @@ export class StochasticAnalyzerNew implements IAnalyzer {
     this.priority = config.priority;
     this.kPeriod = config.kPeriod;
     this.dPeriod = config.dPeriod;
+
+    // Extract calibration parameters (with defaults)
+    this.minCandlesForStochastic = config.minCandlesForStochastic ?? DEFAULT_MIN_CANDLES_FOR_STOCHASTIC;
+    this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+    this.maxConfidence = config.maxConfidence ?? DEFAULT_MAX_CONFIDENCE;
+    this.oversoldLevel = config.oversoldLevel ?? DEFAULT_OVERSOLD_LEVEL;
+    this.overboughtLevel = config.overboughtLevel ?? DEFAULT_OVERBOUGHT_LEVEL;
+    this.midpoint = config.midpoint ?? DEFAULT_MIDPOINT;
 
     // Use injected indicator if provided (DI), otherwise create new one
     if (indicatorDI && indicatorDI instanceof StochasticIndicatorNew) {
@@ -119,9 +143,9 @@ export class StochasticAnalyzerNew implements IAnalyzer {
       throw new Error('[STOCHASTIC_ANALYZER] Invalid candles input (must be array)');
     }
 
-    if (candles.length < MIN_CANDLES_FOR_STOCHASTIC) {
+    if (candles.length < this.minCandlesForStochastic) {
       throw new Error(
-        `[STOCHASTIC_ANALYZER] Not enough candles. Need ${MIN_CANDLES_FOR_STOCHASTIC}, got ${candles.length}`,
+        `[STOCHASTIC_ANALYZER] Not enough candles. Need ${this.minCandlesForStochastic}, got ${candles.length}`,
       );
     }
 
@@ -143,7 +167,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
 
     // Create signal
     const signal: AnalyzerSignal = {
-      source: 'STOCHASTIC_ANALYZER',
+      source: 'STOCHASTIC_ANALYZER_NEW',
       direction,
       confidence,
       weight: this.weight,
@@ -174,11 +198,11 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    */
   private getDirection(k: number, d: number): SignalDirection {
     // Bullish signal: %K crosses above %D in oversold zone
-    if (k > d && k < OVERSOLD_LEVEL) {
+    if (k > d && k < this.oversoldLevel) {
       return SignalDirectionEnum.LONG;
     }
     // Bearish signal: %K crosses below %D in overbought zone
-    else if (k < d && k > OVERBOUGHT_LEVEL) {
+    else if (k < d && k > this.overboughtLevel) {
       return SignalDirectionEnum.SHORT;
     }
     // Neutral
@@ -196,33 +220,32 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @returns Confidence value (0-100 scale)
    */
   private calculateConfidence(k: number, d: number): number {
-    const MAX_CONFIDENCE = 0.95;
     let confidence: number;
 
     // Distance from midpoint (0 = midpoint, 1 = extreme)
-    const distanceFromMid = Math.abs(k - MIDPOINT) / MIDPOINT;
+    const distanceFromMid = Math.abs(k - this.midpoint) / this.midpoint;
 
-    if (k > d && k < OVERSOLD_LEVEL) {
+    if (k > d && k < this.oversoldLevel) {
       // Bullish: confidence based on how far below oversold threshold
-      const strengthFromOversold = (OVERSOLD_LEVEL - k) / OVERSOLD_LEVEL;
-      confidence = MAX_CONFIDENCE * strengthFromOversold * distanceFromMid;
-    } else if (k < d && k > OVERBOUGHT_LEVEL) {
+      const strengthFromOversold = (this.oversoldLevel - k) / this.oversoldLevel;
+      confidence = this.maxConfidence * strengthFromOversold * distanceFromMid;
+    } else if (k < d && k > this.overboughtLevel) {
       // Bearish: confidence based on how far above overbought threshold
-      const strengthFromOverbought = (k - OVERBOUGHT_LEVEL) / (100 - OVERBOUGHT_LEVEL);
-      confidence = MAX_CONFIDENCE * strengthFromOverbought * distanceFromMid;
-    } else if (k > d && k < MIDPOINT) {
+      const strengthFromOverbought = (k - this.overboughtLevel) / (100 - this.overboughtLevel);
+      confidence = this.maxConfidence * strengthFromOverbought * distanceFromMid;
+    } else if (k > d && k < this.midpoint) {
       // Bullish bias but not in clear zone
-      confidence = MAX_CONFIDENCE * 0.3 * (MIDPOINT - k) / MIDPOINT;
-    } else if (k < d && k > MIDPOINT) {
+      confidence = this.maxConfidence * 0.3 * (this.midpoint - k) / this.midpoint;
+    } else if (k < d && k > this.midpoint) {
       // Bearish bias but not in clear zone
-      confidence = MAX_CONFIDENCE * 0.3 * (k - MIDPOINT) / MIDPOINT;
+      confidence = this.maxConfidence * 0.3 * (k - this.midpoint) / this.midpoint;
     } else {
       // Neutral: conflicting signals or both in neutral
-      confidence = MAX_CONFIDENCE * 0.2;
+      confidence = this.maxConfidence * 0.2;
     }
 
     // Clamp to configured bounds
-    confidence = Math.max(MIN_CONFIDENCE, Math.min(MAX_CONFIDENCE, confidence));
+    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
 
     // Convert to 0-100 scale
     return Math.round(confidence * 100);
@@ -236,7 +259,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @throws {Error} If not enough candles
    */
   getStochasticValues(candles: Candle[]): { k: number; d: number } {
-    if (!Array.isArray(candles) || candles.length < MIN_CANDLES_FOR_STOCHASTIC) {
+    if (!Array.isArray(candles) || candles.length < this.minCandlesForStochastic) {
       throw new Error(`[STOCHASTIC_ANALYZER] Not enough candles for Stochastic calculation`);
     }
 
@@ -250,7 +273,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @param threshold - Oversold threshold (default 20)
    * @returns true if %K < threshold
    */
-  isOversold(candles: Candle[], threshold: number = OVERSOLD_LEVEL): boolean {
+  isOversold(candles: Candle[], threshold: number = this.oversoldLevel): boolean {
     const values = this.getStochasticValues(candles);
     return values.k < threshold;
   }
@@ -262,7 +285,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @param threshold - Overbought threshold (default 80)
    * @returns true if %K > threshold
    */
-  isOverbought(candles: Candle[], threshold: number = OVERBOUGHT_LEVEL): boolean {
+  isOverbought(candles: Candle[], threshold: number = this.overboughtLevel): boolean {
     const values = this.getStochasticValues(candles);
     return values.k > threshold;
   }
@@ -343,7 +366,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @returns true if enough candles, false otherwise
    */
   isReady(candles: Candle[]): boolean {
-    return candles && Array.isArray(candles) && candles.length >= MIN_CANDLES_FOR_STOCHASTIC;
+    return candles && Array.isArray(candles) && candles.length >= this.minCandlesForStochastic;
   }
 
   /**
@@ -351,7 +374,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @returns Min candle count needed
    */
   getMinCandlesRequired(): number {
-    return MIN_CANDLES_FOR_STOCHASTIC;
+    return this.minCandlesForStochastic;
   }
 
   /**
@@ -375,7 +398,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    * @returns Max confidence 0.0-1.0
    */
   getMaxConfidence(): number {
-    return 0.95;
+    return this.maxConfidence;
   }
 
 

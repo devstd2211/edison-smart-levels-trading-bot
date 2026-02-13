@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Level Trading - Single Stochastic Analyzer (DEBUG)",
+    "version": "1.0.0",
+    "description": "Single analyzer test to verify Stochastic calibration. Entry threshold lowered to 40% to allow more signal participation.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["debug", "single-analyzer", "stochastic-only", "calibration"]
+  },
+  "entryThreshold": 40,
+  "analyzers": [
+    {
+      "name": "STOCHASTIC_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "kPeriod": 14,
+      "dPeriod": 3
+    }
+  ],
+  "indicators": {
+    "stochastic": {
+      "enabled": true,
+      "kPeriod": 14,
+      "dPeriod": 3,
+      "oversold": 20,
+      "overbought": 80
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "STOCHASTIC_ANALYZER_NEW": {
+      "_comment": "Calibration parameters (Session 106): All 6 constants now configurable",
+      "minCandlesForStochastic": 50,
+      "_minCandlesForStochastic_comment": "Min candles for Stochastic calculation (default: 50, range: 20-100)",
+      "minConfidence": 0.1,
+      "_minConfidence_comment": "Min confidence floor (default: 0.1 = 10%, range: 0.05-0.3)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence ceiling (default: 0.95 = 95%, range: 0.7-1.0)",
+      "oversoldLevel": 20,
+      "_oversoldLevel_comment": "Oversold threshold level (default: 20, range: 10-30)",
+      "overboughtLevel": 80,
+      "_overboughtLevel_comment": "Overbought threshold level (default: 80, range: 70-90)",
+      "midpoint": 50,
+      "_midpoint_comment": "Midpoint level for distance calculation (default: 50, range: 40-60)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "DEBUG: Single Stochastic analyzer for calibration validation. All filters disabled."
+}
