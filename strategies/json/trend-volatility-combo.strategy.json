@@ -72,6 +72,8 @@
     "ATR_ANALYZER_NEW": {
       "minCandlesForAtr": 50,
       "minConfidence": 0.1,
+      "confidenceMultiplier": 2.0,
+      "maxConfidence": 0.95,
       "neutralConfidenceMultiplier": 0.3,
       "highThreshold": 2.5,
       "lowThreshold": 0.8
