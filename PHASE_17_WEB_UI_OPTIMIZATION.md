@@ -298,7 +298,7 @@ npm run dev:web
 
 **Version:** 1.1
 **Last Updated:** 2026-02-14 (Session 107)
-**Status:** ✅ **COMPLETE** (Phase 17.1-17.2)
+**Status:** ✅ **ALL PHASES COMPLETE** (17.1 + 17.2 + 17.3) 🎉
 
 ---
 
@@ -352,9 +352,26 @@ npm run dev:web
   - Status labels (overbought/oversold)
 - ✅ Better transitions/animations
 
-### ⏸️ Phase 17.3: Dark Mode (Optional - POSTPONED)
-**Status:** Postponed until user requests it
-**Reason:** Core UI improvements complete, dark mode is nice-to-have
+### ✅ Phase 17.3: Dark Mode (COMPLETE)
+**Files:** `web-client/src/stores/themeStore.ts` (new), `tailwind.config.js`, `App.tsx`, components
+**Commit:** `1f67367`
+
+**Features:**
+- ✅ ThemeStore (Zustand) for state management
+- ✅ LocalStorage persistence
+- ✅ System preference auto-detection
+- ✅ Toggle button in header (Moon/Sun icons)
+- ✅ Smooth color transitions
+- ✅ Full component coverage:
+  - App.tsx (header, nav, footer)
+  - PositionCard (all sections)
+  - LiveTicker (all indicators)
+- ✅ Tailwind dark mode enabled (class strategy)
+
+**Usage:**
+- Click Moon/Sun icon in header to toggle
+- Theme persists across sessions
+- Auto-detects system dark mode preference
 
 ---
 
