@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "PRICE_ACTION - Aggressive (Production)",
+    "version": "1.0.0",
+    "description": "Lower threshold for max trades. Target: 80%+ WR, frequent trades.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-14T00:00:00Z",
+    "lastModified": "2026-02-14T00:00:00Z",
+    "tags": ["production", "price-action", "aggressive", "frequency"]
+  },
+  "entryThreshold": 35,
+  "analyzers": [
+    {
+      "name": "PRICE_ACTION_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.30,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "PRICE_ACTION_ANALYZER_NEW": {
+      "_comment": "Aggressive variant: Lower thresholds for quantity over quality",
+      "minCandlesForPriceAction": 15,
+      "_minCandlesForPriceAction_comment": "Min candles required - LOWER for aggressive (15 vs 20)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.10,
+      "_baseConfidence_comment": "Base confidence - LOWER for aggressive (0.10 vs 0.15)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Strength multiplier - LOWER for aggressive (0.85 vs 0.90)",
+      "lookbackWindow": 5,
+      "_lookbackWindow_comment": "Lookback window - SHORTER for aggressive (5 vs 7)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "Aggressive variant: Lower entry threshold (35%), lower base confidence (0.10), lower multiplier (0.85), shorter lookback (5). Targets quantity over quality."
+}

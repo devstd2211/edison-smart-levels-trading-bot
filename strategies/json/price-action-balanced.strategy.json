@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "PRICE_ACTION - Balanced (Production)",
+    "version": "1.0.0",
+    "description": "Balanced approach - quality and quantity. Target: 85-90% WR, moderate trades.",
+    "author": "Edison Trading Bot",
+    "createdAt": "2026-02-14T00:00:00Z",
+    "lastModified": "2026-02-14T00:00:00Z",
+    "tags": ["production", "price-action", "balanced"]
+  },
+  "entryThreshold": 50,
+  "analyzers": [
+    {
+      "name": "PRICE_ACTION_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 1.0,
+      "priority": 1,
+      "minConfidence": 0.40,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "PRICE_ACTION_ANALYZER_NEW": {
+      "_comment": "Balanced variant: Moderate thresholds for balanced quality and quantity",
+      "minCandlesForPriceAction": 20,
+      "_minCandlesForPriceAction_comment": "Min candles required (default: 20, range: 10-50)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95, range: 0.7-0.99)",
+      "baseConfidence": 0.12,
+      "_baseConfidence_comment": "Base confidence - MODERATE for balanced (0.12 vs 0.1/0.15)",
+      "confidenceMultiplier": 0.88,
+      "_confidenceMultiplier_comment": "Strength multiplier - MODERATE for balanced (0.88 vs 0.85/0.90)",
+      "lookbackWindow": 6,
+      "_lookbackWindow_comment": "Lookback window - MODERATE for balanced (6 vs 5/7)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "Balanced variant: Moderate entry threshold (50%), moderate base confidence (0.12), moderate multiplier (0.88), moderate lookback (6). Balanced quality and quantity."
+}
