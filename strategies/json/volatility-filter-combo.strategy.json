@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Volatility Filter Combo",
+    "version": "1.0.0",
+    "description": "PRICE_ACTION + ATR + WICK - trades only when volatility confirms. Filters out ranging/choppy markets where Smart Money combos failed.",
+    "author": "Edison Trading Bot - Phase 16.7",
+    "createdAt": "2026-02-14T00:00:00Z",
+    "lastModified": "2026-02-14T00:00:00Z",
+    "tags": ["multi-analyzer", "volatility-filter", "price-action", "atr", "wick", "phase-16.7"]
+  },
+  "entryThreshold": 70,
+  "analyzers": [
+    {
+      "name": "PRICE_ACTION_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.50,
+      "priority": 1,
+      "minConfidence": 0.40,
+      "maxConfidence": 1.0
+    },
+    {
+      "name": "ATR_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.30,
+      "priority": 2,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    },
+    {
+      "name": "WICK_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.20,
+      "priority": 3,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": { "min": 40, "max": 60 },
+      "extreme": { "low": 20, "high": 80 },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "PRICE_ACTION_ANALYZER_NEW": {
+      "minCandlesForPriceAction": 20,
+      "maxConfidence": 0.95,
+      "baseConfidence": 0.1,
+      "confidenceMultiplier": 0.85,
+      "lookbackWindow": 5
+    },
+    "ATR_ANALYZER_NEW": {
+      "minCandlesForAtr": 50,
+      "minConfidence": 0.1,
+      "neutralConfidenceMultiplier": 0.3,
+      "highThreshold": 2.5,
+      "lowThreshold": 0.8
+    },
+    "WICK_ANALYZER_NEW": {
+      "minCandlesForWick": 20,
+      "minConfidence": 0.1,
+      "maxConfidence": 0.95,
+      "minBodyToWickRatio": 0.3
+    }
+  },
+  "filters": {
+    "blindZone": { "minSignalsForLong": 0, "minSignalsForShort": 0 },
+    "flatMarket": { "enabled": false },
+    "fundingRate": { "enabled": false },
+    "btcCorrelation": { "enabled": false },
+    "trendAlignment": { "enabled": false },
+    "postTpFilter": { "enabled": false },
+    "volatilityRegime": { "enabled": false },
+    "neutralTrendStrength": { "enabled": false },
+    "timeBasedFilter": { "enabled": false }
+  },
+  "riskManagement": {
+    "stopLoss": { "atrMultiplier": 2.0, "minDistancePercent": 0.5 },
+    "takeProfits": [
+      { "level": 1, "percent": 1.0, "sizePercent": 30 },
+      { "level": 2, "percent": 2.0, "sizePercent": 40 },
+      { "level": 3, "percent": 3.5, "sizePercent": 30 }
+    ],
+    "trailing": { "enabled": true, "percent": 1.0, "activationLevel": 2.0 }
+  },
+  "notes": "Volatility Filter: PRICE_ACTION for direction, ATR (30% weight) ensures proper volatility, WICK confirms rejection patterns. Should avoid false signals in ranging markets like Dec 10."
+}

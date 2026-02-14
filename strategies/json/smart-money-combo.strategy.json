@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "metadata": {
+    "name": "Smart Money Combo - Multi-Analyzer Strategy",
+    "version": "1.0.0",
+    "description": "Combines top 4 performing analyzers (PRICE_ACTION 85.7% WR, FOOTPRINT 100% WR, ORDER_BLOCK 100% WR, DELTA 100% WR) with weighted signal aggregation. Expected WR: 85%+, PF: >5",
+    "author": "Edison Trading Bot - Phase 16.7",
+    "createdAt": "2026-02-13T00:00:00Z",
+    "lastModified": "2026-02-13T00:00:00Z",
+    "tags": ["multi-analyzer", "smart-money", "price-action", "footprint", "order-block", "delta", "phase-16.7"]
+  },
+  "entryThreshold": 60,
+  "analyzers": [
+    {
+      "name": "PRICE_ACTION_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.35,
+      "priority": 1,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    },
+    {
+      "name": "FOOTPRINT_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.25,
+      "priority": 2,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    },
+    {
+      "name": "ORDER_BLOCK_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.20,
+      "priority": 3,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    },
+    {
+      "name": "DELTA_ANALYZER_NEW",
+      "enabled": true,
+      "weight": 0.20,
+      "priority": 4,
+      "minConfidence": 0.35,
+      "maxConfidence": 1.0
+    }
+  ],
+  "indicators": {
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70,
+      "neutralZone": {
+        "min": 40,
+        "max": 60
+      },
+      "extreme": {
+        "low": 20,
+        "high": 80
+      },
+      "maxConfidence": 0.9
+    },
+    "atr": {
+      "period": 14,
+      "minimumATR": 0.005,
+      "maximumATR": 2.0
+    }
+  },
+  "analyzerDefaults": {
+    "PRICE_ACTION_ANALYZER_NEW": {
+      "_comment": "Best overall performer (85.7% WR, PF 9.67, +$50.26) - Weight: 35%",
+      "minCandlesForPriceAction": 20,
+      "_minCandlesForPriceAction_comment": "Min candles required (default: 20)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence (default: 0.1)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Strength multiplier (default: 0.85)",
+      "lookbackWindow": 5,
+      "_lookbackWindow_comment": "Trend analysis window (default: 5)"
+    },
+    "FOOTPRINT_ANALYZER_NEW": {
+      "_comment": "100% WR, +$43.04 - Smart money volume analysis - Weight: 25%",
+      "minCandlesForFootprint": 25,
+      "_minCandlesForFootprint_comment": "Min candles required (default: 25)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence (default: 0.1)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Volume strength multiplier (default: 0.85)",
+      "lookbackWindow": 10,
+      "_lookbackWindow_comment": "Volume analysis window (default: 10)",
+      "volumeMultiplierThreshold": 1.5,
+      "_volumeMultiplierThreshold_comment": "Volume spike threshold (default: 1.5)",
+      "strengthDivisor": 3,
+      "_strengthDivisor_comment": "Strength calculation divisor (default: 3)"
+    },
+    "ORDER_BLOCK_ANALYZER_NEW": {
+      "_comment": "100% WR, +$32.26, PF 999 - Institutional support/resistance - Weight: 20%",
+      "minCandlesForOrderBlock": 25,
+      "_minCandlesForOrderBlock_comment": "Min candles required (default: 25)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95)",
+      "baseConfidence": 0.15,
+      "_baseConfidence_comment": "Baseline confidence (default: 0.15)",
+      "confidenceMultiplier": 0.8,
+      "_confidenceMultiplier_comment": "Strength multiplier (default: 0.8)",
+      "recentWindow": 10,
+      "_recentWindow_comment": "Recent rejection check window (default: 10)",
+      "wickRatioThreshold": 1.5,
+      "_wickRatioThreshold_comment": "Min wick-to-body ratio (default: 1.5)",
+      "maxDistanceThreshold": 0.05,
+      "_maxDistanceThreshold_comment": "Max distance for full strength (default: 0.05=5%)",
+      "maxRejectionCount": 5,
+      "_maxRejectionCount_comment": "Rejection count for max strength (default: 5)",
+      "distancePenaltyMultiplier": 0.5,
+      "_distancePenaltyMultiplier_comment": "Distance penalty multiplier (default: 0.5)",
+      "maxDistanceForRelevance": 0.1,
+      "_maxDistanceForRelevance_comment": "Max distance for relevance (default: 0.1=10%)"
+    },
+    "DELTA_ANALYZER_NEW": {
+      "_comment": "100% WR, +$32.26, PF 999 - Order flow delta analysis - Weight: 20%",
+      "minCandlesForDelta": 15,
+      "_minCandlesForDelta_comment": "Min candles required (default: 15)",
+      "maxConfidence": 0.95,
+      "_maxConfidence_comment": "Max confidence (default: 0.95)",
+      "baseConfidence": 0.1,
+      "_baseConfidence_comment": "Base confidence (default: 0.1)",
+      "confidenceMultiplier": 0.85,
+      "_confidenceMultiplier_comment": "Delta multiplier (default: 0.85)",
+      "lookbackWindow": 10,
+      "_lookbackWindow_comment": "Delta calculation window (default: 10)"
+    }
+  },
+  "filters": {
+    "blindZone": {
+      "minSignalsForLong": 0,
+      "minSignalsForShort": 0
+    },
+    "flatMarket": {
+      "enabled": false
+    },
+    "fundingRate": {
+      "enabled": false
+    },
+    "btcCorrelation": {
+      "enabled": false
+    },
+    "trendAlignment": {
+      "enabled": false
+    },
+    "postTpFilter": {
+      "enabled": false
+    },
+    "volatilityRegime": {
+      "enabled": false
+    },
+    "neutralTrendStrength": {
+      "enabled": false
+    },
+    "timeBasedFilter": {
+      "enabled": false
+    }
+  },
+  "riskManagement": {
+    "stopLoss": {
+      "atrMultiplier": 2.0,
+      "minDistancePercent": 0.5
+    },
+    "takeProfits": [
+      {
+        "level": 1,
+        "percent": 1.0,
+        "sizePercent": 30
+      },
+      {
+        "level": 2,
+        "percent": 2.0,
+        "sizePercent": 40
+      },
+      {
+        "level": 3,
+        "percent": 3.5,
+        "sizePercent": 30
+      }
+    ],
+    "trailing": {
+      "enabled": true,
+      "percent": 1.0,
+      "activationLevel": 2.0
+    }
+  },
+  "notes": "Phase 16.7: Multi-analyzer strategy combining top 4 performers. Weights: PRICE_ACTION (35%), FOOTPRINT (25%), ORDER_BLOCK (20%), DELTA (20%). Entry threshold 60% ensures 2-3 analyzers must agree. Expected: WR 85%+, PF >5, better trade selection than single analyzers."
+}
