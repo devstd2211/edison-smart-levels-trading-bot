@@ -31,13 +31,13 @@ export function PositionCard() {
 
   if (!currentPosition) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-300">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-gray-300 dark:border-gray-600 transition-colors">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Current Position</h2>
-            <p className="text-sm text-gray-500">No active position</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Current Position</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No active position</p>
           </div>
-          <X className="w-8 h-8 text-gray-400" />
+          <X className="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
       </div>
     );
@@ -83,33 +83,33 @@ export function PositionCard() {
 
   return (
     <div
-      className={`bg-white rounded-lg shadow p-6 border-l-4 ${
-        isLong ? 'border-blue-500' : 'border-red-500'
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 transition-colors ${
+        isLong ? 'border-blue-500 dark:border-blue-400' : 'border-red-500 dark:border-red-400'
       }`}
     >
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Current Position</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Current Position</h2>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-sm text-gray-500">Active trade</p>
-            <Clock className="w-3 h-3 text-gray-400" />
-            <p className="text-sm text-gray-600 font-medium">{timeInPosition}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Active trade</p>
+            <Clock className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+            <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{timeInPosition}</p>
           </div>
         </div>
         {isLong ? (
-          <TrendingUp className="w-6 h-6 text-blue-600" />
+          <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         ) : (
-          <TrendingDown className="w-6 h-6 text-red-600" />
+          <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         {/* Side */}
         <div>
-          <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Side</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Side</p>
           <p
             className={`text-lg font-bold ${
-              isLong ? 'text-blue-600' : 'text-red-600'
+              isLong ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'
             }`}
           >
             {currentPosition.side}
@@ -118,36 +118,36 @@ export function PositionCard() {
 
         {/* Quantity */}
         <div>
-          <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Qty</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Qty</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             {formatNumber(currentPosition?.quantity)}
           </p>
         </div>
 
         {/* Entry Price */}
         <div>
-          <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Entry</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Entry</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             ${formatNumber(currentPosition?.entryPrice)}
           </p>
         </div>
 
         {/* Current Price */}
         <div>
-          <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Current</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Current</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             ${formatNumber(currentPosition?.currentPrice)}
           </p>
         </div>
       </div>
 
       {/* PnL */}
-      <div className="border-t pt-4 mb-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600">Unrealized PnL</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Unrealized PnL</p>
           <p
             className={`text-sm font-semibold ${
-              isProfit ? 'text-green-600' : 'text-red-600'
+              isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}
           >
             {isProfit ? '+' : ''}{formatNumber(currentPosition.unrealizedPnL)} ({pnlPercent.toFixed(
@@ -158,11 +158,11 @@ export function PositionCard() {
       </div>
 
       {/* Stop Loss */}
-      <div className="border-t pt-4 mb-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm text-gray-600">Stop Loss</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Stop Loss</p>
           <div className="text-right">
-            <p className="text-sm font-semibold text-red-600">
+            <p className="text-sm font-semibold text-red-600 dark:text-red-400">
               ${formatNumber(currentPosition.stopLoss.price)}
             </p>
             {(() => {
@@ -173,7 +173,7 @@ export function PositionCard() {
               );
               if (slDistance !== 0) {
                 return (
-                  <p className={`text-xs ${slDistance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                  <p className={`text-xs ${slDistance < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
                     {slDistance > 0 ? '+' : ''}{slDistance.toFixed(2)}% away
                   </p>
                 );
@@ -183,15 +183,15 @@ export function PositionCard() {
           </div>
         </div>
         {currentPosition.stopLoss.breakeven && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Breakeven triggered at: ${formatNumber(currentPosition.stopLoss.breakeven)}
           </p>
         )}
       </div>
 
       {/* Take Profits */}
-      <div className="border-t pt-4">
-        <p className="text-sm text-gray-600 mb-3">Take Profits</p>
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Take Profits</p>
         <div className="space-y-3">
           {(currentPosition?.takeProfits || []).map((tp: any, idx: number) => {
             const progress = calculateProgress(
@@ -209,17 +209,17 @@ export function PositionCard() {
               <div key={idx} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">TP{idx + 1}</span>
+                    <span className="text-gray-600 dark:text-gray-400">TP{idx + 1}</span>
                     {tp?.hit && (
-                      <span className="text-green-600 text-xs font-bold">✓ HIT</span>
+                      <span className="text-green-600 dark:text-green-400 text-xs font-bold">✓ HIT</span>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold text-gray-900">
+                    <div className="font-semibold text-gray-900 dark:text-white">
                       ${formatNumber(tp?.price)} ({formatNumber(tp?.quantity)})
                     </div>
                     {!tp?.hit && distance !== 0 && (
-                      <div className={`text-xs ${distance > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`text-xs ${distance > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {distance > 0 ? '+' : ''}{distance.toFixed(2)}% away
                       </div>
                     )}
@@ -227,9 +227,9 @@ export function PositionCard() {
                 </div>
                 {/* Progress bar */}
                 {!tp?.hit && progress > 0 && (
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-green-500 dark:bg-green-400 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
