@@ -83,6 +83,33 @@ export function LiveTicker() {
     }
   };
 
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-300 animate-pulse">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <div className="h-6 w-40 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 w-32 bg-gray-200 rounded"></div>
+          </div>
+          <Zap className="w-6 h-6 text-gray-300" />
+        </div>
+        <div className="mb-6">
+          <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+          <div className="h-10 w-48 bg-gray-200 rounded"></div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i}>
+              <div className="h-3 w-16 bg-gray-200 rounded mb-2"></div>
+              <div className="h-6 w-20 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
       <div className="flex justify-between items-start mb-6">
@@ -90,7 +117,12 @@ export function LiveTicker() {
           <h2 className="text-lg font-semibold text-gray-900">Live Market Data</h2>
           <p className="text-sm text-gray-500">Real-time price and indicators</p>
         </div>
-        <Zap className="w-6 h-6 text-yellow-600" />
+        <div className="flex items-center gap-2">
+          {isFlashing && (
+            <div className="w-2 h-2 bg-yellow-500 rounded-full animate-ping"></div>
+          )}
+          <Zap className="w-6 h-6 text-yellow-600" />
+        </div>
       </div>
 
       {/* Current Price */}
@@ -98,19 +130,27 @@ export function LiveTicker() {
         <p className="text-sm text-gray-600 mb-2">Current Price</p>
         <div className="flex items-baseline gap-3">
           <p
-            className={`text-4xl font-bold transition-colors ${
-              isFlashing ? 'bg-yellow-100 text-yellow-900' : 'text-gray-900'
+            className={`text-4xl font-bold transition-all duration-300 ${
+              isFlashing ? 'bg-yellow-100 text-yellow-900 px-2 rounded' : 'text-gray-900'
             }`}
           >
             ${formatPrice(market.currentPrice)}
           </p>
-          <p
-            className={`text-lg font-semibold ${
-              market.priceChangePercent >= 0 ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {market.priceChangePercent >= 0 ? '+' : ''}{market.priceChangePercent.toFixed(2)}%
-          </p>
+          <div className="flex flex-col">
+            <p
+              className={`text-lg font-bold ${
+                market.priceChangePercent >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {market.priceChangePercent >= 0 ? '▲' : '▼'} {market.priceChangePercent >= 0 ? '+' : ''}{market.priceChangePercent.toFixed(2)}%
+            </p>
+            {market.priceChangePercent !== 0 && (
+              <div className="mt-1">
+                <div className={`h-1 rounded-full ${market.priceChangePercent >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                     style={{ width: `${Math.min(100, Math.abs(market.priceChangePercent) * 10)}px` }}></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -119,13 +159,30 @@ export function LiveTicker() {
         {/* RSI */}
         <div>
           <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">RSI (14)</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className={`text-lg font-bold ${
+            market.rsi !== undefined
+              ? market.rsi > 70 ? 'text-red-600' : market.rsi < 30 ? 'text-green-600' : 'text-gray-900'
+              : 'text-gray-900'
+          }`}>
             {formatIndicator(market.rsi)}
           </p>
           {market.rsi !== undefined && (
-            <p className="text-xs text-gray-500 mt-1">
-              {market.rsi > 70 ? 'Overbought' : market.rsi < 30 ? 'Oversold' : 'Neutral'}
-            </p>
+            <>
+              <p className={`text-xs font-semibold mt-1 ${
+                market.rsi > 70 ? 'text-red-600' : market.rsi < 30 ? 'text-green-600' : 'text-gray-500'
+              }`}>
+                {market.rsi > 70 ? 'Overbought' : market.rsi < 30 ? 'Oversold' : 'Neutral'}
+              </p>
+              {/* RSI progress bar */}
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    market.rsi > 70 ? 'bg-red-500' : market.rsi < 30 ? 'bg-green-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${market.rsi}%` }}
+                />
+              </div>
+            </>
           )}
         </div>
 
