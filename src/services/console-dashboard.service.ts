@@ -389,23 +389,143 @@ export class ConsoleDashboardService extends EventEmitter {
     }
   }
 
+  /**
+   * Format P&L with color (green=profit, red=loss)
+   */
+  private formatPnL(value: number): string {
+    const color = value >= 0 ? '{green-fg}' : '{red-fg}';
+    const sign = value > 0 ? '+' : '';
+    return `${color}${sign}$${value.toFixed(2)}{/}`;
+  }
+
+  /**
+   * Format percentage with color
+   */
+  private formatPercent(value: number): string {
+    const color = value >= 0 ? '{green-fg}' : '{red-fg}';
+    const sign = value > 0 ? '+' : '';
+    return `${color}${sign}${value.toFixed(2)}%{/}`;
+  }
+
+  /**
+   * Render ASCII progress bar
+   */
+  private renderProgressBar(current: number, target: number, width: number = 20): string {
+    if (target === 0) return '░'.repeat(width);
+    const percent = Math.min(100, Math.max(0, (current / target) * 100));
+    const filled = Math.floor((percent / 100) * width);
+    const empty = width - filled;
+    return '{green-fg}' + '█'.repeat(filled) + '{/}' + '{gray-fg}' + '░'.repeat(empty) + '{/}';
+  }
+
+  /**
+   * Format duration (seconds to human-readable)
+   */
+  private formatDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
+  }
+
   private renderMetrics(): void {
     const widget = this.widgets.get('metrics');
     if (!widget || !this.screen) return;
 
-    // Placeholder: would render real market metrics here
-    widget.setContent('Market Metrics...');
+    let content = '';
+    if (this.state.currentPrice > 0) {
+      content += `{bold}Current Price:{/bold} $${this.state.currentPrice.toFixed(4)}\n`;
+      const age = this.state.priceUpdatedAt > 0
+        ? Math.floor((Date.now() - this.state.priceUpdatedAt) / 1000)
+        : 0;
+      content += `{gray-fg}Updated: ${age}s ago{/}\n\n`;
+    }
+
+    if (this.state.metrics.size > 0) {
+      for (const [tf, metrics] of this.state.metrics) {
+        const trendColor = metrics.trend === 'UPTREND' ? '{green-fg}' :
+                          metrics.trend === 'DOWNTREND' ? '{red-fg}' : '{yellow-fg}';
+        content += `{bold}${tf}:{/bold} ${trendColor}${metrics.trend}{/}\n`;
+        content += `  RSI: ${metrics.rsi.toFixed(1)}`;
+        if (metrics.ema20) content += ` | EMA20: ${metrics.ema20.toFixed(2)}`;
+        if (metrics.atr) content += ` | ATR: ${metrics.atr.toFixed(4)}`;
+        content += '\n';
+      }
+    } else {
+      content += '{gray-fg}Waiting for market data...{/}';
+    }
+
+    widget.setContent(content);
   }
 
   private renderPosition(): void {
     const widget = this.widgets.get('position');
     if (!widget || !this.screen) return;
 
-    let content = 'No active position';
-    if (this.state.position) {
-      content = `Position: ${this.state.position.side}
-Entry: $${this.state.entryPrice}
-P&L: $${this.state.currentPnL?.toFixed(2)} (${this.state.currentPnLPercent?.toFixed(2)}%)`;
+    if (!this.state.position) {
+      widget.setContent('{gray-fg}No active position{/}');
+      return;
+    }
+
+    const { position, entryPrice, currentPnL, currentPnLPercent } = this.state;
+    const sideColor = position.side === 'LONG' ? '{green-fg}' : '{red-fg}';
+
+    let content = `{bold}Position:{/bold} ${sideColor}${position.side}{/}\n`;
+    content += `{bold}Entry:{/bold} $${entryPrice?.toFixed(4) || 'N/A'}\n`;
+    content += `{bold}Current:{/bold} $${this.state.currentPrice.toFixed(4)}\n`;
+
+    // P&L with color
+    if (currentPnL !== undefined && currentPnLPercent !== undefined) {
+      content += `{bold}P&L:{/bold} ${this.formatPnL(currentPnL)} (${this.formatPercent(currentPnLPercent)})\n`;
+    }
+
+    // Time in position
+    if (position.openedAt) {
+      const duration = Math.floor((Date.now() - position.openedAt) / 1000);
+      content += `{bold}Time:{/bold} ${this.formatDuration(duration)}\n`;
+    }
+
+    // TP Levels with progress bars
+    if (this.state.tpLevels.length > 0) {
+      content += '\n{bold}Take Profit Levels:{/bold}\n';
+      for (const tp of this.state.tpLevels) {
+        const reachedIcon = tp.reached ? '{green-fg}✓{/}' : ' ';
+        const distance = entryPrice && tp.price > 0
+          ? ((tp.price - this.state.currentPrice) / entryPrice * 100)
+          : 0;
+        const progress = entryPrice && tp.price > 0
+          ? ((this.state.currentPrice - entryPrice) / (tp.price - entryPrice) * 100)
+          : 0;
+
+        content += `${reachedIcon} TP${tp.level}: $${tp.price.toFixed(4)} (${tp.percent.toFixed(1)}%)`;
+        if (!tp.reached && distance !== 0) {
+          content += ` ${this.formatPercent(distance)} away`;
+        }
+        content += '\n';
+
+        // Progress bar
+        if (!tp.reached && progress > 0) {
+          content += `  ${this.renderProgressBar(progress, 100, 15)}\n`;
+        }
+      }
+    }
+
+    // Stop Loss
+    if (this.state.slLevel) {
+      const distance = entryPrice
+        ? ((this.state.slLevel - this.state.currentPrice) / entryPrice * 100)
+        : 0;
+      content += `\n{bold}Stop Loss:{/bold} {red-fg}$${this.state.slLevel.toFixed(4)}{/}`;
+      if (distance !== 0) {
+        content += ` (${this.formatPercent(distance)} away)`;
+      }
     }
 
     widget.setContent(content);
@@ -415,7 +535,24 @@ P&L: $${this.state.currentPnL?.toFixed(2)} (${this.state.currentPnLPercent?.toFi
     const widget = this.widgets.get('stats');
     if (!widget || !this.screen) return;
 
-    const content = `Wins: ${this.state.dailyWins} | Losses: ${this.state.dailyLosses} | Daily P&L: $${this.state.dailyPnL.toFixed(2)}`;
+    const { dailyWins, dailyLosses, dailyPnL } = this.state;
+    const totalTrades = dailyWins + dailyLosses;
+    const winRate = totalTrades > 0 ? (dailyWins / totalTrades) * 100 : 0;
+    const avgPnL = totalTrades > 0 ? dailyPnL / totalTrades : 0;
+
+    // Win rate color
+    const wrColor = winRate >= 60 ? '{green-fg}' :
+                    winRate >= 40 ? '{yellow-fg}' : '{red-fg}';
+
+    let content = '{bold}Daily Stats:{/bold}\n';
+    content += `Trades: {bold}${totalTrades}{/bold} `;
+    content += `(${'{green-fg}'}W:${dailyWins}{/} / ${'{red-fg}'}L:${dailyLosses}{/}) `;
+    content += `| Win Rate: ${wrColor}${winRate.toFixed(1)}%{/}\n`;
+    content += `P&L: ${this.formatPnL(dailyPnL)} `;
+    if (totalTrades > 0) {
+      content += `| Avg: ${this.formatPnL(avgPnL)}`;
+    }
+
     widget.setContent(content);
   }
 
@@ -423,9 +560,45 @@ P&L: $${this.state.currentPnL?.toFixed(2)} (${this.state.currentPnLPercent?.toFi
     const widget = this.widgets.get('indicators');
     if (!widget || !this.screen) return;
 
-    let content = 'Indicators:\n';
+    if (this.state.metrics.size === 0) {
+      widget.setContent('{gray-fg}Waiting for indicator data...{/}');
+      return;
+    }
+
+    let content = '';
     for (const [tf, metrics] of this.state.metrics) {
-      content += `${tf}: ${metrics.trend} (RSI: ${metrics.rsi?.toFixed(1)})\n`;
+      const trendColor = metrics.trend === 'UPTREND' ? '{green-fg}' :
+                        metrics.trend === 'DOWNTREND' ? '{red-fg}' : '{yellow-fg}';
+
+      content += `{bold}{cyan-fg}${tf.toUpperCase()}{/}{/bold}\n`;
+      content += `  Trend: ${trendColor}${metrics.trend}{/}\n`;
+
+      // RSI with color (overbought/oversold)
+      const rsiColor = metrics.rsi > 70 ? '{red-fg}' :
+                       metrics.rsi < 30 ? '{green-fg}' : '{white-fg}';
+      content += `  RSI: ${rsiColor}${metrics.rsi.toFixed(1)}{/}`;
+
+      // RSI bar
+      const rsiBar = this.renderProgressBar(metrics.rsi, 100, 10);
+      content += ` ${rsiBar}\n`;
+
+      if (metrics.ema20) {
+        content += `  EMA20: ${metrics.ema20.toFixed(4)}`;
+        if (metrics.ema50) {
+          const crossColor = metrics.ema20 > metrics.ema50 ? '{green-fg}' : '{red-fg}';
+          const crossSymbol = metrics.ema20 > metrics.ema50 ? '>' : '<';
+          content += ` ${crossColor}${crossSymbol}{/} EMA50: ${metrics.ema50.toFixed(4)}`;
+        }
+        content += '\n';
+      }
+
+      if (metrics.atr) {
+        content += `  ATR: ${metrics.atr.toFixed(4)}`;
+      }
+      if (metrics.volume) {
+        content += ` | Vol: ${(metrics.volume / 1000).toFixed(1)}K`;
+      }
+      content += '\n\n';
     }
 
     widget.setContent(content);
@@ -435,10 +608,29 @@ P&L: $${this.state.currentPnL?.toFixed(2)} (${this.state.currentPnLPercent?.toFi
     const widget = this.widgets.get('updates');
     if (!widget || !this.screen) return;
 
-    let content = 'Recent Updates:\n';
-    for (const event of this.state.events.slice(-10)) {
+    if (this.state.events.length === 0) {
+      widget.setContent('{gray-fg}No recent events{/}');
+      return;
+    }
+
+    let content = '';
+    const recentEvents = this.state.events.slice(-10);
+    for (const event of recentEvents) {
       const time = event.timestamp.toLocaleTimeString();
-      content += `[${time}] ${event.type}: ${event.message}\n`;
+
+      // Color by event type
+      let typeColor = '{white-fg}';
+      if (event.type.includes('win') || event.type.includes('profit')) {
+        typeColor = '{green-fg}';
+      } else if (event.type.includes('loss') || event.type.includes('sl-hit')) {
+        typeColor = '{red-fg}';
+      } else if (event.type.includes('position-open') || event.type.includes('tp-hit')) {
+        typeColor = '{cyan-fg}';
+      } else if (event.type.includes('error') || event.type.includes('warning')) {
+        typeColor = '{yellow-fg}';
+      }
+
+      content += `{gray-fg}[${time}]{/} ${typeColor}${event.type}{/}: ${event.message}\n`;
     }
 
     widget.setContent(content);
