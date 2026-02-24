@@ -1,6 +1,6 @@
 import { INTEGER_MULTIPLIERS } from '../constants';
-import { OrderBook, LoggerService } from '../types';
-import { BotServices } from './bot-services';
+import { OrderBook } from '../types';
+import type { IWhaleDetectorServices } from '../interfaces';
 
 /**
  * Real-Time Whale Detector
@@ -16,11 +16,11 @@ import { BotServices } from './bot-services';
  * Throttle: 100ms (check every 100ms to avoid redundant analysis)
  */
 export class RealTimeWhaleDetector {
-  private logger: LoggerService;
+  private logger: IWhaleDetectorServices['logger'];
   private lastWhaleAnalysis: number = 0;
   private readonly whaleThrottle = INTEGER_MULTIPLIERS.ONE_HUNDRED; // 100ms
 
-  constructor(private services: BotServices, private config: any) {
+  constructor(private services: IWhaleDetectorServices, private config: any) {
     this.logger = services.logger;
   }
 

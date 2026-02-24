@@ -18,6 +18,7 @@ import { CONFIDENCE_THRESHOLDS, INTEGER_MULTIPLIERS } from './constants';
 import { Config } from './types';
 import { ConfigValidatorService } from './services/config-validator.service';
 import { TIME_MULTIPLIERS, TIMING_CONSTANTS } from './constants/technical.constants';
+import { startWebServer } from './web';
 
 // Load environment variables from .env
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -38,7 +39,7 @@ const WS_PORT = parseInt(process.env.WS_PORT || '4001', 10);
 // MAIN
 // ============================================================================
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   console.log('='.repeat(SEPARATOR_LENGTH));
   console.log('🤖 Edison - Level-Based Trading Strategy');
   console.log('='.repeat(SEPARATOR_LENGTH));
@@ -90,19 +91,7 @@ async function main(): Promise<void> {
     let webServer: any = null;
     try {
       console.log('[Main] Initializing Web Server...');
-      // Dynamic import to avoid TypeScript rootDir issues with web-server location
-      // @ts-ignore - web-server is outside rootDir but will be compiled separately
-      const webServerModule = await import('../web-server/dist/index.js');
-      const WebServer = (webServerModule as any).WebServer;
-      // Pass bot.eventBus (BotEventBus) to web server for event forwarding
-      const botInstance = {
-        ...bot,
-        // Make bot instance behave like EventEmitter for BotBridgeService
-        on: (event: string, listener: any) => bot.eventBus.on(event, listener),
-        off: (event: string, listener: any) => bot.eventBus.off(event, listener),
-        emit: (event: string, ...args: any[]) => bot.eventBus.emit(event, ...args),
-      };
-      webServer = new WebServer(botInstance, {
+      webServer = await startWebServer(bot, {
         apiPort: API_PORT,
         wsPort: WS_PORT,
       });

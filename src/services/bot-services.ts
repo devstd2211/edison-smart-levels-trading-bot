@@ -73,6 +73,13 @@ import { StrategyRegistryService } from './multi-strategy/strategy-registry.serv
 import { StrategyFactoryService } from './multi-strategy/strategy-factory.service';
 import { StrategyStateManagerService } from './multi-strategy/strategy-state-manager.service';
 import { ErrorHandler } from '../errors';
+import { MarketDataServices } from './containers/market-data-services';
+import { ExecutionServices } from './containers/execution-services';
+import { MonitoringServices } from './containers/monitoring-services';
+import { RiskServices } from './containers/risk-services';
+import { WebApiServices } from './containers/web-api-services';
+import { CoreServices } from './containers/core-services';
+import { EventHandlerServices } from './containers/event-handler-services';
 
 // Phase 6.2: Repository Pattern Integration
 import { IPositionRepository, IJournalRepository, IMarketDataRepository } from '../repositories/IRepositories';
@@ -155,6 +162,13 @@ export class BotServices {
   readonly retryPolicy?: RetryPolicyService; // Phase 14.2.3: Advanced retry strategies
   readonly bulkhead?: BulkheadService; // Phase 14.2.4: Resource isolation
   readonly resilienceCoordinator?: ResilienceCoordinator; // Phase 14.2.5: Unified resilience layer
+  readonly marketDataServices: MarketDataServices;
+  readonly executionServices: ExecutionServices;
+  readonly monitoringServices: MonitoringServices;
+  readonly riskServices: RiskServices;
+  readonly webApiServices: WebApiServices;
+  readonly coreServices: CoreServices;
+  readonly eventHandlerServices: EventHandlerServices;
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
@@ -979,6 +993,66 @@ export class BotServices {
       });
     }
 
+    // Grouped services (non-owning, for dependency slicing)
+    this.marketDataServices = new MarketDataServices({
+      bybitService: this.bybitService,
+      timeframeProvider: this.timeframeProvider,
+      candleProvider: this.candleProvider,
+      orderbookManager: this.orderbookManager,
+      publicWebSocket: this.publicWebSocket,
+      webSocketManager: this.webSocketManager,
+      indicatorCache: this.indicatorCache,
+      indicatorPreCalc: this.indicatorPreCalc,
+    });
+
+    this.executionServices = new ExecutionServices({
+      positionManager: this.positionManager,
+      positionExitingService: this.positionExitingService,
+      tradingOrchestrator: this.tradingOrchestrator,
+      realTimeRiskMonitor: this.realTimeRiskMonitor,
+      positionMonitor: this.positionMonitor,
+      ladderExitDetector: this.ladderExitDetector,
+      dynamicPositionSizer: this.dynamicPositionSizer,
+      positionScalingService: this.positionScalingService,
+      smartOrderExecution: this.smartOrderExecution,
+      orderStateMachine: this.orderStateMachine,
+    });
+
+    this.monitoringServices = new MonitoringServices({
+      metrics: this.metrics,
+      metricsService: this.metricsService,
+      healthCheckService: this.healthCheckService,
+      monitoringServer: this.monitoringServer,
+      dashboard: this.dashboard,
+    });
+
+    this.riskServices = new RiskServices({
+      riskManager: riskManager,
+      realTimeRiskMonitor: this.realTimeRiskMonitor,
+      realityCheck: this.realityCheck,
+    });
+
+    this.webApiServices = new WebApiServices({
+      marketDataServices: {
+        candleProvider: this.candleProvider,
+        orderbookManager: this.orderbookManager,
+      },
+      journal: this.journal,
+      bybitService: this.bybitService,
+    });
+
+    this.coreServices = new CoreServices({
+      logger: this.logger,
+      eventBus: this.eventBus,
+      telegram: this.telegram,
+      timeService: this.timeService,
+    });
+
+    this.eventHandlerServices = new EventHandlerServices({
+      positionEventHandler: this.positionEventHandler,
+      webSocketEventHandler: this.webSocketEventHandler,
+    });
+
     this.logger.info('✅ BotServices initialized - all dependencies ready');
   }
 
@@ -989,37 +1063,22 @@ export class BotServices {
   toObject() {
     return {
       logger: this.logger,
-      eventBus: this.eventBus,
-      metrics: this.metrics,
-      telegram: this.telegram,
-      timeService: this.timeService,
       bybitService: this.bybitService,
-      timeframeProvider: this.timeframeProvider,
-      candleProvider: this.candleProvider,
-      indicatorCache: this.indicatorCache,
-      indicatorPreCalc: this.indicatorPreCalc,
-      tradingOrchestrator: this.tradingOrchestrator,
+      coreServices: this.coreServices,
+      marketDataServices: this.marketDataServices,
+      executionServices: this.executionServices,
+      monitoringServices: this.monitoringServices,
+      riskServices: this.riskServices,
+      webApiServices: this.webApiServices,
+      eventHandlerServices: this.eventHandlerServices,
       strategyOrchestrator: this.strategyOrchestrator, // [Phase 10.2] Optional
-      journal: this.journal,
-      sessionStats: this.sessionStats,
-      positionManager: this.positionManager,
-      positionExitingService: this.positionExitingService,
-      realTimeRiskMonitor: this.realTimeRiskMonitor, // [Phase 9.2] Live trading risk monitoring
-      webSocketManager: this.webSocketManager,
-      publicWebSocket: this.publicWebSocket,
-      orderbookManager: this.orderbookManager,
-      positionMonitor: this.positionMonitor,
-      positionEventHandler: this.positionEventHandler,
-      webSocketEventHandler: this.webSocketEventHandler,
+      // Keep direct handlers only if external consumers still rely on them
       compoundInterestCalculator: this.compoundInterestCalculator,
       retestEntryService: this.retestEntryService,
       deltaAnalyzerService: this.deltaAnalyzerService,
       orderbookImbalanceService: this.orderbookImbalanceService,
       wallTrackerService: this.wallTrackerService,
       // Phase 14: Production Hardening
-      metricsService: this.metricsService, // Phase 14.1.1
-      healthCheckService: this.healthCheckService, // Phase 14.1.2
-      monitoringServer: this.monitoringServer, // Phase 14.1.3
       circuitBreaker: this.circuitBreaker, // Phase 14.2.1
       rateLimiter: this.rateLimiter, // Phase 14.2.2
       retryPolicy: this.retryPolicy, // Phase 14.2.3

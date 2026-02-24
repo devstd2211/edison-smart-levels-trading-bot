@@ -1,7 +1,7 @@
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { TIME_MULTIPLIERS } from '../constants/technical.constants';
 import { Config, LoggerService } from '../types';
-import { BotServices } from './bot-services';
+import type { IBotInitializerServices } from '../interfaces';
 import { isCriticalApiError } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import {
@@ -65,11 +65,11 @@ export class BotInitializer {
   };
 
   constructor(
-    private services: BotServices,
+    private services: IBotInitializerServices,
     private config: Config,
     private errorHandler?: ErrorHandler,
   ) {
-    this.logger = services.logger;
+    this.logger = services.coreServices.logger;
   }
 
   /**
@@ -210,13 +210,13 @@ export class BotInitializer {
       // Connect Private WebSocket with retry
       this.logger.info('Connecting Private WebSocket...');
       await this.connectWithRetry('Private WebSocket', () => {
-        this.services.webSocketManager.connect();
+        this.services.marketDataServices.webSocketManager.connect();
       });
 
       // Connect Public WebSocket with retry
       this.logger.info('Connecting Public WebSocket...');
       await this.connectWithRetry('Public WebSocket', () => {
-        this.services.publicWebSocket.connect();
+        this.services.marketDataServices.publicWebSocket.connect();
       });
 
       this.logger.info('✅ WebSocket connections established');
@@ -283,9 +283,9 @@ export class BotInitializer {
 
       this.logger.error('🔥🔥🔥 AFTER WEBSOCKET DELAY - Now calling TradingOrchestrator 🔥🔥🔥');
 
-      if ((this.services as any).tradingOrchestrator) {
+      if (this.services.executionServices.tradingOrchestrator) {
         this.logger.info('✅ TradingOrchestrator found, calling initializeTrendAnalysis()...');
-        await (this.services as any).tradingOrchestrator.initializeTrendAnalysis();
+        await this.services.executionServices.tradingOrchestrator.initializeTrendAnalysis();
         this.logger.info('✅ TradingOrchestrator.initializeTrendAnalysis() returned');
       } else {
         this.logger.error('🚨 CRITICAL: TradingOrchestrator not available in BotServices');
@@ -331,7 +331,7 @@ export class BotInitializer {
    */
   private async startPositionMonitor(): Promise<void> {
     const performStart = async () => {
-      this.services.positionMonitor.start();
+      this.services.executionServices.positionMonitor.start();
       this.logger.debug('Position monitor started');
     };
 
@@ -377,7 +377,7 @@ export class BotInitializer {
       this.logger.info('🔄 Checking for open positions to restore...');
 
       // Fetch all open positions from exchange (BybitService is single-position, so max 1)
-      const openPositions = await this.services.bybitService.getOpenPositions();
+      const openPositions = await this.services.marketDataServices.bybitService.getOpenPositions();
       const exchangePosition = openPositions.length > 0 ? openPositions[0] : null;
 
       if (exchangePosition === null || exchangePosition.quantity === 0) {
@@ -394,9 +394,9 @@ export class BotInitializer {
       });
 
       // Sync position with WebSocket (this handles journal linking)
-      this.services.positionManager.syncWithWebSocket(exchangePosition);
+      this.services.executionServices.positionManager.syncWithWebSocket(exchangePosition);
 
-      const restoredPosition = this.services.positionManager.getCurrentPosition();
+      const restoredPosition = this.services.executionServices.positionManager.getCurrentPosition();
       if (restoredPosition) {
         this.logger.info('✅ Position restored successfully', {
           positionId: restoredPosition.id,
@@ -445,37 +445,37 @@ export class BotInitializer {
 
         // Stop position monitor
         await skipOnError('stop position monitor', () => {
-          this.services.positionMonitor.stop();
+          this.services.executionServices.positionMonitor.stop();
           this.logger.debug('Position monitor stopped');
         });
 
         // Remove all position monitor listeners
         await skipOnError('remove position monitor listeners', () => {
-          this.services.positionMonitor.removeAllListeners();
+          this.services.executionServices.positionMonitor.removeAllListeners();
           this.logger.debug('Position monitor listeners removed');
         });
 
         // Disconnect Private WebSocket
         await skipOnError('disconnect private WebSocket', () => {
-          this.services.webSocketManager.disconnect();
+          this.services.marketDataServices.webSocketManager.disconnect();
           this.logger.debug('Private WebSocket disconnected');
         });
 
         // Remove private WebSocket listeners
         await skipOnError('remove private WebSocket listeners', () => {
-          this.services.webSocketManager.removeAllListeners();
+          this.services.marketDataServices.webSocketManager.removeAllListeners();
           this.logger.debug('Private WebSocket listeners removed');
         });
 
         // Disconnect Public WebSocket
         await skipOnError('disconnect public WebSocket', () => {
-          this.services.publicWebSocket.disconnect();
+          this.services.marketDataServices.publicWebSocket.disconnect();
           this.logger.debug('Public WebSocket disconnected');
         });
 
         // Remove public WebSocket listeners
         await skipOnError('remove public WebSocket listeners', () => {
-          this.services.publicWebSocket.removeAllListeners();
+          this.services.marketDataServices.publicWebSocket.removeAllListeners();
           this.logger.debug('Public WebSocket listeners removed');
         });
 
@@ -487,7 +487,7 @@ export class BotInitializer {
 
         // Send Telegram notification
         await skipOnError('send Telegram notification', async () => {
-          await this.services.telegram.notifyBotStopped();
+          await this.services.coreServices.telegram.notifyBotStopped();
         });
       } else {
         // Without ErrorHandler: original behavior (throws on errors)
@@ -499,23 +499,23 @@ export class BotInitializer {
         }
 
         // Stop position monitor
-        this.services.positionMonitor.stop();
+        this.services.executionServices.positionMonitor.stop();
         this.logger.debug('Position monitor stopped');
 
         // Remove all position monitor listeners
-        this.services.positionMonitor.removeAllListeners();
+        this.services.executionServices.positionMonitor.removeAllListeners();
         this.logger.debug('Position monitor listeners removed');
 
         // Disconnect Private WebSocket
-        this.services.webSocketManager.disconnect();
+        this.services.marketDataServices.webSocketManager.disconnect();
         this.logger.debug('Private WebSocket disconnected');
-        this.services.webSocketManager.removeAllListeners();
+        this.services.marketDataServices.webSocketManager.removeAllListeners();
         this.logger.debug('Private WebSocket listeners removed');
 
         // Disconnect Public WebSocket
-        this.services.publicWebSocket.disconnect();
+        this.services.marketDataServices.publicWebSocket.disconnect();
         this.logger.debug('Public WebSocket disconnected');
-        this.services.publicWebSocket.removeAllListeners();
+        this.services.marketDataServices.publicWebSocket.removeAllListeners();
         this.logger.debug('Public WebSocket listeners removed');
 
         // End session statistics tracking
@@ -523,7 +523,7 @@ export class BotInitializer {
         this.logger.info('📊 Session ended');
 
         // Send Telegram notification
-        await this.services.telegram.notifyBotStopped();
+        await this.services.coreServices.telegram.notifyBotStopped();
       }
 
       this.logger.info('✅ Shutdown complete');
@@ -550,9 +550,9 @@ export class BotInitializer {
         const exchange = await exchangeFactory.createExchange();
         (this.services as any).bybitService = exchange;
         this.logger.info(`✅ ${exchangeName} exchange created and initialized`);
-      } else if (this.services.bybitService.initialize) {
+      } else if (this.services.marketDataServices.bybitService.initialize) {
         // Traditional Bybit initialization
-        await this.services.bybitService.initialize();
+        await this.services.marketDataServices.bybitService.initialize();
         this.logger.debug('✅ Bybit service initialized');
       } else {
         this.logger.debug('✅ Exchange service initialized');
@@ -635,9 +635,9 @@ export class BotInitializer {
     this.logger.info('Synchronizing time with exchange...');
 
     const performSync = async () => {
-      await this.services.timeService.syncWithExchange();
+      await this.services.coreServices.timeService.syncWithExchange();
 
-      const syncInfo = this.services.timeService.getSyncInfo();
+      const syncInfo = this.services.coreServices.timeService.getSyncInfo();
       this.logger.info('Time synchronized', {
         offset: syncInfo.offset,
         nextSyncIn: `${Math.round(syncInfo.nextSyncIn / TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND)}s`,
@@ -676,7 +676,7 @@ export class BotInitializer {
     this.logger.info('Initializing candle cache for all enabled timeframes...');
 
     const performInit = async () => {
-      await this.services.candleProvider.initialize();
+      await this.services.marketDataServices.candleProvider.initialize();
       this.logger.debug('✅ Candle cache initialized (async preload disabled)');
     };
 
@@ -720,21 +720,21 @@ export class BotInitializer {
       try {
         // Task 1: Re-synchronize time with Bybit server
         // CRITICAL: Prevents timestamp drift accumulation
-        if (this.services.bybitService.resyncTime) {
-          await this.services.bybitService.resyncTime();
+        if (this.services.marketDataServices.bybitService.resyncTime) {
+          await this.services.marketDataServices.bybitService.resyncTime();
         }
 
         // Task 2: Cleanup hanging conditional orders
         // CRITICAL FIX: Check both currentPosition AND isOpeningPosition flag
         // to prevent race condition where cleanup cancels newly placed TP/SL orders
-        const currentPosition = this.services.positionManager.getCurrentPosition();
-        const isOpeningPosition = (this.services.positionManager as any).isOpeningPosition;
+        const currentPosition = this.services.executionServices.positionManager.getCurrentPosition();
+        const isOpeningPosition = (this.services.executionServices.positionManager as any).isOpeningPosition;
 
         if (!currentPosition && !isOpeningPosition) {
           this.logger.debug(
             '🧹 Periodic cleanup: checking for hanging conditional orders...',
           );
-          await this.services.bybitService.cancelAllConditionalOrders();
+          await this.services.marketDataServices.bybitService.cancelAllConditionalOrders();
         } else {
           if (currentPosition) {
             this.logger.debug('🧹 Periodic cleanup: skipping (active position exists)', {
@@ -762,7 +762,7 @@ export class BotInitializer {
           }
 
           // Emit critical error event through EventBus for bot to handle
-          this.services.eventBus.emit('critical-error', error);
+          this.services.coreServices.eventBus.emit('critical-error', error);
           return;
         }
 
@@ -794,7 +794,7 @@ export class BotInitializer {
         lookbackCandles: btcConfig.lookbackCandles,
       });
 
-      const btcCandles = await this.services.bybitService.getCandles({
+      const btcCandles = await this.services.marketDataServices.bybitService.getCandles({
         symbol: btcConfig.symbol,
         timeframe: btcConfig.timeframe,
         limit: btcConfig.lookbackCandles || 100,

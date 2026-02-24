@@ -59,3 +59,16 @@ export type {
   ITradingOrchestratorService,
   IBotServices,
 } from './IServices';
+
+export type { IWebApiServices } from './IWebApiServices';
+export type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerServices';
+export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
+export type { IBotInitializerServices } from './IBotInitializerServices';
+export type { ITradingBotServices } from './ITradingBotServices';
+export type { IMarketDataServices } from './IMarketDataServices';
+export type { IExecutionServices } from './IExecutionServices';
+export type { IMonitoringServices } from './IMonitoringServices';
+export type { IRiskServices } from './IRiskServices';
+export type { IWebApiServicesContainer } from './IWebApiServicesContainer';
+export type { ICoreServices } from './ICoreServices';
+export type { IEventHandlerServices } from './IEventHandlerServices';

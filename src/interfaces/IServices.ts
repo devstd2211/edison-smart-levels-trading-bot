@@ -298,8 +298,9 @@ export interface IBotServices {
   publicWebSocket: IPublicWebSocketService;
   orderbookManager: IOrderbookManagerService;
   positionMonitor: IPositionMonitorService;
-  positionEventHandler: any;
-  webSocketEventHandler: any;
+  eventHandlerServices?: any;
+  positionEventHandler: any; // legacy direct access
+  webSocketEventHandler: any; // legacy direct access
   dashboard: any;
   compoundInterestCalculator?: any;
   retestEntryService?: any;

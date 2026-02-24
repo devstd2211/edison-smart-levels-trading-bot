@@ -1,11 +1,13 @@
-import {
-  Config,
-  Position,
-  Candle,
-} from './types';
+import { Config, Position, Candle } from './types';
 
 
 import { BotServices } from './services/bot-services';
+import type {
+  IWebApiServices,
+  IWebSocketEventHandlerServices,
+  IBotInitializerServices,
+  ITradingBotServices,
+} from './interfaces';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
 import { BotWebAPI } from './api/bot-web-api';
@@ -19,36 +21,25 @@ import { BotWebAPI } from './api/bot-web-api';
  */
 export class TradingBot {
   private readonly config: Config;
-  private readonly services: BotServices;
+  private readonly services: ITradingBotServices;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
   private webAPI?: BotWebAPI; // Lazy-loaded web API adapter
 
   // Direct service references (no getters - simpler and more transparent)
-  private readonly logger: any;
-  private readonly telegram: any;
-  private readonly timeService: any;
-  private readonly journal: any;
-  private readonly sessionStats: any;
-  private readonly bybitService: any;
-  private readonly candleProvider: any;
-  private readonly timeframeProvider: any;
-  private readonly tradingOrchestrator: any;
-  private readonly positionManager: any;
-  private readonly webSocketManager: any;
-  private readonly publicWebSocket: any;
-  private readonly orderbookManager: any;
-  private readonly positionMonitor: any;
-  private readonly orderbookImbalanceService: any;
-  private readonly deltaAnalyzerService: any;
-  private readonly wallTrackerService: any;
+  private readonly logger: ITradingBotServices['coreServices']['logger'];
+  private readonly telegram: ITradingBotServices['coreServices']['telegram'];
+  private readonly bybitService: ITradingBotServices['bybitService'];
+  private readonly tradingOrchestrator: ITradingBotServices['executionServices']['tradingOrchestrator'];
+  private readonly positionManager: ITradingBotServices['executionServices']['positionManager'];
+  private readonly positionMonitor: ITradingBotServices['positionMonitor'];
 
   // Public accessors for external consumers
   /**
    * Get EventBus for creating BotEventEmitter adapter
    */
   get eventBus() {
-    return this.services.eventBus;
+    return this.services.coreServices.eventBus;
   }
 
   // State
@@ -65,29 +56,21 @@ export class TradingBot {
    * @param config - Bot configuration
    */
   constructor(services: BotServices, config: Config) {
-    this.services = services;
+    this.services = services as ITradingBotServices;
     this.config = config;
-    this.initializer = new BotInitializer(services, config);
-    this.eventHandlerManager = new WebSocketEventHandlerManager(services, config);
+    this.initializer = new BotInitializer(services as IBotInitializerServices, config);
+    this.eventHandlerManager = new WebSocketEventHandlerManager(
+      services as IWebSocketEventHandlerServices,
+      config,
+    );
 
     // Initialize direct service references
-    this.logger = services.logger;
-    this.telegram = services.telegram;
-    this.timeService = services.timeService;
-    this.journal = services.journal;
-    this.sessionStats = services.sessionStats;
+    this.logger = services.coreServices.logger;
+    this.telegram = services.coreServices.telegram;
     this.bybitService = services.bybitService;
-    this.candleProvider = services.candleProvider;
-    this.timeframeProvider = services.timeframeProvider;
-    this.tradingOrchestrator = services.tradingOrchestrator;
-    this.positionManager = services.positionManager;
-    this.webSocketManager = services.webSocketManager;
-    this.publicWebSocket = services.publicWebSocket;
-    this.orderbookManager = services.orderbookManager;
+    this.tradingOrchestrator = services.executionServices.tradingOrchestrator;
+    this.positionManager = services.executionServices.positionManager;
     this.positionMonitor = services.positionMonitor;
-    this.orderbookImbalanceService = services.orderbookImbalanceService;
-    this.deltaAnalyzerService = services.deltaAnalyzerService;
-    this.wallTrackerService = services.wallTrackerService;
 
     this.logger.info('🤖 TradingBot initialized with injected dependencies via BotFactory');
     this.logger.info('🔍 DEBUG: Config structure check', {
@@ -143,7 +126,7 @@ export class TradingBot {
       this.setupCriticalErrorHandling();
 
       // Phase 4.7: Connect dashboard to trading events (only if enabled)
-      if (this.services.dashboard && (this.config as any)?.dashboard?.enabled === true) {
+      if (this.services.monitoringServices.dashboard && (this.config as any)?.dashboard?.enabled === true) {
         this.setupDashboardEventListeners();
       }
 
@@ -214,7 +197,7 @@ export class TradingBot {
     this.positionMonitor.on('critical-error', handleCriticalError);
 
     // Listen for critical API errors from EventBus (e.g., periodic tasks)
-    this.services.eventBus.on('critical-error', handleCriticalError);
+    this.services.coreServices.eventBus.on('critical-error', handleCriticalError);
 
     this.logger.debug('Critical error handlers registered (positionMonitor + EventBus)');
   }
@@ -250,12 +233,16 @@ export class TradingBot {
    * Connects position and exit events to dashboard display
    */
   private setupDashboardEventListeners(): void {
+    const dashboard = this.services.monitoringServices.dashboard;
+    if (!dashboard) {
+      return;
+    }
     // Listen for position-opened events
     this.eventBus.on('position-opened', (data: any) => {
       if (data.position) {
         const p = data.position;
         const msg = `${p.side} @ ${p.entryPrice.toFixed(4)} | Qty: ${p.quantity}`;
-        this.services.dashboard.recordEvent('position-open', msg);
+        dashboard.recordEvent('position-open', msg);
       }
     });
 
@@ -265,7 +252,7 @@ export class TradingBot {
         const p = data.closedPosition;
         const pnl = data.pnl || 0;
         const msg = `${p.side} closed | P&L: ${pnl > 0 ? '+' : ''}${pnl.toFixed(2)} USDT`;
-        this.services.dashboard.recordEvent('position-close', msg);
+        dashboard.recordEvent('position-close', msg);
       }
     });
 
@@ -300,10 +287,12 @@ export class TradingBot {
   async getBalance(): Promise<number> {
     try {
       const balance = await this.bybitService.getBalance();
-      return balance;
+      return balance.walletBalance;
     } catch (error) {
       this.logger.error('Error getting balance', { error });
-const positionSize = this.config?.riskManagement?.positionSizeUsdt || 100;      const placeholderBalance = positionSize * 100;      return placeholderBalance;
+      const positionSize = this.config?.riskManagement?.positionSizeUsdt || 100;
+      const placeholderBalance = positionSize * 100;
+      return placeholderBalance;
     }
   }
 
@@ -328,7 +317,7 @@ const positionSize = this.config?.riskManagement?.positionSizeUsdt || 100;      
    */
   private getWebAPI(): BotWebAPI {
     if (!this.webAPI) {
-      this.webAPI = new BotWebAPI(this.services);
+      this.webAPI = new BotWebAPI(this.services as IWebApiServices);
     }
     return this.webAPI;
   }

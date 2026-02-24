@@ -1,7 +1,7 @@
 import { DECIMAL_PLACES, INTEGER_MULTIPLIERS } from '../constants';
-import { Candle, TimeframeRole, OrderBook, LoggerService } from '../types';
+import { Candle, TimeframeRole, OrderBook } from '../types';
 import { OrderbookUpdateEvent, TradeTickEvent } from '../types/events.types';
-import { BotServices } from './bot-services';
+import type { IWebSocketEventHandlerServices } from '../interfaces';
 import { RealTimeWhaleDetector } from './realtime-whale-detector';
 import { type OrderbookUpdate } from './orderbook-manager.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
@@ -19,14 +19,14 @@ import { OrderValidationError } from '../errors/DomainErrors';
  * keeping the bot class focused on orchestration.
  */
 export class WebSocketEventHandlerManager {
-  private logger: LoggerService;
+  private logger: IWebSocketEventHandlerServices['logger'];
   private lastOrderbookAnalysis: number = 0;
   private whaleDetector: RealTimeWhaleDetector;
 
   // Track event listeners for cleanup
   private eventListeners: Array<{ emitter: any; event: string; handler: any }> = [];
 
-  constructor(private services: BotServices, private config: any) {
+  constructor(private services: IWebSocketEventHandlerServices, private config: any) {
     this.logger = services.logger;
     this.whaleDetector = new RealTimeWhaleDetector(services, config);
   }
@@ -121,8 +121,8 @@ export class WebSocketEventHandlerManager {
    * Private: Register Position Monitor event handlers
    */
   private registerPositionMonitorHandlers(bot: any): void {
-    const { positionEventHandler } = this.services;
-    const { positionMonitor } = this.services;
+    const { positionEventHandler } = this.services.eventHandlerServices;
+    const { positionMonitor } = this.services.executionServices;
 
     // Position Monitor Events
     this.registerListener(positionMonitor, 'stopLossHit', (event: any) => {
@@ -152,8 +152,8 @@ export class WebSocketEventHandlerManager {
    * Private: Register Private WebSocket event handlers
    */
   private registerPrivateWebSocketHandlers(bot: any): void {
-    const { webSocketEventHandler } = this.services;
-    const { webSocketManager } = this.services;
+    const { webSocketEventHandler } = this.services.eventHandlerServices;
+    const { webSocketManager } = this.services.marketDataServices;
 
     // WebSocket Events
     this.registerListener(webSocketManager, 'positionUpdate', (position: any) => {
@@ -187,8 +187,9 @@ export class WebSocketEventHandlerManager {
    * Private: Register Public WebSocket event handlers
    */
   private registerPublicWebSocketHandlers(bot: any): void {
-    const { publicWebSocket, tradingOrchestrator, positionManager, orderbookManager } =
-      this.services;
+    const { tradingOrchestrator } = this.services;
+    const { publicWebSocket, orderbookManager, candleProvider } =
+      this.services.marketDataServices;
 
     // Candle closed - update cache and trigger trading cycle
     this.registerListener(
@@ -226,10 +227,10 @@ export class WebSocketEventHandlerManager {
 
         try {
           // Update candle cache for this timeframe
-          this.services.candleProvider.onCandleClosed(role, candle);
+          candleProvider.onCandleClosed(role, candle);
 
           // Log cache metrics
-          const metrics = this.services.candleProvider.getCacheMetrics(role);
+          const metrics = candleProvider.getCacheMetrics(role);
           if (metrics) {
             this.logger.debug(`Cache metrics for ${role}`, {
               hits: metrics.hits,
@@ -325,7 +326,7 @@ export class WebSocketEventHandlerManager {
       };
 
       // OrderbookManager ALWAYS maintains the snapshot (no throttling)
-      this.services.orderbookManager.processUpdate(orderbookUpdate);
+      this.services.marketDataServices.orderbookManager.processUpdate(orderbookUpdate);
 
       // THROTTLE analysis to avoid CPU overload
       const now = Date.now();
@@ -337,7 +338,7 @@ export class WebSocketEventHandlerManager {
       this.lastOrderbookAnalysis = now;
 
       // Get full snapshot and pass to whale detector
-      const snapshot = this.services.orderbookManager.getSnapshot();
+      const snapshot = this.services.marketDataServices.orderbookManager.getSnapshot();
       if (snapshot) {
         // Analyze orderbook imbalance
         if (this.services.orderbookImbalanceService) {

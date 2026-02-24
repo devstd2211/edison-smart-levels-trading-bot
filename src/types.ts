@@ -1271,32 +1271,15 @@ export interface WhaleHunterConfig {
 /**
  * Stop Loss Hit Event
  */
-export interface StopLossHitEvent {
-  position: Position;
-  currentPrice: number;
-  reason: string;
-}
+export { StopLossHitEvent, TakeProfitHitEvent, OrderFilledEvent } from './types/events';
 
 /**
  * Take Profit Hit Event
  */
-export interface TakeProfitHitEvent {
-  position: Position;
-  currentPrice: number;
-  tpLevel: number;
-  reason: string;
-}
 
 /**
  * Order Filled Event
  */
-export interface OrderFilledEvent {
-  orderId: string;
-  symbol: string;
-  side: string;
-  execQty: string;
-  execPrice: string;
-}
 
 // ============================================================================
 // TRADING JOURNAL & LOGGING
@@ -1309,13 +1292,7 @@ export interface OrderFilledEvent {
  * Entry condition - simplified to serialize entire objects
  * Just pass the whole Signal object and any additional data
  */
-export interface EntryCondition {
-  signal: Signal; // Complete signal object with all indicators
-  marketData?: Record<string, unknown>; // Additional market data (ZigZag, swing points, etc.)
-  btcData?: BTCAnalysis; // BTC correlation data if available
-  indicators?: Record<string, unknown>; // All indicator values (ATR, EMA, RSI arrays, etc.)
-  rawData?: Record<string, unknown>; // Any other raw data for ML analysis
-}
+export { EntryCondition } from './types/journal';
 
 /**
  * Exit condition for journal - Extended for ML
@@ -1397,22 +1374,7 @@ export interface ExitCondition {
 /**
  * Trade record for journal
  */
-export interface TradeRecord {
-  id: string;
-  symbol: string;
-  side: PositionSide;
-  entryPrice: number;
-  exitPrice?: number;
-  quantity: number;
-  leverage: number;
-  entryCondition: EntryCondition;
-  exitCondition?: ExitCondition;
-  openedAt: number;
-  closedAt?: number;
-  unrealizedPnL?: number;
-  realizedPnL?: number;
-  status: 'OPEN' | 'CLOSED';
-}
+export { TradeRecord } from './types/journal';
 
 /**
  * Trend state for 5m timeframe
@@ -1547,64 +1509,15 @@ export interface EntrySignal {
  * - Tuple format: [price, size] from exchange API
  * - Object format: {price, size, format: 'object'} for type safety
  */
-export type OrderbookLevel =
-  | {
-      price: number;
-      size: number;
-      format?: 'object'; // Discriminator for object format
-    }
-  | readonly [price: number, size: number]; // Tuple with labeled indices
-
-/**
- * Order book snapshot
- * Contains bid/ask levels with normalized OrderbookLevel type
- */
-export interface OrderBook {
-  symbol: string;
-  timestamp: number;
-  bids: OrderbookLevel[]; // Sorted descending by price
-  asks: OrderbookLevel[]; // Sorted ascending by price
-  updateId: number; // Sequential update ID
-}
-
-/**
- * Order book wall (large order) - Unified type from analyzer
- */
-export interface OrderBookWall {
-  side: 'BID' | 'ASK';
-  price: number;
-  quantity: number; // Order quantity
-  percentOfTotal: number; // % of total volume
-  distance: number; // Distance from current price (%)
-}
-
-/**
- * Order book imbalance
- */
-export interface OrderBookImbalance {
-  bidVolume: number; // Total bid volume
-  askVolume: number; // Total ask volume
-  ratio: number; // Bid / Ask ratio
-  direction: 'BULLISH' | 'BEARISH' | 'NEUTRAL'; // Market pressure
-  strength: number; // 0-1 (strength of imbalance)
-}
-
-/**
- * Order book analysis result
- */
-export interface OrderBookAnalysis {
-  timestamp: number;
-  orderBook: OrderBook;
-  imbalance: OrderBookImbalance;
-  walls: OrderBookWall[]; // Detected walls
-  strongestBid: OrderbookLevel | null; // Strongest bid level
-  strongestAsk: OrderbookLevel | null; // Strongest ask level
-  spread: number; // Best bid - best ask (%)
-  depth: {
-    bid: number; // Number of bid levels
-    ask: number; // Number of ask levels
-  };
-}
+export {
+  OrderbookLevel,
+  OrderBook,
+  OrderBookWall,
+  OrderBookImbalance,
+  OrderBookAnalysis,
+} from './types/orderbook';
+export { TakeProfit, StopLossConfig, Position } from './types/position';
+export { Signal } from './types/signal';
 
 // OrderBookConfig (duplicate) removed - use the one from ./types/config.ts
 

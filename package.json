@@ -2,6 +2,11 @@
   "name": "simple-strategy-bot",
   "version": "1.1.0-beta",
   "description": "BTC Trading Bot for accumulation strategy on Bybit",
+  "workspaces": [
+    "packages/*",
+    "web-server",
+    "web-client"
+  ],
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm --prefix web-server run build && npm --prefix web-client run build",

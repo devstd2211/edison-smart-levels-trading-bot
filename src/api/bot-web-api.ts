@@ -1,5 +1,5 @@
-import { Candle, TimeframeRole, LoggerService } from '../types';
-import { BotServices } from '../services/bot-services';
+import { Candle, TimeframeRole } from '../types';
+import { IWebApiServices } from '../interfaces';
 
 /**
  * Bot Web API - Provides data access for web interface
@@ -14,9 +14,9 @@ import { BotServices } from '../services/bot-services';
  * The web interface should only interact through this adapter.
  */
 export class BotWebAPI {
-  private logger: LoggerService;
+  private logger: IWebApiServices['logger'];
 
-  constructor(private services: BotServices) {
+  constructor(private services: IWebApiServices) {
     this.logger = services.logger;
   }
 
@@ -94,7 +94,10 @@ export class BotWebAPI {
       };
 
       const role = timeframeMap[timeframeStr] || TimeframeRole.PRIMARY;
-      return await this.services.candleProvider.getCandles(role, limit);
+      return await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
+        role,
+        limit,
+      );
     } catch (error) {
       this.logger.error('Error getting candles', { error, timeframeStr, limit });
       return [];
@@ -107,7 +110,7 @@ export class BotWebAPI {
   async getPositionHistory(limit: number = 50): Promise<any[]> {
     try {
       // Get closed trades from trading journal
-      const closedTrades = this.services.journal.getClosedTrades();
+      const closedTrades = this.services.webApiServices.journal.getClosedTrades();
 
       // Convert to position history format for web interface
       // Return most recent trades first
@@ -149,7 +152,7 @@ export class BotWebAPI {
   async getOrderBook(symbol: string): Promise<any> {
     try {
       // Use the orderbook manager to get current snapshot
-      const snapshot = this.services.orderbookManager.getSnapshot();
+      const snapshot = this.services.webApiServices.marketDataServices.orderbookManager.getSnapshot();
 
       if (!snapshot) {
         this.logger.warn('Orderbook not available yet', { symbol });
@@ -162,16 +165,20 @@ export class BotWebAPI {
       }
 
       // Convert to web format with cumulative volumes
-      const bids = snapshot.bids.map((level, idx) => ({
+      const bids = snapshot.bids.map((level: any, idx: number) => ({
         price: level.price,
         quantity: level.size,
-        cumulative: snapshot.bids.slice(0, idx + 1).reduce((sum, l) => sum + l.size, 0),
+        cumulative: snapshot.bids
+          .slice(0, idx + 1)
+          .reduce((sum: number, l: any) => sum + l.size, 0),
       }));
 
-      const asks = snapshot.asks.map((level, idx) => ({
+      const asks = snapshot.asks.map((level: any, idx: number) => ({
         price: level.price,
         quantity: level.size,
-        cumulative: snapshot.asks.slice(0, idx + 1).reduce((sum, l) => sum + l.size, 0),
+        cumulative: snapshot.asks
+          .slice(0, idx + 1)
+          .reduce((sum: number, l: any) => sum + l.size, 0),
       }));
 
       return {
@@ -230,8 +237,8 @@ export class BotWebAPI {
     try {
       // Try to get from Bybit API
       // IExchange.getFundingRate() returns number or is optional
-      const fundingRate = this.services.bybitService.getFundingRate
-        ? await this.services.bybitService.getFundingRate(symbol)
+      const fundingRate = this.services.webApiServices.bybitService.getFundingRate
+        ? await this.services.webApiServices.bybitService.getFundingRate(symbol)
         : 0;
 
       // fundingRate is a number (current funding rate percentage)
@@ -262,7 +269,10 @@ export class BotWebAPI {
   async getVolumeProfile(symbol: string, levels: number = 20): Promise<any> {
     try {
       // Get candles and analyze volume distribution
-      const candles = await this.services.candleProvider.getCandles(TimeframeRole.PRIMARY, 100);
+      const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
+        TimeframeRole.PRIMARY,
+        100,
+      );
 
       if (candles.length === 0) {
         return { symbol, levels: [], volumes: [], maxVolume: 0 };
