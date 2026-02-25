@@ -70,7 +70,7 @@ export class MicroWallDetectorService {
   /**
    * Safe logging wrapper - SKIP strategy for logger failures
    */
-  private safeLog(level: 'info' | 'debug' | 'warn' | 'error', message: string, context?: any): void {
+  private safeLog(level: 'info' | 'debug' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
     try {
       if (level === 'info') this.logger.info(message, context);
       else if (level === 'debug') this.logger.debug(message, context);

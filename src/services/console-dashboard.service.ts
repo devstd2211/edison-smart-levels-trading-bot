@@ -1078,7 +1078,7 @@ export class ConsoleDashboardService extends EventEmitter {
    * @param message - Log message
    * @param meta - Optional metadata
    */
-  private safeLog(message: string, meta?: any): void {
+  private safeLog(message: string, meta?: unknown): void {
     try {
       console.log(`[DASHBOARD] ${message}`, meta || '');
     } catch (error) {
@@ -1094,7 +1094,7 @@ export class ConsoleDashboardService extends EventEmitter {
    * @param message - Warn message
    * @param meta - Optional metadata
    */
-  private safeWarn(message: string, meta?: any): void {
+  private safeWarn(message: string, meta?: unknown): void {
     try {
       console.warn(`[DASHBOARD] ${message}`, meta || '');
     } catch (error) {

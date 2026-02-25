@@ -423,7 +423,7 @@ export class ResilienceCoordinator {
     }
   }
 
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, meta?: any): void {
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     if (!this.logger) return;
 
     try {

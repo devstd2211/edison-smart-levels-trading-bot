@@ -97,7 +97,7 @@ export class OrderFlowAnalyzerService {
   /**
    * Safe logging with SKIP strategy for logger failures (non-blocking)
    */
-  private safeLog(level: 'info' | 'debug' | 'warn' | 'error', message: string, meta?: any): void {
+  private safeLog(level: 'info' | 'debug' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     try {
       this.logger[level](message, meta);
     } catch (error) {

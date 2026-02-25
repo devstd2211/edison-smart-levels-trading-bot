@@ -126,6 +126,11 @@
 - [x] Core any cleanup batch 10: IMonitoring unknowns
 - [x] Core any cleanup batch 11: index entrypoint unknowns
 - [x] Core any cleanup batch 12: websocket-event-handler-manager no any
+- [x] Core any cleanup batch 13: websocket handler + auth logger types
+- [x] Core any cleanup batch 14: safeLog logger typing (candle/tf/whale/ml)
+- [x] Core any cleanup batch 15: safeLog meta/context typings (handlers/services)
+- [x] Core any cleanup batch 16: strategy-config-merger logger typing
+- [x] Core any cleanup batch 17: safeLog meta typed as Record for LoggerService
 - [x] BotServices.toObject reduced to grouped services
 - [x] CoreServices container introduced and TradingBot wired
 - [x] EventHandlerServices container introduced and wired

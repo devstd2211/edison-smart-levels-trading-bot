@@ -714,10 +714,10 @@ export class MLFeatureExtractorService {
   /**
    * Safe logging wrapper - SKIP strategy for logging errors
    */
-  private safeLog(level: string, message: string): void {
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string): void {
     try {
       if (this.logger) {
-        (this.logger as any)[level]?.(message);
+        this.logger[level]?.(message);
       }
     } catch (error) {
       // SKIP: Logging failures never block execution

@@ -898,7 +898,7 @@ export class PatternRecognitionService {
   /**
    * Safe logging wrapper (SKIP strategy for logging failures)
    */
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, meta?: any): void {
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     try {
       this.logger[level](message, meta);
     } catch (error) {

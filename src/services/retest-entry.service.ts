@@ -94,7 +94,7 @@ export class RetestEntryService {
   /**
    * Safe logging wrapper: SKIP strategy for logging failures (non-blocking)
    */
-  private safeLog(level: 'info' | 'debug' | 'warn' | 'error', message: string, meta?: any): void {
+  private safeLog(level: 'info' | 'debug' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     try {
       this.logger[level](message, meta);
     } catch (error) {

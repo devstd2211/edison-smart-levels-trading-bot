@@ -13,6 +13,7 @@
  */
 
 import { LoggerService, Position, ExitType, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types/legacy';
+import type { TradeRecord } from '../../types/journal';
 import type { IExchange } from '../../interfaces/IExchange';
 import { PositionLifecycleService } from '../position-lifecycle.service';
 import { PositionExitingService } from '../position-exiting.service';
@@ -53,16 +54,21 @@ export class WebSocketEventHandler {
     private logger: LoggerService,
   ) {}
 
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
   /**
    * Validate position data for required fields and valid values
    * @private
    */
-  private validatePositionData(position: any): boolean {
-    if (!position) return false;
-    if (!position.symbol || typeof position.symbol !== 'string') return false;
-    if (!position.id || typeof position.id !== 'string') return false;
-    if (typeof position.entryPrice !== 'number' || isNaN(position.entryPrice) || position.entryPrice <= 0) return false;
-    if (typeof position.quantity !== 'number' || isNaN(position.quantity) || position.quantity <= 0) return false;
+  private validatePositionData(position: unknown): boolean {
+    if (!this.isRecord(position)) return false;
+    const candidate = position as Partial<Position>;
+    if (!candidate.symbol || typeof candidate.symbol !== 'string') return false;
+    if (!candidate.id || typeof candidate.id !== 'string') return false;
+    if (typeof candidate.entryPrice !== 'number' || isNaN(candidate.entryPrice) || candidate.entryPrice <= 0) return false;
+    if (typeof candidate.quantity !== 'number' || isNaN(candidate.quantity) || candidate.quantity <= 0) return false;
     return true;
   }
 
@@ -210,7 +216,7 @@ export class WebSocketEventHandler {
     // RETRY: Check if position was already closed by another handler (e.g., TIME_BASED_EXIT)
     // Use journalId if available, fallback to exchange id for backward compatibility
     const journalId = position.journalId || position.id;
-    let journalEntry: any = null;
+    let journalEntry: TradeRecord | undefined;
 
     try {
       const result = await ErrorHandler.executeAsync(

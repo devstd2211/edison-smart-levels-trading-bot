@@ -159,10 +159,10 @@ export class CandleAggregatorService {
   /**
    * Safe logging wrapper - SKIP strategy for logging errors
    */
-  private safeLog(level: string, message: string): void {
+  private safeLog(level: keyof Logger, message: string): void {
     try {
       if (this.logger) {
-        (this.logger as any)[level](message);
+        this.logger[level](message);
       }
     } catch (error) {
       // SKIP: Logging failures never block execution

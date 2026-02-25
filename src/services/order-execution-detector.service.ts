@@ -41,7 +41,7 @@ export class OrderExecutionDetectorService {
   /**
    * Safe logging wrapper: SKIP strategy for logging failures (non-blocking)
    */
-  private safeLog(level: 'info' | 'debug', message: string, meta?: any): void {
+  private safeLog(level: 'info' | 'debug', message: string, meta?: Record<string, unknown>): void {
     try {
       this.logger[level](message, meta);
     } catch (error) {

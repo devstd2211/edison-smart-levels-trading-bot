@@ -300,10 +300,10 @@ export class TFAlignmentService {
   /**
    * Safe logging wrapper - SKIP strategy for logging errors
    */
-  private safeLog(level: string, message: string, meta?: any): void {
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     try {
       if (this.logger) {
-        (this.logger as any)[level]?.(message, meta);
+        this.logger[level]?.(message, meta);
       }
     } catch (error) {
       // SKIP: Logging failures never block execution

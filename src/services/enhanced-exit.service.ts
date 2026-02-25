@@ -367,7 +367,7 @@ export class EnhancedExitService {
   /**
    * Safe logging wrapper - SKIP logging failures
    */
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, context?: any): void {
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
     try {
       this.logger[level](message, context);
     } catch (error) {
