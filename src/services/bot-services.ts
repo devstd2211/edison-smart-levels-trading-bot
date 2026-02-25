@@ -59,9 +59,9 @@ import { DeltaAnalyzerService } from './delta-analyzer.service';
 import { OrderbookImbalanceService } from './orderbook-imbalance.service';
 import { WallTrackerService } from './wall-tracker.service';
 import { AdvancedOrderFlowService } from './advanced-order-flow.service'; // Phase 10.1
-import { DynamicPositionSizerService } from './dynamic-position-sizer.service'; // Phase 11.1
-import { PositionScalingService } from './position-scaling.service'; // Phase 11.2
-import { SmartOrderExecutionService } from './smart-order-execution.service'; // Phase 13.1
+import { DynamicPositionSizerService, type SizingConfig } from './dynamic-position-sizer.service'; // Phase 11.1
+import { PositionScalingService, type ScalingConfig } from './position-scaling.service'; // Phase 11.2
+import { SmartOrderExecutionService, type SmartOrderConfig } from './smart-order-execution.service'; // Phase 13.1
 import { AdvancedOrderStateMachineService } from './advanced-order-state-machine.service'; // Phase 13.2
 import { PrometheusMetricsService } from './prometheus-metrics.service'; // Phase 14.1.1
 import { HealthCheckService } from './health-check.service'; // Phase 14.1.2
@@ -75,6 +75,7 @@ import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
 import { RealTimeRiskMonitor } from './real-time-risk-monitor.service';
+import type { LiveTradingConfig, RiskMonitoringConfig } from '../types/live-trading';
 import { StrategyOrchestratorService } from './multi-strategy/strategy-orchestrator.service';
 import { StrategyRegistryService } from './multi-strategy/strategy-registry.service';
 import { StrategyFactoryService } from './multi-strategy/strategy-factory.service';
@@ -93,6 +94,73 @@ import { IPositionRepository, IJournalRepository, IMarketDataRepository } from '
 import { PositionMemoryRepository } from '../repositories/position.memory-repository';
 import { JournalFileRepository } from '../repositories/journal.file-repository';
 import { MarketDataCacheRepository } from '../repositories/market-data.cache-repository';
+
+type DashboardConfig = {
+  enabled?: boolean;
+  updateInterval?: number;
+  theme?: 'dark' | 'light';
+};
+
+type StrategyMeta = {
+  strategy?: string;
+  strategyFile?: string;
+  notes?: string;
+};
+
+type AnalyzerConfig = {
+  enabled?: boolean;
+  name?: string;
+  weight?: number;
+  priority?: number;
+};
+
+type IndicatorConfigParams = {
+  period?: number;
+  fastPeriod?: number;
+  slowPeriod?: number;
+  kPeriod?: number;
+  dPeriod?: number;
+  stdDev?: number;
+};
+
+type DynamicPositionSizingConfig = SizingConfig & { enabled?: boolean };
+type PositionScalingConfig = ScalingConfig & { enabled?: boolean };
+type SmartOrderExecutionConfig = SmartOrderConfig & { enabled?: boolean };
+
+type OrderStateMachineConfig = {
+  enabled?: boolean;
+  [key: string]: unknown;
+};
+
+type MonitoringConfig = {
+  metricsEnabled?: boolean;
+  metricsPrefix?: string;
+  collectInterval?: number;
+  defaultLabels?: Record<string, string>;
+  healthCheckEnabled?: boolean;
+  thresholds?: {
+    memoryUsagePercent?: number;
+    cpuUsagePercent?: number;
+    diskUsagePercent?: number;
+  };
+  serverEnabled?: boolean;
+  port?: number;
+  metricsPath?: string;
+  healthPath?: string;
+  cors?: boolean;
+};
+
+type ResilienceConfig = {
+  enabled?: boolean;
+  circuitBreaker?: Record<string, unknown>;
+  rateLimiter?: Record<string, unknown>;
+  retry?: Record<string, unknown>;
+  bulkhead?: Record<string, unknown>;
+};
+
+type MultiStrategyConfig = {
+  enabled?: boolean;
+};
 
 /**
  * Container for all bot services
@@ -176,17 +244,19 @@ export class BotServices {
   readonly webApiServices: WebApiServices;
   readonly coreServices: CoreServices;
   readonly eventHandlerServices: EventHandlerServices;
+  readonly exchangeFactory?: ExchangeFactory;
 
   constructor(config: Config) {
     // 0. Initialize dashboard FIRST to capture early logs
     // NOW FIXED: Uses non-blocking setImmediate render queue
-    const dashboardConfig = (config as any)?.dashboard || {};
+    const dashboardConfig = (config as Partial<{ dashboard: DashboardConfig }>).dashboard || {};
     const dashboardEnabled = dashboardConfig.enabled === true; // Only true if explicitly enabled
 
+    const dashboardTheme: 'dark' | 'light' = dashboardConfig.theme === 'light' ? 'light' : 'dark';
     this.dashboard = new ConsoleDashboardService({
       enabled: dashboardEnabled,
       updateInterval: dashboardConfig.updateInterval || 1000, // 1 second refresh
-      theme: dashboardConfig.theme || 'dark',
+      theme: dashboardTheme,
     });
     if (dashboardEnabled) {
       console.log('🎨 Console Dashboard ENABLED');
@@ -205,12 +275,13 @@ export class BotServices {
     }
 
     // Log loaded strategy file
-    if ((config as any).meta?.strategy) {
-      const strategyFile = (config as any).meta?.strategyFile || `strategies/json/${(config as any).meta.strategy}.strategy.json`;
+    const meta = (config as Partial<{ meta: StrategyMeta }>).meta;
+    if (meta?.strategy) {
+      const strategyFile = meta.strategyFile || `strategies/json/${meta.strategy}.strategy.json`;
       this.logger.info('📋 Strategy loaded', {
-        strategy: (config as any).meta.strategy,
+        strategy: meta.strategy,
         file: strategyFile,
-        notes: (config as any).meta?.notes,
+        notes: meta.notes,
       });
     }
 
@@ -223,20 +294,24 @@ export class BotServices {
     }
 
     // Log strategy analyzer information
-    if (config.analyzers && config.analyzers.length > 0) {
-      const enabledAnalyzers = config.analyzers.filter((a: any) => a.enabled);
-      this.logger.info(`📊 Strategy Analyzers loaded: ${enabledAnalyzers.length}/${config.analyzers.length} enabled`, {
+    const analyzerList = Array.isArray(config.analyzers)
+      ? (config.analyzers as AnalyzerConfig[])
+      : [];
+    if (analyzerList.length > 0) {
+      const enabledAnalyzers = analyzerList.filter((a) => a.enabled);
+      this.logger.info(`📊 Strategy Analyzers loaded: ${enabledAnalyzers.length}/${analyzerList.length} enabled`, {
         enabled: enabledAnalyzers.length,
-        disabled: config.analyzers.length - enabledAnalyzers.length,
-        total: config.analyzers.length,
+        disabled: analyzerList.length - enabledAnalyzers.length,
+        total: analyzerList.length,
       });
 
       // Group analyzers by weight
       const byWeight = enabledAnalyzers.reduce(
-        (acc: Record<string, string[]>, a: any) => {
-          const key = `${(a.weight * 100).toFixed(1)}%`;
+        (acc: Record<string, string[]>, a) => {
+          const weightValue = a.weight ?? 0;
+          const key = `${(weightValue * 100).toFixed(1)}%`;
           if (!acc[key]) acc[key] = [];
-          acc[key].push(a.name);
+          acc[key].push(a.name ?? 'unknown');
           return acc;
         },
         {} as Record<string, string[]>,
@@ -252,12 +327,14 @@ export class BotServices {
 
       // Log top 5 analyzers by weight
       const topAnalyzers = [...enabledAnalyzers]
-        .sort((a: any, b: any) => (b.weight || 0) - (a.weight || 0))
+        .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
         .slice(0, 5);
       if (topAnalyzers.length > 0) {
         this.logger.info(`   Top 5 analyzers:`);
-        topAnalyzers.forEach((a: any) => {
-          this.logger.info(`     • ${a.name}: ${(a.weight * 100).toFixed(2)}% weight, priority=${a.priority}`);
+        topAnalyzers.forEach((a) => {
+          const weight = a.weight ?? 0;
+          const name = a.name ?? 'unknown';
+          this.logger.info(`     • ${name}: ${(weight * 100).toFixed(2)}% weight, priority=${a.priority ?? 0}`);
         });
       }
     }
@@ -272,7 +349,7 @@ export class BotServices {
       // Log specific indicator parameters
       Object.entries(config.indicators).forEach(([name, cfg]) => {
         const details: string[] = [];
-        const indCfg = cfg as any;
+        const indCfg = cfg as IndicatorConfigParams;
         if (indCfg.period) details.push(`period=${indCfg.period}`);
         if (indCfg.fastPeriod) details.push(`fast=${indCfg.fastPeriod}, slow=${indCfg.slowPeriod}`);
         if (indCfg.kPeriod) details.push(`k=${indCfg.kPeriod}, d=${indCfg.dPeriod}`);
@@ -338,20 +415,16 @@ export class BotServices {
       this.bybitService = new BybitServiceAdapter(rawBybitService, this.logger);
     } else {
       // Use factory for other exchanges (Binance, etc.)
-      // This will be initialized properly in bot-initializer
-      // For now, return a stub that will be replaced after async initialization
-      this.bybitService = exchangeFactory.getExchange() || ({
-        name: 'Unknown',
-        isConnected: () => false,
-        healthCheck: async () => false,
-        connect: async () => {},
-        disconnect: async () => {},
-        initialize: async () => {},
-      } as any);
+      const exchange = exchangeFactory.getExchange();
+      if (!exchange) {
+        const exchangeName = config.exchange.name || 'unknown';
+        throw new Error(`ExchangeFactory returned no exchange for "${exchangeName}"`);
+      }
+      this.bybitService = exchange;
     }
 
     // Store factory for async initialization in BotInitializer
-    (this as any).exchangeFactory = exchangeFactory;
+    this.exchangeFactory = exchangeFactory;
 
     // TimeService now accepts IExchange interface
     this.timeService.setBybitService(this.bybitService);
@@ -487,49 +560,53 @@ export class BotServices {
     }
 
     // Phase 11.1: Initialize Dynamic Position Sizer (optional)
-    if ((config as any).dynamicPositionSizing?.enabled) {
+    const dynamicPositionSizing = (config as Partial<{ dynamicPositionSizing: DynamicPositionSizingConfig }>).dynamicPositionSizing;
+    if (dynamicPositionSizing?.enabled) {
       this.dynamicPositionSizer = new DynamicPositionSizerService(
-        (config as any).dynamicPositionSizing,
+        dynamicPositionSizing,
         this.logger,
         this.errorHandler,
       );
       this.logger.info('✅ Dynamic Position Sizer initialized (Phase 11.1)', {
-        baseRiskPercent: (config as any).dynamicPositionSizing.baseRiskPercent,
-        maxRiskPercent: (config as any).dynamicPositionSizing.maxRiskPercent,
-        volatilityMultiplier: (config as any).dynamicPositionSizing.volatilityMultiplier,
+        baseRiskPercent: dynamicPositionSizing.baseRiskPercent,
+        maxRiskPercent: dynamicPositionSizing.maxRiskPercent,
+        volatilityMultiplier: dynamicPositionSizing.volatilityMultiplier,
       });
     }
 
     // Phase 11.2: Initialize Position Scaling Service (optional)
-    if ((config as any).positionScaling?.enabled) {
+    const positionScaling = (config as Partial<{ positionScaling: PositionScalingConfig }>).positionScaling;
+    if (positionScaling?.enabled) {
       this.positionScalingService = new PositionScalingService(
-        (config as any).positionScaling,
+        positionScaling,
         this.logger,
         this.errorHandler,
       );
       this.logger.info('✅ Position Scaling Service initialized (Phase 11.2)', {
-        scaleInThreshold: (config as any).positionScaling.scaleInThreshold,
-        maxScales: (config as any).positionScaling.maxScales,
-        scaleReduction: (config as any).positionScaling.scaleReduction,
+        scaleInThreshold: positionScaling.scaleInThreshold,
+        maxScales: positionScaling.maxScales,
+        scaleReduction: positionScaling.scaleReduction,
       });
     }
 
     // Phase 13.1: Initialize Smart Order Execution (optional)
-    if ((config as any).smartOrderExecution?.enabled) {
+    const smartOrderExecution = (config as Partial<{ smartOrderExecution: SmartOrderExecutionConfig }>).smartOrderExecution;
+    if (smartOrderExecution?.enabled) {
       this.smartOrderExecution = new SmartOrderExecutionService(
-        (config as any).smartOrderExecution,
+        smartOrderExecution,
         this.logger,
         this.errorHandler,
       );
       this.logger.info('✅ Smart Order Execution initialized (Phase 13.1)', {
-        maxSlippagePercent: (config as any).smartOrderExecution.maxSlippagePercent,
-        executionStrategy: (config as any).smartOrderExecution.executionStrategy,
-        adaptiveExecution: (config as any).smartOrderExecution.adaptiveExecution,
+        maxSlippagePercent: smartOrderExecution.maxSlippagePercent,
+        executionStrategy: smartOrderExecution.executionStrategy,
+        adaptiveExecution: smartOrderExecution.adaptiveExecution,
       });
     }
 
     // Phase 13.2: Initialize Order State Machine (optional)
-    if ((config as any).orderStateMachine?.enabled) {
+    const orderStateMachine = (config as Partial<{ orderStateMachine: OrderStateMachineConfig }>).orderStateMachine;
+    if (orderStateMachine?.enabled) {
       this.orderStateMachine = new AdvancedOrderStateMachineService(
         this.logger,
         this.errorHandler,
@@ -540,20 +617,21 @@ export class BotServices {
     }
 
     // Phase 14.1.1: Initialize Prometheus Metrics (optional)
-    if ((config as any).monitoring?.metricsEnabled) {
+    const monitoring = (config as Partial<{ monitoring: MonitoringConfig }>).monitoring;
+    if (monitoring?.metricsEnabled) {
       this.metricsService = new PrometheusMetricsService(
         {
           enabled: true,
-          prefix: (config as any).monitoring?.metricsPrefix || 'trading_bot_',
-          collectInterval: (config as any).monitoring?.collectInterval || 10000,
-          defaultLabels: (config as any).monitoring?.defaultLabels,
+          prefix: monitoring.metricsPrefix || 'trading_bot_',
+          collectInterval: monitoring.collectInterval || 10000,
+          defaultLabels: monitoring.defaultLabels,
         },
         this.logger,
         this.errorHandler,
       );
       this.logger.info('✅ Prometheus Metrics initialized (Phase 14.1.1)', {
-        prefix: (config as any).monitoring?.metricsPrefix || 'trading_bot_',
-        collectInterval: (config as any).monitoring?.collectInterval || 10000,
+        prefix: monitoring.metricsPrefix || 'trading_bot_',
+        collectInterval: monitoring.collectInterval || 10000,
       });
     }
 
@@ -638,12 +716,13 @@ export class BotServices {
     // 8.6 Initialize Real-Time Risk Monitor (Phase 9.2 Integration)
     // [P1.2] Listens to position-closed events for cache invalidation
     // Get liveTrading config from settings, with fallback defaults
-    const liveTradingConfig = (config as any).liveTrading;
-    const riskMonitoringConfig = liveTradingConfig?.riskMonitoring || {
+    const liveTradingConfig = (config as Partial<{ liveTrading: LiveTradingConfig }>).liveTrading;
+    const riskMonitoringConfig: RiskMonitoringConfig = {
       enabled: true,
       checkIntervalCandles: 5,
       healthScoreThreshold: 30,
       emergencyCloseOnCritical: true,
+      ...(liveTradingConfig?.riskMonitoring ?? {}),
     };
 
     this.realTimeRiskMonitor = new RealTimeRiskMonitor(
@@ -761,7 +840,7 @@ export class BotServices {
       riskManagement: config.riskManagement,
       indicators: config.indicators,
       analyzers: config.analyzers,
-      analyzerDefaults: (config as any).analyzerDefaults,
+      analyzerDefaults: (config as Partial<{ analyzerDefaults: Record<string, unknown> }>).analyzerDefaults,
     };
 
     this.logger.info('🔗 OrchestratorConfig prepared', {
@@ -796,7 +875,7 @@ export class BotServices {
     // 11.7 [Phase 10.2] Initialize StrategyOrchestratorService if multi-strategy mode enabled
     // NOTE: Full initialization deferred to Phase 10.3 after TradingOrchestrator instance allocation
     // For now, initialize registry only to support candle routing framework
-    const multiStrategyMode = (config as any).multiStrategy?.enabled || false;
+    const multiStrategyMode = (config as Partial<{ multiStrategy: MultiStrategyConfig }>).multiStrategy?.enabled || false;
     if (multiStrategyMode) {
       try {
         // Initialize registry with default configuration
@@ -807,30 +886,9 @@ export class BotServices {
         // const strategyFactory = new StrategyFactoryService({...}, loader, merger);
         // const strategyStateManager = new StrategyStateManagerService(stateDir);
 
-        // For Phase 10.2, create stub that will be fully initialized later
-        this.strategyOrchestrator = new StrategyOrchestratorService(
-          strategyRegistry,
-          null as any, // TODO Phase 10.3: Proper factory
-          null as any, // TODO Phase 10.3: Proper state manager
-          this.logger,
-          this.eventBus,
-        );
-
-        // [Phase 10.3b] Set shared services for TradingOrchestrator creation per strategy
-        this.strategyOrchestrator.setSharedServices({
-          candleProvider: this.candleProvider,
-          timeframeProvider: this.timeframeProvider,
-          positionManager: this.positionManager,
-          riskManager: riskManager,
-          telegram: this.telegram,
-          positionExitingService: this.positionExitingService,
-        });
-
-        this.logger.info('⏳ StrategyOrchestratorService initialized (Phase 10.3b)', {
-          mode: 'multi-strategy-framework',
-          sharedServices: 6,
-          note: 'Factory integration deferred to Phase 10.3+',
-        });
+        // Phase 10.2: defer StrategyOrchestratorService until factory/state manager are available
+        this.logger.warn('⚠️ StrategyOrchestratorService not initialized: missing factory/state manager');
+        this.strategyOrchestrator = undefined;
       } catch (error) {
         this.logger.warn('⚠️  Failed to initialize StrategyOrchestratorService', {
           error: error instanceof Error ? error.message : String(error),
@@ -865,38 +923,38 @@ export class BotServices {
     }
 
     // Phase 14.1.2: Initialize Health Check Service (optional)
-    if ((config as any).monitoring?.healthCheckEnabled) {
+    if (monitoring?.healthCheckEnabled) {
       this.healthCheckService = new HealthCheckService(
         this.bybitService,
         this.webSocketManager,
         {
           enabled: true,
           thresholds: {
-            memoryUsagePercent: (config as any).monitoring?.thresholds?.memoryUsagePercent || 90,
-            cpuUsagePercent: (config as any).monitoring?.thresholds?.cpuUsagePercent || 80,
-            diskUsagePercent: (config as any).monitoring?.thresholds?.diskUsagePercent || 90,
+            memoryUsagePercent: monitoring?.thresholds?.memoryUsagePercent || 90,
+            cpuUsagePercent: monitoring?.thresholds?.cpuUsagePercent || 80,
+            diskUsagePercent: monitoring?.thresholds?.diskUsagePercent || 90,
           },
         },
         this.logger,
         this.errorHandler,
       );
       this.logger.info('✅ Health Check Service initialized (Phase 14.1.2)', {
-        memoryThreshold: (config as any).monitoring?.thresholds?.memoryUsagePercent || 90,
-        cpuThreshold: (config as any).monitoring?.thresholds?.cpuUsagePercent || 80,
+        memoryThreshold: monitoring?.thresholds?.memoryUsagePercent || 90,
+        cpuThreshold: monitoring?.thresholds?.cpuUsagePercent || 80,
       });
     }
 
     // Phase 14.1.3: Initialize Monitoring Server (optional)
-    if ((config as any).monitoring?.serverEnabled && (this.metricsService || this.healthCheckService)) {
+    if (monitoring?.serverEnabled && (this.metricsService || this.healthCheckService)) {
       this.monitoringServer = new MonitoringServer(
         this.metricsService,
         this.healthCheckService,
         {
           enabled: true,
-          port: (config as any).monitoring?.port || 9090,
-          metricsPath: (config as any).monitoring?.metricsPath || '/metrics',
-          healthPath: (config as any).monitoring?.healthPath || '/health',
-          cors: (config as any).monitoring?.cors ?? true,
+          port: monitoring?.port || 9090,
+          metricsPath: monitoring?.metricsPath || '/metrics',
+          healthPath: monitoring?.healthPath || '/health',
+          cors: monitoring?.cors ?? true,
         },
         this.logger,
         this.errorHandler,
@@ -908,14 +966,15 @@ export class BotServices {
       });
 
       this.logger.info('✅ Monitoring Server initialized (Phase 14.1.3)', {
-        port: (config as any).monitoring?.port || 9090,
-        metricsPath: (config as any).monitoring?.metricsPath || '/metrics',
-        healthPath: (config as any).monitoring?.healthPath || '/health',
+        port: monitoring?.port || 9090,
+        metricsPath: monitoring?.metricsPath || '/metrics',
+        healthPath: monitoring?.healthPath || '/health',
       });
     }
 
     // Phase 14.2: Initialize Resilience Patterns (optional)
-    if ((config as any).resilience?.enabled) {
+    const resilience = (config as Partial<{ resilience: ResilienceConfig }>).resilience;
+    if (resilience?.enabled) {
       const isMetricsRecorder = (value: unknown): value is IMonitoringMetricsRecorder => {
         if (typeof value !== 'object' || value === null) {
           return false;
@@ -929,7 +988,7 @@ export class BotServices {
 
       // Phase 14.2.1: Circuit Breaker
       this.circuitBreaker = new CircuitBreakerService(
-        (config as any).resilience?.circuitBreaker || {
+        resilience.circuitBreaker || {
           failureThreshold: 5,
           failureRateThreshold: 0.5,
           successThreshold: 2,
@@ -940,13 +999,13 @@ export class BotServices {
         this.errorHandler,
       );
       this.logger.info('✅ Circuit Breaker initialized (Phase 14.2.1)', {
-        failureThreshold: (config as any).resilience?.circuitBreaker?.failureThreshold || 5,
-        timeout: (config as any).resilience?.circuitBreaker?.timeout || 60000,
+        failureThreshold: (resilience.circuitBreaker as { failureThreshold?: number } | undefined)?.failureThreshold || 5,
+        timeout: (resilience.circuitBreaker as { timeout?: number } | undefined)?.timeout || 60000,
       });
 
       // Phase 14.2.2: Rate Limiter
       this.rateLimiter = new RateLimiterService(
-        (config as any).resilience?.rateLimiter || {
+        resilience.rateLimiter || {
           bybit: {
             maxRequests: 10,
             windowMs: 1000,
@@ -958,12 +1017,12 @@ export class BotServices {
         this.errorHandler,
       );
       this.logger.info('✅ Rate Limiter initialized (Phase 14.2.2)', {
-        configs: Object.keys((config as any).resilience?.rateLimiter || { bybit: {} }),
+        configs: Object.keys(resilience.rateLimiter || { bybit: {} }),
       });
 
       // Phase 14.2.3: Retry Policy
       this.retryPolicy = new RetryPolicyService(
-        (config as any).resilience?.retry || {
+        resilience.retry || {
           maxAttempts: 3,
           baseDelayMs: 100,
           maxDelayMs: 5000,
@@ -975,13 +1034,13 @@ export class BotServices {
         this.errorHandler,
       );
       this.logger.info('✅ Retry Policy initialized (Phase 14.2.3)', {
-        maxAttempts: (config as any).resilience?.retry?.maxAttempts || 3,
-        retryBudget: `${(config as any).resilience?.retry?.retryBudgetPercent || 10}%`,
+        maxAttempts: (resilience.retry as { maxAttempts?: number } | undefined)?.maxAttempts || 3,
+        retryBudget: `${(resilience.retry as { retryBudgetPercent?: number } | undefined)?.retryBudgetPercent || 10}%`,
       });
 
       // Phase 14.2.4: Bulkhead
       this.bulkhead = new BulkheadService(
-        (config as any).resilience?.bulkhead || {
+        resilience.bulkhead || {
           trading: {
             maxConcurrent: 10,
             queueSize: 20,
@@ -992,7 +1051,7 @@ export class BotServices {
         this.errorHandler,
       );
       this.logger.info('✅ Bulkhead initialized (Phase 14.2.4)', {
-        pools: Object.keys((config as any).resilience?.bulkhead || { trading: {} }),
+        pools: Object.keys(resilience.bulkhead || { trading: {} }),
       });
 
       // Phase 14.2.5: Resilience Coordinator

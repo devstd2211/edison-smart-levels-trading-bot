@@ -27,18 +27,21 @@ export interface Trade {
   exitCondition?: string;
 }
 
+type SideFilterValue = 'LONG' | 'SHORT' | 'ALL';
+type StatusFilterValue = 'OPEN' | 'CLOSED' | 'ALL';
+
 export interface AnalyticsFilter {
   startDate?: number;
   endDate?: number;
   strategy?: string;
-  side?: 'LONG' | 'SHORT' | 'ALL';
-  status?: 'OPEN' | 'CLOSED' | 'ALL';
+  side?: SideFilterValue;
+  status?: StatusFilterValue;
 }
 
-const isSideFilter = (value: string): value is AnalyticsFilter['side'] =>
+const isSideFilter = (value: string): value is SideFilterValue =>
   value === 'LONG' || value === 'SHORT' || value === 'ALL';
 
-const isStatusFilter = (value: string): value is AnalyticsFilter['status'] =>
+const isStatusFilter = (value: string): value is StatusFilterValue =>
   value === 'OPEN' || value === 'CLOSED' || value === 'ALL';
 
 // Inline component: Filter Panel
@@ -339,21 +342,25 @@ export function Analytics() {
         setLoading(true);
         const response = await dataApi.getPositionHistory(500);
         if (response.success && response.data?.positions) {
-          const tradesData = response.data.positions.map((pos: WebApiPositionHistoryEntry) => ({
-            id: pos.id || `${pos.entryTime}-${pos.side}`,
-            symbol: pos.symbol || 'UNKNOWN',
-            side: pos.side,
-            entryPrice: pos.entryPrice,
-            exitPrice: pos.exitPrice,
-            quantity: pos.quantity || 1,
-            leverage: pos.leverage || 1,
-            openedAt: pos.entryTime,
-            closedAt: pos.exitTime,
-            realizedPnL: pos.pnl,
-            status: pos.exitTime ? 'CLOSED' : 'OPEN',
-            entryCondition: pos.entryCondition,
-            exitCondition: pos.exitCondition,
-          }));
+          const tradesData = response.data.positions.map((pos: WebApiPositionHistoryEntry) => {
+            const side: Trade['side'] = pos.side === 'SHORT' ? 'SHORT' : 'LONG';
+            const status: Trade['status'] = pos.exitTime ? 'CLOSED' : 'OPEN';
+            return {
+              id: String(pos.id ?? `${pos.entryTime}-${pos.side}`),
+              symbol: pos.symbol || 'UNKNOWN',
+              side,
+              entryPrice: pos.entryPrice,
+              exitPrice: pos.exitPrice,
+              quantity: pos.quantity || 1,
+              leverage: pos.leverage || 1,
+              openedAt: pos.entryTime,
+              closedAt: pos.exitTime,
+              realizedPnL: pos.pnl,
+              status,
+              entryCondition: pos.entryCondition,
+              exitCondition: pos.exitCondition,
+            };
+          });
           setTrades(tradesData);
           applyFilters(tradesData, filter);
         }

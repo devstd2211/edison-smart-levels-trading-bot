@@ -187,15 +187,15 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
           error: 'Invalid configuration format',
         });
       }
-      if (!isRecord(config.risk)) {
-        config.risk = {};
-      }
+      const risk = isRecord(config.risk) ? config.risk : {};
 
       // Update provided risk settings
-      if (maxLeverage !== undefined) config.risk.maxLeverage = maxLeverage;
-      if (maxPositionSize !== undefined) config.risk.maxPositionSize = maxPositionSize;
-      if (dailyLossLimit !== undefined) config.risk.dailyLossLimit = dailyLossLimit;
-      if (stopLossPercent !== undefined) config.risk.stopLossPercent = stopLossPercent;
+      if (maxLeverage !== undefined) risk.maxLeverage = maxLeverage;
+      if (maxPositionSize !== undefined) risk.maxPositionSize = maxPositionSize;
+      if (dailyLossLimit !== undefined) risk.dailyLossLimit = dailyLossLimit;
+      if (stopLossPercent !== undefined) risk.stopLossPercent = stopLossPercent;
+
+      config.risk = risk;
 
       // Write updated config
       await fs.writeFile(configPath, JSON.stringify(config, null, 2));

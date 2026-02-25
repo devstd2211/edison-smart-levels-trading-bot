@@ -34,6 +34,7 @@ import {
   LogLevel,
 } from './enums';
 import type { WebApiConfig } from './web-api';
+import type { FilterOverrides } from './strategy-config';
 
 export {
   SignalDirection,
@@ -965,7 +966,9 @@ export interface Config {
     description?: string;
     lastUpdated?: string;
     strategy?: string; // Strategy name from JSON (e.g., "simple-levels")
+    strategyFile?: string; // Optional explicit strategy file path
     notes?: string;
+    testMode?: boolean;
   };
   exchange: ExchangeConfig;
   timeframes: Record<string, TimeframeConfig>; // Key: 'entry' | 'primary' | 'trend1' | 'trend2' | 'context'
@@ -1045,6 +1048,7 @@ export interface Config {
   enableEntryScannerFallback?: boolean; // Enable legacy EntryScanner fallback when strategies don't signal (default: true)
   // Analyzer weights for weighted voting system (config-driven enabling/disabling)
   strategicWeights?: any; // Strategic weights for each analyzer (enables/disables analyzers)
+  filters?: FilterOverrides; // Optional filter overrides
   // Trend Confirmation Filter (optional)
   trendConfirmation?: TrendConfirmationConfig; // Multi-timeframe trend confirmation filter
   // Analysis Configuration (analyzers and pattern detectors)

@@ -234,7 +234,7 @@ export function PriceChart({
         return acc;
       }, [])
       // Sort by time again after deduplication
-      .sort((a, b) => a.time - b.time);
+      .sort((a, b) => Number(a.time) - Number(b.time));
 
     if (formattedCandles.length > 0) {
       candlestickSeries.setData(formattedCandles);
@@ -286,7 +286,7 @@ export function PriceChart({
 
       // Add markers if available - MUST be sorted by time
       if (markers.length > 0 && candlestickSeries) {
-        const sortedMarkers = [...markers].sort((a, b) => a.time - b.time);
+        const sortedMarkers = [...markers].sort((a, b) => Number(a.time) - Number(b.time));
         candlestickSeries.setMarkers(sortedMarkers);
       }
 

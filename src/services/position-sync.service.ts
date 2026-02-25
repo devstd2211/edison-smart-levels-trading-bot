@@ -70,7 +70,7 @@ export class PositionSyncService {
 
     try {
       // 1. Get order history with RETRY strategy (3x attempts)
-      let orderHistory: any[] = [];
+      let orderHistory: BybitOrder[] = [];
       if (this.bybitService.getOrderHistory) {
         const orderHistoryResult = await this.errorHandler.executeAsync(
           () => this.bybitService.getOrderHistory!(20),
@@ -89,7 +89,7 @@ export class PositionSyncService {
         );
 
         if (orderHistoryResult.success && orderHistoryResult.value) {
-          orderHistory = orderHistoryResult.value;
+          orderHistory = this.toBybitOrders(orderHistoryResult.value);
         }
       }
 
@@ -320,7 +320,7 @@ export class PositionSyncService {
       );
 
       if (ordersResult.success && ordersResult.value) {
-        activeOrders = ordersResult.value;
+        activeOrders = this.toBybitOrders(ordersResult.value);
       } else if (ordersResult.error) {
         // GRACEFUL_DEGRADE: Continue with assumption that orders exist
         this.logger.warn('Failed to fetch active orders, assuming protection exists (degraded mode)', {
@@ -515,5 +515,24 @@ export class PositionSyncService {
       // Re-throw to let caller handle (preserves critical protection errors)
       throw error;
     }
+  }
+
+  private toBybitOrders(value: unknown): BybitOrder[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return value.filter(this.isBybitOrder);
+  }
+
+  private isBybitOrder(value: unknown): value is BybitOrder {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+    const order = value as Record<string, unknown>;
+    return typeof order.orderId === 'string'
+      && typeof order.orderType === 'string'
+      && typeof order.side === 'string'
+      && typeof order.price === 'string'
+      && typeof order.reduceOnly === 'boolean';
   }
 }

@@ -198,16 +198,16 @@ export class LadderExitDetectorService {
         return this.determineFallbackExitType(position);
       }
 
-      const orderHistory = result.value as BybitOrder[];
-      return this.determineExitTypeFromOrders(position, orderHistory || []);
+      const orderHistory = this.toBybitOrders(result.value);
+      return this.determineExitTypeFromOrders(position, orderHistory);
     } else {
       // Fallback without ErrorHandler
       try {
         if (!this.bybitService.getOrderHistory) {
           throw new Error('getOrderHistory method not available');
         }
-        const orderHistory = await this.bybitService.getOrderHistory(100);
-        return this.determineExitTypeFromOrders(position, orderHistory || []);
+        const orderHistory = this.toBybitOrders(await this.bybitService.getOrderHistory(100));
+        return this.determineExitTypeFromOrders(position, orderHistory);
       } catch (error) {
         this.logger.warn('Failed to fetch order history', {
           error: (error as Error).message,
@@ -261,13 +261,13 @@ export class LadderExitDetectorService {
           });
           return false;
         }
-        orders = result.value as BybitOrder[];
+        orders = this.toBybitOrders(result.value);
       } else {
         try {
           if (!this.bybitService.getOrderHistory) {
             throw new Error('getOrderHistory method not available');
           }
-          orders = await this.bybitService.getOrderHistory(100);
+          orders = this.toBybitOrders(await this.bybitService.getOrderHistory(100));
         } catch (error) {
           this.logger.warn('Failed to fetch order history', {
             error: (error as Error).message,
@@ -278,7 +278,7 @@ export class LadderExitDetectorService {
     }
 
     // Check if all 3 TP levels have filled orders
-    const filledOrders = orders
+    const filledOrders = (orders ?? [])
       .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled' && o.reduceOnly)
       .sort((a, b) => {
         const aTime = (a as Record<string, unknown>).updatedTime as number;
@@ -354,6 +354,25 @@ export class LadderExitDetectorService {
       }
       throw error;
     }
+  }
+
+  private toBybitOrders(value: unknown): BybitOrder[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return value.filter(this.isBybitOrder);
+  }
+
+  private isBybitOrder(value: unknown): value is BybitOrder {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+    const order = value as Record<string, unknown>;
+    return typeof order.orderId === 'string'
+      && typeof order.orderType === 'string'
+      && typeof order.side === 'string'
+      && typeof order.price === 'string'
+      && typeof order.reduceOnly === 'boolean';
   }
 
   /**

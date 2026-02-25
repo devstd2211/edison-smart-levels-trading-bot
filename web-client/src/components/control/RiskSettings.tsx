@@ -73,7 +73,7 @@ export function RiskSettings({ currentRisk = {}, onSave }: RiskSettingsProps) {
         await onSave(risk);
       } else {
         // Call API to update risk settings
-        const result = await configApi.updateRiskSettings(risk);
+        const result = await configApi.updateRiskSettings(risk as Record<string, unknown>);
         if (!result.success) {
           throw new Error(result.error || 'Failed to save risk settings');
         }

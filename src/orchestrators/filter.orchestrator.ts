@@ -48,7 +48,7 @@ interface TrendAnalysis {
 }
 
 interface FilterContext {
-  signal: FilterSignal; // Trade signal (direction, confidence)
+  signal?: FilterSignal; // Trade signal (direction, confidence)
   accountBalance: number;
   openPositions: unknown[];
   marketData: MarketData; // flat market analysis, BTC correlation, etc
@@ -58,6 +58,8 @@ interface FilterContext {
   btcCandles?: Candle[]; // BTC candles for correlation analysis
   altCandles?: Candle[]; // Target asset candles (XRP, etc)
 }
+
+type FilterContextWithSignal = FilterContext & { signal: FilterSignal };
 
 export class FilterOrchestrator {
   constructor(
@@ -90,10 +92,18 @@ export class FilterOrchestrator {
     }
 
     const appliedFilters: string[] = [];
+    if (!context.signal) {
+      return {
+        allowed: false,
+        reason: 'Missing signal for filter evaluation',
+        appliedFilters,
+      };
+    }
+    const safeContext: FilterContextWithSignal = context as FilterContextWithSignal;
 
     // FILTER 1: Blind Zone
     if (this.filterConfig.blindZone?.minSignalsForLong) {
-      const blindZoneResult = this.evaluateBlindZone(context);
+      const blindZoneResult = this.evaluateBlindZone(safeContext);
       appliedFilters.push('BlindZone');
       if (!blindZoneResult.allowed) {
         return { ...blindZoneResult, appliedFilters, blockedBy: 'BlindZone' };
@@ -102,7 +112,7 @@ export class FilterOrchestrator {
 
     // FILTER 2: Flat Market
     if (this.filterConfig.flatMarket?.enabled !== false) {
-      const flatMarketResult = this.evaluateFlatMarket(context);
+      const flatMarketResult = this.evaluateFlatMarket(safeContext);
       appliedFilters.push('FlatMarket');
       if (!flatMarketResult.allowed) {
         return { ...flatMarketResult, appliedFilters, blockedBy: 'FlatMarket' };
@@ -110,8 +120,8 @@ export class FilterOrchestrator {
     }
 
     // FILTER 3: Funding Rate
-    if (this.filterConfig.fundingRate?.enabled !== false && context.fundingRate !== undefined) {
-      const fundingRateResult = this.evaluateFundingRate(context);
+    if (this.filterConfig.fundingRate?.enabled !== false && safeContext.fundingRate !== undefined) {
+      const fundingRateResult = this.evaluateFundingRate(safeContext);
       appliedFilters.push('FundingRate');
       if (!fundingRateResult.allowed) {
         return { ...fundingRateResult, appliedFilters, blockedBy: 'FundingRate' };
@@ -120,7 +130,7 @@ export class FilterOrchestrator {
 
     // FILTER 4: BTC Correlation
     if (this.filterConfig.btcCorrelation?.enabled !== false) {
-      const btcResult = this.evaluateBtcCorrelation(context);
+      const btcResult = this.evaluateBtcCorrelation(safeContext);
       appliedFilters.push('BtcCorrelation');
       if (!btcResult.allowed) {
         return { ...btcResult, appliedFilters, blockedBy: 'BtcCorrelation' };
@@ -129,7 +139,7 @@ export class FilterOrchestrator {
 
     // FILTER 5: Trend Alignment
     if (this.filterConfig.trendAlignment?.enabled !== false) {
-      const trendResult = this.evaluateTrendAlignment(context);
+      const trendResult = this.evaluateTrendAlignment(safeContext);
       appliedFilters.push('TrendAlignment');
       if (!trendResult.allowed) {
         return { ...trendResult, appliedFilters, blockedBy: 'TrendAlignment' };
@@ -137,8 +147,8 @@ export class FilterOrchestrator {
     }
 
     // FILTER 6: Post-TP Filter
-    if (this.filterConfig.postTpFilter?.enabled !== false && context.lastTPTimestamp) {
-      const postTpResult = this.evaluatePostTpFilter(context);
+    if (this.filterConfig.postTpFilter?.enabled !== false && safeContext.lastTPTimestamp) {
+      const postTpResult = this.evaluatePostTpFilter(safeContext);
       appliedFilters.push('PostTp');
       if (!postTpResult.allowed) {
         return { ...postTpResult, appliedFilters, blockedBy: 'PostTp' };
@@ -147,7 +157,7 @@ export class FilterOrchestrator {
 
     // FILTER 7: Time-Based Filter
     if (this.filterConfig.timeBasedFilter?.enabled !== false) {
-      const timeResult = this.evaluateTimeBasedFilter(context);
+      const timeResult = this.evaluateTimeBasedFilter(safeContext);
       appliedFilters.push('TimeBased');
       if (!timeResult.allowed) {
         return { ...timeResult, appliedFilters, blockedBy: 'TimeBased' };
@@ -156,7 +166,7 @@ export class FilterOrchestrator {
 
     // FILTER 8: Volatility Regime
     if (this.filterConfig.volatilityRegime?.enabled !== false) {
-      const volResult = this.evaluateVolatilityRegime(context);
+      const volResult = this.evaluateVolatilityRegime(safeContext);
       appliedFilters.push('VolatilityRegime');
       if (!volResult.allowed) {
         return { ...volResult, appliedFilters, blockedBy: 'VolatilityRegime' };
@@ -165,7 +175,7 @@ export class FilterOrchestrator {
 
     // FILTER 9: Neutral Trend Strength
     if (this.filterConfig.neutralTrendStrength?.enabled !== false) {
-      const neutralResult = this.evaluateNeutralTrendStrength(context);
+      const neutralResult = this.evaluateNeutralTrendStrength(safeContext);
       appliedFilters.push('NeutralTrendStrength');
       if (!neutralResult.allowed) {
         return { ...neutralResult, appliedFilters, blockedBy: 'NeutralTrendStrength' };
@@ -182,7 +192,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 1: Blind Zone - require minimum signal consensus
    */
-  private evaluateBlindZone(_context: FilterContext): FilterResult {
+  private evaluateBlindZone(_context: FilterContextWithSignal): FilterResult {
     // This filter is handled by StrategyCoordinator, included for completeness
     return { allowed: true, appliedFilters: [] };
   }
@@ -191,7 +201,7 @@ export class FilterOrchestrator {
    * FILTER 2: Flat Market - block entries when market is ranging
    * Phase 8.9.29: Logger failures use SKIP strategy
    */
-  private evaluateFlatMarket(context: FilterContext): FilterResult {
+  private evaluateFlatMarket(context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.flatMarket;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -238,7 +248,7 @@ export class FilterOrchestrator {
    * FILTER 3: Funding Rate - prevent overheated positions
    * Phase 8.9.29: Handle NaN/Infinity funding rates
    */
-  private evaluateFundingRate(context: FilterContext): FilterResult {
+  private evaluateFundingRate(context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.fundingRate;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -308,7 +318,7 @@ export class FilterOrchestrator {
    * With strict blocking: blocks entries that go against BTC trend if correlation is high.
    * Phase 8.9.29: GRACEFUL_DEGRADE strategy with enhanced validation
    */
-  private evaluateBtcCorrelation(context: FilterContext): FilterResult {
+  private evaluateBtcCorrelation(context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.btcCorrelation;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -425,7 +435,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 5: Trend Alignment - block against trend (handled in EntryOrchestrator)
    */
-  private evaluateTrendAlignment(_context: FilterContext): FilterResult {
+  private evaluateTrendAlignment(_context: FilterContextWithSignal): FilterResult {
     // EntryOrchestrator handles this filter
     return { allowed: true, appliedFilters: [] };
   }
@@ -434,7 +444,7 @@ export class FilterOrchestrator {
    * FILTER 6: Post-TP Filter - prevent FOMO after TP
    * Phase 8.9.29: Handle timestamp validation
    */
-  private evaluatePostTpFilter(context: FilterContext): FilterResult {
+  private evaluatePostTpFilter(context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.postTpFilter;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -481,7 +491,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 7: Time-Based Filter - block entries during specific hours
    */
-  private evaluateTimeBasedFilter(_context: FilterContext): FilterResult {
+  private evaluateTimeBasedFilter(_context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.timeBasedFilter;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -495,7 +505,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 8: Volatility Regime - block during extreme volatility
    */
-  private evaluateVolatilityRegime(_context: FilterContext): FilterResult {
+  private evaluateVolatilityRegime(_context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.volatilityRegime;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -517,7 +527,7 @@ export class FilterOrchestrator {
    * entries are made only when signal quality is very high.
    * Phase 8.9.29: Handle NaN trend strength with GRACEFUL_DEGRADE
    */
-  private evaluateNeutralTrendStrength(context: FilterContext): FilterResult {
+  private evaluateNeutralTrendStrength(context: FilterContextWithSignal): FilterResult {
     const config = this.filterConfig.neutralTrendStrength;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };

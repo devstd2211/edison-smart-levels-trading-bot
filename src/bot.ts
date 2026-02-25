@@ -194,9 +194,10 @@ export class TradingBot {
    */
   private setupCriticalErrorHandling(): void {
     // Handler for critical errors
-    const handleCriticalError = (error: Error) => {
+    const handleCriticalError = (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('🚨🚨🚨 CRITICAL ERROR RECEIVED - Initiating IMMEDIATE shutdown 🚨🚨🚨', {
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       });
 
       // Set a hard timeout - if shutdown takes too long, force exit

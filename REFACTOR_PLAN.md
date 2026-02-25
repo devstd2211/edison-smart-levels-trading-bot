@@ -94,6 +94,8 @@
 - [x] IMonitoringServices now extends IMonitoringReadServices
 - [x] ResilienceCoordinator depends on metrics recorder interface
 - [x] PrometheusMetricsService/HealthCheckService implement reader/recorder interfaces
+- [x] Core any cleanup batch 12: BotServices optional config sections typed
+- [x] Core any cleanup batch 13: BotServices stubs removed (exchange/strategy orchestrator)
 - [x] WebSocket payloads typed in web-client (no `any` handlers)
 - [x] StrategyStatus UI uses typed API responses (no `any`)
 - [x] UI data paths cleaned of `any` (Analytics/PositionCard/PriceChart)

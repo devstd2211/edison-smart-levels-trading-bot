@@ -25,6 +25,8 @@ export function Dashboard() {
   const { setRunning, setPosition, setBalance, setUnrealizedPnL, setError, addSignal } = useBotStore();
   const { setPrice, setIndicators, setTrend } = useMarketStore();
   const { symbol, timeframe } = useConfigStore();
+  const isTrend = (value: unknown): value is 'BULLISH' | 'BEARISH' | 'NEUTRAL' =>
+    value === 'BULLISH' || value === 'BEARISH' || value === 'NEUTRAL';
 
   useEffect(() => {
     // Fetch initial status
@@ -37,7 +39,7 @@ export function Dashboard() {
     wsClient.on('BALANCE_UPDATE', handleBalanceUpdate);
     wsClient.on('SIGNAL_NEW', handleNewSignal);
     const handleTrendUpdate = (data: { trend?: string }) => {
-      if (data?.trend) {
+      if (isTrend(data?.trend)) {
         setTrend(data.trend);
       }
     };
@@ -90,9 +92,9 @@ export function Dashboard() {
           marketResponse.data;
         setPrice(currentPrice || 0, 0, priceChangePercent || 0);
         // Set trend - accept any string value including "NEUTRAL"
-        if (trend !== undefined && trend !== null) {
+        if (isTrend(trend)) {
           console.log('[Dashboard] Setting trend to:', trend);
-          setTrend(trend as 'BULLISH' | 'BEARISH' | 'NEUTRAL');
+          setTrend(trend);
         }
         if (rsi !== undefined || ema20 !== undefined || ema50 !== undefined || atr !== undefined) {
           setIndicators({

@@ -484,21 +484,25 @@ export function AdvancedAnalytics() {
         const response = await dataApi.getPositionHistory(1000); // Get last 1000 trades
         if (response.success && response.data?.positions) {
           // Map API response to Trade interface
-          const mappedTrades = response.data.positions.map((pos: WebApiPositionHistoryEntry) => ({
-            id: pos.id || `${pos.entryTime}-${Math.random()}`,
-            symbol: pos.symbol || 'UNKNOWN',
-            side: pos.side || 'LONG',
-            entryPrice: pos.entryPrice || 0,
-            exitPrice: pos.exitPrice,
-            quantity: pos.quantity || 0,
-            leverage: pos.leverage || 1,
-            openedAt: pos.entryTime || 0,
-            closedAt: pos.exitTime,
-            realizedPnL: pos.pnl,
-            status: pos.exitTime ? 'CLOSED' : 'OPEN',
-            entryCondition: pos.entryCondition,
-            exitCondition: pos.exitCondition,
-          }));
+          const mappedTrades = response.data.positions.map((pos: WebApiPositionHistoryEntry) => {
+            const side: Trade['side'] = pos.side === 'SHORT' ? 'SHORT' : 'LONG';
+            const status: Trade['status'] = pos.exitTime ? 'CLOSED' : 'OPEN';
+            return {
+              id: String(pos.id ?? `${pos.entryTime}-${Math.random()}`),
+              symbol: pos.symbol || 'UNKNOWN',
+              side,
+              entryPrice: pos.entryPrice || 0,
+              exitPrice: pos.exitPrice,
+              quantity: pos.quantity || 0,
+              leverage: pos.leverage || 1,
+              openedAt: pos.entryTime || 0,
+              closedAt: pos.exitTime,
+              realizedPnL: pos.pnl,
+              status,
+              entryCondition: pos.entryCondition,
+              exitCondition: pos.exitCondition,
+            };
+          });
           setTrades(mappedTrades);
         }
       } catch (error) {
