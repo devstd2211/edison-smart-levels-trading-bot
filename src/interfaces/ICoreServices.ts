@@ -9,13 +9,13 @@ import type { BotEventBus } from '../services/event-bus';
 import type { IExchange } from './IExchange';
 
 export interface ICoreServices {
-  logger: LoggerService;
-  eventBus: BotEventBus;
-  telegram: {
+  readonly logger: LoggerService;
+  readonly eventBus: BotEventBus;
+  readonly telegram: {
     notifyBotStarted(symbol: string, enabledTimeframes: string[]): Promise<void>;
     notifyBotStopped(): Promise<void>;
   };
-  timeService: {
+  readonly timeService: {
     syncWithExchange(): Promise<void>;
     getSyncInfo(): { offset: number; lastSync: Date; isRecent: boolean; nextSyncIn: number };
     setBybitService(exchange: IExchange): void;

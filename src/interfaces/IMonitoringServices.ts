@@ -10,11 +10,11 @@ import type { IMonitoringHealthReader, IMonitoringMetricsReader } from './IMonit
 import type { ConsoleDashboardService } from '../services/console-dashboard.service';
 
 export interface IMonitoringReadServices {
-  metrics: BotMetricsService;
-  metricsService?: IMonitoringMetricsReader;
-  healthCheckService?: IMonitoringHealthReader;
-  monitoringServer?: MonitoringServer;
-  dashboard: ConsoleDashboardService;
+  readonly metrics: BotMetricsService;
+  readonly metricsService?: IMonitoringMetricsReader;
+  readonly healthCheckService?: IMonitoringHealthReader;
+  readonly monitoringServer?: MonitoringServer;
+  readonly dashboard: ConsoleDashboardService;
 }
 
 export interface IMonitoringServices extends IMonitoringReadServices {}

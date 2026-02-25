@@ -11,9 +11,7 @@ import type {
 } from './types/web-api';
 
 
-import { BotServices } from './services/bot-services';
 import type {
-  IWebApiReadServices,
   IWebSocketEventHandlerServices,
   IBotInitializerServices,
   ITradingBotServices,
@@ -23,6 +21,11 @@ import { WebSocketEventHandlerManager } from './services/websocket-event-handler
 import { BotWebAPI } from './api/bot-web-api';
 import { createWebApiReadServices } from './services/containers/web-api-read-services';
 import { createMonitoringReadServices } from './services/containers/monitoring-services';
+
+export type TradingBotServiceBundle =
+  & ITradingBotServices
+  & IBotInitializerServices
+  & IWebSocketEventHandlerServices;
 
 /**
  * Main Trading Bot orchestrator
@@ -76,15 +79,15 @@ export class TradingBot {
   /**
    * Constructor - receives all dependencies via DI (BotFactory)
    *
-   * @param services - BotServices container with all initialized services
+   * @param services - Grouped service bundle with all initialized services
    * @param config - Bot configuration
    */
-  constructor(services: BotServices, config: Config) {
-    this.services = services as ITradingBotServices;
+  constructor(services: TradingBotServiceBundle, config: Config) {
+    this.services = services;
     this.config = config;
-    this.initializer = new BotInitializer(services as IBotInitializerServices, config);
+    this.initializer = new BotInitializer(services, config);
     this.eventHandlerManager = new WebSocketEventHandlerManager(
-      services as IWebSocketEventHandlerServices,
+      services,
       config,
     );
 
@@ -367,7 +370,7 @@ export class TradingBot {
    */
   private getWebAPI(): BotWebAPI {
     if (!this.webAPI) {
-      this.webAPI = new BotWebAPI(createWebApiReadServices(this.services as IWebApiReadServices));
+      this.webAPI = new BotWebAPI(createWebApiReadServices(this.services));
     }
     return this.webAPI;
   }

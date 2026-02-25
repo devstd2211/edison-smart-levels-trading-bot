@@ -2,7 +2,15 @@ import { DECIMAL_PLACES, INTEGER_MULTIPLIERS } from '../constants';
 import { Candle } from '../types/core';
 import { TimeframeRole } from '../types/enums';
 import { OrderBook } from '../types/orderbook';
-import { OrderbookUpdateEvent, TradeTickEvent } from '../types/events';
+import {
+  OrderbookUpdateEvent,
+  StopLossHitEvent,
+  TakeProfitHitEvent,
+  TimeBasedExitEvent,
+  TradeTickEvent,
+} from '../types/events';
+import type { Position, OrderFilledEvent, StopLossFilledEvent, TakeProfitFilledEvent } from '../types/legacy';
+import type { Config } from '../types/legacy';
 import type { IWebSocketEventHandlerServices } from '../interfaces';
 import { RealTimeWhaleDetector } from './realtime-whale-detector';
 import { type OrderbookUpdate } from './orderbook-manager.service';
@@ -26,9 +34,13 @@ export class WebSocketEventHandlerManager {
   private whaleDetector: RealTimeWhaleDetector;
 
   // Track event listeners for cleanup
-  private eventListeners: Array<{ emitter: any; event: string; handler: any }> = [];
+  private eventListeners: Array<{
+    emitter: { on(event: string, listener: (...args: unknown[]) => void): void; off(event: string, listener: (...args: unknown[]) => void): void };
+    event: string;
+    handler: (...args: unknown[]) => void;
+  }> = [];
 
-  constructor(private services: IWebSocketEventHandlerServices, private config: any) {
+  constructor(private services: IWebSocketEventHandlerServices, private config: Config) {
     this.logger = services.logger;
     this.whaleDetector = new RealTimeWhaleDetector(services, config);
   }
@@ -37,7 +49,7 @@ export class WebSocketEventHandlerManager {
    * Validate candle data for required fields and valid values
    * @private
    */
-  private validateCandleData(candle: any): boolean {
+  private validateCandleData(candle: Candle | undefined | null): boolean {
     if (!candle) return false;
     if (typeof candle.close !== 'number' || isNaN(candle.close) || candle.close <= 0) return false;
     if (typeof candle.timestamp !== 'number' || candle.timestamp <= 0) return false;
@@ -49,27 +61,28 @@ export class WebSocketEventHandlerManager {
    * Handles both snapshot (full orderbook) and delta (partial updates)
    * @private
    */
-  private validateOrderbookData(update: any): boolean {
+  private validateOrderbookData(update: unknown): boolean {
     if (!update) return false;
+    const candidate = update as Partial<OrderbookUpdateEvent>;
 
     // Both bids and asks must exist as arrays (but can be empty for delta updates)
-    if (!Array.isArray(update.bids)) return false;
-    if (!Array.isArray(update.asks)) return false;
+    if (!Array.isArray(candidate.bids)) return false;
+    if (!Array.isArray(candidate.asks)) return false;
 
     // For delta updates, at least ONE of bids or asks must have data
-    if (update.bids.length === 0 && update.asks.length === 0) return false;
+    if (candidate.bids.length === 0 && candidate.asks.length === 0) return false;
 
     // Validate first bid if present
-    if (update.bids.length > 0) {
-      const firstBid = update.bids[0];
+    if (candidate.bids.length > 0) {
+      const firstBid = candidate.bids[0];
       if (!Array.isArray(firstBid) || firstBid.length < 2) return false;
       const bidPrice = parseFloat(String(firstBid[0]));
       if (isNaN(bidPrice) || bidPrice <= 0) return false;
     }
 
     // Validate first ask if present
-    if (update.asks.length > 0) {
-      const firstAsk = update.asks[0];
+    if (candidate.asks.length > 0) {
+      const firstAsk = candidate.asks[0];
       if (!Array.isArray(firstAsk) || firstAsk.length < 2) return false;
       const askPrice = parseFloat(String(firstAsk[0]));
       if (isNaN(askPrice) || askPrice <= 0) return false;
@@ -82,12 +95,13 @@ export class WebSocketEventHandlerManager {
    * Validate trade data for required fields and valid values
    * @private
    */
-  private validateTradeData(trade: any): boolean {
+  private validateTradeData(trade: unknown): boolean {
     if (!trade) return false;
-    if (typeof trade.price !== 'number' || isNaN(trade.price) || trade.price <= 0) return false;
-    if (typeof trade.quantity !== 'number' || isNaN(trade.quantity) || trade.quantity <= 0) return false;
-    if (!trade.side || (trade.side !== 'Buy' && trade.side !== 'Sell' && trade.side !== 'BUY' && trade.side !== 'SELL')) return false;
-    if (typeof trade.timestamp !== 'number' || trade.timestamp <= 0) return false;
+    const candidate = trade as Partial<TradeTickEvent>;
+    if (typeof candidate.price !== 'number' || isNaN(candidate.price) || candidate.price <= 0) return false;
+    if (typeof candidate.quantity !== 'number' || isNaN(candidate.quantity) || candidate.quantity <= 0) return false;
+    if (!candidate.side || (candidate.side !== 'Buy' && candidate.side !== 'Sell' && candidate.side !== 'BUY' && candidate.side !== 'SELL')) return false;
+    if (typeof candidate.timestamp !== 'number' || candidate.timestamp <= 0) return false;
     return true;
   }
 
@@ -97,10 +111,10 @@ export class WebSocketEventHandlerManager {
    *
    * @param bot - Reference to TradingBot instance (for callbacks)
    */
-  registerAllHandlers(bot: any): void {
-    this.registerPositionMonitorHandlers(bot);
-    this.registerPrivateWebSocketHandlers(bot);
-    this.registerPublicWebSocketHandlers(bot);
+  registerAllHandlers(_bot: unknown): void {
+    this.registerPositionMonitorHandlers();
+    this.registerPrivateWebSocketHandlers();
+    this.registerPublicWebSocketHandlers();
 
     this.logger.debug(
       `✅ Registered ${this.eventListeners.length} event handlers (Position Monitor + WebSockets)`,
@@ -122,29 +136,29 @@ export class WebSocketEventHandlerManager {
   /**
    * Private: Register Position Monitor event handlers
    */
-  private registerPositionMonitorHandlers(bot: any): void {
+  private registerPositionMonitorHandlers(): void {
     const { positionEventHandler } = this.services.eventHandlerServices;
     const { positionMonitor } = this.services.executionServices;
 
     // Position Monitor Events
-    this.registerListener(positionMonitor, 'stopLossHit', (event: any) => {
-      void positionEventHandler.handleStopLossHit(event);
+    this.registerListener(positionMonitor, 'stopLossHit', (event) => {
+      void positionEventHandler.handleStopLossHit(event as StopLossHitEvent);
     });
 
-    this.registerListener(positionMonitor, 'takeProfitHit', (event: any) => {
-      void positionEventHandler.handleTakeProfitHit(event);
+    this.registerListener(positionMonitor, 'takeProfitHit', (event) => {
+      void positionEventHandler.handleTakeProfitHit(event as TakeProfitHitEvent);
     });
 
-    this.registerListener(positionMonitor, 'positionClosedExternally', (position: any) => {
-      void positionEventHandler.handlePositionClosedExternally(position);
+    this.registerListener(positionMonitor, 'positionClosedExternally', (position) => {
+      void positionEventHandler.handlePositionClosedExternally(position as Position);
     });
 
-    this.registerListener(positionMonitor, 'timeBasedExit', (event: any) => {
-      void positionEventHandler.handleTimeBasedExit(event);
+    this.registerListener(positionMonitor, 'timeBasedExit', (event) => {
+      void positionEventHandler.handleTimeBasedExit(event as TimeBasedExitEvent);
     });
 
-    this.registerListener(positionMonitor, 'error', (error: Error) => {
-      void positionEventHandler.handleMonitorError(error);
+    this.registerListener(positionMonitor, 'error', (error) => {
+      void positionEventHandler.handleMonitorError(error as Error);
     });
 
     this.logger.debug('✅ Position Monitor handlers registered');
@@ -153,33 +167,33 @@ export class WebSocketEventHandlerManager {
   /**
    * Private: Register Private WebSocket event handlers
    */
-  private registerPrivateWebSocketHandlers(bot: any): void {
+  private registerPrivateWebSocketHandlers(): void {
     const { webSocketEventHandler } = this.services.eventHandlerServices;
     const { webSocketManager } = this.services.marketDataServices;
 
     // WebSocket Events
-    this.registerListener(webSocketManager, 'positionUpdate', (position: any) => {
-      void webSocketEventHandler.handlePositionUpdate(position);
+    this.registerListener(webSocketManager, 'positionUpdate', (position) => {
+      void webSocketEventHandler.handlePositionUpdate(position as Position);
     });
 
     this.registerListener(webSocketManager, 'positionClosed', () => {
       void webSocketEventHandler.handlePositionClosed();
     });
 
-    this.registerListener(webSocketManager, 'orderFilled', (order: any) => {
-      void webSocketEventHandler.handleOrderFilled(order);
+    this.registerListener(webSocketManager, 'orderFilled', (order) => {
+      void webSocketEventHandler.handleOrderFilled(order as OrderFilledEvent);
     });
 
-    this.registerListener(webSocketManager, 'takeProfitFilled', (event: any) => {
-      void webSocketEventHandler.handleTakeProfitFilled(event);
+    this.registerListener(webSocketManager, 'takeProfitFilled', (event) => {
+      void webSocketEventHandler.handleTakeProfitFilled(event as TakeProfitFilledEvent);
     });
 
-    this.registerListener(webSocketManager, 'stopLossFilled', (event: any) => {
-      void webSocketEventHandler.handleStopLossFilled(event);
+    this.registerListener(webSocketManager, 'stopLossFilled', (event) => {
+      void webSocketEventHandler.handleStopLossFilled(event as StopLossFilledEvent);
     });
 
-    this.registerListener(webSocketManager, 'error', (error: Error) => {
-      void webSocketEventHandler.handleError(error);
+    this.registerListener(webSocketManager, 'error', (error) => {
+      void webSocketEventHandler.handleError(error as Error);
     });
 
     this.logger.debug('✅ Private WebSocket handlers registered');
@@ -188,7 +202,7 @@ export class WebSocketEventHandlerManager {
   /**
    * Private: Register Public WebSocket event handlers
    */
-  private registerPublicWebSocketHandlers(bot: any): void {
+  private registerPublicWebSocketHandlers(): void {
     const { tradingOrchestrator } = this.services;
     const { publicWebSocket, orderbookManager, candleProvider } =
       this.services.marketDataServices;
@@ -197,7 +211,10 @@ export class WebSocketEventHandlerManager {
     this.registerListener(
       publicWebSocket,
       'candleClosed',
-      async ({ role, candle }: { role: TimeframeRole; candle: Candle }) => {
+      async (payload) => {
+        const data = payload as { role?: TimeframeRole; candle?: Candle };
+        const role = data.role ?? TimeframeRole.PRIMARY;
+        const candle = data.candle;
         // Validate candle data
         if (!this.validateCandleData(candle)) {
           await ErrorHandler.handle(
@@ -221,15 +238,17 @@ export class WebSocketEventHandlerManager {
           return; // SKIP
         }
 
+        const safeCandle = candle as Candle;
+
         this.logger.info('🕯️ Candle closed', {
           role,
-          timestamp: new Date(candle.timestamp).toISOString(),
-          close: candle.close,
+          timestamp: new Date(safeCandle.timestamp).toISOString(),
+          close: safeCandle.close,
         });
 
         try {
           // Update candle cache for this timeframe
-          candleProvider.onCandleClosed(role, candle);
+          candleProvider.onCandleClosed(role, safeCandle);
 
           // Log cache metrics
           const metrics = candleProvider.getCacheMetrics(role);
@@ -245,10 +264,10 @@ export class WebSocketEventHandlerManager {
           // Otherwise use TradingOrchestrator for single-strategy mode
           if (this.services.strategyOrchestrator) {
             // Multi-strategy mode: route only to active strategy
-            await this.services.strategyOrchestrator.onCandleClosed(role, candle);
+            await this.services.strategyOrchestrator.onCandleClosed(role, safeCandle);
           } else {
             // Single-strategy mode: use legacy flow
-            await tradingOrchestrator.onCandleClosed(role, candle);
+            await tradingOrchestrator.onCandleClosed(role, safeCandle);
           }
         } catch (error) {
           await ErrorHandler.handle(error, {
@@ -274,18 +293,19 @@ export class WebSocketEventHandlerManager {
     });
 
     // Orderbook update
-    this.registerListener(publicWebSocket, 'orderbookUpdate', (update: OrderbookUpdateEvent) => {
-      this.handleOrderbookUpdate(update, bot);
+    this.registerListener(publicWebSocket, 'orderbookUpdate', (update) => {
+      this.handleOrderbookUpdate(update as OrderbookUpdateEvent);
     });
 
     // Trade update
-    this.registerListener(publicWebSocket, 'trade', (trade: TradeTickEvent) => {
-      this.handleTradeUpdate(trade, bot);
+    this.registerListener(publicWebSocket, 'trade', (trade) => {
+      this.handleTradeUpdate(trade as TradeTickEvent);
     });
 
     // WebSocket errors
-    this.registerListener(publicWebSocket, 'error', (error: Error) => {
-      this.logger.error('Public WebSocket error', { error: error.message });
+    this.registerListener(publicWebSocket, 'error', (error) => {
+      const err = error as Error;
+      this.logger.error('Public WebSocket error', { error: err.message });
     });
 
     this.logger.debug('✅ Public WebSocket handlers registered');
@@ -294,16 +314,17 @@ export class WebSocketEventHandlerManager {
   /**
    * Private: Handle orderbook update event
    */
-  private handleOrderbookUpdate(update: OrderbookUpdateEvent, bot: any): void {
+  private handleOrderbookUpdate(update: unknown): void {
     // Validate orderbook data
     if (!this.validateOrderbookData(update)) {
+      const candidate = update as Partial<OrderbookUpdateEvent>;
       void ErrorHandler.handle(
         new OrderValidationError('Invalid orderbook data from WebSocket', {
           field: 'orderbook',
           value: 0,
           reason: 'Invalid bids/asks structure',
-          hasBids: Array.isArray(update?.bids),
-          hasAsks: Array.isArray(update?.asks),
+          hasBids: Array.isArray(candidate.bids),
+          hasAsks: Array.isArray(candidate.asks),
         }),
         {
           strategy: RecoveryStrategy.SKIP,
@@ -319,12 +340,13 @@ export class WebSocketEventHandlerManager {
 
     try {
       // Convert OrderbookUpdateEvent to OrderbookUpdate for processing
+      const orderbookEvent = update as OrderbookUpdateEvent;
       const orderbookUpdate: OrderbookUpdate = {
-        type: update.type || 'delta',
-        bids: (update.bids || []).map((b: any) => [String(b[0]), String(b[1])]),
-        asks: (update.asks || []).map((a: any) => [String(a[0]), String(a[1])]),
-        updateId: update.updateId || 0,
-        timestamp: update.timestamp || Date.now(),
+        type: orderbookEvent.type || 'delta',
+        bids: (orderbookEvent.bids || []).map((b) => [String(b[0]), String(b[1])]),
+        asks: (orderbookEvent.asks || []).map((a) => [String(a[0]), String(a[1])]),
+        updateId: orderbookEvent.updateId || 0,
+        timestamp: orderbookEvent.timestamp || Date.now(),
       };
 
       // OrderbookManager ALWAYS maintains the snapshot (no throttling)
@@ -345,21 +367,21 @@ export class WebSocketEventHandlerManager {
         // Analyze orderbook imbalance
         if (this.services.orderbookImbalanceService) {
           const imbalanceAnalysis = this.services.orderbookImbalanceService.analyze({
-            bids: snapshot.bids.map((b: any) => [b.price, b.size] as [number, number]),
-            asks: snapshot.asks.map((a: any) => [a.price, a.size] as [number, number]),
+            bids: snapshot.bids.map((b) => [b.price, b.size] as [number, number]),
+            asks: snapshot.asks.map((a) => [a.price, a.size] as [number, number]),
           });
         }
 
         // Phase 10.1: Feed orderbook snapshot to Advanced Order Flow Service
         if (this.services.advancedOrderFlowService) {
           this.services.advancedOrderFlowService.processOrderbook({
-            bids: snapshot.bids.map((b: any) => [b.price, b.size]),
-            asks: snapshot.asks.map((a: any) => [a.price, a.size]),
+            bids: snapshot.bids.map((b) => [b.price, b.size]),
+            asks: snapshot.asks.map((a) => [a.price, a.size]),
           });
         }
 
         const orderbookSnapshot: OrderBook = {
-          symbol: update.symbol || this.config.exchange.symbol,
+          symbol: orderbookEvent.symbol || this.config.exchange.symbol,
           bids: snapshot.bids,
           asks: snapshot.asks,
           timestamp: snapshot.timestamp,
@@ -383,16 +405,17 @@ export class WebSocketEventHandlerManager {
   /**
    * Private: Handle trade update event
    */
-  private handleTradeUpdate(trade: TradeTickEvent, bot: any): void {
+  private handleTradeUpdate(trade: unknown): void {
     // Validate trade data
     if (!this.validateTradeData(trade)) {
+      const candidate = trade as Partial<TradeTickEvent>;
       void ErrorHandler.handle(
         new OrderValidationError('Invalid trade tick data from WebSocket', {
           field: 'trade',
           value: 0,
           reason: 'Invalid price, quantity, or side',
-          hasPrice: typeof trade?.price === 'number',
-          hasQuantity: typeof trade?.quantity === 'number',
+          hasPrice: typeof candidate.price === 'number',
+          hasQuantity: typeof candidate.quantity === 'number',
         }),
         {
           strategy: RecoveryStrategy.SKIP,
@@ -408,13 +431,14 @@ export class WebSocketEventHandlerManager {
 
     try {
       // Normalize side
-      const normalizedSide = trade.side === 'Buy' || trade.side === 'BUY' ? 'BUY' : 'SELL';
+      const tradeEvent = trade as TradeTickEvent;
+      const normalizedSide = tradeEvent.side === 'Buy' || tradeEvent.side === 'BUY' ? 'BUY' : 'SELL';
 
       if (this.services.deltaAnalyzerService) {
         this.services.deltaAnalyzerService.addTick({
-          timestamp: trade.timestamp,
-          price: trade.price,
-          quantity: trade.quantity,
+          timestamp: tradeEvent.timestamp,
+          price: tradeEvent.price,
+          quantity: tradeEvent.quantity,
           side: normalizedSide as 'BUY' | 'SELL',
         });
       }
@@ -422,9 +446,9 @@ export class WebSocketEventHandlerManager {
       // Phase 10.1: Feed ticks to Advanced Order Flow Service
       if (this.services.advancedOrderFlowService) {
         this.services.advancedOrderFlowService.addTick({
-          timestamp: trade.timestamp,
-          price: trade.price,
-          size: trade.quantity,
+          timestamp: tradeEvent.timestamp,
+          price: tradeEvent.price,
+          size: tradeEvent.quantity,
           side: normalizedSide as 'BUY' | 'SELL',
         });
       }
@@ -442,7 +466,11 @@ export class WebSocketEventHandlerManager {
   /**
    * Private: Register event listener with tracking for cleanup
    */
-  private registerListener(emitter: any, event: string, handler: any): void {
+  private registerListener(
+    emitter: { on(event: string, listener: (...args: unknown[]) => void): void; off(event: string, listener: (...args: unknown[]) => void): void },
+    event: string,
+    handler: (...args: unknown[]) => void,
+  ): void {
     emitter.on(event, handler);
     this.eventListeners.push({ emitter, event, handler });
   }

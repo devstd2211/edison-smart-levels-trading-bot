@@ -9,7 +9,7 @@ import type { RealTimeRiskMonitor } from '../services/real-time-risk-monitor.ser
 import type { RealityCheckService } from '../services/reality-check.service';
 
 export interface IRiskServices {
-  riskManager: RiskManager;
-  realTimeRiskMonitor: RealTimeRiskMonitor;
-  realityCheck: RealityCheckService;
+  readonly riskManager: RiskManager;
+  readonly realTimeRiskMonitor: RealTimeRiskMonitor;
+  readonly realityCheck: RealityCheckService;
 }

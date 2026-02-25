@@ -16,18 +16,18 @@ import type { IndicatorCacheService } from '../services/indicator-cache.service'
 import type { IndicatorPreCalculationService } from '../services/indicator-precalculation.service';
 
 export interface IMarketDataServices {
-  bybitService: IExchange & {
+  readonly bybitService: IExchange & {
     initialize?: () => Promise<void>;
     resyncTime?: () => Promise<void>;
     cancelAllConditionalOrders?: () => Promise<void>;
     getOpenPositions?: () => Promise<Position[]>;
     getCandles?: (params: CandleParams) => Promise<Candle[]>;
   };
-  timeframeProvider: TimeframeProvider;
-  candleProvider: CandleProvider;
-  orderbookManager: OrderbookManagerService;
-  publicWebSocket: PublicWebSocketService;
-  webSocketManager: WebSocketManagerService;
-  indicatorCache: IndicatorCacheService;
-  indicatorPreCalc: IndicatorPreCalculationService;
+  readonly timeframeProvider: TimeframeProvider;
+  readonly candleProvider: CandleProvider;
+  readonly orderbookManager: OrderbookManagerService;
+  readonly publicWebSocket: PublicWebSocketService;
+  readonly webSocketManager: WebSocketManagerService;
+  readonly indicatorCache: IndicatorCacheService;
+  readonly indicatorPreCalc: IndicatorPreCalculationService;
 }

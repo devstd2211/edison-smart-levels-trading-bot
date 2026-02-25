@@ -138,10 +138,11 @@ export class BotWebAPI {
       };
 
       const role = timeframeMap[timeframeStr] || TimeframeRole.PRIMARY;
-      return await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
+      const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
         role,
         limit,
       );
+      return Array.from(candles);
     } catch (error) {
       this.logger.error('Error getting candles', { error, timeframeStr, limit });
       return [];
@@ -196,7 +197,7 @@ export class BotWebAPI {
   async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
     try {
       // Use the orderbook manager to get current snapshot
-      const snapshot: WebApiOrderbookSnapshot | null =
+      const snapshot: Readonly<WebApiOrderbookSnapshot> | null =
         this.services.webApiServices.marketDataServices.orderbookManager.getSnapshot();
 
       if (!snapshot) {

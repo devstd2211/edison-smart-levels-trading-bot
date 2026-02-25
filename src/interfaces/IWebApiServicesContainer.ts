@@ -8,24 +8,24 @@ import type { Candle } from '../types/core';
 import type { TradeRecord } from '../types/journal';
 import type { TimeframeRole } from '../types/enums';
 import type { WebApiIndicatorPreferences, WebApiOrderbookSnapshot } from '../types/web-api';
-import type { IExchange } from './IExchange';
+import type { AccountBalance } from './IExchange';
 
 export interface IWebApiCandleProvider {
-  getCandles(role: TimeframeRole, limit: number): Promise<Candle[]>;
+  getCandles(role: TimeframeRole, limit: number): Promise<ReadonlyArray<Candle>>;
 }
 
 export interface IWebApiOrderbookManager {
-  getSnapshot(): WebApiOrderbookSnapshot | null;
+  getSnapshot(): Readonly<WebApiOrderbookSnapshot> | null;
 }
 
 export interface IWebApiMarketDataServices {
-  candleProvider: IWebApiCandleProvider;
-  orderbookManager: IWebApiOrderbookManager;
-  indicatorCache: IWebApiIndicatorCache;
+  readonly candleProvider: IWebApiCandleProvider;
+  readonly orderbookManager: IWebApiOrderbookManager;
+  readonly indicatorCache: IWebApiIndicatorCache;
 }
 
 export interface IWebApiJournalReader {
-  getClosedTrades(): TradeRecord[];
+  getClosedTrades(): ReadonlyArray<TradeRecord>;
 }
 
 export interface IWebApiIndicatorCache {
@@ -33,12 +33,14 @@ export interface IWebApiIndicatorCache {
 }
 
 export interface IWebApiExchange {
+  getBalance(): Promise<AccountBalance>;
+  getCurrentPrice?: () => Promise<number>;
   getFundingRate?: (symbol: string) => Promise<number>;
 }
 
 export interface IWebApiServicesContainer {
-  marketDataServices: IWebApiMarketDataServices;
-  journal: IWebApiJournalReader;
-  bybitService: IExchange & IWebApiExchange;
-  indicatorPreferences?: WebApiIndicatorPreferences;
+  readonly marketDataServices: IWebApiMarketDataServices;
+  readonly journal: IWebApiJournalReader;
+  readonly bybitService: IWebApiExchange;
+  readonly indicatorPreferences?: WebApiIndicatorPreferences;
 }

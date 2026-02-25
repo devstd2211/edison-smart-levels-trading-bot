@@ -3,9 +3,10 @@
 Source: `src/services/bot-services.ts`
 
 Flat list of services and immediate dependencies (constructor args + direct setter injections).
+"config.*" references direct `Config` fields unless noted.
 
-- ConsoleDashboardService: config.dashboard
-- LoggerService: config.logging
+- ConsoleDashboardService: config.dashboard (enabled/updateInterval/theme)
+- LoggerService: config.logging.level, config.logging.logDir
 - ErrorHandler: logger
 - BotEventBus: logger
 - BotMetricsService: logger, errorHandler
@@ -13,18 +14,20 @@ Flat list of services and immediate dependencies (constructor args + direct sett
 - JournalFileRepository: logger
 - MarketDataCacheRepository: none
 - TelegramService: config.telegram, logger, errorHandler
-- TimeService: logger, config.system.timeSyncIntervalMs, config.system.timeSyncMaxFailures, bybitService (via `setBybitService`)
-- ExchangeFactory: logger, config.exchange
+- TimeService: logger, config.system.timeSyncIntervalMs, config.system.timeSyncMaxFailures
+- TimeService.setBybitService: bybitService
+- ExchangeFactory: logger, config.exchange (name/symbol/demo/testnet/apiKey/apiSecret)
 - BybitService (raw): config.exchange, logger, marketDataRepository
 - BybitServiceAdapter: rawBybitService, logger
+- IExchange (factory result): exchangeFactory.getExchange()
 - TradingJournalService: logger, config.tradeHistory, config.compoundInterest.baseDeposit, journalRepository, errorHandler
 - SessionStatsService: logger, journalRepository, errorHandler
 - RealityCheckService: logger
 - TimeframeProvider: config.timeframes
 - CandleProvider: timeframeProvider, bybitService, logger, config.exchange.symbol, marketDataRepository, errorHandler
 - IndicatorCacheService: marketDataRepository
-- IndicatorPreCalculationService: candleProvider, indicatorCache, calculators, logger
-- CompoundInterestCalculatorService (optional): config.compoundInterest, logger, journal, bybitService (balance provider)
+- IndicatorPreCalculationService: candleProvider, indicatorCache, CalculatorFactory.createAllCalculators(), logger
+- CompoundInterestCalculatorService (optional): config.compoundInterest, logger, balanceProvider (journal.getVirtualBalance or bybitService.getBalance)
 - RetestEntryService (optional): config.retestEntry, logger
 - DeltaAnalyzerService (optional): config.delta, logger
 - OrderbookImbalanceService (optional): config.orderbookImbalance, logger
@@ -34,7 +37,7 @@ Flat list of services and immediate dependencies (constructor args + direct sett
 - PositionScalingService (optional): config.positionScaling, logger, errorHandler
 - SmartOrderExecutionService (optional): config.smartOrderExecution, logger, errorHandler
 - AdvancedOrderStateMachineService (optional): logger, errorHandler
-- PrometheusMetricsService (optional): config.monitoring.metrics, logger, errorHandler
+- PrometheusMetricsService (optional): config.monitoring.metricsEnabled/prefix/collectInterval/defaultLabels, logger, errorHandler
 - LadderExitDetectorService: logger, bybitService, errorHandler
 - RiskManager: riskManagerConfig (local), logger, errorHandler
 - PositionLifecycleService: bybitService, config.trading, config.riskManagement, telegram, logger, journal, config.entryConfirmation, config, eventBus, compoundInterestCalculator, sessionStats, positionRepository, errorHandler, dynamicPositionSizer, positionScalingService
@@ -53,40 +56,39 @@ Flat list of services and immediate dependencies (constructor args + direct sett
 - PositionMonitorService: bybitService, positionManager, config.riskManagement, telegram, logger, exitTypeDetectorService, pnlCalculatorService, positionSyncService, positionExitingService
 - TradingOrchestrator: orchestratorConfig (local), candleProvider, timeframeProvider, bybitService, positionManager, telegram, logger, riskManager, positionExitingService
 - TradingOrchestrator.setIndicatorPreCalculationService: indicatorPreCalc
-- TradingOrchestrator.setBtcCandlesStore (optional): btcCandles store (BotServices)
-- StrategyRegistryService: none
-- StrategyOrchestratorService (optional): strategyRegistry, strategyFactory (null stub), strategyStateManager (null stub), logger, eventBus
-- StrategyOrchestratorService.setSharedServices: candleProvider, timeframeProvider, positionManager, riskManager, telegram, positionExitingService
+- TradingOrchestrator.setBtcCandlesStore (optional): BotServices (btcCandles1m store)
+- StrategyRegistryService (optional, local only): none
+- StrategyOrchestratorService: not instantiated in this file (Phase 10.3 TODO)
 - PositionEventHandler: positionManager, positionExitingService, bybitService, telegram, logger
 - WebSocketEventHandler: positionManager, positionExitingService, bybitService, webSocketManager, journal, telegram, logger
-- PublicWebSocketService.setBtcCandlesStore (optional): btcCandles store (BotServices)
+- PublicWebSocketService.setBtcCandlesStore (optional): BotServices (btcCandles1m store)
 - HealthCheckService (optional): bybitService, webSocketManager, monitoring thresholds, logger, errorHandler
 - MonitoringServer (optional): metricsService, healthCheckService, monitoring server config, logger, errorHandler
 - CircuitBreakerService (optional): resilience.circuitBreaker config, logger, errorHandler
 - RateLimiterService (optional): resilience.rateLimiter config, logger, errorHandler
 - RetryPolicyService (optional): resilience.retry config, logger, errorHandler
 - BulkheadService (optional): resilience.bulkhead config, logger, errorHandler
-- ResilienceCoordinator (optional): circuitBreaker, rateLimiter, retryPolicy, bulkhead, metricsService, logger, errorHandler
+- ResilienceCoordinator (optional): circuitBreaker, rateLimiter, retryPolicy, bulkhead, metricsRecorder (if metricsService), logger, errorHandler
 - MarketDataServices (container): bybitService, timeframeProvider, candleProvider, orderbookManager, publicWebSocket, webSocketManager, indicatorCache, indicatorPreCalc
 - ExecutionServices (container): positionManager, positionExitingService, tradingOrchestrator, realTimeRiskMonitor, positionMonitor, ladderExitDetector, dynamicPositionSizer, positionScalingService, smartOrderExecution, orderStateMachine
-- MonitoringServices (container): metrics, metricsService, healthCheckService, monitoringServer, dashboard
+- MonitoringServices (container/factory): metrics, metricsService, healthCheckService, monitoringServer, dashboard
 - RiskServices (container): riskManager, realTimeRiskMonitor, realityCheck
-- WebApiServices (container): marketDataServices (candleProvider, orderbookManager), journal, bybitService
+- WebApiServices (container/factory): candleProvider, orderbookManager, indicatorCache, journal, bybitService, config.webApi.indicatorPreferences
 - CoreServices (container): logger, eventBus, telegram, timeService
 - EventHandlerServices (container): positionEventHandler, webSocketEventHandler
 
 ## Proposed First Migration Slice (Low Risk)
-Focus: `WebApiServices` + `BotWebAPI` read-only endpoints.
+Focus: `WebApiServices` + read-only web API adapters (e.g., BotWebAPI endpoints).
 
 Why low risk:
 - Read-only usage of cached market data and journals (no order placement).
-- Narrow dependencies: `marketDataServices` (candleProvider, orderbookManager, indicatorCache) + `journal` + `bybitService`.
+- Narrow dependencies: `candleProvider`, `orderbookManager`, `indicatorCache`, `journal`, `bybitService` (read-only access).
 - Already behind a web adapter boundary, so we can refactor wiring without touching trading runtime.
 
 Scope proposal:
 - Extract a dedicated `WebApiReadServices` interface from `WebApiServices`.
-- Move construction to a small container module and inject into `BotWebAPI`.
-- Avoid changes to runtime execution paths (no changes in trading or WebSocket loops).
+- Provide a small container module that builds only the read-only surface.
+- Inject the narrowed interface into web adapters; avoid changes to trading/WebSocket loops.
 
 ## Proposed Next Migration Slice (Low Risk)
 Focus: read-only monitoring adapters (`MonitoringServices` consumers).

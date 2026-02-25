@@ -13,14 +13,14 @@ export interface IWebApiLogger {
 }
 
 export interface IWebApiWallTracker {
-  getActiveWalls(): Array<{ side: string; price: number; currentSize: number }>;
+  getActiveWalls(): ReadonlyArray<{ side: string; price: number; currentSize: number }>;
   getWallStrength(price: number, side: string): number;
 }
 
 export interface IWebApiReadServices {
-  logger: IWebApiLogger;
-  webApiServices: IWebApiServicesContainer;
-  wallTrackerService?: IWebApiWallTracker;
+  readonly logger: IWebApiLogger;
+  readonly webApiServices: IWebApiServicesContainer;
+  readonly wallTrackerService?: IWebApiWallTracker;
 }
 
 export interface IWebApiServices extends IWebApiReadServices {}

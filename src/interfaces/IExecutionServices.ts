@@ -16,14 +16,14 @@ import type { SmartOrderExecutionService } from '../services/smart-order-executi
 import type { AdvancedOrderStateMachineService } from '../services/advanced-order-state-machine.service';
 
 export interface IExecutionServices {
-  positionManager: PositionLifecycleService;
-  positionMonitor: PositionMonitorService;
-  positionExitingService: PositionExitingService;
-  tradingOrchestrator: TradingOrchestrator;
-  realTimeRiskMonitor: RealTimeRiskMonitor;
-  ladderExitDetector?: LadderExitDetectorService;
-  dynamicPositionSizer?: DynamicPositionSizerService;
-  positionScalingService?: PositionScalingService;
-  smartOrderExecution?: SmartOrderExecutionService;
-  orderStateMachine?: AdvancedOrderStateMachineService;
+  readonly positionManager: PositionLifecycleService;
+  readonly positionMonitor: PositionMonitorService;
+  readonly positionExitingService: PositionExitingService;
+  readonly tradingOrchestrator: TradingOrchestrator;
+  readonly realTimeRiskMonitor: RealTimeRiskMonitor;
+  readonly ladderExitDetector?: LadderExitDetectorService;
+  readonly dynamicPositionSizer?: DynamicPositionSizerService;
+  readonly positionScalingService?: PositionScalingService;
+  readonly smartOrderExecution?: SmartOrderExecutionService;
+  readonly orderStateMachine?: AdvancedOrderStateMachineService;
 }

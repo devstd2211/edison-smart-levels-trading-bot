@@ -70,8 +70,13 @@
 - [x] WebSocketEventHandlerManager uses ExecutionServices for positionMonitor
 - [x] WebSocketEventHandlerManager uses MarketDataServices for webSocketManager
 - [x] TradingBot uses MonitoringServices for dashboard check
+- [x] TradingBot constructor accepts service bundle (no BotServices type)
+- [x] ITradingBotServices narrowed to actual TradingBot usage
 - [x] WebApiServices container introduced and wired
 - [x] Web API boundary interfaces narrowed (web-api types + IWebApiServicesContainer)
+- [x] IWebApiServicesContainer bybitService narrowed to IWebApiExchange
+- [x] IWebApiServicesContainer read-only returns (candles/orderbook/journal)
+- [x] Read-only group contracts (core/market/execution/risk/monitoring/web-api)
 - [x] Web API DTOs typed (BotWebAPI + TradingBot signatures)
 - [x] Web API market data now candle-backed (no placeholders)
 - [x] Web API market data uses indicator cache (RSI/EMA/ATR)
@@ -96,6 +101,7 @@
 - [x] PrometheusMetricsService/HealthCheckService implement reader/recorder interfaces
 - [x] Core any cleanup batch 12: BotServices optional config sections typed
 - [x] Core any cleanup batch 13: BotServices stubs removed (exchange/strategy orchestrator)
+- [x] Build fixes: config/meta/filter types, web-client typing fixes, order history guards
 - [x] WebSocket payloads typed in web-client (no `any` handlers)
 - [x] StrategyStatus UI uses typed API responses (no `any`)
 - [x] UI data paths cleaned of `any` (Analytics/PositionCard/PriceChart)
@@ -119,6 +125,7 @@
 - [x] Core any cleanup batch 9: IRepository/IExchange unknowns
 - [x] Core any cleanup batch 10: IMonitoring unknowns
 - [x] Core any cleanup batch 11: index entrypoint unknowns
+- [x] Core any cleanup batch 12: websocket-event-handler-manager no any
 - [x] BotServices.toObject reduced to grouped services
 - [x] CoreServices container introduced and TradingBot wired
 - [x] EventHandlerServices container introduced and wired
