@@ -20,7 +20,7 @@ import {
   DataCollectionConfig,
   OrderbookSnapshot,
   LoggerService,
-} from '../types';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 // Import decomposed components

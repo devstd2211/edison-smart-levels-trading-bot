@@ -1,6 +1,6 @@
 import { WickAnalyzerNew } from '../../analyzers/wick.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { WickAnalyzerConfigNew } from '../../types/config-new.types';
+import type { WickAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): WickAnalyzerConfigNew {
   return { enabled: true, weight: 0.65, priority: 5 };
@@ -112,3 +112,4 @@ describe('WickAnalyzerNew - Edge Cases Tests', () => {
     expect(signal.score).toBe(0);
   });
 });
+

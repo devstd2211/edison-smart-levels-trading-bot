@@ -35,11 +35,49 @@ export class ApiError extends Error {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (isRecord(error) && typeof error.message === 'string') {
+    return error.message;
+  }
+  return 'An unknown error occurred';
+}
+
+function getErrorStack(error: unknown): string | undefined {
+  if (error instanceof Error) {
+    return error.stack;
+  }
+  if (isRecord(error) && typeof error.stack === 'string') {
+    return error.stack;
+  }
+  return undefined;
+}
+
+function getErrorCode(error: unknown): string | undefined {
+  if (isRecord(error) && typeof error.code === 'string') {
+    return error.code;
+  }
+  return undefined;
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (isRecord(error) && typeof error.statusCode === 'number') {
+    return error.statusCode;
+  }
+  return undefined;
+}
+
 /**
  * Create standardized error response
  */
 export function createErrorResponse(
-  error: any,
+  error: unknown,
   requestId?: string
 ): StandardizedError {
   const timestamp = Date.now();
@@ -76,8 +114,8 @@ export function createErrorResponse(
     success: false,
     error: {
       code: 'UNKNOWN_ERROR',
-      message: error?.message || 'An unknown error occurred',
-      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      message: getErrorMessage(error),
+      details: process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined,
       suggestion: 'Please try again or contact support',
     },
     timestamp,
@@ -91,7 +129,7 @@ export function createErrorResponse(
  */
 export function createErrorHandlerMiddleware() {
   return (
-    err: any,
+    err: unknown,
     _req: Request,
     res: Response,
     _next: NextFunction
@@ -102,14 +140,14 @@ export function createErrorHandlerMiddleware() {
     console.error('[ERROR]', {
       timestamp: new Date().toISOString(),
       requestId,
-      statusCode: err.statusCode || 500,
-      code: err.code || 'UNKNOWN_ERROR',
-      message: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      statusCode: getErrorStatus(err) || 500,
+      code: getErrorCode(err) || 'UNKNOWN_ERROR',
+      message: getErrorMessage(err),
+      stack: process.env.NODE_ENV === 'development' ? getErrorStack(err) : undefined,
     });
 
     // Determine status code
-    const statusCode = err.statusCode || 500;
+    const statusCode = getErrorStatus(err) || 500;
 
     // Create response
     const errorResponse = createErrorResponse(err, requestId);

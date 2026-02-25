@@ -18,8 +18,8 @@ import type {
   StrategyStateSnapshot,
   StrategySwitchResult,
   PnLMetrics,
-} from '../../types/multi-strategy-types';
-import type { IsolatedStrategyContext } from '../../types/multi-strategy-types';
+} from '../../types/multi-strategy';
+import type { IsolatedStrategyContext } from '../../types/multi-strategy';
 import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class StrategyStateManagerService {
@@ -271,3 +271,4 @@ export class StrategyStateManagerService {
     return snapshots;
   }
 }
+

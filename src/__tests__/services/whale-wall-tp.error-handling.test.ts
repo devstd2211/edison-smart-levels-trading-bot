@@ -10,7 +10,7 @@
 
 import { WhaleWallTPService, WhaleWallTPConfig } from '../../services/whale-wall-tp.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { OrderBookWall, SignalDirection } from '../../types';
+import { OrderBookWall, SignalDirection } from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),

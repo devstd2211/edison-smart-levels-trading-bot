@@ -6,7 +6,7 @@ import { PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
  * No side effects, easy to test.
  */
 
-import { CompoundInterestConfig } from '../types';
+import { CompoundInterestConfig } from '../types/config/config';
 
 // ============================================================================
 // TYPES

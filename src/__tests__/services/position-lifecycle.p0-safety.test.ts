@@ -9,8 +9,8 @@
  */
 
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { PositionSide } from '../../types';
-import { Position, TradingConfig, RiskManagementConfig, EntryConfirmationConfig, Config, LoggerService } from '../../types';
+import { PositionSide } from '../../types/legacy';
+import { Position, TradingConfig, RiskManagementConfig, EntryConfirmationConfig, Config, LoggerService } from '../../types/legacy';
 import { BotEventBus } from '../../services/event-bus';
 import { TelegramService } from '../../services/telegram.service';
 import { TradingJournalService } from '../../services/trading-journal.service';

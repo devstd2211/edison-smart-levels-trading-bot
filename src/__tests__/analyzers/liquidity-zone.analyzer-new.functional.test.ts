@@ -1,6 +1,6 @@
 import { LiquidityZoneAnalyzerNew } from '../../analyzers/liquidity-zone.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 5 };
@@ -198,3 +198,4 @@ describe('LiquidityZoneAnalyzerNew - Functional: Resistance Rejection', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

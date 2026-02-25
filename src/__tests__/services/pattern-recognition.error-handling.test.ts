@@ -15,12 +15,12 @@
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { Candle, LogLevel } from '../../types';
+import { Candle, LogLevel } from '../../types/legacy';
 import {
   Pattern,
   SwingPoint,
   PatternRecognitionConfig,
-} from '../../types/pattern-recognition.interface';
+} from '../../types/pattern-recognition';
 
 describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
@@ -703,3 +703,4 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
   });
 });
+

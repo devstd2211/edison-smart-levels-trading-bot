@@ -17,10 +17,10 @@
  */
 
 import type { Candle } from '../types/core';
-import type { RsiIndicatorConfigNew } from '../types/config-new.types';
-import type { IIndicator } from '../types/indicator.interface';
-import { validateIndicatorConfig } from '../types/config-new.types';
-import { IndicatorType } from '../types/indicator-type.enum';
+import type { RsiIndicatorConfigNew } from '../types/config/config-new.types';
+import type { IIndicator } from '../types/indicator';
+import { validateIndicatorConfig } from '../types/config/config-new.types';
+import { IndicatorType } from '../types/indicator';
 
 // ============================================================================
 // CONSTANTS
@@ -360,3 +360,4 @@ export class RSIIndicatorNew implements IIndicator {
     return this.period + 1;
   }
 }
+

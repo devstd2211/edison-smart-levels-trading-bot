@@ -6,7 +6,7 @@
 
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;

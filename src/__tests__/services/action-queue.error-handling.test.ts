@@ -5,7 +5,7 @@
 
 import { ActionQueueService } from '../../services/action-queue.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { IAction, ActionResult, IActionHandler, AnyAction, ActionType, OpenPositionAction, ClosePositionAction } from '../../types/architecture.types';
+import { IAction, ActionResult, IActionHandler, AnyAction, ActionType, OpenPositionAction, ClosePositionAction } from '../../types/architecture';
 
 const mockLogger = {
   info: jest.fn(),
@@ -601,3 +601,4 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
   });
 });
+

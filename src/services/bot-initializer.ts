@@ -1,6 +1,7 @@
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { TIME_MULTIPLIERS } from '../constants/technical.constants';
-import { Config, LoggerService } from '../types';
+import { LoggerService } from './logger.service';
+import { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import { isCriticalApiError } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';

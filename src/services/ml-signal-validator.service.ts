@@ -12,7 +12,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { Signal, SignalType, SignalValidationConfig } from '../types';
+import { Signal, SignalType, SignalValidationConfig } from '../types/legacy';
 import {
   MarketContext,
   MarketRegime,
@@ -23,7 +23,7 @@ import {
   DEFAULT_ML_SIGNAL_VALIDATOR_CONFIG,
   RecommendedAction,
   RiskLevel,
-} from '../types/ml-signal-validator.interface';
+} from '../types/ml-signal-validator';
 import {
   DEFAULT_SIGNAL_VALIDATION,
   ML_SIGNAL_VALIDATOR_TECHNICAL,
@@ -616,3 +616,4 @@ export class MLSignalValidatorService {
     }
   }
 }
+

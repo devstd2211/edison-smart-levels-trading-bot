@@ -7,7 +7,7 @@
 import { ExchangeFactory } from '../../services/exchange-factory.service';
 import { BybitServiceAdapter } from '../../services/bybit/bybit-service.adapter';
 import { BinanceServiceAdapter } from '../../services/binance/binance-service.adapter';
-import type { LoggerService } from '../../types';
+import type { LoggerService } from '../../types/legacy';
 
 // Create mock logger inline
 const createMockLogger = (): Partial<LoggerService> => ({

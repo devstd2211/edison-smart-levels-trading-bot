@@ -6,7 +6,7 @@
 
 import { RetestEntryService } from '../../services/retest-entry.service';
 import { LoggerService } from '../../services/logger.service';
-import { LogLevel, RetestConfig, Signal, Candle, SignalDirection, SignalType } from '../../types';
+import { LogLevel, RetestConfig, Signal, Candle, SignalDirection, SignalType } from '../../types/legacy';
 
 describe('RetestEntryService', () => {
   let service: RetestEntryService;

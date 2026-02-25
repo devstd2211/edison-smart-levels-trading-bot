@@ -41,6 +41,18 @@ export class FileWatcherService extends EventEmitter {
   private debounceTimer: NodeJS.Timeout | null = null;
   private debounceDelay = 500; // 500ms debounce
 
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private getErrorCode(error: unknown): string | undefined {
+    if (!this.isRecord(error)) {
+      return undefined;
+    }
+    const code = error.code;
+    return typeof code === 'string' ? code : undefined;
+  }
+
   constructor(
     journalPath: string = './data/trade-journal.json',
     sessionsPath: string = './data/session-stats.json',
@@ -154,7 +166,7 @@ export class FileWatcherService extends EventEmitter {
       const data = await fs.readFile(this.journalPath, 'utf-8');
       return JSON.parse(data) || [];
     } catch (error) {
-      if ((error as any).code === 'ENOENT') {
+      if (this.getErrorCode(error) === 'ENOENT') {
         return [];
       }
       throw error;
@@ -171,7 +183,7 @@ export class FileWatcherService extends EventEmitter {
       // Handle both formats: { sessions: [...] } and [...]
       return (parsed?.sessions || parsed) || [];
     } catch (error) {
-      if ((error as any).code === 'ENOENT') {
+      if (this.getErrorCode(error) === 'ENOENT') {
         return [];
       }
       throw error;

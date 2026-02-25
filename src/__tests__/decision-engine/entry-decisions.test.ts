@@ -6,7 +6,7 @@
  */
 
 import { evaluateEntry, EntryDecisionContext } from '../../decision-engine/entry-decisions';
-import { Signal, Position, TrendAnalysis, FlatMarketResult } from '../../types';
+import { Signal, Position, TrendAnalysis, FlatMarketResult } from '../../types/legacy';
 import { EntryDecision, SignalDirection, PositionSide, TrendBias } from '../../types/enums';
 
 // ============================================================================

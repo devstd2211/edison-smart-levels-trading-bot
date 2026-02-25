@@ -1,6 +1,6 @@
 import { DivergenceAnalyzerNew } from '../../analyzers/divergence.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { DivergenceAnalyzerConfigNew } from '../../types/config-new.types';
+import type { DivergenceAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): DivergenceAnalyzerConfigNew {
   return { enabled: true, weight: 0.8, priority: 7, maxConfidence: 0.95 };
@@ -148,3 +148,4 @@ describe('DivergenceAnalyzerNew - Functional: Multiple Reversals', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

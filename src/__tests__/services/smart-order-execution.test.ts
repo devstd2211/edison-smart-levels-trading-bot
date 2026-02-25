@@ -19,7 +19,7 @@ import {
   SmartOrderRequest,
   ExecutionReport,
 } from '../../services/smart-order-execution.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   FALLBACK_EXECUTION_REPORT,

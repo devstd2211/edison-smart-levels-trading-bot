@@ -24,7 +24,7 @@ import {
   SignalDirection,
   ExitType,
   Config,
-} from '../types';
+} from '../types/legacy';
 import { IJournalRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {

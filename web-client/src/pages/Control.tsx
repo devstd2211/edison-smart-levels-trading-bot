@@ -12,9 +12,32 @@ import { RiskSettings } from '../components/control/RiskSettings';
 
 type Tab = 'config' | 'strategies' | 'risk';
 
+type StrategyConfig = {
+  enabled?: boolean;
+  minConfidence?: number;
+};
+
+type RiskConfig = {
+  maxLeverage?: number;
+  maxPositionSize?: number;
+  dailyLossLimit?: number;
+  stopLossPercent?: number;
+  takeProfitPercent?: number;
+};
+
+type ControlConfig = {
+  trading?: {
+    symbol?: string;
+    timeframe?: string;
+    enabled?: boolean;
+  };
+  risk?: RiskConfig;
+  strategies?: Record<string, StrategyConfig>;
+};
+
 export function Control() {
   const [activeTab, setActiveTab] = useState<Tab>('config');
-  const [currentConfig, setCurrentConfig] = useState<Record<string, any>>({
+  const [currentConfig, setCurrentConfig] = useState<ControlConfig>({
     trading: {
       symbol: 'APEXUSDT',
       timeframe: '5m',

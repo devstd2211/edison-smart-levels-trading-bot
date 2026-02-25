@@ -18,6 +18,49 @@ import { useThemeStore } from './stores/themeStore';
 
 type Page = 'dashboard' | 'analytics' | 'advanced-analytics' | 'orderbook' | 'control';
 
+type BotConfigShape = {
+  exchange?: {
+    symbol?: string;
+    timeframe?: string;
+  };
+  trading?: {
+    leverage?: number;
+    riskPercent?: number;
+  };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
+const getNumber = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+const toBotConfig = (value: unknown): BotConfigShape | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const exchange = isRecord(value.exchange) ? value.exchange : undefined;
+  const trading = isRecord(value.trading) ? value.trading : undefined;
+
+  return {
+    exchange: exchange
+      ? {
+          symbol: getString(exchange.symbol),
+          timeframe: getString(exchange.timeframe),
+        }
+      : undefined,
+    trading: trading
+      ? {
+          leverage: getNumber(trading.leverage),
+          riskPercent: getNumber(trading.riskPercent),
+        }
+      : undefined,
+  };
+};
+
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const { setConfig, setLoading, setError } = useConfigStore();
@@ -40,14 +83,14 @@ function App() {
         // Fetch bot configuration
         const response = await configApi.getConfig();
         if (response.success && response.data) {
-          const config = response.data as any;
+          const config = toBotConfig(response.data);
           setConfig({
-            symbol: config.exchange?.symbol || 'BTCUSDT',
-            timeframe: config.exchange?.timeframe || '5m',
-            leverage: config.trading?.leverage || 1,
-            riskPercent: config.trading?.riskPercent || 1,
+            symbol: config?.exchange?.symbol || 'BTCUSDT',
+            timeframe: config?.exchange?.timeframe || '5m',
+            leverage: config?.trading?.leverage || 1,
+            riskPercent: config?.trading?.riskPercent || 1,
           });
-          console.log(`[App] Config loaded: ${config.exchange?.symbol}`);
+          console.log(`[App] Config loaded: ${config?.exchange?.symbol ?? 'Unknown'}`);
         }
       } catch (error) {
         console.error('[App] Failed to load config:', error);

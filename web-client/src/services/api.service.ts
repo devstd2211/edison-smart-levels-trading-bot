@@ -4,6 +4,18 @@
  * REST API client for communicating with backend server
  */
 
+import type {
+  BotStatus,
+  WebApiCandlesResponse,
+  WebApiFundingRateView,
+  WebApiMarketData,
+  WebApiOrderBookView,
+  WebApiPositionsResponse,
+  WebApiVolumeProfileView,
+  WebApiWallsView,
+  Strategy,
+} from '../types';
+
 /**
  * Get fallback API URL if server config is unreachable
  */
@@ -56,7 +68,7 @@ export class ApiClient {
   /**
    * Make POST request
    */
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'POST',
@@ -72,7 +84,7 @@ export class ApiClient {
   /**
    * Make PUT request
    */
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'PUT',
@@ -88,7 +100,7 @@ export class ApiClient {
   /**
    * Make PATCH request
    */
-  async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'PATCH',
@@ -133,7 +145,7 @@ export class ApiClient {
   /**
    * Handle error
    */
-  private handleError(error: any): ApiErrorResponse {
+  private handleError(error: unknown): ApiErrorResponse {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -149,7 +161,7 @@ export class BotApi {
     this.client = new ApiClient();
   }
 
-  async getStatus() {
+  async getStatus(): Promise<ApiResponse<BotStatus>> {
     return this.client.get('/bot/status');
   }
 
@@ -170,15 +182,15 @@ export class DataApi {
     this.client = new ApiClient();
   }
 
-  async getCandles(timeframe: string = '5m', limit: number = 100) {
+  async getCandles(timeframe: string = '5m', limit: number = 100): Promise<ApiResponse<WebApiCandlesResponse>> {
     return this.client.get(`/data/candles?timeframe=${timeframe}&limit=${limit}`);
   }
 
-  async getPositionHistory(limit: number = 50) {
+  async getPositionHistory(limit: number = 50): Promise<ApiResponse<WebApiPositionsResponse>> {
     return this.client.get(`/data/positions/history?limit=${limit}`);
   }
 
-  async getMarketData() {
+  async getMarketData(): Promise<ApiResponse<WebApiMarketData>> {
     return this.client.get('/data/market');
   }
 
@@ -194,19 +206,19 @@ export class DataApi {
     return this.client.get('/data/signals/recent');
   }
 
-  async getOrderBook(symbol: string) {
+  async getOrderBook(symbol: string): Promise<ApiResponse<WebApiOrderBookView>> {
     return this.client.get(`/data/orderbook/${symbol}`);
   }
 
-  async getWalls(symbol: string) {
+  async getWalls(symbol: string): Promise<ApiResponse<WebApiWallsView>> {
     return this.client.get(`/data/walls/${symbol}`);
   }
 
-  async getFundingRate(symbol: string) {
+  async getFundingRate(symbol: string): Promise<ApiResponse<WebApiFundingRateView>> {
     return this.client.get(`/data/funding-rate/${symbol}`);
   }
 
-  async getVolumeProfile(symbol: string, limit: number = 20) {
+  async getVolumeProfile(symbol: string, limit: number = 20): Promise<ApiResponse<WebApiVolumeProfileView>> {
     return this.client.get(`/data/volume-profile/${symbol}?limit=${limit}`);
   }
 }
@@ -223,11 +235,11 @@ export class ConfigApi {
     return this.client.get('/config');
   }
 
-  async saveConfig(config: Record<string, any>) {
+  async saveConfig(config: Record<string, unknown>) {
     return this.client.put('/config', config);
   }
 
-  async getStrategies() {
+  async getStrategies(): Promise<ApiResponse<{ strategies: Strategy[] }>> {
     return this.client.get('/config/strategies');
   }
 
@@ -235,11 +247,11 @@ export class ConfigApi {
     return this.client.patch(`/config/strategies/${strategyId}`, { enabled });
   }
 
-  async updateRiskSettings(risk: Record<string, any>) {
+  async updateRiskSettings(risk: Record<string, unknown>) {
     return this.client.patch('/config/risk', risk);
   }
 
-  async validateConfig(config: Record<string, any>) {
+  async validateConfig(config: Record<string, unknown>) {
     return this.client.post('/config/validate', { config });
   }
 

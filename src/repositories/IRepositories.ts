@@ -5,7 +5,8 @@
  * Each repository manages specific data with tailored methods
  */
 
-import { Position, Candle } from '../types';
+import { Position } from '../types/position';
+import { Candle } from '../types/core';
 import { TradeRecord, SessionRecord } from '../interfaces/IRepository';
 
 /**

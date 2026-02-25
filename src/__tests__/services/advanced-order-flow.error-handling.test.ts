@@ -19,9 +19,9 @@ import {
   AdvancedOrderFlowConfig,
   Tick,
   OrderBook,
-} from '../../types/advanced-order-flow.interface';
+} from '../../types/advanced-order-flow';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS
@@ -750,3 +750,4 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
   });
 });
+

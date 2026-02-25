@@ -5,7 +5,7 @@
  */
 
 import type { Position } from '../types/core';
-import type { HealthStatus, MemorySnapshot } from '../types/architecture.types';
+import type { HealthStatus, MemorySnapshot } from '../types/architecture';
 
 /**
  * Logger interface
@@ -14,22 +14,22 @@ export interface ILogger {
   /**
    * Log debug message
    */
-  debug(message: string, data?: any): void;
+  debug(message: string, data?: unknown): void;
 
   /**
    * Log info message
    */
-  info(message: string, data?: any): void;
+  info(message: string, data?: unknown): void;
 
   /**
    * Log warning message
    */
-  warn(message: string, data?: any): void;
+  warn(message: string, data?: unknown): void;
 
   /**
    * Log error message
    */
-  error(message: string, error?: Error | any): void;
+  error(message: string, error?: Error | unknown): void;
 
   /**
    * Set log level
@@ -105,7 +105,7 @@ export interface INotification {
   /**
    * Send message
    */
-  send(message: string, data?: any): Promise<void>;
+  send(message: string, data?: unknown): Promise<void>;
 
   /**
    * Send error notification
@@ -117,3 +117,4 @@ export interface INotification {
    */
   isEnabled(): boolean;
 }
+

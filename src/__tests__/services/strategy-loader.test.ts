@@ -4,7 +4,7 @@
  */
 
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
-import { StrategyValidationError } from '../../types/strategy-config.types';
+import { StrategyValidationError } from '../../types/strategy-config';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
 import { promises as fs } from 'fs';
 import { join } from 'path';
@@ -726,3 +726,4 @@ describe('StrategyLoaderService', () => {
     });
   });
 });
+

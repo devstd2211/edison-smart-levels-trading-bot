@@ -11,9 +11,11 @@
  * Phase: 14.1.1 - Monitoring & Observability
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { Counter, Gauge, Histogram, Summary, Registry, register } from 'prom-client';
+import type { IMonitoringMetricsReader } from '../interfaces/IMonitoringReaders';
+import type { IMonitoringMetricsRecorder } from '../interfaces/IMonitoringRecorders';
 
 // ============================================================================
 // INTERFACES
@@ -57,7 +59,7 @@ export interface PerformanceMetrics {
 // SERVICE
 // ============================================================================
 
-export class PrometheusMetricsService {
+export class PrometheusMetricsService implements IMonitoringMetricsReader, IMonitoringMetricsRecorder {
   private readonly registry: Registry;
   private readonly prefix: string;
   private collectIntervalId?: NodeJS.Timeout;

@@ -9,7 +9,7 @@
  * - No persistence (RAM-only)
  */
 
-import { Position } from '../types';
+import { Position } from '../types/position';
 import { IPositionRepository } from './IRepositories';
 
 /**

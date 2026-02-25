@@ -1,5 +1,5 @@
 import { AtrCalculator, calculateATR } from '../../indicators/calculators/atr.calculator';
-import type { Candle } from '../../types';
+import type { Candle } from '../../types/legacy';
 
 describe('ATR Calculator', () => {
   let calculator: AtrCalculator;

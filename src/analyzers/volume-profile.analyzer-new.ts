@@ -1,10 +1,10 @@
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
-import type { VolumeProfileAnalyzerConfigNew } from '../types/config-new.types';
+import type { VolumeProfileAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import type { LoggerService } from '../services/logger.service';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 const DEFAULT_MIN_CANDLES_FOR_VOLUME_PROFILE = 20;
 const DEFAULT_MAX_CONFIDENCE = 0.95;
@@ -88,3 +88,4 @@ export class VolumeProfileAnalyzerNew implements IAnalyzer {
   reset(): void { this.lastSignal = null; this.initialized = false; }
   getConfig() { return { enabled: this.enabled, weight: this.weight, priority: this.priority }; }
 }
+

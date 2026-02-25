@@ -13,7 +13,7 @@
  */
 
 import { AntiFlipService } from '../../services/anti-flip.service';
-import { LoggerService, LogLevel, SignalDirection, Candle } from '../../types';
+import { LoggerService, LogLevel, SignalDirection, Candle } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 
 // ============================================================================

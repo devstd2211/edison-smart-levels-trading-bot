@@ -10,7 +10,7 @@
  * Phase 14.2.3
  */
 
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import {

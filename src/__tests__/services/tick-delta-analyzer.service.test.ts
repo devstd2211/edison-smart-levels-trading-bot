@@ -16,7 +16,7 @@ import {
   Tick,
   TickDeltaAnalyzerConfig,
   SignalDirection,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

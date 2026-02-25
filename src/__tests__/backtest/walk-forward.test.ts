@@ -12,7 +12,7 @@
  */
 
 import { WalkForwardEngine } from '../../backtest/walk-forward/walk-forward-engine';
-import { Candle } from '../../types';
+import { Candle } from '../../types/legacy';
 
 describe('Phase 7.5: Walk-Forward Analysis', () => {
   let engine: WalkForwardEngine;

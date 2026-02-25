@@ -21,8 +21,8 @@
  * Result is final decision - orchestrator doesn't override.
  */
 
-import { Signal, Position, RiskManagerConfig, RiskDecision, RiskStatus, TradeRecord } from '../types';
-import { LoggerService } from '../types';
+import { Signal, Position, RiskManagerConfig, RiskDecision, RiskStatus, TradeRecord } from '../types/legacy';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   RiskValidationError,

@@ -10,7 +10,7 @@
 
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { Position, ExitType, LoggerService } from '../../types';
+import { Position, ExitType, LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS

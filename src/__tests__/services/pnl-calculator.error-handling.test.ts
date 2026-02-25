@@ -14,7 +14,7 @@
 
 import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calculator.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, PositionSide } from '../../types';
+import { LoggerService, PositionSide } from '../../types/legacy';
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
   let mockLogger: LoggerService;

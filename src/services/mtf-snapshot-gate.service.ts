@@ -40,7 +40,7 @@ import {
   LoggerService,
   SignalDirection,
   TrendBias,
-} from '../types';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import * as crypto from 'crypto';
 

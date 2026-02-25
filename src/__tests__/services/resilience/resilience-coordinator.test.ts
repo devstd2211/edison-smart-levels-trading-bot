@@ -1,4 +1,4 @@
-import { LoggerService } from '../../../types';
+import { LoggerService } from '../../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../../errors/ErrorHandler';
 import { ResilienceCoordinator, ResilienceOptions } from '../../../services/resilience/resilience-coordinator.service';
 import { CircuitBreakerService, CircuitState } from '../../../services/resilience/circuit-breaker.service';

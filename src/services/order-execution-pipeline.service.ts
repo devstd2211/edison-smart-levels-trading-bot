@@ -23,7 +23,7 @@
  * - Logs excessive slippage
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { IExchange } from '../interfaces';
 import {
   OrderExecutionConfig,
@@ -33,7 +33,7 @@ import {
   SlippageAnalysis,
   ExecutionMetrics,
   IOrderExecutionPipeline,
-} from '../types/live-trading.types';
+} from '../types/live-trading';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**
@@ -388,3 +388,4 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     this.logger.info('[OrderExecutionPipeline] Metrics reset');
   }
 }
+

@@ -15,7 +15,7 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
 import type { IMarketDataRepository } from '../../repositories/IRepositories';
 import { LoggerService } from '../../services/logger.service';
-import type { ExchangeConfig } from '../../types';
+import type { ExchangeConfig } from '../../types/legacy';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let mockLogger: LoggerService;

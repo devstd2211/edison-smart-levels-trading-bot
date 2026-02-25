@@ -9,7 +9,7 @@
  * - Handle errors with ErrorHandler integration (THROW for validation, GRACEFUL_DEGRADE for calc failures)
  */
 
-import { Position, PositionSide } from '../types';
+import { Position, PositionSide } from '../types/legacy';
 import { PERCENT_MULTIPLIER } from '../constants';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';

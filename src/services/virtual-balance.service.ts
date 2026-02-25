@@ -24,7 +24,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, ValidatedVirtualBalanceState } from '../types';
+import { LoggerService, ValidatedVirtualBalanceState } from '../types/legacy';
 import { createErrorContext } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { FileSystemError, ValidationError } from '../errors/DomainErrors';

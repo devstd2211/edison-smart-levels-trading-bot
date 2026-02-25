@@ -1,5 +1,5 @@
 import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
-import { LoggerService, LogLevel, DeltaConfig, DeltaTick, SignalDirection, Signal } from '../../types';
+import { LoggerService, LogLevel, DeltaConfig, DeltaTick, SignalDirection, Signal } from '../../types/legacy';
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;

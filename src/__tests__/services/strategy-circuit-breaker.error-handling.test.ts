@@ -6,8 +6,8 @@
 
 import { StrategyCircuitBreakerService } from '../../services/multi-strategy/strategy-circuit-breaker.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
-import { CircuitBreakerStatus } from '../../types/circuit-breaker.types';
-import { LoggerService } from '../../types';
+import { CircuitBreakerStatus } from '../../types/circuit-breaker';
+import { LoggerService } from '../../types/legacy';
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: StrategyCircuitBreakerService;
@@ -402,3 +402,4 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
   });
 });
+

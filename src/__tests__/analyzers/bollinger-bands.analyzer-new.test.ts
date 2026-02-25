@@ -4,7 +4,7 @@
 
 import { BollingerBandsAnalyzerNew } from '../../analyzers/bollinger-bands.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BollingerBandsAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BollingerBandsAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -420,3 +420,4 @@ describe('BollingerBandsAnalyzerNew - Multiple Analysis Tests', () => {
     expect(state2.lastSignal).not.toBe(state1.lastSignal);
   });
 });
+

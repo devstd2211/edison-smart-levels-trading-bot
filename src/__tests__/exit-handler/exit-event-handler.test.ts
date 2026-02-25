@@ -9,10 +9,10 @@ import {
   ITPHitEvent,
   IPositionClosedEvent,
   ExitStrategyConfig,
-} from '../../types/exit-strategy.types';
+} from '../../types/exit-strategy';
 import { Position } from '../../types/core';
 import { PositionSide } from '../../types/enums';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS
@@ -465,3 +465,4 @@ describe('ExitEventHandler', () => {
     });
   });
 });
+

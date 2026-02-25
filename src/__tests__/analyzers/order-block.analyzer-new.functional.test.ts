@@ -1,6 +1,6 @@
 import { OrderBlockAnalyzerNew } from '../../analyzers/order-block.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.75, priority: 6 };
@@ -172,3 +172,4 @@ describe('OrderBlockAnalyzerNew - Functional: Trend Continuation with Block', ()
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

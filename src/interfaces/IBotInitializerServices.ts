@@ -4,7 +4,9 @@
  * Narrow interface for BotInitializer dependencies.
  */
 
-import type { LoggerService, Config, Position, Candle } from '../types';
+import type { Config } from '../types/legacy';
+import type { Position } from '../types/position';
+import type { Candle } from '../types/core';
 import type { IExchange } from './IExchange';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IExecutionServices } from './IExecutionServices';

@@ -6,7 +6,7 @@
  */
 
 import type { Candle } from '../types/core';
-import type { TrendContext } from '../types/architecture.types';
+import type { TrendContext } from '../types/architecture';
 import { SignalDirection } from '../types/enums';
 
 /**
@@ -62,3 +62,4 @@ export interface ITrendAnalyzer {
    */
   reset(): void;
 }
+

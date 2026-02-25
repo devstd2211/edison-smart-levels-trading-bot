@@ -3,7 +3,7 @@
  */
 
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
-import { LoggerService, PositionSide, LogLevel } from '../../types';
+import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
 
 describe('TakeProfitManagerService', () => {
   let logger: LoggerService;

@@ -10,7 +10,9 @@
  * - Delegates actual cache storage to repository
  */
 
-import { Candle, TimeframeRole, LoggerService } from '../types';
+import { LoggerService } from '../services/logger.service';
+import { Candle } from '../types/core';
+import { TimeframeRole } from '../types/enums';
 import type { IExchange } from '../interfaces/IExchange';
 import { TimeframeProvider } from './timeframe.provider';
 import { MULTIPLIERS } from '../constants';

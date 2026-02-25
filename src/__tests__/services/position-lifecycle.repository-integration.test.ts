@@ -7,7 +7,7 @@
 
 import { PositionMemoryRepository } from '../../repositories/position.memory-repository';
 import { IPositionRepository } from '../../repositories/IRepositories';
-import { Position, PositionSide } from '../../types';
+import { Position, PositionSide } from '../../types/legacy';
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
   let repository: IPositionRepository;

@@ -1,69 +1,101 @@
-# BotServices Dependency Map
+# Dependency Map (BotServices)
 
-Scope: Immediate dependencies as wired in `src/services/bot-services.ts`. Optional services are marked `(optional)`.
+Source: `src/services/bot-services.ts`
 
-| Service | Immediate Dependencies | Notes |
-| --- | --- | --- |
-| `ConsoleDashboardService` | `config.dashboard` | Enables console UI; toggles logger console output. |
-| `LoggerService` | `config.logging` | Base logger for most services. |
-| `ErrorHandler` | `LoggerService` | Singleton injected widely. |
-| `BotEventBus` | `LoggerService` | Event emitter for bot‑wide events. |
-| `BotMetricsService` | `LoggerService`, `ErrorHandler` | Internal metrics (not Prometheus). |
-| `PositionMemoryRepository` | none | In‑memory position storage. |
-| `JournalFileRepository` | `LoggerService` | File‑based journal repo. |
-| `MarketDataCacheRepository` | none | Market data cache repo. |
-| `TelegramService` | `config.telegram`, `LoggerService`, `ErrorHandler` | Notifications. |
-| `TimeService` | `LoggerService`, `config.system` | Later: `setBybitService(IExchange)`. |
-| `ExchangeFactory` | `LoggerService`, `config.exchange` | Builds exchange adapter by name. |
-| `BybitService` | `config.exchange`, `LoggerService`, `MarketDataCacheRepository` | Raw Bybit client (legacy path). |
-| `BybitServiceAdapter` | `BybitService`, `LoggerService` | IExchange adapter. |
-| `TradingJournalService` | `LoggerService`, `config.tradeHistory`, `config.compoundInterest`, `JournalFileRepository`, `ErrorHandler` | Journal + virtual balance. |
-| `SessionStatsService` | `LoggerService`, `JournalFileRepository`, `ErrorHandler` | Session stats tracking. |
-| `RealityCheckService` | `LoggerService` | Broken assumption tracker. |
-| `TimeframeProvider` | `config.timeframes` | Timeframe definitions. |
-| `CandleProvider` | `TimeframeProvider`, `IExchange`, `LoggerService`, `config.exchange.symbol`, `MarketDataCacheRepository`, `ErrorHandler` | Candle storage + fetch. |
-| `IndicatorCacheService` | `MarketDataCacheRepository` | TTL cache for indicators. |
-| `IndicatorPreCalculationService` | `CandleProvider`, `IndicatorCacheService`, `CalculatorFactory`, `LoggerService` | Pre‑calc indicator cache. |
-| `CompoundInterestCalculatorService` (optional) | `config.compoundInterest`, `LoggerService`, balance provider | Balance provider reads `TradingJournalService` or `IExchange`. |
-| `RetestEntryService` (optional) | `config.retestEntry`, `LoggerService` | Retest entries. |
-| `DeltaAnalyzerService` (optional) | `config.delta`, `LoggerService` | Tick delta analysis. |
-| `OrderbookImbalanceService` (optional) | `config.orderbookImbalance`, `LoggerService` | Orderbook imbalance. |
-| `WallTrackerService` (optional) | `config.wallTracking`, `LoggerService`, `ErrorHandler` | Wall tracking + spoofing. |
-| `AdvancedOrderFlowService` (optional) | `config.advancedOrderFlow`, `config.orderFlowAnalysis`, `LoggerService`, `ErrorHandler` | Order flow analysis. |
-| `DynamicPositionSizerService` (optional) | `config.dynamicPositionSizing`, `LoggerService`, `ErrorHandler` | Kelly sizing. |
-| `PositionScalingService` (optional) | `config.positionScaling`, `LoggerService`, `ErrorHandler` | Pyramiding. |
-| `SmartOrderExecutionService` (optional) | `config.smartOrderExecution`, `LoggerService`, `ErrorHandler` | Smart execution. |
-| `AdvancedOrderStateMachineService` (optional) | `LoggerService`, `ErrorHandler` | Order lifecycle. |
-| `PrometheusMetricsService` (optional) | `config.monitoring`, `LoggerService`, `ErrorHandler` | Prometheus metrics. |
-| `LadderExitDetectorService` | `LoggerService`, `IExchange`, `ErrorHandler` | Ladder TP exit detection. |
-| `RiskManager` | `riskManagerConfig`, `LoggerService`, `ErrorHandler` | Risk logic (config defined inline). |
-| `PositionLifecycleService` | `IExchange`, `config.trading`, `config.riskManagement`, `TelegramService`, `LoggerService`, `TradingJournalService`, `config.entryConfirmation`, `config`, `BotEventBus`, `CompoundInterestCalculatorService?`, `SessionStatsService`, `PositionMemoryRepository`, `ErrorHandler`, `DynamicPositionSizerService?`, `PositionScalingService?` | Core position lifecycle. |
-| `PositionExitingService` | `IExchange`, `TelegramService`, `LoggerService`, `TradingJournalService`, `config.trading`, `config.riskManagement`, `config`, `SessionStatsService`, `PositionLifecycleService`, `RealityCheckService` | Exit handling. |
-| `RealTimeRiskMonitor` | `liveTrading.riskMonitoring`, `PositionLifecycleService`, `LoggerService`, `BotEventBus` | Live risk checks. |
-| `OrderExecutionDetectorService` | `LoggerService` | WS helper. |
-| `WebSocketAuthenticationService` | none | WS auth helper. |
-| `EventDeduplicationService` | limits, `LoggerService`, `ErrorHandler` | WS event de‑dup. |
-| `WebSocketKeepAliveService` | interval, `LoggerService` | WS keepalive. |
-| `WebSocketManagerService` | `config.exchange`, `config.exchange.symbol`, `ErrorHandler`, `OrderExecutionDetectorService`, `WebSocketAuthenticationService`, `EventDeduplicationService`, `WebSocketKeepAliveService` | Private WS. |
-| `PublicWebSocketService` | `config.exchange`, `config.exchange.symbol`, `TimeframeProvider`, `LoggerService`, `ErrorHandler`, `config.btcConfirmation` | Public WS. |
-| `OrderbookManagerService` | `config.exchange.symbol`, `LoggerService`, `WallTrackerService?` | Orderbook snapshot. |
-| `ExitTypeDetectorService` | `LoggerService` | Exit classification helper. |
-| `PositionPnLCalculatorService` | none | PnL helper. |
-| `PositionSyncService` | `IExchange`, `PositionLifecycleService`, `ExitTypeDetectorService`, `TelegramService`, `LoggerService`, `PositionExitingService` | Position sync. |
-| `PositionMonitorService` | `IExchange`, `PositionLifecycleService`, `config.riskManagement`, `TelegramService`, `LoggerService`, `ExitTypeDetectorService`, `PositionPnLCalculatorService`, `PositionSyncService`, `PositionExitingService` | Position monitoring. |
-| `TradingOrchestrator` | `orchestratorConfig`, `CandleProvider`, `TimeframeProvider`, `IExchange`, `PositionLifecycleService`, `TelegramService`, `LoggerService`, `RiskManager`, `PositionExitingService` | Core orchestration. |
-| `StrategyRegistryService` (optional) | none | Multi‑strategy registry. |
-| `StrategyOrchestratorService` (optional) | `StrategyRegistryService`, `StrategyFactoryService?`, `StrategyStateManagerService?`, `LoggerService`, `BotEventBus` | Multi‑strategy orchestration. |
-| `PositionEventHandler` | `PositionLifecycleService`, `PositionExitingService`, `IExchange`, `TelegramService`, `LoggerService` | Position events. |
-| `WebSocketEventHandler` | `PositionLifecycleService`, `PositionExitingService`, `IExchange`, `WebSocketManagerService`, `TradingJournalService`, `TelegramService`, `LoggerService` | WS events. |
-| `HealthCheckService` (optional) | `IExchange`, `WebSocketManagerService`, `monitoring.thresholds`, `LoggerService`, `ErrorHandler` | Health checks. |
-| `MonitoringServer` (optional) | `PrometheusMetricsService?`, `HealthCheckService?`, `monitoring.server`, `LoggerService`, `ErrorHandler` | Monitoring endpoints. |
-| `CircuitBreakerService` (optional) | `resilience.circuitBreaker`, `LoggerService`, `ErrorHandler` | Resilience. |
-| `RateLimiterService` (optional) | `resilience.rateLimiter`, `LoggerService`, `ErrorHandler` | Resilience. |
-| `RetryPolicyService` (optional) | `resilience.retry`, `LoggerService`, `ErrorHandler` | Resilience. |
-| `BulkheadService` (optional) | `resilience.bulkhead`, `LoggerService`, `ErrorHandler` | Resilience. |
-| `ResilienceCoordinator` (optional) | `CircuitBreakerService?`, `RateLimiterService?`, `RetryPolicyService?`, `BulkheadService?`, `PrometheusMetricsService?`, `LoggerService`, `ErrorHandler` | Resilience coordinator. |
+Flat list of services and immediate dependencies (constructor args + direct setter injections).
 
-Notes:
-- `StrategyFactoryService` and `StrategyStateManagerService` are referenced but not initialized (TODO in code).
-- `TradingOrchestrator` and `PublicWebSocketService` both call `setBtcCandlesStore(this)` when BTC confirmation is enabled.
+- ConsoleDashboardService: config.dashboard
+- LoggerService: config.logging
+- ErrorHandler: logger
+- BotEventBus: logger
+- BotMetricsService: logger, errorHandler
+- PositionMemoryRepository: none
+- JournalFileRepository: logger
+- MarketDataCacheRepository: none
+- TelegramService: config.telegram, logger, errorHandler
+- TimeService: logger, config.system.timeSyncIntervalMs, config.system.timeSyncMaxFailures, bybitService (via `setBybitService`)
+- ExchangeFactory: logger, config.exchange
+- BybitService (raw): config.exchange, logger, marketDataRepository
+- BybitServiceAdapter: rawBybitService, logger
+- TradingJournalService: logger, config.tradeHistory, config.compoundInterest.baseDeposit, journalRepository, errorHandler
+- SessionStatsService: logger, journalRepository, errorHandler
+- RealityCheckService: logger
+- TimeframeProvider: config.timeframes
+- CandleProvider: timeframeProvider, bybitService, logger, config.exchange.symbol, marketDataRepository, errorHandler
+- IndicatorCacheService: marketDataRepository
+- IndicatorPreCalculationService: candleProvider, indicatorCache, calculators, logger
+- CompoundInterestCalculatorService (optional): config.compoundInterest, logger, journal, bybitService (balance provider)
+- RetestEntryService (optional): config.retestEntry, logger
+- DeltaAnalyzerService (optional): config.delta, logger
+- OrderbookImbalanceService (optional): config.orderbookImbalance, logger
+- WallTrackerService (optional): config.wallTracking, logger, errorHandler
+- AdvancedOrderFlowService (optional): config.advancedOrderFlow, config.orderFlowAnalysis, logger, errorHandler
+- DynamicPositionSizerService (optional): config.dynamicPositionSizing, logger, errorHandler
+- PositionScalingService (optional): config.positionScaling, logger, errorHandler
+- SmartOrderExecutionService (optional): config.smartOrderExecution, logger, errorHandler
+- AdvancedOrderStateMachineService (optional): logger, errorHandler
+- PrometheusMetricsService (optional): config.monitoring.metrics, logger, errorHandler
+- LadderExitDetectorService: logger, bybitService, errorHandler
+- RiskManager: riskManagerConfig (local), logger, errorHandler
+- PositionLifecycleService: bybitService, config.trading, config.riskManagement, telegram, logger, journal, config.entryConfirmation, config, eventBus, compoundInterestCalculator, sessionStats, positionRepository, errorHandler, dynamicPositionSizer, positionScalingService
+- PositionExitingService: bybitService, telegram, logger, journal, config.trading, config.riskManagement, config, sessionStats, positionManager, realityCheck
+- RealTimeRiskMonitor: riskMonitoringConfig (local), positionManager, logger, eventBus
+- OrderExecutionDetectorService: logger
+- WebSocketAuthenticationService: none
+- EventDeduplicationService: capacity, ttlMs, logger, errorHandler
+- WebSocketKeepAliveService: intervalMs, logger
+- WebSocketManagerService: config.exchange, config.exchange.symbol, errorHandler, orderExecutionDetector, authService, deduplicationService, keepAliveService
+- PublicWebSocketService: config.exchange, config.exchange.symbol, timeframeProvider, logger, errorHandler, config.btcConfirmation
+- OrderbookManagerService: config.exchange.symbol, logger, wallTrackerService
+- ExitTypeDetectorService: logger
+- PositionPnLCalculatorService: none
+- PositionSyncService: bybitService, positionManager, exitTypeDetectorService, telegram, logger, positionExitingService
+- PositionMonitorService: bybitService, positionManager, config.riskManagement, telegram, logger, exitTypeDetectorService, pnlCalculatorService, positionSyncService, positionExitingService
+- TradingOrchestrator: orchestratorConfig (local), candleProvider, timeframeProvider, bybitService, positionManager, telegram, logger, riskManager, positionExitingService
+- TradingOrchestrator.setIndicatorPreCalculationService: indicatorPreCalc
+- TradingOrchestrator.setBtcCandlesStore (optional): btcCandles store (BotServices)
+- StrategyRegistryService: none
+- StrategyOrchestratorService (optional): strategyRegistry, strategyFactory (null stub), strategyStateManager (null stub), logger, eventBus
+- StrategyOrchestratorService.setSharedServices: candleProvider, timeframeProvider, positionManager, riskManager, telegram, positionExitingService
+- PositionEventHandler: positionManager, positionExitingService, bybitService, telegram, logger
+- WebSocketEventHandler: positionManager, positionExitingService, bybitService, webSocketManager, journal, telegram, logger
+- PublicWebSocketService.setBtcCandlesStore (optional): btcCandles store (BotServices)
+- HealthCheckService (optional): bybitService, webSocketManager, monitoring thresholds, logger, errorHandler
+- MonitoringServer (optional): metricsService, healthCheckService, monitoring server config, logger, errorHandler
+- CircuitBreakerService (optional): resilience.circuitBreaker config, logger, errorHandler
+- RateLimiterService (optional): resilience.rateLimiter config, logger, errorHandler
+- RetryPolicyService (optional): resilience.retry config, logger, errorHandler
+- BulkheadService (optional): resilience.bulkhead config, logger, errorHandler
+- ResilienceCoordinator (optional): circuitBreaker, rateLimiter, retryPolicy, bulkhead, metricsService, logger, errorHandler
+- MarketDataServices (container): bybitService, timeframeProvider, candleProvider, orderbookManager, publicWebSocket, webSocketManager, indicatorCache, indicatorPreCalc
+- ExecutionServices (container): positionManager, positionExitingService, tradingOrchestrator, realTimeRiskMonitor, positionMonitor, ladderExitDetector, dynamicPositionSizer, positionScalingService, smartOrderExecution, orderStateMachine
+- MonitoringServices (container): metrics, metricsService, healthCheckService, monitoringServer, dashboard
+- RiskServices (container): riskManager, realTimeRiskMonitor, realityCheck
+- WebApiServices (container): marketDataServices (candleProvider, orderbookManager), journal, bybitService
+- CoreServices (container): logger, eventBus, telegram, timeService
+- EventHandlerServices (container): positionEventHandler, webSocketEventHandler
+
+## Proposed First Migration Slice (Low Risk)
+Focus: `WebApiServices` + `BotWebAPI` read-only endpoints.
+
+Why low risk:
+- Read-only usage of cached market data and journals (no order placement).
+- Narrow dependencies: `marketDataServices` (candleProvider, orderbookManager, indicatorCache) + `journal` + `bybitService`.
+- Already behind a web adapter boundary, so we can refactor wiring without touching trading runtime.
+
+Scope proposal:
+- Extract a dedicated `WebApiReadServices` interface from `WebApiServices`.
+- Move construction to a small container module and inject into `BotWebAPI`.
+- Avoid changes to runtime execution paths (no changes in trading or WebSocket loops).
+
+## Proposed Next Migration Slice (Low Risk)
+Focus: read-only monitoring adapters (`MonitoringServices` consumers).
+
+Why low risk:
+- Read-only access to metrics/health checks; no trading state mutations.
+- Already isolated behind monitoring adapters and optional toggles.
+
+Scope proposal:
+- Introduce `MonitoringReadServices` interface (metrics/health/dashboard).
+- Wire monitoring adapters (e.g., monitoring server bootstrap) to the narrowed interface.
+- Keep lifecycle/startup behavior unchanged for now.

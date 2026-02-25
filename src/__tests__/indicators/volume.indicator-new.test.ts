@@ -5,7 +5,7 @@
 
 import { VolumeIndicatorNew } from '../../indicators/volume.indicator-new';
 import type { Candle } from '../../types/core';
-import type { VolumeIndicatorConfigNew } from '../../types/config-new.types';
+import type { VolumeIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST HELPERS
@@ -539,3 +539,4 @@ describe('VolumeIndicatorNew - Edge Cases', () => {
     expect(result.average).toBeGreaterThan(0);
   });
 });
+

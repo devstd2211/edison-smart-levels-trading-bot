@@ -15,7 +15,7 @@ import { PERCENT_MULTIPLIER, BYBIT_FEES } from '../constants';
  * - SHORT: -1 (profit when price goes down)
  */
 
-import { PositionSide } from '../types';
+import { PositionSide } from '../types/legacy';
 
 // ============================================================================
 // CONSTANTS (Re-exported from src/constants.ts for backwards compatibility)

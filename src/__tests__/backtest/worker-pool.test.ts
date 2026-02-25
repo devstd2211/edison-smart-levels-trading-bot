@@ -17,7 +17,7 @@
 
 import { ChunkSplitter, BacktestChunk } from '../../backtest/worker-pool/chunk-splitter';
 import { BacktestWorkerResultMerger } from '../../backtest/worker-pool/backtest-worker';
-import { Candle } from '../../types';
+import { Candle } from '../../types/legacy';
 
 describe('Phase 7.3: Worker Pool', () => {
   let splitter: ChunkSplitter;

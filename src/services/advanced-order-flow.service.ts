@@ -24,9 +24,9 @@ import {
   PatternMetric,
   SpoofingMetric,
   MomentumMetric,
-} from '../types/advanced-order-flow.interface';
+} from '../types/advanced-order-flow';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LoggerService, OrderFlowAnalysisConfig } from '../types';
+import { LoggerService, OrderFlowAnalysisConfig } from '../types/legacy';
 import {
   DEFAULT_ORDER_FLOW_ANALYSIS,
   ADVANCED_ORDER_FLOW_TECHNICAL,
@@ -770,3 +770,4 @@ export class AdvancedOrderFlowService {
     }
   }
 }
+

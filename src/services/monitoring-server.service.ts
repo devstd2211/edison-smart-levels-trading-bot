@@ -13,10 +13,12 @@
 
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { Server } from 'http';
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { PrometheusMetricsService } from './prometheus-metrics.service';
-import { HealthCheckService } from './health-check.service';
+import type {
+  IMonitoringHealthReader,
+  IMonitoringMetricsReader,
+} from '../interfaces/IMonitoringReaders';
 
 // ============================================================================
 // INTERFACES
@@ -46,8 +48,8 @@ export class MonitoringServer {
   private readonly corsEnabled: boolean;
 
   constructor(
-    private readonly metricsService?: PrometheusMetricsService,
-    private readonly healthCheckService?: HealthCheckService,
+    private readonly metricsService?: IMonitoringMetricsReader,
+    private readonly healthCheckService?: IMonitoringHealthReader,
     private readonly config: MonitoringServerConfig = {},
     private readonly logger?: LoggerService,
     private readonly errorHandler?: ErrorHandler

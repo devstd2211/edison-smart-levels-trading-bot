@@ -4,14 +4,18 @@
  * Executes the action to update position stop loss
  */
 
-import { IActionHandler, UpdateStopLossAction, ActionResult, ActionType, UpdateSLExitActionDTO } from '../types/architecture.types';
+import { IActionHandler, UpdateStopLossAction, ActionResult, ActionType, UpdateSLExitActionDTO } from '../types/architecture';
 import { PositionExitingService } from '../services/position-exiting.service';
 import { PositionLifecycleService } from '../services/position-lifecycle.service';
 import { LoggerService } from '../services/logger.service';
-import { ExitType, ExitAction } from '../types';
+import { ExitType, ExitAction } from '../types/enums';
 
 export class UpdateStopLossHandler implements IActionHandler {
   readonly name = 'UpdateStopLossHandler';
+
+  private isAction(value: unknown): value is { type?: unknown } {
+    return typeof value === 'object' && value !== null && 'type' in value;
+  }
 
   constructor(
     private positionExitingService: PositionExitingService,
@@ -22,8 +26,8 @@ export class UpdateStopLossHandler implements IActionHandler {
   /**
    * Check if this handler can process the action
    */
-  canHandle(action: any): action is UpdateStopLossAction {
-    return action?.type === ActionType.UPDATE_STOP_LOSS;
+  canHandle(action: unknown): action is UpdateStopLossAction {
+    return this.isAction(action) && action.type === ActionType.UPDATE_STOP_LOSS;
   }
 
   /**
@@ -100,3 +104,4 @@ export class UpdateStopLossHandler implements IActionHandler {
     }
   }
 }
+

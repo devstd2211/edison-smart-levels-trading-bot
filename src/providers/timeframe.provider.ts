@@ -5,7 +5,8 @@
  * Validates that entry and primary timeframes are always enabled.
  */
 
-import { TimeframeConfig, TimeframeRole } from '../types';
+import { TimeframeConfig } from '../types/config/config.types';
+import { TimeframeRole } from '../types/enums';
 
 export class TimeframeProvider {
   private timeframes: Map<TimeframeRole, TimeframeConfig>;

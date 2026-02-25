@@ -12,7 +12,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { Candle, LogLevel, PatternRecognitionStrategicConfig } from '../types';
+import { Candle, LogLevel, PatternRecognitionStrategicConfig } from '../types/legacy';
 import {
   Pattern,
   PatternType,
@@ -25,7 +25,7 @@ import {
   PatternRecognitionConfig,
   DEFAULT_PATTERN_RECOGNITION_CONFIG,
   PatternRecognitionResult,
-} from '../types/pattern-recognition.interface';
+} from '../types/pattern-recognition';
 import {
   DEFAULT_PATTERN_RECOGNITION,
   PATTERN_RECOGNITION_TECHNICAL,
@@ -912,3 +912,4 @@ export class PatternRecognitionService {
     }
   }
 }
+

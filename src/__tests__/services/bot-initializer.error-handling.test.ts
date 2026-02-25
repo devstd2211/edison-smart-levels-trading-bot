@@ -87,51 +87,64 @@ const createMinimalConfig = (): any => ({
   strategy: {} as any,
 });
 
-const createMockBotServices = (): any => ({
-  logger: createMockLogger(),
-  bybitService: {
-    initialize: jest.fn().mockResolvedValue(undefined),
-    resyncTime: jest.fn().mockResolvedValue(undefined),
-    cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
-    getOpenPositions: jest.fn().mockResolvedValue([]),
-  },
-  sessionStats: {
-    startSession: jest.fn().mockReturnValue('session-123'),
-    endSession: jest.fn(),
-  },
-  timeService: {
-    syncWithExchange: jest.fn().mockResolvedValue(undefined),
-    getSyncInfo: jest.fn().mockReturnValue({
-      offset: 0,
-      nextSyncIn: 60000,
-    }),
-  },
-  candleProvider: {
-    initialize: jest.fn().mockResolvedValue(undefined),
-  },
-  webSocketManager: {
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-  publicWebSocket: {
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-  positionMonitor: {
-    start: jest.fn(),
-    stop: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-  positionManager: {
-    getCurrentPosition: jest.fn().mockReturnValue(null),
-    syncWithWebSocket: jest.fn(),
-  },
-  telegram: {
-    notifyBotStopped: jest.fn().mockResolvedValue(undefined),
-  },
-});
+const createMockBotServices = (): any => {
+  const logger = createMockLogger();
+
+  return {
+    coreServices: {
+      logger,
+      timeService: {
+        syncWithExchange: jest.fn().mockResolvedValue(undefined),
+        getSyncInfo: jest.fn().mockReturnValue({
+          offset: 0,
+          nextSyncIn: 60000,
+        }),
+      },
+      telegram: {
+        notifyBotStopped: jest.fn().mockResolvedValue(undefined),
+      },
+      eventBus: {
+        emit: jest.fn(),
+      },
+    },
+    marketDataServices: {
+      bybitService: {
+        initialize: jest.fn().mockResolvedValue(undefined),
+        resyncTime: jest.fn().mockResolvedValue(undefined),
+        cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
+        getOpenPositions: jest.fn().mockResolvedValue([]),
+      },
+      candleProvider: {
+        initialize: jest.fn().mockResolvedValue(undefined),
+      },
+      webSocketManager: {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        removeAllListeners: jest.fn(),
+      },
+      publicWebSocket: {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        removeAllListeners: jest.fn(),
+      },
+    },
+    executionServices: {
+      positionMonitor: {
+        start: jest.fn(),
+        stop: jest.fn(),
+        removeAllListeners: jest.fn(),
+      },
+      positionManager: {
+        getCurrentPosition: jest.fn().mockReturnValue(null),
+        syncWithWebSocket: jest.fn(),
+      },
+    },
+    sessionStats: {
+      startSession: jest.fn().mockReturnValue('session-123'),
+      endSession: jest.fn(),
+    },
+  };
+};
 
 const createMockErrorHandler = (): jest.Mocked<ErrorHandler> => {
   return {
@@ -173,7 +186,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     test('A1: Bybit init fails with network error → retries 3x → throws', async () => {
       const networkError = new Error('ECONNREFUSED: Connection refused');
       let callCount = 0;
-      mockServices.bybitService.initialize.mockImplementation(() => {
+      mockServices.marketDataServices.bybitService.initialize.mockImplementation(() => {
         callCount++;
         if (callCount < 3) {
           return Promise.reject(networkError);
@@ -184,7 +197,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await expect(initializer.initialize()).rejects.toThrow(ExchangeConnectionError);
 
       // Verify retry attempts
-      expect(mockServices.bybitService.initialize).toHaveBeenCalledTimes(3);
+      expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalledTimes(3);
     }, 30000);
 
     test('A2: Session stats fails → gracefully degrades → continues', async () => {
@@ -197,14 +210,14 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await expect(initializer.initialize()).resolves.not.toThrow();
 
       // Verify other services still called
-      expect(mockServices.bybitService.initialize).toHaveBeenCalled();
-      expect(mockServices.timeService.syncWithExchange).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalled();
+      expect(mockServices.coreServices.timeService.syncWithExchange).toHaveBeenCalled();
     });
 
     test('A3: Successful initialization → all components called in order', async () => {
       const callOrder: string[] = [];
 
-      mockServices.bybitService.initialize.mockImplementation(() => {
+      mockServices.marketDataServices.bybitService.initialize.mockImplementation(() => {
         callOrder.push('bybitService.initialize');
         return Promise.resolve();
       });
@@ -212,11 +225,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
         callOrder.push('sessionStats.startSession');
         return 'session-123';
       });
-      mockServices.timeService.syncWithExchange.mockImplementation(() => {
+      mockServices.coreServices.timeService.syncWithExchange.mockImplementation(() => {
         callOrder.push('timeService.syncWithExchange');
         return Promise.resolve();
       });
-      mockServices.candleProvider.initialize.mockImplementation(() => {
+      mockServices.marketDataServices.candleProvider.initialize.mockImplementation(() => {
         callOrder.push('candleProvider.initialize');
         return Promise.resolve();
       });
@@ -233,7 +246,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
     test('A4: Error classification - network errors → ExchangeConnectionError', async () => {
       const networkError = new Error('ECONNREFUSED: Connection refused');
-      mockServices.bybitService.initialize.mockRejectedValue(networkError);
+      mockServices.marketDataServices.bybitService.initialize.mockRejectedValue(networkError);
 
       try {
         await initializer.initialize();
@@ -244,9 +257,9 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     }, 30000);
 
     test('A5: Error classification - rate limit errors → ExchangeRateLimitError', async () => {
-      mockServices.bybitService.initialize.mockResolvedValue(undefined);
+      mockServices.marketDataServices.bybitService.initialize.mockResolvedValue(undefined);
       const rateLimitError = new Error('Rate limit exceeded: 429');
-      mockServices.timeService.syncWithExchange.mockRejectedValue(rateLimitError);
+      mockServices.coreServices.timeService.syncWithExchange.mockRejectedValue(rateLimitError);
 
       try {
         await initializer.initialize();
@@ -269,41 +282,41 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
     test('B1: Private WS connection fails → retries 3x → throws', async () => {
       const wsError = new Error('ws:// connection failed');
-      mockServices.webSocketManager.connect.mockImplementation(() => {
+      mockServices.marketDataServices.webSocketManager.connect.mockImplementation(() => {
         throw wsError;
       });
 
       await expect(initializer.connectWebSockets()).rejects.toThrow(WebSocketConnectionError);
 
       // Verify retry attempts for private WS
-      expect(mockServices.webSocketManager.connect).toHaveBeenCalledTimes(3);
+      expect(mockServices.marketDataServices.webSocketManager.connect).toHaveBeenCalledTimes(3);
     }, 30000);
 
     test('B2: Public WS connection fails → retries 3x → throws', async () => {
       const wsError = new Error('ws:// connection failed');
 
       // First call succeeds (private WS)
-      mockServices.webSocketManager.connect.mockImplementation(() => {
+      mockServices.marketDataServices.webSocketManager.connect.mockImplementation(() => {
         // Success
       });
 
       // Second call fails (public WS)
-      mockServices.publicWebSocket.connect.mockImplementation(() => {
+      mockServices.marketDataServices.publicWebSocket.connect.mockImplementation(() => {
         throw wsError;
       });
 
       await expect(initializer.connectWebSockets()).rejects.toThrow(WebSocketConnectionError);
 
       // Verify retry attempts for public WS
-      expect(mockServices.publicWebSocket.connect).toHaveBeenCalledTimes(3);
+      expect(mockServices.marketDataServices.publicWebSocket.connect).toHaveBeenCalledTimes(3);
     }, 30000);
 
     test('B3: Both WS succeed on first attempt → trend analysis called', async () => {
       // Both succeed
-      mockServices.webSocketManager.connect.mockImplementation(() => {
+      mockServices.marketDataServices.webSocketManager.connect.mockImplementation(() => {
         // Success
       });
-      mockServices.publicWebSocket.connect.mockImplementation(() => {
+      mockServices.marketDataServices.publicWebSocket.connect.mockImplementation(() => {
         // Success
       });
 
@@ -314,8 +327,8 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await initializer.connectWebSockets();
 
       // Verify both WS called once
-      expect(mockServices.webSocketManager.connect).toHaveBeenCalledTimes(1);
-      expect(mockServices.publicWebSocket.connect).toHaveBeenCalledTimes(1);
+      expect(mockServices.marketDataServices.webSocketManager.connect).toHaveBeenCalledTimes(1);
+      expect(mockServices.marketDataServices.publicWebSocket.connect).toHaveBeenCalledTimes(1);
 
       // Verify trend analysis was called
       expect(trendAnalysisSpy).toHaveBeenCalled();
@@ -329,25 +342,25 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   describe('C: startMonitoring() - Position Monitor with RETRY', () => {
     test('C1: Position monitor fails to start → retries 3x → throws', async () => {
       const monitorError = new Error('Monitor initialization failed');
-      mockServices.positionMonitor.start.mockImplementation(() => {
+      mockServices.executionServices.positionMonitor.start.mockImplementation(() => {
         throw monitorError;
       });
 
       await expect(initializer.startMonitoring()).rejects.toThrow(PositionMonitoringError);
 
       // Verify retry attempts
-      expect(mockServices.positionMonitor.start).toHaveBeenCalledTimes(3);
+      expect(mockServices.executionServices.positionMonitor.start).toHaveBeenCalledTimes(3);
     }, 30000);
 
     test('C2: Monitor starts successfully on first attempt', async () => {
-      mockServices.positionMonitor.start.mockImplementation(() => {
+      mockServices.executionServices.positionMonitor.start.mockImplementation(() => {
         // Success
       });
 
       await initializer.startMonitoring();
 
       // Verify called once
-      expect(mockServices.positionMonitor.start).toHaveBeenCalledTimes(1);
+      expect(mockServices.executionServices.positionMonitor.start).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -358,10 +371,10 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   describe('D: shutdown() - All Operations with SKIP Strategy', () => {
     test('D1: Multiple component failures during shutdown → all skipped → completes', async () => {
       // Make all shutdown operations fail
-      mockServices.positionMonitor.stop.mockImplementationOnce(() => {
+      mockServices.executionServices.positionMonitor.stop.mockImplementationOnce(() => {
         throw new Error('Monitor stop failed');
       });
-      mockServices.webSocketManager.disconnect.mockImplementationOnce(() => {
+      mockServices.marketDataServices.webSocketManager.disconnect.mockImplementationOnce(() => {
         throw new Error('WS disconnect failed');
       });
       mockServices.sessionStats.endSession.mockImplementationOnce(() => {
@@ -372,13 +385,13 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await expect(initializer.shutdown()).resolves.not.toThrow();
 
       // Verify all operations were attempted
-      expect(mockServices.positionMonitor.stop).toHaveBeenCalled();
-      expect(mockServices.webSocketManager.disconnect).toHaveBeenCalled();
+      expect(mockServices.executionServices.positionMonitor.stop).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.disconnect).toHaveBeenCalled();
       expect(mockServices.sessionStats.endSession).toHaveBeenCalled();
     });
 
     test('D2: Telegram notification fails → skipped → shutdown completes', async () => {
-      mockServices.telegram.notifyBotStopped.mockRejectedValueOnce(
+      mockServices.coreServices.telegram.notifyBotStopped.mockRejectedValueOnce(
         new Error('Telegram API error'),
       );
 
@@ -404,17 +417,17 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await initializer.initialize();
 
       // Verify continued despite stats error
-      expect(mockServices.bybitService.initialize).toHaveBeenCalled();
-      expect(mockServices.timeService.syncWithExchange).toHaveBeenCalled();
-      expect(mockServices.candleProvider.initialize).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalled();
+      expect(mockServices.coreServices.timeService.syncWithExchange).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.candleProvider.initialize).toHaveBeenCalled();
     });
 
     test('E2: Full lifecycle with shutdown skipping errors', async () => {
       // All shutdown operations fail
-      mockServices.positionMonitor.stop.mockImplementationOnce(() => {
+      mockServices.executionServices.positionMonitor.stop.mockImplementationOnce(() => {
         throw new Error('Monitor stop failed');
       });
-      mockServices.webSocketManager.disconnect.mockImplementationOnce(() => {
+      mockServices.marketDataServices.webSocketManager.disconnect.mockImplementationOnce(() => {
         throw new Error('WS disconnect failed');
       });
 
@@ -422,8 +435,8 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await expect(initializer.shutdown()).resolves.not.toThrow();
 
       // Verify all operations were attempted
-      expect(mockServices.positionMonitor.stop).toHaveBeenCalled();
-      expect(mockServices.webSocketManager.disconnect).toHaveBeenCalled();
+      expect(mockServices.executionServices.positionMonitor.stop).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.disconnect).toHaveBeenCalled();
     });
   });
 
@@ -437,7 +450,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       const initWithoutHandler = new BotInitializer(mockServices, mockConfig, undefined);
 
       // Make Bybit fail
-      mockServices.bybitService.initialize.mockRejectedValueOnce(
+      mockServices.marketDataServices.bybitService.initialize.mockRejectedValueOnce(
         new Error('Initialization failed'),
       );
 
@@ -446,3 +459,4 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     });
   });
 });
+

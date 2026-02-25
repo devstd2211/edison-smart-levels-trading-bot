@@ -1,6 +1,6 @@
 import { BotEventEmitter } from '../bot-event-emitter';
 import { BotEventBus } from '../services/event-bus';
-import { LoggerService } from '../types';
+import { LoggerService } from '../types/legacy';
 
 /**
  * Mock LoggerService for tests

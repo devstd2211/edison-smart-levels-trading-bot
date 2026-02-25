@@ -8,7 +8,7 @@
 
 import { EMAIndicatorNew } from '../../indicators/ema.indicator-new';
 import type { Candle } from '../../types/core';
-import type { EmaIndicatorConfigNew } from '../../types/config-new.types';
+import type { EmaIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST FIXTURES
@@ -552,3 +552,4 @@ describe('EMA Indicator NEW - Functional Tests', () => {
     });
   });
 });
+

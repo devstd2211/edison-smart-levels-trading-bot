@@ -16,10 +16,10 @@
  */
 
 import type { Candle } from '../types/core';
-import type { VolumeIndicatorConfigNew } from '../types/config-new.types';
-import type { IIndicator } from '../types/indicator.interface';
-import { validateIndicatorConfig } from '../types/config-new.types';
-import { IndicatorType } from '../types/indicator-type.enum';
+import type { VolumeIndicatorConfigNew } from '../types/config/config-new.types';
+import type { IIndicator } from '../types/indicator';
+import { validateIndicatorConfig } from '../types/config/config-new.types';
+import { IndicatorType } from '../types/indicator';
 
 // ============================================================================
 // CONSTANTS
@@ -325,3 +325,4 @@ export class VolumeIndicatorNew implements IIndicator {
     return this.period;
   }
 }
+

@@ -1,6 +1,6 @@
 import { FairValueGapAnalyzerNew } from '../../analyzers/fair-value-gap.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.72, priority: 6 };
@@ -340,3 +340,4 @@ describe('FairValueGapAnalyzerNew - Functional: Trend Continuation Gaps', () => 
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

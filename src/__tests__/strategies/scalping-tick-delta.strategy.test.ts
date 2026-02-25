@@ -19,7 +19,7 @@ import {
   TrendBias,
   Tick,
   Candle,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

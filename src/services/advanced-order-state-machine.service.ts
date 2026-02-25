@@ -12,7 +12,7 @@
  * Phase: 13.2 - Order State Machine
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   OrderState,

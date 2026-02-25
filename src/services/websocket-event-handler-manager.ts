@@ -1,6 +1,8 @@
 import { DECIMAL_PLACES, INTEGER_MULTIPLIERS } from '../constants';
-import { Candle, TimeframeRole, OrderBook } from '../types';
-import { OrderbookUpdateEvent, TradeTickEvent } from '../types/events.types';
+import { Candle } from '../types/core';
+import { TimeframeRole } from '../types/enums';
+import { OrderBook } from '../types/orderbook';
+import { OrderbookUpdateEvent, TradeTickEvent } from '../types/events';
 import type { IWebSocketEventHandlerServices } from '../interfaces';
 import { RealTimeWhaleDetector } from './realtime-whale-detector';
 import { type OrderbookUpdate } from './orderbook-manager.service';
@@ -445,3 +447,4 @@ export class WebSocketEventHandlerManager {
     this.eventListeners.push({ emitter, event, handler });
   }
 }
+

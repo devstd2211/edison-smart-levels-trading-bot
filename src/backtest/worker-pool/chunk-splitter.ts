@@ -19,7 +19,7 @@
  * ... etc
  */
 
-import { Candle } from '../../types';
+import { Candle } from '../../types/core';
 import { BacktestTrade } from '../backtest-engine-v5';
 
 export interface BacktestChunk {

@@ -10,9 +10,9 @@ import { SmartOrderPlacementService } from '../../services/smart-order-placement
 import { MLSignalValidatorService } from '../../services/ml-signal-validator.service';
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { AnomalyDetectionService } from '../../services/anomaly-detection.service';
-import { AdvancedOrderFlowConfig, Tick } from '../../types/advanced-order-flow.interface';
-import { Orderbook } from '../../types/liquidity-heatmap.interface';
-import { LoggerService, Signal, MarketContext, SignalDirection } from '../../types';
+import { AdvancedOrderFlowConfig, Tick } from '../../types/advanced-order-flow';
+import { Orderbook } from '../../types/liquidity-heatmap';
+import { LoggerService, Signal, MarketContext, SignalDirection } from '../../types/legacy';
 
 describe('Phase 10 Integration Tests', () => {
   let logger: LoggerService;
@@ -477,3 +477,4 @@ describe('Phase 10 Integration Tests', () => {
     });
   });
 });
+

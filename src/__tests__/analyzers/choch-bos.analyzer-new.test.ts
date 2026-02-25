@@ -1,6 +1,6 @@
 import { ChochBosAnalyzerNew } from '../../analyzers/choch-bos.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { ChochBosAnalyzerConfigNew } from '../../types/config-new.types';
+import type { ChochBosAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): ChochBosAnalyzerConfigNew {
   return { enabled: true, weight: 0.75, priority: 5 };
@@ -126,3 +126,4 @@ describe('ChochBosAnalyzerNew - Edge Cases Tests', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

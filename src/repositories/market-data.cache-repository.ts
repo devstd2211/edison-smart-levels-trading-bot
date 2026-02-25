@@ -10,7 +10,7 @@
  * - Statistics tracking
  */
 
-import { Candle } from '../types';
+import { Candle } from '../types/core';
 import { IMarketDataRepository } from './IRepositories';
 
 /**

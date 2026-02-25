@@ -31,7 +31,7 @@
  */
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
-import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types';
+import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {

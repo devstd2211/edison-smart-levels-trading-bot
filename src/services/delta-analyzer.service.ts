@@ -20,7 +20,7 @@ import { RecoveryStrategy } from '../errors/ErrorHandler';
  * - Sell = aggressive seller hitting bid liquidity (bearish)
  */
 
-import { DeltaConfig, DeltaTick, DeltaAnalysis, Signal, LoggerService } from '../types';
+import { DeltaConfig, DeltaTick, DeltaAnalysis, Signal, LoggerService } from '../types/legacy';
 
 export class DeltaAnalyzerService {
   private ticks: DeltaTick[] = [];

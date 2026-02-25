@@ -17,7 +17,7 @@
  * - MONTH: Trades opened in last 30 days
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { TradingJournalService } from './trading-journal.service';
 import { ErrorHandler, RecoveryStrategy, PerformanceCalculationError } from '../errors';
 import {
@@ -27,7 +27,7 @@ import {
   SessionAnalytics,
   TopTrade,
   IPerformanceAnalytics,
-} from '../types/live-trading.types';
+} from '../types/live-trading';
 
 /**
  * PerformanceAnalytics: Comprehensive trade performance analysis
@@ -676,3 +676,4 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     }
   }
 }
+

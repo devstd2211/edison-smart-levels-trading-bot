@@ -1,4 +1,4 @@
-import { IIndicatorCache } from '../types/indicator-cache.interface';
+import { IIndicatorCache } from '../types/indicator';
 import { IMarketDataRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';
@@ -240,3 +240,4 @@ export class IndicatorCacheService implements IIndicatorCache {
     }
   }
 }
+

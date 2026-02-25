@@ -13,8 +13,8 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { ExchangeAPIError } from '../../errors/DomainErrors';
-import { OrderRequest, OrderStatus, OrderExecutionConfig } from '../../types/live-trading.types';
-import { LoggerService } from '../../types';
+import { OrderRequest, OrderStatus, OrderExecutionConfig } from '../../types/live-trading';
+import { LoggerService } from '../../types/legacy';
 
 /**
  * Helper: Create a retryable error for testing
@@ -354,3 +354,4 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
     });
   });
 });
+

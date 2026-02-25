@@ -14,7 +14,7 @@ import {
   ScalpingMicroWallConfig,
   MicroWallDetectorConfig,
   MicroWall,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS

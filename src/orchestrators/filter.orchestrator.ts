@@ -17,9 +17,9 @@
  */
 
 import { LoggerService } from '../services/logger.service';
-import { FilterOverrides } from '../types/strategy-config.types';
+import { FilterOverrides } from '../types/strategy-config';
 import { correlateCandles, determineBtcTrend, isBtcAligned } from '../utils/correlation';
-import { Candle } from '../types';
+import { Candle } from '../types/core';
 import { ErrorHandler } from '../errors/ErrorHandler'; // Phase 8.9.29
 
 export interface FilterResult {
@@ -27,6 +27,36 @@ export interface FilterResult {
   reason?: string;
   appliedFilters: string[];
   blockedBy?: string;
+}
+
+interface FilterSignal {
+  direction: string;
+  confidence: number;
+}
+
+interface FlatMarketAnalysis {
+  confidence: number;
+}
+
+interface MarketData {
+  flatMarketAnalysis?: FlatMarketAnalysis;
+}
+
+interface TrendAnalysis {
+  bias?: string;
+  strength: number;
+}
+
+interface FilterContext {
+  signal: FilterSignal; // Trade signal (direction, confidence)
+  accountBalance: number;
+  openPositions: unknown[];
+  marketData: MarketData; // flat market analysis, BTC correlation, etc
+  fundingRate?: number;
+  lastTPTimestamp?: number; // timestamp of last TP
+  trend?: TrendAnalysis; // current trend analysis (bias, strength)
+  btcCandles?: Candle[]; // BTC candles for correlation analysis
+  altCandles?: Candle[]; // Target asset candles (XRP, etc)
 }
 
 export class FilterOrchestrator {
@@ -41,17 +71,7 @@ export class FilterOrchestrator {
    * Returns immediately on first blocking filter
    * Phase 8.9.29: Input validation with THROW strategy
    */
-  evaluateFilters(context: {
-    signal: any; // Trade signal (direction, confidence)
-    accountBalance: number;
-    openPositions: any[];
-    marketData: any; // flat market analysis, BTC correlation, etc
-    fundingRate?: number;
-    lastTPTimestamp?: number; // timestamp of last TP
-    trend?: any; // current trend analysis (bias, strength)
-    btcCandles?: Candle[]; // BTC candles for correlation analysis
-    altCandles?: Candle[]; // Target asset candles (XRP, etc)
-  }): FilterResult {
+  evaluateFilters(context: FilterContext): FilterResult {
     // Phase 8.9.29: Input validation with THROW strategy
     try {
       if (!context || !context.signal) {
@@ -162,7 +182,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 1: Blind Zone - require minimum signal consensus
    */
-  private evaluateBlindZone(context: any): FilterResult {
+  private evaluateBlindZone(_context: FilterContext): FilterResult {
     // This filter is handled by StrategyCoordinator, included for completeness
     return { allowed: true, appliedFilters: [] };
   }
@@ -171,7 +191,7 @@ export class FilterOrchestrator {
    * FILTER 2: Flat Market - block entries when market is ranging
    * Phase 8.9.29: Logger failures use SKIP strategy
    */
-  private evaluateFlatMarket(context: any): FilterResult {
+  private evaluateFlatMarket(context: FilterContext): FilterResult {
     const config = this.filterConfig.flatMarket;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -218,7 +238,7 @@ export class FilterOrchestrator {
    * FILTER 3: Funding Rate - prevent overheated positions
    * Phase 8.9.29: Handle NaN/Infinity funding rates
    */
-  private evaluateFundingRate(context: any): FilterResult {
+  private evaluateFundingRate(context: FilterContext): FilterResult {
     const config = this.filterConfig.fundingRate;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -288,7 +308,7 @@ export class FilterOrchestrator {
    * With strict blocking: blocks entries that go against BTC trend if correlation is high.
    * Phase 8.9.29: GRACEFUL_DEGRADE strategy with enhanced validation
    */
-  private evaluateBtcCorrelation(context: any): FilterResult {
+  private evaluateBtcCorrelation(context: FilterContext): FilterResult {
     const config = this.filterConfig.btcCorrelation;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -305,8 +325,8 @@ export class FilterOrchestrator {
 
     try {
       // Phase 8.9.29: Validate candle data before processing
-      const hasValidBtcCandles = context.btcCandles.every((c: any) => isFinite(c.close));
-      const hasValidAltCandles = context.altCandles.every((c: any) => isFinite(c.close));
+      const hasValidBtcCandles = context.btcCandles.every((c) => isFinite(c.close));
+      const hasValidAltCandles = context.altCandles.every((c) => isFinite(c.close));
 
       if (!hasValidBtcCandles || !hasValidAltCandles) {
         if (this.errorHandler) {
@@ -381,7 +401,7 @@ export class FilterOrchestrator {
       }
 
       return { allowed: true, appliedFilters: [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
       try {
         this.logger.error('Error in BTC Correlation filter', {
           error: error instanceof Error ? error.message : String(error),
@@ -405,7 +425,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 5: Trend Alignment - block against trend (handled in EntryOrchestrator)
    */
-  private evaluateTrendAlignment(context: any): FilterResult {
+  private evaluateTrendAlignment(_context: FilterContext): FilterResult {
     // EntryOrchestrator handles this filter
     return { allowed: true, appliedFilters: [] };
   }
@@ -414,7 +434,7 @@ export class FilterOrchestrator {
    * FILTER 6: Post-TP Filter - prevent FOMO after TP
    * Phase 8.9.29: Handle timestamp validation
    */
-  private evaluatePostTpFilter(context: any): FilterResult {
+  private evaluatePostTpFilter(context: FilterContext): FilterResult {
     const config = this.filterConfig.postTpFilter;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -461,7 +481,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 7: Time-Based Filter - block entries during specific hours
    */
-  private evaluateTimeBasedFilter(context: any): FilterResult {
+  private evaluateTimeBasedFilter(_context: FilterContext): FilterResult {
     const config = this.filterConfig.timeBasedFilter;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -475,7 +495,7 @@ export class FilterOrchestrator {
   /**
    * FILTER 8: Volatility Regime - block during extreme volatility
    */
-  private evaluateVolatilityRegime(context: any): FilterResult {
+  private evaluateVolatilityRegime(_context: FilterContext): FilterResult {
     const config = this.filterConfig.volatilityRegime;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -497,7 +517,7 @@ export class FilterOrchestrator {
    * entries are made only when signal quality is very high.
    * Phase 8.9.29: Handle NaN trend strength with GRACEFUL_DEGRADE
    */
-  private evaluateNeutralTrendStrength(context: any): FilterResult {
+  private evaluateNeutralTrendStrength(context: FilterContext): FilterResult {
     const config = this.filterConfig.neutralTrendStrength;
     if (!config?.enabled && config?.enabled !== undefined) {
       return { allowed: true, appliedFilters: [] };
@@ -574,3 +594,4 @@ export class FilterOrchestrator {
 }
 
 export default FilterOrchestrator;
+

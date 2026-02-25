@@ -37,7 +37,7 @@
  */
 
 import { RetestEntryService } from '../../services/retest-entry.service';
-import { LoggerService, LogLevel, RetestConfig, Signal, Candle, SignalDirection, SignalType } from '../../types';
+import { LoggerService, LogLevel, RetestConfig, Signal, Candle, SignalDirection, SignalType } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {

@@ -8,7 +8,7 @@
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { Position, PositionSide } from '../../types';
+import { Position, PositionSide } from '../../types/legacy';
 import { PERCENT_MULTIPLIER } from '../../constants';
 
 // ============================================================================

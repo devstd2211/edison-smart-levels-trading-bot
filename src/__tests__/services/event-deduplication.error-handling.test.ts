@@ -13,7 +13,7 @@
  */
 
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 
 // ============================================================================

@@ -1,7 +1,7 @@
 import { FairValueGapAnalyzerNew } from '../../analyzers/fair-value-gap.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
-import { AnalyzerType } from '../../types/analyzer-type.enum';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
+import { AnalyzerType } from '../../types/analyzer';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 6 };
@@ -129,3 +129,4 @@ describe('FairValueGapAnalyzerNew - IAnalyzer Interface Tests', () => {
     expect(analyzer.getMaxConfidence()).toBe(0.95);
   });
 });
+

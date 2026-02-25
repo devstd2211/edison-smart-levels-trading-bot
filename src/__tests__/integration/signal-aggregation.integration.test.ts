@@ -10,7 +10,7 @@ import {
   buildAggregationConfig,
   AggregationConfig,
 } from '../../decision-engine/signal-aggregation';
-import { AnalyzerSignal, SignalDirection } from '../../types';
+import { AnalyzerSignal, SignalDirection } from '../../types/legacy';
 import { BacktestEngineV5 } from '../../backtest/backtest-engine-v5';
 import { LoggerService } from '../../services/logger.service';
 

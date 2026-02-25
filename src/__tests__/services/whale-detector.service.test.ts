@@ -5,7 +5,7 @@
  */
 
 import { WhaleDetectionService, WhaleDetectionMode, WhaleDetectorConfig } from '../../services/whale-detection.service';
-import { OrderBookAnalysis, OrderBookWall, LoggerService, LogLevel, SignalDirection } from '../../types';
+import { OrderBookAnalysis, OrderBookWall, LoggerService, LogLevel, SignalDirection } from '../../types/legacy';
 
 function createAnalysis(walls: OrderBookWall[], ratio: number, direction: 'BULLISH' | 'BEARISH' | 'NEUTRAL'): OrderBookAnalysis {
   return {

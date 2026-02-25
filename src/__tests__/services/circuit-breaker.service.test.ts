@@ -3,7 +3,7 @@
  */
 
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

@@ -21,7 +21,7 @@ import { PERCENT_MULTIPLIER } from '../constants';
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { extractErrorMessage } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { JournalWriteError } from '../errors/DomainErrors';

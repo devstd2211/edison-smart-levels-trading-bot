@@ -19,7 +19,7 @@
 
 import { BacktestChunk } from './chunk-splitter';
 import { BacktestTrade, BacktestConfig } from '../backtest-engine-v5';
-import { StrategyConfig } from '../../types/strategy-config.types';
+import { StrategyConfig } from '../../types/strategy-config';
 
 export interface BacktestWorkerTask {
   chunk: BacktestChunk;
@@ -198,3 +198,4 @@ if (require.main === module) {
     parentPort.postMessage({ type: 'ready' });
   }
 }
+

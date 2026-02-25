@@ -35,14 +35,10 @@
  * Result determines position updates (close, SL change, trail activation)
  */
 
-import {
-  Position,
-  PositionState,
-  ExitAction,
-  ExitOrchestratorResult,
-  LoggerService,
-  PositionSide,
-} from '../types';
+import { LoggerService } from '../services/logger.service';
+import { ExitOrchestratorResult } from '../types/legacy';
+import { Position } from '../types/position';
+import { ExitAction, PositionSide, PositionState } from '../types/enums';
 import { evaluateExit, ExitDecisionContext, ExitDecisionResult } from '../decision-engine/exit-decisions';
 import { PositionStateMachineService } from '../services/position-state-machine.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';

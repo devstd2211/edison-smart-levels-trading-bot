@@ -11,7 +11,7 @@
  */
 
 import { TFAlignmentService } from '../../services/tf-alignment.service';
-import { TFAlignmentConfig } from '../../types';
+import { TFAlignmentConfig } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 const createMockLogger = () => ({

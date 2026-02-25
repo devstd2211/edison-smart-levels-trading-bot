@@ -19,8 +19,8 @@ import { StrategyProcessingPoolService } from '../services/multi-strategy/strate
 import {
   StrategyProcessingJob,
   ProcessingPriority,
-} from '../types/strategy-processing.types';
-import { LoggerService, LogLevel } from '../types';
+} from '../types/strategy-processing';
+import { LoggerService, LogLevel } from '../types/legacy';
 
 describe('PHASE 12: Parallel Strategy Processing', () => {
   let processingPool: StrategyProcessingPoolService;
@@ -757,3 +757,4 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
     });
   });
 });
+

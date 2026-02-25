@@ -26,8 +26,8 @@ import type { AnalyzerSignal } from '../types/strategy';
 import type { SignalDirection } from '../types/enums';
 import { LoggerService } from './logger.service';
 import type { AnalyzerRegistryService } from './analyzer-registry.service';
-import type { StrategyConfig } from '../types/strategy-config.types';
-import type { IAnalyzer } from '../types/analyzer.interface';
+import type { StrategyConfig } from '../types/strategy-config';
+import type { IAnalyzer } from '../types/analyzer';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================
@@ -455,3 +455,4 @@ export class AnalyzerEngineService {
     };
   }
 }
+

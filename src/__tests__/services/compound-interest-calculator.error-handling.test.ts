@@ -10,7 +10,7 @@
  */
 
 import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
-import { LoggerService, CompoundInterestConfig, LogLevel } from '../../types';
+import { LoggerService, CompoundInterestConfig, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {

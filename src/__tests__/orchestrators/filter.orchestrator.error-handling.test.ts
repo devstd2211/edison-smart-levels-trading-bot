@@ -13,7 +13,7 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { FilterOrchestrator } from '../../orchestrators/filter.orchestrator';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, Candle } from '../../types';
+import { LoggerService, Candle } from '../../types/legacy';
 
 describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
   let orchestrator: FilterOrchestrator;

@@ -4,7 +4,7 @@
  */
 
 import { EntryConfirmationManager } from '../../services/entry-confirmation.service';
-import { LoggerService, LogLevel, SignalDirection, EntryConfirmationConfig } from '../../types';
+import { LoggerService, LogLevel, SignalDirection, EntryConfirmationConfig } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 
 // ============================================================================

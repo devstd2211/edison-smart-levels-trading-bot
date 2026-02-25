@@ -5,7 +5,7 @@
  * Prevents production issues caused by missing dependencies
  */
 
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 describe('SMOKE TESTS: Service Initialization', () => {
   let logger: LoggerService;

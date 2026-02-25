@@ -15,7 +15,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { MultiTimeframeTrendService } from '../../services/multi-timeframe-trend.service';
 import { SwingPointDetectorService } from '../../services/swing-point-detector.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { Candle, LoggerService, TrendBias, MultiTimeframeData } from '../../types';
+import { Candle, LoggerService, TrendBias, MultiTimeframeData } from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

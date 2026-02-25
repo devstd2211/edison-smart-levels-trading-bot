@@ -22,7 +22,7 @@
  */
 
 import type { IExchange } from '../interfaces/IExchange';
-import type { LoggerService } from '../types';
+import type { LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ExchangeFactoryConfigError, ExchangeAdapterInstantiationError } from '../errors/DomainErrors';
 import { BybitService } from './bybit/bybit.service';

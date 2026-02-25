@@ -10,7 +10,7 @@
 
 import { StrategyEventFilterService } from '../../services/multi-strategy/event-filter.service';
 import { LoggerService } from '../../services/logger.service';
-import { LogLevel } from '../../types';
+import { LogLevel } from '../../types/legacy';
 
 class TestLogger extends LoggerService {
   constructor() {

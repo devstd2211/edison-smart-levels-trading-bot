@@ -1,5 +1,5 @@
 import { INTEGER_MULTIPLIERS } from '../constants';
-import { OrderBook } from '../types';
+import { OrderBook } from '../types/legacy';
 import type { IWhaleDetectorServices } from '../interfaces';
 
 /**

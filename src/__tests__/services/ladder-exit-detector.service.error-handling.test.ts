@@ -22,7 +22,7 @@ import {
   Position,
   ExitType,
   BybitOrder,
-} from '../../types';
+} from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 
 // ============================================================================

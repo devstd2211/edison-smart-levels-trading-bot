@@ -4,7 +4,7 @@
  */
 
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
-import { Position, PositionSide } from '../../types';
+import { Position, PositionSide } from '../../types/legacy';
 import { PERCENT_MULTIPLIER } from '../../constants';
 
 // ============================================================================

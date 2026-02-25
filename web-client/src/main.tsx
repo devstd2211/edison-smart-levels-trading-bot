@@ -3,6 +3,23 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+type ServerConfig = {
+  api?: {
+    port?: number;
+    url?: string;
+  };
+  websocket?: {
+    port?: number;
+    url?: string;
+  };
+};
+
+declare global {
+  interface Window {
+    __SERVER_CONFIG__?: ServerConfig;
+  }
+}
+
 /**
  * Initialize server configuration on app startup
  * This fetches the dynamic API/WebSocket ports from the server
@@ -17,7 +34,7 @@ async function initializeServerConfig() {
       if (data.success) {
         console.log('[App] Server config loaded:', data.data);
         // Store in window for global access
-        (window as any).__SERVER_CONFIG__ = data.data;
+        window.__SERVER_CONFIG__ = data.data as ServerConfig;
       }
     }
   } catch (error) {

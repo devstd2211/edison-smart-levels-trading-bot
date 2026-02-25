@@ -15,9 +15,9 @@ import { GracefulShutdownManager } from '../../services/graceful-shutdown.servic
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide, Position } from '../../types';
+import { LoggerService, PositionSide, Position } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
-import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/live-trading.types';
+import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/live-trading';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -603,3 +603,4 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     });
   });
 });
+

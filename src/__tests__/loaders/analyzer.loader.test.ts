@@ -7,8 +7,8 @@
  * 3. Implement IAnalyzer interface
  */
 
-import { AnalyzerType } from '../../types/analyzer-type.enum';
-import { IAnalyzer } from '../../types/analyzer.interface';
+import { AnalyzerType } from '../../types/analyzer';
+import { IAnalyzer } from '../../types/analyzer';
 
 describe('Analyzer Loader & Registry - Phase 3.4 Integration Tests', () => {
   describe('AnalyzerType Enum Completeness', () => {
@@ -214,3 +214,4 @@ describe('Analyzer Loader & Registry - Phase 3.4 Integration Tests', () => {
     });
   });
 });
+

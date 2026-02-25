@@ -24,7 +24,7 @@
  */
 
 import { BotEventBus } from './event-bus';
-import { LoggerService, PositionSide } from '../types';
+import { LoggerService, PositionSide } from '../types/legacy';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { ActionQueueService } from './action-queue.service';
 import { IExchange } from '../interfaces/IExchange';
@@ -41,9 +41,9 @@ import {
   IGracefulShutdownManager,
   EmergencyCloseReason,
   LiveTradingEventType,
-} from '../types/live-trading.types';
+} from '../types/live-trading';
 
-import { ActionType, ClosePercentAction } from '../types/architecture.types';
+import { ActionType, ClosePercentAction } from '../types/architecture';
 
 /**
  * GracefulShutdownManager: Safe bot shutdown with state persistence
@@ -560,3 +560,4 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     return fs.existsSync(filePath);
   }
 }
+

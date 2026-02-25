@@ -5,7 +5,7 @@
  */
 
 import { TimeframeProvider } from '../../providers/timeframe.provider';
-import { TimeframeRole, TimeframeConfig } from '../../types';
+import { TimeframeRole, TimeframeConfig } from '../../types/legacy';
 
 describe('TimeframeProvider', () => {
   // ============================================================================

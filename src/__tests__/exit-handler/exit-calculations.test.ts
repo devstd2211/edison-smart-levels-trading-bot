@@ -8,7 +8,7 @@
 import * as ExitCalculations from '../../exit-handler/exit-calculations';
 import { Position } from '../../types/core';
 import { PositionSide } from '../../types/enums';
-import { TPLevelConfig } from '../../types/exit-strategy.types';
+import { TPLevelConfig } from '../../types/exit-strategy';
 
 // ============================================================================
 // HELPERS
@@ -527,3 +527,4 @@ describe('ExitCalculations - Edge Cases', () => {
     expect(JSON.stringify(position)).toBe(originalJSON);
   });
 });
+

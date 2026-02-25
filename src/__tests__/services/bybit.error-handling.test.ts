@@ -13,7 +13,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { ExchangeAPIError, OrderTimeoutError } from '../../errors/DomainErrors';
 import { BybitService } from '../../services/bybit/bybit.service';
-import { LoggerService, ExchangeConfig, PositionSide } from '../../types';
+import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 
 /**
  * Helper: Create a retryable error for testing

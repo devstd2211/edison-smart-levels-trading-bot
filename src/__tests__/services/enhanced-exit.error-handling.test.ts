@@ -13,7 +13,7 @@
 
 import { EnhancedExitService, EnhancedExitConfig } from '../../services/enhanced-exit.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, SignalDirection } from '../../types';
+import { LoggerService, SignalDirection } from '../../types/legacy';
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: LoggerService;

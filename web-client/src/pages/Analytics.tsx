@@ -8,6 +8,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { BarChart3, TrendingUp, Filter, ChevronUp, ChevronDown, Target } from 'lucide-react';
 import { dataApi } from '../services/api.service';
+import type { WebApiPositionHistoryEntry } from '../types';
 
 export interface Trade {
   id: string;
@@ -34,6 +35,12 @@ export interface AnalyticsFilter {
   status?: 'OPEN' | 'CLOSED' | 'ALL';
 }
 
+const isSideFilter = (value: string): value is AnalyticsFilter['side'] =>
+  value === 'LONG' || value === 'SHORT' || value === 'ALL';
+
+const isStatusFilter = (value: string): value is AnalyticsFilter['status'] =>
+  value === 'OPEN' || value === 'CLOSED' || value === 'ALL';
+
 // Inline component: Filter Panel
 function FilterPanel({ filter, onFilterChange }: { filter: AnalyticsFilter; onFilterChange: (f: AnalyticsFilter) => void }) {
   const [startDate, setStartDate] = useState('');
@@ -45,8 +52,8 @@ function FilterPanel({ filter, onFilterChange }: { filter: AnalyticsFilter; onFi
     onFilterChange({
       startDate: startDate ? new Date(startDate).getTime() : undefined,
       endDate: endDate ? new Date(endDate).getTime() : undefined,
-      side: side as any,
-      status: status as any,
+      side,
+      status,
     });
   };
 
@@ -87,7 +94,12 @@ function FilterPanel({ filter, onFilterChange }: { filter: AnalyticsFilter; onFi
           <label className="block text-sm font-medium text-gray-700 mb-2">Side</label>
           <select
             value={side}
-            onChange={(e) => setSide(e.target.value as any)}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (isSideFilter(next)) {
+                setSide(next);
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">All</option>
@@ -99,7 +111,12 @@ function FilterPanel({ filter, onFilterChange }: { filter: AnalyticsFilter; onFi
           <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as any)}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (isStatusFilter(next)) {
+                setStatus(next);
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">All</option>
@@ -320,9 +337,9 @@ export function Analytics() {
     const loadTrades = async () => {
       try {
         setLoading(true);
-        const response = await dataApi.getPositionHistory(500) as any;
-        if (response?.success && response?.data?.positions) {
-          const tradesData = (response.data?.positions as any[]).map((pos: any) => ({
+        const response = await dataApi.getPositionHistory(500);
+        if (response.success && response.data?.positions) {
+          const tradesData = response.data.positions.map((pos: WebApiPositionHistoryEntry) => ({
             id: pos.id || `${pos.entryTime}-${pos.side}`,
             symbol: pos.symbol || 'UNKNOWN',
             side: pos.side,
@@ -337,8 +354,8 @@ export function Analytics() {
             entryCondition: pos.entryCondition,
             exitCondition: pos.exitCondition,
           }));
-          setTrades(tradesData as any);
-          applyFilters(tradesData as any, filter);
+          setTrades(tradesData);
+          applyFilters(tradesData, filter);
         }
       } catch (error) {
         console.error('Failed to load trades:', error);

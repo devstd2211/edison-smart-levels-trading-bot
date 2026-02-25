@@ -17,7 +17,7 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 import { TimeService } from '../../services/time.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeSyncError, TimeSyncTimeoutError } from '../../errors/DomainErrors';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let timeService: TimeService;

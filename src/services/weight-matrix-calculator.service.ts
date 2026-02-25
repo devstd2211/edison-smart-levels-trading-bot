@@ -1,13 +1,13 @@
 import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER } from '../constants';
 import { INTEGER_MULTIPLIERS, RATIO_MULTIPLIERS, MATH_BOUNDS } from '../constants/technical.constants';
+import { LoggerService } from './logger.service';
 import {
   WeightMatrixConfig,
   WeightMatrixInput,
   IndicatorWeight,
   SignalScoreBreakdown,
-  SignalDirection,
-  LoggerService,
-} from '../types';
+} from '../types/legacy';
+import { SignalDirection } from '../types/enums';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
 

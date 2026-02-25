@@ -11,7 +11,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LogLevel, AnomalyDetectionStrategicConfig } from '../types';
+import { LogLevel, AnomalyDetectionStrategicConfig } from '../types/legacy';
 import {
   AnomalyResult,
   AnomalyType,
@@ -25,7 +25,7 @@ import {
   VolatilityStats,
   AnomalyDetectionConfig,
   DEFAULT_ANOMALY_DETECTION_CONFIG,
-} from '../types/anomaly-detection.interface';
+} from '../types/anomaly-detection';
 import {
   DEFAULT_ANOMALY_DETECTION,
   ANOMALY_DETECTION_TECHNICAL,
@@ -641,3 +641,4 @@ export class AnomalyDetectionService {
     }
   }
 }
+

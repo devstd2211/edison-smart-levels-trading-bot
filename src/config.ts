@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { Config } from './types';
+import { Config } from './types/legacy';
 
 // Load .env file
 dotenv.config();
@@ -36,15 +36,16 @@ export function getConfig(): Config {
 
   // PHASE 8.5: Load and merge strategy.json if specified in config
   // Strategy config takes precedence over base config.json
-  if ((config as any).meta?.strategy || (config as any).meta?.strategyFile) {
-    const strategyFileName = (config as any).meta.strategyFile ||
-      `strategies/json/${(config as any).meta.strategy}.strategy.json`;
+  const meta = config.meta;
+  if (meta?.strategy || meta?.strategyFile) {
+    const strategyFileName = meta.strategyFile ||
+      `strategies/json/${meta.strategy}.strategy.json`;
     const strategyPath = path.join(__dirname, '..', strategyFileName);
 
     if (fs.existsSync(strategyPath)) {
       console.log('🔍 DEBUG: Loading strategy from:', strategyPath);
       const strategyFile = fs.readFileSync(strategyPath, 'utf-8');
-      const strategyConfig = JSON.parse(strategyFile) as any;
+      const strategyConfig = JSON.parse(strategyFile) as Partial<Config>;
 
       // Merge strategy into base config (strategy takes precedence)
       // This ensures strategy.json overrides config.json for:
@@ -62,7 +63,7 @@ export function getConfig(): Config {
 
       if (strategyConfig.analyzers) {
         console.log('✅ Strategy defines analyzers - using strategy config');
-        (config as any).analyzers = strategyConfig.analyzers;
+        config.analyzers = strategyConfig.analyzers;
       }
 
       if (strategyConfig.riskManagement) {
@@ -75,21 +76,23 @@ export function getConfig(): Config {
 
       if (strategyConfig.filters) {
         console.log('✅ Strategy defines filters - merging with config');
-        (config as any).filters = {
-          ...(config as any).filters,
+        config.filters = {
+          ...config.filters,
           ...strategyConfig.filters,
         };
       }
 
       console.log('✅ Strategy merged into config', {
-        strategy: (config as any).meta.strategy,
+        strategy: config.meta?.strategy,
         indicatorsAfterMerge: Object.keys(config.indicators || {}),
       });
 
       // DEBUG: Log enabled/disabled status of each indicator
       console.log('🔍 DEBUG: Indicator enabled status after merge:');
       Object.entries(config.indicators || {}).forEach(([key, val]) => {
-        const enabled = (val as any)?.enabled !== false;
+        const enabled = typeof val === 'object' && val !== null
+          ? (val as { enabled?: boolean }).enabled !== false
+          : true;
         console.log(`  ${key}: ${enabled ? '✅ ENABLED' : '❌ DISABLED'}`);
       });
     } else {

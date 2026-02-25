@@ -9,7 +9,7 @@
  * - Set margin mode
  */
 
-import { Position, PositionSide } from '../../types';
+import { Position, PositionSide } from '../../types/legacy';
 import { BybitBase, BYBIT_SUCCESS_CODE, POSITION_SIZE_ZERO, POSITION_IDX_ONE_WAY } from './bybit-base.partial';
 import { isCriticalApiError } from '../../utils/error-helper';
 

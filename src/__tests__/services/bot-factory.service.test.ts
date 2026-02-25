@@ -7,7 +7,7 @@
 
 import { BotFactory } from '../../services/bot-factory.service';
 import { BotServices } from '../../services/bot-services';
-import { Config } from '../../types';
+import { Config } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
 

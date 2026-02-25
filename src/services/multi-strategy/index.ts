@@ -49,7 +49,8 @@ export type {
   StrategySwitchResult,
   StrategyHealthCheckResult,
   ConcurrencyConfig,
-} from '../../types/multi-strategy-types';
+} from '../../types/multi-strategy';
 
 // Re-export enums
-export { StrategyEventType, StrategyHealthStatus, ConcurrencyMode } from '../../types/multi-strategy-types';
+export { StrategyEventType, StrategyHealthStatus, ConcurrencyMode } from '../../types/multi-strategy';
+

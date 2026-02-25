@@ -15,9 +15,9 @@
 import { LoggerService } from './logger.service';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { StrategyAnalyzerConfig } from '../types/strategy-config.types';
-import { IIndicator } from '../types/indicator.interface';
-import { IndicatorType } from '../types/indicator-type.enum';
+import { StrategyAnalyzerConfig } from '../types/strategy-config';
+import { IIndicator } from '../types/indicator';
+import { IndicatorType } from '../types/indicator';
 
 // Lazy-load analyzer types for type safety
 type AnalyzerInstance = any; // Will be typed as specific analyzer interfaces in real code
@@ -423,3 +423,4 @@ export class AnalyzerRegistryService {
 }
 
 export default AnalyzerRegistryService;
+

@@ -1,6 +1,6 @@
 import { DECIMAL_PLACES, BYBIT_FEES } from '../constants';
 import { EPSILON } from '../constants/technical.constants';
-import { LoggerService, PositionSide } from '../types';
+import { LoggerService, PositionSide } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { TakeProfitCalculationError } from '../errors/DomainErrors';
 

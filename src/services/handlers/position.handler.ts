@@ -11,12 +11,12 @@
  * Extracted from bot.ts setupMonitorHandlers() lines 502-599
  */
 
-import { LoggerService, Position, ExitType, PositionSide } from '../../types';
+import { LoggerService, Position, ExitType, PositionSide } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import { PositionLifecycleService } from '../position-lifecycle.service';
 import { PositionExitingService } from '../position-exiting.service';
 import { TelegramService } from '../telegram.service';
-import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../types';
+import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionMonitoringError } from '../../errors/DomainErrors';
 

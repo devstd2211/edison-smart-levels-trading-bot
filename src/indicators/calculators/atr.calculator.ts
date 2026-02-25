@@ -1,5 +1,5 @@
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
-import { Candle } from '../../types';
+import { IIndicatorCalculator } from '../../types/indicator';
+import { Candle } from '../../types/core';
 
 /**
  * ATR Calculator - calculates Average True Range for multiple periods and timeframes
@@ -106,3 +106,4 @@ export function calculateATR(candles: Candle[], period: number): number {
 
   return Math.round(atr * 10000) / 10000; // Round to 4 decimals for prices
 }
+

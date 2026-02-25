@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { dataApi } from '../services/api.service';
+import type { WebApiPositionHistoryEntry } from '../types';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -480,22 +481,21 @@ export function AdvancedAnalytics() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await dataApi.getPositionHistory(1000) as any; // Get last 1000 trades
-        if (response?.success && response?.data?.positions) {
+        const response = await dataApi.getPositionHistory(1000); // Get last 1000 trades
+        if (response.success && response.data?.positions) {
           // Map API response to Trade interface
-          const mappedTrades = (response.data?.positions as any[]).map((pos: any) => ({
-            id: pos.id || `${pos.openedAt}-${Math.random()}`,
+          const mappedTrades = response.data.positions.map((pos: WebApiPositionHistoryEntry) => ({
+            id: pos.id || `${pos.entryTime}-${Math.random()}`,
             symbol: pos.symbol || 'UNKNOWN',
             side: pos.side || 'LONG',
             entryPrice: pos.entryPrice || 0,
             exitPrice: pos.exitPrice,
             quantity: pos.quantity || 0,
             leverage: pos.leverage || 1,
-            openedAt: pos.openedAt || 0,
-            closedAt: pos.closedAt,
-            realizedPnL: pos.realizedPnL,
-            unrealizedPnL: pos.unrealizedPnL,
-            status: pos.status || 'CLOSED',
+            openedAt: pos.entryTime || 0,
+            closedAt: pos.exitTime,
+            realizedPnL: pos.pnl,
+            status: pos.exitTime ? 'CLOSED' : 'OPEN',
             entryCondition: pos.entryCondition,
             exitCondition: pos.exitCondition,
           }));

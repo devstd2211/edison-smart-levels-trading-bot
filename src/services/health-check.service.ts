@@ -13,8 +13,9 @@
  * Phase: 14.1.2 - Health Checks
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import type { IMonitoringHealthReader } from '../interfaces/IMonitoringReaders';
 
 // ============================================================================
 // INTERFACES
@@ -88,7 +89,7 @@ export interface IWebSocketService {
 // SERVICE
 // ============================================================================
 
-export class HealthCheckService {
+export class HealthCheckService implements IMonitoringHealthReader {
   private readonly startTime: number;
   private readonly thresholds: {
     memoryUsagePercent: number;

@@ -8,7 +8,7 @@
  */
 
 import { ExitOrchestrator } from '../../orchestrators/exit.orchestrator';
-import { Position, PositionSide, PositionState, TakeProfit } from '../../types';
+import { Position, PositionSide, PositionState, TakeProfit } from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),

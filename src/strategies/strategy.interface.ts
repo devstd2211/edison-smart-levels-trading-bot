@@ -5,7 +5,7 @@
  * Allows bot to support multiple strategies with unified API.
  */
 
-import { SignalDirection } from '../types';
+import { SignalDirection } from '../types/enums';
 
 // ============================================================================
 // STRATEGY EVALUATION

@@ -10,7 +10,7 @@
 
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { Position } from '../../types';
+import { Position } from '../../types/legacy';
 
 const createMockErrorHandler = () => {
   const mockLogger = {

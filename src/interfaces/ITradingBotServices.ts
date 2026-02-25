@@ -4,14 +4,14 @@
  * Narrow interface for TradingBot dependencies.
  */
 
-import type { Position } from '../types';
-import type { IWebApiServices } from './IWebApiServices';
-import type { IMonitoringServices } from './IMonitoringServices';
+import type { Position } from '../types/position';
+import type { IWebApiReadServices } from './IWebApiServices';
+import type { IMonitoringReadServices } from './IMonitoringServices';
 import type { IExecutionServices } from './IExecutionServices';
 import type { IRiskServices } from './IRiskServices';
 import type { ICoreServices } from './ICoreServices';
 
-export interface ITradingBotServices extends IWebApiServices {
+export interface ITradingBotServices extends IWebApiReadServices {
   coreServices: ICoreServices;
   tradingOrchestrator: {
     enableTestMode(): void;
@@ -21,12 +21,12 @@ export interface ITradingBotServices extends IWebApiServices {
     getCurrentPosition(): Position | null;
   };
   positionMonitor: {
-    on(event: string, listener: (...args: any[]) => void): void;
+    on(event: string, listener: (...args: unknown[]) => void): void;
   };
   dashboard?: {
     recordEvent(type: string, message: string): void;
   };
-  monitoringServices: IMonitoringServices;
+  monitoringServices: IMonitoringReadServices;
   executionServices: Pick<IExecutionServices, 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'realTimeRiskMonitor'>;
   riskServices: IRiskServices;
 }

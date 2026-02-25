@@ -24,7 +24,7 @@ import {
   TrendBias,
   Position,
   Candle,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

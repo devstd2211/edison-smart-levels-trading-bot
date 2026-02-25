@@ -21,11 +21,11 @@ import type {
   StrategyFactoryConfig,
   StrategyLoadingOptions,
   StrategyRemovalOptions,
-} from '../../types/multi-strategy-types';
-import type { StrategyConfig } from '../../types/strategy-config.types';
-import type { ConfigNew } from '../../types/config-new.types';
+} from '../../types/multi-strategy';
+import type { StrategyConfig } from '../../types/strategy-config';
+import type { ConfigNew } from '../../types/config/config-new.types';
 import type { IExchange } from '../../interfaces/IExchange';
-import type { IAnalyzer } from '../../types/analyzer.interface';
+import type { IAnalyzer } from '../../types/analyzer';
 import type { ILogger } from '../../interfaces/IMonitoring';
 
 /**
@@ -342,3 +342,4 @@ interface StrategyLoaderService {
 interface ConfigMergerService {
   mergeConfigs(base: ConfigNew, strategy: StrategyConfig): ConfigNew;
 }
+

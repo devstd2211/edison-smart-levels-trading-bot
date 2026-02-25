@@ -19,7 +19,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
  * - Backward compatible (works with or without ErrorHandler)
  */
 
-import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../types';
+import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { FundingRateApiError, FundingRateCacheError } from '../errors/DomainErrors';
 

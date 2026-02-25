@@ -11,7 +11,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolatilityRegimeService } from '../../services/volatility-regime.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { ValidationError, ConfigurationError } from '../../errors/DomainErrors';
-import { LoggerService, VolatilityRegime } from '../../types';
+import { LoggerService, VolatilityRegime } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS

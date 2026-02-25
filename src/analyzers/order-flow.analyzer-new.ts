@@ -1,9 +1,9 @@
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
-import type { BreakoutAnalyzerConfigNew } from '../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 // Default configuration values
 const DEFAULT_MIN_CANDLES = 15;
@@ -130,3 +130,4 @@ export class OrderFlowAnalyzerNew implements IAnalyzer {
   isEnabled(): boolean { return this.enabled; }
   getConfig() { return { enabled: this.enabled, weight: this.weight, priority: this.priority }; }
 }
+

@@ -12,7 +12,7 @@ import { JSON_INDENT } from '../constants/technical.constants';
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { TradeRecord, EntryCondition, ExitCondition, PositionSide, LoggerService, TradeHistoryConfig } from '../types';
+import { TradeRecord, EntryCondition, ExitCondition, PositionSide, LoggerService, TradeHistoryConfig } from '../types/legacy';
 import { TradeHistoryService, TradeRecord as CSVTradeRecord } from './trade-history.service';
 import { VirtualBalanceService } from './virtual-balance.service';
 import { IJournalRepository } from '../repositories/IRepositories';

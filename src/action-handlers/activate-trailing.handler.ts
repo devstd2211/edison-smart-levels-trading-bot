@@ -4,14 +4,18 @@
  * Executes the action to activate trailing stop for position
  */
 
-import { IActionHandler, ActivateTrailingAction, ActionResult, ActionType, ActivateTrailingExitActionDTO } from '../types/architecture.types';
+import { IActionHandler, ActivateTrailingAction, ActionResult, ActionType, ActivateTrailingExitActionDTO } from '../types/architecture';
 import { PositionExitingService } from '../services/position-exiting.service';
 import { PositionLifecycleService } from '../services/position-lifecycle.service';
 import { LoggerService } from '../services/logger.service';
-import { ExitType, ExitAction } from '../types';
+import { ExitType, ExitAction } from '../types/enums';
 
 export class ActivateTrailingHandler implements IActionHandler {
   readonly name = 'ActivateTrailingHandler';
+
+  private isAction(value: unknown): value is { type?: unknown } {
+    return typeof value === 'object' && value !== null && 'type' in value;
+  }
 
   constructor(
     private positionExitingService: PositionExitingService,
@@ -22,8 +26,8 @@ export class ActivateTrailingHandler implements IActionHandler {
   /**
    * Check if this handler can process the action
    */
-  canHandle(action: any): action is ActivateTrailingAction {
-    return action?.type === ActionType.ACTIVATE_TRAILING;
+  canHandle(action: unknown): action is ActivateTrailingAction {
+    return this.isAction(action) && action.type === ActionType.ACTIVATE_TRAILING;
   }
 
   /**
@@ -103,3 +107,4 @@ export class ActivateTrailingHandler implements IActionHandler {
     }
   }
 }
+

@@ -7,8 +7,15 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
+import type { CandlestickData, HistogramData, Time, ISeriesApi, SeriesMarker } from 'lightweight-charts';
 import { TrendingUp } from 'lucide-react';
 import { dataApi } from '../../services/api.service';
+import type {
+  PositionClosedPayload,
+  PositionOpenedPayload,
+  WebApiCandle,
+  WebApiPositionHistoryEntry,
+} from '../../types';
 import { wsClient } from '../../services/websocket.service';
 
 export interface Candle {
@@ -37,22 +44,25 @@ export function PriceChart({
 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
-  const candleSeriesRef = useRef<any>(null);
+  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const [displayCandles, setDisplayCandles] = useState<Candle[]>(candles);
   const [loading, setLoading] = useState(true);
-  const [markers, setMarkers] = useState<any[]>([]);
+  const [markers, setMarkers] = useState<SeriesMarker<Time>[]>([]);
 
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
     try {
       setLoading(true);
-      const response = await dataApi.getCandles(tf, 100) as any;
-      if (response?.success && response?.data?.candles) {
+      const response = await dataApi.getCandles(tf, 100);
+      if (response.success && response.data?.candles) {
         // Normalize candles: API returns 'timestamp' but component expects 'time'
-        let normalizedCandles = response.data.candles.map((c: any) => ({
-          ...c,
-          time: c.time || c.timestamp, // Support both 'time' and 'timestamp' field names
-        })) as Candle[];
+        let normalizedCandles = response.data.candles.map((c: WebApiCandle) => {
+          const time = (c as WebApiCandle & { time?: number | string }).time;
+          return {
+            ...c,
+            time: time ?? c.timestamp, // Support both 'time' and 'timestamp' field names
+          };
+        }) as Candle[];
 
         // Remove duplicates - keep last occurrence of each timestamp
         const uniqueByTime = new Map<number, Candle>();
@@ -79,17 +89,17 @@ export function PriceChart({
   // Fetch position history and convert to markers
   const loadPositionMarkers = async () => {
     try {
-      const response = await dataApi.getPositionHistory(50) as any;
-      if (response?.success && response?.data?.positions) {
-        const newMarkers = (response.data.positions as any[])
-          .filter((pos: any) => pos.entryTime) // Only positions with entry time
-          .flatMap((pos: any) => {
-            const posMarkers = [];
+      const response = await dataApi.getPositionHistory(50);
+      if (response.success && response.data?.positions) {
+        const newMarkers = response.data.positions
+          .filter((pos: WebApiPositionHistoryEntry) => pos.entryTime) // Only positions with entry time
+          .flatMap((pos: WebApiPositionHistoryEntry) => {
+            const posMarkers: SeriesMarker<Time>[] = [];
 
             // Entry marker
             if (pos.entryTime) {
               posMarkers.push({
-                time: Math.floor(pos.entryTime / 1000), // Convert to seconds
+                time: Math.floor(pos.entryTime / 1000) as Time, // Convert to seconds
                 position: pos.side === 'LONG' ? 'belowBar' : 'aboveBar',
                 color: pos.side === 'LONG' ? '#22c55e' : '#ef4444',
                 shape: pos.side === 'LONG' ? 'arrowUp' : 'arrowDown',
@@ -101,7 +111,7 @@ export function PriceChart({
             // Exit marker (if position was closed)
             if (pos.exitTime) {
               posMarkers.push({
-                time: Math.floor(pos.exitTime / 1000),
+                time: Math.floor(pos.exitTime / 1000) as Time,
                 position: pos.side === 'LONG' ? 'aboveBar' : 'belowBar',
                 color: pos.pnl >= 0 ? '#22c55e' : '#ef4444',
                 shape: 'circle',
@@ -128,25 +138,32 @@ export function PriceChart({
 
   // Listen for new candles via WebSocket
   useEffect(() => {
-    wsClient.on('CANDLE_CLOSED', (data: any) => {
+    const handleCandleClosed = (data: { timeframe: string; candle: WebApiCandle }) => {
       if (data.timeframe === timeframe) {
-        setDisplayCandles((prev) => [...prev.slice(-99), data.candle]);
+        const candle: Candle = {
+          ...data.candle,
+          time: data.candle.timestamp,
+        };
+        setDisplayCandles((prev) => [...prev.slice(-99), candle]);
       }
-    });
+    };
 
-    // Listen for new positions
-    wsClient.on('POSITION_OPENED', (data: any) => {
+    const handlePositionOpened = (_data: PositionOpenedPayload) => {
       void loadPositionMarkers();
-    });
+    };
 
-    wsClient.on('POSITION_CLOSED', (data: any) => {
+    const handlePositionClosed = (_data: PositionClosedPayload) => {
       void loadPositionMarkers();
-    });
+    };
+
+    wsClient.on('CANDLE_CLOSED', handleCandleClosed);
+    wsClient.on('POSITION_OPENED', handlePositionOpened);
+    wsClient.on('POSITION_CLOSED', handlePositionClosed);
 
     return () => {
-      wsClient.off('CANDLE_CLOSED', () => {});
-      wsClient.off('POSITION_OPENED', () => {});
-      wsClient.off('POSITION_CLOSED', () => {});
+      wsClient.off('CANDLE_CLOSED', handleCandleClosed);
+      wsClient.off('POSITION_OPENED', handlePositionOpened);
+      wsClient.off('POSITION_CLOSED', handlePositionClosed);
     };
   }, [timeframe]);
 
@@ -192,14 +209,14 @@ export function PriceChart({
       return timeA - timeB;
     });
 
-    const formattedCandles = sortedCandles
+    const formattedCandles: CandlestickData[] = sortedCandles
       .filter(c => c && c.time && c.open && c.close)
       .map(c => {
         const timeInSeconds = Number(c.time) > 10000000000
           ? Math.floor(Number(c.time) / 1000)
           : Math.floor(Number(c.time));
         return {
-          time: timeInSeconds,
+          time: timeInSeconds as Time,
           open: Number(c.open),
           high: Number(c.high),
           low: Number(c.low),
@@ -207,7 +224,7 @@ export function PriceChart({
         };
       })
       // Remove duplicates - keep last occurrence of each timestamp
-      .reduce((acc: any[], c) => {
+      .reduce((acc: CandlestickData[], c) => {
         const lastIdx = acc.findIndex(x => x.time === c.time);
         if (lastIdx >= 0) {
           acc[lastIdx] = c; // Replace with newer data
@@ -220,7 +237,7 @@ export function PriceChart({
       .sort((a, b) => a.time - b.time);
 
     if (formattedCandles.length > 0) {
-      candlestickSeries.setData(formattedCandles as any);
+      candlestickSeries.setData(formattedCandles);
 
       // Calculate min and max prices from candles
       let minPrice = Infinity;
@@ -252,10 +269,10 @@ export function PriceChart({
           },
         });
 
-        const volumeData = formattedCandles.map((c, idx) => {
+        const volumeData: HistogramData[] = formattedCandles.map((c, idx) => {
           const originalCandle = displayCandles[idx];
           return {
-            time: c.time as any,
+            time: c.time,
             value: originalCandle?.volume || 0,
             color:
               originalCandle?.close >= originalCandle?.open
@@ -264,7 +281,7 @@ export function PriceChart({
           };
         });
 
-        volumeSeries.setData(volumeData as any);
+        volumeSeries.setData(volumeData);
       }
 
       // Add markers if available - MUST be sorted by time

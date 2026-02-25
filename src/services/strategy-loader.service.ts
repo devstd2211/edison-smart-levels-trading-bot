@@ -20,7 +20,7 @@ import {
   StrategyValidationError,
   StrategyAnalyzerConfig,
   StrategyMetadata,
-} from '../types/strategy-config.types';
+} from '../types/strategy-config';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import { StrategyLoadError, StrategyParseError } from '../errors/DomainErrors';
 
@@ -515,3 +515,4 @@ export class StrategyLoaderService {
     return strategies;
   }
 }
+

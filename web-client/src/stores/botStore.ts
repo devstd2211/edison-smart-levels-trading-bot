@@ -5,6 +5,7 @@
  */
 
 import { create } from 'zustand';
+import type { Position, Signal } from '../types';
 
 export interface BotState {
   // Bot status
@@ -13,21 +14,21 @@ export interface BotState {
   error: string | null;
 
   // Position data
-  currentPosition: any | null;
+  currentPosition: Position | null;
   balance: number;
   unrealizedPnL: number;
 
   // Recent signals
-  recentSignals: any[];
+  recentSignals: Signal[];
 
   // Actions
   setRunning: (running: boolean) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setPosition: (position: any | null) => void;
+  setPosition: (position: Position | null) => void;
   setBalance: (balance: number) => void;
   setUnrealizedPnL: (pnl: number) => void;
-  addSignal: (signal: any) => void;
+  addSignal: (signal: Signal) => void;
   clearSignals: () => void;
   reset: () => void;
 }
@@ -48,11 +49,11 @@ export const useBotStore = create<BotState>((set) => ({
   setRunning: (running: boolean) => set({ isRunning: running }),
   setLoading: (loading: boolean) => set({ isLoading: loading }),
   setError: (error: string | null) => set({ error }),
-  setPosition: (position: any | null) => set({ currentPosition: position }),
+  setPosition: (position: Position | null) => set({ currentPosition: position }),
   setBalance: (balance: number) => set({ balance }),
   setUnrealizedPnL: (pnl: number) => set({ unrealizedPnL: pnl }),
 
-  addSignal: (signal: any) =>
+  addSignal: (signal: Signal) =>
     set((state) => ({
       recentSignals: [signal, ...state.recentSignals].slice(0, 10),
     })),

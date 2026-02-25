@@ -14,7 +14,7 @@
  */
 
 import { TIME_UNITS, INTEGER_MULTIPLIERS } from '../constants';
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**

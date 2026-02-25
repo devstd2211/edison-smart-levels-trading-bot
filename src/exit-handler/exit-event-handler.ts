@@ -20,8 +20,8 @@ import {
   TPHitResult,
   PositionClosedResult,
   ExitHandlerResult,
-} from '../types/exit-strategy.types';
-import { LoggerService } from '../types';
+} from '../types/exit-strategy';
+import { LoggerService } from '../services/logger.service';
 import * as ExitCalculations from './exit-calculations';
 
 // ============================================================================
@@ -200,7 +200,7 @@ export class ExitEventHandler {
    */
   private async moveSlToBreakeven(
     symbol: string,
-    position: any,
+    position: ITPHitEvent['position'],
     tpConfig: TPLevelConfig,
     tpLevel: number,
   ): Promise<TPHitResult> {
@@ -265,10 +265,10 @@ export class ExitEventHandler {
    */
   private async activateTrailing(
     symbol: string,
-    position: any,
+    position: ITPHitEvent['position'],
     tpConfig: TPLevelConfig,
     tpLevel: number,
-    indicators?: any,
+    indicators?: ITPHitEvent['indicators'],
   ): Promise<TPHitResult> {
     try {
       // Get trailing config from TP or from general config
@@ -379,3 +379,4 @@ export class ExitEventHandler {
     }
   }
 }
+

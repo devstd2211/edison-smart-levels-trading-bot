@@ -10,7 +10,8 @@
  */
 
 import { TradingError, ErrorDomain, ErrorSeverity, ErrorContext } from './BaseError';
-import { Signal, Position } from '../types';
+import { Signal } from '../types/signal';
+import { Position } from '../types/position';
 
 // ============================================================================
 // TRADING DOMAIN ERRORS

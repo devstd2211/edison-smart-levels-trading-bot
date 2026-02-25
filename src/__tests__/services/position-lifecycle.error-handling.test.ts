@@ -24,7 +24,7 @@ import {
   Config,
   PositionSide,
   ExitType,
-} from '../../types';
+} from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
   LoggerService,

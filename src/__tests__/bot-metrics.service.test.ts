@@ -12,7 +12,7 @@
  */
 
 import { BotMetricsService, TradeMetrics } from '../services/bot-metrics.service';
-import { LoggerService } from '../types';
+import { LoggerService } from '../types/legacy';
 
 // Mock logger
 const createMockLogger = (): Partial<LoggerService> => ({

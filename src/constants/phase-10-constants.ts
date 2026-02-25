@@ -20,7 +20,7 @@ import type {
   SignalValidationConfig,
   PatternRecognitionStrategicConfig,
   AnomalyDetectionStrategicConfig,
-} from '../types';
+} from '../types/legacy';
 
 // =============================================================================
 // DEFAULT VALUES (used when config not provided)

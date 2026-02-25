@@ -1,5 +1,5 @@
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
-import { Candle } from '../../types';
+import { IIndicatorCalculator } from '../../types/indicator';
+import { Candle } from '../../types/core';
 
 /**
  * RSI Calculator - calculates RSI for multiple periods and timeframes
@@ -95,3 +95,4 @@ export function calculateRSI(candles: Candle[], period: number): number {
 
   return Math.round(rsi * 100) / 100; // Round to 2 decimals
 }
+

@@ -19,7 +19,7 @@
  * - SKIP: Logging errors (silent fail for non-critical logging)
  */
 
-import { LoggerService, MultiTimeframeAnalysis, TradingMode, TrendBias } from '../types';
+import { LoggerService, MultiTimeframeAnalysis, TradingMode, TrendBias } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // TrendBias enum values for comparisons

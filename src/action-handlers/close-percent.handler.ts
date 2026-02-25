@@ -4,14 +4,18 @@
  * Executes the action to close a percentage of position
  */
 
-import { IActionHandler, ClosePercentAction, ActionResult, ActionType, ClosePercentExitActionDTO } from '../types/architecture.types';
+import { IActionHandler, ClosePercentAction, ActionResult, ActionType, ClosePercentExitActionDTO } from '../types/architecture';
 import { PositionExitingService } from '../services/position-exiting.service';
 import { PositionLifecycleService } from '../services/position-lifecycle.service';
 import { LoggerService } from '../services/logger.service';
-import { ExitType, ExitAction } from '../types';
+import { ExitType, ExitAction } from '../types/enums';
 
 export class ClosePercentHandler implements IActionHandler {
   readonly name = 'ClosePercentHandler';
+
+  private isAction(value: unknown): value is { type?: unknown } {
+    return typeof value === 'object' && value !== null && 'type' in value;
+  }
 
   constructor(
     private positionExitingService: PositionExitingService,
@@ -22,8 +26,8 @@ export class ClosePercentHandler implements IActionHandler {
   /**
    * Check if this handler can process the action
    */
-  canHandle(action: any): action is ClosePercentAction {
-    return action?.type === ActionType.CLOSE_PERCENT;
+  canHandle(action: unknown): action is ClosePercentAction {
+    return this.isAction(action) && action.type === ActionType.CLOSE_PERCENT;
   }
 
   /**
@@ -103,3 +107,4 @@ export class ClosePercentHandler implements IActionHandler {
     }
   }
 }
+

@@ -3,7 +3,7 @@
  * Prevents FOMO entries after profitable exits
  */
 
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 export interface PostTPFilterConfig {
   enabled: boolean;

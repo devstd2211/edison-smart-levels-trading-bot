@@ -9,7 +9,7 @@
  */
 
 import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbook-manager.service';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 
 // ============================================================================
 // HELPERS

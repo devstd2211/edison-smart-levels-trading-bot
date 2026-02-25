@@ -1,4 +1,4 @@
-import { IndicatorType } from '../types/indicator-type.enum';
+import { IndicatorType } from '../types/indicator';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';
 
@@ -197,3 +197,4 @@ export class IndicatorRegistry {
     }
   }
 }
+

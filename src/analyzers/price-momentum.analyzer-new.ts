@@ -14,11 +14,11 @@
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
 import type { SignalDirection } from '../types/enums';
-import type { PriceMomentumAnalyzerConfigNew } from '../types/config-new.types';
+import type { PriceMomentumAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import type { LoggerService } from '../services/logger.service';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 // ============================================================================
 // CONSTANTS (DEFAULTS)
@@ -368,3 +368,4 @@ export class PriceMomentumAnalyzerNew implements IAnalyzer {
     };
   }
 }
+

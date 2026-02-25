@@ -9,7 +9,7 @@ import {
   SignalDirection,
   MicroWallDetectorConfig,
   OrderBook,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS

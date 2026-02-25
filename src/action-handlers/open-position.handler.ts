@@ -5,13 +5,17 @@
  * Delegates to PositionLifecycleService for actual execution
  */
 
-import { IActionHandler, OpenPositionAction, ActionResult, ActionType, AnyAction } from '../types/architecture.types';
+import { IActionHandler, OpenPositionAction, ActionResult, ActionType, AnyAction } from '../types/architecture';
 import { PositionLifecycleService } from '../services/position-lifecycle.service';
 import { LoggerService } from '../services/logger.service';
-import { Signal } from '../types';
+import type { Signal } from '../types/signal';
 
 export class OpenPositionHandler implements IActionHandler {
   readonly name = 'OpenPositionHandler';
+
+  private isAction(value: unknown): value is { type?: unknown } {
+    return typeof value === 'object' && value !== null && 'type' in value;
+  }
 
   constructor(
     private positionLifecycleService: PositionLifecycleService,
@@ -21,8 +25,8 @@ export class OpenPositionHandler implements IActionHandler {
   /**
    * Check if this handler can process the action
    */
-  canHandle(action: any): action is AnyAction {
-    return action?.type === ActionType.OPEN_POSITION;
+  canHandle(action: unknown): action is AnyAction {
+    return this.isAction(action) && action.type === ActionType.OPEN_POSITION;
   }
 
   /**
@@ -79,3 +83,4 @@ export class OpenPositionHandler implements IActionHandler {
     }
   }
 }
+

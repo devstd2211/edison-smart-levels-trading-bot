@@ -19,9 +19,9 @@
  */
 
 import { IndicatorRegistry } from '../services/indicator-registry.service';
-import { IIndicator } from '../types/indicator.interface';
-import { IndicatorType } from '../types/indicator-type.enum';
-import { IndicatorsConfig } from '../types/config.types';
+import { IIndicator } from '../types/indicator';
+import { IndicatorType } from '../types/indicator';
+import { IndicatorsConfig } from '../types/config/config.types';
 import { LoggerService } from '../services/logger.service';
 
 /**
@@ -127,3 +127,4 @@ export class IndicatorLoader {
     }
   }
 }
+

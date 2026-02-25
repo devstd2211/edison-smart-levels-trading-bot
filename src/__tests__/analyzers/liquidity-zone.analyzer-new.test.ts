@@ -1,7 +1,7 @@
 import { LiquidityZoneAnalyzerNew } from '../../analyzers/liquidity-zone.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
-import { AnalyzerType } from '../../types/analyzer-type.enum';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
+import { AnalyzerType } from '../../types/analyzer';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.65, priority: 6 };
@@ -141,3 +141,4 @@ describe('LiquidityZoneAnalyzerNew - State Tests', () => {
     expect(analyzer.getLastSignal()).toBeNull();
   });
 });
+

@@ -8,7 +8,7 @@
 import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types';
+import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types/legacy';
 
 // ============================================================================
 // FIXTURES

@@ -1,5 +1,5 @@
-import { IIndicatorPreCalculationService } from '../types/pre-calculation.interface';
-import { TimeframeRole } from '../types';
+import { IIndicatorPreCalculationService } from '../types/indicator';
+import { TimeframeRole } from '../types/legacy';
 
 /**
  * Mock Pre-Calculation Service for testing
@@ -71,3 +71,4 @@ export class MockPreCalculationService implements IIndicatorPreCalculationServic
     return this.entryTimeframe;
   }
 }
+

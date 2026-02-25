@@ -8,13 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Settings, Loader } from 'lucide-react';
 import { configApi } from '../../services/api.service';
 import { wsClient } from '../../services/websocket.service';
-
-export interface Strategy {
-  id: string;
-  name: string;
-  enabled: boolean;
-  config?: Record<string, any>;
-}
+import type { Strategy } from '../../types';
 
 interface StrategyStatusProps {
   strategies?: Strategy[];
@@ -29,9 +23,9 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
   useEffect(() => {
     const loadStrategies = async () => {
       try {
-        const response = await configApi.getStrategies() as any;
-        if (response?.success && response?.data?.strategies) {
-          setStrategies(response.data?.strategies as any);
+        const response = await configApi.getStrategies();
+        if (response.success && response.data?.strategies) {
+          setStrategies(response.data.strategies);
         }
       } catch (error) {
         console.error('Failed to load strategies:', error);
@@ -45,14 +39,16 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
 
   // Listen for strategy changes via WebSocket
   useEffect(() => {
-    wsClient.on('STRATEGIES_RELOADED', (data: any) => {
+    const handleStrategiesReloaded = (data: { strategies: Strategy[] }) => {
       if (data.strategies) {
         setStrategies(data.strategies);
       }
-    });
+    };
+
+    wsClient.on('STRATEGIES_RELOADED', handleStrategiesReloaded);
 
     return () => {
-      wsClient.off('STRATEGIES_RELOADED', () => {});
+      wsClient.off('STRATEGIES_RELOADED', handleStrategiesReloaded);
     };
   }, []);
 

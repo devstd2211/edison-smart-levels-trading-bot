@@ -21,7 +21,7 @@ import {
   PositionSide,
   LadderTpManagerConfig,
   Position,
-} from '../../types';
+} from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 
 // ============================================================================

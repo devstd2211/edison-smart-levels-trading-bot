@@ -15,7 +15,7 @@
  * - autoReset: Automatically close circuit after successful call (default: true)
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { TIME_INTERVALS, MAX_ERROR_HISTORY } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors'; // Phase 8.9.34: ErrorHandler integration
 

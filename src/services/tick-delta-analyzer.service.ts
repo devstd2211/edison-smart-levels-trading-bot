@@ -24,7 +24,7 @@ import {
   Tick,
   MomentumSpike,
   TickDeltaAnalyzerConfig,
-} from '../types';
+} from '../types/legacy';
 
 // ============================================================================
 // CONSTANTS

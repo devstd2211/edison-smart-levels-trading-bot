@@ -26,7 +26,7 @@ import {
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import { BinanceService } from './binance.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 /**
  * BinanceServiceAdapter implements IExchange by wrapping BinanceService

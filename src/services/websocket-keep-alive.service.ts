@@ -9,7 +9,7 @@
  */
 
 import WebSocket from 'ws';
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 
 /**
  * WebSocket Keep-Alive Service

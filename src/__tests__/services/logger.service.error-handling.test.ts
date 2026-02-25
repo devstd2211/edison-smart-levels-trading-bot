@@ -16,7 +16,7 @@
 
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LogLevel } from '../../types';
+import { LogLevel } from '../../types/legacy';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import * as fs from 'fs/promises';

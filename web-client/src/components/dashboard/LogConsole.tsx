@@ -8,6 +8,13 @@
 import React, { useEffect, useState } from 'react';
 import { Terminal, X } from 'lucide-react';
 import { wsClient } from '../../services/websocket.service';
+import type {
+  BotStatus,
+  ErrorPayload,
+  PositionClosedPayload,
+  PositionOpenedPayload,
+  SignalGeneratedPayload,
+} from '../../types';
 
 interface LogEntry {
   time: number;
@@ -29,7 +36,7 @@ export function LogConsole() {
     };
 
     // Listen for position events
-    wsClient.on('POSITION_OPENED', (data: any) => {
+    const handlePositionOpened = (data: PositionOpenedPayload) => {
       const side = data.position?.side || 'UNKNOWN';
       const price = data.position?.entryPrice || 0;
       const strategy = data.signal?.strategy || 'Unknown Strategy';
@@ -40,9 +47,9 @@ export function LogConsole() {
         `POSITION OPENED [${side}] @ ${price.toFixed(4)} - ${strategy} - ${reason}`,
         'POSITION'
       );
-    });
+    };
 
-    wsClient.on('POSITION_CLOSED', (data: any) => {
+    const handlePositionClosed = (data: PositionClosedPayload) => {
       const pnl = data.pnl || 0;
       const exitType = data.exitType || 'UNKNOWN';
       const level = pnl >= 0 ? 'SUCCESS' : 'WARN';
@@ -53,9 +60,9 @@ export function LogConsole() {
         `POSITION CLOSED [${exitType}] ${sign}${pnl.toFixed(2)} USDT (${pnl >= 0 ? 'PROFIT' : 'LOSS'})`,
         'POSITION'
       );
-    });
+    };
 
-    wsClient.on('SIGNAL_GENERATED', (data: any) => {
+    const handleSignalGenerated = (data: SignalGeneratedPayload) => {
       const strategy = data.strategy || 'Unknown';
       const direction = data.direction || 'UNKNOWN';
       const confidence = data.confidence || 0;
@@ -65,24 +72,30 @@ export function LogConsole() {
         `SIGNAL DETECTED [${strategy}] ${direction} @ ${confidence.toFixed(1)}% confidence`,
         'SIGNAL'
       );
-    });
+    };
 
-    wsClient.on('ERROR', (data: any) => {
-      const error = data.error || 'Unknown error';
+    const handleError = (data: ErrorPayload) => {
+      const error = data.error || data.message || 'Unknown error';
       addLog('ERROR', `ERROR: ${error}`, 'SYSTEM');
-    });
+    };
 
-    wsClient.on('BOT_STATUS_CHANGE', (data: any) => {
+    const handleBotStatusChange = (data: BotStatus) => {
       const status = data.isRunning ? 'STARTED' : 'STOPPED';
       addLog('INFO', `BOT ${status}`, 'BOT');
-    });
+    };
+
+    wsClient.on('POSITION_OPENED', handlePositionOpened);
+    wsClient.on('POSITION_CLOSED', handlePositionClosed);
+    wsClient.on('SIGNAL_GENERATED', handleSignalGenerated);
+    wsClient.on('ERROR', handleError);
+    wsClient.on('BOT_STATUS_CHANGE', handleBotStatusChange);
 
     return () => {
-      wsClient.off('POSITION_OPENED', () => {});
-      wsClient.off('POSITION_CLOSED', () => {});
-      wsClient.off('SIGNAL_GENERATED', () => {});
-      wsClient.off('ERROR', () => {});
-      wsClient.off('BOT_STATUS_CHANGE', () => {});
+      wsClient.off('POSITION_OPENED', handlePositionOpened);
+      wsClient.off('POSITION_CLOSED', handlePositionClosed);
+      wsClient.off('SIGNAL_GENERATED', handleSignalGenerated);
+      wsClient.off('ERROR', handleError);
+      wsClient.off('BOT_STATUS_CHANGE', handleBotStatusChange);
     };
   }, [maxLogs]);
 

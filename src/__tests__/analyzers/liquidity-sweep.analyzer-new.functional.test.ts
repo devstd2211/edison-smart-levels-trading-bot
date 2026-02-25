@@ -1,6 +1,6 @@
 import { LiquiditySweepAnalyzerNew } from '../../analyzers/liquidity-sweep.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { LiquiditySweepAnalyzerConfigNew } from '../../types/config-new.types';
+import type { LiquiditySweepAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): LiquiditySweepAnalyzerConfigNew {
   return { enabled: true, weight: 0.65, priority: 6 };
@@ -97,3 +97,4 @@ describe('LiquiditySweepAnalyzerNew - Functional: Reversal Patterns', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

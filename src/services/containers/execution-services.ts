@@ -9,6 +9,7 @@ import type { IExecutionServices } from '../../interfaces/IExecutionServices';
 
 export class ExecutionServices implements IExecutionServices {
   readonly positionManager: IExecutionServices['positionManager'];
+  readonly positionMonitor: IExecutionServices['positionMonitor'];
   readonly positionExitingService: IExecutionServices['positionExitingService'];
   readonly tradingOrchestrator: IExecutionServices['tradingOrchestrator'];
   readonly realTimeRiskMonitor: IExecutionServices['realTimeRiskMonitor'];
@@ -20,6 +21,7 @@ export class ExecutionServices implements IExecutionServices {
 
   constructor(deps: IExecutionServices) {
     this.positionManager = deps.positionManager;
+    this.positionMonitor = deps.positionMonitor;
     this.positionExitingService = deps.positionExitingService;
     this.tradingOrchestrator = deps.tradingOrchestrator;
     this.realTimeRiskMonitor = deps.realTimeRiskMonitor;

@@ -10,7 +10,7 @@
  * - Error handling with RETRY strategy for network failures
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import type { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { TimeSyncError } from '../errors/DomainErrors';

@@ -14,7 +14,7 @@
 
 import { StructureAwareExitService } from '../../services/structure-aware-exit.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointType } from '../../types';
+import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointType } from '../../types/legacy';
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let mockLogger: LoggerService;

@@ -13,7 +13,7 @@
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import { Candle, ExchangeConfig, TimeframeRole, LoggerService, KlineData, OrderbookData, TradeData } from '../types';
+import { Candle, ExchangeConfig, TimeframeRole, LoggerService, KlineData, OrderbookData, TradeData } from '../types/legacy';
 import { TimeframeProvider } from '../providers/timeframe.provider';
 import { TIMING_CONSTANTS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';

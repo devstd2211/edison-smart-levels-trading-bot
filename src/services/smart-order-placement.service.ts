@@ -22,10 +22,10 @@ import {
   OrderSplit,
   MarketConditions,
   OrderPriority,
-} from '../types/smart-order-placement.interface';
-import { Orderbook } from '../types/liquidity-heatmap.interface';
+} from '../types/smart-order-placement';
+import { Orderbook } from '../types/liquidity-heatmap';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LoggerService, SmartOrderPlacementConfig as SmartOrderPlacementStrategicConfig } from '../types';
+import { LoggerService, SmartOrderPlacementConfig as SmartOrderPlacementStrategicConfig } from '../types/legacy';
 import {
   DEFAULT_SMART_ORDER_PLACEMENT,
   SMART_ORDER_PLACEMENT_TECHNICAL,
@@ -1046,3 +1046,4 @@ export class SmartOrderPlacementService {
     }
   }
 }
+

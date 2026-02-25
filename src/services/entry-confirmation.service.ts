@@ -30,7 +30,7 @@ import { TIME_MULTIPLIERS } from '../constants/technical.constants';
  * - Logging failures never block entry confirmation operations
  */
 
-import { LoggerService, SignalDirection, EntryConfirmationConfig } from '../types';
+import { LoggerService, SignalDirection, EntryConfirmationConfig } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 // ============================================================================

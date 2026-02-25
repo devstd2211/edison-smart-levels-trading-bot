@@ -8,7 +8,10 @@
  *   npm run collect-data
  */
 
-import { LoggerService, LogLevel, DataCollectionConfig, Config } from './types';
+import { LoggerService } from './services/logger.service';
+import { LogLevel } from './types/enums';
+import type { DataCollectionConfig } from './types/config/config';
+import type { Config } from './types/legacy';
 import { DataCollectorService } from './services/data-collector.service';
 import { BybitService } from './services/bybit';
 import { BybitServiceAdapter } from './services/bybit/bybit-service.adapter';

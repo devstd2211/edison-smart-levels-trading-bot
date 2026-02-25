@@ -5,7 +5,7 @@
 
 import { StochasticAnalyzerNew } from '../../analyzers/stochastic.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { StochasticAnalyzerConfigNew } from '../../types/config-new.types';
+import type { StochasticAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -68,7 +68,7 @@ describe('StochasticAnalyzerNew - Functional: Uptrend with %K Bullish Cross', ()
 
     expect([SignalDirection.LONG, SignalDirection.HOLD]).toContain(signal.direction);
     expect(signal.confidence).toBeGreaterThan(0);
-    expect(signal.source).toBe('STOCHASTIC_ANALYZER');
+    expect(signal.source).toBe('STOCHASTIC_ANALYZER_NEW');
   });
 
   it('should maintain LONG signal during sustained uptrend', () => {
@@ -540,3 +540,5 @@ describe('StochasticAnalyzerNew - Functional: Extreme Market Conditions', () => 
     expect(signal.confidence).toBeGreaterThan(0);
   });
 });
+
+

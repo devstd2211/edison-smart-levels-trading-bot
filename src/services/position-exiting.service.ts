@@ -28,8 +28,8 @@ import {
   TradingConfig,
   RiskManagementConfig,
   Config,
-} from '../types';
-import { ExitActionDTO } from '../types/architecture.types';
+} from '../types/legacy';
+import { ExitActionDTO } from '../types/architecture';
 import type { IExchange } from '../interfaces/IExchange';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
@@ -1141,3 +1141,4 @@ export class PositionExitingService {
     return isLong ? currentPrice - trailingDistance : currentPrice + trailingDistance;
   }
 }
+

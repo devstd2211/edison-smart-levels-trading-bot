@@ -11,7 +11,7 @@ import {
   TradingContext,
   LoggerService,
   LogLevel,
-} from '../../types';
+} from '../../types/legacy';
 import { MULTIPLIERS } from '../../constants';
 
 /**

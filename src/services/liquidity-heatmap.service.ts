@@ -22,9 +22,9 @@ import {
   SupportResistanceLevels,
   SlippageEstimate,
   ExecutionCost,
-} from '../types/liquidity-heatmap.interface';
+} from '../types/liquidity-heatmap';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { LoggerService, LiquidityAnalysisConfig } from '../types';
+import { LoggerService, LiquidityAnalysisConfig } from '../types/legacy';
 import {
   DEFAULT_LIQUIDITY_ANALYSIS,
   LIQUIDITY_HEATMAP_TECHNICAL,
@@ -760,3 +760,4 @@ export class LiquidityHeatmapService {
     }
   }
 }
+

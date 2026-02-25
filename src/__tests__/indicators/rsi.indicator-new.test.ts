@@ -5,7 +5,7 @@
 
 import { RSIIndicatorNew } from '../../indicators/rsi.indicator-new';
 import type { Candle } from '../../types/core';
-import type { RsiIndicatorConfigNew } from '../../types/config-new.types';
+import type { RsiIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST FIXTURES
@@ -601,3 +601,4 @@ describe('RSI Indicator NEW', () => {
     });
   });
 });
+

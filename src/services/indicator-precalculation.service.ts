@@ -1,9 +1,9 @@
 import { CandleProvider } from '../providers/candle.provider';
-import { IIndicatorCache } from '../types/indicator-cache.interface';
-import { IIndicatorCalculator } from '../types/indicator-calculator.interface';
-import { IIndicatorPreCalculationService } from '../types/pre-calculation.interface';
+import { IIndicatorCache } from '../types/indicator';
+import { IIndicatorCalculator } from '../types/indicator';
+import { IIndicatorPreCalculationService } from '../types/indicator';
 import { LoggerService } from './logger.service';
-import { TimeframeRole } from '../types';
+import { TimeframeRole } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   IndicatorCalculationError,
@@ -389,3 +389,4 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
     );
   }
 }
+

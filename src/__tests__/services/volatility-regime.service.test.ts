@@ -4,7 +4,7 @@ import {
   LogLevel,
   VolatilityRegime,
   VolatilityRegimeConfig,
-} from '../../types';
+} from '../../types/legacy';
 
 describe('VolatilityRegimeService', () => {
   let service: VolatilityRegimeService;

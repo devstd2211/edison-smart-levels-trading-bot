@@ -26,10 +26,10 @@
  */
 
 import type { Candle } from '../types/core';
-import type { BollingerBandsConfigNew } from '../types/config-new.types';
-import type { IIndicator } from '../types/indicator.interface';
-import { validateIndicatorConfig } from '../types/config-new.types';
-import { IndicatorType } from '../types/indicator-type.enum';
+import type { BollingerBandsConfigNew } from '../types/config/config-new.types';
+import type { IIndicator } from '../types/indicator';
+import { validateIndicatorConfig } from '../types/config/config-new.types';
+import { IndicatorType } from '../types/indicator';
 
 // ============================================================================
 // BOLLINGER BANDS CALCULATOR - NEW VERSION
@@ -428,3 +428,4 @@ export class BollingerBandsIndicatorNew implements IIndicator {
     return this.period;
   }
 }
+

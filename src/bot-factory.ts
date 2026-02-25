@@ -14,7 +14,7 @@
  * - Easy to add pre/post-creation hooks
  */
 
-import { Config } from './types';
+import type { Config } from './types/legacy';
 import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
 import { BotServices } from './services/bot-services';
@@ -49,7 +49,7 @@ export class BotFactory {
         const strategyLoader = new StrategyLoaderService();
         const strategyMerger = new StrategyConfigMergerService();
 
-        const strategyFile = (config.meta as any).strategyFile || `strategies/json/${config.meta.strategy}.strategy.json`;
+        const strategyFile = config.meta?.strategyFile || `strategies/json/${config.meta.strategy}.strategy.json`;
         console.log(`📋 Loading strategy: ${config.meta.strategy}`);
         console.log(`   📄 File: ${strategyFile}`);
         const strategy = await strategyLoader.loadStrategy(config.meta.strategy);
@@ -122,7 +122,14 @@ export class BotFactory {
           );
           console.log('═'.repeat(80));
           Object.entries(strategy.indicators).forEach(([name, config]) => {
-            const cfg = config as any;
+            const cfg = config as Partial<{
+              period: number;
+              fastPeriod: number;
+              slowPeriod: number;
+              kPeriod: number;
+              dPeriod: number;
+              stdDev: number;
+            }>;
             const details: string[] = [];
             if (cfg.period) details.push(`period=${cfg.period}`);
             if (cfg.fastPeriod)

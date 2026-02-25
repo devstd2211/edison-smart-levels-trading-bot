@@ -1,6 +1,6 @@
 import { TrendDetectorAnalyzerNew } from '../../analyzers/trend-detector.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { TrendDetectorConfigNew } from '../../types/config-new.types';
+import type { TrendDetectorConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): TrendDetectorConfigNew {
   return { enabled: true, weight: 0.8, priority: 5, minEmaGapPercent: 0.1, minConfidence: 0.1, maxConfidence: 0.95 };
@@ -136,3 +136,4 @@ describe('TrendDetectorAnalyzerNew - Functional: Multiple Reversals', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

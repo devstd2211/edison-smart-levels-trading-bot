@@ -9,7 +9,7 @@
  */
 
 import type { KlineIntervalV3 } from 'bybit-api';
-import { Candle, CONFIDENCE_THRESHOLDS } from '../../types';
+import { Candle, CONFIDENCE_THRESHOLDS } from '../../types/legacy';
 import { BybitBase, BYBIT_SUCCESS_CODE, DEFAULT_CANDLE_LIMIT } from './bybit-base.partial';
 import { TIME_INTERVALS, TIME_MULTIPLIERS } from '../../constants/technical.constants';
 

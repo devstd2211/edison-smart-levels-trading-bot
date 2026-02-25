@@ -20,7 +20,7 @@ import {
   OrderBook,
   Candle,
   AggressiveFlow,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

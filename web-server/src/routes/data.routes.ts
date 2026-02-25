@@ -10,7 +10,17 @@
 
 import { Router, Request, Response } from 'express';
 import { BotBridgeService } from '../services/bot-bridge.service.js';
-import type { ApiResponse, Position } from '../types/api.types.js';
+import type {
+  ApiResponse,
+  Position,
+  WebApiCandle,
+  WebApiFundingRateView,
+  WebApiMarketData,
+  WebApiOrderBookView,
+  WebApiPositionHistoryEntry,
+  WebApiVolumeProfileView,
+  WebApiWallsView,
+} from '../types/api.types.js';
 
 export function createDataRoutes(bridge: BotBridgeService): Router {
   const router = Router();
@@ -63,12 +73,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/market
    * Get market data (price, RSI, EMA, ATR, etc.)
    */
-  router.get('/market', (_req: Request, res: Response<ApiResponse>) => {
+  router.get('/market', async (_req: Request, res: Response<ApiResponse<WebApiMarketData>>) => {
     try {
-      const marketData = bridge.getMarketData();
+      const marketData = await bridge.getMarketData();
       res.json({
         success: true,
-        data: marketData || {},
+        data: marketData,
         timestamp: Date.now(),
       });
     } catch (error) {
@@ -108,7 +118,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/candles?timeframe=5m&limit=100
    * Get candlestick data for web chart
    */
-  router.get('/candles', async (req: Request, res: Response<ApiResponse>) => {
+  router.get('/candles', async (req: Request, res: Response<ApiResponse<{ candles: WebApiCandle[] }>>) => {
     try {
       const timeframe = (req.query.timeframe as string) || '5m';
       const limit = parseInt((req.query.limit as string) || '100', 10);
@@ -133,7 +143,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/positions/history?limit=50
    * Get recent closed positions with entry/exit points
    */
-  router.get('/positions/history', async (req: Request, res: Response<ApiResponse>) => {
+  router.get('/positions/history', async (req: Request, res: Response<ApiResponse<{ positions: WebApiPositionHistoryEntry[] }>>) => {
     try {
       const limit = parseInt((req.query.limit as string) || '50', 10);
       const positions = await bridge.getPositionHistory(Math.min(limit, 500)); // Cap at 500
@@ -157,7 +167,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/orderbook/:symbol
    * Get orderbook snapshot for a trading pair
    */
-  router.get('/orderbook/:symbol', async (req: Request, res: Response<ApiResponse>) => {
+  router.get('/orderbook/:symbol', async (req: Request, res: Response<ApiResponse<WebApiOrderBookView>>) => {
     try {
       const { symbol } = req.params;
       if (!symbol) {
@@ -187,7 +197,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/walls/:symbol
    * Get detected walls (large orders)
    */
-  router.get('/walls/:symbol', async (req: Request, res: Response<ApiResponse>) => {
+  router.get('/walls/:symbol', async (req: Request, res: Response<ApiResponse<WebApiWallsView>>) => {
     try {
       const { symbol } = req.params;
       if (!symbol) {
@@ -217,7 +227,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/funding-rate/:symbol
    * Get current and predicted funding rate
    */
-  router.get('/funding-rate/:symbol', async (req: Request, res: Response<ApiResponse>) => {
+  router.get('/funding-rate/:symbol', async (req: Request, res: Response<ApiResponse<WebApiFundingRateView>>) => {
     try {
       const { symbol } = req.params;
       if (!symbol) {
@@ -247,7 +257,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/volume-profile/:symbol?limit=20
    * Get volume profile (price levels vs volume)
    */
-  router.get('/volume-profile/:symbol', async (req: Request, res: Response<ApiResponse>) => {
+  router.get('/volume-profile/:symbol', async (req: Request, res: Response<ApiResponse<WebApiVolumeProfileView>>) => {
     try {
       const { symbol } = req.params;
       const limit = parseInt((req.query.limit as string) || '20', 10);

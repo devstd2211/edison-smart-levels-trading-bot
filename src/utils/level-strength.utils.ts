@@ -10,7 +10,8 @@
  * - Volume (0-0.2): Higher volume at touches = stronger level
  */
 
-import { Candle, SwingPoint } from '../types';
+import { Candle } from '../types/core';
+import { SwingPoint } from '../types/pattern-recognition';
 
 // ============================================================================
 // INTERFACES

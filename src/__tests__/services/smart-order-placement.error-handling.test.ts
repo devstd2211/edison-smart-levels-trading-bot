@@ -17,10 +17,10 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { SmartOrderPlacementService } from '../../services/smart-order-placement.service';
 import {
   SmartOrderPlacementConfig,
-} from '../../types/smart-order-placement.interface';
-import { Orderbook } from '../../types/liquidity-heatmap.interface';
+} from '../../types/smart-order-placement';
+import { Orderbook } from '../../types/liquidity-heatmap';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS
@@ -583,3 +583,4 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
     }).not.toThrow();
   });
 });
+

@@ -16,7 +16,7 @@
  * - SKIP for event metrics collection (can afford to lose a few metrics)
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { extractErrorMessage } from '../utils/error-helper';
 

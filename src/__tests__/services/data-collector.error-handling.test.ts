@@ -13,7 +13,7 @@ import { DatabaseWriter } from '../../services/data-collector/database-writer';
 import { PingPongHandler } from '../../services/data-collector/ping-pong.handler';
 import { DataQueue } from '../../services/data-collector/data-queue';
 import { ErrorHandler, RecoveryStrategy, DataCollectionError, DatabaseBatchError, DataCompressionError, DataQueueOverflowError } from '../../errors';
-import { LoggerService, DataCollectionConfig } from '../../types';
+import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 
 // ============================================================================

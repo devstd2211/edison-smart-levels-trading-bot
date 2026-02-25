@@ -20,8 +20,8 @@ import type {
   IsolatedStrategyContext,
   SystemStats,
   StrategyStats,
-} from '../../types/multi-strategy-types';
-import { TimeframeRole, Candle, LoggerService } from '../../types';
+} from '../../types/multi-strategy';
+import { TimeframeRole, Candle, LoggerService } from '../../types/legacy';
 import { BotEventBus } from './../../services/event-bus';
 import { StrategyRegistryService } from './strategy-registry.service';
 import { StrategyFactoryService } from './strategy-factory.service';
@@ -502,3 +502,4 @@ export class StrategyOrchestratorService {
     return this.orchestratorCache.getStats();
   }
 }
+

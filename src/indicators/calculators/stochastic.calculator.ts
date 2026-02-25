@@ -1,5 +1,5 @@
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
-import { Candle } from '../../types';
+import { IIndicatorCalculator } from '../../types/indicator';
+import { Candle } from '../../types/core';
 
 /**
  * Stochastic Calculator - calculates Stochastic %K values for multiple periods and timeframes
@@ -94,3 +94,4 @@ export function calculateStochasticK(candles: Candle[], period: number): number 
   const k = ((close - lowestLow) / range) * 100;
   return Math.max(0, Math.min(100, k)); // Clamp to 0-100
 }
+

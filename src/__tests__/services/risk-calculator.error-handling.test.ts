@@ -17,7 +17,7 @@
 import { RiskCalculator, RiskCalculationInput } from '../../services/risk-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RiskCalculationError } from '../../errors/DomainErrors';
-import { SignalDirection } from '../../types';
+import { SignalDirection } from '../../types/legacy';
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let calculator: RiskCalculator;

@@ -15,7 +15,7 @@
 
 import { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { TakeProfit } from '../../types';
+import { TakeProfit } from '../../types/legacy';
 
 // Mock Logger
 const createMockLogger = (overrides?: any) => ({

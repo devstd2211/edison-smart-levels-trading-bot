@@ -12,7 +12,7 @@
  * Extracted from bot.ts setupWebSocketHandlers() lines 271-497
  */
 
-import { LoggerService, Position, ExitType, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types';
+import { LoggerService, Position, ExitType, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import { PositionLifecycleService } from '../position-lifecycle.service';
 import { PositionExitingService } from '../position-exiting.service';

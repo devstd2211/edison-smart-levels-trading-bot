@@ -15,7 +15,7 @@ import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, POSITION_MONITOR_INTERVAL_MS } f
 import { EventEmitter } from 'events';
 import type { IExchange } from '../interfaces/IExchange';
 import { PositionLifecycleService } from './position-lifecycle.service';
-import { Position, PositionSide, RiskManagementConfig, LoggerService } from '../types';
+import { Position, PositionSide, RiskManagementConfig, LoggerService } from '../types/legacy';
 import { isCriticalApiError } from '../utils/error-helper';
 import { TelegramService } from './telegram.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';

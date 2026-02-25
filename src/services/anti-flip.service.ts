@@ -19,7 +19,7 @@ import {
   SignalDirection,
   LoggerService,
   Candle,
-} from '../types';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors'; // Phase 8.9.20
 
 // ============================================================================

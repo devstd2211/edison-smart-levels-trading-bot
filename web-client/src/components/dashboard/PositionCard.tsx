@@ -6,11 +6,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBotStore } from '../../stores/botStore';
+import type { Position } from '../../types';
 import { TrendingUp, TrendingDown, X, Clock } from 'lucide-react';
 
 export function PositionCard() {
   const { currentPosition } = useBotStore();
   const [timeInPosition, setTimeInPosition] = useState('0s');
+  type TakeProfit = Position['takeProfits'][number];
 
   // Update time in position every second
   useEffect(() => {
@@ -193,7 +195,7 @@ export function PositionCard() {
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Take Profits</p>
         <div className="space-y-3">
-          {(currentPosition?.takeProfits || []).map((tp: any, idx: number) => {
+          {(currentPosition?.takeProfits || []).map((tp: TakeProfit, idx: number) => {
             const progress = calculateProgress(
               currentPosition.entryPrice,
               currentPosition.currentPrice || currentPosition.entryPrice,

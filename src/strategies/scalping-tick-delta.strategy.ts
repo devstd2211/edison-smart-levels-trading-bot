@@ -26,7 +26,7 @@ import {
   Tick,
   TakeProfit,
   TickDeltaAnalyzerService,
-} from '../types';
+} from '../types/legacy';
 
 // ============================================================================
 // SCALPING TICK DELTA STRATEGY

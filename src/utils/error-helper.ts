@@ -5,7 +5,7 @@
  * Replaces repeated boilerplate code across services.
  */
 
-import { ErrorContext } from '../types';
+import { ErrorContext } from '../types/legacy';
 
 /**
  * Extract error message from unknown error type

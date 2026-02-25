@@ -25,7 +25,7 @@ import {
   SignalType,
   LoggerService,
   ScalpingLimitOrderConfig,
-} from '../types';
+} from '../types/legacy';
 
 // ============================================================================
 // SCALPING LIMIT ORDER STRATEGY

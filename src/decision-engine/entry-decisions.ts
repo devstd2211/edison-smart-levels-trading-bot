@@ -10,7 +10,9 @@
  * - Testable in isolation
  */
 
-import { Signal, Position, TrendAnalysis, FlatMarketResult } from '../types';
+import type { Signal } from '../types/signal';
+import type { Position } from '../types/position';
+import type { TrendAnalysis, FlatMarketResult } from '../types/legacy';
 import { EntryDecision, SignalDirection } from '../types/enums';
 
 // ============================================================================

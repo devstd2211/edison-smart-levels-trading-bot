@@ -12,7 +12,10 @@
  * - Integration with WallTrackerService for advanced filtering
  */
 
-import { LoggerService, SignalDirection, OrderBookWall, TakeProfit } from '../types';
+import { LoggerService } from './logger.service';
+import { OrderBookWall } from '../types/orderbook';
+import { TakeProfit } from '../types/position';
+import { SignalDirection } from '../types/enums';
 import { WallTrackerService } from './wall-tracker.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';

@@ -16,7 +16,7 @@
  */
 
 import { ConfigValidatorService } from '../../services/config-validator.service';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   ConfigValidationError,

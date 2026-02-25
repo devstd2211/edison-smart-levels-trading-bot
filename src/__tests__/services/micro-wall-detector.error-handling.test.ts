@@ -15,7 +15,7 @@ import {
   LogLevel,
   MicroWallDetectorConfig,
   OrderBook,
-} from '../../types';
+} from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 // ============================================================================

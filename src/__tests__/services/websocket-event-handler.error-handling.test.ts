@@ -17,8 +17,8 @@ import { PositionExitingService } from '../../services/position-exiting.service'
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { TelegramService } from '../../services/telegram.service';
-import { LoggerService, Position, PositionSide } from '../../types';
-import { TakeProfitFilledEvent } from '../../types/events.types';
+import { LoggerService, Position, PositionSide } from '../../types/legacy';
+import { TakeProfitFilledEvent } from '../../types/events';
 import { IExchange } from '../../interfaces/IExchange';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 
@@ -400,3 +400,4 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
   });
 });
+

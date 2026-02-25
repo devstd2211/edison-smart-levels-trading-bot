@@ -15,9 +15,9 @@
  * - SKIP: Logging failures via safeLog() wrapper
  */
 
-import { ConfigNew } from '../types/config-new.types';
-import { StrategyConfig } from '../types/strategy-config.types';
-import { Config } from '../types';
+import { ConfigNew } from '../types/config/config-new.types';
+import { StrategyConfig } from '../types/strategy-config';
+import { Config } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class StrategyConfigMergerService {
@@ -351,3 +351,4 @@ export interface ConfigChange {
   original: any;
   overridden: any;
 }
+

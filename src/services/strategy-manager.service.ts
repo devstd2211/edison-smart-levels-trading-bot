@@ -20,8 +20,8 @@
 
 import { StrategyLoaderService } from './strategy-loader.service';
 import { StrategyConfigMergerService } from './strategy-config-merger.service';
-import { StrategyConfig } from '../types/strategy-config.types';
-import { ConfigNew } from '../types/config-new.types';
+import { StrategyConfig } from '../types/strategy-config';
+import { ConfigNew } from '../types/config/config-new.types';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class StrategyManagerService {
@@ -190,3 +190,4 @@ export class StrategyManagerService {
     }
   }
 }
+

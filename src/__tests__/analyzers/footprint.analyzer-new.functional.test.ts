@@ -1,6 +1,6 @@
 import { FootprintAnalyzerNew } from '../../analyzers/footprint.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.65, priority: 5 };
@@ -193,3 +193,4 @@ describe('FootprintAnalyzerNew - Functional: Institutional Footprints', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

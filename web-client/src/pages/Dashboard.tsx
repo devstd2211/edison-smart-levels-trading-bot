@@ -18,6 +18,7 @@ import { useBotStore } from '../stores/botStore';
 import { useMarketStore } from '../stores/marketStore';
 import { useConfigStore } from '../stores/configStore';
 import { api, dataApi } from '../services/api.service';
+import type { BotStatus, Position, Signal } from '../types';
 import { wsClient } from '../services/websocket.service';
 
 export function Dashboard() {
@@ -35,11 +36,12 @@ export function Dashboard() {
     wsClient.on('POSITION_UPDATE', handlePositionUpdate);
     wsClient.on('BALANCE_UPDATE', handleBalanceUpdate);
     wsClient.on('SIGNAL_NEW', handleNewSignal);
-    wsClient.on('TREND_UPDATE', (data: any) => {
+    const handleTrendUpdate = (data: { trend?: string }) => {
       if (data?.trend) {
         setTrend(data.trend);
       }
-    });
+    };
+    wsClient.on('TREND_UPDATE', handleTrendUpdate);
     wsClient.on('ERROR', handleError);
 
     // Poll market data every 5 seconds for trend updates
@@ -54,14 +56,14 @@ export function Dashboard() {
       wsClient.off('POSITION_UPDATE', handlePositionUpdate);
       wsClient.off('BALANCE_UPDATE', handleBalanceUpdate);
       wsClient.off('SIGNAL_NEW', handleNewSignal);
-      wsClient.off('TREND_UPDATE', () => {});
+      wsClient.off('TREND_UPDATE', handleTrendUpdate);
       wsClient.off('ERROR', handleError);
     };
   }, []);
 
   const fetchStatus = async () => {
-    const response = await api.getStatus() as any;
-    if (response?.success && response?.data) {
+    const response = await api.getStatus();
+    if (response.success && response.data) {
       setRunning(response.data.isRunning);
       setPosition(response.data.currentPosition);
       setBalance(response.data.balance);
@@ -72,8 +74,8 @@ export function Dashboard() {
   const fetchMarketData = async () => {
     try {
       // Fetch bot status
-      const statusResponse = await api.getStatus() as any;
-      if (statusResponse?.success && statusResponse?.data) {
+      const statusResponse = await api.getStatus();
+      if (statusResponse.success && statusResponse.data) {
         setRunning(statusResponse.data.isRunning);
         setPosition(statusResponse.data.currentPosition);
         setBalance(statusResponse.data.balance);
@@ -81,10 +83,11 @@ export function Dashboard() {
       }
 
       // Fetch market data (price, indicators, trend)
-      const marketResponse = await dataApi.getMarketData() as any;
+      const marketResponse = await dataApi.getMarketData();
       console.log('[Dashboard] Market response:', marketResponse);
-      if (marketResponse?.success && marketResponse?.data) {
-        const { currentPrice, priceChangePercent, trend, rsi, ema20, ema50, atr, btcCorrelation } = marketResponse.data;
+      if (marketResponse.success && marketResponse.data) {
+        const { currentPrice, priceChangePercent, trend, rsi, ema20, ema50, atr, btcCorrelation } =
+          marketResponse.data;
         setPrice(currentPrice || 0, 0, priceChangePercent || 0);
         // Set trend - accept any string value including "NEUTRAL"
         if (trend !== undefined && trend !== null) {
@@ -106,27 +109,27 @@ export function Dashboard() {
     }
   };
 
-  const handleBotStatusChange = (data: any) => {
+  const handleBotStatusChange = (data: BotStatus) => {
     setRunning(data.isRunning);
     setPosition(data.currentPosition);
     setBalance(data.balance);
     setUnrealizedPnL(data.unrealizedPnL);
   };
 
-  const handlePositionUpdate = (data: any) => {
+  const handlePositionUpdate = (data: { position: Position | null }) => {
     setPosition(data.position);
   };
 
-  const handleBalanceUpdate = (data: any) => {
+  const handleBalanceUpdate = (data: { balance: number; unrealizedPnL: number }) => {
     setBalance(data.balance);
     setUnrealizedPnL(data.unrealizedPnL);
   };
 
-  const handleNewSignal = (data: any) => {
+  const handleNewSignal = (data: Signal) => {
     addSignal(data);
   };
 
-  const handleError = (data: any) => {
+  const handleError = (data: { error?: string }) => {
     setError(data.error || 'Unknown error');
   };
 

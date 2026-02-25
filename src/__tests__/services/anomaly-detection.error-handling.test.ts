@@ -15,8 +15,8 @@
 import { AnomalyDetectionService } from '../../services/anomaly-detection.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { LogLevel } from '../../types';
-import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection.interface';
+import { LogLevel } from '../../types/legacy';
+import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection';
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -496,3 +496,4 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
   });
 });
+

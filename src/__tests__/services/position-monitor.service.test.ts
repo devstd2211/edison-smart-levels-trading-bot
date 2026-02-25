@@ -18,7 +18,7 @@ import {
   RiskManagementConfig,
   LoggerService,
   LogLevel,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

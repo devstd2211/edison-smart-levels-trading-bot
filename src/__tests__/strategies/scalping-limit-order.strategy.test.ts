@@ -11,7 +11,7 @@ import {
   ScalpingLimitOrderConfig,
   StrategyMarketData,
   TrendBias,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // TEST SETUP

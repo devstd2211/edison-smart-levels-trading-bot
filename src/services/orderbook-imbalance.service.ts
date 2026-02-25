@@ -20,7 +20,7 @@ import { PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
  * Data Source: Orderbook depth (top N levels from OrderbookManagerService)
  */
 
-import { OrderbookImbalanceConfig, ImbalanceAnalysis, LoggerService } from '../types';
+import { OrderbookImbalanceConfig, ImbalanceAnalysis, LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

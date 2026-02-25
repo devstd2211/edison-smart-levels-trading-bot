@@ -1,5 +1,5 @@
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
-import { Candle } from '../../types';
+import { IIndicatorCalculator } from '../../types/indicator';
+import { Candle } from '../../types/core';
 
 /**
  * Volume Calculator - calculates Volume metrics for multiple periods and timeframes
@@ -84,3 +84,4 @@ export function calculateAverageVolume(candles: Candle[], period: number): numbe
   const average = sumVolume / period;
   return Math.round(average * 100) / 100; // Round to 2 decimals
 }
+

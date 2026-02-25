@@ -3,7 +3,7 @@
  */
 
 import { FundingRateFilterService, FundingRateData } from '../../services/funding-rate-filter.service';
-import { LoggerService, LogLevel, SignalDirection, FundingRateFilterConfig } from '../../types';
+import { LoggerService, LogLevel, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
 
 describe('FundingRateFilterService', () => {
   let logger: LoggerService;

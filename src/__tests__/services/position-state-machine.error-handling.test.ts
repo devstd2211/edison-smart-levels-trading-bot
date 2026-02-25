@@ -17,7 +17,7 @@ import { PositionStateMachineService } from '../../services/position-state-machi
 import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors';
-import type { StateTransitionResult } from '../../types/position-state-machine.interface';
+import type { StateTransitionResult } from '../../types/position-state-machine';
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: LoggerService;
@@ -647,3 +647,4 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
   });
 });
+

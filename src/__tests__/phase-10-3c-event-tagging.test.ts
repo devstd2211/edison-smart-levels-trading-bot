@@ -14,7 +14,7 @@
  */
 
 import { StrategyEventFilterService } from '../services/multi-strategy/event-filter.service';
-import { LoggerService, LogLevel } from '../types';
+import { LoggerService, LogLevel } from '../types/legacy';
 
 describe('PHASE 10.3C: Event Tagging & Filtering', () => {
   let filterService: StrategyEventFilterService;

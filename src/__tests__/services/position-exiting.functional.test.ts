@@ -11,7 +11,7 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { Position, PositionSide, TakeProfit, TradingConfig, RiskManagementConfig, Config } from '../../types';
+import { Position, PositionSide, TakeProfit, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),

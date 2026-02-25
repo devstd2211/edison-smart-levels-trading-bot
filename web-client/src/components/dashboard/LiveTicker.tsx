@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { useMarketStore } from '../../stores/marketStore';
 import { dataApi } from '../../services/api.service';
 import { wsClient } from '../../services/websocket.service';
+import type { WebApiMarketData } from '../../types';
 import { Zap } from 'lucide-react';
 
 export function LiveTicker() {
@@ -38,16 +39,18 @@ export function LiveTicker() {
 
   // Listen for market data updates via WebSocket
   useEffect(() => {
-    wsClient.on('MARKET_DATA_UPDATE', (data: any) => {
+    const handleMarketDataUpdate = (data: WebApiMarketData) => {
       // Update price and indicators
       // This would typically update the market store
       if (data.currentPrice) {
         setLastPrice(data.currentPrice);
       }
-    });
+    };
+
+    wsClient.on('MARKET_DATA_UPDATE', handleMarketDataUpdate);
 
     return () => {
-      wsClient.off('MARKET_DATA_UPDATE', () => {});
+      wsClient.off('MARKET_DATA_UPDATE', handleMarketDataUpdate);
     };
   }, []);
 

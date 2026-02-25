@@ -17,7 +17,7 @@ import {
   LoggerService,
   PositionSide,
   TakeProfit,
-} from '../../types';
+} from '../../types/legacy';
 import { INTEGER_MULTIPLIERS } from '../../constants';
 import { BybitBase, RECV_WINDOW } from './bybit-base.partial';
 import { BybitMarketData } from './bybit-market-data.partial';

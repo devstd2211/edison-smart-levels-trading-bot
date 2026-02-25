@@ -1,6 +1,6 @@
 import { VolumeProfileAnalyzerNew } from '../../analyzers/volume-profile.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { VolumeProfileAnalyzerConfigNew } from '../../types/config-new.types';
+import type { VolumeProfileAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): VolumeProfileAnalyzerConfigNew {
   return { enabled: true, weight: 0.75, priority: 5 };
@@ -126,3 +126,4 @@ describe('VolumeProfileAnalyzerNew - Edge Cases Tests', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

@@ -18,7 +18,10 @@ import { ValidationError, ConfigurationError } from '../errors/DomainErrors';
  * Phase 8.9.47: ErrorHandler integration with THROW (validation) + GRACEFUL_DEGRADE (calculation) + SKIP (logging)
  */
 
-import { VolumeProfileConfig, VolumeProfileResult, VolumeNode, Candle, LoggerService } from '../types';
+import { LoggerService } from './logger.service';
+import { VolumeProfileResult, VolumeNode } from '../types/legacy';
+import { VolumeProfileConfig } from '../types/config/config';
+import { Candle } from '../types/core';
 
 // ============================================================================
 // DEFAULT CONFIG

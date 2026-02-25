@@ -20,7 +20,7 @@ import {
   LimitOrderExecutorConfig,
   LimitOrderResult,
   MarketOrderResult,
-} from '../types';
+} from '../types/legacy';
 import { BybitService } from './bybit/bybit.service';
 import { MAKER_FEE_PERCENT, TAKER_FEE_PERCENT, ORDER_CHECK_INTERVAL_MS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';

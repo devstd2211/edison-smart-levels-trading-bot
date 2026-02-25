@@ -26,49 +26,67 @@ export interface ConfigBackup {
 export class ConfigManagementService {
   constructor(private configPath: string) {}
 
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private getErrorCode(error: unknown): string | undefined {
+    if (!this.isRecord(error)) {
+      return undefined;
+    }
+    const code = error.code;
+    return typeof code === 'string' ? code : undefined;
+  }
+
   /**
    * Validate configuration object
    */
-  validate(config: any): ValidationResult {
+  validate(config: unknown): ValidationResult {
     const errors: string[] = [];
 
-    if (!config || typeof config !== 'object') {
+    if (!this.isRecord(config)) {
       errors.push('Config must be a valid object');
       return { valid: false, errors };
     }
 
     // Validate required fields
-    if (!config.trading && !config.strategies) {
+    if (!('trading' in config) && !('strategies' in config)) {
       errors.push('Config must have trading or strategies section');
     }
 
     // Validate risk parameters if present
-    if (config.risk) {
-      if (config.risk.maxLeverage && typeof config.risk.maxLeverage !== 'number') {
+    if (this.isRecord(config.risk)) {
+      if (config.risk.maxLeverage !== undefined && typeof config.risk.maxLeverage !== 'number') {
         errors.push('maxLeverage must be a number');
       }
-      if (config.risk.maxPositionSize && typeof config.risk.maxPositionSize !== 'number') {
+      if (config.risk.maxPositionSize !== undefined && typeof config.risk.maxPositionSize !== 'number') {
         errors.push('maxPositionSize must be a number');
       }
-      if (config.risk.dailyLossLimit && typeof config.risk.dailyLossLimit !== 'number') {
+      if (config.risk.dailyLossLimit !== undefined && typeof config.risk.dailyLossLimit !== 'number') {
         errors.push('dailyLossLimit must be a number');
       }
-      if (config.risk.stopLossPercent && typeof config.risk.stopLossPercent !== 'number') {
+      if (config.risk.stopLossPercent !== undefined && typeof config.risk.stopLossPercent !== 'number') {
         errors.push('stopLossPercent must be a number');
       }
     }
 
     // Validate strategies if present
-    if (config.strategies && typeof config.strategies !== 'object') {
+    if (config.strategies !== undefined && !this.isRecord(config.strategies)) {
       errors.push('Strategies must be an object');
     }
 
     // Validate riskManagement if present
-    if (config.riskManagement) {
-      if (config.riskManagement.positionSizeUsdt && typeof config.riskManagement.positionSizeUsdt !== 'number') {
+    if (this.isRecord(config.riskManagement)) {
+      if (
+        config.riskManagement.positionSizeUsdt !== undefined
+        && typeof config.riskManagement.positionSizeUsdt !== 'number'
+      ) {
         errors.push('positionSizeUsdt must be a number');
       }
-      if (config.riskManagement.stopLossPercent && typeof config.riskManagement.stopLossPercent !== 'number') {
+      if (
+        config.riskManagement.stopLossPercent !== undefined
+        && typeof config.riskManagement.stopLossPercent !== 'number'
+      ) {
         errors.push('stopLossPercent must be a number');
       }
     }
@@ -79,12 +97,12 @@ export class ConfigManagementService {
   /**
    * Read current configuration
    */
-  async read(): Promise<any> {
+  async read(): Promise<unknown> {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
       return JSON.parse(data);
     } catch (error) {
-      if ((error as any).code === 'ENOENT') {
+      if (this.getErrorCode(error) === 'ENOENT') {
         throw new Error('Configuration file not found');
       }
       throw new Error(`Failed to read configuration: ${(error as Error).message}`);
@@ -94,7 +112,9 @@ export class ConfigManagementService {
   /**
    * Write configuration with automatic backup
    */
-  async write(config: any): Promise<{ success: boolean; backupPath: string; message: string }> {
+  async write(
+    config: Record<string, unknown>
+  ): Promise<{ success: boolean; backupPath: string; message: string }> {
     // Validate before writing
     const validation = this.validate(config);
     if (!validation.valid) {
@@ -177,7 +197,7 @@ export class ConfigManagementService {
 
       // Read backup file
       const backupData = await fs.readFile(backup.filePath, 'utf-8');
-      const config = JSON.parse(backupData);
+      const config = JSON.parse(backupData) as unknown;
 
       // Validate before restoring
       const validation = this.validate(config);

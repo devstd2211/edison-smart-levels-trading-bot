@@ -1,5 +1,5 @@
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
-import { Candle } from '../../types';
+import { IIndicatorCalculator } from '../../types/indicator';
+import { Candle } from '../../types/core';
 
 /**
  * EMA Calculator - calculates Exponential Moving Average for multiple periods and timeframes
@@ -87,3 +87,4 @@ export function calculateEMA(candles: Candle[], period: number): number {
 
   return Math.round(ema * 10000) / 10000; // Round to 4 decimals for prices
 }
+

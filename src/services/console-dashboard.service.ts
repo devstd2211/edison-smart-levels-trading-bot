@@ -18,7 +18,7 @@
 
 import blessed, { Widgets } from 'blessed';
 import { EventEmitter } from 'events';
-import { Position } from '../types';
+import { Position } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 interface DashboardConfig {

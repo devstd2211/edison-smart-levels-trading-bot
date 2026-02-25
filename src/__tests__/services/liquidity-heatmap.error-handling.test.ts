@@ -19,9 +19,9 @@ import {
   LiquidityHeatmapConfig,
   Orderbook,
   OrderbookLevel,
-} from '../../types/liquidity-heatmap.interface';
+} from '../../types/liquidity-heatmap';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS
@@ -763,3 +763,4 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
     expect(result.slippageBps).toBeGreaterThanOrEqual(0);
   });
 });
+

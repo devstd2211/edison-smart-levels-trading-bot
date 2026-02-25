@@ -5,7 +5,7 @@
 
 import { AtrAnalyzerNew } from '../../analyzers/atr.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { AtrAnalyzerConfigNew } from '../../types/config-new.types';
+import type { AtrAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -367,3 +367,4 @@ describe('AtrAnalyzerNew - Multiple Analysis Tests', () => {
     expect(state1.config.maxConfidence).toBe(state2.config.maxConfidence);
   });
 });
+

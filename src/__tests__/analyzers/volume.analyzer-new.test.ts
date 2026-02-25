@@ -4,7 +4,7 @@
 
 import { VolumeAnalyzerNew } from '../../analyzers/volume.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { VolumeAnalyzerConfigNew } from '../../types/config-new.types';
+import type { VolumeAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -253,3 +253,4 @@ describe('VolumeAnalyzerNew - Edge Cases Tests', () => {
     expect(state1.config.priority).toBe(state2.config.priority);
   });
 });
+

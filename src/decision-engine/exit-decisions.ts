@@ -12,7 +12,8 @@
  * PATTERN: Follows entry-decisions.ts structure for consistency
  */
 
-import { Position, PositionState, ExitAction, PositionSide } from '../types';
+import type { Position } from '../types/position';
+import { PositionState, ExitAction, PositionSide } from '../types/enums';
 
 // ============================================================================
 // TYPES

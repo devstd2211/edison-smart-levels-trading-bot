@@ -13,14 +13,14 @@
  * - LOW confidence: <70 points (skip, not tradable)
  */
 
-import { LoggerService, StrategyMarketData } from '../types';
+import { LoggerService, StrategyMarketData } from '../types/legacy';
 import {
   FractalSetup,
   ScoreWeight,
   WeightedSignal,
   WeightedSignalConfig,
   ConfidenceLevel
-} from '../types/fractal-strategy.types';
+} from '../types/fractal-strategy';
 import { INTEGER_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
@@ -464,3 +464,4 @@ export class FractalSmcWeightingService {
     }
   }
 }
+

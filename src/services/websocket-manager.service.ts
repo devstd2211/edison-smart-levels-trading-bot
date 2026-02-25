@@ -24,7 +24,7 @@ import {
   PositionData,
   OrderExecutionData,
   OrderUpdateData,
-} from '../types';
+} from '../types/legacy';
 import { OrderExecutionDetectorService } from './order-execution-detector.service';
 import { WebSocketAuthenticationService } from './websocket-authentication.service';
 import { EventDeduplicationService } from './event-deduplication.service';

@@ -16,7 +16,7 @@ import {
   StrategyLoadError,
   StrategyParseError,
 } from '../../errors/DomainErrors';
-import { StrategyValidationError } from '../../types/strategy-config.types';
+import { StrategyValidationError } from '../../types/strategy-config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import * as path from 'path';
@@ -463,3 +463,4 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     });
   });
 });
+

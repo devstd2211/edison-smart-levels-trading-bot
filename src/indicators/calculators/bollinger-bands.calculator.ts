@@ -1,5 +1,5 @@
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
-import { Candle } from '../../types';
+import { IIndicatorCalculator } from '../../types/indicator';
+import { Candle } from '../../types/core';
 
 /**
  * Bollinger Bands Calculator - calculates Bollinger Bands middle band for multiple periods and timeframes
@@ -89,3 +89,4 @@ export function calculateBollingerMiddleBand(candles: Candle[], period: number):
 
   return Math.round(sma * 10000) / 10000; // Round to 4 decimals for prices
 }
+

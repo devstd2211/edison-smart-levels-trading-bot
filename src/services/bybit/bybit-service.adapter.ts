@@ -36,7 +36,7 @@ import {
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import { BybitService } from './bybit.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 /**
  * BybitServiceAdapter implements IExchange by wrapping BybitService

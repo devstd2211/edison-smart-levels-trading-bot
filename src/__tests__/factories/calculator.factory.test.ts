@@ -1,5 +1,5 @@
 import { CalculatorFactory } from '../../factories/calculator.factory';
-import { IIndicatorCalculator } from '../../types/indicator-calculator.interface';
+import { IIndicatorCalculator } from '../../types/indicator';
 import { EmaCalculator } from '../../indicators/calculators/ema.calculator';
 import { RsiCalculator } from '../../indicators/calculators/rsi.calculator';
 import { AtrCalculator } from '../../indicators/calculators/atr.calculator';
@@ -261,3 +261,4 @@ describe('CalculatorFactory', () => {
     });
   });
 });
+

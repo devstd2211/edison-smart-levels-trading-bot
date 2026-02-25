@@ -26,7 +26,7 @@ import {
   OrderBook,
   TakeProfit,
   OrderFlowAnalyzerService,
-} from '../types';
+} from '../types/legacy';
 
 // ============================================================================
 // SCALPING ORDER FLOW STRATEGY

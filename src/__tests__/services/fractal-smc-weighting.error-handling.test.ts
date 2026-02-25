@@ -11,7 +11,7 @@
  */
 
 import { FractalSmcWeightingService } from '../../services/fractal-smc-weighting.service';
-import { WeightedSignalConfig, ConfidenceLevel } from '../../types/fractal-strategy.types';
+import { WeightedSignalConfig, ConfidenceLevel } from '../../types/fractal-strategy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 const createMockLogger = () => ({
@@ -387,3 +387,4 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     });
   });
 });
+

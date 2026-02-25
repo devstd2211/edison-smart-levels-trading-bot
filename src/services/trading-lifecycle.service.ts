@@ -18,8 +18,8 @@
  */
 
 import { BotEventBus } from './event-bus';
-import { LoggerService, PositionSide } from '../types';
-import { ActionType } from '../types/architecture.types';
+import { LoggerService, PositionSide } from '../types/legacy';
+import { ActionType } from '../types/architecture';
 import {
   PositionLifecycleConfig,
   TrackedPosition,
@@ -31,7 +31,7 @@ import {
   ITradingLifecycleManager,
   LiveTradingEventType,
   PositionTimeoutWarningEvent,
-} from '../types/live-trading.types';
+} from '../types/live-trading';
 import { ActionQueueService } from './action-queue.service';
 import { Position } from '../types/core';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
@@ -547,3 +547,4 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
     };
   }
 }
+

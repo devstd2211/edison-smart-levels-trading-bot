@@ -10,7 +10,7 @@
  */
 
 import { RealityCheckService, RealityCheckEvent } from '../../services/reality-check.service';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 import { Signal } from '../../types/core';
 import { SignalDirection, SignalType } from '../../types/enums';
 import { AnalyzerSignal } from '../../types/strategy';

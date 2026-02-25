@@ -31,7 +31,7 @@ import {
   Position,
   LadderTpLevel,
   LadderTpManagerService,
-} from '../types';
+} from '../types/legacy';
 import { BybitService } from '../services/bybit/bybit.service';
 import { IExchange } from '../interfaces/IExchange';
 

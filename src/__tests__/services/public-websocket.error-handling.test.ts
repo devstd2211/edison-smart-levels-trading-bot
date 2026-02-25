@@ -12,7 +12,7 @@
 
 import { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, TimeframeRole } from '../../types';
+import { LoggerService, TimeframeRole } from '../../types/legacy';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {

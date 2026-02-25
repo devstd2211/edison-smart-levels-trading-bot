@@ -132,12 +132,12 @@ export interface IRepository {
   /**
    * Save arbitrary JSON data
    */
-  saveData(key: string, data: any): Promise<void>;
+  saveData(key: string, data: unknown): Promise<void>;
 
   /**
    * Get arbitrary JSON data
    */
-  getData(key: string): Promise<any | null>;
+  getData(key: string): Promise<unknown | null>;
 
   /**
    * Delete data

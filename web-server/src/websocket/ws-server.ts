@@ -15,8 +15,8 @@ export class WebSocketService {
   private clients: Set<WebSocket> = new Set();
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private currentPort: number;
-  private bridgeEventListener: ((event: any) => void) | null = null;
-  private fileWatcherListeners: Map<string, (data: any) => void> = new Map();
+  private bridgeEventListener: ((event: WebSocketMessage) => void) | null = null;
+  private fileWatcherListeners: Map<string, (data: unknown) => void> = new Map();
 
   constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherService) {
     this.currentPort = port;
@@ -31,8 +31,9 @@ export class WebSocketService {
         this.wss = new WebSocketServer({ port: this.currentPort });
         wsCreated = true;
         console.log(`[WS] Server initialized on port ${this.currentPort}`);
-      } catch (error: any) {
-        if (error.code === 'EADDRINUSE' && attempts < maxAttempts - 1) {
+      } catch (error: unknown) {
+        const errorCode = this.getErrorCode(error);
+        if (errorCode === 'EADDRINUSE' && attempts < maxAttempts - 1) {
           this.currentPort += 100;
           attempts++;
           console.log(`[WS] Port already in use, trying port ${this.currentPort}...`);
@@ -52,8 +53,9 @@ export class WebSocketService {
    * Setup error handling for WebSocket server
    */
   private setupErrorHandling() {
-    this.wss.on('error', (error: any) => {
-      if (error.code === 'EADDRINUSE') {
+    this.wss.on('error', (error: unknown) => {
+      const errorCode = this.getErrorCode(error);
+      if (errorCode === 'EADDRINUSE') {
         console.error(`[WS] Port ${this.currentPort} is already in use`);
         // Try to recover by listening on alternate port
         const alternatePort = this.currentPort + 100;
@@ -71,7 +73,7 @@ export class WebSocketService {
         this.setupErrorHandling();
         this.setupConnectionHandling();
       } else {
-        console.error(`[WS] Server error:`, error.message);
+        console.error(`[WS] Server error:`, this.getErrorMessage(error));
       }
     });
   }
@@ -129,7 +131,7 @@ export class WebSocketService {
 
     // Forward file watcher events (journal and session updates)
     if (this.fileWatcher) {
-      const journalListener = (journal: any) => {
+      const journalListener = (journal: unknown) => {
         this.broadcast({
           type: 'JOURNAL_UPDATE',
           payload: { journal },
@@ -137,7 +139,7 @@ export class WebSocketService {
         });
       };
 
-      const sessionListener = (sessions: any) => {
+      const sessionListener = (sessions: unknown) => {
         this.broadcast({
           type: 'SESSION_UPDATE',
           payload: { sessions },
@@ -159,7 +161,7 @@ export class WebSocketService {
   private handleMessage(ws: WebSocket, message: string) {
     try {
       // Parse JSON
-      let data: any;
+      let data: { type?: string; requestId?: string };
       try {
         data = JSON.parse(message);
       } catch (parseError) {
@@ -281,6 +283,31 @@ export class WebSocketService {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private getErrorCode(error: unknown): string | undefined {
+    if (!this.isRecord(error)) {
+      return undefined;
+    }
+    const code = error.code;
+    return typeof code === 'string' ? code : undefined;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (this.isRecord(error)) {
+      const message = error.message;
+      if (typeof message === 'string') {
+        return message;
+      }
+    }
+    return 'Unknown error';
   }
 
   /**

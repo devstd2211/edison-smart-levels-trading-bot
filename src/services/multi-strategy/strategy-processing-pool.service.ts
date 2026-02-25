@@ -8,7 +8,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import {
   StrategyProcessingJob,
   StrategyProcessingResult,
@@ -17,7 +17,7 @@ import {
   StrategyProcessingPoolStatus,
   WorkerHealthStatus,
   ProcessingPriority,
-} from '../../types/strategy-processing.types';
+} from '../../types/strategy-processing';
 
 const DEFAULT_CONFIG: StrategyProcessingPoolConfig = {
   workerPoolSize: 4,
@@ -377,3 +377,4 @@ export class StrategyProcessingPoolService {
     };
   }
 }
+

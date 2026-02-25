@@ -4,7 +4,7 @@
  */
 
 import { VolumeProfileService } from '../../services/volume-profile.service';
-import { VolumeProfileConfig, Candle, LoggerService, LogLevel } from '../../types';
+import { VolumeProfileConfig, Candle, LoggerService, LogLevel } from '../../types/legacy';
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileService;

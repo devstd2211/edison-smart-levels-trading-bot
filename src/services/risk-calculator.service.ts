@@ -16,7 +16,7 @@
  * to calculate SL/TP consistently.
  */
 
-import { LoggerService, SignalDirection, SessionBasedSLConfig } from '../types';
+import { LoggerService, SignalDirection, SessionBasedSLConfig } from '../types/legacy';
 import { SessionDetector } from '../utils/session-detector';
 import { PERCENT_MULTIPLIER, DECIMAL_PLACES } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';

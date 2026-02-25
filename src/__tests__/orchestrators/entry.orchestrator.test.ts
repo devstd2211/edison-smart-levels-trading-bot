@@ -21,7 +21,7 @@ import {
   Position,
   RiskManagerConfig,
   TrendAnalysis,
-} from '../../types';
+} from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 

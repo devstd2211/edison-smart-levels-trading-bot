@@ -16,7 +16,7 @@ import {
   PositionLifecycleState,
   EmergencyCloseReason,
   TrackedPosition,
-} from '../../types/live-trading.types';
+} from '../../types/live-trading';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
 
@@ -853,3 +853,4 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
     });
   });
 });
+

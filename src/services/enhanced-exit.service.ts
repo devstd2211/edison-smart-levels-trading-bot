@@ -19,7 +19,7 @@ import {
   SwingPoint,
   SwingPointType,
   LiquidityZone,
-} from '../types';
+} from '../types/legacy';
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';

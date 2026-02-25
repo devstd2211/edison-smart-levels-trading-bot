@@ -15,7 +15,7 @@
  * Created: 2026-02-09 (Session 96)
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import {
   MAX_SCALE_INS,

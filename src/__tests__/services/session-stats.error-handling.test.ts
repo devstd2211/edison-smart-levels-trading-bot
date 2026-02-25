@@ -26,7 +26,7 @@ import {
   SignalDirection,
   ExitType,
   Config,
-} from '../../types';
+} from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 
 /**

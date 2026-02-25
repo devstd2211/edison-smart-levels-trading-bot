@@ -12,7 +12,7 @@ import {
   SignalDirection,
   PositionSide,
   LimitOrderExecutorConfig,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // TEST SETUP

@@ -17,7 +17,7 @@
  */
 
 import { AdvancedOrderStateMachineService } from '../../services/advanced-order-state-machine.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   OrderState,

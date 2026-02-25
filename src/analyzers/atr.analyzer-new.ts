@@ -17,13 +17,13 @@
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
 import type { SignalDirection } from '../types/enums';
-import type { AtrAnalyzerConfigNew } from '../types/config-new.types';
+import type { AtrAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { ATRIndicatorNew } from '../indicators/atr.indicator-new';
 import type { LoggerService } from '../services/logger.service';
-import type { IIndicator } from '../types/indicator.interface';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import type { IIndicator } from '../types/indicator';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 // ============================================================================
 // DEFAULT CONSTANTS (can be overridden by config)
@@ -390,3 +390,4 @@ export class AtrAnalyzerNew implements IAnalyzer {
     };
   }
 }
+

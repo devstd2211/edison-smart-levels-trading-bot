@@ -15,7 +15,7 @@
  */
 
 import { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 
 describe('PrometheusMetricsService', () => {

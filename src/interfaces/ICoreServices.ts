@@ -4,7 +4,7 @@
  * Grouped core services (logging, events, notifications, time).
  */
 
-import type { LoggerService } from '../types';
+import type { LoggerService } from '../services/logger.service';
 import type { BotEventBus } from '../services/event-bus';
 import type { IExchange } from './IExchange';
 

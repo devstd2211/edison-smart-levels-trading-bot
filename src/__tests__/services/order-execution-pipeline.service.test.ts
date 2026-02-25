@@ -13,12 +13,12 @@
  */
 
 import { OrderExecutionPipeline } from '../../services/order-execution-pipeline.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import {
   OrderExecutionConfig,
   OrderRequest,
   OrderStatus,
-} from '../../types/live-trading.types';
+} from '../../types/live-trading';
 
 describe('OrderExecutionPipeline', () => {
   let pipeline: OrderExecutionPipeline;
@@ -491,3 +491,4 @@ describe('OrderExecutionPipeline', () => {
     });
   });
 });
+

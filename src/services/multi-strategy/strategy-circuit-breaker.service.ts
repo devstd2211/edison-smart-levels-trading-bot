@@ -10,7 +10,7 @@
  * Phase 11: Per-Strategy Circuit Breakers
  */
 
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import {
   CircuitBreakerConfig,
   CircuitBreakerStatus,
@@ -20,7 +20,7 @@ import {
   CircuitBreakerMetrics,
   CircuitBreakerServiceConfig,
   CircuitBreakerServiceStats,
-} from '../../types/circuit-breaker.types';
+} from '../../types/circuit-breaker';
 import { ErrorHandler, RecoveryStrategy } from '../../errors'; // Phase 8.9.34: ErrorHandler integration
 
 const DEFAULT_CONFIG: CircuitBreakerConfig = {
@@ -658,3 +658,4 @@ export class StrategyCircuitBreakerService {
     }
   }
 }
+

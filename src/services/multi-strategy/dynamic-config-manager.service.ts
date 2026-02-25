@@ -16,12 +16,12 @@
  */
 
 import type {
-  StrategyConfig } from '../../types/strategy-config.types';
+  StrategyConfig } from '../../types/strategy-config';
 import type {
   ConfigValidationResult,
   ConfigMergeChange,
-} from '../../types/multi-strategy-types';
-import type { ConfigNew } from '../../types/config-new.types';
+} from '../../types/multi-strategy';
+import type { ConfigNew } from '../../types/config/config-new.types';
 import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class DynamicConfigManagerService {
@@ -336,3 +336,4 @@ function flattenObject(obj: any, prefix = ''): Record<string, any> {
 
   return flattened;
 }
+

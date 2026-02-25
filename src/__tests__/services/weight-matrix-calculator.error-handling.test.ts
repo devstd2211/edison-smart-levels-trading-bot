@@ -8,7 +8,7 @@
 import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { WeightMatrixConfig, WeightMatrixInput, SignalDirection } from '../../types';
+import { WeightMatrixConfig, WeightMatrixInput, SignalDirection } from '../../types/legacy';
 
 // ============================================================================
 // FIXTURES

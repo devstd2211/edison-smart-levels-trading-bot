@@ -23,7 +23,7 @@ import {
   EmergencyCloseReason,
   DangerLevel,
   LiveTradingEventType,
-} from '../types/live-trading.types';
+} from '../types/live-trading';
 
 describe('Phase 9: Live Trading Engine - Integration Tests', () => {
   describe('Module Imports', () => {
@@ -339,3 +339,4 @@ describe('Phase 9: Documentation Status', () => {
     expect(content).toContain('Live Trading');
   });
 });
+

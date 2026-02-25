@@ -10,7 +10,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 
 /**
  * Standard bot event structure

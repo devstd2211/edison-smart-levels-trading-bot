@@ -15,8 +15,8 @@
 
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
-import { LoggerService } from '../../types';
-import { PerformanceAnalyticsConfig } from '../../types/live-trading.types';
+import { LoggerService } from '../../types/legacy';
+import { PerformanceAnalyticsConfig } from '../../types/live-trading';
 
 // ============================================================================
 // MOCKS & FIXTURES
@@ -501,3 +501,4 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
   });
 });
+

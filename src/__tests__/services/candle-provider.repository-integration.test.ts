@@ -5,7 +5,7 @@
  * Ensures candle caching is delegated to repository (not per-timeframe LRU)
  */
 
-import { Candle, TimeframeRole, LoggerService } from '../../types';
+import { Candle, TimeframeRole, LoggerService } from '../../types/legacy';
 import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { IExchange } from '../../interfaces/IExchange';
 import { CandleProvider } from '../../providers/candle.provider';

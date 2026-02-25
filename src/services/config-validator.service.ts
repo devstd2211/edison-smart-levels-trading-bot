@@ -19,7 +19,7 @@
  * - Backward compatible (works with or without ErrorHandler)
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import {
   ConfigValidationError,

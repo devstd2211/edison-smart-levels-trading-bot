@@ -12,12 +12,12 @@
 
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
-import type { LevelAnalyzerConfigNew } from '../types/config-new.types';
+import type { LevelAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection } from '../types/enums';
 import type { LoggerService } from '../services/logger.service';
 import { SwingPointDetectorService } from '../services/swing-point-detector.service';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 // Default constants - can be overridden by config
 const DEFAULT_MIN_CANDLES = 30;
@@ -510,3 +510,4 @@ export class LevelAnalyzerNew implements IAnalyzer {
     return { enabled: this.enabled, weight: this.weight, priority: this.priority };
   }
 }
+

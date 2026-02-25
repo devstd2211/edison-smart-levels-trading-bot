@@ -104,16 +104,118 @@ export interface SessionStats {
   }>;
 }
 
-export interface WebSocketMessage {
-  type: 'POSITION_UPDATE' | 'SIGNAL_NEW' | 'BALANCE_UPDATE' | 'JOURNAL_UPDATE' | 'SESSION_UPDATE' | 'BOT_STATUS_CHANGE' | 'ERROR' | 'PONG';
-  payload: any;
+export interface WebSocketMessage<T extends WebSocketEventType = WebSocketEventType> {
+  type: T;
+  payload: WebSocketPayloadMap[T];
   timestamp: number;
   requestId?: string;
 }
 
-export interface ApiResponse<T = any> {
+export type WebSocketEventType = keyof WebSocketPayloadMap;
+
+export interface WebSocketPayloadMap {
+  BOT_STATUS_CHANGE: BotStatus;
+  POSITION_UPDATE: { position: Position | null };
+  BALANCE_UPDATE: { balance: number; unrealizedPnL: number };
+  SIGNAL_NEW: Signal;
+  TREND_UPDATE: { trend?: string };
+  MARKET_DATA_UPDATE: WebApiMarketData;
+  ORDERBOOK_UPDATE: WebApiOrderBookView;
+  WALLS_UPDATE: WebApiWallsView | WebApiWallView[];
+  FUNDING_RATE_UPDATE: WebApiFundingRateView;
+  CANDLE_CLOSED: { timeframe: string; candle: WebApiCandle };
+  POSITION_OPENED: { position?: Position; signal?: { strategy?: string; reasoning?: string; entryConditions?: string } };
+  POSITION_CLOSED: { pnl?: number; exitType?: string };
+  SIGNAL_GENERATED: { strategy?: string; direction?: string; confidence?: number };
+  TP_HIT: { level?: number; price?: number; pnl?: number };
+  SL_HIT: { price?: number; pnl?: number };
+  STRATEGIES_RELOADED: { strategies: Array<{ id: string; name: string; enabled: boolean; config?: Record<string, unknown> }> };
+  JOURNAL_UPDATE: { journal: unknown };
+  SESSION_UPDATE: { sessions: unknown };
+  ERROR: { error: string; details?: string };
+  PONG: Record<string, never>;
+}
+
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   timestamp: number;
+}
+
+// ============================================================================
+// Web API DTOs (BotWebAPI)
+// ============================================================================
+
+export interface WebApiMarketData {
+  currentPrice: number;
+  priceChangePercent: number;
+  rsi?: number;
+  ema20?: number;
+  ema50?: number;
+  atr?: number;
+  trend?: string;
+  btcCorrelation?: number;
+  nearestLevel?: number;
+  distanceToLevel?: number;
+}
+
+export interface WebApiCandle {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+  timestamp: number;
+}
+
+export interface WebApiPositionHistoryEntry {
+  id?: string | number;
+  symbol?: string;
+  side: string;
+  entryPrice: number;
+  entryTime: number;
+  exitPrice?: number;
+  exitTime?: number;
+  pnl: number;
+  quantity: number;
+  leverage?: number;
+  status?: string;
+  entryCondition?: string;
+  exitCondition?: string;
+}
+
+export interface WebApiOrderBookView {
+  symbol: string;
+  bids: Array<{ price: number; quantity: number; cumulative: number }>;
+  asks: Array<{ price: number; quantity: number; cumulative: number }>;
+  timestamp: number;
+}
+
+export interface WebApiWallView {
+  side: string;
+  price: number;
+  quantity: number;
+  strength: number;
+  detected: boolean;
+}
+
+export interface WebApiWallsView {
+  symbol: string;
+  walls: WebApiWallView[];
+}
+
+export interface WebApiFundingRateView {
+  symbol: string;
+  current: number;
+  predicted: number;
+  nextFundingTime: number;
+  lastFundingTime: number;
+}
+
+export interface WebApiVolumeProfileView {
+  symbol: string;
+  levels: string[];
+  volumes: number[];
+  maxVolume: number;
 }

@@ -5,7 +5,7 @@
 
 import { BollingerBandsAnalyzerNew } from '../../analyzers/bollinger-bands.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BollingerBandsAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BollingerBandsAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -548,3 +548,4 @@ describe('BollingerBandsAnalyzerNew - Functional: Extreme Market Conditions', ()
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

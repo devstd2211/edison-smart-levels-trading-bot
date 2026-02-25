@@ -16,6 +16,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  type TooltipProps,
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { useTradeStore, EquityCurvePoint } from '../../stores/tradeStore';
@@ -67,9 +68,9 @@ export function EquityCurve({
   const minEquity = Math.min(...chartData.map((d) => d.equity));
   const maxDrawdown = Math.max(...chartData.map((d) => d.drawdown));
 
-  const CustomTooltip: React.FC<any> = ({ active, payload }) => {
+  const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
+      const data = payload[0].payload as EquityCurvePoint;
       return (
         <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
           <p className="text-sm text-gray-800 font-medium">Trade #{data.tradeNumber}</p>

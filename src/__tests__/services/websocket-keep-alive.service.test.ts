@@ -5,7 +5,7 @@
 
 import WebSocket from 'ws';
 import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

@@ -10,7 +10,7 @@
  */
 
 import { CandleAggregatorService } from '../../services/candle-aggregator.service';
-import { Candle } from '../../types';
+import { Candle } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 const createMockLogger = () => ({

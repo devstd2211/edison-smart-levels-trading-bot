@@ -10,7 +10,7 @@ import {
   MTFSnapshot,
 } from '../../services/mtf-snapshot-gate.service';
 import { LoggerService } from '../../services/logger.service';
-import { Signal, SignalDirection } from '../../types';
+import { Signal, SignalDirection } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 
 // Mock logger

@@ -5,7 +5,7 @@
  * Verifies that signals conflicting with trend are penalized
  */
 
-import { SignalDirection, TrendAnalysis, TrendBias } from '../../types';
+import { SignalDirection, TrendAnalysis, TrendBias } from '../../types/legacy';
 
 describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
   /**

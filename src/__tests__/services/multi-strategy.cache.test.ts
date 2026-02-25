@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { StrategyOrchestratorCacheService } from '../../services/multi-strategy/strategy-orchestrator-cache.service';
-import type { LoggerService } from '../../types';
+import type { LoggerService } from '../../types/legacy';
 
 const createMockLogger = (): LoggerService => ({
   debug: jest.fn(),

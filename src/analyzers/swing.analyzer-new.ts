@@ -6,11 +6,11 @@
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
 import type { SignalDirection } from '../types/enums';
-import type { SwingAnalyzerConfigNew } from '../types/config-new.types';
+import type { SwingAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import type { LoggerService } from '../services/logger.service';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 const DEFAULT_MIN_CANDLES_FOR_SWING = 25;
 const DEFAULT_MIN_CONFIDENCE = 0.1;
@@ -125,3 +125,4 @@ export class SwingAnalyzerNew implements IAnalyzer {
   isEnabled(): boolean { return this.enabled; }
   getConfig() { return { enabled: this.enabled, weight: this.weight, priority: this.priority }; }
 }
+

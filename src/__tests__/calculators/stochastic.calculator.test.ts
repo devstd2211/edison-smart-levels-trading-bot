@@ -1,5 +1,5 @@
 import { StochasticCalculator, calculateStochasticK } from '../../indicators/calculators/stochastic.calculator';
-import type { Candle } from '../../types';
+import type { Candle } from '../../types/legacy';
 
 describe('Stochastic Calculator', () => {
   let calculator: StochasticCalculator;

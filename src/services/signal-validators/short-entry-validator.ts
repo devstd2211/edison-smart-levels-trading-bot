@@ -3,7 +3,7 @@
  * Stricter requirements for SHORT entries
  */
 
-import { StrategyMarketData, SignalDirection, LoggerService } from '../../types';
+import { StrategyMarketData, SignalDirection, LoggerService } from '../../types/legacy';
 
 export interface ShortValidatorConfig {
   enabled: boolean;

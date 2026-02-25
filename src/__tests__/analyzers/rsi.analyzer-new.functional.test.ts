@@ -11,7 +11,7 @@
 
 import { RsiAnalyzerNew } from '../../analyzers/rsi.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { RsiAnalyzerConfigNew } from '../../types/config-new.types';
+import type { RsiAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -58,7 +58,7 @@ describe('RsiAnalyzerNew - Functional: Strong Uptrend', () => {
 
     expect(signal.direction).toBe(SignalDirection.SHORT);
     expect(signal.confidence).toBeGreaterThan(70);
-    expect(signal.source).toBe('RSI_ANALYZER');
+    expect(signal.source).toBe('RSI_ANALYZER_NEW');
     expect(signal.weight).toBe(config.weight);
     expect(signal.priority).toBe(config.priority);
   });
@@ -91,7 +91,7 @@ describe('RsiAnalyzerNew - Functional: Strong Downtrend', () => {
 
     expect(signal.direction).toBe(SignalDirection.LONG);
     expect(signal.confidence).toBeGreaterThan(70);
-    expect(signal.source).toBe('RSI_ANALYZER');
+    expect(signal.source).toBe('RSI_ANALYZER_NEW');
     expect(signal.weight).toBe(config.weight);
   });
 
@@ -123,7 +123,7 @@ describe('RsiAnalyzerNew - Functional: Consolidation', () => {
 
     expect(signal.direction).toBe(SignalDirection.HOLD);
     expect(signal.confidence).toBeLessThan(50);
-    expect(signal.source).toBe('RSI_ANALYZER');
+    expect(signal.source).toBe('RSI_ANALYZER_NEW');
   });
 
   it('should track RSI near 50 during consolidation', () => {
@@ -534,3 +534,5 @@ describe('RsiAnalyzerNew - Functional: Config Impact on Signals', () => {
     expect(highSignal.score).toBeGreaterThan(lowSignal.score ?? 0);
   });
 });
+
+

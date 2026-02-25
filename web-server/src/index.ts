@@ -297,8 +297,9 @@ export class WebServer {
         console.log(`[API] Server running on http://localhost:${tryPort}`);
       });
 
-      server.on('error', (err: any) => {
-        if (err.code === 'EADDRINUSE') {
+      server.on('error', (err: unknown) => {
+        const errorCode = this.getErrorCode(err);
+        if (errorCode === 'EADDRINUSE') {
           console.error(`[API] Port ${tryPort} is already in use`);
           if (maxRetries > 0) {
             const nextPort = tryPort + 100;
@@ -309,7 +310,7 @@ export class WebServer {
             process.exit(1);
           }
         } else {
-          console.error(`[API] Server error:`, err.message);
+          console.error(`[API] Server error:`, this.getErrorMessage(err));
           process.exit(1);
         }
       });
@@ -325,6 +326,31 @@ export class WebServer {
     };
 
     startServer(port);
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private getErrorCode(error: unknown): string | undefined {
+    if (!this.isRecord(error)) {
+      return undefined;
+    }
+    const code = error.code;
+    return typeof code === 'string' ? code : undefined;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (this.isRecord(error)) {
+      const message = error.message;
+      if (typeof message === 'string') {
+        return message;
+      }
+    }
+    return 'Unknown error';
   }
 
   /**

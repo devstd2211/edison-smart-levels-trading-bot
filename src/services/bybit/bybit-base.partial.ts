@@ -10,7 +10,7 @@
  */
 
 import { RestClientV5 } from 'bybit-api';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import type { IMarketDataRepository } from '../../repositories/IRepositories';
 import { TradingError } from '../../errors/BaseError';
 import {

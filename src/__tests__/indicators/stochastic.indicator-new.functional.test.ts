@@ -5,7 +5,7 @@
 
 import { StochasticIndicatorNew } from '../../indicators/stochastic.indicator-new';
 import type { Candle } from '../../types/core';
-import type { StochasticIndicatorConfigNew } from '../../types/config-new.types';
+import type { StochasticIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST HELPERS
@@ -321,3 +321,4 @@ describe('StochasticIndicatorNew - Functional: Signal Line Behavior', () => {
     expect(Math.abs(result.d)).toBeLessThanOrEqual(Math.abs(result.k) + 10);
   });
 });
+

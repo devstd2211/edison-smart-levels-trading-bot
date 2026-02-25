@@ -5,7 +5,7 @@
  */
 
 import { WallTrackerService } from '../../services/wall-tracker.service';
-import { LoggerService, LogLevel, WallTrackingConfig } from '../../types';
+import { LoggerService, LogLevel, WallTrackingConfig } from '../../types/legacy';
 
 describe('WallTrackerService', () => {
   let service: WallTrackerService;

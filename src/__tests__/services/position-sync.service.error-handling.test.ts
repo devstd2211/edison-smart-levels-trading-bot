@@ -17,7 +17,7 @@ import {
   PositionSide,
   ExitType,
   BybitOrder,
-} from '../../types';
+} from '../../types/legacy';
 import {
   ExchangeConnectionError,
   ExchangeRateLimitError,

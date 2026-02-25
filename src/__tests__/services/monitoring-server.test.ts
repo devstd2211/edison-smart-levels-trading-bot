@@ -17,7 +17,7 @@ import request from 'supertest';
 import { MonitoringServer } from '../../services/monitoring-server.service';
 import { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
 import { HealthCheckService } from '../../services/health-check.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 
 describe('MonitoringServer', () => {

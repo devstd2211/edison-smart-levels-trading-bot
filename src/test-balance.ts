@@ -6,7 +6,9 @@
 
 import * as dotenv from 'dotenv';
 import { BybitService } from './services/bybit';
-import { LogLevel, ExchangeConfig, LoggerService } from './types';
+import { LoggerService } from './services/logger.service';
+import { LogLevel } from './types/enums';
+import { ExchangeConfig } from './types/legacy';
 
 // Load environment variables
 dotenv.config();

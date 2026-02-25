@@ -9,7 +9,7 @@ import type {
   BreakoutAnalyzerParams,
   OrderBlockAnalyzerParams,
   WickAnalyzerParams,
-} from '../types/config.types';
+} from '../types/config/config.types';
 
 // ============================================================================
 // PARAMETER EXTRACTION UTILITIES
@@ -80,3 +80,4 @@ export function getWickAnalyzerParams(config: any): WickAnalyzerParams {
     minBodyToWickRatio: params?.minBodyToWickRatio ?? 0.3,
   };
 }
+

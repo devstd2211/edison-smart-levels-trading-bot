@@ -5,8 +5,9 @@
  * Allows swapping exchanges without changing bot logic
  */
 
-import type { Candle, Position } from '../types/core';
-import type { ProtectionVerification } from '../types';
+import type { Candle } from '../types/core';
+import type { Position } from '../types/position';
+import type { ProtectionVerification } from '../types/legacy';
 
 // ============================================================================
 // CANDLE & MARKET DATA
@@ -255,7 +256,7 @@ export interface IExchangeOrders {
   /**
    * Get order history
    */
-  getOrderHistory?(limit?: number): Promise<any[]>;
+  getOrderHistory?(limit?: number): Promise<unknown[]>;
 }
 
 // ============================================================================
@@ -353,7 +354,7 @@ export interface IExchange
   /**
    * Get active orders (stop loss and take profit orders)
    */
-  getActiveOrders?(): Promise<any[]>;
+  getActiveOrders?(): Promise<unknown[]>;
 
   /**
    * Verify if protection (SL/TP) is set for position

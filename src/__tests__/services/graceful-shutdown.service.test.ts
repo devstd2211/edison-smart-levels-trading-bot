@@ -18,14 +18,14 @@ import { GracefulShutdownManager } from '../../services/graceful-shutdown.servic
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide, Position, TakeProfit, StopLossConfig } from '../../types';
+import { LoggerService, PositionSide, Position, TakeProfit, StopLossConfig } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
 import {
   GracefulShutdownConfig,
   EmergencyCloseReason,
   LiveTradingEventType,
-} from '../../types/live-trading.types';
-import { ActionType } from '../../types/architecture.types';
+} from '../../types/live-trading';
+import { ActionType } from '../../types/architecture';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -627,3 +627,4 @@ describe('GracefulShutdownManager', () => {
     });
   });
 });
+

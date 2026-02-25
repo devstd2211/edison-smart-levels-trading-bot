@@ -11,7 +11,7 @@
  */
 
 import { TradingJournalService } from '../../services/trading-journal.service';
-import { LoggerService, LogLevel, PositionSide, SignalType, SignalDirection, TakeProfit, ExitCondition, ExitType } from '../../types';
+import { LoggerService, LogLevel, PositionSide, SignalType, SignalDirection, TakeProfit, ExitCondition, ExitType } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

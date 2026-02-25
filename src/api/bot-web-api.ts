@@ -1,5 +1,17 @@
-import { Candle, TimeframeRole } from '../types';
-import { IWebApiServices } from '../interfaces';
+import type { Candle } from '../types/core';
+import { TimeframeRole } from '../types/enums';
+import type {
+  WebApiFundingRateView,
+  WebApiIndicatorPreferences,
+  WebApiMarketData,
+  WebApiOrderBookView,
+  WebApiOrderbookLevel,
+  WebApiOrderbookSnapshot,
+  WebApiPositionHistoryEntry,
+  WebApiVolumeProfileView,
+  WebApiWallsView,
+} from '../types/web-api';
+import type { IWebApiLogger, IWebApiReadServices } from '../interfaces';
 
 /**
  * Bot Web API - Provides data access for web interface
@@ -14,9 +26,9 @@ import { IWebApiServices } from '../interfaces';
  * The web interface should only interact through this adapter.
  */
 export class BotWebAPI {
-  private logger: IWebApiServices['logger'];
+  private readonly logger: IWebApiLogger;
 
-  constructor(private services: IWebApiServices) {
+  constructor(private services: IWebApiReadServices) {
     this.logger = services.logger;
   }
 
@@ -24,36 +36,45 @@ export class BotWebAPI {
    * Get current market data (price, indicators, trend)
    * Used by web interface to display live data
    */
-  getMarketData(): {
-    currentPrice: number;
-    priceChangePercent: number;
-    rsi?: number;
-    ema20?: number;
-    ema50?: number;
-    atr?: number;
-    trend?: string;
-    btcCorrelation?: number;
-    nearestLevel?: number;
-    distanceToLevel?: number;
-  } {
+  async getMarketData(): Promise<WebApiMarketData> {
     try {
-      // Get latest candles from PRIMARY timeframe
-      // Use async method without await here - access cached data
-      // This is a simplified version - in production would need async handling
-      const currentPrice = 0; // Placeholder
+      // Prefer cached candles (PRIMARY timeframe) to avoid hitting exchange APIs.
+      const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
+        TimeframeRole.PRIMARY,
+        2,
+      );
 
-      const priceChangePercent = 0; // Placeholder
+      const last = candles[candles.length - 1];
+      const prev = candles.length > 1 ? candles[candles.length - 2] : undefined;
 
-      // Get indicators - these are updated via analyzers
-      let rsi: number | undefined;
-      let ema20: number | undefined;
-      let ema50: number | undefined;
-      let atr: number | undefined;
-      let trend: string | undefined;
+      let currentPrice = last?.close ?? 0;
+      let priceChangePercent = 0;
 
-      // Note: RSI and EMA values would come from analyzer registry in orchestrator
-      // For now, returning placeholders until orchestrator exposes these methods
-      trend = 'NEUTRAL';
+      if (prev && prev.close !== 0) {
+        priceChangePercent = ((currentPrice - prev.close) / prev.close) * 100;
+      }
+
+      if (!currentPrice && this.services.webApiServices.bybitService.getCurrentPrice) {
+        currentPrice = await this.services.webApiServices.bybitService.getCurrentPrice();
+      }
+
+      const indicatorCache = this.services.webApiServices.marketDataServices.indicatorCache;
+      const preferences = this.getIndicatorPreferences();
+      const timeframes = preferences.timeframes ?? ['1h', '4h'];
+      const rsiPeriods = preferences.rsiPeriods ?? [14];
+      const emaPeriods = preferences.emaPeriods ?? [20, 50];
+      const atrPeriods = preferences.atrPeriods ?? [14];
+
+      const rsi = this.getCachedIndicator(indicatorCache, 'RSI', rsiPeriods, timeframes);
+      const ema20 = this.getCachedIndicator(indicatorCache, 'EMA', [20], timeframes) ??
+        this.getCachedIndicator(indicatorCache, 'EMA', emaPeriods, timeframes);
+      const ema50 = this.getCachedIndicator(indicatorCache, 'EMA', [50], timeframes) ??
+        this.getCachedIndicator(indicatorCache, 'EMA', emaPeriods, timeframes);
+      const atr = this.getCachedIndicator(indicatorCache, 'ATR', atrPeriods, timeframes);
+
+      // Basic trend derived from price change until analyzers are exposed.
+      const trend =
+        priceChangePercent > 0 ? 'UP' : priceChangePercent < 0 ? 'DOWN' : 'NEUTRAL';
 
       return {
         currentPrice,
@@ -74,6 +95,29 @@ export class BotWebAPI {
         priceChangePercent: 0,
       };
     }
+  }
+
+  private getCachedIndicator(
+    cache: IWebApiReadServices['webApiServices']['marketDataServices']['indicatorCache'],
+    name: 'RSI' | 'EMA' | 'ATR',
+    periods: number[],
+    timeframes: string[],
+  ): number | undefined {
+    for (const period of periods) {
+      for (const tf of timeframes) {
+        const key = `${name}-${period}-${tf}`;
+        const value = cache.get(key);
+        if (value !== null && value !== undefined) {
+          return value;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private getIndicatorPreferences(): WebApiIndicatorPreferences {
+    return this.services.webApiServices.indicatorPreferences ?? {};
   }
 
   /**
@@ -107,7 +151,7 @@ export class BotWebAPI {
   /**
    * Get position history (closed positions from trading journal)
    */
-  async getPositionHistory(limit: number = 50): Promise<any[]> {
+  async getPositionHistory(limit: number = 50): Promise<WebApiPositionHistoryEntry[]> {
     try {
       // Get closed trades from trading journal
       const closedTrades = this.services.webApiServices.journal.getClosedTrades();
@@ -149,10 +193,11 @@ export class BotWebAPI {
    * Get current orderbook snapshot for a symbol
    * @param symbol - Trading pair symbol (e.g., 'BTCUSDT')
    */
-  async getOrderBook(symbol: string): Promise<any> {
+  async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
     try {
       // Use the orderbook manager to get current snapshot
-      const snapshot = this.services.webApiServices.marketDataServices.orderbookManager.getSnapshot();
+      const snapshot: WebApiOrderbookSnapshot | null =
+        this.services.webApiServices.marketDataServices.orderbookManager.getSnapshot();
 
       if (!snapshot) {
         this.logger.warn('Orderbook not available yet', { symbol });
@@ -165,20 +210,20 @@ export class BotWebAPI {
       }
 
       // Convert to web format with cumulative volumes
-      const bids = snapshot.bids.map((level: any, idx: number) => ({
+      const bids = snapshot.bids.map((level: WebApiOrderbookLevel, idx: number) => ({
         price: level.price,
         quantity: level.size,
         cumulative: snapshot.bids
           .slice(0, idx + 1)
-          .reduce((sum: number, l: any) => sum + l.size, 0),
+          .reduce((sum: number, l: WebApiOrderbookLevel) => sum + l.size, 0),
       }));
 
-      const asks = snapshot.asks.map((level: any, idx: number) => ({
+      const asks = snapshot.asks.map((level: WebApiOrderbookLevel, idx: number) => ({
         price: level.price,
         quantity: level.size,
         cumulative: snapshot.asks
           .slice(0, idx + 1)
-          .reduce((sum: number, l: any) => sum + l.size, 0),
+          .reduce((sum: number, l: WebApiOrderbookLevel) => sum + l.size, 0),
       }));
 
       return {
@@ -202,7 +247,7 @@ export class BotWebAPI {
    * Get detected whale walls (large orders)
    * @param symbol - Trading pair symbol
    */
-  async getWalls(symbol: string): Promise<any> {
+  async getWalls(symbol: string): Promise<WebApiWallsView> {
     try {
       // Check if wall tracker exists
       if (!this.services.wallTrackerService) {
@@ -233,7 +278,7 @@ export class BotWebAPI {
    * Get current and predicted funding rate
    * @param symbol - Trading pair symbol
    */
-  async getFundingRate(symbol: string): Promise<any> {
+  async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
     try {
       // Try to get from Bybit API
       // IExchange.getFundingRate() returns number or is optional
@@ -266,7 +311,7 @@ export class BotWebAPI {
    * @param symbol - Trading pair symbol
    * @param levels - Number of price levels to analyze
    */
-  async getVolumeProfile(symbol: string, levels: number = 20): Promise<any> {
+  async getVolumeProfile(symbol: string, levels: number = 20): Promise<WebApiVolumeProfileView> {
     try {
       // Get candles and analyze volume distribution
       const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(

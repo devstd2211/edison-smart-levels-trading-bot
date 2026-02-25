@@ -12,7 +12,7 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { ExitActionDTO } from '../../types/architecture.types';
+import { ExitActionDTO } from '../../types/architecture';
 import {
   Position,
   PositionSide,
@@ -22,7 +22,7 @@ import {
   RiskManagementConfig,
   TradingConfig,
   Config,
-} from '../../types';
+} from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),
@@ -1085,3 +1085,4 @@ describe('PositionExitingService', () => {
     });
   });
 });
+

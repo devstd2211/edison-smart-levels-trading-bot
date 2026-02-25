@@ -27,7 +27,7 @@ import { CONFIDENCE_THRESHOLDS, PERCENT_MULTIPLIER } from '../constants';
  * Total: 100 points → fully aligned → boost confidence
  */
 
-import { TFAlignmentConfig, TFAlignmentResult, LoggerService } from '../types';
+import { TFAlignmentConfig, TFAlignmentResult, LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

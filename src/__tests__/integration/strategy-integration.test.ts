@@ -5,7 +5,7 @@
  */
 
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
-import { StrategyConfig } from '../../types/strategy-config.types';
+import { StrategyConfig } from '../../types/strategy-config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { mkdtemp, rmdir } from 'fs/promises';
@@ -544,3 +544,4 @@ describe('Strategy System - Integration Tests', () => {
     });
   });
 });
+

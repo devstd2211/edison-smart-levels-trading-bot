@@ -24,7 +24,7 @@ import {
   OrchestratorConfig,
   ExitType,
   Position,
-} from '../types';
+} from '../types/legacy';
 import { TrendBias, SignalDirection } from '../types/enums';
 // PHASE 4: ContextAnalyzer archived to src/archive/phase4-integration/
 // Replaced by TrendAnalyzer (PRIMARY component)
@@ -46,9 +46,9 @@ import { FilterOrchestrator } from '../orchestrators/filter.orchestrator';
 import { MTFSnapshotGate } from './mtf-snapshot-gate.service';
 import { IndicatorRegistry } from './indicator-registry.service';
 import { IndicatorLoader } from '../loaders/indicator.loader';
-import { IndicatorType } from '../types/indicator-type.enum';
+import { IndicatorType } from '../types/indicator';
 import { ActionQueueService } from './action-queue.service';
-import { IActionHandler, ActionType, OpenPositionAction, ClosePercentAction, UpdateStopLossAction, ActivateTrailingAction } from '../types/architecture.types';
+import { IActionHandler, ActionType, OpenPositionAction, ClosePercentAction, UpdateStopLossAction, ActivateTrailingAction } from '../types/architecture';
 import { OpenPositionHandler } from '../action-handlers/open-position.handler';
 import { ClosePercentHandler } from '../action-handlers/close-percent.handler';
 import { UpdateStopLossHandler } from '../action-handlers/update-stop-loss.handler';
@@ -1248,3 +1248,4 @@ export class TradingOrchestrator {
     return this.actionQueue;
   }
 }
+

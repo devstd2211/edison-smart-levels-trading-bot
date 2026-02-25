@@ -5,7 +5,7 @@
 
 import { BollingerBandsIndicatorNew } from '../../indicators/bollinger-bands.indicator-new';
 import type { Candle } from '../../types/core';
-import type { BollingerBandsConfigNew } from '../../types/config-new.types';
+import type { BollingerBandsConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST HELPERS
@@ -499,3 +499,4 @@ describe('BollingerBandsIndicatorNew - Functional: State Transitions', () => {
     expect(['low', 'oversold']).toContain(lowClass);
   });
 });
+

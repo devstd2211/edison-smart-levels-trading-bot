@@ -9,7 +9,7 @@
  */
 
 import { BotEventBus, BotEvent } from '../services/event-bus';
-import { LoggerService } from '../types';
+import { LoggerService } from '../types/legacy';
 
 // Create a mock logger with required methods
 const createMockLogger = (): Partial<LoggerService> => ({

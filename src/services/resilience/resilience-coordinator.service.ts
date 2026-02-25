@@ -1,10 +1,10 @@
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { CircuitBreakerService } from './circuit-breaker.service';
 import { RateLimiterService } from './rate-limiter.service';
 import { RetryPolicyService, RetryPolicyConfig } from './retry-policy.service';
 import { BulkheadService, BulkheadConfig } from './bulkhead.service';
-import { PrometheusMetricsService } from '../prometheus-metrics.service';
+import type { IMonitoringMetricsRecorder } from '../../interfaces/IMonitoringRecorders';
 
 /**
  * Options for resilient operation execution
@@ -121,7 +121,7 @@ export class ResilienceCoordinator {
     private readonly rateLimiter: RateLimiterService,
     private readonly retryPolicy: RetryPolicyService,
     private readonly bulkhead: BulkheadService,
-    private readonly metrics?: PrometheusMetricsService,
+    private readonly metrics?: IMonitoringMetricsRecorder,
     private readonly logger?: LoggerService,
     private readonly errorHandler?: ErrorHandler
   ) {

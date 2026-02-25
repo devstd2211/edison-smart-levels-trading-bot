@@ -15,7 +15,7 @@ import { IndicatorCacheService } from '../../services/indicator-cache.service';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
 import type { IMarketDataRepository } from '../../repositories/IRepositories';
-import type { Candle, ExchangeConfig } from '../../types';
+import type { Candle, ExchangeConfig } from '../../types/legacy';
 
 describe('Phase 6.3: Full Repository Integration E2E', () => {
   let repository: IMarketDataRepository;

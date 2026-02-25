@@ -9,7 +9,7 @@
  */
 
 import { StructureAwareExitService } from '../../services/structure-aware-exit.service';
-import { LoggerService, SignalDirection, SwingPointType, StructureAwareExitConfig, LiquidityZone, SwingPoint } from '../../types';
+import { LoggerService, SignalDirection, SwingPointType, StructureAwareExitConfig, LiquidityZone, SwingPoint } from '../../types/legacy';
 
 describe('StructureAwareExitService', () => {
   let service: StructureAwareExitService;

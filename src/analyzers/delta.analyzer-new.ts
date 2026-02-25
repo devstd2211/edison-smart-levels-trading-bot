@@ -1,9 +1,9 @@
 import type { Candle } from '../types/core';
 import type { AnalyzerSignal } from '../types/strategy';
-import type { BreakoutAnalyzerConfigNew } from '../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 // Default configuration constants
 const DEFAULT_MIN_CANDLES_FOR_DELTA = 15;
@@ -96,3 +96,4 @@ export class DeltaAnalyzerNew implements IAnalyzer {
   reset(): void { this.lastSignal = null; this.initialized = false; }
   getConfig() { return { enabled: this.enabled, weight: this.weight, priority: this.priority }; }
 }
+

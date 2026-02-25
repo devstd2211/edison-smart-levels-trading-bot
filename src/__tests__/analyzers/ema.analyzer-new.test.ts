@@ -5,7 +5,7 @@
 
 import { EmaAnalyzerNew } from '../../analyzers/ema.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { EmaAnalyzerConfigNew } from '../../types/config-new.types';
+import type { EmaAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -643,3 +643,4 @@ describe('EmaAnalyzerNew - Multiple Analysis', () => {
     expect(retrievedConfig.baseConfidence).toBe(config.baseConfidence);
   });
 });
+

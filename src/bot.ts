@@ -1,9 +1,19 @@
-import { Config, Position, Candle } from './types';
+import type { Candle } from './types/core';
+import type { Position } from './types/position';
+import type { Config } from './types/legacy';
+import type {
+  WebApiFundingRateView,
+  WebApiMarketData,
+  WebApiOrderBookView,
+  WebApiPositionHistoryEntry,
+  WebApiVolumeProfileView,
+  WebApiWallsView,
+} from './types/web-api';
 
 
 import { BotServices } from './services/bot-services';
 import type {
-  IWebApiServices,
+  IWebApiReadServices,
   IWebSocketEventHandlerServices,
   IBotInitializerServices,
   ITradingBotServices,
@@ -11,6 +21,8 @@ import type {
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
 import { BotWebAPI } from './api/bot-web-api';
+import { createWebApiReadServices } from './services/containers/web-api-read-services';
+import { createMonitoringReadServices } from './services/containers/monitoring-services';
 
 /**
  * Main Trading Bot orchestrator
@@ -29,10 +41,10 @@ export class TradingBot {
   // Direct service references (no getters - simpler and more transparent)
   private readonly logger: ITradingBotServices['coreServices']['logger'];
   private readonly telegram: ITradingBotServices['coreServices']['telegram'];
-  private readonly bybitService: ITradingBotServices['bybitService'];
   private readonly tradingOrchestrator: ITradingBotServices['executionServices']['tradingOrchestrator'];
   private readonly positionManager: ITradingBotServices['executionServices']['positionManager'];
   private readonly positionMonitor: ITradingBotServices['positionMonitor'];
+  private readonly monitoringServices: ITradingBotServices['monitoringServices'];
 
   // Public accessors for external consumers
   /**
@@ -48,6 +60,18 @@ export class TradingBot {
   // 🔒 CRITICAL: OrderID → TP Level mapping for reliable TP detection
   // Avoids guesswork when multiple TP orders are placed
   private tpOrderToLevel: Map<string, number> = new Map();
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isDashboardEnabled(): boolean {
+    if (!this.isRecord(this.config)) {
+      return false;
+    }
+    const dashboard = this.isRecord(this.config.dashboard) ? this.config.dashboard : undefined;
+    return dashboard?.enabled === true;
+  }
 
   /**
    * Constructor - receives all dependencies via DI (BotFactory)
@@ -67,10 +91,10 @@ export class TradingBot {
     // Initialize direct service references
     this.logger = services.coreServices.logger;
     this.telegram = services.coreServices.telegram;
-    this.bybitService = services.bybitService;
     this.tradingOrchestrator = services.executionServices.tradingOrchestrator;
     this.positionManager = services.executionServices.positionManager;
     this.positionMonitor = services.positionMonitor;
+    this.monitoringServices = createMonitoringReadServices(services.monitoringServices);
 
     this.logger.info('🤖 TradingBot initialized with injected dependencies via BotFactory');
     this.logger.info('🔍 DEBUG: Config structure check', {
@@ -126,7 +150,7 @@ export class TradingBot {
       this.setupCriticalErrorHandling();
 
       // Phase 4.7: Connect dashboard to trading events (only if enabled)
-      if (this.services.monitoringServices.dashboard && (this.config as any)?.dashboard?.enabled === true) {
+      if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
         this.setupDashboardEventListeners();
       }
 
@@ -233,27 +257,52 @@ export class TradingBot {
    * Connects position and exit events to dashboard display
    */
   private setupDashboardEventListeners(): void {
-    const dashboard = this.services.monitoringServices.dashboard;
+    const dashboard = this.monitoringServices.dashboard;
     if (!dashboard) {
       return;
     }
-    // Listen for position-opened events
-    this.eventBus.on('position-opened', (data: any) => {
-      if (data.position) {
-        const p = data.position;
-        const msg = `${p.side} @ ${p.entryPrice.toFixed(4)} | Qty: ${p.quantity}`;
-        dashboard.recordEvent('position-open', msg);
+    const isPositionShape = (value: unknown): value is Position =>
+      this.isRecord(value)
+      && typeof value.side === 'string'
+      && typeof value.entryPrice === 'number'
+      && typeof value.quantity === 'number';
+
+    const getPositionFromEvent = (data: unknown): Position | null => {
+      if (!this.isRecord(data)) {
+        return null;
       }
+      if (isPositionShape(data.position)) {
+        return data.position;
+      }
+      if (isPositionShape(data.closedPosition)) {
+        return data.closedPosition;
+      }
+      if (isPositionShape(data)) {
+        return data;
+      }
+      return null;
+    };
+    // Listen for position-opened events
+    this.eventBus.on('position-opened', (data: unknown) => {
+      const position = getPositionFromEvent(data);
+      if (!position) {
+        return;
+      }
+      const msg = `${position.side} @ ${position.entryPrice.toFixed(4)} | Qty: ${position.quantity}`;
+      dashboard.recordEvent('position-open', msg);
     });
 
     // Listen for position-closed events
-    this.eventBus.on('position-closed', (data: any) => {
-      if (data.closedPosition) {
-        const p = data.closedPosition;
-        const pnl = data.pnl || 0;
-        const msg = `${p.side} closed | P&L: ${pnl > 0 ? '+' : ''}${pnl.toFixed(2)} USDT`;
-        dashboard.recordEvent('position-close', msg);
+    this.eventBus.on('position-closed', (data: unknown) => {
+      const position = getPositionFromEvent(data);
+      if (!position) {
+        return;
       }
+      const pnl = this.isRecord(data) && typeof data.pnl === 'number'
+        ? data.pnl
+        : position.unrealizedPnL || 0;
+      const msg = `${position.side} closed | P&L: ${pnl > 0 ? '+' : ''}${pnl.toFixed(2)} USDT`;
+      dashboard.recordEvent('position-close', msg);
     });
 
     this.logger.debug('📊 Dashboard event listeners configured');
@@ -286,7 +335,7 @@ export class TradingBot {
    */
   async getBalance(): Promise<number> {
     try {
-      const balance = await this.bybitService.getBalance();
+      const balance = await this.services.webApiServices.bybitService.getBalance();
       return balance.walletBalance;
     } catch (error) {
       this.logger.error('Error getting balance', { error });
@@ -317,7 +366,7 @@ export class TradingBot {
    */
   private getWebAPI(): BotWebAPI {
     if (!this.webAPI) {
-      this.webAPI = new BotWebAPI(this.services as IWebApiServices);
+      this.webAPI = new BotWebAPI(createWebApiReadServices(this.services as IWebApiReadServices));
     }
     return this.webAPI;
   }
@@ -326,7 +375,7 @@ export class TradingBot {
    * Get current market data (price, indicators, trend)
    * Delegates to BotWebAPI
    */
-  getMarketData(): any {
+  async getMarketData(): Promise<WebApiMarketData> {
     return this.getWebAPI().getMarketData();
   }
 
@@ -342,7 +391,7 @@ export class TradingBot {
    * Get position history for web interface
    * Delegates to BotWebAPI
    */
-  async getPositionHistory(limit: number): Promise<any[]> {
+  async getPositionHistory(limit: number): Promise<WebApiPositionHistoryEntry[]> {
     return this.getWebAPI().getPositionHistory(limit);
   }
 
@@ -350,7 +399,7 @@ export class TradingBot {
    * Get orderbook data for web interface
    * Delegates to BotWebAPI
    */
-  async getOrderBook(symbol: string): Promise<any> {
+  async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
     return this.getWebAPI().getOrderBook(symbol);
   }
 
@@ -358,7 +407,7 @@ export class TradingBot {
    * Get wall orders for web interface
    * Delegates to BotWebAPI
    */
-  async getWalls(symbol: string): Promise<any> {
+  async getWalls(symbol: string): Promise<WebApiWallsView> {
     return this.getWebAPI().getWalls(symbol);
   }
 
@@ -366,7 +415,7 @@ export class TradingBot {
    * Get funding rate for web interface
    * Delegates to BotWebAPI
    */
-  async getFundingRate(symbol: string): Promise<any> {
+  async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
     return this.getWebAPI().getFundingRate(symbol);
   }
 
@@ -374,7 +423,7 @@ export class TradingBot {
    * Get volume profile for web interface
    * Delegates to BotWebAPI
    */
-  async getVolumeProfile(symbol: string, levels: number): Promise<any> {
+  async getVolumeProfile(symbol: string, levels: number): Promise<WebApiVolumeProfileView> {
     return this.getWebAPI().getVolumeProfile(symbol, levels);
   }
 }

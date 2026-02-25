@@ -10,7 +10,9 @@
  * - OrderExecutionPipeline (before order placement)
  */
 
-import { Position, PositionSide, LoggerService } from '../types';
+import { Position } from '../types/position';
+import { PositionSide } from '../types/enums';
+import { LoggerService } from '../services/logger.service';
 
 export class PositionValidator {
   constructor(private logger: LoggerService) {}

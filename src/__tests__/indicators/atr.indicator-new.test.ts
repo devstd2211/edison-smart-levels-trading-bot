@@ -5,7 +5,7 @@
 
 import { ATRIndicatorNew } from '../../indicators/atr.indicator-new';
 import type { Candle } from '../../types/core';
-import type { AtrIndicatorConfigNew } from '../../types/config-new.types';
+import type { AtrIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST FIXTURES
@@ -514,3 +514,4 @@ describe('ATR Indicator NEW', () => {
     });
   });
 });
+

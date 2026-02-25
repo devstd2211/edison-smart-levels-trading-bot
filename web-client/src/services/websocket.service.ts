@@ -5,12 +5,14 @@
  * Handles reconnection with exponential backoff
  */
 
-type MessageHandler = (data: any) => void;
+import type { WebSocketEventMap } from '../types';
+
+type MessageHandler<K extends keyof WebSocketEventMap> = (data: WebSocketEventMap[K]) => void;
 
 export class WebSocketClient {
   private ws: WebSocket | null = null;
   private url: string = '';
-  private handlers: Map<string, Set<MessageHandler>> = new Map();
+  private handlers: Map<string, Set<(data: unknown) => void>> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
@@ -51,7 +53,7 @@ export class WebSocketClient {
           }
         }
       } catch (error) {
-        console.warn(`[WS] Failed to fetch from port ${apiPort}:`, (error as any).message);
+        console.warn(`[WS] Failed to fetch from port ${apiPort}:`, this.getErrorMessage(error));
       }
     }
 
@@ -124,27 +126,27 @@ export class WebSocketClient {
   /**
    * Subscribe to message type
    */
-  on(type: string, handler: MessageHandler) {
+  on<K extends keyof WebSocketEventMap>(type: K, handler: MessageHandler<K>) {
     if (!this.handlers.has(type)) {
       this.handlers.set(type, new Set());
     }
-    this.handlers.get(type)!.add(handler);
+    this.handlers.get(type)!.add(handler as (data: unknown) => void);
   }
 
   /**
    * Unsubscribe from message type
    */
-  off(type: string, handler: MessageHandler) {
+  off<K extends keyof WebSocketEventMap>(type: K, handler: MessageHandler<K>) {
     const handlers = this.handlers.get(type);
     if (handlers) {
-      handlers.delete(handler);
+      handlers.delete(handler as (data: unknown) => void);
     }
   }
 
   /**
    * Send message to server
    */
-  send(type: string, payload: any = {}) {
+  send<K extends keyof WebSocketEventMap>(type: K, payload: WebSocketEventMap[K]) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type, payload, timestamp: Date.now() }));
     } else {
@@ -194,6 +196,19 @@ export class WebSocketClient {
         }
       });
     }, delay);
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+    return 'Unknown error';
   }
 }
 

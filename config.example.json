@@ -817,6 +817,21 @@
     }
   },
 
+  "webApi": {
+    "_webApi_comment": "Web API settings (optional)",
+    "indicatorPreferences": {
+      "_indicatorPreferences_comment": "Indicator cache lookup preferences for web API",
+      "timeframes": ["1h", "4h"],
+      "_timeframes_comment": "Ordered list of timeframes to search for cached indicators",
+      "rsiPeriods": [14],
+      "_rsiPeriods_comment": "RSI periods to try (in order)",
+      "emaPeriods": [20, 50],
+      "_emaPeriods_comment": "EMA periods to try (in order)",
+      "atrPeriods": [14],
+      "_atrPeriods_comment": "ATR periods to try (in order)"
+    }
+  },
+
   "logging": {
     "_logging_comment": "Duplicate logging config (consolidation pending)",
     "level": "DEBUG",

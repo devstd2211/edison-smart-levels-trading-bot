@@ -11,7 +11,7 @@
  */
 
 import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.service';
-import { Candle } from '../../types';
+import { Candle } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 const createMockLogger = () => ({

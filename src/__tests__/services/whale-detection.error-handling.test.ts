@@ -10,7 +10,7 @@
 
 import { WhaleDetectionService, WhaleDetectorConfig, WhaleDetectionMode } from '../../services/whale-detection.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { OrderBookAnalysis, SignalDirection } from '../../types';
+import { OrderBookAnalysis, SignalDirection } from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),

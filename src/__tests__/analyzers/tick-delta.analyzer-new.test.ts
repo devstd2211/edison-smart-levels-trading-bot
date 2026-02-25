@@ -1,7 +1,7 @@
 import { TickDeltaAnalyzerNew } from '../../analyzers/tick-delta.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
-import { AnalyzerType } from '../../types/analyzer-type.enum';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
+import { AnalyzerType } from '../../types/analyzer';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.6, priority: 5 };
@@ -114,3 +114,4 @@ describe('TickDeltaAnalyzerNew - IAnalyzer Interface Tests', () => {
     expect(analyzer.getMaxConfidence()).toBe(0.95);
   });
 });
+

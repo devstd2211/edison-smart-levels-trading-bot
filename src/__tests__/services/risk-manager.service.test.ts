@@ -20,7 +20,7 @@ import {
   LogLevel,
   SignalType,
   StopLossConfig,
-} from '../../types';
+} from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import {
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_2_LOSSES,

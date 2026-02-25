@@ -17,47 +17,23 @@ import {
 } from 'lucide-react';
 import { wsClient } from '../services/websocket.service';
 import { dataApi } from '../services/api.service';
+import type {
+  WebApiFundingRateView,
+  WebApiOrderBookView,
+  WebApiVolumeProfileView,
+  WebApiWallView,
+  WebApiWallsView,
+} from '../types';
 import { useConfigStore } from '../stores/configStore';
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
 
-interface OrderLevel {
-  price: number;
-  quantity: number;
-  cumulative: number;
-}
-
-interface OrderBook {
-  symbol: string;
-  bids: OrderLevel[];
-  asks: OrderLevel[];
-  timestamp: number;
-}
-
-interface DetectedWall {
-  side: 'BUY' | 'SELL';
-  price: number;
-  quantity: number;
-  cumulative: number;
-  strength: number; // 0-1
-  detected: boolean;
-}
-
-interface FundingRate {
-  symbol: string;
-  current: number;
-  predicted: number;
-  nextFundingTime: number;
-  lastFundingTime: number;
-}
-
-interface VolumeProfile {
-  prices: string[];
-  volumes: number[];
-  maxVolume: number;
-}
+type OrderBook = WebApiOrderBookView;
+type DetectedWall = WebApiWallView;
+type FundingRate = WebApiFundingRateView;
+type VolumeProfile = WebApiVolumeProfileView;
 
 // ============================================================================
 // ORDERBOOK DISPLAY COMPONENT
@@ -299,7 +275,7 @@ function VolumeProfilePanel({ profile }: { profile: VolumeProfile | null }) {
       </div>
 
       <div className="space-y-2">
-        {profile.prices.map((price, idx) => (
+        {profile.levels.map((price, idx) => (
           <div key={idx} className="flex items-center gap-2">
             <span className="text-xs text-gray-600 w-16">${price}</span>
             <div className="flex-1 bg-gray-100 rounded h-6 overflow-hidden">
@@ -326,12 +302,12 @@ function VolumeProfilePanel({ profile }: { profile: VolumeProfile | null }) {
           <div>
             <p className="text-gray-600">Price Range</p>
             <p className="font-semibold text-gray-900">
-              ${profile.prices[0]} - ${profile.prices[profile.prices.length - 1]}
+              ${profile.levels[0]} - ${profile.levels[profile.levels.length - 1]}
             </p>
           </div>
           <div>
             <p className="text-gray-600">Levels</p>
-            <p className="font-semibold text-gray-900">{profile.prices.length}</p>
+            <p className="font-semibold text-gray-900">{profile.levels.length}</p>
           </div>
         </div>
       </div>
@@ -468,7 +444,7 @@ export function OrderBook() {
       volumes.push(Math.random() * maxVol);
     }
 
-    return { prices, volumes, maxVolume: maxVol };
+    return { symbol, levels: prices, volumes, maxVolume: maxVol };
   }, [orderBook, maxVolume]);
 
   useEffect(() => {
@@ -486,10 +462,11 @@ export function OrderBook() {
         const wallsResponse = await dataApi.getWalls(symbol);
         if (wallsResponse.success && wallsResponse.data) {
           // Handle both array and object formats from API
-          const wallsData = Array.isArray(wallsResponse.data)
-            ? wallsResponse.data
-            : (wallsResponse.data as any)?.walls || (wallsResponse.data as any)?.data || [];
-          setWalls(wallsData as DetectedWall[]);
+          const wallsPayload = wallsResponse.data as WebApiWallsView | WebApiWallView[];
+          const wallsData = Array.isArray(wallsPayload)
+            ? wallsPayload
+            : wallsPayload?.walls || [];
+          setWalls(wallsData);
         } else {
           setWalls([]);
         }
@@ -509,37 +486,34 @@ export function OrderBook() {
     fetchData();
 
     // Setup WebSocket listeners for real-time updates
-    wsClient.on('ORDERBOOK_UPDATE', (data: any) => {
+    const handleOrderbookUpdate = (data: WebApiOrderBookView) => {
       if (autoRefresh && data?.symbol === symbol) {
-        setOrderBook(data as OrderBook);
+        setOrderBook(data);
       }
-    });
+    };
 
-    wsClient.on('WALLS_UPDATE', (data: any) => {
+    const handleWallsUpdate = (data: WebApiWallsView | WebApiWallView[]) => {
       if (autoRefresh) {
-        // Handle both array and object formats from WebSocket
-        const wallsData = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.walls)
-          ? data.walls
-          : Array.isArray(data?.data)
-          ? data.data
-          : [];
-        setWalls(wallsData as DetectedWall[]);
+        const wallsData = Array.isArray(data) ? data : data?.walls || [];
+        setWalls(wallsData);
       }
-    });
+    };
 
-    wsClient.on('FUNDING_RATE_UPDATE', (data: any) => {
+    const handleFundingRateUpdate = (data: WebApiFundingRateView) => {
       if (autoRefresh && data?.symbol === symbol) {
-        setFundingRate(data as FundingRate);
+        setFundingRate(data);
       }
-    });
+    };
+
+    wsClient.on('ORDERBOOK_UPDATE', handleOrderbookUpdate);
+    wsClient.on('WALLS_UPDATE', handleWallsUpdate);
+    wsClient.on('FUNDING_RATE_UPDATE', handleFundingRateUpdate);
 
     return () => {
       // Cleanup WebSocket listeners
-      wsClient.off('ORDERBOOK_UPDATE', () => {});
-      wsClient.off('WALLS_UPDATE', () => {});
-      wsClient.off('FUNDING_RATE_UPDATE', () => {});
+      wsClient.off('ORDERBOOK_UPDATE', handleOrderbookUpdate);
+      wsClient.off('WALLS_UPDATE', handleWallsUpdate);
+      wsClient.off('FUNDING_RATE_UPDATE', handleFundingRateUpdate);
     };
   }, [symbol]);
 

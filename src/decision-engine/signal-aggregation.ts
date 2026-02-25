@@ -16,7 +16,8 @@
  * PURE FUNCTION: No side effects, no logger calls, all inputs as parameters
  */
 
-import { AnalyzerSignal, SignalDirection } from '../types';
+import type { AnalyzerSignal } from '../types/strategy';
+import { SignalDirection } from '../types/enums';
 
 // ============================================================================
 // TYPES & INTERFACES

@@ -10,6 +10,9 @@ import {
 } from './enums';
 import type { TakeProfit, StopLossConfig, Position } from './position';
 
+export type { TakeProfit, StopLossConfig, Position } from './position';
+export type { Signal } from './signal';
+
 // ============================================================================
 // CANDLE DATA
 // ============================================================================

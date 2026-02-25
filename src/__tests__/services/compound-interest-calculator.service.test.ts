@@ -3,7 +3,7 @@
  */
 
 import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
-import { LoggerService, CompoundInterestConfig, LogLevel } from '../../types';
+import { LoggerService, CompoundInterestConfig, LogLevel } from '../../types/legacy';
 import {
   calculateLockedProfit,
   calculateReinvestment,

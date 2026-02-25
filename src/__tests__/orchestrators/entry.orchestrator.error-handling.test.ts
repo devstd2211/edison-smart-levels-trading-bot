@@ -24,7 +24,7 @@ import {
   RiskManagerConfig,
   TrendAnalysis,
   RiskDecision,
-} from '../../types';
+} from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {

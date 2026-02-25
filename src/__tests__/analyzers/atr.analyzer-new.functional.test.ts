@@ -5,7 +5,7 @@
 
 import { AtrAnalyzerNew } from '../../analyzers/atr.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { AtrAnalyzerConfigNew } from '../../types/config-new.types';
+import type { AtrAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -56,7 +56,7 @@ describe('AtrAnalyzerNew - Functional: High Volatility Markets', () => {
 
     expect(signal.direction).toBe(SignalDirection.LONG);
     expect(signal.confidence).toBeGreaterThan(40);
-    expect(signal.source).toBe('ATR_ANALYZER');
+    expect(signal.source).toBe('ATR_ANALYZER_NEW');
     expect(signal.weight).toBe(config.weight);
   });
 
@@ -102,7 +102,7 @@ describe('AtrAnalyzerNew - Functional: Low Volatility Markets', () => {
 
     expect(signal.direction).toBe(SignalDirection.SHORT);
     expect(signal.confidence).toBeGreaterThan(10);
-    expect(signal.source).toBe('ATR_ANALYZER');
+    expect(signal.source).toBe('ATR_ANALYZER_NEW');
   });
 
   it('should maintain strong SHORT signal with sustained low volatility', () => {
@@ -423,3 +423,5 @@ describe('AtrAnalyzerNew - Functional: Config Impact on Signals', () => {
     expect(highSignal.confidence).toBeGreaterThan(lowSignal.confidence);
   });
 });
+
+

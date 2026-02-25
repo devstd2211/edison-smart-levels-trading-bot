@@ -8,7 +8,7 @@
 import { TickDeltaAnalyzerService } from '../../services/tick-delta-analyzer.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { TickDeltaAnalyzerConfig, Tick, MomentumSpike, SignalDirection } from '../../types';
+import { TickDeltaAnalyzerConfig, Tick, MomentumSpike, SignalDirection } from '../../types/legacy';
 
 // ============================================================================
 // FIXTURES

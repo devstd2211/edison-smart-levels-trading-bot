@@ -11,7 +11,7 @@
  */
 
 import { TimeframeWeightingService } from '../../services/timeframe-weighting.service';
-import { MultiTimeframeAnalysis, TradingMode, TrendBias } from '../../types';
+import { MultiTimeframeAnalysis, TradingMode, TrendBias } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 const createMockLogger = () => ({

@@ -13,8 +13,8 @@ import { StrategyManagerService } from '../../services/strategy-manager.service'
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { StrategyConfig } from '../../types/strategy-config.types';
-import { ConfigNew } from '../../types/config-new.types';
+import { StrategyConfig } from '../../types/strategy-config';
+import { ConfigNew } from '../../types/config/config-new.types';
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let strategyManager: StrategyManagerService;
@@ -477,3 +477,4 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     });
   });
 });
+

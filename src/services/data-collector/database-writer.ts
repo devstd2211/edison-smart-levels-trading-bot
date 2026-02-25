@@ -8,7 +8,7 @@
 import { Database } from 'sqlite';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
-import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types';
+import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors'; // Phase 8.9.35
 
 const gzip = promisify(zlib.gzip);

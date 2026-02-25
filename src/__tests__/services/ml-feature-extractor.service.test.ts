@@ -3,7 +3,7 @@
  */
 
 import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.service';
-import { LoggerService, LogLevel, Candle } from '../../types';
+import { LoggerService, LogLevel, Candle } from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

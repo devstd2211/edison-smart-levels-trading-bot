@@ -5,7 +5,7 @@
 
 import { RsiAnalyzerNew } from '../../analyzers/rsi.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { RsiAnalyzerConfigNew } from '../../types/config-new.types';
+import type { RsiAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -494,3 +494,4 @@ describe('RsiAnalyzerNew - Multiple Analysis Tests', () => {
     expect(retrievedConfig.maxConfidence).toBe(config.maxConfidence);
   });
 });
+

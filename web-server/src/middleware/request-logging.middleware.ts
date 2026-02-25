@@ -42,9 +42,9 @@ export function createRequestLoggingMiddleware(config: LoggingConfig = {}) {
 
     // Capture response
     const originalSend = res.send;
-    let responseBody: any = null;
+    let responseBody: unknown = null;
 
-    res.send = function (data: any) {
+    res.send = function (data: unknown) {
       responseBody = data;
       return originalSend.call(this, data);
     };
@@ -55,7 +55,7 @@ export function createRequestLoggingMiddleware(config: LoggingConfig = {}) {
       const [seconds, nanoseconds] = process.hrtime(startHrTime);
       const durationMs = seconds * 1000 + nanoseconds / 1000000;
 
-      const logData: Record<string, any> = {
+      const logData: Record<string, unknown> = {
         timestamp: new Date().toISOString(),
         method: req.method,
         path: req.path,
@@ -90,12 +90,13 @@ export function createRequestLoggingMiddleware(config: LoggingConfig = {}) {
     });
 
     // Log on error
-    res.on('error', (error) => {
+    res.on('error', (error: unknown) => {
       const duration = Date.now() - startTime;
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[HTTP_ERROR] ${req.method} ${req.path}`, {
         timestamp: new Date().toISOString(),
         duration: `${duration}ms`,
-        error: error.message,
+        error: message,
         statusCode: res.statusCode,
       });
     });

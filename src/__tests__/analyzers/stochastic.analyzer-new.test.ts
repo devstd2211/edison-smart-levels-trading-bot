@@ -4,7 +4,7 @@
 
 import { StochasticAnalyzerNew } from '../../analyzers/stochastic.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { StochasticAnalyzerConfigNew } from '../../types/config-new.types';
+import type { StochasticAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -431,3 +431,4 @@ describe('StochasticAnalyzerNew - Multiple Analysis Tests', () => {
     expect(state2.lastSignal).not.toBe(state1.lastSignal);
   });
 });
+

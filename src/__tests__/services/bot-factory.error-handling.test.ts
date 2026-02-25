@@ -16,8 +16,8 @@
 
 import { BotFactory } from '../../services/bot-factory.service';
 import { BotServices } from '../../services/bot-services';
-import { Config } from '../../types';
-import { LoggerService } from '../../types';
+import { Config } from '../../types/legacy';
+import { LoggerService } from '../../types/legacy';
 import {
   BotFactoryConfigValidationError,
   BotFactoryInitializationError,

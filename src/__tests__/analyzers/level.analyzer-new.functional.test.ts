@@ -1,6 +1,6 @@
 import { LevelAnalyzerNew } from '../../analyzers/level.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { LevelAnalyzerConfigNew } from '../../types/config-new.types';
+import type { LevelAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): LevelAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 5 };
@@ -184,3 +184,4 @@ describe('LevelAnalyzerNew - Functional: Gap at Levels', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

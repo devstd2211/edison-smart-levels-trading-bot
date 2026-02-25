@@ -32,7 +32,7 @@ import {
   ScalpingMicroWallConfig,
   TakeProfit,
   MicroWallDetectorService,
-} from '../types';
+} from '../types/legacy';
 
 // ============================================================================
 // SCALPING MICRO WALL STRATEGY

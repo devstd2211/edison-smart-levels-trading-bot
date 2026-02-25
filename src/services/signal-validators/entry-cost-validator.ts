@@ -3,7 +3,7 @@
  * Ensures minimum analyzer consensus before entry
  */
 
-import { SignalDirection, LoggerService } from '../../types';
+import { SignalDirection, LoggerService } from '../../types/legacy';
 
 export interface EntryCostValidatorConfig {
   enabled: boolean;

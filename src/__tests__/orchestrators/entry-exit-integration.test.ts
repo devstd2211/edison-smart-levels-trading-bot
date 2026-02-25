@@ -29,7 +29,7 @@ import {
   TakeProfit,
   RiskManagerConfig,
   RiskDecision,
-} from '../../types';
+} from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import { RiskManager } from '../../services/risk-manager.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';

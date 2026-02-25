@@ -4,7 +4,7 @@
  */
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
-import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types';
+import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types/legacy';
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;

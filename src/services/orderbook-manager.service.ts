@@ -16,7 +16,7 @@ import { MAX_ORDERBOOK_LEVELS } from '../constants/technical.constants';
  * Single Responsibility: Orderbook state management
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { WallTrackerService } from './wall-tracker.service';
 

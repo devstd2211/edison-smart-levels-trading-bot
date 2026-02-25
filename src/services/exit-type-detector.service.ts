@@ -8,7 +8,7 @@
  * - Return structured exit information for journal
  */
 
-import { BybitOrder, ExitType, Position, PositionSide, LoggerService } from '../types';
+import { BybitOrder, ExitType, Position, PositionSide, LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**

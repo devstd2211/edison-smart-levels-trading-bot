@@ -10,7 +10,7 @@
  * - SKIP: Logging errors (silent fail for non-critical logging)
  */
 
-import { Candle } from '../types';
+import { Candle } from '../types/legacy';
 import { TIME_INTERVALS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 

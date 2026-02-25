@@ -5,7 +5,7 @@
 
 import { StochasticIndicatorNew } from '../../indicators/stochastic.indicator-new';
 import type { Candle } from '../../types/core';
-import type { StochasticIndicatorConfigNew } from '../../types/config-new.types';
+import type { StochasticIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST HELPERS
@@ -628,3 +628,4 @@ describe('StochasticIndicatorNew - Edge Cases', () => {
     expect(result.k).toBeCloseTo(50, 0);
   });
 });
+

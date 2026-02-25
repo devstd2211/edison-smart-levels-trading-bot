@@ -17,7 +17,7 @@ import {
   DynamicPositionSizerService,
   SizingConfig,
 } from '../../services/dynamic-position-sizer.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   MIN_POSITION_SIZE_USD,

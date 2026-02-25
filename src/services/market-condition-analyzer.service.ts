@@ -10,7 +10,7 @@
 import {
   LoggerService,
   TakeProfit,
-} from '../types';
+} from '../types/legacy';
 import {
   DECIMAL_PLACES,
   FIXED_EXIT_PERCENTAGES,

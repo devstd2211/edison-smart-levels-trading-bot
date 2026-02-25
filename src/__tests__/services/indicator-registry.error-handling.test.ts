@@ -15,7 +15,7 @@
 
 import { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-registry.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { IndicatorType } from '../../types/indicator-type.enum';
+import { IndicatorType } from '../../types/indicator';
 
 // Mock Logger
 const createMockLogger = (overrides?: any) => ({
@@ -454,3 +454,4 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
   });
 });
+

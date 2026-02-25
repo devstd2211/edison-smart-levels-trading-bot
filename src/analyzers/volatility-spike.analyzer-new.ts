@@ -20,8 +20,8 @@ import type { SignalDirection } from '../types/enums';
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { ATRIndicatorNew } from '../indicators/atr.indicator-new';
 import type { LoggerService } from '../services/logger.service';
-import { IAnalyzer } from '../types/analyzer.interface';
-import { AnalyzerType } from '../types/analyzer-type.enum';
+import { IAnalyzer } from '../types/analyzer';
+import { AnalyzerType } from '../types/analyzer';
 
 // ============================================================================
 // CONSTANTS (Defaults)
@@ -257,3 +257,4 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
     return this.lastSignal;
   }
 }
+

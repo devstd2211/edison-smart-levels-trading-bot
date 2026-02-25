@@ -9,7 +9,7 @@
  * - ErrorHandler integration for resilient recovery
  */
 
-import { Position, PositionSide, LoggerService, BybitOrder, isStopLossOrder, isTakeProfitOrder, ExitType } from '../types';
+import { Position, PositionSide, LoggerService, BybitOrder, isStopLossOrder, isTakeProfitOrder, ExitType } from '../types/legacy';
 import type { IExchange } from '../interfaces/IExchange';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';

@@ -15,7 +15,7 @@ import { IndicatorPreCalculationService } from '../../services/indicator-precalc
 import { CandleProvider } from '../../providers/candle.provider';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LogLevel, TimeframeRole } from '../../types';
+import { LogLevel, TimeframeRole } from '../../types/legacy';
 import {
   IndicatorCalculationError,
   IndicatorCacheSyncError,

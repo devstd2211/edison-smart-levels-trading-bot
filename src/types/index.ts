@@ -81,7 +81,7 @@ export type {
   ServicesConfig,
   MonitoringConfig,
   AdvancedOrderFlowConfigType, // Phase 10.1
-} from './config.types';
+} from './config/config.types';
 
 // Re-export old config types (deprecated - for backward compatibility)
 export type {
@@ -134,7 +134,7 @@ export type {
   WeightSystemConfig,
   TrendConfirmationConfig,
   PatternValidationConfig,
-} from './config';
+} from './config/config';
 
 // Re-export new config types - STRICT, NO ANY
 export type {
@@ -192,31 +192,31 @@ export type {
   StrategiesConfigNew,
   ServicesConfigNew,
   MonitoringConfigNew,
-} from './config-new.types';
+} from './config/config-new.types';
 
 export {
   isConfigNew,
   validateAnalyzerConfig,
   validateIndicatorConfig,
-} from './config-new.types';
+} from './config/config-new.types';
 
 // Re-export indicator types and enums
-export { IndicatorType, getAllIndicatorTypes, isValidIndicatorType } from './indicator-type.enum';
-export type { IIndicator } from './indicator.interface';
+export { IndicatorType, getAllIndicatorTypes, isValidIndicatorType } from './indicator';
+export type { IIndicator } from './indicator';
 
 // Re-export indicator loading types
 export type { IIndicatorMetadata } from '../services/indicator-registry.service';
 export { IndicatorRegistry } from '../services/indicator-registry.service';
 
 // Re-export indicator cache & calculator
-export type { IIndicatorCache } from './indicator-cache.interface';
-export type { IIndicatorCalculator } from './indicator-calculator.interface';
+export type { IIndicatorCache } from './indicator';
+export type { IIndicatorCalculator } from './indicator';
 
 // Re-export pre-calculation service interface
-export type { IIndicatorPreCalculationService } from './pre-calculation.interface';
+export type { IIndicatorPreCalculationService } from './indicator';
 
 // Re-export architecture refactoring types
-export { ActionType } from './architecture.types';
+export { ActionType } from './architecture';
 export type {
   IAction,
   AnyAction,
@@ -246,7 +246,7 @@ export type {
   MemorySnapshot,
   IQueueMonitor,
   HealthStatus,
-} from './architecture.types';
+} from './architecture';
 
 // Re-export position state machine types
 export type {
@@ -257,12 +257,12 @@ export type {
   StateTransitionRequest,
   StateTransitionResult,
   IPositionStateMachine,
-} from './position-state-machine.interface';
+} from './position-state-machine';
 
 export {
   VALID_STATE_TRANSITIONS,
   ACTIVE_EXIT_MODES_BY_STATE,
-} from './position-state-machine.interface';
+} from './position-state-machine';
 
 // Re-export live trading types (Phase 9.2+)
 export type {
@@ -272,4 +272,5 @@ export type {
   OrderExecutionConfig,
   GracefulShutdownConfig,
   PerformanceAnalyticsConfig,
-} from './live-trading.types';
+} from './live-trading';
+

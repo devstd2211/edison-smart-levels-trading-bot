@@ -5,7 +5,7 @@
 
 import { VolumeAnalyzerNew } from '../../analyzers/volume.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { VolumeAnalyzerConfigNew } from '../../types/config-new.types';
+import type { VolumeAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 // ============================================================================
@@ -64,7 +64,7 @@ describe('VolumeAnalyzerNew - Functional: Uptrend with Strong Volume', () => {
 
     expect([SignalDirection.LONG, SignalDirection.HOLD]).toContain(signal.direction);
     expect(signal.confidence).toBeGreaterThan(10);
-    expect(signal.source).toBe('VOLUME_ANALYZER');
+    expect(signal.source).toBe('VOLUME_ANALYZER_NEW');
   });
 
   it('should maintain high confidence with sustained volume', () => {
@@ -315,3 +315,4 @@ describe('VolumeAnalyzerNew - Functional: Config Impact on Signals', () => {
     expect(highSignal.score).toBeGreaterThan(lowSignal.score ?? 0);
   });
 });
+

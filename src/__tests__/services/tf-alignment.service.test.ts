@@ -4,7 +4,7 @@
  */
 
 import { TFAlignmentService } from '../../services/tf-alignment.service';
-import { LoggerService, LogLevel, TFAlignmentConfig } from '../../types';
+import { LoggerService, LogLevel, TFAlignmentConfig } from '../../types/legacy';
 
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;

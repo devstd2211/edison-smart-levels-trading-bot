@@ -25,9 +25,11 @@ import { IDataProvider, TimeframeData } from './data-providers/base.provider';
 import { JsonDataProvider } from './data-providers/json.provider';
 import { SqliteDataProvider } from './data-providers/sqlite.provider';
 import { SqliteOptimizedDataProvider } from './data-providers/sqlite-optimized.provider';  // Phase 7.1
-import { Candle, Signal, Position } from '../types';
+import { Candle } from '../types/core';
+import { Signal } from '../types/signal';
+import { Position } from '../types/position';
 import { SignalDirection, EntryDecision } from '../types/enums';
-import { StrategyConfig } from '../types/strategy-config.types';
+import { StrategyConfig } from '../types/strategy-config';
 import { AnalyzerSignal } from '../types/strategy';
 
 // Simple TrendAnalysis type for backtest
@@ -803,3 +805,4 @@ export class BacktestEngineV5 {
 }
 
 export default BacktestEngineV5;
+

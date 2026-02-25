@@ -29,7 +29,8 @@
  *   });
  */
 
-import { Config, LoggerService } from '../types';
+import { LoggerService } from './logger.service';
+import { Config } from '../types/legacy';
 import { BotServices } from './bot-services';
 import { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler } from '../errors/ErrorHandler';

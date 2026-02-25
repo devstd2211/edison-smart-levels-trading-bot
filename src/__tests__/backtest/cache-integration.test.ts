@@ -16,7 +16,7 @@
 import { BacktestCacheLoader, EmaBacktestCalculator, RsiBacktestCalculator, AtrBacktestCalculator, CacheKeyBuilder } from '../../backtest/cache/backtest-cache-loader';
 import { IndicatorCacheService } from '../../services/indicator-cache.service';
 import { LoggerService } from '../../services/logger.service';
-import { Candle } from '../../types';
+import { Candle } from '../../types/legacy';
 import { IMarketDataRepository } from '../../repositories/IRepositories';
 
 // Simple mock repository for testing

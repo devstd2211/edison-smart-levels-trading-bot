@@ -18,7 +18,7 @@ import {
   ScalingConfig,
   PositionState,
 } from '../../services/position-scaling.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   MAX_SCALE_INS,

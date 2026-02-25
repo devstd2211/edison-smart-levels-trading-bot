@@ -19,7 +19,7 @@ import {
   MultiTimeframeAnalysis,
   TimeframeAnalysis,
   TrendBias,
-} from '../types';
+} from '../types/legacy';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 

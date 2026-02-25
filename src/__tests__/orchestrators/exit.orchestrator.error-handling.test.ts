@@ -17,7 +17,7 @@ import {
   PositionSide,
   LogLevel,
   TakeProfit,
-} from '../../types';
+} from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionStateMachineService } from '../../services/position-state-machine.service';

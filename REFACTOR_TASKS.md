@@ -16,6 +16,8 @@
 9. Replace `any` fields in `src/bot.ts` with typed interfaces.
 10. Add temporary adapter `BotServicesAdapter` if needed for incremental migration.
 11. Remove or reduce `BotServices` once all callers migrated.
+12. Propagate Web API DTOs to `web-server` and `web-client` (remove `any` from data API paths).
+13. Add `webApi` config example and defaults to config files (indicator preferences).
 
 ## B) Package Boundaries
 1. Create `packages/contracts` and move shared DTOs/ports there.

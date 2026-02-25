@@ -7,8 +7,8 @@ import { TIME_UNITS } from '../../constants';
  */
 
 import WebSocket from 'ws';
-import { LoggerService } from '../../types';
-import { BybitWebSocketMessage } from '../../types/events.types';
+import { LoggerService } from '../../types/legacy';
+import { BybitWebSocketMessage } from '../../types/events';
 import { TIMING_CONSTANTS } from '../../constants/technical.constants';
 
 // ============================================================================
@@ -101,3 +101,4 @@ export class PingPongHandler {
     return this.lastPongTime;
   }
 }
+

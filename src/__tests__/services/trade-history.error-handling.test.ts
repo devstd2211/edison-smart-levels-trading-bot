@@ -14,7 +14,7 @@ import * as path from 'path';
 import { TradeHistoryService } from '../../services/trade-history.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { JournalWriteError } from '../../errors/DomainErrors';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 
 /**
  * Mock Logger for testing

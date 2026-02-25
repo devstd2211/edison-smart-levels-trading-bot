@@ -17,7 +17,7 @@ import { OrderExecutionDetectorService } from '../../services/order-execution-de
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
 import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
-import { ExchangeConfig, LoggerService, LogLevel } from '../../types';
+import { ExchangeConfig, LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 
 // ============================================================================

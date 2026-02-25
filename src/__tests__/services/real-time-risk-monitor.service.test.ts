@@ -14,14 +14,14 @@
 
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide } from '../../types';
+import { LoggerService, PositionSide } from '../../types/legacy';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import {
   RiskMonitoringConfig,
   DangerLevel,
   RiskAlertType,
   LiveTradingEventType,
-} from '../../types/live-trading.types';
+} from '../../types/live-trading';
 import { Position, TakeProfit, StopLossConfig } from '../../types/core';
 
 // ============================================================================
@@ -590,3 +590,4 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
   });
 });
+

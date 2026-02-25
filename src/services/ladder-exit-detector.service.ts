@@ -24,7 +24,7 @@ import {
   SignalDirection,
   PositionSide,
   BybitOrder,
-} from '../types';
+} from '../types/legacy';
 import type { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ConfigurationError } from '../errors/DomainErrors';

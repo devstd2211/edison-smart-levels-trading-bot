@@ -8,8 +8,8 @@
 
 import { PositionEventHandler } from '../services/handlers/position.handler';
 import { WebSocketEventHandler } from '../services/handlers/websocket.handler';
-import { Position, LoggerService, ExitType } from '../types';
-import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../types';
+import { Position, LoggerService, ExitType } from '../types/legacy';
+import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../types/legacy';
 
 // Mock services
 const createMockLogger = (): Partial<LoggerService> => ({

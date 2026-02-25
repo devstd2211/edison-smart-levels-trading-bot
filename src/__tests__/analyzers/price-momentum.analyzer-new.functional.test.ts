@@ -1,6 +1,6 @@
 import { PriceMomentumAnalyzerNew } from '../../analyzers/price-momentum.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { PriceMomentumAnalyzerConfigNew } from '../../types/config-new.types';
+import type { PriceMomentumAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 function createConfig(): PriceMomentumAnalyzerConfigNew {
@@ -150,3 +150,4 @@ describe('PriceMomentumAnalyzerNew - Functional: Gap Patterns', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

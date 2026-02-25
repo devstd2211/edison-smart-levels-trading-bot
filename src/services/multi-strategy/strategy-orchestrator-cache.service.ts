@@ -18,7 +18,7 @@
  * the real codebase architecture rather than against it.
  */
 
-import type { LoggerService } from '../../types';
+import type { LoggerService } from '../../types/legacy';
 
 /**
  * Cache entry for a strategy's orchestrator

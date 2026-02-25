@@ -77,49 +77,64 @@ const createMinimalConfig = (): any =>
   } as any);
 
 // Create mock BotServices
-const createMockBotServices = (): any => ({
-  logger: createMockLogger(),
-  bybitService: {
-    initialize: jest.fn().mockResolvedValue(undefined),
-    resyncTime: jest.fn().mockResolvedValue(undefined),
-    cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
-  },
-  sessionStats: {
-    startSession: jest.fn().mockReturnValue('session-123'),
-    endSession: jest.fn(),
-  },
-  timeService: {
-    syncWithExchange: jest.fn().mockResolvedValue(undefined),
-    getSyncInfo: jest.fn().mockReturnValue({
-      offset: 0,
-      nextSyncIn: 60000,
-    }),
-  },
-  candleProvider: {
-    initialize: jest.fn().mockResolvedValue(undefined),
-  },
-  webSocketManager: {
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-  publicWebSocket: {
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-  positionMonitor: {
-    start: jest.fn(),
-    stop: jest.fn(),
-    removeAllListeners: jest.fn(),
-  },
-  positionManager: {
-    getCurrentPosition: jest.fn().mockReturnValue(null),
-  },
-  telegram: {
-    notifyBotStopped: jest.fn().mockResolvedValue(undefined),
-  },
-});
+const createMockBotServices = (): any => {
+  const logger = createMockLogger();
+
+  return {
+    coreServices: {
+      logger,
+      timeService: {
+        syncWithExchange: jest.fn().mockResolvedValue(undefined),
+        getSyncInfo: jest.fn().mockReturnValue({
+          offset: 0,
+          nextSyncIn: 60000,
+        }),
+      },
+      telegram: {
+        notifyBotStopped: jest.fn().mockResolvedValue(undefined),
+      },
+      eventBus: {
+        emit: jest.fn(),
+      },
+    },
+    marketDataServices: {
+      bybitService: {
+        initialize: jest.fn().mockResolvedValue(undefined),
+        resyncTime: jest.fn().mockResolvedValue(undefined),
+        cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
+        getOpenPositions: jest.fn().mockResolvedValue([]),
+      },
+      candleProvider: {
+        initialize: jest.fn().mockResolvedValue(undefined),
+      },
+      webSocketManager: {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        removeAllListeners: jest.fn(),
+      },
+      publicWebSocket: {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        removeAllListeners: jest.fn(),
+      },
+    },
+    executionServices: {
+      positionMonitor: {
+        start: jest.fn(),
+        stop: jest.fn(),
+        removeAllListeners: jest.fn(),
+      },
+      positionManager: {
+        getCurrentPosition: jest.fn().mockReturnValue(null),
+        syncWithWebSocket: jest.fn(),
+      },
+    },
+    sessionStats: {
+      startSession: jest.fn().mockReturnValue('session-123'),
+      endSession: jest.fn(),
+    },
+  };
+};
 
 describe('BotInitializer', () => {
   let initializer: BotInitializer;
@@ -140,7 +155,7 @@ describe('BotInitializer', () => {
       const callOrder: string[] = [];
 
       // Track call order
-      mockServices.bybitService.initialize.mockImplementation(() => {
+      mockServices.marketDataServices.bybitService.initialize.mockImplementation(() => {
         callOrder.push('bybitService.initialize');
         return Promise.resolve();
       });
@@ -148,11 +163,11 @@ describe('BotInitializer', () => {
         callOrder.push('sessionStats.startSession');
         return 'session-123';
       });
-      mockServices.timeService.syncWithExchange.mockImplementation(() => {
+      mockServices.coreServices.timeService.syncWithExchange.mockImplementation(() => {
         callOrder.push('timeService.syncWithExchange');
         return Promise.resolve();
       });
-      mockServices.candleProvider.initialize.mockImplementation(() => {
+      mockServices.marketDataServices.candleProvider.initialize.mockImplementation(() => {
         callOrder.push('candleProvider.initialize');
         return Promise.resolve();
       });
@@ -171,8 +186,8 @@ describe('BotInitializer', () => {
     it('should log initialization start and completion', async () => {
       await initializer.initialize();
 
-      expect(mockServices.logger.info).toHaveBeenCalledWith('🚀 Starting bot initialization sequence...');
-      expect(mockServices.logger.info).toHaveBeenCalledWith(
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('🚀 Starting bot initialization sequence...');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
         '✅ Bot initialization complete - ready to connect WebSockets',
       );
     });
@@ -183,18 +198,18 @@ describe('BotInitializer', () => {
 
       await initializer.initialize();
 
-      expect(mockServices.candleProvider.initialize).not.toHaveBeenCalled();
-      expect(mockServices.logger.warn).toHaveBeenCalledWith(
+      expect(mockServices.marketDataServices.candleProvider.initialize).not.toHaveBeenCalled();
+      expect(mockServices.coreServices.logger.warn).toHaveBeenCalledWith(
         '⚠️ Candles disabled - strategies may not work correctly!',
       );
     });
 
     it('should handle initialization errors', async () => {
       const error = new Error('Bybit initialization failed');
-      mockServices.bybitService.initialize.mockRejectedValue(error);
+      mockServices.marketDataServices.bybitService.initialize.mockRejectedValue(error);
 
       await expect(initializer.initialize()).rejects.toThrow('Bybit initialization failed');
-      expect(mockServices.logger.error).toHaveBeenCalledWith('Failed to initialize bot', {
+      expect(mockServices.coreServices.logger.error).toHaveBeenCalledWith('Failed to initialize bot', {
         error: 'Bybit initialization failed',
       });
     });
@@ -202,8 +217,8 @@ describe('BotInitializer', () => {
     it('should sync time with exchange', async () => {
       await initializer.initialize();
 
-      expect(mockServices.timeService.syncWithExchange).toHaveBeenCalled();
-      expect(mockServices.logger.info).toHaveBeenCalledWith('Time synchronized', {
+      expect(mockServices.coreServices.timeService.syncWithExchange).toHaveBeenCalled();
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('Time synchronized', {
         offset: 0,
         nextSyncIn: '60s',
       });
@@ -214,27 +229,27 @@ describe('BotInitializer', () => {
     it('should connect both private and public websockets', async () => {
       await initializer.connectWebSockets();
 
-      expect(mockServices.webSocketManager.connect).toHaveBeenCalled();
-      expect(mockServices.publicWebSocket.connect).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.connect).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.publicWebSocket.connect).toHaveBeenCalled();
     });
 
     it('should log connection status', async () => {
       await initializer.connectWebSockets();
 
-      expect(mockServices.logger.info).toHaveBeenCalledWith('📡 Connecting WebSocket connections...');
-      expect(mockServices.logger.info).toHaveBeenCalledWith('✅ WebSocket connections established');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('📡 Connecting WebSocket connections...');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('✅ WebSocket connections established');
     });
 
     it('should handle connection errors', async () => {
       const error = new Error('WebSocket connection failed');
-      mockServices.webSocketManager.connect.mockImplementation(() => {
+      mockServices.marketDataServices.webSocketManager.connect.mockImplementation(() => {
         throw error;
       });
 
       await expect(initializer.connectWebSockets()).rejects.toThrow(
         'WebSocket connection failed',
       );
-      expect(mockServices.logger.error).toHaveBeenCalledWith('Failed to connect WebSockets', {
+      expect(mockServices.coreServices.logger.error).toHaveBeenCalledWith('Failed to connect WebSockets', {
         error: 'WebSocket connection failed',
       });
     });
@@ -244,28 +259,28 @@ describe('BotInitializer', () => {
     it('should start position monitor', async () => {
       await initializer.startMonitoring();
 
-      expect(mockServices.positionMonitor.start).toHaveBeenCalled();
+      expect(mockServices.executionServices.positionMonitor.start).toHaveBeenCalled();
     });
 
     it('should setup periodic tasks', async () => {
       await initializer.startMonitoring();
 
-      expect(mockServices.logger.info).toHaveBeenCalledWith(
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
         '✅ Position monitor and maintenance tasks started',
       );
-      expect(mockServices.logger.info).toHaveBeenCalledWith(
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('Periodic tasks enabled'),
       );
     });
 
     it('should handle startup errors', async () => {
       const error = new Error('Monitor startup failed');
-      mockServices.positionMonitor.start.mockImplementation(() => {
+      mockServices.executionServices.positionMonitor.start.mockImplementation(() => {
         throw error;
       });
 
       await expect(initializer.startMonitoring()).rejects.toThrow('Monitor startup failed');
-      expect(mockServices.logger.error).toHaveBeenCalledWith('Failed to start monitoring', {
+      expect(mockServices.coreServices.logger.error).toHaveBeenCalledWith('Failed to start monitoring', {
         error: 'Monitor startup failed',
       });
     });
@@ -275,22 +290,22 @@ describe('BotInitializer', () => {
     it('should stop position monitor', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.positionMonitor.stop).toHaveBeenCalled();
+      expect(mockServices.executionServices.positionMonitor.stop).toHaveBeenCalled();
     });
 
     it('should disconnect websockets', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.webSocketManager.disconnect).toHaveBeenCalled();
-      expect(mockServices.publicWebSocket.disconnect).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.disconnect).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.publicWebSocket.disconnect).toHaveBeenCalled();
     });
 
     it('should cleanup event listeners', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.positionMonitor.removeAllListeners).toHaveBeenCalled();
-      expect(mockServices.webSocketManager.removeAllListeners).toHaveBeenCalled();
-      expect(mockServices.publicWebSocket.removeAllListeners).toHaveBeenCalled();
+      expect(mockServices.executionServices.positionMonitor.removeAllListeners).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.removeAllListeners).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.publicWebSocket.removeAllListeners).toHaveBeenCalled();
     });
 
     it('should end session', async () => {
@@ -302,24 +317,24 @@ describe('BotInitializer', () => {
     it('should send telegram notification', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.telegram.notifyBotStopped).toHaveBeenCalled();
+      expect(mockServices.coreServices.telegram.notifyBotStopped).toHaveBeenCalled();
     });
 
     it('should log shutdown completion', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.logger.info).toHaveBeenCalledWith('🛑 Starting graceful shutdown...');
-      expect(mockServices.logger.info).toHaveBeenCalledWith('✅ Shutdown complete');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('🛑 Starting graceful shutdown...');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('✅ Shutdown complete');
     });
 
     it('should handle shutdown errors gracefully', async () => {
       const error = new Error('Shutdown error');
-      mockServices.positionMonitor.stop.mockImplementation(() => {
+      mockServices.executionServices.positionMonitor.stop.mockImplementation(() => {
         throw error;
       });
 
       await expect(initializer.shutdown()).rejects.toThrow('Shutdown error');
-      expect(mockServices.logger.error).toHaveBeenCalledWith('Error during shutdown', {
+      expect(mockServices.coreServices.logger.error).toHaveBeenCalledWith('Error during shutdown', {
         error: 'Shutdown error',
       });
     });
@@ -329,7 +344,7 @@ describe('BotInitializer', () => {
     it('should log data subscription status', () => {
       initializer.logDataSubscriptionStatus();
 
-      expect(mockServices.logger.info).toHaveBeenCalledWith('📊 Data Subscriptions:', {
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('📊 Data Subscriptions:', {
         candles: '✅',
         indicators: '✅',
         orderbook: '✅',
@@ -346,7 +361,7 @@ describe('BotInitializer', () => {
 
       initializer.logDataSubscriptionStatus();
 
-      expect(mockServices.logger.info).toHaveBeenCalledWith('📊 Data Subscriptions:', {
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('📊 Data Subscriptions:', {
         candles: '❌',
         indicators: '❌',
         orderbook: '❌',
@@ -362,9 +377,10 @@ describe('BotInitializer', () => {
       await expect(initializer.startMonitoring()).resolves.not.toThrow();
 
       // Verify logger indicates periodic tasks were enabled
-      expect(mockServices.logger.info).toHaveBeenCalledWith(
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('Periodic tasks enabled'),
       );
     });
   });
 });
+

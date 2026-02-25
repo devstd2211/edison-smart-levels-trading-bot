@@ -24,18 +24,13 @@
  * Result is final decision - orchestrator doesn't override.
  */
 
-import {
-  Signal,
-  EntryDecision,
-  EntryOrchestratorDecision,
-  SignalDirection,
-  TrendAnalysis,
-  Position,
-  LoggerService,
-  FlatMarketResult,
-  RiskManager,
-} from '../types';
-import type { EntryOrchestrationConfig } from '../types/config.types';
+import { LoggerService } from '../services/logger.service';
+import { RiskManager } from '../services/risk-manager.service';
+import { EntryOrchestratorDecision, FlatMarketResult, TrendAnalysis } from '../types/legacy';
+import { Signal } from '../types/signal';
+import { Position } from '../types/position';
+import { EntryDecision, SignalDirection } from '../types/enums';
+import type { EntryOrchestrationConfig } from '../types/config/config.types';
 import { evaluateEntry as evaluateEntryPure, EntryDecisionContext } from '../decision-engine/entry-decisions';
 import { FilterOrchestrator } from './filter.orchestrator';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
@@ -650,3 +645,4 @@ export class EntryOrchestrator {
     };
   }
 }
+

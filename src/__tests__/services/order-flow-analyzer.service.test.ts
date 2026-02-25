@@ -18,7 +18,7 @@ import {
   OrderBook,
   SignalDirection,
   AggressiveFlow,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // HELPER FUNCTIONS

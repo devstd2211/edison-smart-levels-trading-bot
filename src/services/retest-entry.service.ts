@@ -27,7 +27,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
  * - Higher win rate (structured entries)
  */
 
-import { RetestConfig, RetestZone, Signal, Candle, LoggerService, SignalDirection } from '../types';
+import { RetestConfig, RetestZone, Signal, Candle, LoggerService, SignalDirection } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class RetestEntryService {

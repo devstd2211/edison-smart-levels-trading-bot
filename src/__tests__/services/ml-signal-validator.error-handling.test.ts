@@ -15,13 +15,13 @@
 import { MLSignalValidatorService } from '../../services/ml-signal-validator.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { Signal, SignalType, SignalDirection, LogLevel } from '../../types';
+import { Signal, SignalType, SignalDirection, LogLevel } from '../../types/legacy';
 import {
   MarketContext,
   MarketRegime,
   SignalRecord,
   MLSignalValidatorConfig,
-} from '../../types/ml-signal-validator.interface';
+} from '../../types/ml-signal-validator';
 
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
@@ -697,3 +697,4 @@ describe('MLSignalValidatorService - Error Handling', () => {
     });
   });
 });
+

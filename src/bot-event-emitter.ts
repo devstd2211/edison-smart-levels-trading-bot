@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
-import { Signal, Position, LoggerService } from './types';
+import type { Signal } from './types/signal';
+import type { Position } from './types/position';
+import type { LoggerService } from './services/logger.service';
 import { BotEventBus } from './services/event-bus';
 
 /**

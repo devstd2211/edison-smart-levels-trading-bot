@@ -10,7 +10,7 @@
  * Activates Bybit native trailing stop after TP1 hit.
  */
 
-import { LoggerService, StructureAwareExitConfig, StructureLevel, DynamicTPResult, SignalDirection, SwingPoint, SwingPointType, LiquidityZone } from '../types';
+import { LoggerService, StructureAwareExitConfig, StructureLevel, DynamicTPResult, SignalDirection, SwingPoint, SwingPointType, LiquidityZone } from '../types/legacy';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
 

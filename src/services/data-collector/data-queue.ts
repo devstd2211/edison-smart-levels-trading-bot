@@ -5,7 +5,7 @@
  * Implements memory limits to prevent memory leaks.
  */
 
-import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types';
+import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types/legacy';
 import { INTEGER_MULTIPLIERS, MAX_QUEUE_SIZE, WARN_QUEUE_SIZE, QUEUE_LOG_INTERVAL } from '../../constants/technical.constants';
 
 // ============================================================================

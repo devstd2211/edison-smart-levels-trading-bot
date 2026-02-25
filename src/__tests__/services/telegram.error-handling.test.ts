@@ -19,7 +19,7 @@ import {
   TelegramRateLimitError,
 } from '../../errors/DomainErrors';
 import { UnknownTradingError, TradingError } from '../../errors/BaseError';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;

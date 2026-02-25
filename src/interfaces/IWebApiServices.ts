@@ -6,13 +6,21 @@
  */
 
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
-import type { LoggerService } from '../types';
 
-export interface IWebApiServices {
-  logger: LoggerService;
-  webApiServices: IWebApiServicesContainer;
-  wallTrackerService?: {
-    getActiveWalls(): Array<{ side: string; price: number; currentSize: number }>;
-    getWallStrength(price: number, side: string): number;
-  };
+export interface IWebApiLogger {
+  error(message: string, meta?: unknown): void;
+  warn(message: string, meta?: unknown): void;
 }
+
+export interface IWebApiWallTracker {
+  getActiveWalls(): Array<{ side: string; price: number; currentSize: number }>;
+  getWallStrength(price: number, side: string): number;
+}
+
+export interface IWebApiReadServices {
+  logger: IWebApiLogger;
+  webApiServices: IWebApiServicesContainer;
+  wallTrackerService?: IWebApiWallTracker;
+}
+
+export interface IWebApiServices extends IWebApiReadServices {}

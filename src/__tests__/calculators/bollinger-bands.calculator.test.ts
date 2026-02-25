@@ -1,5 +1,5 @@
 import { BollingerBandsCalculator, calculateBollingerMiddleBand } from '../../indicators/calculators/bollinger-bands.calculator';
-import type { Candle } from '../../types';
+import type { Candle } from '../../types/legacy';
 
 describe('Bollinger Bands Calculator', () => {
   let calculator: BollingerBandsCalculator;

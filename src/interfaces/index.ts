@@ -60,14 +60,21 @@ export type {
   IBotServices,
 } from './IServices';
 
-export type { IWebApiServices } from './IWebApiServices';
+export type {
+  IWebApiLogger,
+  IWebApiReadServices,
+  IWebApiServices,
+  IWebApiWallTracker,
+} from './IWebApiServices';
 export type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerServices';
 export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
 export type { IBotInitializerServices } from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';
 export type { IMarketDataServices } from './IMarketDataServices';
 export type { IExecutionServices } from './IExecutionServices';
-export type { IMonitoringServices } from './IMonitoringServices';
+export type { IMonitoringReadServices, IMonitoringServices } from './IMonitoringServices';
+export type { IMonitoringHealthReader, IMonitoringMetricsReader } from './IMonitoringReaders';
+export type { IMonitoringMetricsRecorder } from './IMonitoringRecorders';
 export type { IRiskServices } from './IRiskServices';
 export type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 export type { ICoreServices } from './ICoreServices';

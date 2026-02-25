@@ -5,7 +5,7 @@
  * NO AWAIT operations - fire-and-forget to prevent blocking.
  */
 
-import { CandleRecord, TradeTickRecord, LoggerService } from '../../types';
+import { CandleRecord, TradeTickRecord, LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // INTERFACES (Bybit V5 format)

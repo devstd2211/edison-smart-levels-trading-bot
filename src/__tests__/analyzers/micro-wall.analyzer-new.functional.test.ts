@@ -1,6 +1,6 @@
 import { MicroWallAnalyzerNew } from '../../analyzers/micro-wall.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.6, priority: 5 };
@@ -241,3 +241,4 @@ describe('MicroWallAnalyzerNew - Functional: Wall Breakdown Scenarios', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

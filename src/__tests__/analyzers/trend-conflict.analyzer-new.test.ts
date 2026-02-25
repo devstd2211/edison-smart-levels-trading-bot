@@ -1,6 +1,6 @@
 import { TrendConflictAnalyzerNew } from '../../analyzers/trend-conflict.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { TrendConflictAnalyzerConfigNew } from '../../types/config-new.types';
+import type { TrendConflictAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): TrendConflictAnalyzerConfigNew {
   return { enabled: true, weight: 0.6, priority: 4 };
@@ -126,3 +126,4 @@ describe('TrendConflictAnalyzerNew - Edge Cases Tests', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

@@ -15,8 +15,8 @@
 
 import { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { StrategyAnalyzerConfig } from '../../types/strategy-config.types';
-import { IndicatorType } from '../../types/indicator-type.enum';
+import { StrategyAnalyzerConfig } from '../../types/strategy-config';
+import { IndicatorType } from '../../types/indicator';
 
 // Mock Logger
 const createMockLogger = (overrides?: any) => ({
@@ -493,3 +493,4 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
   });
 });
+

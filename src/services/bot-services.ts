@@ -11,8 +11,15 @@
  * - Easy to add new services
  */
 
-import { Config, LoggerService, Candle } from '../types';
-import { IExchange } from '../interfaces';
+import { LoggerService } from './logger.service';
+import { Candle } from '../types/core';
+import { Config } from '../types/legacy';
+import {
+  IExchange,
+  IMonitoringHealthReader,
+  IMonitoringMetricsReader,
+  IMonitoringMetricsRecorder,
+} from '../interfaces';
 import {
   BybitService,
   PositionLifecycleService,
@@ -75,9 +82,9 @@ import { StrategyStateManagerService } from './multi-strategy/strategy-state-man
 import { ErrorHandler } from '../errors';
 import { MarketDataServices } from './containers/market-data-services';
 import { ExecutionServices } from './containers/execution-services';
-import { MonitoringServices } from './containers/monitoring-services';
+import { MonitoringServices, createMonitoringServices } from './containers/monitoring-services';
 import { RiskServices } from './containers/risk-services';
-import { WebApiServices } from './containers/web-api-services';
+import { WebApiServices, createWebApiServices } from './containers/web-api-services';
 import { CoreServices } from './containers/core-services';
 import { EventHandlerServices } from './containers/event-handler-services';
 
@@ -154,8 +161,8 @@ export class BotServices {
   readonly positionScalingService?: PositionScalingService; // Phase 11.2: Dynamic pyramiding
   readonly smartOrderExecution?: SmartOrderExecutionService; // Phase 13.1: Smart order execution
   readonly orderStateMachine?: AdvancedOrderStateMachineService; // Phase 13.2: Order state machine
-  readonly metricsService?: PrometheusMetricsService; // Phase 14.1.1: Prometheus metrics
-  readonly healthCheckService?: HealthCheckService; // Phase 14.1.2: Health checks
+  readonly metricsService?: IMonitoringMetricsReader; // Phase 14.1.1: Prometheus metrics
+  readonly healthCheckService?: IMonitoringHealthReader; // Phase 14.1.2: Health checks
   readonly monitoringServer?: MonitoringServer; // Phase 14.1.3: HTTP monitoring endpoints
   readonly circuitBreaker?: CircuitBreakerService; // Phase 14.2.1: Circuit breaker pattern
   readonly rateLimiter?: RateLimiterService; // Phase 14.2.2: Adaptive rate limiting
@@ -909,6 +916,17 @@ export class BotServices {
 
     // Phase 14.2: Initialize Resilience Patterns (optional)
     if ((config as any).resilience?.enabled) {
+      const isMetricsRecorder = (value: unknown): value is IMonitoringMetricsRecorder => {
+        if (typeof value !== 'object' || value === null) {
+          return false;
+        }
+        const candidate = value as { recordOrderLatency?: unknown };
+        return typeof candidate.recordOrderLatency === 'function';
+      };
+      const metricsRecorder = isMetricsRecorder(this.metricsService)
+        ? this.metricsService
+        : undefined;
+
       // Phase 14.2.1: Circuit Breaker
       this.circuitBreaker = new CircuitBreakerService(
         (config as any).resilience?.circuitBreaker || {
@@ -983,7 +1001,7 @@ export class BotServices {
         this.rateLimiter,
         this.retryPolicy,
         this.bulkhead,
-        this.metricsService,
+        metricsRecorder,
         this.logger,
         this.errorHandler,
       );
@@ -1018,7 +1036,7 @@ export class BotServices {
       orderStateMachine: this.orderStateMachine,
     });
 
-    this.monitoringServices = new MonitoringServices({
+    this.monitoringServices = createMonitoringServices({
       metrics: this.metrics,
       metricsService: this.metricsService,
       healthCheckService: this.healthCheckService,
@@ -1032,13 +1050,15 @@ export class BotServices {
       realityCheck: this.realityCheck,
     });
 
-    this.webApiServices = new WebApiServices({
+    this.webApiServices = createWebApiServices({
       marketDataServices: {
         candleProvider: this.candleProvider,
         orderbookManager: this.orderbookManager,
+        indicatorCache: this.indicatorCache,
       },
       journal: this.journal,
       bybitService: this.bybitService,
+      indicatorPreferences: config.webApi?.indicatorPreferences,
     });
 
     this.coreServices = new CoreServices({

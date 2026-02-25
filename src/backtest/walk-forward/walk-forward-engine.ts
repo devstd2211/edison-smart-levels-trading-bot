@@ -11,7 +11,7 @@
 
 import { BacktestEngineV5, BacktestConfig, BacktestResult } from '../backtest-engine-v5';
 import { LoggerService } from '../../services/logger.service';
-import { Candle } from '../../types';
+import { Candle } from '../../types/core';
 
 export interface WalkForwardWindow {
   windowId: number;

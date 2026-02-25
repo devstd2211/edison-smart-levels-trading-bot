@@ -19,7 +19,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
  * - SKIP: Logging failures (safeLog() wrapper)
  */
 
-import { LoggerService, SignalDirection, MicroWallDetectorConfig, MicroWall, OrderBook, OrderbookLevel } from '../types';
+import { LoggerService, SignalDirection, MicroWallDetectorConfig, MicroWall, OrderBook, OrderbookLevel } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

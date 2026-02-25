@@ -5,7 +5,7 @@
  */
 
 import { AntiFlipService } from '../services/anti-flip.service';
-import { SignalDirection, Candle } from '../types';
+import { SignalDirection, Candle } from '../types/legacy';
 
 // Mock Logger
 const mockLogger = {

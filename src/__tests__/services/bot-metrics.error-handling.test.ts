@@ -11,7 +11,7 @@
 
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, LogLevel } from '../../types';
+import { LoggerService, LogLevel } from '../../types/legacy';
 
 /**
  * Mock Logger for testing

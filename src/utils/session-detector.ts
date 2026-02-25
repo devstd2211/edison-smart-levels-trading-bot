@@ -11,7 +11,8 @@ import { DECIMAL_PLACES, MATH_OPS, SESSION_SL_MULTIPLIERS } from '../constants';
  * - Overlap: 13:00-16:00 (London + NY overlap = highest volatility)
  */
 
-import { SessionBasedSLConfig, LoggerService } from '../types';
+import { LoggerService } from '../services/logger.service';
+import { SessionBasedSLConfig } from '../types/config/config';
 
 // ============================================================================
 // ENUMS

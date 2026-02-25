@@ -1,6 +1,6 @@
 import { TrendDetectorAnalyzerNew } from '../../analyzers/trend-detector.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { TrendDetectorConfigNew } from '../../types/config-new.types';
+import type { TrendDetectorConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
 function createConfig(): TrendDetectorConfigNew {
@@ -127,3 +127,4 @@ describe('TrendDetectorAnalyzerNew - Edge Cases Tests', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

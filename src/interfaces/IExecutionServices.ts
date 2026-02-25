@@ -6,6 +6,7 @@
 
 import type { PositionLifecycleService } from '../services/position-lifecycle.service';
 import type { PositionExitingService } from '../services/position-exiting.service';
+import type { PositionMonitorService } from '../services/position-monitor.service';
 import type { TradingOrchestrator } from '../services/trading-orchestrator.service';
 import type { RealTimeRiskMonitor } from '../services/real-time-risk-monitor.service';
 import type { LadderExitDetectorService } from '../services/ladder-exit-detector.service';
@@ -16,6 +17,7 @@ import type { AdvancedOrderStateMachineService } from '../services/advanced-orde
 
 export interface IExecutionServices {
   positionManager: PositionLifecycleService;
+  positionMonitor: PositionMonitorService;
   positionExitingService: PositionExitingService;
   tradingOrchestrator: TradingOrchestrator;
   realTimeRiskMonitor: RealTimeRiskMonitor;

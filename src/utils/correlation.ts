@@ -5,7 +5,7 @@
  * price relationships between different assets (e.g., BTC vs altcoin)
  */
 
-import { Candle } from '../types';
+import { Candle } from '../types/core';
 
 // ============================================================================
 // TYPES

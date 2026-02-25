@@ -5,7 +5,7 @@
 
 import { VolumeIndicatorNew } from '../../indicators/volume.indicator-new';
 import type { Candle } from '../../types/core';
-import type { VolumeIndicatorConfigNew } from '../../types/config-new.types';
+import type { VolumeIndicatorConfigNew } from '../../types/config/config-new.types';
 
 // ============================================================================
 // TEST HELPERS
@@ -415,3 +415,4 @@ describe('VolumeIndicatorNew - Functional: State Transitions', () => {
     expect(indicator.getValue().average).toBeCloseTo(300, 0);
   });
 });
+

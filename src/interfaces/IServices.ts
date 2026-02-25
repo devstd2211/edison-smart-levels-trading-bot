@@ -10,21 +10,13 @@
  * Part of LEGO modular architecture transformation
  */
 
-import {
-  Position,
-  Signal,
-  ExitAction,
-  ExitType,
-  LoggerService,
-  Config,
-  PositionSide,
-  SessionTradeRecord,
-  TradingConfig,
-  RiskManagementConfig,
-  Candle,
-} from '../types';
+import { LoggerService } from '../services/logger.service';
+import { SessionTradeRecord } from '../types/legacy';
+import { Position } from '../types/position';
+import { Signal } from '../types/signal';
+import { ExitAction, ExitType } from '../types/enums';
 import type { IExchange } from './IExchange';
-import { ExitActionDTO } from '../types/architecture.types';
+import { ExitActionDTO } from '../types/architecture';
 
 // ============================================================================
 // POSITION MANAGEMENT SERVICES
@@ -43,7 +35,7 @@ import { ExitActionDTO } from '../types/architecture.types';
 export interface IPositionLifecycleService {
   // State accessors
   getCurrentPosition(): Position | null;
-  getTakeProfitManager(): any; // TakeProfitManagerService
+  getTakeProfitManager(): unknown; // TakeProfitManagerService
 
   // Position operations
   openPosition(signal: Signal, price?: number): Promise<Position | null>;
@@ -73,8 +65,8 @@ export interface IPositionLifecycleService {
   registerConfirmedCandle(): void;
 
   // Event listeners
-  on(event: string, listener: (...args: any[]) => void): void;
-  off(event: string, listener?: (...args: any[]) => void): void;
+  on(event: string, listener: (...args: unknown[]) => void): void;
+  off(event: string, listener?: (...args: unknown[]) => void): void;
   removeAllListeners(event?: string): void;
 }
 
@@ -160,7 +152,7 @@ export interface IPublicWebSocketService {
   connect(): void;
   disconnect(): void;
   isConnected(): boolean;
-  setBtcCandlesStore(store: any): void;
+  setBtcCandlesStore(store: unknown): void;
 }
 
 /**
@@ -172,8 +164,8 @@ export interface IPublicWebSocketService {
  * - Monitor liquidity
  */
 export interface IOrderbookManagerService {
-  updateOrderbook(symbol: string, orderbook: any): void;
-  getOrderbook(symbol: string): any;
+  updateOrderbook(symbol: string, orderbook: unknown): void;
+  getOrderbook(symbol: string): unknown;
 }
 
 // ============================================================================
@@ -207,7 +199,7 @@ export interface IJournalService {
 
   getVirtualBalance(): number;
   getTrades(): SessionTradeRecord[];
-  getCurrentSession(): any;
+  getCurrentSession(): unknown;
 }
 
 /**
@@ -220,7 +212,7 @@ export interface IJournalService {
  * - Handle notification batching
  */
 export interface ITelegramService {
-  sendMessage(message: string, options?: any): Promise<void>;
+  sendMessage(message: string, options?: unknown): Promise<void>;
   sendTradeOpened(position: Position, signal: Signal): Promise<void>;
   sendTradeClosed(
     position: Position,
@@ -264,8 +256,8 @@ export interface ITimeService {
 export interface ITradingOrchestratorService {
   runStrategyAnalysis(): Promise<void>;
   getCurrentSignal(): Signal | null;
-  setIndicatorPreCalculationService(service: any): void;
-  setBtcCandlesStore(store: any): void;
+  setIndicatorPreCalculationService(service: unknown): void;
+  setBtcCandlesStore(store: unknown): void;
 }
 
 // ============================================================================
@@ -278,33 +270,34 @@ export interface ITradingOrchestratorService {
  */
 export interface IBotServices {
   logger: LoggerService;
-  eventBus: any;
-  metrics: any;
+  eventBus: unknown;
+  metrics: unknown;
   telegram: ITelegramService;
   timeService: ITimeService;
   bybitService: IExchange;
-  timeframeProvider: any;
-  candleProvider: any;
-  indicatorCache: any;
-  indicatorPreCalc: any;
+  timeframeProvider: unknown;
+  candleProvider: unknown;
+  indicatorCache: unknown;
+  indicatorPreCalc: unknown;
   tradingOrchestrator: ITradingOrchestratorService;
-  strategyOrchestrator?: any;
+  strategyOrchestrator?: unknown;
   journal: IJournalService;
-  sessionStats: any;
+  sessionStats: unknown;
   positionManager: IPositionLifecycleService;
   positionExitingService: IPositionExitingService;
-  realTimeRiskMonitor: any;
+  realTimeRiskMonitor: unknown;
   webSocketManager: IWebSocketManagerService;
   publicWebSocket: IPublicWebSocketService;
   orderbookManager: IOrderbookManagerService;
   positionMonitor: IPositionMonitorService;
-  eventHandlerServices?: any;
-  positionEventHandler: any; // legacy direct access
-  webSocketEventHandler: any; // legacy direct access
-  dashboard: any;
-  compoundInterestCalculator?: any;
-  retestEntryService?: any;
-  deltaAnalyzerService?: any;
-  orderbookImbalanceService?: any;
-  wallTrackerService?: any;
+  eventHandlerServices?: unknown;
+  positionEventHandler: unknown; // legacy direct access
+  webSocketEventHandler: unknown; // legacy direct access
+  dashboard: unknown;
+  compoundInterestCalculator?: unknown;
+  retestEntryService?: unknown;
+  deltaAnalyzerService?: unknown;
+  orderbookImbalanceService?: unknown;
+  wallTrackerService?: unknown;
 }
+

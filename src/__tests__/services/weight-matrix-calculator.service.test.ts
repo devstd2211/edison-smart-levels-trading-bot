@@ -10,7 +10,7 @@ import {
   SignalDirection,
   LoggerService,
   LogLevel,
-} from '../../types';
+} from '../../types/legacy';
 
 describe('WeightMatrixCalculatorService', () => {
   let calculator: WeightMatrixCalculatorService;

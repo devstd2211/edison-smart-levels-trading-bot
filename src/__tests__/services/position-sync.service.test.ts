@@ -9,7 +9,7 @@ import { IExchange } from '../../interfaces/IExchange';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
 import { TelegramService } from '../../services/telegram.service';
-import { LoggerService, LogLevel, Position, PositionSide, ExitType, BybitOrder } from '../../types';
+import { LoggerService, LogLevel, Position, PositionSide, ExitType, BybitOrder } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

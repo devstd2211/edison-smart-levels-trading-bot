@@ -2,7 +2,7 @@
  * SMOKE TESTS - Orchestrator Runtime Behavior
  */
 
-import { SignalDirection, SignalType, TrendBias, LoggerService } from '../../types';
+import { SignalDirection, SignalType, TrendBias, LoggerService } from '../../types/legacy';
 
 describe('SMOKE TESTS: Orchestrator Runtime Behavior', () => {
   let logger: LoggerService;

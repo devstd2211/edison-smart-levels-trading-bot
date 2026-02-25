@@ -38,7 +38,7 @@ import {
   PositionSide,
   ExitType,
   SessionTradeRecord,
-} from '../types';
+} from '../types/legacy';
 import type { IExchange } from '../interfaces/IExchange';
 import { BotEventBus } from './event-bus';
 import { TelegramService } from './telegram.service';

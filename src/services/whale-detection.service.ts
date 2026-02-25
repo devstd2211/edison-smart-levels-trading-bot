@@ -23,7 +23,9 @@ import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS,
  * REST API polling is too slow for whale detection!
  */
 
-import { LoggerService, SignalDirection, OrderBookAnalysis } from '../types';
+import { LoggerService } from './logger.service';
+import { OrderBookAnalysis } from '../types/orderbook';
+import { SignalDirection } from '../types/enums';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

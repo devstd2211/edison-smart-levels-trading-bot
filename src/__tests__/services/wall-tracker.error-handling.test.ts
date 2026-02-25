@@ -15,7 +15,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { WallTrackingError } from '../../errors/DomainErrors';
-import { WallTrackingConfig, LoggerService } from '../../types';
+import { WallTrackingConfig, LoggerService } from '../../types/legacy';
 
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;

@@ -8,7 +8,7 @@
  */
 
 import { PositionValidator } from '../../validators/position.validator';
-import { PositionSide, Position } from '../../types';
+import { PositionSide, Position } from '../../types/legacy';
 
 const mockLogger: any = {
   info: jest.fn(),

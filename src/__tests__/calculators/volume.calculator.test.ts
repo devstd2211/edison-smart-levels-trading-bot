@@ -1,5 +1,5 @@
 import { VolumeCalculator, calculateAverageVolume } from '../../indicators/calculators/volume.calculator';
-import type { Candle } from '../../types';
+import type { Candle } from '../../types/legacy';
 
 describe('Volume Calculator', () => {
   let calculator: VolumeCalculator;

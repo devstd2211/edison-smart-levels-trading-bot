@@ -13,7 +13,7 @@
 
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, PositionSide, LogLevel } from '../../types';
+import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
 import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {

@@ -14,8 +14,8 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide, Position } from '../../types';
-import { RiskMonitoringConfig, DangerLevel, LiveTradingEventType } from '../../types/live-trading.types';
+import { LoggerService, PositionSide, Position } from '../../types/legacy';
+import { RiskMonitoringConfig, DangerLevel, LiveTradingEventType } from '../../types/live-trading';
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
@@ -328,3 +328,4 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
   });
 });
+

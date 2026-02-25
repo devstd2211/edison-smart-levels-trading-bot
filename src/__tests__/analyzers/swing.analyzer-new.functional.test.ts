@@ -1,6 +1,6 @@
 import { SwingAnalyzerNew } from '../../analyzers/swing.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { SwingAnalyzerConfigNew } from '../../types/config-new.types';
+import type { SwingAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): SwingAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 5 };
@@ -180,3 +180,4 @@ describe('SwingAnalyzerNew - Functional: Extreme Moves', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

@@ -3,7 +3,7 @@
  */
 
 import { WhaleWallTPService, WhaleWallTPConfig } from '../services/whale-wall-tp.service';
-import { SignalDirection, LoggerService, OrderBookWall } from '../types';
+import { SignalDirection, LoggerService, OrderBookWall } from '../types/legacy';
 
 // ============================================================================
 // MOCK LOGGER

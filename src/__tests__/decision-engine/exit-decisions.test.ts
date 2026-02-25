@@ -17,7 +17,7 @@ import {
   ExitDecisionResult,
   ExitIndicators,
 } from '../../decision-engine/exit-decisions';
-import { Position, PositionState, ExitAction, PositionSide } from '../../types';
+import { Position, PositionState, ExitAction, PositionSide } from '../../types/legacy';
 
 // ============================================================================
 // HELPER: Create test position

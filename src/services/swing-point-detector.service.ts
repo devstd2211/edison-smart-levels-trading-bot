@@ -15,7 +15,7 @@
  * - A candle is a swing low if its low is less than lookback*2 neighbors
  */
 
-import { Candle, SwingPoint, SwingPointType, LoggerService } from '../types';
+import { Candle, SwingPoint, SwingPointType, LoggerService } from '../types/legacy';
 import { DECIMAL_PLACES } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {

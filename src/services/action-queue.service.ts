@@ -9,7 +9,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { IAction, IActionQueue, ActionResult, IActionHandler, AnyAction } from '../types/architecture.types';
+import { IAction, IActionQueue, ActionResult, IActionHandler, AnyAction } from '../types/architecture';
 
 export class ActionQueueService implements IActionQueue {
   private queue: IAction[] = [];
@@ -254,3 +254,4 @@ export class ActionQueueService implements IActionQueue {
     this.results.clear();
   }
 }
+

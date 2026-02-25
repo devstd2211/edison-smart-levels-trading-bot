@@ -13,7 +13,7 @@
 
 import { Position } from '../types/core';
 import { PositionSide } from '../types/enums';
-import { TPLevelConfig, TrailingConfig, BreakEvenConfig, ExitCalculationContext } from '../types/exit-strategy.types';
+import { TPLevelConfig, TrailingConfig, BreakEvenConfig, ExitCalculationContext } from '../types/exit-strategy';
 
 // ============================================================================
 // BREAKEVEN CALCULATIONS
@@ -363,3 +363,4 @@ export function calculateRemainingSize(
 ): number {
   return Math.max(0, position.quantity - sizeToClose);
 }
+

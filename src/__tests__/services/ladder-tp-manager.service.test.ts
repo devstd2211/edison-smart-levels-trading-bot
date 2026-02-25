@@ -21,7 +21,7 @@ import {
   LadderTpManagerConfig,
   LadderTpLevel,
   Position,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

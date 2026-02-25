@@ -14,11 +14,9 @@
  * from 50% to 70%+
  */
 
-import {
-  Signal,
-  TrendAnalysis,
-  LoggerService,
-} from '../types';
+import { LoggerService } from '../services/logger.service';
+import { TrendAnalysis } from '../types/legacy';
+import { Signal } from '../types/signal';
 
 // ============================================================================
 // NEUTRAL TREND STRENGTH FILTER

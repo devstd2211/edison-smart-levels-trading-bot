@@ -21,7 +21,7 @@
  */
 
 import { BotEventBus } from './event-bus';
-import { LoggerService, PositionSide } from '../types';
+import { LoggerService, PositionSide } from '../types/legacy';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import {
   RiskMonitoringConfig,
@@ -34,7 +34,7 @@ import {
   HealthReport,
   IRealTimeRiskMonitor,
   LiveTradingEventType,
-} from '../types/live-trading.types';
+} from '../types/live-trading';
 import { Position } from '../types/core';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
@@ -693,3 +693,4 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     return { price: currentPrice ?? fallbackPrice, usedCache: false };
   }
 }
+

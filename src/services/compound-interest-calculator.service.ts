@@ -25,7 +25,7 @@ import { DECIMAL_PLACES } from '../constants';
  * ```
  */
 
-import { CompoundInterestConfig, LoggerService } from '../types';
+import { CompoundInterestConfig, LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   calculateCompoundPositionSize,

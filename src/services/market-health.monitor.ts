@@ -13,13 +13,13 @@
  * - BROKEN: Strategy no longer working, STOP trading
  */
 
-import { LoggerService } from '../types';
+import { LoggerService } from './logger.service';
 import {
   MarketHealthConfig,
   MarketHealthResult,
   MarketHealthStatus,
   Trade
-} from '../types/fractal-strategy.types';
+} from '../types/fractal-strategy';
 import { INTEGER_MULTIPLIERS, THRESHOLD_VALUES, RATIO_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
 
 export class MarketHealthMonitor {
@@ -245,3 +245,4 @@ export class MarketHealthMonitor {
     return diagnosis.status;
   }
 }
+

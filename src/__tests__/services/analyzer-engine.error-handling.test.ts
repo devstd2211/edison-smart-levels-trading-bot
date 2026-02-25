@@ -11,10 +11,10 @@
 
 import type { Candle } from '../../types/core';
 import type { AnalyzerSignal } from '../../types/strategy';
-import type { StrategyConfig } from '../../types/strategy-config.types';
+import type { StrategyConfig } from '../../types/strategy-config';
 import { AnalyzerEngineService, AnalyzerExecutionConfig } from '../../services/analyzer-engine.service';
 import type { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
-import type { IAnalyzer } from '../../types/analyzer.interface';
+import type { IAnalyzer } from '../../types/analyzer';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
 
@@ -562,3 +562,4 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     });
   });
 });
+

@@ -22,8 +22,8 @@ import { PositionExitingService } from '../../services/position-exiting.service'
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { TelegramService } from '../../services/telegram.service';
-import { LoggerService, Position, PositionSide, ExitType, LogLevel } from '../../types';
-import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../types';
+import { LoggerService, Position, PositionSide, ExitType, LogLevel } from '../../types/legacy';
+import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { PositionMonitoringError, ExchangeAPIError } from '../../errors/DomainErrors';

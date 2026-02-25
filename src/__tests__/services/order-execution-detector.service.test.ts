@@ -4,7 +4,7 @@
  */
 
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { LoggerService, LogLevel, OrderExecutionData } from '../../types';
+import { LoggerService, LogLevel, OrderExecutionData } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

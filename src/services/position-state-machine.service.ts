@@ -36,7 +36,7 @@ import {
   PreBEMode,
   TrailingMode,
   BBTrailingMode,
-} from '../types/position-state-machine.interface';
+} from '../types/position-state-machine';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
@@ -694,3 +694,4 @@ export class PositionStateMachineService implements IPositionStateMachine {
     return this.stateCache.size;
   }
 }
+

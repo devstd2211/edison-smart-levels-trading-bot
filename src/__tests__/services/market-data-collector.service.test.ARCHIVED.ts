@@ -23,7 +23,7 @@ import {
   SwingPointType,
   Candle,
   TrendBias,
-} from '../../types';
+} from '../../types/legacy';
 
 // ============================================================================
 // MOCK DATA HELPERS

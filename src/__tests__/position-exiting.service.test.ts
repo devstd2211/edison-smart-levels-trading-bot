@@ -20,7 +20,7 @@ import {
   Config,
   OrderType,
   TakeProfitConfig,
-} from '../types';
+} from '../types/legacy';
 
 // Mock services
 const createMockBybitService = () => ({

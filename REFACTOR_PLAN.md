@@ -46,6 +46,8 @@
 
 **Progress**
 - [x] Dependencies mapped
+- [x] Dependency map documented in docs/architecture/dependency-map.md
+- [x] First migration slice proposed (WebApiServices/BotWebAPI read-only group)
 - [ ] Group containers created
 - [x] MarketDataServices scaffolded
 - [x] ExecutionServices scaffolded
@@ -69,6 +71,52 @@
 - [x] WebSocketEventHandlerManager uses MarketDataServices for webSocketManager
 - [x] TradingBot uses MonitoringServices for dashboard check
 - [x] WebApiServices container introduced and wired
+- [x] Web API boundary interfaces narrowed (web-api types + IWebApiServicesContainer)
+- [x] Web API DTOs typed (BotWebAPI + TradingBot signatures)
+- [x] Web API market data now candle-backed (no placeholders)
+- [x] Web API market data uses indicator cache (RSI/EMA/ATR)
+- [x] Web API indicator preferences configurable via config.webApi
+- [x] Web API config example added (config.example.json)
+- [x] Web API config added to config.json
+- [x] Web API DTOs propagated to web-server/web-client (data API paths typed)
+- [x] Web API data routes now fully async (no sync market data calls)
+- [x] WebApiReadServices interface + container factory wired to BotWebAPI
+- [x] WebApiServices creation moved to container factory
+- [x] Next low-risk slice proposed (Monitoring read-only adapters)
+- [x] MonitoringReadServices interface + container factory added
+- [x] TradingBot wired to MonitoringReadServices factory
+- [x] MonitoringServices creation moved to container factory
+- [x] MonitoringServer depends on read-only metric/health reader interfaces
+- [x] Monitoring services interfaces reference read-only metric/health reader contracts
+- [x] Monitoring reader interfaces moved to src/interfaces
+- [x] Monitoring services interfaces decoupled from concrete metrics/health classes
+- [x] BotServices metrics/health fields typed as read-only interfaces
+- [x] IMonitoringServices now extends IMonitoringReadServices
+- [x] ResilienceCoordinator depends on metrics recorder interface
+- [x] PrometheusMetricsService/HealthCheckService implement reader/recorder interfaces
+- [x] WebSocket payloads typed in web-client (no `any` handlers)
+- [x] StrategyStatus UI uses typed API responses (no `any`)
+- [x] UI data paths cleaned of `any` (Analytics/PositionCard/PriceChart)
+- [x] WebSocket payloads typed in web-server (typed WebSocketMessage map)
+- [x] Bot-bridge WS payloads typed (real bot event shapes)
+- [x] api.service any removed (post/put/patch payloads + handleError)
+- [x] WS server error handling uses unknown (no any)
+- [x] Bot-bridge signal/position mapping strict (no silent fallbacks)
+- [x] Web-server any cleanup (phase 1: web-server/src)
+- [x] Web-client any cleanup (phase 2: web-client/src)
+- [ ] Core any cleanup (phase 3: src)
+- [ ] Tests any cleanup (phase 4: __tests__)
+- [x] Core any cleanup batch 1: action-handlers + bot dashboard event typing
+- [x] Core any cleanup batch 2: config + bot-factory meta strategy handling
+- [x] Core any cleanup batch 3: bot-web-api orderbook typing
+- [x] Core any cleanup batch 4: filter orchestrator context typing
+- [x] Core any cleanup batch 5: exit-event-handler typing
+- [x] Core any cleanup batch 6: analyzer loader typing
+- [x] Core any cleanup batch 7: IServices interface unknowns
+- [x] Core any cleanup batch 8: WebSocket/TradingBot interfaces unknowns
+- [x] Core any cleanup batch 9: IRepository/IExchange unknowns
+- [x] Core any cleanup batch 10: IMonitoring unknowns
+- [x] Core any cleanup batch 11: index entrypoint unknowns
 - [x] BotServices.toObject reduced to grouped services
 - [x] CoreServices container introduced and TradingBot wired
 - [x] EventHandlerServices container introduced and wired
@@ -82,11 +130,35 @@
 - [x] Event types moved to domain folder
 - [x] Strategy types moved to domain folder
 - [x] Signal types moved to domain folder
+- [x] Live-trading types moved to domain folder
+- [x] Config types moved to domain folder
+- [x] Architecture types moved to domain folder
+- [x] Indicator types moved to domain folder
+- [x] Analyzer types moved to domain folder
+- [x] Multi-strategy types moved to domain folder
+- [x] Exit-strategy types moved to domain folder
+- [x] Fractal-strategy types moved to domain folder
+- [x] Advanced-order-flow types moved to domain folder
+- [x] Anomaly-detection types moved to domain folder
+- [x] Liquidity-heatmap types moved to domain folder
+- [x] Pattern-recognition types moved to domain folder
+- [x] Smart-order-placement types moved to domain folder
+- [x] Position-state-machine types moved to domain folder
+- [x] Strategy-processing types moved to domain folder
+- [x] Circuit-breaker types moved to domain folder
+- [x] ML-signal-validator types moved to domain folder
+- [x] Strategy-config types moved to domain folder
+- [x] Websocket event types moved to domain folder
+- [x] Legacy types isolated behind src/types.ts re-exports
+- [x] Removed top-level re-export type files from src/types
 - [x] BotInitializer uses ExecutionServices for tradingOrchestrator
 - [x] BotInitializer uses ExecutionServices for periodic position checks
 - [x] BotInitializer uses MarketDataServices for webSocketManager
 - [x] BotInitializer uses CoreServices (logger/timeService/eventBus/telegram)
 - [x] BotInitializer uses MarketDataServices for bybitService
+- [x] Step 1: Updated core/orchestrators/interfaces/providers/repositories/utils/backtest/indicators imports to domain types
+- [ ] Step 1: Remaining domain-import migrations (services/strategies/tests)
+- [x] Step 1: Standardized imports to use legacy types in services/strategies/tests
 - [ ] Old `BotServices` removed or reduced to thin adapter
 
 ### Complexity + Risk

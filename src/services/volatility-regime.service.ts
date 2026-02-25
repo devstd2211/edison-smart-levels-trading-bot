@@ -20,7 +20,7 @@ import {
   VolatilityRegimeConfig,
   VolatilityRegimeParams,
   VolatilityRegimeAnalysis,
-} from '../types';
+} from '../types/legacy';
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ValidationError, ConfigurationError } from '../errors/DomainErrors';

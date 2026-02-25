@@ -14,7 +14,7 @@
  */
 
 import { HealthCheckService, IExchangeService, IWebSocketService } from '../../services/health-check.service';
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 
 describe('HealthCheckService', () => {

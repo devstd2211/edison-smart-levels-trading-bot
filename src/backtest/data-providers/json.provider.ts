@@ -8,7 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { IDataProvider, TimeframeData } from './base.provider';
-import { Candle } from '../../types';
+import { Candle } from '../../types/core';
 
 export class JsonDataProvider implements IDataProvider {
   private dataDir: string;

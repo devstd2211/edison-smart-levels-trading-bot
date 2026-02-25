@@ -15,7 +15,7 @@
  * Phase: 10.3c (Event Tagging & Filtering)
  */
 
-import { LoggerService } from '../../types';
+import { LoggerService } from '../../types/legacy';
 
 export type StrategyEventCallback = (event: any) => void;
 

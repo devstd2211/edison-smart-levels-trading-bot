@@ -14,7 +14,7 @@
  * - Return structured execution result for downstream processing
  */
 
-import { LoggerService, OrderExecutionData } from '../types';
+import { LoggerService, OrderExecutionData } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export interface OrderExecutionResult {

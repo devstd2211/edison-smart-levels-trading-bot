@@ -12,7 +12,11 @@ import * as dotenv from 'dotenv';
 import { ConfigManagementService } from '../services/config-management.service.js';
 
 export interface BotConfig {
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 // Load environment variables
@@ -48,6 +52,12 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
    */
   router.put('/', async (req: Request, res: Response) => {
     try {
+      if (!isRecord(req.body)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid configuration payload',
+        });
+      }
       const result = await configService.write(req.body);
       res.json({
         success: true,
@@ -73,9 +83,9 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
   router.get('/strategies', async (req: Request, res: Response) => {
     try {
       const configData = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(configData);
+      const config = JSON.parse(configData) as unknown;
 
-      if (!config.strategies) {
+      if (!isRecord(config) || !isRecord(config.strategies)) {
         return res.json({
           success: true,
           data: {
@@ -85,12 +95,15 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
       }
 
       // Map config strategies to UI format
-      const strategies = Object.entries(config.strategies).map(([key, value]: [string, any]) => ({
-        id: key,
-        name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
-        enabled: value.enabled || false,
-        config: value,
-      }));
+      const strategies = Object.entries(config.strategies).map(([key, value]) => {
+        const enabled = isRecord(value) ? value.enabled === true : false;
+        return {
+          id: key,
+          name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
+          enabled,
+          config: value,
+        };
+      });
 
       res.json({
         success: true,
@@ -125,10 +138,10 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
       }
 
       const configData = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(configData);
+      const config = JSON.parse(configData) as unknown;
 
       // Update nested strategy config
-      if (!config.strategies || !config.strategies[id]) {
+      if (!isRecord(config) || !isRecord(config.strategies) || !isRecord(config.strategies[id])) {
         return res.status(404).json({
           success: false,
           error: `Strategy '${id}' not found in configuration`,
@@ -165,10 +178,16 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
       const { maxLeverage, maxPositionSize, dailyLossLimit, stopLossPercent } = req.body;
 
       const configData = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(configData);
+      const config = JSON.parse(configData) as unknown;
 
       // Ensure risk object exists
-      if (!config.risk) {
+      if (!isRecord(config)) {
+        return res.status(500).json({
+          success: false,
+          error: 'Invalid configuration format',
+        });
+      }
+      if (!isRecord(config.risk)) {
         config.risk = {};
       }
 

@@ -5,7 +5,8 @@
  */
 
 import type { CandleParams, IExchange } from './IExchange';
-import type { Position, Candle } from '../types';
+import type { Position } from '../types/position';
+import type { Candle } from '../types/core';
 import type { TimeframeProvider } from '../providers/timeframe.provider';
 import type { CandleProvider } from '../providers/candle.provider';
 import type { OrderbookManagerService } from '../services/orderbook-manager.service';

@@ -14,7 +14,7 @@ import type {
   BreakoutAnalyzerParams,
   OrderBlockAnalyzerParams,
   WickAnalyzerParams,
-} from '../../types/config.types';
+} from '../../types/config/config.types';
 
 // ============================================================================
 // ORCHESTRATION CONFIG TESTS
@@ -578,3 +578,4 @@ describe('Phase 4.10: Config Compatibility', () => {
     expect(newConfig.orchestration?.entry.minConfidenceThreshold).toBe(60);
   });
 });
+

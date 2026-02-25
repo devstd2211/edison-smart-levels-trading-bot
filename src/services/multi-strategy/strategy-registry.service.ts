@@ -15,7 +15,7 @@
  * Usage: Injected into StrategyOrchestrator
  */
 
-import type { StrategyMetadata, StrategyRegistryConfig } from '../../types/multi-strategy-types';
+import type { StrategyMetadata, StrategyRegistryConfig } from '../../types/multi-strategy';
 import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class StrategyRegistryService {
@@ -367,3 +367,4 @@ function getDefaultConfig(): StrategyRegistryConfig {
     allowedStrategies: [], // Empty means all allowed
   };
 }
+

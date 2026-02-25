@@ -139,7 +139,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
     if (finalConfig.skipSuccessfulRequests || finalConfig.skipFailedRequests) {
       const originalSend = res.send;
 
-      res.send = function (data: any) {
+      res.send = function (data: unknown) {
         // If configured to skip successful requests, remove from counter
         if (finalConfig.skipSuccessfulRequests && res.statusCode < 400) {
           store[clientIp].timestamps.pop();

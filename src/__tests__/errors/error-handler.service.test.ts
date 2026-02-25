@@ -15,7 +15,7 @@ import {
   ExchangeConnectionError,
 } from '../../errors/DomainErrors';
 import { LoggerService } from '../../services/logger.service';
-import { LogLevel } from '../../types';
+import { LogLevel } from '../../types/legacy';
 
 describe('ErrorHandler - Recovery Strategies', () => {
   let errorHandler: ErrorHandler;

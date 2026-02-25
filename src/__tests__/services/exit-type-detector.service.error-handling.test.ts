@@ -10,7 +10,7 @@
 
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
 import { ErrorHandler } from '../../errors';
-import { ExitType, PositionSide } from '../../types';
+import { ExitType, PositionSide } from '../../types/legacy';
 
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: ExitTypeDetectorService;

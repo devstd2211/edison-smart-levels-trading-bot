@@ -11,7 +11,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolumeProfileService } from '../../services/volume-profile.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { ValidationError, ConfigurationError } from '../../errors/DomainErrors';
-import { LoggerService, Candle } from '../../types';
+import { LoggerService, Candle } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS

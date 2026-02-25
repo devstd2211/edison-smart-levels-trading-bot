@@ -11,7 +11,7 @@
  * - SKIP: Logging errors (silent fail for non-critical logging)
  */
 
-import { MLFeatureSet, Candle, LoggerService } from '../types';
+import { MLFeatureSet, Candle, LoggerService } from '../types/legacy';
 import { CandleAggregatorService } from './candle-aggregator.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {

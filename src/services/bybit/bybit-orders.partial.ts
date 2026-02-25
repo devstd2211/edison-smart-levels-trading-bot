@@ -10,7 +10,7 @@ import { DECIMAL_PLACES, PERCENTAGE_THRESHOLDS } from '../../constants';
  * - Conditional orders cleanup
  */
 
-import { PositionSide, TakeProfit, ProtectionVerification, BybitOrder, isStopLossOrder, isTakeProfitOrder } from '../../types';
+import { PositionSide, TakeProfit, ProtectionVerification, BybitOrder, isStopLossOrder, isTakeProfitOrder } from '../../types/legacy';
 import { BybitBase, BYBIT_SUCCESS_CODE, BYBIT_NOT_MODIFIED_CODE, BYBIT_ORDER_NOT_EXISTS_CODE, BYBIT_ZERO_POSITION_CODE, POSITION_IDX_ONE_WAY, PERCENT_TO_DECIMAL } from './bybit-base.partial';
 import { isCriticalApiError } from '../../utils/error-helper';
 

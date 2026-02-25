@@ -18,7 +18,7 @@ import {
   CandleDataMissingError,
   ValidationError,
 } from '../../errors/DomainErrors';
-import { Candle, SwingPointType, LoggerService } from '../../types';
+import { Candle, SwingPointType, LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // TEST HELPERS

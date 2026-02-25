@@ -1,6 +1,6 @@
 import { WhaleAnalyzerNew } from '../../analyzers/whale.analyzer-new';
 import type { Candle } from '../../types/core';
-import type { BreakoutAnalyzerConfigNew } from '../../types/config-new.types';
+import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.8, priority: 8 };
@@ -326,3 +326,4 @@ describe('WhaleAnalyzerNew - Functional: Whale in Extreme Conditions', () => {
     expect(signal.confidence).toBeGreaterThanOrEqual(10);
   });
 });
+

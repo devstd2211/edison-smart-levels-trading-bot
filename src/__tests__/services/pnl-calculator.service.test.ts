@@ -3,7 +3,7 @@
  */
 
 import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calculator.service';
-import { PositionSide } from '../../types';
+import { PositionSide } from '../../types/legacy';
 
 describe('PnLCalculatorService', () => {
   describe('calculate', () => {

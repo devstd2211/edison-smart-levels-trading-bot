@@ -29,7 +29,7 @@
  */
 
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { LoggerService, LogLevel, OrderExecutionData } from '../../types';
+import { LoggerService, LogLevel, OrderExecutionData } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {

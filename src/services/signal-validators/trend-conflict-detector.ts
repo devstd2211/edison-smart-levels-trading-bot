@@ -3,7 +3,7 @@
  * Detects conflicting signals that indicate trend reversals
  */
 
-import { SignalDirection, LoggerService } from '../../types';
+import { SignalDirection, LoggerService } from '../../types/legacy';
 
 export interface TrendConflictConfig {
   enabled: boolean;

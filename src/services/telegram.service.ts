@@ -5,7 +5,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
  * Integrates with ErrorHandler for resilient notification delivery
  */
 
-import { Position, SignalDirection, PositionSide, LoggerService } from '../types';
+import { Position, SignalDirection, PositionSide, LoggerService } from '../types/legacy';
 import { TIME_MULTIPLIERS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import {

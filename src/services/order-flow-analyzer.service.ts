@@ -29,7 +29,7 @@ import {
   LoggerService,
   OrderBook,
   OrderbookLevel,
-} from '../types';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

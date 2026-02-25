@@ -15,7 +15,7 @@ import { TradingBot } from './bot';
 import { BotFactory } from './bot-factory';
 import { getConfig } from './config';
 import { CONFIDENCE_THRESHOLDS, INTEGER_MULTIPLIERS } from './constants';
-import { Config } from './types';
+import { Config } from './types/legacy';
 import { ConfigValidatorService } from './services/config-validator.service';
 import { TIME_MULTIPLIERS, TIMING_CONSTANTS } from './constants/technical.constants';
 import { startWebServer } from './web';
@@ -88,7 +88,7 @@ export async function main(): Promise<void> {
     const bot = await BotFactory.create({ config });
 
     // Initialize web server (lazy import to avoid rootDir issues)
-    let webServer: any = null;
+    let webServer: { close: () => void } | null = null;
     try {
       console.log('[Main] Initializing Web Server...');
       webServer = await startWebServer(bot, {
@@ -110,7 +110,7 @@ export async function main(): Promise<void> {
     await bot.start();
 
     // Enable test mode if configured
-    const testModeEnabled = (config as any)?.meta?.testMode === true;
+    const testModeEnabled = config.meta?.testMode === true;
     if (testModeEnabled) {
       bot.enableTestMode();
       console.log('\n🧪 TEST MODE ENABLED - Bot will open test positions without real signals');
@@ -170,7 +170,7 @@ function detectActiveStrategy(config: Config): string {
 /**
  * Setup graceful shutdown handlers
  */
-function setupGracefulShutdown(bot: TradingBot, webServer?: any): void {
+function setupGracefulShutdown(bot: TradingBot, webServer?: { close: () => void } | null): void {
   let isShuttingDown = false;
 
   const shutdown = async (signal: string): Promise<void> => {

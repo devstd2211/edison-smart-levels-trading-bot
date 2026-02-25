@@ -2,7 +2,10 @@
  * Journal types
  */
 
-import type { Signal, PositionSide, ExitCondition, BTCAnalysis } from '../../types';
+import type { ExitCondition } from '../../types/legacy';
+import type { BTCAnalysis } from '../../types/core';
+import type { Signal } from '../../types/signal';
+import type { PositionSide } from '../../types/enums';
 
 /**
  * Trade record for journal

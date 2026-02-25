@@ -4,7 +4,7 @@
  */
 
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { LoggerService, LogLevel, ExitType, PositionSide, Position, BybitOrder } from '../../types';
+import { LoggerService, LogLevel, ExitType, PositionSide, Position, BybitOrder } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS

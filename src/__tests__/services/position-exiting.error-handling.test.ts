@@ -12,7 +12,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
-import { Position, ExitType, PositionSide, TradingConfig, RiskManagementConfig, Config } from '../../types';
+import { Position, ExitType, PositionSide, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import { LoggerService, TelegramService, TradingJournalService, SessionStatsService } from '../../services';
 
