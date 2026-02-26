@@ -198,6 +198,7 @@
 - [x] Step 1: Remaining domain-import migrations (services/strategies/tests)
 - [x] Step 1: Standardized imports to use legacy types in services/strategies/tests
 - [x] Multi-strategy module exports now sourced from legacy re-exports
+- [x] Note: Tests still not run after refactor batches (status unknown)
 - [ ] Old `BotServices` removed or reduced to thin adapter
 
 ### Complexity + Risk

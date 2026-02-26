@@ -23,3 +23,11 @@ Constraints:
 Deliverables for this session:
 - `docs/architecture/dependency-map.md`
 - A short summary of the first migration slice and why it is low‑risk.
+
+## Current Status (as of 2026-02-26)
+- Domain-type migration in services/strategies/tests is complete via legacy re-exports.
+- Multi-strategy module exports now re-export from legacy.
+- Tests not run.
+
+## Next Session Start
+- Consider next slice: reduce/remove `BotServices` to thin adapter (REFACTOR_PLAN Step 1 remaining).
