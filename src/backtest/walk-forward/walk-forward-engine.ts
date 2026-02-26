@@ -37,7 +37,7 @@ export interface WalkForwardWindowResult {
     winRate: number;
     totalTrades: number;
   };
-  optimalParams: { [key: string]: any };
+  optimalParams: Record<string, unknown>;
   overfittingDetected: boolean;
   overfittingScore: number; // 0-1: 0=no overfitting, 1=severe
 }
@@ -188,12 +188,12 @@ export class WalkForwardEngine {
    * Detect overfitting by comparing in-sample vs out-of-sample metrics
    */
   private detectOverfitting(
-    inSample: any,
-    outOfSample: any,
-    metric: string,
+    inSample: WalkForwardWindowResult['inSampleMetrics'],
+    outOfSample: WalkForwardWindowResult['outOfSampleMetrics'],
+    metric: WalkForwardConfig['optimizationMetric'],
     threshold: number
   ): boolean {
-    const getMetricValue = (metrics: any) => {
+    const getMetricValue = (metrics: WalkForwardWindowResult['inSampleMetrics']) => {
       switch (metric) {
         case 'sharpe':
           return metrics.sharpe || 0;

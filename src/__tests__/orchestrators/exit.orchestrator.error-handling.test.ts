@@ -90,7 +90,7 @@ function createPosition(
     exitPrice: 0,
     leverage: 1,
     marginUsed: quantity * entryPrice,
-    entryCondition: { signal: {}, indicators: {} } as any,
+    entryCondition: { signal: {}, indicators: {} } as Position['entryCondition'],
     openedAt: Date.now(),
     unrealizedPnL: 0,
     orderId: 'test-order-1',
@@ -135,14 +135,14 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
     });
 
     it('should THROW when position is null', async () => {
-      const result = await orchestratorWithErrorHandler.evaluateExit(null as any, 100);
+      const result = await orchestratorWithErrorHandler.evaluateExit(null as unknown as Position, 100);
 
       expect(result.newState).toBe(PositionState.CLOSED); // Falls back to close position
       expect(result.actions).toContainEqual({ action: ExitAction.CLOSE_ALL });
     });
 
     it('should THROW when position is undefined', async () => {
-      const result = await orchestratorWithErrorHandler.evaluateExit(undefined as any, 100);
+      const result = await orchestratorWithErrorHandler.evaluateExit(undefined as unknown as Position, 100);
 
       expect(result.newState).toBe(PositionState.CLOSED);
       expect(result.actions).toContainEqual({ action: ExitAction.CLOSE_ALL });
@@ -182,7 +182,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
   describe('State Machine Errors (GRACEFUL_DEGRADE Strategy)', () => {
     it('should continue evaluateExit even if state machine transitions fail', async () => {
       const failingStateMachine = new PositionStateMachineService(logger);
-      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation((request: any): any => {
+      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation(() => {
         throw new Error('State machine connection failed');
       });
 
@@ -199,7 +199,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
 
     it('should continue even if state machine closePosition fails', async () => {
       const failingStateMachine = new PositionStateMachineService(logger);
-      jest.spyOn(failingStateMachine, 'closePosition').mockImplementation((symbol: string, positionId: string, reason: string) => {
+      jest.spyOn(failingStateMachine, 'closePosition').mockImplementation(() => {
         throw new Error('Close position failed');
       });
 
@@ -291,7 +291,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
       orchestratorWithErrorHandler = new ExitOrchestrator(failingLogger, failingStateMachine, 'test-strategy', errorHandler);
 
       // Mock failures after initialization
-      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation((request: any): any => {
+      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation(() => {
         throw new Error('State machine failed');
       });
       jest.spyOn(failingLogger, 'info').mockImplementation(() => {
@@ -315,7 +315,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
 
       orchestratorWithErrorHandler = new ExitOrchestrator(failingLogger, stateMachine, 'test-strategy', errorHandler);
 
-      const result = await orchestratorWithErrorHandler.evaluateExit(null as any, NaN);
+      const result = await orchestratorWithErrorHandler.evaluateExit(null as unknown as Position, NaN);
 
       // Should handle all errors and return safe default
       expect(result.newState).toBe(PositionState.CLOSED);
@@ -366,7 +366,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
 
     it('should handle TP2 transition with GRACEFUL_DEGRADE', async () => {
       const failingStateMachine = new PositionStateMachineService(logger);
-      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation((request: any) => {
+      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation(() => {
         throw new Error('State machine temporarily unavailable');
       });
 
@@ -384,7 +384,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
 
     it('should handle TP3 transition with GRACEFUL_DEGRADE', async () => {
       const failingStateMachine = new PositionStateMachineService(logger);
-      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation((request: any) => {
+      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation(() => {
         throw new Error('State machine issue');
       });
 
@@ -466,7 +466,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
     it('should handle error in one position without affecting another', async () => {
       const failingStateMachine = new PositionStateMachineService(logger);
       let callCount = 0;
-      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation((request: any): any => {
+      jest.spyOn(failingStateMachine, 'transitionState').mockImplementation((request: unknown) => {
         callCount++;
         if (callCount === 1) {
           throw new Error('Temporary failure');
@@ -474,8 +474,8 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
         // Second call succeeds - return success result
         return {
           allowed: true,
-          currentState: request.targetState || PositionState.OPEN,
-          stateChange: `${PositionState.OPEN} → ${request.targetState}`,
+          currentState: (request as { targetState?: PositionState }).targetState ?? PositionState.OPEN,
+          stateChange: `${PositionState.OPEN} → ${(request as { targetState?: PositionState }).targetState}`,
         };
       });
 

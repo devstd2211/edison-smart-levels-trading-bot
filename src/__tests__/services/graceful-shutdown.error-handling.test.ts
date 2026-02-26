@@ -17,7 +17,7 @@ import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
 import { LoggerService, PositionSide, Position } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
-import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/live-trading';
+import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
 

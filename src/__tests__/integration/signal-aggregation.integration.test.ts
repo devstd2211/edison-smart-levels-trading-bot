@@ -11,8 +11,6 @@ import {
   AggregationConfig,
 } from '../../decision-engine/signal-aggregation';
 import { AnalyzerSignal, SignalDirection } from '../../types/legacy';
-import { BacktestEngineV5 } from '../../backtest/backtest-engine-v5';
-import { LoggerService } from '../../services/logger.service';
 
 // ============================================================================
 // TEST HELPERS
@@ -32,25 +30,11 @@ function createAnalyzerSignal(
   };
 }
 
-function createBacktestConfig(strategyFile: string): any {
-  return {
-    strategyFile,
-    symbol: 'ETHUSDT',
-    dataProvider: 'json',
-    startDate: '2023-01-01',
-    endDate: '2023-01-07',
-    initialBalance: 10000,
-    maxOpenPositions: 1,
-  };
-}
-
 // ============================================================================
 // TEST SUITE: Integration Tests
 // ============================================================================
 
 describe('Signal Aggregation Integration Tests', () => {
-  const logger = new LoggerService();
-
   describe('Aggregation Config Builder', () => {
     test('builds config from simple analyzer list', () => {
       const mockStrategy = {

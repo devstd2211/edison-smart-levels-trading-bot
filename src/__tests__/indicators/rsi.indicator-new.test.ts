@@ -56,38 +56,38 @@ function createCandles(count: number, basePrice: number = 100, trend: 'up' | 'do
 describe('RSI Indicator NEW', () => {
   describe('Configuration Validation', () => {
     it('should throw if enabled is missing', () => {
-      const badConfig = { ...validRsiConfig, enabled: undefined } as any;
+      const badConfig = { ...validRsiConfig, enabled: undefined } as unknown as RsiIndicatorConfigNew;
       expect(() => new RSIIndicatorNew(badConfig)).toThrow(/enabled.*boolean/i);
     });
 
     it('should throw if period is missing', () => {
       const badConfig = { ...validRsiConfig, period: undefined };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/period/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/period/i);
     });
 
     it('should throw if oversold is missing', () => {
       const badConfig = { ...validRsiConfig, oversold: undefined };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/oversold/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/oversold/i);
     });
 
     it('should throw if overbought is missing', () => {
       const badConfig = { ...validRsiConfig, overbought: undefined };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/overbought/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/overbought/i);
     });
 
     it('should throw if extreme is missing', () => {
       const badConfig = { ...validRsiConfig, extreme: undefined };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/extreme/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/extreme/i);
     });
 
     it('should throw if neutralZone is missing', () => {
       const badConfig = { ...validRsiConfig, neutralZone: undefined };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/neutralZone/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/neutralZone/i);
     });
 
     it('should throw if maxConfidence is missing', () => {
       const badConfig = { ...validRsiConfig, maxConfidence: undefined };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/maxConfidence/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/maxConfidence/i);
     });
 
     it('should throw if period is invalid (negative)', () => {
@@ -107,12 +107,12 @@ describe('RSI Indicator NEW', () => {
 
     it('should throw if extreme.low is missing', () => {
       const badConfig = { ...validRsiConfig, extreme: { high: 80 } };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/extreme/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/extreme/i);
     });
 
     it('should throw if neutralZone.min is missing', () => {
       const badConfig = { ...validRsiConfig, neutralZone: { max: 55 } };
-      expect(() => new RSIIndicatorNew(badConfig as any)).toThrow(/neutralZone/i);
+      expect(() => new RSIIndicatorNew(badConfig as unknown as RsiIndicatorConfigNew)).toThrow(/neutralZone/i);
     });
 
     it('should throw if maxConfidence is out of range', () => {

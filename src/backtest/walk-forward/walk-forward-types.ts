@@ -3,7 +3,11 @@
  */
 
 export interface ParameterOptimizer {
-  optimize(grid: any, config: any, opts: any): Promise<any>;
+  optimize<TGrid = unknown, TConfig = unknown, TOpts = unknown, TResult = unknown>(
+    grid: TGrid,
+    config: TConfig,
+    opts: TOpts
+  ): Promise<TResult>;
 }
 
 export interface WindowAnalysisResult {

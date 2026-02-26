@@ -31,7 +31,7 @@ export interface OptimizationResult {
     totalPnl: number;
     trades: number;
   };
-  allResults: { params: ParameterCombination; metrics: any; rank: number }[];
+  allResults: { params: ParameterCombination; metrics: BacktestResult['metrics']; rank: number }[];
   efficiency: {
     totalCombinations: number;
     testedCombinations: number;
@@ -140,8 +140,8 @@ export class ParameterOptimizer {
     combinations: ParameterCombination[],
     baseConfig: BacktestConfig,
     optimizationConfig: OptimizationConfig
-  ): Promise<{ params: ParameterCombination; metrics: any }[]> {
-    const results: { params: ParameterCombination; metrics: any }[] = [];
+  ): Promise<{ params: ParameterCombination; metrics: BacktestResult['metrics'] }[]> {
+    const results: { params: ParameterCombination; metrics: BacktestResult['metrics'] }[] = [];
 
     // For now, execute sequentially (parallel execution would use worker pool)
     for (let i = 0; i < combinations.length; i++) {
@@ -174,7 +174,7 @@ export class ParameterOptimizer {
   /**
    * Get metric value from backtest result
    */
-  private getMetricValue(metrics: any, metric: string): number {
+  private getMetricValue(metrics: BacktestResult['metrics'], metric: OptimizationConfig['metric']): number {
     switch (metric) {
       case 'sharpe':
         return metrics.sharpeRatio || 0;

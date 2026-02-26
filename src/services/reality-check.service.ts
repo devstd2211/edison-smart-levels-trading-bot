@@ -12,8 +12,7 @@
  */
 
 import type { LoggerService } from './logger.service';
-import type { Signal } from '../types/core';
-import type { AnalyzerSignal } from '../types/strategy';
+import type { Signal, AnalyzerSignal } from '../types/legacy';
 
 // ============================================================================
 // TYPES

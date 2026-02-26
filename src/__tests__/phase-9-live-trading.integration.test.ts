@@ -23,7 +23,7 @@ import {
   EmergencyCloseReason,
   DangerLevel,
   LiveTradingEventType,
-} from '../types/live-trading';
+} from '../types/legacy';
 
 describe('Phase 9: Live Trading Engine - Integration Tests', () => {
   describe('Module Imports', () => {

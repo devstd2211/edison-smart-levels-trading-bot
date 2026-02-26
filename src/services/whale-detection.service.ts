@@ -24,8 +24,8 @@ import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS,
  */
 
 import { LoggerService } from './logger.service';
-import { OrderBookAnalysis } from '../types/orderbook';
-import { SignalDirection } from '../types/enums';
+import { OrderBookAnalysis } from '../types/legacy';
+import { SignalDirection } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

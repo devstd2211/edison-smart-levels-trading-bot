@@ -39,6 +39,20 @@ export interface BacktestWorkerResult {
   errors: string[];
 }
 
+type WorkerTaskMessage = {
+  type: 'task';
+  taskId: string;
+  data: BacktestWorkerTask;
+};
+
+const isWorkerTaskMessage = (message: unknown): message is WorkerTaskMessage => {
+  if (!message || typeof message !== 'object') {
+    return false;
+  }
+  const candidate = message as { type?: unknown; taskId?: unknown; data?: unknown };
+  return candidate.type === 'task' && typeof candidate.taskId === 'string';
+};
+
 /**
  * Backtest Worker Process
  *
@@ -175,10 +189,10 @@ if (require.main === module) {
   if (parentPort) {
     const processor = new BacktestWorkerProcess();
 
-    parentPort.on('message', async (message: any) => {
+    parentPort.on('message', async (message: unknown) => {
       try {
-        if (message.type === 'task') {
-          const result = await processor.procesChunk(message.data as BacktestWorkerTask);
+        if (isWorkerTaskMessage(message)) {
+          const result = await processor.procesChunk(message.data);
           parentPort.postMessage({
             taskId: message.taskId,
             type: 'result',
@@ -187,7 +201,7 @@ if (require.main === module) {
         }
       } catch (error) {
         parentPort.postMessage({
-          taskId: message.taskId,
+          taskId: isWorkerTaskMessage(message) ? message.taskId : undefined,
           type: 'error',
           error: error instanceof Error ? error.message : String(error),
         });

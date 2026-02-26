@@ -11,7 +11,7 @@ import { MLSignalValidatorService } from '../../services/ml-signal-validator.ser
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { AnomalyDetectionService } from '../../services/anomaly-detection.service';
 import { AdvancedOrderFlowConfig, Tick } from '../../types/advanced-order-flow';
-import { Orderbook } from '../../types/liquidity-heatmap';
+import { Orderbook } from '../../types/legacy';
 import { LoggerService, Signal, MarketContext, SignalDirection } from '../../types/legacy';
 
 describe('Phase 10 Integration Tests', () => {

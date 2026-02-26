@@ -25,7 +25,7 @@ import {
   VolatilityStats,
   AnomalyDetectionConfig,
   DEFAULT_ANOMALY_DETECTION_CONFIG,
-} from '../types/anomaly-detection';
+} from '../types/legacy';
 import {
   DEFAULT_ANOMALY_DETECTION,
   ANOMALY_DETECTION_TECHNICAL,

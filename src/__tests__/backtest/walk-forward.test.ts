@@ -12,10 +12,28 @@
  */
 
 import { WalkForwardEngine } from '../../backtest/walk-forward/walk-forward-engine';
+import type { WalkForwardConfig, WalkForwardWindow, WalkForwardWindowResult } from '../../backtest/walk-forward/walk-forward-engine';
 import { Candle } from '../../types/legacy';
 
 describe('Phase 7.5: Walk-Forward Analysis', () => {
   let engine: WalkForwardEngine;
+  const getEnginePrivate = (instance: WalkForwardEngine): {
+    splitIntoWindows: (candles: Candle[], config: WalkForwardConfig) => WalkForwardWindow[];
+    detectOverfitting: (
+      inSample: WalkForwardWindowResult['inSampleMetrics'],
+      outOfSample: WalkForwardWindowResult['outOfSampleMetrics'],
+      metric: WalkForwardConfig['optimizationMetric'],
+      threshold: number
+    ) => boolean;
+  } => instance as unknown as {
+    splitIntoWindows: (candles: Candle[], config: WalkForwardConfig) => WalkForwardWindow[];
+    detectOverfitting: (
+      inSample: WalkForwardWindowResult['inSampleMetrics'],
+      outOfSample: WalkForwardWindowResult['outOfSampleMetrics'],
+      metric: WalkForwardConfig['optimizationMetric'],
+      threshold: number
+    ) => boolean;
+  };
 
   function createTestCandles(count: number, baseTime: number = 1000000000000): Candle[] {
     const candles: Candle[] = [];
@@ -54,7 +72,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
       };
 
       // Use reflection to access private method for testing
-      const splitMethod = (engine as any).splitIntoWindows.bind(engine);
+      const splitMethod = getEnginePrivate(engine).splitIntoWindows.bind(engine);
       const windows = splitMethod(candles, config);
 
       expect(windows.length).toBeGreaterThan(0);
@@ -70,7 +88,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
         optimizationMetric: 'sharpe' as const,
       };
 
-      const splitMethod = (engine as any).splitIntoWindows.bind(engine);
+      const splitMethod = getEnginePrivate(engine).splitIntoWindows.bind(engine);
       const windows = splitMethod(candles, config);
 
       for (let i = 0; i < windows.length - 1; i++) {
@@ -87,7 +105,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
         optimizationMetric: 'sharpe' as const,
       };
 
-      const splitMethod = (engine as any).splitIntoWindows.bind(engine);
+      const splitMethod = getEnginePrivate(engine).splitIntoWindows.bind(engine);
       const windows = splitMethod(candles, config);
 
       for (let i = 0; i < windows.length - 1; i++) {
@@ -109,7 +127,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
         optimizationMetric: 'sharpe' as const,
       };
 
-      const splitMethod = (engine as any).splitIntoWindows.bind(engine);
+      const splitMethod = getEnginePrivate(engine).splitIntoWindows.bind(engine);
       const windows = splitMethod(candles, config);
 
       if (windows.length > 0) {
@@ -134,7 +152,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
         optimizationMetric: 'sharpe' as const,
       };
 
-      const splitMethod = (engine as any).splitIntoWindows.bind(engine);
+      const splitMethod = getEnginePrivate(engine).splitIntoWindows.bind(engine);
       const windows = splitMethod(candles, config);
 
       expect(windows.length).toBeGreaterThan(1); // Should have multiple windows
@@ -146,7 +164,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
    */
   describe('Test 3: Overfitting Detection', () => {
     it('should detect severe overfitting', () => {
-      const detectMethod = (engine as any).detectOverfitting.bind(engine);
+      const detectMethod = getEnginePrivate(engine).detectOverfitting.bind(engine);
 
       const inSample = { sharpe: 2.0, profitFactor: 3.0, winRate: 0.65 };
       const outOfSample = { sharpe: 0.5, profitFactor: 1.0, winRate: 0.50 };
@@ -157,7 +175,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
     });
 
     it('should not flag normal performance degradation', () => {
-      const detectMethod = (engine as any).detectOverfitting.bind(engine);
+      const detectMethod = getEnginePrivate(engine).detectOverfitting.bind(engine);
 
       const inSample = { sharpe: 1.5, profitFactor: 1.8, winRate: 0.55 };
       const outOfSample = { sharpe: 1.3, profitFactor: 1.6, winRate: 0.53 };
@@ -168,7 +186,7 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
     });
 
     it('should work with different metrics', () => {
-      const detectMethod = (engine as any).detectOverfitting.bind(engine);
+      const detectMethod = getEnginePrivate(engine).detectOverfitting.bind(engine);
 
       const inSample = { sharpe: 2.0, profitFactor: 3.0, winRate: 0.65 };
       const outOfSample = { sharpe: 1.5, profitFactor: 1.5, winRate: 0.50 };

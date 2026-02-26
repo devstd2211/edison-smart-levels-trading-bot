@@ -143,9 +143,9 @@ describe('Phase 7.4: Parameter Optimization', () => {
     });
 
     it('should detect invalid types', () => {
-      const grid: ParameterGrid = {
-        param1: [1, 2, 'invalid'] as any,
-      };
+      const grid = {
+        param1: [1, 2, 'invalid'],
+      } as unknown as ParameterGrid;
 
       const validation = ParameterGridGenerator.validate(grid);
 

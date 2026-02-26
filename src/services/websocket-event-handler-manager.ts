@@ -1,16 +1,19 @@
 import { DECIMAL_PLACES, INTEGER_MULTIPLIERS } from '../constants';
-import { Candle } from '../types/core';
-import { TimeframeRole } from '../types/enums';
-import { OrderBook } from '../types/orderbook';
 import {
+  Candle,
+  TimeframeRole,
+  OrderBook,
   OrderbookUpdateEvent,
   StopLossHitEvent,
   TakeProfitHitEvent,
   TimeBasedExitEvent,
   TradeTickEvent,
-} from '../types/events';
-import type { Position, OrderFilledEvent, StopLossFilledEvent, TakeProfitFilledEvent } from '../types/legacy';
-import type { Config } from '../types/legacy';
+  Position,
+  OrderFilledEvent,
+  StopLossFilledEvent,
+  TakeProfitFilledEvent,
+  Config,
+} from '../types/legacy';
 import type { IWebSocketEventHandlerServices } from '../interfaces';
 import { RealTimeWhaleDetector } from './realtime-whale-detector';
 import { type OrderbookUpdate } from './orderbook-manager.service';

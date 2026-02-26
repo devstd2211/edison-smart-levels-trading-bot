@@ -20,7 +20,7 @@ import {
   CircuitBreakerMetrics,
   CircuitBreakerServiceConfig,
   CircuitBreakerServiceStats,
-} from '../../types/circuit-breaker';
+} from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors'; // Phase 8.9.34: ErrorHandler integration
 
 const DEFAULT_CONFIG: CircuitBreakerConfig = {

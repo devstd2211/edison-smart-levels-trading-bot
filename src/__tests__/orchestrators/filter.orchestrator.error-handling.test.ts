@@ -42,7 +42,7 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     errorHandler = new ErrorHandler(mockLogger);
     orchestrator = new FilterOrchestrator(mockLogger, {}, errorHandler);
@@ -191,7 +191,7 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
       const contextWithBrokenCorrelation = {
         ...mockContext,
         btcCandles: [
-          { close: Infinity, open: -Infinity, high: NaN, low: NaN, volume: 1000, timestamp: Date.now() } as any,
+          { close: Infinity, open: -Infinity, high: NaN, low: NaN, volume: 1000, timestamp: Date.now() } as Candle,
         ],
         altCandles: [
           { close: 40000, open: 39000, high: 40500, low: 38500, volume: 1000, timestamp: Date.now() } as Candle,

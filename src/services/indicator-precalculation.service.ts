@@ -1,7 +1,5 @@
 import { CandleProvider } from '../providers/candle.provider';
-import { IIndicatorCache } from '../types/indicator';
-import { IIndicatorCalculator } from '../types/indicator';
-import { IIndicatorPreCalculationService } from '../types/indicator';
+import { IIndicatorCache, IIndicatorCalculator, IIndicatorPreCalculationService } from '../types/legacy';
 import { LoggerService } from './logger.service';
 import { TimeframeRole } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';

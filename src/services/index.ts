@@ -30,6 +30,7 @@ export * from './reality-check.service'; // Tracks when bot logic was right but 
 // Phase 5: Dependency Injection Enhancement
 export * from './bot-factory.service'; // DI container for creating BotServices
 export * from './bot-services'; // DI container for all services
+export * from './bot-services-adapter'; // Maps BotServices to narrow bundles
 export * from './bot-initializer'; // Manages bot lifecycle
 
 // Phase 14.2: Resilience Patterns (Production Hardening)

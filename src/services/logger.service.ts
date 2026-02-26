@@ -16,7 +16,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { appendFile } from 'fs/promises';
 import { join } from 'path';
 import { LogEntry } from '../types/legacy';
-import { LogLevel } from '../types/enums';
+import { LogLevel } from '../types/legacy';
 import { TIME_INTERVALS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 

@@ -20,21 +20,14 @@ import type {
   WebSocketMessage,
   WebSocketPayloadMap,
 } from '../types/api.types.js';
+import type { IWebApiAdapter } from './web-api-adapter.types.js';
 
 export interface IBotInstance extends EventEmitter {
   isRunning: boolean;
   getCurrentPosition(): Position | null;
   getBalance(): Promise<number>;
-  getMarketData(): Promise<WebApiMarketData>;
-  getCandles(timeframe: string, limit: number): Promise<WebApiCandle[]>;
-  getPositionHistory(limit: number): Promise<WebApiPositionHistoryEntry[]>;
-  getOrderBook(symbol: string): Promise<WebApiOrderBookView>;
-  getWalls(symbol: string): Promise<WebApiWallsView>;
-  getFundingRate(symbol: string): Promise<WebApiFundingRateView>;
-  getVolumeProfile(symbol: string, levels: number): Promise<WebApiVolumeProfileView>;
   start(): Promise<void>;
   stop(): void;
-  bybitService?: unknown;
 }
 
 export class BotBridgeService extends EventEmitter {
@@ -44,8 +37,11 @@ export class BotBridgeService extends EventEmitter {
   private botListeners = new Map<string, (data?: unknown) => void>();
   private recentSignals: Signal[] = [];
 
-  constructor(private bot: IBotInstance) {
+  private readonly webApi?: IWebApiAdapter;
+
+  constructor(private bot: IBotInstance, webApi?: IWebApiAdapter) {
     super();
+    this.webApi = webApi ?? this.coerceWebApiAdapter(bot);
     this.setupEventForwarding();
   }
 
@@ -155,6 +151,22 @@ export class BotBridgeService extends EventEmitter {
 
   private getString(value: unknown): string | null {
     return typeof value === 'string' ? value : null;
+  }
+
+  private coerceWebApiAdapter(bot: IBotInstance): IWebApiAdapter | undefined {
+    const candidate = bot as Partial<IWebApiAdapter>;
+    if (
+      typeof candidate.getMarketData === 'function'
+      && typeof candidate.getCandles === 'function'
+      && typeof candidate.getPositionHistory === 'function'
+      && typeof candidate.getOrderBook === 'function'
+      && typeof candidate.getWalls === 'function'
+      && typeof candidate.getFundingRate === 'function'
+      && typeof candidate.getVolumeProfile === 'function'
+    ) {
+      return candidate as IWebApiAdapter;
+    }
+    return undefined;
   }
 
   private toWebSignal(data: unknown): Signal | null {
@@ -524,7 +536,10 @@ export class BotBridgeService extends EventEmitter {
    */
   async getMarketData(): Promise<WebApiMarketData> {
     try {
-      const marketData = await this.bot.getMarketData?.();
+      if (!this.webApi) {
+        return { currentPrice: 0, priceChangePercent: 0 };
+      }
+      const marketData = await this.webApi.getMarketData();
       return marketData ?? { currentPrice: 0, priceChangePercent: 0 };
     } catch (error) {
       console.error('Error getting market data:', error);
@@ -537,7 +552,10 @@ export class BotBridgeService extends EventEmitter {
    */
   async getCandles(timeframe: string, limit: number = 100): Promise<WebApiCandle[]> {
     try {
-      return (await this.bot.getCandles?.(timeframe, limit)) || [];
+      if (!this.webApi) {
+        return [];
+      }
+      return await this.webApi.getCandles(timeframe, limit);
     } catch (error) {
       console.error('Error getting candles:', error);
       return [];
@@ -549,7 +567,10 @@ export class BotBridgeService extends EventEmitter {
    */
   async getPositionHistory(limit: number = 50): Promise<WebApiPositionHistoryEntry[]> {
     try {
-      return (await this.bot.getPositionHistory?.(limit)) || [];
+      if (!this.webApi) {
+        return [];
+      }
+      return await this.webApi.getPositionHistory(limit);
     } catch (error) {
       console.error('Error getting position history:', error);
       return [];
@@ -567,7 +588,10 @@ export class BotBridgeService extends EventEmitter {
    */
   async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
     try {
-      return (await this.bot.getOrderBook?.(symbol)) || { symbol, bids: [], asks: [], timestamp: Date.now() };
+      if (!this.webApi) {
+        return { symbol, bids: [], asks: [], timestamp: Date.now() };
+      }
+      return await this.webApi.getOrderBook(symbol);
     } catch (error) {
       console.error('Error getting orderbook:', error);
       return { symbol, bids: [], asks: [], timestamp: Date.now() };
@@ -579,7 +603,10 @@ export class BotBridgeService extends EventEmitter {
    */
   async getWalls(symbol: string): Promise<WebApiWallsView> {
     try {
-      const walls = await this.bot.getWalls?.(symbol);
+      if (!this.webApi) {
+        return { symbol, walls: [] };
+      }
+      const walls = await this.webApi.getWalls(symbol);
       if (Array.isArray(walls)) {
         return { symbol, walls };
       }
@@ -595,13 +622,16 @@ export class BotBridgeService extends EventEmitter {
    */
   async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
     try {
-      return (await this.bot.getFundingRate?.(symbol)) || {
-        symbol,
-        current: 0,
-        predicted: 0,
-        nextFundingTime: 0,
-        lastFundingTime: 0,
-      };
+      if (!this.webApi) {
+        return {
+          symbol,
+          current: 0,
+          predicted: 0,
+          nextFundingTime: 0,
+          lastFundingTime: 0,
+        };
+      }
+      return await this.webApi.getFundingRate(symbol);
     } catch (error) {
       console.error('Error getting funding rate:', error);
       return { symbol, current: 0, predicted: 0, nextFundingTime: 0, lastFundingTime: 0 };
@@ -613,12 +643,15 @@ export class BotBridgeService extends EventEmitter {
    */
   async getVolumeProfile(symbol: string, levels: number = 20): Promise<WebApiVolumeProfileView> {
     try {
-      return (await this.bot.getVolumeProfile?.(symbol, levels)) || {
-        symbol,
-        levels: [],
-        volumes: [],
-        maxVolume: 0,
-      };
+      if (!this.webApi) {
+        return {
+          symbol,
+          levels: [],
+          volumes: [],
+          maxVolume: 0,
+        };
+      }
+      return await this.webApi.getVolumeProfile(symbol, levels);
     } catch (error) {
       console.error('Error getting volume profile:', error);
       return { symbol, levels: [], volumes: [], maxVolume: 0 };

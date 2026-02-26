@@ -20,6 +20,20 @@ import {
   ExchangeConnectionError,
 } from '../../errors/DomainErrors';
 
+type ResultJson<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: { metadata?: { code?: string; context?: unknown } } };
+
+const getOk = <T>(result: Result<T>): Ok<T> => {
+  expect(result.isOk()).toBe(true);
+  return result as Ok<T>;
+};
+
+const getErr = <T>(result: Result<T>): Err<T> => {
+  expect(result.isErr()).toBe(true);
+  return result as Err<T>;
+};
+
 describe('Result<T> Type - Type-Safe Error Handling', () => {
   describe('Ok<T> Creation and Methods', () => {
     it('should create Ok result with value', () => {
@@ -36,7 +50,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const result = ok({ id: '123', size: 10 });
 
       expect(result.ok).toBe(true);
-      expect((result as any).value.id).toBe('123');
+      expect(getOk(result).value.id).toBe('123');
     });
 
     it('should unwrap value', () => {
@@ -77,7 +91,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
 
       expect(result.ok).toBe(false);
       expect(result.err).toBe(true);
-      expect((result as any).error).toBe(error);
+      expect(getErr(result).error).toBe(error);
       expect(result.isOk()).toBe(false);
       expect(result.isErr()).toBe(true);
     });
@@ -91,7 +105,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const result = err(error);
 
       expect(result.isErr()).toBe(true);
-      expect((result as any).error).toBe(error);
+      expect(getErr(result).error).toBe(error);
     });
 
     it('should return default in unwrapOr', () => {
@@ -149,7 +163,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const transformed = result.map(n => n * 2);
 
       expect(transformed.isErr()).toBe(true);
-      expect((transformed as any).error).toBe(error);
+      expect(getErr(transformed).error).toBe(error);
     });
 
     it('should catch errors in map transformation', () => {
@@ -159,7 +173,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       });
 
       expect(transformed.isErr()).toBe(true);
-      expect((transformed as any).error.message).toContain('Transformation failed');
+      expect(getErr(transformed).error.message).toContain('Transformation failed');
     });
 
     it('should allow chaining maps', () => {
@@ -189,7 +203,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const transformed = result.mapErr(() => newError);
 
       expect(transformed.isErr()).toBe(true);
-      expect((transformed as any).error).toBe(newError);
+      expect(getErr(transformed).error).toBe(newError);
     });
 
     it('should not apply mapErr on Ok', () => {
@@ -233,7 +247,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const chained = result.flatMap(() => err(error));
 
       expect(chained.isErr()).toBe(true);
-      expect((chained as any).error).toBe(error);
+      expect(getErr(chained).error).toBe(error);
     });
 
     it('should catch errors in flatMap operation', () => {
@@ -305,10 +319,13 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
   describe('JSON Serialization', () => {
     it('should serialize Ok to JSON', () => {
       const result: Result<{ id: number }> = ok({ id: 123 });
-      const json = result.toJSON();
+      const json = result.toJSON() as ResultJson<{ id: number }>;
 
-      expect((json as any).ok).toBe(true);
-      expect((json as any).value.id).toBe(123);
+      expect(json.ok).toBe(true);
+      if (!json.ok) {
+        throw new Error('Expected ok result');
+      }
+      expect(json.value.id).toBe(123);
     });
 
     it('should serialize Err to JSON', () => {
@@ -318,11 +335,14 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
         timeoutMs: 1000,
       });
       const result: Result<number> = err(error);
-      const json = result.toJSON();
+      const json = result.toJSON() as ResultJson<number>;
 
-      expect((json as any).ok).toBe(false);
-      expect((json as any).error).toBeDefined();
-      expect((json as any).error.metadata.code).toBe('ORDER_TIMEOUT');
+      expect(json.ok).toBe(false);
+      if (json.ok) {
+        throw new Error('Expected error result');
+      }
+      expect(json.error).toBeDefined();
+      expect(json.error.metadata?.code).toBe('ORDER_TIMEOUT');
     });
   });
 
@@ -342,7 +362,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       });
 
       expect(result.isErr()).toBe(true);
-      expect((result as any).error.message).toContain('Async operation failed');
+      expect(getErr(result).error.message).toContain('Async operation failed');
     });
 
     it('should handle trading errors in async', async () => {
@@ -356,7 +376,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       });
 
       expect(result.isErr()).toBe(true);
-      expect((result as any).error).toBe(error);
+      expect(getErr(result).error).toBe(error);
     });
   });
 
@@ -376,7 +396,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       });
 
       expect(result.isErr()).toBe(true);
-      expect((result as any).error.message).toContain('Sync operation failed');
+      expect(getErr(result).error.message).toContain('Sync operation failed');
     });
   });
 
@@ -399,7 +419,7 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const combined = combine(results);
 
       expect(combined.isErr()).toBe(true);
-      expect((combined as any).error).toBe(error);
+      expect(getErr(combined).error).toBe(error);
     });
   });
 
@@ -442,8 +462,9 @@ describe('Result<T> Type - Type-Safe Error Handling', () => {
       const combined = combineAll(results);
 
       expect(combined.isErr()).toBe(true);
-      const ctx = (combined as any).error.metadata.context as any;
-      expect(ctx.count).toBe(1);
+      const errResult = getErr(combined);
+      const ctx = errResult.error.metadata?.context as { count?: number } | undefined;
+      expect(ctx?.count).toBe(1);
     });
   });
 

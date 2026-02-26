@@ -16,12 +16,11 @@
  */
 
 import type {
-  StrategyConfig } from '../../types/strategy-config';
-import type {
+  StrategyConfigV2 as StrategyConfig,
   ConfigValidationResult,
   ConfigMergeChange,
-} from '../../types/multi-strategy';
-import type { ConfigNew } from '../../types/config/config-new.types';
+  ConfigNew,
+} from '../../types/legacy';
 import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class DynamicConfigManagerService {

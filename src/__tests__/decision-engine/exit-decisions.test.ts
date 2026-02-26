@@ -68,7 +68,7 @@ function createPosition(
 describe('evaluateExit - Input Validation', () => {
   it('should return CLOSED and CLOSE_ALL when position is missing', () => {
     const context: ExitDecisionContext = {
-      position: null as any,
+      position: null as unknown as Position,
       currentPrice: 100,
       currentState: PositionState.OPEN,
     };
@@ -85,7 +85,7 @@ describe('evaluateExit - Input Validation', () => {
     const position = createPosition();
     const context: ExitDecisionContext = {
       position,
-      currentPrice: undefined as any,
+      currentPrice: undefined as unknown as number,
       currentState: PositionState.OPEN,
     };
 
@@ -128,7 +128,7 @@ describe('evaluateExit - Input Validation', () => {
     const context: ExitDecisionContext = {
       position,
       currentPrice: 100,
-      currentState: null as any,
+      currentState: null as unknown as PositionState,
     };
 
     const result = evaluateExit(context);

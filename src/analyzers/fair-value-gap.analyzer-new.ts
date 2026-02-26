@@ -4,6 +4,7 @@ import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import type { LoggerService } from '../services/logger.service';
 
 const DEFAULT_MIN_CANDLES_FOR_FAIR_VALUE_GAP = 25;
 const DEFAULT_MAX_CONFIDENCE = 0.95;
@@ -21,7 +22,7 @@ export class FairValueGapAnalyzerNew implements IAnalyzer {
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
-  constructor(config: BreakoutAnalyzerConfigNew & { minCandlesForFairValueGap?: number; maxConfidence?: number; baseConfidence?: number; confidenceMultiplier?: number }, private logger?: any) {
+  constructor(config: BreakoutAnalyzerConfigNew & { minCandlesForFairValueGap?: number; maxConfidence?: number; baseConfidence?: number; confidenceMultiplier?: number }, private logger?: LoggerService) {
     if (typeof config.enabled !== 'boolean') throw new Error('[FVG] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[FVG] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[FVG] Missing or invalid: priority');

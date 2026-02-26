@@ -20,8 +20,8 @@ import { ValidationError, ConfigurationError } from '../errors/DomainErrors';
 
 import { LoggerService } from './logger.service';
 import { VolumeProfileResult, VolumeNode } from '../types/legacy';
-import { VolumeProfileConfig } from '../types/config/config';
-import { Candle } from '../types/core';
+import { VolumeProfileConfig } from '../types/legacy';
+import { Candle } from '../types/legacy';
 
 // ============================================================================
 // DEFAULT CONFIG

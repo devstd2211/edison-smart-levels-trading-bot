@@ -4,6 +4,7 @@ import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import type { LoggerService } from '../services/logger.service';
 
 const DEFAULT_MIN_CANDLES_FOR_MICRO_WALL = 20;
 const DEFAULT_MAX_CONFIDENCE = 0.95;
@@ -29,7 +30,7 @@ export class MicroWallAnalyzerNew implements IAnalyzer {
     baseConfidence?: number;
     confidenceMultiplier?: number;
     recentWindow?: number;
-  }, private logger?: any) {
+  }, private logger?: LoggerService) {
     if (typeof config.enabled !== 'boolean') throw new Error('[MICRO_WALL] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[MICRO_WALL] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[MICRO_WALL] Missing or invalid: priority');

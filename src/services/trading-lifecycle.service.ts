@@ -18,9 +18,10 @@
  */
 
 import { BotEventBus } from './event-bus';
-import { LoggerService, PositionSide } from '../types/legacy';
-import { ActionType } from '../types/architecture';
 import {
+  LoggerService,
+  PositionSide,
+  ActionType,
   PositionLifecycleConfig,
   TrackedPosition,
   TimeoutCheckResult,
@@ -31,9 +32,9 @@ import {
   ITradingLifecycleManager,
   LiveTradingEventType,
   PositionTimeoutWarningEvent,
-} from '../types/live-trading';
+  Position,
+} from '../types/legacy';
 import { ActionQueueService } from './action-queue.service';
-import { Position } from '../types/core';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**

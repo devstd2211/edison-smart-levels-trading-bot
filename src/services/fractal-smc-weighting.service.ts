@@ -19,8 +19,8 @@ import {
   ScoreWeight,
   WeightedSignal,
   WeightedSignalConfig,
-  ConfidenceLevel
-} from '../types/fractal-strategy';
+  ConfidenceLevel,
+} from '../types/legacy';
 import { INTEGER_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 

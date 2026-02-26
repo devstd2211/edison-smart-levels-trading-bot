@@ -7,7 +7,7 @@
 
 import { evaluateEntry, EntryDecisionContext } from '../../decision-engine/entry-decisions';
 import { Signal, Position, TrendAnalysis, FlatMarketResult } from '../../types/legacy';
-import { EntryDecision, SignalDirection, PositionSide, TrendBias } from '../../types/enums';
+import { EntryDecision, SignalDirection, PositionSide, TrendBias, SignalType } from '../../types/enums';
 
 // ============================================================================
 // TEST HELPERS
@@ -19,7 +19,7 @@ import { EntryDecision, SignalDirection, PositionSide, TrendBias } from '../../t
 function createTestSignal(overrides?: Partial<Signal>): Signal {
   return {
     direction: SignalDirection.LONG,
-    type: 'TREND_FOLLOWING' as any,
+    type: SignalType.TREND_FOLLOWING,
     confidence: 75,
     price: 100,
     stopLoss: 95,

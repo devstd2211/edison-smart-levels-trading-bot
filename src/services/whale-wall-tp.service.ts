@@ -13,9 +13,9 @@
  */
 
 import { LoggerService } from './logger.service';
-import { OrderBookWall } from '../types/orderbook';
-import { TakeProfit } from '../types/position';
-import { SignalDirection } from '../types/enums';
+import { OrderBookWall } from '../types/legacy';
+import { TakeProfit } from '../types/legacy';
+import { SignalDirection } from '../types/legacy';
 import { WallTrackerService } from './wall-tracker.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';

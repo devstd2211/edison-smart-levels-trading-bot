@@ -6,7 +6,7 @@
 
 import { StrategyCircuitBreakerService } from '../../services/multi-strategy/strategy-circuit-breaker.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
-import { CircuitBreakerStatus } from '../../types/circuit-breaker';
+import { CircuitBreakerStatus } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {

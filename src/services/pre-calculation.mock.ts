@@ -1,4 +1,4 @@
-import { IIndicatorPreCalculationService } from '../types/indicator';
+import { IIndicatorPreCalculationService } from '../types/legacy';
 import { TimeframeRole } from '../types/legacy';
 
 /**

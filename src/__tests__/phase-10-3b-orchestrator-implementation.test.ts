@@ -21,13 +21,35 @@ import { BotEventBus } from '../services/event-bus';
 import { LoggerService } from '../services/logger.service';
 import { RiskManager } from '../services/risk-manager.service';
 import { PositionExitingService } from '../services/position-exiting.service';
+import type { StrategyFactoryService } from '../services/multi-strategy/strategy-factory.service';
+import type { StrategyStateManagerService } from '../services/multi-strategy/strategy-state-manager.service';
+import type { IsolatedStrategyContext } from '../types/legacy';
 
 describe('Phase 10.3b: Orchestrator Implementation', () => {
   let orchestratorService: StrategyOrchestratorService;
   let registry: StrategyRegistryService;
-  let logger: LoggerService;
+  let logger: Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
   let eventBus: BotEventBus;
   let riskManager: RiskManager;
+  let sharedServices: Parameters<StrategyOrchestratorService['setSharedServices']>[0];
+
+  const createContext = (
+    overrides?: Partial<IsolatedStrategyContext>,
+  ): IsolatedStrategyContext => ({
+    strategyId: 'test-strategy-1',
+    strategyName: 'test-strategy',
+    symbol: 'BTCUSDT',
+    config: {} as IsolatedStrategyContext['config'],
+    strategy: { metadata: { version: '1.0' } } as IsolatedStrategyContext['strategy'],
+    exchange: {} as IsolatedStrategyContext['exchange'],
+    analyzers: [] as IsolatedStrategyContext['analyzers'],
+    createdAt: new Date(),
+    isActive: true,
+    getSnapshot: jest.fn(),
+    restoreFromSnapshot: jest.fn(),
+    cleanup: jest.fn(),
+    ...overrides,
+  });
 
   beforeEach(() => {
     // Setup: Create minimal logger and services
@@ -51,11 +73,20 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
       getPositionRisk: jest.fn(),
     } as unknown as RiskManager;
 
+    sharedServices = {
+      candleProvider: {} as unknown as Parameters<StrategyOrchestratorService['setSharedServices']>[0]['candleProvider'],
+      timeframeProvider: {} as unknown as Parameters<StrategyOrchestratorService['setSharedServices']>[0]['timeframeProvider'],
+      positionManager: {} as unknown as Parameters<StrategyOrchestratorService['setSharedServices']>[0]['positionManager'],
+      riskManager,
+      telegram: null,
+      positionExitingService: {} as unknown as PositionExitingService,
+    };
+
     orchestratorService = new StrategyOrchestratorService(
       registry,
-      null as any, // factory
-      null as any, // state manager
-      logger,
+      null as unknown as StrategyFactoryService, // factory
+      null as unknown as StrategyStateManagerService, // state manager
+      logger as LoggerService,
       eventBus,
     );
   });
@@ -67,37 +98,19 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     });
 
     it('should return null when shared services not initialized', async () => {
-      const context = {
-        strategyId: 'test-strategy-1',
-        strategyName: 'test-strategy',
-        symbol: 'BTCUSDT',
-        config: { version: '1.0' },
-        strategy: { metadata: { version: '1.0' } },
-        exchange: {} as any,
-        analyzers: [],
-        createdAt: new Date(),
-        isActive: true,
-        getSnapshot: jest.fn(),
-        restoreFromSnapshot: jest.fn(),
-        cleanup: jest.fn(),
-      } as any;
+      const context = createContext({
+        config: { version: '1.0' } as IsolatedStrategyContext['config'],
+      });
 
       // Without setSharedServices, should return null
-      const result = await (orchestratorService as any).getOrCreateStrategyOrchestrator(context);
+      const result = await (orchestratorService as unknown as {
+        getOrCreateStrategyOrchestrator: (ctx: IsolatedStrategyContext) => Promise<unknown>;
+      }).getOrCreateStrategyOrchestrator(context);
       expect(result).toBeNull();
       expect(logger.error).toHaveBeenCalled();
     });
 
     it('should set shared services correctly', () => {
-      const sharedServices = {
-        candleProvider: {} as any,
-        timeframeProvider: {} as any,
-        positionManager: {} as any,
-        riskManager,
-        telegram: null,
-        positionExitingService: {} as any,
-      };
-
       orchestratorService.setSharedServices(sharedServices);
       expect(logger.debug).toHaveBeenCalledWith(
         expect.stringContaining('Shared services initialized'),
@@ -107,41 +120,33 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     it('should create TradingOrchestrator with strategy config', async () => {
       // This test would require mocking TradingOrchestrator which is complex
       // For now, we verify that the service initializes correctly
-      const cacheStats = (orchestratorService as any).getCacheStats();
+      const cacheStats = orchestratorService.getCacheStats() as { cacheSize: number };
       expect(cacheStats).toHaveProperty('cacheSize');
       expect(cacheStats.cacheSize).toBe(0);
     });
 
     it('should remove orchestrator from cache on strategy removal', async () => {
       // Get initial cache size
-      const initialStats = (orchestratorService as any).getCacheStats();
+      const initialStats = orchestratorService.getCacheStats() as { cacheSize: number };
       expect(initialStats.cacheSize).toBe(0);
     });
 
     it('should handle errors during orchestrator creation gracefully', async () => {
       orchestratorService.setSharedServices({
-        candleProvider: { throwError: true } as any,
-        timeframeProvider: {} as any,
-        positionManager: {} as any,
-        riskManager,
-        telegram: null,
-        positionExitingService: {} as any,
+        ...sharedServices,
+        candleProvider: { throwError: true } as unknown as typeof sharedServices.candleProvider,
       });
 
-      const context = {
+      const context = createContext({
         strategyId: 'error-strategy',
         strategyName: 'error-test',
-        symbol: 'BTCUSDT',
-        config: { version: '1.0' } as any,
-        strategy: { metadata: { version: '1.0' } } as any,
-        exchange: {} as any,
-        analyzers: [],
-        createdAt: new Date(),
-        isActive: true,
-      } as any;
+        config: { version: '1.0' } as IsolatedStrategyContext['config'],
+      });
 
       // Error handling is tested implicitly - no throw expected
-      const result = await (orchestratorService as any).getOrCreateStrategyOrchestrator(context);
+      const result = await (orchestratorService as unknown as {
+        getOrCreateStrategyOrchestrator: (ctx: IsolatedStrategyContext) => Promise<unknown>;
+      }).getOrCreateStrategyOrchestrator(context);
       // Result may be null if creation fails, which is expected behavior
       if (result === null) {
         expect(logger.error).toHaveBeenCalled();
@@ -150,21 +155,23 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
     it('should log orchestrator creation with strategy info', async () => {
       // Verify logging calls are made during normal operation
-      const methods = ['debug', 'info', 'warn'];
+      const methods: Array<keyof typeof logger> = ['debug', 'info', 'warn'];
       methods.forEach((method) => {
-        expect((logger as any)[method]).toBeDefined();
+        expect(logger[method]).toBeDefined();
       });
     });
 
     it('should implement wire event handlers method', () => {
       // Verify method exists and is callable
-      const method = (orchestratorService as any).wireEventHandlers;
+      const method = (orchestratorService as unknown as {
+        wireEventHandlers: (...args: unknown[]) => void;
+      }).wireEventHandlers;
       expect(method).toBeDefined();
       expect(typeof method).toBe('function');
     });
 
     it('should provide cache statistics', () => {
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { cacheSize: number; strategies: unknown[] };
       expect(stats).toHaveProperty('cacheSize');
       expect(stats).toHaveProperty('strategies');
       expect(Array.isArray(stats.strategies)).toBe(true);
@@ -173,31 +180,31 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
   describe('2. Cache Service Integration', () => {
     it('should use StrategyOrchestratorCacheService', () => {
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats();
       expect(stats).toBeDefined();
       expect(typeof stats).toBe('object');
     });
 
     it('should initialize cache service with logger', () => {
       // Cache service should be initialized
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { cacheSize: number };
       expect(stats.cacheSize).toBeGreaterThanOrEqual(0);
     });
 
     it('should report correct initial cache size', () => {
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { cacheSize: number; strategies: unknown[] };
       expect(stats.cacheSize).toBe(0);
       expect(stats.strategies).toEqual([]);
     });
 
     it('should track cached strategies', () => {
       // Manual cache manipulation for testing
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { strategies: unknown[] };
       expect(stats).toHaveProperty('strategies');
     });
 
     it('should support cache statistics monitoring', () => {
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { strategies: unknown[] };
       expect(stats.strategies).toBeInstanceOf(Array);
     });
   });
@@ -205,12 +212,10 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
   describe('3. Shared Services Integration', () => {
     beforeEach(() => {
       orchestratorService.setSharedServices({
-        candleProvider: { name: 'candle-provider' } as any,
-        timeframeProvider: { name: 'timeframe-provider' } as any,
-        positionManager: { name: 'position-manager' } as any,
-        riskManager,
-        telegram: null,
-        positionExitingService: {} as any,
+        ...sharedServices,
+        candleProvider: { name: 'candle-provider' } as unknown as typeof sharedServices.candleProvider,
+        timeframeProvider: { name: 'timeframe-provider' } as unknown as typeof sharedServices.timeframeProvider,
+        positionManager: { name: 'position-manager' } as unknown as typeof sharedServices.positionManager,
       });
     });
 
@@ -223,20 +228,21 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     it('should require candleProvider', () => {
       // This would be tested via full integration
       // For unit test, we just verify setSharedServices accepts it
-      expect((orchestratorService as any).sharedServices).toBeDefined();
+      expect((orchestratorService as unknown as { sharedServices: unknown }).sharedServices).toBeDefined();
     });
 
     it('should require timeframeProvider', () => {
-      expect((orchestratorService as any).sharedServices).toBeDefined();
+      expect((orchestratorService as unknown as { sharedServices: unknown }).sharedServices).toBeDefined();
     });
 
     it('should require positionManager for modular architecture', () => {
-      expect((orchestratorService as any).sharedServices).toBeDefined();
+      expect((orchestratorService as unknown as { sharedServices: unknown }).sharedServices).toBeDefined();
     });
 
     it('should support null telegram service', () => {
       // Already tested in beforeEach
-      expect((orchestratorService as any).sharedServices.telegram).toBeNull();
+      const services = (orchestratorService as unknown as { sharedServices: Parameters<StrategyOrchestratorService['setSharedServices']>[0] }).sharedServices;
+      expect(services.telegram).toBeNull();
     });
   });
 
@@ -289,33 +295,33 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
     it('should cleanup strategy resources on removal', async () => {
       // This is tested implicitly in removeStrategy
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats();
       expect(stats).toBeDefined();
     });
   });
 
   describe('5. Strategy Switching Performance', () => {
     it('should provide cache statistics for performance monitoring', () => {
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats();
       expect(stats).toHaveProperty('cacheSize');
     });
 
     it('should track cache access patterns', () => {
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { strategies: unknown[] };
       const strategies = stats.strategies;
       expect(strategies).toBeInstanceOf(Array);
     });
 
     it('should report cache hit/miss information', () => {
       // Cache service maintains access counts
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats() as { strategies: unknown[] };
       // Strategies array would show access patterns
       expect(Array.isArray(stats.strategies)).toBe(true);
     });
 
     it('should support LRU eviction monitoring', () => {
       // Cache service has LRU eviction capability
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats();
       expect(stats).toHaveProperty('cacheSize');
     });
   });
@@ -324,7 +330,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     it('should use config-driven indicator loading', () => {
       // Config should drive what indicators are loaded
       // This is handled inside getOrCreateStrategyOrchestrator
-      expect((orchestratorService as any).sharedServices === null).toBe(true);
+      expect((orchestratorService as unknown as { sharedServices: unknown }).sharedServices === null).toBe(true);
     });
 
     it('should support strategy-specific configuration', () => {
@@ -340,7 +346,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     });
 
     it('should integrate StrategyOrchestratorCacheService for caching', () => {
-      const cacheStats = (orchestratorService as any).getCacheStats();
+      const cacheStats = orchestratorService.getCacheStats();
       expect(cacheStats).toBeDefined();
       expect(typeof cacheStats).toBe('object');
     });
@@ -348,19 +354,20 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     it('should reuse shared services across strategies', () => {
       // All strategies share same infrastructure
       orchestratorService.setSharedServices({
-        candleProvider: { shared: true } as any,
-        timeframeProvider: { shared: true } as any,
-        positionManager: { shared: true } as any,
+        ...sharedServices,
+        candleProvider: { shared: true } as unknown as typeof sharedServices.candleProvider,
+        timeframeProvider: { shared: true } as unknown as typeof sharedServices.timeframeProvider,
+        positionManager: { shared: true } as unknown as typeof sharedServices.positionManager,
         riskManager,
-        telegram: null,
-        positionExitingService: {} as any,
       });
 
-      expect((orchestratorService as any).sharedServices).toBeDefined();
+      expect((orchestratorService as unknown as { sharedServices: unknown }).sharedServices).toBeDefined();
     });
 
     it('should implement event handler wiring for strategyId tagging', () => {
-      const method = (orchestratorService as any).wireEventHandlers;
+      const method = (orchestratorService as unknown as {
+        wireEventHandlers: (...args: unknown[]) => void;
+      }).wireEventHandlers;
       expect(method).toBeDefined();
       // This will be fully tested in Phase 10.3c
     });
@@ -379,12 +386,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
     it('should log errors during orchestrator creation', async () => {
       orchestratorService.setSharedServices({
-        candleProvider: {} as any,
-        timeframeProvider: {} as any,
-        positionManager: {} as any,
-        riskManager,
-        telegram: null,
-        positionExitingService: {} as any,
+        ...sharedServices,
       });
 
       // Error logging is verified implicitly
@@ -393,7 +395,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
     it('should recover from orchestrator creation failures', async () => {
       // Service should remain functional after creation failure
-      const stats = (orchestratorService as any).getCacheStats();
+      const stats = orchestratorService.getCacheStats();
       expect(stats).toBeDefined();
     });
   });
@@ -411,12 +413,17 @@ describe('Phase 10.3b: Backward Compatibility', () => {
       error: jest.fn(),
     } as unknown as LoggerService;
 
+    const eventBus = {
+      publishSync: jest.fn(),
+      publish: jest.fn(),
+    } as unknown as BotEventBus;
+
     service = new StrategyOrchestratorService(
       new StrategyRegistryService(),
-      null as any,
-      null as any,
+      null as unknown as StrategyFactoryService,
+      null as unknown as StrategyStateManagerService,
       logger,
-      {} as any,
+      eventBus,
     );
   });
 

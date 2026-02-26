@@ -16,7 +16,7 @@ import {
   PositionLifecycleState,
   EmergencyCloseReason,
   TrackedPosition,
-} from '../../types/live-trading';
+} from '../../types/legacy';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
 

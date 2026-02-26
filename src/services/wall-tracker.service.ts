@@ -20,7 +20,7 @@ import { MIN_REFILLS_FOR_ICEBERG, CLUSTER_MIN_WALLS, WALL_LIFETIME_SCORE_MAX, WA
 
 import { LoggerService } from './logger.service';
 import { WallEvent, WallLifetime, WallCluster } from '../types/legacy';
-import { WallTrackingConfig } from '../types/config/config';
+import { WallTrackingConfig } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { WallTrackingError } from '../errors/DomainErrors';
 

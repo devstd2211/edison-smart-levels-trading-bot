@@ -19,7 +19,7 @@ import { StrategyProcessingPoolService } from '../services/multi-strategy/strate
 import {
   StrategyProcessingJob,
   ProcessingPriority,
-} from '../types/strategy-processing';
+} from '../types/legacy';
 import { LoggerService, LogLevel } from '../types/legacy';
 
 describe('PHASE 12: Parallel Strategy Processing', () => {

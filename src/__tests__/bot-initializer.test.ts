@@ -11,9 +11,14 @@
  */
 
 import { BotInitializer } from '../services/bot-initializer';
+import type { Config } from '../types/legacy';
+import type { IBotInitializerServices } from '../interfaces';
+import type { LoggerService } from '../services/logger.service';
 
 // Mock logger
-const createMockLogger = (): any => ({
+type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error' | 'getLogFilePath'>;
+
+const createMockLogger = (): LoggerLike => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -22,8 +27,7 @@ const createMockLogger = (): any => ({
 });
 
 // Minimal valid config
-const createMinimalConfig = (): any =>
-  ({
+const createMinimalConfig = (): Config => ({
     exchange: {
       apiKey: 'test-key',
       apiSecret: 'test-secret',
@@ -67,17 +71,17 @@ const createMinimalConfig = (): any =>
       orderbook: { enabled: true, updateIntervalMs: 100 },
       ticks: { enabled: true, calculateDelta: true },
     },
-    strategies: {} as any,
-    entryConfirmation: {} as any,
+    strategies: {} as Config['strategies'],
+    entryConfirmation: {} as Config['entryConfirmation'],
     telegram: { enabled: false },
-    analysisConfig: {},
-    strategicWeights: {},
-    tradeHistory: {},
-    strategy: {} as any,
-  } as any);
+    analysisConfig: {} as Config['analysisConfig'],
+    strategicWeights: {} as Config['strategicWeights'],
+    tradeHistory: {} as Config['tradeHistory'],
+    strategy: {} as Config['strategy'],
+  } as Config);
 
 // Create mock BotServices
-const createMockBotServices = (): any => {
+const createMockBotServices = (): IBotInitializerServices => {
   const logger = createMockLogger();
 
   return {
@@ -97,12 +101,18 @@ const createMockBotServices = (): any => {
         emit: jest.fn(),
       },
     },
+    publicWebSocket: {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      removeAllListeners: jest.fn(),
+    },
     marketDataServices: {
       bybitService: {
         initialize: jest.fn().mockResolvedValue(undefined),
         resyncTime: jest.fn().mockResolvedValue(undefined),
         cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
         getOpenPositions: jest.fn().mockResolvedValue([]),
+        getCandles: jest.fn().mockResolvedValue([]),
       },
       candleProvider: {
         initialize: jest.fn().mockResolvedValue(undefined),
@@ -118,6 +128,10 @@ const createMockBotServices = (): any => {
         removeAllListeners: jest.fn(),
       },
     },
+    positionManager: {
+      syncWithWebSocket: jest.fn(),
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+    },
     executionServices: {
       positionMonitor: {
         start: jest.fn(),
@@ -128,18 +142,28 @@ const createMockBotServices = (): any => {
         getCurrentPosition: jest.fn().mockReturnValue(null),
         syncWithWebSocket: jest.fn(),
       },
+      positionExitingService: {
+        cancelAllOrders: jest.fn(),
+      },
+      tradingOrchestrator: {
+        initializeTrendAnalysis: jest.fn().mockResolvedValue(undefined),
+      },
     },
     sessionStats: {
       startSession: jest.fn().mockReturnValue('session-123'),
       endSession: jest.fn(),
     },
-  };
+    candleProvider: {
+      initialize: jest.fn().mockResolvedValue(undefined),
+    },
+    btcCandles1m: [],
+  } as IBotInitializerServices;
 };
 
 describe('BotInitializer', () => {
   let initializer: BotInitializer;
-  let mockServices: any;
-  let mockConfig: any;
+  let mockServices: IBotInitializerServices;
+  let mockConfig: Config;
 
   beforeEach(() => {
     mockServices = createMockBotServices();

@@ -48,6 +48,7 @@
 - [x] Dependencies mapped
 - [x] Dependency map documented in docs/architecture/dependency-map.md
 - [x] First migration slice proposed (WebApiServices/BotWebAPI read-only group)
+- [ ] Tests not run yet after refactor batches (status unknown)
 - [ ] Group containers created
 - [x] MarketDataServices scaffolded
 - [x] ExecutionServices scaffolded
@@ -86,7 +87,13 @@
 - [x] Web API DTOs propagated to web-server/web-client (data API paths typed)
 - [x] Web API data routes now fully async (no sync market data calls)
 - [x] WebApiReadServices interface + container factory wired to BotWebAPI
+- [x] WebApiReadServices verified complete (read-only adapter wired end-to-end)
 - [x] WebApiServices creation moved to container factory
+- [x] Web-server bridge uses WebApiReadServices adapter (BotWebAPI injected at boundary)
+- [x] Web-server WebApiAdapter contract extracted for reuse
+- [x] Web-server routes audited (all data routes go through BotBridgeService)
+- [x] Build verified after web-server boundary changes
+- [x] Web-server IBotInstance narrowed (read API moved to IWebApiAdapter)
 - [x] Next low-risk slice proposed (Monitoring read-only adapters)
 - [x] MonitoringReadServices interface + container factory added
 - [x] TradingBot wired to MonitoringReadServices factory
@@ -131,11 +138,28 @@
 - [x] Core any cleanup batch 15: safeLog meta/context typings (handlers/services)
 - [x] Core any cleanup batch 16: strategy-config-merger logger typing
 - [x] Core any cleanup batch 17: safeLog meta typed as Record for LoggerService
+- [x] Core any cleanup batch 18: web entrypoint typed (src/web/index.ts)
+- [x] Core any cleanup batch 19: analyzer logger types (new analyzers)
+- [x] Core any cleanup batch 20: level/order-block analyzer any cleanup
+- [x] Core any cleanup batch 21: volatility spike analyzer config typed
+- [x] Core any cleanup batch 22: backtest worker/walk-forward/backtest-engine any cleanup
+- [x] Core any cleanup batch 23: backtest sqlite providers + optimizer metrics typed
+- [x] Core any cleanup batch 24: backtest risk gate + sqlite blob guards + worker message guard
+- [x] Tests any cleanup batch 1: backtest walk-forward/worker-pool/parameter-optimizer tests
+- [x] Tests any cleanup batch 2: bot-event-emitter, exit-decisions, anti-flip tests
+- [x] Tests any cleanup batch 3: event-handlers, entry-decisions, cache-integration tests
+- [x] Tests any cleanup batch 4: error-result + position validator tests
+- [x] Tests any cleanup batch 5: smoke-tests + integration tests
+- [x] Tests any cleanup batch 6: error-registry + base/domain error tests
+- [x] Tests any cleanup batch 7: phase-10-3b/3c + exit/entry-exit orchestrator tests
+- [x] Tests any cleanup batch 8: entry/exit/filter orchestrator error-handling tests
+- [x] Tests any cleanup batch 9: indicators (volume/stochastic/rsi/ema/bollinger/atr)
 - [x] BotServices.toObject reduced to grouped services
 - [x] CoreServices container introduced and TradingBot wired
 - [x] EventHandlerServices container introduced and wired
 - [x] WebSocketEventHandlerManager uses EventHandlerServices
 - [x] IBotServices exposes EventHandlerServices (legacy handlers retained)
+- [x] BotServicesAdapter maps BotServices to TradingBotServiceBundle (BotFactory)
 - [x] Entry point scaffolds created (cli/core/web)
 - [x] Workspaces scaffolding added (packages/contracts, packages/core)
 - [x] Types modularization started (domain folders + re-export)
@@ -171,8 +195,9 @@
 - [x] BotInitializer uses CoreServices (logger/timeService/eventBus/telegram)
 - [x] BotInitializer uses MarketDataServices for bybitService
 - [x] Step 1: Updated core/orchestrators/interfaces/providers/repositories/utils/backtest/indicators imports to domain types
-- [ ] Step 1: Remaining domain-import migrations (services/strategies/tests)
+- [x] Step 1: Remaining domain-import migrations (services/strategies/tests)
 - [x] Step 1: Standardized imports to use legacy types in services/strategies/tests
+- [x] Multi-strategy module exports now sourced from legacy re-exports
 - [ ] Old `BotServices` removed or reduced to thin adapter
 
 ### Complexity + Risk

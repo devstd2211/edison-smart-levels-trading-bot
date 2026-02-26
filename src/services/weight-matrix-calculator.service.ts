@@ -7,7 +7,7 @@ import {
   IndicatorWeight,
   SignalScoreBreakdown,
 } from '../types/legacy';
-import { SignalDirection } from '../types/enums';
+import { SignalDirection } from '../types/legacy';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
 

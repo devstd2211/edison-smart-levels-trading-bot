@@ -16,9 +16,11 @@
 import { StrategyEventFilterService } from '../services/multi-strategy/event-filter.service';
 import { LoggerService, LogLevel } from '../types/legacy';
 
+type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>;
+
 describe('PHASE 10.3C: Event Tagging & Filtering', () => {
   let filterService: StrategyEventFilterService;
-  let logger: LoggerService;
+  let logger: LoggerLike;
 
   beforeEach(() => {
     // Create mock logger
@@ -27,15 +29,9 @@ describe('PHASE 10.3C: Event Tagging & Filtering', () => {
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-      log: jest.fn(),
-      setLevel: jest.fn(),
-      getLevel: jest.fn(() => LogLevel.INFO),
-      writeToConsole: jest.fn(),
-      writeToFile: jest.fn(),
-      flush: jest.fn(),
-    } as any;
+    };
 
-    filterService = new StrategyEventFilterService(logger);
+    filterService = new StrategyEventFilterService(logger as LoggerService);
   });
 
   afterEach(() => {

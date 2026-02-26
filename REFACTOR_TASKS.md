@@ -18,6 +18,8 @@
 11. Remove or reduce `BotServices` once all callers migrated.
 12. Propagate Web API DTOs to `web-server` and `web-client` (remove `any` from data API paths).
 13. Add `webApi` config example and defaults to config files (indicator preferences).
+14. Wire web-server boundary to read-only web API adapter (`IWebApiAdapter`), avoid direct bot service access.
+15. Ensure web-server routes remain read-only via `BotBridgeService` (no direct bot/service access).
 
 ## B) Package Boundaries
 1. Create `packages/contracts` and move shared DTOs/ports there.

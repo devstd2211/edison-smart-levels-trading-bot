@@ -15,12 +15,12 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import {
-  StrategyConfig,
+  StrategyConfigV2 as StrategyConfig,
   AvailableAnalyzer,
   StrategyValidationError,
-  StrategyAnalyzerConfig,
-  StrategyMetadata,
-} from '../types/strategy-config';
+  StrategyAnalyzerConfigV2 as StrategyAnalyzerConfig,
+  StrategyMetadataV2 as StrategyMetadata,
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import { StrategyLoadError, StrategyParseError } from '../errors/DomainErrors';
 

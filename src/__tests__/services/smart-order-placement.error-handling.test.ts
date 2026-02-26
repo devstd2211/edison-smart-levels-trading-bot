@@ -15,10 +15,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { SmartOrderPlacementService } from '../../services/smart-order-placement.service';
-import {
-  SmartOrderPlacementConfig,
-} from '../../types/smart-order-placement';
-import { Orderbook } from '../../types/liquidity-heatmap';
+import { SmartOrderPlacementConfig, Orderbook } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../types/legacy';
 

@@ -18,8 +18,8 @@ import {
   MarketHealthConfig,
   MarketHealthResult,
   MarketHealthStatus,
-  Trade
-} from '../types/fractal-strategy';
+  Trade,
+} from '../types/legacy';
 import { INTEGER_MULTIPLIERS, THRESHOLD_VALUES, RATIO_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
 
 export class MarketHealthMonitor {

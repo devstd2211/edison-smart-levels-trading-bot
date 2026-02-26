@@ -282,6 +282,210 @@ export type {
 } from './anomaly-detection';
 export { DEFAULT_ANOMALY_DETECTION_CONFIG } from './anomaly-detection';
 
+// ---------------------------------------------------------------------------
+// Additional domain type re-exports for services/strategies/tests
+// ---------------------------------------------------------------------------
+
+export type {
+  OrderBook,
+  OrderBookWall,
+  OrderBookAnalysis,
+  OrderBookImbalance,
+  OrderbookLevel,
+} from './orderbook';
+
+export type {
+  StopLossHitEvent,
+  TakeProfitHitEvent,
+  OrderFilledEvent,
+} from './events';
+
+export { IndicatorType } from './indicator';
+export type {
+  IIndicator,
+  IIndicatorCache,
+  IIndicatorCalculator,
+  IIndicatorPreCalculationService,
+} from './indicator';
+
+export type { IAnalyzer } from './analyzer';
+
+export type {
+  AdvancedOrderFlowConfig,
+  Tick,
+  AdvancedOrderFlow,
+  FlowPattern,
+  SpoofingSignal,
+  ImbalanceMetric,
+  PatternMetric,
+  SpoofingMetric,
+  MomentumMetric,
+  OrderBook as AdvancedOrderFlowOrderBook,
+} from './advanced-order-flow';
+
+export type {
+  LiquidityHeatmapConfig,
+  Orderbook,
+  OrderbookLevel as LiquidityHeatmapOrderbookLevel,
+  LiquidityHeatmap,
+  LiquidityZone as LiquidityHeatmapZone,
+  SupportResistanceLevels,
+  SlippageEstimate,
+  ExecutionCost,
+} from './liquidity-heatmap';
+
+export type {
+  SmartOrderPlacementConfig,
+  SmartOrderPlan,
+  SubOrder,
+  OrderPriority,
+  LiquidityLevel,
+  FillProbability,
+  OrderSplit,
+  MarketConditions,
+} from './smart-order-placement';
+
+export type {
+  MarketHealthConfig,
+  MarketHealthResult,
+  MarketHealthStatus,
+  Trade,
+  FractalSetup,
+  ScoreWeight,
+  WeightedSignal,
+  WeightedSignalConfig,
+  ConfidenceLevel,
+} from './fractal-strategy';
+
+export type {
+  StrategyProcessingJob,
+  StrategyProcessingResult,
+  StrategyProcessingStats,
+  StrategyProcessingPoolConfig,
+  StrategyProcessingPoolStatus,
+  WorkerHealthStatus,
+  ParallelProcessingConfig,
+  ProcessingPriority,
+} from './strategy-processing';
+
+export { ActionType } from './architecture';
+export type {
+  ExitActionDTO,
+  IAction,
+  IActionHandler,
+  OpenPositionAction,
+  ClosePositionAction,
+  ClosePercentAction,
+  UpdateStopLossAction,
+  ActivateTrailingAction,
+  MoveSLToBreakeven,
+  AnyAction,
+  ActionResult,
+} from './architecture';
+
+export {
+  PositionLifecycleState,
+  EmergencyCloseReason,
+  DangerLevel,
+  RiskAlertType,
+  OrderStatus,
+  LiveTradingEventType,
+} from './live-trading';
+export type {
+  PositionLifecycleConfig,
+  TrackedPosition,
+  TimeoutCheckResult,
+  TimeoutAlert,
+  EmergencyCloseRequest,
+  LiveTradingConfig,
+  RiskMonitoringConfig,
+  HealthScoreCacheEntry,
+  PositionHealthResult,
+  RiskAlert,
+  OrderExecutionConfig,
+  OrderRequest,
+  OrderResult,
+  SlippageAnalysis,
+  ExecutionMetrics,
+  IOrderExecutionPipeline,
+  PerformanceAnalyticsConfig,
+  TradeStatistics,
+  PeriodMetrics,
+  SessionAnalytics,
+  TopTrade,
+  IPerformanceAnalytics,
+  GracefulShutdownConfig,
+  ShutdownResult,
+  PersistedPositionState,
+  RecoveryMetadata,
+  BotStateSnapshot,
+  IGracefulShutdownManager,
+} from './live-trading';
+
+export {
+  StrategyEventType,
+  StrategyHealthStatus,
+  ConcurrencyMode,
+} from './multi-strategy';
+export type {
+  StrategyMetadata,
+  StrategyStateSnapshot,
+  StrategySwitchResult,
+  PnLMetrics,
+  StrategyRegistryConfig,
+  StrategyInstanceConfig,
+  StrategyValidationResult,
+  ConfigValidationResult,
+  ConfigMergeChange,
+  StrategyEvent,
+  StrategyContextCacheKey,
+  StrategyPersistenceConfig,
+  StrategyValidationRules,
+  StrategyLoadingOptions,
+  StrategyRemovalOptions,
+  StrategyHealthCheckResult,
+  ConcurrencyConfig,
+  IsolatedStrategyContext,
+  StrategyFactoryConfig,
+  StrategyStats as MultiStrategyStats,
+  SystemStats as MultiStrategySystemStats,
+} from './multi-strategy';
+
+export { CircuitBreakerStatus } from './circuit-breaker';
+export type {
+  CircuitBreakerConfig,
+  CircuitBreakerState,
+  CircuitBreakerError,
+  CircuitBreakerMetrics,
+  CircuitBreakerEvent,
+  CircuitBreakerServiceConfig,
+  CircuitBreakerServiceStats,
+} from './circuit-breaker';
+
+export type {
+  PositionStateMachineState,
+  StateTransitionRequest,
+  StateTransitionResult,
+  IPositionStateMachine,
+  PreBEMode,
+  TrailingMode,
+  BBTrailingMode,
+} from './position-state-machine';
+export {
+  VALID_STATE_TRANSITIONS,
+  ACTIVE_EXIT_MODES_BY_STATE,
+} from './position-state-machine';
+
+export type {
+  StrategyConfig as StrategyConfigV2,
+  StrategyMetadata as StrategyMetadataV2,
+  StrategyAnalyzerConfig as StrategyAnalyzerConfigV2,
+  StrategyAnalyzerFilter as StrategyAnalyzerFilterV2,
+  StrategyValidationError,
+} from './strategy-config';
+
+export type { ConfigNew } from './config/config-new.types';
+
 /**
  * Types and Enums for Trading Bot
  * ALL types in ONE file - NO duplication!

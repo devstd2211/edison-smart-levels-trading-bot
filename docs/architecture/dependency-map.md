@@ -6,7 +6,7 @@ Flat list of services and immediate dependencies (constructor args + direct sett
 "config.*" references direct `Config` fields unless noted.
 
 - ConsoleDashboardService: config.dashboard (enabled/updateInterval/theme)
-- LoggerService: config.logging.level, config.logging.logDir
+- LoggerService: config.logging.level, config.logging.logDir, enableConsole=true
 - ErrorHandler: logger
 - BotEventBus: logger
 - BotMetricsService: logger, errorHandler
@@ -39,10 +39,10 @@ Flat list of services and immediate dependencies (constructor args + direct sett
 - AdvancedOrderStateMachineService (optional): logger, errorHandler
 - PrometheusMetricsService (optional): config.monitoring.metricsEnabled/prefix/collectInterval/defaultLabels, logger, errorHandler
 - LadderExitDetectorService: logger, bybitService, errorHandler
-- RiskManager: riskManagerConfig (local), logger, errorHandler
+- RiskManager: riskManagerConfig (local static), logger, errorHandler
 - PositionLifecycleService: bybitService, config.trading, config.riskManagement, telegram, logger, journal, config.entryConfirmation, config, eventBus, compoundInterestCalculator, sessionStats, positionRepository, errorHandler, dynamicPositionSizer, positionScalingService
 - PositionExitingService: bybitService, telegram, logger, journal, config.trading, config.riskManagement, config, sessionStats, positionManager, realityCheck
-- RealTimeRiskMonitor: riskMonitoringConfig (local), positionManager, logger, eventBus
+- RealTimeRiskMonitor: riskMonitoringConfig (local + config.liveTrading.riskMonitoring), positionManager, logger, eventBus
 - OrderExecutionDetectorService: logger
 - WebSocketAuthenticationService: none
 - EventDeduplicationService: capacity, ttlMs, logger, errorHandler

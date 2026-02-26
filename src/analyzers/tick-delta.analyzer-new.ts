@@ -4,6 +4,7 @@ import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import type { LoggerService } from '../services/logger.service';
 
 const DEFAULT_MIN_CANDLES_FOR_TICK_DELTA = 15;
 const DEFAULT_MAX_CONFIDENCE = 0.95;
@@ -23,7 +24,7 @@ export class TickDeltaAnalyzerNew implements IAnalyzer {
   private lastSignal: AnalyzerSignal | null = null;
   private initialized: boolean = false;
 
-  constructor(config: BreakoutAnalyzerConfigNew & { minCandlesForTickDelta?: number; maxConfidence?: number; baseConfidence?: number; confidenceMultiplier?: number; lookbackWindow?: number }, private logger?: any) {
+  constructor(config: BreakoutAnalyzerConfigNew & { minCandlesForTickDelta?: number; maxConfidence?: number; baseConfidence?: number; confidenceMultiplier?: number; lookbackWindow?: number }, private logger?: LoggerService) {
     if (typeof config.enabled !== 'boolean') throw new Error('[TICK_DELTA] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[TICK_DELTA] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[TICK_DELTA] Missing or invalid: priority');

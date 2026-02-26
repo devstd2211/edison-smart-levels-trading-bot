@@ -20,8 +20,7 @@
 
 import { StrategyLoaderService } from './strategy-loader.service';
 import { StrategyConfigMergerService } from './strategy-config-merger.service';
-import { StrategyConfig } from '../types/strategy-config';
-import { ConfigNew } from '../types/config/config-new.types';
+import { StrategyConfigV2 as StrategyConfig, ConfigNew } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class StrategyManagerService {

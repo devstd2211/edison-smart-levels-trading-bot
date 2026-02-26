@@ -17,7 +17,7 @@ import { StrategyStateManagerService } from '../services/multi-strategy/strategy
 import { StrategyOrchestratorService } from '../services/multi-strategy/strategy-orchestrator.service';
 import { DynamicConfigManagerService } from '../services/multi-strategy/dynamic-config-manager.service';
 
-import type { StrategyMetadata } from '../types/multi-strategy';
+import type { StrategyMetadata } from '../types/legacy';
 
 // ============================================================================
 // PART 1: STRATEGY REGISTRY SERVICE TESTS (15 tests)

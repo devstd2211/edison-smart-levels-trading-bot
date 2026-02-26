@@ -22,19 +22,19 @@ import {
   StrategyExecutionError,
   LeverageValidationError,
 } from '../../errors/DomainErrors';
-import { ErrorDomain, ErrorSeverity, TradingError } from '../../errors/BaseError';
+import { ErrorContext, ErrorDomain, ErrorSeverity, TradingError } from '../../errors/BaseError';
 
 describe('Domain-Specific Errors', () => {
   describe('Trading Domain Errors', () => {
     it('should create EntryValidationError with signal context', () => {
-      const context = {
+      const context: ErrorContext = {
         reason: 'Confidence too low',
         confidence: 0.75,
       };
 
       const error = new EntryValidationError(
         'Entry signal rejected',
-        context as any,
+        context,
       );
 
       expect(error.message).toBe('Entry signal rejected');

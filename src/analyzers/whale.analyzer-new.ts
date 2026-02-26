@@ -4,6 +4,7 @@ import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import type { LoggerService } from '../services/logger.service';
 
 // Default configuration constants
 const DEFAULT_MIN_CANDLES_FOR_WHALE = 25;
@@ -38,7 +39,7 @@ export class WhaleAnalyzerNew implements IAnalyzer {
       volumeThresholdMultiplier?: number;
       strengthDenominator?: number;
     },
-    private logger?: any
+    private logger?: LoggerService
   ) {
     if (typeof config.enabled !== 'boolean') throw new Error('[WHALE] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[WHALE] Missing or invalid: weight');

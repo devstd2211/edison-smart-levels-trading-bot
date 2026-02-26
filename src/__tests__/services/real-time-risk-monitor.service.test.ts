@@ -21,8 +21,8 @@ import {
   DangerLevel,
   RiskAlertType,
   LiveTradingEventType,
-} from '../../types/live-trading';
-import { Position, TakeProfit, StopLossConfig } from '../../types/core';
+} from '../../types/legacy';
+import { Position, TakeProfit, StopLossConfig } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS & FIXTURES

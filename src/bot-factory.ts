@@ -15,9 +15,10 @@
  */
 
 import type { Config } from './types/legacy';
-import { TradingBot, type TradingBotServiceBundle } from './bot';
+import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
 import { BotServices } from './services/bot-services';
+import { createTradingBotServiceBundle } from './services/bot-services-adapter';
 import { StrategyLoaderService } from './services/strategy-loader.service';
 import { StrategyConfigMergerService } from './services/strategy-config-merger.service';
 
@@ -149,9 +150,10 @@ export class BotFactory {
 
     // 2. Initialize all services in dependency order
     const services = new BotServices(config);
+    const serviceBundle = createTradingBotServiceBundle(services);
 
     // 3. Create bot with injected dependencies
-    const bot = new TradingBot(services as TradingBotServiceBundle, config);
+    const bot = new TradingBot(serviceBundle, config);
 
     // 4. Log successful creation
     services.logger.info('🤖 TradingBot created successfully via BotFactory');
@@ -186,7 +188,8 @@ export class BotFactory {
       Object.assign(services, serviceOverrides);
     }
 
-    return new TradingBot(services as TradingBotServiceBundle, config);
+    const serviceBundle = createTradingBotServiceBundle(services);
+    return new TradingBot(serviceBundle, config);
   }
 
   /**

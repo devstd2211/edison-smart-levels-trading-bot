@@ -15,8 +15,7 @@
  * - SKIP: Logging failures via safeLog() wrapper
  */
 
-import { ConfigNew } from '../types/config/config-new.types';
-import { StrategyConfig } from '../types/strategy-config';
+import { ConfigNew, StrategyConfigV2 as StrategyConfig } from '../types/legacy';
 import { Config } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 

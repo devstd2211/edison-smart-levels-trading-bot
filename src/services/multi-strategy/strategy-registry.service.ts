@@ -15,7 +15,7 @@
  * Usage: Injected into StrategyOrchestrator
  */
 
-import type { StrategyMetadata, StrategyRegistryConfig } from '../../types/multi-strategy';
+import type { StrategyMetadata, StrategyRegistryConfig } from '../../types/legacy';
 import type { ILogger } from '../../interfaces/IMonitoring';
 
 export class StrategyRegistryService {

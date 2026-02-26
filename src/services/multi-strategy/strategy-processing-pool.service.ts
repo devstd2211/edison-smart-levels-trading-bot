@@ -17,7 +17,7 @@ import {
   StrategyProcessingPoolStatus,
   WorkerHealthStatus,
   ProcessingPriority,
-} from '../../types/strategy-processing';
+} from '../../types/legacy';
 
 const DEFAULT_CONFIG: StrategyProcessingPoolConfig = {
   workerPoolSize: 4,

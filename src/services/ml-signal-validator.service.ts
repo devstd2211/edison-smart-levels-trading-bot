@@ -23,7 +23,7 @@ import {
   DEFAULT_ML_SIGNAL_VALIDATOR_CONFIG,
   RecommendedAction,
   RiskLevel,
-} from '../types/ml-signal-validator';
+} from '../types/legacy';
 import {
   DEFAULT_SIGNAL_VALIDATION,
   ML_SIGNAL_VALIDATOR_TECHNICAL,

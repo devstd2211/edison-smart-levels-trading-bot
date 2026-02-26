@@ -24,8 +24,8 @@ import {
   GracefulShutdownConfig,
   EmergencyCloseReason,
   LiveTradingEventType,
-} from '../../types/live-trading';
-import { ActionType } from '../../types/architecture';
+} from '../../types/legacy';
+import { ActionType } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
 

@@ -8,7 +8,14 @@
  */
 
 import { ExitOrchestrator } from '../../orchestrators/exit.orchestrator';
-import { Position, PositionSide, PositionState, TakeProfit } from '../../types/legacy';
+import {
+  LoggerService,
+  Position,
+  PositionExitAction,
+  PositionSide,
+  PositionState,
+  TakeProfit,
+} from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),
@@ -65,11 +72,11 @@ const createMockCandles = (count: number, basePrice: number = 100) => {
 
 describe('ExitOrchestrator Enhancements (Session 66)', () => {
   let orchestrator: ExitOrchestrator;
-  let mockLogger: any;
+  let mockLogger: Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
-    orchestrator = new ExitOrchestrator(mockLogger);
+    orchestrator = new ExitOrchestrator(mockLogger as LoggerService);
   });
 
   afterEach(() => {
@@ -107,7 +114,9 @@ describe('ExitOrchestrator Enhancements (Session 66)', () => {
 
       // TP1 hit should move SL to entry + profit margin
       const result = await orchestrator.evaluateExit(position, 105);
-      const slAction = result.actions.find((a: any) => a.action === 'UPDATE_SL');
+      const slAction = result.actions.find(
+        (action: PositionExitAction) => action.action === 'UPDATE_SL',
+      );
       expect(slAction).toBeDefined();
       expect(slAction?.newStopLoss).toBeGreaterThanOrEqual(position.entryPrice);
     });
@@ -380,7 +389,7 @@ describe('ExitOrchestrator Enhancements (Session 66)', () => {
 
     it('should handle missing position gracefully', async () => {
       // Missing position should fail safely and close
-      const result = await orchestrator.evaluateExit(null as any, 100);
+      const result = await orchestrator.evaluateExit(null as unknown as Position, 100);
       expect(result.newState).toBe(PositionState.CLOSED);
     });
   });

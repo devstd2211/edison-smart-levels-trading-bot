@@ -12,7 +12,7 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { ExitActionDTO } from '../../types/architecture';
+import { ExitActionDTO } from '../../types/legacy';
 import {
   Position,
   PositionSide,

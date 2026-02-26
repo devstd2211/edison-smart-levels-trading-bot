@@ -38,17 +38,17 @@ function expectK(high: number, low: number, close: number, expectedK: number) {
 
 describe('StochasticIndicatorNew - Configuration Validation', () => {
   test('should throw on missing enabled property', () => {
-    const config = { kPeriod: 14, dPeriod: 3 } as any;
+    const config = { kPeriod: 14, dPeriod: 3 } as unknown as StochasticIndicatorConfigNew;
     expect(() => new StochasticIndicatorNew(config)).toThrow();
   });
 
   test('should throw on missing kPeriod property', () => {
-    const config = { enabled: true, dPeriod: 3 } as any;
+    const config = { enabled: true, dPeriod: 3 } as unknown as StochasticIndicatorConfigNew;
     expect(() => new StochasticIndicatorNew(config)).toThrow();
   });
 
   test('should throw on missing dPeriod property', () => {
-    const config = { enabled: true, kPeriod: 14 } as any;
+    const config = { enabled: true, kPeriod: 14 } as unknown as StochasticIndicatorConfigNew;
     expect(() => new StochasticIndicatorNew(config)).toThrow();
   });
 
@@ -463,7 +463,7 @@ describe('StochasticIndicatorNew - Update Method', () => {
 
     indicator.calculate(candles);
 
-    const invalidCandle = { high: 100 } as any; // Missing low and close
+    const invalidCandle = { high: 100 } as unknown as Candle; // Missing low and close
     expect(() => indicator.update(invalidCandle)).toThrow();
   });
 });
@@ -477,7 +477,7 @@ describe('StochasticIndicatorNew - Input Validation', () => {
     const config: StochasticIndicatorConfigNew = { enabled: true, kPeriod: 5, dPeriod: 3 };
     const indicator = new StochasticIndicatorNew(config);
 
-    expect(() => indicator.calculate({} as any)).toThrow();
+    expect(() => indicator.calculate({} as unknown as Candle[])).toThrow();
   });
 
   test('should throw on not enough candles', () => {
@@ -500,7 +500,7 @@ describe('StochasticIndicatorNew - Input Validation', () => {
       createCandle(100, 90, 95),
       { high: 100 }, // Missing low, close
       createCandle(100, 90, 95),
-    ] as any;
+    ] as unknown as Candle[];
 
     expect(() => indicator.calculate(candles)).toThrow('[STOCHASTIC_INDICATOR] Invalid candle');
   });

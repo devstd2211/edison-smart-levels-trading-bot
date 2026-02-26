@@ -21,13 +21,9 @@
  * - Previously duplicated in StrategyCoordinatorService (now deleted)
  */
 
-import type { Candle } from '../types/core';
-import type { AnalyzerSignal } from '../types/strategy';
-import type { SignalDirection } from '../types/enums';
+import type { Candle, AnalyzerSignal, SignalDirection, StrategyConfigV2 as StrategyConfig, IAnalyzer } from '../types/legacy';
 import { LoggerService } from './logger.service';
 import type { AnalyzerRegistryService } from './analyzer-registry.service';
-import type { StrategyConfig } from '../types/strategy-config';
-import type { IAnalyzer } from '../types/analyzer';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 // ============================================================================

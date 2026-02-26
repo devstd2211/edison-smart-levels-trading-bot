@@ -25,7 +25,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
-import { PositionState } from '../types/enums';
+import { PositionState } from '../types/legacy';
 import {
   IPositionStateMachine,
   PositionStateMachineState,
@@ -36,7 +36,7 @@ import {
   PreBEMode,
   TrailingMode,
   BBTrailingMode,
-} from '../types/position-state-machine';
+} from '../types/legacy';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 

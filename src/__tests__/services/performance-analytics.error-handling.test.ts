@@ -14,7 +14,7 @@ import { PerformanceAnalytics } from '../../services/performance-analytics.servi
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult, PerformanceCalculationError } from '../../errors';
-import type { PerformanceAnalyticsConfig } from '../../types/live-trading';
+import type { PerformanceAnalyticsConfig } from '../../types/legacy';
 
 // ============================================================================
 // MOCK UTILITIES

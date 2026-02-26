@@ -16,7 +16,7 @@
  */
 
 import { ChunkSplitter, BacktestChunk } from '../../backtest/worker-pool/chunk-splitter';
-import { BacktestWorkerResultMerger } from '../../backtest/worker-pool/backtest-worker';
+import { BacktestWorkerResultMerger, type BacktestWorkerResult } from '../../backtest/worker-pool/backtest-worker';
 import { Candle } from '../../types/legacy';
 
 describe('Phase 7.3: Worker Pool', () => {
@@ -266,7 +266,7 @@ describe('Phase 7.3: Worker Pool', () => {
    */
   describe('Test 7: Result Merging', () => {
     it('should merge chunk results correctly', () => {
-      const results = [
+      const results: BacktestWorkerResult[] = [
         {
           chunkId: 0,
           trades: [],
@@ -295,14 +295,14 @@ describe('Phase 7.3: Worker Pool', () => {
         },
       ];
 
-      const merged = BacktestWorkerResultMerger.mergeResults(10000, results as any);
+      const merged = BacktestWorkerResultMerger.mergeResults(10000, results);
 
       expect(merged.finalBalance).toBe(10200);
       expect(merged.trades.length).toBe(0);
     });
 
     it('should validate chunk results', () => {
-      const goodResults = [
+      const goodResults: BacktestWorkerResult[] = [
         {
           chunkId: 0,
           trades: [],
@@ -315,7 +315,7 @@ describe('Phase 7.3: Worker Pool', () => {
         },
       ];
 
-      const badResults = [
+      const badResults: BacktestWorkerResult[] = [
         {
           chunkId: 0,
           trades: [],
@@ -328,8 +328,8 @@ describe('Phase 7.3: Worker Pool', () => {
         },
       ];
 
-      const goodValidation = BacktestWorkerResultMerger.validateResults(goodResults as any);
-      const badValidation = BacktestWorkerResultMerger.validateResults(badResults as any);
+      const goodValidation = BacktestWorkerResultMerger.validateResults(goodResults);
+      const badValidation = BacktestWorkerResultMerger.validateResults(badResults);
 
       expect(goodValidation.valid).toBe(true);
       expect(badValidation.valid).toBe(false);

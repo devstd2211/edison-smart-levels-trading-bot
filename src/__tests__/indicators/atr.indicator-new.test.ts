@@ -47,23 +47,23 @@ function createCandles(count: number, basePrice: number = 100, volatility: numbe
 describe('ATR Indicator NEW', () => {
   describe('Configuration Validation', () => {
     it('should throw if enabled is missing', () => {
-      const badConfig = { ...validAtrConfig, enabled: undefined } as any;
+      const badConfig = { ...validAtrConfig, enabled: undefined } as unknown as AtrIndicatorConfigNew;
       expect(() => new ATRIndicatorNew(badConfig)).toThrow(/enabled.*boolean/i);
     });
 
     it('should throw if period is missing', () => {
       const badConfig = { ...validAtrConfig, period: undefined };
-      expect(() => new ATRIndicatorNew(badConfig as any)).toThrow(/period/i);
+      expect(() => new ATRIndicatorNew(badConfig as unknown as AtrIndicatorConfigNew)).toThrow(/period/i);
     });
 
     it('should throw if minimumATR is missing', () => {
       const badConfig = { ...validAtrConfig, minimumATR: undefined };
-      expect(() => new ATRIndicatorNew(badConfig as any)).toThrow(/minimumATR/i);
+      expect(() => new ATRIndicatorNew(badConfig as unknown as AtrIndicatorConfigNew)).toThrow(/minimumATR/i);
     });
 
     it('should throw if maximumATR is missing', () => {
       const badConfig = { ...validAtrConfig, maximumATR: undefined };
-      expect(() => new ATRIndicatorNew(badConfig as any)).toThrow(/maximumATR/i);
+      expect(() => new ATRIndicatorNew(badConfig as unknown as AtrIndicatorConfigNew)).toThrow(/maximumATR/i);
     });
 
     it('should throw if period is invalid (negative)', () => {
@@ -160,7 +160,7 @@ describe('ATR Indicator NEW', () => {
       const candles = createCandles(30);
       atr.calculate(candles);
 
-      const badCandle = { ...candles[0], high: undefined } as any;
+      const badCandle = { ...candles[0], high: undefined } as unknown as Candle;
       expect(() => atr.update(badCandle, candles[0])).toThrow(/invalid.*Candle/i);
     });
 
@@ -169,7 +169,7 @@ describe('ATR Indicator NEW', () => {
       const candles = createCandles(30);
       atr.calculate(candles);
 
-      const badCandle = { ...candles[0], close: undefined } as any;
+      const badCandle = { ...candles[0], close: undefined } as unknown as Candle;
       expect(() => atr.update(candles[1], badCandle)).toThrow(/invalid.*Candle/i);
     });
 

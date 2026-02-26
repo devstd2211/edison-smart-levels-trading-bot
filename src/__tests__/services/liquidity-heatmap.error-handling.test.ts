@@ -18,8 +18,8 @@ import { LiquidityHeatmapService } from '../../services/liquidity-heatmap.servic
 import {
   LiquidityHeatmapConfig,
   Orderbook,
-  OrderbookLevel,
-} from '../../types/liquidity-heatmap';
+  LiquidityHeatmapOrderbookLevel as OrderbookLevel,
+} from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../types/legacy';
 

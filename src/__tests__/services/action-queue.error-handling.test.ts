@@ -5,7 +5,7 @@
 
 import { ActionQueueService } from '../../services/action-queue.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { IAction, ActionResult, IActionHandler, AnyAction, ActionType, OpenPositionAction, ClosePositionAction } from '../../types/architecture';
+import { IAction, ActionResult, IActionHandler, AnyAction, ActionType, OpenPositionAction, ClosePositionAction } from '../../types/legacy';
 
 const mockLogger = {
   info: jest.fn(),

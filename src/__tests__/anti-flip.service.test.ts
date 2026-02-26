@@ -5,10 +5,12 @@
  */
 
 import { AntiFlipService } from '../services/anti-flip.service';
-import { SignalDirection, Candle } from '../types/legacy';
+import { SignalDirection, Candle, LoggerService } from '../types/legacy';
+
+type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
 
 // Mock Logger
-const mockLogger = {
+const mockLogger: LoggerLike = {
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -21,7 +23,7 @@ describe('AntiFlipService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    service = new AntiFlipService(mockLogger as any, {
+    service = new AntiFlipService(mockLogger as LoggerService, {
       enabled: true,
       cooldownCandles: 3,
       cooldownMs: 300000, // 5 minutes
@@ -278,7 +280,7 @@ describe('AntiFlipService', () => {
 
   describe('configuration', () => {
     it('should respect disabled config', () => {
-      const disabledService = new AntiFlipService(mockLogger as any, {
+      const disabledService = new AntiFlipService(mockLogger as LoggerService, {
         enabled: false,
       });
 
@@ -302,7 +304,7 @@ describe('AntiFlipService', () => {
     });
 
     it('should use custom cooldown values', () => {
-      const customService = new AntiFlipService(mockLogger as any, {
+      const customService = new AntiFlipService(mockLogger as LoggerService, {
         enabled: true,
         cooldownCandles: 1,
         cooldownMs: 1000,

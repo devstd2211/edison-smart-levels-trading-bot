@@ -34,8 +34,8 @@ import {
   HealthReport,
   IRealTimeRiskMonitor,
   LiveTradingEventType,
-} from '../types/live-trading';
-import { Position } from '../types/core';
+  Position,
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   PositionNotFoundError,

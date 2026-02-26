@@ -41,28 +41,28 @@ function createCandles(count: number, basePrice: number = 100): Candle[] {
 describe('EMA Indicator NEW', () => {
   describe('Configuration Validation', () => {
     it('should throw if enabled is missing', () => {
-      const badConfig = { ...validEmaConfig, enabled: undefined } as any;
+      const badConfig = { ...validEmaConfig, enabled: undefined } as unknown as EmaIndicatorConfigNew;
       expect(() => new EMAIndicatorNew(badConfig)).toThrow(/enabled.*boolean/i);
     });
 
     it('should throw if fastPeriod is missing', () => {
       const badConfig = { ...validEmaConfig, fastPeriod: undefined };
-      expect(() => new EMAIndicatorNew(badConfig as any)).toThrow(/fastPeriod/i);
+      expect(() => new EMAIndicatorNew(badConfig as unknown as EmaIndicatorConfigNew)).toThrow(/fastPeriod/i);
     });
 
     it('should throw if slowPeriod is missing', () => {
       const badConfig = { ...validEmaConfig, slowPeriod: undefined };
-      expect(() => new EMAIndicatorNew(badConfig as any)).toThrow(/slowPeriod/i);
+      expect(() => new EMAIndicatorNew(badConfig as unknown as EmaIndicatorConfigNew)).toThrow(/slowPeriod/i);
     });
 
     it('should throw if baseConfidence is missing', () => {
       const badConfig = { ...validEmaConfig, baseConfidence: undefined };
-      expect(() => new EMAIndicatorNew(badConfig as any)).toThrow(/baseConfidence/i);
+      expect(() => new EMAIndicatorNew(badConfig as unknown as EmaIndicatorConfigNew)).toThrow(/baseConfidence/i);
     });
 
     it('should throw if strengthMultiplier is missing', () => {
       const badConfig = { ...validEmaConfig, strengthMultiplier: undefined };
-      expect(() => new EMAIndicatorNew(badConfig as any)).toThrow(/strengthMultiplier/i);
+      expect(() => new EMAIndicatorNew(badConfig as unknown as EmaIndicatorConfigNew)).toThrow(/strengthMultiplier/i);
     });
 
     it('should throw if fastPeriod is invalid (negative)', () => {

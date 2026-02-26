@@ -53,7 +53,7 @@ function createPosition(
     exitPrice: 0,
     leverage: 1,
     marginUsed: quantity * entryPrice,
-    entryCondition: { signal: {}, indicators: {} } as any,
+    entryCondition: { signal: {}, indicators: {} } as Position['entryCondition'],
     openedAt: Date.now(),
     unrealizedPnL: 0,
     orderId: 'test-order-1',
@@ -312,7 +312,7 @@ describe('ExitOrchestrator', () => {
 
   describe('Input Validation - FAST FAIL', () => {
     it('should return CLOSED on invalid position (null)', async () => {
-      const result = await orchestrator.evaluateExit(null as any, 100);
+      const result = await orchestrator.evaluateExit(null as unknown as Position, 100);
 
       expect(result.newState).toBe(PositionState.CLOSED);
       expect(result.actions).toContainEqual({ action: ExitAction.CLOSE_ALL });

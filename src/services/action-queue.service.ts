@@ -9,7 +9,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { IAction, IActionQueue, ActionResult, IActionHandler, AnyAction } from '../types/architecture';
+import { IAction, IActionQueue, ActionResult, IActionHandler, AnyAction } from '../types/legacy';
 
 export class ActionQueueService implements IActionQueue {
   private queue: IAction[] = [];

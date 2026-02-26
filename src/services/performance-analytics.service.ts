@@ -27,7 +27,7 @@ import {
   SessionAnalytics,
   TopTrade,
   IPerformanceAnalytics,
-} from '../types/live-trading';
+} from '../types/legacy';
 
 /**
  * PerformanceAnalytics: Comprehensive trade performance analysis

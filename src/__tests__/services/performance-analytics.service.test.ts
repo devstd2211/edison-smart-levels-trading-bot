@@ -16,7 +16,7 @@
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { LoggerService } from '../../types/legacy';
-import { PerformanceAnalyticsConfig } from '../../types/live-trading';
+import { PerformanceAnalyticsConfig } from '../../types/legacy';
 
 // ============================================================================
 // MOCKS & FIXTURES

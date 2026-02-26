@@ -1,4 +1,4 @@
-import { IIndicatorCache } from '../types/indicator';
+import { IIndicatorCache } from '../types/legacy';
 import { IMarketDataRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';

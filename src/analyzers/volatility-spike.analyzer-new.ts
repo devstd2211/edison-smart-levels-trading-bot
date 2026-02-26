@@ -22,6 +22,7 @@ import { ATRIndicatorNew } from '../indicators/atr.indicator-new';
 import type { LoggerService } from '../services/logger.service';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import type { BaseAnalyzerConfigNew } from '../types/config/config-new.types';
 
 // ============================================================================
 // CONSTANTS (Defaults)
@@ -61,7 +62,18 @@ export class VolatilitySpikeAnalyzerNew implements IAnalyzer {
    * STRICT - Throws if config is invalid
    */
   constructor(
-    config: any,
+    config: BaseAnalyzerConfigNew & {
+      maxConfidence?: number;
+      minCandlesForVolatility?: number;
+      minConfidence?: number;
+      volatilityHighMultiplier?: number;
+      volatilityLowMultiplier?: number;
+      neutralConfidence?: number;
+      maxAtrEstimate?: number;
+      period?: number;
+      minimumATR?: number;
+      maximumATR?: number;
+    },
     private logger?: LoggerService,
   ) {
     // Validate analyzer config

@@ -24,6 +24,7 @@ import {
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import type { TradeRecord } from '../../types/journal/types';
 
 // Test utilities
 class TestLogger extends LoggerService {
@@ -305,12 +306,12 @@ describe('EntryOrchestrator', () => {
         entryPrice: 100,
         exitPrice: 50, // -50% loss
         leverage: 1,
-        entryCondition: { signal: {}, indicators: {} } as any,
+        entryCondition: { signal: createSignal(SignalDirection.LONG, 60, 100) },
         openedAt: Date.now(),
         closedAt: Date.now(),
         realizedPnL: -100,
         status: 'CLOSED' as const,
-      };
+      } as unknown as TradeRecord;
       riskManager.recordTradeResult(trade);
 
       // Now try to trade - should be blocked
@@ -406,7 +407,7 @@ describe('EntryOrchestrator', () => {
         canTrade: async () => {
           throw new Error('RiskManager error');
         },
-      } as any;
+      } as unknown as RiskManager;
 
       const brokenOrchestrator = new EntryOrchestrator(brokenRiskManager, logger);
 
@@ -789,12 +790,12 @@ describe('EntryOrchestrator', () => {
           entryPrice: 100,
           exitPrice: 90,
           leverage: 1,
-          entryCondition: { signal: {}, indicators: {} } as any,
+          entryCondition: { signal: createSignal(SignalDirection.LONG, 60, 100) },
           openedAt: Date.now(),
           closedAt: Date.now(),
           realizedPnL: -10,
           status: 'CLOSED' as const,
-        };
+        } as unknown as TradeRecord;
         riskManager.recordTradeResult(lossTrade);
       }
 

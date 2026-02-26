@@ -18,7 +18,7 @@ import {
   OrderExecutionConfig,
   OrderRequest,
   OrderStatus,
-} from '../../types/live-trading';
+} from '../../types/legacy';
 
 describe('OrderExecutionPipeline', () => {
   let pipeline: OrderExecutionPipeline;

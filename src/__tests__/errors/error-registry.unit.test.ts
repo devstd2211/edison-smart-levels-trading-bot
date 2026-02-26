@@ -386,7 +386,7 @@ describe('ErrorRegistry - Telemetry and Classification', () => {
           timeoutMs: 1000,
         });
         // Hack to make each error unique
-        (error as any).metadata.code = `ERROR_${i}`;
+        error.metadata.code = `ERROR_${i}`;
         ErrorRegistry.record(error);
       }
 

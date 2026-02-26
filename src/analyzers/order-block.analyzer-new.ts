@@ -4,6 +4,7 @@ import type { BreakoutAnalyzerConfigNew } from '../types/config/config-new.types
 import { SignalDirection as SignalDirectionEnum } from '../types/enums';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import type { LoggerService } from '../services/logger.service';
 
 const DEFAULT_MIN_CANDLES_FOR_ORDER_BLOCK = 25;
 const DEFAULT_MAX_CONFIDENCE = 0.95;
@@ -44,7 +45,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
     maxRejectionCount?: number;
     distancePenaltyMultiplier?: number;
     maxDistanceForRelevance?: number;
-  }, private logger?: any) {
+  }, private logger?: LoggerService) {
     if (typeof config.enabled !== 'boolean') throw new Error('[ORDER_BLOCK] Missing or invalid: enabled');
     if (typeof config.weight !== 'number' || config.weight < 0 || config.weight > 1) throw new Error('[ORDER_BLOCK] Missing or invalid: weight');
     if (typeof config.priority !== 'number' || config.priority < 1 || config.priority > 10) throw new Error('[ORDER_BLOCK] Missing or invalid: priority');
@@ -208,11 +209,20 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
       .filter((x) => x.isRejection);
 
     // FIX #5: Find most relevant block (closest to current price)
+    interface RejectionCandidate {
+      index: number;
+      candle: Candle;
+      level: number;
+      wickRatio: number;
+      body: number;
+      isRejection: boolean;
+    }
+
     interface BlockCandidate {
       type: 'BULLISH' | 'BEARISH';
       level: number;
       distance: number;
-      rejections: any[];
+      rejections: RejectionCandidate[];
     }
 
     let bestBlock: BlockCandidate | null = null;

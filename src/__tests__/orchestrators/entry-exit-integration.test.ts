@@ -60,29 +60,29 @@ class MockRiskManager extends RiskManager {
 }
 
 class TestLogger extends LoggerService {
-  logHistory: Array<{ level: string; message: string; metadata: any }> = [];
+  logHistory: Array<{ level: string; message: string; metadata?: Record<string, unknown> }> = [];
 
   constructor() {
     super(LogLevel.DEBUG, './logs', false);
   }
 
   // Override to capture logs
-  info(message: string, metadata?: any): void {
+  info(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'INFO', message, metadata });
     super.info(message, metadata);
   }
 
-  debug(message: string, metadata?: any): void {
+  debug(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'DEBUG', message, metadata });
     super.debug(message, metadata);
   }
 
-  warn(message: string, metadata?: any): void {
+  warn(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'WARN', message, metadata });
     super.warn(message, metadata);
   }
 
-  error(message: string, metadata?: any): void {
+  error(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'ERROR', message, metadata });
     super.error(message, metadata);
   }
@@ -145,7 +145,7 @@ function createPosition(
     exitPrice: 0,
     leverage: 1,
     marginUsed: quantity * entryPrice,
-    entryCondition: { signal: {}, indicators: {} } as any,
+    entryCondition: { signal: {}, indicators: {} } as Position['entryCondition'],
     openedAt: Date.now(),
     unrealizedPnL: 0,
     orderId: 'test-order-' + Date.now(),

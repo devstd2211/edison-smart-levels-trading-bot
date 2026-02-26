@@ -16,13 +16,13 @@
 import {
   LiquidityHeatmapConfig,
   Orderbook,
-  OrderbookLevel,
-  LiquidityZone,
+  LiquidityHeatmapOrderbookLevel as OrderbookLevel,
+  LiquidityHeatmapZone as LiquidityZone,
   LiquidityHeatmap,
   SupportResistanceLevels,
   SlippageEstimate,
   ExecutionCost,
-} from '../types/liquidity-heatmap';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService, LiquidityAnalysisConfig } from '../types/legacy';
 import {

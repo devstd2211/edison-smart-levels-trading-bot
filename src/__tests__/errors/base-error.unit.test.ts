@@ -104,7 +104,7 @@ describe('BaseError - Error Hierarchy and Metadata', () => {
         undefined,
         { domain: ErrorDomain.TRADING },
       );
-      (tradingError as any).metadata.domain = ErrorDomain.TRADING;
+      tradingError.metadata.domain = ErrorDomain.TRADING;
 
       expect(tradingError.metadata.domain).toBe(ErrorDomain.TRADING);
     });
@@ -169,9 +169,9 @@ describe('BaseError - Error Hierarchy and Metadata', () => {
         undefined,
         { positionId: '123' },
       );
-      (error as any).metadata.code = 'TEST_CODE';
-      (error as any).metadata.domain = ErrorDomain.TRADING;
-      (error as any).metadata.severity = ErrorSeverity.HIGH;
+      error.metadata.code = 'TEST_CODE';
+      error.metadata.domain = ErrorDomain.TRADING;
+      error.metadata.severity = ErrorSeverity.HIGH;
 
       const diagnostic = error.toDiagnosticString();
 

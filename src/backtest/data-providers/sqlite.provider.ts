@@ -10,7 +10,7 @@ import { open, Database } from 'sqlite';
 import * as path from 'path';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
-import { IDataProvider, TimeframeData } from './base.provider';
+import type { CandleData, IDataProvider, TimeframeData } from './base.provider';
 
 const sqlite3 = sqlite3Import.verbose();
 
@@ -19,7 +19,7 @@ const gunzipAsync = promisify(gunzip);
 export class SqliteDataProvider implements IDataProvider {
   private dbPath: string;
   private db: Database | null = null;
-  private orderbookCache = new Map<number, any>(); // ✅ Cache for orderbook snapshots
+  private orderbookCache = new Map<number, OrderbookSnapshot>(); // ✅ Cache for orderbook snapshots
 
   constructor(dbPath: string = '') {
     // Auto-detect: prefer market-data-multi.db (from data-collector) if it exists
@@ -198,9 +198,9 @@ export class SqliteDataProvider implements IDataProvider {
        ORDER BY ABS(timestamp - ?) ASC
        LIMIT 1`,
       [symbol, timestamp, timestamp],
-    );
+    ) as OrderbookRow | undefined;
 
-    if (!snapshot) {
+    if (!snapshot || !isBufferLike(snapshot.bids) || !isBufferLike(snapshot.asks)) {
       return null;
     }
 
@@ -213,10 +213,10 @@ export class SqliteDataProvider implements IDataProvider {
       const asksDecompressed = await gunzipAsync(asksBuffer);
 
       // Parse JSON
-      const bids = JSON.parse(bidsDecompressed.toString());
-      const asks = JSON.parse(asksDecompressed.toString());
+      const bids = JSON.parse(bidsDecompressed.toString()) as OrderbookSnapshot['bids'];
+      const asks = JSON.parse(asksDecompressed.toString()) as OrderbookSnapshot['asks'];
 
-      const result = {
+      const result: OrderbookSnapshot = {
         symbol,
         timestamp: snapshot.timestamp,
         bids,
@@ -238,7 +238,7 @@ export class SqliteDataProvider implements IDataProvider {
    * Load trade ticks for a time range
    * Used by TickDelta backtesting
    */
-  async loadTicks(symbol: string, startTime: number, endTime: number): Promise<any[]> {
+  async loadTicks(symbol: string, startTime: number, endTime: number): Promise<TradeTick[]> {
     const db = await this.openDatabase();
 
     try {
@@ -248,7 +248,7 @@ export class SqliteDataProvider implements IDataProvider {
          WHERE symbol = ? AND timestamp >= ? AND timestamp <= ?
          ORDER BY timestamp ASC`,
         [symbol, startTime, endTime],
-      );
+      ) as TradeTick[];
 
       return ticks || [];
     } catch (error) {
@@ -257,3 +257,27 @@ export class SqliteDataProvider implements IDataProvider {
     }
   }
 }
+
+type OrderbookSnapshot = {
+  symbol: string;
+  timestamp: number;
+  bids: [number, number][];
+  asks: [number, number][];
+  updateId: number;
+};
+
+type OrderbookRow = {
+  timestamp: number;
+  bids: Buffer | Uint8Array;
+  asks: Buffer | Uint8Array;
+};
+
+type TradeTick = {
+  timestamp: number;
+  price: number;
+  size: number;
+  side: string;
+};
+
+const isBufferLike = (value: unknown): value is Buffer | Uint8Array =>
+  value instanceof Uint8Array || Buffer.isBuffer(value);

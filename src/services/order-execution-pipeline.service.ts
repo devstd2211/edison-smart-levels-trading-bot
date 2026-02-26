@@ -33,7 +33,7 @@ import {
   SlippageAnalysis,
   ExecutionMetrics,
   IOrderExecutionPipeline,
-} from '../types/live-trading';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**

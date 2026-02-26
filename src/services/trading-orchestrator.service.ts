@@ -25,7 +25,7 @@ import {
   ExitType,
   Position,
 } from '../types/legacy';
-import { TrendBias, SignalDirection } from '../types/enums';
+import { TrendBias, SignalDirection } from '../types/legacy';
 // PHASE 4: ContextAnalyzer archived to src/archive/phase4-integration/
 // Replaced by TrendAnalyzer (PRIMARY component)
 import { CandleProvider } from '../providers/candle.provider';
@@ -46,9 +46,8 @@ import { FilterOrchestrator } from '../orchestrators/filter.orchestrator';
 import { MTFSnapshotGate } from './mtf-snapshot-gate.service';
 import { IndicatorRegistry } from './indicator-registry.service';
 import { IndicatorLoader } from '../loaders/indicator.loader';
-import { IndicatorType } from '../types/indicator';
+import { IndicatorType, ActionType, IActionHandler, OpenPositionAction, ClosePercentAction, UpdateStopLossAction, ActivateTrailingAction } from '../types/legacy';
 import { ActionQueueService } from './action-queue.service';
-import { IActionHandler, ActionType, OpenPositionAction, ClosePercentAction, UpdateStopLossAction, ActivateTrailingAction } from '../types/architecture';
 import { OpenPositionHandler } from '../action-handlers/open-position.handler';
 import { ClosePercentHandler } from '../action-handlers/close-percent.handler';
 import { UpdateStopLossHandler } from '../action-handlers/update-stop-loss.handler';

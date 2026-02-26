@@ -376,6 +376,13 @@ export class TradingBot {
   }
 
   /**
+   * Expose web API adapter for external consumers (web-server bridge).
+   */
+  getWebApiAdapter(): BotWebAPI {
+    return this.getWebAPI();
+  }
+
+  /**
    * Get current market data (price, indicators, trend)
    * Delegates to BotWebAPI
    */

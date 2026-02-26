@@ -27,7 +27,7 @@ export interface WorkerPoolConfig {
   workerRestartAttempts?: number; // Restart attempts on crash (default: 3)
 }
 
-export interface TaskMessage<T = any> {
+export interface TaskMessage<T = unknown> {
   taskId: string;
   type: 'task' | 'ready' | 'result' | 'error';
   data?: T;
@@ -37,7 +37,7 @@ export interface TaskMessage<T = any> {
 /**
  * Generic Worker Pool
  */
-export class WorkerPool<TTask = any, TResult = any> extends EventEmitter {
+export class WorkerPool<TTask = unknown, TResult = unknown> extends EventEmitter {
   private workers: Worker[] = [];
   private taskQueue: Array<{ taskId: string; task: TTask; resolve: (r: TResult) => void; reject: (e: Error) => void }> = [];
   private activeWorkers: Map<string, number> = new Map(); // taskId -> workerIndex

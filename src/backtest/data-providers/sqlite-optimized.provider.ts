@@ -16,7 +16,7 @@
 import * as sqlite3Import from 'sqlite3';
 import { open, Database } from 'sqlite';
 import * as path from 'path';
-import { IDataProvider, TimeframeData } from './base.provider';
+import type { CandleData, IDataProvider, TimeframeData } from './base.provider';
 
 const sqlite3 = sqlite3Import.verbose();
 
@@ -175,7 +175,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
     const startQueryTime = Date.now();
 
     try {
-      const allCandles = await db.all(query, params);
+      const allCandles = await db.all(query, params) as SqliteCandleRow[];
 
       const queryTime = Date.now() - startQueryTime;
       console.log(`✅ Query completed in ${queryTime}ms`);
@@ -186,7 +186,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
       const candles15m = allCandles.filter(c => c.timeframe === '15m');
 
       // Remove timeframe column (it was only for UNION ALL separation)
-      const cleanCandles = (candles: any[]) =>
+      const cleanCandles = (candles: SqliteCandleRow[]): CandleData[] =>
         candles.map(({ timeframe, ...rest }) => rest);
 
       console.log(`✅ Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles (${queryTime}ms)`);
@@ -222,3 +222,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
     return '';
   }
 }
+
+type SqliteCandleRow = CandleData & {
+  timeframe: '1m' | '5m' | '15m';
+};

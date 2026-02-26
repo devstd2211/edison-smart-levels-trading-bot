@@ -10,6 +10,8 @@ import { PositionEventHandler } from '../services/handlers/position.handler';
 import { WebSocketEventHandler } from '../services/handlers/websocket.handler';
 import { Position, LoggerService, ExitType } from '../types/legacy';
 import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../types/legacy';
+import { PositionSide } from '../types/legacy';
+import type { StopLossConfig } from '../types/legacy';
 
 // Mock services
 const createMockLogger = (): Partial<LoggerService> => ({
@@ -20,10 +22,18 @@ const createMockLogger = (): Partial<LoggerService> => ({
   getLogFilePath: jest.fn().mockReturnValue('/mock/log/path'),
 });
 
+const createStopLoss = (price: number): StopLossConfig => ({
+  price,
+  initialPrice: price,
+  isBreakeven: false,
+  isTrailing: false,
+  updatedAt: Date.now(),
+});
+
 const createMockPosition = (): Position => ({
   id: 'pos-123',
   journalId: 'j-123',
-  side: 'Buy' as any,
+  side: PositionSide.LONG,
   symbol: 'XRPUSDT',
   entryPrice: 2.0,
   quantity: 100,
@@ -35,17 +45,27 @@ const createMockPosition = (): Position => ({
     { level: 2, percent: 1.2, price: 2.024, sizePercent: 35, hit: false, orderId: 'tp2-order' },
     { level: 3, percent: 2.0, price: 2.04, sizePercent: 40, hit: false, orderId: 'tp3-order' },
   ],
-  stopLoss: { price: 1.96, isTrailing: false } as any,
+  stopLoss: createStopLoss(1.96),
   status: 'OPEN',
-} as any);
+} as Position);
 
 describe('PositionEventHandler', () => {
   let handler: PositionEventHandler;
   let mockLogger: Partial<LoggerService>;
-  let mockPositionManager: any;
-  let mockPositionExitingService: any;
-  let mockBybitService: any;
-  let mockTelegram: any;
+  let mockPositionManager: {
+    clearPosition: jest.Mock;
+    recordPositionClose: jest.Mock;
+  };
+  let mockPositionExitingService: {
+    closeFullPosition: jest.Mock;
+  };
+  let mockBybitService: {
+    closePosition: jest.Mock;
+    getCurrentPrice: jest.Mock;
+  };
+  let mockTelegram: {
+    sendAlert: jest.Mock;
+  };
 
   beforeEach(() => {
     mockLogger = createMockLogger();
@@ -69,10 +89,10 @@ describe('PositionEventHandler', () => {
     };
 
     handler = new PositionEventHandler(
-      mockPositionManager as any,
-      mockPositionExitingService as any,
-      mockBybitService as any,
-      mockTelegram as any,
+      mockPositionManager as unknown as Parameters<typeof PositionEventHandler>[0],
+      mockPositionExitingService as unknown as Parameters<typeof PositionEventHandler>[1],
+      mockBybitService as unknown as Parameters<typeof PositionEventHandler>[2],
+      mockTelegram as unknown as Parameters<typeof PositionEventHandler>[3],
       mockLogger as LoggerService,
     );
   });
@@ -170,7 +190,7 @@ describe('PositionEventHandler', () => {
         pnlPercent: 2.5,
         position: {
           id: position.id,
-          side: 'Buy' as any,
+          side: PositionSide.LONG,
           quantity: position.quantity,
           entryPrice: position.entryPrice,
         },
@@ -192,7 +212,7 @@ describe('PositionEventHandler', () => {
         pnlPercent: 2.5,
         position: {
           id: position.id,
-          side: 'Buy' as any,
+          side: PositionSide.LONG,
           quantity: position.quantity,
           entryPrice: position.entryPrice,
         },
@@ -214,7 +234,7 @@ describe('PositionEventHandler', () => {
         pnlPercent: 2.5,
         position: {
           id: position.id,
-          side: 'Buy' as any,
+          side: PositionSide.LONG,
           quantity: position.quantity,
           entryPrice: position.entryPrice,
         },
@@ -239,12 +259,31 @@ describe('PositionEventHandler', () => {
 describe('WebSocketEventHandler', () => {
   let handler: WebSocketEventHandler;
   let mockLogger: Partial<LoggerService>;
-  let mockPositionManager: any;
-  let mockPositionExitingService: any;
-  let mockBybitService: any;
-  let mockWebSocketManager: any;
-  let mockJournal: any;
-  let mockTelegram: any;
+  let mockPositionManager: {
+    syncWithWebSocket: jest.Mock;
+    getCurrentPosition: jest.Mock;
+    clearPosition: jest.Mock;
+    recordPositionClose: jest.Mock;
+    onTakeProfitHit: jest.Mock;
+    closePositionWithAtomicLock: jest.Mock;
+  };
+  let mockPositionExitingService: {
+    closeFullPosition: jest.Mock;
+    onTakeProfitHit: jest.Mock;
+  };
+  let mockBybitService: {
+    getClosedPosition: jest.Mock;
+  };
+  let mockWebSocketManager: {
+    getLastCloseReason: jest.Mock;
+    resetLastCloseReason: jest.Mock;
+  };
+  let mockJournal: {
+    getTrade: jest.Mock;
+  };
+  let mockTelegram: {
+    notifyPositionClosed: jest.Mock;
+  };
 
   beforeEach(() => {
     mockLogger = createMockLogger();
@@ -288,12 +327,12 @@ describe('WebSocketEventHandler', () => {
     };
 
     handler = new WebSocketEventHandler(
-      mockPositionManager as any,
-      mockPositionExitingService as any,
-      mockBybitService as any,
-      mockWebSocketManager as any,
-      mockJournal as any,
-      mockTelegram as any,
+      mockPositionManager as unknown as Parameters<typeof WebSocketEventHandler>[0],
+      mockPositionExitingService as unknown as Parameters<typeof WebSocketEventHandler>[1],
+      mockBybitService as unknown as Parameters<typeof WebSocketEventHandler>[2],
+      mockWebSocketManager as unknown as Parameters<typeof WebSocketEventHandler>[3],
+      mockJournal as unknown as Parameters<typeof WebSocketEventHandler>[4],
+      mockTelegram as unknown as Parameters<typeof WebSocketEventHandler>[5],
       mockLogger as LoggerService,
     );
   });
@@ -418,7 +457,7 @@ describe('WebSocketEventHandler', () => {
         quantity: 50,
       };
 
-      await handler.handleOrderFilled(order as any);
+      await handler.handleOrderFilled(order as unknown as Parameters<typeof handler.handleOrderFilled>[0]);
 
       expect(mockLogger.info).toHaveBeenCalledWith('WebSocket: Order filled', { orderId: 'order-123' });
     });
@@ -432,7 +471,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 25,
       };
 
-      await handler.handleTakeProfitFilled(event as any);
+      await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
       expect(mockLogger.info).toHaveBeenCalledWith('✅ Matched TP by OrderID (RELIABLE)', expect.any(Object));
       expect(mockPositionExitingService.onTakeProfitHit).toHaveBeenCalledWith(expect.any(Object), 1, 2.012);
@@ -445,7 +484,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 25,
       };
 
-      await handler.handleTakeProfitFilled(event as any);
+      await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
       expect(mockLogger.warn).toHaveBeenCalledWith('⚠️ Matched TP by price (fallback)', expect.any(Object));
       expect(mockPositionExitingService.onTakeProfitHit).toHaveBeenCalledWith(expect.any(Object), 1, expect.closeTo(2.0121, 0.01));
@@ -458,7 +497,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 25, // Should match TP1 (25% sizePercent)
       };
 
-      await handler.handleTakeProfitFilled(event as any);
+      await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
       expect(mockLogger.warn).toHaveBeenCalledWith('⚠️ Matched TP by quantity (fallback)', expect.any(Object));
       expect(mockPositionExitingService.onTakeProfitHit).toHaveBeenCalledWith(expect.any(Object), 1, expect.any(Number));
@@ -473,7 +512,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 25,
       };
 
-      await handler.handleTakeProfitFilled(event as any);
+      await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
       expect(mockLogger.warn).toHaveBeenCalledWith('Take Profit filled but no active position');
       expect(mockPositionManager.onTakeProfitHit).not.toHaveBeenCalled();
@@ -490,7 +529,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 50,
       };
 
-      await handler.handleTakeProfitFilled(event as any);
+      await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('Could not determine ANY TP level'),
@@ -508,7 +547,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 100,
       };
 
-      await handler.handleStopLossFilled(event as any);
+      await handler.handleStopLossFilled(event as unknown as Parameters<typeof handler.handleStopLossFilled>[0]);
 
       expect(mockLogger.info).toHaveBeenCalledWith('WebSocket: Stop Loss filled', expect.any(Object));
     });
@@ -520,7 +559,7 @@ describe('WebSocketEventHandler', () => {
         cumExecQty: 100,
       };
 
-      await handler.handleStopLossFilled(event as any);
+      await handler.handleStopLossFilled(event as unknown as Parameters<typeof handler.handleStopLossFilled>[0]);
 
       expect(mockPositionManager.recordPositionClose).not.toHaveBeenCalled();
     });

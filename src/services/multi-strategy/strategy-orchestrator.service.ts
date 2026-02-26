@@ -18,9 +18,9 @@
 import type {
   StrategyMetadata,
   IsolatedStrategyContext,
-  SystemStats,
-  StrategyStats,
-} from '../../types/multi-strategy';
+  MultiStrategySystemStats,
+  MultiStrategyStats,
+} from '../../types/legacy';
 import { TimeframeRole, Candle, LoggerService } from '../../types/legacy';
 import { BotEventBus } from './../../services/event-bus';
 import { StrategyRegistryService } from './strategy-registry.service';
@@ -240,7 +240,7 @@ export class StrategyOrchestratorService {
   /**
    * Get strategy stats
    */
-  getStrategyStats(strategyId: string): StrategyStats | null {
+  getStrategyStats(strategyId: string): MultiStrategyStats | null {
     const context = this.contextMap.get(strategyId);
     if (!context) return null;
 
@@ -268,9 +268,9 @@ export class StrategyOrchestratorService {
   /**
    * Get overall system stats
    */
-  getOverallStats(): SystemStats {
+  getOverallStats(): MultiStrategySystemStats {
     const strategies = this.listStrategies();
-    const stats: SystemStats = {
+    const stats: MultiStrategySystemStats = {
       totalStrategies: strategies.length,
       activeStrategies: strategies.filter((s) => s.isActive).length,
       inactiveStrategies: strategies.filter((s) => !s.isActive).length,

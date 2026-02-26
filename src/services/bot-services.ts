@@ -12,8 +12,7 @@
  */
 
 import { LoggerService } from './logger.service';
-import { Candle } from '../types/core';
-import { Config } from '../types/legacy';
+import { Candle, Config } from '../types/legacy';
 import {
   IExchange,
   IMonitoringHealthReader,
@@ -75,7 +74,7 @@ import { ConsoleDashboardService } from './console-dashboard.service';
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { RealityCheckService } from './reality-check.service';
 import { RealTimeRiskMonitor } from './real-time-risk-monitor.service';
-import type { LiveTradingConfig, RiskMonitoringConfig } from '../types/live-trading';
+import type { LiveTradingConfig, RiskMonitoringConfig } from '../types/legacy';
 import { StrategyOrchestratorService } from './multi-strategy/strategy-orchestrator.service';
 import { StrategyRegistryService } from './multi-strategy/strategy-registry.service';
 import { StrategyFactoryService } from './multi-strategy/strategy-factory.service';

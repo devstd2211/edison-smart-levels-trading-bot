@@ -41,9 +41,9 @@ import {
   IGracefulShutdownManager,
   EmergencyCloseReason,
   LiveTradingEventType,
-} from '../types/live-trading';
-
-import { ActionType, ClosePercentAction } from '../types/architecture';
+  ActionType,
+  ClosePercentAction,
+} from '../types/legacy';
 
 /**
  * GracefulShutdownManager: Safe bot shutdown with state persistence

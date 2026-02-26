@@ -30,8 +30,8 @@ export type { ProcessingFunction } from './strategy-processing-pool.service';
 export type {
   StrategyMetadata,
   StrategyStateSnapshot,
-  StrategyStats,
-  SystemStats,
+  MultiStrategyStats as StrategyStats,
+  MultiStrategySystemStats as SystemStats,
   StrategyInstanceConfig,
   IsolatedStrategyContext,
   StrategyValidationResult,
@@ -49,8 +49,8 @@ export type {
   StrategySwitchResult,
   StrategyHealthCheckResult,
   ConcurrencyConfig,
-} from '../../types/multi-strategy';
+} from '../../types/legacy';
 
 // Re-export enums
-export { StrategyEventType, StrategyHealthStatus, ConcurrencyMode } from '../../types/multi-strategy';
+export { StrategyEventType, StrategyHealthStatus, ConcurrencyMode } from '../../types/legacy';
 

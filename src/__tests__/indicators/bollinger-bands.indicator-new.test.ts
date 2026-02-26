@@ -38,35 +38,35 @@ describe('BollingerBandsIndicatorNew - Configuration', () => {
   });
 
   test('should throw if period is missing', () => {
-    const config: any = { enabled: true, stdDev: 2 };
+    const config = { enabled: true, stdDev: 2 } as unknown as BollingerBandsConfigNew;
     expect(() => new BollingerBandsIndicatorNew(config)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Missing or invalid: period',
     );
   });
 
   test('should throw if period is 0', () => {
-    const config: any = { enabled: true, period: 0, stdDev: 2 };
+    const config = { enabled: true, period: 0, stdDev: 2 } as unknown as BollingerBandsConfigNew;
     expect(() => new BollingerBandsIndicatorNew(config)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Missing or invalid: period',
     );
   });
 
   test('should throw if period is negative', () => {
-    const config: any = { enabled: true, period: -1, stdDev: 2 };
+    const config = { enabled: true, period: -1, stdDev: 2 } as unknown as BollingerBandsConfigNew;
     expect(() => new BollingerBandsIndicatorNew(config)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Missing or invalid: period',
     );
   });
 
   test('should throw if stdDev is missing', () => {
-    const config: any = { enabled: true, period: 20 };
+    const config = { enabled: true, period: 20 } as unknown as BollingerBandsConfigNew;
     expect(() => new BollingerBandsIndicatorNew(config)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Missing or invalid: stdDev',
     );
   });
 
   test('should throw if stdDev is too low', () => {
-    const config: any = { enabled: true, period: 20, stdDev: 0.05 };
+    const config = { enabled: true, period: 20, stdDev: 0.05 } as unknown as BollingerBandsConfigNew;
     expect(() => new BollingerBandsIndicatorNew(config)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Missing or invalid: stdDev',
     );
@@ -116,7 +116,7 @@ describe('BollingerBandsIndicatorNew - Input Validation', () => {
     const config: BollingerBandsConfigNew = { enabled: true, period: 20, stdDev: 2 };
     const indicator = new BollingerBandsIndicatorNew(config);
 
-    expect(() => indicator.calculate(null as any)).toThrow(
+    expect(() => indicator.calculate(null as unknown as Candle[])).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Invalid candles input (must be array)',
     );
   });
@@ -132,7 +132,7 @@ describe('BollingerBandsIndicatorNew - Input Validation', () => {
       close: i === 10 ? undefined : 100 + i,
       volume: 1000,
       timestamp: Date.now(),
-    })) as any[];
+    })) as unknown as Candle[];
 
     expect(() => indicator.calculate(candles)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Invalid candle at index 10',
@@ -155,7 +155,7 @@ describe('BollingerBandsIndicatorNew - Input Validation', () => {
     const candles = Array.from({ length: 20 }, (_, i) => createCandle(100 + i));
     indicator.calculate(candles);
 
-    expect(() => indicator.update(null as any)).toThrow(
+    expect(() => indicator.update(null as unknown as Candle)).toThrow(
       '[BOLLINGER_BANDS_INDICATOR] Invalid newCandle',
     );
   });

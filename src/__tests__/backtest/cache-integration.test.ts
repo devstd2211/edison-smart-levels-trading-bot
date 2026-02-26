@@ -21,12 +21,12 @@ import { IMarketDataRepository } from '../../repositories/IRepositories';
 
 // Simple mock repository for testing
 class MockMarketDataRepo implements IMarketDataRepository {
-  private indicators: Map<string, any> = new Map();
+  private indicators: Map<string, number> = new Map();
 
-  cacheIndicator(key: string, value: any): void {
+  cacheIndicator(key: string, value: number): void {
     this.indicators.set(key, value);
   }
-  getIndicator(key: string): any {
+  getIndicator(key: string): number | null {
     return this.indicators.get(key) || null;
   }
   hasIndicator(key: string): boolean {
@@ -36,13 +36,13 @@ class MockMarketDataRepo implements IMarketDataRepository {
     return 0;
   }
   saveCandles(): void {}
-  getCandles(): any[] {
+  getCandles(): Candle[] {
     return [];
   }
-  getLatestCandle(): any {
+  getLatestCandle(): Candle | null {
     return null;
   }
-  getCandlesSince(): any[] {
+  getCandlesSince(): Candle[] {
     return [];
   }
   clearExpiredCandles(): number {
@@ -54,7 +54,7 @@ class MockMarketDataRepo implements IMarketDataRepository {
   getSize(): number {
     return this.indicators.size;
   }
-  getStats(): any {
+  getStats(): { candleCount: number; indicatorCount: number; sizeBytes: number } {
     return { candleCount: 0, indicatorCount: this.indicators.size, sizeBytes: 0 };
   }
 }

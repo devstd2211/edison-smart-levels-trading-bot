@@ -22,8 +22,12 @@ import {
   Config,
   LogLevel,
   StopLossConfig,
+  ExitType,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
+import type { IExchange } from '../../interfaces/IExchange';
+import type { TelegramService } from '../../services/telegram.service';
+import type { TradingJournalService } from '../../services/trading-journal.service';
 
 // ============================================================================
 // MOCK SERVICES
@@ -55,7 +59,7 @@ const createTradingConfig = (): TradingConfig => ({
   maxPositions: 1,
   positionSizeUsdt: 100,
   tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT' as any,
+  orderType: 'LIMIT',
   tradingFeeRate: 0.0002,
   favorableMovementThresholdPercent: 0.1,
 });
@@ -76,22 +80,22 @@ const createRiskConfig = (): RiskManagementConfig => ({
 });
 
 const createFullConfig = (): Config => ({
-  exchange: { symbol: 'BTCUSDT', testnet: true } as any,
-  timeframes: {} as any,
+  exchange: { symbol: 'BTCUSDT', testnet: true } as unknown as Config['exchange'],
+  timeframes: {} as unknown as Config['timeframes'],
   trading: createTradingConfig(),
-  strategies: {} as any,
-  strategy: {} as any,
-  indicators: {} as any,
+  strategies: {} as unknown as Config['strategies'],
+  strategy: {} as unknown as Config['strategy'],
+  indicators: {} as unknown as Config['indicators'],
   riskManagement: createRiskConfig(),
-  logging: { level: LogLevel.DEBUG } as any,
-  system: {} as any,
+  logging: { level: LogLevel.DEBUG } as unknown as Config['logging'],
+  system: {} as unknown as Config['system'],
   dataSubscriptions: {
     candles: { enabled: true, calculateIndicators: true },
     orderbook: { enabled: false, updateIntervalMs: 5000 },
     ticks: { enabled: false, calculateDelta: false },
   },
-  entryConfig: {} as any,
-  entryConfirmation: {} as any,
+  entryConfig: {} as unknown as Config['entryConfig'],
+  entryConfirmation: {} as unknown as Config['entryConfirmation'],
 });
 
 // ============================================================================
@@ -99,25 +103,25 @@ const createFullConfig = (): Config => ({
 // ============================================================================
 
 class TestLogger extends LoggerService {
-  logHistory: Array<{ level: string; message: string; metadata?: any }> = [];
+  logHistory: Array<{ level: string; message: string; metadata?: Record<string, unknown> }> = [];
 
   constructor() {
     super(LogLevel.DEBUG, './logs', false);
   }
 
-  info(message: string, metadata?: any): void {
+  info(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'INFO', message, metadata });
   }
 
-  debug(message: string, metadata?: any): void {
+  debug(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'DEBUG', message, metadata });
   }
 
-  warn(message: string, metadata?: any): void {
+  warn(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'WARN', message, metadata });
   }
 
-  error(message: string, metadata?: any): void {
+  error(message: string, metadata?: Record<string, unknown>): void {
     this.logHistory.push({ level: 'ERROR', message, metadata });
   }
 
@@ -164,9 +168,9 @@ function createTestPosition(entryPrice: number, quantity: number, side: Position
 describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
   let logger: TestLogger;
   let errorHandler: ErrorHandler;
-  let mockBybit: any;
-  let mockTelegram: any;
-  let mockJournal: any;
+  let mockBybit: ReturnType<typeof createMockBybitService>;
+  let mockTelegram: ReturnType<typeof createMockTelegramService>;
+  let mockJournal: ReturnType<typeof createMockJournalService>;
   let positionRepo: PositionMemoryRepository;
 
   beforeEach(() => {
@@ -306,10 +310,10 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
       positionRepo.setCurrentPosition(position);
 
       const positionExiting = new PositionExitingService(
-        mockBybit,
-        mockTelegram as any,
+        mockBybit as unknown as IExchange,
+        mockTelegram as unknown as TelegramService,
         logger,
-        mockJournal,
+        mockJournal as unknown as TradingJournalService,
         createTradingConfig(),
         createRiskConfig(),
         createFullConfig(),
@@ -321,7 +325,7 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
         position,
         exitPrice,
         'TP3_HIT',
-        'TAKE_PROFIT' as any,
+        ExitType.TAKE_PROFIT,
       );
 
       expect(result).toBe(true);
@@ -350,10 +354,10 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
       });
 
       const positionExiting = new PositionExitingService(
-        mockBybit,
-        mockTelegram as any,
+        mockBybit as unknown as IExchange,
+        mockTelegram as unknown as TelegramService,
         logger,
-        mockJournal,
+        mockJournal as unknown as TradingJournalService,
         createTradingConfig(),
         createRiskConfig(),
         createFullConfig(),
@@ -369,7 +373,7 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
         position,
         51000,
         'TP_HIT',
-        'TAKE_PROFIT' as any
+        ExitType.TAKE_PROFIT
       );
 
       expect(result).toBe(true);
@@ -387,10 +391,10 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
       mockJournal.recordTradeClose.mockRejectedValue(new Error('Journal write failed'));
 
       const positionExiting = new PositionExitingService(
-        mockBybit,
-        mockTelegram as any,
+        mockBybit as unknown as IExchange,
+        mockTelegram as unknown as TelegramService,
         logger,
-        mockJournal,
+        mockJournal as unknown as TradingJournalService,
         createTradingConfig(),
         createRiskConfig(),
         createFullConfig(),
@@ -401,7 +405,7 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
         position,
         51000,
         'TP_HIT',
-        'TAKE_PROFIT' as any
+        ExitType.TAKE_PROFIT
       );
 
       expect(result).toBe(true);
@@ -414,10 +418,10 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
       const position = createTestPosition(50000, 1.0);
 
       const positionExiting = new PositionExitingService(
-        mockBybit,
-        mockTelegram as any,
+        mockBybit as unknown as IExchange,
+        mockTelegram as unknown as TelegramService,
         logger,
-        mockJournal,
+        mockJournal as unknown as TradingJournalService,
         createTradingConfig(),
         createRiskConfig(),
         createFullConfig(),
@@ -425,9 +429,9 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
 
       // Simulate concurrent close attempts (WebSocket + Timeout race)
       const results = await Promise.allSettled([
-        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', 'TAKE_PROFIT' as any),
-        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', 'TAKE_PROFIT' as any),
-        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', 'TAKE_PROFIT' as any),
+        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT),
+        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT),
+        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT),
       ]);
 
       // Only one should succeed (atomic lock)

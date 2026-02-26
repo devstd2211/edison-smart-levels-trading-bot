@@ -13,7 +13,7 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { ExchangeAPIError } from '../../errors/DomainErrors';
-import { OrderRequest, OrderStatus, OrderExecutionConfig } from '../../types/live-trading';
+import { OrderRequest, OrderStatus, OrderExecutionConfig } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 
 /**

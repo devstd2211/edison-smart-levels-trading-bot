@@ -34,6 +34,11 @@ interface Level {
   isRecent: boolean; // Within last 15 candles
 }
 
+type SwingPointLike = {
+  price: number;
+  index?: number;
+};
+
 export class LevelAnalyzerNew implements IAnalyzer {
   private readonly enabled: boolean;
   private readonly weight: number;
@@ -242,7 +247,11 @@ export class LevelAnalyzerNew implements IAnalyzer {
   /**
    * Build levels from detected swing points
    */
-  private buildLevelsFromSwingPoints(swingPoints: any[], type: 'support' | 'resistance', totalCandles: number): Level[] {
+  private buildLevelsFromSwingPoints(
+    swingPoints: SwingPointLike[],
+    type: 'support' | 'resistance',
+    totalCandles: number
+  ): Level[] {
     const levels: Level[] = [];
     const tolerance = 0.01; // 1% tolerance for clustering
 

@@ -32,12 +32,12 @@ function createCandles(volumes: number[]): Candle[] {
 
 describe('VolumeIndicatorNew - Configuration Validation', () => {
   test('should throw on missing enabled property', () => {
-    const config = { period: 20 } as any;
+    const config = { period: 20 } as unknown as VolumeIndicatorConfigNew;
     expect(() => new VolumeIndicatorNew(config)).toThrow();
   });
 
   test('should throw on missing period property', () => {
-    const config = { enabled: true } as any;
+    const config = { enabled: true } as unknown as VolumeIndicatorConfigNew;
     expect(() => new VolumeIndicatorNew(config)).toThrow();
   });
 
@@ -54,7 +54,7 @@ describe('VolumeIndicatorNew - Configuration Validation', () => {
   });
 
   test('should throw on non-numeric period', () => {
-    const config = { enabled: true, period: 'twenty' } as any;
+    const config = { enabled: true, period: 'twenty' } as unknown as VolumeIndicatorConfigNew;
     expect(() => new VolumeIndicatorNew(config)).toThrow();
   });
 
@@ -240,7 +240,7 @@ describe('VolumeIndicatorNew - Update Method', () => {
     const candles = createCandles([1000, 1100, 900, 1200, 800]);
 
     indicator.calculate(candles);
-    expect(() => indicator.update(null as any)).toThrow();
+    expect(() => indicator.update(null as unknown as Candle)).toThrow();
   });
 });
 
@@ -395,7 +395,7 @@ describe('VolumeIndicatorNew - Input Validation', () => {
     const config: VolumeIndicatorConfigNew = { enabled: true, period: 5 };
     const indicator = new VolumeIndicatorNew(config);
 
-    expect(() => indicator.calculate({} as any)).toThrow(
+    expect(() => indicator.calculate({} as unknown as Candle[])).toThrow(
       '[VOLUME_INDICATOR] Invalid candles input',
     );
   });
@@ -419,10 +419,10 @@ describe('VolumeIndicatorNew - Input Validation', () => {
   test('should throw on null candle in array', () => {
     const config: VolumeIndicatorConfigNew = { enabled: true, period: 5 };
     const indicator = new VolumeIndicatorNew(config);
-    const candles = createCandles([1000, 1100, 900, 1200]) as any;
+    const candles: Array<Candle | null> = createCandles([1000, 1100, 900, 1200]);
     candles.push(null);
 
-    expect(() => indicator.calculate(candles)).toThrow('[VOLUME_INDICATOR] Invalid volume');
+    expect(() => indicator.calculate(candles as unknown as Candle[])).toThrow('[VOLUME_INDICATOR] Invalid volume');
   });
 });
 

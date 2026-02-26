@@ -18,14 +18,14 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
       ];
 
       modules.forEach(({ path, name }) => {
-        const Module = require(path) as any;
+        const Module = require(path) as Record<string, unknown>;
         expect(Module[name]).toBeDefined();
         expect(typeof Module[name]).toBe('function');
       });
     });
 
     it('should verify type exports are available', () => {
-      const types = require('../../types') as any;
+      const types = require('../../types') as Record<string, unknown>;
 
       // Core types that must exist
       const requiredTypes = [
@@ -43,7 +43,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     });
 
     it('should verify constants are properly exported', () => {
-      const constants = require('../../constants') as any;
+      const constants = require('../../constants') as Record<string, unknown>;
 
       expect(constants).toBeDefined();
       expect(typeof constants).toBe('object');
@@ -98,14 +98,14 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
 
   describe('Type Safety', () => {
     it('should verify all signal directions are defined', () => {
-      const types = require('../../types') as any;
+      const types = require('../../types') as { SignalDirection?: { LONG?: string; SHORT?: string } };
 
       expect(types.SignalDirection.LONG).toBe('LONG');
       expect(types.SignalDirection.SHORT).toBe('SHORT');
     });
 
     it('should verify core trading types exist', () => {
-      const types = require('../../types') as any;
+      const types = require('../../types') as Record<string, unknown>;
 
       expect(types.SignalDirection).toBeDefined();
       expect(types.SignalType).toBeDefined();
@@ -115,7 +115,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
 
   describe('Production Readiness Checklist', () => {
     it('should verify TradingOrchestrator has entryOrchestrator property', () => {
-      const Module = require('../../services/trading-orchestrator.service') as any;
+      const Module = require('../../services/trading-orchestrator.service') as Record<'TradingOrchestrator', { toString: () => string }>;
       const code = Module.TradingOrchestrator.toString();
 
       expect(code).toContain('this.entryOrchestrator');
@@ -123,7 +123,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     });
 
     it('should verify TradingOrchestrator has exitOrchestrator property', () => {
-      const Module = require('../../services/trading-orchestrator.service') as any;
+      const Module = require('../../services/trading-orchestrator.service') as Record<'TradingOrchestrator', { toString: () => string }>;
       const code = Module.TradingOrchestrator.toString();
 
       expect(code).toContain('this.exitOrchestrator');
@@ -131,7 +131,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     });
 
     it('should verify ActionQueueService checks handlers', () => {
-      const Module = require('../../services/action-queue.service') as any;
+      const Module = require('../../services/action-queue.service') as Record<'ActionQueueService', { toString: () => string }>;
       const code = Module.ActionQueueService.toString();
 
       expect(code).toContain('handler');

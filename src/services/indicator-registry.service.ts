@@ -1,4 +1,4 @@
-import { IndicatorType } from '../types/indicator';
+import { IndicatorType } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';
 

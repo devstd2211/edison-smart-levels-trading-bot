@@ -9,6 +9,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import * as path from 'path';
 import { BotBridgeService, type IBotInstance } from './services/bot-bridge.service.js';
+import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 import { WebSocketService } from './websocket/ws-server.js';
 import { createBotRoutes } from './routes/bot.routes.js';
 import { createDataRoutes } from './routes/data.routes.js';
@@ -38,9 +39,13 @@ export class WebServer {
   private wsService: WebSocketService | null = null;
   private fileWatcher: FileWatcherService | null = null;
 
-  constructor(private bot: IBotInstance, config: WebServerConfig = {}) {
+  constructor(
+    private bot: IBotInstance,
+    config: WebServerConfig = {},
+    webApiAdapter?: IWebApiAdapter,
+  ) {
     this.app = express();
-    this.bridge = new BotBridgeService(bot);
+    this.bridge = new BotBridgeService(bot, webApiAdapter);
 
     const apiPort = config.apiPort || API_PORT;
     const wsPort = config.wsPort || WS_PORT;
@@ -396,7 +401,11 @@ export class WebServer {
 /**
  * Standalone mode - used for testing without bot
  */
-export async function startWebServer(bot: IBotInstance, config?: WebServerConfig): Promise<WebServer> {
-  const server = new WebServer(bot, config);
+export async function startWebServer(
+  bot: IBotInstance,
+  config?: WebServerConfig,
+  webApiAdapter?: IWebApiAdapter,
+): Promise<WebServer> {
+  const server = new WebServer(bot, config, webApiAdapter);
   return server;
 }

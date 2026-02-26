@@ -29,7 +29,7 @@ import {
   RiskManagementConfig,
   Config,
 } from '../types/legacy';
-import { ExitActionDTO } from '../types/architecture';
+import { ExitActionDTO } from '../types/legacy';
 import type { IExchange } from '../interfaces/IExchange';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';

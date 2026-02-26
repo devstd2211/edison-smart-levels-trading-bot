@@ -8,14 +8,28 @@
  */
 
 import { PositionValidator } from '../../validators/position.validator';
-import { PositionSide, Position } from '../../types/legacy';
+import { PositionSide, Position, LoggerService } from '../../types/legacy';
 
-const mockLogger: any = {
+type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>;
+
+const mockLogger: LoggerLike = {
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
-  log: jest.fn(),
+};
+
+const setPositionField = (
+  position: Position,
+  key: keyof Position,
+  value: unknown,
+): void => {
+  (position as unknown as Record<string, unknown>)[key] = value;
+};
+
+const setStopLossPrice = (position: Position, value: unknown): void => {
+  const stopLoss = position.stopLoss as unknown as { price?: unknown };
+  stopLoss.price = value;
 };
 
 const createValidPosition = (): Position => ({
@@ -48,7 +62,7 @@ describe('PositionValidator - P0.2 Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    validator = new PositionValidator(mockLogger);
+    validator = new PositionValidator(mockLogger as LoggerService);
   });
 
   // =========================================================================
@@ -146,7 +160,7 @@ describe('PositionValidator - P0.2 Tests', () => {
   describe('Entry Price Validation (Critical)', () => {
     test('E1: Empty string entryPrice throws error', () => {
       const position = createValidPosition();
-      (position as any).entryPrice = '';
+      setPositionField(position, 'entryPrice', '');
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -156,7 +170,7 @@ describe('PositionValidator - P0.2 Tests', () => {
 
     test('E2: NaN entryPrice throws error', () => {
       const position = createValidPosition();
-      (position as any).entryPrice = NaN;
+      setPositionField(position, 'entryPrice', NaN);
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -166,7 +180,7 @@ describe('PositionValidator - P0.2 Tests', () => {
 
     test('E3: String entryPrice throws error', () => {
       const position = createValidPosition();
-      (position as any).entryPrice = '45000';
+      setPositionField(position, 'entryPrice', '45000');
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -189,7 +203,7 @@ describe('PositionValidator - P0.2 Tests', () => {
   describe('UnrealizedPnL Validation', () => {
     test('U1: Undefined unrealizedPnL throws error', () => {
       const position = createValidPosition();
-      (position as any).unrealizedPnL = undefined;
+      setPositionField(position, 'unrealizedPnL', undefined);
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -199,7 +213,7 @@ describe('PositionValidator - P0.2 Tests', () => {
 
     test('U2: NaN unrealizedPnL throws error', () => {
       const position = createValidPosition();
-      (position as any).unrealizedPnL = NaN;
+      setPositionField(position, 'unrealizedPnL', NaN);
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -229,7 +243,7 @@ describe('PositionValidator - P0.2 Tests', () => {
   describe('Leverage Validation', () => {
     test('L1: Invalid leverage throws error', () => {
       const position = createValidPosition();
-      (position as any).leverage = undefined;
+      setPositionField(position, 'leverage', undefined);
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -252,7 +266,7 @@ describe('PositionValidator - P0.2 Tests', () => {
   describe('Stop Loss Validation', () => {
     test('SL1: Invalid stopLoss.price throws error', () => {
       const position = createValidPosition();
-      (position.stopLoss as any).price = undefined;
+      setStopLossPrice(position, undefined);
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -262,7 +276,7 @@ describe('PositionValidator - P0.2 Tests', () => {
 
     test('SL2: NaN stopLoss.price throws error', () => {
       const position = createValidPosition();
-      (position.stopLoss as any).price = NaN;
+      setStopLossPrice(position, NaN);
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -285,7 +299,7 @@ describe('PositionValidator - P0.2 Tests', () => {
   describe('Backward Compatibility (fillMissingFields)', () => {
     test('BC1: Position without unrealizedPnL gets filled', () => {
       const position = createValidPosition();
-      (position as any).unrealizedPnL = undefined; // Old position format
+      setPositionField(position, 'unrealizedPnL', undefined); // Old position format
 
       // First validation will fail
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
@@ -300,7 +314,7 @@ describe('PositionValidator - P0.2 Tests', () => {
 
     test('BC2: Position without marginUsed gets estimated', () => {
       const position = createValidPosition();
-      (position as any).marginUsed = 0;
+      setPositionField(position, 'marginUsed', 0);
 
       const filled = validator.fillMissingFields(position, 45500);
 
@@ -345,7 +359,7 @@ describe('PositionValidator - P0.2 Tests', () => {
           isTrailing: false,
           updatedAt: Date.now(),
         },
-      } as any;
+      } as unknown as Position;
 
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
 

@@ -15,7 +15,7 @@
  */
 
 import { StrategyCircuitBreakerService } from '../services/multi-strategy/strategy-circuit-breaker.service';
-import { CircuitBreakerStatus } from '../types/circuit-breaker';
+import { CircuitBreakerStatus } from '../types/legacy';
 import { LoggerService, LogLevel } from '../types/legacy';
 
 describe('PHASE 11: Per-Strategy Circuit Breakers', () => {

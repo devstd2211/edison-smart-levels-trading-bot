@@ -16,7 +16,7 @@
 import {
   AdvancedOrderFlowConfig,
   Tick,
-  OrderBook,
+  AdvancedOrderFlowOrderBook as OrderBook,
   AdvancedOrderFlow,
   FlowPattern,
   SpoofingSignal,
@@ -24,7 +24,7 @@ import {
   PatternMetric,
   SpoofingMetric,
   MomentumMetric,
-} from '../types/advanced-order-flow';
+} from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { LoggerService, OrderFlowAnalysisConfig } from '../types/legacy';
 import {

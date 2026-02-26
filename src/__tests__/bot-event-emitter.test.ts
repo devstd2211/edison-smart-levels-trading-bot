@@ -1,6 +1,8 @@
 import { BotEventEmitter } from '../bot-event-emitter';
 import { BotEventBus } from '../services/event-bus';
 import { LoggerService } from '../types/legacy';
+import type { Position, StopLossConfig, TakeProfit } from '../types/legacy';
+import { PositionSide } from '../types/legacy';
 
 /**
  * Mock LoggerService for tests
@@ -10,6 +12,41 @@ const createMockLogger = (): Partial<LoggerService> => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
+});
+
+const createStopLoss = (price: number): StopLossConfig => ({
+  price,
+  initialPrice: price,
+  isBreakeven: false,
+  isTrailing: false,
+  updatedAt: Date.now(),
+});
+
+const createTakeProfits = (prices: number[]): TakeProfit[] =>
+  prices.map((price, index) => ({
+    level: index + 1,
+    price,
+    percent: 1,
+    sizePercent: 100 / prices.length,
+    hit: false,
+  }));
+
+const createPosition = (overrides: Partial<Position> = {}): Position => ({
+  id: 'test-pos',
+  symbol: 'BTCUSDT',
+  side: PositionSide.LONG,
+  quantity: 1,
+  entryPrice: 50000,
+  leverage: 10,
+  marginUsed: 5000,
+  stopLoss: createStopLoss(49000),
+  takeProfits: createTakeProfits([51000, 52000]),
+  openedAt: Date.now(),
+  unrealizedPnL: 0,
+  orderId: 'order-1',
+  reason: 'TEST',
+  status: 'OPEN',
+  ...overrides,
 });
 
 /**
@@ -107,21 +144,11 @@ describe('BotEventEmitter', () => {
 
   describe('event bridging - position opened', () => {
     it('should bridge position-opened events', (done) => {
-      const testPosition = {
+      const testPosition = createPosition({
         id: 'test-pos-1',
         symbol: 'BTCUSDT',
-        entryPrice: 50000,
-        quantity: 1,
-        side: 'LONG' as const,
-        status: 'OPEN' as const,
-        openedAt: Date.now(),
-        entrySignalSource: 'TEST',
-        takeProfit: [51000, 52000],
-        stopLoss: { percent: 2 } as any,
-        currentPrice: 50100,
-        unrealizedPnl: 100,
-        unrealizedPnlPercent: 0.2,
-      };
+        takeProfits: createTakeProfits([51000, 52000]),
+      });
 
       emitter.on('position-opened', (position) => {
         expect(position.symbol).toEqual('BTCUSDT');
@@ -132,21 +159,15 @@ describe('BotEventEmitter', () => {
     });
 
     it('should support multiple position-opened listeners', (done) => {
-      const testPosition = {
+      const testPosition = createPosition({
         id: 'test-pos-2',
         symbol: 'ETHUSDT',
+        side: PositionSide.SHORT,
         entryPrice: 3000,
         quantity: 10,
-        side: 'SHORT' as const,
-        status: 'OPEN' as const,
-        openedAt: Date.now(),
-        entrySignalSource: 'TEST',
-        takeProfit: [2900],
-        stopLoss: { percent: 3 } as any,
-        currentPrice: 2950,
-        unrealizedPnl: 500,
-        unrealizedPnlPercent: 1.67,
-      };
+        takeProfits: createTakeProfits([2900]),
+        stopLoss: createStopLoss(3090),
+      });
 
       const handler1 = jest.fn();
       const handler2 = jest.fn();
@@ -166,20 +187,11 @@ describe('BotEventEmitter', () => {
 
   describe('event bridging - position closed', () => {
     it('should bridge position-closed events', (done) => {
-      const testResult = {
-        positionId: 'test-pos-1',
+      const testResult = createPosition({
+        id: 'test-pos-1',
         symbol: 'BTCUSDT',
-        side: 'LONG' as const,
-        entryPrice: 50000,
-        exitPrice: 51000,
-        quantity: 1,
-        pnl: 1000,
-        pnlPercent: 2,
-        reason: 'TAKE_PROFIT',
-        exitType: 'TAKE_PROFIT_1' as const,
-        exitedAt: Date.now(),
-        duration: 3600000,
-      };
+        status: 'CLOSED',
+      });
 
       emitter.on('position-closed', (result) => {
         expect(result.symbol).toEqual('BTCUSDT');
@@ -190,20 +202,12 @@ describe('BotEventEmitter', () => {
     });
 
     it('should support multiple position-closed listeners', (done) => {
-      const testResult = {
-        positionId: 'test-pos-2',
+      const testResult = createPosition({
+        id: 'test-pos-2',
         symbol: 'ETHUSDT',
-        side: 'SHORT' as const,
-        entryPrice: 3000,
-        exitPrice: 2900,
-        quantity: 10,
-        pnl: 1000,
-        pnlPercent: 3.33,
-        reason: 'STOP_LOSS',
-        exitType: 'STOP_LOSS' as const,
-        exitedAt: Date.now(),
-        duration: 1800000,
-      };
+        side: PositionSide.SHORT,
+        status: 'CLOSED',
+      });
 
       const handler1 = jest.fn();
       const handler2 = jest.fn();
@@ -354,21 +358,9 @@ describe('BotEventEmitter', () => {
 
   describe('convenience methods - onPositionOpened', () => {
     it('should provide onPositionOpened() method', (done) => {
-      const testPosition = {
-        id: 'test-pos',
-        symbol: 'BTCUSDT',
-        entryPrice: 50000,
-        quantity: 1,
-        side: 'LONG' as const,
-        status: 'OPEN' as const,
-        openedAt: Date.now(),
-        entrySignalSource: 'TEST',
-        takeProfit: [51000],
-        stopLoss: { percent: 2 } as any,
-        currentPrice: 50100,
-        unrealizedPnl: 100,
-        unrealizedPnlPercent: 0.2,
-      };
+      const testPosition = createPosition({
+        takeProfits: createTakeProfits([51000]),
+      });
 
       const handler = jest.fn();
       emitter.onPositionOpened(handler);
@@ -387,21 +379,9 @@ describe('BotEventEmitter', () => {
 
       expect(typeof unsubscribe).toBe('function');
 
-      const testPosition = {
-        id: 'test-pos',
-        symbol: 'BTCUSDT',
-        entryPrice: 50000,
-        quantity: 1,
-        side: 'LONG' as const,
-        status: 'OPEN' as const,
-        openedAt: Date.now(),
-        entrySignalSource: 'TEST',
-        takeProfit: [51000],
-        stopLoss: { percent: 2 } as any,
-        currentPrice: 50100,
-        unrealizedPnl: 100,
-        unrealizedPnlPercent: 0.2,
-      };
+      const testPosition = createPosition({
+        takeProfits: createTakeProfits([51000]),
+      });
 
       eventBus.emit('position-opened', testPosition);
 
@@ -421,20 +401,9 @@ describe('BotEventEmitter', () => {
 
   describe('convenience methods - onPositionClosed', () => {
     it('should provide onPositionClosed() method', (done) => {
-      const testResult = {
-        positionId: 'test-pos',
-        symbol: 'BTCUSDT',
-        side: 'LONG' as const,
-        entryPrice: 50000,
-        exitPrice: 51000,
-        quantity: 1,
-        pnl: 1000,
-        pnlPercent: 2,
-        reason: 'TAKE_PROFIT',
-        exitType: 'TAKE_PROFIT_1' as const,
-        exitedAt: Date.now(),
-        duration: 3600000,
-      };
+      const testResult = createPosition({
+        status: 'CLOSED',
+      });
 
       const handler = jest.fn();
       emitter.onPositionClosed(handler);
@@ -453,20 +422,9 @@ describe('BotEventEmitter', () => {
 
       expect(typeof unsubscribe).toBe('function');
 
-      const testResult = {
-        positionId: 'test-pos',
-        symbol: 'BTCUSDT',
-        side: 'LONG' as const,
-        entryPrice: 50000,
-        exitPrice: 51000,
-        quantity: 1,
-        pnl: 1000,
-        pnlPercent: 2,
-        reason: 'TAKE_PROFIT',
-        exitType: 'TAKE_PROFIT_1' as const,
-        exitedAt: Date.now(),
-        duration: 3600000,
-      };
+      const testResult = createPosition({
+        status: 'CLOSED',
+      });
 
       eventBus.emit('position-closed', testResult);
 
@@ -752,21 +710,9 @@ describe('BotEventEmitter', () => {
 
       eventBus.emit('signal', signal);
 
-      const position = {
-        id: 'test',
-        symbol: 'BTCUSDT',
-        entryPrice: 50000,
-        quantity: 1,
-        side: 'LONG' as const,
-        status: 'OPEN' as const,
-        openedAt: Date.now(),
-        entrySignalSource: 'TEST',
-        takeProfit: [51000],
-        stopLoss: { percent: 2 } as any,
-        currentPrice: 50100,
-        unrealizedPnl: 100,
-        unrealizedPnlPercent: 0.2,
-      };
+      const position = createPosition({
+        takeProfits: createTakeProfits([51000]),
+      });
 
       eventBus.emit('position-opened', position);
 

@@ -28,9 +28,10 @@ import { SqliteOptimizedDataProvider } from './data-providers/sqlite-optimized.p
 import { Candle } from '../types/core';
 import { Signal } from '../types/signal';
 import { Position } from '../types/position';
-import { SignalDirection, EntryDecision } from '../types/enums';
+import { SignalDirection, SignalType, TrendBias, EntryDecision } from '../types/enums';
 import { StrategyConfig } from '../types/strategy-config';
 import { AnalyzerSignal } from '../types/strategy';
+import type { TrendAnalysis } from '../types/legacy';
 
 // Simple TrendAnalysis type for backtest
 interface TrendAnalysisBacktest {
@@ -150,20 +151,21 @@ export class BacktestEngineV5 {
 
     // For BACKTEST: Use dummy RiskManager that always approves (no risk constraints)
     // This allows backtest to use its own position sizing logic without restrictions
-    const dummyRiskManager = {
+    type RiskGate = Pick<RiskManager, 'canTrade'>;
+    const dummyRiskManager: RiskGate = {
       async canTrade() {
         return { allowed: true, reason: 'Backtest mode - no risk constraints' };
       }
-    } as any;
+    };
 
-    this.riskManager = dummyRiskManager;
+    this.riskManager = dummyRiskManager as unknown as RiskManager;
     this.filterOrchestrator = new FilterOrchestrator(this.logger, this.strategyConfig.filters);
     this.entryOrchestrator = new EntryOrchestrator(this.riskManager, this.logger, this.filterOrchestrator);
     this.exitOrchestrator = new ExitOrchestrator(this.logger);
 
     // Configure entry threshold from strategy if specified (allows tuning without modifying code)
     // Phase 4.10: Use instance method instead of static
-    const entryThreshold = (this.strategyConfig as any).entryThreshold;
+    const entryThreshold = (this.strategyConfig as StrategyConfig & { entryThreshold?: number }).entryThreshold;
     if (entryThreshold !== undefined && typeof entryThreshold === 'number') {
       this.entryOrchestrator.setMinConfidenceThreshold(entryThreshold);
       this.logger.info('🎛️ Entry confidence threshold configured', {
@@ -385,26 +387,30 @@ export class BacktestEngineV5 {
 
         // Convert to Signal format expected by EntryOrchestrator
         // Use aggregated signal if direction is determined
-        const convertedSignals: any[] = aggregationResult.direction
+        const convertedSignals: Signal[] = aggregationResult.direction
           ? [
               {
-                type: 'AGGREGATED',
-                direction: aggregationResult.direction === SignalDirection.LONG ? 'LONG' : 'SHORT',
+                type: SignalType.LEVEL_BASED,
+                direction: aggregationResult.direction === SignalDirection.LONG ? SignalDirection.LONG : SignalDirection.SHORT,
                 confidence: Math.round(aggregationResult.confidence * 100), // Convert 0-1 to 0-100
                 price: candle5m.close,
+                stopLoss: 0,
+                takeProfits: [],
+                reason: 'Aggregated backtest signal',
                 timestamp: candle5m.timestamp,
-                source: 'AGGREGATED_SIGNALS',
               },
             ]
           : [];
 
         // Convert TrendAnalysisBacktest
         // NOTE: Use NEUTRAL to avoid trend alignment blocks during backtest
-        const anyTrendAnalysis: any = {
-          bias: 'NEUTRAL', // Override to NEUTRAL to avoid trend alignment filtering
+        const neutralTrendAnalysis: TrendAnalysis = {
+          bias: TrendBias.NEUTRAL,
           strength: trendAnalysis.strength,
           timeframe: '15m',
-          reasoning: `Trend analysis (neutral mode for backtest): ${trendAnalysis.bias}`,
+          pattern: 'FLAT',
+          reasoning: [`Trend analysis (neutral mode for backtest): ${trendAnalysis.bias}`],
+          restrictedDirections: [],
         };
 
         try {
@@ -412,7 +418,7 @@ export class BacktestEngineV5 {
             convertedSignals,
             this.currentBalance,
             [],
-            anyTrendAnalysis,
+            neutralTrendAnalysis,
           );
 
           if (i % 500 === 0 && analyzerSignals.length > 0) {
