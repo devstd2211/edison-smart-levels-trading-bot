@@ -292,6 +292,7 @@
 - [x] PositionStateMachineService constructor logging removed
 - [x] Constructor logging removed in exit/ladder/tick-delta/orderbook/bybit/circuit-breaker services
 - [x] Constructor logging removed in limit-order executor, binance adapter, multi-timeframe trend, strategy cache, exit handler, scalping strategies
+- [x] Constructor side effects removed for BotEventEmitter, GracefulShutdownManager, SQLite backtest providers
 - [ ] Side effects removed from constructors (remaining cleanup)
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes

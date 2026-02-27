@@ -16,6 +16,7 @@
 import * as sqlite3Import from 'sqlite3';
 import { open, Database } from 'sqlite';
 import * as path from 'path';
+import * as fs from 'fs';
 import type { CandleData, IDataProvider, TimeframeData } from './base.provider';
 
 const sqlite3 = sqlite3Import.verbose();
@@ -26,28 +27,30 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
   private indexesInitialized = false;
 
   constructor(dbPath: string = '') {
-    // Auto-detect: prefer market-data-multi.db (from data-collector) if it exists
-    if (!dbPath) {
-      const multiDbPath = path.join(__dirname, '../../../data/market-data-multi.db');
-      const singleDbPath = path.join(__dirname, '../../../data/market-data.db');
+    this.dbPath = dbPath;
+  }
 
-      // Check if multi-db exists and is not empty
-      if (require('fs').existsSync(multiDbPath)) {
-        const stats = require('fs').statSync(multiDbPath);
-        if (stats.size > 1000000) { // > 1MB = has data
-          this.dbPath = multiDbPath;
-          console.log('📊 Using optimized multi-symbol database: market-data-multi.db');
-        } else {
-          this.dbPath = singleDbPath;
-          console.log('📊 Using optimized single-symbol database: market-data.db');
-        }
-      } else {
-        this.dbPath = singleDbPath;
-        console.log('📊 Using optimized single-symbol database: market-data.db');
-      }
-    } else {
-      this.dbPath = dbPath;
+  private ensureDbPath(): void {
+    if (this.dbPath) {
+      return;
     }
+
+    // Auto-detect: prefer market-data-multi.db (from data-collector) if it exists
+    const multiDbPath = path.join(__dirname, '../../../data/market-data-multi.db');
+    const singleDbPath = path.join(__dirname, '../../../data/market-data.db');
+
+    // Check if multi-db exists and is not empty
+    if (fs.existsSync(multiDbPath)) {
+      const stats = fs.statSync(multiDbPath);
+      if (stats.size > 1000000) { // > 1MB = has data
+        this.dbPath = multiDbPath;
+        console.log('📊 Using optimized multi-symbol database: market-data-multi.db');
+        return;
+      }
+    }
+
+    this.dbPath = singleDbPath;
+    console.log('📊 Using optimized single-symbol database: market-data.db');
   }
 
   /**
@@ -58,6 +61,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
       return this.db;
     }
 
+    this.ensureDbPath();
     this.db = await open({
       filename: this.dbPath,
       driver: sqlite3.Database,
@@ -120,6 +124,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
    * Get data source name for logging
    */
   getSourceName(): string {
+    this.ensureDbPath();
     return `SQLite Optimized (${this.dbPath})`;
   }
 

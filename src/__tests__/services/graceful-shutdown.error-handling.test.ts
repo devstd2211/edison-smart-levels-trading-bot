@@ -342,7 +342,6 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
       (fs.mkdirSync as jest.Mock).mockImplementationOnce(() => {});
 
-      // Create new instance to trigger ensureStateDirectory in constructor
       const newManager = new GracefulShutdownManager(
         mockConfig,
         mockPositionLifecycleService,
@@ -352,6 +351,8 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         mockEventBus,
         './test-new-dir'
       );
+
+      newManager.registerShutdownHandlers();
 
       expect(fs.mkdirSync).toHaveBeenCalled();
       expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -374,6 +375,8 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         mockEventBus,
         './test-permission-denied'
       );
+
+      newManager.registerShutdownHandlers();
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Could not create state directory, persistence will be disabled'),
@@ -398,6 +401,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
           mockEventBus,
           './test-fs-error'
         );
+        newManager.registerShutdownHandlers();
       } catch (error) {
         constructorFailed = true;
       }

@@ -212,6 +212,7 @@ export class BotFactory {
   ): Promise<{ bot: TradingBot; emitter: BotEventEmitter }> {
     const bot = await this.create(factoryConfig);
     const emitter = new BotEventEmitter(bot.eventBus);
+    emitter.start();
     return { bot, emitter };
   }
 

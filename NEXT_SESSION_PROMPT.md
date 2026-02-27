@@ -56,6 +56,7 @@ Deliverables for this session:
 - PositionStateMachineService constructor logging removed (no constructor side effects).
 - Constructor logging removed in exit/ladder/tick-delta/orderbook/bybit/circuit-breaker services.
 - Constructor logging removed in limit-order executor, binance adapter, multi-timeframe trend, strategy cache, exit handler, scalping strategies.
+- Constructor side effects moved out for BotEventEmitter (bridge subscriptions), GracefulShutdownManager (state dir), and SQLite backtest providers (fs auto-detect).
 
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.

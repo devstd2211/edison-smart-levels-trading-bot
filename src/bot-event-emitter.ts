@@ -14,49 +14,73 @@ import { BotEventBus } from './services/event-bus';
  * External code can only listen to events, not emit or manipulate them.
  */
 export class BotEventEmitter extends EventEmitter {
+  private isStarted = false;
+  private unsubscribeHandlers: Array<() => void> = [];
+
   constructor(
     private eventBus: BotEventBus,
     private logger?: LoggerService
   ) {
     super();
-    this.setupEventBridges();
   }
 
   /**
    * Setup bridges from internal BotEventBus to external EventEmitter
    */
+  start(): void {
+    if (this.isStarted) {
+      return;
+    }
+    this.isStarted = true;
+    this.setupEventBridges();
+  }
+
+  /**
+   * Remove bridges from internal BotEventBus
+   */
+  stop(): void {
+    if (!this.isStarted) {
+      return;
+    }
+    this.isStarted = false;
+    for (const unsubscribe of this.unsubscribeHandlers) {
+      unsubscribe();
+    }
+    this.unsubscribeHandlers = [];
+  }
+
   private setupEventBridges(): void {
     // Signal events
-    this.eventBus.subscribe('signal', (signal: Signal) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('signal', (signal: Signal) => {
       this.emit('signal', signal);
-    });
+    }));
 
     // Position lifecycle events
-    this.eventBus.subscribe('position-opened', (position: Position) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('position-opened', (position: Position) => {
       this.emit('position-opened', position);
-    });
+    }));
 
-    this.eventBus.subscribe('position-closed', (position: Position) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('position-closed', (position: Position) => {
       this.emit('position-closed', position);
-    });
+    }));
 
     // Error events
-    this.eventBus.subscribe('error', (error: Error) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('error', (error: Error) => {
       this.emit('error', error);
-    });
+    }));
 
     // Status events
-    this.eventBus.subscribe('bot-started', (isRunning: boolean) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('bot-started', (isRunning: boolean) => {
       if (isRunning) {
         this.emit('bot-started');
       }
-    });
+    }));
 
-    this.eventBus.subscribe('bot-stopped', (isRunning: boolean) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('bot-stopped', (isRunning: boolean) => {
       if (!isRunning) {
         this.emit('bot-stopped');
       }
-    });
+    }));
   }
 
   /**

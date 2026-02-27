@@ -88,9 +88,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     this.logger = logger;
     this.eventBus = eventBus;
     this.stateDirectory = stateDirectory;
-
-    // Create state directory if needed
-    this.ensureStateDirectory();
   }
 
   /**
@@ -98,6 +95,8 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
    * Called during bot initialization
    */
   public registerShutdownHandlers(): void {
+    this.ensureStateDirectory();
+
     // Handle Ctrl+C
     process.on('SIGINT', async () => {
       this.logger.info('[GracefulShutdownManager] Received SIGINT (Ctrl+C)');
@@ -362,6 +361,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
    * Returns early on failure (doesn't throw) to allow shutdown to continue
    */
   public async persistState(): Promise<void> {
+    this.ensureStateDirectory();
     const result = await ErrorHandler.executeAsync(
       async () => {
         const position = this.positionLifecycleService.getCurrentPosition();
