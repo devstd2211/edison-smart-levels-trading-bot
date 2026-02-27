@@ -48,6 +48,7 @@ Deliverables for this session:
 - Test fixes: bot-initializer config completed (exchange/trading/indicators/risk/logging/entryConfig), event handlers ctor typing + side literals, integration TP/OrderType enums, smoke tests SignalDirection checks, position validator mock usage, error context typing.
 - BotFactory main flow now uses `buildBotServices` directly (reduces BotServices class dependency in core create path).
 - BotFactory DI service (`services/bot-factory.service.ts`) now returns builder state; BotServices class dependency reduced.
+- BotFactory `createServices` now returns builder state (no BotServices class dependency).
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
 
 ## Next Session Start

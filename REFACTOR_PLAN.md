@@ -177,6 +177,7 @@
 - [x] BotServices fields restored to readonly with builder-based assignment
 - [x] BotFactory uses builder-based services (no BotServices class dependency in core create flow)
 - [x] BotFactory DI service returns builder state; legacy IBotServices export removed
+- [x] BotFactory createServices now returns builder state (no BotServices class dependency)
 - [x] Entry point scaffolds created (cli/core/web)
 - [x] Workspaces scaffolding added (packages/contracts, packages/core)
 - [x] Types modularization started (domain folders + re-export)

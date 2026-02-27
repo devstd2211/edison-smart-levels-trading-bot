@@ -17,7 +17,6 @@
 import type { Config } from './types/legacy';
 import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
-import { BotServices } from './services/bot-services';
 import { createTradingBotServiceBundle } from './services/bot-services-adapter';
 import { buildBotServices, type BotServicesState } from './services/bot-services.builder';
 import { StrategyLoaderService } from './services/strategy-loader.service';
@@ -222,9 +221,9 @@ export class BotFactory {
    * Useful for direct service access in tests or standalone usage.
    *
    * @param config - Configuration for services
-   * @returns Initialized BotServices container
+   * @returns Initialized services state
    */
-  static createServices(config: Config): BotServices {
-    return new BotServices(config);
+  static createServices(config: Config): BotServicesState {
+    return buildBotServices(config);
   }
 }
