@@ -37,6 +37,7 @@ Deliverables for this session:
 - BotFactory main flow now uses `buildBotServices` directly (reduces BotServices class dependency in core create path).
 - BotFactory DI service (`services/bot-factory.service.ts`) now returns builder state; BotServices class dependency reduced.
 - BotFactory `createServices` now returns builder state (no BotServices class dependency).
+- BotServices class reduced to a thin legacy wrapper (no explicit fields or container logic).
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
 - Lifecycle groundwork added: `ILifecycle` interface and `LifecycleManager` service.
 - ILifecycle implemented for WebSocketManagerService, PublicWebSocketService, PositionMonitorService, MonitoringServer.
