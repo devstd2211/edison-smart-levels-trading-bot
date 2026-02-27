@@ -564,12 +564,14 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       const newEventBus = createMockEventBus();
       const newActionQueue = createMockActionQueue();
 
-      new TradingLifecycleManager(
+      const newManager = new TradingLifecycleManager(
         createConfig(),
         newLogger as any,
         newEventBus as any,
         newActionQueue as any
       );
+
+      newManager.start();
 
       // Verify both subscriptions were set up
       expect(newEventBus.subscribe).toHaveBeenCalledWith(

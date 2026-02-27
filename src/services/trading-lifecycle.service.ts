@@ -35,6 +35,7 @@ import {
   Position,
 } from '../types/legacy';
 import { ActionQueueService } from './action-queue.service';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 /**
@@ -53,7 +54,7 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
  * - Checks timeouts on each candle or explicit call
  * - Delegates emergency close execution to ActionQueue
  */
-export class TradingLifecycleManager implements ITradingLifecycleManager {
+export class TradingLifecycleManager implements ITradingLifecycleManager, ILifecycle {
   private config: PositionLifecycleConfig;
   private trackedPositions: Map<string, TrackedPosition>;
   private warningEmittedFor: Set<string>; // Track which positions we've warned about
@@ -61,6 +62,8 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
   private eventBus: BotEventBus;
   private actionQueue: ActionQueueService;
   private errorHandler?: ErrorHandler;
+  private started = false;
+  private unsubscribeHandlers: Array<() => void> = [];
 
   // State machine: Valid transitions for position lifecycle
   private readonly VALID_STATE_TRANSITIONS: Map<PositionLifecycleState, PositionLifecycleState[]> = new Map([
@@ -85,16 +88,15 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
     this.errorHandler = errorHandler;
     this.trackedPositions = new Map();
     this.warningEmittedFor = new Set();
-
-    this.initializeEventSubscriptions();
   }
 
   /**
    * Subscribe to position lifecycle events
    */
   private initializeEventSubscriptions(): void {
+    this.unsubscribeHandlers = [];
     // Listen for position opens
-    this.eventBus.subscribe('position-opened', (event: any) => {
+    const unsubscribeOpened = this.eventBus.subscribe('position-opened', (event: any) => {
       const position: Position = event.position;
       if (position && position.id) {
         this.trackPosition({
@@ -113,13 +115,49 @@ export class TradingLifecycleManager implements ITradingLifecycleManager {
     });
 
     // Listen for position closes
-    this.eventBus.subscribe('position-closed', (event: any) => {
+    const unsubscribeClosed = this.eventBus.subscribe('position-closed', (event: any) => {
       const positionId = event.positionId || event.position?.id;
       if (positionId) {
         this.untrackPosition(positionId);
         this.logger.info(`[TradingLifecycleManager] Untracking closed position: ${positionId}`);
       }
     });
+
+    if (typeof unsubscribeOpened === 'function') {
+      this.unsubscribeHandlers.push(unsubscribeOpened);
+    }
+    if (typeof unsubscribeClosed === 'function') {
+      this.unsubscribeHandlers.push(unsubscribeClosed);
+    }
+  }
+
+  /**
+   * Start lifecycle (subscribe to EventBus)
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.initializeEventSubscriptions();
+  }
+
+  /**
+   * Stop lifecycle (unsubscribe from EventBus)
+   */
+  stop(): void {
+    if (!this.started) {
+      return;
+    }
+    for (const unsubscribe of this.unsubscribeHandlers) {
+      try {
+        unsubscribe();
+      } catch {
+        // Ignore unsubscribe failures
+      }
+    }
+    this.unsubscribeHandlers = [];
+    this.started = false;
   }
 
   /**

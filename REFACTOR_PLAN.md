@@ -288,6 +288,8 @@
 - [x] TradeHistoryService/TradingJournalService/VirtualBalanceService constructors made side-effect free
 - [x] SessionStatsService load moved to explicit start/ensure
 - [x] BotMetricsService constructor logging moved to explicit start/ensure
+- [x] TradingLifecycleManager EventBus subscriptions moved to explicit start/stop
+- [x] PositionStateMachineService constructor logging removed
 - [ ] Side effects removed from constructors (remaining cleanup)
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes

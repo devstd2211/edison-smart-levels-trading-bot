@@ -74,11 +74,6 @@ export class PositionStateMachineService implements IPositionStateMachine {
   ) {
     this.stateFilePath = path.join(process.cwd(), 'data', 'position-states.jsonl');
     this.historyFilePath = path.join(process.cwd(), 'data', 'position-transitions.jsonl');
-
-    this.logger.info('📍 PositionStateMachineService created', {
-      stateFile: this.stateFilePath,
-      historyFile: this.historyFilePath,
-    });
   }
 
   // ============================================================================
