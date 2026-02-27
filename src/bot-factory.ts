@@ -19,6 +19,7 @@ import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
 import { BotServices } from './services/bot-services';
 import { createTradingBotServiceBundle } from './services/bot-services-adapter';
+import { buildBotServices, type BotServicesState } from './services/bot-services.builder';
 import { StrategyLoaderService } from './services/strategy-loader.service';
 import { StrategyConfigMergerService } from './services/strategy-config-merger.service';
 import type { IBotServicesAdapterSource } from './interfaces';
@@ -150,7 +151,7 @@ export class BotFactory {
     }
 
     // 2. Initialize all services in dependency order
-    const services = new BotServices(config);
+    const services = buildBotServices(config);
     const serviceBundle = createTradingBotServiceBundle(services);
 
     // 3. Create bot with injected dependencies
@@ -182,11 +183,11 @@ export class BotFactory {
     serviceOverrides?: Partial<IBotServicesAdapterSource>,
   ): TradingBot {
     // Create services normally
-    const services = new BotServices(config);
+    const services = buildBotServices(config);
 
     // Override specific services for testing
     if (serviceOverrides) {
-      Object.assign(services, serviceOverrides);
+      Object.assign(services as BotServicesState, serviceOverrides);
     }
 
     const serviceBundle = createTradingBotServiceBundle(services);

@@ -46,6 +46,7 @@ Deliverables for this session:
 - BotServicesAdapter source contract expanded to include web API read services + logger; adapter now passes logger/webApiServices explicitly to avoid logger type mismatch.
 - Pattern recognition service/tests updated to use `SwingPointType` enum and index field.
 - Test fixes: bot-initializer config completed (exchange/trading/indicators/risk/logging/entryConfig), event handlers ctor typing + side literals, integration TP/OrderType enums, smoke tests SignalDirection checks, position validator mock usage, error context typing.
+- BotFactory main flow now uses `buildBotServices` directly (reduces BotServices class dependency in core create path).
 
 ## Next Session Start
 - Continue: reduce `BotServices` to thin adapter (REFACTOR_PLAN Step 1 remaining).

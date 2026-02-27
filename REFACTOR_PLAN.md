@@ -175,6 +175,7 @@
 - [x] BotServices service fields made non-readonly to allow helper-based initialization
 - [x] BotServices builder introduced; construction moved to builder with thin wrapper class
 - [x] BotServices fields restored to readonly with builder-based assignment
+- [x] BotFactory uses builder-based services (no BotServices class dependency in core create flow)
 - [x] Entry point scaffolds created (cli/core/web)
 - [x] Workspaces scaffolding added (packages/contracts, packages/core)
 - [x] Types modularization started (domain folders + re-export)
