@@ -31,6 +31,7 @@ export * from './reality-check.service'; // Tracks when bot logic was right but 
 export * from './bot-factory.service'; // DI container for creating BotServices state
 export * from './bot-services'; // DI container for all services
 export * from './bot-services-adapter'; // Maps BotServices to narrow bundles
+export * from './lifecycle-manager.service';
 export * from './bot-initializer'; // Manages bot lifecycle
 
 // Phase 14.2: Resilience Patterns (Production Hardening)

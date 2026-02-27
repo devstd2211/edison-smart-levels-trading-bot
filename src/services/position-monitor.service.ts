@@ -13,6 +13,7 @@ import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS, POSITION_MONITOR_INTERVAL_MS } f
  */
 
 import { EventEmitter } from 'events';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 import type { IExchange } from '../interfaces/IExchange';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { Position, PositionSide, RiskManagementConfig, LoggerService } from '../types/legacy';
@@ -39,7 +40,7 @@ const POSITION_SIZE_ZERO = INTEGER_MULTIPLIERS.ZERO;
 // POSITION MONITOR SERVICE
 // ============================================================================
 
-export class PositionMonitorService extends EventEmitter {
+export class PositionMonitorService extends EventEmitter implements ILifecycle {
   private monitorInterval: NodeJS.Timeout | null = null;
   private deepSyncInterval: NodeJS.Timeout | null = null;
   private isMonitoring: boolean = false;

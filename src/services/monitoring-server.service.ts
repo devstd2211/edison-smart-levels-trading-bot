@@ -14,6 +14,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { Server } from 'http';
 import { LoggerService } from './logger.service';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import type {
   IMonitoringHealthReader,
@@ -39,7 +40,7 @@ export interface MonitoringServerConfig {
 // SERVICE
 // ============================================================================
 
-export class MonitoringServer {
+export class MonitoringServer implements ILifecycle {
   private app?: Express;
   private server?: Server;
   private readonly port: number;

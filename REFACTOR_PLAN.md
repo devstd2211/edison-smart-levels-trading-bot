@@ -179,6 +179,8 @@
 - [x] BotFactory DI service returns builder state; legacy IBotServices export removed
 - [x] BotFactory createServices now returns builder state (no BotServices class dependency)
 - [x] BotFactory service docs/tests aligned to builder-based DI
+- [x] Lifecycle groundwork added (ILifecycle + LifecycleManager)
+- [x] ILifecycle implemented for websocket/monitoring services (start/stop wrappers)
 - [x] Entry point scaffolds created (cli/core/web)
 - [x] Workspaces scaffolding added (packages/contracts, packages/core)
 - [x] Types modularization started (domain folders + re-export)

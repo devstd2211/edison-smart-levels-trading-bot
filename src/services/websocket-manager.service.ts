@@ -16,6 +16,7 @@ import { TIMING_CONSTANTS } from '../constants/technical.constants';
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 import {
   ExchangeConfig,
   Position,
@@ -78,7 +79,7 @@ export interface OrderUpdateEvent {
 // WEBSOCKET MANAGER SERVICE
 // ============================================================================
 
-export class WebSocketManagerService extends EventEmitter {
+export class WebSocketManagerService extends EventEmitter implements ILifecycle {
   private ws: WebSocket | null = null;
   private reconnectAttempts: number = 0;
   private isConnecting: boolean = false;
@@ -276,6 +277,14 @@ export class WebSocketManagerService extends EventEmitter {
         context: 'WebSocketManager.disconnect',
       });
     }
+  }
+
+  start(): Promise<void> {
+    return this.connect();
+  }
+
+  stop(): Promise<void> {
+    return this.disconnect();
   }
 
   /**

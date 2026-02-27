@@ -51,6 +51,8 @@ Deliverables for this session:
 - BotFactory `createServices` now returns builder state (no BotServices class dependency).
 - BotFactory service/tests/docs updated to reflect builder-based DI (no BotServices constructor dependency).
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
+- Lifecycle groundwork added: `ILifecycle` interface and `LifecycleManager` service.
+- ILifecycle implemented for WebSocketManagerService, PublicWebSocketService, PositionMonitorService, MonitoringServer (start/stop wrappers where needed).
 
 ## Next Session Start
 - Continue: reduce `BotServices` to thin adapter (REFACTOR_PLAN Step 1 remaining).

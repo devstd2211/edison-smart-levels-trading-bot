@@ -13,6 +13,7 @@
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 import { Candle, ExchangeConfig, TimeframeRole, LoggerService, KlineData, OrderbookData, TradeData } from '../types/legacy';
 import { TimeframeProvider } from '../providers/timeframe.provider';
 import { TIMING_CONSTANTS } from '../constants/technical.constants';
@@ -34,7 +35,7 @@ const MAX_RECONNECT_ATTEMPTS = TIMING_CONSTANTS.MAX_RECONNECT_ATTEMPTS;
 // PUBLIC WEBSOCKET SERVICE
 // ============================================================================
 
-export class PublicWebSocketService extends EventEmitter {
+export class PublicWebSocketService extends EventEmitter implements ILifecycle {
   private ws: WebSocket | null = null;
   private pingInterval: NodeJS.Timeout | null = null;
   private reconnectAttempts: number = 0;
@@ -164,6 +165,14 @@ export class PublicWebSocketService extends EventEmitter {
         });
       }
     }
+  }
+
+  start(): void {
+    this.connect();
+  }
+
+  stop(): void {
+    this.disconnect();
   }
 
   /**
