@@ -51,9 +51,10 @@ export interface VirtualBalanceState {
 
 export class VirtualBalanceService {
   private statePath: string;
-  private state: VirtualBalanceState;
+  private state: VirtualBalanceState | null = null;
   private lastSyncAttempt = 0;
   private syncFailureCount = 0;
+  private initialized = false;
 
   constructor(
     private logger: LoggerService,
@@ -70,7 +71,23 @@ export class VirtualBalanceService {
     }
 
     this.statePath = path.join(this.dataDir, 'virtual-balance.json');
+  }
+
+  /**
+   * Start service initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
     this.state = this.loadState();
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      this.start();
+    }
   }
 
   /**
@@ -210,44 +227,50 @@ export class VirtualBalanceService {
    * Get current virtual balance
    */
   getCurrentBalance(): number {
-    return this.state.currentBalance;
+    this.ensureInitialized();
+    return this.state!.currentBalance;
   }
 
   /**
    * Get base deposit
    */
   getBaseDeposit(): number {
-    return this.state.baseDeposit;
+    this.ensureInitialized();
+    return this.state!.baseDeposit;
   }
 
   /**
    * Get total profit (current - base)
    */
   getTotalProfit(): number {
-    return this.state.totalProfit;
+    this.ensureInitialized();
+    return this.state!.totalProfit;
   }
 
   /**
    * Get profit percentage
    */
   getProfitPercent(): number {
-    if (this.state.baseDeposit === 0) {
+    this.ensureInitialized();
+    if (this.state!.baseDeposit === 0) {
       return 0;
     }
-    return (this.state.totalProfit / this.state.baseDeposit) * PERCENT_MULTIPLIER;
+    return (this.state!.totalProfit / this.state!.baseDeposit) * PERCENT_MULTIPLIER;
   }
 
   /**
    * Get complete state
    */
   getState(): VirtualBalanceState {
-    return { ...this.state };
+    this.ensureInitialized();
+    return { ...this.state! };
   }
 
   /**
    * Update balance after trade (SKIP on logging errors, THROW on validation)
    */
   updateBalance(pnl: number, tradeId: string): void {
+    this.ensureInitialized();
     // Validate input (THROW on invalid)
     if (!tradeId || typeof tradeId !== 'string') {
       throw new ValidationError('Invalid trade ID', {
@@ -256,23 +279,23 @@ export class VirtualBalanceService {
       });
     }
 
-    const oldBalance = this.state.currentBalance;
+    const oldBalance = this.state!.currentBalance;
 
-    this.state.currentBalance += pnl;
-    this.state.lastUpdated = Date.now();
-    this.state.totalTrades++;
-    this.state.lastTradeId = tradeId;
-    this.state.totalProfit = this.state.currentBalance - this.state.baseDeposit;
+    this.state!.currentBalance += pnl;
+    this.state!.lastUpdated = Date.now();
+    this.state!.totalTrades++;
+    this.state!.lastTradeId = tradeId;
+    this.state!.totalProfit = this.state!.currentBalance - this.state!.baseDeposit;
 
     // Update all-time highs/lows
-    if (this.state.currentBalance > this.state.allTimeHigh) {
-      this.state.allTimeHigh = this.state.currentBalance;
+    if (this.state!.currentBalance > this.state!.allTimeHigh) {
+      this.state!.allTimeHigh = this.state!.currentBalance;
     }
-    if (this.state.currentBalance < this.state.allTimeLow) {
-      this.state.allTimeLow = this.state.currentBalance;
+    if (this.state!.currentBalance < this.state!.allTimeLow) {
+      this.state!.allTimeLow = this.state!.currentBalance;
     }
 
-    this.saveState(this.state);
+    this.saveState(this.state!);
 
     // SKIP: Logging errors don't block balance update
     try {
@@ -282,8 +305,8 @@ export class VirtualBalanceService {
         tradeId,
         pnl: pnl.toFixed(DECIMAL_PLACES.PERCENT),
         oldBalance: oldBalance.toFixed(DECIMAL_PLACES.PERCENT),
-        newBalance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-        profit: this.state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
+        newBalance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+        profit: this.state!.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
         profitPercent: this.getProfitPercent().toFixed(DECIMAL_PLACES.PERCENT) + '%',
       });
     } catch (error: unknown) {
@@ -302,6 +325,7 @@ export class VirtualBalanceService {
    * Reset balance to base deposit (with validation - THROW on error)
    */
   reset(newBaseDeposit?: number): void {
+    this.ensureInitialized();
     const deposit = newBaseDeposit !== undefined ? newBaseDeposit : this.baseDeposit;
 
     // Validate (THROW on invalid)
@@ -312,16 +336,16 @@ export class VirtualBalanceService {
       });
     }
 
-    this.state.currentBalance = deposit;
-    this.state.baseDeposit = deposit;
-    this.state.lastUpdated = Date.now();
-    this.state.totalTrades = 0;
-    this.state.lastTradeId = '';
-    this.state.totalProfit = 0;
-    this.state.allTimeHigh = deposit;
-    this.state.allTimeLow = deposit;
+    this.state!.currentBalance = deposit;
+    this.state!.baseDeposit = deposit;
+    this.state!.lastUpdated = Date.now();
+    this.state!.totalTrades = 0;
+    this.state!.lastTradeId = '';
+    this.state!.totalProfit = 0;
+    this.state!.allTimeHigh = deposit;
+    this.state!.allTimeLow = deposit;
 
-    this.saveState(this.state);
+    this.saveState(this.state!);
 
     this.logger.warn('⚠️ Virtual balance RESET', {
       balance: deposit.toFixed(DECIMAL_PLACES.PERCENT),
@@ -333,8 +357,9 @@ export class VirtualBalanceService {
    * Useful for fixing inconsistencies (with GRACEFUL_DEGRADE)
    */
   async syncFromHistory(trades: Array<{ id: string; netPnl: number }>): Promise<void> {
+    this.ensureInitialized();
     const performSync = async () => {
-      let calculatedBalance = this.state.baseDeposit;
+      let calculatedBalance = this.state!.baseDeposit;
       let lastTradeId = '';
 
       for (const trade of trades) {
@@ -347,40 +372,40 @@ export class VirtualBalanceService {
 
     try {
       const { calculatedBalance, lastTradeId } = await performSync();
-      const diff = Math.abs(calculatedBalance - this.state.currentBalance);
+      const diff = Math.abs(calculatedBalance - this.state!.currentBalance);
 
       if (diff > 0.01) {
         // Threshold for floating point errors
         this.logger.warn('⚠️ Balance mismatch detected, syncing from history', {
-          currentBalance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+          currentBalance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
           calculatedBalance: calculatedBalance.toFixed(DECIMAL_PLACES.PERCENT),
           difference: diff.toFixed(DECIMAL_PLACES.PERCENT),
         });
 
-        this.state.currentBalance = calculatedBalance;
-        this.state.totalProfit = calculatedBalance - this.state.baseDeposit;
-        this.state.totalTrades = trades.length;
-        this.state.lastTradeId = lastTradeId;
-        this.state.lastUpdated = Date.now();
+        this.state!.currentBalance = calculatedBalance;
+        this.state!.totalProfit = calculatedBalance - this.state!.baseDeposit;
+        this.state!.totalTrades = trades.length;
+        this.state!.lastTradeId = lastTradeId;
+        this.state!.lastUpdated = Date.now();
 
         // Update all-time highs/lows
-        if (calculatedBalance > this.state.allTimeHigh) {
-          this.state.allTimeHigh = calculatedBalance;
+        if (calculatedBalance > this.state!.allTimeHigh) {
+          this.state!.allTimeHigh = calculatedBalance;
         }
-        if (calculatedBalance < this.state.allTimeLow) {
-          this.state.allTimeLow = calculatedBalance;
+        if (calculatedBalance < this.state!.allTimeLow) {
+          this.state!.allTimeLow = calculatedBalance;
         }
 
-        this.saveState(this.state);
+        this.saveState(this.state!);
 
         this.logger.info('✅ Virtual balance synced from history', {
-          balance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
-          profit: this.state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
-          trades: this.state.totalTrades,
+          balance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+          profit: this.state!.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
+          trades: this.state!.totalTrades,
         });
       } else {
         this.logger.debug('✅ Virtual balance in sync with history', {
-          balance: this.state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
+          balance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
         });
       }
 
@@ -396,7 +421,7 @@ export class VirtualBalanceService {
           this.logger.warn('⚠️ Virtual balance sync failed (degraded mode)', {
             error: err.message,
             failureCount: this.syncFailureCount,
-            balance: this.state.currentBalance,
+            balance: this.state!.currentBalance,
           });
         },
       });

@@ -31,6 +31,7 @@ export class TradingJournalService {
   private trades: Map<string, TradeRecord> = new Map();
   private readonly journalPath: string;
   private readonly dataDir: string;
+  private initialized = false;
 
   // NEW: Permanent storage and virtual balance
   private tradeHistory?: TradeHistoryService;
@@ -47,6 +48,16 @@ export class TradingJournalService {
   ) {
     this.dataDir = dataPath || path.join(process.cwd(), DATA_DIR);
     this.journalPath = path.join(this.dataDir, JOURNAL_FILE);
+  }
+
+  /**
+   * Start service initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
 
     // Create directory if not exists
     if (!fs.existsSync(this.dataDir)) {
@@ -54,12 +65,19 @@ export class TradingJournalService {
     }
 
     // Initialize trade history (permanent CSV)
-    if (tradeHistoryConfig?.enabled) {
-      this.tradeHistory = new TradeHistoryService(logger, tradeHistoryConfig.dataDir || this.dataDir);
+    if (this.tradeHistoryConfig?.enabled) {
+      this.tradeHistory = new TradeHistoryService(this.logger, this.tradeHistoryConfig.dataDir || this.dataDir);
+      this.tradeHistory.start();
 
       // Initialize virtual balance (Phase 8.9.43: with ErrorHandler)
-      if (baseDeposit && baseDeposit > 0 && errorHandler) {
-        this.virtualBalance = new VirtualBalanceService(logger, errorHandler, baseDeposit, tradeHistoryConfig.dataDir || this.dataDir);
+      if (this.baseDeposit && this.baseDeposit > 0 && this.errorHandler) {
+        this.virtualBalance = new VirtualBalanceService(
+          this.logger,
+          this.errorHandler,
+          this.baseDeposit,
+          this.tradeHistoryConfig.dataDir || this.dataDir,
+        );
+        this.virtualBalance.start();
 
         // Sync virtual balance from history on startup
         this.syncVirtualBalanceAsync();
@@ -68,6 +86,12 @@ export class TradingJournalService {
 
     // Load existing journal
     this.loadJournal();
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      this.start();
+    }
   }
 
   /**
@@ -219,6 +243,7 @@ export class TradingJournalService {
     leverage: number;
     entryCondition: EntryCondition;
   }): void {
+    this.ensureInitialized();
     // Validation: Empty trade ID
     if (!params.id || params.id.length === 0) {
       throw new TradeRecordValidationError('Trade ID is required', {
@@ -296,6 +321,7 @@ export class TradingJournalService {
     exitCondition: ExitCondition;
     realizedPnL: number;
   }): { rollback: () => void } {
+    this.ensureInitialized();
     const trade = this.trades.get(params.id);
 
     if (trade === undefined) {
@@ -467,6 +493,7 @@ export class TradingJournalService {
    * Get trade by ID
    */
   getTrade(id: string): TradeRecord | undefined {
+    this.ensureInitialized();
     return this.trades.get(id);
   }
 
@@ -475,6 +502,7 @@ export class TradingJournalService {
    * Phase 6.2: Uses repository if available, fallback to in-memory Map
    */
   getAllTrades(): TradeRecord[] {
+    this.ensureInitialized();
     // For now, return from in-memory Map (repository is async, we're sync)
     // Repository sync happens in background when trades are recorded
     if (this.journalRepository) {
@@ -487,6 +515,7 @@ export class TradingJournalService {
    * Get open trades
    */
   getOpenTrades(): TradeRecord[] {
+    this.ensureInitialized();
     return this.getAllTrades().filter((t) => t.status === 'OPEN');
   }
 
@@ -495,6 +524,7 @@ export class TradingJournalService {
    * Used for restoring position state from WebSocket
    */
   getOpenPositionBySymbol(symbol: string): TradeRecord | undefined {
+    this.ensureInitialized();
     return this.getOpenTrades().find((t) => t.symbol === symbol);
   }
 
@@ -502,6 +532,7 @@ export class TradingJournalService {
    * Get closed trades
    */
   getClosedTrades(): TradeRecord[] {
+    this.ensureInitialized();
     return this.getAllTrades().filter((t) => t.status === 'CLOSED');
   }
 
@@ -518,7 +549,8 @@ export class TradingJournalService {
     averagePnL: number;
     winRate: number;
     averageHoldingTimeMinutes: number;
-    } {
+  } {
+    this.ensureInitialized();
     const closed = this.getClosedTrades();
     const winning = closed.filter((t) => t.realizedPnL && t.realizedPnL > 0);
     const losing = closed.filter((t) => t.realizedPnL && t.realizedPnL <= 0);
@@ -565,6 +597,7 @@ export class TradingJournalService {
    * Get virtual balance (for compound interest calculation)
    */
   getVirtualBalance(): number {
+    this.ensureInitialized();
     return this.virtualBalance?.getCurrentBalance() || 0;
   }
 
@@ -572,6 +605,7 @@ export class TradingJournalService {
    * Get virtual balance service (for external access)
    */
   getVirtualBalanceService(): VirtualBalanceService | undefined {
+    this.ensureInitialized();
     return this.virtualBalance;
   }
 
@@ -580,6 +614,7 @@ export class TradingJournalService {
    * Strategy: GRACEFUL_DEGRADE for CSV export (non-critical operation)
    */
   exportToCSV(outputPath?: string): void {
+    this.ensureInitialized();
     const csvPath = outputPath || path.join(this.dataDir, CSV_FILE);
 
     try {
@@ -716,6 +751,7 @@ export class TradingJournalService {
    * Clear all trades (for testing)
    */
   clear(): void {
+    this.ensureInitialized();
     this.trades.clear();
     this.saveJournal();
   }

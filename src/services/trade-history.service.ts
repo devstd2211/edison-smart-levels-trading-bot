@@ -92,6 +92,7 @@ export class TradeHistoryService {
   private schemaPath: string;
   private currentSchema: string[] = [];
   private errorHandler?: ErrorHandler;
+  private initialized = false;
 
   constructor(
     private logger: LoggerService,
@@ -101,7 +102,23 @@ export class TradeHistoryService {
     this.csvPath = path.join(this.dataDir, 'trade-history.csv');
     this.schemaPath = path.join(this.dataDir, 'csv-schema.json');
     this.errorHandler = errorHandler;
+  }
+
+  /**
+   * Start service initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
     this.initialize();
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      this.start();
+    }
   }
 
   /**
@@ -300,6 +317,7 @@ export class TradeHistoryService {
    * Append trade with dynamic fields with RETRY strategy for write errors
    */
   async appendTrade(record: TradeRecord): Promise<void> {
+    this.ensureInitialized();
     // Define the append operation
     const appendOperation = async () => {
       // Detect new fields in this record
@@ -402,6 +420,7 @@ export class TradeHistoryService {
    * Read all trades with dynamic schema with GRACEFUL_DEGRADE strategy
    */
   async readAllTrades(): Promise<TradeRecord[]> {
+    this.ensureInitialized();
     const readOperation = async (): Promise<TradeRecord[]> => {
       const content = fs.readFileSync(this.csvPath, 'utf-8');
       const lines = content.split('\n').filter(Boolean);
@@ -538,6 +557,7 @@ export class TradeHistoryService {
    * Get current schema
    */
   getCurrentSchema(): string[] {
+    this.ensureInitialized();
     return [...this.currentSchema];
   }
 
@@ -545,6 +565,7 @@ export class TradeHistoryService {
    * Get total number of trades
    */
   async getTotalTrades(): Promise<number> {
+    this.ensureInitialized();
     try {
       const content = fs.readFileSync(this.csvPath, 'utf-8');
       const lines = content.split('\n').filter(Boolean);
@@ -565,6 +586,7 @@ export class TradeHistoryService {
     byStrategy: { [key: string]: number };
     bySession: { [key: string]: number };
   }> {
+    this.ensureInitialized();
     const defaultStats = {
       totalTrades: 0,
       totalPnL: 0,
@@ -630,6 +652,7 @@ export class TradeHistoryService {
    * Get statistics grouped by custom field with GRACEFUL_DEGRADE strategy
    */
   async getStatisticsByField(fieldName: string): Promise<{ [key: string]: number }> {
+    this.ensureInitialized();
     const statsOperation = async () => {
       const trades = await this.readAllTrades();
       const stats: { [key: string]: number } = {};
