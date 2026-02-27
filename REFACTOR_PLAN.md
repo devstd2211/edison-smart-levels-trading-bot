@@ -294,15 +294,16 @@
 - [x] Constructor logging removed in limit-order executor, binance adapter, multi-timeframe trend, strategy cache, exit handler, scalping strategies
 - [x] Constructor side effects removed for BotEventEmitter, GracefulShutdownManager, SQLite backtest providers
 - [x] Constructor side effects removed for RealTimeRiskMonitor, JournalFileRepository, WorkerPool, BacktestEngineV5
-- [ ] Side effects removed from constructors (remaining cleanup)
+- [x] Side effects removed from constructors (remaining cleanup)
 - [x] Audit complete: no remaining constructor side effects found (timers/subscriptions/IO)
+- [x] Constructor re-scan (timers/subscriptions/IO heuristics) found no remaining side effects
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes
 
 **Next Iteration Plan**
-1. Audit remaining constructors for non-log side effects (timers, subscriptions, IO) and move into `start()/stop()`.
-2. Verify builders/factories are side-effect free; ensure `BotInitializer` owns lifecycle sequencing.
-3. Once lifecycle cleanup is complete, return to DI Step 1 to reduce `BotServices` to a thin adapter.
+1. Complete DI Step 1: reduce `BotServices` to a thin adapter (grouped containers as primary wiring).
+2. Verify builders/factories are side-effect free; keep lifecycle sequencing in `BotInitializer`.
+3. If regressions appear, revisit lifecycle cleanup.
 
 ### Complexity + Risk
 - **Complexity:** Medium

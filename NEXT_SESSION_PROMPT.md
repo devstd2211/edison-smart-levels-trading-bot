@@ -59,12 +59,13 @@ Deliverables for this session:
 - Constructor side effects moved out for BotEventEmitter (bridge subscriptions), GracefulShutdownManager (state dir), and SQLite backtest providers (fs auto-detect).
 - Constructor side effects moved out for RealTimeRiskMonitor (event subscription), JournalFileRepository (fs load/dir), WorkerPool (worker init), and BacktestEngineV5 (strategy file IO).
 - Audit complete: no remaining constructor side effects found (timers/subscriptions/IO).
+- Re-scan of constructors (timers/subscriptions/IO heuristics) found no remaining side effects.
 
 ## Next Session Start
-- Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.
-- Return to DI Step 1: reduce `BotServices` to thin adapter once lifecycle is stable.
+- Return to DI Step 1: reduce `BotServices` to thin adapter once lifecycle work is stable.
+- Verify builders/factories remain side-effect free as DI is simplified.
 
 ## Next Iteration Plan (2026-02-27 end)
-1. Audit remaining constructors for non-log side effects (timers, subscriptions, IO) and move into explicit `start()/stop()`.
-2. Identify any services still starting work in builders/factories and relocate to `BotInitializer` lifecycle sequencing.
-3. After lifecycle cleanup is complete, return to DI Step 1 to reduce `BotServices` to a thin adapter.
+1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).
+2. Verify builders/factories are side-effect free; keep lifecycle sequencing in `BotInitializer`.
+3. Only if regressions appear, revisit lifecycle cleanup.
