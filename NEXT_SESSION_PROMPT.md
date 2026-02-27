@@ -60,3 +60,8 @@ Deliverables for this session:
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.
 - Return to DI Step 1: reduce `BotServices` to thin adapter once lifecycle is stable.
+
+## Next Iteration Plan (2026-02-27 end)
+1. Audit remaining constructors for non-log side effects (timers, subscriptions, IO) and move into explicit `start()/stop()`.
+2. Identify any services still starting work in builders/factories and relocate to `BotInitializer` lifecycle sequencing.
+3. After lifecycle cleanup is complete, return to DI Step 1 to reduce `BotServices` to a thin adapter.

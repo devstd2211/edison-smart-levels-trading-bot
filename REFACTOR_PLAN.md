@@ -296,6 +296,11 @@
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes
 
+**Next Iteration Plan**
+1. Audit remaining constructors for non-log side effects (timers, subscriptions, IO) and move into `start()/stop()`.
+2. Verify builders/factories are side-effect free; ensure `BotInitializer` owns lifecycle sequencing.
+3. Once lifecycle cleanup is complete, return to DI Step 1 to reduce `BotServices` to a thin adapter.
+
 ### Complexity + Risk
 - **Complexity:** Medium
 - **Risk:** Medium (timing/order changes)
