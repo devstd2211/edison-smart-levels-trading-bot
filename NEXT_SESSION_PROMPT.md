@@ -46,6 +46,9 @@ Deliverables for this session:
 - BotInitializer tests updated to expect start/stop instead of connect/disconnect.
 - TradingOrchestrator constructor side effects moved into `start()` with `stop()` for snapshot gate.
 - BotInitializer now starts TradingOrchestrator during initialize (before websockets).
+- AdvancedOrderStateMachineService timeout checker moved into `start()`/`stop()`.
+- BulkheadService queue checker moved into `start()`/`stop()`.
+- BotInitializer now starts Bulkhead and OrderStateMachine (when enabled).
 
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.

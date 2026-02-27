@@ -92,8 +92,14 @@ export class BotInitializer {
     if (this.services.resilienceServices?.retryPolicy) {
       this.registerLifecycleService(this.services.resilienceServices.retryPolicy);
     }
+    if (this.services.resilienceServices?.bulkhead) {
+      this.registerLifecycleService(this.services.resilienceServices.bulkhead);
+    }
     if (this.services.executionServices?.tradingOrchestrator) {
       this.registerLifecycleService(this.services.executionServices.tradingOrchestrator);
+    }
+    if (this.services.executionServices?.orderStateMachine) {
+      this.registerLifecycleService(this.services.executionServices.orderStateMachine);
     }
   }
 
@@ -214,8 +220,8 @@ export class BotInitializer {
         await this.initializeBtcCandles();
       }
 
-      // Phase 4.6: Start trading orchestrator (load indicators/analyzers)
-      await this.startTradingOrchestrator();
+      // Phase 4.6: Start execution services (orchestrator, order state machine)
+      await this.startExecutionServices();
 
       // Phase 4.7: Start monitoring services (dashboard/metrics)
       await this.startMonitoringServices();
@@ -889,20 +895,31 @@ export class BotInitializer {
 
     await startService(resilience.rateLimiter, 'rate limiter');
     await startService(resilience.retryPolicy, 'retry policy');
+    await startService(resilience.bulkhead, 'bulkhead');
   }
 
-  private async startTradingOrchestrator(): Promise<void> {
-    const orchestrator = this.services.executionServices?.tradingOrchestrator;
-    if (!this.isLifecycleService(orchestrator)) {
-      return;
+  private async startExecutionServices(): Promise<void> {
+    const { tradingOrchestrator, orderStateMachine } = this.services.executionServices;
+
+    if (this.isLifecycleService(tradingOrchestrator)) {
+      try {
+        await tradingOrchestrator.start();
+      } catch (error) {
+        this.logger.error('Failed to start trading orchestrator', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
     }
-    try {
-      await orchestrator.start();
-    } catch (error) {
-      this.logger.error('Failed to start trading orchestrator', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
+
+    if (this.isLifecycleService(orderStateMachine)) {
+      try {
+        await orderStateMachine.start();
+      } catch (error) {
+        this.logger.error('Failed to start order state machine', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 

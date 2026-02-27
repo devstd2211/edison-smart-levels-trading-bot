@@ -12,6 +12,7 @@
  */
 
 import { LoggerService } from '../../types/legacy';
+import type { ILifecycle } from '../../interfaces/ILifecycle';
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
@@ -94,9 +95,10 @@ export class BulkheadTimeoutError extends Error {
 // SERVICE
 // ============================================================================
 
-export class BulkheadService {
+export class BulkheadService implements ILifecycle {
   private readonly pools = new Map<string, ResourcePool>();
-  private readonly queueCheckInterval?: NodeJS.Timeout;
+  private queueCheckInterval?: NodeJS.Timeout;
+  private started = false;
 
   constructor(
     private readonly defaultConfig?: Partial<BulkheadConfig>,
@@ -113,9 +115,6 @@ export class BulkheadService {
     if (defaultConfig?.timeoutMs !== undefined && defaultConfig.timeoutMs < 0) {
       throw new Error('timeoutMs must be non-negative');
     }
-
-    // Start queue timeout checker
-    this.startQueueChecker();
 
     this.safeLog('info', 'BulkheadService initialized', { defaultConfig });
   }
@@ -216,13 +215,26 @@ export class BulkheadService {
   }
 
   /**
+   * Start queue checker
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.startQueueChecker();
+  }
+
+  /**
    * Stop queue checker (for cleanup)
    */
   stop(): void {
     if (this.queueCheckInterval) {
       clearInterval(this.queueCheckInterval);
+      this.queueCheckInterval = undefined;
       this.safeLog('info', 'BulkheadService stopped');
     }
+    this.started = false;
 
     // Clean up all pools
     for (const poolName of this.pools.keys()) {
@@ -422,7 +434,7 @@ export class BulkheadService {
       interval.unref();
     }
 
-    (this as any).queueCheckInterval = interval;
+    this.queueCheckInterval = interval;
   }
 
   private safeLog(level: 'info' | 'warn' | 'error' | 'debug', message: string, meta?: unknown): void {

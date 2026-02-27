@@ -14,6 +14,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 import {
   OrderState,
   DEFAULT_ORDER_TIMEOUT_MS,
@@ -99,10 +100,11 @@ export interface StateMachineStats {
 // SERVICE
 // ============================================================================
 
-export class AdvancedOrderStateMachineService {
+export class AdvancedOrderStateMachineService implements ILifecycle {
   private readonly stateMachines: Map<string, OrderStateMachine> = new Map();
   private readonly locks: Map<string, boolean> = new Map();
   private timeoutCheckInterval?: NodeJS.Timeout;
+  private started = false;
   private stats: StateMachineStats = {
     totalTransitions: 0,
     averageTransitionTime: 0,
@@ -116,7 +118,31 @@ export class AdvancedOrderStateMachineService {
     private readonly errorHandler?: ErrorHandler
   ) {
     this.safeLog('AdvancedOrderStateMachineService initialized');
+  }
+
+  /**
+   * Start background timeout checker
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
     this.startTimeoutChecker();
+  }
+
+  /**
+   * Stop background timeout checker
+   */
+  stop(): void {
+    if (!this.started) {
+      return;
+    }
+    if (this.timeoutCheckInterval) {
+      clearInterval(this.timeoutCheckInterval);
+      this.timeoutCheckInterval = undefined;
+    }
+    this.started = false;
   }
 
   // ============================================================================
@@ -556,10 +582,7 @@ export class AdvancedOrderStateMachineService {
    * Cleanup service (stop timeout checker)
    */
   cleanup(): void {
-    if (this.timeoutCheckInterval) {
-      clearInterval(this.timeoutCheckInterval);
-      this.timeoutCheckInterval = undefined;
-    }
+    this.stop();
     this.stateMachines.clear();
     this.locks.clear();
     this.safeLog('AdvancedOrderStateMachineService cleaned up');

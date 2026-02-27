@@ -282,6 +282,9 @@
 - [x] MTFSnapshotGate cleanup interval moved to explicit start/stop
 - [x] TradingOrchestrator constructor side effects moved to explicit start/stop
 - [x] BotInitializer now starts TradingOrchestrator during initialize
+- [x] AdvancedOrderStateMachineService timeout checker moved to explicit start/stop
+- [x] BulkheadService queue checker moved to explicit start/stop
+- [x] BotInitializer now starts Bulkhead/OrderStateMachine (when enabled)
 - [ ] Side effects removed from constructors (remaining cleanup)
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes

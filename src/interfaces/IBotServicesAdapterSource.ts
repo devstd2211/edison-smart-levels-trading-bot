@@ -23,6 +23,7 @@ import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 import type { IWebApiWallTracker } from './IWebApiServices';
 import type { RateLimiterService } from '../services/resilience/rate-limiter.service';
 import type { RetryPolicyService } from '../services/resilience/retry-policy.service';
+import type { BulkheadService } from '../services/resilience/bulkhead.service';
 
 export interface IBotServicesAdapterSource {
   logger: LoggerService;
@@ -30,7 +31,7 @@ export interface IBotServicesAdapterSource {
   monitoringServices: IMonitoringReadServices;
   executionServices: Pick<
     IExecutionServices,
-    'positionManager' | 'tradingOrchestrator' | 'positionMonitor' | 'positionExitingService'
+    'positionManager' | 'tradingOrchestrator' | 'positionMonitor' | 'positionExitingService' | 'orderStateMachine'
   >;
   marketDataServices: Pick<
     IMarketDataServices,
@@ -72,4 +73,5 @@ export interface IBotServicesAdapterSource {
   strategyOrchestrator?: StrategyOrchestratorService;
   rateLimiter?: RateLimiterService;
   retryPolicy?: RetryPolicyService;
+  bulkhead?: BulkheadService;
 }

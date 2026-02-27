@@ -44,6 +44,7 @@ export const createTradingBotServiceBundle = (
     resilienceServices: {
       rateLimiter: services.rateLimiter,
       retryPolicy: services.retryPolicy,
+      bulkhead: services.bulkhead,
     },
 
     // IWebSocketEventHandlerServices

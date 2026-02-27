@@ -20,6 +20,7 @@ export interface IBotInitializerServices {
   resilienceServices?: {
     rateLimiter?: ILifecycle;
     retryPolicy?: ILifecycle;
+    bulkhead?: ILifecycle;
   };
   publicWebSocket: {
     connect(): void;
@@ -31,7 +32,10 @@ export interface IBotInitializerServices {
     syncWithWebSocket(position?: Position): void;
     getCurrentPosition(): Position | null;
   };
-  executionServices: Pick<IExecutionServices, 'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator'>;
+  executionServices: Pick<
+    IExecutionServices,
+    'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'orderStateMachine'
+  >;
   sessionStats: {
     startSession(config: Config, symbol: string): string;
     endSession(): void;
