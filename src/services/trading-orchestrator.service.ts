@@ -178,7 +178,7 @@ export class TradingOrchestrator {
 
   /**
    * Set the pre-calculation service for indicator caching
-   * Called by BotServices during initialization (Phase 0.2 Integration)
+   * Called by services builder during initialization (Phase 0.2 Integration)
    */
   setIndicatorPreCalculationService(preCalc: IndicatorPreCalculationService): void {
     this.indicatorPreCalc = preCalc;
@@ -187,7 +187,7 @@ export class TradingOrchestrator {
 
   /**
    * Log cache statistics (for monitoring)
-   * Can be called periodically by BotServices or bot.ts
+   * Can be called periodically by services or bot.ts
    */
   logCacheStats(): void {
     if (this.indicatorPreCalc && (this.indicatorPreCalc as any).cache) {
@@ -328,7 +328,7 @@ export class TradingOrchestrator {
 
   /**
    * Set the BTC candles store (used to access pre-loaded BTC candles)
-   * Called by BotServices after initialization
+   * Called by services after initialization
    */
   setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
     this.logger.info('🔗 BTC candles store linked to TradingOrchestrator');
@@ -336,7 +336,7 @@ export class TradingOrchestrator {
 
   /**
    * Initialize trend analysis from loaded candles
-   * Called by BotServices after candles are loaded
+   * Called by services after candles are loaded
    */
   async initializeTrendAnalysis(): Promise<void> {
     // Trend analysis is initialized by market data preparation on candle close

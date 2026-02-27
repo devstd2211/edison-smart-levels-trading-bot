@@ -2,7 +2,7 @@
  * IWebApiServices
  *
  * Narrow interface for BotWebAPI dependencies.
- * Keeps web adapter decoupled from the full BotServices container.
+ * Keeps web adapter decoupled from the full services state.
  */
 
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';

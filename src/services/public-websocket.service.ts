@@ -63,7 +63,7 @@ export class PublicWebSocketService extends EventEmitter {
 
   /**
    * Set the BTC candles store (used to update candles from WebSocket)
-   * Called by BotServices after initialization
+   * Called by services after initialization
    */
   setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
     this.btcCandlesStore = store;

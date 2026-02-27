@@ -1,7 +1,7 @@
 /**
- * Grouped service factory for BotServices.
+ * Grouped service factory for services state.
  *
- * Keeps grouped container wiring out of the BotServices constructor.
+ * Keeps grouped container wiring out of the services builder.
  */
 
 import { MarketDataServices } from './market-data-services';

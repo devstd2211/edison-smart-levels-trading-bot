@@ -2,7 +2,7 @@
  * IBotServicesAdapterSource
  *
  * Narrow input contract for BotServicesAdapter.
- * Avoids coupling to the concrete BotServices class.
+ * Avoids coupling to the concrete services class.
  */
 
 import type { Candle, Config } from '../types/legacy';

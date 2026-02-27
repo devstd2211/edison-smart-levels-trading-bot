@@ -1955,7 +1955,7 @@ export class BotFactoryConfigValidationError extends TradingError {
 
 /**
  * BotFactory service initialization error
- * Thrown when BotServices fails to initialize
+ * Thrown when service composition fails to initialize
  * Phase 8.9.41: Factory initialization
  */
 export class BotFactoryInitializationError extends TradingError {

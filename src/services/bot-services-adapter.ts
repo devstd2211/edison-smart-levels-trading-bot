@@ -1,7 +1,7 @@
 /**
  * BotServicesAdapter
  *
- * Maps the full BotServices container into the narrow bundles used by
+ * Maps the full services state into the narrow bundles used by
  * TradingBot, BotInitializer, and WebSocketEventHandlerManager.
  */
 

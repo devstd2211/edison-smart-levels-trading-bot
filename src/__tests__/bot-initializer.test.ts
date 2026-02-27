@@ -115,7 +115,7 @@ const createMinimalConfig = (): Config => ({
     strategy: {} as Config['strategy'],
   } as Config);
 
-// Create mock BotServices
+// Create mock services bundle
 const createMockBotServices = (): IBotInitializerServices => {
   const logger = createMockLogger();
 

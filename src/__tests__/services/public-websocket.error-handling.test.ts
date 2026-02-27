@@ -442,21 +442,21 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   // TEST GROUP 10: INTEGRATION WITH BOT SERVICES (2 tests)
   // =========================================================================
 
-  describe('Integration with BotServices', () => {
-    it('should accept ErrorHandler injected from BotServices', () => {
+  describe('Integration with service composition', () => {
+    it('should accept ErrorHandler injected from services builder', () => {
       const service = new PublicWebSocketService(
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
         mockLogger,
-        errorHandler, // ErrorHandler injected from BotServices
+        errorHandler, // ErrorHandler injected from services builder
       );
 
       expect(service).toBeDefined();
     });
 
-    it('should work with optional ErrorHandler parameter in BotServices flow', () => {
-      // Simulate BotServices creation without ErrorHandler (backward compat)
+    it('should work with optional ErrorHandler parameter in builder flow', () => {
+      // Simulate services creation without ErrorHandler (backward compat)
       const service1 = new PublicWebSocketService(
         mockConfig,
         'XRPUSDT',

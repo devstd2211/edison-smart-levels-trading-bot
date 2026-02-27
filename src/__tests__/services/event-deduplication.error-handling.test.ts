@@ -9,7 +9,7 @@
  * - Map iteration failures
  * - Logger failures (SKIP strategy)
  * - Backward compatibility (works without ErrorHandler)
- * - Integration with BotServices DI
+ * - Integration with services DI
  */
 
 import { EventDeduplicationService } from '../../services/event-deduplication.service';

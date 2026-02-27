@@ -477,7 +477,7 @@ export class StrategyOrchestratorService {
 
   /**
    * Set shared services for TradingOrchestrator creation
-   * Called by BotServices during initialization
+   * Called by services during initialization
    *
    * [Phase 10.3b] Dependency injection for shared infrastructure
    */

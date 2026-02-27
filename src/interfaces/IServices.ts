@@ -266,7 +266,7 @@ export interface ITradingOrchestratorService {
 
 /**
  * IBotServices - Complete service container interface (legacy)
- * Represents all services available in BotServices.
+ * Represents all services available in the services state.
  *
  * Deprecated: prefer grouped service interfaces (MarketData/Execution/etc).
  */

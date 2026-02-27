@@ -289,7 +289,7 @@ export class BotInitializer {
         await this.services.executionServices.tradingOrchestrator.initializeTrendAnalysis();
         this.logger.info('✅ TradingOrchestrator.initializeTrendAnalysis() returned');
       } else {
-        this.logger.error('🚨 CRITICAL: TradingOrchestrator not available in BotServices');
+        this.logger.error('🚨 CRITICAL: TradingOrchestrator not available in services bundle');
       }
     } catch (error) {
       this.logger.error('🚨 Exception during trend initialization after WebSocket', {
