@@ -57,7 +57,6 @@ export type {
   ITelegramService,
   ITimeService,
   ITradingOrchestratorService,
-  IBotServices,
 } from './IServices';
 
 export type {

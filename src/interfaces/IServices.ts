@@ -265,8 +265,10 @@ export interface ITradingOrchestratorService {
 // ============================================================================
 
 /**
- * IBotServices - Complete service container interface
- * Represents all services available in BotServices
+ * IBotServices - Complete service container interface (legacy)
+ * Represents all services available in BotServices.
+ *
+ * Deprecated: prefer grouped service interfaces (MarketData/Execution/etc).
  */
 export interface IBotServices {
   logger: LoggerService;

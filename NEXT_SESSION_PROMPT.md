@@ -47,6 +47,8 @@ Deliverables for this session:
 - Pattern recognition service/tests updated to use `SwingPointType` enum and index field.
 - Test fixes: bot-initializer config completed (exchange/trading/indicators/risk/logging/entryConfig), event handlers ctor typing + side literals, integration TP/OrderType enums, smoke tests SignalDirection checks, position validator mock usage, error context typing.
 - BotFactory main flow now uses `buildBotServices` directly (reduces BotServices class dependency in core create path).
+- BotFactory DI service (`services/bot-factory.service.ts`) now returns builder state; BotServices class dependency reduced.
+- Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
 
 ## Next Session Start
 - Continue: reduce `BotServices` to thin adapter (REFACTOR_PLAN Step 1 remaining).

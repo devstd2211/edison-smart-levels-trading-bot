@@ -6,7 +6,6 @@
  */
 
 import { BotFactory } from '../../services/bot-factory.service';
-import { BotServices } from '../../services/bot-services';
 import { Config } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -60,9 +59,10 @@ describe('BotFactory - DI Container for BotServices', () => {
   });
 
   describe('Basic Factory Operations', () => {
-    test('T1: Should create BotServices instance', () => {
+    test('T1: Should create services state', () => {
       const services = BotFactory.create(config);
-      expect(services).toBeInstanceOf(BotServices);
+      expect(services).toBeDefined();
+      expect(services.logger).toBeDefined();
     });
 
     test('T2: Should create multiple independent instances', () => {
@@ -156,14 +156,14 @@ describe('BotFactory - DI Container for BotServices', () => {
         bybitService: mockExchange as any,
       });
 
-      expect(services).toBeInstanceOf(BotServices);
+      expect(services).toBeDefined();
       expect(services.bybitService).toBe(mockExchange);
     });
 
     test('T10: createForTesting with empty options creates normal services', () => {
       const services = BotFactory.createForTesting(config);
 
-      expect(services).toBeInstanceOf(BotServices);
+      expect(services).toBeDefined();
       expect(services.logger).toBeDefined();
     });
   });

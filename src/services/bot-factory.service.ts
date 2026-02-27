@@ -31,7 +31,7 @@
 
 import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
-import { BotServices } from './bot-services';
+import { buildBotServices, type BotServicesState } from './bot-services.builder';
 import { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import {
@@ -60,7 +60,7 @@ export interface BotFactoryOptions {
 }
 
 /**
- * BotFactory - Creates BotServices with dependency injection
+ * BotFactory - Creates BotServices state with dependency injection
  */
 export class BotFactory {
   /**
@@ -259,9 +259,9 @@ export class BotFactory {
   static create(
     config: Config,
     options: BotFactoryOptions = {},
-  ): BotServices {
-    // Create BotServices normally
-    const services = new BotServices(config);
+  ): BotServicesState {
+    // Create services normally
+    const services = buildBotServices(config);
 
     // Apply any test overrides (SKIP strategy - non-blocking)
     if (options.bybitService) {
@@ -305,7 +305,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): BotServices {
+  ): BotServicesState {
     // THROW: Validate config first (fail fast on invalid config)
     try {
       this.validateConfig(config);
@@ -319,9 +319,9 @@ export class BotFactory {
     }
 
     // THROW: Try to create BotServices
-    let services: BotServices;
+    let services: BotServicesState;
     try {
-      services = new BotServices(config);
+      services = buildBotServices(config);
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Unknown initialization error';
@@ -384,7 +384,7 @@ export class BotFactory {
   static createForTesting(
     config: Config,
     mockServices: BotFactoryOptions = {},
-  ): BotServices {
+  ): BotServicesState {
     // Use createWithValidation to ensure config is valid for testing
     return this.createWithValidation(config, mockServices);
   }
@@ -405,7 +405,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): { success: true; services: BotServices } | { success: false; error: Error } {
+  ): { success: true; services: BotServicesState } | { success: false; error: Error } {
     try {
       const services = this.createWithValidation(config, options, logger);
       return { success: true, services };
