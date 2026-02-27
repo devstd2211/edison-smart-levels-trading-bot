@@ -180,6 +180,7 @@
 - [x] BotFactory createServices now returns builder state (no BotServices class dependency)
 - [x] BotFactory service docs/tests aligned to builder-based DI
 - [x] BotServices reduced to thin legacy wrapper (no container logic)
+- [x] BotServices export removed from services barrel (avoid new usage)
 - [x] Lifecycle groundwork added (ILifecycle + LifecycleManager)
 - [x] ILifecycle implemented for websocket/monitoring services (start/stop wrappers)
 - [x] Entry point scaffolds created (cli/core/web)
