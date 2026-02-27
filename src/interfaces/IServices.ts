@@ -260,46 +260,4 @@ export interface ITradingOrchestratorService {
   setBtcCandlesStore(store: unknown): void;
 }
 
-// ============================================================================
-// EXPORT TYPE
-// ============================================================================
-
-/**
- * IBotServices - Complete service container interface (legacy)
- * Represents all services available in the services state.
- *
- * Deprecated: prefer grouped service interfaces (MarketData/Execution/etc).
- */
-export interface IBotServices {
-  logger: LoggerService;
-  eventBus: unknown;
-  metrics: unknown;
-  telegram: ITelegramService;
-  timeService: ITimeService;
-  bybitService: IExchange;
-  timeframeProvider: unknown;
-  candleProvider: unknown;
-  indicatorCache: unknown;
-  indicatorPreCalc: unknown;
-  tradingOrchestrator: ITradingOrchestratorService;
-  strategyOrchestrator?: unknown;
-  journal: IJournalService;
-  sessionStats: unknown;
-  positionManager: IPositionLifecycleService;
-  positionExitingService: IPositionExitingService;
-  realTimeRiskMonitor: unknown;
-  webSocketManager: IWebSocketManagerService;
-  publicWebSocket: IPublicWebSocketService;
-  orderbookManager: IOrderbookManagerService;
-  positionMonitor: IPositionMonitorService;
-  eventHandlerServices?: unknown;
-  positionEventHandler: unknown; // legacy direct access
-  webSocketEventHandler: unknown; // legacy direct access
-  dashboard: unknown;
-  compoundInterestCalculator?: unknown;
-  retestEntryService?: unknown;
-  deltaAnalyzerService?: unknown;
-  orderbookImbalanceService?: unknown;
-  wallTrackerService?: unknown;
-}
 

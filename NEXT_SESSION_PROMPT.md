@@ -40,6 +40,7 @@ Deliverables for this session:
 - BotServices class reduced to a thin legacy wrapper (no explicit fields or container logic).
 - BotServices export removed from `services/index.ts` (avoid new usage).
 - BotServices legacy wrapper removed entirely; codebase now uses builder state directly.
+- Legacy `IBotServices` interface removed from `src/interfaces/IServices.ts`.
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
 - Lifecycle groundwork added: `ILifecycle` interface and `LifecycleManager` service.
 - ILifecycle implemented for WebSocketManagerService, PublicWebSocketService, PositionMonitorService, MonitoringServer.

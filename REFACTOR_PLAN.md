@@ -182,6 +182,7 @@
 - [x] BotServices reduced to thin legacy wrapper (no container logic)
 - [x] BotServices export removed from services barrel (avoid new usage)
 - [x] BotServices legacy wrapper removed (builder state is primary)
+- [x] Legacy IBotServices interface removed from IServices
 - [x] Lifecycle groundwork added (ILifecycle + LifecycleManager)
 - [x] ILifecycle implemented for websocket/monitoring services (start/stop wrappers)
 - [x] Entry point scaffolds created (cli/core/web)
