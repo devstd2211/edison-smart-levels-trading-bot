@@ -4,7 +4,7 @@
  * Phase 5: Dependency Injection Enhancement
  * Phase 8.9.41: ErrorHandler Integration for config validation & service creation
  *
- * Manages creation and configuration of BotServices with proper DI and error handling.
+ * Manages creation and configuration of BotServices state with proper DI and error handling.
  *
  * Error Handling Strategies:
  * - THROW: Config validation errors (missing/invalid required fields)
@@ -247,14 +247,14 @@ export class BotFactory {
   }
 
   /**
-   * Create BotServices with optional DI overrides
+   * Create BotServices state with optional DI overrides
    *
    * Phase 8.9.41: Service creation (backward compatible - no automatic validation)
    * For validation and error handling, use createWithValidation() instead.
    *
    * @param config - Bot configuration
    * @param options - Optional overrides for testing
-   * @returns Initialized BotServices instance
+   * @returns Initialized services state
    */
   static create(
     config: Config,
@@ -284,7 +284,7 @@ export class BotFactory {
   }
 
   /**
-   * Create BotServices with config validation and error handling
+   * Create BotServices state with config validation and error handling
    *
    * Phase 8.9.41: Service creation with strict validation
    * Strategies:
@@ -297,7 +297,7 @@ export class BotFactory {
    * @param config - Bot configuration
    * @param options - Optional overrides for testing
    * @param logger - Optional logger instance (for error reporting before BotServices init)
-   * @returns Initialized BotServices instance
+   * @returns Initialized services state
    * @throws BotFactoryConfigValidationError - When config is invalid
    * @throws BotFactoryInitializationError - When service initialization fails critically
    */
@@ -369,7 +369,7 @@ export class BotFactory {
   }
 
   /**
-   * Create minimal BotServices for testing
+   * Create minimal BotServices state for testing
    * Useful for unit tests that need basic functionality
    *
    * Phase 8.9.41: Testing helper with error handling
@@ -377,7 +377,7 @@ export class BotFactory {
    *
    * @param config - Bot configuration
    * @param mockServices - Mock implementations
-   * @returns Minimal BotServices for testing
+   * @returns Minimal services state for testing
    * @throws BotFactoryConfigValidationError - When config is invalid
    * @throws BotFactoryInitializationError - When initialization fails
    */

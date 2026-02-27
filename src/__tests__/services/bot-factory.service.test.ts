@@ -37,7 +37,7 @@ function getMinimalConfig(): Config {
     dataSubscriptions: { candles: { enabled: true } },
     system: { timeSyncIntervalMs: 60000, timeSyncMaxFailures: 3 },
     indicators: { rsiPeriod: 14, slowEmaPeriod: 50 },
-    // Required by BotServices constructor
+    // Required by BotServices builder
     entryConfig: {
       divergenceDetector: false,
     },
@@ -49,7 +49,7 @@ function getMinimalConfig(): Config {
   } as any;
 }
 
-describe('BotFactory - DI Container for BotServices', () => {
+describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
 
   beforeAll(() => {

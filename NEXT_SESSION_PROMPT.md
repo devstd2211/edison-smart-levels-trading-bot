@@ -49,6 +49,7 @@ Deliverables for this session:
 - BotFactory main flow now uses `buildBotServices` directly (reduces BotServices class dependency in core create path).
 - BotFactory DI service (`services/bot-factory.service.ts`) now returns builder state; BotServices class dependency reduced.
 - BotFactory `createServices` now returns builder state (no BotServices class dependency).
+- BotFactory service/tests/docs updated to reflect builder-based DI (no BotServices constructor dependency).
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
 
 ## Next Session Start

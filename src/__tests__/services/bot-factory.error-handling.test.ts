@@ -53,7 +53,7 @@ function getValidConfig(): Config {
     dataSubscriptions: { candles: { enabled: true } },
     system: { timeSyncIntervalMs: 60000, timeSyncMaxFailures: 3 },
     indicators: { rsiPeriod: 14, slowEmaPeriod: 50 },
-    // Required by BotServices constructor
+    // Required by BotServices builder
     entryConfig: {
       divergenceDetector: false,
     },
@@ -76,7 +76,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   afterEach(() => {
-    // Clean up any created BotServices instances (stop timers, close connections)
+    // Clean up any created services instances (stop timers, close connections)
     createdServices.forEach((services) => {
       try {
         // Try to clean up any timers or intervals
