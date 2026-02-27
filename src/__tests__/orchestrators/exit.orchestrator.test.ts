@@ -53,7 +53,6 @@ function createPosition(
     exitPrice: 0,
     leverage: 1,
     marginUsed: quantity * entryPrice,
-    entryCondition: { signal: {}, indicators: {} } as Position['entryCondition'],
     openedAt: Date.now(),
     unrealizedPnL: 0,
     orderId: 'test-order-1',

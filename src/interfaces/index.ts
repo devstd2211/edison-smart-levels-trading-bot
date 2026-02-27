@@ -70,6 +70,7 @@ export type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerSer
 export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
 export type { IBotInitializerServices } from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';
+export type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
 export type { IMarketDataServices } from './IMarketDataServices';
 export type { IExecutionServices } from './IExecutionServices';
 export type { IMonitoringReadServices, IMonitoringServices } from './IMonitoringServices';

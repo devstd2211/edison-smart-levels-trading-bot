@@ -99,7 +99,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
     it('should return null when shared services not initialized', async () => {
       const context = createContext({
-        config: { version: '1.0' } as IsolatedStrategyContext['config'],
+        config: { version: '1.0' } as unknown as IsolatedStrategyContext['config'],
       });
 
       // Without setSharedServices, should return null
@@ -140,7 +140,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
       const context = createContext({
         strategyId: 'error-strategy',
         strategyName: 'error-test',
-        config: { version: '1.0' } as IsolatedStrategyContext['config'],
+        config: { version: '1.0' } as unknown as IsolatedStrategyContext['config'],
       });
 
       // Error handling is tested implicitly - no throw expected

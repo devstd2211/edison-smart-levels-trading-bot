@@ -6,36 +6,48 @@
  */
 
 import type { TradingBotServiceBundle } from '../bot';
-import type { BotServices } from './bot-services';
+import type { IBotServicesAdapterSource } from '../interfaces/IBotServicesAdapterSource';
+import { createWebApiReadServices } from './containers/web-api-read-services';
+import { createMonitoringReadServices } from './containers/monitoring-services';
 
 export const createTradingBotServiceBundle = (
-  services: BotServices,
-): TradingBotServiceBundle => ({
-  // IWebApiReadServices
-  logger: services.logger,
-  webApiServices: services.webApiServices,
-  wallTrackerService: services.wallTrackerService,
+  services: IBotServicesAdapterSource,
+): TradingBotServiceBundle => {
+  const webApiReadServices = createWebApiReadServices({
+    logger: services.logger,
+    webApiServices: services.webApiServices,
+    wallTrackerService: services.wallTrackerService,
+  });
+  const monitoringReadServices = createMonitoringReadServices(services.monitoringServices);
 
-  // ITradingBotServices
-  coreServices: services.coreServices,
-  positionMonitor: services.positionMonitor,
-  monitoringServices: services.monitoringServices,
-  executionServices: services.executionServices,
+  return {
+    // IWebApiReadServices
+    ...webApiReadServices,
+    logger: services.logger,
+    webApiServices: services.webApiServices,
+    wallTrackerService: services.wallTrackerService,
 
-  // IBotInitializerServices
-  publicWebSocket: services.publicWebSocket,
-  marketDataServices: services.marketDataServices,
-  positionManager: services.positionManager,
-  sessionStats: services.sessionStats,
-  candleProvider: services.candleProvider,
-  btcCandles1m: services.btcCandles1m,
-  exchangeFactory: services.exchangeFactory,
+    // ITradingBotServices
+    coreServices: services.coreServices,
+    positionMonitor: services.positionMonitor,
+    monitoringServices: monitoringReadServices,
+    executionServices: services.executionServices,
 
-  // IWebSocketEventHandlerServices
-  eventHandlerServices: services.eventHandlerServices,
-  orderbookImbalanceService: services.orderbookImbalanceService,
-  advancedOrderFlowService: services.advancedOrderFlowService,
-  deltaAnalyzerService: services.deltaAnalyzerService,
-  tradingOrchestrator: services.tradingOrchestrator,
-  strategyOrchestrator: services.strategyOrchestrator,
-});
+    // IBotInitializerServices
+    publicWebSocket: services.publicWebSocket,
+    marketDataServices: services.marketDataServices,
+    positionManager: services.positionManager,
+    sessionStats: services.sessionStats,
+    candleProvider: services.candleProvider,
+    btcCandles1m: services.btcCandles1m,
+    exchangeFactory: services.exchangeFactory,
+
+    // IWebSocketEventHandlerServices
+    eventHandlerServices: services.eventHandlerServices,
+    orderbookImbalanceService: services.orderbookImbalanceService,
+    advancedOrderFlowService: services.advancedOrderFlowService,
+    deltaAnalyzerService: services.deltaAnalyzerService,
+    tradingOrchestrator: services.tradingOrchestrator,
+    strategyOrchestrator: services.strategyOrchestrator,
+  };
+};

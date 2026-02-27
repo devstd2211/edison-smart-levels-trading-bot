@@ -659,7 +659,7 @@ export class PatternRecognitionService {
 
     // Calculate fibonacci levels
     for (const level of this.config.fibLevels) {
-      const price = swing.type === 'high'
+      const price = swing.type === SwingPointType.HIGH
         ? high - (range * level) / 100
         : low + (range * level) / 100;
 
@@ -689,13 +689,13 @@ export class PatternRecognitionService {
     const lookback = Math.min(this.config.swingLookback, this.candleHistory.length);
     const candles = this.candleHistory.slice(-lookback);
 
-    if (swing.type === 'high') {
+    if (swing.type === SwingPointType.HIGH) {
       // Find recent low
       const minPrice = Math.min(...candles.map((c) => c.low));
       const minIndex = candles.findIndex((c) => c.low === minPrice);
 
       return {
-        type: 'low',
+        type: SwingPointType.LOW,
         price: minPrice,
         timestamp: candles[minIndex].timestamp,
         index: this.candleHistory.length - lookback + minIndex,
@@ -707,7 +707,7 @@ export class PatternRecognitionService {
       const maxIndex = candles.findIndex((c) => c.high === maxPrice);
 
       return {
-        type: 'high',
+        type: SwingPointType.HIGH,
         price: maxPrice,
         timestamp: candles[maxIndex].timestamp,
         index: this.candleHistory.length - lookback + maxIndex,
@@ -736,8 +736,8 @@ export class PatternRecognitionService {
     const zones: Zone[] = [];
 
     // Find swing highs and lows
-    const swingHighs = this.findSwingPoints('high');
-    const swingLows = this.findSwingPoints('low');
+    const swingHighs = this.findSwingPoints(SwingPointType.HIGH);
+    const swingLows = this.findSwingPoints(SwingPointType.LOW);
 
     // Create supply zones from swing highs
     for (const swing of swingHighs) {
@@ -765,7 +765,7 @@ export class PatternRecognitionService {
     for (let i = lookback; i < this.candleHistory.length - lookback; i++) {
       const candle = this.candleHistory[i];
 
-      if (type === 'high') {
+      if (type === SwingPointType.HIGH) {
         // Check if this is a local high
         const isHigh = this.candleHistory
           .slice(i - lookback, i + lookback + 1)
@@ -773,7 +773,7 @@ export class PatternRecognitionService {
 
         if (isHigh) {
           swings.push({
-            type: 'high',
+            type: SwingPointType.HIGH,
             price: candle.high,
             timestamp: candle.timestamp,
             index: i,
@@ -788,7 +788,7 @@ export class PatternRecognitionService {
 
         if (isLow) {
           swings.push({
-            type: 'low',
+            type: SwingPointType.LOW,
             price: candle.low,
             timestamp: candle.timestamp,
             index: i,

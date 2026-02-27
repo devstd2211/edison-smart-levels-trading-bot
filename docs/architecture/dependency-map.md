@@ -1,6 +1,6 @@
 # Dependency Map (BotServices)
 
-Source: `src/services/bot-services.ts`
+Source: `src/services/bot-services.builder.ts`
 
 Flat list of services and immediate dependencies (constructor args + direct setter injections).
 "config.*" references direct `Config` fields unless noted.

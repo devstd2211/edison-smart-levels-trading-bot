@@ -21,6 +21,7 @@ import { BotServices } from './services/bot-services';
 import { createTradingBotServiceBundle } from './services/bot-services-adapter';
 import { StrategyLoaderService } from './services/strategy-loader.service';
 import { StrategyConfigMergerService } from './services/strategy-config-merger.service';
+import type { IBotServicesAdapterSource } from './interfaces';
 
 export interface BotFactoryConfig {
   config: Config;
@@ -178,7 +179,7 @@ export class BotFactory {
    */
   static createForTesting(
     config: Config,
-    serviceOverrides?: Partial<BotServices>,
+    serviceOverrides?: Partial<IBotServicesAdapterSource>,
   ): TradingBot {
     // Create services normally
     const services = new BotServices(config);

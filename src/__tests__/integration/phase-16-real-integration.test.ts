@@ -23,6 +23,7 @@ import {
   LogLevel,
   StopLossConfig,
   ExitType,
+  OrderType,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import type { IExchange } from '../../interfaces/IExchange';
@@ -59,7 +60,7 @@ const createTradingConfig = (): TradingConfig => ({
   maxPositions: 1,
   positionSizeUsdt: 100,
   tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT',
+  orderType: OrderType.LIMIT,
   tradingFeeRate: 0.0002,
   favorableMovementThresholdPercent: 0.1,
 });
@@ -325,7 +326,7 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
         position,
         exitPrice,
         'TP3_HIT',
-        ExitType.TAKE_PROFIT,
+        ExitType.TAKE_PROFIT_1,
       );
 
       expect(result).toBe(true);
@@ -373,7 +374,7 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
         position,
         51000,
         'TP_HIT',
-        ExitType.TAKE_PROFIT
+        ExitType.TAKE_PROFIT_1
       );
 
       expect(result).toBe(true);
@@ -405,7 +406,7 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
         position,
         51000,
         'TP_HIT',
-        ExitType.TAKE_PROFIT
+        ExitType.TAKE_PROFIT_1
       );
 
       expect(result).toBe(true);
@@ -429,9 +430,9 @@ describe('Phase 16.1.2: Real Integration Tests - Critical Scenarios', () => {
 
       // Simulate concurrent close attempts (WebSocket + Timeout race)
       const results = await Promise.allSettled([
-        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT),
-        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT),
-        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT),
+        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT_1),
+        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT_1),
+        positionExiting.closeFullPosition(position, 51000, 'TP_HIT', ExitType.TAKE_PROFIT_1),
       ]);
 
       // Only one should succeed (atomic lock)

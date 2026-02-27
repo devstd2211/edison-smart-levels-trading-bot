@@ -27,7 +27,7 @@ import { ErrorContext, ErrorDomain, ErrorSeverity, TradingError } from '../../er
 describe('Domain-Specific Errors', () => {
   describe('Trading Domain Errors', () => {
     it('should create EntryValidationError with signal context', () => {
-      const context: ErrorContext = {
+      const context = {
         reason: 'Confidence too low',
         confidence: 0.75,
       };

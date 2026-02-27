@@ -47,8 +47,10 @@
 **Progress**
 - [x] Dependencies mapped
 - [x] Dependency map documented in docs/architecture/dependency-map.md
+- [x] Dependency map source updated to bot-services.builder.ts
 - [x] First migration slice proposed (WebApiServices/BotWebAPI read-only group)
 - [ ] Tests not run yet after refactor batches (status unknown)
+- [x] Build run 2026-02-27 succeeded after legacy/type/test fixes
 - [ ] Group containers created
 - [x] MarketDataServices scaffolded
 - [x] ExecutionServices scaffolded
@@ -160,6 +162,19 @@
 - [x] WebSocketEventHandlerManager uses EventHandlerServices
 - [x] IBotServices exposes EventHandlerServices (legacy handlers retained)
 - [x] BotServicesAdapter maps BotServices to TradingBotServiceBundle (BotFactory)
+- [x] BotServicesAdapter now consumes IBotServicesAdapterSource (decoupled from BotServices)
+- [x] BotFactory createForTesting overrides typed to IBotServicesAdapterSource
+- [x] BotServices grouped container wiring extracted to createGroupedServices helper
+- [x] BotServices grouped container wiring moved into initializeGroupedServices helper
+- [x] BotServices optional services initialization moved into initializeOptionalServices helper
+- [x] BotServices monitoring/resilience initialization moved into initializeMonitoringAndResilience helper
+- [x] BotServices websocket/orderbook/position monitor initialization moved into initializeWebSocketAndMonitoring helper
+- [x] BotServices position management initialization moved into initializePositionManagement helper
+- [x] BotServices orchestrator/handlers initialization moved into initializeOrchestratorAndHandlers helper
+- [x] BotServices dashboard/logger/repositories initialization moved into initializeCoreInfrastructure helper
+- [x] BotServices service fields made non-readonly to allow helper-based initialization
+- [x] BotServices builder introduced; construction moved to builder with thin wrapper class
+- [x] BotServices fields restored to readonly with builder-based assignment
 - [x] Entry point scaffolds created (cli/core/web)
 - [x] Workspaces scaffolding added (packages/contracts, packages/core)
 - [x] Types modularization started (domain folders + re-export)

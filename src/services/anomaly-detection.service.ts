@@ -19,7 +19,7 @@ import {
   VolatilitySpike,
   WhaleAlert,
   ManipulationFlags,
-  Trade,
+  AnomalyTrade,
   TradeDirection,
   VolumeStats,
   VolatilityStats,
@@ -54,7 +54,7 @@ export class AnomalyDetectionService {
   private volatilityHistory: number[] = [];
 
   /** Recent trades for whale detection */
-  private recentTrades: Trade[] = [];
+  private recentTrades: AnomalyTrade[] = [];
 
   /** Current price for manipulation detection */
   private currentPrice: number = 0;
@@ -177,7 +177,7 @@ export class AnomalyDetectionService {
    *
    * @throws Error if trades is null/undefined or not an array
    */
-  detectWhaleActivity(trades: Trade[]): WhaleAlert[] {
+  detectWhaleActivity(trades: AnomalyTrade[]): WhaleAlert[] {
     // THROW: Input validation
     if (!trades) {
       throw new Error('[AnomalyDetection] Trades array cannot be null or undefined');
@@ -389,7 +389,7 @@ export class AnomalyDetectionService {
   /**
    * Perform whale activity detection
    */
-  private performWhaleDetection(trades: Trade[]): WhaleAlert[] {
+  private performWhaleDetection(trades: AnomalyTrade[]): WhaleAlert[] {
     const alerts: WhaleAlert[] = [];
 
     if (trades.length === 0) {
@@ -432,7 +432,7 @@ export class AnomalyDetectionService {
   /**
    * Detect accumulation pattern (multiple buys)
    */
-  private detectAccumulation(trades: Trade[], avgSize: number): WhaleAlert | null {
+  private detectAccumulation(trades: AnomalyTrade[], avgSize: number): WhaleAlert | null {
     const buyTrades = trades.filter((t) => t.side === 'BUY');
     if (buyTrades.length < 3) return null;
 
@@ -459,7 +459,7 @@ export class AnomalyDetectionService {
   /**
    * Detect distribution pattern (multiple sells)
    */
-  private detectDistribution(trades: Trade[], avgSize: number): WhaleAlert | null {
+  private detectDistribution(trades: AnomalyTrade[], avgSize: number): WhaleAlert | null {
     const sellTrades = trades.filter((t) => t.side === 'SELL');
     if (sellTrades.length < 3) return null;
 

@@ -12,6 +12,7 @@
 
 import { BotInitializer } from '../services/bot-initializer';
 import type { Config } from '../types/legacy';
+import { OrderType, LogLevel } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import type { LoggerService } from '../services/logger.service';
 
@@ -26,29 +27,50 @@ const createMockLogger = (): LoggerLike => ({
   getLogFilePath: jest.fn().mockReturnValue('/mock/log/path'),
 });
 
+const asMock = (fn: unknown): jest.Mock => fn as jest.Mock;
+
 // Minimal valid config
 const createMinimalConfig = (): Config => ({
     exchange: {
+      name: 'bybit',
+      timeframe: '1',
       apiKey: 'test-key',
       apiSecret: 'test-secret',
+      demo: false,
       testnet: true,
       symbol: 'APEXUSDT',
     },
     trading: {
       leverage: 10,
+      riskPercent: 1,
+      maxPositions: 1,
       positionSizeUsdt: 100,
-      maxConcurrentPositions: 1,
+      tradingCycleIntervalMs: 1000,
+      orderType: OrderType.MARKET,
+      tradingFeeRate: 0.0002,
+      favorableMovementThresholdPercent: 0.1,
     },
     riskManagement: {
       stopLossPercent: 2,
-      maxDailyLossPercent: 5,
+      minStopLossPercent: 1,
+      breakevenOffsetPercent: 0.3,
+      trailingStopEnabled: false,
+      trailingStopPercent: 1,
+      trailingStopActivationLevel: 2,
+      positionSizeUsdt: 100,
+      takeProfits: [
+        { level: 1, percent: 0.5, sizePercent: 100 },
+      ],
     },
     indicators: {
       atrPeriod: 14,
       fastEmaPeriod: 5,
       slowEmaPeriod: 20,
       rsiPeriod: 14,
+      rsiOversold: 30,
+      rsiOverbought: 70,
       zigzagDepth: 5,
+      zigzagDeviation: 5,
     },
     timeframes: {
       entry: { interval: '1', candleLimit: 100, enabled: true },
@@ -58,8 +80,9 @@ const createMinimalConfig = (): Config => ({
       context: { interval: '240', candleLimit: 100, enabled: false },
     },
     logging: {
-      level: 'info',
+      level: LogLevel.INFO,
       logDir: './logs',
+      logToFile: false,
     },
     system: {
       timeSyncIntervalMs: 60000,
@@ -73,6 +96,18 @@ const createMinimalConfig = (): Config => ({
     },
     strategies: {} as Config['strategies'],
     entryConfirmation: {} as Config['entryConfirmation'],
+    entryConfig: {
+      rsiPeriod: 14,
+      rsiOversold: 30,
+      rsiOverbought: 70,
+      fastEmaPeriod: 5,
+      slowEmaPeriod: 20,
+      zigzagDepth: 5,
+      divergenceDetector: {
+        minStrength: 0.5,
+        priceDiffPercent: 0.5,
+      },
+    },
     telegram: { enabled: false },
     analysisConfig: {} as Config['analysisConfig'],
     strategicWeights: {} as Config['strategicWeights'],
@@ -86,7 +121,7 @@ const createMockBotServices = (): IBotInitializerServices => {
 
   return {
     coreServices: {
-      logger,
+      logger: logger as unknown as LoggerService,
       timeService: {
         syncWithExchange: jest.fn().mockResolvedValue(undefined),
         getSyncInfo: jest.fn().mockReturnValue({
@@ -117,6 +152,9 @@ const createMockBotServices = (): IBotInitializerServices => {
       candleProvider: {
         initialize: jest.fn().mockResolvedValue(undefined),
       },
+      orderbookManager: {
+        getSnapshot: jest.fn().mockReturnValue(null),
+      } as unknown as IBotInitializerServices['marketDataServices']['orderbookManager'],
       webSocketManager: {
         connect: jest.fn(),
         disconnect: jest.fn(),
@@ -126,6 +164,9 @@ const createMockBotServices = (): IBotInitializerServices => {
         connect: jest.fn(),
         disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
+        on: jest.fn(),
+        off: jest.fn(),
+        setBtcCandlesStore: jest.fn(),
       },
     },
     positionManager: {
@@ -157,7 +198,7 @@ const createMockBotServices = (): IBotInitializerServices => {
       initialize: jest.fn().mockResolvedValue(undefined),
     },
     btcCandles1m: [],
-  } as IBotInitializerServices;
+  } as unknown as IBotInitializerServices;
 };
 
 describe('BotInitializer', () => {
@@ -179,19 +220,19 @@ describe('BotInitializer', () => {
       const callOrder: string[] = [];
 
       // Track call order
-      mockServices.marketDataServices.bybitService.initialize.mockImplementation(() => {
+      asMock(mockServices.marketDataServices.bybitService.initialize).mockImplementation(() => {
         callOrder.push('bybitService.initialize');
         return Promise.resolve();
       });
-      mockServices.sessionStats.startSession.mockImplementation(() => {
+      asMock(mockServices.sessionStats.startSession).mockImplementation(() => {
         callOrder.push('sessionStats.startSession');
         return 'session-123';
       });
-      mockServices.coreServices.timeService.syncWithExchange.mockImplementation(() => {
+      asMock(mockServices.coreServices.timeService.syncWithExchange).mockImplementation(() => {
         callOrder.push('timeService.syncWithExchange');
         return Promise.resolve();
       });
-      mockServices.marketDataServices.candleProvider.initialize.mockImplementation(() => {
+      asMock(mockServices.marketDataServices.candleProvider.initialize).mockImplementation(() => {
         callOrder.push('candleProvider.initialize');
         return Promise.resolve();
       });
@@ -230,7 +271,7 @@ describe('BotInitializer', () => {
 
     it('should handle initialization errors', async () => {
       const error = new Error('Bybit initialization failed');
-      mockServices.marketDataServices.bybitService.initialize.mockRejectedValue(error);
+      asMock(mockServices.marketDataServices.bybitService.initialize).mockRejectedValue(error);
 
       await expect(initializer.initialize()).rejects.toThrow('Bybit initialization failed');
       expect(mockServices.coreServices.logger.error).toHaveBeenCalledWith('Failed to initialize bot', {
@@ -266,7 +307,7 @@ describe('BotInitializer', () => {
 
     it('should handle connection errors', async () => {
       const error = new Error('WebSocket connection failed');
-      mockServices.marketDataServices.webSocketManager.connect.mockImplementation(() => {
+      asMock(mockServices.marketDataServices.webSocketManager.connect).mockImplementation(() => {
         throw error;
       });
 
@@ -299,7 +340,7 @@ describe('BotInitializer', () => {
 
     it('should handle startup errors', async () => {
       const error = new Error('Monitor startup failed');
-      mockServices.executionServices.positionMonitor.start.mockImplementation(() => {
+      asMock(mockServices.executionServices.positionMonitor.start).mockImplementation(() => {
         throw error;
       });
 
@@ -353,7 +394,7 @@ describe('BotInitializer', () => {
 
     it('should handle shutdown errors gracefully', async () => {
       const error = new Error('Shutdown error');
-      mockServices.executionServices.positionMonitor.stop.mockImplementation(() => {
+      asMock(mockServices.executionServices.positionMonitor.stop).mockImplementation(() => {
         throw error;
       });
 

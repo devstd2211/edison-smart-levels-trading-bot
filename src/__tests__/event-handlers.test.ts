@@ -89,10 +89,10 @@ describe('PositionEventHandler', () => {
     };
 
     handler = new PositionEventHandler(
-      mockPositionManager as unknown as Parameters<typeof PositionEventHandler>[0],
-      mockPositionExitingService as unknown as Parameters<typeof PositionEventHandler>[1],
-      mockBybitService as unknown as Parameters<typeof PositionEventHandler>[2],
-      mockTelegram as unknown as Parameters<typeof PositionEventHandler>[3],
+      mockPositionManager as unknown as ConstructorParameters<typeof PositionEventHandler>[0],
+      mockPositionExitingService as unknown as ConstructorParameters<typeof PositionEventHandler>[1],
+      mockBybitService as unknown as ConstructorParameters<typeof PositionEventHandler>[2],
+      mockTelegram as unknown as ConstructorParameters<typeof PositionEventHandler>[3],
       mockLogger as LoggerService,
     );
   });
@@ -190,7 +190,7 @@ describe('PositionEventHandler', () => {
         pnlPercent: 2.5,
         position: {
           id: position.id,
-          side: PositionSide.LONG,
+          side: 'Buy',
           quantity: position.quantity,
           entryPrice: position.entryPrice,
         },
@@ -212,7 +212,7 @@ describe('PositionEventHandler', () => {
         pnlPercent: 2.5,
         position: {
           id: position.id,
-          side: PositionSide.LONG,
+          side: 'Buy',
           quantity: position.quantity,
           entryPrice: position.entryPrice,
         },
@@ -234,7 +234,7 @@ describe('PositionEventHandler', () => {
         pnlPercent: 2.5,
         position: {
           id: position.id,
-          side: PositionSide.LONG,
+          side: 'Buy',
           quantity: position.quantity,
           entryPrice: position.entryPrice,
         },
@@ -272,7 +272,7 @@ describe('WebSocketEventHandler', () => {
     onTakeProfitHit: jest.Mock;
   };
   let mockBybitService: {
-    getClosedPosition: jest.Mock;
+    getCurrentPrice: jest.Mock;
   };
   let mockWebSocketManager: {
     getLastCloseReason: jest.Mock;
@@ -327,12 +327,12 @@ describe('WebSocketEventHandler', () => {
     };
 
     handler = new WebSocketEventHandler(
-      mockPositionManager as unknown as Parameters<typeof WebSocketEventHandler>[0],
-      mockPositionExitingService as unknown as Parameters<typeof WebSocketEventHandler>[1],
-      mockBybitService as unknown as Parameters<typeof WebSocketEventHandler>[2],
-      mockWebSocketManager as unknown as Parameters<typeof WebSocketEventHandler>[3],
-      mockJournal as unknown as Parameters<typeof WebSocketEventHandler>[4],
-      mockTelegram as unknown as Parameters<typeof WebSocketEventHandler>[5],
+      mockPositionManager as unknown as ConstructorParameters<typeof WebSocketEventHandler>[0],
+      mockPositionExitingService as unknown as ConstructorParameters<typeof WebSocketEventHandler>[1],
+      mockBybitService as unknown as ConstructorParameters<typeof WebSocketEventHandler>[2],
+      mockWebSocketManager as unknown as ConstructorParameters<typeof WebSocketEventHandler>[3],
+      mockJournal as unknown as ConstructorParameters<typeof WebSocketEventHandler>[4],
+      mockTelegram as unknown as ConstructorParameters<typeof WebSocketEventHandler>[5],
       mockLogger as LoggerService,
     );
   });

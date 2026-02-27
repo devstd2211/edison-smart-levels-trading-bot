@@ -270,7 +270,7 @@ export type {
   AnomalySeverity,
   AnomalyType,
   TradeDirection,
-  Trade,
+  Trade as AnomalyTrade,
   AnomalyResult,
   WhaleAlert,
   VolatilitySpike,
@@ -286,20 +286,6 @@ export { DEFAULT_ANOMALY_DETECTION_CONFIG } from './anomaly-detection';
 // Additional domain type re-exports for services/strategies/tests
 // ---------------------------------------------------------------------------
 
-export type {
-  OrderBook,
-  OrderBookWall,
-  OrderBookAnalysis,
-  OrderBookImbalance,
-  OrderbookLevel,
-} from './orderbook';
-
-export type {
-  StopLossHitEvent,
-  TakeProfitHitEvent,
-  OrderFilledEvent,
-} from './events';
-
 export { IndicatorType } from './indicator';
 export type {
   IIndicator,
@@ -312,7 +298,7 @@ export type { IAnalyzer } from './analyzer';
 
 export type {
   AdvancedOrderFlowConfig,
-  Tick,
+  Tick as AdvancedOrderFlowTick,
   AdvancedOrderFlow,
   FlowPattern,
   SpoofingSignal,
@@ -345,18 +331,18 @@ export type {
   MarketConditions,
 } from './smart-order-placement';
 
+export { MarketHealthStatus, ConfidenceLevel } from './fractal-strategy';
 export type {
   MarketHealthConfig,
   MarketHealthResult,
-  MarketHealthStatus,
   Trade,
   FractalSetup,
   ScoreWeight,
   WeightedSignal,
   WeightedSignalConfig,
-  ConfidenceLevel,
 } from './fractal-strategy';
 
+export { ProcessingPriority } from './strategy-processing';
 export type {
   StrategyProcessingJob,
   StrategyProcessingResult,
@@ -365,7 +351,6 @@ export type {
   StrategyProcessingPoolStatus,
   WorkerHealthStatus,
   ParallelProcessingConfig,
-  ProcessingPriority,
 } from './strategy-processing';
 
 export { ActionType } from './architecture';
@@ -373,6 +358,7 @@ export type {
   ExitActionDTO,
   IAction,
   IActionHandler,
+  IActionQueue,
   OpenPositionAction,
   ClosePositionAction,
   ClosePercentAction,
@@ -399,8 +385,13 @@ export type {
   EmergencyCloseRequest,
   LiveTradingConfig,
   RiskMonitoringConfig,
-  HealthScoreCacheEntry,
-  PositionHealthResult,
+  HealthScore,
+  HealthScoreComponents,
+  HealthAnalysis,
+  HealthReport,
+  IRealTimeRiskMonitor,
+  PositionTimeoutWarningEvent,
+  ITradingLifecycleManager,
   RiskAlert,
   OrderExecutionConfig,
   OrderRequest,
@@ -481,8 +472,9 @@ export type {
   StrategyMetadata as StrategyMetadataV2,
   StrategyAnalyzerConfig as StrategyAnalyzerConfigV2,
   StrategyAnalyzerFilter as StrategyAnalyzerFilterV2,
-  StrategyValidationError,
+  AvailableAnalyzer,
 } from './strategy-config';
+export { StrategyValidationError } from './strategy-config';
 
 export type { ConfigNew } from './config/config-new.types';
 
@@ -725,6 +717,8 @@ export interface SwingPoint {
   price: number;
   timestamp: number;
   type: SwingPointType;
+  index?: number;
+  strength?: number;
 }
 
 /**
@@ -1100,10 +1094,10 @@ export interface LiquidityAnalysisConfig {
 }
 
 /**
- * Smart Order Placement Configuration
+ * Smart Order Placement Strategic Configuration
  * Controls order execution strategy selection
  */
-export interface SmartOrderPlacementConfig {
+export interface SmartOrderPlacementStrategicConfig {
   /** Fill probability threshold for patient execution (default: 80) */
   patientThreshold: number;
   /** Fill probability threshold for immediate execution (default: 50) */
@@ -1262,7 +1256,7 @@ export interface Config {
   // Phase 10: Advanced Analysis Configuration (optional)
   orderFlowAnalysis?: OrderFlowAnalysisConfig; // Order flow momentum and pattern detection thresholds (optional)
   liquidityAnalysis?: LiquidityAnalysisConfig; // Liquidity heatmap zone classification (optional)
-  smartOrderPlacement?: SmartOrderPlacementConfig; // Order execution strategy selection (optional)
+  smartOrderPlacement?: SmartOrderPlacementStrategicConfig; // Order execution strategy selection (optional)
   signalValidation?: SignalValidationConfig; // ML-based signal validation thresholds (optional)
   patternRecognitionStrategic?: PatternRecognitionStrategicConfig; // Candlestick pattern and zone detection (optional)
   anomalyDetectionStrategic?: AnomalyDetectionStrategicConfig; // Statistical anomaly and manipulation detection (optional)
@@ -1720,7 +1714,7 @@ export interface EntrySignal {
  * - Tuple format: [price, size] from exchange API
  * - Object format: {price, size, format: 'object'} for type safety
  */
-export {
+export type {
   OrderbookLevel,
   OrderBook,
   OrderBookWall,

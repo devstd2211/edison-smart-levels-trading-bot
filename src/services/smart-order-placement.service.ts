@@ -24,7 +24,7 @@ import {
   OrderPriority,
   Orderbook,
   LoggerService,
-  SmartOrderPlacementConfig as SmartOrderPlacementStrategicConfig,
+  SmartOrderPlacementStrategicConfig,
 } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {

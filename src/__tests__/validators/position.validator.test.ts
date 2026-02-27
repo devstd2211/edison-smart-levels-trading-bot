@@ -364,7 +364,7 @@ describe('PositionValidator - P0.2 Tests', () => {
       expect(() => validator.validateForPhase9Monitoring(position)).toThrow();
 
       // Error message should contain multiple validation failures
-      const errorCall = mockLogger.error.mock.calls[0][0];
+      const errorCall = (mockLogger.error as jest.Mock).mock.calls[0][0];
       expect(errorCall).toContain('Invalid id');
       expect(errorCall).toContain('Invalid symbol');
       expect(errorCall).toContain('Invalid entryPrice');

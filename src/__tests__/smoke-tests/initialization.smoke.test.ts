@@ -154,8 +154,9 @@ describe('SMOKE TESTS: Service Initialization', () => {
 
     it('should verify SignalDirection enum has correct values', () => {
       const types = require('../../types') as { SignalDirection?: { LONG?: string; SHORT?: string } };
-      expect(types.SignalDirection.LONG).toBe('LONG');
-      expect(types.SignalDirection.SHORT).toBe('SHORT');
+      expect(types.SignalDirection).toBeDefined();
+      expect(types.SignalDirection!.LONG).toBe('LONG');
+      expect(types.SignalDirection!.SHORT).toBe('SHORT');
     });
 
     it('should verify common trading types are available', () => {

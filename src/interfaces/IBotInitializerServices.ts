@@ -19,7 +19,7 @@ export interface IBotInitializerServices {
     disconnect(): void;
     removeAllListeners(): void;
   };
-  marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'>;
+  marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'>;
   positionManager: {
     syncWithWebSocket(position?: Position): void;
     getCurrentPosition(): Position | null;

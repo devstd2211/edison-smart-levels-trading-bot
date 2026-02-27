@@ -15,7 +15,7 @@
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { Candle, LogLevel, Pattern, SwingPoint, PatternRecognitionConfig } from '../../types/legacy';
+import { Candle, LogLevel, Pattern, SwingPoint, PatternRecognitionConfig, SwingPointType } from '../../types/legacy';
 
 describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
@@ -55,7 +55,7 @@ describe('PatternRecognitionService - Error Handling', () => {
   };
 
   const createMockSwing = (overrides?: Partial<SwingPoint>): SwingPoint => ({
-    type: 'high',
+      type: SwingPointType.HIGH,
     price: 51000,
     timestamp: Date.now(),
     index: 10,
@@ -418,7 +418,7 @@ describe('PatternRecognitionService - Error Handling', () => {
 
     it('should calculate fibonacci levels correctly', () => {
       const swing: SwingPoint = {
-        type: 'high',
+        type: SwingPointType.HIGH,
         price: 52000,
         timestamp: Date.now(),
         index: 10,
@@ -602,7 +602,7 @@ describe('PatternRecognitionService - Error Handling', () => {
 
     it('should handle swing with invalid price', () => {
       const swing: SwingPoint = {
-        type: 'high',
+        type: SwingPointType.HIGH,
         price: NaN,
         timestamp: Date.now(),
         index: 10,

@@ -16,7 +16,7 @@
 import type {
   OrderFlowAnalysisConfig,
   LiquidityAnalysisConfig,
-  SmartOrderPlacementConfig,
+  SmartOrderPlacementStrategicConfig,
   SignalValidationConfig,
   PatternRecognitionStrategicConfig,
   AnomalyDetectionStrategicConfig,
@@ -38,7 +38,7 @@ export const DEFAULT_LIQUIDITY_ANALYSIS: LiquidityAnalysisConfig = {
   neutralZoneThreshold: 35,
 };
 
-export const DEFAULT_SMART_ORDER_PLACEMENT: SmartOrderPlacementConfig = {
+export const DEFAULT_SMART_ORDER_PLACEMENT: SmartOrderPlacementStrategicConfig = {
   patientThreshold: 80,
   immediateThreshold: 50,
   highRiskSlippageMultiplier: 1.5,

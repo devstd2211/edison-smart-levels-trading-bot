@@ -15,7 +15,7 @@
 
 import {
   AdvancedOrderFlowConfig,
-  Tick,
+  AdvancedOrderFlowTick as Tick,
   AdvancedOrderFlowOrderBook as OrderBook,
   AdvancedOrderFlow,
   FlowPattern,

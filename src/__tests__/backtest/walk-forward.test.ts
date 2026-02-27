@@ -166,8 +166,8 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
     it('should detect severe overfitting', () => {
       const detectMethod = getEnginePrivate(engine).detectOverfitting.bind(engine);
 
-      const inSample = { sharpe: 2.0, profitFactor: 3.0, winRate: 0.65 };
-      const outOfSample = { sharpe: 0.5, profitFactor: 1.0, winRate: 0.50 };
+      const inSample = { sharpe: 2.0, profitFactor: 3.0, winRate: 0.65, totalTrades: 100 };
+      const outOfSample = { sharpe: 0.5, profitFactor: 1.0, winRate: 0.50, totalTrades: 40 };
 
       const overfitted = detectMethod(inSample, outOfSample, 'sharpe', 0.3);
 
@@ -177,8 +177,8 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
     it('should not flag normal performance degradation', () => {
       const detectMethod = getEnginePrivate(engine).detectOverfitting.bind(engine);
 
-      const inSample = { sharpe: 1.5, profitFactor: 1.8, winRate: 0.55 };
-      const outOfSample = { sharpe: 1.3, profitFactor: 1.6, winRate: 0.53 };
+      const inSample = { sharpe: 1.5, profitFactor: 1.8, winRate: 0.55, totalTrades: 80 };
+      const outOfSample = { sharpe: 1.3, profitFactor: 1.6, winRate: 0.53, totalTrades: 60 };
 
       const overfitted = detectMethod(inSample, outOfSample, 'sharpe', 0.3);
 
@@ -188,8 +188,8 @@ describe('Phase 7.5: Walk-Forward Analysis', () => {
     it('should work with different metrics', () => {
       const detectMethod = getEnginePrivate(engine).detectOverfitting.bind(engine);
 
-      const inSample = { sharpe: 2.0, profitFactor: 3.0, winRate: 0.65 };
-      const outOfSample = { sharpe: 1.5, profitFactor: 1.5, winRate: 0.50 };
+      const inSample = { sharpe: 2.0, profitFactor: 3.0, winRate: 0.65, totalTrades: 120 };
+      const outOfSample = { sharpe: 1.5, profitFactor: 1.5, winRate: 0.50, totalTrades: 55 };
 
       const sharpeOverfit = detectMethod(inSample, outOfSample, 'sharpe', 0.2);
       const pfOverfit = detectMethod(inSample, outOfSample, 'profitFactor', 0.4);

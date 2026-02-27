@@ -24,10 +24,29 @@ Deliverables for this session:
 - `docs/architecture/dependency-map.md`
 - A short summary of the first migration slice and why it is low‑risk.
 
-## Current Status (as of 2026-02-26)
+## Current Status (as of 2026-02-27)
 - Domain-type migration in services/strategies/tests is complete via legacy re-exports.
 - Multi-strategy module exports now re-export from legacy.
 - Tests not run.
+- BotServicesAdapter decoupled from BotServices via IBotServicesAdapterSource.
+- BotFactory createForTesting overrides typed to IBotServicesAdapterSource.
+- Grouped container wiring extracted into createGroupedServices helper.
+- BotServices grouped container wiring moved into initializeGroupedServices helper.
+- BotServices optional services initialization moved into initializeOptionalServices helper.
+- BotServices monitoring/resilience initialization moved into initializeMonitoringAndResilience helper.
+- BotServices websocket/orderbook/position monitor initialization moved into initializeWebSocketAndMonitoring helper.
+- BotServices position management initialization moved into initializePositionManagement helper.
+- BotServices orchestrator/handlers initialization moved into initializeOrchestratorAndHandlers helper.
+- BotServices dashboard/logger/repositories initialization moved into initializeCoreInfrastructure helper.
+- BotServices service fields made non-readonly to allow helper-based initialization.
+- BotServices builder created; BotServices now thin wrapper with readonly fields restored.
+- Dependency map refreshed and aligned to `bot-services.builder.ts` source.
+- Build run (`npm run build`) succeeded after fixing legacy exports, adapter typings, and test configs.
+- Legacy type cleanup: removed duplicate exports, restored enum/class value exports, added missing re-exports, aligned SwingPoint to include index/strength, and split smart-order placement strategic config.
+- BotServicesAdapter source contract expanded to include web API read services + logger; adapter now passes logger/webApiServices explicitly to avoid logger type mismatch.
+- Pattern recognition service/tests updated to use `SwingPointType` enum and index field.
+- Test fixes: bot-initializer config completed (exchange/trading/indicators/risk/logging/entryConfig), event handlers ctor typing + side literals, integration TP/OrderType enums, smoke tests SignalDirection checks, position validator mock usage, error context typing.
 
 ## Next Session Start
-- Consider next slice: reduce/remove `BotServices` to thin adapter (REFACTOR_PLAN Step 1 remaining).
+- Continue: reduce `BotServices` to thin adapter (REFACTOR_PLAN Step 1 remaining).
+- Proceed to lifecycle cleanup when ready (remove side effects from constructors).

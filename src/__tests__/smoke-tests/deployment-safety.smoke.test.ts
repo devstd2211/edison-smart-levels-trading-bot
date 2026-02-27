@@ -100,8 +100,9 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify all signal directions are defined', () => {
       const types = require('../../types') as { SignalDirection?: { LONG?: string; SHORT?: string } };
 
-      expect(types.SignalDirection.LONG).toBe('LONG');
-      expect(types.SignalDirection.SHORT).toBe('SHORT');
+      expect(types.SignalDirection).toBeDefined();
+      expect(types.SignalDirection!.LONG).toBe('LONG');
+      expect(types.SignalDirection!.SHORT).toBe('SHORT');
     });
 
     it('should verify core trading types exist', () => {
