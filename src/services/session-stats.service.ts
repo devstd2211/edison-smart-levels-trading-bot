@@ -52,6 +52,7 @@ export class SessionStatsService {
 
   private database: SessionDatabase = { sessions: [] };
   private currentSession: Session | null = null;
+  private initialized = false;
 
   constructor(
     logger: LoggerService,
@@ -62,9 +63,23 @@ export class SessionStatsService {
     this.logger = logger;
     this.dataDir = dataDir;
     this.filePath = path.join(dataDir, SESSION_STATS_FILE);
+  }
 
-    // Load existing database
+  /**
+   * Start service initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
     this.load();
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      this.start();
+    }
   }
 
   // ==========================================================================
@@ -78,6 +93,7 @@ export class SessionStatsService {
    * @returns Session ID
    */
   startSession(config: Config, symbol: string): string {
+    this.ensureInitialized();
     // Close previous session if exists
     if (this.currentSession !== null) {
       this.logger.warn('Previous session not closed, closing now');
@@ -118,6 +134,7 @@ export class SessionStatsService {
    * End current trading session
    */
   endSession(): void {
+    this.ensureInitialized();
     if (this.currentSession === null) {
       this.logger.warn('No active session to end');
       return;
@@ -145,6 +162,7 @@ export class SessionStatsService {
    * Get current active session
    */
   getCurrentSession(): Session | null {
+    this.ensureInitialized();
     return this.currentSession;
   }
 
@@ -158,6 +176,7 @@ export class SessionStatsService {
    * @param trade - Trade record with entry condition
    */
   recordTradeEntry(trade: SessionTradeRecord): void {
+    this.ensureInitialized();
     if (this.currentSession === null) {
       this.logger.error('Cannot record trade - no active session');
       return;
@@ -270,6 +289,7 @@ export class SessionStatsService {
    * @returns Session or null if not found
    */
   getSession(sessionId: string): Session | null {
+    this.ensureInitialized();
     return this.database.sessions.find((s) => s.sessionId === sessionId) || null;
   }
 
@@ -278,6 +298,7 @@ export class SessionStatsService {
    * @returns All sessions sorted by start time (newest first)
    */
   getAllSessions(): Session[] {
+    this.ensureInitialized();
     return [...this.database.sessions].sort((a, b) =>
       new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
     );
@@ -289,6 +310,7 @@ export class SessionStatsService {
    * @returns Session summary or null if not found
    */
   getSessionSummary(sessionId: string): SessionSummary | null {
+    this.ensureInitialized();
     const session = this.getSession(sessionId);
     return session ? session.summary : null;
   }

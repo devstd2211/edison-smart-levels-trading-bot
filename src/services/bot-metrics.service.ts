@@ -82,21 +82,33 @@ export class BotMetricsService {
   private currentDrawdown: number = 0;
   private peakBalance: number = 0;
   private errorHandler?: ErrorHandler;
+  private started = false;
 
   constructor(private logger: LoggerService, errorHandler?: ErrorHandler) {
     this.errorHandler = errorHandler;
+  }
+
+  /**
+   * Start service initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.sessionStartTime = Date.now();
     try {
-      this.logger.info('📊 BotMetrics service initialized');
+      this.logger.info('???? BotMetrics service initialized');
     } catch (error: unknown) {
       // RETRY strategy: logger might be temporarily unavailable
       if (this.errorHandler) {
         this.errorHandler.handle(new Error('Failed to log initialization'), {
           strategy: RecoveryStrategy.RETRY,
-          context: 'BotMetricsService.constructor',
+          context: 'BotMetricsService.start',
         });
       } else {
         try {
-          this.logger.error('❌ Failed to initialize BotMetrics service', {
+          this.logger.error('??? Failed to initialize BotMetrics service', {
             error,
             errorMessage: extractErrorMessage(error),
           });
@@ -108,12 +120,19 @@ export class BotMetricsService {
     }
   }
 
+  private ensureStarted(): void {
+    if (!this.started) {
+      this.start();
+    }
+  }
+
   /**
    * Record a completed trade
    *
    * @param trade - Trade metrics to record
    */
   recordTrade(trade: TradeMetrics): void {
+    this.ensureStarted();
     try {
       this.trades.push(trade);
 
@@ -168,6 +187,7 @@ export class BotMetricsService {
    * @param error - Optional error message
    */
   recordEvent(eventType: string, duration: number, success: boolean = true, error?: string): void {
+    this.ensureStarted();
     try {
       if (!this.eventMetrics.has(eventType)) {
         this.eventMetrics.set(eventType, {
@@ -237,6 +257,7 @@ export class BotMetricsService {
    * @returns Performance metrics summary
    */
   getPerformanceMetrics(): PerformanceMetrics {
+    this.ensureStarted();
     const totalTrades = this.trades.length;
     const winningTrades = this.trades.filter(t => t.pnl > 0).length;
     const losingTrades = this.trades.filter(t => t.pnl < 0).length;
@@ -280,6 +301,7 @@ export class BotMetricsService {
    * @returns Map of event metrics by type
    */
   getEventMetrics(): Map<string, EventMetrics> {
+    this.ensureStarted();
     return this.eventMetrics;
   }
 
@@ -289,6 +311,7 @@ export class BotMetricsService {
    * @returns Duration in seconds
    */
   getSessionDuration(): number {
+    this.ensureStarted();
     return (Date.now() - this.sessionStartTime) / 1000;
   }
 
@@ -296,6 +319,7 @@ export class BotMetricsService {
    * Print comprehensive metrics report (GRACEFUL_DEGRADE: never blocks trading)
    */
   printReport(): void {
+    this.ensureStarted();
     try {
       const perf = this.getPerformanceMetrics();
       const sessionDuration = this.getSessionDuration();
@@ -360,6 +384,7 @@ export class BotMetricsService {
    * Reset all metrics for a new session
    */
   reset(): void {
+    this.ensureStarted();
     try {
       this.trades = [];
       this.eventMetrics.clear();
@@ -394,6 +419,7 @@ export class BotMetricsService {
    * @returns Array of trade metrics
    */
   getTrades(): TradeMetrics[] {
+    this.ensureStarted();
     return [...this.trades];
   }
 
@@ -404,6 +430,7 @@ export class BotMetricsService {
    * @returns Trade metrics or undefined
    */
   getTradeById(tradeId: string): TradeMetrics | undefined {
+    this.ensureStarted();
     return this.trades.find(t => t.id === tradeId);
   }
 }

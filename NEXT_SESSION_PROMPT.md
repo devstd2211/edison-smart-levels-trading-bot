@@ -50,6 +50,8 @@ Deliverables for this session:
 - BulkheadService queue checker moved into `start()`/`stop()`.
 - BotInitializer now starts Bulkhead and OrderStateMachine (when enabled).
 - TradeHistoryService/TradingJournalService/VirtualBalanceService constructors are now side-effect free (lazy `start()` via ensure).
+- SessionStatsService now lazy-initializes via `start()`/`ensureInitialized()`.
+- BotMetricsService now lazy-initializes via `start()`/`ensureStarted()`.
 
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.
