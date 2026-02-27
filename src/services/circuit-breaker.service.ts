@@ -74,22 +74,6 @@ export class CircuitBreakerService {
     private logger: LoggerService,
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.34: Optional ErrorHandler for resilience
   ) {
-    // Phase 8.9.34: SKIP logging failures
-    try {
-      this.logger.info('[CircuitBreaker] Initialized', {
-        errorThreshold: config.errorThreshold,
-        cooldownMs: config.cooldownMs,
-      });
-    } catch (logError) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(logError as Error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'CircuitBreakerService.constructor.initialization',
-        }).catch(() => {
-          // Silently ignore error handling failures
-        });
-      }
-    }
   }
 
   /**

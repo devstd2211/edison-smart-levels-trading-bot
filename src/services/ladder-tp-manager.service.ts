@@ -48,13 +48,6 @@ export class LadderTpManagerService {
     private logger: LoggerService,
     private readonly errorHandler?: ErrorHandler,
   ) {
-    this.logger.info('LadderTpManagerService initialized', {
-      levels: config.levels.length,
-      moveToBreakeven: config.moveToBreakevenAfterTP1,
-      trailing: config.trailingAfterTP2,
-      trailingDistance: config.trailingDistancePercent,
-    });
-
     // Validate config
     this.validateConfig();
   }
@@ -437,13 +430,6 @@ export class LadderTpManagerService {
     }
 
     // Validate total closePercent ~= 100%
-    const totalClose = this.config.levels.reduce((sum, level) => sum + level.closePercent, 0);
-    if (Math.abs(totalClose - INTEGER_MULTIPLIERS.ONE_HUNDRED) > 5) {
-      this.logger.warn('Total closePercent is not ~100%, some position may remain', {
-        totalClose,
-      });
-    }
-
     if (this.config.trailingAfterTP2 && this.config.trailingDistancePercent <= 0) {
       throw new ConfigurationError(
         `Invalid trailingDistancePercent: ${this.config.trailingDistancePercent} (must be > 0)`,

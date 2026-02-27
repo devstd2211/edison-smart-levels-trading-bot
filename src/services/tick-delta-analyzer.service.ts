@@ -48,15 +48,6 @@ export class TickDeltaAnalyzerService {
   ) {
     // THROW: Config validation
     this.validateConfig(config);
-
-    this.safeLog(() => {
-      this.logger.info('TickDeltaAnalyzerService initialized', {
-        minDeltaRatio: config.minDeltaRatio,
-        detectionWindow: config.detectionWindow,
-        minTickCount: config.minTickCount,
-        minVolumeUSDT: config.minVolumeUSDT,
-      });
-    });
   }
 
   /**

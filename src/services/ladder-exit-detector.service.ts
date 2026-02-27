@@ -39,9 +39,6 @@ export class LadderExitDetectorService {
     private readonly bybitService: IExchange,
     private readonly errorHandler?: ErrorHandler,
   ) {
-    this.logger.info('LadderExitDetectorService initialized', {
-      hasErrorHandler: !!errorHandler,
-    });
   }
 
   // ==========================================================================

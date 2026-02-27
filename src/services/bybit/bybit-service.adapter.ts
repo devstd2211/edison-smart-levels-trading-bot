@@ -53,10 +53,6 @@ export class BybitServiceAdapter implements IExchange {
     private bybitService: BybitService,
     private logger: LoggerService,
   ) {
-    this.logger.info('BybitServiceAdapter initialized', {
-      name: this.name,
-      symbol: this.bybitService.getSymbol(),
-    });
   }
 
   // ============================================================================

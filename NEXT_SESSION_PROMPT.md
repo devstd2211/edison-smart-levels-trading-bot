@@ -54,6 +54,7 @@ Deliverables for this session:
 - BotMetricsService now lazy-initializes via `start()`/`ensureStarted()`.
 - TradingLifecycleManager subscriptions moved to explicit `start()/stop()`.
 - PositionStateMachineService constructor logging removed (no constructor side effects).
+- Constructor logging removed in exit/ladder/tick-delta/orderbook/bybit/circuit-breaker services.
 
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.

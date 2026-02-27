@@ -101,14 +101,6 @@ export class ExitOrchestrator {
   ) {
     // Use injected state machine or create new one
     this.stateMachine = stateMachine || new PositionStateMachineService(logger);
-
-    this.logger.info('🎯 ExitOrchestrator initialized (PHASE 4.5 INTEGRATION + 8.9.25 ErrorHandler)', {
-      role: 'Single position exit state machine',
-      statesAvailable: 'OPEN, TP1_HIT, TP2_HIT, TP3_HIT, CLOSED',
-      actionsAvailable: 'CLOSE_PERCENT, UPDATE_SL, ACTIVATE_TRAILING, MOVE_SL_TO_BREAKEVEN, CLOSE_ALL',
-      stateMachineIntegrated: 'YES (Phase 4.5)',
-      errorHandlerIntegrated: this.errorHandler ? 'YES (Phase 8.9.25)' : 'NO (backward compatible)',
-    });
   }
 
   /**

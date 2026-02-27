@@ -113,7 +113,6 @@ export class CircuitBreakerService {
     };
 
     this.circuits = new Map();
-    this.safeLog('info', `CircuitBreakerService initialized with config`, this.config);
   }
 
   // ============================================================================

@@ -35,14 +35,6 @@ export class OrderbookImbalanceService {
   ) {
     // Constructor validation: THROW on invalid config
     this.validateConfig(config);
-
-    this.safeLog(() =>
-      this.logger.info('OrderbookImbalanceService initialized', {
-        enabled: config.enabled,
-        levels: config.levels,
-        minImbalancePercent: config.minImbalancePercent,
-      }),
-    );
   }
 
   /**
