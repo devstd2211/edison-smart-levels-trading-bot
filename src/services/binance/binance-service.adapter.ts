@@ -43,10 +43,6 @@ export class BinanceServiceAdapter implements IExchange {
     private binanceService: BinanceService,
     private logger: LoggerService,
   ) {
-    this.logger.info('BinanceServiceAdapter initialized', {
-      name: this.name,
-      symbol: this.binanceService.getSymbol(),
-    });
   }
 
   // ============================================================================

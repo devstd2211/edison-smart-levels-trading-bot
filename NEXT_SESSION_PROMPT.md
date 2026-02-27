@@ -55,6 +55,7 @@ Deliverables for this session:
 - TradingLifecycleManager subscriptions moved to explicit `start()/stop()`.
 - PositionStateMachineService constructor logging removed (no constructor side effects).
 - Constructor logging removed in exit/ladder/tick-delta/orderbook/bybit/circuit-breaker services.
+- Constructor logging removed in limit-order executor, binance adapter, multi-timeframe trend, strategy cache, exit handler, scalping strategies.
 
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.

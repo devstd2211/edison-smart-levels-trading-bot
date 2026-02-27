@@ -50,14 +50,6 @@ export class LimitOrderExecutorService {
     private logger: LoggerService,
     private errorHandler?: ErrorHandler,
   ) {
-    this.logger.info('LimitOrderExecutorService initialized', {
-      enabled: config.enabled,
-      timeoutMs: config.timeoutMs,
-      slippagePercent: config.slippagePercent,
-      fallbackToMarket: config.fallbackToMarket,
-      maxRetries: config.maxRetries,
-      errorHandlerEnabled: !!errorHandler,
-    });
   }
 
   // ==========================================================================

@@ -54,12 +54,6 @@ export class ExitEventHandler {
     private exitConfig: ExitStrategyConfig,
     private logger: LoggerService,
   ) {
-    this.logger.info('🎯 ExitEventHandler initialized', {
-      role: 'Process exit events (TP hits, position closed)',
-      tpLevels: exitConfig.takeProfits.length,
-      trailingEnabled: exitConfig.trailing?.enabled ?? false,
-      breakEvenEnabled: exitConfig.breakeven?.enabled ?? false,
-    });
   }
 
   /**

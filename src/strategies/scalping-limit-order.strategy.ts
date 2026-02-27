@@ -41,21 +41,6 @@ export class ScalpingLimitOrderStrategy implements IStrategy {
     private logger: LoggerService,
   ) {
     this.priority = config.priority;
-    this.logger.info('ScalpingLimitOrderStrategy initialized (execution wrapper)', {
-      enabled: config.enabled,
-      priority: config.priority,
-      timeoutMs: config.executor.timeoutMs,
-      slippage: config.executor.slippagePercent,
-      fallbackToMarket: config.executor.fallbackToMarket,
-      baseSignalSource: config.baseSignalSource,
-    });
-
-    if (config.enabled) {
-      this.logger.info(
-        '💰 Limit Order Execution ENABLED - All entries will use limit orders (maker fees)',
-      );
-      this.logger.info('📊 Fee savings: 0.05% per trade (0.06% taker → 0.01% maker)');
-    }
   }
 
   // ==========================================================================

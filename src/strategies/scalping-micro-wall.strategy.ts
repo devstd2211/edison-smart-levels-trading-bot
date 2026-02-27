@@ -50,14 +50,6 @@ export class ScalpingMicroWallStrategy implements IStrategy {
     private logger: LoggerService,
   ) {
     this.priority = config.priority;
-
-    this.logger.info('📊 ScalpingMicroWallStrategy initialized', {
-      priority: this.priority,
-      minConfidence: config.minConfidence,
-      takeProfitPercent: config.takeProfitPercent,
-      stopLossPercent: config.stopLossPercent,
-      maxHoldingTimeMs: config.maxHoldingTimeMs,
-    });
   }
 
   /**

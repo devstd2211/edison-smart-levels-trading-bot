@@ -39,11 +39,6 @@ export class MultiTimeframeTrendService {
     private readonly swingPointDetector: SwingPointDetectorService,
     private readonly errorHandler?: ErrorHandler,
   ) {
-    try {
-      this.logger.info('✅ MultiTimeframeTrendService initialized');
-    } catch {
-      // Ignore logger errors on initialization
-    }
   }
 
   /**

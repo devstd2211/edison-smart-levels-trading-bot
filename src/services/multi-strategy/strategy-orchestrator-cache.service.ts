@@ -41,7 +41,6 @@ export class StrategyOrchestratorCacheService {
   private maxCacheSize = 10; // Max strategies to cache simultaneously
 
   constructor(private logger: LoggerService) {
-    this.logger.debug('[StrategyOrchestratorCache] Initialized');
   }
 
   /**
