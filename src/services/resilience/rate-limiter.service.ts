@@ -14,6 +14,7 @@
 import { LoggerService } from '../../types/legacy';
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
+import type { ILifecycle } from '../../interfaces/ILifecycle';
 import {
   DEFAULT_RATE_LIMIT_RPS,
   DEFAULT_RATE_LIMIT_WINDOW_MS,
@@ -108,11 +109,12 @@ export class RateLimitQueueFullError extends Error {
 // SERVICE
 // ============================================================================
 
-export class RateLimiterService {
+export class RateLimiterService implements ILifecycle {
   private readonly buckets: Map<string, TokenBucket>;
   private readonly config: RateLimiterConfig;
   private readonly stats: Map<string, RateLimiterStats>;
   private refillInterval?: NodeJS.Timeout;
+  private started = false;
 
   constructor(
     config?: Partial<RateLimiterConfig>,
@@ -143,9 +145,6 @@ export class RateLimiterService {
 
     this.buckets = new Map();
     this.stats = new Map();
-
-    // Start token refill interval
-    this.startRefillInterval();
 
     this.safeLog('info', 'RateLimiterService initialized', this.config);
   }
@@ -325,6 +324,18 @@ export class RateLimiterService {
       this.refillInterval = undefined;
       this.safeLog('info', 'RateLimiterService stopped');
     }
+    this.started = false;
+  }
+
+  /**
+   * Start refill interval (lifecycle)
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.startRefillInterval();
   }
 
   // ============================================================================
@@ -409,6 +420,9 @@ export class RateLimiterService {
   }
 
   private startRefillInterval(): void {
+    if (this.refillInterval) {
+      return;
+    }
     this.refillInterval = setInterval(() => {
       for (const bucket of this.buckets.values()) {
         this.refillTokens(bucket);

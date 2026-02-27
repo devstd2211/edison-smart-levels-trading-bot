@@ -3,6 +3,7 @@ import { TIME_MULTIPLIERS } from '../constants/technical.constants';
 import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
+import { LifecycleManager } from './lifecycle-manager.service';
 import { isCriticalApiError } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import {
@@ -28,6 +29,7 @@ import {
 export class BotInitializer {
   private logger: LoggerService;
   private periodicTaskInterval: NodeJS.Timeout | null = null;
+  private readonly lifecycleManager: LifecycleManager;
 
   // Retry configurations for different operations
   private readonly BYBIT_INIT_RETRY_CONFIG: RetryConfig = {
@@ -71,6 +73,28 @@ export class BotInitializer {
     private errorHandler?: ErrorHandler,
   ) {
     this.logger = services.coreServices.logger;
+    this.lifecycleManager = new LifecycleManager(this.logger);
+    this.registerLifecycleService(this.services.marketDataServices.webSocketManager);
+    this.registerLifecycleService(this.services.marketDataServices.publicWebSocket);
+    this.registerLifecycleService(this.services.executionServices.positionMonitor);
+    if (this.services.monitoringServices?.monitoringServer) {
+      this.registerLifecycleService(this.services.monitoringServices.monitoringServer);
+    }
+    if (this.services.monitoringServices?.metricsService) {
+      this.registerLifecycleService(this.services.monitoringServices.metricsService);
+    }
+    if (this.services.monitoringServices?.dashboard) {
+      this.registerLifecycleService(this.services.monitoringServices.dashboard);
+    }
+    if (this.services.resilienceServices?.rateLimiter) {
+      this.registerLifecycleService(this.services.resilienceServices.rateLimiter);
+    }
+    if (this.services.resilienceServices?.retryPolicy) {
+      this.registerLifecycleService(this.services.resilienceServices.retryPolicy);
+    }
+    if (this.services.executionServices?.tradingOrchestrator) {
+      this.registerLifecycleService(this.services.executionServices.tradingOrchestrator);
+    }
   }
 
   /**
@@ -190,6 +214,18 @@ export class BotInitializer {
         await this.initializeBtcCandles();
       }
 
+      // Phase 4.6: Start trading orchestrator (load indicators/analyzers)
+      await this.startTradingOrchestrator();
+
+      // Phase 4.7: Start monitoring services (dashboard/metrics)
+      await this.startMonitoringServices();
+
+      // Phase 4.75: Start resilience services (rate limiter, retry policy)
+      await this.startResilienceServices();
+
+      // Phase 4.8: Start monitoring server (optional, non-blocking)
+      this.startMonitoringServer();
+
       this.logger.info('✅ Bot initialization complete - ready to connect WebSockets');
     } catch (error) {
       this.logger.error('Failed to initialize bot', {
@@ -211,13 +247,13 @@ export class BotInitializer {
       // Connect Private WebSocket with retry
       this.logger.info('Connecting Private WebSocket...');
       await this.connectWithRetry('Private WebSocket', () => {
-        this.services.marketDataServices.webSocketManager.connect();
+        return this.services.marketDataServices.webSocketManager.start();
       });
 
       // Connect Public WebSocket with retry
       this.logger.info('Connecting Public WebSocket...');
       await this.connectWithRetry('Public WebSocket', () => {
-        this.services.marketDataServices.publicWebSocket.connect();
+        return this.services.marketDataServices.publicWebSocket.start();
       });
 
       this.logger.info('✅ WebSocket connections established');
@@ -240,12 +276,12 @@ export class BotInitializer {
    */
   private async connectWithRetry(
     wsName: string,
-    connectFn: () => void,
+    connectFn: () => void | Promise<void>,
   ): Promise<void> {
     if (this.errorHandler) {
       for (let attempt = 1; attempt <= this.WEBSOCKET_RETRY_CONFIG.maxAttempts; attempt++) {
         try {
-          connectFn();
+          await connectFn();
           return;
         } catch (error) {
           if (attempt === this.WEBSOCKET_RETRY_CONFIG.maxAttempts) {
@@ -265,7 +301,23 @@ export class BotInitializer {
         }
       }
     } else {
-      connectFn();
+      await connectFn();
+    }
+  }
+
+  private isLifecycleService(
+    value: unknown,
+  ): value is { start: () => void | Promise<void>; stop: () => void | Promise<void> } {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+    const candidate = value as { start?: unknown; stop?: unknown };
+    return typeof candidate.start === 'function' && typeof candidate.stop === 'function';
+  }
+
+  private registerLifecycleService(value: unknown): void {
+    if (this.isLifecycleService(value)) {
+      this.lifecycleManager.register(value);
     }
   }
 
@@ -444,11 +496,8 @@ export class BotInitializer {
           }
         });
 
-        // Stop position monitor
-        await skipOnError('stop position monitor', () => {
-          this.services.executionServices.positionMonitor.stop();
-          this.logger.debug('Position monitor stopped');
-        });
+        // Stop lifecycle-managed services
+        await skipOnError('stop lifecycle services', () => this.lifecycleManager.stopAll());
 
         // Remove all position monitor listeners
         await skipOnError('remove position monitor listeners', () => {
@@ -456,22 +505,10 @@ export class BotInitializer {
           this.logger.debug('Position monitor listeners removed');
         });
 
-        // Disconnect Private WebSocket
-        await skipOnError('disconnect private WebSocket', () => {
-          this.services.marketDataServices.webSocketManager.disconnect();
-          this.logger.debug('Private WebSocket disconnected');
-        });
-
         // Remove private WebSocket listeners
         await skipOnError('remove private WebSocket listeners', () => {
           this.services.marketDataServices.webSocketManager.removeAllListeners();
           this.logger.debug('Private WebSocket listeners removed');
-        });
-
-        // Disconnect Public WebSocket
-        await skipOnError('disconnect public WebSocket', () => {
-          this.services.marketDataServices.publicWebSocket.disconnect();
-          this.logger.debug('Public WebSocket disconnected');
         });
 
         // Remove public WebSocket listeners
@@ -499,23 +536,16 @@ export class BotInitializer {
           this.logger.debug('Periodic tasks stopped');
         }
 
-        // Stop position monitor
-        this.services.executionServices.positionMonitor.stop();
-        this.logger.debug('Position monitor stopped');
+        // Stop lifecycle-managed services
+        await this.lifecycleManager.stopAll({ throwOnError: true });
 
         // Remove all position monitor listeners
         this.services.executionServices.positionMonitor.removeAllListeners();
         this.logger.debug('Position monitor listeners removed');
 
-        // Disconnect Private WebSocket
-        this.services.marketDataServices.webSocketManager.disconnect();
-        this.logger.debug('Private WebSocket disconnected');
         this.services.marketDataServices.webSocketManager.removeAllListeners();
         this.logger.debug('Private WebSocket listeners removed');
 
-        // Disconnect Public WebSocket
-        this.services.marketDataServices.publicWebSocket.disconnect();
-        this.logger.debug('Public WebSocket disconnected');
         this.services.marketDataServices.publicWebSocket.removeAllListeners();
         this.logger.debug('Public WebSocket listeners removed');
 
@@ -813,6 +843,83 @@ export class BotInitializer {
       // Don't throw - allow bot to continue without BTC confirmation
       this.services.btcCandles1m = [];
     }
+  }
+
+  private async startMonitoringServices(): Promise<void> {
+    const monitoring = this.services.monitoringServices;
+    if (!monitoring) {
+      return;
+    }
+
+    const startService = async (service: unknown, name: string): Promise<void> => {
+      if (!this.isLifecycleService(service)) {
+        return;
+      }
+      try {
+        await service.start();
+      } catch (error) {
+        this.logger.error(`Failed to start ${name}`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    await startService(monitoring.metricsService, 'metrics service');
+    await startService(monitoring.dashboard, 'dashboard');
+  }
+
+  private async startResilienceServices(): Promise<void> {
+    const resilience = this.services.resilienceServices;
+    if (!resilience) {
+      return;
+    }
+
+    const startService = async (service: unknown, name: string): Promise<void> => {
+      if (!this.isLifecycleService(service)) {
+        return;
+      }
+      try {
+        await service.start();
+      } catch (error) {
+        this.logger.error(`Failed to start ${name}`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    await startService(resilience.rateLimiter, 'rate limiter');
+    await startService(resilience.retryPolicy, 'retry policy');
+  }
+
+  private async startTradingOrchestrator(): Promise<void> {
+    const orchestrator = this.services.executionServices?.tradingOrchestrator;
+    if (!this.isLifecycleService(orchestrator)) {
+      return;
+    }
+    try {
+      await orchestrator.start();
+    } catch (error) {
+      this.logger.error('Failed to start trading orchestrator', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Start MonitoringServer if configured (non-blocking)
+   */
+  private startMonitoringServer(): void {
+    const monitoringServer = this.services.monitoringServices?.monitoringServer;
+    if (!monitoringServer) {
+      return;
+    }
+
+    monitoringServer.start().catch((error) => {
+      this.logger.error('Failed to start monitoring server', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
   }
 
   /**

@@ -20,6 +20,7 @@ import blessed, { Widgets } from 'blessed';
 import { EventEmitter } from 'events';
 import { Position } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 
 interface DashboardConfig {
   enabled: boolean;
@@ -67,11 +68,13 @@ interface DashboardState {
   lastUpdate: Date;
 }
 
-export class ConsoleDashboardService extends EventEmitter {
+export class ConsoleDashboardService extends EventEmitter implements ILifecycle {
   private screen?: Widgets.Screen;
   private config: DashboardConfig;
   private state: DashboardState;
   private widgets: Map<string, Widgets.BoxElement> = new Map();
+  private updateIntervalId?: NodeJS.Timeout;
+  private started = false;
 
   // Non-blocking render control
   private renderScheduled = false;
@@ -97,14 +100,6 @@ export class ConsoleDashboardService extends EventEmitter {
       lastUpdate: new Date(),
     };
 
-    if (this.config.enabled) {
-      try {
-        this.initialize();
-      } catch (error) {
-        this.safeWarn('[DASHBOARD] Failed to initialize:', error instanceof Error ? error.message : String(error));
-        this.config.enabled = false;
-      }
-    }
   }
 
   /**
@@ -189,6 +184,24 @@ export class ConsoleDashboardService extends EventEmitter {
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
+    }
+  }
+
+  /**
+   * Start dashboard (lifecycle)
+   */
+  start(): void {
+    if (!this.config.enabled || this.started) {
+      return;
+    }
+
+    this.started = true;
+    try {
+      this.initialize();
+    } catch (error) {
+      this.safeWarn('[DASHBOARD] Failed to initialize:', error instanceof Error ? error.message : String(error));
+      this.config.enabled = false;
+      this.started = false;
     }
   }
 
@@ -367,7 +380,10 @@ export class ConsoleDashboardService extends EventEmitter {
 
     // Start loop
     const interval = this.config.updateInterval || 1000;
-    setInterval(updateLoop, interval);
+    if (this.updateIntervalId) {
+      clearInterval(this.updateIntervalId);
+    }
+    this.updateIntervalId = setInterval(updateLoop, interval);
   }
 
   /**
@@ -1106,6 +1122,10 @@ export class ConsoleDashboardService extends EventEmitter {
   }
 
   public destroy(): void {
+    if (this.updateIntervalId) {
+      clearInterval(this.updateIntervalId);
+      this.updateIntervalId = undefined;
+    }
     if (this.screen) {
       try {
         this.screen.destroy();
@@ -1116,5 +1136,14 @@ export class ConsoleDashboardService extends EventEmitter {
         }
       }
     }
+    this.screen = undefined;
+    this.started = false;
+  }
+
+  /**
+   * Stop dashboard (lifecycle)
+   */
+  stop(): void {
+    this.destroy();
   }
 }

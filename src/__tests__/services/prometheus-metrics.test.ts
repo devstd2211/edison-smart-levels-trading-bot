@@ -70,6 +70,7 @@ describe('PrometheusMetricsService', () => {
         { collectInterval: 1000 },
         mockLogger
       );
+      svc.start();
       expect(svc).toBeDefined();
       svc.stop();
     });
@@ -345,6 +346,7 @@ describe('PrometheusMetricsService', () => {
       );
 
       // Should start collection
+      svc.start();
       expect(svc).toBeDefined();
 
       // Stop collection

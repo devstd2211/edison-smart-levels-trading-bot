@@ -33,6 +33,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     mockLogger = createMockLogger();
     errorHandler = new ErrorHandler(mockLogger);
     gate = new MTFSnapshotGate(mockLogger, errorHandler);
+    gate.start();
   });
 
   afterEach(() => {
@@ -54,6 +55,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -95,6 +97,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
     it('should work without ErrorHandler (backward compatible)', () => {
       const gateWithoutErrorHandler = new MTFSnapshotGate(mockLogger);
+      gateWithoutErrorHandler.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -147,6 +150,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -197,6 +201,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -244,6 +249,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -296,6 +302,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -350,6 +357,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       // Create multiple snapshots
       const signal1: Signal = {
@@ -415,6 +423,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     it('should work without ErrorHandler during cleanup', (done) => {
 
       const gateWithoutErrorHandler = new MTFSnapshotGate(mockLogger);
+      gateWithoutErrorHandler.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -473,6 +482,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -524,6 +534,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -577,6 +588,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const candle = {
         open: 1000,
@@ -636,6 +648,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithBrokenLogger = new MTFSnapshotGate(brokenLogger, errorHandler);
+      gateWithBrokenLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -683,6 +696,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
       // Gate should handle null logger gracefully
       const gateWithNullLogger = new MTFSnapshotGate(nullLogger, errorHandler);
+      gateWithNullLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -725,6 +739,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       } as any;
 
       const gateWithThrowingHandler = new MTFSnapshotGate(mockLogger, throwingErrorHandler);
+      gateWithThrowingHandler.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -772,6 +787,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       });
 
       const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
+      gateWithFailingLogger.start();
 
       const signal: Signal = {
         direction: SignalDirection.LONG,

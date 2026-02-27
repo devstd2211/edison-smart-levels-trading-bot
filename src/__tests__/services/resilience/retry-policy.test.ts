@@ -47,6 +47,7 @@ describe('RetryPolicyService', () => {
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
       service = new RetryPolicyService();
+      service.start();
       expect(service).toBeDefined();
 
       const stats = service.getStats();
@@ -92,6 +93,7 @@ describe('RetryPolicyService', () => {
         exponentialBase: 2,
         jitterEnabled: false,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Attempt 1: 100 * 2^0 = 100ms
       expect(service.getBackoffDelay(1, 100, { jitterEnabled: false })).toBe(100);
@@ -109,6 +111,7 @@ describe('RetryPolicyService', () => {
         exponentialBase: 2,
         jitterEnabled: true,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       const delays = [];
       for (let i = 0; i < 10; i++) {
@@ -133,6 +136,7 @@ describe('RetryPolicyService', () => {
         maxDelayMs: 500,
         jitterEnabled: false,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Attempt 5: 100 * 10^4 = 100000ms, but should cap at 500ms
       const delay = service.getBackoffDelay(5, 100, { maxDelayMs: 500, jitterEnabled: false });
@@ -145,6 +149,7 @@ describe('RetryPolicyService', () => {
         exponentialBase: 1,
         jitterEnabled: false,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Should never go below MIN_RETRY_DELAY_MS (10ms)
       const delay = service.getBackoffDelay(1, 1, { jitterEnabled: false });
@@ -157,6 +162,7 @@ describe('RetryPolicyService', () => {
         exponentialBase: 3,
         jitterEnabled: false,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Attempt 1: 100 * 3^0 = 100ms
       expect(service.getBackoffDelay(1, 100, { exponentialBase: 3, jitterEnabled: false })).toBe(100);
@@ -180,6 +186,7 @@ describe('RetryPolicyService', () => {
         retryBudgetPercent: 0.5, // 50% of operations can retry
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const failTwice = async () => {
@@ -204,6 +211,7 @@ describe('RetryPolicyService', () => {
         retryBudgetPercent: 0.1, // 10% budget
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Run 10 operations to establish budget
       for (let i = 0; i < 10; i++) {
@@ -238,6 +246,7 @@ describe('RetryPolicyService', () => {
         retryBudgetPercent: 0.1,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Manually set budget usage
       service['stats'].budgetUsage = 5;
@@ -259,6 +268,7 @@ describe('RetryPolicyService', () => {
         retryBudgetPercent: 0.5,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const failTwice = async () => {
@@ -282,6 +292,7 @@ describe('RetryPolicyService', () => {
         retryBudgetPercent: 0.1, // 10%
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // 0 operations → budget limit = 0
       expect(service.getStats().budgetLimit).toBe(0);
@@ -310,6 +321,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const transientError = async () => {
@@ -332,6 +344,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const http429Error = async () => {
@@ -354,6 +367,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const http404Error = async () => {
@@ -380,6 +394,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const failTwice = async () => {
@@ -402,6 +417,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const alwaysFail = async () => {
@@ -423,6 +439,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 3,
         baseDelayMs: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       const immediateSuccess = async () => 'success';
 
@@ -440,6 +457,7 @@ describe('RetryPolicyService', () => {
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // 3 successful operations
       for (let i = 0; i < 3; i++) {
@@ -467,6 +485,7 @@ describe('RetryPolicyService', () => {
         maxAttempts: 1,
         baseDelayMs: 100,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       let callCount = 0;
       const failTwice = async () => {
@@ -493,6 +512,7 @@ describe('RetryPolicyService', () => {
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
       }, logger as LoggerService);
+      service.start();
 
       let callCount = 0;
       const failOnce = async () => {
@@ -512,6 +532,7 @@ describe('RetryPolicyService', () => {
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
       });
+      service.start();
 
       let callCount = 0;
       const failOnce = async () => {

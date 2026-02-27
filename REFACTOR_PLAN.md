@@ -264,8 +264,8 @@
 **Goal:** Make lifecycle explicit and remove side effects from constructors.
 
 ### Step‑by‑Step Checklist
-- [ ] Introduce `LifecycleManager` with `start()` and `stop()` methods.
-- [ ] Ensure services that open sockets/timers implement `start/stop`.
+- [x] Introduce `LifecycleManager` with `start()` and `stop()` methods.
+- [x] Ensure services that open sockets/timers implement `start/stop`.
 - [ ] Move side‑effects out of constructors into `start`.
 - [ ] Create lightweight `createServices()` factory that is side‑effect free.
 - [ ] Refactor `TradingBot.start()` to only orchestrate lifecycle, not initialize dependencies.
@@ -273,10 +273,18 @@
 - [ ] Update tests to use `createServices()` + explicit `start/stop`.
 
 **Progress**
-- [ ] LifecycleManager added
-- [ ] Side effects removed from constructors
-- [ ] Explicit start/stop across services
-- [ ] Tests updated
+- [x] LifecycleManager added and used for BotInitializer shutdown sequencing
+- [x] MonitoringServer start moved out of builder into BotInitializer
+- [x] PrometheusMetricsService auto-collection moved to explicit start
+- [x] ConsoleDashboardService update loop moved to explicit start/stop
+- [x] RateLimiterService refill interval moved to explicit start/stop
+- [x] RetryPolicyService budget reset moved to explicit start/stop
+- [x] MTFSnapshotGate cleanup interval moved to explicit start/stop
+- [x] TradingOrchestrator constructor side effects moved to explicit start/stop
+- [x] BotInitializer now starts TradingOrchestrator during initialize
+- [ ] Side effects removed from constructors (remaining cleanup)
+- [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
+- [x] BotInitializer tests updated for start/stop changes
 
 ### Complexity + Risk
 - **Complexity:** Medium

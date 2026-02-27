@@ -41,6 +41,10 @@ export const createTradingBotServiceBundle = (
     candleProvider: services.candleProvider,
     btcCandles1m: services.btcCandles1m,
     exchangeFactory: services.exchangeFactory,
+    resilienceServices: {
+      rateLimiter: services.rateLimiter,
+      retryPolicy: services.retryPolicy,
+    },
 
     // IWebSocketEventHandlerServices
     eventHandlerServices: services.eventHandlerServices,

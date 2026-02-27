@@ -29,6 +29,7 @@ describe('MTFSnapshotGate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     gate = new MTFSnapshotGate(mockLogger);
+    gate.start();
   });
 
   // ========================================================================

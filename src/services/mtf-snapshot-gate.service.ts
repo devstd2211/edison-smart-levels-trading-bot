@@ -43,6 +43,7 @@ import {
 } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import * as crypto from 'crypto';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 
 // ============================================================================
 // TYPES
@@ -106,19 +107,18 @@ export interface SnapshotValidationResult {
 // MTF SNAPSHOT GATE SERVICE
 // ============================================================================
 
-export class MTFSnapshotGate {
+export class MTFSnapshotGate implements ILifecycle {
   private snapshots = new Map<string, MTFSnapshot>();
   private activeSnapshotId: string | null = null;
   private readonly SNAPSHOT_TTL = 120000; // 120 seconds (FIX: was 60s, too short for PRIMARY→ENTRY delay)
   private readonly SNAPSHOT_CLEANUP_INTERVAL = 60000; // 60 seconds (FIX: was 30s, too aggressive)
   private cleanupIntervalId?: ReturnType<typeof setInterval>;
+  private started = false;
 
   constructor(
     private logger: LoggerService,
     private errorHandler?: ErrorHandler
   ) {
-    // Periodically clean up expired snapshots
-    this.cleanupIntervalId = setInterval(() => this.cleanupExpiredSnapshots(), this.SNAPSHOT_CLEANUP_INTERVAL);
   }
 
   /**
@@ -126,9 +126,31 @@ export class MTFSnapshotGate {
    * Call this when gate is no longer needed (e.g., in test afterEach)
    */
   destroy(): void {
+    this.stop();
+  }
+
+  /**
+   * Start snapshot cleanup interval (lifecycle)
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    if (!this.cleanupIntervalId) {
+      this.cleanupIntervalId = setInterval(() => this.cleanupExpiredSnapshots(), this.SNAPSHOT_CLEANUP_INTERVAL);
+    }
+  }
+
+  /**
+   * Stop snapshot cleanup interval (lifecycle)
+   */
+  stop(): void {
     if (this.cleanupIntervalId !== undefined) {
       clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = undefined;
     }
+    this.started = false;
   }
 
   /**

@@ -21,6 +21,8 @@ import type { DeltaAnalyzerService } from '../services/delta-analyzer.service';
 import type { LoggerService } from '../services/logger.service';
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 import type { IWebApiWallTracker } from './IWebApiServices';
+import type { RateLimiterService } from '../services/resilience/rate-limiter.service';
+import type { RetryPolicyService } from '../services/resilience/retry-policy.service';
 
 export interface IBotServicesAdapterSource {
   logger: LoggerService;
@@ -68,4 +70,6 @@ export interface IBotServicesAdapterSource {
   deltaAnalyzerService?: DeltaAnalyzerService;
   tradingOrchestrator: TradingOrchestrator;
   strategyOrchestrator?: StrategyOrchestratorService;
+  rateLimiter?: RateLimiterService;
+  retryPolicy?: RetryPolicyService;
 }

@@ -16,6 +16,7 @@ import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { Counter, Gauge, Histogram, Summary, Registry, register } from 'prom-client';
 import type { IMonitoringMetricsReader } from '../interfaces/IMonitoringReaders';
 import type { IMonitoringMetricsRecorder } from '../interfaces/IMonitoringRecorders';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 
 // ============================================================================
 // INTERFACES
@@ -59,7 +60,7 @@ export interface PerformanceMetrics {
 // SERVICE
 // ============================================================================
 
-export class PrometheusMetricsService implements IMonitoringMetricsReader, IMonitoringMetricsRecorder {
+export class PrometheusMetricsService implements IMonitoringMetricsReader, IMonitoringMetricsRecorder, ILifecycle {
   private readonly registry: Registry;
   private readonly prefix: string;
   private collectIntervalId?: NodeJS.Timeout;
@@ -227,10 +228,6 @@ export class PrometheusMetricsService implements IMonitoringMetricsReader, IMoni
 
     this.safeLog('PrometheusMetricsService initialized', 'info');
 
-    // Start automatic collection if enabled
-    if (config.collectInterval && config.collectInterval > 0) {
-      this.startAutoCollection(config.collectInterval);
-    }
   }
 
   // ============================================================================
@@ -602,6 +599,15 @@ export class PrometheusMetricsService implements IMonitoringMetricsReader, IMoni
       clearInterval(this.collectIntervalId);
       this.collectIntervalId = undefined;
       this.safeLog('Metric collection stopped', 'info');
+    }
+  }
+
+  /**
+   * Start automatic metric collection (lifecycle)
+   */
+  start(): void {
+    if (this.config.collectInterval && this.config.collectInterval > 0) {
+      this.startAutoCollection(this.config.collectInterval);
     }
   }
 

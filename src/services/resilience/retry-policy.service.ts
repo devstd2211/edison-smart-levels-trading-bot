@@ -13,6 +13,7 @@
 import { LoggerService } from '../../types/legacy';
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
+import type { ILifecycle } from '../../interfaces/ILifecycle';
 import {
   DEFAULT_MAX_RETRY_ATTEMPTS,
   DEFAULT_RETRY_BASE_DELAY_MS,
@@ -87,10 +88,11 @@ export class MaxRetriesExceededError extends Error {
 // SERVICE
 // ============================================================================
 
-export class RetryPolicyService {
+export class RetryPolicyService implements ILifecycle {
   private readonly config: RetryPolicyConfig;
   private stats: RetryStats;
   private budgetResetInterval?: NodeJS.Timeout;
+  private started = false;
 
   constructor(
     config?: Partial<RetryPolicyConfig>,
@@ -131,9 +133,6 @@ export class RetryPolicyService {
       budgetUsage: 0,
       budgetLimit: 0,
     };
-
-    // Start budget reset interval
-    this.startBudgetResetInterval();
 
     this.safeLog('info', 'RetryPolicyService initialized', this.config);
   }
@@ -308,6 +307,18 @@ export class RetryPolicyService {
       this.budgetResetInterval = undefined;
       this.safeLog('info', 'RetryPolicyService stopped');
     }
+    this.started = false;
+  }
+
+  /**
+   * Start budget reset interval (lifecycle)
+   */
+  start(): void {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
+    this.startBudgetResetInterval();
   }
 
   // ============================================================================
@@ -352,6 +363,9 @@ export class RetryPolicyService {
   }
 
   private startBudgetResetInterval(): void {
+    if (this.budgetResetInterval) {
+      return;
+    }
     this.budgetResetInterval = setInterval(() => {
       this.resetBudget();
     }, RETRY_BUDGET_RESET_INTERVAL_MS);

@@ -32,7 +32,7 @@ export class LifecycleManager {
     }
   }
 
-  async stopAll(): Promise<void> {
+  async stopAll(options: { throwOnError?: boolean } = {}): Promise<void> {
     for (let i = this.services.length - 1; i >= 0; i -= 1) {
       const service = this.services[i];
       try {
@@ -42,6 +42,9 @@ export class LifecycleManager {
           this.logger.warn('LifecycleManager failed to stop service', {
             error: error instanceof Error ? error.message : String(error),
           });
+        }
+        if (options.throwOnError) {
+          throw error;
         }
       }
     }

@@ -696,10 +696,6 @@ const initializeMonitoringAndResilience = (
       state.errorHandler,
     );
 
-    state.monitoringServer.start().catch((error) => {
-      state.logger.error('Failed to start monitoring server', { error: error instanceof Error ? error.message : String(error) });
-    });
-
     state.logger.info('✅ Monitoring Server initialized (Phase 14.1.3)', {
       port: monitoring?.port || 9090,
       metricsPath: monitoring?.metricsPath || '/metrics',

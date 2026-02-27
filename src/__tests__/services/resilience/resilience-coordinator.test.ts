@@ -53,6 +53,7 @@ describe('ResilienceCoordinator', () => {
       logger,
       errorHandler
     );
+    rateLimiter.start();
 
     retryPolicy = new RetryPolicyService(
       {
@@ -66,6 +67,7 @@ describe('ResilienceCoordinator', () => {
       logger,
       errorHandler
     );
+    retryPolicy.start();
 
     bulkhead = new BulkheadService(
       {
@@ -83,6 +85,7 @@ describe('ResilienceCoordinator', () => {
       logger,
       errorHandler
     );
+    metrics.start();
 
     // Create coordinator
     coordinator = new ResilienceCoordinator(

@@ -38,6 +38,7 @@ describe('RateLimiterService', () => {
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
       const service = new RateLimiterService();
+      service.start();
       expect(service).toBeDefined();
       expect(service.getKeys()).toEqual([]);
       service.stop();
@@ -84,6 +85,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       const acquired = await service.acquire('test', 3);
       expect(acquired).toBe(true);
@@ -98,6 +100,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Consume all tokens
       await service.acquire('test', 10);
@@ -118,6 +121,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 15, // Allow burst of 15
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Should allow burst up to 15 tokens
       const acquired = await service.acquire('test', 15);
@@ -133,6 +137,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Don't consume tokens, just wait
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -149,6 +154,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       await service.acquire('endpoint1', 3);
       await service.acquire('endpoint2', 5);
@@ -174,6 +180,7 @@ describe('RateLimiterService', () => {
         burstSize: 5,
         queueSize: 0, // Disable queue
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Consume all tokens
       await service.acquire('test', 5);
@@ -192,6 +199,7 @@ describe('RateLimiterService', () => {
         burstSize: 2,
         queueSize: 0,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       const operation = jest.fn(async () => 'success');
 
@@ -215,6 +223,7 @@ describe('RateLimiterService', () => {
         burstSize: 5,
         queueSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Consume all tokens
       await service.acquire('test', 5);
@@ -240,6 +249,7 @@ describe('RateLimiterService', () => {
         burstSize: 2,
         queueSize: 2, // Small queue
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Consume all tokens
       await service.acquire('test', 2);
@@ -267,6 +277,7 @@ describe('RateLimiterService', () => {
         burstSize: 10,
         queueSize: 0,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // 5 successful acquires
       for (let i = 0; i < 5; i++) {
@@ -300,6 +311,7 @@ describe('RateLimiterService', () => {
         burstSize: 10,
         adaptiveEnabled: true,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       const error429 = new Error('Too Many Requests');
       (error429 as any).status = 429;
@@ -330,6 +342,7 @@ describe('RateLimiterService', () => {
         burstSize: 10,
         adaptiveEnabled: true,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // First reduce rate
       const error429 = new Error('Rate limited');
@@ -359,6 +372,7 @@ describe('RateLimiterService', () => {
         burstSize: 10,
         adaptiveEnabled: false,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       const error429 = new Error('Too Many Requests');
       (error429 as any).status = 429;
@@ -384,6 +398,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Initialize bucket and stats
       await service.acquire('test', 1);
@@ -406,6 +421,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 10,
       }, logger as LoggerService, errorHandler);
+      service.start();
 
       // Initialize bucket and stats
       await service.acquire('test', 1);
@@ -427,6 +443,7 @@ describe('RateLimiterService', () => {
   describe('Edge Cases', () => {
     it('should throw on invalid key', async () => {
       const service = new RateLimiterService({}, logger as LoggerService, errorHandler);
+      service.start();
 
       await expect(service.acquire('', 1))
         .rejects.toThrow('Rate limiter key must be a non-empty string');
@@ -439,6 +456,7 @@ describe('RateLimiterService', () => {
 
     it('should throw on invalid token count', async () => {
       const service = new RateLimiterService({}, logger as LoggerService, errorHandler);
+      service.start();
 
       await expect(service.acquire('test', 0))
         .rejects.toThrow('Token count must be positive');
@@ -467,6 +485,7 @@ describe('RateLimiterService', () => {
 
       // Should not throw despite logging errors
       const service = new RateLimiterService({}, faultyLogger as any, errorHandler);
+      service.start();
       await expect(service.acquire('test', 1)).resolves.toBe(true);
 
       service.stop();
@@ -484,6 +503,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 5,
       }, logger as LoggerService);
+      service.start();
 
       const acquired = await service.acquire('test', 3);
       expect(acquired).toBe(true);
@@ -498,6 +518,7 @@ describe('RateLimiterService', () => {
         windowMs: 1000,
         burstSize: 5,
       });
+      service.start();
 
       const acquired = await service.acquire('test', 3);
       expect(acquired).toBe(true);

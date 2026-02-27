@@ -126,6 +126,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     gate = new MTFSnapshotGate(mockLogger);
+    gate.start();
   });
 
   // ========================================================================

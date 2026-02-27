@@ -11,9 +11,16 @@ import type { IExchange } from './IExchange';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IExecutionServices } from './IExecutionServices';
 import type { ICoreServices } from './ICoreServices';
+import type { IMonitoringReadServices } from './IMonitoringServices';
+import type { ILifecycle } from './ILifecycle';
 
 export interface IBotInitializerServices {
   coreServices: ICoreServices;
+  monitoringServices?: Pick<IMonitoringReadServices, 'monitoringServer' | 'metricsService' | 'dashboard'>;
+  resilienceServices?: {
+    rateLimiter?: ILifecycle;
+    retryPolicy?: ILifecycle;
+  };
   publicWebSocket: {
     connect(): void;
     disconnect(): void;

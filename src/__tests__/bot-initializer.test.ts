@@ -156,11 +156,15 @@ const createMockBotServices = (): IBotInitializerServices => {
         getSnapshot: jest.fn().mockReturnValue(null),
       } as unknown as IBotInitializerServices['marketDataServices']['orderbookManager'],
       webSocketManager: {
+        start: jest.fn(),
+        stop: jest.fn(),
         connect: jest.fn(),
         disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
       },
       publicWebSocket: {
+        start: jest.fn(),
+        stop: jest.fn(),
         connect: jest.fn(),
         disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
@@ -187,6 +191,8 @@ const createMockBotServices = (): IBotInitializerServices => {
         cancelAllOrders: jest.fn(),
       },
       tradingOrchestrator: {
+        start: jest.fn().mockResolvedValue(undefined),
+        stop: jest.fn(),
         initializeTrendAnalysis: jest.fn().mockResolvedValue(undefined),
       },
     },
@@ -236,6 +242,10 @@ describe('BotInitializer', () => {
         callOrder.push('candleProvider.initialize');
         return Promise.resolve();
       });
+      asMock(mockServices.executionServices.tradingOrchestrator.start).mockImplementation(() => {
+        callOrder.push('tradingOrchestrator.start');
+        return Promise.resolve();
+      });
 
       await initializer.initialize();
 
@@ -245,6 +255,7 @@ describe('BotInitializer', () => {
         'sessionStats.startSession',
         'timeService.syncWithExchange',
         'candleProvider.initialize',
+        'tradingOrchestrator.start',
       ]);
     });
 
@@ -294,8 +305,8 @@ describe('BotInitializer', () => {
     it('should connect both private and public websockets', async () => {
       await initializer.connectWebSockets();
 
-      expect(mockServices.marketDataServices.webSocketManager.connect).toHaveBeenCalled();
-      expect(mockServices.marketDataServices.publicWebSocket.connect).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.start).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.publicWebSocket.start).toHaveBeenCalled();
     });
 
     it('should log connection status', async () => {
@@ -307,7 +318,7 @@ describe('BotInitializer', () => {
 
     it('should handle connection errors', async () => {
       const error = new Error('WebSocket connection failed');
-      asMock(mockServices.marketDataServices.webSocketManager.connect).mockImplementation(() => {
+      asMock(mockServices.marketDataServices.webSocketManager.start).mockImplementation(() => {
         throw error;
       });
 
@@ -358,11 +369,11 @@ describe('BotInitializer', () => {
       expect(mockServices.executionServices.positionMonitor.stop).toHaveBeenCalled();
     });
 
-    it('should disconnect websockets', async () => {
+    it('should stop websockets', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.marketDataServices.webSocketManager.disconnect).toHaveBeenCalled();
-      expect(mockServices.marketDataServices.publicWebSocket.disconnect).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.stop).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.publicWebSocket.stop).toHaveBeenCalled();
     });
 
     it('should cleanup event listeners', async () => {

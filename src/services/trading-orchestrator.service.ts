@@ -54,6 +54,7 @@ import { UpdateStopLossHandler } from '../action-handlers/update-stop-loss.handl
 import { ActivateTrailingHandler } from '../action-handlers/activate-trailing.handler';
 import { IndicatorPreCalculationService } from './indicator-precalculation.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import type { ILifecycle } from '../interfaces/ILifecycle';
 
 // ============================================================================
 // TYPES
@@ -63,7 +64,7 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
 // TRADING ORCHESTRATOR
 // ============================================================================
 
-export class TradingOrchestrator {
+export class TradingOrchestrator implements ILifecycle {
   // Core services
   private indicatorRegistry: IndicatorRegistry | null = null;
   private indicatorLoader: IndicatorLoader | null = null;
@@ -94,6 +95,7 @@ export class TradingOrchestrator {
   // DEBUG: Allow testing without real signals
   private testModeEnabled: boolean = false;
   private testModeSignalCount: number = 0;
+  private started = false;
 
   constructor(
     private config: OrchestratorConfig,
@@ -106,6 +108,16 @@ export class TradingOrchestrator {
     private riskManager: RiskManager,
     private positionExitingServiceInject?: PositionExitingService | null,
   ) {
+  }
+
+  /**
+   * Start orchestrator services (lifecycle)
+   */
+  async start(): Promise<void> {
+    if (this.started) {
+      return;
+    }
+    this.started = true;
 
     // Initialize indicator loading infrastructure
     this.indicatorRegistry = new IndicatorRegistry();
@@ -119,14 +131,15 @@ export class TradingOrchestrator {
     this.filterOrchestrator = new FilterOrchestrator(this.logger, filterConfig);
 
     // Load indicators from config and pass to analyzer registry
-    void this.loadIndicatorsAndInitializeAnalyzers();
+    await this.loadIndicatorsAndInitializeAnalyzers();
 
     // Initialize MTF Snapshot Gate (fixes race condition)
     this.snapshotGate = new MTFSnapshotGate(this.logger);
+    this.snapshotGate.start();
 
     // Initialize EntryOrchestrator with FilterOrchestrator
     this.entryOrchestrator = new EntryOrchestrator(
-      riskManager,
+      this.riskManager,
       this.logger,
       this.filterOrchestrator,
     );
@@ -136,7 +149,18 @@ export class TradingOrchestrator {
     this.initializeActionHandlers();
 
     // Initialize context on startup (async)
-    void this.initializeContext();
+    await this.initializeContext();
+  }
+
+  /**
+   * Stop orchestrator services (lifecycle)
+   */
+  stop(): void {
+    if (!this.started) {
+      return;
+    }
+    this.snapshotGate?.stop();
+    this.started = false;
   }
 
   /**
