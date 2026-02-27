@@ -43,6 +43,7 @@ export class WorkerPool<TTask = unknown, TResult = unknown> extends EventEmitter
   private activeWorkers: Map<string, number> = new Map(); // taskId -> workerIndex
   private taskCounter = 0;
   private config: Required<WorkerPoolConfig>;
+  private isStarted = false;
 
   constructor(config: WorkerPoolConfig) {
     super();
@@ -51,8 +52,23 @@ export class WorkerPool<TTask = unknown, TResult = unknown> extends EventEmitter
       workerRestartAttempts: config.workerRestartAttempts || 3,
       ...config,
     };
+  }
 
+  /**
+   * Start worker pool (explicit lifecycle)
+   */
+  start(): void {
+    if (this.isStarted) {
+      return;
+    }
+    this.isStarted = true;
     this.initializeWorkers();
+  }
+
+  private ensureStarted(): void {
+    if (!this.isStarted) {
+      this.start();
+    }
   }
 
   /**
@@ -147,6 +163,7 @@ export class WorkerPool<TTask = unknown, TResult = unknown> extends EventEmitter
    * Submit a task for processing
    */
   async execute(task: TTask): Promise<TResult> {
+    this.ensureStarted();
     if (this.taskQueue.length >= this.config.maxQueueSize) {
       throw new Error(`Task queue full (${this.config.maxQueueSize} pending)`);
     }
@@ -175,6 +192,7 @@ export class WorkerPool<TTask = unknown, TResult = unknown> extends EventEmitter
    * Execute multiple tasks in parallel
    */
   async executeBatch(tasks: TTask[]): Promise<TResult[]> {
+    this.ensureStarted();
     const promises = tasks.map(task => this.execute(task));
     return Promise.all(promises);
   }
@@ -205,6 +223,7 @@ export class WorkerPool<TTask = unknown, TResult = unknown> extends EventEmitter
     this.workers = [];
     this.taskQueue = [];
     this.activeWorkers.clear();
+    this.isStarted = false;
   }
 }
 

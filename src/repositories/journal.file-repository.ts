@@ -39,9 +39,6 @@ export class JournalFileRepository implements IJournalRepository {
     this.dataDir = dataDir;
     this.journalFile = path.join(dataDir, 'trades.json');
     this.sessionsFile = path.join(dataDir, 'sessions.json');
-
-    this.ensureDirectory();
-    this.load();
   }
 
   // ============================================================================
@@ -54,6 +51,21 @@ export class JournalFileRepository implements IJournalRepository {
   private ensureDirectory(): void {
     if (!fs.existsSync(this.dataDir)) {
       fs.mkdirSync(this.dataDir, { recursive: true });
+    }
+  }
+
+  /**
+   * Start repository initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.loaded) return;
+    this.ensureDirectory();
+    this.load();
+  }
+
+  private ensureLoaded(): void {
+    if (!this.loaded) {
+      this.start();
     }
   }
 
@@ -127,15 +139,18 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async recordTrade(trade: TradeRecord): Promise<void> {
+    this.ensureLoaded();
     this.trades.set(trade.id, trade);
     this.saveTrades();
   }
 
   async getTrade(tradeId: string): Promise<TradeRecord | null> {
+    this.ensureLoaded();
     return this.trades.get(tradeId) || null;
   }
 
   async getAllTrades(): Promise<TradeRecord[]> {
+    this.ensureLoaded();
     return Array.from(this.trades.values());
   }
 
@@ -146,6 +161,7 @@ export class JournalFileRepository implements IJournalRepository {
     endTime?: number;
     strategy?: string;
   }): Promise<TradeRecord[]> {
+    this.ensureLoaded();
     let results = Array.from(this.trades.values());
 
     if (filter.symbol) {
@@ -172,6 +188,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async updateTrade(tradeId: string, updates: Partial<TradeRecord>): Promise<void> {
+    this.ensureLoaded();
     const trade = this.trades.get(tradeId);
     if (!trade) return;
 
@@ -180,6 +197,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async deleteTrade(tradeId: string): Promise<void> {
+    this.ensureLoaded();
     this.trades.delete(tradeId);
     this.saveTrades();
   }
@@ -189,19 +207,23 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async saveSession(session: SessionRecord): Promise<void> {
+    this.ensureLoaded();
     this.sessions.set(session.id, session);
     this.saveSessions();
   }
 
   async getSession(sessionId: string): Promise<SessionRecord | null> {
+    this.ensureLoaded();
     return this.sessions.get(sessionId) || null;
   }
 
   async getAllSessions(): Promise<SessionRecord[]> {
+    this.ensureLoaded();
     return Array.from(this.sessions.values());
   }
 
   async updateSession(sessionId: string, updates: Partial<SessionRecord>): Promise<void> {
+    this.ensureLoaded();
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
@@ -214,6 +236,7 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async calculateSessionPnL(sessionId: string): Promise<number> {
+    this.ensureLoaded();
     const trades = Array.from(this.trades.values()).filter(t => {
       // Find trades in this session (created after session start)
       const session = this.sessions.get(sessionId);
@@ -225,6 +248,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async calculateWinRate(sessionId: string): Promise<number> {
+    this.ensureLoaded();
     const trades = Array.from(this.trades.values()).filter(t => {
       const session = this.sessions.get(sessionId);
       if (!session) return false;
@@ -242,19 +266,23 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async saveData(key: string, data: any): Promise<void> {
+    this.ensureLoaded();
     this.generalData.set(key, data);
     // Could persist to separate file if needed
   }
 
   async getData(key: string): Promise<any | null> {
+    this.ensureLoaded();
     return this.generalData.get(key) || null;
   }
 
   async deleteData(key: string): Promise<void> {
+    this.ensureLoaded();
     this.generalData.delete(key);
   }
 
   async hasData(key: string): Promise<boolean> {
+    this.ensureLoaded();
     return this.generalData.has(key);
   }
 
@@ -263,6 +291,7 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async clear(): Promise<void> {
+    this.ensureLoaded();
     this.trades.clear();
     this.sessions.clear();
     this.generalData.clear();
@@ -277,6 +306,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async getSize(): Promise<number> {
+    this.ensureLoaded();
     let size = 0;
 
     if (fs.existsSync(this.journalFile)) {
@@ -291,6 +321,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async healthCheck(): Promise<boolean> {
+    this.ensureLoaded();
     try {
       // Verify we can read files
       if (fs.existsSync(this.journalFile)) {

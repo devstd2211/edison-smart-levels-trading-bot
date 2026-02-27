@@ -68,6 +68,8 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
   private lastCheckTime: number = 0;
   private healthScoreCache: Map<string, HealthScore> = new Map();
   private generatedAlerts: Map<string, RiskAlert[]> = new Map(); // Track alerts per position
+  private isStarted = false;
+  private unsubscribePositionClosed?: () => void;
 
   // Default thresholds for health score components
   private readonly COMPONENT_WEIGHTS = {
@@ -88,13 +90,43 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     this.positionLifecycleService = positionLifecycleService;
     this.logger = logger;
     this.eventBus = eventBus;
+  }
+
+  /**
+   * Start subscriptions for cache invalidation (explicit lifecycle)
+   */
+  public start(): void {
+    if (this.isStarted) {
+      return;
+    }
+    this.isStarted = true;
 
     // [P1] Subscribe to position-closed event for cache invalidation
     if (this.eventBus && typeof this.eventBus.subscribe === 'function') {
-      this.eventBus.subscribe('position-closed', (data: any) => {
+      this.unsubscribePositionClosed = this.eventBus.subscribe('position-closed', (data: any) => {
         this.onPositionClosed(data);
       });
       this.logger.debug('[RealTimeRiskMonitor] Subscribed to position-closed events');
+    }
+  }
+
+  /**
+   * Stop subscriptions (explicit lifecycle)
+   */
+  public stop(): void {
+    if (!this.isStarted) {
+      return;
+    }
+    this.isStarted = false;
+    if (this.unsubscribePositionClosed) {
+      this.unsubscribePositionClosed();
+      this.unsubscribePositionClosed = undefined;
+    }
+  }
+
+  private ensureStarted(): void {
+    if (!this.isStarted) {
+      this.start();
     }
   }
 
@@ -105,6 +137,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
    * Phase 8.5: ErrorHandler integration with GRACEFUL_DEGRADE strategy
    */
   public async calculatePositionHealth(positionId: string, currentPrice: number): Promise<HealthScore> {
+    this.ensureStarted();
     const now = Date.now();
     const position = this.positionLifecycleService.getCurrentPosition();
 
@@ -359,6 +392,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
    * Check if position is in danger
    */
   public async checkPositionDanger(positionId: string, currentPrice?: number): Promise<DangerLevel> {
+    this.ensureStarted();
     const position = this.positionLifecycleService.getCurrentPosition();
     if (!position || position.id !== positionId) {
       throw new Error(`Position not found: ${positionId}`);
@@ -378,6 +412,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
    * Caller (WebSocket or candle handler) must provide real market price
    */
   public async monitorAllPositions(currentPrice?: number): Promise<HealthReport> {
+    this.ensureStarted();
     const now = Date.now();
     const position = this.positionLifecycleService.getCurrentPosition();
     const scores: HealthScore[] = [];
@@ -504,6 +539,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
    * NOW REQUIRES: currentPrice parameter for accurate health calculation
    */
   public async shouldTriggerAlert(positionId: string, currentPrice: number): Promise<RiskAlert | null> {
+    this.ensureStarted();
     const position = this.positionLifecycleService.getCurrentPosition();
     if (!position || position.id !== positionId) {
       return null;

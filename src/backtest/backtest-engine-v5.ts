@@ -115,15 +115,16 @@ export interface BacktestResult {
 
 export class BacktestEngineV5 {
   private logger: LoggerService;
-  private strategyConfig: StrategyConfig;
-  private analyzerRegistry: AnalyzerRegistryService;
-  private analyzerEngine: AnalyzerEngineService;
-  private aggregationConfig: AggregationConfig;
-  private entryOrchestrator: EntryOrchestrator;
-  private filterOrchestrator: FilterOrchestrator;
-  private exitOrchestrator: ExitOrchestrator;
-  private riskManager: RiskManager;
-  private dataProvider: IDataProvider;
+  private strategyConfig!: StrategyConfig;
+  private analyzerRegistry!: AnalyzerRegistryService;
+  private analyzerEngine!: AnalyzerEngineService;
+  private aggregationConfig!: AggregationConfig;
+  private entryOrchestrator!: EntryOrchestrator;
+  private filterOrchestrator!: FilterOrchestrator;
+  private exitOrchestrator!: ExitOrchestrator;
+  private riskManager!: RiskManager;
+  private dataProvider!: IDataProvider;
+  private initialized = false;
 
   // State tracking
   private data: TimeframeData | null = null;
@@ -140,9 +141,16 @@ export class BacktestEngineV5 {
   ) {
     this.logger = logger || new LoggerService();
     this.currentBalance = config.initialBalance;
+  }
+
+  private ensureInitialized(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
 
     // Load strategy configuration
-    this.strategyConfig = this.loadStrategyConfig(config.strategyFile);
+    this.strategyConfig = this.loadStrategyConfig(this.config.strategyFile);
 
     // Initialize services
     this.analyzerRegistry = new AnalyzerRegistryService(this.logger);
@@ -184,10 +192,10 @@ export class BacktestEngineV5 {
     }
 
     this.logger.info('🎯 BacktestEngineV5 initialized', {
-      strategyFile: config.strategyFile,
+      strategyFile: this.config.strategyFile,
       strategyName: this.strategyConfig.metadata.name,
-      symbol: config.symbol,
-      initialBalance: config.initialBalance,
+      symbol: this.config.symbol,
+      initialBalance: this.config.initialBalance,
       entryThreshold: this.entryOrchestrator.getMinConfidenceThreshold(),
     });
   }
@@ -240,6 +248,7 @@ export class BacktestEngineV5 {
    * Run backtest on historical data
    */
   async run(): Promise<BacktestResult> {
+    this.ensureInitialized();
     const startTime = Date.now();
 
     this.logger.info('📊 Starting backtest run...', {

@@ -41,6 +41,7 @@ export class LoggerService {
   private isProcessingQueue: boolean = false;
   private enableConsoleOutput: boolean = true; // Can be disabled for dashboard
   private readonly errorHandler?: ErrorHandler;
+  private initialized = false;
 
   constructor(
     minLevel: LogLevel | string = LogLevel.INFO,
@@ -65,11 +66,27 @@ export class LoggerService {
     this.logDir = logDir;
     this.logToFile = logToFile;
     this.errorHandler = errorHandler;
+  }
+
+  /**
+   * Start logger initialization (explicit lifecycle)
+   */
+  start(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
 
     if (this.logToFile) {
       this.ensureLogDirectory();
       // Start cleanup in background
       void this.cleanOldLogs();
+    }
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      this.start();
     }
   }
 
@@ -392,6 +409,7 @@ export class LoggerService {
    * Internal log method
    */
   private log(level: LogLevel, message: string, context?: Record<string, unknown>): void {
+    this.ensureInitialized();
     const levelPriority = LOG_LEVEL_PRIORITY[level];
     const minPriority = LOG_LEVEL_PRIORITY[this.minLevel];
 
