@@ -295,6 +295,7 @@
 - [x] Constructor side effects removed for BotEventEmitter, GracefulShutdownManager, SQLite backtest providers
 - [x] Constructor side effects removed for RealTimeRiskMonitor, JournalFileRepository, WorkerPool, BacktestEngineV5
 - [ ] Side effects removed from constructors (remaining cleanup)
+- [x] Audit complete: no remaining constructor side effects found (timers/subscriptions/IO)
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes
 

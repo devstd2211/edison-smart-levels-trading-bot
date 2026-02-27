@@ -58,6 +58,7 @@ Deliverables for this session:
 - Constructor logging removed in limit-order executor, binance adapter, multi-timeframe trend, strategy cache, exit handler, scalping strategies.
 - Constructor side effects moved out for BotEventEmitter (bridge subscriptions), GracefulShutdownManager (state dir), and SQLite backtest providers (fs auto-detect).
 - Constructor side effects moved out for RealTimeRiskMonitor (event subscription), JournalFileRepository (fs load/dir), WorkerPool (worker init), and BacktestEngineV5 (strategy file IO).
+- Audit complete: no remaining constructor side effects found (timers/subscriptions/IO).
 
 ## Next Session Start
 - Continue lifecycle cleanup: remove remaining constructor side effects; ensure TradingBot.start orchestrates lifecycle only.
