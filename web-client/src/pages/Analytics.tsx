@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { BarChart3, TrendingUp, Filter, ChevronUp, ChevronDown, Target } from 'lucide-react';
 import { dataApi } from '../services/api.service';
-import type { WebApiPositionHistoryEntry } from '../types';
+import type { WebApiPositionHistoryEntry } from '@edison/contracts';
 
 export interface Trade {
   id: string;

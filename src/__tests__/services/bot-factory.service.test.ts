@@ -77,10 +77,10 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const services = BotFactory.create(config);
 
       expect(services.logger).toBeDefined();
-      expect(services.eventBus).toBeDefined();
-      expect(services.bybitService).toBeDefined();
-      expect(services.journal).toBeDefined();
-      expect(services.positionManager).toBeDefined();
+      expect(services.coreServices.eventBus).toBeDefined();
+      expect(services.marketDataServices.bybitService).toBeDefined();
+      expect(services.webApiServices.journal).toBeDefined();
+      expect(services.executionServices.positionManager).toBeDefined();
     });
 
     test('T4: Should have proper service type structure', () => {
@@ -88,8 +88,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
       // Check function types
       expect(typeof services.logger.info).toBe('function');
-      expect(typeof services.positionManager.getCurrentPosition).toBe('function');
-      expect(typeof services.positionExitingService.executeExitAction).toBe('function');
+      expect(typeof services.executionServices.positionManager.getCurrentPosition).toBe('function');
+      expect(typeof services.executionServices.positionExitingService.executeExitAction).toBe('function');
     });
   });
 
@@ -102,7 +102,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
     const mockTelegram = {
       notifyBotStarted: jest.fn(),
-      sendAlert: jest.fn(),
+      notifyBotStopped: jest.fn(),
     };
 
     test('T5: Should allow exchange service override', () => {
@@ -110,8 +110,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
         bybitService: mockExchange as any,
       });
 
-      expect(services.bybitService).toBe(mockExchange);
-      expect(services.bybitService.isConnected()).toBe(true);
+      expect(services.marketDataServices.bybitService).toBe(mockExchange);
+      expect(services.marketDataServices.bybitService.isConnected()).toBe(true);
     });
 
     test('T6: Should allow telegram service override', () => {
@@ -119,8 +119,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
         telegram: mockTelegram as any,
       });
 
-      expect(services.telegram).toBe(mockTelegram);
-      expect(services.telegram.sendAlert).toBeDefined();
+      expect(services.coreServices.telegram).toBe(mockTelegram);
+      expect(services.coreServices.telegram.notifyBotStopped).toBeDefined();
     });
 
     test('T7: Should allow multiple service overrides', () => {
@@ -129,8 +129,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
         telegram: mockTelegram as any,
       });
 
-      expect(services.bybitService).toBe(mockExchange);
-      expect(services.telegram).toBe(mockTelegram);
+      expect(services.marketDataServices.bybitService).toBe(mockExchange);
+      expect(services.coreServices.telegram).toBe(mockTelegram);
     });
 
     test('T8: Override should not affect other instances', () => {
@@ -140,8 +140,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
       const services2 = BotFactory.create(config, {});
 
-      expect(services1.telegram).toBe(mockTelegram);
-      expect(services2.telegram).not.toBe(mockTelegram);
+      expect(services1.coreServices.telegram).toBe(mockTelegram);
+      expect(services2.coreServices.telegram).not.toBe(mockTelegram);
     });
   });
 
@@ -157,7 +157,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       });
 
       expect(services).toBeDefined();
-      expect(services.bybitService).toBe(mockExchange);
+      expect(services.marketDataServices.bybitService).toBe(mockExchange);
     });
 
     test('T10: createForTesting with empty options creates normal services', () => {
@@ -189,7 +189,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
         bybitService: mockExchange as any,
       });
 
-      expect(services.bybitService.openPosition).toBeDefined();
+      expect(services.marketDataServices.bybitService.openPosition).toBeDefined();
     });
 
     test('T12: Supports service swappability', () => {
@@ -204,8 +204,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
         bybitService: exchangeB as any,
       });
 
-      expect(servicesA.bybitService.name).toBe('BybitMock');
-      expect(servicesB.bybitService.name).toBe('BinanceMock');
+      expect(servicesA.marketDataServices.bybitService.name).toBe('BybitMock');
+      expect(servicesB.marketDataServices.bybitService.name).toBe('BinanceMock');
     });
 
     test('T13: Maintains service independence', () => {
@@ -220,8 +220,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
         bybitService: mockExchange2 as any,
       });
 
-      expect((services1.bybitService as any).name).toBe('Exchange1');
-      expect((services2.bybitService as any).name).toBe('Exchange2');
+      expect((services1.marketDataServices.bybitService as any).name).toBe('Exchange1');
+      expect((services2.marketDataServices.bybitService as any).name).toBe('Exchange2');
     });
   });
 
@@ -246,8 +246,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
       });
 
       expect(services).toBeDefined();
-      expect(services.positionManager).toBeDefined();
-      expect(services.journal).toBeDefined();
+      expect(services.executionServices.positionManager).toBeDefined();
+      expect(services.webApiServices.journal).toBeDefined();
     });
   });
 });

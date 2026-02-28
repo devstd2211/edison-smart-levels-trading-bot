@@ -30,18 +30,18 @@
 **Goal:** Remove the “God container” and make dependencies explicit and testable.
 
 ### Step‑by‑Step Checklist
-- [ ] Inventory: Map all services currently built in `BotServices` with dependency graph.
-- [ ] Define bounded service groups:
+- [x] Inventory: Map all services currently built in `BotServices` with dependency graph.
+- [x] Define bounded service groups:
   - `MarketDataServices`
   - `ExecutionServices`
   - `RiskServices`
   - `MonitoringServices`
   - `WebApiServices`
-- [ ] Create interfaces for each group (ports) in `src/interfaces`.
-- [ ] Replace direct `BotServices` injection with narrow group interfaces in high‑level classes.
+- [x] Create interfaces for each group (ports) in `src/interfaces`.
+- [x] Replace direct `BotServices` injection with narrow group interfaces in high‑level classes.
 - [ ] Move optional services behind feature toggles with explicit “capability” interfaces.
-- [ ] Replace `any` in `TradingBot` with concrete interfaces.
-- [ ] Remove duplicate factories; pick a single factory as the DI composition root.
+- [x] Replace `any` in `TradingBot` with concrete interfaces.
+- [x] Remove duplicate factories; pick a single factory as the DI composition root.
 - [ ] Update tests to build only the required groups (no global container).
 
 **Progress**
@@ -51,7 +51,7 @@
 - [x] First migration slice proposed (WebApiServices/BotWebAPI read-only group)
 - [ ] Tests not run yet after refactor batches (status unknown)
 - [x] Build run 2026-02-27 succeeded after legacy/type/test fixes
-- [ ] Group containers created
+- [x] Group containers created
 - [x] MarketDataServices scaffolded
 - [x] ExecutionServices scaffolded
 - [x] MonitoringServices scaffolded
@@ -224,7 +224,12 @@
 - [x] Step 1: Standardized imports to use legacy types in services/strategies/tests
 - [x] Multi-strategy module exports now sourced from legacy re-exports
 - [x] Note: Tests still not run after refactor batches (status unknown)
-- [ ] Old `BotServices` removed or reduced to thin adapter
+- [x] Old `BotServices` removed or reduced to thin adapter
+- [x] BotFactory DI returns adapter source; overrides refresh grouped containers (core/market/web-api)
+- [x] Adapter interfaces trimmed: remove duplicate `publicWebSocket`/`candleProvider` in initializer/adapter source
+- [x] Trading BotFactory delegates service creation to DI BotFactory (single composition root for services)
+- [x] BotFactory internals split into validation + overrides factory modules (avoid god factory)
+- [x] BotServices builder split into modular builders (core/optional/position/websocket/orchestrator/monitoring/grouped)
 
 ### Complexity + Risk
 - **Complexity:** High
@@ -238,23 +243,39 @@
 **Goal:** Establish strict build boundaries and typed contracts between core and web layers.
 
 ### Step‑by‑Step Checklist
-- [ ] Create `packages/contracts` for shared types/DTOs/ports.
-- [ ] Move web‑facing DTOs and API contracts to `packages/contracts`.
-- [ ] Add workspaces (npm) and `tsconfig` references.
+- [x] Create `packages/contracts` for shared types/DTOs/ports.
+- [x] Move web-facing DTOs and API contracts to `packages/contracts`.
+- [x] Add workspaces (npm) and `tsconfig` references.
 - [ ] Split into packages:
   - `packages/core` (bot engine)
   - `packages/web-server`
   - `packages/web-client`
   - `packages/contracts`
-- [ ] Replace dynamic import of `web-server/dist` with typed package import.
-- [ ] Enforce build order in scripts: `contracts -> core -> web-server -> web-client`.
+- [x] Replace dynamic import of `web-server/dist` with typed package import.
+- [x] Enforce build order in scripts: `contracts -> web-server -> core -> web-client`.
 - [ ] CI: build each package independently.
 
 **Progress**
-- [ ] Contracts package created
-- [ ] Workspaces configured
-- [ ] Dynamic import removed
-- [ ] Build order enforced
+- [x] Contracts package created
+- [x] Web API contracts seeded in `packages/contracts`
+- [x] Legacy Web API types removed (contracts only)
+- [x] TS config paths added for contracts (root + web-server)
+- [x] Web-client wired to contracts alias (tsconfig + vite)
+- [x] Web-client feature code imports Web API types from `@edison/contracts`
+- [x] WebApiCandle moved to contracts and web-server uses contracts types
+- [x] Web-client websocket/price-chart types use contracts directly
+- [x] WebApi response wrappers moved to contracts (web-client API service updated)
+- [x] Web-client types index no longer re-exports Web API contracts
+- [x] Removed redundant web-client Web API type file
+- [x] Web-server API types no longer re-export Web API contracts
+- [x] Web API type imports now consistently sourced from `@edison/contracts`
+- [x] Web-server imported via package (static import in core)
+- [x] Workspaces configured
+- [x] Dynamic import removed
+- [x] Build order enforced (root build runs contracts -> web-server -> core -> web-client)
+- [x] Project references scaffolded (tsconfig references file + composite builds)
+- [x] Added `build:refs` script for project references
+- [x] Build verified after web-server package import (2026-02-28)
 
 ### Complexity + Risk
 - **Complexity:** High
@@ -321,18 +342,18 @@
 **Goal:** Separate CLI, core, and web entrypoints to clarify responsibility.
 
 ### Step‑by‑Step Checklist
-- [ ] Move CLI UX and logging to `src/cli/index.ts`.
-- [ ] Keep `src/index.ts` as minimal “core bot” entrypoint.
-- [ ] Create `src/web/index.ts` for web server startup.
-- [ ] Move strategy config merge into `ConfigPipeline` module.
-- [ ] Ensure entrypoints depend on contracts and factory only, not on business logic internals.
-- [ ] Update README to point to new entrypoints.
+- [x] Move CLI UX and logging to `src/cli/index.ts`.
+- [x] Keep `src/index.ts` as minimal wrapper (CLI by default) and export core entrypoint from `src/core/index.ts`.
+- [x] Create `src/web/index.ts` for web server startup.
+- [x] Move strategy config merge into `ConfigPipeline` module.
+- [x] Ensure entrypoints depend on contracts and factory only, not on business logic internals.
+- [x] Update README to point to new entrypoints.
 
 **Progress**
-- [ ] CLI entrypoint separated
-- [ ] Core entrypoint simplified
-- [ ] Web entrypoint created
-- [ ] ConfigPipeline implemented
+- [x] CLI entrypoint separated
+- [x] Core entrypoint simplified
+- [x] Web entrypoint created
+- [x] ConfigPipeline implemented
 
 ### Complexity + Risk
 - **Complexity:** Medium
@@ -363,7 +384,7 @@
 4. Create `packages/web-client` and wire to `contracts` for data shapes.
 5. Add workspace config in root `package.json`.
 6. Add `tsconfig` references for packages.
-7. Replace dynamic import of `web-server/dist` with typed package import.
+- [x] Replace dynamic import of `web-server/dist` with typed package import.
 8. Update build scripts to enforce order.
 9. Add per‑package build/test scripts.
 
@@ -383,3 +404,12 @@
 4. Add `ConfigPipeline` module for strategy merge and config validation.
 5. Update README to new entrypoints.
 6. Keep old `src/index.ts` as wrapper until migration complete.
+
+
+
+
+
+
+
+
+

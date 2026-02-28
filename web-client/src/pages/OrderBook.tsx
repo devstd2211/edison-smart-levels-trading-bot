@@ -23,7 +23,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallView,
   WebApiWallsView,
-} from '../types';
+} from '@edison/contracts';
 import { useConfigStore } from '../stores/configStore';
 
 // ============================================================================

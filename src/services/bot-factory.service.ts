@@ -34,10 +34,12 @@ import { Config } from '../types/legacy';
 import { buildBotServices, type BotServicesState } from './bot-services.builder';
 import { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler } from '../errors/ErrorHandler';
+import type { IBotServicesAdapterSource } from '../interfaces';
 import {
-  BotFactoryConfigValidationError,
   BotFactoryInitializationError,
 } from '../errors/DomainErrors';
+import { applyBotServiceOverrides } from './factories/bot-services.overrides';
+import { validateBotConfig } from './factories/bot-services.validate';
 
 /**
  * Factory options for partial DI overrides
@@ -79,171 +81,7 @@ export class BotFactory {
    * @throws BotFactoryConfigValidationError - For missing or invalid fields
    */
   private static validateConfig(config: Config): void {
-    // Null/undefined check
-    if (!config) {
-      throw new BotFactoryConfigValidationError(
-        'Configuration object is required',
-        { missingField: 'config' },
-      );
-    }
-
-    // Exchange validation
-    if (!config.exchange) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: exchange',
-        { missingField: 'exchange' },
-      );
-    }
-
-    const { exchange } = config;
-    if (!exchange.symbol || typeof exchange.symbol !== 'string') {
-      throw new BotFactoryConfigValidationError(
-        'Missing or invalid field: exchange.symbol must be a string',
-        { field: 'exchange.symbol', received: typeof exchange.symbol },
-      );
-    }
-
-    if (!exchange.apiKey || typeof exchange.apiKey !== 'string') {
-      throw new BotFactoryConfigValidationError(
-        'Missing or invalid field: exchange.apiKey must be a string',
-        { field: 'exchange.apiKey', received: typeof exchange.apiKey },
-      );
-    }
-
-    if (!exchange.apiSecret || typeof exchange.apiSecret !== 'string') {
-      throw new BotFactoryConfigValidationError(
-        'Missing or invalid field: exchange.apiSecret must be a string',
-        { field: 'exchange.apiSecret', received: typeof exchange.apiSecret },
-      );
-    }
-
-    // Trading validation
-    if (!config.trading) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: trading',
-        { missingField: 'trading' },
-      );
-    }
-
-    if (
-      typeof config.trading.leverage !== 'number' ||
-      config.trading.leverage <= 0
-    ) {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: trading.leverage must be a positive number',
-        {
-          field: 'trading.leverage',
-          received: config.trading.leverage,
-          type: typeof config.trading.leverage,
-        },
-      );
-    }
-
-    // Risk Management validation
-    if (!config.riskManagement) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: riskManagement',
-        { missingField: 'riskManagement' },
-      );
-    }
-
-    const { riskManagement } = config;
-    if (
-      typeof riskManagement.stopLossPercent !== 'number' ||
-      riskManagement.stopLossPercent <= 0
-    ) {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: riskManagement.stopLossPercent must be a positive number',
-        {
-          field: 'riskManagement.stopLossPercent',
-          received: riskManagement.stopLossPercent,
-        },
-      );
-    }
-
-    if (!Array.isArray(riskManagement.takeProfits)) {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: riskManagement.takeProfits must be an array',
-        {
-          field: 'riskManagement.takeProfits',
-          received: typeof riskManagement.takeProfits,
-        },
-      );
-    }
-
-    if (
-      typeof riskManagement.positionSizeUsdt !== 'number' ||
-      riskManagement.positionSizeUsdt <= 0
-    ) {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: riskManagement.positionSizeUsdt must be a positive number',
-        {
-          field: 'riskManagement.positionSizeUsdt',
-          received: riskManagement.positionSizeUsdt,
-        },
-      );
-    }
-
-    // Logging validation
-    if (!config.logging) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: logging',
-        { missingField: 'logging' },
-      );
-    }
-
-    if (!config.logging.level || typeof config.logging.level !== 'string') {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: logging.level must be a string',
-        {
-          field: 'logging.level',
-          received: config.logging.level,
-        },
-      );
-    }
-
-    if (!config.logging.logDir || typeof config.logging.logDir !== 'string') {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: logging.logDir must be a string',
-        {
-          field: 'logging.logDir',
-          received: config.logging.logDir,
-        },
-      );
-    }
-
-    // Timeframes validation
-    if (!config.timeframes) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: timeframes',
-        { missingField: 'timeframes' },
-      );
-    }
-
-    if (!config.timeframes.entry) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: timeframes.entry',
-        { missingField: 'timeframes.entry' },
-      );
-    }
-
-    if (!config.timeframes.primary) {
-      throw new BotFactoryConfigValidationError(
-        'Missing required field: timeframes.primary',
-        { missingField: 'timeframes.primary' },
-      );
-    }
-
-    // Indicators validation (should be object, can be empty)
-    if (!config.indicators || typeof config.indicators !== 'object') {
-      throw new BotFactoryConfigValidationError(
-        'Invalid field: indicators must be an object',
-        {
-          field: 'indicators',
-          received: typeof config.indicators,
-        },
-      );
-    }
+    validateBotConfig(config);
   }
 
   /**
@@ -259,26 +97,12 @@ export class BotFactory {
   static create(
     config: Config,
     options: BotFactoryOptions = {},
-  ): BotServicesState {
+  ): IBotServicesAdapterSource {
     // Create services normally
     const services = buildBotServices(config);
 
     // Apply any test overrides (SKIP strategy - non-blocking)
-    if (options.bybitService) {
-      (services as any).bybitService = options.bybitService;
-    }
-
-    if (options.telegram) {
-      (services as any).telegram = options.telegram;
-    }
-
-    if (options.logger) {
-      (services as any).logger = options.logger;
-    }
-
-    if (options.errorHandler) {
-      (services as any).errorHandler = options.errorHandler;
-    }
+    applyBotServiceOverrides(services, options);
 
     return services;
   }
@@ -305,7 +129,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): BotServicesState {
+  ): IBotServicesAdapterSource {
     // THROW: Validate config first (fail fast on invalid config)
     try {
       this.validateConfig(config);
@@ -340,21 +164,7 @@ export class BotFactory {
 
     // SKIP: Apply test overrides (logging failures don't block)
     try {
-      if (options.bybitService) {
-        (services as any).bybitService = options.bybitService;
-      }
-
-      if (options.telegram) {
-        (services as any).telegram = options.telegram;
-      }
-
-      if (options.logger) {
-        (services as any).logger = options.logger;
-      }
-
-      if (options.errorHandler) {
-        (services as any).errorHandler = options.errorHandler;
-      }
+      applyBotServiceOverrides(services, options);
     } catch (err) {
       // SKIP: Log but don't throw (DI overrides are non-critical)
       if (logger) {
@@ -384,7 +194,7 @@ export class BotFactory {
   static createForTesting(
     config: Config,
     mockServices: BotFactoryOptions = {},
-  ): BotServicesState {
+  ): IBotServicesAdapterSource {
     // Use createWithValidation to ensure config is valid for testing
     return this.createWithValidation(config, mockServices);
   }
@@ -405,7 +215,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): { success: true; services: BotServicesState } | { success: false; error: Error } {
+  ): { success: true; services: IBotServicesAdapterSource } | { success: false; error: Error } {
     try {
       const services = this.createWithValidation(config, options, logger);
       return { success: true, services };
@@ -418,3 +228,4 @@ export class BotFactory {
     }
   }
 }
+

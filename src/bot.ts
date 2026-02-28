@@ -8,7 +8,7 @@ import type {
   WebApiPositionHistoryEntry,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from './types/web-api';
+} from '@edison/contracts';
 
 
 import type {

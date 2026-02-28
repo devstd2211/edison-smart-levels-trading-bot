@@ -1,3 +1,19 @@
+/**
+ * Web API contracts
+ */
+
+export interface WebApiOrderbookLevel {
+  price: number;
+  size: number;
+}
+
+export interface WebApiOrderbookSnapshot {
+  bids: WebApiOrderbookLevel[];
+  asks: WebApiOrderbookLevel[];
+  timestamp: number;
+  updateId: number;
+}
+
 export interface WebApiMarketData {
   currentPrice: number;
   priceChangePercent: number;
@@ -77,4 +93,15 @@ export interface WebApiCandlesResponse {
 
 export interface WebApiPositionsResponse {
   positions: WebApiPositionHistoryEntry[];
+}
+
+export interface WebApiIndicatorPreferences {
+  timeframes?: string[];
+  rsiPeriods?: number[];
+  emaPeriods?: number[];
+  atrPeriods?: number[];
+}
+
+export interface WebApiConfig {
+  indicatorPreferences?: WebApiIndicatorPreferences;
 }

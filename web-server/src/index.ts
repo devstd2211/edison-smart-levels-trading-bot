@@ -33,6 +33,9 @@ export interface WebServerConfig {
   wsPort?: number;
 }
 
+export type { IBotInstance } from './services/bot-bridge.service.js';
+export type { IWebApiAdapter } from './services/web-api-adapter.types.js';
+
 export class WebServer {
   private app: Express;
   private bridge: BotBridgeService;

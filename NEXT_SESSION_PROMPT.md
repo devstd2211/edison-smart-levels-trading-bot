@@ -25,7 +25,7 @@ Deliverables for this session:
 - Updated tests for lifecycle start/stop.
 - Progress update for next session.
 
-## Current Status (as of 2026-02-27)
+## Current Status (as of 2026-02-28)
 - Domain-type migration in services/strategies/tests is complete via legacy re-exports.
 - Multi-strategy module exports now re-export from legacy.
 - Tests not run.
@@ -42,6 +42,35 @@ Deliverables for this session:
 - BotServices legacy wrapper removed entirely; codebase now uses builder state directly.
 - Legacy `IBotServices` interface removed from `src/interfaces/IServices.ts`.
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
+- BotFactory DI now returns adapter source; overrides refresh grouped core/market/web-api containers; tests updated to use grouped access.
+- Adapter interfaces trimmed: removed duplicate `publicWebSocket`/`candleProvider` from `IBotServicesAdapterSource` + `IBotInitializerServices`, adapter now pulls from `marketDataServices`.
+- Trading BotFactory now delegates service creation to DI BotFactory (single DI composition root for services).
+- BotFactory internals split into factory modules (validation + overrides) to avoid “god factory”.
+- BotServices builder split into modular builders (core/optional/position/websocket/orchestrator/monitoring/grouped).
+- Contracts package now exports Web API contract types and response wrappers.
+- Root build now runs `packages/contracts` then `web-server` before core build.
+- Root + web-server tsconfig paths now resolve `@edison/contracts` to source.
+- Core Web API imports started using `@edison/contracts` (bot/api/interfaces/grouped).
+- Web-client tsconfig + Vite alias now resolve `@edison/contracts`; web-client types re-export contracts.
+- Web-client feature code now imports Web API contract types directly from `@edison/contracts`.
+- WebApiCandle is now part of contracts; web-server uses contracts types directly.
+- Web-client WebSocket and chart types now pull WebApiCandle from contracts directly.
+- WebApi response wrappers (candles/positions) moved to contracts; web-client API service imports them directly.
+- Web-client types index no longer re-exports Web API contracts (use contracts directly).
+- Removed redundant web-client Web API type file; web-server API types no longer re-export Web API contracts.
+- Web API type imports now consistently come from `@edison/contracts`.
+- Core web entrypoint now imports `WebServer` via package (no dynamic `dist` import).
+- Project references scaffolded via `tsconfig.references.json` + composite builds (contracts/web-server/core).
+- Added `build:refs` script to run reference builds.
+- Build succeeded after switching to web-server package import (2026-02-28).
+- Composition roots split: CLI moved to `src/cli/index.ts`, core entrypoint in `src/core/index.ts`, `src/index.ts` now wrapper.
+- ConfigPipeline added to centralize strategy merge; CLI now loads via pipeline; BotFactory no longer merges strategies.
+- README updated with entrypoints section.
+- ConfigPipeline re-exported from `src/config/index.ts` for convenience.
+- CLI now uses `loadValidatedConfig()` from ConfigPipeline (validation centralized in pipeline).
+- CLI entrypoint no longer depends on `TradingBot` class (uses BotLike interface).
+- Core entrypoint now returns BotLike and avoids importing TradingBot.
+- Risk management validation moved to `src/config/risk-management.validate.ts`.
 - Lifecycle groundwork added: `ILifecycle` interface and `LifecycleManager` service.
 - ILifecycle implemented for WebSocketManagerService, PublicWebSocketService, PositionMonitorService, MonitoringServer.
 - MonitoringServer start removed from `bot-services.builder.ts` (no side effects during build).
@@ -66,10 +95,10 @@ Deliverables for this session:
 - Re-scan of constructors (timers/subscriptions/IO heuristics) found no remaining side effects.
 
 ## Next Session Start
-- Return to DI Step 1: reduce `BotServices` to thin adapter once lifecycle work is stable.
-- Verify builders/factories remain side-effect free as DI is simplified.
+- Decide whether to start moving `src/*` into `packages/core` (or keep shim + exports).
+- If moving, align build order and root `tsconfig` paths accordingly.
 
-## Next Iteration Plan (2026-02-27 end)
+## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).
 2. Verify builders/factories are side-effect free; keep lifecycle sequencing in `BotInitializer`.
 3. Only if regressions appear, revisit lifecycle cleanup.

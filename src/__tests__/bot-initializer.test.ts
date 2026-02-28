@@ -136,11 +136,6 @@ const createMockBotServices = (): IBotInitializerServices => {
         emit: jest.fn(),
       },
     },
-    publicWebSocket: {
-      connect: jest.fn(),
-      disconnect: jest.fn(),
-      removeAllListeners: jest.fn(),
-    },
     marketDataServices: {
       bybitService: {
         initialize: jest.fn().mockResolvedValue(undefined),
@@ -199,9 +194,6 @@ const createMockBotServices = (): IBotInitializerServices => {
     sessionStats: {
       startSession: jest.fn().mockReturnValue('session-123'),
       endSession: jest.fn(),
-    },
-    candleProvider: {
-      initialize: jest.fn().mockResolvedValue(undefined),
     },
     btcCandles1m: [],
   } as unknown as IBotInitializerServices;

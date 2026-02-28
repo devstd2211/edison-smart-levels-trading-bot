@@ -9,7 +9,8 @@
   ],
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && npm --prefix web-server run build && npm --prefix web-client run build",
+    "build": "npm --prefix packages/contracts run build && npm --prefix web-server run build && tsc && npm --prefix web-client run build",
+    "build:refs": "tsc -b tsconfig.references.json",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "dev:full": "concurrently \"ts-node src/index.ts\" \"npm --prefix web-server run dev\" \"npm --prefix web-client run dev\"",
@@ -110,6 +111,8 @@
   "author": "Trading Bot Developer",
   "license": "MIT",
   "dependencies": {
+    "@edison/contracts": "workspace:*",
+    "trading-bot-web-server": "workspace:*",
     "blessed": "^0.1.81",
     "bybit-api": "^4.4.0",
     "dotenv": "^16.4.4",

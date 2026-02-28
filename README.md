@@ -62,6 +62,7 @@ cp config.example.json config.json
 ### 3️⃣ Run
 ```bash
 npm run dev
+# Runs CLI entrypoint (src/cli/index.ts)
 ```
 
 ✅ Bot connects to Bybit DEMO, downloads candles, and starts trading!
@@ -82,6 +83,7 @@ npm run dev
   - [4-Layer System](#how-it-works-4-layer-system)
   - [Data Flow](#data-flow-from-candle-to-trade)
 - [✅ What Is Edison / ❌ What Is NOT](#-what-is-edison--what-is-not)
+- [🚪 Entrypoints](#-entrypoints)
 - [📝 Common Commands](#-common-commands)
 - [🎯 Building Blocks Architecture](#-building-blocks-architecture)
 - [📋 Full Legal Disclaimer](#-full-legal-disclaimer)
@@ -256,11 +258,18 @@ Exit and Log Trade
 
 ---
 
+## 🚪 Entrypoints
+
+- `src/cli/index.ts`: CLI entrypoint (loads config via ConfigPipeline + validation and starts bot + web server).
+- `src/core/index.ts`: Core entrypoint (`createBot`/`startBot`) for programmatic use.
+- `src/web/index.ts`: Web server entrypoint used by CLI.
+- `src/index.ts`: Legacy wrapper (exports CLI/core, runs CLI by default).
+
 ## 📝 Common Commands
 
 ### Development
 ```bash
-npm run dev              # Start bot with live trading
+npm run dev              # Start CLI entrypoint (bot + web server)
 npm run build            # Compile TypeScript
 npm test                 # Run 7000+ unit tests
 npm run lint             # Check code style
@@ -514,6 +523,7 @@ cp strategies/json/level-trading.strategy.json \
 # Run with new strategy:
 # In config.json: "strategy": "my-new-strategy"
 npm run dev
+# Runs CLI entrypoint (src/cli/index.ts)
 ```
 
 ### Adding New Analyzers
@@ -991,6 +1001,7 @@ npm test
 
 # Run dev bot
 npm run dev
+# Runs CLI entrypoint (src/cli/index.ts)
 
 # Run backtest
 npm run backtest-v5 -- --strategy level-trading-v2

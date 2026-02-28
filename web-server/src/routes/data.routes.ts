@@ -13,6 +13,8 @@ import { BotBridgeService } from '../services/bot-bridge.service.js';
 import type {
   ApiResponse,
   Position,
+} from '../types/api.types.js';
+import type {
   WebApiCandle,
   WebApiFundingRateView,
   WebApiMarketData,
@@ -20,7 +22,7 @@ import type {
   WebApiPositionHistoryEntry,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from '../types/api.types.js';
+} from '@edison/contracts';
 
 export function createDataRoutes(bridge: BotBridgeService): Router {
   const router = Router();

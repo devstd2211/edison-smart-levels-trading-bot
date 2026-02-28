@@ -1,14 +1,5 @@
-import type {
-  BotStatus,
-  Position,
-  Signal,
-  WebApiCandle,
-  WebApiFundingRateView,
-  WebApiMarketData,
-  WebApiOrderBookView,
-  WebApiWallView,
-  WebApiWallsView,
-} from './index';
+import type { WebApiCandle, WebApiFundingRateView, WebApiMarketData, WebApiOrderBookView, WebApiWallView, WebApiWallsView } from '@edison/contracts';
+import type { BotStatus, Position, Signal } from './index';
 import type { Strategy } from './strategy';
 
 export interface PositionOpenedPayload {

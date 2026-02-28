@@ -16,7 +16,15 @@
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "moduleResolution": "node",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@edison/contracts": ["packages/contracts/dist"],
+      "@edison/contracts/*": ["packages/contracts/dist/*"],
+      "trading-bot-web-server": ["web-server/dist"],
+      "trading-bot-web-server/*": ["web-server/dist/*"]
+    }
   },
   "include": ["src/**/*"],
-      "exclude": ["node_modules", "dist", "tests", "web-server/**", "web-client/**", "src/archive/**", "src/__tests__/**/*.ARCHIVED.ts"]}
+  "exclude": ["node_modules", "dist", "tests", "web-server/**", "web-client/**", "src/archive/**", "src/__tests__/**/*.ARCHIVED.ts"]
+}

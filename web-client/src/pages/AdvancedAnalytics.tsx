@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { dataApi } from '../services/api.service';
-import type { WebApiPositionHistoryEntry } from '../types';
+import type { WebApiPositionHistoryEntry } from '@edison/contracts';
 
 // ============================================================================
 // TYPES & INTERFACES

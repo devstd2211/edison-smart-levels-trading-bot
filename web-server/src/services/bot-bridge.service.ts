@@ -10,6 +10,10 @@ import type {
   BotStatus,
   Position,
   Signal,
+  WebSocketMessage,
+  WebSocketPayloadMap,
+} from '../types/api.types.js';
+import type {
   WebApiCandle,
   WebApiFundingRateView,
   WebApiMarketData,
@@ -17,9 +21,7 @@ import type {
   WebApiPositionHistoryEntry,
   WebApiVolumeProfileView,
   WebApiWallsView,
-  WebSocketMessage,
-  WebSocketPayloadMap,
-} from '../types/api.types.js';
+} from '@edison/contracts';
 import type { IWebApiAdapter } from './web-api-adapter.types.js';
 
 export interface IBotInstance extends EventEmitter {

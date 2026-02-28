@@ -34,11 +34,9 @@ export const createTradingBotServiceBundle = (
     executionServices: services.executionServices,
 
     // IBotInitializerServices
-    publicWebSocket: services.publicWebSocket,
     marketDataServices: services.marketDataServices,
     positionManager: services.positionManager,
     sessionStats: services.sessionStats,
-    candleProvider: services.candleProvider,
     btcCandles1m: services.btcCandles1m,
     exchangeFactory: services.exchangeFactory,
     resilienceServices: {
@@ -49,6 +47,7 @@ export const createTradingBotServiceBundle = (
 
     // IWebSocketEventHandlerServices
     eventHandlerServices: services.eventHandlerServices,
+    publicWebSocket: services.marketDataServices.publicWebSocket,
     orderbookImbalanceService: services.orderbookImbalanceService,
     advancedOrderFlowService: services.advancedOrderFlowService,
     deltaAnalyzerService: services.deltaAnalyzerService,

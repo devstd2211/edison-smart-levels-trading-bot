@@ -6,6 +6,9 @@
 
 import type {
   BotStatus,
+  Strategy,
+} from '../types';
+import type {
   WebApiCandlesResponse,
   WebApiFundingRateView,
   WebApiMarketData,
@@ -13,8 +16,7 @@ import type {
   WebApiPositionsResponse,
   WebApiVolumeProfileView,
   WebApiWallsView,
-  Strategy,
-} from '../types';
+} from '@edison/contracts';
 
 /**
  * Get fallback API URL if server config is unreachable

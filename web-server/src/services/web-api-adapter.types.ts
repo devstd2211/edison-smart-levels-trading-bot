@@ -6,7 +6,7 @@ import type {
   WebApiPositionHistoryEntry,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from '../types/api.types.js';
+} from '@edison/contracts';
 
 export interface IWebApiAdapter {
   getMarketData(): Promise<WebApiMarketData>;

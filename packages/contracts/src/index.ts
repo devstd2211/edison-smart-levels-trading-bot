@@ -1,1 +1,1 @@
-// Contracts package entrypoint (placeholder)
+export * from './web-api';

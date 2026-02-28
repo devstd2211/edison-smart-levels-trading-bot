@@ -37,14 +37,6 @@ export interface IBotServicesAdapterSource {
     IMarketDataServices,
     'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'
   >;
-  publicWebSocket: {
-    connect(): void;
-    disconnect(): void;
-    removeAllListeners(): void;
-    on(event: string, listener: (...args: unknown[]) => void): void;
-    off(event: string, listener?: (...args: unknown[]) => void): void;
-    setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void;
-  };
   positionMonitor: {
     on(event: string, listener: (...args: unknown[]) => void): void;
   };
@@ -55,9 +47,6 @@ export interface IBotServicesAdapterSource {
   sessionStats: {
     startSession(config: Config, symbol: string): string;
     endSession(): void;
-  };
-  candleProvider: {
-    initialize(): Promise<void>;
   };
   btcCandles1m: Candle[];
   exchangeFactory?: {

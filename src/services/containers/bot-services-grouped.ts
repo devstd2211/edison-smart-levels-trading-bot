@@ -16,7 +16,7 @@ import type { BotMetricsService } from '../bot-metrics.service';
 import type { ConsoleDashboardService } from '../console-dashboard.service';
 import type { TradingJournalService } from '../trading-journal.service';
 import type { IExchange } from '../../interfaces/IExchange';
-import type { WebApiIndicatorPreferences } from '../../types/web-api';
+import type { WebApiIndicatorPreferences } from '@edison/contracts';
 
 type GroupedServiceDeps = {
   // Market data

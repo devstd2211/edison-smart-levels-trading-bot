@@ -13,7 +13,12 @@
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "@edison/contracts": ["../packages/contracts/src"],
+      "@edison/contracts/*": ["../packages/contracts/src/*"]
+    }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

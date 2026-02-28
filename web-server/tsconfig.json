@@ -3,6 +3,7 @@
     "target": "ES2020",
     "module": "ES2020",
     "lib": ["ES2020"],
+    "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -16,8 +17,16 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@edison/contracts": ["../packages/contracts/dist"],
+      "@edison/contracts/*": ["../packages/contracts/dist/*"]
+    }
   },
+  "references": [
+    { "path": "../packages/contracts" }
+  ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

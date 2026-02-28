@@ -22,11 +22,6 @@ export interface IBotInitializerServices {
     retryPolicy?: ILifecycle;
     bulkhead?: ILifecycle;
   };
-  publicWebSocket: {
-    connect(): void;
-    disconnect(): void;
-    removeAllListeners(): void;
-  };
   marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'>;
   positionManager: {
     syncWithWebSocket(position?: Position): void;
@@ -39,9 +34,6 @@ export interface IBotInitializerServices {
   sessionStats: {
     startSession(config: Config, symbol: string): string;
     endSession(): void;
-  };
-  candleProvider: {
-    initialize(): Promise<void>;
   };
   btcCandles1m: Candle[];
   exchangeFactory?: {

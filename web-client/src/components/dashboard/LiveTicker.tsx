@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { useMarketStore } from '../../stores/marketStore';
 import { dataApi } from '../../services/api.service';
 import { wsClient } from '../../services/websocket.service';
-import type { WebApiMarketData } from '../../types';
+import type { WebApiMarketData } from '@edison/contracts';
 import { Zap } from 'lucide-react';
 
 export function LiveTicker() {

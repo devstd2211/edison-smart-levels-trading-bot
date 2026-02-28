@@ -10,12 +10,8 @@ import { createChart, ColorType } from 'lightweight-charts';
 import type { CandlestickData, HistogramData, Time, ISeriesApi, SeriesMarker } from 'lightweight-charts';
 import { TrendingUp } from 'lucide-react';
 import { dataApi } from '../../services/api.service';
-import type {
-  PositionClosedPayload,
-  PositionOpenedPayload,
-  WebApiCandle,
-  WebApiPositionHistoryEntry,
-} from '../../types';
+import type { PositionClosedPayload, PositionOpenedPayload } from '../../types';
+import type { WebApiCandle, WebApiPositionHistoryEntry } from '@edison/contracts';
 import { wsClient } from '../../services/websocket.service';
 
 export interface Candle {
