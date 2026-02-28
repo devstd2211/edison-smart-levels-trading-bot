@@ -281,6 +281,10 @@
 - [x] Core build wired into root build (2026-02-28)
 - [x] Build verified after core move (2026-02-28)
 
+**Next Tasks**
+1. Decide whether to move `web-server` and `web-client` under `packages/*` or keep them top-level.
+2. Audit remaining tooling/docs/scripts for stale `src/` paths.
+
 ### Complexity + Risk
 - **Complexity:** High
 - **Risk:** High (build + runtime path changes)

@@ -100,6 +100,10 @@ Deliverables for this session:
 - Decide whether to split web-server/web-client into `packages/*` or keep top-level.
 - Audit remaining tooling/docs for outdated `src/` paths.
 
+## Next Tasks
+1. Choose packaging plan for `web-server`/`web-client`.
+2. Sweep scripts/docs for any remaining `src/` references and update to `packages/core/src`.
+
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).
 2. Verify builders/factories are side-effect free; keep lifecycle sequencing in `BotInitializer`.
