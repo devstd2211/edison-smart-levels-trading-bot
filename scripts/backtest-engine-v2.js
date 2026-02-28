@@ -72,32 +72,32 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BacktestEngineV2 = void 0;
-var types_1 = require("../src/types");
-var level_based_strategy_1 = require("../src/strategies/level-based.strategy");
-var trend_following_strategy_1 = require("../src/strategies/trend-following.strategy");
-var counter_trend_strategy_1 = require("../src/strategies/counter-trend.strategy");
-var whale_hunter_strategy_1 = require("../src/strategies/whale-hunter.strategy");
-var rsi_indicator_1 = require("../src/indicators/rsi.indicator");
-var ema_indicator_1 = require("../src/indicators/ema.indicator");
-var atr_indicator_1 = require("../src/indicators/atr.indicator");
-var zigzag_indicator_1 = require("../src/indicators/zigzag.indicator");
-var liquidity_detector_1 = require("../src/analyzers/liquidity.detector");
-var divergence_detector_1 = require("../src/analyzers/divergence.detector");
-var stochastic_indicator_1 = require("../src/indicators/stochastic.indicator");
-var bollinger_indicator_1 = require("../src/indicators/bollinger.indicator");
-var entry_confirmation_service_1 = require("../src/services/entry-confirmation.service");
-var context_analyzer_1 = require("../src/analyzers/context.analyzer");
-var entry_scanner_1 = require("../src/analyzers/entry.scanner");
-var types_2 = require("../src/types");
-var weight_matrix_calculator_service_1 = require("../src/services/weight-matrix-calculator.service");
-var whale_detector_service_1 = require("../src/services/whale-detector.service");
-var orderbook_analyzer_1 = require("../src/analyzers/orderbook.analyzer");
+var types_1 = require("../packages/core/src/types");
+var level_based_strategy_1 = require("../packages/core/src/strategies/level-based.strategy");
+var trend_following_strategy_1 = require("../packages/core/src/strategies/trend-following.strategy");
+var counter_trend_strategy_1 = require("../packages/core/src/strategies/counter-trend.strategy");
+var whale_hunter_strategy_1 = require("../packages/core/src/strategies/whale-hunter.strategy");
+var rsi_indicator_1 = require("../packages/core/src/indicators/rsi.indicator");
+var ema_indicator_1 = require("../packages/core/src/indicators/ema.indicator");
+var atr_indicator_1 = require("../packages/core/src/indicators/atr.indicator");
+var zigzag_indicator_1 = require("../packages/core/src/indicators/zigzag.indicator");
+var liquidity_detector_1 = require("../packages/core/src/analyzers/liquidity.detector");
+var divergence_detector_1 = require("../packages/core/src/analyzers/divergence.detector");
+var stochastic_indicator_1 = require("../packages/core/src/indicators/stochastic.indicator");
+var bollinger_indicator_1 = require("../packages/core/src/indicators/bollinger.indicator");
+var entry_confirmation_service_1 = require("../packages/core/src/services/entry-confirmation.service");
+var context_analyzer_1 = require("../packages/core/src/analyzers/context.analyzer");
+var entry_scanner_1 = require("../packages/core/src/analyzers/entry.scanner");
+var types_2 = require("../packages/core/src/types");
+var weight_matrix_calculator_service_1 = require("../packages/core/src/services/weight-matrix-calculator.service");
+var whale_detector_service_1 = require("../packages/core/src/services/whale-detector.service");
+var orderbook_analyzer_1 = require("../packages/core/src/analyzers/orderbook.analyzer");
 // PHASE 5: Risk Management Services
-var daily_limits_service_1 = require("../src/services/daily-limits.service");
-var risk_based_sizing_service_1 = require("../src/services/risk-based-sizing.service");
-var loss_streak_service_1 = require("../src/services/loss-streak.service");
-var vwap_indicator_1 = require("../src/indicators/vwap.indicator");
-var tf_alignment_service_1 = require("../src/services/tf-alignment.service");
+var daily_limits_service_1 = require("../packages/core/src/services/daily-limits.service");
+var risk_based_sizing_service_1 = require("../packages/core/src/services/risk-based-sizing.service");
+var loss_streak_service_1 = require("../packages/core/src/services/loss-streak.service");
+var vwap_indicator_1 = require("../packages/core/src/indicators/vwap.indicator");
+var tf_alignment_service_1 = require("../packages/core/src/services/tf-alignment.service");
 // ============================================================================
 // MOCK CANDLE PROVIDER FOR BACKTEST
 // ============================================================================
@@ -927,3 +927,4 @@ var BacktestEngineV2 = /** @class */ (function () {
     return BacktestEngineV2;
 }());
 exports.BacktestEngineV2 = BacktestEngineV2;
+

@@ -192,3 +192,4 @@ if (!fs.existsSync(journalPath)) {
 }
 
 analyzeLosingTrades(journalPath);
+

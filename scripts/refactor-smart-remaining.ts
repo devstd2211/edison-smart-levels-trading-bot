@@ -99,8 +99,8 @@ function processFile(filePath: string): number {
 function main(): void {
   console.log('🧠 SMART REFACTORING: Safe Magic Number Replacements\n');
 
-  const files = glob.sync('src/**/*.ts', {
-    ignore: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/constants/**'],
+  const files = glob.sync('packages/core/src/**/*.ts', {
+    ignore: ['packages/core/src/**/*.test.ts', 'packages/core/src/**/*.spec.ts', 'packages/core/src/constants/**'],
   });
 
   let totalReplacements = 0;
@@ -120,3 +120,4 @@ function main(): void {
 }
 
 main();
+

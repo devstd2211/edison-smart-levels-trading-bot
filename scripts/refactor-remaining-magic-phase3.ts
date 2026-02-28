@@ -339,14 +339,14 @@ function createAnalyzerConstantsFile(): void {
 
 function main(): void {
   const targetDirs = [
-    'src/analyzers/**/*.ts',
-    'src/indicators/**/*.ts',
+    'packages/core/src/analyzers/**/*.ts',
+    'packages/core/src/indicators/**/*.ts',
   ];
 
   const excludePatterns = [
     '**/*.test.ts',
     '**/*.spec.ts',
-    'src/constants/**',
+    'packages/core/src/constants/**',
   ];
 
   console.log('🔧 Phase 3: Context-Specific Magic Numbers Refactoring...\n');
@@ -396,3 +396,4 @@ function main(): void {
 }
 
 main();
+

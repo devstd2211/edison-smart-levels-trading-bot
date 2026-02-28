@@ -117,3 +117,4 @@ if (totalPnL > 0) {
 } else {
   console.log('⚠️  Unprofitable day - review strategy\n');
 }
+

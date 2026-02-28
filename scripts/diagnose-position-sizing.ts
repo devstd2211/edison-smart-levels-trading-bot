@@ -8,8 +8,8 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { BacktestEngineV5, BacktestResult } from '../src/backtest/backtest-engine-v5';
-import { LoggerService } from '../src/services/logger.service';
+import { BacktestEngineV5, BacktestResult } from '../packages/core/src/backtest/backtest-engine-v5';
+import { LoggerService } from '../packages/core/src/services/logger.service';
 
 async function main() {
   const logger = new LoggerService();
@@ -97,3 +97,4 @@ async function main() {
 }
 
 main();
+

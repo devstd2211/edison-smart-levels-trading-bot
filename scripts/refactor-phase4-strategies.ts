@@ -328,7 +328,7 @@ function processFile(filePath: string): { changed: boolean; count: number } {
 function createStrategyConstantsFile(): void {
   console.log(`\n📝 Creating strategy constants file...`);
 
-  const targetFile = 'src/constants/strategy-constants.ts';
+  const targetFile = 'packages/core/src/constants/strategy-constants.ts';
 
   if (fs.existsSync(targetFile)) {
     console.log('   ⚠️  strategy-constants.ts already exists, skipping');
@@ -339,7 +339,7 @@ function createStrategyConstantsFile(): void {
   console.log('   ✅ strategy-constants.ts created!');
 
   // Add export to constants/index.ts
-  const indexPath = 'src/constants/index.ts';
+  const indexPath = 'packages/core/src/constants/index.ts';
   let indexContent = fs.readFileSync(indexPath, 'utf-8');
 
   // Add import/export if not already present
@@ -372,15 +372,15 @@ function createStrategyConstantsFile(): void {
 
 function main(): void {
   const targetFiles = [
-    'src/strategies/**/*.ts',
-    'src/services/*.service.ts',
-    'src/bot.ts',
+    'packages/core/src/strategies/**/*.ts',
+    'packages/core/src/services/*.service.ts',
+    'packages/core/src/bot.ts',
   ];
 
   const excludePatterns = [
     '**/*.test.ts',
     '**/*.spec.ts',
-    'src/constants/**',
+    'packages/core/src/constants/**',
   ];
 
   console.log('🔧 Phase 4: Strategy & Service Magic Numbers Refactoring...\n');
@@ -426,3 +426,4 @@ function main(): void {
 }
 
 main();
+

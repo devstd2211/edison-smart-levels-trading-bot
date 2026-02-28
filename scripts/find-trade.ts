@@ -39,3 +39,4 @@ if (matchingTrades.length > 0) {
       console.log(`  ${t.side} @ ${t.entryPrice} → ${t.exitPrice || 'OPEN'} (${t.quantity} APEX)`);
     });
 }
+

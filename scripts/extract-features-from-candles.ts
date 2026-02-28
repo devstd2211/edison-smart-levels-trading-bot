@@ -13,9 +13,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, LogLevel, MLFeatureSet, Candle } from '../src/types';
-import { MLFeatureExtractorService } from '../src/services/ml-feature-extractor.service';
-import { CandleAggregatorService } from '../src/services/candle-aggregator.service';
+import { LoggerService, LogLevel, MLFeatureSet, Candle } from '../packages/core/src/types';
+import { MLFeatureExtractorService } from '../packages/core/src/services/ml-feature-extractor.service';
+import { CandleAggregatorService } from '../packages/core/src/services/candle-aggregator.service';
 
 // ============================================================================
 // CONSTANTS
@@ -288,3 +288,4 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

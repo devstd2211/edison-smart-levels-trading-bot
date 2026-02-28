@@ -454,3 +454,4 @@ if (require.main === module) {
 }
 
 export { parseLogFile, extractPricePoints, findBounces };
+

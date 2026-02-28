@@ -303,7 +303,7 @@ EXAMPLES:
   npm run vector-db related "ema.analyzer-new.ts"
   npm run vector-db autocomplete "ana"
   npm run vector-db reindex
-  npm run vector-db get "src/indicators/ema.indicator-new.ts"
+  npm run vector-db get "packages/core/src/indicators/ema.indicator-new.ts"
   npm run vector-db export ./export.json
 
 For detailed documentation, see: .vector-db/USAGE.md

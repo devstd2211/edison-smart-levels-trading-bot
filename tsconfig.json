@@ -4,7 +4,7 @@
     "module": "commonjs",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./packages/core/src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -25,6 +25,6 @@
       "trading-bot-web-server/*": ["web-server/dist/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "web-server/**", "web-client/**", "src/archive/**", "src/__tests__/**/*.ARCHIVED.ts"]
+  "include": ["packages/core/src/**/*"],
+  "exclude": ["node_modules", "dist", "tests", "web-server/**", "web-client/**", "packages/core/src/archive/**", "packages/core/src/__tests__/**/*.ARCHIVED.ts"]
 }

@@ -104,7 +104,7 @@ export class ProjectIndexer {
    */
   private async findFiles(): Promise<string[]> {
     try {
-      const globPattern = path.join(this.projectPath, 'src/**/*.ts').replace(/\\/g, '/');
+      const globPattern = path.join(this.projectPath, 'packages/core/src/**/*.ts').replace(/\\/g, '/');
       const ignorePatterns = (this.config.excludePatterns?.map((p) => path.join(this.projectPath, p).replace(/\\/g, '/')) || []);
 
       const files = await glob(globPattern, {

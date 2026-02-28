@@ -11,7 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, LogLevel, MLFeatureSet } from '../src/types';
+import { LoggerService, LogLevel, MLFeatureSet } from '../packages/core/src/types';
 
 // ============================================================================
 // CONSTANTS
@@ -400,3 +400,4 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

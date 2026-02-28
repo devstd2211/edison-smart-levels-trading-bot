@@ -11,7 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Candle, MLFeatureSet } from '../src/types';
+import { Candle, MLFeatureSet } from '../packages/core/src/types';
 
 interface BacktestResult {
   setup: string;
@@ -324,3 +324,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

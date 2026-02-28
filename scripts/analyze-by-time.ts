@@ -92,3 +92,4 @@ const worstHour = sortedByPnL[sortedByPnL.length - 1];
 console.log('\n' + '═'.repeat(63));
 console.log(`\n✅ BEST HOUR:  ${bestHour.hour.toString().padStart(2, '0')}:00 UTC (${(bestHour.hour + 3).toString().padStart(2, '0')}:00 MSK) | ${bestHour.totalPnL.toFixed(2)} USDT`);
 console.log(`❌ WORST HOUR: ${worstHour.hour.toString().padStart(2, '0')}:00 UTC (${(worstHour.hour + 3).toString().padStart(2, '0')}:00 MSK) | ${worstHour.totalPnL.toFixed(2)} USDT`);
+

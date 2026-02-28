@@ -78,3 +78,4 @@ strategies.forEach(({ file, symbol, strategy }) => {
 console.log('\n========================================');
 console.log('All configs configured!');
 console.log('========================================\n');
+

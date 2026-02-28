@@ -125,3 +125,4 @@ function calculateEMA(prices: number[], period: number): number[] {
 
   return ema;
 }
+

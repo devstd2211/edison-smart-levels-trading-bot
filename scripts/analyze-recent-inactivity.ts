@@ -5,10 +5,10 @@
  */
 
 import { SqliteDataProvider } from './data-providers';
-import { ZigZagIndicator } from '../src/indicators/zigzag.indicator';
-import { RSIIndicator } from '../src/indicators/rsi.indicator';
-import { EMAIndicator } from '../src/indicators/ema.indicator';
-import { LoggerService, LogLevel, Candle } from '../src/types';
+import { ZigZagIndicator } from '../packages/core/src/indicators/zigzag.indicator';
+import { RSIIndicator } from '../packages/core/src/indicators/rsi.indicator';
+import { EMAIndicator } from '../packages/core/src/indicators/ema.indicator';
+import { LoggerService, LogLevel, Candle } from '../packages/core/src/types';
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════════');
@@ -128,3 +128,4 @@ main().catch((error) => {
   console.error('❌ Error:', error);
   process.exit(1);
 });
+

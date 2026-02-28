@@ -11,7 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Candle } from '../src/types';
+import { Candle } from '../packages/core/src/types';
 
 interface TrendAnalysis {
   symbol: string;
@@ -194,3 +194,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

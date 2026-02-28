@@ -363,3 +363,4 @@ if (require.main === module) {
 }
 
 export { downloadKlines, aggregateCandles, saveKlines };
+

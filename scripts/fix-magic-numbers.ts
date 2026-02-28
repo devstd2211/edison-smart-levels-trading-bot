@@ -129,3 +129,4 @@ for (const file of args) {
 }
 
 console.log(`\nTotal files fixed: ${fixedCount}/${args.length}`);
+

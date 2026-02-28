@@ -31,3 +31,4 @@ console.log(`📊 SUMMARY:`);
 console.log(`  Avg RSI at entry: ${avgRSI.toFixed(1)}`);
 console.log(`  Avg EMA Distance: ${avgEmaDistance.toFixed(2)}%`);
 console.log(`  Avg Confidence: ${(losses.reduce((sum, t) => sum + t.confidence, 0) / losses.length * 100).toFixed(1)}%`);
+

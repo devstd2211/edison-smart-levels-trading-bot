@@ -39,3 +39,4 @@ export interface IDataProvider {
    */
   getSourceName(): string;
 }
+

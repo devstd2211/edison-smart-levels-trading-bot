@@ -75,3 +75,4 @@ console.log(`   - TP1 at Resistance 2.1782 = ${((nearestResistance - entry) / ri
 console.log(`   - TP2 at Resistance 2.1959 = ${((farthestResistance - entry) / riskDistance).toFixed(2)} R:R ✓`);
 console.log(`B) Increase ATR-based SL configuration to tighter SL`);
 console.log(`C) Lower minimum R:R requirement from 1.5 to 0.5 or 0.7`);
+

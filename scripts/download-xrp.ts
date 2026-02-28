@@ -96,3 +96,4 @@ downloadChunk().then(() => {
   console.log(`\n🎉 Download complete! Total: ${allCandles.length} candles`);
   console.log(`💾 Saved: ${jsonFile}`);
 });
+

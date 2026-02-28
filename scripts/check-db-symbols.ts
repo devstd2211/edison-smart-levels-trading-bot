@@ -42,3 +42,4 @@ async function listDatabaseTables() {
 }
 
 listDatabaseTables().catch(console.error);
+

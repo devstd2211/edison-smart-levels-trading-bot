@@ -21,8 +21,8 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { BacktestEngineV5, BacktestConfig, BacktestResult } from '../src/backtest/backtest-engine-v5';
-import { LoggerService } from '../src/services/logger.service';
+import { BacktestEngineV5, BacktestConfig, BacktestResult } from '../packages/core/src/backtest/backtest-engine-v5';
+import { LoggerService } from '../packages/core/src/services/logger.service';
 
 // ============================================================================
 // ARGUMENT PARSING
@@ -215,3 +215,4 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

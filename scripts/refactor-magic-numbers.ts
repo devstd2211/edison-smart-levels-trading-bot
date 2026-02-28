@@ -246,19 +246,19 @@ function refactorFile(filePath: string): { changed: boolean; count: number } {
 
 function main(): void {
   const targetDirs = [
-    'src/strategies/**/*.ts',
-    'src/services/**/*.ts',
-    'src/analyzers/**/*.ts',
-    'src/indicators/**/*.ts',
-    'src/utils/**/*.ts',
+    'packages/core/src/strategies/**/*.ts',
+    'packages/core/src/services/**/*.ts',
+    'packages/core/src/analyzers/**/*.ts',
+    'packages/core/src/indicators/**/*.ts',
+    'packages/core/src/utils/**/*.ts',
   ];
 
   // Exclude test files and already processed files
   const excludePatterns = [
     '**/*.test.ts',
     '**/*.spec.ts',
-    'src/constants/**',
-    'src/config/**',
+    'packages/core/src/constants/**',
+    'packages/core/src/config/**',
   ];
 
   console.log('🔧 Auto-Refactoring Magic Numbers...\n');
@@ -306,3 +306,4 @@ function main(): void {
 }
 
 main();
+

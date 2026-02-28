@@ -52,3 +52,4 @@ console.log('⚠️  Leverage affects MARGIN, not PnL display!');
 console.log('10x leverage means:');
 console.log('  - You only need 10% margin');
 console.log('  - But PnL shown is for FULL position value (no 10x multiplier)\n');
+

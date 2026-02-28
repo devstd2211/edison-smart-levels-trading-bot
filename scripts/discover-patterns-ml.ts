@@ -9,8 +9,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, LogLevel, MLFeatureSet, MLDiscoveryConfig } from '../src/types';
-import { MLPatternDiscoveryService } from '../src/services/pattern-ml-discovery.service';
+import { LoggerService, LogLevel, MLFeatureSet, MLDiscoveryConfig } from '../packages/core/src/types';
+import { MLPatternDiscoveryService } from '../packages/core/src/services/pattern-ml-discovery.service';
 
 // ============================================================================
 // CONSTANTS
@@ -280,3 +280,4 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

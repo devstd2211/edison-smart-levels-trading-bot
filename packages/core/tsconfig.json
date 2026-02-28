@@ -9,7 +9,21 @@
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@edison/contracts": ["../contracts/dist"],
+      "@edison/contracts/*": ["../contracts/dist/*"],
+      "trading-bot-web-server": ["../../web-server/dist"],
+      "trading-bot-web-server/*": ["../../web-server/dist/*"]
+    }
   },
-  "include": ["src/**/*"]
+  "references": [
+    { "path": "../contracts" },
+    { "path": "../../web-server" }
+  ],
+  "include": ["src/**/*"],
+  "exclude": ["src/**/__tests__/**/*.ARCHIVED.ts"]
 }

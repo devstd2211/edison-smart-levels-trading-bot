@@ -49,3 +49,4 @@ console.log('\nScalping strategies now update at:');
 console.log('  • MicroWall:  500ms (2x per second)');
 console.log('  • OrderFlow:  500ms (2x per second)');
 console.log('  • WhaleHunter: 100ms (10x per second) - ultra-fast!');
+

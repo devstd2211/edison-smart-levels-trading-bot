@@ -252,15 +252,15 @@ function main(): void {
   console.log('Targeting files with magic numbers...\n');
 
   const targetDirs = [
-    'src/strategies/**/*.ts',
-    'src/services/*.service.ts',
-    'src/analyzers/**/*.ts',
-    'src/indicators/**/*.ts',
-    'src/backtest/**/*.ts',
-    'src/bot.ts',
+    'packages/core/src/strategies/**/*.ts',
+    'packages/core/src/services/*.service.ts',
+    'packages/core/src/analyzers/**/*.ts',
+    'packages/core/src/indicators/**/*.ts',
+    'packages/core/src/backtest/**/*.ts',
+    'packages/core/src/bot.ts',
   ];
 
-  const excludePatterns = ['**/*.test.ts', '**/*.spec.ts', 'src/constants/**'];
+  const excludePatterns = ['**/*.test.ts', '**/*.spec.ts', 'packages/core/src/constants/**'];
 
   let totalFiles = 0;
   let changedFiles = 0;
@@ -298,3 +298,4 @@ function main(): void {
 }
 
 main();
+

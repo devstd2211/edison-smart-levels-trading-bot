@@ -93,9 +93,9 @@ function main(): void {
   console.log('🔧 Phase 5: Backtest & Detector Magic Numbers...\n');
 
   const targetFiles = [
-    'src/backtest/*.ts',
-    'src/analyzers/*detector*.ts',
-    'src/analyzers/*pattern*.ts',
+    'packages/core/src/backtest/*.ts',
+    'packages/core/src/analyzers/*detector*.ts',
+    'packages/core/src/analyzers/*pattern*.ts',
   ];
 
   const excludePatterns = ['**/*.test.ts', '**/*.spec.ts'];
@@ -122,3 +122,4 @@ function main(): void {
 }
 
 main();
+

@@ -15,7 +15,7 @@ import * as path from 'path';
 import { BacktestEngineV2, BacktestResult, BacktestTrade } from './backtest-engine-v2';
 import { SqliteDataProvider } from './data-providers/sqlite.provider';
 import { JsonDataProvider } from './data-providers/json.provider';
-import { LoggerService, LogLevel } from '../src/types';
+import { LoggerService, LogLevel } from '../packages/core/src/types';
 
 // ============================================================================
 // CALIBRATION CONFIGURATION
@@ -528,3 +528,4 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

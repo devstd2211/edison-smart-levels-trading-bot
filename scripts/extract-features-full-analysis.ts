@@ -15,15 +15,15 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, LogLevel, MLFeatureSet, Candle } from '../src/types';
-import { CandleAggregatorService } from '../src/services/candle-aggregator.service';
-import { RSIIndicator } from '../src/indicators/rsi.indicator';
-import { EMAIndicator } from '../src/indicators/ema.indicator';
-import { StochasticIndicator } from '../src/indicators/stochastic.indicator';
-import { BollingerBandsIndicator } from '../src/indicators/bollinger.indicator';
-import { ATRIndicator } from '../src/indicators/atr.indicator';
-import { EngulfingPatternDetector } from '../src/analyzers/engulfing-pattern.detector';
-import { SwingPointType } from '../src/types';
+import { LoggerService, LogLevel, MLFeatureSet, Candle } from '../packages/core/src/types';
+import { CandleAggregatorService } from '../packages/core/src/services/candle-aggregator.service';
+import { RSIIndicator } from '../packages/core/src/indicators/rsi.indicator';
+import { EMAIndicator } from '../packages/core/src/indicators/ema.indicator';
+import { StochasticIndicator } from '../packages/core/src/indicators/stochastic.indicator';
+import { BollingerBandsIndicator } from '../packages/core/src/indicators/bollinger.indicator';
+import { ATRIndicator } from '../packages/core/src/indicators/atr.indicator';
+import { EngulfingPatternDetector } from '../packages/core/src/analyzers/engulfing-pattern.detector';
+import { SwingPointType } from '../packages/core/src/types';
 
 const DATA_DIR = path.join(__dirname, '../data/historical');
 const OUTPUT_DIR = path.join(__dirname, '../data/pattern-validation');
@@ -812,3 +812,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

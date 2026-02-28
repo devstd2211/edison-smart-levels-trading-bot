@@ -11,11 +11,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LoggerService, LogLevel, Candle } from '../src/types';
-import { CandleAggregatorService } from '../src/services/candle-aggregator.service';
-import { RSIIndicator } from '../src/indicators/rsi.indicator';
-import { ATRIndicator } from '../src/indicators/atr.indicator';
-import { EMAIndicator } from '../src/indicators/ema.indicator';
+import { LoggerService, LogLevel, Candle } from '../packages/core/src/types';
+import { CandleAggregatorService } from '../packages/core/src/services/candle-aggregator.service';
+import { RSIIndicator } from '../packages/core/src/indicators/rsi.indicator';
+import { ATRIndicator } from '../packages/core/src/indicators/atr.indicator';
+import { EMAIndicator } from '../packages/core/src/indicators/ema.indicator';
 
 interface TimeframeStats {
   timeframe: string;
@@ -216,3 +216,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

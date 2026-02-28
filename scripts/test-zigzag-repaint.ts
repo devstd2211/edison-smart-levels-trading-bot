@@ -1,8 +1,8 @@
 
 import * as path from 'path';
-import { SqliteDataProvider } from '../src/backtest/data-providers/sqlite.provider';
-import { ZigZagIndicator } from '../src/indicators/zigzag.indicator';
-import { Candle } from '../src/types';
+import { SqliteDataProvider } from '../packages/core/src/backtest/data-providers/sqlite.provider';
+import { ZigZagIndicator } from '../packages/core/src/indicators/zigzag.indicator';
+import { Candle } from '../packages/core/src/types';
 
 /**
  * This script demonstrates the "repainting" nature of the ZigZag indicator.
@@ -77,3 +77,4 @@ async function demonstrateRepainting() {
 }
 
 demonstrateRepainting().catch(console.error);
+

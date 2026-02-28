@@ -17,7 +17,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { SessionDatabase, Session } from '../src/types';
+import { SessionDatabase, Session } from '../packages/core/src/types';
 
 // ============================================================================
 // CONSTANTS
@@ -204,3 +204,4 @@ function main(): void {
 // ============================================================================
 
 main();
+

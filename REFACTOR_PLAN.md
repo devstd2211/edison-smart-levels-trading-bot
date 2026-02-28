@@ -276,6 +276,10 @@
 - [x] Project references scaffolded (tsconfig references file + composite builds)
 - [x] Added `build:refs` script for project references
 - [x] Build verified after web-server package import (2026-02-28)
+- [x] Core sources moved under `packages/core/src` (root `src` removed)
+- [x] Root scripts now point to `packages/core` entrypoints
+- [x] Core build wired into root build (2026-02-28)
+- [x] Build verified after core move (2026-02-28)
 
 ### Complexity + Risk
 - **Complexity:** High

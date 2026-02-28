@@ -165,3 +165,4 @@ if (!fs.existsSync(journalPath)) {
 }
 
 analyzeSLBug(journalPath);
+

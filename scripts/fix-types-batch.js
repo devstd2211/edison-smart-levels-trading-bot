@@ -200,3 +200,4 @@ fs.writeFileSync(
 );
 
 console.log('📄 Report saved to scripts/fix-types-report.json');
+

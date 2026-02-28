@@ -62,3 +62,4 @@ console.log('──────────────────────�
 console.log('pnlGross = priceDiff × quantity × pnlMultiplier');
 console.log('fees = (entryValue + exitValue) × 0.0006');
 console.log('pnlNet = pnlGross - fees\n');
+

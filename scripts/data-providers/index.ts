@@ -7,3 +7,4 @@
 export { IDataProvider, CandleData, TimeframeData } from './base.provider';
 export { JsonDataProvider } from './json.provider';
 export { SqliteDataProvider } from './sqlite.provider';
+

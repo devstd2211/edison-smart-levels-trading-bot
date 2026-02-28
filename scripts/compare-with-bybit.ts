@@ -92,3 +92,4 @@ console.log('  = 1.5839 USDT ✅\n');
 console.log('Our calculation (wrong for partial closes):');
 console.log('  = (1.1748 - 1.1363) × 85.2 × 10');
 console.log('  = 32.81 USDT ❌ (assumes all closed at 1.1363)\n');
+

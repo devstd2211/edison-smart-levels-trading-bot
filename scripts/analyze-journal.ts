@@ -473,3 +473,4 @@ if (require.main === module) {
 }
 
 export { analyzeJournal, loadJournal, JournalStats, Trade };
+

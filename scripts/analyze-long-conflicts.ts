@@ -102,3 +102,4 @@ if (data.summary.longTrades === 0) {
   console.log('└─ Result: Missing winning LONG opportunities ❌\n');
   console.log('ACTION: Need to review the penalty thresholds and parameters');
 }
+

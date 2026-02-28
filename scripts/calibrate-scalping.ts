@@ -15,9 +15,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { BacktestEngineV2, BacktestResult } from '../src/backtest/backtest-engine-v2';
-import { SqliteDataProvider } from '../src/backtest/data-providers/sqlite.provider';
-import { LoggerService, LogLevel, Config } from '../src/types';
+import { BacktestEngineV2, BacktestResult } from '../packages/core/src/backtest/backtest-engine-v2';
+import { SqliteDataProvider } from '../packages/core/src/backtest/data-providers/sqlite.provider';
+import { LoggerService, LogLevel, Config } from '../packages/core/src/types';
 
 // ============================================================================
 // CALIBRATION CONFIGURATION
@@ -526,3 +526,4 @@ runCalibration(strategyArg).catch((error) => {
   console.error('Calibration failed:', error);
   process.exit(1);
 });
+

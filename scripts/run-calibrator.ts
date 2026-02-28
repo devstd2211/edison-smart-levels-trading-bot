@@ -7,8 +7,8 @@
  */
 
 import * as path from 'path';
-import { LoggerService } from '../src/services/logger.service';
-import { CalibratorService, ParameterGridConfig } from '../src/backtest/calibrator.service';
+import { LoggerService } from '../packages/core/src/services/logger.service';
+import { CalibratorService, ParameterGridConfig } from '../packages/core/src/backtest/calibrator.service';
 
 const logger = new LoggerService();
 
@@ -111,3 +111,4 @@ async function main() {
 }
 
 main();
+

@@ -93,3 +93,4 @@ console.log('✅ Whale config applied successfully!');
 console.log('   - whaleHunter: ENABLED (TP: 0.3%, SL: 0.5x ATR, Confidence: 60%)');
 console.log('   - Only IMBALANCE_SPIKE mode enabled');
 console.log('   - All other strategies: DISABLED');
+

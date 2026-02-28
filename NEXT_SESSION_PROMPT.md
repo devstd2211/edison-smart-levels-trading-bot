@@ -63,6 +63,8 @@ Deliverables for this session:
 - Project references scaffolded via `tsconfig.references.json` + composite builds (contracts/web-server/core).
 - Added `build:refs` script to run reference builds.
 - Build succeeded after switching to web-server package import (2026-02-28).
+- Core sources moved to `packages/core/src`; root scripts updated to use new entrypoints.
+- Build succeeded after full core move (2026-02-28).
 - Composition roots split: CLI moved to `src/cli/index.ts`, core entrypoint in `src/core/index.ts`, `src/index.ts` now wrapper.
 - ConfigPipeline added to centralize strategy merge; CLI now loads via pipeline; BotFactory no longer merges strategies.
 - README updated with entrypoints section.
@@ -95,8 +97,8 @@ Deliverables for this session:
 - Re-scan of constructors (timers/subscriptions/IO heuristics) found no remaining side effects.
 
 ## Next Session Start
-- Decide whether to start moving `src/*` into `packages/core` (or keep shim + exports).
-- If moving, align build order and root `tsconfig` paths accordingly.
+- Decide whether to split web-server/web-client into `packages/*` or keep top-level.
+- Audit remaining tooling/docs for outdated `src/` paths.
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

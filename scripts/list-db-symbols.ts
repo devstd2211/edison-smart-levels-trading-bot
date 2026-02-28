@@ -43,3 +43,4 @@ async function listAvailableSymbols() {
 }
 
 listAvailableSymbols().catch(console.error);
+

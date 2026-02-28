@@ -18,10 +18,10 @@ describe('Phase 16.2.1: Security Audit', () => {
   describe('API Key Management', () => {
     it('should not contain hardcoded API keys in source code', () => {
       const sourceFiles = [
-        'src/services/bybit/bybit.service.ts',
-        'src/services/bybit/bybit-service.adapter.ts',
-        'src/services/telegram.service.ts',
-        'src/config.ts',
+        'packages/core/src/services/bybit/bybit.service.ts',
+        'packages/core/src/services/bybit/bybit-service.adapter.ts',
+        'packages/core/src/services/telegram.service.ts',
+        'packages/core/src/config.ts',
       ];
 
       const dangerousPatterns = [

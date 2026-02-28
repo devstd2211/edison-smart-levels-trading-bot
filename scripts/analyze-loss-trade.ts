@@ -82,3 +82,4 @@ console.log(`  - Exit: ~${trade.exit}`);
 console.log(`  - Side: SHORT`);
 console.log(`  - exitType: STOP_LOSS`);
 console.log(`  - Entry reason (to understand why signal was taken)\n`);
+

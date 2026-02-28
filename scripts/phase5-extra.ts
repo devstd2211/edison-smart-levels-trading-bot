@@ -26,8 +26,8 @@ function addImport(content: string, imp: string): string {
 }
 
 let total = 0;
-const files = glob.sync('src/**/*.ts', {
-  ignore: ['src/**/*.test.ts', '**/*.spec.ts', 'src/constants/**'],
+const files = glob.sync('packages/core/src/**/*.ts', {
+  ignore: ['packages/core/src/**/*.test.ts', '**/*.spec.ts', 'packages/core/src/constants/**'],
 });
 
 for (const f of files) {
@@ -55,3 +55,4 @@ for (const f of files) {
 }
 
 console.log(`\n📊 Extra replacements: ${total}\n`);
+

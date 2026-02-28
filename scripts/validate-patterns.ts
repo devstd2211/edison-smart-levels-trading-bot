@@ -19,11 +19,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { LogLevel, LoggerService, PatternOccurrence, PatternValidationResult } from '../src/types';
-import { PatternDataCollectorService } from '../src/services/pattern-data-collector.service';
-import { PatternValidationService } from '../src/services/pattern-validation.service';
-import { PatternReportGeneratorService } from '../src/services/pattern-report-generator.service';
-import { DEFAULT_PATTERN_VALIDATION_CONFIG, ANALYSIS_TIMEFRAMES, PATTERN_TYPES } from '../src/constants/pattern-validation.constants';
+import { LogLevel, LoggerService, PatternOccurrence, PatternValidationResult } from '../packages/core/src/types';
+import { PatternDataCollectorService } from '../packages/core/src/services/pattern-data-collector.service';
+import { PatternValidationService } from '../packages/core/src/services/pattern-validation.service';
+import { PatternReportGeneratorService } from '../packages/core/src/services/pattern-report-generator.service';
+import { DEFAULT_PATTERN_VALIDATION_CONFIG, ANALYSIS_TIMEFRAMES, PATTERN_TYPES } from '../packages/core/src/constants/pattern-validation.constants';
 
 // ============================================================================
 // CONSTANTS
@@ -351,3 +351,4 @@ main().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

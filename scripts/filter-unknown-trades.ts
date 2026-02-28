@@ -35,3 +35,4 @@ fs.writeFileSync(filteredPath, JSON.stringify(validTrades, null, 2));
 
 console.log(`\n✅ Filtered journal saved to: ${filteredPath}`);
 console.log(`\nNow run: npm run analyze-journal data/trade-journal-filtered.json`);
+

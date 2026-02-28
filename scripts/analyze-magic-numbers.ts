@@ -67,8 +67,8 @@ function extractMagicNumbers(filePath: string): MagicNumberInfo[] {
 }
 
 function analyzeAllFiles(): FileStats[] {
-  const sourceFiles = glob.sync('src/**/*.ts', {
-    ignore: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/constants/**'],
+  const sourceFiles = glob.sync('packages/core/src/**/*.ts', {
+    ignore: ['packages/core/src/**/*.test.ts', 'packages/core/src/**/*.spec.ts', 'packages/core/src/constants/**'],
   });
 
   const fileStats: FileStats[] = [];
@@ -139,3 +139,4 @@ function main(): void {
 }
 
 main();
+

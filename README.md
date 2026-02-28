@@ -62,7 +62,7 @@ cp config.example.json config.json
 ### 3️⃣ Run
 ```bash
 npm run dev
-# Runs CLI entrypoint (src/cli/index.ts)
+# Runs CLI entrypoint (packages/core/src/cli/index.ts)
 ```
 
 ✅ Bot connects to Bybit DEMO, downloads candles, and starts trading!
@@ -260,10 +260,10 @@ Exit and Log Trade
 
 ## 🚪 Entrypoints
 
-- `src/cli/index.ts`: CLI entrypoint (loads config via ConfigPipeline + validation and starts bot + web server).
-- `src/core/index.ts`: Core entrypoint (`createBot`/`startBot`) for programmatic use.
-- `src/web/index.ts`: Web server entrypoint used by CLI.
-- `src/index.ts`: Legacy wrapper (exports CLI/core, runs CLI by default).
+- `packages/core/src/cli/index.ts`: CLI entrypoint (loads config via ConfigPipeline + validation and starts bot + web server).
+- `packages/core/src/core/index.ts`: Core entrypoint (`createBot`/`startBot`) for programmatic use.
+- `packages/core/src/web/index.ts`: Web server entrypoint used by CLI.
+- `packages/core/src/index.ts`: Legacy wrapper (exports CLI/core, runs CLI by default).
 
 ## 📝 Common Commands
 
@@ -523,14 +523,14 @@ cp strategies/json/level-trading.strategy.json \
 # Run with new strategy:
 # In config.json: "strategy": "my-new-strategy"
 npm run dev
-# Runs CLI entrypoint (src/cli/index.ts)
+# Runs CLI entrypoint (packages/core/src/cli/index.ts)
 ```
 
 ### Adding New Analyzers
 
 When you add a new analyzer (complete checklist):
 
-1. **Create the analyzer class** in `src/analyzers/my-analyzer-new.ts`
+1. **Create the analyzer class** in `packages/core/src/analyzers/my-analyzer-new.ts`
    - Extend from analyzer base pattern
    - Implement `analyze(candles: Candle[]): AnalyzerSignal` method
    - Return signal with direction (LONG/SHORT/HOLD), confidence (0-100), weight, priority
@@ -540,7 +540,7 @@ When you add a new analyzer (complete checklist):
    - Add analyzer-specific parameters (e.g., thresholds, periods)
    - Export from types file
 
-3. **Register in AnalyzerRegistry** (`src/services/analyzer-registry.service.ts`)
+3. **Register in AnalyzerRegistry** (`packages/core/src/services/analyzer-registry.service.ts`)
    - Add analyzer to `analyzerRegistry` map with config merging logic
 
 4. **Add defaults in config files**
@@ -550,7 +550,7 @@ When you add a new analyzer (complete checklist):
 5. **Write tests**
    - Technical tests: Verify analyzer logic and calculations
    - Functional tests: Test with real market patterns (uptrend, downtrend, reversals)
-   - See `src/__tests__/analyzers/` for examples
+   - See `packages/core/src/__tests__/analyzers/` for examples
 
 6. **Use in strategies** via JSON config:
 
@@ -790,7 +790,7 @@ Layer 4: Execution          → Place trades (40+ services)
 ### Extensibility Without Breaking Changes
 
 **Adding New Analyzer (5-step process):**
-1. Create `src/analyzers/my-new-analyzer-new.ts`
+1. Create `packages/core/src/analyzers/my-new-analyzer-new.ts`
 2. Register in `AnalyzerRegistry` (1 line)
 3. Use in strategy JSON:
    ```json
@@ -800,7 +800,7 @@ Layer 4: Execution          → Place trades (40+ services)
 5. Instant availability in all strategies
 
 **Adding New Indicator:**
-1. Create `src/indicators/my-new-indicator-new.ts`
+1. Create `packages/core/src/indicators/my-new-indicator-new.ts`
 2. Use in analyzers that need it
 3. Analyzers auto-update without changes
 4. Existing strategies still work
@@ -887,10 +887,10 @@ Recommended reading:
 
 ### Code Learning Path
 
-1. **Start:** Read `src/strategies/level-based.strategy.ts` (main logic)
-2. **Then:** Explore `src/analyzers/` (entry signal generation)
-3. **Then:** Check `src/services/` (position lifecycle)
-4. **Finally:** Study `src/__tests__/` (test examples)
+1. **Start:** Read `packages/core/src/strategies/level-based.strategy.ts` (main logic)
+2. **Then:** Explore `packages/core/src/analyzers/` (entry signal generation)
+3. **Then:** Check `packages/core/src/services/` (position lifecycle)
+4. **Finally:** Study `packages/core/src/__tests__/` (test examples)
 
 ---
 
@@ -1001,7 +1001,7 @@ npm test
 
 # Run dev bot
 npm run dev
-# Runs CLI entrypoint (src/cli/index.ts)
+# Runs CLI entrypoint (packages/core/src/cli/index.ts)
 
 # Run backtest
 npm run backtest-v5 -- --strategy level-trading-v2
@@ -1181,4 +1181,5 @@ This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file
 - 📊 Comprehensive backtesting system
 
 Version 1.1.1 beta is ready.
+
 

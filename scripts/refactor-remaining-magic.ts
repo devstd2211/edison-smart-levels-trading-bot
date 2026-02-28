@@ -206,7 +206,7 @@ function processFile(filePath: string): { changed: boolean; count: number } {
 }
 
 function updateConstants(): void {
-  const constantsFile = 'src/constants/index.ts';
+  const constantsFile = 'packages/core/src/constants/index.ts';
 
   console.log(`\n📝 Updating ${constantsFile}...`);
 
@@ -251,12 +251,12 @@ function updateConstants(): void {
 
 function main(): void {
   const targetDirs = [
-    'src/strategies/**/*.ts',
-    'src/services/**/*.ts',
-    'src/utils/**/*.ts',
+    'packages/core/src/strategies/**/*.ts',
+    'packages/core/src/services/**/*.ts',
+    'packages/core/src/utils/**/*.ts',
   ];
 
-  const excludePatterns = ['**/*.test.ts', '**/*.spec.ts', 'src/constants/**'];
+  const excludePatterns = ['**/*.test.ts', '**/*.spec.ts', 'packages/core/src/constants/**'];
 
   console.log('🔧 Phase 2: Refactoring Remaining Magic Numbers...\n');
   console.log('Patterns to replace:');
@@ -302,3 +302,4 @@ function main(): void {
 }
 
 main();
+

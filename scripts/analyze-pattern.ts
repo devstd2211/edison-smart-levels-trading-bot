@@ -228,3 +228,4 @@ if (mostCommonLosingSource && mostCommonWinningSource && mostCommonLosingSource[
 }
 
 findings.forEach((f, i) => console.log(`${i + 1}. ${f}`));
+

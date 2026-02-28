@@ -30,3 +30,4 @@ console.log('Take Profit Prices:');
 tp3Trade.entryCondition.signal.takeProfits.forEach((tp: any) => {
   console.log(`   TP${tp.level}: ${tp.price} (${tp.percent}%)`);
 });
+
