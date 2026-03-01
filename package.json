@@ -15,7 +15,7 @@
     "build:refs": "tsc -b tsconfig.references.json",
     "test:web-client": "npm --prefix packages/web-client run test -- --runInBand",
     "test:web-server": "npm --prefix packages/web-server run build",
-    "test:core:stable": "npm test -- --runInBand --testPathIgnorePatterns \"virtual-balance.error-handling.test.ts|bot-metrics.service.test.ts|bot-metrics.error-handling.test.ts|phase-10-3b-orchestrator-implementation.test.ts|filter.orchestrator.error-handling.test.ts|analyzer-engine.error-handling-advanced.test.ts\"",
+    "test:core:stable": "npm test -- --runInBand --testPathIgnorePatterns \"bot-metrics.service.test.ts|bot-metrics.error-handling.test.ts|phase-10-3b-orchestrator-implementation.test.ts|filter.orchestrator.error-handling.test.ts|analyzer-engine.error-handling-advanced.test.ts\"",
     "test:core:ci": "npm run test:core:stable -- --forceExit",
     "test:core": "npm run test:core:stable",
     "start": "node packages/core/dist/index.js",

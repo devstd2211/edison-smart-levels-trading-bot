@@ -405,6 +405,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
     it('should log initialization message', () => {
       service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service.getCurrentBalance(); // trigger lazy initialization lifecycle
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('✅'),
@@ -486,3 +487,4 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     expect(state.allTimeLow).toBe(100); // Never goes below base deposit
   });
 });
+
