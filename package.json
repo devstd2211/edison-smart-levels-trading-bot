@@ -21,6 +21,8 @@
     "test:core:handles:a": "npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t \"A:\"",
     "test:core:handles:b": "npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t \"B:\"",
     "test:core:handles:cdef": "npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t \"C:|D:|E:|F:\"",
+    "test:core:handles:limit-order": "npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts",
+    "test:core:handles:candle-provider": "npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/candle-provider.error-handling.test.ts",
     "start": "node packages/core/dist/index.js",
     "dev": "ts-node packages/core/src/index.ts",
     "dev:full": "concurrently \"ts-node packages/core/src/index.ts\" \"npm --prefix packages/web-server run dev\" \"npm --prefix packages/web-client run dev\"",

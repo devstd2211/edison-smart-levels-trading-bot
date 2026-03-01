@@ -123,6 +123,10 @@ Deliverables for this session:
 - `test:core:handles:cdef` now exits cleanly after adding teardown for Block C (`startMonitoring` path).
 - Root cause confirmed: Block C leaked handles via periodic tasks started in `startMonitoring()`; fixed with `afterEach(async () => await initializer.shutdown())` in C tests.
 - Full `--detectOpenHandles` run for `bot-initializer.error-handling` now exits cleanly (15/15).
+- Additional heavy suites also exit cleanly with `--detectOpenHandles`:
+  - `limit-order-executor.error-handling` (22/22)
+  - `candle-provider.error-handling` (20/20)
+- New helper script `test:core:handles:limit-order` validated (PASS, exits cleanly).
 
 ## Next Session Start
 - Keep `test:core:stable` ignore list empty and guard against regressions.
@@ -146,6 +150,8 @@ Deliverables for this session:
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "A:"
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "B:"
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
+npm run test:core:handles:limit-order
+npm run test:core:handles:candle-provider
 ```
 
 ## Next Iteration Plan (2026-03-01 end)

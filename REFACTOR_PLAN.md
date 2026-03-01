@@ -310,6 +310,10 @@
 - [x] Reproduced hang on `test:core:handles:cdef` and isolated it to Block C (`-t "C:"`) (2026-03-01)
 - [x] Fixed Block C test cleanup: added `afterEach(async () => await initializer.shutdown())` in C section to stop periodic tasks (2026-03-01)
 - [x] Verified `test:core:handles:cdef` exits cleanly and full `--detectOpenHandles` run for `bot-initializer.error-handling` exits cleanly (15/15) (2026-03-01)
+- [x] Verified `limit-order-executor.error-handling` exits cleanly with `--detectOpenHandles` (22/22) (2026-03-01)
+- [x] Verified `candle-provider.error-handling` exits cleanly with `--detectOpenHandles` (20/20) (2026-03-01)
+- [x] Added helper scripts `test:core:handles:limit-order` and `test:core:handles:candle-provider` for repeatable triage (2026-03-01)
+- [x] Validated `npm run test:core:handles:limit-order` end-to-end (PASS, exits cleanly) (2026-03-01)
 
 **Next Tasks**
 1. `test:core:stable` ignore list is now empty; keep it empty for new changes.
