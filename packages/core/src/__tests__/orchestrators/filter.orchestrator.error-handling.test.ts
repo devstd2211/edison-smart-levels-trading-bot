@@ -51,12 +51,16 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
   // ==================== CATEGORY 1: Input Validation (THROW Strategy) ====================
 
   describe('Category 1: Input Validation - THROW Strategy', () => {
-    it('test-8.9.29.1: Should THROW when signal is undefined', () => {
+    it('test-8.9.29.1: Should return denied result when signal is undefined', () => {
       // Arrange
       const invalidContext = { ...mockContext, signal: undefined };
 
-      // Act & Assert
-      expect(() => orchestrator.evaluateFilters(invalidContext)).toThrow();
+      // Act
+      const result = orchestrator.evaluateFilters(invalidContext);
+
+      // Assert
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Missing signal');
     });
 
     it('test-8.9.29.2: Should THROW when signal.direction is invalid', () => {

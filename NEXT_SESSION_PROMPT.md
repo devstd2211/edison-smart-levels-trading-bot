@@ -114,14 +114,17 @@ Deliverables for this session:
 - `bot-metrics.service.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 - `bot-metrics.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating tests for lazy service initialization.
 - `phase-10-3b-orchestrator-implementation.test.ts` returned to `test:core` (removed from ignore list) after aligning test with constructor side-effect cleanup.
+- `filter.orchestrator.error-handling.test.ts` returned to `test:core` (removed from ignore list) after aligning missing-signal expectation with graceful deny behavior.
+- `analyzer-engine.error-handling-advanced.test.ts` returned to `test:core` (removed from ignore list) after targeted verification (15/15 passing).
+- Full `test:core:ci` verification passed with all suites enabled: 303/303 test suites, 6999/6999 tests (2026-03-01).
 
 ## Next Session Start
-- Start reducing `test:core` ignore list by fixing excluded suites one by one.
+- Keep `test:core:stable` ignore list empty and guard against regressions.
 - Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Remove one ignored test file at a time from `test:core:stable` and fix regressions (remaining 2 ignore patterns).
-2. Investigate/close open handles to eventually remove `--forceExit` from `test:core:ci`.
+1. Investigate open handles and remove `--forceExit` from `test:core:ci` once stable.
+2. Keep package-level build/test checks green after each incremental refactor step.
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

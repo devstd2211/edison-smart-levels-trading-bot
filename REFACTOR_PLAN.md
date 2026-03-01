@@ -301,10 +301,12 @@
 - [x] Removed `bot-metrics.service.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy start trigger) (2026-03-01)
 - [x] Removed `bot-metrics.error-handling.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy start trigger) (2026-03-01)
 - [x] Removed `phase-10-3b-orchestrator-implementation.test.ts` from `test:core:stable` ignore list after constructor-side-effect expectation cleanup (2026-03-01)
+- [x] Removed `filter.orchestrator.error-handling.test.ts` from `test:core:stable` ignore list after aligning test with graceful missing-signal behavior (2026-03-01)
+- [x] Removed `analyzer-engine.error-handling-advanced.test.ts` from `test:core:stable` ignore list; suite verified passing and re-enabled (2026-03-01)
 
 **Next Tasks**
-1. Continue reducing `test:core` ignore list (remaining 2 patterns) by fixing excluded suites incrementally.
-2. Optionally investigate root open handles with targeted `--detectOpenHandles` runs and remove `--forceExit` when clean.
+1. `test:core:stable` ignore list is now empty; keep it empty for new changes.
+2. Investigate root open handles with targeted `--detectOpenHandles` runs and remove `--forceExit` when clean.
 
 ### Complexity + Risk
 - **Complexity:** High
