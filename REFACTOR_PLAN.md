@@ -293,10 +293,12 @@
 - [x] `test:core` and `test:web-server` CI steps promoted to blocking (2026-03-01)
 - [x] Historical doc paths updated from top-level `web-client/*` to `packages/web-client/*` (`PHASE_17_WEB_UI_OPTIMIZATION.md`) (2026-03-01)
 - [x] Core CI tests split into 2 blocking shards via Jest `--shard` (2026-03-01)
+- [x] Core CI tests stabilized with `test:core:ci` (`--forceExit`) to avoid open-handle hangs after PASS (2026-03-01)
+- [x] Local full-shard verification passed: `test:core:ci -- --shard=1/2` and `--shard=2/2` (2026-03-01)
 
 **Next Tasks**
-1. Monitor shard stability/timeouts (`test:core` open handles) and tune shard count if needed.
-2. Reduce `test:core` ignore list by fixing excluded test suites incrementally.
+1. Reduce `test:core` ignore list by fixing excluded test suites incrementally.
+2. Optionally investigate root open handles with targeted `--detectOpenHandles` runs and remove `--forceExit` when clean.
 
 ### Complexity + Risk
 - **Complexity:** High

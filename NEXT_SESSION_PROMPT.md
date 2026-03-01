@@ -106,14 +106,16 @@ Deliverables for this session:
 - Package test wiring added: `test:core` + `test:web-server` scripts and CI steps (blocking).
 - Historical path cleanup applied in `PHASE_17_WEB_UI_OPTIMIZATION.md` (`web-client/*` -> `packages/web-client/*`).
 - `test:core` CI runtime optimized with blocking Jest sharding (2 shards via `--shard`).
+- `test:core:ci` script added (`test:core:stable` + `--forceExit`) to stabilize CI completion with open handles.
+- Local verification passed for full shard runs: `test:core:ci -- --shard=1/2` and `test:core:ci -- --shard=2/2`.
 
 ## Next Session Start
-- Monitor `test:core` shard stability and open-handle behavior in CI.
-- Continue targeted path cleanup only when touching historical docs.
+- Start reducing `test:core` ignore list by fixing excluded suites one by one.
+- Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Reduce `test:core` ignore patterns by fixing excluded suites incrementally.
-2. Tune shard count/scope if CI time remains high.
+1. Remove one ignored test file at a time from `test:core:stable` and fix regressions.
+2. Investigate/close open handles to eventually remove `--forceExit` from `test:core:ci`.
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

@@ -105,7 +105,7 @@ jobs:
         run: npm run build:contracts && npm run build:web-server
 
       - name: Test core
-        run: npm run test:core:stable -- --shard=${{ matrix.shard }}/${{ matrix.total }}
+        run: npm run test:core:ci -- --shard=${{ matrix.shard }}/${{ matrix.total }}
 
   web-client:
     name: Build and test web-client
