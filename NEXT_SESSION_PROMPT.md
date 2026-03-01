@@ -127,14 +127,17 @@ Deliverables for this session:
   - `limit-order-executor.error-handling` (22/22)
   - `candle-provider.error-handling` (20/20)
 - New helper script `test:core:handles:limit-order` validated (PASS, exits cleanly).
+- Controlled run without `--forceExit` passes all tests (`304/304`, `7014/7014`) but still hangs after completion.
+- Both shard runs without `--forceExit` (`--shard=1/2`, `--shard=2/2`) also hang after completion.
+- Phase 16 flaky threshold stabilized: burst degradation assertion now `<= 0.5`.
 
 ## Next Session Start
 - Keep `test:core:stable` ignore list empty and guard against regressions.
 - Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Isolate leaking handles in `bot-initializer.error-handling` by running grouped blocks (A/B/C/D/E/F) with `--detectOpenHandles`.
-2. Add targeted teardown/fake-timer cleanup in that test suite and re-run without `--forceExit`.
+1. Find remaining open handles outside `bot-initializer` by targeted `--detectOpenHandles` runs in each shard (start from long-running infra/error suites).
+2. Keep `test:core:stable` green without expanding ignore list; use `test:core:ci` with `--forceExit` until remaining handles are closed.
 3. Keep package-level build/test checks green after each incremental refactor step.
 
 ### Open Handle Triage Checklist

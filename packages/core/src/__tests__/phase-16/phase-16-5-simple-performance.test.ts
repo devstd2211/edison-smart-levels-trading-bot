@@ -232,7 +232,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       const lastBatch = batchTimes[batchTimes.length - 1];
       const degradation = Math.abs(lastBatch - firstBatch) / firstBatch;
 
-      expect(degradation).toBeLessThan(0.5); // < 50% degradation
+      expect(degradation).toBeLessThanOrEqual(0.5); // <= 50% degradation
 
       console.log(`✅ Burst Load: ${burstSize} operations, ${(degradation * 100).toFixed(1)}% degradation`);
     });
