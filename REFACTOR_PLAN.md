@@ -298,6 +298,7 @@
 - [x] Removed `session-stats.error-handling.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy init trigger) (2026-03-01)
 - [x] Removed `trading-journal.error-handling.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy init trigger) (2026-03-01)
 - [x] Removed `virtual-balance.error-handling.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy init trigger) (2026-03-01)
+- [x] Removed `bot-metrics.service.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy start trigger) (2026-03-01)
 
 **Next Tasks**
 1. Continue reducing `test:core` ignore list (remaining 4 patterns) by fixing excluded suites incrementally.

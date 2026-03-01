@@ -111,6 +111,7 @@ Deliverables for this session:
 - `session-stats.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 - `trading-journal.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 - `virtual-balance.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
+- `bot-metrics.service.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 
 ## Next Session Start
 - Start reducing `test:core` ignore list by fixing excluded suites one by one.

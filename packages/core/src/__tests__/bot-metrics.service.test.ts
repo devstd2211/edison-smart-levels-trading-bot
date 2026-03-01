@@ -45,6 +45,7 @@ describe('BotMetricsService', () => {
     });
 
     it('should log initialization message', () => {
+      metricsService.getSessionDuration(); // trigger lazy start lifecycle
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('BotMetrics')
       );
