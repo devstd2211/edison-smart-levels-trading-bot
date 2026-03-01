@@ -1,8 +1,8 @@
 # Refactor Task Breakdown
 
 ## A) DI + Containers
-1. Create `docs/architecture/dependency-map.md` with all services from `src/services/bot-services.ts` and their dependencies.
-2. Add grouped service interfaces in `src/interfaces`:
+1. Create `docs/architecture/dependency-map.md` with all services from `packages/core/src/services/bot-services.builder.ts` and their dependencies.
+2. Add grouped service interfaces in `packages/core/src/interfaces`:
    - `IMarketDataServices`
    - `IExecutionServices`
    - `IRiskServices`
@@ -13,13 +13,13 @@
 6. Implement `MonitoringServices` container with only monitoring dependencies.
 7. Update `TradingBot` constructor to accept grouped interfaces instead of `BotServices`.
 8. Update `BotWebAPI` to accept only required group interface(s).
-9. Replace `any` fields in `src/bot.ts` with typed interfaces.
+9. Replace `any` fields in `packages/core/src/bot.ts` with typed interfaces.
 10. Add temporary adapter `BotServicesAdapter` if needed for incremental migration.
 11. Remove or reduce `BotServices` once all callers migrated.
-12. Propagate Web API DTOs to `web-server` and `web-client` (remove `any` from data API paths).
+12. Propagate Web API DTOs to `packages/web-server` and `packages/web-client` (remove `any` from data API paths).
 13. Add `webApi` config example and defaults to config files (indicator preferences).
-14. Wire web-server boundary to read-only web API adapter (`IWebApiAdapter`), avoid direct bot service access.
-15. Ensure web-server routes remain read-only via `BotBridgeService` (no direct bot/service access).
+14. Wire `packages/web-server` boundary to read-only web API adapter (`IWebApiAdapter`), avoid direct bot service access.
+15. Ensure `packages/web-server` routes remain read-only via `BotBridgeService` (no direct bot/service access).
 
 ## B) Package Boundaries
 1. Create `packages/contracts` and move shared DTOs/ports there.
@@ -42,9 +42,9 @@
 7. Update tests to use `createServices()` + `start/stop`.
 
 ## D) Composition Roots
-1. Create `src/cli/index.ts` with CLI UX and logging.
-2. Create `src/core/index.ts` as minimal bot entrypoint.
-3. Create `src/web/index.ts` for web server startup.
+1. Create `packages/core/src/cli/index.ts` with CLI UX and logging.
+2. Create `packages/core/src/core/index.ts` as minimal bot entrypoint.
+3. Create `packages/core/src/web/index.ts` for web server startup.
 4. Add `ConfigPipeline` module for strategy merge and config validation.
 5. Update README to new entrypoints.
-6. Keep old `src/index.ts` as wrapper until migration complete.
+6. Keep old `packages/core/src/index.ts` as wrapper until migration complete.

@@ -25,10 +25,10 @@ Deliverables for this session:
 - Updated tests for lifecycle start/stop.
 - Progress update for next session.
 
-## Current Status (as of 2026-02-28)
+## Current Status (as of 2026-03-01)
 - Domain-type migration in services/strategies/tests is complete via legacy re-exports.
 - Multi-strategy module exports now re-export from legacy.
-- Tests not run.
+- Package-level verification run (2026-03-01): `build:contracts`, `build:web-server`, `build:core`, `build:web-client`, `test:web-client` passed.
 - BotServicesAdapter decoupled from BotServices via IBotServicesAdapterSource.
 - BotFactory createForTesting overrides typed to IBotServicesAdapterSource.
 - BotServices builder created; BotServices now thin wrapper with readonly fields restored.
@@ -40,7 +40,7 @@ Deliverables for this session:
 - BotServices class reduced to a thin legacy wrapper (no explicit fields or container logic).
 - BotServices export removed from `services/index.ts` (avoid new usage).
 - BotServices legacy wrapper removed entirely; codebase now uses builder state directly.
-- Legacy `IBotServices` interface removed from `src/interfaces/IServices.ts`.
+- Legacy `IBotServices` interface removed from `packages/core/src/interfaces/IServices.ts`.
 - Legacy `IBotServices` export removed from interfaces index (interface remains for legacy compatibility).
 - BotFactory DI now returns adapter source; overrides refresh grouped core/market/web-api containers; tests updated to use grouped access.
 - Adapter interfaces trimmed: removed duplicate `publicWebSocket`/`candleProvider` from `IBotServicesAdapterSource` + `IBotInitializerServices`, adapter now pulls from `marketDataServices`.
@@ -65,14 +65,14 @@ Deliverables for this session:
 - Build succeeded after switching to web-server package import (2026-02-28).
 - Core sources moved to `packages/core/src`; root scripts updated to use new entrypoints.
 - Build succeeded after full core move (2026-02-28).
-- Composition roots split: CLI moved to `src/cli/index.ts`, core entrypoint in `src/core/index.ts`, `src/index.ts` now wrapper.
+- Composition roots split: CLI moved to `packages/core/src/cli/index.ts`, core entrypoint in `packages/core/src/core/index.ts`, `packages/core/src/index.ts` now wrapper.
 - ConfigPipeline added to centralize strategy merge; CLI now loads via pipeline; BotFactory no longer merges strategies.
 - README updated with entrypoints section.
-- ConfigPipeline re-exported from `src/config/index.ts` for convenience.
+- ConfigPipeline re-exported from `packages/core/src/config/index.ts` for convenience.
 - CLI now uses `loadValidatedConfig()` from ConfigPipeline (validation centralized in pipeline).
 - CLI entrypoint no longer depends on `TradingBot` class (uses BotLike interface).
 - Core entrypoint now returns BotLike and avoids importing TradingBot.
-- Risk management validation moved to `src/config/risk-management.validate.ts`.
+- Risk management validation moved to `packages/core/src/config/risk-management.validate.ts`.
 - Lifecycle groundwork added: `ILifecycle` interface and `LifecycleManager` service.
 - ILifecycle implemented for WebSocketManagerService, PublicWebSocketService, PositionMonitorService, MonitoringServer.
 - MonitoringServer start removed from `bot-services.builder.ts` (no side effects during build).
@@ -95,14 +95,23 @@ Deliverables for this session:
 - Constructor side effects moved out for RealTimeRiskMonitor (event subscription), JournalFileRepository (fs load/dir), WorkerPool (worker init), and BacktestEngineV5 (strategy file IO).
 - Audit complete: no remaining constructor side effects found (timers/subscriptions/IO).
 - Re-scan of constructors (timers/subscriptions/IO heuristics) found no remaining side effects.
+- Tooling/docs stale path audit completed for core-move follow-up; outdated `src/` references fixed in migration scripts and architecture docs.
+- Packaging decision updated: `web-server` and `web-client` are now part of `packages/*` as `packages/web-server` and `packages/web-client`.
+- CI package-level workflow added (`.github/workflows/package-builds.yml`) for independent builds of contracts/web-server/core/web-client.
+- Root helper scripts added for CI package checks (`build:*` and `test:web-client`).
+- `REFACTOR_TASKS.md` paths synced to `packages/core/src/*` for current repo layout.
+- `web-server` and `web-client` migrated to `packages/web-server` and `packages/web-client`.
+- Root scripts/tsconfig references updated to new package paths.
+- Post-move verification passed: `npm run build` and `npm run test:web-client`.
+- Optional package test wiring added: `test:core` + `test:web-server` scripts and CI steps (non-blocking).
 
 ## Next Session Start
-- Decide whether to split web-server/web-client into `packages/*` or keep top-level.
-- Audit remaining tooling/docs for outdated `src/` paths.
+- Continue targeted docs cleanup for remaining historical top-level `web-server`/`web-client` path mentions.
+- Decide whether to make `core`/`web-server` test jobs blocking after stabilization.
 
 ## Next Tasks
-1. Choose packaging plan for `web-server`/`web-client`.
-2. Sweep scripts/docs for any remaining `src/` references and update to `packages/core/src`.
+1. Sweep remaining docs for stale top-level `web-server`/`web-client` paths when touched.
+2. Promote optional `core`/`web-server` CI tests to blocking when stable.
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

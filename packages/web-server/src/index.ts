@@ -8,6 +8,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import * as path from 'path';
+import * as fs from 'fs';
 import { BotBridgeService, type IBotInstance } from './services/bot-bridge.service.js';
 import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 import { WebSocketService } from './websocket/ws-server.js';
@@ -104,7 +105,12 @@ export class WebServer {
     const analyticsRoutes = createAnalyticsRoutes(this.fileWatcher);
 
     // Serve web-client static files
-    const webClientPath = path.resolve(process.cwd(), 'web-client', 'dist');
+    const webClientPathCandidates = [
+      path.resolve(process.cwd(), 'packages', 'web-client', 'dist'),
+      path.resolve(process.cwd(), 'web-client', 'dist'),
+      path.resolve(process.cwd(), '..', 'web-client', 'dist'),
+    ];
+    const webClientPath = webClientPathCandidates.find(candidate => fs.existsSync(candidate)) ?? webClientPathCandidates[0];
     this.app.use(express.static(webClientPath));
 
     this.app.use('/api/bot', botRoutes);

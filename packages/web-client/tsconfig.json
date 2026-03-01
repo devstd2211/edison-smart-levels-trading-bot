@@ -16,8 +16,8 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@edison/contracts": ["../packages/contracts/src"],
-      "@edison/contracts/*": ["../packages/contracts/src/*"]
+      "@edison/contracts": ["../contracts/src"],
+      "@edison/contracts/*": ["../contracts/src/*"]
     }
   },
   "include": ["src"],

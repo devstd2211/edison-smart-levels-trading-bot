@@ -10,13 +10,13 @@
 
 **Backend (web-server):**
 ```bash
-cd D:\src\Edison\web-server
+cd D:\\src\\Edison\\packages\\web-server
 npm install
 ```
 
 **Frontend (web-client):**
 ```bash
-cd D:\src\Edison\web-client
+cd D:\\src\\Edison\\packages\\web-client
 npm install
 ```
 
@@ -24,7 +24,7 @@ npm install
 
 **Terminal 1: Start Backend + Bot**
 ```bash
-cd D:\src\Edison\web-server
+cd D:\\src\\Edison\\packages\\web-server
 npm run dev
 ```
 
@@ -35,7 +35,7 @@ The web server will:
 
 **Terminal 2: Start Frontend**
 ```bash
-cd D:\src\Edison\web-client
+cd D:\\src\\Edison\\packages\\web-client
 npm run dev
 ```
 
@@ -77,7 +77,7 @@ The dashboard displays (in real-time):
 
 ```
 D:\src\Edison\
-├── web-server/                 # Backend (Express + WebSocket)
+├── packages/web-server/        # Backend (Express + WebSocket)
 │   ├── src/
 │   │   ├── index.ts           # Main server
 │   │   ├── types/
@@ -92,7 +92,7 @@ D:\src\Edison\
 │   ├── package.json
 │   └── tsconfig.json
 │
-└── web-client/                 # Frontend (React + Vite)
+└── packages/web-client/        # Frontend (React + Vite)
     ├── src/
     │   ├── main.tsx
     │   ├── App.tsx
@@ -129,7 +129,7 @@ D:\src\Edison\
 
 ## Development Commands
 
-### Frontend (web-client/)
+### Frontend (packages/web-client/)
 
 ```bash
 # Start dev server with hot reload
@@ -142,7 +142,7 @@ npm run build
 npm run preview
 ```
 
-### Backend (web-server/)
+### Backend (packages/web-server/)
 
 ```bash
 # Start dev server
@@ -233,12 +233,12 @@ const {
 ## Customization
 
 ### Change API Server Port
-**In `web-server/src/index.ts`:**
+**In `packages/web-server/src/index.ts`:**
 ```typescript
 const PORT = 4000; // Change this
 ```
 
-**In `web-client/vite.config.ts`:**
+**In `packages/web-client/vite.config.ts`:**
 ```typescript
 proxy: {
   '/api': {
@@ -249,25 +249,25 @@ proxy: {
 ```
 
 ### Change WebSocket Port
-**In `web-server/src/websocket/ws-server.ts`:**
+**In `packages/web-server/src/websocket/ws-server.ts`:**
 ```typescript
 const WS_PORT = 4001; // Change this
 ```
 
-**In `web-client/src/services/websocket.service.ts`:**
+**In `packages/web-client/src/services/websocket.service.ts`:**
 ```typescript
 const WS_URL = 'ws://localhost:4001'; // And this
 ```
 
 ### Change Dashboard Layout
-Edit `web-client/src/pages/Dashboard.tsx` grid classes:
+Edit `packages/web-client/src/pages/Dashboard.tsx` grid classes:
 ```tsx
 // Modify grid-cols-1 md:grid-cols-2 or md:grid-cols-3 for different layouts
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 ```
 
 ### Customize Chart
-Edit `web-client/src/components/charts/PriceChart.tsx`:
+Edit `packages/web-client/src/components/charts/PriceChart.tsx`:
 ```tsx
 // Change timeframe, colors, height, etc.
 <PriceChart
@@ -282,7 +282,7 @@ Edit `web-client/src/components/charts/PriceChart.tsx`:
 
 To connect the web interface to the actual trading bot, you need to:
 
-1. **Export bot instance in `src/bot.ts`:**
+1. **Export bot instance in `packages/core/src/bot.ts`:**
 ```typescript
 export const bot = new TradingBot(config, logger);
 
@@ -293,9 +293,9 @@ bot.getMarketData = function() { /* ... */ }
 bot.isRunning = true/false;
 ```
 
-2. **Import in `web-server/src/index.ts`:**
+2. **Import in `packages/web-server/src/index.ts`:**
 ```typescript
-import { bot } from '../../src/bot';
+import { bot } from '../../core/src/bot';
 
 const botBridge = new BotBridgeService(bot);
 ```
@@ -313,11 +313,11 @@ const botBridge = new BotBridgeService(bot);
 
 ### API Requests Getting 404
 - Ensure backend is running on port 4000
-- Check that routes are registered in `web-server/src/index.ts`
+- Check that routes are registered in `packages/web-server/src/index.ts`
 - Verify proxy configuration in `vite.config.ts`
 
 ### Styling Issues (Tailwind not working)
-- Run `npm install` in web-client directory
+- Run `npm install` in packages/web-client directory
 - Restart dev server after package.json changes
 - Clear node_modules and reinstall if still broken
 
@@ -380,4 +380,5 @@ const botBridge = new BotBridgeService(bot);
 **Last Updated:** 2025-12-05
 **Version:** PHASE 2 Complete
 **Status:** Ready for Development
+
 

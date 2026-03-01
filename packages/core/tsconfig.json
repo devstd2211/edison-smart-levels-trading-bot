@@ -16,13 +16,13 @@
     "paths": {
       "@edison/contracts": ["../contracts/dist"],
       "@edison/contracts/*": ["../contracts/dist/*"],
-      "trading-bot-web-server": ["../../web-server/dist"],
-      "trading-bot-web-server/*": ["../../web-server/dist/*"]
+      "trading-bot-web-server": ["../web-server/dist"],
+      "trading-bot-web-server/*": ["../web-server/dist/*"]
     }
   },
   "references": [
     { "path": "../contracts" },
-    { "path": "../../web-server" }
+    { "path": "../web-server" }
   ],
   "include": ["src/**/*"],
   "exclude": ["src/**/__tests__/**/*.ARCHIVED.ts"]

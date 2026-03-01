@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@edison/contracts': path.resolve(__dirname, '../packages/contracts/src'),
+      '@edison/contracts': path.resolve(__dirname, '../contracts/src'),
     },
   },
   server: {

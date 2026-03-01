@@ -168,6 +168,7 @@ backtest-results/
 !PHASE_*.md
 !ARCHITECTURE_*.md
 !MIGRATION_PLAN.md
+!packages/web-client/GETTING_STARTED.md
 !SESSION_*.md
 
 # =============================================================================

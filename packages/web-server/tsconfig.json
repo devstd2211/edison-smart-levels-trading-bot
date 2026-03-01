@@ -20,12 +20,12 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@edison/contracts": ["../packages/contracts/dist"],
-      "@edison/contracts/*": ["../packages/contracts/dist/*"]
+      "@edison/contracts": ["../contracts/dist"],
+      "@edison/contracts/*": ["../contracts/dist/*"]
     }
   },
   "references": [
-    { "path": "../packages/contracts" }
+    { "path": "../contracts" }
   ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

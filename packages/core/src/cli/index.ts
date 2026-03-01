@@ -109,7 +109,7 @@ export async function main(): Promise<void> {
     console.log('📊 Web Interface: http://localhost:3000');
     console.log(`🔌 API: http://localhost:${API_PORT}`);
     console.log(`📡 WebSocket: ws://localhost:${WS_PORT}`);
-    console.log('📝 Note: Run web-client dev server in another terminal: cd web-client && npm run dev\n');
+    console.log('📝 Note: Run web-client dev server in another terminal: cd packages/web-client && npm run dev\n');
 
   } catch (error) {
     console.error('\n❌ Failed to start bot:', error);

@@ -48,7 +48,7 @@ echo "===================================================================="
 for analyzer_info in "${ANALYZERS[@]}"; do
     IFS=':' read -r file_name enum_name class_name <<< "$analyzer_info"
 
-    file_path="src/analyzers/${file_name}.analyzer-new.ts"
+    file_path="packages/core/src/analyzers/${file_name}.analyzer-new.ts"
 
     if [ ! -f "$file_path" ]; then
         echo "❌ File not found: $file_path"

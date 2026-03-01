@@ -73,7 +73,7 @@ const REPLACEMENTS = [
 // NEW ANALYZER CONSTANTS
 // ============================================================================
 
-const NEW_CONSTANTS_FILE = `src/constants/analyzer-constants.ts`;
+const NEW_CONSTANTS_FILE = `packages/core/src/constants/analyzer-constants.ts`;
 
 const NEW_CONSTANTS_CONTENT = `/**
  * Analyzer-Specific Constants

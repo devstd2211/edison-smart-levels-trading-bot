@@ -37,7 +37,7 @@
   - `RiskServices`
   - `MonitoringServices`
   - `WebApiServices`
-- [x] Create interfaces for each group (ports) in `src/interfaces`.
+- [x] Create interfaces for each group (ports) in `packages/core/src/interfaces`.
 - [x] Replace direct `BotServices` injection with narrow group interfaces in high‑level classes.
 - [ ] Move optional services behind feature toggles with explicit “capability” interfaces.
 - [x] Replace `any` in `TradingBot` with concrete interfaces.
@@ -102,7 +102,7 @@
 - [x] MonitoringServices creation moved to container factory
 - [x] MonitoringServer depends on read-only metric/health reader interfaces
 - [x] Monitoring services interfaces reference read-only metric/health reader contracts
-- [x] Monitoring reader interfaces moved to src/interfaces
+- [x] Monitoring reader interfaces moved to `packages/core/src/interfaces`
 - [x] Monitoring services interfaces decoupled from concrete metrics/health classes
 - [x] BotServices metrics/health fields typed as read-only interfaces
 - [x] IMonitoringServices now extends IMonitoringReadServices
@@ -140,7 +140,7 @@
 - [x] Core any cleanup batch 15: safeLog meta/context typings (handlers/services)
 - [x] Core any cleanup batch 16: strategy-config-merger logger typing
 - [x] Core any cleanup batch 17: safeLog meta typed as Record for LoggerService
-- [x] Core any cleanup batch 18: web entrypoint typed (src/web/index.ts)
+- [x] Core any cleanup batch 18: web entrypoint typed (`packages/core/src/web/index.ts`)
 - [x] Core any cleanup batch 19: analyzer logger types (new analyzers)
 - [x] Core any cleanup batch 20: level/order-block analyzer any cleanup
 - [x] Core any cleanup batch 21: volatility spike analyzer config typed
@@ -212,8 +212,8 @@
 - [x] ML-signal-validator types moved to domain folder
 - [x] Strategy-config types moved to domain folder
 - [x] Websocket event types moved to domain folder
-- [x] Legacy types isolated behind src/types.ts re-exports
-- [x] Removed top-level re-export type files from src/types
+- [x] Legacy types isolated behind `packages/core/src/types.ts` re-exports
+- [x] Removed top-level re-export type files from `packages/core/src/types`
 - [x] BotInitializer uses ExecutionServices for tradingOrchestrator
 - [x] BotInitializer uses ExecutionServices for periodic position checks
 - [x] BotInitializer uses MarketDataServices for webSocketManager
@@ -246,14 +246,14 @@
 - [x] Create `packages/contracts` for shared types/DTOs/ports.
 - [x] Move web-facing DTOs and API contracts to `packages/contracts`.
 - [x] Add workspaces (npm) and `tsconfig` references.
-- [ ] Split into packages:
+- [x] Split into packages:
   - `packages/core` (bot engine)
   - `packages/web-server`
   - `packages/web-client`
   - `packages/contracts`
 - [x] Replace dynamic import of `web-server/dist` with typed package import.
 - [x] Enforce build order in scripts: `contracts -> web-server -> core -> web-client`.
-- [ ] CI: build each package independently.
+- [x] CI: build each package independently.
 
 **Progress**
 - [x] Contracts package created
@@ -280,10 +280,20 @@
 - [x] Root scripts now point to `packages/core` entrypoints
 - [x] Core build wired into root build (2026-02-28)
 - [x] Build verified after core move (2026-02-28)
+- [x] Tooling/docs stale path audit completed for core move; outdated `src/` references fixed in migration scripts/docs (2026-03-01)
+- [x] Packaging decision recorded and executed: moved `web-server` and `web-client` into `packages/*` (2026-03-01)
+- [x] CI workflow added for package-level checks (`contracts`, `web-server`, `core`, `web-client`) (2026-03-01)
+- [x] Root helper scripts added for package CI (`build:contracts`, `build:web-server`, `build:core`, `build:web-client`, `test:web-client`) (2026-03-01)
+- [x] Local package CI command smoke-run passed (`build:contracts`, `build:web-server`, `build:core`, `build:web-client`, `test:web-client`) (2026-03-01)
+- [x] `REFACTOR_TASKS.md` updated to `packages/core/src/*` paths (2026-03-01)
+- [x] `web-server` and `web-client` moved under `packages/` as `packages/web-server` and `packages/web-client` (2026-03-01)
+- [x] Root scripts/tsconfig references/paths updated for `packages/web-server` + `packages/web-client` (2026-03-01)
+- [x] Build + test smoke run passed after move (`build`, `test:web-client`) (2026-03-01)
+- [x] Added optional package test scripts + CI steps for `core` and `web-server` (`test:core`, `test:web-server`) (2026-03-01)
 
 **Next Tasks**
-1. Decide whether to move `web-server` and `web-client` under `packages/*` or keep them top-level.
-2. Audit remaining tooling/docs/scripts for stale `src/` paths.
+1. Continue low-risk docs cleanup for stale top-level `web-server`/`web-client` path mentions in historical docs.
+2. Decide whether to make `core`/`web-server` test jobs blocking after stabilization.
 
 ### Complexity + Risk
 - **Complexity:** High
@@ -350,9 +360,9 @@
 **Goal:** Separate CLI, core, and web entrypoints to clarify responsibility.
 
 ### Step‑by‑Step Checklist
-- [x] Move CLI UX and logging to `src/cli/index.ts`.
-- [x] Keep `src/index.ts` as minimal wrapper (CLI by default) and export core entrypoint from `src/core/index.ts`.
-- [x] Create `src/web/index.ts` for web server startup.
+- [x] Move CLI UX and logging to `packages/core/src/cli/index.ts`.
+- [x] Keep `packages/core/src/index.ts` as minimal wrapper (CLI by default) and export core entrypoint from `packages/core/src/core/index.ts`.
+- [x] Create `packages/core/src/web/index.ts` for web server startup.
 - [x] Move strategy config merge into `ConfigPipeline` module.
 - [x] Ensure entrypoints depend on contracts and factory only, not on business logic internals.
 - [x] Update README to point to new entrypoints.
@@ -374,7 +384,7 @@
 
 ### A) DI + Containers
 1. Create dependency map doc for `BotServices` (list all services + dependencies).
-2. Add interfaces for grouped services in `src/interfaces`.
+2. Add interfaces for grouped services in `packages/core/src/interfaces`.
 3. Introduce `MarketDataServices` container.
 4. Introduce `ExecutionServices` container.
 5. Introduce `RiskServices` container.
@@ -406,12 +416,12 @@
 7. Update tests to use `createServices()` + `start/stop`.
 
 ### D) Composition Roots
-1. Create `src/cli/index.ts` with CLI UX and logging.
-2. Create `src/core/index.ts` as minimal bot entrypoint.
-3. Create `src/web/index.ts` for web server startup.
+1. Create `packages/core/src/cli/index.ts` with CLI UX and logging.
+2. Create `packages/core/src/core/index.ts` as minimal bot entrypoint.
+3. Create `packages/core/src/web/index.ts` for web server startup.
 4. Add `ConfigPipeline` module for strategy merge and config validation.
 5. Update README to new entrypoints.
-6. Keep old `src/index.ts` as wrapper until migration complete.
+6. Keep old `packages/core/src/index.ts` as wrapper until migration complete.
 
 
 
