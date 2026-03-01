@@ -166,6 +166,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
       // Act: Create stats service
       const svc = new SessionStatsService(logger, undefined, tempDir, errorHandler);
+      svc.getAllSessions(); // Explicitly trigger lazy load/start lifecycle
 
       // Assert: Backup should contain the corrupted content
       const backupPath = statsPath + '.corrupted';

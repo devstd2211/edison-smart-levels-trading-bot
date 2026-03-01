@@ -108,13 +108,14 @@ Deliverables for this session:
 - `test:core` CI runtime optimized with blocking Jest sharding (2 shards via `--shard`).
 - `test:core:ci` script added (`test:core:stable` + `--forceExit`) to stabilize CI completion with open handles.
 - Local verification passed for full shard runs: `test:core:ci -- --shard=1/2` and `test:core:ci -- --shard=2/2`.
+- `session-stats.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 
 ## Next Session Start
 - Start reducing `test:core` ignore list by fixing excluded suites one by one.
 - Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Remove one ignored test file at a time from `test:core:stable` and fix regressions.
+1. Remove one ignored test file at a time from `test:core:stable` and fix regressions (remaining 7 ignore patterns).
 2. Investigate/close open handles to eventually remove `--forceExit` from `test:core:ci`.
 
 ## Next Iteration Plan (2026-02-28 end)
