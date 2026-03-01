@@ -118,6 +118,7 @@ Deliverables for this session:
 - `analyzer-engine.error-handling-advanced.test.ts` returned to `test:core` (removed from ignore list) after targeted verification (15/15 passing).
 - Full `test:core:ci` verification passed with all suites enabled and empty ignore list: 304/304 test suites, 7014/7014 tests (2026-03-01).
 - Open-handle triage started: `--detectOpenHandles` on full `bot-initializer.error-handling` hangs without `--forceExit`, but isolated `B1` test exits normally (likely multi-test teardown leak).
+- Triage script `test:core:handles:b` added and verified passing (Block B isolated run exits cleanly, 3/3 in section B).
 
 ## Next Session Start
 - Keep `test:core:stable` ignore list empty and guard against regressions.
@@ -127,6 +128,14 @@ Deliverables for this session:
 1. Isolate leaking handles in `bot-initializer.error-handling` by running grouped blocks (A/B/C/D/E/F) with `--detectOpenHandles`.
 2. Add targeted teardown/fake-timer cleanup in that test suite and re-run without `--forceExit`.
 3. Keep package-level build/test checks green after each incremental refactor step.
+
+### Open Handle Triage Checklist
+- [ ] Block A
+- [x] Block B
+- [ ] Block C
+- [ ] Block D
+- [ ] Block E
+- [ ] Block F
 
 ### Quick Start Commands
 ```bash

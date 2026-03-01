@@ -1,15 +1,15 @@
 ﻿# Edison Refactor Plan (Global + Detailed Checklists)
 
-## Global Phased Plan (Highâ€‘Level)
+## Global Phased Plan (High-Level)
 1. **Freeze Baseline**
    - Align on target architecture boundaries and success criteria.
    - Add lightweight health checks to detect regressions early.
 2. **Define Contracts**
-   - Extract public contracts (types/DTOs/ports) for crossâ€‘module communication.
+   - Extract public contracts (types/DTOs/ports) for cross-module communication.
 3. **Split Composition Roots**
    - Separate CLI entrypoint, core bot entrypoint, and web entrypoint.
 4. **Refactor DI & Containers**
-   - Replace serviceâ€‘locator with scoped containers.
+   - Replace service-locator with scoped containers.
 5. **Lifecycle & Testability**
    - Make start/stop explicit; remove side effects from constructors.
 6. **Package Boundaries**
@@ -27,9 +27,9 @@
 
 ## 1) DI + Container Simplification
 
-**Goal:** Remove the â€œGod containerâ€ and make dependencies explicit and testable.
+**Goal:** Remove the "God container" and make dependencies explicit and testable.
 
-### Stepâ€‘byâ€‘Step Checklist
+### Step-by-Step Checklist
 - [x] Inventory: Map all services currently built in `BotServices` with dependency graph.
 - [x] Define bounded service groups:
   - `MarketDataServices`
@@ -38,8 +38,8 @@
   - `MonitoringServices`
   - `WebApiServices`
 - [x] Create interfaces for each group (ports) in `packages/core/src/interfaces`.
-- [x] Replace direct `BotServices` injection with narrow group interfaces in highâ€‘level classes.
-- [ ] Move optional services behind feature toggles with explicit â€œcapabilityâ€ interfaces.
+- [x] Replace direct `BotServices` injection with narrow group interfaces in high-level classes.
+- [ ] Move optional services behind feature toggles with explicit "capability" interfaces.
 - [x] Replace `any` in `TradingBot` with concrete interfaces.
 - [x] Remove duplicate factories; pick a single factory as the DI composition root.
 - [ ] Update tests to build only the required groups (no global container).
@@ -242,7 +242,7 @@
 
 **Goal:** Establish strict build boundaries and typed contracts between core and web layers.
 
-### Stepâ€‘byâ€‘Step Checklist
+### Step-by-Step Checklist
 - [x] Create `packages/contracts` for shared types/DTOs/ports.
 - [x] Move web-facing DTOs and API contracts to `packages/contracts`.
 - [x] Add workspaces (npm) and `tsconfig` references.
@@ -305,6 +305,7 @@
 - [x] Removed `analyzer-engine.error-handling-advanced.test.ts` from `test:core:stable` ignore list; suite verified passing and re-enabled (2026-03-01)
 - [x] Full `test:core:ci` verification passed with empty ignore list: 304/304 suites, 7014/7014 tests (2026-03-01)
 - [x] Open-handle triage started: `--detectOpenHandles` shows full `bot-initializer.error-handling` suite hangs without `--forceExit`, while isolated `B1` test exits normally (2026-03-01)
+- [x] Added triage npm scripts (`test:core:handles:a|b|cdef`) and verified `test:core:handles:b` exits cleanly (B block isolated) (2026-03-01)
 
 **Next Tasks**
 1. `test:core:stable` ignore list is now empty; keep it empty for new changes.
@@ -315,6 +316,13 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "B:"
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
 ```
+4. Track block-level triage status checklist and mark completed blocks:
+   - [ ] Block A
+   - [x] Block B
+   - [ ] Block C
+   - [ ] Block D
+   - [ ] Block E
+   - [ ] Block F
 
 ### Complexity + Risk
 - **Complexity:** High
@@ -327,11 +335,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 
 **Goal:** Make lifecycle explicit and remove side effects from constructors.
 
-### Stepâ€‘byâ€‘Step Checklist
+### Step-by-Step Checklist
 - [x] Introduce `LifecycleManager` with `start()` and `stop()` methods.
 - [x] Ensure services that open sockets/timers implement `start/stop`.
-- [ ] Move sideâ€‘effects out of constructors into `start`.
-- [ ] Create lightweight `createServices()` factory that is sideâ€‘effect free.
+- [ ] Move side-effects out of constructors into `start`.
+- [ ] Create lightweight `createServices()` factory that is side-effect free.
 - [ ] Refactor `TradingBot.start()` to only orchestrate lifecycle, not initialize dependencies.
 - [ ] Refactor `BotInitializer` into a `Bootstrapper` that wires lifecycle steps.
 - [ ] Update tests to use `createServices()` + explicit `start/stop`.
@@ -380,7 +388,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 
 **Goal:** Separate CLI, core, and web entrypoints to clarify responsibility.
 
-### Stepâ€‘byâ€‘Step Checklist
+### Step-by-Step Checklist
 - [x] Move CLI UX and logging to `packages/core/src/cli/index.ts`.
 - [x] Keep `packages/core/src/index.ts` as minimal wrapper (CLI by default) and export core entrypoint from `packages/core/src/core/index.ts`.
 - [x] Create `packages/core/src/web/index.ts` for web server startup.
@@ -396,12 +404,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 
 ### Complexity + Risk
 - **Complexity:** Medium
-- **Risk:** Lowâ€‘Medium (wiring changes)
+- **Risk:** Low-Medium (wiring changes)
 - **Mitigation:** Keep existing entrypoint temporarily as a thin wrapper.
 
 ---
 
-## Issueâ€‘Ready Task Lists (By Area)
+## Issue-Ready Task Lists (By Area)
 
 ### A) DI + Containers
 1. Create dependency map doc for `BotServices` (list all services + dependencies).
@@ -425,13 +433,13 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 6. Add `tsconfig` references for packages.
 - [x] Replace dynamic import of `packages/web-server/dist` with typed package import.
 8. Update build scripts to enforce order.
-9. Add perâ€‘package build/test scripts.
+9. Add per-package build/test scripts.
 
 ### C) Lifecycle + Testability
 1. Add `ILifecycle` interface with `start/stop`.
 2. Create `LifecycleManager` orchestration.
 3. Refactor services with timers/sockets to implement `ILifecycle`.
-4. Make constructors sideâ€‘effect free in those services.
+4. Make constructors side-effect free in those services.
 5. Update `BotInitializer` to use `LifecycleManager`.
 6. Update `TradingBot.start()` to orchestrate lifecycle only.
 7. Update tests to use `createServices()` + `start/stop`.
