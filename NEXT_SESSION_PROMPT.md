@@ -135,7 +135,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
 ```
 
-## Next Iteration Plan (2026-02-28 end)
-1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).
-2. Verify builders/factories are side-effect free; keep lifecycle sequencing in `BotInitializer`.
-3. Only if regressions appear, revisit lifecycle cleanup.
+## Next Iteration Plan (2026-03-01 end)
+1. Finish open-handle isolation in `bot-initializer.error-handling` (A/B/C/D/E/F blocks) and identify exact leaking setup/teardown path.
+2. Add minimal teardown cleanup in that suite, then validate `--detectOpenHandles` without `--forceExit`.
+3. Keep `test:core:stable` ignore list empty and preserve full green run after each fix.
