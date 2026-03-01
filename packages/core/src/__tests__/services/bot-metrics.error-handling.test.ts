@@ -116,6 +116,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   describe('Constructor', () => {
     it('should initialize with ErrorHandler', () => {
       const service = new BotMetricsService(logger, errorHandler);
+      service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(logger.logCalls.length).toBeGreaterThan(0);
     });
@@ -128,6 +129,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     it('should handle logger failure in constructor with RETRY strategy', () => {
       logger.throwOnCall = true;
       const service = new BotMetricsService(logger, errorHandler);
+      service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(errorHandler.handle).toHaveBeenCalled();
     });
@@ -135,6 +137,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     it('should continue if constructor logger fails without ErrorHandler', () => {
       logger.throwOnCall = true;
       const service = new BotMetricsService(logger);
+      expect(() => service.getSessionDuration()).not.toThrow();
       expect(service).toBeDefined();
     });
   });

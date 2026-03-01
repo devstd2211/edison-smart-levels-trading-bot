@@ -112,13 +112,14 @@ Deliverables for this session:
 - `trading-journal.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 - `virtual-balance.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
 - `bot-metrics.service.test.ts` returned to `test:core` (removed from ignore list) after updating test for lazy service initialization.
+- `bot-metrics.error-handling.test.ts` returned to `test:core` (removed from ignore list) after updating tests for lazy service initialization.
 
 ## Next Session Start
 - Start reducing `test:core` ignore list by fixing excluded suites one by one.
 - Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Remove one ignored test file at a time from `test:core:stable` and fix regressions (remaining 4 ignore patterns).
+1. Remove one ignored test file at a time from `test:core:stable` and fix regressions (remaining 3 ignore patterns).
 2. Investigate/close open handles to eventually remove `--forceExit` from `test:core:ci`.
 
 ## Next Iteration Plan (2026-02-28 end)
