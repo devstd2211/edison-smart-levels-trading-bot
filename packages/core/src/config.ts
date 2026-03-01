@@ -18,7 +18,7 @@ dotenv.config();
  * Strategy merging is handled by ConfigPipeline.
  */
 export function getConfig(): Config {
-  const configPath = path.join(__dirname, '..', 'config.json');
+  const configPath = path.resolve(__dirname, '../../../config.json');
 
   console.log('🔍 DEBUG: Loading config from:', configPath);
 

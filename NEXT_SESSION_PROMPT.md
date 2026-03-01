@@ -48,8 +48,8 @@ Deliverables for this session:
 - BotFactory internals split into factory modules (validation + overrides) to avoid “god factory”.
 - BotServices builder split into modular builders (core/optional/position/websocket/orchestrator/monitoring/grouped).
 - Contracts package now exports Web API contract types and response wrappers.
-- Root build now runs `packages/contracts` then `web-server` before core build.
-- Root + web-server tsconfig paths now resolve `@edison/contracts` to source.
+- Root build now runs `packages/contracts` then `packages/web-server` before core build.
+- Root + `packages/web-server` tsconfig paths now resolve `@edison/contracts` to source.
 - Core Web API imports started using `@edison/contracts` (bot/api/interfaces/grouped).
 - Web-client tsconfig + Vite alias now resolve `@edison/contracts`; web-client types re-export contracts.
 - Web-client feature code now imports Web API contract types directly from `@edison/contracts`.
@@ -60,7 +60,7 @@ Deliverables for this session:
 - Removed redundant web-client Web API type file; web-server API types no longer re-export Web API contracts.
 - Web API type imports now consistently come from `@edison/contracts`.
 - Core web entrypoint now imports `WebServer` via package (no dynamic `dist` import).
-- Project references scaffolded via `tsconfig.references.json` + composite builds (contracts/web-server/core).
+- Project references scaffolded via `tsconfig.references.json` + composite builds (`packages/contracts`/`packages/web-server`/`packages/core`).
 - Added `build:refs` script to run reference builds.
 - Build succeeded after switching to web-server package import (2026-02-28).
 - Core sources moved to `packages/core/src`; root scripts updated to use new entrypoints.
@@ -97,21 +97,21 @@ Deliverables for this session:
 - Re-scan of constructors (timers/subscriptions/IO heuristics) found no remaining side effects.
 - Tooling/docs stale path audit completed for core-move follow-up; outdated `src/` references fixed in migration scripts and architecture docs.
 - Packaging decision updated: `web-server` and `web-client` are now part of `packages/*` as `packages/web-server` and `packages/web-client`.
-- CI package-level workflow added (`.github/workflows/package-builds.yml`) for independent builds of contracts/web-server/core/web-client.
+- CI package-level workflow added (`.github/workflows/package-builds.yml`) for independent builds of `packages/contracts`/`packages/web-server`/`packages/core`/`packages/web-client`.
 - Root helper scripts added for CI package checks (`build:*` and `test:web-client`).
 - `REFACTOR_TASKS.md` paths synced to `packages/core/src/*` for current repo layout.
 - `web-server` and `web-client` migrated to `packages/web-server` and `packages/web-client`.
 - Root scripts/tsconfig references updated to new package paths.
 - Post-move verification passed: `npm run build` and `npm run test:web-client`.
-- Optional package test wiring added: `test:core` + `test:web-server` scripts and CI steps (non-blocking).
+- Package test wiring added: `test:core` + `test:web-server` scripts and CI steps (blocking).
 
 ## Next Session Start
 - Continue targeted docs cleanup for remaining historical top-level `web-server`/`web-client` path mentions.
-- Decide whether to make `core`/`web-server` test jobs blocking after stabilization.
+- Keep monitoring `test:core` and `test:web-server` CI stability; optimize runtime if needed.
 
 ## Next Tasks
 1. Sweep remaining docs for stale top-level `web-server`/`web-client` paths when touched.
-2. Promote optional `core`/`web-server` CI tests to blocking when stable.
+2. Optimize `test:core` CI runtime if needed (sharding/scope split).
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

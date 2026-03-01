@@ -85,7 +85,7 @@ describe('SMOKE TESTS: Service Initialization', () => {
     it('should load and validate main config.json', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
 
       expect(fs.existsSync(configPath)).toBe(true);
 

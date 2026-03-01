@@ -8,7 +8,7 @@
 
 ### 1. Build and Tests
 ```bash
-npm run build           # Full build (main + web-server + web-client)
+npm run build           # Full build (main + packages/web-server + packages/web-client)
 npm test               # Run all tests
 npm test -- position   # Run specific test
 ```
@@ -230,7 +230,7 @@ npm run build 2>&1 | grep "error TS"    # See all TS errors
 ### Problem: WebSocket not connecting
 Check:
 - `config.json` → `exchange.apiKey` + `exchange.apiSecret`
-- `src/services/websocket-manager.service.ts` (TP fixes added!)
+- `packages/core/src/services/websocket-manager.service.ts` (TP fixes added!)
 - WebSocket logs
 
 ---

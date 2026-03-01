@@ -261,7 +261,7 @@ describe('Phase 9: Live Trading Engine - Integration Tests', () => {
       const fs = require('fs');
       const path = require('path');
 
-      const docPath = path.join(__dirname, '../../ARCHITECTURE_QUICK_START.md');
+      const docPath = path.join(__dirname, '../../../../ARCHITECTURE_QUICK_START.md');
       expect(fs.existsSync(docPath)).toBe(true);
     });
 
@@ -269,7 +269,7 @@ describe('Phase 9: Live Trading Engine - Integration Tests', () => {
       const fs = require('fs');
       const path = require('path');
 
-      const docPath = path.join(__dirname, '../../CLAUDE.md');
+      const docPath = path.join(__dirname, '../../../../CLAUDE.md');
       expect(fs.existsSync(docPath)).toBe(true);
     });
   });
@@ -321,7 +321,7 @@ describe('Phase 9: Documentation Status', () => {
     const fs = require('fs');
     const path = require('path');
 
-    const docPath = path.join(__dirname, '../../ARCHITECTURE_QUICK_START.md');
+    const docPath = path.join(__dirname, '../../../../ARCHITECTURE_QUICK_START.md');
     const content = fs.readFileSync(docPath, 'utf8');
 
     expect(content).toContain('Phase 9');
@@ -332,7 +332,7 @@ describe('Phase 9: Documentation Status', () => {
     const fs = require('fs');
     const path = require('path');
 
-    const docPath = path.join(__dirname, '../../CLAUDE.md');
+    const docPath = path.join(__dirname, '../../../../CLAUDE.md');
     const content = fs.readFileSync(docPath, 'utf8');
 
     expect(content).toContain('Phase 9');

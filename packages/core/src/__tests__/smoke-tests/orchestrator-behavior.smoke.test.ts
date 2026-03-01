@@ -142,14 +142,14 @@ describe('SMOKE TESTS: Orchestrator Runtime Behavior', () => {
     it('should verify config.json is accessible', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
       expect(fs.existsSync(configPath)).toBe(true);
     });
 
     it('should verify all required config sections exist', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
       const configContent = fs.readFileSync(configPath, 'utf-8');
       const config = JSON.parse(configContent);
 

@@ -54,7 +54,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify config.json exists and is valid JSON', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
 
       expect(fs.existsSync(configPath)).toBe(true);
 
@@ -68,7 +68,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify essential exchange configuration exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config.exchange).toBeDefined();
@@ -78,7 +78,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify trading configuration exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config.trading).toBeDefined();
@@ -88,7 +88,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify risk management configuration exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../..', 'config.json');
+      const configPath = path.join(__dirname, '../../../../../', 'config.json');
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config.riskManagement).toBeDefined();
@@ -144,7 +144,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify compiled JavaScript exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const distPath = path.join(__dirname, '../../..', 'dist');
+      const distPath = path.join(__dirname, '../../../../../', 'dist');
 
       // If dist exists, verify it's a directory
       if (fs.existsSync(distPath)) {
@@ -155,7 +155,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify package.json has required scripts', () => {
       const fs = require('fs');
       const path = require('path');
-      const packagePath = path.join(__dirname, '../../..', 'package.json');
+      const packagePath = path.join(__dirname, '../../../../../', 'package.json');
 
       const content = fs.readFileSync(packagePath, 'utf-8');
       const pkg = JSON.parse(content);
@@ -170,7 +170,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify TypeScript is installed', () => {
       const fs = require('fs');
       const path = require('path');
-      const packagePath = path.join(__dirname, '../../..', 'package.json');
+      const packagePath = path.join(__dirname, '../../../../../', 'package.json');
 
       const content = fs.readFileSync(packagePath, 'utf-8');
       const pkg = JSON.parse(content);
@@ -181,7 +181,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify Jest is installed for testing', () => {
       const fs = require('fs');
       const path = require('path');
-      const packagePath = path.join(__dirname, '../../..', 'package.json');
+      const packagePath = path.join(__dirname, '../../../../../', 'package.json');
 
       const content = fs.readFileSync(packagePath, 'utf-8');
       const pkg = JSON.parse(content);

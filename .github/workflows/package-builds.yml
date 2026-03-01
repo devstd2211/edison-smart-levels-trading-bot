@@ -50,9 +50,8 @@ jobs:
       - name: Build web-server
         run: npm run build:web-server
 
-      - name: Test web-server (optional)
+      - name: Test web-server
         run: npm run test:web-server
-        continue-on-error: true
 
   core:
     name: Build core
@@ -77,9 +76,8 @@ jobs:
       - name: Build core
         run: npm run build:core
 
-      - name: Test core (optional)
+      - name: Test core
         run: npm run test:core
-        continue-on-error: true
 
   web-client:
     name: Build and test web-client

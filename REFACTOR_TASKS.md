@@ -28,8 +28,8 @@
 4. Create `packages/web-client` and wire to `contracts`.
 5. Add workspace config in root `package.json`.
 6. Add `tsconfig` references for packages.
-7. Replace dynamic import of `web-server/dist` with typed package import.
-8. Update build scripts to enforce order: `contracts -> core -> web-server -> web-client`.
+7. Replace dynamic import of `packages/web-server/dist` with typed package import.
+8. Update build scripts to enforce order: `packages/contracts -> packages/web-server -> packages/core -> packages/web-client`.
 9. Add per‑package build/test scripts.
 
 ## C) Lifecycle + Testability

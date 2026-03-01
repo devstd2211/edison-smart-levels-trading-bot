@@ -8,13 +8,13 @@
 
 ### 1. Install Dependencies
 
-**Backend (web-server):**
+**Backend (packages/web-server):**
 ```bash
 cd D:\\src\\Edison\\packages\\web-server
 npm install
 ```
 
-**Frontend (web-client):**
+**Frontend (packages/web-client):**
 ```bash
 cd D:\\src\\Edison\\packages\\web-client
 npm install

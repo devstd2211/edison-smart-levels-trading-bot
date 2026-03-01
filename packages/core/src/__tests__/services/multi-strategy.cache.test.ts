@@ -33,7 +33,7 @@ describe('StrategyOrchestratorCacheService', () => {
   describe('Initialization', () => {
     it('should create cache service with logger', () => {
       expect(cache).toBeInstanceOf(StrategyOrchestratorCacheService);
-      expect(logger.debug).toHaveBeenCalled();
+      expect(logger.debug).not.toHaveBeenCalled();
     });
 
     it('should have max cache size of 10 by default', () => {

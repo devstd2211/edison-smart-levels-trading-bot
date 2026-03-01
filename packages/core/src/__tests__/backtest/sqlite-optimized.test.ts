@@ -26,7 +26,7 @@ describe('Phase 7.1: SQLite Optimized Provider', () => {
 
   beforeAll(() => {
     // Use test database
-    testDbPath = path.join(__dirname, '../../../data/test-market-data.db');
+    testDbPath = path.join(__dirname, '../../../../../data/test-market-data.db');
   });
 
   const cleanupDatabase = async () => {

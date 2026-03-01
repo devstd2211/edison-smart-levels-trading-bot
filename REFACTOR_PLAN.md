@@ -86,7 +86,7 @@
 - [x] Web API indicator preferences configurable via config.webApi
 - [x] Web API config example added (config.example.json)
 - [x] Web API config added to config.json
-- [x] Web API DTOs propagated to web-server/web-client (data API paths typed)
+- [x] Web API DTOs propagated to `packages/web-server`/`packages/web-client` (data API paths typed)
 - [x] Web API data routes now fully async (no sync market data calls)
 - [x] WebApiReadServices interface + container factory wired to BotWebAPI
 - [x] WebApiReadServices verified complete (read-only adapter wired end-to-end)
@@ -119,8 +119,8 @@
 - [x] api.service any removed (post/put/patch payloads + handleError)
 - [x] WS server error handling uses unknown (no any)
 - [x] Bot-bridge signal/position mapping strict (no silent fallbacks)
-- [x] Web-server any cleanup (phase 1: web-server/src)
-- [x] Web-client any cleanup (phase 2: web-client/src)
+- [x] Web-server any cleanup (phase 1: `packages/web-server/src`)
+- [x] Web-client any cleanup (phase 2: `packages/web-client/src`)
 - [ ] Core any cleanup (phase 3: src)
 - [ ] Tests any cleanup (phase 4: __tests__)
 - [x] Core any cleanup batch 1: action-handlers + bot dashboard event typing
@@ -251,8 +251,8 @@
   - `packages/web-server`
   - `packages/web-client`
   - `packages/contracts`
-- [x] Replace dynamic import of `web-server/dist` with typed package import.
-- [x] Enforce build order in scripts: `contracts -> web-server -> core -> web-client`.
+- [x] Replace dynamic import of `packages/web-server/dist` with typed package import.
+- [x] Enforce build order in scripts: `packages/contracts -> packages/web-server -> packages/core -> packages/web-client`.
 - [x] CI: build each package independently.
 
 **Progress**
@@ -272,7 +272,7 @@
 - [x] Web-server imported via package (static import in core)
 - [x] Workspaces configured
 - [x] Dynamic import removed
-- [x] Build order enforced (root build runs contracts -> web-server -> core -> web-client)
+- [x] Build order enforced (root build runs `packages/contracts` -> `packages/web-server` -> `packages/core` -> `packages/web-client`)
 - [x] Project references scaffolded (tsconfig references file + composite builds)
 - [x] Added `build:refs` script for project references
 - [x] Build verified after web-server package import (2026-02-28)
@@ -282,18 +282,19 @@
 - [x] Build verified after core move (2026-02-28)
 - [x] Tooling/docs stale path audit completed for core move; outdated `src/` references fixed in migration scripts/docs (2026-03-01)
 - [x] Packaging decision recorded and executed: moved `web-server` and `web-client` into `packages/*` (2026-03-01)
-- [x] CI workflow added for package-level checks (`contracts`, `web-server`, `core`, `web-client`) (2026-03-01)
+- [x] CI workflow added for package-level checks (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`) (2026-03-01)
 - [x] Root helper scripts added for package CI (`build:contracts`, `build:web-server`, `build:core`, `build:web-client`, `test:web-client`) (2026-03-01)
 - [x] Local package CI command smoke-run passed (`build:contracts`, `build:web-server`, `build:core`, `build:web-client`, `test:web-client`) (2026-03-01)
 - [x] `REFACTOR_TASKS.md` updated to `packages/core/src/*` paths (2026-03-01)
 - [x] `web-server` and `web-client` moved under `packages/` as `packages/web-server` and `packages/web-client` (2026-03-01)
 - [x] Root scripts/tsconfig references/paths updated for `packages/web-server` + `packages/web-client` (2026-03-01)
 - [x] Build + test smoke run passed after move (`build`, `test:web-client`) (2026-03-01)
-- [x] Added optional package test scripts + CI steps for `core` and `web-server` (`test:core`, `test:web-server`) (2026-03-01)
+- [x] Added package test scripts + CI steps for `core` and `web-server` (`test:core`, `test:web-server`) (2026-03-01)
+- [x] `test:core` and `test:web-server` CI steps promoted to blocking (2026-03-01)
 
 **Next Tasks**
 1. Continue low-risk docs cleanup for stale top-level `web-server`/`web-client` path mentions in historical docs.
-2. Decide whether to make `core`/`web-server` test jobs blocking after stabilization.
+2. Optimize `test:core` CI runtime if needed (e.g., sharding/scope split).
 
 ### Complexity + Risk
 - **Complexity:** High
@@ -402,7 +403,7 @@
 4. Create `packages/web-client` and wire to `contracts` for data shapes.
 5. Add workspace config in root `package.json`.
 6. Add `tsconfig` references for packages.
-- [x] Replace dynamic import of `web-server/dist` with typed package import.
+- [x] Replace dynamic import of `packages/web-server/dist` with typed package import.
 8. Update build scripts to enforce order.
 9. Add per‑package build/test scripts.
 
