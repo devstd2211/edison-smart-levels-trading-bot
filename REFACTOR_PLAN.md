@@ -291,10 +291,12 @@
 - [x] Build + test smoke run passed after move (`build`, `test:web-client`) (2026-03-01)
 - [x] Added package test scripts + CI steps for `core` and `web-server` (`test:core`, `test:web-server`) (2026-03-01)
 - [x] `test:core` and `test:web-server` CI steps promoted to blocking (2026-03-01)
+- [x] Historical doc paths updated from top-level `web-client/*` to `packages/web-client/*` (`PHASE_17_WEB_UI_OPTIMIZATION.md`) (2026-03-01)
+- [x] Core CI tests split into 2 blocking shards via Jest `--shard` (2026-03-01)
 
 **Next Tasks**
-1. Continue low-risk docs cleanup for stale top-level `web-server`/`web-client` path mentions in historical docs.
-2. Optimize `test:core` CI runtime if needed (e.g., sharding/scope split).
+1. Monitor shard stability/timeouts (`test:core` open handles) and tune shard count if needed.
+2. Reduce `test:core` ignore list by fixing excluded test suites incrementally.
 
 ### Complexity + Risk
 - **Complexity:** High

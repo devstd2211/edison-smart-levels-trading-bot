@@ -104,14 +104,16 @@ Deliverables for this session:
 - Root scripts/tsconfig references updated to new package paths.
 - Post-move verification passed: `npm run build` and `npm run test:web-client`.
 - Package test wiring added: `test:core` + `test:web-server` scripts and CI steps (blocking).
+- Historical path cleanup applied in `PHASE_17_WEB_UI_OPTIMIZATION.md` (`web-client/*` -> `packages/web-client/*`).
+- `test:core` CI runtime optimized with blocking Jest sharding (2 shards via `--shard`).
 
 ## Next Session Start
-- Continue targeted docs cleanup for remaining historical top-level `web-server`/`web-client` path mentions.
-- Keep monitoring `test:core` and `test:web-server` CI stability; optimize runtime if needed.
+- Monitor `test:core` shard stability and open-handle behavior in CI.
+- Continue targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Sweep remaining docs for stale top-level `web-server`/`web-client` paths when touched.
-2. Optimize `test:core` CI runtime if needed (sharding/scope split).
+1. Reduce `test:core` ignore patterns by fixing excluded suites incrementally.
+2. Tune shard count/scope if CI time remains high.
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

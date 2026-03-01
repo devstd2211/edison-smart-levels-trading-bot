@@ -52,10 +52,10 @@
 
 ### 2. Web Client (React Dashboard)
 **Файлы:**
-- `web-client/src/pages/Dashboard.tsx`
-- `web-client/src/pages/Analytics.tsx`
-- `web-client/src/pages/AdvancedAnalytics.tsx`
-- `web-client/src/components/dashboard/*.tsx`
+- `packages/web-client/src/pages/Dashboard.tsx`
+- `packages/web-client/src/pages/Analytics.tsx`
+- `packages/web-client/src/pages/AdvancedAnalytics.tsx`
+- `packages/web-client/src/components/dashboard/*.tsx`
 
 **Текущее состояние:**
 - ✅ 5 страниц: Dashboard, Analytics, Advanced Analytics, OrderBook, Control
@@ -171,9 +171,9 @@
 
 ### 3.2 Web Dashboard Improvements
 **Приоритетные файлы:**
-- `web-client/src/pages/Dashboard.tsx`
-- `web-client/src/components/dashboard/PositionCard.tsx`
-- `web-client/src/components/dashboard/LiveTicker.tsx`
+- `packages/web-client/src/pages/Dashboard.tsx`
+- `packages/web-client/src/components/dashboard/PositionCard.tsx`
+- `packages/web-client/src/components/dashboard/LiveTicker.tsx`
 
 **Задачи:**
 1. **Добавить loading states:**
@@ -205,8 +205,8 @@
 
 ### 3.3 Performance Optimization
 **Файлы:**
-- `web-client/src/stores/botStore.ts`
-- `web-client/src/services/websocket.service.ts`
+- `packages/web-client/src/stores/botStore.ts`
+- `packages/web-client/src/services/websocket.service.ts`
 
 **Задачи:**
 1. **Debounce WebSocket updates:**
@@ -277,7 +277,7 @@ npm start
 ### Перейти к Web Dashboard:
 ```bash
 # 1. Открыть компоненты
-code web-client/src/components/dashboard/PositionCard.tsx
+code packages/web-client/src/components/dashboard/PositionCard.tsx
 
 # 2. Добавить улучшения
 # 3. Тестировать в браузере:
@@ -331,7 +331,7 @@ npm run dev:web
 **Tests:** 26/26 passing ✅
 
 ### ✅ Phase 17.2: Web Dashboard Improvements
-**Files:** `web-client/src/components/dashboard/PositionCard.tsx`, `LiveTicker.tsx`
+**Files:** `packages/web-client/src/components/dashboard/PositionCard.tsx`, `LiveTicker.tsx`
 **Commit:** `10219f0`
 
 **PositionCard:**
@@ -353,7 +353,7 @@ npm run dev:web
 - ✅ Better transitions/animations
 
 ### ✅ Phase 17.3: Dark Mode (COMPLETE)
-**Files:** `web-client/src/stores/themeStore.ts` (new), `tailwind.config.js`, `App.tsx`, components
+**Files:** `packages/web-client/src/stores/themeStore.ts` (new), `tailwind.config.js`, `App.tsx`, components
 **Commit:** `1f67367`
 
 **Features:**
@@ -386,3 +386,4 @@ If you want to continue UI optimization:
 - [ ] Strategy comparison side-by-side
 
 **Recommendation:** Test the bot visually first, then decide on additional UI features.
+
