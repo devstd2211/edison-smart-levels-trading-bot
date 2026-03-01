@@ -155,6 +155,8 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
 npm run test:core:handles:limit-order
 npm run test:core:handles:candle-provider
+npm run test:core:noforce:shard1
+npm run test:core:noforce:shard2
 ```
 
 ## Next Iteration Plan (2026-03-01 end)
