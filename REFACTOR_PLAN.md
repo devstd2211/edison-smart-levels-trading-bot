@@ -296,9 +296,10 @@
 - [x] Core CI tests stabilized with `test:core:ci` (`--forceExit`) to avoid open-handle hangs after PASS (2026-03-01)
 - [x] Local full-shard verification passed: `test:core:ci -- --shard=1/2` and `--shard=2/2` (2026-03-01)
 - [x] Removed `session-stats.error-handling.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy init trigger) (2026-03-01)
+- [x] Removed `trading-journal.error-handling.test.ts` from `test:core:stable` ignore list after lifecycle-aware test fix (lazy init trigger) (2026-03-01)
 
 **Next Tasks**
-1. Continue reducing `test:core` ignore list (remaining 7 patterns) by fixing excluded suites incrementally.
+1. Continue reducing `test:core` ignore list (remaining 5 patterns) by fixing excluded suites incrementally.
 2. Optionally investigate root open handles with targeted `--detectOpenHandles` runs and remove `--forceExit` when clean.
 
 ### Complexity + Risk

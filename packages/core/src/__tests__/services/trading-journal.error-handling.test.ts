@@ -209,6 +209,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
 
       // Act: Create service (triggers load with error handling)
       const svc = new TradingJournalService(logger, tempDir, undefined, undefined, undefined, errorHandler);
+      svc.getAllTrades(); // Explicitly trigger lazy load/start lifecycle
 
       // Assert: Backup should exist with exact same content
       const backupPath = journalPath + '.corrupted';
