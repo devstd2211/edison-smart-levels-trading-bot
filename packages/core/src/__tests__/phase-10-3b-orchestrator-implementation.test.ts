@@ -94,7 +94,9 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
   describe('1. getOrCreateStrategyOrchestrator() Core', () => {
     it('should initialize StrategyOrchestratorService with cache service', () => {
       expect(orchestratorService).toBeDefined();
-      expect(logger.debug).toHaveBeenCalled();
+      expect(logger.debug).not.toHaveBeenCalled();
+      const stats = orchestratorService.getCacheStats() as { cacheSize: number };
+      expect(stats.cacheSize).toBe(0);
     });
 
     it('should return null when shared services not initialized', async () => {
