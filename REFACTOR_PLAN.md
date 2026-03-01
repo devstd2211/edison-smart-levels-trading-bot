@@ -306,6 +306,10 @@
 - [x] Full `test:core:ci` verification passed with empty ignore list: 304/304 suites, 7014/7014 tests (2026-03-01)
 - [x] Open-handle triage started: `--detectOpenHandles` shows full `bot-initializer.error-handling` suite hangs without `--forceExit`, while isolated `B1` test exits normally (2026-03-01)
 - [x] Added triage npm scripts (`test:core:handles:a|b|cdef`) and verified `test:core:handles:b` exits cleanly (B block isolated) (2026-03-01)
+- [x] Verified `test:core:handles:a` exits cleanly (A block isolated, 5/5) (2026-03-01)
+- [x] Reproduced hang on `test:core:handles:cdef` and isolated it to Block C (`-t "C:"`) (2026-03-01)
+- [x] Fixed Block C test cleanup: added `afterEach(async () => await initializer.shutdown())` in C section to stop periodic tasks (2026-03-01)
+- [x] Verified `test:core:handles:cdef` exits cleanly and full `--detectOpenHandles` run for `bot-initializer.error-handling` exits cleanly (15/15) (2026-03-01)
 
 **Next Tasks**
 1. `test:core:stable` ignore list is now empty; keep it empty for new changes.
@@ -317,12 +321,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
 ```
 4. Track block-level triage status checklist and mark completed blocks:
-   - [ ] Block A
+   - [x] Block A
    - [x] Block B
-   - [ ] Block C
-   - [ ] Block D
-   - [ ] Block E
-   - [ ] Block F
+   - [x] Block C
+   - [x] Block D (validated in grouped CDEF run)
+   - [x] Block E (validated in grouped CDEF run)
+   - [x] Block F (validated in grouped CDEF run)
 
 ### Complexity + Risk
 - **Complexity:** High

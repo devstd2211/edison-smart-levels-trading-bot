@@ -119,6 +119,10 @@ Deliverables for this session:
 - Full `test:core:ci` verification passed with all suites enabled and empty ignore list: 304/304 test suites, 7014/7014 tests (2026-03-01).
 - Open-handle triage started: `--detectOpenHandles` on full `bot-initializer.error-handling` hangs without `--forceExit`, but isolated `B1` test exits normally (likely multi-test teardown leak).
 - Triage script `test:core:handles:b` added and verified passing (Block B isolated run exits cleanly, 3/3 in section B).
+- Triage script `test:core:handles:a` verified passing (Block A isolated run exits cleanly, 5/5 in section A).
+- `test:core:handles:cdef` now exits cleanly after adding teardown for Block C (`startMonitoring` path).
+- Root cause confirmed: Block C leaked handles via periodic tasks started in `startMonitoring()`; fixed with `afterEach(async () => await initializer.shutdown())` in C tests.
+- Full `--detectOpenHandles` run for `bot-initializer.error-handling` now exits cleanly (15/15).
 
 ## Next Session Start
 - Keep `test:core:stable` ignore list empty and guard against regressions.
@@ -130,12 +134,12 @@ Deliverables for this session:
 3. Keep package-level build/test checks green after each incremental refactor step.
 
 ### Open Handle Triage Checklist
-- [ ] Block A
+- [x] Block A
 - [x] Block B
-- [ ] Block C
-- [ ] Block D
-- [ ] Block E
-- [ ] Block F
+- [x] Block C
+- [x] Block D (validated in grouped CDEF run)
+- [x] Block E (validated in grouped CDEF run)
+- [x] Block F (validated in grouped CDEF run)
 
 ### Quick Start Commands
 ```bash
@@ -145,6 +149,6 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 ```
 
 ## Next Iteration Plan (2026-03-01 end)
-1. Finish open-handle isolation in `bot-initializer.error-handling` (A/B/C/D/E/F blocks) and identify exact leaking setup/teardown path.
-2. Add minimal teardown cleanup in that suite, then validate `--detectOpenHandles` without `--forceExit`.
-3. Keep `test:core:stable` ignore list empty and preserve full green run after each fix.
+1. Re-run targeted open-handle checks on other long-running suites and keep `test:core:stable` ignore list empty.
+2. Attempt `test:core:ci` without `--forceExit` in a controlled run and evaluate stability.
+3. Keep package-level build/test checks green after each incremental refactor step.
