@@ -116,15 +116,17 @@ Deliverables for this session:
 - `phase-10-3b-orchestrator-implementation.test.ts` returned to `test:core` (removed from ignore list) after aligning test with constructor side-effect cleanup.
 - `filter.orchestrator.error-handling.test.ts` returned to `test:core` (removed from ignore list) after aligning missing-signal expectation with graceful deny behavior.
 - `analyzer-engine.error-handling-advanced.test.ts` returned to `test:core` (removed from ignore list) after targeted verification (15/15 passing).
-- Full `test:core:ci` verification passed with all suites enabled: 303/303 test suites, 6999/6999 tests (2026-03-01).
+- Full `test:core:ci` verification passed with all suites enabled and empty ignore list: 304/304 test suites, 7014/7014 tests (2026-03-01).
+- Open-handle triage started: `--detectOpenHandles` on full `bot-initializer.error-handling` hangs without `--forceExit`, but isolated `B1` test exits normally (likely multi-test teardown leak).
 
 ## Next Session Start
 - Keep `test:core:stable` ignore list empty and guard against regressions.
 - Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Investigate open handles and remove `--forceExit` from `test:core:ci` once stable.
-2. Keep package-level build/test checks green after each incremental refactor step.
+1. Isolate leaking handles in `bot-initializer.error-handling` by running grouped blocks (A/B/C/D/E/F) with `--detectOpenHandles`.
+2. Add targeted teardown/fake-timer cleanup in that test suite and re-run without `--forceExit`.
+3. Keep package-level build/test checks green after each incremental refactor step.
 
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).

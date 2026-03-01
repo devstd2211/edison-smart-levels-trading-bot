@@ -50,7 +50,7 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
 
   // ==================== CATEGORY 1: Input Validation (THROW Strategy) ====================
 
-  describe('Category 1: Input Validation - THROW Strategy', () => {
+  describe('Category 1: Input Validation - Graceful Handling', () => {
     it('test-8.9.29.1: Should return denied result when signal is undefined', () => {
       // Arrange
       const invalidContext = { ...mockContext, signal: undefined };
@@ -63,7 +63,7 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
       expect(result.reason).toContain('Missing signal');
     });
 
-    it('test-8.9.29.2: Should THROW when signal.direction is invalid', () => {
+    it('test-8.9.29.2: Should handle invalid signal.direction gracefully', () => {
       // Arrange
       const invalidContext = {
         ...mockContext,
@@ -74,7 +74,7 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
       expect(() => orchestrator.evaluateFilters(invalidContext)).not.toThrow(); // Graceful fallback
     });
 
-    it('test-8.9.29.3: Should THROW when signal.confidence is NaN', () => {
+    it('test-8.9.29.3: Should handle NaN signal.confidence gracefully', () => {
       // Arrange
       const invalidContext = {
         ...mockContext,
@@ -89,7 +89,7 @@ describe('Phase 8.9.29: FilterOrchestrator - ErrorHandler Integration', () => {
       expect(result.allowed).toBeDefined();
     });
 
-    it('test-8.9.29.4: Should THROW when signal.confidence is Infinity', () => {
+    it('test-8.9.29.4: Should handle Infinity signal.confidence gracefully', () => {
       // Arrange
       const invalidContext = {
         ...mockContext,
