@@ -127,6 +127,8 @@ Deliverables for this session:
   - `limit-order-executor.error-handling` (22/22)
   - `candle-provider.error-handling` (20/20)
 - New helper script `test:core:handles:limit-order` validated (PASS, exits cleanly).
+- Added aggregate triage command: `npm run test:core:handles:smoke`.
+- Minor test hygiene: normalized arrow glyphs in `bot-initializer.error-handling` test names and extracted section C cleanup helper.
 - Controlled run without `--forceExit` passes all tests (`304/304`, `7014/7014`) but still hangs after completion.
 - Both shard runs without `--forceExit` (`--shard=1/2`, `--shard=2/2`) also hang after completion.
 - Phase 16 flaky threshold stabilized: burst degradation assertion now `<= 0.5`.
@@ -155,6 +157,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
 npm run test:core:handles:limit-order
 npm run test:core:handles:candle-provider
+npm run test:core:handles:smoke
 npm run test:core:noforce:shard1
 npm run test:core:noforce:shard2
 ```

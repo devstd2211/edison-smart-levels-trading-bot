@@ -180,6 +180,9 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let mockServices: any;
   let mockConfig: any;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  const cleanupMonitoringResources = async (): Promise<void> => {
+    await initializer.shutdown();
+  };
 
   beforeEach(() => {
     mockServices = createMockBotServices();
@@ -191,7 +194,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {
-    test('A1: Bybit init fails with network error â†’ retries 3x â†’ throws', async () => {
+    test('A1: Bybit init fails with network error -> retries 3x -> throws', async () => {
       const networkError = new Error('ECONNREFUSED: Connection refused');
       let callCount = 0;
       mockServices.marketDataServices.bybitService.initialize.mockImplementation(() => {
@@ -208,7 +211,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalledTimes(3);
     }, 30000);
 
-    test('A2: Session stats fails â†’ gracefully degrades â†’ continues', async () => {
+    test('A2: Session stats fails -> gracefully degrades -> continues', async () => {
       const sessionStatsError = new Error('Stats service unavailable');
       mockServices.sessionStats.startSession.mockImplementationOnce(() => {
         throw sessionStatsError;
@@ -222,7 +225,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       expect(mockServices.coreServices.timeService.syncWithExchange).toHaveBeenCalled();
     });
 
-    test('A3: Successful initialization â†’ all components called in order', async () => {
+    test('A3: Successful initialization -> all components called in order', async () => {
       const callOrder: string[] = [];
 
       mockServices.marketDataServices.bybitService.initialize.mockImplementation(() => {
@@ -257,7 +260,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       ]);
     });
 
-    test('A4: Error classification - network errors â†’ ExchangeConnectionError', async () => {
+    test('A4: Error classification - network errors -> ExchangeConnectionError', async () => {
       const networkError = new Error('ECONNREFUSED: Connection refused');
       mockServices.marketDataServices.bybitService.initialize.mockRejectedValue(networkError);
 
@@ -269,7 +272,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       }
     }, 30000);
 
-    test('A5: Error classification - rate limit errors â†’ ExchangeRateLimitError', async () => {
+    test('A5: Error classification - rate limit errors -> ExchangeRateLimitError', async () => {
       mockServices.marketDataServices.bybitService.initialize.mockResolvedValue(undefined);
       const rateLimitError = new Error('Rate limit exceeded: 429');
       mockServices.coreServices.timeService.syncWithExchange.mockRejectedValue(rateLimitError);
@@ -293,7 +296,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
         .mockResolvedValue(undefined);
     });
 
-    test('B1: Private WS connection fails â†’ retries 3x â†’ throws', async () => {
+    test('B1: Private WS connection fails -> retries 3x -> throws', async () => {
       const wsError = new Error('ws:// connection failed');
       mockServices.marketDataServices.webSocketManager.start.mockImplementation(() => {
         throw wsError;
@@ -305,7 +308,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       expect(mockServices.marketDataServices.webSocketManager.start).toHaveBeenCalledTimes(3);
     }, 30000);
 
-    test('B2: Public WS connection fails â†’ retries 3x â†’ throws', async () => {
+    test('B2: Public WS connection fails -> retries 3x -> throws', async () => {
       const wsError = new Error('ws:// connection failed');
 
       // First call succeeds (private WS)
@@ -324,7 +327,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       expect(mockServices.marketDataServices.publicWebSocket.start).toHaveBeenCalledTimes(3);
     }, 30000);
 
-    test('B3: Both WS succeed on first attempt â†’ trend analysis called', async () => {
+    test('B3: Both WS succeed on first attempt -> trend analysis called', async () => {
       // Both succeed
       mockServices.marketDataServices.webSocketManager.start.mockImplementation(() => {
         // Success
@@ -353,12 +356,9 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   // ============================================================================
 
   describe('C: startMonitoring() - Position Monitor with RETRY', () => {
-    afterEach(async () => {
-      // startMonitoring() creates periodic tasks; ensure cleanup to avoid leaked handles.
-      await initializer.shutdown();
-    });
+    afterEach(cleanupMonitoringResources);
 
-    test('C1: Position monitor fails to start â†’ retries 3x â†’ throws', async () => {
+    test('C1: Position monitor fails to start -> retries 3x -> throws', async () => {
       const monitorError = new Error('Monitor initialization failed');
       mockServices.executionServices.positionMonitor.start.mockImplementation(() => {
         throw monitorError;
@@ -387,7 +387,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   // ============================================================================
 
   describe('D: shutdown() - All Operations with SKIP Strategy', () => {
-    test('D1: Multiple component failures during shutdown â†’ all skipped â†’ completes', async () => {
+    test('D1: Multiple component failures during shutdown -> all skipped -> completes', async () => {
       // Make all shutdown operations fail
       mockServices.executionServices.positionMonitor.stop.mockImplementationOnce(() => {
         throw new Error('Monitor stop failed');
@@ -408,7 +408,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       expect(mockServices.sessionStats.endSession).toHaveBeenCalled();
     });
 
-    test('D2: Telegram notification fails â†’ skipped â†’ shutdown completes', async () => {
+    test('D2: Telegram notification fails -> skipped -> shutdown completes', async () => {
       mockServices.coreServices.telegram.notifyBotStopped.mockRejectedValueOnce(
         new Error('Telegram API error'),
       );
@@ -463,7 +463,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   // ============================================================================
 
   describe('F: Backward Compatibility (without ErrorHandler)', () => {
-    test('F1: Service works without ErrorHandler â†’ errors propagate as before', async () => {
+    test('F1: Service works without ErrorHandler -> errors propagate as before', async () => {
       // Create initializer without error handler
       const initWithoutHandler = new BotInitializer(mockServices, mockConfig, undefined);
 
