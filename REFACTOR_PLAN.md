@@ -309,6 +309,12 @@
 **Next Tasks**
 1. `test:core:stable` ignore list is now empty; keep it empty for new changes.
 2. Continue open-handle isolation in `bot-initializer.error-handling` by running grouped blocks (A/B/C/D/E/F) with `--detectOpenHandles` and add missing teardown for leaked timers/subscriptions.
+3. Use quick triage commands for block isolation:
+```bash
+npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "A:"
+npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "B:"
+npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
+```
 
 ### Complexity + Risk
 - **Complexity:** High

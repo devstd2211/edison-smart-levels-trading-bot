@@ -128,6 +128,13 @@ Deliverables for this session:
 2. Add targeted teardown/fake-timer cleanup in that test suite and re-run without `--forceExit`.
 3. Keep package-level build/test checks green after each incremental refactor step.
 
+### Quick Start Commands
+```bash
+npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "A:"
+npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "B:"
+npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts -t "C:|D:|E:|F:"
+```
+
 ## Next Iteration Plan (2026-02-28 end)
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (use grouped containers directly).
 2. Verify builders/factories are side-effect free; keep lifecycle sequencing in `BotInitializer`.
