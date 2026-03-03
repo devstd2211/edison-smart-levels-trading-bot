@@ -279,7 +279,7 @@ FIX: Update your config.json and restart.
       if (!sw[section]) continue;
 
       for (const [analyzer, settings] of Object.entries(sw[section])) {
-        const isEnabled = (settings as any)?.enabled === true;
+        const isEnabled = this.isEnabledAnalyzerSettings(settings);
         const fullName = `${section}.${analyzer}`;
 
         if (isEnabled) {
@@ -296,6 +296,14 @@ FIX: Update your config.json and restart.
       enabledList: enabled,
       disabledList: disabled,
     });
+  }
+
+  private isEnabledAnalyzerSettings(settings: unknown): boolean {
+    if (typeof settings !== 'object' || settings === null) {
+      return false;
+    }
+    const candidate = settings as { enabled?: unknown };
+    return candidate.enabled === true;
   }
 
   /**

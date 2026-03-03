@@ -36,6 +36,7 @@ import { BinanceService } from './binance/binance.service';
 export interface ExchangeConfig {
   name: 'bybit' | 'binance'; // Future: add more exchanges
   symbol: string;
+  timeframe?: string;
   demo?: boolean;
   testnet?: boolean;
   apiKey?: string;
@@ -196,6 +197,7 @@ export class ExchangeFactory {
         const bybitConfig = {
           name: 'bybit',
           symbol: this.config.symbol,
+          timeframe: this.config.timeframe ?? '15',
           demo: this.config.demo ?? true,
           testnet: this.config.testnet ?? false,
           apiKey: this.config.apiKey ?? '',
@@ -203,7 +205,7 @@ export class ExchangeFactory {
         };
 
         // Create BybitService instance (takes config and logger)
-        bybitService = new BybitService(bybitConfig as any, this.logger);
+        bybitService = new BybitService(bybitConfig, this.logger);
       } catch (error) {
         const err = new ExchangeAdapterInstantiationError(
           `Failed to create BybitService: ${error instanceof Error ? error.message : String(error)}`,

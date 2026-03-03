@@ -154,8 +154,21 @@ Deliverables for this session:
 - Added `TradingBot` lifecycle delegation unit test suite (`trading-bot.lifecycle.test.ts`) to lock in `start()/stop()` orchestration through `BotInitializer.bootstrap()`/`shutdown()`.
 - Verified new `TradingBot` lifecycle suite (2026-03-03): `trading-bot.lifecycle.test.ts` = 3/3 PASS.
 - Re-verified noforce shards after TradingBot lifecycle suite addition (2026-03-03): `test:core:noforce:shard1` PASS and `test:core:noforce:shard2` PASS.
+- Added lifecycle integration test for real `TradingBot` flow built via `createServices()` + adapter bundle (`trading-bot.create-services.lifecycle.test.ts`) with explicit `start()/stop()` orchestration checks.
+- Verified new TradingBot+createServices lifecycle integration test (2026-03-03): `trading-bot.create-services.lifecycle.test.ts` = 1/1 PASS.
+- Re-verified noforce shards after TradingBot+createServices lifecycle integration test (2026-03-03): `test:core:noforce:shard1` PASS (154 suites) and `test:core:noforce:shard2` PASS (153 suites).
 - Core `any` cleanup continued (2026-03-03): `ActionQueueService` no-handler error path now uses typed action-type extraction (removed `as any` access).
 - Verified ActionQueue and smoke safety suites after cleanup (2026-03-03): `action-queue.error-handling.test.ts` = 26/26 PASS; `deployment-safety.smoke.test.ts` = 16/16 PASS.
+- Core `any` cleanup continued (2026-03-03): `ConfigValidatorService.printEnabledAnalyzers()` now uses typed enabled-flag extraction helper (removed `as any` access).
+- Verified ConfigValidator suites after cleanup (2026-03-03): `config-validator.service.test.ts` = 14/14 PASS; `config-validator.error-handling.test.ts` = 22/22 PASS.
+- Core `any` cleanup continued (2026-03-03): `TradingLifecycleManager` emergency-close queueing now uses typed `IAction` payload (removed `enqueue(closeAction as any)` casts).
+- Verified TradingLifecycle/Phase9 suites after cleanup (2026-03-03): `trading-lifecycle.error-handling.test.ts` = 35/35 PASS; `phase-9-live-trading.integration.test.ts` = 37/37 PASS.
+- Core `any` cleanup continued (2026-03-03): `TradingLifecycleManager` EventBus subscription handlers now accept `unknown` payloads with typed extractors (removed `event: any` in opened/closed handlers).
+- Re-verified TradingLifecycle/Phase9 suites after payload typing cleanup (2026-03-03): `trading-lifecycle.error-handling.test.ts` = 35/35 PASS; `phase-9-live-trading.integration.test.ts` = 37/37 PASS.
+- Core `any` cleanup continued (2026-03-03): Bybit/Binance funding-rate adapter calls now use typed `hasFundingRateMethod` guards (removed dynamic `as any` getFundingRate calls).
+- Verified exchange adapter/factory suites after funding-rate typing cleanup (2026-03-03): `bybit-service.adapter.test.ts` = 47/47 PASS; `exchange-factory.service.test.ts` = 27/27 PASS.
+- Core `any` cleanup continued (2026-03-03): `ExchangeFactory` Bybit service instantiation now uses typed config with optional `timeframe` defaulting to `'15'` (removed `bybitConfig as any` cast).
+- Verified ExchangeFactory suites after factory typing cleanup (2026-03-03): `exchange-factory.service.test.ts` = 27/27 PASS; `exchange-factory.error-handling.test.ts` = 24/24 PASS.
 - Known issue (Windows, intermittent): `vite build` in `packages/web-client` may fail with `spawn EPERM` (esbuild process spawn). Mitigation added: web-client build script now retries `vite build` once via `scripts/vite-build-retry.cjs`.
 - Clarification (2026-03-03): `npm --prefix packages/web-client run test` runs `jest` only; `vite` appears only through build scripts (e.g. `build:web-client` in chained commands).
 

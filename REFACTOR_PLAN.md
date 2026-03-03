@@ -148,6 +148,10 @@
 - [x] Core any cleanup batch 23: backtest sqlite providers + optimizer metrics typed
 - [x] Core any cleanup batch 24: backtest risk gate + sqlite blob guards + worker message guard
 - [x] Core any cleanup batch 25: ActionQueue no-handler error path typed (removed `as any` action type access)
+- [x] Core any cleanup batch 26: ConfigValidator analyzer enabled-flag check typed (removed `as any` in `printEnabledAnalyzers`)
+- [x] Core any cleanup batch 27: TradingLifecycle emergency-close queueing typed (`IAction` close action, removed `enqueue(... as any)`)
+- [x] Core any cleanup batch 28: TradingLifecycle EventBus subscription payloads typed (`event: unknown` + extractor helpers, removed `event: any`)
+- [x] Core any cleanup batch 29: Exchange adapters funding-rate dynamic calls typed (Bybit/Binance `hasFundingRateMethod` guards, removed `as any` calls)
 - [x] Tests any cleanup batch 1: backtest walk-forward/worker-pool/parameter-optimizer tests
 - [x] Tests any cleanup batch 2: bot-event-emitter, exit-decisions, anti-flip tests
 - [x] Tests any cleanup batch 3: event-handlers, entry-decisions, cache-integration tests
@@ -414,6 +418,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Re-verified complementary noforce shard after lifecycle-test addition: `test:core:noforce:shard1` PASS (153/153 suites, 2026-03-03)
 - [x] Added `TradingBot` lifecycle delegation unit coverage for explicit `BotInitializer.bootstrap()`/`shutdown()` orchestration (`trading-bot.lifecycle.test.ts`, 3/3, 2026-03-03)
 - [x] Re-verified noforce shards after TradingBot lifecycle suite addition: `test:core:noforce:shard1` PASS (153/153 suites) and `test:core:noforce:shard2` PASS (153/153 suites), 2026-03-03
+- [x] Added integration lifecycle test for real `TradingBot` + `createServices()` path (idle-before-start + explicit `start()/stop()`), `trading-bot.create-services.lifecycle.test.ts` (1/1, 2026-03-03)
+- [x] Re-verified noforce shard stability after TradingBot+createServices lifecycle integration test: `test:core:noforce:shard1` PASS (154/154 suites) and `test:core:noforce:shard2` PASS (153/153 suites), 2026-03-03
+- [x] Core `any` cleanup continued (2026-03-03): `ExchangeFactory` Bybit config path now uses typed `timeframe` + direct `BybitService` config (removed `bybitConfig as any`)
+- [x] Verified ExchangeFactory suites after typing cleanup (2026-03-03): `exchange-factory.service.test.ts` = 27/27 PASS; `exchange-factory.error-handling.test.ts` = 24/24 PASS
 
 **Next Iteration Plan**
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (grouped containers as primary wiring).

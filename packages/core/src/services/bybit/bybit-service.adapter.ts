@@ -55,6 +55,16 @@ export class BybitServiceAdapter implements IExchange {
   ) {
   }
 
+  private hasFundingRateMethod(
+    service: unknown,
+  ): service is { getFundingRate: (symbol: string) => Promise<number | { fundingRate: number }> } {
+    if (typeof service !== 'object' || service === null) {
+      return false;
+    }
+    const candidate = service as { getFundingRate?: unknown };
+    return typeof candidate.getFundingRate === 'function';
+  }
+
   // ============================================================================
   // INITIALIZATION & CONNECTION LIFECYCLE (IExchange Main Interface)
   // ============================================================================
@@ -880,8 +890,14 @@ export class BybitServiceAdapter implements IExchange {
       }
 
       // Check if BybitService has getFundingRate method
-      if (typeof (this.bybitService as any).getFundingRate === 'function') {
-        return await (this.bybitService as any).getFundingRate(symbol);
+      if (this.hasFundingRateMethod(this.bybitService)) {
+        const funding = await this.bybitService.getFundingRate(symbol);
+        if (typeof funding === 'number') {
+          return funding;
+        }
+        if (typeof funding === 'object' && funding !== null && typeof funding.fundingRate === 'number') {
+          return funding.fundingRate;
+        }
       }
 
       // Fallback: return 0 if method not available

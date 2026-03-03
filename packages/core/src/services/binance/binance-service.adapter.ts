@@ -45,6 +45,16 @@ export class BinanceServiceAdapter implements IExchange {
   ) {
   }
 
+  private hasFundingRateMethod(
+    service: unknown,
+  ): service is { getFundingRate: (symbol: string) => Promise<number> } {
+    if (typeof service !== 'object' || service === null) {
+      return false;
+    }
+    const candidate = service as { getFundingRate?: unknown };
+    return typeof candidate.getFundingRate === 'function';
+  }
+
   // ============================================================================
   // INITIALIZATION & CONNECTION LIFECYCLE
   // ============================================================================
@@ -674,8 +684,8 @@ export class BinanceServiceAdapter implements IExchange {
         });
       }
 
-      if (typeof (this.binanceService as any).getFundingRate === 'function') {
-        return await (this.binanceService as any).getFundingRate(symbol);
+      if (this.hasFundingRateMethod(this.binanceService)) {
+        return await this.binanceService.getFundingRate(symbol);
       }
 
       this.logger.debug('⚠️ getFundingRate not implemented in BinanceService, returning 0');

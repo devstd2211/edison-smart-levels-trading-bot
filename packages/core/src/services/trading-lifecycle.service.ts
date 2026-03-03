@@ -33,6 +33,7 @@ import {
   LiveTradingEventType,
   PositionTimeoutWarningEvent,
   Position,
+  IAction,
 } from '../types/legacy';
 import { ActionQueueService } from './action-queue.service';
 import type { ILifecycle } from '../interfaces/ILifecycle';
@@ -96,8 +97,8 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
   private initializeEventSubscriptions(): void {
     this.unsubscribeHandlers = [];
     // Listen for position opens
-    const unsubscribeOpened = this.eventBus.subscribe('position-opened', (event: any) => {
-      const position: Position = event.position;
+    const unsubscribeOpened = this.eventBus.subscribe('position-opened', (event: unknown) => {
+      const position = this.getOpenedPosition(event);
       if (position && position.id) {
         this.trackPosition({
           positionId: position.id,
@@ -115,8 +116,8 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     });
 
     // Listen for position closes
-    const unsubscribeClosed = this.eventBus.subscribe('position-closed', (event: any) => {
-      const positionId = event.positionId || event.position?.id;
+    const unsubscribeClosed = this.eventBus.subscribe('position-closed', (event: unknown) => {
+      const positionId = this.getClosedPositionId(event);
       if (positionId) {
         this.untrackPosition(positionId);
         this.logger.info(`[TradingLifecycleManager] Untracking closed position: ${positionId}`);
@@ -129,6 +130,31 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     if (typeof unsubscribeClosed === 'function') {
       this.unsubscribeHandlers.push(unsubscribeClosed);
     }
+  }
+
+  private getOpenedPosition(event: unknown): Position | null {
+    if (typeof event !== 'object' || event === null) {
+      return null;
+    }
+    const candidate = event as { position?: unknown };
+    if (typeof candidate.position !== 'object' || candidate.position === null) {
+      return null;
+    }
+    return candidate.position as Position;
+  }
+
+  private getClosedPositionId(event: unknown): string | null {
+    if (typeof event !== 'object' || event === null) {
+      return null;
+    }
+    const candidate = event as { positionId?: unknown; position?: { id?: unknown } };
+    if (typeof candidate.positionId === 'string' && candidate.positionId.length > 0) {
+      return candidate.positionId;
+    }
+    if (typeof candidate.position?.id === 'string' && candidate.position.id.length > 0) {
+      return candidate.position.id;
+    }
+    return null;
   }
 
   /**
@@ -446,7 +472,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
 
       // FALLBACK Strategy: Queue close action with error recovery
       try {
-        const closeAction = {
+        const closeAction: IAction = {
           id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
           type: ActionType.CLOSE_PERCENT,
           timestamp: Date.now(),
@@ -461,7 +487,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
         if (this.errorHandler) {
           await this.errorHandler.executeAsync(
             async () => {
-              this.actionQueue.enqueue(closeAction as any);
+              this.actionQueue.enqueue(closeAction);
             },
             {
               strategy: RecoveryStrategy.FALLBACK,
@@ -476,7 +502,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
           );
         } else {
           // Fallback without ErrorHandler
-          this.actionQueue.enqueue(closeAction as any);
+          this.actionQueue.enqueue(closeAction);
         }
       } catch (queueError) {
         // FALLBACK: Log detailed error but continue
