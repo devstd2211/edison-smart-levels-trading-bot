@@ -104,22 +104,21 @@ export class MicroWallDetectorService {
     const now = currentTime;
     const detectedWalls: MicroWall[] = [];
 
+    const toNumberFromUnknown = (value: unknown): number => {
+      if (this.hasToNumber(value)) {
+        return value.toNumber();
+      }
+      return Number(value);
+    };
+
     // Helper to extract price and size from OrderbookLevel union type
     const getPrice = (level: OrderbookLevel): number => {
       const price = typeof level === 'object' && 'price' in level ? level.price : level[0];
-      // Handle Decimal.js objects
-      if (typeof price === 'object' && price !== null && 'toNumber' in price) {
-        return (price as any).toNumber();
-      }
-      return Number(price);
+      return toNumberFromUnknown(price);
     };
     const getSize = (level: OrderbookLevel): number => {
       const size = typeof level === 'object' && 'size' in level ? level.size : level[1];
-      // Handle Decimal.js objects
-      if (typeof size === 'object' && size !== null && 'toNumber' in size) {
-        return (size as any).toNumber();
-      }
-      return Number(size);
+      return toNumberFromUnknown(size);
     };
 
     try {
@@ -540,5 +539,14 @@ export class MicroWallDetectorService {
       // SKIP: Silent fail for reset errors
       this.safeLog('warn', '⚠️ MicroWall reset failed', { error: (error as Error).message });
     }
+  }
+
+  private hasToNumber(value: unknown): value is { toNumber: () => number } {
+    return (
+      typeof value === 'object'
+      && value !== null
+      && 'toNumber' in value
+      && typeof (value as { toNumber?: unknown }).toNumber === 'function'
+    );
   }
 }

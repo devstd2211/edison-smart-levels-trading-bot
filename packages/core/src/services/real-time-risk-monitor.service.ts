@@ -103,7 +103,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
 
     // [P1] Subscribe to position-closed event for cache invalidation
     if (this.eventBus && typeof this.eventBus.subscribe === 'function') {
-      this.unsubscribePositionClosed = this.eventBus.subscribe('position-closed', (data: any) => {
+      this.unsubscribePositionClosed = this.eventBus.subscribe('position-closed', (data: unknown) => {
         this.onPositionClosed(data);
       });
       this.logger.debug('[RealTimeRiskMonitor] Subscribed to position-closed events');
@@ -611,8 +611,8 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
    * [P1] Handle position-closed event
    * Invalidate health score cache when position closes
    */
-  private onPositionClosed(data: { position: Position; strategyId?: string }): void {
-    const positionId = data.position?.id;
+  private onPositionClosed(data: unknown): void {
+    const positionId = this.extractPositionIdFromClosedEvent(data);
 
     if (!positionId) {
       this.logger.warn('[RealTimeRiskMonitor] position-closed event missing ID');
@@ -624,6 +624,15 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     this.generatedAlerts.delete(positionId);
 
     this.logger.debug('[RealTimeRiskMonitor] Cache invalidated', { positionId });
+  }
+
+  private extractPositionIdFromClosedEvent(data: unknown): string | undefined {
+    if (!data || typeof data !== 'object') {
+      return undefined;
+    }
+
+    const maybeEvent = data as { position?: { id?: unknown } };
+    return typeof maybeEvent.position?.id === 'string' ? maybeEvent.position.id : undefined;
   }
 
   /**

@@ -543,11 +543,14 @@ export class DynamicPositionSizerService {
   private safeLog(
     level: 'info' | 'warn' | 'error',
     message: string,
-    meta?: any
+    meta?: unknown
   ): void {
     if (!this.logger) return;
     try {
-      this.logger[level](message, meta);
+      const context = typeof meta === 'object' && meta !== null
+        ? (meta as Record<string, unknown>)
+        : undefined;
+      this.logger[level](message, context);
     } catch (error) {
       // SKIP - never throw on logging failure
     }

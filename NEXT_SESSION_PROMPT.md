@@ -169,6 +169,25 @@ Deliverables for this session:
 - Verified exchange adapter/factory suites after funding-rate typing cleanup (2026-03-03): `bybit-service.adapter.test.ts` = 47/47 PASS; `exchange-factory.service.test.ts` = 27/27 PASS.
 - Core `any` cleanup continued (2026-03-03): `ExchangeFactory` Bybit service instantiation now uses typed config with optional `timeframe` defaulting to `'15'` (removed `bybitConfig as any` cast).
 - Verified ExchangeFactory suites after factory typing cleanup (2026-03-03): `exchange-factory.service.test.ts` = 27/27 PASS; `exchange-factory.error-handling.test.ts` = 24/24 PASS.
+- Core `any` cleanup continued (2026-03-03): `RetryPolicyService` now uses typed error-code/HTTP-status extractors (`unknown` input), removing `as any` in transient/http retry checks.
+- Core `any` cleanup continued (2026-03-03): `RealTimeRiskMonitor` `position-closed` subscription now accepts `unknown` payload with typed position-id extraction (removed callback `data: any`).
+- Re-verified targeted resilience/risk monitor suites after typing cleanup (2026-03-03): `retry-policy.test.ts` + `real-time-risk-monitor*.test.ts` = 84/84 PASS.
+- Re-verified noforce shard stability after typing cleanup (2026-03-03): `test:core:noforce:shard1` PASS (154 suites) and `test:core:noforce:shard2` PASS (153 suites), both exit cleanly.
+- Core `any` cleanup continued (2026-03-03): `PositionSyncService` and `PositionMonitorService` now use typed `PositionCloseRecorder` contract for close orchestration (removed constructor `positionExitingService: any`).
+- Core `any` cleanup continued (2026-03-03): `PositionExitingService.executeExitAction()` trailing action path now uses discriminated `ExitActionDTO` field access (removed `as any` cast).
+- Core `any` cleanup continued (2026-03-03): `PositionLifecycleService` now uses typed `DynamicPositionSizerService`/`PositionScalingService` dependencies (removed constructor `any` types).
+- Core `any` cleanup continued (2026-03-03): `PositionLifecycleService` dynamic sizing flow now uses typed helpers for config/ATR extraction (`isDynamicPositionSizingEnabled` + `extractSignalNumber`), removing `as any` on config and signal fields.
+- Core `any` cleanup continued (2026-03-03): `GracefulShutdownManager` unrealized PnL helpers now accept `PersistedPositionState` instead of `any`.
+- Core `any` cleanup continued (2026-03-03): `PositionExitingService.updateBBTrailingStop()` now uses typed `Candle[]` input instead of `any[]`.
+- Core `any` cleanup continued (2026-03-03): `RetryPolicyService.executeWithRetry()` catch-path now uses `unknown` instead of `any` (error normalization unchanged).
+- Core `any` cleanup continued (2026-03-03): `TradeHistoryService` retry/degrade callbacks now type error payloads as `unknown` (removed callback `error: any` signatures).
+- Core `any` cleanup continued (2026-03-03): `DynamicPositionSizerService` and `PositionScalingService` safe-log helpers now type `meta` as `unknown` (removed `meta?: any`).
+- Core `any` cleanup continued (2026-03-03): `LoggerService` validation helpers now accept `unknown` for level/logDir inputs (removed `any` signatures).
+- Core `any` cleanup continued (2026-03-03): `MicroWallDetectorService` Decimal-like conversion now uses typed `hasToNumber` guard (removed local `(value as any).toNumber()` casts).
+- Core `any` cleanup continued (2026-03-03): `RateLimiterService` execution/429 detection paths now use `unknown` payloads with typed extraction (removed `catch(error: any)` and `is429Error(error: any)`).
+- Core `any` cleanup continued (2026-03-03): `RiskCalculator` logging fallback catch now uses `unknown` (`catch(logError: unknown)`).
+- Full verification run (2026-03-03): `npm run build`, `npm run test:core:stable`, `npm run test:web-client`, and `npm run test:web-server` all PASS.
+- Per-session execution rule updated (2026-03-03): long test/build runs are deferred; only run them after large refactor milestones to keep iteration speed high.
 - Known issue (Windows, intermittent): `vite build` in `packages/web-client` may fail with `spawn EPERM` (esbuild process spawn). Mitigation added: web-client build script now retries `vite build` once via `scripts/vite-build-retry.cjs`.
 - Clarification (2026-03-03): `npm --prefix packages/web-client run test` runs `jest` only; `vite` appears only through build scripts (e.g. `build:web-client` in chained commands).
 

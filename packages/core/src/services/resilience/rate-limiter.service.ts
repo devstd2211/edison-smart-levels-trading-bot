@@ -213,7 +213,7 @@ export class RateLimiterService implements ILifecycle {
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // On 429 error, reduce rate if adaptive enabled
       if (this.config.adaptiveEnabled && this.is429Error(error)) {
         this.adjustRate(key, RATE_LIMIT_429_REDUCTION_FACTOR);
@@ -435,12 +435,24 @@ export class RateLimiterService implements ILifecycle {
     }
   }
 
-  private is429Error(error: any): boolean {
-    return error?.status === 429 ||
-           error?.statusCode === 429 ||
-           error?.response?.status === 429 ||
-           error?.message?.includes('429') ||
-           error?.message?.toLowerCase().includes('rate limit');
+  private is429Error(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const candidate = error as {
+      status?: unknown;
+      statusCode?: unknown;
+      response?: { status?: unknown };
+      message?: unknown;
+    };
+
+    const message = typeof candidate.message === 'string' ? candidate.message : '';
+    return candidate.status === 429
+      || candidate.statusCode === 429
+      || candidate.response?.status === 429
+      || message.includes('429')
+      || message.toLowerCase().includes('rate limit');
   }
 
   private safeLog(level: 'info' | 'warn' | 'error' | 'debug', message: string, meta?: unknown): void {

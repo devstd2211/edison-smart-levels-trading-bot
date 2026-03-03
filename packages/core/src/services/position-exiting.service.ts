@@ -21,6 +21,7 @@
 
 import {
   LoggerService,
+  Candle,
   Position,
   ExitType,
   ExitAction,
@@ -42,6 +43,8 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
 // ============================================================================
 // POSITION EXITING SERVICE
 // ============================================================================
+
+type BollingerCandle = Pick<Candle, 'close'>;
 
 export class PositionExitingService {
   // [P3] Atomic lock pattern: prevent concurrent close attempts on same position
@@ -102,7 +105,7 @@ export class PositionExitingService {
           return await this.updateStopLoss(position, action.newStopLoss);
 
         case ExitAction.ACTIVATE_TRAILING:
-          return await this.activateTrailingStop(position, (action as any).trailingPercent, exitPrice);
+          return await this.activateTrailingStop(position, action.trailingPercent, exitPrice);
 
         default:
           this.logger.warn('Unknown exit action', { action: action.action });
@@ -1045,7 +1048,7 @@ export class PositionExitingService {
   /**
    * Update Bollinger Band trailing stop
    */
-  async updateBBTrailingStop(position: Position, candles: any[]): Promise<void> {
+  async updateBBTrailingStop(position: Position, candles: BollingerCandle[]): Promise<void> {
     if (!position.stopLoss.isTrailing || candles.length < 20) {
       return; // Need 20+ candles for BB
     }

@@ -36,6 +36,15 @@ import {
 
 const POSITION_SIZE_ZERO = INTEGER_MULTIPLIERS.ZERO;
 
+type PositionCloseRecorder = {
+  closeFullPosition(
+    position: Position | null | undefined,
+    exitPrice: number,
+    exitReason: string,
+    exitType: import('../types/legacy').ExitType,
+  ): Promise<boolean>;
+};
+
 // ============================================================================
 // POSITION MONITOR SERVICE
 // ============================================================================
@@ -55,7 +64,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
     private readonly exitTypeDetectorService: ExitTypeDetectorService,
     private readonly pnlCalculator: PositionPnLCalculatorService,
     private readonly positionSyncService: PositionSyncService,
-    private readonly positionExitingService?: any, // PositionExitingService (optional for now)
+    private readonly positionExitingService?: PositionCloseRecorder, // PositionExitingService (optional for now)
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.3: ErrorHandler integration
   ) {
     super();

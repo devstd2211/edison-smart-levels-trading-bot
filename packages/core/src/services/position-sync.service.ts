@@ -33,6 +33,15 @@ import { INTEGER_MULTIPLIERS } from '../constants/technical.constants';
 const POSITION_SIZE_ZERO = INTEGER_MULTIPLIERS.ZERO;
 const DEEP_SYNC_MIN_AGE_MS = 120000; // 2 minutes
 
+type PositionCloseRecorder = {
+  closeFullPosition(
+    position: Position | null | undefined,
+    exitPrice: number,
+    exitReason: string,
+    exitType: ExitType,
+  ): Promise<boolean>;
+};
+
 // ============================================================================
 // POSITION SYNC SERVICE
 // ============================================================================
@@ -46,7 +55,7 @@ export class PositionSyncService {
     private readonly exitTypeDetectorService: ExitTypeDetectorService,
     private readonly telegram: TelegramService,
     private readonly logger: LoggerService,
-    private readonly positionExitingService: any, // PositionExitingService (optional for now)
+    private readonly positionExitingService: PositionCloseRecorder,
     errorHandler?: ErrorHandler,
   ) {
     // If no errorHandler provided, create one with the logger

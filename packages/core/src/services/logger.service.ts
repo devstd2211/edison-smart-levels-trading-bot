@@ -93,11 +93,11 @@ export class LoggerService {
   /**
    * Validate that minLevel is a valid LogLevel value (accept both enum and string)
    */
-  private validateLogLevel(level: any): void {
+  private validateLogLevel(level: unknown): void {
     const validLevels = Object.values(LogLevel);
 
     // Accept both enum values
-    if (validLevels.includes(level)) {
+    if (typeof level === 'string' && validLevels.includes(level as LogLevel)) {
       return;
     }
 
@@ -115,7 +115,7 @@ export class LoggerService {
   /**
    * Validate that logDir is a valid directory path
    */
-  private isValidLogDir(logDir: any): boolean {
+  private isValidLogDir(logDir: unknown): boolean {
     if (typeof logDir !== 'string') {
       return false;
     }

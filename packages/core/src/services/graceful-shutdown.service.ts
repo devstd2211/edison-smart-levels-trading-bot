@@ -520,7 +520,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
   /**
    * Helper: Calculate unrealized PnL
    */
-  private calculateUnrealizedPnL(position: any): number {
+  private calculateUnrealizedPnL(position: PersistedPositionState): number {
     const currentPrice = position.currentPrice || position.entryPrice;
     if (position.direction === 'LONG') {
       return (currentPrice - position.entryPrice) * position.quantity;
@@ -532,7 +532,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
   /**
    * Helper: Calculate unrealized PnL percent
    */
-  private calculateUnrealizedPnLPercent(position: any): number {
+  private calculateUnrealizedPnLPercent(position: PersistedPositionState): number {
     const pnl = this.calculateUnrealizedPnL(position);
     const positionValue = position.quantity * position.entryPrice;
     return (pnl / positionValue) * 100;

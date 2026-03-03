@@ -47,6 +47,8 @@ import { TakeProfitManagerService } from './take-profit-manager.service';
 import { EntryConfirmationManager } from './entry-confirmation.service';
 import { CompoundInterestCalculatorService } from './compound-interest-calculator.service';
 import { SessionStatsService } from './session-stats.service';
+import type { DynamicPositionSizerService } from './dynamic-position-sizer.service';
+import type { PositionScalingService } from './position-scaling.service';
 import { IPositionRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
@@ -55,6 +57,12 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
 // ============================================================================
 
 const PERCENT_TO_DECIMAL = PERCENT_MULTIPLIER;
+
+type DynamicPositionSizingConfigView = {
+  dynamicPositionSizing?: {
+    enabled?: boolean;
+  };
+};
 
 // ============================================================================
 // POSITION LIFECYCLE SERVICE
@@ -85,8 +93,8 @@ export class PositionLifecycleService {
     private readonly strategyId?: string,  // Phase 10.3c: Strategy identifier for event tagging
     private readonly positionRepository?: IPositionRepository, // Phase 6.2: Repository pattern
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.17: Error handling integration
-    private readonly dynamicPositionSizer?: any, // Phase 11.1: Kelly Criterion position sizing
-    private readonly positionScalingService?: any, // Phase 11.2: Dynamic pyramiding
+    private readonly dynamicPositionSizer?: DynamicPositionSizerService, // Phase 11.1: Kelly Criterion position sizing
+    private readonly positionScalingService?: PositionScalingService, // Phase 11.2: Dynamic pyramiding
   ) {
     this.entryConfirmation = new EntryConfirmationManager(entryConfirmationConfig, logger);
   }
@@ -783,7 +791,7 @@ export class PositionLifecycleService {
       }
     }
     // Priority 2: Dynamic Position Sizing (Phase 11.1 - Kelly Criterion)
-    else if (this.dynamicPositionSizer && (this.fullConfig as any).dynamicPositionSizing?.enabled) {
+    else if (this.dynamicPositionSizer && this.isDynamicPositionSizingEnabled()) {
       try {
         // Get account balance
         const balanceInfo = await this.bybitService.getBalance();
@@ -798,8 +806,8 @@ export class PositionLifecycleService {
         const rrRatio = stopDistance > 0 ? tpDistance / stopDistance : 1.5;
 
         // Get ATR if available (optional)
-        const currentATR = (signal as any).atr;
-        const averageATR = (signal as any).averageATR;
+        const currentATR = this.extractSignalNumber(signal, ['atr']) ?? signal.marketData?.atr;
+        const averageATR = this.extractSignalNumber(signal, ['averageATR', 'averageAtr']);
 
         const sizingResult = await this.dynamicPositionSizer.calculateOptimalSize(
           signal.price,           // entry price
@@ -872,6 +880,22 @@ export class PositionLifecycleService {
     slDistance: number,
   ): number {
     return isLong ? currentPrice - slDistance : currentPrice + slDistance;
+  }
+
+  private isDynamicPositionSizingEnabled(): boolean {
+    const config = this.fullConfig as Config & DynamicPositionSizingConfigView;
+    return config.dynamicPositionSizing?.enabled === true;
+  }
+
+  private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {
+    const raw = signal as unknown as Record<string, unknown>;
+    for (const key of keys) {
+      const value = raw[key];
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+      }
+    }
+    return undefined;
   }
 
   // =========================================================================

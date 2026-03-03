@@ -376,7 +376,7 @@ export class TradeHistoryService {
           maxDelayMs: 800,
         },
         context: `TradeHistoryService.appendTrade[${record.id}]`,
-        onRetry: (attempt: number, error: any, delayMs: number) => {
+        onRetry: (attempt: number, error: unknown, delayMs: number) => {
           this.logger.warn('🔄 Retrying trade append', {
             attempt,
             tradeId: record.id,
@@ -384,7 +384,7 @@ export class TradeHistoryService {
             error: extractErrorMessage(error),
           });
         },
-        onFailure: (error: any, attempts: number) => {
+        onFailure: (error: unknown, attempts: number) => {
           this.logger.error('❌ Failed to append trade after retries', {
             id: record.id,
             attempts,
@@ -447,7 +447,7 @@ export class TradeHistoryService {
       const result = await this.errorHandler.executeAsync(readOperation, {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         context: 'TradeHistoryService.readAllTrades',
-        onFailure: (error: any, attempts: number) => {
+        onFailure: (error: unknown, attempts: number) => {
           this.logger.warn('⚠️ Failed to read trades, returning empty list', {
             attempts,
             error: extractErrorMessage(error),
@@ -629,7 +629,7 @@ export class TradeHistoryService {
       const result = await this.errorHandler.executeAsync(statsOperation, {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         context: 'TradeHistoryService.getStatistics',
-        onFailure: (error: any, attempts: number) => {
+        onFailure: (error: unknown, attempts: number) => {
           this.logger.warn('⚠️ Failed to calculate statistics, returning defaults', {
             attempts,
             error: extractErrorMessage(error),
@@ -670,7 +670,7 @@ export class TradeHistoryService {
       const result = await this.errorHandler.executeAsync(statsOperation, {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         context: `TradeHistoryService.getStatisticsByField[${fieldName}]`,
-        onFailure: (error: any, attempts: number) => {
+        onFailure: (error: unknown, attempts: number) => {
           this.logger.warn('⚠️ Failed to calculate field statistics, returning empty', {
             fieldName,
             attempts,

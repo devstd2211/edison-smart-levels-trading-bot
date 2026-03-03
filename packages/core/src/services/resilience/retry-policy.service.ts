@@ -166,7 +166,7 @@ export class RetryPolicyService implements ILifecycle {
         }
 
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
         attempt++;
 
@@ -344,8 +344,8 @@ export class RetryPolicyService implements ILifecycle {
   }
 
   private isTransientError(error: Error): boolean {
-    const errorCode = (error as any).code;
-    return TRANSIENT_ERROR_CODES.includes(errorCode);
+    const errorCode = this.getErrorCode(error);
+    return typeof errorCode === 'string' && TRANSIENT_ERROR_CODES.includes(errorCode);
   }
 
   private isRetryableHttpError(error: Error): boolean {
@@ -358,8 +358,24 @@ export class RetryPolicyService implements ILifecycle {
     return status !== null && NON_RETRYABLE_HTTP_STATUS_CODES.includes(status);
   }
 
-  private getHttpStatus(error: any): number | null {
-    return error?.status ?? error?.statusCode ?? error?.response?.status ?? null;
+  private getHttpStatus(error: unknown): number | null {
+    if (!error || typeof error !== 'object') {
+      return null;
+    }
+
+    const candidate = error as {
+      status?: unknown;
+      statusCode?: unknown;
+      response?: { status?: unknown };
+    };
+
+    const status = candidate.status ?? candidate.statusCode ?? candidate.response?.status;
+    return typeof status === 'number' ? status : null;
+  }
+
+  private getErrorCode(error: Error): string | undefined {
+    const candidate = error as Error & { code?: unknown };
+    return typeof candidate.code === 'string' ? candidate.code : undefined;
   }
 
   private startBudgetResetInterval(): void {

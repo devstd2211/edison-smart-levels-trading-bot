@@ -218,7 +218,7 @@ export class RiskCalculator {
         atr: effectiveAtrPercent.toFixed(DECIMAL_PLACES.PERCENT),
         slMultiplier: effectiveSlMultiplier.toFixed(DECIMAL_PLACES.PERCENT),
       });
-    } catch (logError: any) {
+    } catch (logError: unknown) {
       // SKIP: ignore logging failures
       if (this.errorHandler) {
         this.errorHandler.handle(logError, {
