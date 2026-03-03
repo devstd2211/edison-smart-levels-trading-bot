@@ -18,7 +18,11 @@ import type { Config } from './types/legacy';
 import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
 import { createTradingBotServiceBundle } from './services/bot-services-adapter';
-import { BotFactory as ServicesBotFactory, type BotFactoryOptions } from './services/bot-factory.service';
+import {
+  BotFactory as ServicesBotFactory,
+  createServices as createServiceState,
+  type BotFactoryOptions,
+} from './services/bot-factory.service';
 import type { IBotServicesAdapterSource } from './interfaces';
 
 export interface BotFactoryConfig {
@@ -115,6 +119,6 @@ export class BotFactory {
    * @returns Initialized services state
    */
   static createServices(config: Config): IBotServicesAdapterSource {
-    return ServicesBotFactory.create(config);
+    return createServiceState(config);
   }
 }

@@ -67,6 +67,11 @@ export class BotInitializer {
     maxDelayMs: 2000,
   };
 
+  private get legacyBybitCompat():
+    IBotInitializerServices & { bybitService?: IBotInitializerServices['marketDataServices']['bybitService'] } {
+    return this.services;
+  }
+
   constructor(
     private services: IBotInitializerServices,
     private config: Config,
@@ -189,6 +194,21 @@ export class BotInitializer {
       },
       originalError,
     );
+  }
+
+  /**
+   * Bootstrap runtime lifecycle in startup order.
+   * Allows caller to inject steps that must run after sockets connect
+   * and before monitoring tasks begin.
+   */
+  async bootstrap(hooks: { beforeMonitoring?: () => void | Promise<void> } = {}): Promise<void> {
+    await this.initialize();
+    this.logDataSubscriptionStatus();
+    await this.connectWebSockets();
+    if (hooks.beforeMonitoring) {
+      await hooks.beforeMonitoring();
+    }
+    await this.startMonitoring();
   }
 
   /**
@@ -576,16 +596,16 @@ export class BotInitializer {
    * Private: Initialize Bybit service with error recovery
    */
   private async initializeBybit(): Promise<void> {
-    const exchangeName = (this.config.exchange as any)?.name || 'bybit';
+    const exchangeName = this.config.exchange.name || 'bybit';
     this.logger.info(`Initializing ${exchangeName} service...`);
 
     const performInit = async () => {
       // If using factory-created exchange (non-Bybit), create it asynchronously
-      const exchangeFactory = (this.services as any).exchangeFactory;
+      const exchangeFactory = this.services.exchangeFactory;
       if (exchangeFactory && exchangeName !== 'bybit') {
         this.logger.info(`Creating ${exchangeName} exchange via factory...`);
         const exchange = await exchangeFactory.createExchange();
-        (this.services as any).bybitService = exchange;
+        this.legacyBybitCompat.bybitService = exchange;
         this.logger.info(`✅ ${exchangeName} exchange created and initialized`);
       } else if (this.services.marketDataServices.bybitService.initialize) {
         // Traditional Bybit initialization
@@ -765,7 +785,8 @@ export class BotInitializer {
         // CRITICAL FIX: Check both currentPosition AND isOpeningPosition flag
         // to prevent race condition where cleanup cancels newly placed TP/SL orders
         const currentPosition = this.services.executionServices.positionManager.getCurrentPosition();
-        const isOpeningPosition = (this.services.executionServices.positionManager as any).isOpeningPosition;
+        const isOpeningPosition =
+          this.services.executionServices.positionManager.isPositionOpening();
 
         if (!currentPosition && !isOpeningPosition) {
           this.logger.debug(

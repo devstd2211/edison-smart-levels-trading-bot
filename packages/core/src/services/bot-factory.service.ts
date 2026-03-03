@@ -229,3 +229,14 @@ export class BotFactory {
   }
 }
 
+/**
+ * Side-effect-free services factory for composition roots and tests.
+ * Builds service state only; lifecycle startup remains explicit via initializer/start().
+ */
+export function createServices(
+  config: Config,
+  options: BotFactoryOptions = {},
+): IBotServicesAdapterSource {
+  return BotFactory.create(config, options);
+}
+

@@ -560,6 +560,13 @@ export class PositionLifecycleService {
   }
 
   /**
+   * Expose entry-lock state for lifecycle orchestration safeguards.
+   */
+  isPositionOpening(): boolean {
+    return this.isOpeningPosition;
+  }
+
+  /**
    * Get all open positions from journal
    * @returns Array of Position objects currently open
    */

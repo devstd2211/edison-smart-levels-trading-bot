@@ -327,6 +327,55 @@ describe('BotInitializer', () => {
     });
   });
 
+  describe('bootstrap()', () => {
+    it('should execute startup lifecycle in order', async () => {
+      const callOrder: string[] = [];
+
+      jest.spyOn(initializer, 'initialize').mockImplementation(async () => {
+        callOrder.push('initialize');
+      });
+      jest.spyOn(initializer, 'logDataSubscriptionStatus').mockImplementation(() => {
+        callOrder.push('logDataSubscriptionStatus');
+      });
+      jest.spyOn(initializer, 'connectWebSockets').mockImplementation(async () => {
+        callOrder.push('connectWebSockets');
+      });
+      jest.spyOn(initializer, 'startMonitoring').mockImplementation(async () => {
+        callOrder.push('startMonitoring');
+      });
+
+      await initializer.bootstrap({
+        beforeMonitoring: async () => {
+          callOrder.push('beforeMonitoring');
+        },
+      });
+
+      expect(callOrder).toEqual([
+        'initialize',
+        'logDataSubscriptionStatus',
+        'connectWebSockets',
+        'beforeMonitoring',
+        'startMonitoring',
+      ]);
+    });
+
+    it('should stop before monitoring when hook fails', async () => {
+      const startMonitoringSpy = jest
+        .spyOn(initializer, 'startMonitoring')
+        .mockResolvedValue(undefined);
+
+      await expect(
+        initializer.bootstrap({
+          beforeMonitoring: async () => {
+            throw new Error('hook failed');
+          },
+        }),
+      ).rejects.toThrow('hook failed');
+
+      expect(startMonitoringSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('startMonitoring()', () => {
     it('should start position monitor', async () => {
       await initializer.startMonitoring();

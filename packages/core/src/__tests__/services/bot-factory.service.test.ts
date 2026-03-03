@@ -5,7 +5,7 @@
  * Tests verify that BotFactory correctly manages service creation and DI
  */
 
-import { BotFactory } from '../../services/bot-factory.service';
+import { createServices } from '../../services/bot-factory.service';
 import { Config } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -60,21 +60,21 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
   describe('Basic Factory Operations', () => {
     test('T1: Should create services state', () => {
-      const services = BotFactory.create(config);
+      const services = createServices(config);
       expect(services).toBeDefined();
       expect(services.logger).toBeDefined();
     });
 
     test('T2: Should create multiple independent instances', () => {
-      const services1 = BotFactory.create(config);
-      const services2 = BotFactory.create(config);
+      const services1 = createServices(config);
+      const services2 = createServices(config);
 
       expect(services1).not.toBe(services2);
       expect(services1.logger).not.toBe(services2.logger);
     });
 
     test('T3: Should initialize all required services', () => {
-      const services = BotFactory.create(config);
+      const services = createServices(config);
 
       expect(services.logger).toBeDefined();
       expect(services.coreServices.eventBus).toBeDefined();
@@ -84,7 +84,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T4: Should have proper service type structure', () => {
-      const services = BotFactory.create(config);
+      const services = createServices(config);
 
       // Check function types
       expect(typeof services.logger.info).toBe('function');
@@ -106,7 +106,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     };
 
     test('T5: Should allow exchange service override', () => {
-      const services = BotFactory.create(config, {
+      const services = createServices(config, {
         bybitService: mockExchange as any,
       });
 
@@ -115,7 +115,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T6: Should allow telegram service override', () => {
-      const services = BotFactory.create(config, {
+      const services = createServices(config, {
         telegram: mockTelegram as any,
       });
 
@@ -124,7 +124,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T7: Should allow multiple service overrides', () => {
-      const services = BotFactory.create(config, {
+      const services = createServices(config, {
         bybitService: mockExchange as any,
         telegram: mockTelegram as any,
       });
@@ -134,11 +134,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T8: Override should not affect other instances', () => {
-      const services1 = BotFactory.create(config, {
+      const services1 = createServices(config, {
         telegram: mockTelegram as any,
       });
 
-      const services2 = BotFactory.create(config, {});
+      const services2 = createServices(config, {});
 
       expect(services1.coreServices.telegram).toBe(mockTelegram);
       expect(services2.coreServices.telegram).not.toBe(mockTelegram);
@@ -146,13 +146,13 @@ describe('BotFactory - DI Container for BotServices state', () => {
   });
 
   describe('Factory Helper Methods', () => {
-    test('T9: createForTesting should work like create', () => {
+    test('T9: createServices should support test-time overrides', () => {
       const mockExchange = {
         name: 'TestExchange',
         isConnected: jest.fn(() => true),
       };
 
-      const services = BotFactory.createForTesting(config, {
+      const services = createServices(config, {
         bybitService: mockExchange as any,
       });
 
@@ -160,8 +160,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.marketDataServices.bybitService).toBe(mockExchange);
     });
 
-    test('T10: createForTesting with empty options creates normal services', () => {
-      const services = BotFactory.createForTesting(config);
+    test('T10: createServices with empty options creates normal services', () => {
+      const services = createServices(config);
 
       expect(services).toBeDefined();
       expect(services.logger).toBeDefined();
@@ -185,7 +185,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
         })),
       };
 
-      const services = BotFactory.create(config, {
+      const services = createServices(config, {
         bybitService: mockExchange as any,
       });
 
@@ -196,11 +196,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const exchangeA = { name: 'BybitMock', isConnected: jest.fn(() => true) };
       const exchangeB = { name: 'BinanceMock', isConnected: jest.fn(() => true) };
 
-      const servicesA = BotFactory.create(config, {
+      const servicesA = createServices(config, {
         bybitService: exchangeA as any,
       });
 
-      const servicesB = BotFactory.create(config, {
+      const servicesB = createServices(config, {
         bybitService: exchangeB as any,
       });
 
@@ -212,11 +212,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const mockExchange1 = { name: 'Exchange1' };
       const mockExchange2 = { name: 'Exchange2' };
 
-      const services1 = BotFactory.create(config, {
+      const services1 = createServices(config, {
         bybitService: mockExchange1 as any,
       });
 
-      const services2 = BotFactory.create(config, {
+      const services2 = createServices(config, {
         bybitService: mockExchange2 as any,
       });
 
@@ -228,20 +228,20 @@ describe('BotFactory - DI Container for BotServices state', () => {
   describe('Error Handling', () => {
     test('T14: Should handle empty override options', () => {
       expect(() => {
-        BotFactory.create(config, {});
+        createServices(config, {});
       }).not.toThrow();
     });
 
     test('T15: Should handle undefined overrides', () => {
       expect(() => {
-        BotFactory.create(config, undefined);
+        createServices(config, undefined);
       }).not.toThrow();
     });
 
     test('T16: Should create valid services with partial overrides', () => {
       const mockExchange = { name: 'MockExchange' };
 
-      const services = BotFactory.create(config, {
+      const services = createServices(config, {
         bybitService: mockExchange as any,
       });
 

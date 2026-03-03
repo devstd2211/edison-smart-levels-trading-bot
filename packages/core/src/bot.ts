@@ -137,28 +137,17 @@ export class TradingBot {
     this.logger.info('Starting...');
 
     try {
-      // Phase 1: Initialize components
-      await this.initializer.initialize();
+      await this.initializer.bootstrap({
+        beforeMonitoring: async () => {
+          // Register handlers after WS connections are established.
+          this.eventHandlerManager.registerAllHandlers(this);
+          this.setupCriticalErrorHandling();
 
-      // Phase 2: Log data subscriptions
-      this.initializer.logDataSubscriptionStatus();
-
-      // Phase 3: Connect WebSocket connections
-      await this.initializer.connectWebSockets();
-
-      // Phase 4: Register all event handlers
-      this.eventHandlerManager.registerAllHandlers(this);
-
-      // Phase 4.5: Setup critical error handling
-      this.setupCriticalErrorHandling();
-
-      // Phase 4.7: Connect dashboard to trading events (only if enabled)
-      if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
-        this.setupDashboardEventListeners();
-      }
-
-      // Phase 5: Start position monitoring and periodic tasks
-      await this.initializer.startMonitoring();
+          if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
+            this.setupDashboardEventListeners();
+          }
+        },
+      });
 
       this.isRunning = true;
       this.logger.info('✅ Started successfully! Waiting for candle close events...');

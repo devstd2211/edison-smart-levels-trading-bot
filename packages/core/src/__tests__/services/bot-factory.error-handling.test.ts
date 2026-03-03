@@ -342,12 +342,12 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       }
     });
 
-    test('T28: createForTesting validates config', () => {
+    test('T28: createWithValidation validates config', () => {
       const config = getValidConfig();
       delete (config as any).trading;
 
       expect(() => {
-        BotFactory.createForTesting(config);
+        BotFactory.createWithValidation(config);
       }).toThrow(BotFactoryConfigValidationError);
     });
   });
@@ -447,7 +447,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       }).toThrow(BotFactoryConfigValidationError);
     });
 
-    test('T38: createForTesting validates before creating', () => {
+    test('T38: createForTesting keeps backward-compatible validation behavior', () => {
       const config = getValidConfig();
       delete (config as any).timeframes;
 

@@ -357,9 +357,9 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Introduce `LifecycleManager` with `start()` and `stop()` methods.
 - [x] Ensure services that open sockets/timers implement `start/stop`.
 - [ ] Move side-effects out of constructors into `start`.
-- [ ] Create lightweight `createServices()` factory that is side-effect free.
-- [ ] Refactor `TradingBot.start()` to only orchestrate lifecycle, not initialize dependencies.
-- [ ] Refactor `BotInitializer` into a `Bootstrapper` that wires lifecycle steps.
+- [x] Create lightweight `createServices()` factory that is side-effect free.
+- [x] Refactor `TradingBot.start()` to only orchestrate lifecycle, not initialize dependencies.
+- [x] Refactor `BotInitializer` into a `Bootstrapper` that wires lifecycle steps.
 - [ ] Update tests to use `createServices()` + explicit `start/stop`.
 
 **Progress**
@@ -394,6 +394,25 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Open-handle triage: fixed `MTFSnapshotGate` interval leaks in `mtf-snapshot-gate.test.ts` + `mtf-snapshot-gate.functional.test.ts` via explicit teardown
 - [x] Open-handle triage: fixed `bot-initializer.test.ts` lifecycle leak with `afterEach` shutdown cleanup
 - [x] Noforce shard validation stabilized post-fix: `test:core:noforce:shard1` and `test:core:noforce:shard2` complete (2026-03-03)
+- [x] Core lifecycle typing cleanup: removed `as any` from `BotInitializer` startup path (`exchangeFactory`/`exchange.name`) and periodic cleanup lock check
+- [x] Position lifecycle lock is now exposed via explicit `isPositionOpening()` API (instead of private-field access hacks in initializer)
+- [x] Targeted lifecycle regression check re-run: `bot-initializer.test.ts` + `services/bot-initializer.error-handling.test.ts` (36/36, 2026-03-03)
+- [x] Post-change noforce shard verification re-run: `test:core:noforce:shard1` (152/152 suites) and `test:core:noforce:shard2` (152/152 suites) both pass and exit cleanly (2026-03-03)
+- [x] BotInitializer bootstrap sequencing added (`initialize` -> `logDataSubscriptionStatus` -> `connectWebSockets` -> hook -> `startMonitoring`)
+- [x] TradingBot start flow switched to `initializer.bootstrap(...)` with hook for handler registration before monitoring
+- [x] BotInitializer tests extended for bootstrap sequence/hook error path; targeted suites now 38/38 PASS (2026-03-03)
+- [x] Added explicit side-effect-free `createServices(config, options?)` API in DI factory module (`services/bot-factory.service.ts`)
+- [x] Updated factory unit tests to use `createServices()` as primary service-state creation path
+- [x] Verified factory suites after migration: `bot-factory.service.test.ts` + `bot-factory.error-handling.test.ts` (52/52, 2026-03-03)
+- [x] Removed remaining `createForTesting()` assertions from factory unit suite in favor of `createServices()` (`bot-factory.service.test.ts`)
+- [x] Kept one backward-compat coverage point for `createForTesting()` validation in error-handling suite (`bot-factory.error-handling.test.ts`)
+- [x] Re-verified factory suites after helper-method migration: `bot-factory.service.test.ts` (16/16) + `bot-factory.error-handling.test.ts` (36/36), 2026-03-03
+- [x] Added lifecycle integration test using real `createServices()` state with explicit `BotInitializer.bootstrap()` + `shutdown()`
+- [x] Verified new lifecycle test path: `create-services.lifecycle.test.ts` (1/1, 2026-03-03)
+- [x] Re-verified noforce stability after new lifecycle test addition: `test:core:noforce:shard2` PASS (152/152 suites, 2026-03-03)
+- [x] Re-verified complementary noforce shard after lifecycle-test addition: `test:core:noforce:shard1` PASS (153/153 suites, 2026-03-03)
+- [x] Added `TradingBot` lifecycle delegation unit coverage for explicit `BotInitializer.bootstrap()`/`shutdown()` orchestration (`trading-bot.lifecycle.test.ts`, 3/3, 2026-03-03)
+- [x] Re-verified noforce shards after TradingBot lifecycle suite addition: `test:core:noforce:shard1` PASS (153/153 suites) and `test:core:noforce:shard2` PASS (153/153 suites), 2026-03-03
 
 **Next Iteration Plan**
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (grouped containers as primary wiring).

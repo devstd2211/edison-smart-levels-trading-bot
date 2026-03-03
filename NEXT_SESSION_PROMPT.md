@@ -137,6 +137,23 @@ Deliverables for this session:
 - Open-handle source isolated in shard triage: `MTFSnapshotGate` test suites leaked interval handles; fixed with explicit `gate.stop()` teardown in `mtf-snapshot-gate.test.ts` and `mtf-snapshot-gate.functional.test.ts`.
 - Additional noforce hang source isolated: `bot-initializer.test.ts` left lifecycle tasks running in some cases; fixed with `afterEach(async () => await initializer.shutdown().catch(...))`.
 - Post-fix verification (2026-03-03): `test:core:noforce:shard1` and `test:core:noforce:shard2` both complete successfully without `--forceExit`.
+- Core lifecycle typing cleanup (2026-03-03): removed `as any` usages in `bot-initializer.ts` for `exchangeFactory`/`exchange.name` and periodic cleanup position-opening check.
+- PositionLifecycleService now exposes `isPositionOpening()`; BotInitializer uses it instead of private-field access.
+- Re-verified targeted BotInitializer suites after cleanup (2026-03-03): `bot-initializer.test.ts` + `services/bot-initializer.error-handling.test.ts` = 36/36 PASS.
+- Re-verified noforce shard stability after lifecycle cleanup (2026-03-03): `test:core:noforce:shard1` and `test:core:noforce:shard2` both PASS and exit cleanly.
+- BotInitializer bootstrap sequencing added (2026-03-03): `initialize` -> `logDataSubscriptionStatus` -> `connectWebSockets` -> hook -> `startMonitoring`.
+- TradingBot start flow now delegates lifecycle sequencing to `initializer.bootstrap(...)`; event handlers/critical hooks are injected via `beforeMonitoring` hook.
+- BotInitializer test suite expanded for bootstrap behavior; targeted run now `38/38` PASS (`bot-initializer.test.ts` + `services/bot-initializer.error-handling.test.ts`).
+- Added explicit side-effect-free `createServices(config, options?)` API in `services/bot-factory.service.ts`.
+- Factory tests migrated to `createServices()` path and re-verified (2026-03-03): `bot-factory.service.test.ts` + `bot-factory.error-handling.test.ts` = 52/52 PASS.
+- Remaining factory helper assertions migrated from `createForTesting()` to `createServices()` in unit suite; `createForTesting` kept only as backward-compat validation check in error-handling suite.
+- Re-verified factory suites after helper-method migration (2026-03-03): `bot-factory.service.test.ts` = 16/16 PASS and `bot-factory.error-handling.test.ts` = 36/36 PASS.
+- Added lifecycle integration test for `createServices()` flow: explicit `BotInitializer.bootstrap()`/`shutdown()` (no constructor-time lifecycle starts).
+- Verified new lifecycle integration test (2026-03-03): `create-services.lifecycle.test.ts` = 1/1 PASS.
+- Re-verified noforce shards after adding lifecycle test (2026-03-03): `test:core:noforce:shard2` PASS and `test:core:noforce:shard1` PASS.
+- Added `TradingBot` lifecycle delegation unit test suite (`trading-bot.lifecycle.test.ts`) to lock in `start()/stop()` orchestration through `BotInitializer.bootstrap()`/`shutdown()`.
+- Verified new `TradingBot` lifecycle suite (2026-03-03): `trading-bot.lifecycle.test.ts` = 3/3 PASS.
+- Re-verified noforce shards after TradingBot lifecycle suite addition (2026-03-03): `test:core:noforce:shard1` PASS and `test:core:noforce:shard2` PASS.
 - Known issue (Windows, intermittent): `vite build` in `packages/web-client` may fail with `spawn EPERM` (esbuild process spawn). Mitigation added: web-client build script now retries `vite build` once via `scripts/vite-build-retry.cjs`.
 - Clarification (2026-03-03): `npm --prefix packages/web-client run test` runs `jest` only; `vite` appears only through build scripts (e.g. `build:web-client` in chained commands).
 
