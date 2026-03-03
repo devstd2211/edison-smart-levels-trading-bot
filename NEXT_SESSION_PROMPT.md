@@ -154,6 +154,8 @@ Deliverables for this session:
 - Added `TradingBot` lifecycle delegation unit test suite (`trading-bot.lifecycle.test.ts`) to lock in `start()/stop()` orchestration through `BotInitializer.bootstrap()`/`shutdown()`.
 - Verified new `TradingBot` lifecycle suite (2026-03-03): `trading-bot.lifecycle.test.ts` = 3/3 PASS.
 - Re-verified noforce shards after TradingBot lifecycle suite addition (2026-03-03): `test:core:noforce:shard1` PASS and `test:core:noforce:shard2` PASS.
+- Core `any` cleanup continued (2026-03-03): `ActionQueueService` no-handler error path now uses typed action-type extraction (removed `as any` access).
+- Verified ActionQueue and smoke safety suites after cleanup (2026-03-03): `action-queue.error-handling.test.ts` = 26/26 PASS; `deployment-safety.smoke.test.ts` = 16/16 PASS.
 - Known issue (Windows, intermittent): `vite build` in `packages/web-client` may fail with `spawn EPERM` (esbuild process spawn). Mitigation added: web-client build script now retries `vite build` once via `scripts/vite-build-retry.cjs`.
 - Clarification (2026-03-03): `npm --prefix packages/web-client run test` runs `jest` only; `vite` appears only through build scripts (e.g. `build:web-client` in chained commands).
 

@@ -147,6 +147,7 @@
 - [x] Core any cleanup batch 22: backtest worker/walk-forward/backtest-engine any cleanup
 - [x] Core any cleanup batch 23: backtest sqlite providers + optimizer metrics typed
 - [x] Core any cleanup batch 24: backtest risk gate + sqlite blob guards + worker message guard
+- [x] Core any cleanup batch 25: ActionQueue no-handler error path typed (removed `as any` action type access)
 - [x] Tests any cleanup batch 1: backtest walk-forward/worker-pool/parameter-optimizer tests
 - [x] Tests any cleanup batch 2: bot-event-emitter, exit-decisions, anti-flip tests
 - [x] Tests any cleanup batch 3: event-handlers, entry-decisions, cache-integration tests

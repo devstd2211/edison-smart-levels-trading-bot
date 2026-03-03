@@ -40,6 +40,11 @@ export class ActionQueueService implements IActionQueue {
     return this.strategyId;
   }
 
+  private getActionType(action: IAction): string {
+    const candidate = action as Partial<{ type: unknown }>;
+    return typeof candidate.type === 'string' ? candidate.type : 'unknown';
+  }
+
   /**
    * Add action to queue
    */
@@ -164,10 +169,11 @@ export class ActionQueueService implements IActionQueue {
 
         // No handler found for action
         if (!result) {
+          const actionType = this.getActionType(action);
           const noHandlerResult: ActionResult = {
             success: false,
             actionId: action.id,
-            error: new Error(`No handler found for action type: ${(action as any).type}`),
+            error: new Error(`No handler found for action type: ${actionType}`),
             timestamp: Date.now(),
           };
           this.dequeue();
