@@ -25,7 +25,7 @@ Deliverables for this session:
 - Updated tests for lifecycle start/stop.
 - Progress update for next session.
 
-## Current Status (as of 2026-03-01)
+## Current Status (as of 2026-03-03)
 - Domain-type migration in services/strategies/tests is complete via legacy re-exports.
 - Multi-strategy module exports now re-export from legacy.
 - Package-level verification run (2026-03-01): `build:contracts`, `build:web-server`, `build:core`, `build:web-client`, `test:web-client` passed.
@@ -132,14 +132,21 @@ Deliverables for this session:
 - Controlled run without `--forceExit` passes all tests (`304/304`, `7014/7014`) but still hangs after completion.
 - Both shard runs without `--forceExit` (`--shard=1/2`, `--shard=2/2`) also hang after completion.
 - Phase 16 flaky threshold stabilized: burst degradation assertion now `<= 0.5`.
+- BotInitializer lifecycle start flow refactored via shared `startLifecycleService` helper (execution/monitoring/resilience/server) with preserved critical vs non-critical error behavior.
+- Targeted BotInitializer suites re-verified (2026-03-03): `bot-initializer.test.ts` + `services/bot-initializer.error-handling.test.ts` = 36/36 PASS; run without `--forceExit` still reports post-run open handles.
+- Open-handle source isolated in shard triage: `MTFSnapshotGate` test suites leaked interval handles; fixed with explicit `gate.stop()` teardown in `mtf-snapshot-gate.test.ts` and `mtf-snapshot-gate.functional.test.ts`.
+- Additional noforce hang source isolated: `bot-initializer.test.ts` left lifecycle tasks running in some cases; fixed with `afterEach(async () => await initializer.shutdown().catch(...))`.
+- Post-fix verification (2026-03-03): `test:core:noforce:shard1` and `test:core:noforce:shard2` both complete successfully without `--forceExit`.
+- Known issue (Windows, intermittent): `vite build` in `packages/web-client` may fail with `spawn EPERM` (esbuild process spawn). Mitigation added: web-client build script now retries `vite build` once via `scripts/vite-build-retry.cjs`.
+- Clarification (2026-03-03): `npm --prefix packages/web-client run test` runs `jest` only; `vite` appears only through build scripts (e.g. `build:web-client` in chained commands).
 
 ## Next Session Start
 - Keep `test:core:stable` ignore list empty and guard against regressions.
 - Keep targeted path cleanup only when touching historical docs.
 
 ## Next Tasks
-1. Find remaining open handles outside `bot-initializer` by targeted `--detectOpenHandles` runs in each shard (start from long-running infra/error suites).
-2. Keep `test:core:stable` green without expanding ignore list; use `test:core:ci` with `--forceExit` until remaining handles are closed.
+1. Keep noforce shard runs green and re-check after each lifecycle/test cleanup change.
+2. Keep `test:core:stable` green without expanding ignore list.
 3. Keep package-level build/test checks green after each incremental refactor step.
 
 ### Open Handle Triage Checklist

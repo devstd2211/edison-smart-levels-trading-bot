@@ -321,6 +321,9 @@
 - [x] Added aggregate triage script `test:core:handles:smoke` to run A/B/CDEF + heavy handle suites in one command (2026-03-01)
 - [x] Refactored `bot-initializer.error-handling` test cleanup via shared helper (`cleanupMonitoringResources`) in section C (2026-03-01)
 - [x] Normalized mojibake arrows in `bot-initializer.error-handling` test names (`â†’` -> `->`) for readability (2026-03-01)
+- [x] Clarified `web-client` test/build behavior: `npm --prefix packages/web-client run test` runs Jest only; `vite` is invoked only by build scripts (2026-03-03)
+- [x] Added Windows mitigation for intermittent `vite build` `spawn EPERM`: one-time retry wrapper (`packages/web-client/scripts/vite-build-retry.cjs`) wired in `packages/web-client/package.json` (2026-03-03)
+- [x] Re-verified package web-client checks after mitigation: `npm run build:web-client` and `npm run test:web-client -- --runInBand` PASS (2026-03-03)
 
 **Next Tasks**
 1. `test:core:stable` ignore list is now empty; keep it empty for new changes.
@@ -386,6 +389,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Constructor re-scan (timers/subscriptions/IO heuristics) found no remaining side effects
 - [x] ILifecycle implemented for WebSocketManager/PublicWebSocket/PositionMonitor/MonitoringServer
 - [x] BotInitializer tests updated for start/stop changes
+- [x] BotInitializer lifecycle starts refactored through shared helper (execution/monitoring/resilience/server) with unchanged error policy
+- [x] Targeted BotInitializer lifecycle suites re-verified: `bot-initializer.test.ts` + `services/bot-initializer.error-handling.test.ts` (36/36, 2026-03-03)
+- [x] Open-handle triage: fixed `MTFSnapshotGate` interval leaks in `mtf-snapshot-gate.test.ts` + `mtf-snapshot-gate.functional.test.ts` via explicit teardown
+- [x] Open-handle triage: fixed `bot-initializer.test.ts` lifecycle leak with `afterEach` shutdown cleanup
+- [x] Noforce shard validation stabilized post-fix: `test:core:noforce:shard1` and `test:core:noforce:shard2` complete (2026-03-03)
 
 **Next Iteration Plan**
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (grouped containers as primary wiring).

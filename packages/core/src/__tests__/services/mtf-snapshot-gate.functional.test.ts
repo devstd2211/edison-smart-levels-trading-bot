@@ -129,6 +129,11 @@ describe('MTFSnapshotGate - Functional Tests', () => {
     gate.start();
   });
 
+  afterEach(() => {
+    gate.stop();
+    jest.useRealTimers();
+  });
+
   // ========================================================================
   // REALISTIC TRADING SCENARIOS
   // ========================================================================

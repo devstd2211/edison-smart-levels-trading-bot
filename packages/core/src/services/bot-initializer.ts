@@ -856,22 +856,8 @@ export class BotInitializer {
     if (!monitoring) {
       return;
     }
-
-    const startService = async (service: unknown, name: string): Promise<void> => {
-      if (!this.isLifecycleService(service)) {
-        return;
-      }
-      try {
-        await service.start();
-      } catch (error) {
-        this.logger.error(`Failed to start ${name}`, {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
-
-    await startService(monitoring.metricsService, 'metrics service');
-    await startService(monitoring.dashboard, 'dashboard');
+    await this.startLifecycleService(monitoring.metricsService, 'metrics service');
+    await this.startLifecycleService(monitoring.dashboard, 'dashboard');
   }
 
   private async startResilienceServices(): Promise<void> {
@@ -879,48 +865,20 @@ export class BotInitializer {
     if (!resilience) {
       return;
     }
-
-    const startService = async (service: unknown, name: string): Promise<void> => {
-      if (!this.isLifecycleService(service)) {
-        return;
-      }
-      try {
-        await service.start();
-      } catch (error) {
-        this.logger.error(`Failed to start ${name}`, {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
-
-    await startService(resilience.rateLimiter, 'rate limiter');
-    await startService(resilience.retryPolicy, 'retry policy');
-    await startService(resilience.bulkhead, 'bulkhead');
+    await this.startLifecycleService(resilience.rateLimiter, 'rate limiter');
+    await this.startLifecycleService(resilience.retryPolicy, 'retry policy');
+    await this.startLifecycleService(resilience.bulkhead, 'bulkhead');
   }
 
   private async startExecutionServices(): Promise<void> {
     const { tradingOrchestrator, orderStateMachine } = this.services.executionServices;
 
-    if (this.isLifecycleService(tradingOrchestrator)) {
-      try {
-        await tradingOrchestrator.start();
-      } catch (error) {
-        this.logger.error('Failed to start trading orchestrator', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        throw error;
-      }
-    }
-
-    if (this.isLifecycleService(orderStateMachine)) {
-      try {
-        await orderStateMachine.start();
-      } catch (error) {
-        this.logger.error('Failed to start order state machine', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
+    await this.startLifecycleService(
+      tradingOrchestrator,
+      'trading orchestrator',
+      { throwOnError: true },
+    );
+    await this.startLifecycleService(orderStateMachine, 'order state machine');
   }
 
   /**
@@ -932,11 +890,28 @@ export class BotInitializer {
       return;
     }
 
-    monitoringServer.start().catch((error) => {
-      this.logger.error('Failed to start monitoring server', {
+    void this.startLifecycleService(monitoringServer, 'monitoring server');
+  }
+
+  private async startLifecycleService(
+    service: unknown,
+    name: string,
+    options: { throwOnError?: boolean } = {},
+  ): Promise<void> {
+    if (!this.isLifecycleService(service)) {
+      return;
+    }
+
+    try {
+      await service.start();
+    } catch (error) {
+      this.logger.error(`Failed to start ${name}`, {
         error: error instanceof Error ? error.message : String(error),
       });
-    });
+      if (options.throwOnError) {
+        throw error;
+      }
+    }
   }
 
   /**

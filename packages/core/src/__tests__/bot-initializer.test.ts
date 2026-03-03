@@ -213,6 +213,10 @@ describe('BotInitializer', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {
+    await initializer.shutdown().catch(() => undefined);
+  });
+
   describe('initialize()', () => {
     it('should initialize all components in correct order', async () => {
       const callOrder: string[] = [];

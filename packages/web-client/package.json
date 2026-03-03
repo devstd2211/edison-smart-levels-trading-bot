@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && node ./scripts/vite-build-retry.cjs",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
