@@ -141,38 +141,7 @@ export class PositionLifecycleService {
       // STEP 2: Cancel any hanging conditional orders from previous position
       // Phase 8.9.17: ErrorHandler integration with RETRY → SKIP strategy
       // ===================================================================
-      this.logger.debug('🧹 Cancelling any hanging conditional orders before opening...');
-      if (this.errorHandler) {
-        const cancelResult = await this.errorHandler.executeAsync(
-          () => this.bybitService.cancelAllConditionalOrders(),
-          {
-            strategy: RecoveryStrategy.RETRY,
-            retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
-            context: 'PositionLifecycleService.openPosition.cancelAllConditionalOrders',
-            onFailure: () => {
-              this.logger.warn('Failed to cancel hanging orders (non-blocking)', {
-                note: 'Continuing with position opening',
-              });
-            },
-          }
-        );
-
-        if (!cancelResult.success) {
-          // SKIP: non-blocking operation - continue anyway
-          this.logger.warn('Hanging order cancellation skipped, proceeding with position open', {
-            error: cancelResult.error?.message,
-          });
-        }
-      } else {
-        try {
-          await this.bybitService.cancelAllConditionalOrders();
-        } catch (error) {
-          this.logger.warn('Failed to cancel hanging orders', {
-            error: error instanceof Error ? error.message : String(error),
-          });
-          // Continue anyway - don't fail the position opening
-        }
-      }
+      await this.cancelHangingOrdersBeforeOpen();
 
       // ===================================================================
       // STEP 3: Calculate SL with price recalculation
@@ -181,32 +150,7 @@ export class PositionLifecycleService {
       const isLong = signal.direction === SignalDirection.LONG;
       const side = isLong ? PositionSide.LONG : PositionSide.SHORT;
       const slDistance = this.calculateSLDistance(signal.price, signal.stopLoss);
-
-      let currentPrice = signal.price;
-      if (this.errorHandler) {
-        const priceResult = await this.errorHandler.executeAsync(
-          () => this.bybitService.getCurrentPrice(),
-          {
-            strategy: RecoveryStrategy.RETRY,
-            retryConfig: { maxAttempts: 3, initialDelayMs: 500, backoffMultiplier: 2 },
-            context: 'PositionLifecycleService.openPosition.getCurrentPrice',
-            onRetry: (attempt, error, delayMs) => {
-              this.logger.warn(`🔄 Retrying price fetch (${attempt}/3)`, {
-                delayMs,
-                error: error.message,
-              });
-            },
-            onFailure: () => {
-              this.logger.warn('⚠️ Price fetch failed, falling back to signal price', {
-                signalPrice: signal.price,
-              });
-            },
-          }
-        );
-        currentPrice = priceResult.success && priceResult.value !== undefined ? priceResult.value : signal.price;
-      } else {
-        currentPrice = await this.bybitService.getCurrentPrice();
-      }
+      const currentPrice = await this.resolveCurrentPriceForOpen(signal.price);
 
       const actualStopLoss = this.calculateActualStopLoss(isLong, currentPrice, slDistance);
 
@@ -880,6 +824,71 @@ export class PositionLifecycleService {
     slDistance: number,
   ): number {
     return isLong ? currentPrice - slDistance : currentPrice + slDistance;
+  }
+
+  private async cancelHangingOrdersBeforeOpen(): Promise<void> {
+    this.logger.debug('🧹 Cancelling any hanging conditional orders before opening...');
+    if (this.errorHandler) {
+      const cancelResult = await this.errorHandler.executeAsync(
+        () => this.bybitService.cancelAllConditionalOrders(),
+        {
+          strategy: RecoveryStrategy.RETRY,
+          retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
+          context: 'PositionLifecycleService.openPosition.cancelAllConditionalOrders',
+          onFailure: () => {
+            this.logger.warn('Failed to cancel hanging orders (non-blocking)', {
+              note: 'Continuing with position opening',
+            });
+          },
+        }
+      );
+
+      if (!cancelResult.success) {
+        // SKIP: non-blocking operation - continue anyway
+        this.logger.warn('Hanging order cancellation skipped, proceeding with position open', {
+          error: cancelResult.error?.message,
+        });
+      }
+      return;
+    }
+
+    try {
+      await this.bybitService.cancelAllConditionalOrders();
+    } catch (error) {
+      this.logger.warn('Failed to cancel hanging orders', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Continue anyway - don't fail the position opening
+    }
+  }
+
+  private async resolveCurrentPriceForOpen(signalPrice: number): Promise<number> {
+    if (this.errorHandler) {
+      const priceResult = await this.errorHandler.executeAsync(
+        () => this.bybitService.getCurrentPrice(),
+        {
+          strategy: RecoveryStrategy.RETRY,
+          retryConfig: { maxAttempts: 3, initialDelayMs: 500, backoffMultiplier: 2 },
+          context: 'PositionLifecycleService.openPosition.getCurrentPrice',
+          onRetry: (attempt, error, delayMs) => {
+            this.logger.warn(`🔄 Retrying price fetch (${attempt}/3)`, {
+              delayMs,
+              error: error.message,
+            });
+          },
+          onFailure: () => {
+            this.logger.warn('⚠️ Price fetch failed, falling back to signal price', {
+              signalPrice,
+            });
+          },
+        }
+      );
+      return priceResult.success && priceResult.value !== undefined
+        ? priceResult.value
+        : signalPrice;
+    }
+
+    return this.bybitService.getCurrentPrice();
   }
 
   private isDynamicPositionSizingEnabled(): boolean {

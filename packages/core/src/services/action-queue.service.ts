@@ -45,10 +45,7 @@ export class ActionQueueService implements IActionQueue {
     return typeof candidate.type === 'string' ? candidate.type : 'unknown';
   }
 
-  /**
-   * Add action to queue
-   */
-  async enqueue(action: IAction): Promise<void> {
+  private ensureActionDefaults(action: IAction): void {
     if (!action.id) {
       action.id = randomUUID();
     }
@@ -61,6 +58,13 @@ export class ActionQueueService implements IActionQueue {
     if (!action.retries) {
       action.retries = 0;
     }
+  }
+
+  /**
+   * Add action to queue
+   */
+  async enqueue(action: IAction): Promise<void> {
+    this.ensureActionDefaults(action);
 
     this.queue.push(action);
     this.totalEnqueued++;

@@ -1,7 +1,9 @@
 import { TradingBot } from '../bot';
 import { createServices } from '../services/bot-factory.service';
+import type { BotFactoryOptions } from '../services/bot-factory.service';
 import { createTradingBotServiceBundle } from '../services/bot-services-adapter';
 import type { Config } from '../types/legacy';
+import type { IExchange } from '../interfaces';
 
 function getMinimalConfig(): Config {
   return {
@@ -41,7 +43,7 @@ function getMinimalConfig(): Config {
     },
     strategies: {},
     analyzers: [],
-  } as any;
+  } as unknown as Config;
 }
 
 describe('TradingBot + createServices lifecycle orchestration', () => {
@@ -63,14 +65,14 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
     };
 
     const serviceState = createServices(config, {
-      bybitService: mockExchange as any,
-      telegram: mockTelegram as any,
+      bybitService: mockExchange as unknown as IExchange,
+      telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
     });
     const bot = new TradingBot(createTradingBotServiceBundle(serviceState), config);
 
-    const wsManager = serviceState.marketDataServices.webSocketManager as any;
-    const publicWs = serviceState.marketDataServices.publicWebSocket as any;
-    const positionMonitor = serviceState.executionServices.positionMonitor as any;
+    const wsManager = serviceState.marketDataServices.webSocketManager;
+    const publicWs = serviceState.marketDataServices.publicWebSocket;
+    const positionMonitor = serviceState.executionServices.positionMonitor;
 
     const syncSpy = jest
       .spyOn(serviceState.coreServices.timeService, 'syncWithExchange')

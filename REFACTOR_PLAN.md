@@ -49,7 +49,7 @@
 - [x] Dependency map documented in docs/architecture/dependency-map.md
 - [x] Dependency map source updated to bot-services.builder.ts
 - [x] First migration slice proposed (WebApiServices/BotWebAPI read-only group)
-- [ ] Tests not run yet after refactor batches (status unknown)
+- [x] Tests re-run after refactor batches (targeted + shard noforce checks), status tracked in-session
 - [x] Build run 2026-02-27 succeeded after legacy/type/test fixes
 - [x] Group containers created
 - [x] MarketDataServices scaffolded
@@ -158,9 +158,17 @@
 - [x] Tests any cleanup batch 4: error-result + position validator tests
 - [x] Tests any cleanup batch 5: smoke-tests + integration tests
 - [x] Tests any cleanup batch 6: error-registry + base/domain error tests
+- [x] Tests any cleanup batch 10: position lifecycle safety + error-handling suites (`position-lifecycle.p0-safety.test.ts`, `position-lifecycle.error-handling.test.ts`)
 - [x] Tests any cleanup batch 7: phase-10-3b/3c + exit/entry-exit orchestrator tests
 - [x] Tests any cleanup batch 8: entry/exit/filter orchestrator error-handling tests
 - [x] Tests any cleanup batch 9: indicators (volume/stochastic/rsi/ema/bollinger/atr)
+- [x] Tests any cleanup batch 11: trading lifecycle error-handling suite (`trading-lifecycle.error-handling.test.ts`)
+- [x] Tests any cleanup batch 12: action queue error-handling suite (`action-queue.error-handling.test.ts`)
+- [x] Tests any cleanup batch 13: virtual balance error-handling suite (`virtual-balance.error-handling.test.ts`)
+- [x] Tests any cleanup batch 14: PnL calculator error-handling suite (`pnl-calculator.error-handling.test.ts`)
+- [x] Tests any cleanup batch 15: delta analyzer service suite (`delta-analyzer.service.test.ts`)
+- [x] Tests any cleanup batch 16: entry confirmation error-handling suite (`entry-confirmation.error-handling.test.ts`)
+- [x] Tests any cleanup batch 17: event deduplication error-handling suite (`event-deduplication.error-handling.test.ts`)
 - [x] BotServices.toObject reduced to grouped services
 - [x] CoreServices container introduced and TradingBot wired
 - [x] EventHandlerServices container introduced and wired
@@ -361,7 +369,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 ### Step-by-Step Checklist
 - [x] Introduce `LifecycleManager` with `start()` and `stop()` methods.
 - [x] Ensure services that open sockets/timers implement `start/stop`.
-- [ ] Move side-effects out of constructors into `start`.
+- [x] Move side-effects out of constructors into `start`.
 - [x] Create lightweight `createServices()` factory that is side-effect free.
 - [x] Refactor `TradingBot.start()` to only orchestrate lifecycle, not initialize dependencies.
 - [x] Refactor `BotInitializer` into a `Bootstrapper` that wires lifecycle steps.
@@ -418,6 +426,35 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Re-verified complementary noforce shard after lifecycle-test addition: `test:core:noforce:shard1` PASS (153/153 suites, 2026-03-03)
 - [x] Added `TradingBot` lifecycle delegation unit coverage for explicit `BotInitializer.bootstrap()`/`shutdown()` orchestration (`trading-bot.lifecycle.test.ts`, 3/3, 2026-03-03)
 - [x] Re-verified noforce shards after TradingBot lifecycle suite addition: `test:core:noforce:shard1` PASS (153/153 suites) and `test:core:noforce:shard2` PASS (153/153 suites), 2026-03-03
+- [x] BotInitializer startup path now consistently uses shared lifecycle starter for websocket + position monitor (`startLifecycleService(..., { throwOnError: true })`) with retry semantics unchanged (2026-03-04)
+- [x] BotInitializer lifecycle test doubles cleaned up: removed legacy `connect`/`disconnect` stubs, lifecycle assertions now rely on `start/stop` (2026-03-04)
+- [x] Re-verified noforce shards after lifecycle cleanup: `test:core:noforce:shard1` PASS (154 suites, 3515 tests) and `test:core:noforce:shard2` PASS (153 suites, 3506 tests), both exit cleanly without `--forceExit` (2026-03-04)
+- [x] `TradingBot` lifecycle suites `any` cleanup completed (`trading-bot.lifecycle.test.ts`, `trading-bot.create-services.lifecycle.test.ts`) with targeted re-verification 4/4 PASS (2026-03-04)
+- [x] `bot-factory.error-handling.test.ts` `any` cleanup completed via typed config mutation helpers (`deleteConfigPath`/`setConfigPath`) and typed error/context assertions; re-verified 36/36 PASS (2026-03-04)
+- [x] `bot-initializer.error-handling.test.ts` typing hardening started (typed logger/config + mock-service alias for Jest mock methods preserved); targeted lifecycle error-handling suite re-verified 15/15 PASS (2026-03-04)
+- [x] Note on BotInitializer error-handling suite: private-method `jest.spyOn` still requires localized `as any` cast due TS/Jest private-member typing (`never`) constraints; behavior covered and stable (2026-03-04)
+- [x] `position-lifecycle.p0-safety.test.ts` `any` cleanup completed for mock dependencies and internal-state access (typed internal-state helper, typed call-message guards); targeted suite re-verified 14/14 PASS (2026-03-04)
+- [x] `PositionLifecycleService` decomposition started (behavior-preserving): extracted `cancelHangingOrdersBeforeOpen()` and `resolveCurrentPriceForOpen()` from `openPosition()` to reduce method complexity without changing runtime flow (2026-03-04)
+- [x] Re-verified PositionLifecycle target suites after decomposition step: `position-lifecycle.error-handling.test.ts` + `position-lifecycle.p0-safety.test.ts` = 36/36 PASS (2026-03-04)
+- [x] `TradingLifecycleManager` decomposition started (behavior-preserving): extracted timeout warning event publication into `emitWarningTimeoutEvent(...)` to reduce `checkPositionTimeouts()` complexity without changing runtime flow (2026-03-04)
+- [x] Re-verified `trading-lifecycle.error-handling.test.ts` after TradingLifecycle service + test cleanup: 35/35 PASS (2026-03-04)
+- [x] `TradingLifecycleManager` decomposition continued (behavior-preserving): extracted emergency-close timeout-triggered event publication into `emitEmergencyCloseEvent(...)` to reduce `triggerEmergencyClose()` complexity without changing runtime flow (2026-03-04)
+- [x] Re-verified `trading-lifecycle.error-handling.test.ts` after emergency-close event extraction: 35/35 PASS (2026-03-04)
+- [x] Tests any cleanup follow-up: removed remaining `Promise<any>` usage in `trading-lifecycle.error-handling.test.ts` (cascading-failure `executeAsync` mock now uses typed result shape) (2026-03-04)
+- [x] `TradingLifecycleManager` decomposition continued (behavior-preserving): extracted emergency-close action creation into `buildEmergencyCloseAction(...)` to reduce `triggerEmergencyClose()` method complexity while preserving enqueue payload/runtime behavior (2026-03-04)
+- [x] Re-verified `trading-lifecycle.error-handling.test.ts` after test typing cleanup + action-builder extraction: 35/35 PASS (2026-03-04)
+- [x] `ActionQueueService` service follow-up after test refactor: extracted enqueue defaulting into `ensureActionDefaults(...)` (behavior-preserving decomposition, no runtime-flow change) (2026-03-04)
+- [x] Re-verified `action-queue.error-handling.test.ts` after test+service cleanup: 26/26 PASS (2026-03-04)
+- [x] `VirtualBalanceService` service follow-up after test refactor: extracted all-time-extremes update logic into `updateAllTimeExtremes()` (behavior-preserving decomposition, no runtime-flow change) (2026-03-04)
+- [x] Re-verified `virtual-balance.error-handling.test.ts` after test+service cleanup: 35/35 PASS (2026-03-04)
+- [x] `PnLCalculatorService` candidate review after test refactor: no behavior-preserving decomposition required in this pass (logic already compact and static); deferred until larger math/validation consolidation slice (2026-03-04)
+- [x] Re-verified `pnl-calculator.error-handling.test.ts` after test typing cleanup: 20/20 PASS (2026-03-04)
+- [x] `DeltaAnalyzerService` service follow-up after test refactor: extracted repeated neutral-result construction into `createNeutralAnalysis()` (behavior-preserving decomposition, no runtime-flow change) (2026-03-04)
+- [x] Re-verified `delta-analyzer.service.test.ts` after test+service cleanup: 28/28 PASS (2026-03-04)
+- [x] `EntryConfirmationManager` service follow-up after test refactor: extracted pending-entry id generation into `buildPendingId(...)` (behavior-preserving decomposition, no runtime-flow change) (2026-03-04)
+- [x] Re-verified `entry-confirmation.error-handling.test.ts` after test+service cleanup: 17/17 PASS (2026-03-04)
+- [x] `EventDeduplicationService` service follow-up after test refactor: extracted event-key generation into `buildEventKey(...)` (behavior-preserving decomposition, no runtime-flow change) (2026-03-04)
+- [x] Re-verified `event-deduplication.error-handling.test.ts` after test+service cleanup: 20/20 PASS (2026-03-04)
 - [x] Added integration lifecycle test for real `TradingBot` + `createServices()` path (idle-before-start + explicit `start()/stop()`), `trading-bot.create-services.lifecycle.test.ts` (1/1, 2026-03-03)
 - [x] Re-verified noforce shard stability after TradingBot+createServices lifecycle integration test: `test:core:noforce:shard1` PASS (154/154 suites) and `test:core:noforce:shard2` PASS (153/153 suites), 2026-03-03
 - [x] Core `any` cleanup continued (2026-03-03): `ExchangeFactory` Bybit config path now uses typed `timeframe` + direct `BybitService` config (removed `bybitConfig as any`)

@@ -42,6 +42,18 @@ export class DeltaAnalyzerService {
     });
   }
 
+  private createNeutralAnalysis(): DeltaAnalysis {
+    return {
+      timestamp: Date.now(),
+      buyVolume: 0,
+      sellVolume: 0,
+      delta: 0,
+      deltaPercent: 0,
+      trend: 'NEUTRAL',
+      strength: 0,
+    };
+  }
+
   /**
    * Safe logging wrapper - SKIP strategy for logger errors
    */
@@ -197,15 +209,7 @@ export class DeltaAnalyzerService {
 
       if (recentTicks.length === 0) {
         // No data - return neutral
-        return {
-          timestamp: Date.now(),
-          buyVolume: 0,
-          sellVolume: 0,
-          delta: 0,
-          deltaPercent: 0,
-          trend: 'NEUTRAL',
-          strength: 0,
-        };
+        return this.createNeutralAnalysis();
       }
 
       let buyVolume = 0;
@@ -221,15 +225,7 @@ export class DeltaAnalyzerService {
 
       // GRACEFUL_DEGRADE: Handle NaN/Infinity in volume calculations
       if (!Number.isFinite(buyVolume) || !Number.isFinite(sellVolume)) {
-        return {
-          timestamp: Date.now(),
-          buyVolume: 0,
-          sellVolume: 0,
-          delta: 0,
-          deltaPercent: 0,
-          trend: 'NEUTRAL',
-          strength: 0,
-        };
+        return this.createNeutralAnalysis();
       }
 
       const totalVolume = buyVolume + sellVolume;
@@ -289,15 +285,7 @@ export class DeltaAnalyzerService {
       if (this.errorHandler) {
         this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
-      return {
-        timestamp: Date.now(),
-        buyVolume: 0,
-        sellVolume: 0,
-        delta: 0,
-        deltaPercent: 0,
-        trend: 'NEUTRAL',
-        strength: 0,
-      };
+      return this.createNeutralAnalysis();
     }
   }
 

@@ -47,6 +47,12 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     errorHandler = createMockErrorHandler();
   });
 
+  const getProcessedEvents = (
+    target: EventDeduplicationService
+  ): Map<string, number> => {
+    return (target as unknown as { processedEvents: Map<string, number> }).processedEvents;
+  };
+
   // ========================================================================
   // SKIP Strategy Tests (4 tests)
   // ========================================================================
@@ -150,7 +156,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
       // Manually add events to trigger potential cleanup
       const now = Date.now();
       for (let i = 0; i < 11; i++) {
-        (corruptedService as any).processedEvents.set(`key-${i}`, now);
+        getProcessedEvents(corruptedService).set(`key-${i}`, now);
       }
 
       // Call isDuplicate to test deduplication

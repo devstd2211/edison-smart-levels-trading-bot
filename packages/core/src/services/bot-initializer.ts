@@ -272,15 +272,27 @@ export class BotInitializer {
 
       // Connect Private WebSocket with retry
       this.logger.info('Connecting Private WebSocket...');
-      await this.connectWithRetry('Private WebSocket', () => {
-        return this.services.marketDataServices.webSocketManager.start();
-      });
+      await this.connectWithRetry(
+        'Private WebSocket',
+        () =>
+          this.startLifecycleService(
+            this.services.marketDataServices.webSocketManager,
+            'private WebSocket',
+            { throwOnError: true },
+          ),
+      );
 
       // Connect Public WebSocket with retry
       this.logger.info('Connecting Public WebSocket...');
-      await this.connectWithRetry('Public WebSocket', () => {
-        return this.services.marketDataServices.publicWebSocket.start();
-      });
+      await this.connectWithRetry(
+        'Public WebSocket',
+        () =>
+          this.startLifecycleService(
+            this.services.marketDataServices.publicWebSocket,
+            'public WebSocket',
+            { throwOnError: true },
+          ),
+      );
 
       this.logger.info('✅ WebSocket connections established');
 
@@ -410,7 +422,11 @@ export class BotInitializer {
    */
   private async startPositionMonitor(): Promise<void> {
     const performStart = async () => {
-      this.services.executionServices.positionMonitor.start();
+      await this.startLifecycleService(
+        this.services.executionServices.positionMonitor,
+        'position monitor',
+        { throwOnError: true },
+      );
       this.logger.debug('Position monitor started');
     };
 

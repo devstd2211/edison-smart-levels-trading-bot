@@ -272,61 +272,24 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
 
         // Emit warning alert only once per position
         if (!this.warningEmittedFor.has(positionId)) {
+          const roundedHoldingMinutes = Math.round(holdingTimeMinutes);
+          const minutesUntilTimeout = Math.round(maxHoldingMinutes - holdingTimeMinutes);
           const warningAlert: TimeoutAlert = {
             positionId: position.positionId,
             symbol: position.symbol,
-            holdingTimeMinutes: Math.round(holdingTimeMinutes),
+            holdingTimeMinutes: roundedHoldingMinutes,
             state: newState,
-            minutesUntilTimeout: Math.round(maxHoldingMinutes - holdingTimeMinutes),
+            minutesUntilTimeout,
           };
           alerts.push(warningAlert);
 
-          // RETRY Strategy: Emit warning event with error recovery
-          if (this.errorHandler) {
-            try {
-              await this.errorHandler.executeAsync(
-                async () => {
-                  this.eventBus.publishSync({
-                    type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
-                    data: {
-                      positionId: position.positionId,
-                      symbol: position.symbol,
-                      holdingTimeMinutes: Math.round(holdingTimeMinutes),
-                      minutesUntilTimeout: Math.round(maxHoldingMinutes - holdingTimeMinutes),
-                    } as PositionTimeoutWarningEvent,
-                    timestamp: now,
-                  });
-                },
-                {
-                  strategy: RecoveryStrategy.RETRY,
-                  context: `TradingLifecycleManager.emitWarningEvent[${position.positionId}]`,
-                  retryConfig: {
-                    maxAttempts: 2,
-                    initialDelayMs: 100,
-                    backoffMultiplier: 2,
-                    maxDelayMs: 400,
-                  },
-                }
-              );
-            } catch (error) {
-              // SKIP: Event publishing failure doesn't block timeout detection
-              this.logger.warn(
-                `[TradingLifecycleManager] Failed to emit warning event for ${position.positionId}: ${error instanceof Error ? error.message : String(error)}`
-              );
-            }
-          } else {
-            // Fallback without ErrorHandler
-            this.eventBus.publishSync({
-              type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
-              data: {
-                positionId: position.positionId,
-                symbol: position.symbol,
-                holdingTimeMinutes: Math.round(holdingTimeMinutes),
-                minutesUntilTimeout: Math.round(maxHoldingMinutes - holdingTimeMinutes),
-              } as PositionTimeoutWarningEvent,
-              timestamp: now,
-            });
-          }
+          await this.emitWarningTimeoutEvent({
+            positionId: position.positionId,
+            symbol: position.symbol,
+            holdingTimeMinutes: roundedHoldingMinutes,
+            minutesUntilTimeout,
+            timestamp: now,
+          });
 
           this.warningEmittedFor.add(positionId);
           this.logger.warn(
@@ -364,6 +327,117 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       positions: alerts,
       anyWarnings,
       anyCritical,
+    };
+  }
+
+  private async emitWarningTimeoutEvent(payload: {
+    positionId: string;
+    symbol: string;
+    holdingTimeMinutes: number;
+    minutesUntilTimeout: number;
+    timestamp: number;
+  }): Promise<void> {
+    const eventData: PositionTimeoutWarningEvent = {
+      positionId: payload.positionId,
+      symbol: payload.symbol,
+      holdingTimeMinutes: payload.holdingTimeMinutes,
+      minutesUntilTimeout: payload.minutesUntilTimeout,
+    };
+
+    if (this.errorHandler) {
+      try {
+        await this.errorHandler.executeAsync(
+          async () => {
+            this.eventBus.publishSync({
+              type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
+              data: eventData,
+              timestamp: payload.timestamp,
+            });
+          },
+          {
+            strategy: RecoveryStrategy.RETRY,
+            context: `TradingLifecycleManager.emitWarningEvent[${payload.positionId}]`,
+            retryConfig: {
+              maxAttempts: 2,
+              initialDelayMs: 100,
+              backoffMultiplier: 2,
+              maxDelayMs: 400,
+            },
+          }
+        );
+      } catch (error) {
+        // SKIP: Event publishing failure doesn't block timeout detection
+        this.logger.warn(
+          `[TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+      return;
+    }
+
+    // Fallback without ErrorHandler
+    this.eventBus.publishSync({
+      type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
+      data: eventData,
+      timestamp: payload.timestamp,
+    });
+  }
+
+  private async emitEmergencyCloseEvent(request: EmergencyCloseRequest): Promise<void> {
+    const eventData = {
+      positionId: request.positionId,
+      reason: request.reason,
+      priority: request.priority,
+      details: request.details,
+    };
+
+    if (this.errorHandler) {
+      try {
+        await this.errorHandler.executeAsync(
+          async () => {
+            this.eventBus.publishSync({
+              type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
+              data: eventData,
+              timestamp: Date.now(),
+            });
+          },
+          {
+            strategy: RecoveryStrategy.RETRY,
+            context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
+            retryConfig: {
+              maxAttempts: 2,
+              initialDelayMs: 100,
+              backoffMultiplier: 2,
+              maxDelayMs: 400,
+            },
+          }
+        );
+      } catch (error) {
+        // SKIP: Event publication failure should not block emergency close execution
+        this.logger.warn(
+          `[TradingLifecycleManager] Failed emergency close event publication for ${request.positionId}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+      return;
+    }
+
+    this.eventBus.publishSync({
+      type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
+      data: eventData,
+      timestamp: Date.now(),
+    });
+  }
+
+  private buildEmergencyCloseAction(request: EmergencyCloseRequest): IAction {
+    return {
+      id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      type: ActionType.CLOSE_PERCENT,
+      timestamp: Date.now(),
+      priority: 'HIGH' as const,
+      metadata: {
+        positionId: request.positionId,
+        percent: 100,
+        reason: request.reason,
+      },
     };
   }
 
@@ -423,66 +497,11 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
         }
       }
 
-      // RETRY Strategy: Emit emergency close event with error recovery
-      try {
-        if (this.errorHandler) {
-          await this.errorHandler.executeAsync(
-            async () => {
-              this.eventBus.publishSync({
-                type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
-                data: {
-                  positionId: request.positionId,
-                  reason: request.reason,
-                  priority: request.priority,
-                  details: request.details,
-                },
-                timestamp: Date.now(),
-              });
-            },
-            {
-              strategy: RecoveryStrategy.RETRY,
-              context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
-              retryConfig: {
-                maxAttempts: 2,
-                initialDelayMs: 100,
-                backoffMultiplier: 2,
-                maxDelayMs: 400,
-              },
-            }
-          );
-        } else {
-          // Fallback without ErrorHandler
-          this.eventBus.publishSync({
-            type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
-            data: {
-              positionId: request.positionId,
-              reason: request.reason,
-              priority: request.priority,
-              details: request.details,
-            },
-            timestamp: Date.now(),
-          });
-        }
-      } catch (eventError) {
-        // SKIP: Event publishing failure doesn't block action queueing
-        this.logger.warn(
-          `[TradingLifecycleManager] Failed to emit emergency close event: ${eventError instanceof Error ? eventError.message : String(eventError)}`
-        );
-      }
+      await this.emitEmergencyCloseEvent(request);
 
       // FALLBACK Strategy: Queue close action with error recovery
       try {
-        const closeAction: IAction = {
-          id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          type: ActionType.CLOSE_PERCENT,
-          timestamp: Date.now(),
-          priority: 'HIGH' as const,
-          metadata: {
-            positionId: request.positionId,
-            percent: 100,
-            reason: request.reason,
-          },
-        };
+        const closeAction = this.buildEmergencyCloseAction(request);
 
         if (this.errorHandler) {
           await this.errorHandler.executeAsync(

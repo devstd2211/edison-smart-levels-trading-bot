@@ -1,5 +1,9 @@
 # Refactor Task Breakdown
 
+Note:
+- `REFACTOR_PLAN.md` is the source of truth for progress/status.
+- This file is a task catalog/backlog (decomposition by area), not a chronological progress log.
+
 ## A) DI + Containers
 1. Create `docs/architecture/dependency-map.md` with all services from `packages/core/src/services/bot-services.builder.ts` and their dependencies.
 2. Add grouped service interfaces in `packages/core/src/interfaces`:
@@ -30,13 +34,13 @@
 6. Add `tsconfig` references for packages.
 7. Replace dynamic import of `packages/web-server/dist` with typed package import.
 8. Update build scripts to enforce order: `packages/contracts -> packages/web-server -> packages/core -> packages/web-client`.
-9. Add per‑package build/test scripts.
+9. Add per-package build/test scripts.
 
 ## C) Lifecycle + Testability
 1. Add `ILifecycle` interface with `start/stop`.
 2. Create `LifecycleManager` orchestration.
 3. Refactor services with timers/sockets to implement `ILifecycle`.
-4. Make constructors side‑effect free in those services.
+4. Make constructors side-effect free in those services.
 5. Update `BotInitializer` to use `LifecycleManager`.
 6. Update `TradingBot.start()` to orchestrate lifecycle only.
 7. Update tests to use `createServices()` + `start/stop`.

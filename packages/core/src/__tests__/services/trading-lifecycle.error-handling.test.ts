@@ -16,9 +16,11 @@ import {
   PositionLifecycleState,
   EmergencyCloseReason,
   TrackedPosition,
+  PositionLifecycleConfig,
 } from '../../types/legacy';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
+import type { LoggerService } from '../../services/logger.service';
 
 // ============================================================================
 // MOCK UTILITIES
@@ -52,8 +54,11 @@ const createMockActionQueue = () => ({
 });
 
 const createMockErrorHandler = () => {
+  type ExecuteAsyncResult = { success: boolean; value?: unknown; error?: TradingError };
+  type ExecuteAsyncConfig = { retryConfig?: { maxAttempts?: number; initialDelayMs?: number } };
+
   const mockEH = {
-    handle: jest.fn((error: any, options: any): any => {
+    handle: jest.fn((error: unknown, options: { strategy?: RecoveryStrategy }) => {
       if (options.strategy === RecoveryStrategy.THROW) {
         throw error;
       }
@@ -64,9 +69,9 @@ const createMockErrorHandler = () => {
       };
     }),
     executeAsync: jest.fn(
-      async (fn: () => Promise<any>, config: any): Promise<{ success: boolean; value?: any; error?: TradingError }> => {
+      async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig): Promise<ExecuteAsyncResult> => {
         // Simulate RETRY with exponential backoff
-        let lastError: any = null;
+        let lastError: unknown = null;
         const maxAttempts = config?.retryConfig?.maxAttempts ?? 1;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -110,7 +115,9 @@ const createTrackedPosition = (overrides?: Partial<TrackedPosition>): TrackedPos
   ...overrides,
 });
 
-const createConfig = (overrides?: any) => ({
+const createConfig = (
+  overrides?: Partial<PositionLifecycleConfig>,
+): PositionLifecycleConfig => ({
   maxHoldingTimeMinutes: 60,
   warningThresholdMinutes: 45,
   enableAutomaticTimeout: true,
@@ -136,9 +143,9 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
     manager = new TradingLifecycleManager(
       createConfig(),
-      mockLogger as any,
-      mockEventBus as any,
-      mockActionQueue as any,
+      mockLogger as unknown as LoggerService,
+      mockEventBus as unknown as BotEventBus,
+      mockActionQueue as unknown as ActionQueueService,
       mockErrorHandler
     );
 
@@ -150,9 +157,9 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('RETRY Strategy - Event Publication', () => {
     it('should retry event publishing on transient failure', async () => {
       // Setup: Properly mock executeAsync to simulate retry BEFORE test
-      mockErrorHandler.executeAsync.mockImplementation(async (fn, config): Promise<any> => {
+      mockErrorHandler.executeAsync.mockImplementation(async (fn, config) => {
         const maxAttempts = config?.retryConfig?.maxAttempts ?? 1;
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
           try {
@@ -198,9 +205,9 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
     it('should handle recurring event publication failures gracefully', async () => {
       // Setup: Mock executeAsync FIRST to handle all retries failing gracefully
-      mockErrorHandler.executeAsync.mockImplementation(async (fn, config): Promise<any> => {
+      mockErrorHandler.executeAsync.mockImplementation(async (fn, config) => {
         const maxAttempts = config?.retryConfig?.maxAttempts ?? 1;
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
           try {
@@ -358,7 +365,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
     it('should handle unknown state gracefully', () => {
       const isValid = manager.validateStateTransition(
-        'UNKNOWN' as any,
+        'UNKNOWN' as unknown as PositionLifecycleState,
         PositionLifecycleState.OPEN
       );
 
@@ -566,9 +573,9 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
       const newManager = new TradingLifecycleManager(
         createConfig(),
-        newLogger as any,
-        newEventBus as any,
-        newActionQueue as any
+        newLogger as unknown as LoggerService,
+        newEventBus as unknown as BotEventBus,
+        newActionQueue as unknown as ActionQueueService
       );
 
       newManager.start();
@@ -689,7 +696,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('Cascading Failures & Recovery', () => {
     it('should handle multiple failures in timeout check', async () => {
       // Mock executeAsync FIRST to handle failures gracefully
-      mockErrorHandler.executeAsync.mockImplementation(async (fn, config): Promise<any> => {
+      mockErrorHandler.executeAsync.mockImplementation(async (fn, config): Promise<{ success: boolean; value?: unknown; error?: TradingError }> => {
         try {
           const value = await fn();
           return { success: true, value };
@@ -779,9 +786,9 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
     it('should respect automatic timeout configuration', async () => {
       const autoManager = new TradingLifecycleManager(
         createConfig({ enableAutomaticTimeout: false }),
-        mockLogger as any,
-        mockEventBus as any,
-        mockActionQueue as any
+        mockLogger as unknown as LoggerService,
+        mockEventBus as unknown as BotEventBus,
+        mockActionQueue as unknown as ActionQueueService
       );
 
       const position = createTrackedPosition({
@@ -835,9 +842,9 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       expect(() => {
         new TradingLifecycleManager(
           createConfig(),
-          mockLogger as any,
-          mockEventBus as any,
-          mockActionQueue as any
+          mockLogger as unknown as LoggerService,
+          mockEventBus as unknown as BotEventBus,
+          mockActionQueue as unknown as ActionQueueService
         );
       }).not.toThrow();
     });

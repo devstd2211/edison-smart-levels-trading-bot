@@ -266,6 +266,18 @@ export class VirtualBalanceService {
     return { ...this.state! };
   }
 
+  private updateAllTimeExtremes(): void {
+    if (!this.state) {
+      return;
+    }
+    if (this.state.currentBalance > this.state.allTimeHigh) {
+      this.state.allTimeHigh = this.state.currentBalance;
+    }
+    if (this.state.currentBalance < this.state.allTimeLow) {
+      this.state.allTimeLow = this.state.currentBalance;
+    }
+  }
+
   /**
    * Update balance after trade (SKIP on logging errors, THROW on validation)
    */
@@ -287,13 +299,7 @@ export class VirtualBalanceService {
     this.state!.lastTradeId = tradeId;
     this.state!.totalProfit = this.state!.currentBalance - this.state!.baseDeposit;
 
-    // Update all-time highs/lows
-    if (this.state!.currentBalance > this.state!.allTimeHigh) {
-      this.state!.allTimeHigh = this.state!.currentBalance;
-    }
-    if (this.state!.currentBalance < this.state!.allTimeLow) {
-      this.state!.allTimeLow = this.state!.currentBalance;
-    }
+    this.updateAllTimeExtremes();
 
     this.saveState(this.state!);
 

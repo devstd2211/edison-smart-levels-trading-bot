@@ -9,6 +9,7 @@ import * as path from 'path';
 import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
+import type { LoggerService } from '../../services/logger.service';
 
 // Simple mock logger for error handling tests
 const mockLogger = {
@@ -16,7 +17,7 @@ const mockLogger = {
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
-} as any;
+} as unknown as LoggerService;
 
 // Test data directory
 const testDataDir = './test-data-vb';

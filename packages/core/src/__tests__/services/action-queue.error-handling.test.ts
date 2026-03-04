@@ -5,7 +5,18 @@
 
 import { ActionQueueService } from '../../services/action-queue.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { IAction, ActionResult, IActionHandler, AnyAction, ActionType, OpenPositionAction, ClosePositionAction } from '../../types/legacy';
+import {
+  IAction,
+  ActionResult,
+  IActionHandler,
+  AnyAction,
+  ActionType,
+  OpenPositionAction,
+  ClosePositionAction,
+  Signal,
+  SignalDirection,
+  SignalType,
+} from '../../types/legacy';
 
 const mockLogger = {
   info: jest.fn(),
@@ -13,6 +24,19 @@ const mockLogger = {
   error: jest.fn(),
   debug: jest.fn(),
 };
+
+function createTestSignal(): Signal {
+  return {
+    direction: SignalDirection.LONG,
+    type: SignalType.LEVEL_BASED,
+    confidence: 70,
+    price: 100,
+    stopLoss: 95,
+    takeProfits: [{ level: 1, percent: 100, sizePercent: 100, price: 110, hit: false }],
+    reason: 'test',
+    timestamp: Date.now(),
+  };
+}
 
 // Helper to create a simple test action
 function createTestAction(
@@ -33,7 +57,7 @@ function createTestAction(
   if (type === ActionType.OPEN_POSITION) {
     return {
       ...base,
-      signal: {} as any,
+      signal: createTestSignal(),
       positionSize: 1,
       stopLoss: 100,
       takeProfits: [110],
@@ -315,8 +339,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
 
     it('should handle mixed success/failure in bulk', async () => {
       const handler = createTestHandler('MixedHandler', null, async (a) => {
-        const meta = (a as any).metadata;
-        if (meta.shouldFail) {
+        if (a.metadata?.shouldFail) {
           return {
             success: false,
             actionId: a.id,
@@ -350,11 +373,11 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 7: Action Validation ==========
   describe('Scenario 7: Action validation and auto-generation', () => {
     it('should auto-generate missing action fields', async () => {
-      const action: any = {
+      const action = {
         type: ActionType.OPEN_POSITION,
         priority: 'NORMAL',
         metadata: {},
-      };
+      } as unknown as IAction;
 
       await service.enqueue(action);
 

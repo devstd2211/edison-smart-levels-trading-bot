@@ -1,8 +1,10 @@
 import { TradingBot } from '../bot';
+import type { TradingBotServiceBundle } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
 import { WebSocketEventHandlerManager } from '../services/websocket-event-handler-manager';
+import type { Config } from '../types/legacy';
 
-const createConfig = (): any => ({
+const createConfig = (): Config => ({
   exchange: { symbol: 'XRPUSDT' },
   trading: {},
   timeframes: {
@@ -10,9 +12,9 @@ const createConfig = (): any => ({
     primary: { enabled: true, interval: '5' },
   },
   dashboard: { enabled: false },
-});
+} as unknown as Config);
 
-const createServices = (): any => {
+const createServices = (): TradingBotServiceBundle => {
   const logger = {
     info: jest.fn(),
     warn: jest.fn(),
@@ -94,7 +96,7 @@ const createServices = (): any => {
       onOrderbookUpdate: jest.fn(),
       checkWhaleSignalRealtime: jest.fn(),
     },
-  };
+  } as unknown as TradingBotServiceBundle;
 };
 
 describe('TradingBot lifecycle delegation', () => {

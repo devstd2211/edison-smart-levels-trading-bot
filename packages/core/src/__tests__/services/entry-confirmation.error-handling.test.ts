@@ -459,7 +459,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
         direction: SignalDirection.LONG,
         keyLevel: 1.5000,
         detectedAt: Date.now(),
-        signalData: null as any,
+        signalData: null as unknown as Record<string, unknown>,
       });
 
       expect(manager.getPendingCount()).toBe(1);

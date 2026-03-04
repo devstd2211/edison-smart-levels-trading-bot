@@ -50,7 +50,7 @@ export interface BotFactoryOptions {
   bybitService?: IExchange;
 
   // Notification service (for testing without sending messages)
-  telegram?: any;
+  telegram?: BotServicesState['telegram'];
 
   // Logger (for testing with custom logger)
   logger?: LoggerService;

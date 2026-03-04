@@ -13,6 +13,9 @@
 
 import { BotInitializer } from '../../services/bot-initializer';
 import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
+import type { Config } from '../../types/legacy';
+import type { IBotInitializerServices } from '../../interfaces';
+import type { LoggerService } from '../../services/logger.service';
 import {
   ExchangeConnectionError,
   ExchangeRateLimitError,
@@ -25,7 +28,9 @@ import {
 // MOCK SETUP
 // ============================================================================
 
-const createMockLogger = (): any => ({
+type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error' | 'getLogFilePath'>;
+
+const createMockLogger = (): LoggerLike => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -33,7 +38,7 @@ const createMockLogger = (): any => ({
   getLogFilePath: jest.fn().mockReturnValue('/mock/log/path'),
 });
 
-const createMinimalConfig = (): any => ({
+const createMinimalConfig = (): Config => ({
   exchange: {
     apiKey: 'test-key',
     apiSecret: 'test-secret',
@@ -78,16 +83,16 @@ const createMinimalConfig = (): any => ({
     orderbook: { enabled: true, updateIntervalMs: 100 },
     ticks: { enabled: true, calculateDelta: true },
   },
-  strategies: {} as any,
-  entryConfirmation: {} as any,
+  strategies: {} as Config['strategies'],
+  entryConfirmation: {} as Config['entryConfirmation'],
   telegram: { enabled: false },
   analysisConfig: {},
   strategicWeights: {},
   tradeHistory: {},
-  strategy: {} as any,
-});
+  strategy: {} as Config['strategy'],
+} as unknown as Config);
 
-const createMockBotServices = (): any => {
+const createMockBotServices = () => {
   const logger = createMockLogger();
 
   return {
@@ -120,15 +125,11 @@ const createMockBotServices = (): any => {
       webSocketManager: {
         start: jest.fn(),
         stop: jest.fn(),
-        connect: jest.fn(),
-        disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
       },
       publicWebSocket: {
         start: jest.fn(),
         stop: jest.fn(),
-        connect: jest.fn(),
-        disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
       },
     },
@@ -154,6 +155,8 @@ const createMockBotServices = (): any => {
   };
 };
 
+type MockBotServices = ReturnType<typeof createMockBotServices>;
+
 const createMockErrorHandler = (): jest.Mocked<ErrorHandler> => {
   return {
     handle: jest.fn(async (operation, options) => {
@@ -177,8 +180,8 @@ const createMockErrorHandler = (): jest.Mocked<ErrorHandler> => {
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
-  let mockServices: any;
-  let mockConfig: any;
+  let mockServices: MockBotServices;
+  let mockConfig: Config;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   const cleanupMonitoringResources = async (): Promise<void> => {
     await initializer.shutdown();
@@ -188,7 +191,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     mockServices = createMockBotServices();
     mockConfig = createMinimalConfig();
     mockErrorHandler = createMockErrorHandler();
-    initializer = new BotInitializer(mockServices, mockConfig, mockErrorHandler);
+    initializer = new BotInitializer(
+      mockServices as unknown as IBotInitializerServices,
+      mockConfig,
+      mockErrorHandler,
+    );
 
     jest.clearAllMocks();
   });
@@ -465,7 +472,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   describe('F: Backward Compatibility (without ErrorHandler)', () => {
     test('F1: Service works without ErrorHandler -> errors propagate as before', async () => {
       // Create initializer without error handler
-      const initWithoutHandler = new BotInitializer(mockServices, mockConfig, undefined);
+      const initWithoutHandler = new BotInitializer(
+        mockServices as unknown as IBotInitializerServices,
+        mockConfig,
+        undefined,
+      );
 
       // Make Bybit fail
       mockServices.marketDataServices.bybitService.initialize.mockRejectedValueOnce(

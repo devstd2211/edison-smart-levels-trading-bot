@@ -26,7 +26,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
       debug: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
 
     errorHandler = new ErrorHandler(mockLogger);
   });

@@ -49,22 +49,22 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     tradingFeeRate: 0.0002,
     positionSizeUsdt: 100,
     riskPercent: 2,
-  } as any;
+  } as unknown as TradingConfig;
 
   const mockRiskConfig: RiskManagementConfig = {
     trailingStopActivationLevel: 2,
-  } as any;
+  } as unknown as RiskManagementConfig;
 
   const mockEntryConfirmationConfig: EntryConfirmationConfig = {
     longEnabled: false,
     shortEnabled: false,
-  } as any;
+  } as unknown as EntryConfirmationConfig;
 
   const mockConfig: Config = {
-    exchange: { name: 'bybit', testnet: true } as any,
+    exchange: { name: 'bybit', testnet: true } as unknown as Config['exchange'],
     trading: mockTradingConfig,
     riskManagement: mockRiskConfig,
-  } as any;
+  } as unknown as Config;
 
   const mockSignal: Signal = {
     direction: SignalDirection.LONG,
@@ -77,8 +77,8 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     ],
     timestamp: Date.now(),
     confidence: 0.85,
-    type: 'technical' as any,
-  } as any;
+    type: 'technical',
+  } as unknown as Signal;
 
   const mockPosition: Position = {
     id: 'BTC_BUY',
@@ -109,19 +109,19 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   };
 
   beforeEach(() => {
-    const openPositionFn = jest.fn<any>().mockResolvedValue(mockPosition);
-    const closePositionFn = jest.fn<any>().mockResolvedValue(undefined);
-    const cancelAllOrdersFn = jest.fn<any>().mockResolvedValue(undefined);
-    const updateTPFn = jest.fn<any>().mockResolvedValue(undefined);
-    const getPriceFn = jest.fn<any>().mockResolvedValue(40000);
-    const getSymbolFn = jest.fn<any>().mockReturnValue('BTCUSDT');
+    const openPositionFn = jest.fn<() => Promise<Position>>().mockResolvedValue(mockPosition);
+    const closePositionFn = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const cancelAllOrdersFn = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const updateTPFn = jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined);
+    const getPriceFn = jest.fn<() => Promise<number>>().mockResolvedValue(40000);
+    const getSymbolFn = jest.fn<() => string>().mockReturnValue('BTCUSDT');
 
-    const notifyOpenedFn = jest.fn<any>().mockResolvedValue(undefined);
-    const sendAlertFn = jest.fn<any>().mockResolvedValue(undefined);
+    const notifyOpenedFn = jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined);
+    const sendAlertFn = jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined);
 
-    const recordOpenFn = jest.fn<any>();
-    const recordCloseFn = jest.fn<any>();
-    const getOpenPosFn = jest.fn<any>().mockReturnValue({ id: 'JOURNAL1' } as any);
+    const recordOpenFn = jest.fn();
+    const recordCloseFn = jest.fn();
+    const getOpenPosFn = jest.fn().mockReturnValue({ id: 'JOURNAL1' });
 
     mockExchange = {
       openPosition: openPositionFn,
@@ -130,36 +130,36 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       updateTakeProfitPartial: updateTPFn,
       getCurrentPrice: getPriceFn,
       getSymbol: getSymbolFn,
-    } as any;
+    } as unknown as jest.Mocked<IExchange>;
 
     mockTelegram = {
       notifyPositionOpened: notifyOpenedFn,
       sendAlert: sendAlertFn,
-    } as any;
+    } as unknown as jest.Mocked<TelegramService>;
 
     mockLogger = {
-      info: jest.fn<any>(),
-      warn: jest.fn<any>(),
-      error: jest.fn<any>(),
-      debug: jest.fn<any>(),
-    } as any;
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockJournal = {
       recordTradeOpen: recordOpenFn,
       recordTradeClose: recordCloseFn,
       getOpenPositionBySymbol: getOpenPosFn,
-    } as any;
+    } as unknown as jest.Mocked<TradingJournalService>;
 
     mockEventBus = {
-      emit: jest.fn<any>(),
-      on: jest.fn<any>(),
-      off: jest.fn<any>(),
-    } as any;
+      emit: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+    } as unknown as jest.Mocked<BotEventBus>;
 
     mockRepository = {
-      getCurrentPosition: jest.fn<any>().mockReturnValue(mockPosition),
-      setCurrentPosition: jest.fn<any>(),
-    } as any;
+      getCurrentPosition: jest.fn().mockReturnValue(mockPosition),
+      setCurrentPosition: jest.fn(),
+    } as unknown as jest.Mocked<IPositionRepository>;
 
     service = new PositionLifecycleService(
       mockExchange,
@@ -377,7 +377,9 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // SKIP strategy for non-critical secondary TP levels
       expect(mockExchange.updateTakeProfitPartial).toBeDefined();
       // Verify the mocking is set up
-      (mockExchange.updateTakeProfitPartial as jest.Mock<any>).mockRejectedValue(new Error('TP failed'));
+      (mockExchange.updateTakeProfitPartial as unknown as jest.Mock).mockImplementation(
+        async () => Promise.reject(new Error('TP failed'))
+      );
       expect(mockExchange.updateTakeProfitPartial).toBeDefined();
     });
 
@@ -430,7 +432,9 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // In real scenario: cancel failures, telegram failures, TP failures all handled
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('Cancel timeout'));
       mockTelegram.notifyPositionOpened.mockRejectedValue(new Error('Telegram down'));
-      (mockExchange.updateTakeProfitPartial as jest.Mock<any>).mockRejectedValue(new Error('TP failed'));
+      (mockExchange.updateTakeProfitPartial as unknown as jest.Mock).mockImplementation(
+        async () => Promise.reject(new Error('TP failed'))
+      );
 
       // Verify all mocks are properly configured for cascading failure handling
       expect(mockExchange.cancelAllConditionalOrders).toBeDefined();
@@ -605,8 +609,8 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       });
 
       // 4. updateTakeProfitPartial fails (will be skipped)
-      (mockExchange.updateTakeProfitPartial as jest.Mock<any>).mockRejectedValue(
-        new Error('TP validation failed')
+      (mockExchange.updateTakeProfitPartial as unknown as jest.Mock).mockImplementation(
+        async () => Promise.reject(new Error('TP validation failed'))
       );
 
       // Verify ErrorHandler callbacks are configured

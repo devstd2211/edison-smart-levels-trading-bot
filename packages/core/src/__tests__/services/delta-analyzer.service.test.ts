@@ -1,5 +1,5 @@
 import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
-import { LoggerService, LogLevel, DeltaConfig, DeltaTick, SignalDirection, Signal } from '../../types/legacy';
+import { LoggerService, LogLevel, DeltaConfig, DeltaTick, SignalDirection, Signal, SignalType } from '../../types/legacy';
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
@@ -261,7 +261,7 @@ describe('DeltaAnalyzerService', () => {
   describe('confirmSignal', () => {
     const mockSignal = (direction: SignalDirection): Signal => ({
       timestamp: Date.now(),
-      type: 'ENTRY' as any,
+      type: SignalType.LEVEL_BASED,
       direction,
       price: 50000,
       stopLoss: 49500,

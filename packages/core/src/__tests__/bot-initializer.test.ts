@@ -153,15 +153,11 @@ const createMockBotServices = (): IBotInitializerServices => {
       webSocketManager: {
         start: jest.fn(),
         stop: jest.fn(),
-        connect: jest.fn(),
-        disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
       },
       publicWebSocket: {
         start: jest.fn(),
         stop: jest.fn(),
-        connect: jest.fn(),
-        disconnect: jest.fn(),
         removeAllListeners: jest.fn(),
         on: jest.fn(),
         off: jest.fn(),

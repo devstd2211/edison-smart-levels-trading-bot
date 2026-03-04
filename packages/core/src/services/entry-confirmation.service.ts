@@ -61,6 +61,10 @@ export interface ConfirmationResult {
 export class EntryConfirmationManager {
   private pendingEntries: Map<string, PendingEntry> = new Map();
 
+  private buildPendingId(symbol: string, direction: SignalDirection): string {
+    return `${symbol}_${direction}_${Date.now()}`;
+  }
+
   constructor(
     private config: EntryConfirmationConfig,
     private logger: LoggerService,
@@ -115,7 +119,7 @@ export class EntryConfirmationManager {
    * @returns Pending entry ID
    */
   addPending(entry: Omit<PendingEntry, 'id' | 'expiresAt'>): string {
-    const id = `${entry.symbol}_${entry.direction}_${Date.now()}`;
+    const id = this.buildPendingId(entry.symbol, entry.direction);
     const expiryMs = this.getExpiryMs(entry.direction);
     const expiresAt = Date.now() + expiryMs;
 

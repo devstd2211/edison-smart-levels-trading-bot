@@ -1,6 +1,7 @@
 import { BotInitializer } from '../../services/bot-initializer';
 import { createServices } from '../../services/bot-factory.service';
 import type { Config } from '../../types/legacy';
+import type { IExchange, IBotInitializerServices } from '../../interfaces';
 
 function getMinimalConfig(): Config {
   return {
@@ -39,7 +40,7 @@ function getMinimalConfig(): Config {
     },
     strategies: {},
     analyzers: [],
-  } as any;
+  } as unknown as Config;
 }
 
 describe('createServices lifecycle orchestration', () => {
@@ -54,17 +55,17 @@ describe('createServices lifecycle orchestration', () => {
       getCandles: jest.fn().mockResolvedValue([]),
       getServerTime: jest.fn().mockResolvedValue(Date.now()),
       isConnected: jest.fn(() => true),
-    };
+    } as unknown as IExchange;
 
     const services = createServices(config, {
-      bybitService: mockExchange as any,
+      bybitService: mockExchange,
     });
-    const initializer = new BotInitializer(services as any, config);
+    const initializer = new BotInitializer(services as unknown as IBotInitializerServices, config);
 
-    const bybit = services.marketDataServices.bybitService as any;
-    const wsManager = services.marketDataServices.webSocketManager as any;
-    const publicWs = services.marketDataServices.publicWebSocket as any;
-    const positionMonitor = services.executionServices.positionMonitor as any;
+    const bybit = services.marketDataServices.bybitService;
+    const wsManager = services.marketDataServices.webSocketManager;
+    const publicWs = services.marketDataServices.publicWebSocket;
+    const positionMonitor = services.executionServices.positionMonitor;
 
     const bybitInitSpy = jest.spyOn(bybit, 'initialize');
     const bybitOpenPositionsSpy = jest.spyOn(bybit, 'getOpenPositions');

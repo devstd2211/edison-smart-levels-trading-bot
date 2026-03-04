@@ -17,7 +17,7 @@ import { TradingJournalService } from '../../services/trading-journal.service';
 import { IExchange } from '../../interfaces/IExchange';
 
 // Mock dependencies
-const mockExchange: any = {
+const mockExchange = {
   closePosition: jest.fn().mockResolvedValue(undefined),
   placeOrder: jest.fn(),
   cancelOrder: jest.fn(),
@@ -35,17 +35,17 @@ const mockExchange: any = {
   subscribeToPositions: jest.fn(),
   subscribeToOrders: jest.fn(),
   unsubscribeTicker: jest.fn(),
-};
+} as unknown as IExchange;
 
-const mockLogger: any = {
+const mockLogger = {
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
   log: jest.fn(),
-};
+} as unknown as LoggerService;
 
-const mockEventBus: any = {
+const mockEventBus = {
   emit: jest.fn(),
   on: jest.fn(),
   off: jest.fn(),
@@ -53,15 +53,15 @@ const mockEventBus: any = {
   publish: jest.fn(),
   subscribe: jest.fn(),
   unsubscribe: jest.fn(),
-};
+} as unknown as BotEventBus;
 
-const mockTelegram: any = {
+const mockTelegram = {
   sendMessage: jest.fn(),
-};
+} as unknown as TelegramService;
 
-const mockJournal: any = {
+const mockJournal = {
   recordTrade: jest.fn(),
-};
+} as unknown as TradingJournalService;
 
 const createMockPosition = (): Position => ({
   id: 'BTCUSDT_Buy',
@@ -91,26 +91,35 @@ const createMockPosition = (): Position => ({
 describe('PositionLifecycleService - P0 Safety Tests', () => {
   let service: PositionLifecycleService;
   let position: Position;
+  type InternalPositionLifecycleState = {
+    currentPosition: Position | null;
+    positionClosing: Set<string>;
+  };
+  const internals = (): InternalPositionLifecycleState =>
+    service as unknown as InternalPositionLifecycleState;
+  const setCurrentPosition = (value: Position | null): void => {
+    internals().currentPosition = value;
+  };
 
   const mockConfig: TradingConfig = {
     leverage: 10,
     positionSize: 100,
-  } as any;
+  } as unknown as TradingConfig;
 
   const mockRiskConfig: RiskManagementConfig = {
     dailyLossLimit: 1000,
     maxConsecutiveLosses: 3,
-  } as any;
+  } as unknown as RiskManagementConfig;
 
   const mockEntryConfig: EntryConfirmationConfig = {
     enabled: false,
-  } as any;
+  } as unknown as EntryConfirmationConfig;
 
   const mockFullConfig: Config = {
     trading: mockConfig,
     riskManagement: mockRiskConfig,
     entryConfirmation: mockEntryConfig,
-  } as any;
+  } as unknown as Config;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -137,21 +146,22 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   describe('P0.1: Atomic Lock for Position Close', () => {
     test('AL1: First close attempt succeeds', async () => {
       // Set position in service
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       await service.closePositionWithAtomicLock('Test close');
 
       // Position should be cleared after closing
-      expect((service as any).currentPosition).toBeNull();
+      expect(internals().currentPosition).toBeNull();
       // Check that the message contains the expected text (ignoring second arg object)
-      const infoCall = mockLogger.info.mock.calls.find((call: any[]) =>
-        call[0]?.includes('[P0.1 + P3] Position closed successfully')
+      const infoCall = (mockLogger.info as jest.Mock).mock.calls.find((call: unknown[]) =>
+        typeof call[0] === 'string'
+        && call[0].includes('[P0.1 + P3] Position closed successfully')
       );
       expect(infoCall).toBeDefined();
     });
 
     test('AL2: Concurrent close attempts wait for first', async () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       // Start two concurrent closes
       const promise1 = service.closePositionWithAtomicLock('Close 1');
@@ -160,28 +170,29 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       await Promise.all([promise1, promise2]);
 
       // Position should be cleared only once (atomic lock prevented second)
-      expect((service as any).currentPosition).toBeNull();
+      expect(internals().currentPosition).toBeNull();
 
       // Both should complete - second should warn about already closing
-      const warnCall = mockLogger.warn.mock.calls.find((call: any[]) =>
-        call[0]?.includes('[P0.1 + P3] Position already closing')
+      const warnCall = (mockLogger.warn as jest.Mock).mock.calls.find((call: unknown[]) =>
+        typeof call[0] === 'string'
+        && call[0].includes('[P0.1 + P3] Position already closing')
       );
       expect(warnCall).toBeDefined();
     });
 
     test('AL3: Lock released after successful close', async () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       await service.closePositionWithAtomicLock('Close 1');
 
       // Lock should be cleaned up
-      const positionClosing = (service as any).positionClosing;
+      const positionClosing = internals().positionClosing;
       expect(positionClosing.has(position.id)).toBe(false);
     });
 
     test('AL4: Lock released after failed close', async () => {
-      (service as any).currentPosition = position;
-      mockExchange.closePosition.mockRejectedValueOnce(new Error('Exchange error'));
+      setCurrentPosition(position);
+      (mockExchange.closePosition as jest.Mock).mockRejectedValueOnce(new Error('Exchange error'));
 
       try {
         await service.closePositionWithAtomicLock('Close fail');
@@ -190,17 +201,18 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       }
 
       // Lock should still be cleaned up even on error
-      const positionClosing = (service as any).positionClosing;
+      const positionClosing = internals().positionClosing;
       expect(positionClosing.has(position.id)).toBe(false);
     });
 
     test('AL5: Null reference check on stale position', async () => {
-      (service as any).currentPosition = null; // Position already cleared
+      setCurrentPosition(null); // Position already cleared
 
       await service.closePositionWithAtomicLock('Stale position');
 
-      const infoCall = mockLogger.info.mock.calls.find((call: any[]) =>
-        call[0]?.includes('[P0.1 + P3] Position already closed or not found')
+      const infoCall = (mockLogger.info as jest.Mock).mock.calls.find((call: unknown[]) =>
+        typeof call[0] === 'string'
+        && call[0].includes('[P0.1 + P3] Position already closed or not found')
       );
       expect(infoCall).toBeDefined();
       expect(mockExchange.closePosition).not.toHaveBeenCalled();
@@ -213,7 +225,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
 
   describe('P0.3: Atomic Position Snapshots', () => {
     test('AS1: Snapshot is deep copy, not reference', () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       const snapshot = service.getPositionSnapshot();
 
@@ -223,7 +235,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS2: Modifying snapshot doesn\'t affect original', () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
       const originalPnL = position.unrealizedPnL;
 
       const snapshot = service.getPositionSnapshot();
@@ -236,7 +248,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS3: WebSocket changes don\'t affect in-flight snapshot', async () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       // Get snapshot
       const snapshot = service.getPositionSnapshot();
@@ -244,7 +256,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       // Simulate WebSocket update
       const updated = createMockPosition();
       updated.unrealizedPnL = 9000; // Large change
-      (service as any).currentPosition = updated;
+      setCurrentPosition(updated);
 
       // Snapshot should still have original PnL
       expect(snapshot?.unrealizedPnL).toBe(500);
@@ -254,7 +266,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS4: Multiple snapshots are independent', () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       const snapshot1 = service.getPositionSnapshot();
       const snapshot2 = service.getPositionSnapshot();
@@ -270,7 +282,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS5: Null position returns null snapshot', () => {
-      (service as any).currentPosition = null;
+      setCurrentPosition(null);
 
       const snapshot = service.getPositionSnapshot();
 
@@ -278,7 +290,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS6: Snapshot preserves all fields', () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       const snapshot = service.getPositionSnapshot();
 
@@ -293,7 +305,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS7: Snapshot can be used safely for calculations', () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       const snapshot = service.getPositionSnapshot();
 
@@ -305,7 +317,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     });
 
     test('AS8: Concurrent snapshot reads are safe', async () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       // Multiple concurrent snapshot reads
       const promises = [
@@ -331,7 +343,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
 
   describe('P0.1 + P0.3 Integration', () => {
     test('INT1: Atomic lock + snapshots prevent race condition', async () => {
-      (service as any).currentPosition = position;
+      setCurrentPosition(position);
 
       // Simulate: Health monitor gets snapshot while close happens
       const snapshotPromise = Promise.resolve(service.getPositionSnapshot());

@@ -29,6 +29,10 @@ export class EventDeduplicationService {
   private readonly cacheSize: number;
   private readonly cacheTtlMs: number;
 
+  private buildEventKey(eventType: string, eventId: string, timestamp: number): string {
+    return `${eventType}_${eventId}_${timestamp}`;
+  }
+
   constructor(
     cacheSize: number = INTEGER_MULTIPLIERS.ONE_HUNDRED,
     cacheTtlMs: number = TIME_UNITS.MINUTE, // 1 minute TTL
@@ -47,7 +51,7 @@ export class EventDeduplicationService {
    * @returns true if event was already processed, false if new
    */
   public isDuplicate(eventType: string, eventId: string, timestamp: number): boolean {
-    const eventKey = `${eventType}_${eventId}_${timestamp}`;
+    const eventKey = this.buildEventKey(eventType, eventId, timestamp);
 
     // Check if event already processed
     if (this.processedEvents.has(eventKey)) {
@@ -137,3 +141,4 @@ export class EventDeduplicationService {
     }
   }
 }
+

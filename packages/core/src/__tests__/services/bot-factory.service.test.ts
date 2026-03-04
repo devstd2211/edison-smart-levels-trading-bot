@@ -5,8 +5,9 @@
  * Tests verify that BotFactory correctly manages service creation and DI
  */
 
-import { createServices } from '../../services/bot-factory.service';
+import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
 import { Config } from '../../types/legacy';
+import type { IExchange } from '../../interfaces/IExchange';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -46,7 +47,7 @@ function getMinimalConfig(): Config {
     },
     strategies: {},
     analyzers: [],
-  } as any;
+  } as unknown as Config;
 }
 
 describe('BotFactory - DI Container for BotServices state', () => {
@@ -101,13 +102,13 @@ describe('BotFactory - DI Container for BotServices state', () => {
     };
 
     const mockTelegram = {
-      notifyBotStarted: jest.fn(),
-      notifyBotStopped: jest.fn(),
+      notifyBotStarted: jest.fn().mockResolvedValue(undefined),
+      notifyBotStopped: jest.fn().mockResolvedValue(undefined),
     };
 
     test('T5: Should allow exchange service override', () => {
       const services = createServices(config, {
-        bybitService: mockExchange as any,
+        bybitService: mockExchange as unknown as IExchange,
       });
 
       expect(services.marketDataServices.bybitService).toBe(mockExchange);
@@ -116,7 +117,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
     test('T6: Should allow telegram service override', () => {
       const services = createServices(config, {
-        telegram: mockTelegram as any,
+        telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
 
       expect(services.coreServices.telegram).toBe(mockTelegram);
@@ -125,8 +126,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
     test('T7: Should allow multiple service overrides', () => {
       const services = createServices(config, {
-        bybitService: mockExchange as any,
-        telegram: mockTelegram as any,
+        bybitService: mockExchange as unknown as IExchange,
+        telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
 
       expect(services.marketDataServices.bybitService).toBe(mockExchange);
@@ -135,7 +136,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
     test('T8: Override should not affect other instances', () => {
       const services1 = createServices(config, {
-        telegram: mockTelegram as any,
+        telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
 
       const services2 = createServices(config, {});
@@ -153,7 +154,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       };
 
       const services = createServices(config, {
-        bybitService: mockExchange as any,
+        bybitService: mockExchange as unknown as IExchange,
       });
 
       expect(services).toBeDefined();
@@ -175,7 +176,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
         openPosition: jest.fn(async () => ({
           id: 'test-pos-123',
           symbol: 'XRPUSDT',
-          side: 'LONG' as any,
+          side: 'Buy',
           quantity: 100,
           entryPrice: 0.5,
           leverage: 10,
@@ -186,7 +187,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       };
 
       const services = createServices(config, {
-        bybitService: mockExchange as any,
+        bybitService: mockExchange as unknown as IExchange,
       });
 
       expect(services.marketDataServices.bybitService.openPosition).toBeDefined();
@@ -197,11 +198,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const exchangeB = { name: 'BinanceMock', isConnected: jest.fn(() => true) };
 
       const servicesA = createServices(config, {
-        bybitService: exchangeA as any,
+        bybitService: exchangeA as unknown as IExchange,
       });
 
       const servicesB = createServices(config, {
-        bybitService: exchangeB as any,
+        bybitService: exchangeB as unknown as IExchange,
       });
 
       expect(servicesA.marketDataServices.bybitService.name).toBe('BybitMock');
@@ -213,15 +214,15 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const mockExchange2 = { name: 'Exchange2' };
 
       const services1 = createServices(config, {
-        bybitService: mockExchange1 as any,
+        bybitService: mockExchange1 as unknown as IExchange,
       });
 
       const services2 = createServices(config, {
-        bybitService: mockExchange2 as any,
+        bybitService: mockExchange2 as unknown as IExchange,
       });
 
-      expect((services1.marketDataServices.bybitService as any).name).toBe('Exchange1');
-      expect((services2.marketDataServices.bybitService as any).name).toBe('Exchange2');
+      expect(services1.marketDataServices.bybitService.name).toBe('Exchange1');
+      expect(services2.marketDataServices.bybitService.name).toBe('Exchange2');
     });
   });
 
@@ -242,7 +243,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const mockExchange = { name: 'MockExchange' };
 
       const services = createServices(config, {
-        bybitService: mockExchange as any,
+        bybitService: mockExchange as unknown as IExchange,
       });
 
       expect(services).toBeDefined();
