@@ -272,7 +272,7 @@ describe('StrategyOrchestratorCacheService', () => {
   describe('Performance', () => {
     it('should handle large number of strategies', () => {
       const strategyCount = 100;
-      const orchestrators: any[] = [];
+      const orchestrators: Array<ReturnType<typeof createMockOrchestrator>> = [];
 
       // Cache 100 strategies (with LRU eviction to max 10)
       for (let i = 0; i < strategyCount; i++) {

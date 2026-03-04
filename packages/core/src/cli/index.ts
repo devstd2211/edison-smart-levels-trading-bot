@@ -226,5 +226,7 @@ function delay(ms: number): Promise<void> {
 // START
 // ============================================================================
 
-// Start the bot
-void main();
+// Start only when executed directly (avoid double-start when imported by wrapper entrypoint).
+if (require.main === module) {
+  void main();
+}

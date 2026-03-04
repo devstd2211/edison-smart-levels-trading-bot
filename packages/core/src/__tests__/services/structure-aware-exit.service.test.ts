@@ -35,12 +35,11 @@ describe('StructureAwareExitService', () => {
   };
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as any;
+    mockLogger = new LoggerService('ERROR', './logs', false);
+    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
 
     service = new StructureAwareExitService(defaultConfig, mockLogger);
   });

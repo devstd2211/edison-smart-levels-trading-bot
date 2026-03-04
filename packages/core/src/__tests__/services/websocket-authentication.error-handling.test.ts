@@ -5,9 +5,20 @@
 
 import { WebSocketAuthenticationService, WebSocketAuthPayload } from '../../services/websocket-authentication.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import type { ErrorLogger } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 
-const createMockLogger = () => ({
+type AuthLogger = Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: unknown) => void>>;
+type TestErrorLogger = jest.Mocked<ErrorLogger>;
+
+const createMockAuthLogger = (): AuthLogger => ({
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+});
+
+const createMockErrorLogger = (): TestErrorLogger => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -17,11 +28,11 @@ const createMockLogger = () => ({
 describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
-  let mockLogger: any;
+  let mockLogger: AuthLogger;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    errorHandler = new ErrorHandler(mockLogger);
+    mockLogger = createMockAuthLogger();
+    errorHandler = new ErrorHandler(createMockErrorLogger());
     service = new WebSocketAuthenticationService(mockLogger, errorHandler);
   });
 
@@ -29,13 +40,13 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   describe('THROW: Input Validation', () => {
     it('should throw when apiKey is null', () => {
       expect(() => {
-        service.generateAuthPayload(null as any, 'valid-secret-key');
+        service.generateAuthPayload(null as unknown as string, 'valid-secret-key');
       }).toThrow('apiKey must be a non-null value');
     });
 
     it('should throw when apiSecret is null', () => {
       expect(() => {
-        service.generateAuthPayload('valid-api-key', null as any);
+        service.generateAuthPayload('valid-api-key', null as unknown as string);
       }).toThrow('apiSecret must be a non-null value');
     });
 
@@ -221,13 +232,13 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should reject null apiKey in validateCredentials', () => {
-      const result = service.validateCredentials(null as any, 'valid-secret-1234567890');
+      const result = service.validateCredentials(null as unknown as string, 'valid-secret-1234567890');
 
       expect(result).toBe(false);
     });
 
     it('should reject null apiSecret in validateCredentials', () => {
-      const result = service.validateCredentials('valid-key-1234567890', null as any);
+      const result = service.validateCredentials('valid-key-1234567890', null as unknown as string);
 
       expect(result).toBe(false);
     });
@@ -271,7 +282,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       const serviceNoHandler = new WebSocketAuthenticationService();
 
       expect(() => {
-        serviceNoHandler.generateAuthPayload(null as any, 'secret-1234567890');
+        serviceNoHandler.generateAuthPayload(null as unknown as string, 'secret-1234567890');
       }).toThrow();
     });
 
@@ -332,9 +343,8 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should handle constructor with partial logger', () => {
-      const partialLogger = { info: jest.fn() };
-
-      const servicePartialLogger = new WebSocketAuthenticationService(partialLogger as any, errorHandler);
+      const partialLogger: AuthLogger = { info: jest.fn() };
+      const servicePartialLogger = new WebSocketAuthenticationService(partialLogger, errorHandler);
 
       const result = servicePartialLogger.generateAuthPayload('key-1234567890', 'secret-1234567890');
 

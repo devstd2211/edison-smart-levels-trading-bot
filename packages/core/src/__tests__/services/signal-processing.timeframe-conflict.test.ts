@@ -333,7 +333,10 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
     });
 
     it('should handle undefined trend analysis', () => {
-      const multiplier = detectTimeframeConflict(undefined as any, SignalDirection.LONG);
+      const multiplier = detectTimeframeConflict(
+        undefined as unknown as TrendAnalysis,
+        SignalDirection.LONG,
+      );
       expect(multiplier).toBe(1.0);
     });
 

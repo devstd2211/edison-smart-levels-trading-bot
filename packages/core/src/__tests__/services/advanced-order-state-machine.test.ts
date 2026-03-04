@@ -36,7 +36,7 @@ describe('AdvancedOrderStateMachineService', () => {
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     errorHandler = new ErrorHandler(mockLogger);
     service = new AdvancedOrderStateMachineService(mockLogger, errorHandler);
@@ -78,7 +78,7 @@ describe('AdvancedOrderStateMachineService', () => {
       service.createStateMachine('order_1');
 
       await expect(
-        service.transitionState('order_1', null as any, {
+        service.transitionState('order_1', null as unknown as OrderState, {
           reason: 'test',
           triggeredBy: TransitionTrigger.SYSTEM,
         })
@@ -157,7 +157,7 @@ describe('AdvancedOrderStateMachineService', () => {
       service.createStateMachine('order_1');
 
       await expect(
-        service.handleError('order_1', null as any)
+        service.handleError('order_1', null as unknown as Error)
       ).rejects.toThrow('Error object is required');
     });
   });
@@ -701,8 +701,8 @@ describe('AdvancedOrderStateMachineService', () => {
       expect(service.validateTransition(OrderState.CANCELLED, OrderState.SUBMITTED)).toBe(false);
 
       // Null/undefined
-      expect(service.validateTransition(null as any, OrderState.SUBMITTED)).toBe(false);
-      expect(service.validateTransition(OrderState.PENDING, null as any)).toBe(false);
+      expect(service.validateTransition(null as unknown as OrderState, OrderState.SUBMITTED)).toBe(false);
+      expect(service.validateTransition(OrderState.PENDING, null as unknown as OrderState)).toBe(false);
     });
 
     it('should handle getOrderHistory with non-existent order', () => {

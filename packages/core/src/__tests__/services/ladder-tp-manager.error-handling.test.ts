@@ -32,7 +32,7 @@ const createMockBybitService = (): jest.Mocked<IExchange> => {
   return {
     closePosition: jest.fn().mockResolvedValue(undefined),
     updateStopLoss: jest.fn().mockResolvedValue(undefined),
-  } as any;
+  } as unknown as jest.Mocked<IExchange>;
 };
 
 const createMockPosition = (

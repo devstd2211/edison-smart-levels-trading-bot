@@ -48,7 +48,7 @@ describe('LimitOrderExecutorService', () => {
         cancelOrder: jest.fn(),
       }),
       openPosition: jest.fn(),
-    } as any;
+    } as unknown as BybitService;
 
     service = new LimitOrderExecutorService(config, bybitService, logger);
   });

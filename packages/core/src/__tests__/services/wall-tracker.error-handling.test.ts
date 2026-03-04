@@ -20,7 +20,7 @@ import { WallTrackingConfig, LoggerService } from '../../types/legacy';
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: jest.Mocked<LoggerService>;
+  let mockLogger: LoggerService;
 
   const mockConfig: WallTrackingConfig = {
     enabled: true,
@@ -30,12 +30,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   };
 
   beforeEach(() => {
-    mockLogger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as any;
+    mockLogger = new LoggerService('ERROR', './logs', false);
 
     errorHandler = new ErrorHandler(mockLogger);
     service = new WallTrackerService(mockConfig, mockLogger, errorHandler);

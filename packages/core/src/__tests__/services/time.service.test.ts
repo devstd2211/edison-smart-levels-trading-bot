@@ -18,25 +18,28 @@ import { TimeService } from '../../services/time.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeSyncError, TimeSyncTimeoutError } from '../../errors/DomainErrors';
 import { LoggerService } from '../../types/legacy';
+import type { IExchange } from '../../interfaces/IExchange';
+
+type MockExchange = {
+  getServerTime: jest.MockedFunction<() => Promise<number | undefined>>;
+};
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let timeService: TimeService;
-  let mockLogger: jest.Mocked<LoggerService>;
-  let mockExchange: any;
+  let mockLogger: LoggerService;
+  let mockExchange: MockExchange;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    // Mock logger with all required methods
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as any;
+    mockLogger = new LoggerService('ERROR', './logs', false);
+    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
 
     // Mock exchange service
     mockExchange = {
-      getServerTime: jest.fn(),
+      getServerTime: jest.fn<() => Promise<number | undefined>>(),
     };
 
     // Create ErrorHandler
@@ -50,7 +53,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
       errorHandler,
     );
 
-    timeService.setBybitService(mockExchange);
+    timeService.setBybitService(mockExchange as unknown as IExchange);
   });
 
   afterEach(() => {
@@ -365,7 +368,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     it('should work without ErrorHandler parameter', async () => {
       const service = new TimeService(mockLogger, 1000, 3);
-      service.setBybitService(mockExchange);
+      service.setBybitService(mockExchange as unknown as IExchange);
 
       const serverTime = Date.now();
       mockExchange.getServerTime.mockResolvedValue(serverTime);
@@ -377,7 +380,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
     it('should use auto-created ErrorHandler when not provided', async () => {
       const service = new TimeService(mockLogger, 1000, 3);
-      service.setBybitService(mockExchange);
+      service.setBybitService(mockExchange as unknown as IExchange);
 
       mockExchange.getServerTime.mockResolvedValue(Date.now());
 
@@ -388,7 +391,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
     it('should maintain backward compatible behavior', async () => {
       const legacyService = new TimeService(mockLogger, 1000, 3);
-      legacyService.setBybitService(mockExchange);
+      legacyService.setBybitService(mockExchange as unknown as IExchange);
 
       mockExchange.getServerTime.mockResolvedValue(Date.now() + 3000);
 

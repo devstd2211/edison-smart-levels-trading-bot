@@ -19,7 +19,7 @@ import {
   TelegramRateLimitError,
 } from '../../errors/DomainErrors';
 import { UnknownTradingError, TradingError } from '../../errors/BaseError';
-import { LoggerService } from '../../types/legacy';
+import { LoggerService, Position } from '../../types/legacy';
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;
@@ -495,7 +495,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
         confidence: 0.85,
         strategy: 'TestStrategy',
         reason: 'Test entry',
-      } as any;
+      } as unknown as Position;
 
       await telegramService.notifyPositionOpened(position);
 
@@ -526,7 +526,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
         confidence: 0.85,
         strategy: 'TestStrategy',
         reason: 'Test entry',
-      } as any;
+      } as unknown as Position;
 
       await telegramService.notifyPositionClosed(
         position,

@@ -148,7 +148,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
           throw error;
         }
         // Succeed on retry
-        return undefined as any;
+        return undefined;
       });
 
       const testState = {

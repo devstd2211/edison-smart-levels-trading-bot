@@ -66,7 +66,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
 
       // Spy on ErrorHandler to verify RETRY config is correct
-      const executeAsyncSpy = jest.spyOn(ErrorHandler, 'executeAsync' as any);
+      const executeAsyncSpy = jest.spyOn(ErrorHandler, 'executeAsync');
 
       await filter.checkSignal(SignalDirection.LONG);
 

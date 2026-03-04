@@ -36,6 +36,12 @@ const createMockDatabase = () => ({
   prepare: jest.fn(),
 });
 
+type MockDatabase = ReturnType<typeof createMockDatabase>;
+const asWriterDatabase = (
+  db: MockDatabase,
+): ConstructorParameters<typeof DatabaseWriter>[0] =>
+  db as unknown as ConstructorParameters<typeof DatabaseWriter>[0];
+
 // Mock WebSocket
 const createMockWebSocket = () => {
   const listeners: { [key: string]: Function[] } = {};
@@ -50,7 +56,7 @@ const createMockWebSocket = () => {
     }),
     off: jest.fn(),
     once: jest.fn(),
-    emit: (event: string, ...args: any[]) => {
+    emit: (event: string, ...args: unknown[]) => {
       if (listeners[event]) {
         listeners[event].forEach(handler => handler(...args));
       }
@@ -86,7 +92,7 @@ const createMockConfig = (): DataCollectionConfig => ({
 describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let service: DataCollectorService;
   let mockLogger: Partial<LoggerService>;
-  let mockDatabase: any;
+  let mockDatabase: MockDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
 
@@ -110,7 +116,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       it('should have ErrorHandler integrated into DatabaseWriter', () => {
         // DatabaseWriter should accept ErrorHandler in constructor
         const writer = new DatabaseWriter(
-          mockDatabase,
+          asWriterDatabase(mockDatabase),
           mockLogger as LoggerService,
           true, // compression
           errorHandler, // ErrorHandler (Phase 8.9.35)
@@ -131,7 +137,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
         });
 
         const writer = new DatabaseWriter(
-          mockDatabase,
+          asWriterDatabase(mockDatabase),
           mockLogger as LoggerService,
           true,
           errorHandler,
@@ -161,7 +167,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     describe('DatabaseWriter GRACEFUL_DEGRADE for Compression', () => {
       it('should fallback to uncompressed data on zlib error', async () => {
         const writer = new DatabaseWriter(
-          mockDatabase,
+          asWriterDatabase(mockDatabase),
           mockLogger as LoggerService,
           true, // compression enabled
           errorHandler,
@@ -174,7 +180,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
       it('should handle orderbook batch write with compression fallback', async () => {
         const writer = new DatabaseWriter(
-          mockDatabase,
+          asWriterDatabase(mockDatabase),
           mockLogger as LoggerService,
           true,
           errorHandler,
@@ -364,14 +370,14 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     it('DatabaseWriter should accept optional ErrorHandler', () => {
       // Should work with or without ErrorHandler
       const writerWithHandler = new DatabaseWriter(
-        mockDatabase,
+        asWriterDatabase(mockDatabase),
         mockLogger as LoggerService,
         true,
         errorHandler,
       );
 
       const writerWithoutHandler = new DatabaseWriter(
-        mockDatabase,
+        asWriterDatabase(mockDatabase),
         mockLogger as LoggerService,
         true,
         undefined, // No ErrorHandler

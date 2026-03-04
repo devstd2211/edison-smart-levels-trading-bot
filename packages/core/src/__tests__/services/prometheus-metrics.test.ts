@@ -20,16 +20,15 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 
 describe('PrometheusMetricsService', () => {
   let service: PrometheusMetricsService;
-  let mockLogger: jest.Mocked<LoggerService>;
+  let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as any;
+    mockLogger = new LoggerService('ERROR', './logs', false);
+    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
 
     errorHandler = new ErrorHandler(mockLogger);
     service = new PrometheusMetricsService({}, mockLogger, errorHandler);

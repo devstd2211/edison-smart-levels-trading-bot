@@ -8,26 +8,16 @@
 import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { WeightMatrixConfig, WeightMatrixInput, SignalDirection } from '../../types/legacy';
+import { WeightMatrixConfig, WeightMatrixInput, SignalDirection, LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // FIXTURES
 // ============================================================================
 
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  getLogs: jest.fn(() => []),
-  getLogsByLevel: jest.fn(() => []),
-  clear: jest.fn(),
-  disableConsoleOutput: jest.fn(),
-  enableConsoleOutputMode: jest.fn(),
-});
+const createMockLogger = (): LoggerService => new LoggerService('ERROR', './logs', false);
 
 const createMockErrorHandler = () => {
-  return new ErrorHandler(createMockLogger() as any);
+  return new ErrorHandler(createMockLogger());
 };
 
 const createMockConfig = (): WeightMatrixConfig => ({
@@ -71,7 +61,7 @@ const createMockInput = (): WeightMatrixInput => ({
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
   let service: WeightMatrixCalculatorService;
   let errorHandler: ErrorHandler;
-  let mockLogger: any;
+  let mockLogger: LoggerService;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
@@ -85,13 +75,21 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new WeightMatrixCalculatorService(null as any, mockLogger, errorHandler);
+        new WeightMatrixCalculatorService(
+          null as unknown as WeightMatrixConfig,
+          mockLogger,
+          errorHandler,
+        );
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
     });
 
     it('should throw on undefined config', () => {
       expect(() => {
-        new WeightMatrixCalculatorService(undefined as any, mockLogger, errorHandler);
+        new WeightMatrixCalculatorService(
+          undefined as unknown as WeightMatrixConfig,
+          mockLogger,
+          errorHandler,
+        );
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
     });
 
@@ -143,13 +141,13 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
     it('should throw on null input', () => {
       expect(() => {
-        service.calculateScore(null as any, SignalDirection.LONG);
+        service.calculateScore(null as unknown as WeightMatrixInput, SignalDirection.LONG);
       }).toThrow('WeightMatrixInput cannot be null or undefined');
     });
 
     it('should throw on undefined input', () => {
       expect(() => {
-        service.calculateScore(undefined as any, SignalDirection.LONG);
+        service.calculateScore(undefined as unknown as WeightMatrixInput, SignalDirection.LONG);
       }).toThrow('WeightMatrixInput cannot be null or undefined');
     });
 
@@ -157,7 +155,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       const input = createMockInput();
 
       expect(() => {
-        service.calculateScore(input, null as any);
+        service.calculateScore(input, null as unknown as SignalDirection);
       }).toThrow('SignalDirection must be LONG or SHORT');
     });
 
@@ -165,7 +163,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       const input = createMockInput();
 
       expect(() => {
-        service.calculateScore(input, 'MIDDLE' as any);
+        service.calculateScore(input, 'MIDDLE' as unknown as SignalDirection);
       }).toThrow('SignalDirection must be LONG or SHORT');
     });
   });
@@ -240,7 +238,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should skip logger errors during initialization', () => {
-      mockLogger.info.mockImplementation(() => {
+      jest.spyOn(mockLogger, 'info').mockImplementation(() => {
         throw new Error('Logger failed');
       });
 
@@ -250,7 +248,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should skip logger errors during calculation', () => {
-      mockLogger.debug.mockImplementation(() => {
+      jest.spyOn(mockLogger, 'debug').mockImplementation(() => {
         throw new Error('Logger failed');
       });
 
@@ -269,7 +267,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        new WeightMatrixCalculatorService(null as any, mockLogger);
+        new WeightMatrixCalculatorService(null as unknown as WeightMatrixConfig, mockLogger);
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
     });
 
@@ -277,7 +275,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger);
 
       expect(() => {
-        service.calculateScore(null as any, SignalDirection.LONG);
+        service.calculateScore(null as unknown as WeightMatrixInput, SignalDirection.LONG);
       }).toThrow('WeightMatrixInput cannot be null or undefined');
     });
 

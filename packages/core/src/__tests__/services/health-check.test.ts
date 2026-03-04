@@ -19,18 +19,17 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 
 describe('HealthCheckService', () => {
   let service: HealthCheckService;
-  let mockLogger: jest.Mocked<LoggerService>;
+  let mockLogger: LoggerService;
   let mockExchange: jest.Mocked<IExchangeService>;
   let mockWebSocket: jest.Mocked<IWebSocketService>;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as any;
+    mockLogger = new LoggerService('ERROR', './logs', false);
+    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
+    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
 
     mockExchange = {
       testConnection: jest.fn().mockResolvedValue(true),
@@ -226,17 +225,15 @@ describe('HealthCheckService', () => {
 
     it('should handle system check errors gracefully', async () => {
       // Mock process.memoryUsage to throw
-      const originalMemoryUsage = process.memoryUsage;
-      process.memoryUsage = jest.fn().mockImplementation(() => {
+      const memoryUsageSpy = jest.spyOn(process, 'memoryUsage').mockImplementation(() => {
         throw new Error('Memory error');
-      }) as any;
+      });
 
       const health = await service.checkSystem();
 
       expect(health.status).toBe('down');
 
-      // Restore
-      process.memoryUsage = originalMemoryUsage;
+      memoryUsageSpy.mockRestore();
     });
   });
 

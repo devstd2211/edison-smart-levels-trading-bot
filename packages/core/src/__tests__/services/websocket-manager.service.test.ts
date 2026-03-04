@@ -30,6 +30,23 @@ const createMockLogger = (): LoggerService => {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 };
 
+const getIsDuplicateEvent = (
+  manager: WebSocketManagerService,
+): ((eventType: string, eventId: string, timestamp: number) => boolean) => {
+  return (eventType: string, eventId: string, timestamp: number): boolean => {
+    const method = (manager as unknown as Record<string, unknown>).isDuplicateEvent;
+    if (typeof method !== 'function') {
+      throw new Error('isDuplicateEvent private method is not available');
+    }
+    return (method as (eventType: string, eventId: string, timestamp: number) => boolean).call(
+      manager,
+      eventType,
+      eventId,
+      timestamp,
+    );
+  };
+};
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -65,8 +82,7 @@ describe('WebSocketManagerService', () => {
 
   describe('Event Deduplication (Session #60)', () => {
     it('should ignore duplicate TP events with same orderId', () => {
-      // Access private method via any cast for testing
-      const isDuplicateEvent = (wsManager as any).isDuplicateEvent.bind(wsManager);
+      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
 
       const eventType = 'TP';
       const orderId = 'tp1-order-123';
@@ -86,7 +102,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should process non-duplicate events', () => {
-      const isDuplicateEvent = (wsManager as any).isDuplicateEvent.bind(wsManager);
+      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
 
       const eventType = 'TP';
       const timestamp = Date.now();
@@ -107,7 +123,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should cleanup old events from cache', () => {
-      const isDuplicateEvent = (wsManager as any).isDuplicateEvent.bind(wsManager);
+      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
 
       // Fill cache with events
       for (let i = 0; i < 110; i++) {
@@ -127,7 +143,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should handle different event types independently', () => {
-      const isDuplicateEvent = (wsManager as any).isDuplicateEvent.bind(wsManager);
+      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
 
       const orderId = 'same-order-123';
       const timestamp = Date.now();
@@ -148,7 +164,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should handle different timestamps for same orderId as separate events', () => {
-      const isDuplicateEvent = (wsManager as any).isDuplicateEvent.bind(wsManager);
+      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
 
       const eventType = 'TP';
       const orderId = 'order-123';

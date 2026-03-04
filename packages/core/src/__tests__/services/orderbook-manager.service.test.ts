@@ -43,6 +43,14 @@ const createDeltaUpdate = (
   timestamp: Date.now(),
 });
 
+type OrderbookManagerInternals = {
+  lastSnapshotTime: number;
+};
+
+const setLastSnapshotTime = (manager: OrderbookManagerService, timestamp: number): void => {
+  (manager as unknown as OrderbookManagerInternals).lastSnapshotTime = timestamp;
+};
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -290,7 +298,7 @@ describe('OrderbookManagerService', () => {
       manager.processUpdate(snapshot);
 
       // Manually set lastSnapshotTime to 2 minutes ago
-      (manager as any).lastSnapshotTime = Date.now() - 120000;
+      setLastSnapshotTime(manager, Date.now() - 120000);
 
       const result = manager.getSnapshot();
       expect(result).toBeNull();

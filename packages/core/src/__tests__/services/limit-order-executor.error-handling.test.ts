@@ -63,7 +63,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
         cancelOrder: jest.fn(),
       }),
       openPosition: jest.fn(),
-    } as any;
+    } as unknown as BybitService;
 
     service = new LimitOrderExecutorService(config, bybitService, logger, errorHandler);
   });
@@ -540,7 +540,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
 
       expect(result.orderId).toBe(limitOrderId);
       expect(result.filled).toBe(true);
-      expect((result as any).fillPrice).toBe(99.98); // Maker fee
+      expect('fillPrice' in result ? result.fillPrice : undefined).toBe(99.98); // Maker fee
     });
 
     it(

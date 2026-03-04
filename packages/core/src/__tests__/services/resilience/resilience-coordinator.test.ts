@@ -18,13 +18,11 @@ describe('ResilienceCoordinator', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    // Create mock logger
-    logger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn()
-    } as any;
+    logger = new LoggerService('ERROR', './logs', false);
+    jest.spyOn(logger, 'debug').mockImplementation(() => undefined);
+    jest.spyOn(logger, 'info').mockImplementation(() => undefined);
+    jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
 
     // Create error handler
     errorHandler = new ErrorHandler(logger);
