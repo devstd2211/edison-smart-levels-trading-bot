@@ -58,7 +58,7 @@ describe('ExchangeFactory Service', () => {
     it('should reject missing exchange name', () => {
       expect(() => {
         new ExchangeFactory(mockLogger as LoggerService, {
-          name: undefined as any,
+          name: undefined as unknown as 'bybit' | 'binance',
           symbol: 'XRPUSDT',
         });
       }).toThrow();
@@ -68,7 +68,7 @@ describe('ExchangeFactory Service', () => {
       expect(() => {
         new ExchangeFactory(mockLogger as LoggerService, {
           name: 'bybit' as const,
-          symbol: undefined as any,
+          symbol: undefined as unknown as string,
         });
       }).toThrow();
     });
@@ -76,7 +76,7 @@ describe('ExchangeFactory Service', () => {
     it('should reject unsupported exchange', () => {
       expect(() => {
         new ExchangeFactory(mockLogger as LoggerService, {
-          name: 'kraken' as any,
+          name: 'kraken' as unknown as 'bybit' | 'binance',
           symbol: 'XRPUSDT',
         });
       }).toThrow();
@@ -85,7 +85,7 @@ describe('ExchangeFactory Service', () => {
     it('should accept case-insensitive exchange names in config validation', () => {
       // Only test that config validation doesn't break
       const config = {
-        name: 'BYBIT' as any,
+        name: 'BYBIT' as unknown as 'bybit' | 'binance',
         symbol: 'XRPUSDT',
       };
       const factory = new ExchangeFactory(mockLogger as LoggerService, config);
@@ -351,8 +351,10 @@ describe('ExchangeFactory Service', () => {
       ];
 
       for (const method of expectedMethods) {
-        expect(typeof (bybitExchange as any)[method]).toBe('function');
-        expect(typeof (binanceExchange as any)[method]).toBe('function');
+        const bybitMethod = (bybitExchange as unknown as Record<string, unknown>)[method];
+        const binanceMethod = (binanceExchange as unknown as Record<string, unknown>)[method];
+        expect(typeof bybitMethod).toBe('function');
+        expect(typeof binanceMethod).toBe('function');
       }
     });
   });

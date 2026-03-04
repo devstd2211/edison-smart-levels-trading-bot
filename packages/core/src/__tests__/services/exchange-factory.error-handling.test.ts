@@ -10,16 +10,33 @@
  * - Backward compatibility (without ErrorHandler)
  */
 
-import { ExchangeFactory, ExchangeConfig } from '../../services/exchange-factory.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors';
-import { ExchangeFactoryConfigError, ExchangeAdapterInstantiationError } from '../../errors/DomainErrors';
+import { ExchangeFactory } from '../../services/exchange-factory.service';
+import {
+  ErrorHandler,
+  RecoveryStrategy,
+  type ErrorHandlingConfig,
+  type ErrorHandlingResult,
+  type TradingError,
+} from '../../errors';
+import type { ExchangeConfig } from '../../services/exchange-factory.service';
+import { ExchangeFactoryConfigError } from '../../errors/DomainErrors';
 import { LoggerService } from '../../services/logger.service';
 
 // ============================================================================
 // MOCK UTILITIES
 // ============================================================================
 
-const createMockLogger = () => ({
+type MockLogger = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
+
+const asLoggerService = (logger: MockLogger): LoggerService =>
+  logger as unknown as LoggerService;
+
+const asExchangeName = (name: unknown): ExchangeConfig['name'] =>
+  name as ExchangeConfig['name'];
+
+const asSymbol = (symbol: unknown): string => symbol as string;
+
+const createMockLogger = (): jest.Mocked<MockLogger> => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -37,24 +54,46 @@ const createMockConfig = (overrides?: Partial<ExchangeConfig>): ExchangeConfig =
 });
 
 const createMockErrorHandler = () => ({
-  handle: jest.fn((error, options): any => {
-    if (options.strategy === RecoveryStrategy.THROW) {
-      throw error; // Throw synchronously for THROW strategy
+  handle: jest.fn(
+    (error: unknown, options: ErrorHandlingConfig): ErrorHandlingResult => {
+      const normalizedError =
+        error instanceof Error
+          ? (error as unknown as TradingError)
+          : (new Error(String(error)) as unknown as TradingError);
+
+      if (options.strategy === RecoveryStrategy.THROW) {
+        throw normalizedError; // Throw for THROW strategy
+      }
+
+      return {
+        success: false,
+        error: normalizedError,
+        recovered: false,
+        attempts: 1,
+        message: normalizedError.message,
+        strategy: options.strategy,
+      };
     }
-    return Promise.resolve({
-      success: false,
-      error,
-      strategy: options.strategy,
-    });
-  }),
-  executeAsync: jest.fn(async (fn, config): Promise<any> => {
-    try {
-      const value = await fn();
-      return { success: true, value };
-    } catch (error) {
-      return { success: false, error };
+  ),
+  executeAsync: jest.fn(
+    async (
+      fn: () => Promise<unknown>,
+      _config: ErrorHandlingConfig
+    ): Promise<{ success: boolean; value?: unknown; error?: TradingError }> => {
+      try {
+        const value = await fn();
+        return { success: true, value };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? (error as unknown as TradingError)
+              : (new Error(String(error)) as unknown as TradingError),
+        };
+      }
     }
-  }),
+  ),
   getLogger: jest.fn(() => createMockLogger()),
 } as unknown as jest.Mocked<ErrorHandler>);
 
@@ -63,7 +102,7 @@ const createMockErrorHandler = () => ({
 // ============================================================================
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockLogger: jest.Mocked<MockLogger>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
 
   beforeEach(() => {
@@ -77,8 +116,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should throw ExchangeFactoryConfigError on missing exchange name', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: undefined as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName(undefined) }),
           mockErrorHandler
         );
       }).toThrow(ExchangeFactoryConfigError);
@@ -87,8 +126,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should throw ExchangeFactoryConfigError on missing symbol', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ symbol: undefined as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ symbol: asSymbol(undefined) }),
           mockErrorHandler
         );
       }).toThrow(ExchangeFactoryConfigError);
@@ -97,8 +136,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should throw ExchangeFactoryConfigError on unsupported exchange', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: 'kraken' as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName('kraken') }),
           mockErrorHandler
         );
       }).toThrow(ExchangeFactoryConfigError);
@@ -107,8 +146,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should call ErrorHandler.handle with THROW strategy on missing name', () => {
       try {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: undefined as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName(undefined) }),
           mockErrorHandler
         );
       } catch (e) {
@@ -127,7 +166,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should accept valid config without throwing', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
+          asLoggerService(mockLogger),
           createMockConfig(),
           mockErrorHandler
         );
@@ -144,7 +183,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
       });
 
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig(),
         mockErrorHandler
       );
@@ -157,7 +196,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should handle logger failure in reset', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig(),
         mockErrorHandler
       );
@@ -169,7 +208,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should continue despite logger failure in getExchangeName', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig(),
         mockErrorHandler
       );
@@ -188,7 +227,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should create factory without ErrorHandler parameter', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
+          asLoggerService(mockLogger),
           createMockConfig()
         );
       }).not.toThrow();
@@ -197,8 +236,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should still throw validation errors without ErrorHandler', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: undefined as any })
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName(undefined) })
         );
       }).toThrow();
     });
@@ -206,15 +245,15 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should throw ExchangeFactoryConfigError without ErrorHandler', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ symbol: undefined as any })
+          asLoggerService(mockLogger),
+          createMockConfig({ symbol: asSymbol(undefined) })
         );
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should accept valid config and return methods without ErrorHandler', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig()
       );
 
@@ -229,7 +268,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Configuration Methods', () => {
     it('should return exchange name correctly', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig({ name: 'binance' }),
         mockErrorHandler
       );
@@ -239,7 +278,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should return symbol correctly', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig({ symbol: 'ETHUSDT' }),
         mockErrorHandler
       );
@@ -249,7 +288,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should return null for uninitialized exchange', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig(),
         mockErrorHandler
       );
@@ -259,7 +298,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should reset exchange cache', () => {
       const factory = new ExchangeFactory(
-        mockLogger as any,
+        asLoggerService(mockLogger),
         createMockConfig(),
         mockErrorHandler
       );
@@ -275,8 +314,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should include exchange name in missing field error context', () => {
       try {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: 'unsupported' as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName('unsupported') }),
           mockErrorHandler
         );
       } catch (e) {
@@ -285,14 +324,15 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
       const callArgs = mockErrorHandler.handle.mock.calls[0];
       const error = callArgs[0] as ExchangeFactoryConfigError;
-      expect((error.metadata.context as any)?.reason).toBe('unsupported_exchange');
+      const context = error.metadata.context as Record<string, unknown> | undefined;
+      expect(context?.reason).toBe('unsupported_exchange');
     });
 
     it('should include supported exchanges list in error', () => {
       try {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: 'dydx' as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName('dydx') }),
           mockErrorHandler
         );
       } catch (e) {
@@ -301,8 +341,10 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
       const callArgs = mockErrorHandler.handle.mock.calls[0];
       const error = callArgs[0] as ExchangeFactoryConfigError;
-      expect((error.metadata.context as any)?.supportedExchanges).toContain('bybit');
-      expect((error.metadata.context as any)?.supportedExchanges).toContain('binance');
+      const context = error.metadata.context as Record<string, unknown> | undefined;
+      const supportedExchanges = context?.supportedExchanges as string[] | undefined;
+      expect(supportedExchanges).toContain('bybit');
+      expect(supportedExchanges).toContain('binance');
     });
   });
 
@@ -312,8 +354,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should handle case-insensitive exchange names', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: 'BYBIT' as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName('BYBIT') }),
           mockErrorHandler
         );
       }).not.toThrow();
@@ -322,7 +364,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should handle empty symbol as error', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
+          asLoggerService(mockLogger),
           createMockConfig({ symbol: '' }),
           mockErrorHandler
         );
@@ -332,8 +374,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     it('should handle null config values', () => {
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: null as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: asExchangeName(null) }),
           mockErrorHandler
         );
       }).toThrow();
@@ -343,7 +385,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
       // Should not throw - empty credentials are allowed (converted to empty string)
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
+          asLoggerService(mockLogger),
           createMockConfig({ apiKey: '', apiSecret: '' }),
           mockErrorHandler
         );
@@ -358,8 +400,11 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
       // First error should be missing name (checked first)
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: undefined as any, symbol: undefined as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({
+            name: asExchangeName(undefined),
+            symbol: asSymbol(undefined),
+          }),
           mockErrorHandler
         );
       }).toThrow();
@@ -369,11 +414,12 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
       // With valid name but invalid symbol
       expect(() => {
         new ExchangeFactory(
-          mockLogger as any,
-          createMockConfig({ name: 'bybit', symbol: undefined as any }),
+          asLoggerService(mockLogger),
+          createMockConfig({ name: 'bybit', symbol: asSymbol(undefined) }),
           mockErrorHandler
         );
       }).toThrow();
     });
   });
 });
+

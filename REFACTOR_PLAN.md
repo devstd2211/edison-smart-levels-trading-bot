@@ -691,6 +691,20 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Re-verified noforce shard stability after TradingBot+createServices lifecycle integration test: `test:core:noforce:shard1` PASS (154/154 suites) and `test:core:noforce:shard2` PASS (153/153 suites), 2026-03-03
 - [x] Core `any` cleanup continued (2026-03-03): `ExchangeFactory` Bybit config path now uses typed `timeframe` + direct `BybitService` config (removed `bybitConfig as any`)
 - [x] Verified ExchangeFactory suites after typing cleanup (2026-03-03): `exchange-factory.service.test.ts` = 27/27 PASS; `exchange-factory.error-handling.test.ts` = 24/24 PASS
+- [x] `exchange-factory.service.test.ts`: removed local `as any` usages (typed invalid config inputs via `unknown` boundary casts; typed dynamic method checks with `Record<string, unknown>`) (2026-03-04)
+- [x] `exchange-factory.error-handling.test.ts`: removed local `as any`/`Promise<any>` usages (typed logger/error-handler mocks, typed invalid config aliases, typed metadata context narrowing) (2026-03-04)
+- [x] `ExchangeFactory` candidate review after exchange-factory test refactor: no safe behavior-preserving decomposition required in this pass (instantiation/validation/error-recovery paths already explicitly method-split) (2026-03-04)
+- [x] Verification batch (2026-03-04): `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts` -> 51/51 PASS
+- [x] `exit-type-detector.service.error-handling.test.ts`: removed local `any` usages (typed logger/position/order fixtures, typed invalid-input casts via `unknown`) (2026-03-04)
+- [x] `ExitTypeDetectorService` candidate review after test refactor: no safe behavior-preserving decomposition required in this pass (history/TP identification responsibilities already compact and separated) (2026-03-04)
+- [x] Re-verified `exit-type-detector.service.error-handling.test.ts` after test cleanup: 12/12 PASS (2026-03-04)
+- [x] `position-pnl-calculator.error-handling.test.ts`: removed local `as any` usages (typed `ErrorHandler` logger dependency, typed invalid `Position`/`PositionSide` inputs via `unknown`, typed internal-method spy interface) (2026-03-04)
+- [x] `PositionPnLCalculatorService` candidate review after test refactor: no safe behavior-preserving decomposition required in this pass (validation and calculation paths already explicitly split) (2026-03-04)
+- [x] Re-verified `position-pnl-calculator.error-handling.test.ts` after test cleanup: 29/29 PASS (2026-03-04)
+- [x] `websocket-event-handler.error-handling.test.ts`: removed local `as any` usages (typed dependency mock casters, typed `ErrorHandler.handle` static mock result, typed order/SL/TP event fixtures and invalid input casts via `unknown`) (2026-03-04)
+- [x] `WebSocketEventHandler` candidate review after test refactor: no safe behavior-preserving decomposition required in this pass (validation/fallback/close-flow methods already segmented in handler) (2026-03-04)
+- [x] Re-verified `websocket-event-handler.error-handling.test.ts` after test cleanup: 21/21 PASS (2026-03-04)
+- [x] Verification batch (2026-03-04): `npm test -- --runInBand packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts` -> 62/62 PASS
 
 **Next Iteration Plan**
 1. Complete DI Step 1: reduce `BotServices` to a thin adapter (grouped containers as primary wiring).

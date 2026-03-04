@@ -17,10 +17,17 @@ import { PositionExitingService } from '../../services/position-exiting.service'
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { TelegramService } from '../../services/telegram.service';
-import { LoggerService, Position, PositionSide } from '../../types/legacy';
-import { TakeProfitFilledEvent } from '../../types/events';
+import {
+  LoggerService,
+  Position,
+  PositionSide,
+  type OrderFilledEvent,
+  type StopLossFilledEvent,
+  type TakeProfitFilledEvent,
+} from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import { RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
@@ -30,7 +37,24 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let mockWebSocketManager: jest.Mocked<WebSocketManagerService>;
   let mockJournal: jest.Mocked<TradingJournalService>;
   let mockTelegram: jest.Mocked<TelegramService>;
-  let mockLogger: jest.Mocked<LoggerService>;
+  let mockLogger: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
+
+  const asPositionLifecycleService = (
+    value: unknown,
+  ): jest.Mocked<PositionLifecycleService> => value as jest.Mocked<PositionLifecycleService>;
+  const asPositionExitingService = (
+    value: unknown,
+  ): jest.Mocked<PositionExitingService> => value as jest.Mocked<PositionExitingService>;
+  const asExchange = (value: unknown): jest.Mocked<IExchange> => value as jest.Mocked<IExchange>;
+  const asWebSocketManagerService = (
+    value: unknown,
+  ): jest.Mocked<WebSocketManagerService> => value as jest.Mocked<WebSocketManagerService>;
+  const asTradingJournalService = (
+    value: unknown,
+  ): jest.Mocked<TradingJournalService> => value as jest.Mocked<TradingJournalService>;
+  const asTelegramService = (value: unknown): jest.Mocked<TelegramService> =>
+    value as jest.Mocked<TelegramService>;
+  const asLoggerService = (value: unknown): LoggerService => value as LoggerService;
 
   const createMockPosition = (overrides: Partial<Position> = {}): Position => ({
     id: 'pos-123',
@@ -62,48 +86,53 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockPositionManager = {
+    mockPositionManager = asPositionLifecycleService({
       getCurrentPosition: jest.fn(),
       syncWithWebSocket: jest.fn(),
       closePositionWithAtomicLock: jest.fn(async (_reason: string, callback: () => Promise<void>) => {
         await callback();
       }),
       clearPosition: jest.fn(),
-    } as any;
+    });
 
-    mockPositionExitingService = {
+    mockPositionExitingService = asPositionExitingService({
       closeFullPosition: jest.fn(),
       onTakeProfitHit: jest.fn(),
-    } as any;
+    });
 
-    mockBybitService = {
+    mockBybitService = asExchange({
       getCurrentPrice: jest.fn(),
-    } as any;
+    });
 
-    mockWebSocketManager = {
+    mockWebSocketManager = asWebSocketManagerService({
       getLastCloseReason: jest.fn().mockReturnValue('TP'),
       resetLastCloseReason: jest.fn(),
-    } as any;
+    });
 
-    mockJournal = {
+    mockJournal = asTradingJournalService({
       getTrade: jest.fn(),
       recordTrade: jest.fn(),
-    } as any;
+    });
 
-    mockTelegram = {
+    mockTelegram = asTelegramService({
       notifyPositionClosed: jest.fn(),
-    } as any;
+    });
 
     mockLogger = {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-      log: jest.fn(),
-    } as any;
+    };
 
     // Mock the static ErrorHandler.handle method
-    jest.spyOn(ErrorHandler, 'handle').mockResolvedValue(undefined as any);
+    jest.spyOn(ErrorHandler, 'handle').mockResolvedValue({
+      success: true,
+      recovered: true,
+      attempts: 1,
+      message: 'mocked',
+      strategy: RecoveryStrategy.SKIP,
+    });
 
     handler = new WebSocketEventHandler(
       mockPositionManager,
@@ -112,20 +141,20 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockWebSocketManager,
       mockJournal,
       mockTelegram,
-      mockLogger,
+      asLoggerService(mockLogger),
     );
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {
     it('test-8.6.1: Should skip update when position is null', async () => {
-      await handler.handlePositionUpdate(null as any);
+      await handler.handlePositionUpdate(null as unknown as Position);
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
       expect(mockPositionManager.syncWithWebSocket).not.toHaveBeenCalled();
     });
 
     it('test-8.6.2: Should skip update when position missing symbol', async () => {
-      const position = createMockPosition({ symbol: '' as any });
+      const position = createMockPosition({ symbol: '' });
       await handler.handlePositionUpdate(position);
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
@@ -157,7 +186,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       const position = createMockPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
-      mockJournal.getTrade.mockReturnValue(null as any);
+      mockJournal.getTrade.mockReturnValue(undefined);
 
       // Trigger _handlePositionClosedInternal through handlePositionClosed
       await handler.handlePositionClosed();
@@ -174,7 +203,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       const position = createMockPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
-      mockJournal.getTrade.mockReturnValue(null as any);
+      mockJournal.getTrade.mockReturnValue(undefined);
 
       await handler.handlePositionClosed();
 
@@ -189,7 +218,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       const position = createMockPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
-      mockJournal.getTrade.mockReturnValue(null as any);
+      mockJournal.getTrade.mockReturnValue(undefined);
 
       await handler.handlePositionClosed();
 
@@ -201,7 +230,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('[SKIP] handleTakeProfitFilled() - TP Event Validation (4 tests)', () => {
     it('test-8.6.8: Should skip when TP event is null', async () => {
-      await handler.handleTakeProfitFilled(null as any);
+      await handler.handleTakeProfitFilled(null as unknown as TakeProfitFilledEvent);
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
       expect(mockPositionManager.getCurrentPosition).not.toHaveBeenCalled();
@@ -209,7 +238,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
     it('test-8.6.9: Should skip when TP event missing orderId', async () => {
       const event: TakeProfitFilledEvent = {
-        orderId: '' as any,
+        orderId: '',
         avgPrice: 46000,
         cumExecQty: 0.05,
       };
@@ -306,7 +335,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   describe('End-to-End Error Recovery Scenarios (2 tests)', () => {
     it('test-8.6.17: Should continue on multiple invalid updates', async () => {
       // First invalid update
-      await handler.handlePositionUpdate(null as any);
+      await handler.handlePositionUpdate(null as unknown as Position);
       expect(ErrorHandler.handle).toHaveBeenCalledTimes(1);
 
       // Second invalid update with different error
@@ -325,7 +354,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockBybitService.getCurrentPrice.mockRejectedValue(new Error('API down'));
 
       // Invalid position update
-      const invalidPosition = createMockPosition({ symbol: '' as any });
+      const invalidPosition = createMockPosition({ symbol: '' });
       await handler.handlePositionUpdate(invalidPosition);
       expect(ErrorHandler.handle).toHaveBeenCalled();
 
@@ -359,10 +388,12 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('Integration with Existing Functionality', () => {
     it('should not break existing handleOrderFilled functionality', async () => {
-      const order: any = {
+      const order: OrderFilledEvent = {
         orderId: 'order-456',
-        avgPrice: 45500,
-        cumExecQty: 0.1,
+        symbol: 'BTCUSDT',
+        side: 'Buy',
+        execQty: '0.1',
+        execPrice: '45500',
       };
 
       await handler.handleOrderFilled(order);
@@ -374,7 +405,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('should not break existing handleStopLossFilled functionality', async () => {
-      const event: any = {
+      const event: StopLossFilledEvent = {
         orderId: 'sl-order-1',
         avgPrice: 44000,
         cumExecQty: 0.1,

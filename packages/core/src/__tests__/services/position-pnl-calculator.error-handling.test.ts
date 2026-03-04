@@ -7,9 +7,7 @@
 
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { Position, PositionSide } from '../../types/legacy';
-import { PERCENT_MULTIPLIER } from '../../constants';
+import { Position, PositionSide, type LoggerService } from '../../types/legacy';
 
 // ============================================================================
 // FIXTURES
@@ -63,8 +61,14 @@ const createMockLogger = () => ({
   enableConsoleOutputMode: jest.fn(),
 });
 
+const asPosition = (value: unknown): Position => value as Position;
+
 const createMockErrorHandler = () => {
-  const errorHandler = new ErrorHandler(createMockLogger() as any);
+  const errorLogger = createMockLogger() as unknown as Pick<
+    LoggerService,
+    'debug' | 'info' | 'warn' | 'error'
+  >;
+  const errorHandler = new ErrorHandler(errorLogger);
   return errorHandler;
 };
 
@@ -90,7 +94,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
       const currentPrice = 100;
 
       expect(() => {
-        service.calculatePnL(null as any, currentPrice);
+        service.calculatePnL(null as unknown as Position, currentPrice);
       }).toThrow('Position cannot be null or undefined');
     });
 
@@ -98,7 +102,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
       const currentPrice = 100;
 
       expect(() => {
-        service.calculatePnL(undefined as any, currentPrice);
+        service.calculatePnL(undefined as unknown as Position, currentPrice);
       }).toThrow('Position cannot be null or undefined');
     });
 
@@ -193,7 +197,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   describe('THROW: Position Side Validation', () => {
     it('should throw on null position side', () => {
       const position = createMockPosition();
-      position.side = null as any;
+      position.side = null as unknown as PositionSide;
       const currentPrice = 100;
 
       expect(() => {
@@ -203,7 +207,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
     it('should throw on invalid position side string', () => {
       const position = createMockPosition();
-      position.side = 'MIDDLE' as any;
+      position.side = 'MIDDLE' as unknown as PositionSide;
       const currentPrice = 100;
 
       expect(() => {
@@ -213,7 +217,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
     it('should throw on undefined position side', () => {
       const position = createMockPosition();
-      position.side = undefined as any;
+      position.side = undefined as unknown as PositionSide;
       const currentPrice = 100;
 
       expect(() => {
@@ -232,7 +236,13 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
       const currentPrice = 110;
 
       // Spy on calculation to simulate failure
-      const calculateSpy = jest.spyOn(service as any, 'validateInputs');
+      interface PositionPnLCalculatorInternal {
+        validateInputs(position: Position, currentPrice: number): void;
+      }
+      const calculateSpy = jest.spyOn(
+        service as unknown as PositionPnLCalculatorInternal,
+        'validateInputs'
+      );
       calculateSpy.mockImplementation(() => {
         // Validation passes, but calculation could theoretically fail
       });
@@ -279,7 +289,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
       const currentPrice = 100;
 
       expect(() => {
-        serviceWithoutHandler.calculatePnL(null as any, currentPrice);
+        serviceWithoutHandler.calculatePnL(null as unknown as Position, currentPrice);
       }).toThrow('Position cannot be null or undefined');
     });
 
@@ -309,7 +319,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     it('should recover and calculate correctly after validation error', () => {
       // First attempt with invalid data
       expect(() => {
-        service.calculatePnL(null as any, 100);
+        service.calculatePnL(null as unknown as Position, 100);
       }).toThrow();
 
       // Second attempt with valid data should work
@@ -323,7 +333,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
       const position = createMockPosition();
 
       // Multiple validation errors
-      expect(() => service.calculatePnL(null as any, 100)).toThrow();
+      expect(() => service.calculatePnL(null as unknown as Position, 100)).toThrow();
       expect(() => service.calculatePnL(position, NaN)).toThrow();
       expect(() => {
         position.entryPrice = 0;
@@ -392,7 +402,11 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should reject invalid positions', () => {
-      const invalidPositions = [null, undefined, {} as any];
+      const invalidPositions: Position[] = [
+        null as unknown as Position,
+        undefined as unknown as Position,
+        asPosition({}),
+      ];
 
       for (const pos of invalidPositions) {
         expect(() => {
