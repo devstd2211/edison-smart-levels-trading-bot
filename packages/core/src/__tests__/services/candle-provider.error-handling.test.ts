@@ -25,15 +25,46 @@ import { TimeframeRole } from '../../types/enums';
 // MOCK SETUP
 // ============================================================================
 
-const createMockLogger = (): any => ({
+type ProviderLogger = ConstructorParameters<typeof CandleProvider>[2];
+type ProviderTimeframeProvider = ConstructorParameters<typeof CandleProvider>[0];
+type ProviderExchange = ConstructorParameters<typeof CandleProvider>[1];
+type ProviderRepository = ConstructorParameters<typeof CandleProvider>[4];
+type GetCandlesParams = Parameters<ProviderExchange['getCandles']>[0];
+type MockTimeframeConfig = { interval: string; candleLimit: number; enabled: boolean };
+
+type MockLogger = {
+  debug: jest.Mock;
+  info: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+  getLogFilePath: jest.Mock;
+};
+
+type MockTimeframeProvider = {
+  getAllTimeframes: jest.Mock;
+  getTimeframe: jest.Mock;
+};
+
+type MockExchange = {
+  getCandles: jest.Mock;
+};
+
+type MockRepository = {
+  saveCandles: jest.Mock;
+  getCandles: jest.Mock;
+  clear: jest.Mock;
+  getStats: jest.Mock;
+};
+
+const createMockLogger = (): MockLogger & ProviderLogger => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
   getLogFilePath: jest.fn().mockReturnValue('/mock/log/path'),
-});
+}) as unknown as MockLogger & ProviderLogger;
 
-const createMockTimeframeProvider = (): any => ({
+const createMockTimeframeProvider = (): MockTimeframeProvider & ProviderTimeframeProvider => ({
   getAllTimeframes: jest.fn().mockReturnValue(
     new Map([
       [TimeframeRole.ENTRY, { interval: '1', candleLimit: 100, enabled: true }],
@@ -42,7 +73,7 @@ const createMockTimeframeProvider = (): any => ({
     ])
   ),
   getTimeframe: jest.fn((role: TimeframeRole) => {
-    const timeframes: Record<TimeframeRole, any> = {
+    const timeframes: Record<TimeframeRole, MockTimeframeConfig> = {
       [TimeframeRole.ENTRY]: { interval: '1', candleLimit: 100, enabled: true },
       [TimeframeRole.PRIMARY]: { interval: '5', candleLimit: 100, enabled: true },
       [TimeframeRole.TREND1]: { interval: '15', candleLimit: 100, enabled: true },
@@ -51,17 +82,17 @@ const createMockTimeframeProvider = (): any => ({
     };
     return timeframes[role] || null;
   }),
-});
+}) as unknown as MockTimeframeProvider & ProviderTimeframeProvider;
 
-const createMockExchange = (): any => ({
+const createMockExchange = (): MockExchange & ProviderExchange => ({
   getCandles: jest.fn().mockResolvedValue([
     { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
     { timestamp: 2, open: 105, high: 115, low: 95, close: 110, volume: 1100 },
     { timestamp: 3, open: 110, high: 120, low: 100, close: 115, volume: 1200 },
   ]),
-});
+}) as unknown as MockExchange & ProviderExchange;
 
-const createMockRepository = (): any => ({
+const createMockRepository = (): MockRepository & ProviderRepository => ({
   saveCandles: jest.fn(),
   getCandles: jest.fn().mockReturnValue([
     { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
@@ -70,7 +101,7 @@ const createMockRepository = (): any => ({
   ]),
   clear: jest.fn(),
   getStats: jest.fn().mockReturnValue({ capacity: 1000 }),
-});
+}) as unknown as MockRepository & ProviderRepository;
 
 const createMockCandle = (role: string) => ({
   timestamp: Date.now(),
@@ -116,8 +147,8 @@ describe('CandleProvider - RETRY Strategy', () => {
       expect(exchange.getCandles).toHaveBeenCalledTimes(3);
 
       // Verify retry warnings in logs
-      const warnCalls = logger.warn.mock.calls.filter((call: any[]) =>
-        call[0]?.includes?.('Retrying')
+      const warnCalls = logger.warn.mock.calls.filter(
+        (call: unknown[]) => typeof call[0] === 'string' && call[0].includes('Retrying')
       );
       expect(warnCalls.length).toBeGreaterThan(0);
     });
@@ -207,7 +238,7 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
       const errorHandler = new ErrorHandler(logger);
 
       // Fail for 'primary' timeframe only
-      exchange.getCandles.mockImplementation(({ timeframe }: any) => {
+      exchange.getCandles.mockImplementation(({ timeframe }: GetCandlesParams) => {
         if (timeframe === '5') {
           return Promise.reject(new Error('timeout'));
         }
@@ -641,7 +672,7 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
       const errorHandler = new ErrorHandler(logger);
 
       // ENTRY succeeds, PRIMARY fails, TREND1 succeeds
-      exchange.getCandles.mockImplementation(({ timeframe }: any) => {
+      exchange.getCandles.mockImplementation(({ timeframe }: GetCandlesParams) => {
         if (timeframe === '5') {
           return Promise.reject(new Error('timeout'));
         }
@@ -730,7 +761,7 @@ describe('CandleProvider - Integration Tests', () => {
       const errorHandler = new ErrorHandler(logger);
 
       let attempt = 0;
-      exchange.getCandles.mockImplementation(({ timeframe }: any) => {
+      exchange.getCandles.mockImplementation(({ timeframe }: GetCandlesParams) => {
         attempt++;
         // Simulate intermittent failure
         if (timeframe === '1' && attempt === 1) {

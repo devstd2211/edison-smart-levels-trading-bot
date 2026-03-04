@@ -19,8 +19,13 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SignalDirection, SwingPointType } from '../../types/legacy';
 
 describe('Analyzer Registration Service - All Fixes', () => {
-  let mockLogger: any;
-  let mockConfig: any;
+  let mockLogger: {
+    debug: jest.Mock;
+    info: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+  };
+  let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
   beforeEach(() => {
     mockLogger = {
@@ -125,7 +130,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
       // SHORT signal at RSI 55 should be generated (55 > 50) but NOT at RSI < 70
       const rsi = 55;
       const overboughtLevel = 70;
-      const dynamicThreshold = mockConfig.analyzerStrategic.rsiAnalyzer.dynamicShortThreshold;
+      const dynamicThreshold = mockConfig.analyzerStrategic.rsiAnalyzer.dynamicShortThreshold as number;
 
       // With dynamic threshold enabled, RSI 55 should generate signal
       expect(rsi > dynamicThreshold).toBe(true);
@@ -145,7 +150,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
 
     it('should reduce confidence on rising knife pattern (close > prevClose)', () => {
       const baseConfidence = 65;
-      const risingKnifePenalty = mockConfig.analyzerStrategic.rsiAnalyzer.risingKnifePenalty;
+      const risingKnifePenalty = mockConfig.analyzerStrategic.rsiAnalyzer.risingKnifePenalty as number;
       const adjustedConfidence = baseConfidence * risingKnifePenalty;
 
       expect(adjustedConfidence).toBe(39); // 65 * 0.6
@@ -300,8 +305,8 @@ describe('Analyzer Registration Service - All Fixes', () => {
       const longSignals = [{ direction: SignalDirection.LONG }]; // 1+ LONG
 
       const hasConflict =
-        shortSignals.length >= mockConfig.analyzerStrategic.trendConflictDetector.minConflictingSignals &&
-        longSignals.length >= mockConfig.analyzerStrategic.trendConflictDetector.minOppositeSignals;
+        shortSignals.length >= (mockConfig.analyzerStrategic.trendConflictDetector.minConflictingSignals as number) &&
+        longSignals.length >= (mockConfig.analyzerStrategic.trendConflictDetector.minOppositeSignals as number);
 
       expect(hasConflict).toBe(true);
     });
@@ -345,8 +350,8 @@ describe('Analyzer Registration Service - All Fixes', () => {
 
   describe('FIX #8: Short Entry Enhanced Requirements', () => {
     it('should require 75% confidence for SHORT (vs 70% for LONG)', () => {
-      const shortMin = mockConfig.analyzerStrategic.shortEntryEnhancement.minConfidenceShort;
-      const longMin = mockConfig.analyzerStrategic.shortEntryEnhancement.minConfidenceLong;
+      const shortMin = mockConfig.analyzerStrategic.shortEntryEnhancement.minConfidenceShort as number;
+      const longMin = mockConfig.analyzerStrategic.shortEntryEnhancement.minConfidenceLong as number;
 
       expect(shortMin).toBe(0.75);
       expect(longMin).toBe(0.70);
@@ -462,10 +467,11 @@ describe('Analyzer Registration Service - All Fixes', () => {
     });
 
     it('each fix should be an object with configuration', () => {
-      Object.values(mockConfig.analyzerStrategic).forEach((fix: any) => {
+      Object.values(mockConfig.analyzerStrategic).forEach((fix: unknown) => {
+        const analyzerFix = fix as Record<string, unknown>;
         // Each fix should be an object with config properties
-        expect(typeof fix).toBe('object');
-        expect(fix).not.toBeNull();
+        expect(typeof analyzerFix).toBe('object');
+        expect(analyzerFix).not.toBeNull();
       });
     });
 
@@ -482,7 +488,8 @@ describe('Analyzer Registration Service - All Fixes', () => {
       ];
 
       logFlags.forEach(flag => {
-        const hasFlag = Object.values(mockConfig.analyzerStrategic).some((fix: any) => fix[flag]);
+        const hasFlag = Object.values(mockConfig.analyzerStrategic)
+          .some((fix: unknown) => Boolean((fix as Record<string, unknown>)[flag]));
         expect(hasFlag).toBe(true);
       });
     });

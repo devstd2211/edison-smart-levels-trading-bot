@@ -14,12 +14,20 @@
  */
 
 import { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
+import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyAnalyzerConfig } from '../../types/strategy-config';
 import { IndicatorType } from '../../types/indicator';
 
 // Mock Logger
-const createMockLogger = (overrides?: any) => ({
+type MockLogger = {
+  debug: jest.Mock;
+  info: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+};
+
+const createMockLogger = (overrides?: Partial<MockLogger>): MockLogger => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -49,13 +57,13 @@ const createBaseConfig = () => ({
 });
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let logger: any;
+  let logger: MockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
 
   beforeEach(() => {
     logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
+    errorHandler = new ErrorHandler(logger as unknown as LoggerService);
   });
 
   // ============================================================================
@@ -64,7 +72,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('THROW: Analyzer Validation', () => {
     beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger, errorHandler);
+      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
     });
 
     it('should THROW on unknown analyzer name', async () => {
@@ -88,11 +96,11 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
     it('should throw on invalid analyzer config with null name', async () => {
       const config = createBaseConfig();
-      const analyzerConfig: any = {
+      const analyzerConfig = {
         name: null,
         enabled: true,
         weight: 1,
-      };
+      } as unknown as StrategyAnalyzerConfig;
 
       try {
         await registry.getAnalyzerInstance(config, analyzerConfig);
@@ -140,7 +148,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
     it('should throw on empty analyzer configuration', async () => {
       const config = createBaseConfig();
-      const emptyAnalyzerConfig: any = {};
+      const emptyAnalyzerConfig = {} as unknown as StrategyAnalyzerConfig;
 
       await registry.getAnalyzerInstance(config, emptyAnalyzerConfig);
       expect(logger.warn).toHaveBeenCalled();
@@ -153,7 +161,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('GRACEFUL_DEGRADE: Load Failures & Recovery', () => {
     beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger, errorHandler);
+      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
     });
 
     it('should return null when analyzer fails to load', async () => {
@@ -187,8 +195,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       expect(logger.warn).toHaveBeenCalled();
       // Check that unknown analyzer was warned about
       const warnCalls = logger.warn.mock.calls;
-      const unknownWarning = warnCalls.some((call: any) =>
-        (call[0] as string)?.includes('Unknown analyzer')
+      const unknownWarning = warnCalls.some((call: unknown[]) =>
+        typeof call[0] === 'string' && call[0].includes('Unknown analyzer')
       );
       expect(unknownWarning).toBe(true);
     });
@@ -254,7 +262,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = new AnalyzerRegistryService(failingLogger, errorHandler);
+      const reg = new AnalyzerRegistryService(failingLogger as unknown as LoggerService, errorHandler);
       const indicators = new Map();
       indicators.set(IndicatorType.EMA, createMockIndicator('EMA'));
 
@@ -274,7 +282,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = new AnalyzerRegistryService(failingLogger, errorHandler);
+      const reg = new AnalyzerRegistryService(failingLogger as unknown as LoggerService, errorHandler);
       const config = createBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
@@ -296,7 +304,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = new AnalyzerRegistryService(failingLogger, errorHandler);
+      const reg = new AnalyzerRegistryService(failingLogger as unknown as LoggerService, errorHandler);
       const config = createBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'EMA_ANALYZER_NEW',
@@ -318,7 +326,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('Integration: End-to-End Scenarios', () => {
     beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger, errorHandler);
+      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
     });
 
     it('should load all enabled analyzers from strategy config', async () => {
@@ -369,7 +377,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
       // Should return null for unavailable indicator
       const unknownIndicator = registry.getIndicator(
-        'UNKNOWN_INDICATOR' as any
+        'UNKNOWN_INDICATOR' as unknown as IndicatorType
       );
       expect(unknownIndicator).toBeNull();
     });
@@ -392,13 +400,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = new AnalyzerRegistryService(logger);
+      const reg = new AnalyzerRegistryService(logger as unknown as LoggerService);
       expect(reg).toBeDefined();
       expect(reg.getAvailableAnalyzers().length).toBeGreaterThan(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', async () => {
-      const reg = new AnalyzerRegistryService(logger);
+      const reg = new AnalyzerRegistryService(logger as unknown as LoggerService);
       const config = createBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
@@ -416,7 +424,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should support legacy calls to getEnabledAnalyzers without ErrorHandler', async () => {
-      const reg = new AnalyzerRegistryService(logger);
+      const reg = new AnalyzerRegistryService(logger as unknown as LoggerService);
       const config = createBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },
@@ -433,12 +441,12 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('Edge Cases & Corner Cases', () => {
     beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger, errorHandler);
+      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
     });
 
     it('should handle undefined analyzer config gracefully', async () => {
       const config = createBaseConfig();
-      const analyzerConfig: any = undefined;
+      const analyzerConfig = undefined as unknown as StrategyAnalyzerConfig;
 
       try {
         await registry.getAnalyzerInstance(config, analyzerConfig);
@@ -493,4 +501,5 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
   });
 });
+
 

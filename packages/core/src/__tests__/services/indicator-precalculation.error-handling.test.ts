@@ -16,6 +16,7 @@ import { CandleProvider } from '../../providers/candle.provider';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LogLevel, TimeframeRole } from '../../types/legacy';
+import type { IIndicatorCache, IIndicatorCalculator } from '../../types/legacy';
 import {
   IndicatorCalculationError,
   IndicatorCacheSyncError,
@@ -41,6 +42,10 @@ function createMockCalculator(name: string) {
     }),
   };
 }
+
+type MockCalculator = ReturnType<typeof createMockCalculator>;
+type MockCache = ReturnType<typeof createMockCache>;
+type MockCandleProvider = ReturnType<typeof createMockCandleProvider>;
 
 function createMockCache() {
   return {
@@ -87,9 +92,9 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let service: IndicatorPreCalculationService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
-  let mockCandleProvider: any;
-  let mockCache: any;
-  let mockCalculators: any[];
+  let mockCandleProvider: MockCandleProvider;
+  let mockCache: MockCache;
+  let mockCalculators: MockCalculator[];
 
   beforeEach(() => {
     logger = new LoggerService(LogLevel.ERROR, './logs', false);
@@ -104,9 +109,9 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     ];
 
     service = new IndicatorPreCalculationService(
-      mockCandleProvider,
-      mockCache,
-      mockCalculators,
+      mockCandleProvider as unknown as CandleProvider,
+      mockCache as unknown as IIndicatorCache,
+      mockCalculators as unknown as IIndicatorCalculator[],
       logger,
       errorHandler // With ErrorHandler
     );
@@ -181,7 +186,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
 
     it('test-A4: Should include calculator context in error classification', async () => {
       // Arrange: Create service that captures errors
-      const capturedErrors: any[] = [];
+      const capturedErrors: unknown[] = [];
       const customLogger = {
         info: jest.fn(),
         warn: jest.fn((msg) => {
@@ -192,10 +197,10 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       };
 
       const customService = new IndicatorPreCalculationService(
-        mockCandleProvider,
-        mockCache,
-        mockCalculators,
-        customLogger as any,
+        mockCandleProvider as unknown as CandleProvider,
+        mockCache as unknown as IIndicatorCache,
+        mockCalculators as unknown as IIndicatorCalculator[],
+        customLogger as unknown as LoggerService,
         errorHandler
       );
       customService.setOnIndicatorsReady(
@@ -558,9 +563,9 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     it('test-E1: Should work without ErrorHandler parameter', async () => {
       // Arrange: Create service without errorHandler
       const serviceWithoutHandler = new IndicatorPreCalculationService(
-        mockCandleProvider,
-        mockCache,
-        mockCalculators,
+        mockCandleProvider as unknown as CandleProvider,
+        mockCache as unknown as IIndicatorCache,
+        mockCalculators as unknown as IIndicatorCalculator[],
         logger
         // No errorHandler parameter
       );
@@ -588,9 +593,9 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     it('test-E2: Should maintain original behavior for cache failures', async () => {
       // Arrange: Without errorHandler, cache failures logged to console
       const serviceWithoutHandler = new IndicatorPreCalculationService(
-        mockCandleProvider,
-        mockCache,
-        mockCalculators,
+        mockCandleProvider as unknown as CandleProvider,
+        mockCache as unknown as IIndicatorCache,
+        mockCalculators as unknown as IIndicatorCalculator[],
         logger
       );
 

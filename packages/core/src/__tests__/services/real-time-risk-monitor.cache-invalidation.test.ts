@@ -6,6 +6,9 @@
  */
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
+  type WarnLogger = { warn: (message: string) => void };
+  type DebugLogger = { debug: (message: string, meta?: { positionId: string }) => void };
+
   // CI1: position-closed event clears health score cache
   it('CI1: position-closed event clears health score cache', () => {
     const cache = new Map();
@@ -44,8 +47,9 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
       warn: jest.fn(),
     };
 
-    const handlePositionClosed = (data: any, logger: any) => {
-      if (!data?.position?.id) {
+    const handlePositionClosed = (data: unknown, logger: WarnLogger) => {
+      const maybeEvent = data as { position?: { id?: unknown } } | null;
+      if (typeof maybeEvent?.position?.id !== 'string') {
         logger.warn('position-closed event missing ID');
       }
     };
@@ -101,7 +105,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
       debug: jest.fn(),
     };
 
-    const handlePositionClosed = (positionId: string, logger: any) => {
+    const handlePositionClosed = (positionId: string, logger: DebugLogger) => {
       logger.debug('[RealTimeRiskMonitor] Cache invalidated', { positionId });
     };
 

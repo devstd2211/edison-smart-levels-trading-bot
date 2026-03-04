@@ -10,17 +10,19 @@
 
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { Position } from '../../types/legacy';
+import { Position, LoggerService } from '../../types/legacy';
+
+type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
 const createMockErrorHandler = () => {
-  const mockLogger = {
+  const mockLogger: Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'> & { silly: jest.Mock } = {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
     silly: jest.fn(),
   };
-  return new ErrorHandler(mockLogger as any);
+  return new ErrorHandler(mockLogger as unknown as LoggerService);
 };
 
 const createValidPosition = (): Position => ({
@@ -37,7 +39,7 @@ const createValidPosition = (): Position => ({
   fees: 10,
   takeProfits: [],
   stopLoss: 49000,
-} as any);
+} as unknown as Position);
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
@@ -47,13 +49,16 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   describe('THROW: Config Validation', () => {
     test('should throw on null config', () => {
       expect(() => {
-        new ConsoleDashboardService(null as any, createMockErrorHandler());
+        new ConsoleDashboardService(null as unknown as DashboardConfigInput, createMockErrorHandler());
       }).toThrow('Config must be a valid object');
     });
 
     test('should throw on invalid enabled (not boolean)', () => {
       expect(() => {
-        new ConsoleDashboardService({ enabled: 'yes' as any }, createMockErrorHandler());
+        new ConsoleDashboardService(
+          { enabled: 'yes' as unknown as boolean } as DashboardConfigInput,
+          createMockErrorHandler()
+        );
       }).toThrow('Config.enabled must be a boolean');
     });
 
@@ -65,7 +70,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
     test('should throw on invalid theme', () => {
       expect(() => {
-        new ConsoleDashboardService({ enabled: true, theme: 'rainbow' as any }, createMockErrorHandler());
+        new ConsoleDashboardService(
+          { enabled: true, theme: 'rainbow' as unknown as 'dark' | 'light' } as DashboardConfigInput,
+          createMockErrorHandler()
+        );
       }).toThrow('Config.theme must be "dark" or "light"');
     });
   });

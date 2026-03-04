@@ -15,10 +15,18 @@
 
 import { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { TakeProfit } from '../../types/legacy';
+import { TakeProfit, LoggerService } from '../../types/legacy';
 
 // Mock Logger
-const createMockLogger = (overrides?: any) => ({
+type MockLogger = {
+  debug: jest.Mock;
+  info: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+};
+const asLoggerService = (logger: MockLogger): LoggerService => logger as unknown as LoggerService;
+
+const createMockLogger = (overrides?: Partial<MockLogger>): MockLogger => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -41,13 +49,13 @@ const createFlatResult = (isFlat: boolean, confidence: number) => ({
 });
 
 describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
-  let logger: any;
+  let logger: MockLogger;
   let errorHandler: ErrorHandler;
   let service: MarketConditionAnalyzerService;
 
   beforeEach(() => {
     logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
+    errorHandler = new ErrorHandler(logger as unknown as LoggerService);
   });
 
   // ============================================================================
@@ -56,14 +64,14 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('THROW: Input Validation', () => {
     beforeEach(() => {
-      service = new MarketConditionAnalyzerService(logger, errorHandler);
+      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
     });
 
     it('should THROW on null takeProfits array', () => {
       const flatResult = createFlatResult(true, 75);
 
       expect(() => {
-        service.adjustTakeProfitsForMarketCondition(null as any, flatResult);
+        service.adjustTakeProfitsForMarketCondition(null as unknown as TakeProfit[], flatResult);
       }).not.toThrow(); // ErrorHandler catches it
 
       // Should warn about validation failure
@@ -112,7 +120,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('GRACEFUL_DEGRADE: Market Condition Processing', () => {
     beforeEach(() => {
-      service = new MarketConditionAnalyzerService(logger, errorHandler);
+      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
     });
 
     it('should handle NaN confidence gracefully', () => {
@@ -171,7 +179,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(failingLogger, errorHandler);
+      const service = new MarketConditionAnalyzerService(asLoggerService(failingLogger), errorHandler);
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(true, 75);
 
@@ -188,7 +196,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(failingLogger, errorHandler);
+      const service = new MarketConditionAnalyzerService(asLoggerService(failingLogger), errorHandler);
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const badFlatResult = { isFlat: true, confidence: NaN };
 
@@ -205,7 +213,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(failingLogger, errorHandler);
+      const service = new MarketConditionAnalyzerService(asLoggerService(failingLogger), errorHandler);
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(false, 80);
 
@@ -222,7 +230,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('Integration: End-to-End Scenarios', () => {
     beforeEach(() => {
-      service = new MarketConditionAnalyzerService(logger, errorHandler);
+      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
     });
 
     it('should adjust TPs for FLAT market (single TP)', () => {
@@ -298,7 +306,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
-      const service = new MarketConditionAnalyzerService(logger);
+      const service = new MarketConditionAnalyzerService(asLoggerService(logger));
       expect(service).toBeDefined();
 
       const takeProfits = [createTP(1, 100, 50, 0.5)];
@@ -309,7 +317,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const service = new MarketConditionAnalyzerService(logger);
+      const service = new MarketConditionAnalyzerService(asLoggerService(logger));
 
       const takeProfits = [
         createTP(1, 100, 50, 0.5),
@@ -325,7 +333,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should support null flatResult without ErrorHandler', () => {
-      const service = new MarketConditionAnalyzerService(logger);
+      const service = new MarketConditionAnalyzerService(asLoggerService(logger));
 
       const takeProfits = [createTP(1, 100, 50, 0.5)];
 
@@ -340,7 +348,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('Edge Cases & Corner Cases', () => {
     beforeEach(() => {
-      service = new MarketConditionAnalyzerService(logger, errorHandler);
+      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
     });
 
     it('should handle very small TP prices', () => {

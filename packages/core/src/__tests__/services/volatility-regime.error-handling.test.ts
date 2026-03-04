@@ -26,19 +26,19 @@ function createMockLogger(methodToFail?: string): LoggerService {
     logDir: '/tmp',
     logToFile: false,
     logs: [],
-    info: jest.fn<any>((_msg: string, _meta?: any) => {
+    info: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'info') throw new Error('Logger.info failed');
     }),
-    warn: jest.fn<any>((_msg: string, _meta?: any) => {
+    warn: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'warn') throw new Error('Logger.warn failed');
     }),
-    debug: jest.fn<any>((_msg: string, _meta?: any) => {
+    debug: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'debug') throw new Error('Logger.debug failed');
     }),
-    error: jest.fn<any>((_msg: string, _meta?: any) => {
+    error: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'error') throw new Error('Logger.error failed');
     }),
-  } as any;
+  } as unknown as LoggerService;
 }
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {

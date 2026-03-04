@@ -12,6 +12,9 @@ import {
 import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
 
+type ErrorWithCode = Error & { code?: string };
+type ErrorWithStatus = Error & { status?: number };
+
 describe('RetryPolicyService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
@@ -328,7 +331,7 @@ describe('RetryPolicyService', () => {
         callCount++;
         if (callCount <= 2) {
           const error = new Error('ECONNRESET');
-          (error as any).code = 'ECONNRESET';
+          (error as ErrorWithCode).code = 'ECONNRESET';
           throw error;
         }
         return 'success';
@@ -351,7 +354,7 @@ describe('RetryPolicyService', () => {
         callCount++;
         if (callCount <= 2) {
           const error = new Error('Too Many Requests');
-          (error as any).status = 429;
+          (error as ErrorWithStatus).status = 429;
           throw error;
         }
         return 'success';
@@ -373,7 +376,7 @@ describe('RetryPolicyService', () => {
       const http404Error = async () => {
         callCount++;
         const error = new Error('Not Found');
-        (error as any).status = 404;
+        (error as ErrorWithStatus).status = 404;
         throw error;
       };
 

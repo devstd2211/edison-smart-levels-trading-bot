@@ -46,7 +46,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
           attempts: 1,
           message: 'Handled successfully',
           strategy: options.strategy,
-          error: error as any,
+          error: error instanceof Error ? undefined : undefined,
         };
       }),
     } as unknown as jest.Mocked<ErrorHandler>;
@@ -109,8 +109,9 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
       } catch (caught) {
         expect(caught).toBeInstanceOf(StrategyLoadError);
         const e = caught as StrategyLoadError;
-        expect((e.metadata.context as any)?.strategyName).toBe('missing');
-        expect((e.metadata.context as any)?.reason).toBe('file_not_found');
+        const context = e.metadata.context as Record<string, unknown> | undefined;
+        expect(context?.strategyName).toBe('missing');
+        expect(context?.reason).toBe('file_not_found');
       }
     });
   });
@@ -137,8 +138,9 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
       } catch (caught) {
         expect(caught).toBeInstanceOf(StrategyParseError);
         const e = caught as StrategyParseError;
-        expect((e.metadata.context as any)?.strategyName).toBe('malformed');
-        expect((e.metadata.context as any)?.parseError).toBeDefined();
+        const context = e.metadata.context as Record<string, unknown> | undefined;
+        expect(context?.strategyName).toBe('malformed');
+        expect(context?.parseError).toBeDefined();
       }
     });
   });
@@ -292,7 +294,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
         ],
       };
 
-      dirReadSpy.mockResolvedValue(['valid.strategy.json', 'invalid.strategy.json'] as any);
+      dirReadSpy.mockResolvedValue(['valid.strategy.json', 'invalid.strategy.json']);
 
       // Mock file reads to return valid for first call, error for subsequent calls
       let callCount = 0;
@@ -312,7 +314,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     });
 
     test('E2: Failed strategies trigger SKIP strategy in ErrorHandler', async () => {
-      dirReadSpy.mockResolvedValue(['bad.strategy.json'] as any);
+      dirReadSpy.mockResolvedValue(['bad.strategy.json']);
       fileReadSpy.mockRejectedValue(new Error('ENOENT: not found'));
 
       await loaderService.loadAllStrategies();
@@ -326,7 +328,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     });
 
     test('E3: All strategies fail but SKIP allows graceful degradation', async () => {
-      dirReadSpy.mockResolvedValue(['bad1.strategy.json', 'bad2.strategy.json'] as any);
+      dirReadSpy.mockResolvedValue(['bad1.strategy.json', 'bad2.strategy.json']);
       fileReadSpy.mockRejectedValue(new Error('ENOENT: not found'));
 
       const results = await loaderService.loadAllStrategies();
@@ -442,7 +444,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
         'valid.strategy.json',
         'bad-json.strategy.json',
         'missing.strategy.json',
-      ] as any);
+      ]);
 
       fileReadSpy.mockImplementation((path) => {
         if (path.toString().includes('valid')) {

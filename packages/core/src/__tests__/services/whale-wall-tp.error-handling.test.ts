@@ -11,6 +11,8 @@
 import { WhaleWallTPService, WhaleWallTPConfig } from '../../services/whale-wall-tp.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { OrderBookWall, SignalDirection } from '../../types/legacy';
+import { LoggerService } from '../../services/logger.service';
+import type { TakeProfit } from '../../types/legacy';
 
 const createMockLogger = () => ({
   info: jest.fn(),
@@ -46,7 +48,7 @@ const createValidConfig = (): Partial<WhaleWallTPConfig> => ({
   },
 });
 
-const createConfigWithTPTargeting = (override: any) => ({
+const createConfigWithTPTargeting = (override: Partial<WhaleWallTPConfig['tpTargeting']>) => ({
   ...createValidConfig(),
   tpTargeting: {
     enabled: true,
@@ -57,7 +59,7 @@ const createConfigWithTPTargeting = (override: any) => ({
   },
 });
 
-const createConfigWithQualityValidation = (override: any) => ({
+const createConfigWithQualityValidation = (override: Partial<WhaleWallTPConfig['qualityValidation']>) => ({
   ...createValidConfig(),
   qualityValidation: {
     enabled: false,
@@ -76,18 +78,14 @@ const createValidWalls = (): OrderBookWall[] => [
     quantity: 10,
     percentOfTotal: 15,
     distance: 1.0,
-    isIceberg: false,
-    lastUpdated: Date.now(),
-  } as any,
+  },
   {
     side: 'BID',
     price: 49500,
     quantity: 8,
     percentOfTotal: 12,
     distance: -1.0,
-    isIceberg: false,
-    lastUpdated: Date.now(),
-  } as any,
+  },
 ];
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
@@ -96,40 +94,40 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   // ============================================================================
 
   describe('THROW: Config Validation', () => {
-    const mockLogger = createMockLogger() as any;
+    const mockLogger = createMockLogger();
 
     test('should throw on invalid minWallPercent (> 100)', () => {
       const errorHandler = new ErrorHandler(mockLogger);
       expect(() => {
-        new WhaleWallTPService(mockLogger, { minWallPercent: 150 }, undefined, errorHandler);
+        new WhaleWallTPService(mockLogger as unknown as LoggerService, { minWallPercent: 150 }, undefined, errorHandler);
       }).toThrow('minWallPercent must be between 0 and 100');
     });
 
     test('should throw on negative maxDistancePercent', () => {
       const errorHandler = new ErrorHandler(mockLogger);
       expect(() => {
-        new WhaleWallTPService(mockLogger, { maxDistancePercent: -1 }, undefined, errorHandler);
+        new WhaleWallTPService(mockLogger as unknown as LoggerService, { maxDistancePercent: -1 }, undefined, errorHandler);
       }).toThrow('maxDistancePercent must be positive number');
     });
 
     test('should throw on invalid alignmentThresholdPercent', () => {
       const errorHandler = new ErrorHandler(mockLogger);
       expect(() => {
-        new WhaleWallTPService(mockLogger, createConfigWithTPTargeting({ alignmentThresholdPercent: 150 }), undefined, errorHandler);
+        new WhaleWallTPService(mockLogger as unknown as LoggerService, createConfigWithTPTargeting({ alignmentThresholdPercent: 150 }), undefined, errorHandler);
       }).toThrow('tpTargeting.alignmentThresholdPercent must be between 0 and 100');
     });
 
     test('should throw on invalid minStrength (> 1)', () => {
       const errorHandler = new ErrorHandler(mockLogger);
       expect(() => {
-        new WhaleWallTPService(mockLogger, createConfigWithQualityValidation({ minStrength: 1.5 }), undefined, errorHandler);
+        new WhaleWallTPService(mockLogger as unknown as LoggerService, createConfigWithQualityValidation({ minStrength: 1.5 }), undefined, errorHandler);
       }).toThrow('qualityValidation.minStrength must be between 0 and 1');
     });
 
     test('should throw on invalid icebergBoostFactor', () => {
       const errorHandler = new ErrorHandler(mockLogger);
       expect(() => {
-        new WhaleWallTPService(mockLogger, createConfigWithQualityValidation({ icebergBoostFactor: 0 }), undefined, errorHandler);
+        new WhaleWallTPService(mockLogger as unknown as LoggerService, createConfigWithQualityValidation({ icebergBoostFactor: 0 }), undefined, errorHandler);
       }).toThrow('qualityValidation.icebergBoostFactor must be positive number');
     });
   });
@@ -139,17 +137,18 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   // ============================================================================
 
   describe('THROW: Input Validation', () => {
-    const mockLogger = createMockLogger() as any;
+    const mockLogger = createMockLogger();
     const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleWallTPService;
+    type WallsInput = Parameters<WhaleWallTPService['adjustTPSL']>[0];
 
     beforeEach(() => {
-      service = new WhaleWallTPService(mockLogger, createValidConfig(), undefined, errorHandler);
+      service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig(), undefined, errorHandler);
     });
 
     test('should throw on null walls array', () => {
       expect(() => {
-        service.adjustTPSL(null as any, 50000, SignalDirection.LONG, 51000, 49000);
+        service.adjustTPSL(null as unknown as WallsInput, 50000, SignalDirection.LONG, 51000, 49000);
       }).toThrow('Walls must be a valid array');
     });
 
@@ -183,12 +182,12 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Adjustment Failures', () => {
-    const mockLogger = createMockLogger() as any;
+    const mockLogger = createMockLogger();
     const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      service = new WhaleWallTPService(mockLogger, createValidConfig(), undefined, errorHandler);
+      service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig(), undefined, errorHandler);
     });
 
     test('should handle valid adjustment request', () => {
@@ -213,7 +212,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should handle config disabled gracefully', () => {
       const disabledService = new WhaleWallTPService(
-        mockLogger,
+        mockLogger as unknown as LoggerService,
         { ...createValidConfig(), enabled: false },
         undefined,
         errorHandler
@@ -239,8 +238,8 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
         }),
         silly: jest.fn(),
       };
-      const errorHandler = new ErrorHandler(mockLogger as any);
-      const service = new WhaleWallTPService(mockLogger as any, createValidConfig(), undefined, errorHandler);
+      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+      const service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig(), undefined, errorHandler);
 
       expect(() => {
         service.adjustTPSL(createValidWalls(), 50000, SignalDirection.LONG, 51000, 49000);
@@ -257,8 +256,8 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
         debug: jest.fn(),
         silly: jest.fn(),
       };
-      const errorHandler = new ErrorHandler(mockLogger as any);
-      const service = new WhaleWallTPService(mockLogger as any, createValidConfig(), undefined, errorHandler);
+      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+      const service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig(), undefined, errorHandler);
 
       expect(() => {
         service.adjustTPSL(createValidWalls(), 50000, SignalDirection.LONG, 51000, 49000);
@@ -271,12 +270,12 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   // ============================================================================
 
   describe('Integration: Adjustment Operations', () => {
-    const mockLogger = createMockLogger() as any;
+    const mockLogger = createMockLogger();
     const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      service = new WhaleWallTPService(mockLogger, createValidConfig(), undefined, errorHandler);
+      service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig(), undefined, errorHandler);
     });
 
     test('should handle multiple sequential adjustments', () => {
@@ -298,7 +297,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
       const takeProfits = [
         { price: 51000, percent: 2, level: 1, sizePercent: 30, hit: false },
         { price: 52000, percent: 3, level: 2, sizePercent: 40, hit: false },
-      ] as any;
+      ] as TakeProfit[];
 
       const adjusted = service.applyTPAdjustment(takeProfits, result, 50000, SignalDirection.LONG);
       expect(Array.isArray(adjusted)).toBe(true);
@@ -310,16 +309,16 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   // ============================================================================
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
-    const mockLogger = createMockLogger() as any;
+    const mockLogger = createMockLogger();
 
     test('should work without ErrorHandler', () => {
-      const service = new WhaleWallTPService(mockLogger, createValidConfig());
+      const service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig());
       const result = service.adjustTPSL(createValidWalls(), 50000, SignalDirection.LONG, 51000, 49000);
       expect(result).toBeDefined();
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const service = new WhaleWallTPService(mockLogger, createValidConfig());
+      const service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig());
       expect(() => {
         service.adjustTPSL(createValidWalls(), NaN, SignalDirection.LONG, 51000, 49000);
       }).toThrow('Entry price must be a finite number');
@@ -331,17 +330,17 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   // ============================================================================
 
   describe('Edge Cases', () => {
-    const mockLogger = createMockLogger() as any;
+    const mockLogger = createMockLogger();
     const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      service = new WhaleWallTPService(mockLogger, createValidConfig(), undefined, errorHandler);
+      service = new WhaleWallTPService(mockLogger as unknown as LoggerService, createValidConfig(), undefined, errorHandler);
     });
 
     test('should handle zero minWallPercent', () => {
       const zeroService = new WhaleWallTPService(
-        mockLogger,
+        mockLogger as unknown as LoggerService,
         { ...createValidConfig(), minWallPercent: 0 },
         undefined,
         errorHandler
@@ -352,7 +351,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should handle high minStrength value', () => {
       const highStrengthService = new WhaleWallTPService(
-        mockLogger,
+        mockLogger as unknown as LoggerService,
         createConfigWithQualityValidation({ minStrength: 1.0 }),
         undefined,
         errorHandler

@@ -14,15 +14,27 @@
 
 import { OrderExecutionPipeline } from '../../services/order-execution-pipeline.service';
 import { LoggerService } from '../../types/legacy';
+import { IExchange } from '../../interfaces';
 import {
   OrderExecutionConfig,
   OrderRequest,
   OrderStatus,
 } from '../../types/legacy';
 
+type PlaceOrderResponse = {
+  orderId: string;
+  price?: number;
+  filledQuantity?: number;
+} | null;
+
+type MockExchangeService = {
+  placeOrder: jest.Mock<Promise<PlaceOrderResponse>, [unknown]>;
+  getOrderStatus: jest.Mock<Promise<string>, [string]>;
+};
+
 describe('OrderExecutionPipeline', () => {
   let pipeline: OrderExecutionPipeline;
-  let mockBybitService: any;
+  let mockBybitService: MockExchangeService;
   let mockLogger: jest.Mocked<LoggerService>;
   const config: OrderExecutionConfig = {
     enabled: true,
@@ -53,16 +65,16 @@ describe('OrderExecutionPipeline', () => {
       error: jest.fn(),
       debug: jest.fn(),
       log: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockBybitService = {
       placeOrder: jest.fn(),
       getOrderStatus: jest.fn(),
-    } as any;
+    };
 
     pipeline = new OrderExecutionPipeline(
       config,
-      mockBybitService,
+      mockBybitService as unknown as IExchange,
       mockLogger
     );
   });

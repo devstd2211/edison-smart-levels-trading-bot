@@ -18,7 +18,7 @@ import { MarketDataCacheRepository } from '../../repositories/market-data.cache-
 class MockExchange {
   private callCount = 0;
 
-  async getCandles(params: any): Promise<Candle[]> {
+  async getCandles(params: { symbol: string; timeframe: string; limit?: number }): Promise<Candle[]> {
     this.callCount++;
     const { symbol, timeframe, limit = 100 } = params;
 
@@ -51,7 +51,7 @@ class MockExchange {
  * Mock TimeframeProvider for testing
  */
 class MockTimeframeProvider {
-  getAllTimeframes(): Map<TimeframeRole, any> {
+  getAllTimeframes(): Map<TimeframeRole, { interval: string; candleLimit: number }> {
     return new Map([
       ['PRIMARY' as TimeframeRole, { interval: '1', candleLimit: 100 }],
       ['ENTRY' as TimeframeRole, { interval: '5', candleLimit: 100 }],
@@ -60,7 +60,7 @@ class MockTimeframeProvider {
     ]);
   }
 
-  getTimeframe(role: TimeframeRole): any {
+  getTimeframe(role: TimeframeRole): { interval: string; candleLimit: number } {
     const tf = this.getAllTimeframes().get(role);
     if (!tf) throw new Error(`Timeframe ${role} not found`);
     return tf;
@@ -77,7 +77,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   beforeEach(() => {
     exchange = new MockExchange();
     repository = new MarketDataCacheRepository();
-    timeframeProvider = new MockTimeframeProvider() as any;
+    timeframeProvider = new MockTimeframeProvider() as unknown as TimeframeProvider;
     logger = new LoggerService();
 
     provider = new CandleProvider(
@@ -317,8 +317,15 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
 
   describe('Error Handling', () => {
     it('should throw on invalid timeframe during initialize', async () => {
+      type CandleProviderInternals = {
+        loadTimeframeCandles: (role: TimeframeRole, interval: string, limit: number) => Promise<void>;
+      };
+      const getCandleProviderInternals = (value: CandleProvider): CandleProviderInternals => (
+        value as unknown as CandleProviderInternals
+      );
+
       expect(async () => {
-        await (provider as any).loadTimeframeCandles('INVALID' as any, '1h', 100);
+        await getCandleProviderInternals(provider).loadTimeframeCandles('INVALID' as unknown as TimeframeRole, '1h', 100);
       }).not.toThrow(); // loadTimeframeCandles is private, just verify it doesn't crash
     });
 

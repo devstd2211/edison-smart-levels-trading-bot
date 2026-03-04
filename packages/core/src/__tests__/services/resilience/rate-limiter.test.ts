@@ -313,8 +313,7 @@ describe('RateLimiterService', () => {
       }, logger as LoggerService, errorHandler);
       service.start();
 
-      const error429 = new Error('Too Many Requests');
-      (error429 as any).status = 429;
+      const error429 = Object.assign(new Error('Too Many Requests'), { status: 429 });
 
       const operation = jest.fn(async () => {
         throw error429;
@@ -345,8 +344,7 @@ describe('RateLimiterService', () => {
       service.start();
 
       // First reduce rate
-      const error429 = new Error('Rate limited');
-      (error429 as any).status = 429;
+      const error429 = Object.assign(new Error('Rate limited'), { status: 429 });
       try {
         await service.execute('test', async () => { throw error429; });
       } catch (error) {
@@ -374,8 +372,7 @@ describe('RateLimiterService', () => {
       }, logger as LoggerService, errorHandler);
       service.start();
 
-      const error429 = new Error('Too Many Requests');
-      (error429 as any).status = 429;
+      const error429 = Object.assign(new Error('Too Many Requests'), { status: 429 });
 
       const statsBefore = service.getStats('test');
       const rateBefore = statsBefore?.refillRate ?? 10;
@@ -444,11 +441,12 @@ describe('RateLimiterService', () => {
     it('should throw on invalid key', async () => {
       const service = new RateLimiterService({}, logger as LoggerService, errorHandler);
       service.start();
+      type AcquireKey = Parameters<RateLimiterService['acquire']>[0];
 
       await expect(service.acquire('', 1))
         .rejects.toThrow('Rate limiter key must be a non-empty string');
 
-      await expect(service.acquire(null as any, 1))
+      await expect(service.acquire(null as unknown as AcquireKey, 1))
         .rejects.toThrow('Rate limiter key must be a non-empty string');
 
       service.stop();
@@ -484,7 +482,7 @@ describe('RateLimiterService', () => {
       };
 
       // Should not throw despite logging errors
-      const service = new RateLimiterService({}, faultyLogger as any, errorHandler);
+      const service = new RateLimiterService({}, faultyLogger as unknown as LoggerService, errorHandler);
       service.start();
       await expect(service.acquire('test', 1)).resolves.toBe(true);
 

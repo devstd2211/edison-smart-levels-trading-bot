@@ -24,7 +24,7 @@ function createRetryableError(message: string): ExchangeAPIError {
 
 describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
-  let mockRestClient: any;
+  let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
 
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockConfig = {
       name: 'bybit',
@@ -43,7 +43,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
       timeframe: '1m',
       testnet: true,
       demo: false,
-    } as any;
+    } as unknown as ExchangeConfig;
 
     mockRestClient = {
       getServerTime: jest.fn(),
@@ -328,7 +328,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   describe('Exponential Backoff Calculation', () => {
     it('test-6.1: Should calculate exponential backoff delays correctly', async () => {
       const delays: number[] = [];
-      const recordDelays = (attempt: number, error: any, delayMs: number) => {
+      const recordDelays = (attempt: number, error: unknown, delayMs: number) => {
         delays.push(delayMs);
       };
 
@@ -357,7 +357,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
 
     it('test-6.2: Should respect maxDelayMs cap', async () => {
       const delays: number[] = [];
-      const recordDelays = (attempt: number, error: any, delayMs: number) => {
+      const recordDelays = (attempt: number, error: unknown, delayMs: number) => {
         delays.push(delayMs);
       };
 

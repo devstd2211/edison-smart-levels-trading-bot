@@ -66,7 +66,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
       debug: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
 
     errorHandler = new ErrorHandler(mockLogger);
   });
@@ -227,7 +227,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         error: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-      } as any;
+      } as unknown as LoggerService;
     });
 
     it('should SKIP logger.debug failures in calculateATRBasedTP', () => {
@@ -246,7 +246,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
       const newConfig = { ...defaultConfig, atrBasedTP: { ...defaultConfig.atrBasedTP, minTPPercent: 0.3 } };
 
       // Should not throw despite potential logging failures
-      expect(() => service.updateConfig(newConfig as any)).not.toThrow();
+      expect(() => service.updateConfig(newConfig as unknown as Partial<EnhancedExitConfig>)).not.toThrow();
     });
   });
 
@@ -307,7 +307,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
       const validUpdate = { atrBasedTP: { ...defaultConfig.atrBasedTP, minTPPercent: 0.3 } };
 
-      service.updateConfig(validUpdate as any);
+      service.updateConfig(validUpdate as unknown as Partial<EnhancedExitConfig>);
 
       const newConfig = service.getConfig();
       expect(newConfig.atrBasedTP.minTPPercent).toBe(0.3);

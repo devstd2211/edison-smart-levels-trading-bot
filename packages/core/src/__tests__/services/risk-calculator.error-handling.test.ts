@@ -17,11 +17,21 @@
 import { RiskCalculator, RiskCalculationInput } from '../../services/risk-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RiskCalculationError } from '../../errors/DomainErrors';
-import { SignalDirection } from '../../types/legacy';
+import { SignalDirection, LoggerService } from '../../types/legacy';
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let calculator: RiskCalculator;
-  let mockLogger: any;
+  type MockLogger = {
+    info: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    debug: jest.Mock;
+    minLevel: string;
+    logDir: string;
+    logToFile: boolean;
+    logs: unknown[];
+  };
+  let mockLogger: MockLogger;
   let errorHandler: ErrorHandler;
   let defaultInput: RiskCalculationInput;
 
@@ -36,8 +46,8 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
       logToFile: false,
       logs: [],
     };
-    errorHandler = new ErrorHandler(mockLogger);
-    calculator = new RiskCalculator(mockLogger, errorHandler);
+    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+    calculator = new RiskCalculator(mockLogger as unknown as LoggerService, errorHandler);
 
     defaultInput = {
       direction: SignalDirection.LONG,
@@ -167,7 +177,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('continues calculation despite logger failures without ErrorHandler', () => {
-      const calculatorNoHandler = new RiskCalculator(mockLogger);
+      const calculatorNoHandler = new RiskCalculator(mockLogger as unknown as LoggerService);
       mockLogger.debug.mockImplementation(() => {
         throw new Error('Logger failure');
       });
@@ -294,7 +304,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
-      calculator = new RiskCalculator(mockLogger); // No ErrorHandler
+      calculator = new RiskCalculator(mockLogger as unknown as LoggerService); // No ErrorHandler
     });
 
     it('still validates input and throws on errors', () => {
@@ -334,11 +344,12 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
       try {
         calculator.calculate(input);
         fail('Should throw');
-      } catch (err: any) {
-        expect(err).toBeInstanceOf(RiskCalculationError);
-        expect(err.message).toContain('entryPrice');
-        expect(err.metadata).toBeDefined();
-        expect(err.metadata.context).toBeDefined();
+      } catch (err: unknown) {
+        const error = err as RiskCalculationError & { metadata?: { context?: unknown } };
+        expect(error).toBeInstanceOf(RiskCalculationError);
+        expect(error.message).toContain('entryPrice');
+        expect(error.metadata).toBeDefined();
+        expect(error.metadata?.context).toBeDefined();
       }
     });
 
@@ -347,8 +358,9 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
       try {
         calculator.calculate(input);
         fail('Should throw');
-      } catch (err: any) {
-        expect(err.metadata.context.entryPrice).toBe(-50);
+      } catch (err: unknown) {
+        const error = err as RiskCalculationError & { metadata?: { context?: { entryPrice?: number } } };
+        expect(error.metadata?.context?.entryPrice).toBe(-50);
       }
     });
   });

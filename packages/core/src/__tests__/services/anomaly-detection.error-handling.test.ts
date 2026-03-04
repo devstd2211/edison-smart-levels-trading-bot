@@ -22,6 +22,16 @@ describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
+  type ConfigInput = ConstructorParameters<typeof AnomalyDetectionService>[0];
+  type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
+  type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
+  type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
+  type AnomalyInternals = {
+    performVolumeAnomalyDetection: (volume: number) => unknown;
+    performVolatilitySpikeDetection: (value: number) => unknown;
+    performWhaleDetection: (trades: Trade[]) => unknown;
+    performManipulationDetection: () => unknown;
+  };
 
   const createMockTrade = (overrides?: Partial<Trade>): Trade => ({
     price: 50000,
@@ -48,19 +58,19 @@ describe('AnomalyDetectionService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new AnomalyDetectionService('invalid' as any, undefined, logger, errorHandler);
+        new AnomalyDetectionService('invalid' as unknown as ConfigInput, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new AnomalyDetectionService(123 as any, undefined, logger, errorHandler);
+        new AnomalyDetectionService(123 as unknown as ConfigInput, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new AnomalyDetectionService([] as any, undefined, logger, errorHandler);
+        new AnomalyDetectionService([] as unknown as ConfigInput, undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
@@ -89,7 +99,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   describe('THROW: Input Validation', () => {
     it('should throw when detectVolumeAnomaly receives non-number', () => {
       expect(() => {
-        service.detectVolumeAnomaly('invalid' as any);
+        service.detectVolumeAnomaly('invalid' as unknown as VolumeInput);
       }).toThrow('Volume must be a number');
     });
 
@@ -101,19 +111,19 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should throw when detectVolatilitySpike receives non-number', () => {
       expect(() => {
-        service.detectVolatilitySpike('invalid' as any);
+        service.detectVolatilitySpike('invalid' as unknown as VolatilityInput);
       }).toThrow('Volatility must be a number');
     });
 
     it('should throw when detectWhaleActivity receives null', () => {
       expect(() => {
-        service.detectWhaleActivity(null as any);
+        service.detectWhaleActivity(null as unknown as WhaleTradesInput);
       }).toThrow('Trades array cannot be null or undefined');
     });
 
     it('should throw when detectWhaleActivity receives non-array', () => {
       expect(() => {
-        service.detectWhaleActivity('invalid' as any);
+        service.detectWhaleActivity('invalid' as unknown as WhaleTradesInput);
       }).toThrow('Trades must be an array');
     });
   });
@@ -125,7 +135,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
   describe('GRACEFUL_DEGRADE: Detection Failures', () => {
     it('should return no anomaly when volume detection throws error', () => {
       // Force error by mocking internal method
-      jest.spyOn(service as any, 'performVolumeAnomalyDetection').mockImplementation(() => {
+      const internals = service as unknown as AnomalyInternals;
+      jest.spyOn(internals, 'performVolumeAnomalyDetection').mockImplementation(() => {
         throw new Error('Volume detection failed');
       });
 
@@ -137,7 +148,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should return no spike when volatility detection throws error', () => {
       // Force error
-      jest.spyOn(service as any, 'performVolatilitySpikeDetection').mockImplementation(() => {
+      const internals = service as unknown as AnomalyInternals;
+      jest.spyOn(internals, 'performVolatilitySpikeDetection').mockImplementation(() => {
         throw new Error('Volatility detection failed');
       });
 
@@ -151,7 +163,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const trades = [createMockTrade()];
 
       // Force error
-      jest.spyOn(service as any, 'performWhaleDetection').mockImplementation(() => {
+      const internals = service as unknown as AnomalyInternals;
+      jest.spyOn(internals, 'performWhaleDetection').mockImplementation(() => {
         throw new Error('Whale detection failed');
       });
 
@@ -162,7 +175,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should return no flags when manipulation detection throws error', () => {
       // Force error
-      jest.spyOn(service as any, 'performManipulationDetection').mockImplementation(() => {
+      const internals = service as unknown as AnomalyInternals;
+      jest.spyOn(internals, 'performManipulationDetection').mockImplementation(() => {
         throw new Error('Manipulation detection failed');
       });
 
@@ -210,7 +224,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-      } as any;
+      } as unknown as LoggerService;
 
       expect(() => {
         new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
@@ -225,12 +239,13 @@ describe('AnomalyDetectionService - Error Handling', () => {
         debug: jest.fn(),
         info: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
       const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
 
       // Force detection to log a warning
-      jest.spyOn(testService as any, 'performVolumeAnomalyDetection').mockImplementation(() => {
+      const testInternals = testService as unknown as AnomalyInternals;
+      jest.spyOn(testInternals, 'performVolumeAnomalyDetection').mockImplementation(() => {
         throw new Error('Detection failed');
       });
 
@@ -247,7 +262,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
       const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
 

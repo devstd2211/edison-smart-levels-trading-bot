@@ -22,6 +22,8 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let consoleLogSpy: jest.SpyInstance;
+  type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
+  type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
 
   // Mock strategy for testing
   const mockStrategy: StrategyConfig = {
@@ -42,13 +44,13 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     ],
   };
 
-  const mockMainConfig: any = {
+  const mockMainConfig: InitMainConfig = {
     version: 1,
     exchange: {
       name: 'bybit',
       symbols: ['BTCUSDT'],
     },
-  };
+  } as unknown as InitMainConfig;
 
   const createMockLoader = (): jest.Mocked<StrategyLoaderService> => {
     return {
@@ -92,7 +94,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     test('1.1: should THROW on null strategyName', async () => {
       strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
 
-      await expect(strategyManager.initialize(null as any, mockMainConfig)).rejects.toThrow(
+      await expect(strategyManager.initialize(null as unknown as InitStrategyName, mockMainConfig)).rejects.toThrow(
         'StrategyName is required'
       );
     });
@@ -116,7 +118,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     test('1.4: should THROW on invalid mainConfig (not object)', async () => {
       strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
 
-      await expect(strategyManager.initialize('test-strategy', 'not-an-object' as any)).rejects.toThrow(
+      await expect(strategyManager.initialize('test-strategy', 'not-an-object' as unknown as InitMainConfig)).rejects.toThrow(
         'Main config must be an object'
       );
     });
@@ -150,7 +152,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     });
 
     test('2.3: should handle invalid strategy from loader', async () => {
-      mockLoader.loadStrategy.mockResolvedValue(null as any);
+      mockLoader.loadStrategy.mockResolvedValue(null as unknown as StrategyConfig);
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
 
       strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
@@ -326,7 +328,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     test('5.2: should still throw validation errors without ErrorHandler', async () => {
       strategyManager = new StrategyManagerService(mockLoader, mockMerger);
 
-      await expect(strategyManager.initialize(null as any, mockMainConfig)).rejects.toThrow(
+      await expect(strategyManager.initialize(null as unknown as InitStrategyName, mockMainConfig)).rejects.toThrow(
         'StrategyName is required'
       );
     });

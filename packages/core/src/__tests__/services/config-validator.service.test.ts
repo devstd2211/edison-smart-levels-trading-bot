@@ -55,14 +55,14 @@ describe('ConfigValidatorService', () => {
           ...validConfig,
           riskManagement: { ...validConfig.riskManagement, stopLossPercent: undefined },
         };
-        expect(() => ConfigValidatorService.validateAtStartup(config as any)).toThrow(
+        expect(() => ConfigValidatorService.validateAtStartup(config as unknown)).toThrow(
           'REQUIRED FIELD MISSING',
         );
       });
 
       it('should fail when trading.leverage is missing', () => {
         const config = { ...validConfig, trading: { leverage: undefined } };
-        expect(() => ConfigValidatorService.validateAtStartup(config as any)).toThrow(
+        expect(() => ConfigValidatorService.validateAtStartup(config as unknown)).toThrow(
           'REQUIRED FIELD MISSING',
         );
       });
@@ -151,12 +151,13 @@ describe('ConfigValidatorService', () => {
         try {
           ConfigValidatorService.validateAtStartup(config);
           fail('Should have thrown');
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const configError = error as Error;
           // Should contain multiple errors
-          expect(error.message).toContain('DEPRECATED KEY');
-          expect(error.message).toContain('REQUIRED FIELD MISSING');
-          expect(error.message).toContain('must be > 0');
-          expect(error.message).toContain('must be 1-100');
+          expect(configError.message).toContain('DEPRECATED KEY');
+          expect(configError.message).toContain('REQUIRED FIELD MISSING');
+          expect(configError.message).toContain('must be > 0');
+          expect(configError.message).toContain('must be 1-100');
         }
       });
     });

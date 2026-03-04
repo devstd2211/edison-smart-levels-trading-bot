@@ -25,7 +25,10 @@ function createRetryableError(message: string): ExchangeAPIError {
 
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
-  let mockBybitService: any;
+  let mockBybitService: {
+    placeOrder: jest.MockedFunction<(params: unknown) => Promise<{ orderId: string; price?: number; filledQuantity?: number }>>;
+    getOrderStatus: jest.MockedFunction<(params: unknown) => Promise<unknown>>;
+  };
 
   beforeEach(() => {
     mockLogger = {
@@ -33,11 +36,11 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockBybitService = {
-      placeOrder: jest.fn(),
-      getOrderStatus: jest.fn(),
+      placeOrder: jest.fn(async () => ({ orderId: 'ORD-DEFAULT' })),
+      getOrderStatus: jest.fn(async () => ({})),
     };
   });
 
@@ -50,7 +53,7 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
       });
 
       const result = await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 3, initialDelayMs: 50, backoffMultiplier: 2 },
@@ -60,7 +63,7 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
       );
 
       expect(result.success).toBe(true);
-      expect((result.value as any)?.orderId).toBe('ORD1');
+      expect((result.value as { orderId?: string } | undefined)?.orderId).toBe('ORD1');
       expect(mockBybitService.placeOrder).toHaveBeenCalledTimes(1);
     });
 
@@ -75,7 +78,7 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
       });
 
       const result = await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 3, initialDelayMs: 50, backoffMultiplier: 2 },
@@ -117,10 +120,12 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
     });
 
     it('test-1.4: Should fail after max retries exhausted', async () => {
-      mockBybitService.placeOrder.mockRejectedValue(createRetryableError('Persistent API error'));
+      mockBybitService.placeOrder.mockImplementation(async () => {
+        throw createRetryableError('Persistent API error');
+      });
 
       const result = await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 2, initialDelayMs: 50, backoffMultiplier: 2 },
@@ -188,11 +193,13 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
 
   describe('Retry Exhaustion Handling', () => {
     it('test-2.1: Should return failure result with retry count', async () => {
-      mockBybitService.placeOrder.mockRejectedValue(createRetryableError('API unreachable'));
+      mockBybitService.placeOrder.mockImplementation(async () => {
+        throw createRetryableError('API unreachable');
+      });
 
       const retryAttempts: number[] = [];
       await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 3, initialDelayMs: 50, backoffMultiplier: 2 },
@@ -211,11 +218,13 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
 
     it('test-2.2: Should log errors appropriately on exhaustion', async () => {
       const errorSpy = jest.spyOn(mockLogger, 'error');
-      mockBybitService.placeOrder.mockRejectedValue(createRetryableError('Persistent failure'));
+      mockBybitService.placeOrder.mockImplementation(async () => {
+        throw createRetryableError('Persistent failure');
+      });
 
       // The app would log the failure, so just verify the error was captured
       const result = await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 2, initialDelayMs: 50, backoffMultiplier: 2 },
@@ -248,7 +257,7 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
       });
 
       const result = await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 3, initialDelayMs: 50, backoffMultiplier: 2 },
@@ -260,23 +269,25 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
       );
 
       expect(result.success).toBe(true);
-      expect((result.value as any)?.orderId).toBe('ORD123');
+      expect((result.value as { orderId?: string } | undefined)?.orderId).toBe('ORD123');
       expect(onRetrySpy).toHaveBeenCalledTimes(1); // One retry
       expect(onRecoverSpy).toHaveBeenCalledWith(RecoveryStrategy.RETRY, 1);
     });
 
     it('test-3.2: Should track execution context in logging', async () => {
-      const logContextCapture: any = {};
+      const logContextCapture: Record<string, unknown> = {};
       const warnSpy = jest.spyOn(mockLogger, 'warn').mockImplementation((msg, context) => {
         if (msg.includes('Retry')) {
           logContextCapture.retryContext = context;
         }
       });
 
-      mockBybitService.placeOrder.mockRejectedValue(createRetryableError('API error'));
+      mockBybitService.placeOrder.mockImplementation(async () => {
+        throw createRetryableError('API error');
+      });
 
       await ErrorHandler.executeAsync(
-        () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
+        async () => mockBybitService.placeOrder({ symbol: 'BTCUSDT', side: 'Buy', quantity: 1, price: 40000 }),
         {
           strategy: RecoveryStrategy.RETRY,
           retryConfig: { maxAttempts: 2, initialDelayMs: 50, backoffMultiplier: 2 },

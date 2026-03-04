@@ -25,6 +25,7 @@ import {
   LogLevel,
   PositionSide,
   TakeProfit,
+  StopLossConfig,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 
@@ -98,7 +99,13 @@ function createPosition(overrides?: Partial<Position>): Position {
     entryPrice: 50000,
     leverage: 1,
     marginUsed: 50000,
-    stopLoss: { price: 45000, percent: 10 } as any,
+    stopLoss: {
+      price: 45000,
+      initialPrice: 45000,
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    } as StopLossConfig,
     takeProfits: [{ level: 1, price: 55000, percent: 10 }] as TakeProfit[],
     openedAt: Date.now(),
     unrealizedPnL: 0,
@@ -125,7 +132,7 @@ function createTrade(overrides?: Partial<TradeRecord>): TradeRecord {
     entryPrice,
     exitPrice,
     leverage: overrides?.leverage || 1,
-    entryCondition: (overrides?.entryCondition || { signal: {}, indicators: {} }) as any,
+    entryCondition: overrides?.entryCondition || { signal: createSignal(), indicators: {} },
     openedAt: overrides?.openedAt || Date.now(),
     closedAt: overrides?.closedAt || Date.now(),
     realizedPnL,

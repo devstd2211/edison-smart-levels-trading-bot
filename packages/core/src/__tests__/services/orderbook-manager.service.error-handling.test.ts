@@ -11,13 +11,20 @@
 
 import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbook-manager.service';
 import { ErrorHandler } from '../../errors';
+import { LoggerService } from '../../services/logger.service';
+import { WallTrackerService } from '../../services/wall-tracker.service';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler;
-  let mockWallTracker: any;
+  let mockWallTracker: {
+    detectWall: jest.Mock;
+    removeWall: jest.Mock;
+    getWalls: jest.Mock;
+    reset: jest.Mock;
+  };
 
-  const mockLogger: any = {
+  const mockLogger: Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'> = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
@@ -32,8 +39,13 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       getWalls: jest.fn(() => ({})),
       reset: jest.fn(),
     };
-    errorHandler = new ErrorHandler(mockLogger);
-    service = new OrderbookManagerService('BTCUSDT', mockLogger, mockWallTracker as any, errorHandler);
+    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+    service = new OrderbookManagerService(
+      'BTCUSDT',
+      mockLogger as unknown as LoggerService,
+      mockWallTracker as unknown as WallTrackerService,
+      errorHandler
+    );
   });
 
   // ==========================================================================
@@ -271,7 +283,11 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       jest.useFakeTimers();
 
       // Service without error handler
-      const legacyService = new OrderbookManagerService('BTCUSDT', mockLogger, mockWallTracker as any);
+      const legacyService = new OrderbookManagerService(
+        'BTCUSDT',
+        mockLogger as unknown as LoggerService,
+        mockWallTracker as unknown as WallTrackerService
+      );
 
       const snapshot: OrderbookUpdate = {
         type: 'snapshot',
@@ -341,7 +357,11 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const legacyService = new OrderbookManagerService('BTCUSDT', mockLogger, mockWallTracker as any);
+      const legacyService = new OrderbookManagerService(
+        'BTCUSDT',
+        mockLogger as unknown as LoggerService,
+        mockWallTracker as unknown as WallTrackerService
+      );
 
       const snapshot: OrderbookUpdate = {
         type: 'snapshot',
@@ -359,7 +379,12 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without WallTracker', () => {
-      const serviceNoWall = new OrderbookManagerService('BTCUSDT', mockLogger, undefined, errorHandler);
+      const serviceNoWall = new OrderbookManagerService(
+        'BTCUSDT',
+        mockLogger as unknown as LoggerService,
+        undefined,
+        errorHandler
+      );
 
       const snapshot: OrderbookUpdate = {
         type: 'snapshot',
@@ -376,7 +401,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without either ErrorHandler or WallTracker', () => {
-      const minimalService = new OrderbookManagerService('BTCUSDT', mockLogger);
+      const minimalService = new OrderbookManagerService('BTCUSDT', mockLogger as unknown as LoggerService);
 
       const snapshot: OrderbookUpdate = {
         type: 'snapshot',

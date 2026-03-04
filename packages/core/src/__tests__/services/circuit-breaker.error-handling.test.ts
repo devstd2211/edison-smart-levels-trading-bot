@@ -45,7 +45,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
       // Should not throw despite logger failure
       expect(() => {
-        new CircuitBreakerService(config, failingLogger as any, errorHandler);
+        new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
       }).not.toThrow();
     });
 
@@ -56,7 +56,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       };
 
-      const testService = new CircuitBreakerService(config, failingLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
       testService.recordError('Test error 1');
       testService.recordError('Test error 2'); // Trigger trip
 
@@ -83,7 +83,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       };
 
-      const testService = new CircuitBreakerService(config, failingLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
 
       // Should not throw despite logger failures
       expect(() => {
@@ -101,7 +101,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       };
 
-      const testService = new CircuitBreakerService(config, failingLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -119,7 +119,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       };
 
-      const testService = new CircuitBreakerService(config, failingLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
       testService.recordError('Error 1');
 
       // Should not throw despite logger failure
@@ -138,7 +138,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       };
 
-      const testService = new CircuitBreakerService(config, failingLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
       testService.recordError('Error 1');
       testService.recordError('Error 2'); // Trip circuit
 
@@ -162,12 +162,12 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       // Spy on internal errorHistory to simulate push failure
       const originalPush = Array.prototype.push;
       let pushCallCount = 0;
-      jest.spyOn(Array.prototype, 'push').mockImplementation(function (this: any, ...args: any[]) {
+      jest.spyOn(Array.prototype, 'push').mockImplementation(function (this: unknown, ...args: unknown[]) {
         pushCallCount++;
         if (pushCallCount === 1) {
           throw new Error('History push failed');
         }
-        return originalPush.apply(this, args as any);
+        return Reflect.apply(originalPush, this as object, args) as number;
       });
 
       // Should not throw despite history error
@@ -272,7 +272,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       };
 
       // Service without ErrorHandler should still work
-      const testService = new CircuitBreakerService(config, failingLogger as any);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService);
 
       // Should handle error despite failing logger (degraded mode)
       expect(() => {
@@ -327,7 +327,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       };
 
-      const testService = new CircuitBreakerService(config, failingLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, failingLogger as unknown as LoggerService, errorHandler);
 
       // All operations should succeed despite logger failures
       expect(() => {
@@ -352,7 +352,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         error: jest.fn(),
       };
 
-      const testService = new CircuitBreakerService(config, intermittentLogger as any, errorHandler);
+      const testService = new CircuitBreakerService(config, intermittentLogger as unknown as LoggerService, errorHandler);
 
       // First operation fails in logger
       expect(() => {

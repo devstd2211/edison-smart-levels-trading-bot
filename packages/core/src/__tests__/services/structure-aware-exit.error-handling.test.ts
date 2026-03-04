@@ -45,7 +45,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
       debug: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
 
     errorHandler = new ErrorHandler(mockLogger);
   });
@@ -200,19 +200,23 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         },
       ];
 
-      const badProfile = { nodes: [{ price: NaN, volume: 1000 }] };
+      const badProfile: { nodes: Array<{ price: number; volume: number }> } = {
+        nodes: [{ price: NaN, volume: 1000 }],
+      };
 
       // Should still detect structure from liquidity zones
-      const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, badProfile as any);
+      const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, badProfile);
 
       expect(result).toBeTruthy();
       expect(result!.type).toBe('LIQUIDITY_ZONE');
     });
 
     it('should return null when all structure sources fail', () => {
-      const badProfile = { nodes: [{ price: NaN, volume: NaN }] };
+      const badProfile: { nodes: Array<{ price: number; volume: number }> } = {
+        nodes: [{ price: NaN, volume: NaN }],
+      };
 
-      const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], [], badProfile as any);
+      const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], [], badProfile);
 
       expect(result).toBeNull();
     });
@@ -279,7 +283,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
       service = new StructureAwareExitService(defaultConfig, throwingLogger, errorHandler);
     });
@@ -312,7 +316,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         error: jest.fn(() => {
           throw new Error('Log failed');
         }),
-      } as any;
+      } as unknown as LoggerService;
 
       const svc = new StructureAwareExitService(defaultConfig, badLogger, errorHandler);
       const structure = { price: 2.05, type: 'SWING_POINT' as const, strength: 0.8 };

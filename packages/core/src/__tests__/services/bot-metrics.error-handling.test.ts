@@ -12,40 +12,41 @@
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService, LogLevel } from '../../types/legacy';
+import { TradeMetrics } from '../../services/bot-metrics.service';
 
 /**
  * Mock Logger for testing
  */
 class MockLogger extends LoggerService {
-  logCalls: Array<{ level: string; message: string; meta?: any }> = [];
+  logCalls: Array<{ level: string; message: string; meta?: unknown }> = [];
   throwOnCall: boolean = false;
 
   constructor() {
     super(LogLevel.INFO, './logs', false);
   }
 
-  info(message: string, meta?: any): void {
+  info(message: string, meta?: unknown): void {
     this.logCalls.push({ level: 'info', message, meta });
     if (this.throwOnCall) {
       throw new Error('Logger failed');
     }
   }
 
-  debug(message: string, meta?: any): void {
+  debug(message: string, meta?: unknown): void {
     this.logCalls.push({ level: 'debug', message, meta });
     if (this.throwOnCall) {
       throw new Error('Logger failed');
     }
   }
 
-  warn(message: string, meta?: any): void {
+  warn(message: string, meta?: unknown): void {
     this.logCalls.push({ level: 'warn', message, meta });
     if (this.throwOnCall) {
       throw new Error('Logger failed');
     }
   }
 
-  error(message: string, meta?: any): void {
+  error(message: string, meta?: unknown): void {
     this.logCalls.push({ level: 'error', message, meta });
     if (this.throwOnCall) {
       throw new Error('Logger failed');
@@ -62,7 +63,7 @@ class MockLogger extends LoggerService {
 /**
  * Helper to create trade metrics
  */
-function createTradeMetrics(overrides?: any) {
+function createTradeMetrics(overrides?: Partial<TradeMetrics>): TradeMetrics {
   return {
     id: `trade-${Date.now()}`,
     direction: 'LONG' as const,
@@ -82,8 +83,9 @@ function createTradeMetrics(overrides?: any) {
  * Helper to create mock ErrorHandler
  */
 function createMockErrorHandler() {
-  const mockEH: any = {
-    handle: jest.fn((error: any, options: any) => {
+  type HandleConfig = Parameters<ErrorHandler['handle']>[1];
+  const mockEH = {
+    handle: jest.fn((error: unknown, options: HandleConfig) => {
       if (options.strategy === RecoveryStrategy.THROW) {
         throw error;
       }
@@ -94,12 +96,12 @@ function createMockErrorHandler() {
       };
     }),
   };
-  return mockEH;
+  return mockEH as unknown as ErrorHandler;
 }
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: MockLogger;
-  let errorHandler: any;
+  let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
 
   beforeEach(() => {
@@ -383,7 +385,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
       metricsService.recordTrade(createTradeMetrics({ id: 'trade-3' }));
 
       // Should have at least 1 error handler call (from trade or event)
-      expect(errorHandler.handle.mock.calls.length).toBeGreaterThanOrEqual(1);
+      expect((errorHandler.handle as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should maintain metrics state across errors', () => {

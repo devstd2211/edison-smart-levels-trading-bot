@@ -12,15 +12,27 @@
 
 import { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, TimeframeRole } from '../../types/legacy';
+import { ExchangeConfig, LoggerService, TimeframeRole } from '../../types/legacy';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let service: PublicWebSocketService;
-  let mockLogger: any;
-  let errorHandler: any;
-  let mockTimeframeProvider: any;
-  let mockConfig: any;
+  let mockLogger: {
+    debug: jest.Mock;
+    info: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    setContext: jest.Mock;
+  };
+  let errorHandler: {
+    handle: jest.Mock;
+    classify: jest.Mock;
+    getLogger: jest.Mock;
+  };
+  let mockTimeframeProvider: TimeframeProvider;
+  let mockConfig: ExchangeConfig;
+  let loggerService: LoggerService;
+  let errorHandlerService: ErrorHandler;
 
   beforeEach(() => {
     mockLogger = {
@@ -30,6 +42,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       error: jest.fn(),
       setContext: jest.fn(),
     };
+    loggerService = mockLogger as unknown as LoggerService;
 
     mockTimeframeProvider = {
       getAllTimeframes: jest.fn().mockReturnValue(
@@ -39,12 +52,16 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
           ['TIMEFRAME_15M' as TimeframeRole, { interval: '15', durationSeconds: 900 }],
         ])
       ),
-    };
+    } as unknown as TimeframeProvider;
 
     mockConfig = {
+      name: 'bybit',
       apiKey: 'test-key',
       apiSecret: 'test-secret',
+      symbol: 'XRPUSDT',
+      timeframe: '1m',
       testnet: false,
+      demo: false,
     };
 
     errorHandler = {
@@ -52,6 +69,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       classify: jest.fn(),
       getLogger: jest.fn().mockReturnValue(mockLogger),
     };
+    errorHandlerService = errorHandler as unknown as ErrorHandler;
   });
 
   // =========================================================================
@@ -64,7 +82,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
+        loggerService,
       );
       expect(serviceWithoutHandler).toBeDefined();
 
@@ -72,8 +90,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
       expect(serviceWithHandler).toBeDefined();
     });
@@ -83,8 +101,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
 
       expect(service.isConnected()).toBe(false);
@@ -101,8 +119,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
     });
 
@@ -110,15 +128,15 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       const invalidJson = '{invalid json';
 
       // Try to parse and catch error
-      let parseError: any = null;
+      let parseError: Error | null = null;
       try {
         JSON.parse(invalidJson);
       } catch (error) {
-        parseError = error;
+        parseError = error as Error;
       }
 
       expect(parseError).toBeDefined();
-      expect(parseError.message).toContain('JSON');
+      expect((parseError as Error).message).toContain('JSON');
 
       // Verify ErrorHandler would be called with GRACEFUL_DEGRADE
       expect(errorHandler.handle).toBeDefined();
@@ -160,8 +178,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
     });
 
@@ -205,8 +223,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
     });
 
@@ -243,8 +261,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
     });
 
@@ -279,8 +297,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
         btcConfig,
       );
 
@@ -292,8 +310,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
         { enabled: true, symbol: 'BTCUSDT' },
       );
 
@@ -314,8 +332,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
     });
 
@@ -341,7 +359,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
+        loggerService,
         // No ErrorHandler
       );
 
@@ -360,8 +378,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
     });
 
@@ -401,7 +419,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
+        loggerService,
       );
 
       expect(serviceNoHandler).toBeDefined();
@@ -413,7 +431,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
+        loggerService,
         // No ErrorHandler
       );
 
@@ -428,7 +446,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
+        loggerService,
       );
 
       service.disconnect();
@@ -448,8 +466,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler, // ErrorHandler injected from services builder
+        loggerService,
+        errorHandlerService, // ErrorHandler injected from services builder
       );
 
       expect(service).toBeDefined();
@@ -461,7 +479,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
+        loggerService,
       );
       expect(service1).toBeDefined();
 
@@ -470,10 +488,11 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         mockConfig,
         'XRPUSDT',
         mockTimeframeProvider,
-        mockLogger,
-        errorHandler,
+        loggerService,
+        errorHandlerService,
       );
       expect(service2).toBeDefined();
     });
   });
 });
+

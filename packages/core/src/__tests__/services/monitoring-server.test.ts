@@ -33,7 +33,7 @@ describe('MonitoringServer', () => {
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     errorHandler = new ErrorHandler(mockLogger);
 
@@ -41,7 +41,7 @@ describe('MonitoringServer', () => {
     mockMetricsService = {
       getMetrics: jest.fn().mockResolvedValue('# HELP trading_bot_orders_placed_total Total orders placed\ntrading_bot_orders_placed_total{side="Buy"} 10'),
       getContentType: jest.fn().mockReturnValue('text/plain; version=0.0.4; charset=utf-8'),
-    } as any;
+    } as unknown as jest.Mocked<PrometheusMetricsService>;
 
     // Mock HealthCheckService
     mockHealthService = {
@@ -58,7 +58,7 @@ describe('MonitoringServer', () => {
       }),
       isAlive: jest.fn().mockResolvedValue(true),
       isReady: jest.fn().mockResolvedValue(true),
-    } as any;
+    } as unknown as jest.Mocked<HealthCheckService>;
   });
 
   afterEach(async () => {

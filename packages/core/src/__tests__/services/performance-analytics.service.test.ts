@@ -34,7 +34,21 @@ const mockConfig: PerformanceAnalyticsConfig = {
   },
 };
 
-const createMockTrade = (overrides?: any) => {
+type MockTrade = {
+  tradeId: string;
+  symbol: string;
+  direction: string;
+  entryPrice: number;
+  exitPrice: number;
+  pnl: number;
+  pnlPercent: number;
+  entryTime: number;
+  exitTime: number;
+  openedAt: number;
+  exitReason: string;
+};
+
+const createMockTrade = (overrides?: Partial<MockTrade>): MockTrade => {
   const baseTrade = {
     tradeId: `trade-${Math.random()}`,
     symbol: 'BTCUSDT',
@@ -53,26 +67,29 @@ const createMockTrade = (overrides?: any) => {
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
-  let mockJournalService: jest.Mocked<TradingJournalService>;
+  type MockJournalService = {
+    getAllTrades: jest.Mock<unknown[], []>;
+  };
+  let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
 
   beforeEach(() => {
     // Create mocks
     mockJournalService = {
       getAllTrades: jest.fn(),
-    } as any;
+    };
 
     mockLogger = {
       info: jest.fn(),
       debug: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     // Initialize analytics
     analytics = new PerformanceAnalytics(
       mockConfig,
-      mockJournalService,
+      mockJournalService as unknown as TradingJournalService,
       mockLogger
     );
   });

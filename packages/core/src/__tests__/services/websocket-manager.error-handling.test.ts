@@ -38,6 +38,18 @@ const createMockLogger = (): LoggerService => {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 };
 
+type WebSocketManagerInternalState = {
+  errorHandler: ErrorHandler;
+  reconnectAttempts: number;
+  isConnecting: boolean;
+  shouldReconnect: boolean;
+  isDuplicateEvent: (eventType: string, eventId: string, timestamp: number) => boolean;
+};
+
+const getWsManagerInternals = (manager: WebSocketManagerService): WebSocketManagerInternalState => (
+  manager as unknown as WebSocketManagerInternalState
+);
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -74,8 +86,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('RETRY Strategy for Connection (3 tests)', () => {
     it('test-1.1: Should retry connection on network error', async () => {
       // Test that connection retry logic handles network errors gracefully
-      let connectAttempts = 0;
-      const errorHandler = (wsManager as any).errorHandler;
+      const errorHandler = getWsManagerInternals(wsManager).errorHandler;
 
       // Verify errorHandler exists and has RETRY capability
       expect(errorHandler).toBeDefined();
@@ -248,18 +259,18 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
     });
 
     it('test-6.2: Should track reconnect attempts', () => {
-      const reconnectAttempts = (wsManager as any).reconnectAttempts;
+      const reconnectAttempts = getWsManagerInternals(wsManager).reconnectAttempts;
       expect(typeof reconnectAttempts).toBe('number');
     });
 
     it('test-6.3: Should reset reconnect counter on successful connection', () => {
       // Verify counter reset logic
-      (wsManager as any).reconnectAttempts = 5;
-      expect((wsManager as any).reconnectAttempts).toBe(5);
+      getWsManagerInternals(wsManager).reconnectAttempts = 5;
+      expect(getWsManagerInternals(wsManager).reconnectAttempts).toBe(5);
 
       // After successful connection, should reset
-      (wsManager as any).reconnectAttempts = 0;
-      expect((wsManager as any).reconnectAttempts).toBe(0);
+      getWsManagerInternals(wsManager).reconnectAttempts = 0;
+      expect(getWsManagerInternals(wsManager).reconnectAttempts).toBe(0);
     });
   });
 
@@ -269,15 +280,15 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
 
   describe('Connection State Management (3 tests)', () => {
     it('test-7.1: Should not attempt duplicate connections', () => {
-      const isConnecting = (wsManager as any).isConnecting;
+      const isConnecting = getWsManagerInternals(wsManager).isConnecting;
       expect(typeof isConnecting).toBe('boolean');
     });
 
     it('test-7.2: Should respect shouldReconnect flag', async () => {
-      (wsManager as any).shouldReconnect = false;
+      getWsManagerInternals(wsManager).shouldReconnect = false;
       await wsManager.disconnect();
 
-      const shouldReconnect = (wsManager as any).shouldReconnect;
+      const shouldReconnect = getWsManagerInternals(wsManager).shouldReconnect;
       expect(shouldReconnect).toBe(false);
     });
 
@@ -295,13 +306,13 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('Integration Scenarios (2 tests)', () => {
     it('test-8.1: Should maintain deduplication during retry/recovery', () => {
       // Verify deduplication service still works during recovery
-      const isDuplicate = (wsManager as any).isDuplicateEvent('TP', 'order-1', Date.now());
+      const isDuplicate = getWsManagerInternals(wsManager).isDuplicateEvent('TP', 'order-1', Date.now());
       expect(typeof isDuplicate).toBe('boolean');
     });
 
     it('test-8.2: Should handle strategy switching during operation', () => {
       // Verify ErrorHandler can switch strategies as needed
-      const errorHandler = (wsManager as any).errorHandler;
+      const errorHandler = getWsManagerInternals(wsManager).errorHandler;
       expect(errorHandler).toBeDefined();
     });
   });

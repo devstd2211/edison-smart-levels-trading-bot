@@ -156,6 +156,9 @@ const createMockBotServices = () => {
 };
 
 type MockBotServices = ReturnType<typeof createMockBotServices>;
+type BotInitializerInternals = {
+  initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
+};
 
 const createMockErrorHandler = (): jest.Mocked<ErrorHandler> => {
   return {
@@ -299,7 +302,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
   describe('B: connectWebSockets() - WebSocket Connection with RETRY', () => {
     beforeEach(() => {
-      jest.spyOn(initializer as any, 'initializeTrendAnalysisAfterWebSocket')
+      jest.spyOn(initializer as unknown as BotInitializerInternals, 'initializeTrendAnalysisAfterWebSocket')
         .mockResolvedValue(undefined);
     });
 
@@ -344,7 +347,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       });
 
       const trendAnalysisSpy = jest
-        .spyOn(initializer as any, 'initializeTrendAnalysisAfterWebSocket')
+        .spyOn(initializer as unknown as BotInitializerInternals, 'initializeTrendAnalysisAfterWebSocket')
         .mockResolvedValue(undefined);
 
       await initializer.connectWebSockets();

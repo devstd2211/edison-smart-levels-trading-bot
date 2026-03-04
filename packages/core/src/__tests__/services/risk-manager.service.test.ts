@@ -140,7 +140,7 @@ function createMockTradeRecord(realizedPnL: number = 10, quantity: number = 1): 
     entryPrice: 100,
     exitPrice: 100 + realizedPnL / quantity,
     leverage: 1,
-    entryCondition: { signal: {}, indicators: {} } as any,
+    entryCondition: { signal: createMockSignal(), indicators: {} },
     openedAt: Date.now(),
     closedAt: Date.now(),
     realizedPnL,
@@ -172,7 +172,7 @@ describe('RiskManager', () => {
 
     it('should throw error if config is missing', () => {
       expect(() => {
-        new RiskManager(null as any, mockLogger, errorHandler);
+        new RiskManager(null as unknown as RiskManagerConfig, mockLogger, errorHandler);
       }).toThrow('RiskManagerConfig is required');
     });
 
@@ -206,7 +206,8 @@ describe('RiskManager', () => {
 
     it('should reject if signal.confidence is missing', async () => {
       const signal = createMockSignal(SignalDirection.LONG, 60);
-      signal.confidence = undefined as any;
+      const invalidSignal = signal as unknown as { confidence: number | undefined };
+      invalidSignal.confidence = undefined;
 
       await expect(riskManager.canTrade(signal, 1000, [])).rejects.toThrow(
         RiskValidationError

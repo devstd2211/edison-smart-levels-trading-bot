@@ -11,6 +11,7 @@
 
 import { CandleAggregatorService } from '../../services/candle-aggregator.service';
 import { Candle } from '../../types/legacy';
+import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 const createMockLogger = () => ({
@@ -25,35 +26,37 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   const mockLogger = createMockLogger();
+  type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
+  type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
   beforeEach(() => {
-    errorHandler = new ErrorHandler(mockLogger);
-    service = new CandleAggregatorService(mockLogger, errorHandler);
+    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+    service = new CandleAggregatorService(mockLogger as unknown as LoggerService, errorHandler);
   });
 
   describe('THROW: Input Validation', () => {
     test('should throw on null candles', () => {
       expect(() => {
-        service.aggregateCandles(null as any, 5);
+        service.aggregateCandles(null as unknown as AggregateCandlesInput, 5);
       }).toThrow('Candles array cannot be null or undefined');
     });
 
     test('should throw on undefined candles', () => {
       expect(() => {
-        service.aggregateCandles(undefined as any, 5);
+        service.aggregateCandles(undefined as unknown as AggregateCandlesInput, 5);
       }).toThrow('Candles array cannot be null or undefined');
     });
 
     test('should throw when candles is not an array', () => {
       expect(() => {
-        service.aggregateCandles({ length: 1 } as any, 5);
+        service.aggregateCandles({ length: 1 } as unknown as AggregateCandlesInput, 5);
       }).toThrow('Candles must be an array');
     });
 
     test('should throw on null timeframe', () => {
       const candles = [createMockCandle(1000, 100)];
       expect(() => {
-        service.aggregateCandles(candles, null as any);
+        service.aggregateCandles(candles, null as unknown as AggregateTimeframeInput);
       }).toThrow('Timeframe minutes must be a valid finite number');
     });
 
@@ -159,7 +162,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
           throw new Error('Logger failed');
         }),
       };
-      const badService = new CandleAggregatorService(badLogger as any, errorHandler);
+      const badService = new CandleAggregatorService(badLogger as unknown as LoggerService, errorHandler);
       const candles = [
         createMockCandle(1000, 100),
         { ...createMockCandle(2000, 100), open: NaN },
@@ -230,7 +233,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
       const basicService = new CandleAggregatorService(mockLogger);
 
       expect(() => {
-        basicService.aggregateCandles(null as any, 5);
+        basicService.aggregateCandles(null as unknown as AggregateCandlesInput, 5);
       }).toThrow();
     });
 

@@ -26,19 +26,19 @@ function createMockLogger(methodToFail?: string): LoggerService {
     logDir: '/tmp',
     logToFile: false,
     logs: [],
-    info: jest.fn<any>((_msg: string, _meta?: any) => {
+    info: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'info') throw new Error('Logger.info failed');
     }),
-    warn: jest.fn<any>((_msg: string, _meta?: any) => {
+    warn: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'warn') throw new Error('Logger.warn failed');
     }),
-    debug: jest.fn<any>((_msg: string, _meta?: any) => {
+    debug: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'debug') throw new Error('Logger.debug failed');
     }),
-    error: jest.fn<any>((_msg: string, _meta?: any) => {
+    error: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'error') throw new Error('Logger.error failed');
     }),
-  } as any;
+  } as unknown as LoggerService;
 }
 
 /**
@@ -67,6 +67,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let service: VolumeProfileService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
 
   beforeEach(() => {
     mockLogger = createMockLogger();
@@ -82,7 +83,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       service = new VolumeProfileService(mockLogger, undefined, errorHandler);
 
       expect(() => {
-        service.calculate(null as any);
+        service.calculate(null as unknown as VolumeCandlesInput);
       }).toThrow();
     });
 
@@ -90,7 +91,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       service = new VolumeProfileService(mockLogger, undefined, errorHandler);
 
       expect(() => {
-        service.calculate({ high: 100, low: 99 } as any);
+        service.calculate({ high: 100, low: 99 } as unknown as VolumeCandlesInput);
       }).toThrow();
     });
 
@@ -105,7 +106,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on candles with NaN values', () => {
       service = new VolumeProfileService(mockLogger, undefined, errorHandler);
 
-      const badCandles = [
+      const badCandles: Candle[] = [
         {
           timestamp: 1000,
           open: 100,
@@ -117,14 +118,14 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       ];
 
       expect(() => {
-        service.calculate(badCandles as any);
+        service.calculate(badCandles);
       }).toThrow();
     });
 
     it('should throw on candles with Infinity values', () => {
       service = new VolumeProfileService(mockLogger, undefined, errorHandler);
 
-      const badCandles = [
+      const badCandles: Candle[] = [
         {
           timestamp: 1000,
           open: 100,
@@ -136,14 +137,14 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       ];
 
       expect(() => {
-        service.calculate(badCandles as any);
+        service.calculate(badCandles);
       }).toThrow();
     });
 
     it('should throw on negative volume in candles', () => {
       service = new VolumeProfileService(mockLogger, undefined, errorHandler);
 
-      const badCandles = [
+      const badCandles: Candle[] = [
         {
           timestamp: 1000,
           open: 100,
@@ -155,7 +156,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       ];
 
       expect(() => {
-        service.calculate(badCandles as any);
+        service.calculate(badCandles);
       }).toThrow();
     });
 
@@ -530,7 +531,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on invalid candles without ErrorHandler', () => {
       service = new VolumeProfileService(mockLogger);
 
-      const badCandles = [
+      const badCandles: Candle[] = [
         {
           timestamp: 1000,
           open: 100,
@@ -542,7 +543,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       ];
 
       expect(() => {
-        service.calculate(badCandles as any);
+        service.calculate(badCandles);
       }).toThrow();
     });
 

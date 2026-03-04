@@ -25,6 +25,7 @@ const createMockLogger = (): LoggerService => {
 };
 
 const createMockErrorHandler = (): ErrorHandler & { handle: jest.Mock } => {
+  type HandleResult = Awaited<ReturnType<ErrorHandler['handle']>>;
   const handler = new ErrorHandler({
     info: jest.fn(),
     warn: jest.fn(),
@@ -37,10 +38,10 @@ const createMockErrorHandler = (): ErrorHandler & { handle: jest.Mock } => {
     success: true,
     recovered: true,
     message: 'Handled',
-    strategy: 'SKIP' as any,
-  } as any);
+    strategy: RecoveryStrategy.SKIP,
+  } as HandleResult);
 
-  return handler as any;
+  return handler as ErrorHandler & { handle: jest.Mock };
 };
 
 const createBullishCandle = (price: number): Candle => ({
@@ -558,11 +559,16 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   describe('Edge Cases (4 tests)', () => {
     it('test-8.9.20.17: Should handle null/undefined logger methods gracefully', () => {
       const mockLoggerWithNullMethods = createMockLogger();
+      const nullableLogger = mockLoggerWithNullMethods as unknown as {
+        debug: LoggerService['debug'] | null;
+        info: LoggerService['info'] | null;
+        warn: LoggerService['warn'] | null;
+      };
 
       // Manually set methods to null to simulate edge case
-      (mockLoggerWithNullMethods as any).debug = null;
-      (mockLoggerWithNullMethods as any).info = null;
-      (mockLoggerWithNullMethods as any).warn = null;
+      nullableLogger.debug = null;
+      nullableLogger.info = null;
+      nullableLogger.warn = null;
 
       service = new AntiFlipService(
         mockLoggerWithNullMethods,

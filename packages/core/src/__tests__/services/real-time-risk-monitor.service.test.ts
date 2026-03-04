@@ -79,33 +79,34 @@ const createMockPosition = (overrides?: Partial<Position>): Position => {
 
 describe('RealTimeRiskMonitor Service Tests', () => {
   let monitor: RealTimeRiskMonitor;
-  let mockPositionService: jest.Mocked<PositionLifecycleService>;
-  let mockEventBus: jest.Mocked<BotEventBus>;
+  let mockPositionService: Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
+  let mockEventBus: Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
   let mockLogger: jest.Mocked<LoggerService>;
 
   beforeEach(() => {
     // Create mocks
     mockPositionService = {
       getCurrentPosition: jest.fn(),
-    } as any;
+    };
 
     mockEventBus = {
       publishSync: jest.fn(),
-    } as any;
+      subscribe: jest.fn().mockReturnValue(() => undefined),
+    };
 
     mockLogger = {
       info: jest.fn(),
       debug: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     // Initialize monitor
     monitor = new RealTimeRiskMonitor(
       mockConfig,
-      mockPositionService,
+      mockPositionService as unknown as PositionLifecycleService,
       mockLogger,
-      mockEventBus
+      mockEventBus as unknown as BotEventBus
     );
   });
 

@@ -31,6 +31,8 @@ describe('PositionScalingService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
+  type ScalingConfigInput = ConstructorParameters<typeof PositionScalingService>[0];
+  type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
     logger = {
@@ -38,7 +40,7 @@ describe('PositionScalingService', () => {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
     errorHandler = new ErrorHandler(logger);
 
     mockConfig = {
@@ -68,7 +70,7 @@ describe('PositionScalingService', () => {
   describe('THROW - Config Validation', () => {
     it('should throw when config is null', () => {
       expect(() => {
-        new PositionScalingService(null as any, logger, errorHandler);
+        new PositionScalingService(null as unknown as ScalingConfigInput, logger, errorHandler);
       }).toThrow('config is required');
     });
 
@@ -127,7 +129,7 @@ describe('PositionScalingService', () => {
 
   describe('THROW - Position Validation', () => {
     it('should throw when position is null', async () => {
-      await expect(service.shouldScale(null as any)).rejects.toThrow(
+      await expect(service.shouldScale(null as unknown as ScalingPositionInput)).rejects.toThrow(
         'position is required'
       );
     });
@@ -156,7 +158,7 @@ describe('PositionScalingService', () => {
 
     it('should throw when side is invalid', async () => {
       await expect(
-        service.shouldScale({ ...mockPosition, side: 'invalid' as any })
+        service.shouldScale({ ...mockPosition, side: 'invalid' as unknown as PositionState['side'] })
       ).rejects.toThrow('side must be "long" or "short"');
     });
   });
@@ -273,7 +275,7 @@ describe('PositionScalingService', () => {
         error: jest.fn(() => {
           throw new Error('Logger broken');
         }),
-      } as any;
+      } as unknown as LoggerService;
     });
 
     it('should not throw when logging fails in shouldScale', async () => {

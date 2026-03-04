@@ -597,10 +597,10 @@ describe('CircuitBreakerService', () => {
     it('should throw on invalid operation input', async () => {
       const service = new CircuitBreakerService({}, logger as LoggerService, errorHandler);
 
-      await expect(service.execute(null as any, 'test'))
+      await expect(service.execute(null as unknown as () => Promise<unknown>, 'test'))
         .rejects.toThrow('Operation must be a function');
 
-      await expect(service.execute('not a function' as any, 'test'))
+      await expect(service.execute('not a function' as unknown as () => Promise<unknown>, 'test'))
         .rejects.toThrow('Operation must be a function');
     });
 
@@ -612,7 +612,7 @@ describe('CircuitBreakerService', () => {
       await expect(service.execute(operation, ''))
         .rejects.toThrow('Circuit name must be a non-empty string');
 
-      await expect(service.execute(operation, null as any))
+      await expect(service.execute(operation, null as unknown as string))
         .rejects.toThrow('Circuit name must be a non-empty string');
     });
 
@@ -631,7 +631,7 @@ describe('CircuitBreakerService', () => {
       };
 
       // Should not throw despite logging errors
-      const service = new CircuitBreakerService({}, faultyLogger as any, errorHandler);
+      const service = new CircuitBreakerService({}, faultyLogger as unknown as LoggerService, errorHandler);
       const operation = async () => 'success';
 
       await expect(service.execute(operation, 'test')).resolves.toBe('success');

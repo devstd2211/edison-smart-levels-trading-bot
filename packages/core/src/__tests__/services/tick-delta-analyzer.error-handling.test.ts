@@ -9,6 +9,7 @@ import { TickDeltaAnalyzerService } from '../../services/tick-delta-analyzer.ser
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import { TickDeltaAnalyzerConfig, Tick, MomentumSpike, SignalDirection } from '../../types/legacy';
+import { LoggerService } from '../../services/logger.service';
 
 // ============================================================================
 // FIXTURES
@@ -27,7 +28,7 @@ const createMockLogger = () => ({
 });
 
 const createMockErrorHandler = () => {
-  return new ErrorHandler(createMockLogger() as any);
+  return new ErrorHandler(createMockLogger() as unknown as LoggerService);
 };
 
 const createMockConfig = (): TickDeltaAnalyzerConfig => ({
@@ -52,7 +53,9 @@ const createMockTick = (): Tick => ({
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: any;
+  let mockLogger: ReturnType<typeof createMockLogger>;
+  type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
+  type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
 
   beforeEach(() => {
     mockLogger = createMockLogger();
@@ -66,7 +69,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new TickDeltaAnalyzerService(null as any, mockLogger, errorHandler);
+        new TickDeltaAnalyzerService(null as unknown as TickConfigInput, mockLogger as unknown as LoggerService, errorHandler);
       }).toThrow('TickDeltaAnalyzerConfig cannot be null or undefined');
     });
 
@@ -75,7 +78,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       config.minDeltaRatio = 0;
 
       expect(() => {
-        new TickDeltaAnalyzerService(config, mockLogger, errorHandler);
+        new TickDeltaAnalyzerService(config, mockLogger as unknown as LoggerService, errorHandler);
       }).toThrow('minDeltaRatio must be > 0 and finite');
     });
 
@@ -84,7 +87,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       config.detectionWindow = -1000;
 
       expect(() => {
-        new TickDeltaAnalyzerService(config, mockLogger, errorHandler);
+        new TickDeltaAnalyzerService(config, mockLogger as unknown as LoggerService, errorHandler);
       }).toThrow('detectionWindow must be > 0');
     });
 
@@ -93,7 +96,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       config.maxConfidence = 0;
 
       expect(() => {
-        new TickDeltaAnalyzerService(config, mockLogger, errorHandler);
+        new TickDeltaAnalyzerService(config, mockLogger as unknown as LoggerService, errorHandler);
       }).toThrow('maxConfidence must be > 0 and finite');
     });
   });
@@ -104,18 +107,18 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
     });
 
     it('should throw on null tick', () => {
       expect(() => {
-        service.addTick(null as any);
+        service.addTick(null as unknown as TickInput);
       }).toThrow('Tick cannot be null or undefined');
     });
 
     it('should throw on invalid tick side', () => {
       const tick = createMockTick();
-      tick.side = 'NEUTRAL' as any;
+      tick.side = 'NEUTRAL' as unknown as Tick['side'];
 
       expect(() => {
         service.addTick(tick);
@@ -147,7 +150,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
     });
 
     it('should handle calculation failures gracefully', () => {
@@ -192,7 +195,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
   describe('SKIP: Logger Errors', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
     });
 
     it('should skip logger errors during initialization', () => {
@@ -201,7 +204,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       });
 
       expect(() => {
-        new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+        new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
       }).not.toThrow();
     });
 
@@ -229,7 +232,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
   describe('Integration: Complex Scenarios', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
     });
 
     it('should detect BUY momentum spike correctly', () => {
@@ -276,15 +279,15 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        new TickDeltaAnalyzerService(null as any, mockLogger);
+        new TickDeltaAnalyzerService(null as unknown as TickConfigInput, mockLogger as unknown as LoggerService);
       }).toThrow('TickDeltaAnalyzerConfig cannot be null or undefined');
     });
 
     it('should throw on null tick without ErrorHandler', () => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService);
 
       expect(() => {
-        service.addTick(null as any);
+        service.addTick(null as unknown as TickInput);
       }).toThrow('Tick cannot be null or undefined');
     });
   });
@@ -295,7 +298,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
     });
 
     it('should handle zero-size ticks', () => {
@@ -346,7 +349,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
   describe('E2E: Error Recovery Scenarios', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      service = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
     });
 
     it('should recover from invalid config and succeed with valid config', () => {
@@ -354,13 +357,13 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       expect(() => {
         new TickDeltaAnalyzerService(
           { ...createMockConfig(), minDeltaRatio: -1 },
-          mockLogger,
+          mockLogger as unknown as LoggerService,
           errorHandler
         );
       }).toThrow();
 
       // Second attempt with valid config
-      const validService = new TickDeltaAnalyzerService(createMockConfig(), mockLogger, errorHandler);
+      const validService = new TickDeltaAnalyzerService(createMockConfig(), mockLogger as unknown as LoggerService, errorHandler);
 
       const tick = createMockTick();
       expect(() => {
@@ -388,3 +391,4 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
     });
   });
 });
+

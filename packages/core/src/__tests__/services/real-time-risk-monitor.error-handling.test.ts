@@ -19,9 +19,27 @@ import { RiskMonitoringConfig, DangerLevel, LiveTradingEventType } from '../../t
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
-  let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
-  let mockLogger: jest.Mocked<LoggerService>;
-  let mockEventBus: jest.Mocked<BotEventBus>;
+  type MockPositionLifecycleService = {
+    getCurrentPosition: jest.Mock;
+    getPositionHistory: jest.Mock;
+    updatePosition: jest.Mock;
+  };
+  type MockLogger = {
+    info: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    debug: jest.Mock;
+    log: jest.Mock;
+  };
+  type MockEventBus = {
+    publishSync: jest.Mock;
+    publish: jest.Mock;
+    subscribe: jest.Mock;
+    unsubscribe: jest.Mock;
+  };
+  let mockPositionLifecycleService: MockPositionLifecycleService;
+  let mockLogger: MockLogger;
+  let mockEventBus: MockEventBus;
 
   const mockConfig: RiskMonitoringConfig = {
     enabled: true,
@@ -61,7 +79,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       getCurrentPosition: jest.fn(),
       getPositionHistory: jest.fn().mockReturnValue([]),
       updatePosition: jest.fn(),
-    } as any;
+    };
 
     mockLogger = {
       info: jest.fn(),
@@ -69,20 +87,20 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       error: jest.fn(),
       debug: jest.fn(),
       log: jest.fn(),
-    } as any;
+    };
 
     mockEventBus = {
       publishSync: jest.fn(),
       publish: jest.fn(),
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),
-    } as any;
+    };
 
     monitor = new RealTimeRiskMonitor(
       mockConfig,
-      mockPositionLifecycleService,
-      mockLogger,
-      mockEventBus
+      mockPositionLifecycleService as unknown as PositionLifecycleService,
+      mockLogger as unknown as LoggerService,
+      mockEventBus as unknown as BotEventBus
     );
   });
 
@@ -97,7 +115,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       expect(monitor.getLatestHealthScore('pos-123')).toBeDefined();
 
       // Second call with position not found - should return cached
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null as any);
+      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       const cachedScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(cachedScore.positionId).toBe('pos-123');
@@ -109,7 +127,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.2: Should return safe default when position not found and no cache', async () => {
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null as any);
+      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       const healthScore = await monitor.calculatePositionHealth('pos-unknown', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
@@ -130,7 +148,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.4: Should log warning on graceful degradation', async () => {
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null as any);
+      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       await monitor.calculatePositionHealth('pos-123', 46000);
       expect(mockLogger.warn).toHaveBeenCalled();
@@ -232,8 +250,8 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const position = createMockPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
-      mockEventBus.publishSync.mockImplementation((event: any) => {
-        if (event.type === LiveTradingEventType.HEALTH_SCORE_UPDATED) {
+      mockEventBus.publishSync.mockImplementation((event: unknown) => {
+        if ((event as { type?: LiveTradingEventType }).type === LiveTradingEventType.HEALTH_SCORE_UPDATED) {
           throw new Error('Event bus failure');
         }
       });
@@ -251,8 +269,8 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
       // Create alert condition with critical health score
-      mockEventBus.publishSync.mockImplementation((event: any) => {
-        if (event.type === LiveTradingEventType.RISK_ALERT_TRIGGERED) {
+      mockEventBus.publishSync.mockImplementation((event: unknown) => {
+        if ((event as { type?: LiveTradingEventType }).type === LiveTradingEventType.RISK_ALERT_TRIGGERED) {
           throw new Error('Event bus failure');
         }
       });
@@ -274,7 +292,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       expect(firstScore).toBeDefined();
 
       // Then, simulate position not found but we have cache
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null as any);
+      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       // This should not throw and should use cache
       const report = await monitor.monitorAllPositions(46000);
