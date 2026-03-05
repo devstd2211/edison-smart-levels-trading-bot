@@ -23,7 +23,7 @@ import * as path from 'path';
 
 jest.mock('fs');
 jest.mock('path', () => {
-  const actualPath = jest.requireActual('path') as any;
+  const actualPath = jest.requireActual('path') as Record<string, unknown>;
   return {
     ...actualPath,
     join: jest.fn((...args) => args.join('/')),
@@ -33,7 +33,7 @@ jest.mock('path', () => {
 const mockExit = jest.fn(() => {
   throw new Error('Process exit called');
 });
-jest.spyOn(process, 'exit').mockImplementation(mockExit as any);
+jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
   let shutdownManager: GracefulShutdownManager;
@@ -81,33 +81,33 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       getCurrentPosition: jest.fn().mockReturnValue(createMockPosition()),
       getPositionHistory: jest.fn().mockReturnValue([]),
       updatePosition: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<PositionLifecycleService>;
 
     mockActionQueue = {
-      enqueue: jest.fn() as any,
-      waitEmpty: (jest.fn() as any).mockResolvedValue(undefined),
-      getQueueSize: jest.fn() as any,
-      clear: jest.fn() as any,
-    } as any;
+      enqueue: jest.fn(),
+      waitEmpty: jest.fn(),
+      getQueueSize: jest.fn(),
+      clear: jest.fn(),
+    } as unknown as jest.Mocked<ActionQueueService>;
 
     mockExchange = {
-      cancelAllOrders: (jest.fn() as any).mockResolvedValue(undefined),
-      cancelAllConditionalOrders: (jest.fn() as any).mockResolvedValue(undefined),
-      getSymbols: (jest.fn() as any).mockResolvedValue([]),
-      getBalance: (jest.fn() as any).mockResolvedValue({}),
-      placeOrder: jest.fn() as any,
-      cancelOrder: jest.fn() as any,
-      getOrderHistory: jest.fn() as any,
-      getOpenOrders: jest.fn() as any,
-      getPositions: jest.fn() as any,
-      getTradingPairs: jest.fn() as any,
-      getTicker: jest.fn() as any,
-      getKlines: jest.fn() as any,
-      subscribeToTicker: jest.fn() as any,
-      subscribeToPositions: jest.fn() as any,
-      subscribeToOrders: jest.fn() as any,
-      unsubscribeTicker: jest.fn() as any,
-    } as any;
+      cancelAllOrders: jest.fn(),
+      cancelAllConditionalOrders: jest.fn(),
+      getSymbols: jest.fn(),
+      getBalance: jest.fn(),
+      placeOrder: jest.fn(),
+      cancelOrder: jest.fn(),
+      getOrderHistory: jest.fn(),
+      getOpenOrders: jest.fn(),
+      getPositions: jest.fn(),
+      getTradingPairs: jest.fn(),
+      getTicker: jest.fn(),
+      getKlines: jest.fn(),
+      subscribeToTicker: jest.fn(),
+      subscribeToPositions: jest.fn(),
+      subscribeToOrders: jest.fn(),
+      unsubscribeTicker: jest.fn(),
+    } as unknown as jest.Mocked<IExchange>;
 
     mockLogger = {
       info: jest.fn(),
@@ -115,14 +115,14 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       error: jest.fn(),
       debug: jest.fn(),
       log: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockEventBus = {
       publishSync: jest.fn(),
       publish: jest.fn(),
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<BotEventBus>;
 
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
@@ -142,8 +142,8 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {
     it('test-1.1: Should succeed on first attempt for hanging orders', async () => {
-      mockExchange.cancelAllOrders.mockResolvedValueOnce(undefined as any);
-      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined as any);
+      mockExchange.cancelAllOrders.mockResolvedValueOnce(undefined);
+      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
       await shutdownManager['cancelAllPendingOrders']();
 
@@ -167,7 +167,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         }
         return Promise.resolve();
       });
-      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined as any);
+      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
       const result = await shutdownManager['cancelAllPendingOrders']();
 
@@ -185,7 +185,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     it('test-1.3: Should use exponential backoff (500ms → 1000ms → 2000ms)', async () => {
       // Set up to fail all retries so we can see the full retry behavior
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('Network error'));
-      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined as any);
+      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
       const result = await shutdownManager['cancelAllPendingOrders']();
 
@@ -208,7 +208,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         }
         return Promise.resolve();
       });
-      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined as any);
+      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
       await shutdownManager['cancelAllPendingOrders']();
 
@@ -223,7 +223,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
     it('test-1.5: Should gracefully degrade after max retries exhausted', async () => {
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('Persistent API error'));
-      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined as any);
+      mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
       const result = await shutdownManager['cancelAllPendingOrders']();
 
@@ -330,7 +330,9 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       await shutdownManager.persistState();
 
       const persistedEventCalls = mockEventBus.publishSync.mock.calls.filter(
-        (call: any[]) => call[0]?.type === LiveTradingEventType.STATE_PERSISTED
+        (call) =>
+          (call[0] as { type?: LiveTradingEventType } | undefined)?.type ===
+          LiveTradingEventType.STATE_PERSISTED
       );
 
       expect(persistedEventCalls.length).toBe(0);
@@ -607,4 +609,5 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     });
   });
 });
+
 

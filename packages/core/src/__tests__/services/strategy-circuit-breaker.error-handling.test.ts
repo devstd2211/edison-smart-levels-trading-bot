@@ -10,6 +10,9 @@ import { CircuitBreakerStatus } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
+  const asLoggerService = (value: Partial<LoggerService>): LoggerService =>
+    value as unknown as LoggerService;
+
   let service: StrategyCircuitBreakerService;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
@@ -38,7 +41,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = new StrategyCircuitBreakerService(failingLogger as any, {}, errorHandler);
+      const testService = new StrategyCircuitBreakerService(asLoggerService(failingLogger), {}, errorHandler);
       testService.recordSuccess('strategy-1');
 
       // Should not throw and should record success
@@ -53,7 +56,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = new StrategyCircuitBreakerService(failingLogger as any, {}, errorHandler);
+      const testService = new StrategyCircuitBreakerService(asLoggerService(failingLogger), {}, errorHandler);
       testService.recordFailure('strategy-1', new Error('Test failure'));
 
       // Should not throw and should record failure
@@ -69,7 +72,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = new StrategyCircuitBreakerService(failingLogger as any, {}, errorHandler);
+      const testService = new StrategyCircuitBreakerService(asLoggerService(failingLogger), {}, errorHandler);
       testService.recordFailure('strategy-1', new Error('Test failure'));
       testService.recordFailure('strategy-1', new Error('Test failure'));
 
@@ -89,7 +92,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = new StrategyCircuitBreakerService(failingLogger as any, {}, errorHandler);
+      const testService = new StrategyCircuitBreakerService(asLoggerService(failingLogger), {}, errorHandler);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -116,7 +119,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = new StrategyCircuitBreakerService(failingLogger as any, {}, errorHandler);
+      const testService = new StrategyCircuitBreakerService(asLoggerService(failingLogger), {}, errorHandler);
 
       // All these should not throw despite logger failures
       expect(() => {
@@ -320,7 +323,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = new StrategyCircuitBreakerService(failingLogger as any, {}, errorHandler);
+      const testService = new StrategyCircuitBreakerService(asLoggerService(failingLogger), {}, errorHandler);
 
       // Multiple strategies with failures
       expect(() => {

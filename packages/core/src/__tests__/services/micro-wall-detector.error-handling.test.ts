@@ -55,6 +55,28 @@ function createMockLogger(): LoggerService {
 // ============================================================================
 
 describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
+  const asConfig = (value: unknown): MicroWallDetectorConfig =>
+    value as MicroWallDetectorConfig;
+  const asOrderBook = (value: unknown): OrderBook => value as OrderBook;
+  const asLogger = (value: unknown): LoggerService => value as LoggerService;
+  const asWall = (value: unknown): {
+    side: 'BID' | 'ASK';
+    price: number;
+    size: number;
+    percentOfTotal: number;
+    distance: number;
+    timestamp: number;
+    broken: boolean;
+  } => value as {
+    side: 'BID' | 'ASK';
+    price: number;
+    size: number;
+    percentOfTotal: number;
+    distance: number;
+    timestamp: number;
+    broken: boolean;
+  };
+
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
@@ -70,7 +92,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new MicroWallDetectorService(null as any, logger, errorHandler);
+        new MicroWallDetectorService(asConfig(null), logger, errorHandler);
       }).toThrow('config is required');
     });
 
@@ -138,19 +160,19 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on null orderbook', () => {
       expect(() => {
-        detector.detectMicroWalls(null as any);
+        detector.detectMicroWalls(asOrderBook(null));
       }).toThrow('orderbook is required');
     });
 
     it('should throw on invalid orderbook structure (no bids)', () => {
-      const badOrderbook = { bids: null, asks: [[1.001, 100]] } as any;
+      const badOrderbook = asOrderBook({ bids: null, asks: [[1.001, 100]] });
       expect(() => {
         detector.detectMicroWalls(badOrderbook);
       }).toThrow('orderbook.bids and asks must be arrays');
     });
 
     it('should throw on invalid orderbook structure (no asks)', () => {
-      const badOrderbook = { bids: [[1.0, 100]], asks: undefined } as any;
+      const badOrderbook = asOrderBook({ bids: [[1.0, 100]], asks: undefined });
       expect(() => {
         detector.detectMicroWalls(badOrderbook);
       }).toThrow('orderbook.bids and asks must be arrays');
@@ -158,7 +180,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on null wall in calculateWallConfidence', () => {
       expect(() => {
-        detector.calculateWallConfidence(null as any);
+        detector.calculateWallConfidence(asWall(null));
       }).toThrow('wall is required');
     });
   });
@@ -176,7 +198,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on null wall', () => {
       expect(() => {
-        detector.isWallBroken(null as any, 1.0);
+        detector.isWallBroken(asWall(null), 1.0);
       }).toThrow('wall is required');
     });
 
@@ -306,10 +328,10 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
       expect(() => {
-        new MicroWallDetectorService(createConfig(), badLogger, errorHandler);
+        new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
       }).not.toThrow();
     });
 
@@ -321,9 +343,9 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         }),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
-      const detector = new MicroWallDetectorService(createConfig(), badLogger, errorHandler);
+      const detector = new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
       const orderbook = createOrderBook([[1.0, 500]], [[1.001, 4500]]);
 
       // Should not throw despite logger failure
@@ -340,9 +362,9 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         }),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
-      const detector = new MicroWallDetectorService(createConfig(), badLogger, errorHandler);
+      const detector = new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -447,7 +469,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
       const detector = new MicroWallDetectorService(createConfig(), logger);
 
       expect(() => {
-        detector.detectMicroWalls(null as any);
+        detector.detectMicroWalls(asOrderBook(null));
       }).toThrow('orderbook is required');
     });
   });
@@ -501,9 +523,9 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
-      new MicroWallDetectorService(createConfig(), badLogger, errorHandler);
+      new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
 
       // ErrorHandler.handle should have been called for logger failure
       expect(handleSpy).toHaveBeenCalled();

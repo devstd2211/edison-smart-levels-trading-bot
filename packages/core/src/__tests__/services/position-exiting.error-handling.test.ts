@@ -28,17 +28,21 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     tradingFeeRate: 0.0002,
     positionSizeUsdt: 100,
     riskPercent: 2,
-  } as any;
+    maxPositions: 1,
+    tradingCycleIntervalMs: 1000,
+    orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
+    favorableMovementThresholdPercent: 0.1,
+  };
 
   const mockRiskConfig: RiskManagementConfig = {
     trailingStopActivationLevel: 2,
-  } as any;
+  } as unknown as RiskManagementConfig;
 
   const mockConfig: Config = {
-    exchange: { name: 'bybit', testnet: true } as any,
+    exchange: { name: 'bybit', testnet: true } as unknown,
     trading: mockTradingConfig,
     riskManagement: mockRiskConfig,
-  } as any;
+  } as unknown as Config;
 
   const mockPosition: Position = {
     id: 'POS1',
@@ -75,26 +79,26 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       updateStopLoss: jest.fn(),
       openPosition: jest.fn(),
       getCandles: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<IExchange>;
 
     mockTelegram = {
       sendAlert: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<TelegramService>;
 
     mockLogger = {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockJournal = {
       recordTradeClose: jest.fn().mockReturnValue({ rollback: jest.fn() }),
-    } as any;
+    } as unknown as jest.Mocked<TradingJournalService>;
 
     mockSessionStats = {
       updateTradeExit: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<SessionStatsService>;
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {
@@ -245,7 +249,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
   describe('FALLBACK Strategy for Journal Operations (4 tests)', () => {
     it('test-2.1: Should fallback to no-op rollback on journal failure', async () => {
-      (mockJournal.recordTradeClose as any).mockImplementation(() => {
+      mockJournal.recordTradeClose.mockImplementation(() => {
         throw new Error('Journal write failed');
       });
 
@@ -254,7 +258,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
           id: 'JOURNAL1',
           exitPrice: 41000,
           realizedPnL: 1000,
-          exitCondition: {} as any,
+          exitCondition: {} as unknown as Parameters<TradingJournalService['recordTradeClose']>[0]['exitCondition'],
         });
       } catch (error) {
         // Expected - now handle with FALLBACK
@@ -313,7 +317,10 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
         expect(handled.success).toBe(true);
         // After fallback, we should continue with stats update
-        mockSessionStats.updateTradeExit('JOURNAL1', {} as any);
+        mockSessionStats.updateTradeExit(
+          'JOURNAL1',
+          {} as unknown as Parameters<SessionStatsService['updateTradeExit']>[1]
+        );
         expect(mockSessionStats.updateTradeExit).toHaveBeenCalled();
       }
     });
@@ -528,7 +535,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       expect(closeAttempts).toBe(2); // Success on second attempt
 
       // FALLBACK: Journal fails
-      (mockJournal.recordTradeClose as any).mockImplementation(() => {
+      mockJournal.recordTradeClose.mockImplementation(() => {
         throw new Error('Journal unavailable');
       });
       let journalFallback = false;
@@ -538,9 +545,9 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
           id: 'JOURNAL1',
           exitPrice: 41000,
           realizedPnL: 1000,
-          exitCondition: {} as any,
+          exitCondition: {} as unknown as Parameters<TradingJournalService['recordTradeClose']>[0]['exitCondition'],
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         const handled = await ErrorHandler.handle(error, {
           strategy: RecoveryStrategy.FALLBACK,
           logger: mockLogger,
@@ -575,7 +582,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
 
     it('test-6.2: Should maintain position state through error recovery', async () => {
-      const testPosition: any = { ...mockPosition };
+      const testPosition: Position = { ...mockPosition };
 
       // Simulate close with error handling
       expect(testPosition.status).toBe('OPEN');
@@ -585,10 +592,10 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       expect(testPosition.status).toBe('CLOSED');
 
       // Even if errors occurred in journal/notification, position state updated
-      (mockJournal.recordTradeClose as any).mockImplementation(() => {
+      mockJournal.recordTradeClose.mockImplementation(() => {
         throw new Error('Journal failure');
       });
-      (mockTelegram.sendAlert as any).mockImplementation(() => {
+      mockTelegram.sendAlert.mockImplementation(() => {
         throw new Error('Notification failure');
       });
 
@@ -597,12 +604,12 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
 
     it('test-6.3: Should log all errors during recovery process', async () => {
-      const errors: any[] = [];
+      const errors: unknown[] = [];
 
       // Simulate errors at each stage
       try {
         throw new Error('Close timeout');
-      } catch (error: any) {
+      } catch (error: unknown) {
         errors.push(error);
         await ErrorHandler.handle(error, {
           strategy: RecoveryStrategy.RETRY,
@@ -613,7 +620,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
       try {
         throw new Error('Journal unavailable');
-      } catch (error: any) {
+      } catch (error: unknown) {
         errors.push(error);
         await ErrorHandler.handle(error, {
           strategy: RecoveryStrategy.FALLBACK,
@@ -624,7 +631,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
       try {
         throw new Error('Telegram timeout');
-      } catch (error: any) {
+      } catch (error: unknown) {
         errors.push(error);
         await ErrorHandler.handle(error, {
           strategy: RecoveryStrategy.SKIP,
@@ -640,3 +647,5 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
   });
 });
+
+

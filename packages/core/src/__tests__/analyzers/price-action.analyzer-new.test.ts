@@ -4,6 +4,11 @@ import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.ty
 import { SignalDirection } from '../../types/enums';
 import { AnalyzerType } from '../../types/analyzer';
 
+type ConfigInput = ConstructorParameters<typeof PriceActionAnalyzerNew>[0];
+type CandlesInput = Parameters<PriceActionAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.6, priority: 5 };
 }
@@ -26,9 +31,9 @@ describe('PriceActionAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new PriceActionAnalyzerNew(config as any)).toThrow('[PRICE_ACTION]');
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new PriceActionAnalyzerNew(asConfig(config))).toThrow('[PRICE_ACTION]');
   });
 
   test('should throw on invalid weight (negative)', () => {
@@ -62,7 +67,7 @@ describe('PriceActionAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles input (null)', () => {
     const analyzer = new PriceActionAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow('[PRICE_ACTION]');
+    expect(() => analyzer.analyze(asCandles(null))).toThrow('[PRICE_ACTION]');
   });
 
   test('should throw on insufficient candles', () => {
@@ -74,7 +79,7 @@ describe('PriceActionAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candle data', () => {
     const analyzer = new PriceActionAnalyzerNew(createConfig());
     const candles = createCandles(Array.from({ length: 20 }, (_, i) => 100 + i));
-    (candles[5] as any).close = undefined;
+    (candles[5] as unknown as { close?: number }).close = undefined;
     expect(() => analyzer.analyze(candles)).toThrow('[PRICE_ACTION]');
   });
 });

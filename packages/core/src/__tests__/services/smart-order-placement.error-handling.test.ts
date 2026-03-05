@@ -23,25 +23,28 @@ import { LoggerService } from '../../types/legacy';
 // TEST HELPERS
 // ============================================================================
 
+type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
+const asConfig = (value: unknown): SmartOrderPlacementConfig =>
+  value as SmartOrderPlacementConfig;
+const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
+const asDirection = (value: unknown): 'buy' | 'sell' => value as 'buy' | 'sell';
+
 function createMockLogger(methodToFail?: string): LoggerService {
-  return {
-    minLevel: 'debug',
-    logDir: '/tmp',
-    logToFile: false,
-    logs: [],
-    info: jest.fn((_msg: string, _meta?: any) => {
+  const logger: LoggerLike = {
+    info: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'info') throw new Error('Logger.info failed');
     }),
-    warn: jest.fn((_msg: string, _meta?: any) => {
+    warn: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'warn') throw new Error('Logger.warn failed');
     }),
-    debug: jest.fn((_msg: string, _meta?: any) => {
+    debug: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'debug') throw new Error('Logger.debug failed');
     }),
-    error: jest.fn((_msg: string, _meta?: any) => {
+    error: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'error') throw new Error('Logger.error failed');
     }),
-  } as any;
+  };
+  return logger as unknown as LoggerService;
 }
 
 function createValidConfig(): SmartOrderPlacementConfig {
@@ -105,7 +108,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     const logger = createMockLogger();
 
     expect(() => {
-      new SmartOrderPlacementService(null as any, undefined, logger);
+      new SmartOrderPlacementService(asConfig(null), undefined, logger);
     }).toThrow('SmartOrderPlacementConfig cannot be null or undefined');
   });
 
@@ -173,7 +176,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
     const orderbook = createMockOrderbook();
 
     await expect(
-      service.planOrderExecution(orderbook, 1.0, 'invalid' as any),
+      service.planOrderExecution(orderbook, 1.0, asDirection('invalid')),
     ).rejects.toThrow('Invalid direction');
   });
 
@@ -183,7 +186,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
     const service = new SmartOrderPlacementService(config, undefined, logger);
 
     await expect(
-      service.planOrderExecution(null as any, 1.0, 'buy'),
+      service.planOrderExecution(asOrderbook(null), 1.0, 'buy'),
     ).rejects.toThrow('Orderbook cannot be null or undefined');
   });
 });

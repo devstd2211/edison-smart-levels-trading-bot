@@ -38,7 +38,7 @@ function createMockLogger(): LoggerService {
     clearLogs: jest.fn(),
     exportLogs: jest.fn(),
     stat: jest.fn(),
-  } as any as LoggerService;
+  } as unknown as LoggerService;
 }
 
 function createValidCandles(count: number = 10): Candle[] {
@@ -56,12 +56,18 @@ function createValidCandles(count: number = 10): Candle[] {
   return candles;
 }
 
-function createValidMultiTFData(): any {
+function createValidMultiTFData(): MultiTimeframeData {
+  const candles5m = createValidCandles(10);
+  const candles15m = createValidCandles(10);
+  const candles1h = createValidCandles(10);
+  const candles4h = createValidCandles(10);
+
   return {
-    candles5m: createValidCandles(10),
-    candles15m: createValidCandles(10),
-    candles1h: createValidCandles(10),
-    candles4h: createValidCandles(10),
+    primary: candles5m,
+    candles5m,
+    candles15m,
+    candles1h,
+    candles4h,
   };
 }
 
@@ -69,6 +75,10 @@ function createMockSwingPointDetector(): SwingPointDetectorService {
   const mockLogger = createMockLogger();
   const detector = new SwingPointDetectorService(mockLogger);
   return detector;
+}
+
+function asData(value: unknown): MultiTimeframeData {
+  return value as MultiTimeframeData;
 }
 
 // ============================================================================
@@ -96,10 +106,10 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
       try {
-        await service.analyze(null as any);
+        await service.analyze(asData(null));
         throw new Error('Should have thrown');
-      } catch (error: any) {
-        expect(error.message).toContain('null or undefined input data');
+      } catch (error: unknown) {
+        expect((error as Error).message).toContain('null or undefined input data');
       }
     });
 
@@ -107,10 +117,10 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
       try {
-        await service.analyze(undefined as any);
+        await service.analyze(asData(undefined));
         throw new Error('Should have thrown');
-      } catch (error: any) {
-        expect(error.message).toContain('null or undefined input data');
+      } catch (error: unknown) {
+        expect((error as Error).message).toContain('null or undefined input data');
       }
     });
 
@@ -118,11 +128,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
       try {
-        await service.analyze(null as any);
+        await service.analyze(asData(null));
         throw new Error('Should have thrown');
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Verify that error was thrown with ErrorHandler context
-        expect(error.message).toBeDefined();
+        expect((error as Error).message).toBeDefined();
         expect(error).toBeInstanceOf(Error);
       }
     });
@@ -131,10 +141,10 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
       try {
-        await service.analyze(null as any);
+        await service.analyze(asData(null));
         throw new Error('Should have thrown');
-      } catch (error: any) {
-        expect(error.message).toContain('MultiTimeframe');
+      } catch (error: unknown) {
+        expect((error as Error).message).toContain('MultiTimeframe');
       }
     });
 
@@ -142,7 +152,7 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
       try {
-        await service.analyze({} as any);
+        await service.analyze(asData({}));
         throw new Error('Should have thrown');
       } catch {
         // Expected - test passes if error thrown
@@ -158,12 +168,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     it('should degrade gracefully on missing candles', async () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
-      const data: any = {
+      const data = asData({
         candles5m: undefined,
         candles15m: createValidCandles(10),
         candles1h: createValidCandles(10),
-        candles4h: createValidCandles(10),
-      };
+        candles4h: createValidCandles(10),      });
 
       try {
         const result = await service.analyze(data);
@@ -176,12 +185,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     it('should degrade gracefully on insufficient candles', async () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
-      const data: any = {
+      const data = asData({
         candles5m: createValidCandles(2), // Less than required 5
         candles15m: createValidCandles(10),
         candles1h: createValidCandles(10),
-        candles4h: createValidCandles(10),
-      };
+        candles4h: createValidCandles(10),      });
 
       const result = await service.analyze(data);
 
@@ -204,12 +212,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
         ...createValidCandles(9),
       ];
 
-      const data: any = {
+      const data = asData({
         candles5m: invalidCandles,
         candles15m: createValidCandles(10),
         candles1h: createValidCandles(10),
-        candles4h: createValidCandles(10),
-      };
+        candles4h: createValidCandles(10),      });
 
       const result = await service.analyze(data);
 
@@ -232,12 +239,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
         ...createValidCandles(9),
       ];
 
-      const data: any = {
+      const data = asData({
         candles5m: invalidCandles,
         candles15m: createValidCandles(10),
         candles1h: createValidCandles(10),
-        candles4h: createValidCandles(10),
-      };
+        candles4h: createValidCandles(10),      });
 
       const result = await service.analyze(data);
 
@@ -323,7 +329,7 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     it('should handle cascading timeframe failures gracefully', async () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
-      const data: any = {
+      const data = asData({
         candles5m: [], // Empty
         candles15m: createValidCandles(3), // Too few
         candles1h: createValidCandles(10),
@@ -336,8 +342,7 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
             close: NaN,
             volume: 1000,
           },
-        ], // NaN values
-      };
+        ], // NaN values      });
 
       const result = await service.analyze(data);
 
@@ -359,7 +364,7 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     it('should provide valid consensus with mixed data quality', async () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector, errorHandler);
 
-      const data: any = {
+      const data = asData({
         candles5m: createValidCandles(10),
         candles15m: [
           {
@@ -373,8 +378,7 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
           ...createValidCandles(9),
         ],
         candles1h: undefined,
-        candles4h: createValidCandles(10),
-      };
+        candles4h: createValidCandles(10),      });
 
       try {
         const result = await service.analyze(data);
@@ -394,7 +398,7 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
           throw new Error('Detector failed');
         }),
         calculateStrengthFromSwingPoints: jest.fn(() => 0.3),
-      } as any;
+      } as unknown as SwingPointDetectorService;
 
       service = new MultiTimeframeTrendService(logger, brokenDetector, errorHandler);
 
@@ -443,12 +447,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     it('should produce valid results without ErrorHandler', async () => {
       service = new MultiTimeframeTrendService(logger, swingPointDetector);
 
-      const data: any = {
+      const data = asData({
         candles5m: createValidCandles(10),
         candles15m: createValidCandles(10),
         candles1h: createValidCandles(10),
-        candles4h: createValidCandles(10),
-      };
+        candles4h: createValidCandles(10),      });
 
       const result = await service.analyze(data);
 
@@ -458,3 +461,6 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     });
   });
 });
+
+
+

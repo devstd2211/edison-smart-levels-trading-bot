@@ -33,6 +33,11 @@ import { LoggerService, LogLevel, OrderExecutionData } from '../../types/legacy'
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
+  const asExecData = (value: unknown): OrderExecutionData =>
+    value as OrderExecutionData;
+  const asLogger = (value: unknown): LoggerService =>
+    value as LoggerService;
+
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
@@ -63,13 +68,13 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     it('should throw on null execData', () => {
       const service = new OrderExecutionDetectorService(logger, errorHandler);
 
-      expect(() => service.detectExecution(null as any)).toThrow('execData is required');
+      expect(() => service.detectExecution(asExecData(null))).toThrow('execData is required');
     });
 
     it('should throw on undefined execData', () => {
       const service = new OrderExecutionDetectorService(logger, errorHandler);
 
-      expect(() => service.detectExecution(undefined as any)).toThrow('execData is required');
+      expect(() => service.detectExecution(asExecData(undefined))).toThrow('execData is required');
     });
 
     it('should handle missing optional fields gracefully', () => {
@@ -81,7 +86,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         symbol: 'APEXUSDT',
         side: 'Buy',
         execType: 'Trade',
-      } as any;
+      } as unknown as OrderExecutionData;
 
       // Should not throw (fields are optional in detection logic)
       expect(() => service.detectExecution(execData)).not.toThrow();
@@ -190,9 +195,9 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-      } as any;
+      };
 
-      const service = new OrderExecutionDetectorService(failingLogger, errorHandler);
+      const service = new OrderExecutionDetectorService(asLogger(failingLogger), errorHandler);
 
       const execData = createMockExecutionData();
 
@@ -207,9 +212,9 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         debug: jest.fn(() => {
           throw new Error('Logger debug failed');
         }),
-      } as any;
+      };
 
-      const service = new OrderExecutionDetectorService(failingLogger, errorHandler);
+      const service = new OrderExecutionDetectorService(asLogger(failingLogger), errorHandler);
 
       // Should not throw on reset despite logger failure (SKIP strategy)
       expect(() => service.resetTpCounter()).not.toThrow();
@@ -221,9 +226,9 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         debug: jest.fn(() => {
           throw new Error('Logger debug failed');
         }),
-      } as any;
+      };
 
-      const service = new OrderExecutionDetectorService(failingLogger, errorHandler);
+      const service = new OrderExecutionDetectorService(asLogger(failingLogger), errorHandler);
 
       // Should not throw on reset despite logger failure (SKIP strategy)
       expect(() => service.resetLastCloseReason()).not.toThrow();
@@ -295,7 +300,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         handle: jest.fn(() => {
           throw new Error('ErrorHandler.handle failed');
         }),
-      } as any;
+      } as unknown as ErrorHandler;
 
       const service = new OrderExecutionDetectorService(logger, failingErrorHandler);
 
@@ -330,7 +335,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
       const service = new OrderExecutionDetectorService(logger);
 
       // THROW validation should still work without ErrorHandler
-      expect(() => service.detectExecution(null as any)).toThrow('execData is required');
+      expect(() => service.detectExecution(asExecData(null))).toThrow('execData is required');
     });
   });
 

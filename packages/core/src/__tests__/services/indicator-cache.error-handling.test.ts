@@ -16,18 +16,29 @@
 import { IndicatorCacheService } from '../../services/indicator-cache.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { IMarketDataRepository } from '../../repositories/IRepositories';
+import { LoggerService } from '../../services/logger.service';
+
+type LoggerMock = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
+type MockRepository = IMarketDataRepository & {
+  getIndicator: jest.Mock;
+  cacheIndicator: jest.Mock;
+  clearExpiredIndicators: jest.Mock;
+  getStats: jest.Mock;
+  clear: jest.Mock;
+};
 
 // Mock Logger
-const createMockLogger = (overrides?: any) => ({
+const createMockLogger = (overrides?: Partial<LoggerMock>): LoggerService =>
+  ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
   ...overrides,
-});
+} as unknown as LoggerService);
 
 // Mock Repository
-const createMockRepository = (overrides?: any): IMarketDataRepository => ({
+const createMockRepository = (overrides?: Partial<MockRepository>): MockRepository => ({
   getIndicator: jest.fn().mockReturnValue(null),
   cacheIndicator: jest.fn(),
   clearExpiredIndicators: jest.fn(),
@@ -38,12 +49,14 @@ const createMockRepository = (overrides?: any): IMarketDataRepository => ({
   getCandles: jest.fn().mockReturnValue([]),
   checkExists: jest.fn().mockReturnValue(false),
   ...overrides,
-});
+}) as MockRepository;
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
-  let logger: any;
+  const asCacheKey = (value: unknown): string => value as string;
+
+  let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let mockRepo: any;
+  let mockRepo: MockRepository;
   let cache: IndicatorCacheService;
 
   beforeEach(() => {
@@ -63,7 +76,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
     it('should THROW on null cache key in get()', () => {
       expect(() => {
-        cache.get(null as any);
+        cache.get(asCacheKey(null));
       }).not.toThrow(); // ErrorHandler catches it
 
       // Should not increment metrics
@@ -80,7 +93,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
     it('should THROW on null key in set()', () => {
       expect(() => {
-        cache.set(null as any, 50.5);
+        cache.set(asCacheKey(null), 50.5);
       }).not.toThrow();
 
       expect(mockRepo.cacheIndicator).not.toHaveBeenCalled();

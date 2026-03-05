@@ -35,6 +35,12 @@ import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types/l
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
+  const asOrderbook = (
+    value: unknown
+  ): { bids: [number, number][]; asks: [number, number][] } =>
+    value as { bids: [number, number][]; asks: [number, number][] };
+  const asLogger = (value: unknown): LoggerService => value as LoggerService;
+
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
@@ -86,7 +92,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
     it('should throw on non-boolean enabled', () => {
       const config = {
-        enabled: 'true' as any, // Invalid: string instead of boolean
+        enabled: 'true' as unknown as boolean, // Invalid: string instead of boolean
         minImbalancePercent: 30,
         levels: 10,
       };
@@ -106,7 +112,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       };
       const service = new OrderbookImbalanceService(config, logger, errorHandler);
 
-      expect(() => service.analyze(null as any)).toThrow('orderbook is required');
+      expect(() => service.analyze(asOrderbook(null))).toThrow('orderbook is required');
     });
 
     it('should throw on undefined orderbook', () => {
@@ -117,7 +123,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       };
       const service = new OrderbookImbalanceService(config, logger, errorHandler);
 
-      expect(() => service.analyze(undefined as any)).toThrow('orderbook is required');
+      expect(() => service.analyze(asOrderbook(undefined))).toThrow('orderbook is required');
     });
 
     it('should throw on non-array bids', () => {
@@ -129,7 +135,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const service = new OrderbookImbalanceService(config, logger, errorHandler);
 
       const orderbook = {
-        bids: 'not-an-array' as any,
+        bids: 'not-an-array' as unknown as [number, number][],
         asks: [[50010, 10] as [number, number]],
       };
 
@@ -146,7 +152,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
       const orderbook = {
         bids: [[50000, 10] as [number, number]],
-        asks: 'not-an-array' as any,
+        asks: 'not-an-array' as unknown as [number, number][],
       };
 
       expect(() => service.analyze(orderbook)).toThrow('bids and asks must be arrays');
@@ -276,7 +282,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-      } as any;
+      };
 
       const config: OrderbookImbalanceConfig = {
         enabled: true,
@@ -286,7 +292,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(
-        () => new OrderbookImbalanceService(config, failingLogger, errorHandler),
+        () => new OrderbookImbalanceService(config, asLogger(failingLogger), errorHandler),
       ).not.toThrow();
     });
 
@@ -297,14 +303,14 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
           throw new Error('Logger warn failed');
         }),
         debug: jest.fn(),
-      } as any;
+      };
 
       const config: OrderbookImbalanceConfig = {
         enabled: true,
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, failingLogger, errorHandler);
+      const service = new OrderbookImbalanceService(config, asLogger(failingLogger), errorHandler);
 
       const orderbook = {
         bids: [[50000, NaN] as [number, number]],
@@ -324,7 +330,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, null as any, errorHandler);
+      const service = new OrderbookImbalanceService(config, asLogger(null), errorHandler);
 
       const orderbook = {
         bids: [[50000, 10] as [number, number]],
@@ -499,7 +505,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
           throw new Error('ErrorHandler failed');
         }),
         executeAsync: jest.fn(),
-      } as any;
+      } as unknown as ErrorHandler;
 
       const config: OrderbookImbalanceConfig = {
         enabled: true,

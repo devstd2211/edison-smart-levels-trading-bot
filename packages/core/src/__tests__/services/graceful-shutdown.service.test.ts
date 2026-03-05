@@ -40,7 +40,9 @@ jest.mock('path', () => ({
 const mockExit = jest.fn(() => {
   throw new Error('Process exit called');
 });
-jest.spyOn(process, 'exit').mockImplementation(mockExit as any);
+jest.spyOn(process, 'exit').mockImplementation(
+  mockExit as unknown as (code?: string | number | null | undefined) => never
+);
 
 describe('GracefulShutdownManager', () => {
   let shutdownManager: GracefulShutdownManager;
@@ -49,6 +51,8 @@ describe('GracefulShutdownManager', () => {
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
+  const asInternals = (manager: GracefulShutdownManager): { cancelAllPendingOrders: () => Promise<number> } =>
+    manager as unknown as { cancelAllPendingOrders: () => Promise<number> };
 
   const mockConfig: GracefulShutdownConfig = {
     enabled: true,
@@ -91,14 +95,14 @@ describe('GracefulShutdownManager', () => {
       getCurrentPosition: jest.fn().mockReturnValue(createMockPosition()),
       getPositionHistory: jest.fn().mockReturnValue([]),
       updatePosition: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<PositionLifecycleService>;
 
     mockActionQueue = {
       enqueue: jest.fn(),
       waitEmpty: jest.fn().mockResolvedValue(undefined),
       getQueueSize: jest.fn().mockReturnValue(0),
       clear: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<ActionQueueService>;
 
     mockExchange = {
       cancelAllOrders: jest.fn().mockResolvedValue(undefined),
@@ -117,7 +121,7 @@ describe('GracefulShutdownManager', () => {
       subscribeToPositions: jest.fn(),
       subscribeToOrders: jest.fn(),
       unsubscribeTicker: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<IExchange>;
 
     mockLogger = {
       info: jest.fn(),
@@ -125,14 +129,14 @@ describe('GracefulShutdownManager', () => {
       error: jest.fn(),
       debug: jest.fn(),
       log: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<LoggerService>;
 
     mockEventBus = {
       publishSync: jest.fn(),
       publish: jest.fn(),
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<BotEventBus>;
 
     // Mock fs functions
     (fs.existsSync as jest.Mock).mockReturnValue(false);
@@ -320,7 +324,7 @@ describe('GracefulShutdownManager', () => {
 
   describe('Order Cancellation', () => {
     it('should cancel all orders when position exists', async () => {
-      const result = await (shutdownManager as any).cancelAllPendingOrders();
+      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).toHaveBeenCalledWith('BTCUSDT');
       expect(mockExchange.cancelAllConditionalOrders).toHaveBeenCalled();
@@ -330,7 +334,7 @@ describe('GracefulShutdownManager', () => {
     it('should return 0 when no position exists', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const result = await (shutdownManager as any).cancelAllPendingOrders();
+      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).not.toHaveBeenCalled();
       expect(result).toBe(0);
@@ -339,7 +343,7 @@ describe('GracefulShutdownManager', () => {
     it('should handle error when cancelling hanging orders', async () => {
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('API Error'));
 
-      const result = await (shutdownManager as any).cancelAllPendingOrders();
+      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
 
       // Should still try conditional orders
       expect(mockExchange.cancelAllConditionalOrders).toHaveBeenCalled();
@@ -353,7 +357,7 @@ describe('GracefulShutdownManager', () => {
     it('should handle error when cancelling conditional orders', async () => {
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('API Error'));
 
-      const result = await (shutdownManager as any).cancelAllPendingOrders();
+      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
 
       // Should still try hanging orders
       expect(mockExchange.cancelAllOrders).toHaveBeenCalled();

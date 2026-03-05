@@ -2,6 +2,11 @@ import { ChochBosAnalyzerNew } from '../../analyzers/choch-bos.analyzer-new';
 import type { Candle } from '../../types/core';
 import type { ChochBosAnalyzerConfigNew } from '../../types/config/config-new.types';
 
+type ConfigInput = ConstructorParameters<typeof ChochBosAnalyzerNew>[0];
+type CandlesInput = Parameters<ChochBosAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): ChochBosAnalyzerConfigNew {
   return { enabled: true, weight: 0.75, priority: 5 };
 }
@@ -24,9 +29,9 @@ describe('ChochBosAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new ChochBosAnalyzerNew(config as any)).toThrow();
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new ChochBosAnalyzerNew(asConfig(config))).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +52,7 @@ describe('ChochBosAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new ChochBosAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -59,7 +64,7 @@ describe('ChochBosAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candle', () => {
     const analyzer = new ChochBosAnalyzerNew(createConfig());
     const candles = createCandles(Array.from({ length: 35 }, (_, i) => 100 + i));
-    (candles[15] as any).high = undefined;
+    (candles[15] as unknown as { high?: number }).high = undefined;
     expect(() => analyzer.analyze(candles)).toThrow();
   });
 });

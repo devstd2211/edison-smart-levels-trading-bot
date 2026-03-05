@@ -47,11 +47,13 @@ const createMockErrorHandler = (): ErrorHandler & { handle: jest.Mock } => {
     success: true,
     recovered: true,
     message: 'Handled',
-    strategy: RecoveryStrategy.THROW as any,
-  } as any);
+    strategy: RecoveryStrategy.THROW,
+  } as Awaited<ReturnType<ErrorHandler['handle']>>);
 
-  return handler as any;
+  return handler as ErrorHandler & { handle: jest.Mock };
 };
+const asConfigInput = (value: unknown): Parameters<ConfigValidatorService['validateAll']>[0] =>
+  value as Parameters<ConfigValidatorService['validateAll']>[0];
 
 const validConfig = {
   exchange: {
@@ -187,7 +189,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       const validator = new ConfigValidatorService(logger, errorHandler);
       const config = { ...validConfig, exchange: { ...validConfig.exchange, symbol: null } };
 
-      expect(() => validator.validateAll(config as any)).toThrow(ConfigValidationError);
+      expect(() => validator.validateAll(asConfigInput(config))).toThrow(ConfigValidationError);
     });
 
     it('test-8.9.31.B3: Should throw for missing riskManagement.stopLossPercent', () => {
@@ -197,7 +199,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         riskManagement: { ...validConfig.riskManagement, stopLossPercent: undefined },
       };
 
-      expect(() => validator.validateAll(config as any)).toThrow(ConfigValidationError);
+      expect(() => validator.validateAll(asConfigInput(config))).toThrow(ConfigValidationError);
     });
 
     it('test-8.9.31.B4: Should collect multiple missing required fields', () => {
@@ -209,9 +211,9 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       };
 
       try {
-        validator.validateAll(config as any);
+        validator.validateAll(asConfigInput(config));
         fail('Should have thrown');
-      } catch (error: any) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(ConfigValidationError);
       }
     });
@@ -234,7 +236,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         },
       };
 
-      expect(() => validator.validateAll(config as any)).toThrow(ConfigFormatError);
+      expect(() => validator.validateAll(asConfigInput(config))).toThrow(ConfigFormatError);
     });
 
     it('test-8.9.31.C2: Should collect multiple confidence format errors', () => {
@@ -250,9 +252,9 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       };
 
       try {
-        validator.validateAll(config as any);
+        validator.validateAll(asConfigInput(config));
         fail('Should have thrown');
-      } catch (error: any) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(ConfigFormatError);
       }
     });
@@ -304,10 +306,10 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   describe('E. Analyzer Configuration Validation (2 tests)', () => {
     it('test-8.9.31.E1: Should throw ConfigAnalyzerValidationError for missing strategicWeights', () => {
       const validator = new ConfigValidatorService(logger, errorHandler);
-      const config = { ...validConfig };
-      delete (config as any).strategicWeights;
+      const config: Record<string, unknown> = { ...validConfig };
+      delete config.strategicWeights;
 
-      expect(() => validator.validateAnalyzerConfig(config)).toThrow(ConfigAnalyzerValidationError);
+      expect(() => validator.validateAnalyzerConfig(asConfigInput(config))).toThrow(ConfigAnalyzerValidationError);
     });
 
     it('test-8.9.31.E2: Should throw for missing analyzer enabled flag', () => {
@@ -324,7 +326,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         },
       };
 
-      expect(() => validator.validateAnalyzerConfig(config as any)).toThrow(ConfigAnalyzerValidationError);
+      expect(() => validator.validateAnalyzerConfig(asConfigInput(config))).toThrow(ConfigAnalyzerValidationError);
     });
   });
 
@@ -335,10 +337,10 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   describe('F. Strategy Configuration Validation (2 tests)', () => {
     it('test-8.9.31.F1: Should throw ConfigStrategyValidationError for missing strategies section', () => {
       const validator = new ConfigValidatorService(logger, errorHandler);
-      const config = { ...validConfig };
-      delete (config as any).strategies;
+      const config: Record<string, unknown> = { ...validConfig };
+      delete config.strategies;
 
-      expect(() => validator.validateStrategyConfig(config as any)).toThrow(ConfigStrategyValidationError);
+      expect(() => validator.validateStrategyConfig(asConfigInput(config))).toThrow(ConfigStrategyValidationError);
     });
 
     it('test-8.9.31.F2: Should throw for missing blockLongInDowntrend flag', () => {
@@ -353,7 +355,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         },
       };
 
-      expect(() => validator.validateStrategyConfig(config as any)).toThrow(ConfigStrategyValidationError);
+      expect(() => validator.validateStrategyConfig(asConfigInput(config))).toThrow(ConfigStrategyValidationError);
     });
   });
 
@@ -426,10 +428,10 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       try {
         validator.validateAll(config);
         fail('Should have thrown');
-      } catch (error: any) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(ConfigValidationError);
-        expect(error.message).toBeDefined();
-        expect(error.message).toContain('Configuration validation failed');
+        expect((error as Error).message).toBeDefined();
+        expect((error as Error).message).toContain('Configuration validation failed');
       }
     });
   });

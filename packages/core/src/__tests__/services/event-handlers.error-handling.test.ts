@@ -23,7 +23,7 @@ import { WebSocketManagerService } from '../../services/websocket-manager.servic
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { TelegramService } from '../../services/telegram.service';
 import { LoggerService, Position, PositionSide, ExitType, LogLevel } from '../../types/legacy';
-import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../types/legacy';
+import { StopLossHitEvent, TakeProfitHitEvent } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { PositionMonitoringError, ExchangeAPIError } from '../../errors/DomainErrors';
@@ -60,15 +60,65 @@ const createMockPosition = (overrides: Partial<Position> = {}): Position => ({
   ...overrides,
 });
 
-const createMockLogger = (): LoggerService => {
+const createMockLogger = () => {
   return {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
     trace: jest.fn(),
-  } as unknown as LoggerService;
+  };
 };
+
+type PositionManagerInput = ConstructorParameters<typeof PositionEventHandler>[0];
+type PositionExitingInput = ConstructorParameters<typeof PositionEventHandler>[1];
+type ExchangeInput = ConstructorParameters<typeof PositionEventHandler>[2];
+type TelegramInput = ConstructorParameters<typeof PositionEventHandler>[3];
+type PositionLoggerInput = ConstructorParameters<typeof PositionEventHandler>[4];
+type WebSocketManagerInput = ConstructorParameters<typeof WebSocketEventHandler>[3];
+type JournalInput = ConstructorParameters<typeof WebSocketEventHandler>[4];
+type TimeBasedExitInput = Parameters<PositionEventHandler['handleTimeBasedExit']>[0];
+type OrderFilledInput = Parameters<WebSocketEventHandler['handleOrderFilled']>[0];
+type StopLossFilledInput = Parameters<WebSocketEventHandler['handleStopLossFilled']>[0];
+
+const asPositionManager = (value: unknown): PositionManagerInput => value as PositionManagerInput;
+const asPositionExiting = (value: unknown): PositionExitingInput => value as PositionExitingInput;
+const asExchange = (value: unknown): ExchangeInput => value as ExchangeInput;
+const asTelegram = (value: unknown): TelegramInput => value as TelegramInput;
+const asPositionLogger = (value: unknown): PositionLoggerInput => value as PositionLoggerInput;
+const asWebSocketManager = (value: unknown): WebSocketManagerInput => value as WebSocketManagerInput;
+const asJournal = (value: unknown): JournalInput => value as JournalInput;
+const asTimeBasedExit = (value: unknown): TimeBasedExitInput => value as TimeBasedExitInput;
+const asOrderFilled = (value: unknown): OrderFilledInput => value as OrderFilledInput;
+const asStopLossFilled = (value: unknown): StopLossFilledInput => value as StopLossFilledInput;
+
+type PositionManagerMock = {
+  getCurrentPosition: jest.Mock;
+  clearPosition: jest.Mock;
+  syncWithWebSocket: jest.Mock;
+  closePositionWithAtomicLock: jest.Mock;
+};
+type PositionExitingMock = {
+  closeFullPosition: jest.Mock;
+  onTakeProfitHit: jest.Mock;
+};
+type ExchangeMock = {
+  closePosition?: jest.Mock;
+  getCurrentPrice: jest.Mock;
+};
+type TelegramMock = {
+  sendAlert: jest.Mock;
+  notifyPositionClosed: jest.Mock;
+};
+type WebSocketManagerMock = {
+  getLastCloseReason: jest.Mock;
+  resetLastCloseReason: jest.Mock;
+};
+type JournalMock = {
+  getTrade: jest.Mock;
+  recordTrade: jest.Mock;
+};
+type LoggerMock = ReturnType<typeof createMockLogger>;
 
 // ============================================================================
 // TESTS: PositionEventHandler (15 tests)
@@ -76,11 +126,11 @@ const createMockLogger = (): LoggerService => {
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
   let handler: PositionEventHandler;
-  let mockPositionManager: any;
-  let mockPositionExitingService: any;
-  let mockBybitService: any;
-  let mockTelegram: any;
-  let mockLogger: any;
+  let mockPositionManager: PositionManagerMock;
+  let mockPositionExitingService: PositionExitingMock;
+  let mockBybitService: ExchangeMock;
+  let mockTelegram: TelegramMock;
+  let mockLogger: LoggerMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -90,31 +140,31 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
       clearPosition: jest.fn(async () => {}),
       syncWithWebSocket: jest.fn(async () => {}),
       closePositionWithAtomicLock: jest.fn(),
-    } as any;
+    };
 
     mockPositionExitingService = {
       closeFullPosition: jest.fn(async () => {}),
       onTakeProfitHit: jest.fn(async () => {}),
-    } as any;
+    };
 
     mockBybitService = {
       closePosition: jest.fn(async () => {}),
       getCurrentPrice: jest.fn(),
-    } as any;
+    };
 
     mockTelegram = {
       sendAlert: jest.fn(async () => {}),
       notifyPositionClosed: jest.fn(async () => {}),
-    } as any;
+    };
 
-    mockLogger = createMockLogger() as any;
+    mockLogger = createMockLogger();
 
     handler = new PositionEventHandler(
-      mockPositionManager,
-      mockPositionExitingService,
-      mockBybitService,
-      mockTelegram,
-      mockLogger,
+      asPositionManager(mockPositionManager),
+      asPositionExiting(mockPositionExitingService),
+      asExchange(mockBybitService),
+      asTelegram(mockTelegram),
+      asPositionLogger(mockLogger as unknown as LoggerService),
     );
   });
 
@@ -292,13 +342,13 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
   describe('[RETRY + FALLBACK] handleTimeBasedExit() (4 tests)', () => {
     it('test-8.9.4.10: Should RETRY on exchange API failure (transient)', async () => {
-      const position = createMockPosition() as any;
-      const event: TimeBasedExitEvent = {
+      const position = createMockPosition();
+      const event = asTimeBasedExit({
         position,
         reason: 'duration exceeded',
         openedMinutes: 120,
         pnlPercent: 0.5,
-      };
+      });
 
       // First 2 attempts fail, third succeeds
       let callCount = 0;
@@ -318,13 +368,13 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
     });
 
     it('test-8.9.4.11: Should FALLBACK to PositionExitingService after retries exhausted', async () => {
-      const position = createMockPosition() as any;
-      const event: TimeBasedExitEvent = {
+      const position = createMockPosition();
+      const event = asTimeBasedExit({
         position,
         reason: 'time limit',
         openedMinutes: 90,
         pnlPercent: 0.3,
-      };
+      });
 
       // All retries fail
       mockBybitService.closePosition = jest.fn(async () => {
@@ -344,13 +394,13 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
     });
 
     it('test-8.9.4.12: Should use exponential backoff in RETRY attempts', async () => {
-      const position = createMockPosition() as any;
-      const event: TimeBasedExitEvent = {
+      const position = createMockPosition();
+      const event = asTimeBasedExit({
         position,
         reason: 'max duration',
         openedMinutes: 60,
         pnlPercent: 0.2,
-      };
+      });
 
       jest.useFakeTimers();
 
@@ -381,13 +431,13 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
     });
 
     it('test-8.9.4.13: Should successfully close position when exchange API works', async () => {
-      const position = createMockPosition() as any;
-      const event: TimeBasedExitEvent = {
+      const position = createMockPosition();
+      const event = asTimeBasedExit({
         position,
         reason: 'time-based rule',
         openedMinutes: 45,
         pnlPercent: 0.5,
-      };
+      });
 
       mockBybitService.closePosition = jest.fn(async () => {});
 
@@ -435,13 +485,13 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
-  let mockPositionManager: any;
-  let mockPositionExitingService: any;
-  let mockBybitService: any;
-  let mockWebSocketManager: any;
-  let mockJournal: any;
-  let mockTelegram: any;
-  let mockLogger: any;
+  let mockPositionManager: PositionManagerMock;
+  let mockPositionExitingService: PositionExitingMock;
+  let mockBybitService: ExchangeMock;
+  let mockWebSocketManager: WebSocketManagerMock;
+  let mockJournal: JournalMock;
+  let mockTelegram: TelegramMock;
+  let mockLogger: LoggerMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -451,46 +501,47 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       clearPosition: jest.fn(async () => {}),
       syncWithWebSocket: jest.fn(),
       closePositionWithAtomicLock: jest.fn(
-        async (_reason: string, callback: () => Promise<void>) => {
+        async (...args: unknown[]) => {
+          const callback = args[1] as () => Promise<void>;
           await callback();
         },
       ),
-    } as any;
+    };
 
     mockPositionExitingService = {
       closeFullPosition: jest.fn(async () => {}),
       onTakeProfitHit: jest.fn(async () => {}),
-    } as any;
+    };
 
     mockBybitService = {
       getCurrentPrice: jest.fn(async () => 45500),
-    } as any;
+    };
 
     mockWebSocketManager = {
       getLastCloseReason: jest.fn(() => 'TP'),
       resetLastCloseReason: jest.fn(),
-    } as any;
+    };
 
     mockJournal = {
       getTrade: jest.fn(() => null),
       recordTrade: jest.fn(),
-    } as any;
+    };
 
     mockTelegram = {
       notifyPositionClosed: jest.fn(async () => {}),
       sendAlert: jest.fn(),
-    } as any;
+    };
 
-    mockLogger = createMockLogger() as any;
+    mockLogger = createMockLogger();
 
     handler = new WebSocketEventHandler(
-      mockPositionManager,
-      mockPositionExitingService,
-      mockBybitService,
-      mockWebSocketManager,
-      mockJournal,
-      mockTelegram,
-      mockLogger,
+      asPositionManager(mockPositionManager),
+      asPositionExiting(mockPositionExitingService),
+      asExchange(mockBybitService),
+      asWebSocketManager(mockWebSocketManager),
+      asJournal(mockJournal),
+      asTelegram(mockTelegram),
+      asPositionLogger(mockLogger as unknown as LoggerService),
     );
   });
 
@@ -579,7 +630,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       });
 
       const order = { orderId: 'order-1', qty: 0.1, price: 45000 };
-      await expect(handler.handleOrderFilled(order as any)).resolves.not.toThrow();
+      await expect(handler.handleOrderFilled(asOrderFilled(order))).resolves.not.toThrow();
 
       expect(mockLogger.info).toHaveBeenCalled();
     });
@@ -588,7 +639,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockLogger.info = jest.fn();
 
       const order = { orderId: 'order-1', qty: 0.1, price: 45000 };
-      await handler.handleOrderFilled(order as any);
+      await handler.handleOrderFilled(asOrderFilled(order));
 
       expect(mockLogger.info).toHaveBeenCalledWith('WebSocket: Order filled', expect.any(Object));
     });
@@ -605,7 +656,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       });
 
       const event = { orderId: 'sl-order-1', avgPrice: 44000, cumExecQty: 0.1 };
-      await expect(handler.handleStopLossFilled(event as any)).resolves.not.toThrow();
+      await expect(handler.handleStopLossFilled(asStopLossFilled(event))).resolves.not.toThrow();
 
       expect(mockLogger.info).toHaveBeenCalled();
     });
@@ -614,7 +665,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockLogger.info = jest.fn();
 
       const event = { orderId: 'sl-order-1', avgPrice: 44000, cumExecQty: 0.1 };
-      await handler.handleStopLossFilled(event as any);
+      await handler.handleStopLossFilled(asStopLossFilled(event));
 
       expect(mockLogger.info).toHaveBeenCalledWith('WebSocket: Stop Loss filled', expect.any(Object));
     });

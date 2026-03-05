@@ -8,6 +8,11 @@ import type { Candle } from '../../types/core';
 import type { AtrAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type ConfigInput = ConstructorParameters<typeof AtrAnalyzerNew>[0];
+type CandlesInput = Parameters<AtrAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -70,9 +75,9 @@ describe('AtrAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).enabled;
-    expect(() => new AtrAnalyzerNew(config as any)).toThrow('[ATR_ANALYZER] Missing or invalid: enabled');
+    const config = { ...createDefaultConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new AtrAnalyzerNew(asConfig(config))).toThrow('[ATR_ANALYZER] Missing or invalid: enabled');
   });
 
   test('should throw on invalid weight (negative)', () => {
@@ -112,7 +117,7 @@ describe('AtrAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candles input (not array)', () => {
     const config = createDefaultConfig();
     const analyzer = new AtrAnalyzerNew(config);
-    expect(() => analyzer.analyze(null as any)).toThrow('[ATR_ANALYZER] Invalid candles input');
+    expect(() => analyzer.analyze(asCandles(null))).toThrow('[ATR_ANALYZER] Invalid candles input');
   });
 
   test('should throw on insufficient candles', () => {
@@ -128,7 +133,7 @@ describe('AtrAnalyzerNew - Input Validation Tests', () => {
     const config = createDefaultConfig();
     const analyzer = new AtrAnalyzerNew(config);
     const candles = createHighVolatilityCandles();
-    (candles[25] as any).high = undefined;
+    (candles[25] as unknown as { high?: number }).high = undefined;
     expect(() => analyzer.analyze(candles)).toThrow('[ATR_ANALYZER] Invalid candle');
   });
 });

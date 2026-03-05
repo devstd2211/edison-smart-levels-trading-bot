@@ -9,7 +9,7 @@ import { MTFSnapshotGate } from '../../services/mtf-snapshot-gate.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ErrorRegistry } from '../../errors/ErrorRegistry';
 import { LoggerService } from '../../services/logger.service';
-import { Signal, SignalDirection } from '../../types/legacy';
+import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 
 // Mock logger
@@ -19,7 +19,7 @@ const createMockLogger = (): LoggerService => ({
   error: jest.fn(),
   debug: jest.fn(),
   setContext: jest.fn(),
-} as any);
+} as unknown as LoggerService);
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let gate: MTFSnapshotGate;
@@ -85,7 +85,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
           timeframe: '4h',
           reasoning: ['HH_HL pattern'],
           restrictedDirections: [],
-        } as any, signal, candle);
+        } as unknown as TrendAnalysis, signal, candle);
       }).not.toThrow();
 
       // Verify snapshot was actually created
@@ -127,7 +127,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
           timeframe: '4h',
           reasoning: [],
           restrictedDirections: [],
-        } as any,
+        } as unknown as TrendAnalysis,
         signal,
         candle
       );
@@ -178,7 +178,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Advance time past expiration
       jest.advanceTimersByTime(121000);
@@ -229,7 +229,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -277,7 +277,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -330,7 +330,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(gateWithFailingLogger.getActiveSnapshot()).toBeDefined();
 
@@ -397,7 +397,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal1, candle);
+      } as unknown as TrendAnalysis, signal1, candle);
 
       gateWithFailingLogger.createSnapshot(TrendBias.BEARISH, {
         bias: TrendBias.BEARISH,
@@ -405,7 +405,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal2, candle);
+      } as unknown as TrendAnalysis, signal2, candle);
 
       expect(gateWithFailingLogger.getSnapshotCount()).toBe(2);
 
@@ -451,7 +451,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(gateWithoutErrorHandler.getSnapshotCount()).toBe(1);
 
@@ -511,7 +511,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: ['HH_HL pattern'],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(snapshot).toBeDefined();
 
@@ -563,7 +563,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Validate multiple times with different biases
       const result1 = gateWithFailingLogger.validateSnapshot(TrendBias.BULLISH);
@@ -621,7 +621,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
             timeframe: '4h',
             reasoning: [],
             restrictedDirections: [],
-          } as any,
+          } as unknown as TrendAnalysis,
           signal,
           candle
         );
@@ -678,7 +678,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
           timeframe: '4h',
           reasoning: [],
           restrictedDirections: [],
-        } as any, signal, candle);
+        } as unknown as TrendAnalysis, signal, candle);
       }).not.toThrow();
 
       // Snapshot should still be created
@@ -692,8 +692,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         error: null,
         debug: null,
         setContext: null,
-      } as any;
-
+      } as unknown as LoggerService;
       // Gate should handle null logger gracefully
       const gateWithNullLogger = new MTFSnapshotGate(nullLogger, errorHandler);
       gateWithNullLogger.start();
@@ -726,7 +725,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
           timeframe: '4h',
           reasoning: [],
           restrictedDirections: [],
-        } as any, signal, candle);
+        } as unknown as TrendAnalysis, signal, candle);
       }).not.toThrow();
     });
 
@@ -736,8 +735,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       // So this test verifies that the ErrorHandler is properly integrated but won't throw
       const throwingErrorHandler = {
         handle: jest.fn().mockResolvedValue({ success: false }),
-      } as any;
-
+      } as unknown as ErrorHandler;
       const gateWithThrowingHandler = new MTFSnapshotGate(mockLogger, throwingErrorHandler);
       gateWithThrowingHandler.start();
 
@@ -770,7 +768,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
           timeframe: '4h',
           reasoning: [],
           restrictedDirections: [],
-        } as any, signal, candle);
+        } as unknown as TrendAnalysis, signal, candle);
       }).not.toThrow();
     });
   });
@@ -817,7 +815,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
           timeframe: '4h',
           reasoning: [],
           restrictedDirections: [],
-        } as any, signal, candle);
+        } as unknown as TrendAnalysis, signal, candle);
       }).not.toThrow();
 
       // Verify snapshot was created successfully despite logging failure
@@ -825,3 +823,4 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     });
   });
 });
+

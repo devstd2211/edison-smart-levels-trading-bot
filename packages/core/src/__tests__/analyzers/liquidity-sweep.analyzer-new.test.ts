@@ -2,6 +2,11 @@ import { LiquiditySweepAnalyzerNew } from '../../analyzers/liquidity-sweep.analy
 import type { Candle } from '../../types/core';
 import type { LiquiditySweepAnalyzerConfigNew } from '../../types/config/config-new.types';
 
+type ConfigInput = ConstructorParameters<typeof LiquiditySweepAnalyzerNew>[0];
+type CandlesInput = Parameters<LiquiditySweepAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): LiquiditySweepAnalyzerConfigNew {
   return { enabled: true, weight: 0.65, priority: 6 };
 }
@@ -24,9 +29,9 @@ describe('LiquiditySweepAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new LiquiditySweepAnalyzerNew(config as any)).toThrow();
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new LiquiditySweepAnalyzerNew(asConfig(config))).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +52,7 @@ describe('LiquiditySweepAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new LiquiditySweepAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -59,7 +64,7 @@ describe('LiquiditySweepAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candle', () => {
     const analyzer = new LiquiditySweepAnalyzerNew(createConfig());
     const candles = createCandlesWithWicks(Array.from({ length: 30 }, (_, i) => 100 + i));
-    (candles[15] as any).high = undefined;
+    (candles[15] as unknown as { high?: number }).high = undefined;
     expect(() => analyzer.analyze(candles)).toThrow();
   });
 });

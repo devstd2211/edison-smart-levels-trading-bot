@@ -41,6 +41,11 @@ import { LoggerService, LogLevel, RetestConfig, Signal, Candle, SignalDirection,
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
+  const asCandles = (value: unknown): Candle[] => value as Candle[];
+  const asSignal = (value: unknown): Signal => value as Signal;
+  const asRetestConfig = (value: unknown): RetestConfig => value as RetestConfig;
+  const asLogger = (value: unknown): LoggerService => value as LoggerService;
+
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
@@ -142,7 +147,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on null candles array in detectImpulse', () => {
       const service = new RetestEntryService(mockConfig, logger, errorHandler);
 
-      expect(() => service.detectImpulse('BTCUSDT', 1.1575, null as any)).toThrow(
+      expect(() => service.detectImpulse('BTCUSDT', 1.1575, asCandles(null))).toThrow(
         'candles must be an array',
       );
     });
@@ -158,7 +163,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on null signal in createRetestZone', () => {
       const service = new RetestEntryService(mockConfig, logger, errorHandler);
 
-      expect(() => service.createRetestZone('BTCUSDT', null as any, 1.1500, 1.1600)).toThrow(
+      expect(() => service.createRetestZone('BTCUSDT', asSignal(null), 1.1500, 1.1600)).toThrow(
         'signal is required',
       );
     });
@@ -266,9 +271,9 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         }),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
-      const service = new RetestEntryService(mockConfig, failingLogger, errorHandler);
+      const service = new RetestEntryService(mockConfig, asLogger(failingLogger), errorHandler);
 
       // Should not throw despite logger failures (SKIP strategy)
       expect(() => service.detectImpulse('BTCUSDT', 1.1575, mockCandles)).not.toThrow();
@@ -284,9 +289,9 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
-      const service = new RetestEntryService(mockConfig, failingLogger, errorHandler);
+      const service = new RetestEntryService(mockConfig, asLogger(failingLogger), errorHandler);
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(() => service.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600)).not.toThrow();
@@ -304,9 +309,9 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         }),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      };
 
-      const service = new RetestEntryService(mockConfig, failingLogger, errorHandler);
+      const service = new RetestEntryService(mockConfig, asLogger(failingLogger), errorHandler);
       service.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600);
 
       // Should not throw despite logger failures (SKIP strategy)
@@ -412,7 +417,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         handle: jest.fn(() => {
           throw new Error('ErrorHandler.handle failed');
         }),
-      } as any;
+      } as unknown as ErrorHandler;
 
       const service = new RetestEntryService(mockConfig, logger, failingErrorHandler);
 
@@ -429,8 +434,8 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
       const testConfigs = [
         { ...mockConfig, retestZoneFibStart: 0 }, // Invalid
         { ...mockConfig, retestZoneFibEnd: 101 }, // Invalid
-        { ...mockConfig, enabled: 'true' as any }, // Invalid type
-        { ...mockConfig, requireStructureIntact: 1 as any }, // Invalid type
+        { ...mockConfig, enabled: 'true' as unknown as boolean }, // Invalid type
+        { ...mockConfig, requireStructureIntact: 1 as unknown as boolean }, // Invalid type
       ];
 
       for (const badConfig of testConfigs) {

@@ -78,7 +78,7 @@ function createMockAnalyzerRegistry(
 ): AnalyzerRegistryService {
   return {
     getEnabledAnalyzers: jest.fn(async () => analyzers),
-  } as any;
+  } as unknown as AnalyzerRegistryService;
 }
 
 /**
@@ -126,6 +126,8 @@ const createMockLogger = () => ({
   warn: jest.fn(),
   error: jest.fn(),
 });
+type MockLogger = ReturnType<typeof createMockLogger>;
+const asLogger = (logger: MockLogger): LoggerService => logger as unknown as LoggerService;
 
 // ============================================================================
 // TESTS
@@ -152,7 +154,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -174,7 +176,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -197,7 +199,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI', 'ATR']);
@@ -213,7 +215,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -227,7 +229,7 @@ describe('AnalyzerEngineService', () => {
     it('should return empty result when no analyzers enabled', async () => {
       const analyzers = new Map();
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig([]);
@@ -252,7 +254,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(30);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -274,7 +276,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(30);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -291,7 +293,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(30);
       const config = createMockStrategyConfig(['EMA']);
@@ -310,7 +312,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(30);
       const config = createMockStrategyConfig(['EMA']);
@@ -338,7 +340,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -361,7 +363,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI', 'ATR']);
@@ -382,7 +384,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -403,7 +405,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -420,7 +422,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -437,7 +439,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -457,7 +459,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -484,7 +486,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -512,7 +514,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -529,9 +531,9 @@ describe('AnalyzerEngineService', () => {
         getEnabledAnalyzers: jest.fn(async () => {
           throw new Error('Registry connection failed');
         }),
-      } as any;
+      } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(mockFailingRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockFailingRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -548,9 +550,9 @@ describe('AnalyzerEngineService', () => {
         getEnabledAnalyzers: jest.fn(async () => {
           throw new Error('Registry connection failed');
         }),
-      } as any;
+      } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(mockFailingRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockFailingRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -564,7 +566,7 @@ describe('AnalyzerEngineService', () => {
     it('should validate signal structure on analyzer result', async () => {
       const badAnalyzer: IAnalyzer = {
         getType: jest.fn(() => 'BAD'),
-        analyze: jest.fn(() => ({ direction: undefined } as any)), // Missing direction
+        analyze: jest.fn(() => ({ direction: undefined } as unknown as AnalyzerSignal)), // Missing direction
         isReady: jest.fn(() => true),
         getMinCandlesRequired: jest.fn(() => 20),
         isEnabled: jest.fn(() => true),
@@ -576,7 +578,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['BAD', { instance: badAnalyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['BAD']);
@@ -598,7 +600,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -618,7 +620,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -635,7 +637,7 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -655,7 +657,7 @@ describe('AnalyzerEngineService', () => {
     it('should handle empty enabled analyzers list', async () => {
       const analyzers = new Map();
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig([]);
@@ -679,7 +681,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -701,7 +703,7 @@ describe('AnalyzerEngineService', () => {
       }
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const analyzerNames = Array.from({ length: analyzerCount }, (_, i) => `ANALYZER_${i}`);
       const candles = createMockCandles(50);
@@ -722,7 +724,7 @@ describe('AnalyzerEngineService', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -741,4 +743,5 @@ describe('AnalyzerEngineService', () => {
     });
   });
 });
+
 

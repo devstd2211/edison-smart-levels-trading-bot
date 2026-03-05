@@ -27,6 +27,23 @@ describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
+  const asConfig = (value: unknown): MLSignalValidatorConfig => value as MLSignalValidatorConfig;
+  const asSignal = (value: unknown): Signal => value as Signal;
+  const asContext = (value: unknown): MarketContext => value as MarketContext;
+  type ValidatorInternals = {
+    performValidation: (signal: Signal, context: MarketContext) => void;
+    performWinRateCalculation: (signals: SignalRecord[]) => number;
+    performRegimeAdjustment: (
+      confidence: number,
+      regime: MarketRegime,
+      signalType: SignalType
+    ) => number;
+    performQualityScoring: (signal: Signal, context: MarketContext) => number | Promise<number>;
+    getRegimeMultiplier: (regime: MarketRegime, signalType: SignalType) => number;
+  };
+  const asInternals = (svc: MLSignalValidatorService): ValidatorInternals =>
+    svc as unknown as ValidatorInternals;
+  const asLogger = (value: unknown): LoggerService => value as LoggerService;
 
   const createMockSignal = (overrides?: Partial<Signal>): Signal => ({
     direction: SignalDirection.LONG,
@@ -78,19 +95,19 @@ describe('MLSignalValidatorService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new MLSignalValidatorService('invalid' as any, undefined, logger, errorHandler);
+        new MLSignalValidatorService(asConfig('invalid'), undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new MLSignalValidatorService(123 as any, undefined, logger, errorHandler);
+        new MLSignalValidatorService(asConfig(123), undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new MLSignalValidatorService([] as any, undefined, logger, errorHandler);
+        new MLSignalValidatorService(asConfig([]), undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
@@ -119,7 +136,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const context = createMockContext();
 
       await expect(
-        service.validateSignal(null as any, context),
+        service.validateSignal(asSignal(null), context),
       ).rejects.toThrow('Signal cannot be null or undefined');
     });
 
@@ -127,7 +144,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const signal = createMockSignal();
 
       await expect(
-        service.validateSignal(signal, null as any),
+        service.validateSignal(signal, asContext(null)),
       ).rejects.toThrow('Market context cannot be null or undefined');
     });
 
@@ -141,7 +158,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
     });
 
     it('should throw when signal type is empty string', async () => {
-      const signal = createMockSignal({ type: '' as any });
+      const signal = createMockSignal({ type: '' as unknown as SignalType });
       const context = createMockContext();
 
       await expect(
@@ -151,7 +168,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
 
     it('should throw when calculateWinRate receives null', () => {
       expect(() => {
-        service.calculateWinRate(null as any);
+        service.calculateWinRate(null as unknown as SignalRecord[]);
       }).toThrow('Signals array cannot be null or undefined');
     });
 
@@ -172,7 +189,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const context = createMockContext();
 
       // Force error by mocking internal method
-      jest.spyOn(service as any, 'performValidation').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performValidation').mockImplementation(() => {
         throw new Error('Validation failed');
       });
 
@@ -190,7 +207,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const signals = [createMockSignalRecord()];
 
       // Force error
-      jest.spyOn(service as any, 'performWinRateCalculation').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performWinRateCalculation').mockImplementation(() => {
         throw new Error('Win rate calc failed');
       });
 
@@ -203,7 +220,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const confidence = 80;
 
       // Force error
-      jest.spyOn(service as any, 'performRegimeAdjustment').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performRegimeAdjustment').mockImplementation(() => {
         throw new Error('Regime adjustment failed');
       });
 
@@ -221,7 +238,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const context = createMockContext();
 
       // Force error
-      jest.spyOn(service as any, 'performQualityScoring').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performQualityScoring').mockImplementation(() => {
         throw new Error('Scoring failed');
       });
 
@@ -234,7 +251,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       // Create signals that would produce NaN
       const signals: SignalRecord[] = [];
 
-      jest.spyOn(service as any, 'performWinRateCalculation').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performWinRateCalculation').mockImplementation(() => {
         throw new Error('Win rate calculation resulted in invalid number');
       });
 
@@ -244,7 +261,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
     });
 
     it('should handle Infinity in regime adjustment gracefully', () => {
-      jest.spyOn(service as any, 'performRegimeAdjustment').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performRegimeAdjustment').mockImplementation(() => {
         throw new Error('Regime adjustment resulted in invalid number');
       });
 
@@ -301,7 +318,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-      } as any;
+      } as unknown as LoggerService;
 
       expect(() => {
         new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
@@ -316,12 +333,12 @@ describe('MLSignalValidatorService - Error Handling', () => {
         debug: jest.fn(),
         info: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
-      const testService = new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
+      const testService = new MLSignalValidatorService(undefined, undefined, asLogger(badLogger), errorHandler);
 
       // Force validation to log a warning
-      jest.spyOn(testService as any, 'performValidation').mockImplementation(() => {
+      jest.spyOn(asInternals(testService), 'performValidation').mockImplementation(() => {
         throw new Error('Validation failed');
       });
 
@@ -341,9 +358,9 @@ describe('MLSignalValidatorService - Error Handling', () => {
         info: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
-      const testService = new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
+      const testService = new MLSignalValidatorService(undefined, undefined, asLogger(badLogger), errorHandler);
 
       expect(() => {
         testService.addSignalRecord(createMockSignalRecord());
@@ -358,9 +375,9 @@ describe('MLSignalValidatorService - Error Handling', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
-      const testService = new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
+      const testService = new MLSignalValidatorService(undefined, undefined, asLogger(badLogger), errorHandler);
 
       expect(() => {
         testService.clearHistory();
@@ -628,7 +645,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       const context = createMockContext();
 
       // Force multiplier to go over 100
-      jest.spyOn(service as any, 'getRegimeMultiplier').mockReturnValue(2.0);
+      jest.spyOn(asInternals(service), 'getRegimeMultiplier').mockReturnValue(2.0);
 
       const result = await service.validateSignal(signal, context);
 

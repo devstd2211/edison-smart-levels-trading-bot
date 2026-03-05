@@ -16,6 +16,16 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { JournalWriteError } from '../../errors/DomainErrors';
 import { LoggerService, LogLevel } from '../../types/legacy';
 
+type TradeRecordInput = Parameters<TradeHistoryService['appendTrade']>[0];
+type ExecuteAsyncConfig = Parameters<ErrorHandler['executeAsync']>[1];
+type ExecuteAsyncResult<T = unknown> = { success: boolean; value?: T; error?: unknown };
+type RetryError = Parameters<NonNullable<ExecuteAsyncConfig['onRetry']>>[1];
+type FailureError = Parameters<NonNullable<ExecuteAsyncConfig['onFailure']>>[0];
+
+const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
+const asRetryError = (value: unknown): RetryError => value as RetryError;
+const asFailureError = (value: unknown): FailureError => value as FailureError;
+
 /**
  * Mock Logger for testing
  */
@@ -28,7 +38,7 @@ class MockLogger extends LoggerService {
 /**
  * Helper to create a valid trade record
  */
-function createTradeRecord(overrides?: any) {
+function createTradeRecord(overrides: Partial<TradeRecordInput> = {}): TradeRecordInput {
   return {
     timestamp: new Date().toISOString(),
     id: `trade-${Date.now()}`,
@@ -57,8 +67,8 @@ function createTradeRecord(overrides?: any) {
  * Helper to create mock ErrorHandler
  */
 function createMockErrorHandler() {
-  const mockEH: any = {
-    handle: jest.fn((error: any, options: any) => {
+  const mockEH = {
+    handle: jest.fn((error: unknown, options: { strategy: RecoveryStrategy }) => {
       if (options.strategy === RecoveryStrategy.THROW) {
         throw error;
       }
@@ -69,9 +79,9 @@ function createMockErrorHandler() {
       };
     }),
     executeAsync: jest.fn(
-      async (fn: () => Promise<any>, config: any): Promise<any> => {
+      async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig): Promise<ExecuteAsyncResult> => {
         // Simulate RETRY with exponential backoff
-        let lastError: any = null;
+        let lastError: unknown = null;
         const maxAttempts = config?.retryConfig?.maxAttempts ?? 1;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -81,11 +91,11 @@ function createMockErrorHandler() {
               config.onRecover(config.strategy, attempt + 1);
             }
             return { success: true, value };
-          } catch (error: any) {
+          } catch (error: unknown) {
             lastError = error;
             if (attempt < maxAttempts - 1 && config.retryConfig) {
               if (config.onRetry) {
-                config.onRetry(attempt + 1, error, config.retryConfig.initialDelayMs);
+                config.onRetry(attempt + 1, asRetryError(error), config.retryConfig.initialDelayMs);
               }
               // Wait before retry
               await new Promise((resolve) =>
@@ -97,7 +107,7 @@ function createMockErrorHandler() {
 
         // Return gracefully (don't throw)
         if (config.onFailure) {
-          config.onFailure(lastError, maxAttempts);
+          config.onFailure(asFailureError(lastError), maxAttempts);
         }
         return { success: false, value: config.strategy === RecoveryStrategy.GRACEFUL_DEGRADE ? undefined : null, error: lastError };
       }
@@ -108,7 +118,7 @@ function createMockErrorHandler() {
     isRecoveryMode: jest.fn(() => true),
   };
 
-  return mockEH as jest.Mocked<ErrorHandler>;
+  return mockEH as unknown as jest.Mocked<ErrorHandler>;
 }
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
@@ -171,12 +181,12 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       const trade = createTradeRecord();
       const onRetrySpy = jest.fn();
 
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         try {
           const value = await fn();
           return { success: true, value };
-        } catch (error: any) {
-          config.onRetry?.(1, error as any, 100);
+        } catch (error: unknown) {
+          config.onRetry?.(1, asRetryError(error), 100);
           return { success: false, error };
         }
       });
@@ -192,8 +202,8 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       const trade = createTradeRecord();
       const onFailureSpy = jest.fn();
 
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
-        config.onFailure?.(new Error('Write failed') as any, 3);
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
+        config.onFailure?.(asFailureError(new Error('Write failed')), 3);
         return { success: false, error: new Error('Write failed') };
       });
 
@@ -211,12 +221,12 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       const trade = createTradeRecord();
       let attemptCount = 0;
 
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         // Simulate retry logic: fail first, succeed second time
         if (attemptCount === 0) {
           attemptCount++;
           if (config.onRetry) {
-            config.onRetry(1, new Error('Write failed'), 100);
+            config.onRetry(1, asRetryError(new Error('Write failed')), 100);
           }
           // Try again
           try {
@@ -225,7 +235,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
               config.onRecover(config.strategy, 2);
             }
             return { success: true, value };
-          } catch (error: any) {
+          } catch (error: unknown) {
             return { success: false, error };
           }
         }
@@ -237,7 +247,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
             config.onRecover(config.strategy, 1);
           }
           return { success: true, value };
-        } catch (error: any) {
+        } catch (error: unknown) {
           return { success: false, error };
         }
       });
@@ -288,7 +298,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should return empty array on read failure with GRACEFUL_DEGRADE', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         return { success: false, value: [], error: new Error('Read failed') };
       });
 
@@ -298,8 +308,8 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should call onFailure when read fails', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
-        config.onFailure?.(new Error('Read failed') as any, 1);
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
+        config.onFailure?.(asFailureError(new Error('Read failed')), 1);
         return { success: false, value: [] };
       });
 
@@ -313,11 +323,11 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       const csvPath = path.join(tempDir, 'trade-history.csv');
       fs.writeFileSync(csvPath, 'invalid csv data [[ broken', 'utf-8');
 
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         try {
           return { success: true, value: await fn() };
-        } catch (error: any) {
-          config.onFailure?.(error as any, 1);
+        } catch (error: unknown) {
+          config.onFailure?.(asFailureError(error), 1);
           return { success: false, value: [] };
         }
       });
@@ -328,7 +338,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should return empty array instead of throwing', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         return { success: false, value: [] };
       });
 
@@ -355,7 +365,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should return default statistics on failure', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         return {
           success: false,
           value: {
@@ -377,8 +387,8 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should call onFailure when stats calculation fails', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
-        config.onFailure?.(new Error('Stats failed') as any, 1);
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
+        config.onFailure?.(asFailureError(new Error('Stats failed')), 1);
         return { success: false, value: undefined };
       });
 
@@ -389,7 +399,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should calculate correct statistics for winning trades', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         return { success: true, value: await fn() };
       });
 
@@ -422,7 +432,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should return empty object on field stats failure', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         return { success: false, value: {} };
       });
 
@@ -435,11 +445,11 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       const trade = createTradeRecord();
       await service.appendTrade(trade);
 
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
         try {
           return { success: true, value: await fn() };
-        } catch (error: any) {
-          config.onFailure?.(error as any, 1);
+        } catch (error: unknown) {
+          config.onFailure?.(asFailureError(error), 1);
           return { success: false, value: {} };
         }
       });
@@ -451,8 +461,8 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should call onFailure when field stats fail', async () => {
-      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: any, config: any) => {
-        config.onFailure?.(new Error('Field stats failed') as any, 1);
+      (errorHandler.executeAsync as jest.Mock) = jest.fn(async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig) => {
+        config.onFailure?.(asFailureError(new Error('Field stats failed')), 1);
         return { success: false, value: {} };
       });
 
@@ -484,7 +494,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       // Make schema file read-only to force write failure
       const schemaPath = path.join(tempDir, 'csv-schema.json');
 
-      (errorHandler.handle as jest.Mock) = jest.fn((error: any, options: any) => {
+      (errorHandler.handle as jest.Mock) = jest.fn((error: unknown, options: { strategy: RecoveryStrategy }) => {
         if (options.strategy === RecoveryStrategy.SKIP) {
           return { success: true, strategy: RecoveryStrategy.SKIP };
         }
@@ -507,7 +517,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should handle migration skip gracefully', async () => {
-      (errorHandler.handle as jest.Mock) = jest.fn((error: any, options: any) => {
+      (errorHandler.handle as jest.Mock) = jest.fn((error: unknown, options: { strategy: RecoveryStrategy }) => {
         if (options.strategy === RecoveryStrategy.SKIP) {
           // Log and continue
           return { success: true, strategy: RecoveryStrategy.SKIP };
@@ -538,7 +548,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       fs.mkdirSync(readOnlyDir);
 
       // Create service with read-only parent
-      (errorHandler.handle as jest.Mock) = jest.fn((error: any, options: any) => {
+      (errorHandler.handle as jest.Mock) = jest.fn((error: unknown, options: { strategy: RecoveryStrategy }) => {
         if (options.strategy === RecoveryStrategy.SKIP) {
           return { success: true, strategy: RecoveryStrategy.SKIP };
         }
@@ -552,7 +562,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should continue with empty schema on initialize failure', () => {
-      (errorHandler.handle as jest.Mock) = jest.fn((error: any, options: any) => {
+      (errorHandler.handle as jest.Mock) = jest.fn((error: unknown, options: { strategy: RecoveryStrategy }) => {
         if (options.strategy === RecoveryStrategy.SKIP) {
           return { success: true, strategy: RecoveryStrategy.SKIP };
         }
@@ -611,3 +621,4 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
   });
 });
+

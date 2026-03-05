@@ -2,6 +2,11 @@ import { BreakoutAnalyzerNew } from '../../analyzers/breakout.analyzer-new';
 import type { Candle } from '../../types/core';
 import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 
+type ConfigInput = ConstructorParameters<typeof BreakoutAnalyzerNew>[0];
+type CandlesInput = Parameters<BreakoutAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.75, priority: 6 };
 }
@@ -24,9 +29,9 @@ describe('BreakoutAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new BreakoutAnalyzerNew(config as any)).toThrow();
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new BreakoutAnalyzerNew(asConfig(config))).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +52,7 @@ describe('BreakoutAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new BreakoutAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -59,7 +64,7 @@ describe('BreakoutAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candle', () => {
     const analyzer = new BreakoutAnalyzerNew(createConfig());
     const candles = createCandles(Array.from({ length: 40 }, (_, i) => 100 + i));
-    (candles[20] as any).high = undefined;
+    (candles[20] as unknown as { high?: number }).high = undefined;
     expect(() => analyzer.analyze(candles)).toThrow();
   });
 });

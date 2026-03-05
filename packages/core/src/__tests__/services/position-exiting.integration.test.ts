@@ -39,7 +39,7 @@ const createMockTelegramService = () => ({
   botToken: 'test',
   chatId: 'test',
   logger: createMockLogger(),
-} as any);
+});
 
 const createMockJournalService = () => ({
   recordTradeOpen: jest.fn(),
@@ -57,7 +57,7 @@ const createMockTradingConfig = (): TradingConfig => ({
   maxPositions: 1,
   positionSizeUsdt: 100,
   tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT' as any,
+  orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
   tradingFeeRate: 0.0002,
   favorableMovementThresholdPercent: 0.1,
 });
@@ -78,28 +78,32 @@ const createMockRiskConfig = (): RiskManagementConfig => ({
 });
 
 const createMockConfig = (): Config => ({
-  exchange: { symbol: 'XRPUSDT' } as any,
+  exchange: { symbol: 'XRPUSDT' } as unknown as Config['exchange'],
   timeframes: {},
   trading: createMockTradingConfig(),
-  strategies: {} as any,
-  strategy: {} as any,
-  indicators: {} as any,
+  strategies: {} as unknown as Config['strategies'],
+  strategy: {} as unknown as Config['strategy'],
+  indicators: {} as unknown as Config['indicators'],
   riskManagement: createMockRiskConfig(),
-  logging: {} as any,
-  system: {} as any,
+  logging: {} as unknown as Config['logging'],
+  system: {} as unknown as Config['system'],
   dataSubscriptions: {
     candles: { enabled: true, calculateIndicators: true },
     orderbook: { enabled: false, updateIntervalMs: 5000 },
     ticks: { enabled: false, calculateDelta: false },
   },
-  entryConfig: {} as any,
-  entryConfirmation: {} as any,
+  entryConfig: {} as unknown as Config['entryConfig'],
+  entryConfirmation: {} as unknown as Config['entryConfirmation'],
 });
 
+const asExchange = (v: ReturnType<typeof createMockBybitService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[0];
+const asLogger = (v: ReturnType<typeof createMockLogger>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[2];
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   let service: PositionExitingService;
-  let mockBybitService: any;
-  let mockLogger: any;
+  let mockBybitService: ReturnType<typeof createMockBybitService>;
+  let mockLogger: ReturnType<typeof createMockLogger>;
   let mockTakeProfitManager: TakeProfitManagerService;
 
   beforeEach(() => {
@@ -116,7 +120,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
         totalQuantity: 52.85,
         leverage: 10,
       },
-      mockLogger,
+      asLogger(mockLogger),
     );
 
     // Mock positionManager to return the real TakeProfitManager
@@ -125,15 +129,15 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
     };
 
     service = new PositionExitingService(
-      mockBybitService,
-      createMockTelegramService(),
-      mockLogger,
-      createMockJournalService() as any,
+      asExchange(mockBybitService),
+      createMockTelegramService() as unknown as ConstructorParameters<typeof PositionExitingService>[1],
+      asLogger(mockLogger),
+      createMockJournalService() as unknown as ConstructorParameters<typeof PositionExitingService>[3],
       createMockTradingConfig(),
       createMockRiskConfig(),
       createMockConfig(),
-      createMockSessionStatsService() as any,
-      mockPositionManager as any,
+      createMockSessionStatsService() as unknown as ConstructorParameters<typeof PositionExitingService>[7],
+      mockPositionManager as unknown as ConstructorParameters<typeof PositionExitingService>[8],
     );
   });
 
@@ -168,7 +172,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
 
     it('CRITICAL: What happens if TakeProfitManager entryPrice becomes NaN?', () => {
       // Simulate corruption
-      (mockTakeProfitManager as any).config.entryPrice = NaN;
+      (mockTakeProfitManager as unknown as { config: { entryPrice: number } }).config.entryPrice = NaN;
 
       const tpLevel = 1;
       const partialQuantity = (52.85 * 33) / 100;
@@ -182,7 +186,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
 
       console.log(`
         CORRUPTED ENTRY PRICE:
-        - config.entryPrice: ${(mockTakeProfitManager as any).config.entryPrice}
+        - config.entryPrice: ${(mockTakeProfitManager as unknown as { config: { entryPrice: number } }).config.entryPrice}
         - Recorded pnlNet: ${partialClose.pnlNet}
         - Is NaN? ${isNaN(partialClose.pnlNet)}
       `);
@@ -296,12 +300,12 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       console.log(`
         AFTER CORRUPTION:
         - Position entryPrice: ${position.entryPrice}
-        - Is NaN? ${isNaN(position.entryPrice as any)}
+        - Is NaN? ${isNaN(position.entryPrice)}
         - Calculated Breakeven: ${breakevenPrice2}
-        - Is Breakeven NaN? ${isNaN(breakevenPrice2 as any)}
+        - Is Breakeven NaN? ${isNaN(breakevenPrice2)}
       `);
 
-      expect(isNaN(breakevenPrice2 as any)).toBe(true);
+      expect(isNaN(breakevenPrice2)).toBe(true);
     });
   });
 
@@ -412,3 +416,5 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
     });
   });
 });
+
+

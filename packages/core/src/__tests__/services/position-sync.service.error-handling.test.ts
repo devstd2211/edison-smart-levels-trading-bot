@@ -127,6 +127,19 @@ const createTakeProfitOrder = (side: string = 'Sell', level: number = 1): BybitO
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
+  type PositionCloseRecorder = {
+    closeFullPosition: jest.Mock;
+  };
+  const asPositionCloseRecorder = (value: PositionCloseRecorder) =>
+    value as unknown as {
+      closeFullPosition(
+        position: Position | null | undefined,
+        exitPrice: number,
+        exitReason: string,
+        exitType: ExitType,
+      ): Promise<boolean>;
+    };
+
   let service: PositionSyncService;
   let mockBybit: ReturnType<typeof createMockBybitService>;
   let mockPositionManager: ReturnType<typeof createMockPositionManager>;
@@ -151,7 +164,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockExitTypeDetector as unknown as ExitTypeDetectorService,
       mockTelegram as unknown as TelegramService,
       logger,
-      { closeFullPosition: jest.fn().mockResolvedValue(undefined) } as any,
+      asPositionCloseRecorder({
+        closeFullPosition: jest.fn().mockResolvedValue(true),
+      }),
       errorHandler,
     );
   });
@@ -225,7 +240,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         mockExitTypeDetector as unknown as ExitTypeDetectorService,
         mockTelegram as unknown as TelegramService,
         logger,
-        mockPositionExiting as any,
+        asPositionCloseRecorder(mockPositionExiting),
         errorHandler,
       );
 
@@ -295,7 +310,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         mockExitTypeDetector as unknown as ExitTypeDetectorService,
         mockTelegram as unknown as TelegramService,
         logger,
-        mockPositionExiting as any,
+        asPositionCloseRecorder(mockPositionExiting),
         errorHandler,
       );
 
@@ -384,7 +399,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         quantity: 8, // Local is 10, exchange is 8 = difference of 2 > 0.01
       };
 
-      mockBybit.getPosition.mockResolvedValue(exchangePos as any);
+      mockBybit.getPosition.mockResolvedValue(exchangePos as unknown as Position);
       mockBybit.getActiveOrders.mockResolvedValue([
         createStopLossOrder(),
         createTakeProfitOrder(),
@@ -418,7 +433,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       // No SL, no TP, no trailing
       const noProtectionOrders: BybitOrder[] = [];
       mockBybit.getActiveOrders.mockResolvedValue(noProtectionOrders);
-      mockBybit.closePosition.mockResolvedValue({ orderId: 'close-order' } as any);
+      mockBybit.closePosition.mockResolvedValue({ orderId: 'close-order' });
       mockTelegram.sendAlert.mockResolvedValue(undefined);
 
       await service.deepSyncCheck(position);
@@ -500,7 +515,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         mockExitTypeDetector as unknown as ExitTypeDetectorService,
         mockTelegram as unknown as TelegramService,
         logger,
-        mockPositionExiting as any,
+        asPositionCloseRecorder(mockPositionExiting),
         errorHandler,
       );
 
@@ -557,7 +572,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         mockExitTypeDetector as unknown as ExitTypeDetectorService,
         mockTelegram as unknown as TelegramService,
         logger,
-        { closeFullPosition: jest.fn().mockResolvedValue(undefined) } as any,
+        asPositionCloseRecorder({
+          closeFullPosition: jest.fn().mockResolvedValue(true),
+        }),
         customErrorHandler, // Explicitly passed
       );
 
@@ -590,7 +607,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         mockExitTypeDetector as unknown as ExitTypeDetectorService,
         mockTelegram as unknown as TelegramService,
         logger,
-        { closeFullPosition: jest.fn().mockResolvedValue(undefined) } as any,
+        asPositionCloseRecorder({
+          closeFullPosition: jest.fn().mockResolvedValue(true),
+        }),
         undefined, // No errorHandler
       );
 

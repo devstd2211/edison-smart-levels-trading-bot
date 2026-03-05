@@ -29,7 +29,12 @@ import type { IExchange } from '../../interfaces/IExchange';
 // MOCKS & HELPERS
 // ============================================================================
 
-const createMockBybitService = (): any => {
+type MockBybitService = {
+  getOrderHistory: jest.Mock;
+  closePosition: jest.Mock;
+};
+
+const createMockBybitService = (): MockBybitService => {
   return {
     getOrderHistory: jest.fn().mockResolvedValue([]),
     closePosition: jest.fn().mockResolvedValue(undefined),
@@ -110,8 +115,14 @@ const createMockOrder = (
 // ============================================================================
 
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
+  const asPosition = (value: unknown): Position => value as Position;
+  const asPrice = (value: unknown): number => value as number;
+  const asTakeProfits = (
+    value: unknown
+  ): Position['takeProfits'] => value as Position['takeProfits'];
+
   let logger: LoggerService;
-  let bybitService: any;
+  let bybitService: MockBybitService;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
@@ -126,15 +137,15 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Input Validation (THROW Strategy)', () => {
     it('should throw ConfigurationError for missing position in detectLadderTPHit', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
 
       expect(() => {
-        service.detectLadderTPHit(null as any, 100);
+        service.detectLadderTPHit(asPosition(null), 100);
       }).toThrow(ConfigurationError);
     });
 
     it('should throw ConfigurationError for position without symbol', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
       position.symbol = '';
 
@@ -144,7 +155,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should throw ConfigurationError for invalid price (NaN)', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       expect(() => {
@@ -153,27 +164,27 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should throw ConfigurationError for null price', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       expect(() => {
-        service.detectLadderTPHit(position, null as any);
+        service.detectLadderTPHit(position, asPrice(null));
       }).toThrow(ConfigurationError);
     });
 
     it('should throw ConfigurationError in identifyTPLevel for missing position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
 
       expect(() => {
-        service.identifyTPLevel(100.5, undefined as any);
+        service.identifyTPLevel(100.5, asPosition(undefined));
       }).toThrow(ConfigurationError);
     });
 
     it('should handle validation errors without ErrorHandler (backward compatibility)', () => {
-      const service = new LadderExitDetectorService(logger, bybitService);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange);
 
       expect(() => {
-        service.detectLadderTPHit(null as any, 100);
+        service.detectLadderTPHit(asPosition(null), 100);
       }).toThrow(ConfigurationError);
     });
   });
@@ -184,7 +195,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('TP Level Detection - LONG Positions', () => {
     it('should detect TP1 hit for LONG position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // TP1 is at 100.08
@@ -193,7 +204,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should detect TP2 hit for LONG position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // TP2 is at 100.15
@@ -202,7 +213,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should detect TP3 hit for LONG position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // TP3 is at 100.25
@@ -211,7 +222,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should return undefined when no TP is hit', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // Price below all TP levels
@@ -226,7 +237,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('TP Level Detection - SHORT Positions', () => {
     it('should detect TP1 hit for SHORT position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.SHORT, 100);
 
       // SHORT TP1 is below entry
@@ -235,7 +246,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should detect TP2 hit for SHORT position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.SHORT, 100);
 
       // SHORT TP2 is below entry
@@ -244,7 +255,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should detect TP3 hit for SHORT position', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.SHORT, 100);
 
       // SHORT TP3 is below entry
@@ -259,7 +270,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('TP Level Identification', () => {
     it('should identify closest TP level when price is between levels', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // Price between TP1 (100.08) and TP2 (100.15)
@@ -268,7 +279,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should default to TP1 when execution price is below all TPs', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const tpLevel = service.identifyTPLevel(100.01, position);
@@ -276,7 +287,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should identify TP3 when execution price is above all TPs', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const tpLevel = service.identifyTPLevel(100.3, position);
@@ -290,7 +301,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Missing TP Levels (SKIP Strategy)', () => {
     it('should return undefined for detectLadderTPHit when no TP levels exist', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
       position.takeProfits = [];
 
@@ -299,7 +310,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should default to TP1 for identifyTPLevel when no TP levels exist', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
       position.takeProfits = [];
 
@@ -308,7 +319,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle missing TP levels without ErrorHandler (backward compatibility)', () => {
-      const service = new LadderExitDetectorService(logger, bybitService);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange);
       const position = createMockPosition(PositionSide.LONG, 100);
       position.takeProfits = [];
 
@@ -323,7 +334,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Analyze Exit Execution (RETRY Strategy)', () => {
     it('should fetch order history and detect TP exit', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -339,7 +350,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should fallback on API failure after retries', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // API fails all retries
@@ -356,7 +367,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should fallback to MANUAL when API fails after retries', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       bybitService.getOrderHistory.mockRejectedValue(
@@ -369,7 +380,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle Stop Loss exit type', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -383,7 +394,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle Trailing Stop exit type', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -397,7 +408,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should work without ErrorHandler (backward compatibility)', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -417,7 +428,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Complete Ladder Execution Detection', () => {
     it('should detect complete ladder execution with all 3 TP levels hit', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -435,7 +446,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should return false when only 2 TP levels hit', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -452,7 +463,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should return false when ladder is incomplete', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
       position.takeProfits = position.takeProfits?.slice(0, 2); // Only 2 TP levels
 
@@ -469,7 +480,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should fetch order history if not provided and detect ladder', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -486,7 +497,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle API failure in isCompleteLadderExecuted gracefully', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       bybitService.getOrderHistory.mockRejectedValueOnce(
@@ -505,7 +516,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Logging Integration', () => {
     it('should log TP hit detection', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
       const logSpy = jest.spyOn(logger, 'info');
 
@@ -516,7 +527,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should log warnings for missing TP levels', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
       position.takeProfits = [];
       const warnSpy = jest.spyOn(logger, 'warn');
@@ -535,16 +546,16 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Edge Cases & Error Scenarios', () => {
     it('should handle position with undefined takeProfits gracefully', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
-      position.takeProfits = undefined as any;
+      position.takeProfits = asTakeProfits(undefined);
 
       const tpLevel = service.detectLadderTPHit(position, 100.08);
       expect(tpLevel).toBeUndefined();
     });
 
     it('should handle price parsing error in exit type detection', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // Order with unparseable price
@@ -561,7 +572,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle empty order history gracefully', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       bybitService.getOrderHistory.mockResolvedValueOnce([]);
@@ -572,7 +583,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle Manual close order type correctly', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       const mockOrders = [
@@ -592,7 +603,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
   describe('Integration Scenarios', () => {
     it('should handle full workflow: detect → identify → analyze', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // Step 1: Detect TP1 hit (at or above target price)
@@ -614,7 +625,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle cascading failures with retry and fallback', async () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // Simulate API failure
@@ -627,7 +638,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
 
     it('should handle multiple rapid detections', () => {
-      const service = new LadderExitDetectorService(logger, bybitService, errorHandler);
+      const service = new LadderExitDetectorService(logger, bybitService as unknown as IExchange, errorHandler);
       const position = createMockPosition(PositionSide.LONG, 100);
 
       // Test various price points across TP levels
@@ -644,3 +655,4 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     });
   });
 });
+

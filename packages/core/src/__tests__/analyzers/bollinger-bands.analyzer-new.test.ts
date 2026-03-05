@@ -7,6 +7,11 @@ import type { Candle } from '../../types/core';
 import type { BollingerBandsAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type ConfigInput = ConstructorParameters<typeof BollingerBandsAnalyzerNew>[0];
+type CandlesInput = Parameters<BollingerBandsAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -48,9 +53,9 @@ describe('BollingerBandsAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).enabled;
-    expect(() => new BollingerBandsAnalyzerNew(config as any)).toThrow(
+    const config = { ...createDefaultConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new BollingerBandsAnalyzerNew(asConfig(config))).toThrow(
       '[BOLLINGER_BANDS_ANALYZER] Missing or invalid: enabled',
     );
   });
@@ -84,17 +89,17 @@ describe('BollingerBandsAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing period field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).period;
-    expect(() => new BollingerBandsAnalyzerNew(config as any)).toThrow(
+    const config = { ...createDefaultConfig() } as Partial<ConfigInput>;
+    delete config.period;
+    expect(() => new BollingerBandsAnalyzerNew(asConfig(config))).toThrow(
       '[BOLLINGER_BANDS_ANALYZER] Missing or invalid: period',
     );
   });
 
   test('should throw on missing stdDev field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).stdDev;
-    expect(() => new BollingerBandsAnalyzerNew(config as any)).toThrow(
+    const config = { ...createDefaultConfig() } as Partial<ConfigInput>;
+    delete config.stdDev;
+    expect(() => new BollingerBandsAnalyzerNew(asConfig(config))).toThrow(
       '[BOLLINGER_BANDS_ANALYZER] Missing or invalid: stdDev',
     );
   });
@@ -111,7 +116,7 @@ describe('BollingerBandsAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles input', () => {
     const analyzer = new BollingerBandsAnalyzerNew(createDefaultConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow('[BOLLINGER_BANDS_ANALYZER] Invalid candles input');
+    expect(() => analyzer.analyze(asCandles(null))).toThrow('[BOLLINGER_BANDS_ANALYZER] Invalid candles input');
   });
 
   test('should throw on insufficient candles', () => {
@@ -125,7 +130,7 @@ describe('BollingerBandsAnalyzerNew - Input Validation Tests', () => {
     const analyzer = new BollingerBandsAnalyzerNew(createDefaultConfig());
     const closes = Array.from({ length: 30 }, (_, i) => 100 + i);
     const candles = createCandleSequence(closes);
-    (candles[15] as any).close = undefined;
+    (candles[15] as unknown as { close?: number }).close = undefined;
     expect(() => analyzer.analyze(candles)).toThrow('[BOLLINGER_BANDS_ANALYZER] Invalid candle');
   });
 });

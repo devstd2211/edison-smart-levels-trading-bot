@@ -3,6 +3,9 @@ import type { Candle } from '../../types/core';
 import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { AnalyzerType } from '../../types/analyzer';
 
+type ConfigInput = ConstructorParameters<typeof FootprintAnalyzerNew>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.5, priority: 5 };
 }
@@ -25,7 +28,9 @@ describe('FootprintAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on invalid config', () => {
-    expect(() => new FootprintAnalyzerNew({ enabled: 'true' as any, weight: 0.5, priority: 5 })).toThrow();
+    expect(() =>
+      new FootprintAnalyzerNew(asConfig({ enabled: 'true', weight: 0.5, priority: 5 }))
+    ).toThrow();
   });
 });
 

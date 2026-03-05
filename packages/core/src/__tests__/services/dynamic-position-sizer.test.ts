@@ -26,18 +26,23 @@ import {
 } from '../../constants/phase-11-constants';
 
 describe('DynamicPositionSizerService', () => {
+  type LoggerMock = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
+  const asNumber = (value: unknown): number => value as number;
+  const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
+
   let service: DynamicPositionSizerService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
 
   beforeEach(() => {
-    logger = {
+    const mockLogger: LoggerMock = {
       debug: jest.fn(),
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    };
+    logger = mockLogger as unknown as LoggerService;
     errorHandler = new ErrorHandler(logger);
 
     mockConfig = {
@@ -59,7 +64,7 @@ describe('DynamicPositionSizerService', () => {
   describe('THROW - Config Validation', () => {
     it('should throw when config is null', () => {
       expect(() => {
-        new DynamicPositionSizerService(null as any, logger, errorHandler);
+        new DynamicPositionSizerService(asSizingConfig(null), logger, errorHandler);
       }).toThrow('config is required');
     });
 
@@ -121,7 +126,7 @@ describe('DynamicPositionSizerService', () => {
   describe('THROW - Input Validation', () => {
     it('should throw when entryPrice is null', async () => {
       await expect(
-        service.calculateOptimalSize(null as any, 100, 10000, 0.7)
+        service.calculateOptimalSize(asNumber(null), 100, 10000, 0.7)
       ).rejects.toThrow('entryPrice must be a positive number');
     });
 
@@ -133,19 +138,19 @@ describe('DynamicPositionSizerService', () => {
 
     it('should throw when stopLoss is null', async () => {
       await expect(
-        service.calculateOptimalSize(105, null as any, 10000, 0.7)
+        service.calculateOptimalSize(105, asNumber(null), 10000, 0.7)
       ).rejects.toThrow('stopLoss must be a positive number');
     });
 
     it('should throw when accountBalance is null', async () => {
       await expect(
-        service.calculateOptimalSize(105, 100, null as any, 0.7)
+        service.calculateOptimalSize(105, 100, asNumber(null), 0.7)
       ).rejects.toThrow('accountBalance must be >= 0');
     });
 
     it('should throw when confidence is null', async () => {
       await expect(
-        service.calculateOptimalSize(105, 100, 10000, null as any)
+        service.calculateOptimalSize(105, 100, 10000, asNumber(null))
       ).rejects.toThrow('confidence must be a number');
     });
 
@@ -292,7 +297,7 @@ describe('DynamicPositionSizerService', () => {
     let brokenLogger: LoggerService;
 
     beforeEach(() => {
-      brokenLogger = {
+      const mockBrokenLogger: LoggerMock = {
         debug: jest.fn(() => {
           throw new Error('Logger broken');
         }),
@@ -305,7 +310,8 @@ describe('DynamicPositionSizerService', () => {
         error: jest.fn(() => {
           throw new Error('Logger broken');
         }),
-      } as any;
+      };
+      brokenLogger = mockBrokenLogger as unknown as LoggerService;
     });
 
     it('should not throw when logging fails in calculateOptimalSize', async () => {
@@ -568,19 +574,19 @@ describe('DynamicPositionSizerService', () => {
   describe('Helper Methods - adjustForVolatility', () => {
     it('should throw on null baseSize', () => {
       expect(() => {
-        service.adjustForVolatility(null as any, 1.0, 1.0);
+        service.adjustForVolatility(asNumber(null), 1.0, 1.0);
       }).toThrow('baseSize must be >= 0');
     });
 
     it('should throw on null currentATR', () => {
       expect(() => {
-        service.adjustForVolatility(100, null as any, 1.0);
+        service.adjustForVolatility(100, asNumber(null), 1.0);
       }).toThrow('currentATR must be >= 0');
     });
 
     it('should throw on null averageATR', () => {
       expect(() => {
-        service.adjustForVolatility(100, 1.0, null as any);
+        service.adjustForVolatility(100, 1.0, asNumber(null));
       }).toThrow('averageATR must be >= 0');
     });
 
@@ -594,13 +600,13 @@ describe('DynamicPositionSizerService', () => {
   describe('Helper Methods - adjustForAccountRisk', () => {
     it('should throw on null size', () => {
       expect(() => {
-        service.adjustForAccountRisk(null as any, 10000, 105, 5);
+        service.adjustForAccountRisk(asNumber(null), 10000, 105, 5);
       }).toThrow('size must be >= 0');
     });
 
     it('should throw on null accountBalance', () => {
       expect(() => {
-        service.adjustForAccountRisk(100, null as any, 105, 5);
+        service.adjustForAccountRisk(100, asNumber(null), 105, 5);
       }).toThrow('accountBalance must be >= 0');
     });
 
@@ -631,13 +637,13 @@ describe('DynamicPositionSizerService', () => {
   describe('Helper Methods - calculateMaxPosition', () => {
     it('should throw on null maxRiskPercent', () => {
       expect(() => {
-        service.calculateMaxPosition(null as any, 10000);
+        service.calculateMaxPosition(asNumber(null), 10000);
       }).toThrow('maxRiskPercent must be >= 0');
     });
 
     it('should throw on null accountBalance', () => {
       expect(() => {
-        service.calculateMaxPosition(3.0, null as any);
+        service.calculateMaxPosition(3.0, asNumber(null));
       }).toThrow('accountBalance must be >= 0');
     });
 

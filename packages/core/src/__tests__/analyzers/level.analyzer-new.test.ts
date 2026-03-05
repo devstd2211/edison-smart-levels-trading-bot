@@ -2,6 +2,11 @@ import { LevelAnalyzerNew } from '../../analyzers/level.analyzer-new';
 import type { Candle } from '../../types/core';
 import type { LevelAnalyzerConfigNew } from '../../types/config/config-new.types';
 
+type ConfigInput = ConstructorParameters<typeof LevelAnalyzerNew>[0];
+type CandlesInput = Parameters<LevelAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): LevelAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 5 };
 }
@@ -24,9 +29,9 @@ describe('LevelAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new LevelAnalyzerNew(config as any)).toThrow();
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new LevelAnalyzerNew(asConfig(config))).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +52,7 @@ describe('LevelAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new LevelAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -59,7 +64,7 @@ describe('LevelAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candle', () => {
     const analyzer = new LevelAnalyzerNew(createConfig());
     const candles = createCandles(Array.from({ length: 35 }, (_, i) => 100 + i));
-    (candles[15] as any).close = undefined;
+    (candles[15] as unknown as { close?: number }).close = undefined;
     expect(() => analyzer.analyze(candles)).toThrow();
   });
 });

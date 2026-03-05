@@ -21,7 +21,7 @@ function createMockPosition(): Position {
     id: 'XRPUSDT_Buy',
     journalId: 'j-123',
     symbol: 'XRPUSDT',
-    side: 'Buy' as any,
+    side: 'Buy' as unknown as Position['side'],
     quantity: 52.9,
     entryPrice: 1.85,
     leverage: 10,
@@ -35,8 +35,8 @@ function createMockPosition(): Position {
       { level: 2, percent: 1.0, price: 1.869, sizePercent: 33, hit: false, orderId: 'tp2' },
       { level: 3, percent: 1.5, price: 1.879, sizePercent: 34, hit: false, orderId: 'tp3' },
     ],
-    stopLoss: { price: 1.80, isBreakeven: false, isTrailing: false, updatedAt: Date.now() } as any,
-  } as any;
+    stopLoss: { price: 1.80, isBreakeven: false, isTrailing: false, updatedAt: Date.now() } as unknown as Position['stopLoss'],
+  } as Position;
 }
 
 // ============================================================================
@@ -45,11 +45,21 @@ function createMockPosition(): Position {
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   let positionExitingService: PositionExitingService;
-  let mockLogger: any;
-  let mockBybitService: any;
-  let mockTelegram: any;
-  let mockJournal: any;
-  let mockSessionStats: any;
+  let mockLogger: {
+    debug: jest.Mock;
+    info: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    getLogFilePath: jest.Mock;
+  };
+  let mockBybitService: {
+    closePosition: jest.Mock;
+    cancelAllConditionalOrders: jest.Mock;
+    getCurrentPrice: jest.Mock;
+  };
+  let mockTelegram: { sendAlert: jest.Mock; notifyPositionClosed: jest.Mock };
+  let mockJournal: { recordPositionClose: jest.Mock; getTrade: jest.Mock };
+  let mockSessionStats: { updateTradeExit: jest.Mock };
 
   beforeEach(() => {
     mockLogger = {
@@ -87,21 +97,23 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       tradingFeeRate: 0.0006,
       minPositionSize: 10,
       maxPositionSize: 1000,
-    } as any;
+    } as unknown;
 
     const mockRiskConfig = {
       maxRiskPercent: 2,
       maxPositionSize: 1000,
-    } as any;
+    } as unknown;
+    const mockFullConfig = {} as unknown as ConstructorParameters<typeof PositionExitingService>[6];
 
     positionExitingService = new PositionExitingService(
-      mockBybitService as any,
-      mockTelegram as any,
-      mockLogger,
-      mockJournal as any,
-      mockTradingConfig as any,
-      mockRiskConfig as any,
-      mockSessionStats as any,
+      mockBybitService as unknown as ConstructorParameters<typeof PositionExitingService>[0],
+      mockTelegram as unknown as ConstructorParameters<typeof PositionExitingService>[1],
+      mockLogger as unknown as ConstructorParameters<typeof PositionExitingService>[2],
+      mockJournal as unknown as ConstructorParameters<typeof PositionExitingService>[3],
+      mockTradingConfig as unknown as ConstructorParameters<typeof PositionExitingService>[4],
+      mockRiskConfig as unknown as ConstructorParameters<typeof PositionExitingService>[5],
+      mockFullConfig,
+      mockSessionStats as unknown as ConstructorParameters<typeof PositionExitingService>[7],
     );
   });
 
@@ -121,8 +133,8 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       expect(result).toBe(false);
 
       // Check that logger.warn was called with message containing 'closeFullPosition called with null/undefined'
-      const warnCall = mockLogger.warn.mock.calls.find((call: any[]) =>
-        call[0]?.includes('closeFullPosition called with null/undefined'),
+      const warnCall = mockLogger.warn.mock.calls.find((call: unknown[]) =>
+        String(call[0] ?? '').includes('closeFullPosition called with null/undefined'),
       );
       expect(warnCall).toBeDefined();
 
@@ -156,8 +168,8 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       expect(mockBybitService.closePosition).not.toHaveBeenCalled();
 
       // Check that logger.debug was called with message containing 'already marked closed'
-      const debugCall = mockLogger.debug.mock.calls.find((call: any[]) =>
-        call[0]?.includes('already marked closed'),
+      const debugCall = mockLogger.debug.mock.calls.find((call: unknown[]) =>
+        String(call[0] ?? '').includes('already marked closed'),
       );
       expect(debugCall).toBeDefined();
     });
@@ -437,8 +449,8 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       expect(result).toBe(false);
 
       // Should have warning message, not error
-      const warnCall = mockLogger.warn.mock.calls.find((call: any[]) =>
-        call[0]?.includes('closeFullPosition called with null/undefined'),
+      const warnCall = mockLogger.warn.mock.calls.find((call: unknown[]) =>
+        String(call[0] ?? '').includes('closeFullPosition called with null/undefined'),
       );
       expect(warnCall).toBeDefined();
 
@@ -479,3 +491,5 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
   });
 });
+
+

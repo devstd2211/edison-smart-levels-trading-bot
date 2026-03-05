@@ -51,7 +51,7 @@ const createMockTradingConfig = (): TradingConfig => ({
   maxPositions: 1,
   positionSizeUsdt: 100,
   tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT' as any,
+  orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
   tradingFeeRate: 0.0002,
   favorableMovementThresholdPercent: 0.1,
 });
@@ -72,15 +72,15 @@ const createMockRiskConfig = (): RiskManagementConfig => ({
 });
 
 const createMockConfig = (): Config => ({
-  exchange: { symbol: 'XRPUSDT' } as any,
+  exchange: { symbol: 'XRPUSDT' } as unknown as Config['exchange'],
   timeframes: {},
   trading: createMockTradingConfig(),
-  strategies: {} as any,
-  strategy: {} as any,
-  indicators: {} as any,
+  strategies: {} as unknown as Config['strategies'],
+  strategy: {} as unknown as Config['strategy'],
+  indicators: {} as unknown as Config['indicators'],
   riskManagement: createMockRiskConfig(),
-  logging: {} as any,
-  system: {} as any,
+  logging: {} as unknown as Config['logging'],
+  system: {} as unknown as Config['system'],
   dataSubscriptions: {
     candles: { enabled: true, calculateIndicators: true },
     orderbook: { enabled: false, updateIntervalMs: 5000 },
@@ -95,7 +95,7 @@ const createMockConfig = (): Config => ({
     slowEmaPeriod: 21,
     zigzagDepth: 2,
   },
-  entryConfirmation: {} as any,
+  entryConfirmation: {} as unknown as Config['entryConfirmation'],
 });
 
 /**
@@ -136,14 +136,26 @@ const createRealScenarioPosition = (): Position => ({
   status: 'OPEN' as const,
 });
 
+const asExchange = (v: ReturnType<typeof createMockBybitService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[0];
+const asTelegram = (v: ReturnType<typeof createMockTelegramService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[1];
+const asLogger = (v: ReturnType<typeof createMockLogger>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[2];
+const asJournal = (v: ReturnType<typeof createMockJournalService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[3];
+const asSessionStats = (v: ReturnType<typeof createMockSessionStatsService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[7];
+const asPositionManager = (v: ReturnType<typeof createMockPositionManager>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[8];
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
   let service: PositionExitingService;
-  let mockBybitService: any;
-  let mockTelegramService: any;
-  let mockLogger: any;
-  let mockJournalService: any;
-  let mockSessionStats: any;
-  let mockPositionManager: any;
+  let mockBybitService: ReturnType<typeof createMockBybitService>;
+  let mockTelegramService: ReturnType<typeof createMockTelegramService>;
+  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockJournalService: ReturnType<typeof createMockJournalService>;
+  let mockSessionStats: ReturnType<typeof createMockSessionStatsService>;
+  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
@@ -154,15 +166,15 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     mockPositionManager = createMockPositionManager();
 
     service = new PositionExitingService(
-      mockBybitService,
-      mockTelegramService,
-      mockLogger,
-      mockJournalService,
+      asExchange(mockBybitService),
+      asTelegram(mockTelegramService),
+      asLogger(mockLogger),
+      asJournal(mockJournalService),
       createMockTradingConfig(),
       createMockRiskConfig(),
       createMockConfig(),
-      mockSessionStats,
-      mockPositionManager,
+      asSessionStats(mockSessionStats),
+      asPositionManager(mockPositionManager),
     );
   });
 
@@ -209,14 +221,14 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - Calculated Breakeven: ${breakevenPrice}
       `);
 
-      expect(isNaN(position.entryPrice as any)).toBe(true);
+      expect(isNaN(position.entryPrice)).toBe(true);
       expect(isNaN(offset)).toBe(true);
-      expect(isNaN(breakevenPrice as any)).toBe(true);
+      expect(isNaN(breakevenPrice)).toBe(true);
     });
 
     it('Should handle undefined entryPrice gracefully', () => {
       const position = createRealScenarioPosition();
-      position.entryPrice = undefined as any;
+      position.entryPrice = undefined as unknown as number;
 
       // Attempt calculation like the service would
       let breakevenPrice: number | undefined;
@@ -234,7 +246,7 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - Calculated Breakeven: ${breakevenPrice}
       `);
 
-      expect(breakevenPrice === undefined || isNaN(breakevenPrice as any)).toBe(true);
+      expect(breakevenPrice === undefined || isNaN(breakevenPrice)).toBe(true);
     });
 
     it('CRITICAL: Call handleTP1Hit and verify it handles NaN gracefully', async () => {
@@ -344,7 +356,7 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
       const initialEntryPrice = position.entryPrice;
 
       // Record the state we're testing
-      const testState: any = {
+      const testState: { entryPriceBefore: number; entryPriceAfter?: number; entryPriceValid?: boolean } = {
         entryPriceBefore: position.entryPrice,
         entryPriceValid: !isNaN(position.entryPrice),
       };
@@ -428,3 +440,5 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     });
   });
 });
+
+

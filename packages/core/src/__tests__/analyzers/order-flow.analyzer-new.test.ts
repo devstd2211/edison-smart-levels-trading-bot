@@ -3,6 +3,11 @@ import type { Candle } from '../../types/core';
 import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { AnalyzerType } from '../../types/analyzer';
 
+type ConfigInput = ConstructorParameters<typeof OrderFlowAnalyzerNew>[0];
+type CandlesInput = Parameters<OrderFlowAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 6 };
 }
@@ -25,9 +30,9 @@ describe('OrderFlowAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new OrderFlowAnalyzerNew(config as any)).toThrow();
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new OrderFlowAnalyzerNew(asConfig(config))).toThrow();
   });
 });
 
@@ -47,7 +52,7 @@ describe('OrderFlowAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid input', () => {
     const analyzer = new OrderFlowAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 });
 

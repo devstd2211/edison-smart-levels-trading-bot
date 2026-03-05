@@ -65,7 +65,7 @@ const createMockTakeProfitManager = () => ({
   getTpLevelsHit: jest.fn().mockReturnValue([1, 2]),
 });
 
-const createMockPositionManager = (takeProfitManager: any) => ({
+const createMockPositionManager = (takeProfitManager: unknown) => ({
   getTakeProfitManager: jest.fn().mockReturnValue(takeProfitManager),
 });
 
@@ -74,7 +74,7 @@ const createMockTradingConfig = (): TradingConfig => ({
   riskPercent: 2,
   maxPositions: 1,
   tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT' as any,
+  orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
   tradingFeeRate: 0.0002,
   favorableMovementThresholdPercent: 0.1,
 });
@@ -95,15 +95,15 @@ const createMockRiskConfig = (): RiskManagementConfig => ({
 });
 
 const createMockFullConfig = (): Config => ({
-  exchange: { symbol: 'APEXUSDT' } as any,
+  exchange: { symbol: 'APEXUSDT' } as unknown as Config['exchange'],
   timeframes: {},
   trading: createMockTradingConfig(),
-  strategies: {} as any,
-  strategy: {} as any,
-  indicators: {} as any,
+  strategies: {} as unknown as Config['strategies'],
+  strategy: {} as unknown as Config['strategy'],
+  indicators: {} as unknown as Config['indicators'],
   riskManagement: createMockRiskConfig(),
-  logging: {} as any,
-  system: {} as any,
+  logging: {} as unknown as Config['logging'],
+  system: {} as unknown as Config['system'],
   dataSubscriptions: { candles: { enabled: true, calculateIndicators: true }, orderbook: { enabled: false, updateIntervalMs: 5000 }, ticks: { enabled: false, calculateDelta: false } },
   entryConfig: {
     divergenceDetector: { minStrength: 0.3, priceDiffPercent: 0.2 },
@@ -114,9 +114,21 @@ const createMockFullConfig = (): Config => ({
     slowEmaPeriod: 21,
     zigzagDepth: 2,
   },
-  entryConfirmation: {} as any,
+  entryConfirmation: {} as unknown as Config['entryConfirmation'],
 });
 
+const asExchange = (v: ReturnType<typeof createMockBybitService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[0];
+const asTelegram = (v: ReturnType<typeof createMockTelegramService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[1];
+const asLogger = (v: ReturnType<typeof createMockLogger>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[2];
+const asJournal = (v: ReturnType<typeof createMockJournalService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[3];
+const asSessionStats = (v: ReturnType<typeof createMockSessionStatsService>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[7];
+const asPositionManager = (v: ReturnType<typeof createMockPositionManager>) =>
+  v as unknown as ConstructorParameters<typeof PositionExitingService>[8];
 const createMockPosition = (overrides?: Partial<Position>): Position => ({
   id: 'APEXUSDT_Buy',
   journalId: 'APEXUSDT_Buy_123456',
@@ -150,13 +162,13 @@ const createMockPosition = (overrides?: Partial<Position>): Position => ({
 
 describe('PositionExitingService', () => {
   let service: PositionExitingService;
-  let mockLogger: any;
-  let mockBybit: any;
-  let mockTelegram: any;
-  let mockJournal: any;
-  let mockSessionStats: any;
-  let mockTakeProfitManager: any;
-  let mockPositionManager: any;
+  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockBybit: ReturnType<typeof createMockBybitService>;
+  let mockTelegram: ReturnType<typeof createMockTelegramService>;
+  let mockJournal: ReturnType<typeof createMockJournalService>;
+  let mockSessionStats: ReturnType<typeof createMockSessionStatsService>;
+  let mockTakeProfitManager: ReturnType<typeof createMockTakeProfitManager>;
+  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
   let tradingConfig: TradingConfig;
   let riskConfig: RiskManagementConfig;
   let fullConfig: Config;
@@ -174,15 +186,15 @@ describe('PositionExitingService', () => {
     fullConfig = createMockFullConfig();
 
     service = new PositionExitingService(
-      mockBybit,
-      mockTelegram,
-      mockLogger,
-      mockJournal,
+      asExchange(mockBybit),
+      asTelegram(mockTelegram),
+      asLogger(mockLogger),
+      asJournal(mockJournal),
       tradingConfig,
       riskConfig,
       fullConfig,
-      mockSessionStats,
-      mockPositionManager,
+      asSessionStats(mockSessionStats),
+      asPositionManager(mockPositionManager),
     );
   });
 
@@ -274,7 +286,7 @@ describe('PositionExitingService', () => {
 
     it('should return false for unknown action', async () => {
       const position = createMockPosition();
-      const action: ExitActionDTO = { action: 'UNKNOWN_ACTION' as any };
+      const action = { action: 'UNKNOWN_ACTION' as unknown as ExitActionDTO['action'] } as unknown as ExitActionDTO;
 
       const result = await service.executeExitAction(
         position,
@@ -308,7 +320,7 @@ describe('PositionExitingService', () => {
       const action: ExitActionDTO = { action: ExitAction.CLOSE_ALL };
 
       const result = await service.executeExitAction(
-        null as any,
+        null as unknown as Position,
         action,
         105,
         'TP1_HIT',
@@ -547,14 +559,14 @@ describe('PositionExitingService', () => {
 
     it('should calculate simple PnL without TakeProfitManager', async () => {
       service = new PositionExitingService(
-        mockBybit,
-        mockTelegram,
-        mockLogger,
-        mockJournal,
+        asExchange(mockBybit),
+        asTelegram(mockTelegram),
+        asLogger(mockLogger),
+        asJournal(mockJournal),
         tradingConfig,
         riskConfig,
         fullConfig,
-        mockSessionStats,
+        asSessionStats(mockSessionStats),
         undefined, // No TakeProfitManager
       );
 
@@ -1085,4 +1097,6 @@ describe('PositionExitingService', () => {
     });
   });
 });
+
+
 

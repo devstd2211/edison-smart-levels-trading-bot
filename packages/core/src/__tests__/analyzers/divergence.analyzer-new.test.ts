@@ -3,6 +3,11 @@ import type { Candle } from '../../types/core';
 import type { DivergenceAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type ConfigInput = ConstructorParameters<typeof DivergenceAnalyzerNew>[0];
+type CandlesInput = Parameters<DivergenceAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): DivergenceAnalyzerConfigNew {
   return { enabled: true, weight: 0.8, priority: 7, maxConfidence: 0.95 };
 }
@@ -25,9 +30,9 @@ describe('DivergenceAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new DivergenceAnalyzerNew(config as any)).toThrow();
+    const config = { ...createConfig() } as Partial<ConfigInput>;
+    delete config.enabled;
+    expect(() => new DivergenceAnalyzerNew(asConfig(config))).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -56,7 +61,7 @@ describe('DivergenceAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles input', () => {
     const analyzer = new DivergenceAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -68,7 +73,7 @@ describe('DivergenceAnalyzerNew - Input Validation Tests', () => {
   test('should throw on invalid candle data', () => {
     const analyzer = new DivergenceAnalyzerNew(createConfig());
     const candles = createCandles(Array.from({ length: 50 }, (_, i) => 100 + i));
-    (candles[25] as any).high = undefined;
+    (candles[25] as unknown as { high?: number }).high = undefined;
     expect(() => analyzer.analyze(candles)).toThrow();
   });
 });

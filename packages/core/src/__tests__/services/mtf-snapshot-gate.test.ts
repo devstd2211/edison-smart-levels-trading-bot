@@ -11,7 +11,7 @@ import {
   SnapshotValidationResult,
 } from '../../services/mtf-snapshot-gate.service';
 import { LoggerService } from '../../services/logger.service';
-import { Signal, SignalDirection } from '../../types/legacy';
+import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 
 // Mock logger
@@ -21,7 +21,7 @@ const mockLogger: LoggerService = {
   error: jest.fn(),
   debug: jest.fn(),
   setContext: jest.fn(),
-} as any;
+} as unknown as LoggerService;
 
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
@@ -69,7 +69,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: ['HH_HL pattern'],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(snapshot).toBeDefined();
       expect(snapshot.htfBias).toBe(TrendBias.BULLISH);
@@ -98,7 +98,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       const expirationTime = snapshot.expiresAt - snapshot.timestamp;
       expect(expirationTime).toBe(120000); // 120 seconds (increased from 60s to prevent race conditions)
@@ -124,7 +124,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: ['LH_LL'],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       const retrieved = gate.getActiveSnapshot();
       expect(retrieved).toEqual(snapshot);
@@ -158,7 +158,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Validate with same BULLISH bias
       const result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -189,7 +189,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Validate with reversed BEARISH bias
       const result = gate.validateSnapshot(TrendBias.BEARISH);
@@ -223,7 +223,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Validate with same BEARISH bias
       const result = gate.validateSnapshot(TrendBias.BEARISH);
@@ -253,7 +253,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, longSignal, candle);
+      } as unknown as TrendAnalysis, longSignal, candle);
 
       let result = gate.validateSnapshot(TrendBias.NEUTRAL);
       expect(result.valid).toBe(true);
@@ -276,7 +276,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, shortSignal, candle);
+      } as unknown as TrendAnalysis, shortSignal, candle);
 
       result = gate.validateSnapshot(TrendBias.NEUTRAL);
       expect(result.valid).toBe(true);
@@ -312,7 +312,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Advance time by 121 seconds (past expiration of 120 seconds)
       jest.advanceTimersByTime(121000);
@@ -353,7 +353,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(gate.getActiveSnapshot()).toBeDefined();
 
@@ -395,7 +395,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(gate.getSnapshotCount()).toBe(1);
 
@@ -426,7 +426,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       const info = gate.getSnapshotDebugInfo();
 
@@ -468,7 +468,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: ['HH_HL'],
         restrictedDirections: [],
-      } as any, longSignal, candle);
+      } as unknown as TrendAnalysis, longSignal, candle);
 
       // T2: HTF updates - bias flips to BEARISH (race condition!)
       const result = gate.validateSnapshot(TrendBias.BEARISH);
@@ -501,7 +501,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: ['LH_LL'],
         restrictedDirections: [],
-      } as any, shortSignal, candle);
+      } as unknown as TrendAnalysis, shortSignal, candle);
 
       // T2: HTF updates - bias flips to BULLISH (race condition!)
       const result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -535,7 +535,7 @@ describe('MTFSnapshotGate', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // Validate: still BULLISH (no change) or could change to stronger BULLISH
       let result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -547,3 +547,4 @@ describe('MTFSnapshotGate', () => {
     });
   });
 });
+

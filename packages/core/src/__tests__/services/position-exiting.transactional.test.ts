@@ -9,14 +9,14 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   // T1: Normal flow - journal and stats both succeed
   it('T1: Normal flow - journal and stats both succeed', () => {
     // Simplified test: journal and stats updates succeed
-    const mockJournal: any = {
-      recordTradeClose: jest.fn().mockReturnValue({
+    const mockJournal = {
+      recordTradeClose: jest.fn((_trade: unknown) => ({
         rollback: jest.fn(),
-      }),
+      })),
     };
 
-    const mockStats: any = {
-      updateTradeExit: jest.fn().mockReturnValue(undefined),
+    const mockStats = {
+      updateTradeExit: jest.fn((_trade: unknown) => undefined),
     };
 
     // Simulate successful journal record with rollback capability
@@ -39,14 +39,14 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   // T2: Session stats fails - journal rolls back
   it('T2: Session stats fails - journal rolls back', () => {
     const rollbackFn = jest.fn();
-    const mockJournal: any = {
-      recordTradeClose: jest.fn().mockReturnValue({
+    const mockJournal = {
+      recordTradeClose: jest.fn((_trade: unknown) => ({
         rollback: rollbackFn,
-      }),
+      })),
     };
 
-    const mockStats: any = {
-      updateTradeExit: jest.fn(() => {
+    const mockStats = {
+      updateTradeExit: jest.fn((_trade: unknown) => {
         throw new Error('Database connection lost');
       }),
     };
@@ -75,9 +75,9 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
     const balanceBefore = 1000;
     let currentBalance = balanceBefore;
 
-    const mockBalance: any = {
+    const mockBalance = {
       getCurrentBalance: jest.fn(() => currentBalance),
-      updateBalance: jest.fn((amount) => {
+      updateBalance: jest.fn((amount: number) => {
         currentBalance += amount;
       }),
     };
@@ -106,7 +106,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
   // T5: Position without journalId skips journal
   it('T5: Position with no journalId skips journal (no rollback needed)', () => {
-    const mockJournal: any = {
+    const mockJournal = {
       recordTradeClose: jest.fn(),
     };
 
@@ -117,7 +117,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
   // T6: Rollback logs errors for debugging
   it('T6: Rollback operation logs errors for debugging', () => {
-    const mockLogger: any = {
+    const mockLogger = {
       error: jest.fn(),
       info: jest.fn(),
     };
@@ -133,8 +133,8 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
   // T7: Journal failure prevents position close
   it('T7: Journal failure prevents position close', () => {
-    const mockJournal: any = {
-      recordTradeClose: jest.fn(() => {
+    const mockJournal = {
+      recordTradeClose: jest.fn((_trade: unknown) => {
         throw new Error('Journal file I/O failed');
       }),
     };

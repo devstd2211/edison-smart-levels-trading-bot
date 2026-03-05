@@ -21,6 +21,21 @@ describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
+  const asConfig = (value: unknown): PatternRecognitionConfig => value as PatternRecognitionConfig;
+  const asCandles = (value: unknown): Candle[] => value as Candle[];
+  const asPattern = (value: unknown): Pattern => value as Pattern;
+  const asSwing = (value: unknown): SwingPoint => value as SwingPoint;
+  const asLogger = (value: unknown): LoggerService => value as LoggerService;
+  type PatternInternals = {
+    performPatternRecognition: (candles: Candle[]) => Pattern[];
+    performStrengthCalculation: (pattern: Pattern) => number;
+    performFibonacciCalculation: (swing: SwingPoint) => Array<{ level: number; price: number }>;
+    performReliabilityScoring: (pattern: Pattern) => number;
+    performZoneIdentification: () => Array<unknown>;
+    candleHistory: Candle[];
+  };
+  const asInternals = (svc: PatternRecognitionService): PatternInternals =>
+    svc as unknown as PatternInternals;
 
   const createMockCandle = (
     open: number,
@@ -80,19 +95,19 @@ describe('PatternRecognitionService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new PatternRecognitionService('invalid' as any, undefined, logger, errorHandler);
+        new PatternRecognitionService(asConfig('invalid'), undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new PatternRecognitionService(123 as any, undefined, logger, errorHandler);
+        new PatternRecognitionService(asConfig(123), undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new PatternRecognitionService([] as any, undefined, logger, errorHandler);
+        new PatternRecognitionService(asConfig([]), undefined, logger, errorHandler);
       }).toThrow('Config must be an object or undefined');
     });
 
@@ -119,13 +134,13 @@ describe('PatternRecognitionService - Error Handling', () => {
   describe('THROW: Input Validation', () => {
     it('should throw when recognizePattern receives null candles', async () => {
       await expect(
-        service.recognizePattern(null as any),
+        service.recognizePattern(asCandles(null)),
       ).rejects.toThrow('Candles array cannot be null or undefined');
     });
 
     it('should throw when recognizePattern receives non-array', async () => {
       await expect(
-        service.recognizePattern('invalid' as any),
+        service.recognizePattern(asCandles('invalid')),
       ).rejects.toThrow('Candles must be an array');
     });
 
@@ -139,13 +154,13 @@ describe('PatternRecognitionService - Error Handling', () => {
 
     it('should throw when calculatePatternStrength receives null pattern', () => {
       expect(() => {
-        service.calculatePatternStrength(null as any);
+        service.calculatePatternStrength(asPattern(null));
       }).toThrow('Pattern cannot be null or undefined');
     });
 
     it('should throw when findFibonacciLevels receives null swing', () => {
       expect(() => {
-        service.findFibonacciLevels(null as any);
+        service.findFibonacciLevels(asSwing(null));
       }).toThrow('Swing point cannot be null or undefined');
     });
   });
@@ -159,7 +174,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       const candles = createCandleArray(15);
 
       // Force error by mocking internal method
-      jest.spyOn(service as any, 'performPatternRecognition').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performPatternRecognition').mockImplementation(() => {
         throw new Error('Pattern recognition failed');
       });
 
@@ -183,7 +198,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       };
 
       // Force error
-      jest.spyOn(service as any, 'performStrengthCalculation').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performStrengthCalculation').mockImplementation(() => {
         throw new Error('Strength calculation failed');
       });
 
@@ -196,7 +211,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       const swing = createMockSwing();
 
       // Force error
-      jest.spyOn(service as any, 'performFibonacciCalculation').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performFibonacciCalculation').mockImplementation(() => {
         throw new Error('Fibonacci calculation failed');
       });
 
@@ -220,7 +235,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       };
 
       // Force error
-      jest.spyOn(service as any, 'performReliabilityScoring').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performReliabilityScoring').mockImplementation(() => {
         throw new Error('Reliability scoring failed');
       });
 
@@ -234,7 +249,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       service.updateCandles(candles);
 
       // Force error
-      jest.spyOn(service as any, 'performZoneIdentification').mockImplementation(() => {
+      jest.spyOn(asInternals(service), 'performZoneIdentification').mockImplementation(() => {
         throw new Error('Zone identification failed');
       });
 
@@ -293,7 +308,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-      } as any;
+      } as unknown as LoggerService;
 
       expect(() => {
         new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
@@ -308,12 +323,12 @@ describe('PatternRecognitionService - Error Handling', () => {
         debug: jest.fn(),
         info: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
-      const testService = new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
+      const testService = new PatternRecognitionService(undefined, undefined, asLogger(badLogger), errorHandler);
 
       // Force pattern recognition to log a warning
-      jest.spyOn(testService as any, 'performPatternRecognition').mockImplementation(() => {
+      jest.spyOn(asInternals(testService), 'performPatternRecognition').mockImplementation(() => {
         throw new Error('Pattern recognition failed');
       });
 
@@ -332,9 +347,9 @@ describe('PatternRecognitionService - Error Handling', () => {
         info: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
-      const testService = new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
+      const testService = new PatternRecognitionService(undefined, undefined, asLogger(badLogger), errorHandler);
 
       expect(() => {
         testService.updateCandles(createCandleArray(10));
@@ -349,9 +364,9 @@ describe('PatternRecognitionService - Error Handling', () => {
         debug: jest.fn(),
         warn: jest.fn(),
         error: jest.fn(),
-      } as any;
+      } as unknown as LoggerService;
 
-      const testService = new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
+      const testService = new PatternRecognitionService(undefined, undefined, asLogger(badLogger), errorHandler);
 
       expect(() => {
         testService.clearHistory();
@@ -568,10 +583,10 @@ describe('PatternRecognitionService - Error Handling', () => {
 
       service.updateCandles(candles1);
       // Access private property for testing
-      expect((service as any).candleHistory.length).toBe(10);
+      expect(asInternals(service).candleHistory.length).toBe(10);
 
       service.updateCandles(candles2);
-      expect((service as any).candleHistory.length).toBe(20);
+      expect(asInternals(service).candleHistory.length).toBe(20);
     });
   });
 

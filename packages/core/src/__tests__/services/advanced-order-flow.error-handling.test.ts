@@ -27,28 +27,31 @@ import { LoggerService } from '../../types/legacy';
 // TEST HELPERS
 // ============================================================================
 
+type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
+const asConfig = (value: unknown): AdvancedOrderFlowConfig =>
+  value as AdvancedOrderFlowConfig;
+const asTick = (value: unknown): Tick => value as Tick;
+const asOrderBook = (value: unknown): OrderBook => value as OrderBook;
+
 /**
  * Create mock logger for testing
  */
 function createMockLogger(methodToFail?: string): LoggerService {
-  return {
-    minLevel: 'debug',
-    logDir: '/tmp',
-    logToFile: false,
-    logs: [],
-    info: jest.fn((_msg: string, _meta?: any) => {
+  const logger: LoggerLike = {
+    info: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'info') throw new Error('Logger.info failed');
     }),
-    warn: jest.fn((_msg: string, _meta?: any) => {
+    warn: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'warn') throw new Error('Logger.warn failed');
     }),
-    debug: jest.fn((_msg: string, _meta?: any) => {
+    debug: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'debug') throw new Error('Logger.debug failed');
     }),
-    error: jest.fn((_msg: string, _meta?: any) => {
+    error: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'error') throw new Error('Logger.error failed');
     }),
-  } as any;
+  };
+  return logger as unknown as LoggerService;
 }
 
 /**
@@ -132,7 +135,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new AdvancedOrderFlowService(null as any, undefined, mockLogger, errorHandler);
+        new AdvancedOrderFlowService(asConfig(null), undefined, mockLogger, errorHandler);
       }).toThrow(/cannot be null or undefined/i);
     });
 
@@ -198,13 +201,12 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
     it('should throw on null tick in addTick()', () => {
       expect(() => {
-        service.addTick(null as any);
+        service.addTick(asTick(null));
       }).toThrow(/tick cannot be null or undefined/i);
     });
 
     it('should throw on invalid tick.side', () => {
-      const tick = createMockTick('BUY');
-      (tick as any).side = 'INVALID';
+      const tick = asTick({ ...createMockTick('BUY'), side: 'INVALID' });
 
       expect(() => {
         service.addTick(tick);
@@ -231,12 +233,12 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
     it('should throw on null orderbook in processOrderbook()', () => {
       expect(() => {
-        service.processOrderbook(null as any);
+        service.processOrderbook(asOrderBook(null));
       }).toThrow(/orderbook cannot be null or undefined/i);
     });
 
     it('should throw on invalid orderbook structure', () => {
-      const bad = { bids: 'not_array' } as any;
+      const bad = asOrderBook({ bids: 'not_array' });
 
       expect(() => {
         service.processOrderbook(bad);
@@ -307,10 +309,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const badBook = {
         bids: [[50000, 1.0]],
         asks: [[50010, 'invalid']],
-      } as any;
+      };
 
       expect(() => {
-        service.processOrderbook(badBook);
+        service.processOrderbook(asOrderBook(badBook));
       }).toThrow(); // THROW on validation
     });
 
@@ -549,7 +551,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       );
 
       expect(() => {
-        service.addTick(null as any);
+        service.addTick(asTick(null));
       }).toThrow();
     });
 

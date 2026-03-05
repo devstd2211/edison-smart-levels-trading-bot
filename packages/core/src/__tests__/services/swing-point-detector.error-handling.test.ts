@@ -61,21 +61,29 @@ function createValidCandleArray(count: number): Candle[] {
 /**
  * Create mock logger that throws on specific methods
  */
+type LoggerLike = { info: jest.Mock; warn: jest.Mock; debug: jest.Mock; error: jest.Mock };
+const asLogger = (logger: LoggerLike): LoggerService => logger as unknown as LoggerService;
+const asErrorHandler = (handler: { handle: jest.Mock; handleAsync: jest.Mock }): ErrorHandler =>
+  handler as unknown as ErrorHandler;
+const asCandles = (value: unknown): Candle[] => value as Candle[];
+type SwingPointsInput = Parameters<SwingPointDetectorService['calculateStrengthFromSwingPoints']>[1];
+const asSwingPoints = (value: unknown): SwingPointsInput => value as SwingPointsInput;
+
 function createFailingLogger(methodToFail?: string): LoggerService {
   return {
-    info: jest.fn<any>((_msg: string, _meta?: any) => {
+    info: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'info') throw new Error('Logger.info failed');
     }),
-    warn: jest.fn<any>((_msg: string, _meta?: any) => {
+    warn: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'warn') throw new Error('Logger.warn failed');
     }),
-    debug: jest.fn<any>((_msg: string, _meta?: any) => {
+    debug: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'debug') throw new Error('Logger.debug failed');
     }),
-    error: jest.fn<any>((_msg: string, _meta?: any) => {
+    error: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'error') throw new Error('Logger.error failed');
     }),
-  } as any;
+  } as unknown as LoggerService;
 }
 
 /**
@@ -83,9 +91,9 @@ function createFailingLogger(methodToFail?: string): LoggerService {
  */
 function createMockErrorHandler(): ErrorHandler {
   return {
-    handle: jest.fn<any>(),
-    handleAsync: jest.fn<any>(),
-  } as any;
+    handle: jest.fn(),
+    handleAsync: jest.fn(),
+  } as unknown as ErrorHandler;
 }
 
 // ============================================================================
@@ -99,11 +107,11 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
   beforeEach(() => {
     mockLogger = {
-      info: jest.fn<any>(),
-      warn: jest.fn<any>(),
-      debug: jest.fn<any>(),
-      error: jest.fn<any>(),
-    } as any;
+      info: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      error: jest.fn(),
+    } as unknown as LoggerService;
     mockErrorHandler = createMockErrorHandler();
   });
 
@@ -115,7 +123,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     it('test-A1: Return empty arrays for null candles input', () => {
       service = new SwingPointDetectorService(mockLogger, 2, mockErrorHandler);
 
-      const result = service.detectSwingPoints(null as any);
+      const result = service.detectSwingPoints(asCandles(null));
 
       expect(result.highs).toEqual([]);
       expect(result.lows).toEqual([]);
@@ -183,7 +191,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     it('test-A5: Return empty arrays on algorithm exception', () => {
       service = new SwingPointDetectorService(mockLogger, 2, mockErrorHandler);
       // Create candles that will cause unexpected error
-      const candles: any = createValidCandleArray(5);
+      const candles = createValidCandleArray(5) as Candle[];
       // Modify to cause error in comparison logic
       Object.defineProperty(candles[2], 'high', {
         get() {
@@ -290,7 +298,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
       // Inject Infinity into prices
       if (highs.length > 1) {
-        (highs[0] as any).price = Infinity;
+        (highs[0] as unknown as { price: number }).price = Infinity;
       }
 
       const result = service.isLowerHigherLow(highs, lows);
@@ -313,8 +321,8 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
       const resultInvalid = service.calculateStrengthFromSwingPoints(
         'NEUTRAL',
-        undefined as any,
-        undefined as any
+        asSwingPoints(undefined),
+        asSwingPoints(undefined)
       );
 
       // Should return NEUTRAL (0.3) as safe default when hitting error
@@ -374,7 +382,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
       service = new SwingPointDetectorService(mockLogger, 2, mockErrorHandler);
 
       // Start with invalid input
-      const detectionResult = service.detectSwingPoints(null as any);
+      const detectionResult = service.detectSwingPoints(asCandles(null));
 
       // Use failed detection result for pattern analysis
       const patternResult = service.isHigherHigherLow(
@@ -402,7 +410,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
         let candles = createValidCandleArray(7);
         if (i === 2) {
           // Corrupt one iteration
-          candles = null as any;
+          candles = asCandles(null);
         }
         const result = service.detectSwingPoints(candles);
         if (Array.isArray(result.highs) && Array.isArray(result.lows)) {
@@ -493,3 +501,4 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
   });
 });
+

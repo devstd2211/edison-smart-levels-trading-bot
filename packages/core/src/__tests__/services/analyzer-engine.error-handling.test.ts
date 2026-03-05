@@ -76,7 +76,7 @@ function createMockAnalyzerRegistry(
 ): AnalyzerRegistryService {
   return {
     getEnabledAnalyzers: jest.fn(async () => analyzers),
-  } as any;
+  } as unknown as AnalyzerRegistryService;
 }
 
 /**
@@ -124,6 +124,8 @@ const createMockLogger = () => ({
   warn: jest.fn(),
   error: jest.fn(),
 });
+type MockLogger = ReturnType<typeof createMockLogger>;
+const asLogger = (logger: MockLogger): LoggerService => logger as unknown as LoggerService;
 
 const createMockErrorHandler = () => ({
   handle: jest.fn(async (error, options): Promise<ErrorHandlingResult> => {
@@ -133,7 +135,7 @@ const createMockErrorHandler = () => ({
       attempts: 1,
       message: 'Handled successfully',
       strategy: options.strategy,
-      error: error as any,
+      error: error as ErrorHandlingResult['error'],
     };
   }),
   getLogger: jest.fn(() => createMockLogger()),
@@ -170,7 +172,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI', 'ATR']);
@@ -194,7 +196,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -220,7 +222,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -240,7 +242,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -255,7 +257,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     test('A5: Signal validation failures trigger SKIP strategy', async () => {
       const badAnalyzer: IAnalyzer = {
         getType: jest.fn(() => 'BAD'),
-        analyze: jest.fn(() => ({ direction: undefined } as any)), // Missing direction
+        analyze: jest.fn(() => ({ direction: undefined } as unknown as AnalyzerSignal)), // Missing direction
         isReady: jest.fn(() => true),
         getMinCandlesRequired: jest.fn(() => 20),
         isEnabled: jest.fn(() => true),
@@ -267,7 +269,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       const analyzers = new Map([['BAD', { instance: badAnalyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['BAD']);
@@ -288,9 +290,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         getEnabledAnalyzers: jest.fn(async () => {
           throw new Error('Registry connection failed');
         }),
-      } as any;
+      } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(mockFailingRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockFailingRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -310,9 +312,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         getEnabledAnalyzers: jest.fn(async () => {
           throw new Error('Registry connection failed');
         }),
-      } as any;
+      } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(mockFailingRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockFailingRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -331,10 +333,10 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         getEnabledAnalyzers: jest.fn(async () => {
           throw new Error('Registry connection failed');
         }),
-      } as any;
+      } as unknown as AnalyzerRegistryService;
 
       // Service without ErrorHandler
-      service = new AnalyzerEngineService(mockFailingRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockFailingRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -352,9 +354,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         getEnabledAnalyzers: jest.fn(async () => {
           throw new Error('Registry service unavailable');
         }),
-      } as any;
+      } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(mockFailingRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockFailingRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA']);
@@ -382,7 +384,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -405,7 +407,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -430,7 +432,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
       // Create service WITHOUT ErrorHandler
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger));
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -461,7 +463,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['ANALYZER1', 'ANALYZER2', 'ANALYZER3']);
@@ -485,7 +487,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -517,7 +519,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -543,7 +545,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = new AnalyzerEngineService(mockRegistry, mockLogger as any, mockErrorHandler);
+      service = new AnalyzerEngineService(mockRegistry, asLogger(mockLogger), mockErrorHandler);
 
       const candles = createMockCandles(50);
       const config = createMockStrategyConfig(['EMA', 'RSI']);
@@ -562,4 +564,5 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     });
   });
 });
+
 

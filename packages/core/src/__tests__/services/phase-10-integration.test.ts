@@ -27,6 +27,10 @@ describe('Phase 10 Integration Tests', () => {
   let mlValidatorService: MLSignalValidatorService;
   let patternService: PatternRecognitionService;
   let anomalyService: AnomalyDetectionService;
+  const asSignalType = (value: unknown): Signal['type'] => value as Signal['type'];
+  const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
+  const asSignal = (value: unknown): Signal => value as Signal;
+  const asContext = (value: unknown): MarketContext => value as MarketContext;
 
   beforeEach(() => {
     logger = {
@@ -34,7 +38,7 @@ describe('Phase 10 Integration Tests', () => {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
 
     errorHandler = new ErrorHandler(logger);
 
@@ -210,7 +214,7 @@ describe('Phase 10 Integration Tests', () => {
   describe('Phase 10.2 Services Integration', () => {
     it('should validate signals with ML', async () => {
       const signal: Signal = {
-        type: 'delta' as any,
+        type: asSignalType('delta'),
         direction: SignalDirection.LONG,
         confidence: 0.75,
         timestamp: Date.now(),
@@ -257,7 +261,7 @@ describe('Phase 10 Integration Tests', () => {
 
     it('should work without history tracking methods', () => {
       const signal: Signal = {
-        type: 'delta' as any,
+        type: asSignalType('delta'),
         direction: SignalDirection.LONG,
         confidence: 0.7,
         timestamp: Date.now(),
@@ -294,7 +298,7 @@ describe('Phase 10 Integration Tests', () => {
 
       // Step 3: Generate signal
       const signal: Signal = {
-        type: 'delta' as any,
+        type: asSignalType('delta'),
         direction: SignalDirection.LONG,
         confidence: 0.75,
         timestamp: Date.now(),
@@ -352,7 +356,7 @@ describe('Phase 10 Integration Tests', () => {
 
     it('should validate signal in < 30ms', async () => {
       const signal: Signal = {
-        type: 'delta' as any,
+        type: asSignalType('delta'),
         direction: SignalDirection.LONG,
         confidence: 0.75,
         timestamp: Date.now(),
@@ -381,12 +385,12 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Error Resilience', () => {
     it('should handle invalid orderbook gracefully', async () => {
-      const invalidOrderbook: any = {
+      const invalidOrderbook = asOrderbook({
         symbol: 'BTCUSDT',
         timestamp: Date.now(),
         bids: null,
         asks: [],
-      };
+      });
 
       await expect(liquidityService.buildLiquidityHeatmap(invalidOrderbook)).rejects.toThrow();
 
@@ -403,20 +407,20 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should handle invalid signal gracefully', async () => {
-      const invalidSignal: any = {
+      const invalidSignal = asSignal({
         type: 'invalid',
         direction: 'wrong',
         confidence: 5.0,
         timestamp: NaN,
-      };
+      });
 
       // Service doesn't throw, but returns NaN for invalid inputs
-      const result = await mlValidatorService.validateSignal(invalidSignal, {} as any);
+      const result = await mlValidatorService.validateSignal(invalidSignal, asContext({}));
       expect(result.adjustedConfidence).toBeNaN();
 
       // Service should still work after error
       const validSignal: Signal = {
-        type: 'delta' as any,
+        type: asSignalType('delta'),
         direction: SignalDirection.LONG,
         confidence: 0.75,
         timestamp: Date.now(),

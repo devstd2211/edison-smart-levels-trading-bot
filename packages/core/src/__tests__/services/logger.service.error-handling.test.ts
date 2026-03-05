@@ -15,7 +15,7 @@
  */
 
 import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy, ErrorLogger } from '../../errors/ErrorHandler';
 import { LogLevel } from '../../types/legacy';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -35,6 +35,9 @@ const mockLogger = () => ({
 });
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
+  const asLogLevel = (value: unknown): LogLevel => value as LogLevel;
+  const asPath = (value: unknown): string => value as string;
+
   let testLogDir: string;
   let errorHandler: ErrorHandler;
 
@@ -43,7 +46,8 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     testLogDir = join(tmpdir(), `logger-test-${Date.now()}`);
 
     // Initialize ErrorHandler
-    errorHandler = new ErrorHandler(mockLogger() as any);
+    const logger = mockLogger() as ErrorLogger;
+    errorHandler = new ErrorHandler(logger);
   });
 
   afterEach(async () => {
@@ -61,19 +65,19 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   describe('THROW: Constructor Validation', () => {
     it('should throw on invalid logLevel in constructor', () => {
       expect(() => {
-        new LoggerService('INVALID_LEVEL' as any, testLogDir, true);
+        new LoggerService(asLogLevel('INVALID_LEVEL'), testLogDir, true);
       }).toThrow();
     });
 
     it('should throw on null minLevel', () => {
       expect(() => {
-        new LoggerService(null as any, testLogDir, true);
+        new LoggerService(asLogLevel(null), testLogDir, true);
       }).toThrow();
     });
 
     it('should throw on non-string logDir with logToFile=true', () => {
       expect(() => {
-        new LoggerService(LogLevel.INFO, 123 as any, true);
+        new LoggerService(LogLevel.INFO, asPath(123), true);
       }).toThrow();
     });
 
@@ -273,8 +277,10 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
       // Even with complex context that might cause formatting issues
       expect(() => {
+        const circular: { ref?: unknown } = {};
+        circular.ref = circular;
         logger.info('Message', {
-          circular: { ref: null as any }, // Will have circular reference
+          circular, // Will have circular reference
           large: new Array(1000).fill('x'),
         });
       }).not.toThrow();
@@ -360,7 +366,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should still throw on invalid logLevel without ErrorHandler', () => {
       expect(() => {
-        new LoggerService('INVALID' as any, testLogDir, true);
+        new LoggerService(asLogLevel('INVALID'), testLogDir, true);
       }).toThrow();
     });
 

@@ -3,6 +3,9 @@ import type { Candle } from '../../types/core';
 import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { AnalyzerType } from '../../types/analyzer';
 
+type CandlesInput = Parameters<FairValueGapAnalyzerNew['analyze']>[0];
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 6 };
 }
@@ -51,7 +54,7 @@ describe('FairValueGapAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles input', () => {
     const analyzer = new FairValueGapAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 });
 

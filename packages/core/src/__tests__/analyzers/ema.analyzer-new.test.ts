@@ -8,6 +8,11 @@ import type { Candle } from '../../types/core';
 import type { EmaAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type ConfigInput = ConstructorParameters<typeof EmaAnalyzerNew>[0];
+type CandlesInput = Parameters<EmaAnalyzerNew['analyze']>[0];
+const asConfig = (value: unknown): ConfigInput => value as ConfigInput;
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -45,7 +50,7 @@ function createCandleSequence(startPrice: number, count: number, direction: 'up'
 
 describe('EmaAnalyzerNew - Configuration', () => {
   test('should throw if enabled is not a boolean', () => {
-    const config: any = {
+    const config = {
       enabled: 'true',
       weight: 0.3,
       priority: 5,
@@ -54,11 +59,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.3,
       maxConfidence: 0.8,
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: enabled');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: enabled');
   });
 
   test('should throw if weight is invalid', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 1.5, // Invalid: > 1.0
       priority: 5,
@@ -67,11 +72,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.3,
       maxConfidence: 0.8,
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: weight');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: weight');
   });
 
   test('should throw if priority is invalid', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 0.3,
       priority: 11, // Invalid: > 10
@@ -80,11 +85,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.3,
       maxConfidence: 0.8,
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: priority');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: priority');
   });
 
   test('should throw if baseConfidence is invalid', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 0.3,
       priority: 5,
@@ -93,11 +98,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.3,
       maxConfidence: 0.8,
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: baseConfidence');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: baseConfidence');
   });
 
   test('should throw if strengthMultiplier is negative', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 0.3,
       priority: 5,
@@ -106,11 +111,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.3,
       maxConfidence: 0.8,
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: strengthMultiplier');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: strengthMultiplier');
   });
 
   test('should throw if minConfidence is invalid', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 0.3,
       priority: 5,
@@ -119,11 +124,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 1.5, // Invalid: > 1.0
       maxConfidence: 0.8,
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: minConfidence');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: minConfidence');
   });
 
   test('should throw if maxConfidence is invalid', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 0.3,
       priority: 5,
@@ -132,11 +137,11 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.3,
       maxConfidence: 1.5, // Invalid: > 1.0
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('[EMA_ANALYZER] Missing or invalid: maxConfidence');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('[EMA_ANALYZER] Missing or invalid: maxConfidence');
   });
 
   test('should throw if minConfidence > maxConfidence', () => {
-    const config: any = {
+    const config: Partial<ConfigInput> = {
       enabled: true,
       weight: 0.3,
       priority: 5,
@@ -145,7 +150,7 @@ describe('EmaAnalyzerNew - Configuration', () => {
       minConfidence: 0.8,
       maxConfidence: 0.3, // Invalid: min > max
     };
-    expect(() => new EmaAnalyzerNew(config)).toThrow('minConfidence cannot be greater than maxConfidence');
+    expect(() => new EmaAnalyzerNew(asConfig(config))).toThrow('minConfidence cannot be greater than maxConfidence');
   });
 
   test('should accept valid config', () => {
@@ -209,7 +214,7 @@ describe('EmaAnalyzerNew - Input Validation', () => {
 
   test('should throw if candles is not array', () => {
     const analyzer = new EmaAnalyzerNew(config);
-    expect(() => analyzer.analyze(null as any)).toThrow('[EMA_ANALYZER] Invalid candles input');
+    expect(() => analyzer.analyze(asCandles(null))).toThrow('[EMA_ANALYZER] Invalid candles input');
   });
 
   test('should throw if candles array is too short', () => {
@@ -222,7 +227,7 @@ describe('EmaAnalyzerNew - Input Validation', () => {
   test('should throw if candle is missing close', () => {
     const analyzer = new EmaAnalyzerNew(config);
     const candles = createCandleSequence(100, 50, 'up');
-    candles[25].close = undefined as any;
+    candles[25].close = undefined as unknown as number;
 
     expect(() => analyzer.analyze(candles)).toThrow('Invalid candle at index 25');
   });

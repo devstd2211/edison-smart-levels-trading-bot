@@ -26,18 +26,18 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-04)
-- `exit-type-detector.service.error-handling.test.ts`: removed local `any` usages (typed logger/position/order fixtures, invalid-input casts via `unknown`).
-- `ExitTypeDetectorService`: reviewed as related service candidate; no safe behavior-preserving decomposition needed in this pass.
-- `position-pnl-calculator.error-handling.test.ts`: removed local `as any` usages (typed ErrorHandler logger, typed invalid `Position`/`PositionSide` inputs, typed internal-method spy interface).
-- `PositionPnLCalculatorService`: reviewed as related service candidate; no safe behavior-preserving decomposition needed in this pass.
-- `websocket-event-handler.error-handling.test.ts`: removed local `as any` usages (typed dependency mock casters, typed `ErrorHandler.handle` static mock result, typed order/SL/TP fixtures).
-- `WebSocketEventHandler`: reviewed as related service candidate; no safe behavior-preserving decomposition needed in this pass.
+## Last Completed (2026-03-05)
+- Removed local `any` usages in:
+  - `liquidity-sweep.analyzer-new.test.ts`
+  - `liquidity-zone.analyzer-new.test.ts`
+  - `order-block.analyzer-new.test.ts`
+  - `order-flow.analyzer-new.test.ts`
+  - `price-action.analyzer-new.test.ts`
+- Related services reviewed: `LiquiditySweepAnalyzerNew`, `LiquidityZoneAnalyzerNew`, `OrderBlockAnalyzerNew`, `OrderFlowAnalyzerNew`, `PriceActionAnalyzerNew` (no safe behavior-preserving decomposition required in this pass).
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts` -> 12/12 PASS.
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts` -> 29/29 PASS.
-  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts` -> 21/21 PASS.
-  - `npm test -- --runInBand packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts` -> 62/62 PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/analyzers/liquidity-sweep.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-block.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-flow.analyzer-new.test.ts packages/core/src/__tests__/analyzers/price-action.analyzer-new.test.ts` -> 88/88 PASS.
+  - `npm run build` -> PASS.
+  - `npm test -- --runInBand` -> PASS (`307/307` suites, `7021/7021` tests).
 
 ## Next Step
-- Continue `__tests__/services/*` `any` cleanup with same rule (test refactor + related service candidate check + targeted verification + `REFACTOR_PLAN.md` update); next target candidate: `dynamic-position-sizer.test.ts`.
+- Continue test `any` cleanup beyond `__tests__/services/*` (non-archived service tests are complete; only `market-data-collector.service.test.ARCHIVED.ts` remains in services). Next target candidate: `__tests__/analyzers/price-momentum.analyzer-new.test.ts`.

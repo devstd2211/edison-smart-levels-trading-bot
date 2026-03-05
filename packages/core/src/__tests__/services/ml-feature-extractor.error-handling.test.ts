@@ -11,21 +11,26 @@
  */
 
 import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.service';
-import { Candle } from '../../types/legacy';
+import { Candle, LoggerService } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 
-const createMockLogger = () => ({
+type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>;
+const asCandles = (value: unknown): Candle[] => value as Candle[];
+const asPatternType = (value: unknown): string => value as string;
+const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
+const asLogger = (value: LoggerLike): LoggerService => value as unknown as LoggerService;
+
+const createMockLogger = (): LoggerLike => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
-  silly: jest.fn(),
 });
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler;
-  const mockLogger = createMockLogger() as any;
+  const mockLogger = asLogger(createMockLogger());
 
   beforeEach(() => {
     errorHandler = new ErrorHandler(mockLogger);
@@ -35,19 +40,19 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   describe('THROW: extractFeatures Input Validation', () => {
     test('should throw on null candles', () => {
       expect(() => {
-        service.extractFeatures(null as any, 'BREAKOUT', 'WIN');
+        service.extractFeatures(asCandles(null), 'BREAKOUT', 'WIN');
       }).toThrow('Candles array cannot be null or undefined');
     });
 
     test('should throw on undefined candles', () => {
       expect(() => {
-        service.extractFeatures(undefined as any, 'BREAKOUT', 'WIN');
+        service.extractFeatures(asCandles(undefined), 'BREAKOUT', 'WIN');
       }).toThrow('Candles array cannot be null or undefined');
     });
 
     test('should throw when candles is not an array', () => {
       expect(() => {
-        service.extractFeatures({ length: 10 } as any, 'BREAKOUT', 'WIN');
+        service.extractFeatures(asCandles({ length: 10 }), 'BREAKOUT', 'WIN');
       }).toThrow('Candles must be an array');
     });
 
@@ -61,7 +66,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     test('should throw on null pattern type', () => {
       const candles = createCandles(10);
       expect(() => {
-        service.extractFeatures(candles, null as any, 'WIN');
+        service.extractFeatures(candles, asPatternType(null), 'WIN');
       }).toThrow('Pattern type must be a non-empty string');
     });
 
@@ -75,7 +80,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     test('should throw on invalid outcome', () => {
       const candles = createCandles(10);
       expect(() => {
-        service.extractFeatures(candles, 'BREAKOUT', 'INVALID' as any);
+        service.extractFeatures(candles, 'BREAKOUT', asOutcome('INVALID'));
       }).toThrow("Outcome must be 'WIN' or 'LOSS'");
     });
   });
@@ -83,7 +88,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   describe('THROW: extractFeaturesMultiTimeframe Validation', () => {
     test('should throw on null candles1m', () => {
       expect(() => {
-        service.extractFeaturesMultiTimeframe(null as any, 'BREAKOUT', 'WIN', 50);
+        service.extractFeaturesMultiTimeframe(asCandles(null), 'BREAKOUT', 'WIN', 50);
       }).toThrow('Candles1m array cannot be null or undefined');
     });
 
@@ -154,7 +159,10 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
         error: jest.fn(),
         debug: jest.fn(),
       };
-      const badService = new MLFeatureExtractorService(badLogger as any, errorHandler);
+      const badService = new MLFeatureExtractorService(
+        asLogger(badLogger as LoggerLike),
+        errorHandler
+      );
       const candles = createCandles(10);
 
       expect(() => {
@@ -171,7 +179,10 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
         }),
         debug: jest.fn(),
       };
-      const badService = new MLFeatureExtractorService(badLogger as any, errorHandler);
+      const badService = new MLFeatureExtractorService(
+        asLogger(badLogger as LoggerLike),
+        errorHandler
+      );
       const candles = createCandles(10);
 
       expect(() => {
@@ -241,7 +252,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = new MLFeatureExtractorService(mockLogger as any);
+      const basicService = new MLFeatureExtractorService(mockLogger);
       const candles = createCandles(10);
 
       expect(() => {
@@ -268,10 +279,10 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = new MLFeatureExtractorService(mockLogger as any);
+      const basicService = new MLFeatureExtractorService(mockLogger);
 
       expect(() => {
-        basicService.extractFeatures(null as any, 'BREAKOUT', 'WIN');
+        basicService.extractFeatures(asCandles(null), 'BREAKOUT', 'WIN');
       }).toThrow();
     });
   });

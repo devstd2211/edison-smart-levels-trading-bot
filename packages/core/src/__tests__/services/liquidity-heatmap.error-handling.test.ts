@@ -27,28 +27,31 @@ import { LoggerService } from '../../types/legacy';
 // TEST HELPERS
 // ============================================================================
 
+type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
+const asConfig = (value: unknown): LiquidityHeatmapConfig =>
+  value as LiquidityHeatmapConfig;
+const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
+const asDirection = (value: unknown): 'buy' | 'sell' => value as 'buy' | 'sell';
+
 /**
  * Create mock logger for testing
  */
 function createMockLogger(methodToFail?: string): LoggerService {
-  return {
-    minLevel: 'debug',
-    logDir: '/tmp',
-    logToFile: false,
-    logs: [],
-    info: jest.fn((_msg: string, _meta?: any) => {
+  const logger: LoggerLike = {
+    info: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'info') throw new Error('Logger.info failed');
     }),
-    warn: jest.fn((_msg: string, _meta?: any) => {
+    warn: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'warn') throw new Error('Logger.warn failed');
     }),
-    debug: jest.fn((_msg: string, _meta?: any) => {
+    debug: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'debug') throw new Error('Logger.debug failed');
     }),
-    error: jest.fn((_msg: string, _meta?: any) => {
+    error: jest.fn((_msg: string, _meta?: unknown) => {
       if (methodToFail === 'error') throw new Error('Logger.error failed');
     }),
-  } as any;
+  };
+  return logger as unknown as LoggerService;
 }
 
 /**
@@ -160,7 +163,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     const logger = createMockLogger();
 
     expect(() => {
-      new LiquidityHeatmapService(null as any, undefined, logger);
+      new LiquidityHeatmapService(asConfig(null), undefined, logger);
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
@@ -168,7 +171,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     const logger = createMockLogger();
 
     expect(() => {
-      new LiquidityHeatmapService(undefined as any, undefined, logger);
+      new LiquidityHeatmapService(asConfig(undefined), undefined, logger);
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
@@ -214,7 +217,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
     const service = new LiquidityHeatmapService(config, undefined, logger);
 
     await expect(
-      service.buildLiquidityHeatmap(null as any),
+      service.buildLiquidityHeatmap(asOrderbook(null)),
     ).rejects.toThrow('Orderbook cannot be null or undefined');
   });
 
@@ -224,7 +227,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
     const service = new LiquidityHeatmapService(config, undefined, logger);
 
     await expect(
-      service.buildLiquidityHeatmap(undefined as any),
+      service.buildLiquidityHeatmap(asOrderbook(undefined)),
     ).rejects.toThrow('Orderbook cannot be null or undefined');
   });
 
@@ -234,7 +237,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
     const service = new LiquidityHeatmapService(config, undefined, logger);
 
     const invalidOrderbook = createMockOrderbook();
-    invalidOrderbook.symbol = null as any;
+    invalidOrderbook.symbol = null as unknown as string;
 
     await expect(
       service.buildLiquidityHeatmap(invalidOrderbook),
@@ -260,7 +263,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
     const service = new LiquidityHeatmapService(config, undefined, logger);
 
     const invalidOrderbook = createMockOrderbook();
-    invalidOrderbook.bids = null as any;
+    invalidOrderbook.bids = null as unknown as OrderbookLevel[];
 
     await expect(
       service.buildLiquidityHeatmap(invalidOrderbook),
@@ -291,7 +294,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
     const orderbook = createMockOrderbook();
 
     await expect(
-      service.calculateSlippageForSize(orderbook, 1.0, 'invalid' as any),
+      service.calculateSlippageForSize(orderbook, 1.0, asDirection('invalid')),
     ).rejects.toThrow("Invalid direction");
   });
 

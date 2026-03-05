@@ -26,6 +26,7 @@ import {
   SignalDirection,
   ExitType,
   Config,
+  SessionTradeRecord,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 
@@ -69,7 +70,28 @@ function createConfig(): Config {
 /**
  * Helper to create a minimal valid session trade record
  */
-function createSessionTrade(tradeId: string) {
+function createSessionTrade(tradeId: string): SessionTradeRecord {
+  const entryCondition = {
+    signal: {
+      type: SignalType.LEVEL_BASED,
+      direction: SignalDirection.LONG,
+      price: 50000,
+      confidence: 75,
+      stopLoss: 49000,
+      takeProfits: [{ level: 1, percent: 0.5 }],
+      reason: 'test signal',
+      timestamp: Date.now(),
+    },
+    indicators: {
+      entry: {},
+      primary: {},
+      trend1: {},
+    },
+    patterns: {},
+    levels: null,
+    context: {},
+  } as unknown as SessionTradeRecord['entryCondition'];
+
   return {
     tradeId,
     timestamp: new Date().toISOString(),
@@ -82,26 +104,7 @@ function createSessionTrade(tradeId: string) {
     exitType: ExitType.TAKE_PROFIT_1, // Default exit type for test records
     tpHitLevels: [],
     holdingTimeMs: 0,
-    entryCondition: {
-      signal: {
-        type: SignalType.LEVEL_BASED,
-        direction: SignalDirection.LONG,
-        price: 50000,
-        confidence: 75,
-        stopLoss: 49000,
-        takeProfits: [{ level: 1, percent: 0.5 }],
-        reason: 'test signal',
-        timestamp: Date.now(),
-      },
-      indicators: {
-        entry: {} as any,
-        primary: {} as any,
-        trend1: {} as any,
-      },
-      patterns: {} as any,
-      levels: null,
-      context: {} as any,
-    },
+    entryCondition,
     stopLoss: {
       initial: 49000,
       final: 49000,
@@ -273,8 +276,11 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
         fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(SessionRecordValidationError);
-        const tradingError = error as any; // Use any to access metadata
-        expect(tradingError.metadata.context.tradeId).toBe('my-trade');
+        const tradingError = error as SessionRecordValidationError;
+        const context = tradingError.metadata.context as
+          | { tradeId?: string }
+          | undefined;
+        expect(context?.tradeId).toBe('my-trade');
       }
     });
 

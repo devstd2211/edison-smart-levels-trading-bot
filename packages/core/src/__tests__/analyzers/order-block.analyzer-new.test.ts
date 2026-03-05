@@ -3,6 +3,9 @@ import type { Candle } from '../../types/core';
 import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { AnalyzerType } from '../../types/analyzer';
 
+type CandlesInput = Parameters<OrderBlockAnalyzerNew['analyze']>[0];
+const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
+
 function createConfig(): BreakoutAnalyzerConfigNew {
   return { enabled: true, weight: 0.75, priority: 7 };
 }
@@ -44,7 +47,7 @@ describe('OrderBlockAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null candles', () => {
     const analyzer = new OrderBlockAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(asCandles(null))).toThrow();
   });
 });
 

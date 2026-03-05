@@ -10,7 +10,7 @@ import {
   MTFSnapshot,
 } from '../../services/mtf-snapshot-gate.service';
 import { LoggerService } from '../../services/logger.service';
-import { Signal, SignalDirection } from '../../types/legacy';
+import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 
 // Mock logger
@@ -20,7 +20,7 @@ const mockLogger: LoggerService = {
   error: jest.fn(),
   debug: jest.fn(),
   setContext: jest.fn(),
-} as any;
+} as unknown as LoggerService;
 
 /**
  * Helper: Create realistic candles for a market pattern
@@ -178,7 +178,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['HH_HL pattern', 'Price above 50 EMA', 'RSI > 60'],
         restrictedDirections: [SignalDirection.SHORT],
-      } as any, signal, lastCandle);
+      } as unknown as TrendAnalysis, signal, lastCandle);
 
       expect(snapshot).toBeDefined();
       expect(snapshot.htfBias).toBe(TrendBias.BULLISH);
@@ -213,7 +213,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['HH_HL', 'Uptrend'],
         restrictedDirections: [],
-      } as any, signal, lastCandle);
+      } as unknown as TrendAnalysis, signal, lastCandle);
 
       // But market reversed to downtrend (4h flipped)
       const result = gate.validateSnapshot(TrendBias.BEARISH);
@@ -254,7 +254,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['LH_LL pattern', 'Price below 50 EMA', 'RSI < 40'],
         restrictedDirections: [SignalDirection.LONG],
-      } as any, signal, lastCandle);
+      } as unknown as TrendAnalysis, signal, lastCandle);
 
       expect(snapshot).toBeDefined();
 
@@ -285,7 +285,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['LH_LL', 'Downtrend'],
         restrictedDirections: [],
-      } as any, signal, lastCandle);
+      } as unknown as TrendAnalysis, signal, lastCandle);
 
       // Market reversed (4h flipped to bullish)
       const result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -318,7 +318,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['Price in range 9950-10050', 'No clear direction'],
         restrictedDirections: [],
-      } as any, longSignal, lastCandle);
+      } as unknown as TrendAnalysis, longSignal, lastCandle);
 
       let result = gate.validateSnapshot(TrendBias.NEUTRAL);
       expect(result.valid).toBe(true);
@@ -341,7 +341,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['Price in range 9950-10050'],
         restrictedDirections: [],
-      } as any, shortSignal, lastCandle);
+      } as unknown as TrendAnalysis, shortSignal, lastCandle);
 
       result = gate.validateSnapshot(TrendBias.NEUTRAL);
       expect(result.valid).toBe(true);
@@ -372,7 +372,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['V-shape forming', 'Support holding'],
         restrictedDirections: [],
-      } as any, signal, lastCandle);
+      } as unknown as TrendAnalysis, signal, lastCandle);
 
       // If HTF flips to BULLISH by ENTRY time, entry should be allowed
       const result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -409,7 +409,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['H&S bottoming pattern', 'Support confirmed'],
         restrictedDirections: [],
-      } as any, signal, lastCandle);
+      } as unknown as TrendAnalysis, signal, lastCandle);
 
       // By ENTRY: HTF flipped to BULLISH
       const result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -441,7 +441,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle, 10000, {
+      } as unknown as TrendAnalysis, signal, candle, 10000, {
         maxRiskPercent: 2,
         maxPositionSize: 5000,
         minSignals: 3,
@@ -477,7 +477,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['Uptrend 1'],
         restrictedDirections: [],
-      } as any, signal1, candles1[candles1.length - 1]);
+      } as unknown as TrendAnalysis, signal1, candles1[candles1.length - 1]);
 
       // Validate and clear
       expect(gate.validateSnapshot(TrendBias.BULLISH).valid).toBe(true);
@@ -501,7 +501,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['Uptrend 2'],
         restrictedDirections: [],
-      } as any, signal2, candles2[candles2.length - 1]);
+      } as unknown as TrendAnalysis, signal2, candles2[candles2.length - 1]);
 
       expect(gate.validateSnapshot(TrendBias.BULLISH).valid).toBe(true);
     });
@@ -527,7 +527,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       // T1: Validate BULLISH (should pass)
       let result = gate.validateSnapshot(TrendBias.BULLISH);
@@ -565,7 +565,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: ['HH_HL'],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Created snapshot')
@@ -592,7 +592,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         timeframe: '4h',
         reasoning: [],
         restrictedDirections: [],
-      } as any, signal, candle);
+      } as unknown as TrendAnalysis, signal, candle);
 
       jest.clearAllMocks();
 
@@ -612,3 +612,4 @@ describe('MTFSnapshotGate - Functional Tests', () => {
     });
   });
 });
+

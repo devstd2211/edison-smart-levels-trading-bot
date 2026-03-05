@@ -53,11 +53,36 @@ const createMockStrategy = () => ({
 describe('StrategyConfigMergerService - Error Handling', () => {
   let service: StrategyConfigMergerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: any;
+  type MainConfigInput = Parameters<StrategyConfigMergerService['mergeConfigs']>[0];
+  type ConfigValueMainInput = Parameters<StrategyConfigMergerService['getConfigValue']>[0];
+  type StrategyInput = Parameters<StrategyConfigMergerService['mergeConfigs']>[1];
+  type PathInput = Parameters<StrategyConfigMergerService['getConfigValue']>[2];
+  const asMainConfig = (value: unknown): MainConfigInput => value as MainConfigInput;
+  const asConfigValueMain = (value: unknown): ConfigValueMainInput => value as ConfigValueMainInput;
+  const asStrategy = (value: unknown): StrategyInput => value as StrategyInput;
+  const asPath = (value: unknown): PathInput => value as PathInput;
+  const asErrorLogger = (value: ReturnType<typeof createMockLogger>) =>
+    value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
+  const viewMerged = (value: ReturnType<StrategyConfigMergerService['mergeConfigs']>) =>
+    value as unknown as {
+      version: number;
+      meta: unknown;
+      exchange: unknown;
+      indicators: { ema: { fast: number; slow: number; enabled?: boolean }; rsi: { period: number } };
+      riskManagement: { stopLoss: { percent?: number; multiplier?: number } };
+    };
+  const viewMain = (value: MainConfigInput) =>
+    value as unknown as {
+      version: number;
+      meta: unknown;
+      exchange: unknown;
+      indicators: { ema: { enabled?: boolean } };
+    };
+  let mockLogger: ReturnType<typeof createMockLogger>;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
-    errorHandler = new ErrorHandler(mockLogger);
+    errorHandler = new ErrorHandler(asErrorLogger(mockLogger));
     service = new StrategyConfigMergerService(mockLogger, errorHandler);
   });
 
@@ -65,31 +90,35 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   describe('THROW: Input Validation', () => {
     it('should throw when mainConfig is null', () => {
       expect(() => {
-        service.mergeConfigs(null as any, createMockStrategy() as any as any);
+        service.mergeConfigs(asMainConfig(null), asStrategy(createMockStrategy()));
       }).toThrow('mainConfig must be a non-null object');
     });
 
     it('should throw when strategy is null', () => {
       expect(() => {
-        service.mergeConfigs(createMockConfig() as any as any, null as any);
+        service.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(null));
       }).toThrow('strategy must be a non-null object');
     });
 
     it('should throw when mainConfig is undefined', () => {
       expect(() => {
-        service.mergeConfigs(undefined as any, createMockStrategy() as any as any);
+        service.mergeConfigs(asMainConfig(undefined), asStrategy(createMockStrategy()));
       }).toThrow('mainConfig must be a non-null object');
     });
 
     it('should throw when strategy is undefined', () => {
       expect(() => {
-        service.mergeConfigs(createMockConfig() as any as any, undefined as any);
+        service.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(undefined));
       }).toThrow('strategy must be a non-null object');
     });
 
     it('should handle null path gracefully', () => {
       // When path is null, the method should return undefined (GRACEFUL_DEGRADE)
-      const result = service.getConfigValue(createMockConfig() as any, createMockStrategy() as any, null as any);
+      const result = service.getConfigValue(
+        asConfigValueMain(createMockConfig()),
+        asStrategy(createMockStrategy()),
+        asPath(null),
+      );
       expect(result).toBeUndefined();
     });
   });
@@ -97,22 +126,22 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   // ===== GRACEFUL_DEGRADE: Merge Failures =====
   describe('GRACEFUL_DEGRADE: Merge Failures', () => {
     it('should handle merge with null riskManagement', () => {
-      const mainConfig = createMockConfig() as any;
-      const strategy = { ...createMockStrategy() as any, riskManagement: null };
+      const mainConfig = asMainConfig(createMockConfig());
+      const strategy = { ...asStrategy(createMockStrategy()), riskManagement: null };
 
-      const result = service.mergeConfigs(mainConfig as any, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
       // Should still return a valid config
-      expect((result as any).version).toBe(mainConfig.version);
-      expect((result as any).meta).toBe(mainConfig.meta);
-      expect((result as any).exchange).toBe(mainConfig.exchange);
+      expect(viewMerged(result).version).toBe(viewMain(mainConfig).version);
+      expect(viewMerged(result).meta).toBe(viewMain(mainConfig).meta);
+      expect(viewMerged(result).exchange).toBe(viewMain(mainConfig).exchange);
       expect(result).toBeDefined();
     });
 
     it('should return undefined on getConfigValue failure with invalid path', () => {
       const result = service.getConfigValue(
-        createMockConfig() as any,
-        createMockStrategy() as any,
+        asConfigValueMain(createMockConfig()),
+        asStrategy(createMockStrategy()),
         'invalid.deeply.nested.path.that.does.not.exist'
       );
 
@@ -120,13 +149,13 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should return empty change report on getChangeReport failure', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
-        ...createMockStrategy() as any,
+        ...asStrategy(createMockStrategy()),
         metadata: null,
       };
 
-      const result = service.getChangeReport(mainConfig, strategy as any);
+      const result = service.getChangeReport(mainConfig, asStrategy(strategy));
 
       expect(result.changesCount).toBe(0);
       expect(result.changes).toEqual([]);
@@ -134,28 +163,28 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should continue with partial merge on nested failure', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
-        ...createMockStrategy() as any,
+        ...asStrategy(createMockStrategy()),
         indicators: { ema: { fast: 15, slow: 30 } },
       };
 
-      const result = service.mergeConfigs(mainConfig as any, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
-      expect((result as any).indicators.ema.fast).toBe(15);
-      expect((result as any).indicators.ema.slow).toBe(30);
+      expect(viewMerged(result).indicators.ema.fast).toBe(15);
+      expect(viewMerged(result).indicators.ema.slow).toBe(30);
     });
 
     it('should handle merge with missing optional fields', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
         metadata: { name: 'simple' },
       };
 
-      const result = service.mergeConfigs(mainConfig, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
       expect(result).toBeDefined();
-      expect((result as any).version).toBe(mainConfig.version);
+      expect(viewMerged(result).version).toBe(viewMain(mainConfig).version);
     });
   });
 
@@ -171,7 +200,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       const serviceWithBadLogger = new StrategyConfigMergerService(loggerWithError, errorHandler);
 
       expect(() => {
-        serviceWithBadLogger.mergeConfigs(createMockConfig() as any, createMockStrategy() as any);
+        serviceWithBadLogger.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(createMockStrategy()));
       }).not.toThrow();
     });
 
@@ -185,8 +214,8 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       const serviceWithBadLogger = new StrategyConfigMergerService(loggerWithError, errorHandler);
 
       const result = serviceWithBadLogger.getConfigValue(
-        createMockConfig() as any,
-        createMockStrategy() as any,
+        asConfigValueMain(createMockConfig()),
+        asStrategy(createMockStrategy()),
         'invalid.path'
       );
 
@@ -196,7 +225,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     it('should handle missing logger gracefully', () => {
       const serviceNoLogger = new StrategyConfigMergerService(undefined, errorHandler);
 
-      const result = serviceNoLogger.mergeConfigs(createMockConfig() as any, createMockStrategy() as any);
+      const result = serviceNoLogger.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(createMockStrategy()));
 
       expect(result).toBeDefined();
     });
@@ -205,8 +234,8 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       const serviceNoHandler = new StrategyConfigMergerService(mockLogger);
 
       const result = serviceNoHandler.getConfigValue(
-        createMockConfig() as any,
-        createMockStrategy() as any,
+        asConfigValueMain(createMockConfig()),
+        asStrategy(createMockStrategy()),
         'invalid.path'
       );
 
@@ -217,58 +246,58 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   // ===== Integration Tests =====
   describe('Integration: Config Merging', () => {
     it('should merge indicators correctly', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
-        ...createMockStrategy() as any,
+        ...asStrategy(createMockStrategy()),
         indicators: {
           rsi: { period: 20 },
         },
       };
 
-      const result = service.mergeConfigs(mainConfig, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
-      expect((result as any).indicators.rsi.period).toBe(20);
-      expect((result as any).indicators.ema.enabled).toBe(mainConfig.indicators.ema.enabled);
+      expect(viewMerged(result).indicators.rsi.period).toBe(20);
+      expect(viewMerged(result).indicators.ema.enabled).toBe(viewMain(mainConfig).indicators.ema.enabled);
     });
 
     it('should merge risk management overrides', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
-        ...createMockStrategy() as any,
+        ...asStrategy(createMockStrategy()),
         riskManagement: {
           stopLoss: { type: 'PERCENT', percent: 3 },
         },
       };
 
-      const result = service.mergeConfigs(mainConfig, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
-      expect((result as any).riskManagement.stopLoss.percent).toBe(3);
+      expect(viewMerged(result).riskManagement.stopLoss.percent).toBe(3);
     });
 
     it('should get nested config value with overrides', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
-        ...createMockStrategy() as any,
+        ...asStrategy(createMockStrategy()),
         indicators: {
           ema: { fast: 15 },
         },
       };
 
-      const result = service.getConfigValue(mainConfig, strategy as any, 'indicators.ema.fast');
+      const result = service.getConfigValue(asConfigValueMain(mainConfig), asStrategy(strategy), 'indicators.ema.fast');
 
       expect(result).toBe(15);
     });
 
     it('should generate change report correctly', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
-        ...createMockStrategy() as any,
+        ...asStrategy(createMockStrategy()),
         indicators: {
           ema: { fast: 15 },
         },
       };
 
-      const report = service.getChangeReport(mainConfig, strategy as any);
+      const report = service.getChangeReport(mainConfig, asStrategy(strategy));
 
       expect(report.strategyName).toBe('test-strategy');
       expect(report.changesCount).toBeGreaterThan(0);
@@ -280,7 +309,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should handle multiple levels of nested overrides', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
         metadata: { name: 'complex-strategy' },
         indicators: {
@@ -293,11 +322,11 @@ describe('StrategyConfigMergerService - Error Handling', () => {
         },
       };
 
-      const result = service.mergeConfigs(mainConfig, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
-      expect((result as any).indicators.ema.fast).toBe(10);
-      expect((result as any).indicators.rsi.period).toBe(16);
-      expect((result as any).riskManagement.stopLoss.multiplier).toBe(3);
+      expect(viewMerged(result).indicators.ema.fast).toBe(10);
+      expect(viewMerged(result).indicators.rsi.period).toBe(16);
+      expect(viewMerged(result).riskManagement.stopLoss.multiplier).toBe(3);
     });
   });
 
@@ -307,8 +336,8 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       const serviceNoHandler = new StrategyConfigMergerService(mockLogger);
 
       const result = serviceNoHandler.mergeConfigs(
-        createMockConfig() as any,
-        createMockStrategy() as any
+        asMainConfig(createMockConfig()),
+        asStrategy(createMockStrategy())
       );
 
       expect(result).toBeDefined();
@@ -316,8 +345,8 @@ describe('StrategyConfigMergerService - Error Handling', () => {
 
     it('should work without logger', () => {
       const result = service.mergeConfigs(
-        createMockConfig() as any,
-        createMockStrategy() as any
+        asMainConfig(createMockConfig()),
+        asStrategy(createMockStrategy())
       );
 
       expect(result).toBeDefined();
@@ -327,7 +356,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       const serviceNoHandler = new StrategyConfigMergerService();
 
       expect(() => {
-        serviceNoHandler.mergeConfigs(null as any, createMockStrategy() as any);
+        serviceNoHandler.mergeConfigs(asMainConfig(null), asStrategy(createMockStrategy()));
       }).toThrow();
     });
   });
@@ -335,12 +364,12 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   // ===== Edge Cases =====
   describe('Edge Cases', () => {
     it('should handle empty strategy overrides', () => {
-      const mainConfig = createMockConfig() as any;
+      const mainConfig = asMainConfig(createMockConfig());
       const strategy = {
         metadata: { name: 'empty-strategy' },
       };
 
-      const result = service.mergeConfigs(mainConfig, strategy as any);
+      const result = service.mergeConfigs(mainConfig, asStrategy(strategy));
 
       expect(result).toEqual(mainConfig);
     });
@@ -351,16 +380,16 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       };
 
       expect(() => {
-        service.getChangeReport(createMockConfig() as any, strategy as any);
+        service.getChangeReport(asMainConfig(createMockConfig()), asStrategy(strategy));
       }).not.toThrow();
     });
 
     it('should handle deeply nested path lookups', () => {
-      const mainConfig = createMockConfig() as any;
-      const strategy = createMockStrategy() as any;
+      const mainConfig = asMainConfig(createMockConfig());
+      const strategy = asStrategy(createMockStrategy());
 
       const result = service.getConfigValue(
-        mainConfig,
+        asConfigValueMain(mainConfig),
         strategy,
         'indicators.ema.fast'
       );
@@ -370,8 +399,8 @@ describe('StrategyConfigMergerService - Error Handling', () => {
 
     it('should return undefined for non-existent paths without throwing', () => {
       const result = service.getConfigValue(
-        createMockConfig() as any,
-        createMockStrategy() as any,
+        asConfigValueMain(createMockConfig()),
+        asStrategy(createMockStrategy()),
         'nonexistent.deeply.nested.path'
       );
 
@@ -379,3 +408,4 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
   });
 });
+
