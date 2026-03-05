@@ -58,9 +58,13 @@ const createMockTakeProfitManager = () => ({
   getTpLevelsHit: jest.fn().mockReturnValue([1, 2]),
 });
 
-const createMockPositionManager = (takeProfitManager: any) => ({
+const createMockPositionManager = (
+  takeProfitManager: ReturnType<typeof createMockTakeProfitManager>,
+) => ({
   getTakeProfitManager: jest.fn().mockReturnValue(takeProfitManager),
 });
+
+type PositionExitingDeps = ConstructorParameters<typeof PositionExitingService>;
 
 // Helper to create a test position
 const createTestPosition = (overrides: Partial<Position> = {}): Position => {
@@ -132,17 +136,17 @@ const createFullConfig = (): Config => ({
   riskManagement: createRiskConfig(),
   strategies: [],
   bot: { enabled: true },
-} as any);
+} as unknown as Config);
 
 describe('PositionExitingService', () => {
   let service: PositionExitingService;
-  let mockBybit: any;
-  let mockTelegram: any;
-  let mockLogger: any;
-  let mockJournal: any;
-  let mockSessionStats: any;
-  let mockTPManager: any;
-  let mockPositionManager: any;
+  let mockBybit: ReturnType<typeof createMockBybitService>;
+  let mockTelegram: ReturnType<typeof createMockTelegramService>;
+  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockJournal: ReturnType<typeof createMockJournalService>;
+  let mockSessionStats: ReturnType<typeof createMockSessionStatsService>;
+  let mockTPManager: ReturnType<typeof createMockTakeProfitManager>;
+  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
 
   beforeEach(() => {
     mockBybit = createMockBybitService();
@@ -154,15 +158,15 @@ describe('PositionExitingService', () => {
     mockPositionManager = createMockPositionManager(mockTPManager);
 
     service = new PositionExitingService(
-      mockBybit,
-      mockTelegram,
-      mockLogger,
-      mockJournal,
+      mockBybit as unknown as PositionExitingDeps[0],
+      mockTelegram as unknown as PositionExitingDeps[1],
+      mockLogger as unknown as PositionExitingDeps[2],
+      mockJournal as unknown as PositionExitingDeps[3],
       createTradingConfig(),
       createRiskConfig(),
       createFullConfig(),
-      mockSessionStats,
-      mockPositionManager,
+      mockSessionStats as unknown as PositionExitingDeps[7],
+      mockPositionManager as unknown as PositionExitingDeps[8],
     );
   });
 
@@ -172,7 +176,7 @@ describe('PositionExitingService', () => {
 
   describe('onTakeProfitHit', () => {
     it('should ignore null position', async () => {
-      await service.onTakeProfitHit(null as any, 1, 110);
+      await service.onTakeProfitHit(null as unknown as Position, 1, 110);
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('null position'),
       );
@@ -643,15 +647,15 @@ describe('PositionExitingService', () => {
       riskConfig.smartTP3 = { ...riskConfig.smartTP3!, enabled: false };
 
       service = new PositionExitingService(
-        mockBybit,
-        mockTelegram,
-        mockLogger,
-        mockJournal,
+        mockBybit as unknown as PositionExitingDeps[0],
+        mockTelegram as unknown as PositionExitingDeps[1],
+        mockLogger as unknown as PositionExitingDeps[2],
+        mockJournal as unknown as PositionExitingDeps[3],
         createTradingConfig(),
         riskConfig,
         createFullConfig(),
-        mockSessionStats,
-        mockPositionManager,
+        mockSessionStats as unknown as PositionExitingDeps[7],
+        mockPositionManager as unknown as PositionExitingDeps[8],
       );
 
       await service.updateSmartTP3(position, 140);

@@ -26,6 +26,15 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
   let processingPool: StrategyProcessingPoolService;
   let logger: LoggerService;
 
+  const createTestCandle = (): StrategyProcessingJob['candle'] => ({
+    timestamp: Date.now(),
+    open: 100,
+    high: 105,
+    low: 95,
+    close: 102,
+    volume: 1000,
+  });
+
   beforeEach(async () => {
     logger = {
       info: jest.fn(),
@@ -38,7 +47,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       writeToConsole: jest.fn(),
       writeToFile: jest.fn(),
       flush: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
 
     processingPool = new StrategyProcessingPoolService(
       {
@@ -120,7 +129,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -136,7 +145,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const jobs = Array(5).fill(null).map((_, i) => ({
         jobId: `job-${i}`,
         strategyId: `strategy-${i}`,
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       }));
@@ -151,7 +160,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'test-job',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -165,7 +174,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const lowPriorityJob: StrategyProcessingJob = {
         jobId: 'low-priority',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.LOW,
       };
@@ -173,7 +182,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const highPriorityJob: StrategyProcessingJob = {
         jobId: 'high-priority',
         strategyId: 'strategy-2',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.HIGH,
       };
@@ -192,7 +201,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -209,7 +218,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -221,7 +230,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job1: StrategyProcessingJob = {
         jobId: 'job-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -249,7 +258,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-proc-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -265,7 +274,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-time-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -285,7 +294,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-timeout-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
         timeoutMs: 50,
@@ -301,7 +310,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-completed-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -317,7 +326,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-stats-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -334,7 +343,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const jobs = Array(3).fill(null).map((_, i) => ({
         jobId: `job-avg-${i}`,
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       }));
@@ -351,7 +360,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-minmax-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -381,7 +390,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const jobs = Array(4).fill(null).map((_, i) => ({
         jobId: `job-concurrent-${i}`,
         strategyId: `strategy-${i}`,
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       }));
@@ -399,7 +408,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job1: StrategyProcessingJob = {
         jobId: 'job-iso-1',
         strategyId: 'strategy-A',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -407,7 +416,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job2: StrategyProcessingJob = {
         jobId: 'job-iso-2',
         strategyId: 'strategy-B',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -434,7 +443,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const jobs = Array(10).fill(null).map((_, i) => ({
         jobId: `job-overflow-${i}`,
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       }));
@@ -466,7 +475,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const lowJob: StrategyProcessingJob = {
         jobId: 'low',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.LOW,
       };
@@ -475,7 +484,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const highJob: StrategyProcessingJob = {
         jobId: 'high',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.HIGH,
       };
@@ -492,7 +501,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const jobs = Array(8).fill(null).map((_, i) => ({
         jobId: `job-load-${i}`,
         strategyId: `strategy-${i}`,
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       }));
@@ -508,7 +517,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const jobs = Array(5).fill(null).map((_, i) => ({
         jobId: `job-wait-${i}`,
         strategyId: `strategy-${i}`,
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       }));
@@ -527,21 +536,21 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
         {
           jobId: 'batch-1',
           strategyId: 'strategy-1',
-          candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+          candle: createTestCandle(),
           timestamp: Date.now(),
           priority: ProcessingPriority.NORMAL,
         },
         {
           jobId: 'batch-2',
           strategyId: 'strategy-2',
-          candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+          candle: createTestCandle(),
           timestamp: Date.now(),
           priority: ProcessingPriority.HIGH,
         },
         {
           jobId: 'batch-3',
           strategyId: 'strategy-3',
-          candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+          candle: createTestCandle(),
           timestamp: Date.now(),
           priority: ProcessingPriority.LOW,
         },
@@ -567,7 +576,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-error-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -586,7 +595,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-fail-record',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -606,7 +615,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-stack-1',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -631,7 +640,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job1: StrategyProcessingJob = {
         jobId: 'job-iso-err-1',
         strategyId: 'strategy-fail',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -639,7 +648,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job2: StrategyProcessingJob = {
         jobId: 'job-iso-err-2',
         strategyId: 'strategy-ok',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -662,7 +671,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-timeout-test',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
         timeoutMs: 100,
@@ -699,7 +708,7 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
       const job: StrategyProcessingJob = {
         jobId: 'job-stats-metric',
         strategyId: 'strategy-1',
-        candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+        candle: createTestCandle(),
         timestamp: Date.now(),
         priority: ProcessingPriority.NORMAL,
       };
@@ -733,14 +742,14 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
         {
           jobId: 'job-sr-1',
           strategyId: 'strategy-1',
-          candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+          candle: createTestCandle(),
           timestamp: Date.now(),
           priority: ProcessingPriority.NORMAL,
         },
         {
           jobId: 'job-sr-fail',
           strategyId: 'strategy-2',
-          candle: { open: 100, high: 105, low: 95, close: 102, volume: 1000 } as any,
+          candle: createTestCandle(),
           timestamp: Date.now(),
           priority: ProcessingPriority.NORMAL,
         },
@@ -757,4 +766,5 @@ describe('PHASE 12: Parallel Strategy Processing', () => {
     });
   });
 });
+
 

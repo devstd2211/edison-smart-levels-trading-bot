@@ -24,7 +24,7 @@ describe('Phase 7.6: Event Stream Replay', () => {
     for (let i = 0; i < count; i++) {
       const entryTime = currentTime;
       const entryPrice = price;
-      const direction = i % 2 === 0 ? 'LONG' : 'SHORT';
+      const direction: BacktestTrade['direction'] = i % 2 === 0 ? 'LONG' : 'SHORT';
 
       // Random P&L
       const pnl = (Math.random() - 0.5) * 200;
@@ -34,7 +34,7 @@ describe('Phase 7.6: Event Stream Replay', () => {
         entryTime,
         entryPrice,
         entrySignal: 'TEST_SIGNAL',
-        direction: direction as any,
+        direction,
         size: 100,
         stopLoss: direction === 'LONG' ? entryPrice - 2 : entryPrice + 2,
         takeProfits: [

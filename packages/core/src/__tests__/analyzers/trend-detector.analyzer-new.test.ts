@@ -25,9 +25,14 @@ describe('TrendDetectorAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new TrendDetectorAnalyzerNew(config as any)).toThrow();
+    const configWithoutEnabled: Omit<TrendDetectorConfigNew, 'enabled'> = {
+      weight: 0.8,
+      priority: 5,
+      minEmaGapPercent: 0.1,
+      minConfidence: 0.1,
+      maxConfidence: 0.95,
+    };
+    expect(() => new TrendDetectorAnalyzerNew(configWithoutEnabled as unknown as TrendDetectorConfigNew)).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -48,7 +53,7 @@ describe('TrendDetectorAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new TrendDetectorAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -59,9 +64,10 @@ describe('TrendDetectorAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candle', () => {
     const analyzer = new TrendDetectorAnalyzerNew(createConfig());
-    const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i));
-    (candles[10] as any).high = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow();
+    type CandleWithOptionalHigh = Omit<Candle, 'high'> & { high?: number };
+    const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i)) as CandleWithOptionalHigh[];
+    candles[10].high = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow();
   });
 });
 

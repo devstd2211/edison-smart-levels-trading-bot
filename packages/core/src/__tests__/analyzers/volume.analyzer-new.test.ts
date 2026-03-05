@@ -7,6 +7,15 @@ import type { Candle } from '../../types/core';
 import type { VolumeAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type VolumeConfigOverrides = VolumeAnalyzerConfigNew & {
+  minCandlesForVolume?: number;
+  minConfidence?: number;
+  highStrengthThreshold?: number;
+  lowStrengthThreshold?: number;
+  maxConfidence?: number;
+  indicatorPeriod?: number;
+};
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -43,9 +52,14 @@ describe('VolumeAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).enabled;
-    expect(() => new VolumeAnalyzerNew(config as any)).toThrow('[VOLUME_ANALYZER] Missing or invalid: enabled');
+    const configWithoutEnabled: Omit<VolumeConfigOverrides, 'enabled'> = {
+      weight: 0.7,
+      priority: 4,
+      neutralConfidence: 0.3,
+    };
+    expect(() => new VolumeAnalyzerNew(configWithoutEnabled as unknown as VolumeConfigOverrides)).toThrow(
+      '[VOLUME_ANALYZER] Missing or invalid: enabled',
+    );
   });
 
   test('should throw on invalid weight', () => {
@@ -75,7 +89,7 @@ describe('VolumeAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles input', () => {
     const analyzer = new VolumeAnalyzerNew(createDefaultConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow('[VOLUME_ANALYZER] Invalid candles input');
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow('[VOLUME_ANALYZER] Invalid candles input');
   });
 
   test('should throw on insufficient candles', () => {
@@ -86,9 +100,10 @@ describe('VolumeAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on candle with missing volume', () => {
     const analyzer = new VolumeAnalyzerNew(createDefaultConfig());
-    const candles = Array.from({ length: 20 }, () => createCandle(1000));
-    (candles[10] as any).volume = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow('[VOLUME_ANALYZER] Invalid candle');
+    type CandleWithOptionalVolume = Omit<Candle, 'volume'> & { volume?: number };
+    const candles = Array.from({ length: 20 }, () => createCandle(1000)) as CandleWithOptionalVolume[];
+    candles[10].volume = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow('[VOLUME_ANALYZER] Invalid candle');
   });
 });
 

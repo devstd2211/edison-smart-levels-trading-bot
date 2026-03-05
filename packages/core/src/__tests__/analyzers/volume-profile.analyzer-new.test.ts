@@ -24,9 +24,13 @@ describe('VolumeProfileAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new VolumeProfileAnalyzerNew(config as any)).toThrow();
+    const configWithoutEnabled: Omit<VolumeProfileAnalyzerConfigNew, 'enabled'> = {
+      weight: 0.75,
+      priority: 5,
+    };
+    expect(() =>
+      new VolumeProfileAnalyzerNew(configWithoutEnabled as unknown as VolumeProfileAnalyzerConfigNew),
+    ).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +51,7 @@ describe('VolumeProfileAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new VolumeProfileAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -58,9 +62,10 @@ describe('VolumeProfileAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candle', () => {
     const analyzer = new VolumeProfileAnalyzerNew(createConfig());
-    const candles = createCandlesWithVolume(Array.from({ length: 25 }, (_, i) => 100 + i));
-    (candles[10] as any).volume = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow();
+    type CandleWithOptionalVolume = Omit<Candle, 'volume'> & { volume?: number };
+    const candles = createCandlesWithVolume(Array.from({ length: 25 }, (_, i) => 100 + i)) as CandleWithOptionalVolume[];
+    candles[10].volume = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow();
   });
 });
 

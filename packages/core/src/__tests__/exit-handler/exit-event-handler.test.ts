@@ -9,6 +9,9 @@ import {
   ITPHitEvent,
   IPositionClosedEvent,
   ExitStrategyConfig,
+  ExitHandlerResult,
+  TPHitResult,
+  PositionClosedResult,
 } from '../../types/exit-strategy';
 import { Position } from '../../types/core';
 import { PositionSide } from '../../types/enums';
@@ -33,10 +36,6 @@ class MockLogger implements Partial<LoggerService> {
   warn = jest.fn();
   error = jest.fn();
   trace = jest.fn();
-  minLevel = 'debug' as any;
-  logDir = '';
-  logToFile = false;
-  logs = [] as any[];
 }
 
 // ============================================================================
@@ -87,6 +86,24 @@ function createTestConfig(): ExitStrategyConfig {
   };
 }
 
+function asLogger(logger: MockLogger): LoggerService {
+  return logger as unknown as LoggerService;
+}
+
+function asTpResult(result: ExitHandlerResult): TPHitResult {
+  if (!('action' in result)) {
+    throw new Error('Expected TP hit result');
+  }
+  return result;
+}
+
+function asPositionClosedResult(result: ExitHandlerResult): PositionClosedResult {
+  if (!('removed' in result)) {
+    throw new Error('Expected position closed result');
+  }
+  return result;
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -105,7 +122,7 @@ describe('ExitEventHandler', () => {
     logger = new MockLogger();
     config = createTestConfig();
     position = createTestPosition();
-    handler = new ExitEventHandler(exchange, positionManager, config, logger as any);
+    handler = new ExitEventHandler(exchange, positionManager, config, asLogger(logger));
   });
 
   // ==========================================================================
@@ -125,10 +142,11 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect(result.success).toBe(true);
-      expect((result as any).action).toBe('MOVE_SL_TO_BREAKEVEN');
-      expect((result as any).newSlPrice).toBe(100.1); // entry + 0.1%
+      expect(tpResult.success).toBe(true);
+      expect(tpResult.action).toBe('MOVE_SL_TO_BREAKEVEN');
+      expect(tpResult.newSlPrice).toBe(100.1); // entry + 0.1%
       expect(exchange.updateStopLoss).toHaveBeenCalledWith('BTCUSDT', 100.1);
     });
 
@@ -188,10 +206,11 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect(result.success).toBe(true);
-      expect((result as any).action).toBe('ACTIVATE_TRAILING');
-      expect((result as any).trailingDistance).toBeDefined();
+      expect(tpResult.success).toBe(true);
+      expect(tpResult.action).toBe('ACTIVATE_TRAILING');
+      expect(tpResult.trailingDistance).toBeDefined();
       expect(exchange.setTrailingStop).toHaveBeenCalledWith('BTCUSDT', expect.any(Number));
     });
 
@@ -231,10 +250,11 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect(result.success).toBe(true);
-      expect((result as any).action).toBe('CLOSE');
-      expect((result as any).reason).toContain('closing');
+      expect(tpResult.success).toBe(true);
+      expect(tpResult.action).toBe('CLOSE');
+      expect(tpResult.reason).toContain('closing');
     });
   });
 
@@ -255,9 +275,10 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect(result.success).toBe(false);
-      expect((result as any).reason).toContain('No config');
+      expect(tpResult.success).toBe(false);
+      expect(tpResult.reason).toContain('No config');
     });
   });
 
@@ -281,9 +302,10 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const closedResult = asPositionClosedResult(result);
 
-      expect(result.success).toBe(true);
-      expect((result as any).removed).toBe(true);
+      expect(closedResult.success).toBe(true);
+      expect(closedResult.removed).toBe(true);
       expect(positionManager.remove).toHaveBeenCalledWith('BTCUSDT');
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('POSITION CLOSED'),
@@ -308,10 +330,11 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const closedResult = asPositionClosedResult(result);
 
       // Should succeed even if cleanup fails
-      expect(result.success).toBe(true);
-      expect((result as any).removed).toBe(false);
+      expect(closedResult.success).toBe(true);
+      expect(closedResult.removed).toBe(false);
     });
 
     it('should handle different close reasons', async () => {
@@ -368,11 +391,12 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect(result.success).toBe(true);
-      expect((result as any).action).toBe('MOVE_SL_TO_BREAKEVEN');
+      expect(tpResult.success).toBe(true);
+      expect(tpResult.action).toBe('MOVE_SL_TO_BREAKEVEN');
       // For SHORT: BE should be below entry
-      expect((result as any).newSlPrice).toBe(99.9); // 100 - 0.1
+      expect(tpResult.newSlPrice).toBe(99.9); // 100 - 0.1
     });
   });
 
@@ -387,7 +411,7 @@ describe('ExitEventHandler', () => {
         trailing: { ...config.trailing!, enabled: false },
       };
 
-      handler = new ExitEventHandler(exchange, positionManager, configNoTrailing, logger as any);
+      handler = new ExitEventHandler(exchange, positionManager, configNoTrailing, asLogger(logger));
 
       const event: ITPHitEvent = {
         type: 'TP_HIT',
@@ -400,8 +424,9 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect((result as any).action).toBe('NONE');
+      expect(tpResult.action).toBe('NONE');
       expect(exchange.setTrailingStop).not.toHaveBeenCalled();
     });
 
@@ -419,7 +444,7 @@ describe('ExitEventHandler', () => {
         ],
       };
 
-      handler = new ExitEventHandler(exchange, positionManager, configCustom, logger as any);
+      handler = new ExitEventHandler(exchange, positionManager, configCustom, asLogger(logger));
 
       const event: ITPHitEvent = {
         type: 'TP_HIT',
@@ -432,9 +457,10 @@ describe('ExitEventHandler', () => {
       };
 
       const result = await handler.handle(event);
+      const tpResult = asTpResult(result);
 
-      expect((result as any).action).toBe('NONE');
-      expect((result as any).reason).toContain('Custom handler');
+      expect(tpResult.action).toBe('NONE');
+      expect(tpResult.reason).toContain('Custom handler');
     });
   });
 

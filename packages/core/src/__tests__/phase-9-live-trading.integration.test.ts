@@ -286,13 +286,21 @@ describe('Phase 9: Live Trading Engine - Integration Tests', () => {
     });
 
     test('Phase 9 should use ActionQueue for order execution', () => {
-      const instance = new OrderExecutionPipeline({} as any, {} as any, {} as any);
+      const instance = new OrderExecutionPipeline(
+        {} as unknown as ConstructorParameters<typeof OrderExecutionPipeline>[0],
+        {} as unknown as ConstructorParameters<typeof OrderExecutionPipeline>[1],
+        {} as unknown as ConstructorParameters<typeof OrderExecutionPipeline>[2],
+      );
 
       expect(typeof instance.placeOrder).toBe('function');
     });
 
     test('Phase 9 should integrate with TradingJournalService', () => {
-      const instance = new PerformanceAnalytics({} as any, {} as any, {} as any);
+      const instance = new PerformanceAnalytics(
+        {} as unknown as ConstructorParameters<typeof PerformanceAnalytics>[0],
+        {} as unknown as ConstructorParameters<typeof PerformanceAnalytics>[1],
+        {} as unknown as ConstructorParameters<typeof PerformanceAnalytics>[2],
+      );
 
       expect(typeof instance.getMetrics).toBe('function');
     });

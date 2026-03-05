@@ -25,7 +25,9 @@ describe('VolatilitySpikeAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing config fields', () => {
-    expect(() => new VolatilitySpikeAnalyzerNew({ enabled: 'true' as any, weight: 0.65, priority: 6 })).toThrow();
+    expect(() =>
+      new VolatilitySpikeAnalyzerNew({ enabled: 'true' as unknown as boolean, weight: 0.65, priority: 6 }),
+    ).toThrow();
   });
 });
 
@@ -44,7 +46,7 @@ describe('VolatilitySpikeAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles', () => {
     const analyzer = new VolatilitySpikeAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow();
   });
 });
 

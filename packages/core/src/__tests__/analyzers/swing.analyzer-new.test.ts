@@ -24,9 +24,11 @@ describe('SwingAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new SwingAnalyzerNew(config as any)).toThrow();
+    const configWithoutEnabled: Omit<SwingAnalyzerConfigNew, 'enabled'> = {
+      weight: 0.7,
+      priority: 5,
+    };
+    expect(() => new SwingAnalyzerNew(configWithoutEnabled as unknown as SwingAnalyzerConfigNew)).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +49,7 @@ describe('SwingAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new SwingAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -58,9 +60,10 @@ describe('SwingAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candle', () => {
     const analyzer = new SwingAnalyzerNew(createConfig());
-    const candles = createCandles(Array.from({ length: 30 }, (_, i) => 100 + i));
-    (candles[10] as any).high = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow();
+    type CandleWithOptionalHigh = Omit<Candle, 'high'> & { high?: number };
+    const candles = createCandles(Array.from({ length: 30 }, (_, i) => 100 + i)) as CandleWithOptionalHigh[];
+    candles[10].high = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow();
   });
 });
 

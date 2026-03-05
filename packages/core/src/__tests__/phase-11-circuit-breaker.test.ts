@@ -34,7 +34,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       writeToConsole: jest.fn(),
       writeToFile: jest.fn(),
       flush: jest.fn(),
-    } as any;
+    } as unknown as LoggerService;
 
     circuitBreakerService = new StrategyCircuitBreakerService(logger, {
       defaultConfig: {

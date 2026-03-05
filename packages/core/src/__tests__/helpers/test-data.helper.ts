@@ -11,6 +11,8 @@ import {
   TradingContext,
   LoggerService,
   LogLevel,
+  SwingPointType,
+  TrendBias,
 } from '../../types/legacy';
 import { MULTIPLIERS } from '../../constants';
 
@@ -41,7 +43,7 @@ export function createTestCandle(
 export function createMockSwingPoint(
   timestamp: number,
   price: number,
-  type: any = 'HIGH', // SwingPointType.HIGH or 'HIGH'
+  type: SwingPoint['type'] = SwingPointType.HIGH,
 ): SwingPoint {
   return {
     timestamp,
@@ -53,7 +55,9 @@ export function createMockSwingPoint(
 /**
  * Create mock trading context
  */
-export function createMockContext(trend: any = 'NEUTRAL'): TradingContext {
+export function createMockContext(
+  trend: TradingContext['trend'] = TrendBias.NEUTRAL,
+): TradingContext {
   return {
     timestamp: Date.now(),
     trend,
@@ -77,6 +81,14 @@ export function createMockContext(trend: any = 'NEUTRAL'): TradingContext {
 export function createTestMarketData(
   overrides?: Partial<StrategyMarketData>,
 ): StrategyMarketData {
+  const toTrendBias = (
+    trend: StrategyMarketData['trend'] | TradingContext['trend'],
+  ): TradingContext['trend'] => {
+    if (trend === 'BULLISH') return TrendBias.BULLISH;
+    if (trend === 'BEARISH') return TrendBias.BEARISH;
+    return TrendBias.NEUTRAL;
+  };
+
   const defaultData: StrategyMarketData = {
     candles: [
       createTestCandle(1000, 1.0, 1.1, 0.9, 1.05),
@@ -84,8 +96,8 @@ export function createTestMarketData(
       createTestCandle(3000, 1.1, 1.2, 1.05, 1.15),
     ],
     swingPoints: [
-      createMockSwingPoint(1000, 0.9, 'LOW'),
-      createMockSwingPoint(3000, 1.2, 'HIGH'),
+      createMockSwingPoint(1000, 0.9, SwingPointType.LOW),
+      createMockSwingPoint(3000, 1.2, SwingPointType.HIGH),
     ],
     rsi: 50,
     ema: { fast: 1.1, slow: 1.05 },
@@ -93,13 +105,13 @@ export function createTestMarketData(
     atr: 0.01,
     timestamp: 3000,
     currentPrice: 1.15,
-    context: createMockContext('NEUTRAL'),
+    context: createMockContext(TrendBias.NEUTRAL),
   };
 
   return {
     ...defaultData,
     ...overrides,
     // Ensure context has correct trend if trend is overridden
-    context: overrides?.context || createMockContext(overrides?.trend || 'NEUTRAL'),
+    context: overrides?.context || createMockContext(toTrendBias(overrides?.trend || TrendBias.NEUTRAL)),
   };
 }

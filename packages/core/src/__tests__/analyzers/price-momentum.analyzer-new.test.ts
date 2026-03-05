@@ -1,7 +1,14 @@
 import { PriceMomentumAnalyzerNew } from '../../analyzers/price-momentum.analyzer-new';
 import type { Candle } from '../../types/core';
 import type { PriceMomentumAnalyzerConfigNew } from '../../types/config/config-new.types';
-import { SignalDirection } from '../../types/enums';
+
+type PriceMomentumConfigOverrides = PriceMomentumAnalyzerConfigNew & {
+  minCandlesForMomentum?: number;
+  momentumLookback?: number;
+  accelerationLookback?: number;
+  neutralThreshold?: number;
+  strongMomentumThreshold?: number;
+};
 
 function createConfig(): PriceMomentumAnalyzerConfigNew {
   return { enabled: true, weight: 0.7, priority: 5, minConfidence: 0.1, maxConfidence: 0.95 };
@@ -25,9 +32,13 @@ describe('PriceMomentumAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new PriceMomentumAnalyzerNew(config as any)).toThrow();
+    const configWithoutEnabled: Omit<PriceMomentumConfigOverrides, 'enabled'> = {
+      weight: 0.7,
+      priority: 5,
+      minConfidence: 0.1,
+      maxConfidence: 0.95,
+    };
+    expect(() => new PriceMomentumAnalyzerNew(configWithoutEnabled as unknown as PriceMomentumConfigOverrides)).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -48,7 +59,7 @@ describe('PriceMomentumAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new PriceMomentumAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -59,9 +70,10 @@ describe('PriceMomentumAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candle', () => {
     const analyzer = new PriceMomentumAnalyzerNew(createConfig());
-    const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i));
-    (candles[10] as any).close = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow();
+    type CandleWithOptionalClose = Omit<Candle, 'close'> & { close?: number };
+    const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i)) as CandleWithOptionalClose[];
+    candles[10].close = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow();
   });
 });
 

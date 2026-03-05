@@ -25,7 +25,7 @@ describe('WhaleAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on invalid enabled', () => {
-    expect(() => new WhaleAnalyzerNew({ ...createConfig(), enabled: 'true' as any })).toThrow();
+    expect(() => new WhaleAnalyzerNew({ ...createConfig(), enabled: 'true' as unknown as boolean })).toThrow();
   });
 
   test('should throw on invalid priority', () => {
@@ -48,7 +48,7 @@ describe('WhaleAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid input', () => {
     const analyzer = new WhaleAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(undefined as any)).toThrow();
+    expect(() => analyzer.analyze(undefined as unknown as Candle[])).toThrow();
   });
 });
 

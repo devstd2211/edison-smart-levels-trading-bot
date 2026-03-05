@@ -16,8 +16,48 @@ import { StrategyFactoryService } from '../services/multi-strategy/strategy-fact
 import { StrategyStateManagerService } from '../services/multi-strategy/strategy-state-manager.service';
 import { StrategyOrchestratorService } from '../services/multi-strategy/strategy-orchestrator.service';
 import { DynamicConfigManagerService } from '../services/multi-strategy/dynamic-config-manager.service';
+import { BotEventBus } from '../services/event-bus';
 
-import type { StrategyMetadata } from '../types/legacy';
+import type { LoggerService, StrategyMetadata } from '../types/legacy';
+
+type StrategyFactoryTestDouble = {
+  createContext: jest.Mock;
+  listContexts: jest.Mock;
+  hasContext: jest.Mock;
+  removeContext: jest.Mock;
+  getContext: jest.Mock;
+};
+
+function createFactoryDouble(): StrategyFactoryTestDouble {
+  return {
+    createContext: jest.fn(),
+    listContexts: jest.fn(() => []),
+    hasContext: jest.fn(() => false),
+    removeContext: jest.fn(),
+    getContext: jest.fn(),
+  };
+}
+
+function asStrategyFactory(factory: StrategyFactoryTestDouble): StrategyFactoryService {
+  return factory as unknown as StrategyFactoryService;
+}
+
+function createLoggerDouble(): LoggerService {
+  return {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  } as unknown as LoggerService;
+}
+
+function createEventBusDouble(): BotEventBus {
+  return {
+    subscribe: jest.fn(),
+    publish: jest.fn(),
+    publishSync: jest.fn(),
+  } as unknown as BotEventBus;
+}
 
 // ============================================================================
 // PART 1: STRATEGY REGISTRY SERVICE TESTS (15 tests)
@@ -319,17 +359,11 @@ describe('StrategyRegistryService', () => {
 // ============================================================================
 
 describe('StrategyFactoryService', () => {
-  let factory: any;
+  let factory: StrategyFactoryTestDouble;
 
   beforeEach(() => {
     // Factory requires dependencies, create a mock/stub
-    factory = {
-      createContext: jest.fn(),
-      listContexts: jest.fn(() => []),
-      hasContext: jest.fn(() => false),
-      removeContext: jest.fn(),
-      getContext: jest.fn(),
-    };
+    factory = createFactoryDouble();
   });
 
   // Creation Tests (5 tests)
@@ -464,22 +498,16 @@ describe('StrategyStateManagerService', () => {
 
 describe('StrategyOrchestratorService', () => {
   let registry: StrategyRegistryService;
-  let factory: any;
+  let factory: StrategyFactoryService;
   let stateManager: StrategyStateManagerService;
   let orchestrator: StrategyOrchestratorService;
 
   beforeEach(() => {
     registry = new StrategyRegistryService();
-    factory = {
-      createContext: jest.fn(),
-      listContexts: jest.fn(() => []),
-      hasContext: jest.fn(() => false),
-      removeContext: jest.fn(),
-      getContext: jest.fn(),
-    };
+    factory = asStrategyFactory(createFactoryDouble());
     stateManager = new StrategyStateManagerService();
-    const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } as any;
-    const mockEventBus = { subscribe: jest.fn(), publish: jest.fn(), publishSync: jest.fn() } as any;
+    const mockLogger = createLoggerDouble();
+    const mockEventBus = createEventBusDouble();
     orchestrator = new StrategyOrchestratorService(registry, factory, stateManager, mockLogger, mockEventBus);
   });
 
@@ -653,13 +681,10 @@ describe('Phase 10 Integration Tests', () => {
   // Full Workflow Tests (5 tests)
   test('[Integration-1] Should load and manage strategies', async () => {
     const registry = new StrategyRegistryService();
-    const factory = {
-      createContext: jest.fn(),
-      listContexts: jest.fn(() => []),
-    } as any;
+    const factory = asStrategyFactory(createFactoryDouble());
     const stateManager = new StrategyStateManagerService();
-    const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } as any;
-    const mockEventBus = { subscribe: jest.fn(), publish: jest.fn(), publishSync: jest.fn() } as any;
+    const mockLogger = createLoggerDouble();
+    const mockEventBus = createEventBusDouble();
     const orchestrator = new StrategyOrchestratorService(registry, factory, stateManager, mockLogger, mockEventBus);
 
     expect(orchestrator).toBeDefined();
@@ -815,13 +840,10 @@ describe('Phase 10 Integration Tests', () => {
   // End-to-End Tests (2 tests)
   test('[Integration-9] Should complete full strategy lifecycle', () => {
     const registry = new StrategyRegistryService();
-    const factory = {
-      createContext: jest.fn(),
-      listContexts: jest.fn(() => []),
-    } as any;
+    const factory = asStrategyFactory(createFactoryDouble());
     const stateManager = new StrategyStateManagerService();
-    const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } as any;
-    const mockEventBus = { subscribe: jest.fn(), publish: jest.fn(), publishSync: jest.fn() } as any;
+    const mockLogger = createLoggerDouble();
+    const mockEventBus = createEventBusDouble();
     const orchestrator = new StrategyOrchestratorService(registry, factory, stateManager, mockLogger, mockEventBus);
 
     registry.registerStrategy('strategy-1', {

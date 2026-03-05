@@ -8,6 +8,14 @@ import type { Candle } from '../../types/core';
 import type { RsiAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type RsiConfigOverrides = RsiAnalyzerConfigNew & {
+  minCandlesForRsi?: number;
+  minConfidence?: number;
+  neutralConfidenceMultiplier?: number;
+  extremeLow?: number;
+  extremeHigh?: number;
+};
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -72,10 +80,17 @@ describe('RsiAnalyzerNew - Configuration Tests', () => {
   });
 
   it('should throw on missing enabled field', () => {
-    const config = createDefaultConfig();
-    delete (config as any).enabled;
-
-    expect(() => new RsiAnalyzerNew(config)).toThrow('[RSI_ANALYZER] Missing or invalid: enabled (boolean)');
+    const configWithoutEnabled: Omit<RsiConfigOverrides, 'enabled'> = {
+      weight: 0.8,
+      priority: 5,
+      period: 14,
+      oversold: 30,
+      overbought: 70,
+      maxConfidence: 0.95,
+    };
+    expect(() => new RsiAnalyzerNew(configWithoutEnabled as unknown as RsiConfigOverrides)).toThrow(
+      '[RSI_ANALYZER] Missing or invalid: enabled (boolean)',
+    );
   });
 
   it('should throw on invalid weight (negative)', () => {
@@ -141,7 +156,9 @@ describe('RsiAnalyzerNew - Input Validation Tests', () => {
     const config = createDefaultConfig();
     const analyzer = new RsiAnalyzerNew(config);
 
-    expect(() => analyzer.analyze(null as any)).toThrow('[RSI_ANALYZER] Invalid candles input (must be array)');
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow(
+      '[RSI_ANALYZER] Invalid candles input (must be array)',
+    );
   });
 
   it('should throw on insufficient candles', () => {
@@ -157,10 +174,11 @@ describe('RsiAnalyzerNew - Input Validation Tests', () => {
     const config = createDefaultConfig();
     const analyzer = new RsiAnalyzerNew(config);
 
-    const candles = createCandleSequence(100, 50, 'flat');
-    candles[25].close = undefined as any;
+    type CandleWithOptionalClose = Omit<Candle, 'close'> & { close?: number };
+    const candles = createCandleSequence(100, 50, 'flat') as CandleWithOptionalClose[];
+    candles[25].close = undefined;
 
-    expect(() => analyzer.analyze(candles)).toThrow('[RSI_ANALYZER] Invalid candle at index');
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow('[RSI_ANALYZER] Invalid candle at index');
   });
 });
 

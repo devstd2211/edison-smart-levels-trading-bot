@@ -24,9 +24,11 @@ describe('TrendConflictAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled', () => {
-    const config = { ...createConfig() };
-    delete (config as any).enabled;
-    expect(() => new TrendConflictAnalyzerNew(config as any)).toThrow();
+    const configWithoutEnabled: Omit<TrendConflictAnalyzerConfigNew, 'enabled'> = {
+      weight: 0.6,
+      priority: 4,
+    };
+    expect(() => new TrendConflictAnalyzerNew(configWithoutEnabled as unknown as TrendConflictAnalyzerConfigNew)).toThrow();
   });
 
   test('should throw on invalid weight', () => {
@@ -47,7 +49,7 @@ describe('TrendConflictAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on null input', () => {
     const analyzer = new TrendConflictAnalyzerNew(createConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow();
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow();
   });
 
   test('should throw on insufficient candles', () => {
@@ -58,9 +60,10 @@ describe('TrendConflictAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candle', () => {
     const analyzer = new TrendConflictAnalyzerNew(createConfig());
-    const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i));
-    (candles[10] as any).close = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow();
+    type CandleWithOptionalClose = Omit<Candle, 'close'> & { close?: number };
+    const candles = createCandles(Array.from({ length: 25 }, (_, i) => 100 + i)) as CandleWithOptionalClose[];
+    candles[10].close = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow();
   });
 });
 

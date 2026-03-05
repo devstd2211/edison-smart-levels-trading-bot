@@ -12,7 +12,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
   describe('16.5.1: Memory Management', () => {
     it('should not leak memory over 1000 operations', () => {
       const initialMemory = process.memoryUsage().heapUsed;
-      const operations: any[] = [];
+      const operations: Array<{ id: string; timestamp: number; data: number[] }> = [];
 
       // Perform 1000 operations
       for (let i = 0; i < 1000; i++) {
@@ -44,7 +44,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
     it('should handle memory pressure gracefully', () => {
       const initialMemory = process.memoryUsage().heapUsed;
-      const largeObjects: any[] = [];
+      const largeObjects: Array<{ data: string[]; timestamp: number }> = [];
 
       // Create memory pressure
       for (let i = 0; i < 100; i++) {
@@ -75,7 +75,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       const gcMetrics: number[] = [];
 
       for (let cycle = 0; cycle < 5; cycle++) {
-        const tempData: any[] = [];
+        const tempData: Array<{ id: number; data: number[] }> = [];
 
         // Create temporary data
         for (let i = 0; i < 100; i++) {

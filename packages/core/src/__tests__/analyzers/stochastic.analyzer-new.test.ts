@@ -7,6 +7,15 @@ import type { Candle } from '../../types/core';
 import type { StochasticAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { SignalDirection } from '../../types/enums';
 
+type StochasticConfigOverrides = StochasticAnalyzerConfigNew & {
+  minCandlesForStochastic?: number;
+  minConfidence?: number;
+  maxConfidence?: number;
+  oversoldLevel?: number;
+  overboughtLevel?: number;
+  midpoint?: number;
+};
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -48,9 +57,15 @@ describe('StochasticAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing enabled field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).enabled;
-    expect(() => new StochasticAnalyzerNew(config as any)).toThrow('[STOCHASTIC_ANALYZER] Missing or invalid: enabled');
+    const configWithoutEnabled: Omit<StochasticConfigOverrides, 'enabled'> = {
+      weight: 0.8,
+      priority: 5,
+      kPeriod: 14,
+      dPeriod: 3,
+    };
+    expect(() => new StochasticAnalyzerNew(configWithoutEnabled as unknown as StochasticConfigOverrides)).toThrow(
+      '[STOCHASTIC_ANALYZER] Missing or invalid: enabled',
+    );
   });
 
   test('should throw on invalid weight', () => {
@@ -74,15 +89,27 @@ describe('StochasticAnalyzerNew - Configuration Tests', () => {
   });
 
   test('should throw on missing kPeriod field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).kPeriod;
-    expect(() => new StochasticAnalyzerNew(config as any)).toThrow('[STOCHASTIC_ANALYZER] Missing or invalid: kPeriod');
+    const configWithoutKPeriod: Omit<StochasticConfigOverrides, 'kPeriod'> = {
+      enabled: true,
+      weight: 0.8,
+      priority: 5,
+      dPeriod: 3,
+    };
+    expect(() => new StochasticAnalyzerNew(configWithoutKPeriod as unknown as StochasticConfigOverrides)).toThrow(
+      '[STOCHASTIC_ANALYZER] Missing or invalid: kPeriod',
+    );
   });
 
   test('should throw on missing dPeriod field', () => {
-    const config = { ...createDefaultConfig() };
-    delete (config as any).dPeriod;
-    expect(() => new StochasticAnalyzerNew(config as any)).toThrow('[STOCHASTIC_ANALYZER] Missing or invalid: dPeriod');
+    const configWithoutDPeriod: Omit<StochasticConfigOverrides, 'dPeriod'> = {
+      enabled: true,
+      weight: 0.8,
+      priority: 5,
+      kPeriod: 14,
+    };
+    expect(() => new StochasticAnalyzerNew(configWithoutDPeriod as unknown as StochasticConfigOverrides)).toThrow(
+      '[STOCHASTIC_ANALYZER] Missing or invalid: dPeriod',
+    );
   });
 });
 
@@ -96,7 +123,7 @@ describe('StochasticAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on invalid candles input', () => {
     const analyzer = new StochasticAnalyzerNew(createDefaultConfig());
-    expect(() => analyzer.analyze(null as any)).toThrow('[STOCHASTIC_ANALYZER] Invalid candles input');
+    expect(() => analyzer.analyze(null as unknown as Candle[])).toThrow('[STOCHASTIC_ANALYZER] Invalid candles input');
   });
 
   test('should throw on insufficient candles', () => {
@@ -107,23 +134,26 @@ describe('StochasticAnalyzerNew - Input Validation Tests', () => {
 
   test('should throw on candle with missing high', () => {
     const analyzer = new StochasticAnalyzerNew(createDefaultConfig());
-    const candles = Array.from({ length: 50 }, (_, i) => createCandle(100 + i, 99 + i, 100 + i));
-    (candles[25] as any).high = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow('[STOCHASTIC_ANALYZER] Invalid candle');
+    type CandleWithOptionalHigh = Omit<Candle, 'high'> & { high?: number };
+    const candles = Array.from({ length: 50 }, (_, i) => createCandle(100 + i, 99 + i, 100 + i)) as CandleWithOptionalHigh[];
+    candles[25].high = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow('[STOCHASTIC_ANALYZER] Invalid candle');
   });
 
   test('should throw on candle with missing low', () => {
     const analyzer = new StochasticAnalyzerNew(createDefaultConfig());
-    const candles = Array.from({ length: 50 }, (_, i) => createCandle(100 + i, 99 + i, 100 + i));
-    (candles[25] as any).low = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow('[STOCHASTIC_ANALYZER] Invalid candle');
+    type CandleWithOptionalLow = Omit<Candle, 'low'> & { low?: number };
+    const candles = Array.from({ length: 50 }, (_, i) => createCandle(100 + i, 99 + i, 100 + i)) as CandleWithOptionalLow[];
+    candles[25].low = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow('[STOCHASTIC_ANALYZER] Invalid candle');
   });
 
   test('should throw on candle with missing close', () => {
     const analyzer = new StochasticAnalyzerNew(createDefaultConfig());
-    const candles = Array.from({ length: 50 }, (_, i) => createCandle(100 + i, 99 + i, 100 + i));
-    (candles[25] as any).close = undefined;
-    expect(() => analyzer.analyze(candles)).toThrow('[STOCHASTIC_ANALYZER] Invalid candle');
+    type CandleWithOptionalClose = Omit<Candle, 'close'> & { close?: number };
+    const candles = Array.from({ length: 50 }, (_, i) => createCandle(100 + i, 99 + i, 100 + i)) as CandleWithOptionalClose[];
+    candles[25].close = undefined;
+    expect(() => analyzer.analyze(candles as unknown as Candle[])).toThrow('[STOCHASTIC_ANALYZER] Invalid candle');
   });
 });
 

@@ -28,16 +28,12 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-03-05)
 - Removed local `any` usages in:
-  - `liquidity-sweep.analyzer-new.test.ts`
-  - `liquidity-zone.analyzer-new.test.ts`
-  - `order-block.analyzer-new.test.ts`
-  - `order-flow.analyzer-new.test.ts`
-  - `price-action.analyzer-new.test.ts`
-- Related services reviewed: `LiquiditySweepAnalyzerNew`, `LiquidityZoneAnalyzerNew`, `OrderBlockAnalyzerNew`, `OrderFlowAnalyzerNew`, `PriceActionAnalyzerNew` (no safe behavior-preserving decomposition required in this pass).
+  - `phase-12-parallel-processing.test.ts`
+  - `position-exiting.service.test.ts`
+- Related services reviewed: `StrategyProcessingPoolService`, `PositionExitingService` (no safe behavior-preserving decomposition required in this pass).
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/analyzers/liquidity-sweep.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-block.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-flow.analyzer-new.test.ts packages/core/src/__tests__/analyzers/price-action.analyzer-new.test.ts` -> 88/88 PASS.
-  - `npm run build` -> PASS.
-  - `npm test -- --runInBand` -> PASS (`307/307` suites, `7021/7021` tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-12-parallel-processing.test.ts packages/core/src/__tests__/position-exiting.service.test.ts` -> 2/2 suites PASS, 72/72 tests PASS.
+  - Note: Jest reports open handles after this batch (existing suite behavior; functional assertions pass).
 
 ## Next Step
-- Continue test `any` cleanup beyond `__tests__/services/*` (non-archived service tests are complete; only `market-data-collector.service.test.ARCHIVED.ts` remains in services). Next target candidate: `__tests__/analyzers/price-momentum.analyzer-new.test.ts`.
+- Active non-archived `__tests__` files are `any`-clean. Remaining `any` usage is only in archived suite: `__tests__/services/market-data-collector.service.test.ARCHIVED.ts`.
