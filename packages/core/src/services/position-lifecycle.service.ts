@@ -75,6 +75,18 @@ type DynamicPositionSizingConfigView = {
   };
 };
 
+type TradeOpenPayload = {
+  id: string;
+  symbol: string;
+  side: PositionSide;
+  entryPrice: number;
+  quantity: number;
+  leverage: number;
+  entryCondition: {
+    signal: Signal;
+  };
+};
+
 // ============================================================================
 // POSITION LIFECYCLE SERVICE
 // ============================================================================
@@ -1139,43 +1151,87 @@ export class PositionLifecycleService {
     journalId: string;
   }): Promise<void> {
     const { positionId, symbol, signal, side, quantity, journalId } = params;
-    const tradeOpenPayload = {
-      id: journalId,
+    const tradeOpenPayload = this.createTradeOpenPayload({
+      journalId,
       symbol,
       side,
       entryPrice: signal.price,
+      quantity,
+      signal,
+    });
+
+    if (this.errorHandler) {
+      const retryResult = await this.recordTradeOpenWithRetry(tradeOpenPayload);
+      this.logTradeOpenRetryResult(retryResult.success, journalId, positionId, retryResult.errorMessage);
+      return;
+    }
+
+    this.journal.recordTradeOpen(tradeOpenPayload);
+    this.logJournalTradeRecorded(journalId);
+  }
+
+  private createTradeOpenPayload(params: {
+    journalId: string;
+    symbol: string;
+    side: PositionSide;
+    entryPrice: number;
+    quantity: number;
+    signal: Signal;
+  }): TradeOpenPayload {
+    const { journalId, symbol, side, entryPrice, quantity, signal } = params;
+    return {
+      id: journalId,
+      symbol,
+      side,
+      entryPrice,
       quantity,
       leverage: this.tradingConfig.leverage,
       entryCondition: {
         signal,
       },
     };
+  }
 
-    if (this.errorHandler) {
-      const journalResult = await this.errorHandler.executeAsync(
-        async () => {
-          this.journal.recordTradeOpen(tradeOpenPayload);
+  private async recordTradeOpenWithRetry(payload: TradeOpenPayload): Promise<{
+    success: boolean;
+    errorMessage?: string;
+  }> {
+    if (!this.errorHandler) {
+      return { success: false, errorMessage: 'Error handler unavailable' };
+    }
+
+    const journalResult = await this.errorHandler.executeAsync(
+      async () => {
+        this.journal.recordTradeOpen(payload);
+      },
+      {
+        strategy: RecoveryStrategy.RETRY,
+        retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
+        context: 'PositionLifecycleService.openPosition.recordTradeOpen',
+        onFailure: () => {
+          this.logJournalTradeOpenDegraded();
         },
-        {
-          strategy: RecoveryStrategy.RETRY,
-          retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
-          context: 'PositionLifecycleService.openPosition.recordTradeOpen',
-          onFailure: () => {
-            this.logJournalTradeOpenDegraded();
-          },
-        }
-      );
-
-      if (!journalResult.success) {
-        this.logJournalTradeOpenFailure(positionId, journalResult.error?.message);
-      } else {
-        this.logJournalTradeRecorded(journalId);
       }
+    );
+
+    return {
+      success: journalResult.success,
+      errorMessage: journalResult.error?.message,
+    };
+  }
+
+  private logTradeOpenRetryResult(
+    success: boolean,
+    journalId: string,
+    positionId: string,
+    errorMessage?: string,
+  ): void {
+    if (success) {
+      this.logJournalTradeRecorded(journalId);
       return;
     }
 
-    this.journal.recordTradeOpen(tradeOpenPayload);
-    this.logJournalTradeRecorded(journalId);
+    this.logJournalTradeOpenFailure(positionId, errorMessage);
   }
 
   private createSessionTradeRecordForOpen(params: {

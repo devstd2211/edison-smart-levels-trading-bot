@@ -1120,6 +1120,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - moved `logOpenPositionFailure(...)` next to `openPosition(...)`
   - moved `logPositionClearedFromRepository(...)` next to clear/finalize helpers
   - preserved all behavior and call ordering
+- [x] 4-slice batch in journal-open analytics decomposition:
+  - extracted `createTradeOpenPayload(...)`
+  - extracted `recordTradeOpenWithRetry(...)`
+  - extracted `logTradeOpenRetryResult(...)`
+  - introduced local payload type `TradeOpenPayload`
+  - preserved journal retry context, degraded-mode log, and success/failure semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
