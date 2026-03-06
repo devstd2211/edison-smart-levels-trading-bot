@@ -462,32 +462,16 @@ export class PositionLifecycleService {
       const result = this.entryConfirmation.checkConfirmation(pending.id, currentCandleClose);
 
       if (result.confirmed) {
-        const levelType = pending.direction === SignalDirection.LONG ? 'support' : 'resistance';
-
-        this.logger.info(`✅ ${pending.direction} signal confirmed - ready to enter`, {
-          pendingId: pending.id,
-          direction: pending.direction,
-          [`${levelType}Level`]: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-          candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-        });
+        this.logPendingSignalConfirmed(pending.id, pending.direction, pending.keyLevel, currentCandleClose);
 
         return pending.signalData as unknown as Signal;
       }
 
-      // Log rejections
       if (!result.confirmed) {
         if (pending.direction === SignalDirection.LONG && result.reason.includes('below support')) {
-          this.logger.info('❌ LONG signal rejected - falling knife avoided', {
-            pendingId: pending.id,
-            supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-          });
+          this.logPendingLongRejected(pending.id, pending.keyLevel, currentCandleClose);
         } else if (pending.direction === SignalDirection.SHORT && result.reason.includes('above resistance')) {
-          this.logger.info('❌ SHORT signal rejected - pump continues', {
-            pendingId: pending.id,
-            resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-            candleClose: currentCandleClose.toFixed(DECIMAL_PLACES.PRICE),
-          });
+          this.logPendingShortRejected(pending.id, pending.keyLevel, currentCandleClose);
         }
       }
     }
@@ -520,6 +504,46 @@ export class PositionLifecycleService {
   // =========================================================================
   // PRIVATE HELPERS: Position Sizing
   // =========================================================================
+
+  private logPendingSignalConfirmed(
+    pendingId: string,
+    direction: SignalDirection,
+    keyLevel: number,
+    candleClose: number,
+  ): void {
+    const levelType = direction === SignalDirection.LONG ? 'support' : 'resistance';
+    this.logger.info(`${direction} signal confirmed - ready to enter`, {
+      pendingId,
+      direction,
+      [`${levelType}Level`]: keyLevel.toFixed(DECIMAL_PLACES.PRICE),
+      candleClose: candleClose.toFixed(DECIMAL_PLACES.PRICE),
+    });
+  }
+
+  private logPendingLongRejected(
+    pendingId: string,
+    supportLevel: number,
+    candleClose: number,
+  ): void {
+    this.logger.info('LONG signal rejected - falling knife avoided', {
+      pendingId,
+      supportLevel: supportLevel.toFixed(DECIMAL_PLACES.PRICE),
+      candleClose: candleClose.toFixed(DECIMAL_PLACES.PRICE),
+    });
+  }
+
+  private logPendingShortRejected(
+    pendingId: string,
+    resistanceLevel: number,
+    candleClose: number,
+  ): void {
+    this.logger.info('SHORT signal rejected - pump continues', {
+      pendingId,
+      resistanceLevel: resistanceLevel.toFixed(DECIMAL_PLACES.PRICE),
+      candleClose: candleClose.toFixed(DECIMAL_PLACES.PRICE),
+    });
+  }
+
 
   /**
    * Calculate final position size with compound interest support

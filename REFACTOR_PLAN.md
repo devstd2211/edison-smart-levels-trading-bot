@@ -1062,6 +1062,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logConditionalOrderCancelFailure()`
   - extracted `logAtomicCloseStart/Success/Failure/NoPosition(...)` payload logging helpers
   - preserved atomic-close and cancel-retry behavior with unchanged flow ordering
+- [x] 3-slice batch in confirmation-path logging boundaries:
+  - extracted `logPendingSignalConfirmed(...)`
+  - extracted `logPendingLongRejected(...)`
+  - extracted `logPendingShortRejected(...)`
+  - preserved confirmation/rejection decision logic and pending cleanup flow
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
