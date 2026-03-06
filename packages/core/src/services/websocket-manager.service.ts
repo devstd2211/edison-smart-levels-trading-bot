@@ -20,7 +20,6 @@ import type { ILifecycle } from '../interfaces/ILifecycle';
 import {
   ExchangeConfig,
   Position,
-  PositionSide,
   LoggerService,
   PositionData,
   OrderExecutionData,
@@ -30,6 +29,7 @@ import { OrderExecutionDetectorService } from './order-execution-detector.servic
 import { WebSocketAuthenticationService } from './websocket-authentication.service';
 import { EventDeduplicationService } from './event-deduplication.service';
 import { WebSocketKeepAliveService } from './websocket-keep-alive.service';
+import { mapPositionFromWebSocketData } from './websocket-manager/websocket-position-mapping.utils';
 import { ErrorHandler, RecoveryStrategy, WebSocketConnectionError, WebSocketAuthenticationError, WebSocketSubscriptionError, ErrorLogger } from '../errors';
 
 // ============================================================================
@@ -553,46 +553,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
       return;
     }
 
-    // Position opened or updated
-    // CRITICAL FIX: Check for EMPTY strings, not just null/undefined
-    // parseFloat('') = NaN, so we must validate before parsing
-    const parseEntryPrice = (): number => {
-      // Try entryPrice first (must be non-empty)
-      if (posData.entryPrice && posData.entryPrice.trim()) {
-        const price = parseFloat(posData.entryPrice);
-        if (!isNaN(price)) return price;
-      }
-      // Fall back to avgPrice (must be non-empty)
-      if (posData.avgPrice && posData.avgPrice.trim()) {
-        const price = parseFloat(posData.avgPrice);
-        if (!isNaN(price)) return price;
-      }
-      // Default to 0 if both are invalid
-      return 0;
-    };
-
-    const position: Position = {
-      id: `${this.symbol}_${posData.side ?? 'unknown'}`,
-      symbol: this.symbol,
-      side: posData.side === 'Buy' ? PositionSide.LONG : PositionSide.SHORT,
-      quantity: size,
-      entryPrice: parseEntryPrice(),
-      leverage: parseFloat(posData.leverage ?? '1'),
-      marginUsed: parseFloat(posData.positionIM ?? '0'), // Initial margin
-      stopLoss: {
-        price: 0,
-        initialPrice: 0,
-        isBreakeven: false,
-        isTrailing: false,
-        updatedAt: Date.now(),
-      },
-      takeProfits: [],
-      openedAt: Date.now(),
-      unrealizedPnL: parseFloat(posData.unrealisedPnl ?? '0'),
-      orderId: '',
-      reason: 'WebSocket position update',
-      status: 'OPEN', // Position from WebSocket is OPEN
-    };
+    const position: Position = mapPositionFromWebSocketData(this.symbol, posData);
 
     this.emit('positionUpdate', position);
   }

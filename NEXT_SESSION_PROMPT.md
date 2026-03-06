@@ -27,12 +27,12 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-06)
-- God-object recovery track continued with `packages/core/src/services/trading-journal.service.ts` iteration 1.
-- Extracted pure fee/net-PnL and stats aggregation calculations to `packages/core/src/services/trading-journal/trading-journal-calculations.utils.ts`.
-- Integrated extracted utils into trade-close and `getStatistics` flows without behavior change.
-- Progress tracking updated in `REFACTOR_PLAN.md`: 3/10 recovery candidates completed, 7/10 pending.
+- God-object recovery track continued with `packages/core/src/services/websocket-manager.service.ts` iteration 1.
+- Extracted pure position mapping (`PositionData -> Position`) to `packages/core/src/services/websocket-manager/websocket-position-mapping.utils.ts`.
+- Integrated util into `processPositionData` while preserving event-routing behavior.
+- Progress tracking updated in `REFACTOR_PLAN.md`: 4/10 recovery candidates completed, 6/10 pending.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` -> 2/2 suites PASS, 49/49 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts` -> 2/2 suites PASS, 31/31 tests PASS.
 
 ## Next Step
-- Continue recovery track with next highest-impact candidate: `packages/core/src/services/websocket-manager.service.ts` (behavior-preserving isolation of connection lifecycle, auth/retry, and subscription routing + targeted tests + progress update).
+- Continue recovery track with next highest-impact candidate: `packages/core/src/services/public-websocket.service.ts` (behavior-preserving isolation of reconnect policy, message parsing, and channel dispatch + targeted tests + progress update).
