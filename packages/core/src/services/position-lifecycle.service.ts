@@ -1347,20 +1347,31 @@ export class PositionLifecycleService {
       const openTrade = this.journal.getOpenPositionBySymbol(position.symbol);
 
       if (openTrade) {
-        const restored = restoreWebSocketPosition(position, openTrade.id);
-        this.logWebSocketRestoreWithJournal(restored);
-        return restored;
+        return this.restorePositionFromWebSocketWithJournal(position, openTrade.id);
       }
 
-      const restored = restoreWebSocketPosition(position, undefined);
-      this.logWebSocketRestoreWithoutJournal(restored);
-      return restored;
+      return this.restorePositionFromWebSocketWithoutJournal(position);
     } catch (error) {
-      const restored = restoreWebSocketPosition(position, undefined);
+      const restored = this.restorePositionFromWebSocketWithoutJournal(position);
       // Journal lookup failed - graceful degrade (continue without journalId)
       this.logWebSocketRestoreJournalLookupFailure(error, restored.id);
       return restored;
     }
+  }
+
+  private restorePositionFromWebSocketWithJournal(
+    position: Position,
+    journalId: string,
+  ): Position {
+    const restored = restoreWebSocketPosition(position, journalId);
+    this.logWebSocketRestoreWithJournal(restored);
+    return restored;
+  }
+
+  private restorePositionFromWebSocketWithoutJournal(position: Position): Position {
+    const restored = restoreWebSocketPosition(position, undefined);
+    this.logWebSocketRestoreWithoutJournal(restored);
+    return restored;
   }
 
   private logWebSocketRestoreWithJournal(position: Position): void {
