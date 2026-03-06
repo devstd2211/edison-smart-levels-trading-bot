@@ -999,6 +999,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - `cancelConditionalOrdersAfterClose()` (retry + logging policy)
   - `finalizePositionClear()` (state reset + close event emission)
   - preserved close order: capture snapshot -> cancel attempts -> clear state -> emit event
+- [x] Decomposed WebSocket sync decision branch in `PositionLifecycleService`:
+  - extracted `resolveWebSocketSyncedPosition(currentPosition, wsPosition)` for restore-vs-update routing
+  - kept in-memory semantics for `syncWithWebSocket()` to preserve degraded-mode compatibility
+  - normalized post-close cancellation debug log text to ASCII (`Cancelling conditional orders after position close...`)
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

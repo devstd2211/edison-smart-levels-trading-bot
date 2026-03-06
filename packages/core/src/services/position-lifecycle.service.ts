@@ -542,16 +542,22 @@ export class PositionLifecycleService {
    * Phase 8.9.17: GRACEFUL_DEGRADE if journal lookup fails
    */
   syncWithWebSocket(wsPosition: Position): void {
-    if (this.currentPosition === null) {
+    this.currentPosition = this.resolveWebSocketSyncedPosition(this.currentPosition, wsPosition);
+  }
+
+  private resolveWebSocketSyncedPosition(
+    currentPosition: Position | null,
+    wsPosition: Position,
+  ): Position {
+    if (currentPosition === null) {
       // Restore position after bot restart
       // Phase 8.9.17: GRACEFUL_DEGRADE - continue without journalId if journal unavailable
       // Note: Sync version for backward compatibility - async restoration handled internally
-      const restored = this.restorePositionFromWebSocketSync(wsPosition);
-      this.currentPosition = restored;
-    } else {
-      // Update existing position state
-      this.currentPosition = this.updatePositionState(this.currentPosition, wsPosition);
+      return this.restorePositionFromWebSocketSync(wsPosition);
     }
+
+    // Update existing position state
+    return this.updatePositionState(currentPosition, wsPosition);
   }
 
   /**
@@ -568,7 +574,7 @@ export class PositionLifecycleService {
 
   private async cancelConditionalOrdersAfterClose(): Promise<void> {
     // Phase 8.7: Cancel with RETRY strategy, then SKIP if exhausted
-    this.logger.debug('?? Cancelling conditional orders after position close...');
+    this.logger.debug('Cancelling conditional orders after position close...');
     await ErrorHandler.executeAsync(
       () => this.bybitService.cancelAllConditionalOrders(),
       {

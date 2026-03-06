@@ -44,9 +44,13 @@ You are continuing refactoring in `D:\src\Edison`.
   - `cancelConditionalOrdersAfterClose()`
   - `finalizePositionClear()`
   with the same side-effect order and targeted-suite parity.
+- Decomposed WebSocket sync branching in `PositionLifecycleService`:
+  - extracted `resolveWebSocketSyncedPosition(currentPosition, wsPosition)` for restore/update routing
+  - kept `syncWithWebSocket()` behavior (in-memory restore/update semantics) intact for compatibility
+  - normalized post-close cancellation debug log text to ASCII.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from WebSocket sync restoration/update flow (helper boundary around restore/update decisions), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from `openPosition()` orchestration (prefer journal/stats recording helper split), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
