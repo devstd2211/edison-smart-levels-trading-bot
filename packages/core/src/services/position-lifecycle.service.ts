@@ -907,26 +907,14 @@ export class PositionLifecycleService {
     }
 
     if (this.sessionStats && entrySnapshot) {
-      const sessionTrade: SessionTradeRecord = {
-        tradeId: journalId,
-        timestamp: new Date(timestamp).toISOString(),
-        direction: signal.direction,
-        entryPrice: signal.price,
-        exitPrice: 0,
+      const sessionTrade = this.createSessionTradeRecordForOpen({
+        journalId,
+        timestamp,
+        signal,
         quantity,
-        pnl: 0,
-        pnlPercent: 0,
-        exitType: ExitType.MANUAL,
-        tpHitLevels: [],
-        holdingTimeMs: 0,
-        entryCondition: entrySnapshot,
-        stopLoss: {
-          initial: actualStopLoss,
-          final: actualStopLoss,
-          movedToBreakeven: false,
-          trailingActivated: false,
-        },
-      };
+        actualStopLoss,
+        entrySnapshot,
+      });
 
       if (this.errorHandler) {
         const statsResult = await this.errorHandler.executeAsync(
@@ -952,6 +940,39 @@ export class PositionLifecycleService {
       }
     }
   }
+
+  private createSessionTradeRecordForOpen(params: {
+    journalId: string;
+    timestamp: number;
+    signal: Signal;
+    quantity: number;
+    actualStopLoss: number;
+    entrySnapshot: SessionEntryCondition;
+  }): SessionTradeRecord {
+    const { journalId, timestamp, signal, quantity, actualStopLoss, entrySnapshot } = params;
+
+    return {
+      tradeId: journalId,
+      timestamp: new Date(timestamp).toISOString(),
+      direction: signal.direction,
+      entryPrice: signal.price,
+      exitPrice: 0,
+      quantity,
+      pnl: 0,
+      pnlPercent: 0,
+      exitType: ExitType.MANUAL,
+      tpHitLevels: [],
+      holdingTimeMs: 0,
+      entryCondition: entrySnapshot,
+      stopLoss: {
+        initial: actualStopLoss,
+        final: actualStopLoss,
+        movedToBreakeven: false,
+        trailingActivated: false,
+      },
+    };
+  }
+
   private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {
     const raw = signal as unknown as Record<string, unknown>;
     for (const key of keys) {

@@ -63,9 +63,12 @@ You are continuing refactoring in `D:\src\Edison`.
 - Decomposed post-open wiring in `openPosition()`:
   - extracted `wireOpenedPositionState(position, signal)` for persistence + event emission + TP manager init
   - preserved ordering before notification/analytics stage.
+- Decomposed session-stats payload construction in analytics path:
+  - extracted `createSessionTradeRecordForOpen(...)`
+  - kept payload shape and record flow unchanged.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: normalize log text/encoding artifacts in the remaining extracted helpers without changing behavior, then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from `recordPositionOpenAnalytics` journal branch (record-open command builder/executor split), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
