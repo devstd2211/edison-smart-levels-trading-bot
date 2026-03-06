@@ -60,9 +60,12 @@ You are continuing refactoring in `D:\src\Edison`.
 - Decomposed atomic exchange-open boundary in `openPosition()`:
   - extracted `executeAtomicOpenPosition(...)` for side mapping, retry-wrapped open call, and order-id extraction
   - preserved retry context/callback behavior and first-TP order-id propagation.
+- Decomposed post-open wiring in `openPosition()`:
+  - extracted `wireOpenedPositionState(position, signal)` for persistence + event emission + TP manager init
+  - preserved ordering before notification/analytics stage.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from post-open wiring (position persistence + event emission + TP manager init), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: normalize log text/encoding artifacts in the remaining extracted helpers without changing behavior, then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

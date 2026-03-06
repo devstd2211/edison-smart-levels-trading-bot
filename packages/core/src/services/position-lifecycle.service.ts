@@ -223,36 +223,8 @@ export class PositionLifecycleService {
       });
       const journalId = position.journalId || `${position.id}_${timestamp}`;
 
-      // Store position IMMEDIATELY to prevent race condition
-      // Phase 6.2: Use repository if available, fallback to direct storage
-      if (this.positionRepository) {
-        this.writeStoredPosition(position);
-        this.logger.debug('[Phase 6.2] Position stored in repository', { positionId: position.id });
-      } else {
-        this.writeStoredPosition(position);
-      }
+      this.wireOpenedPositionState(position, signal);
 
-      // Emit position-opened event
-      this.logger.info('📢 Emitting position-opened event', { positionId: position.id });
-      this.eventBus.emit('position-opened', {
-        position,
-        strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
-      });
-      this.logger.debug('[EVENT] position-opened emitted', { positionId: position.id });
-
-      // Initialize TakeProfitManager for partial close tracking (Phase 8.9.22: ErrorHandler injection)
-      this.takeProfitManager = new TakeProfitManagerService(
-        {
-          positionId: position.id,
-          symbol: position.symbol,
-          side: position.side,
-          entryPrice: signal.price,
-          totalQuantity: position.quantity,
-          leverage: this.tradingConfig.leverage,
-        },
-        this.logger,
-        this.errorHandler, // Phase 8.9.22: Pass ErrorHandler for resilience
-      );
 
       // ===================================================================
       // STEP 6: Send notifications and record
@@ -833,6 +805,38 @@ export class PositionLifecycleService {
     }
 
     return this.bybitService.getCurrentPrice();
+  }
+
+  private wireOpenedPositionState(position: Position, signal: Signal): void {
+    // Store position immediately to prevent race condition
+    if (this.positionRepository) {
+      this.writeStoredPosition(position);
+      this.logger.debug('[Phase 6.2] Position stored in repository', { positionId: position.id });
+    } else {
+      this.writeStoredPosition(position);
+    }
+
+    // Emit position-opened event
+    this.logger.info('Emitting position-opened event', { positionId: position.id });
+    this.eventBus.emit('position-opened', {
+      position,
+      strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
+    });
+    this.logger.debug('[EVENT] position-opened emitted', { positionId: position.id });
+
+    // Initialize TakeProfitManager for partial close tracking
+    this.takeProfitManager = new TakeProfitManagerService(
+      {
+        positionId: position.id,
+        symbol: position.symbol,
+        side: position.side,
+        entryPrice: signal.price,
+        totalQuantity: position.quantity,
+        leverage: this.tradingConfig.leverage,
+      },
+      this.logger,
+      this.errorHandler,
+    );
   }
 
   private isDynamicPositionSizingEnabled(): boolean {

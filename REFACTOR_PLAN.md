@@ -1019,6 +1019,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `executeAtomicOpenPosition(...)` for side mapping, retry-wrapped exchange call, and order-id extraction
   - preserved retry context (`PositionLifecycleService.openPosition`) and retry callback semantics
   - preserved first-TP order-id propagation via returned `tpOrderIds`
+- [x] Decomposed post-open wiring in `openPosition()`:
+  - extracted `wireOpenedPositionState(position, signal)` for persistence, `position-opened` event emission, and `TakeProfitManager` initialization
+  - preserved sequence: persist position -> emit event -> initialize TP manager
+  - `openPosition()` remains orchestration-focused before notification/analytics steps
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
