@@ -805,25 +805,45 @@ export class PositionLifecycleService {
   private async cancelHangingOrdersBeforeOpen(): Promise<void> {
     this.logHangingOrderCancellationStart();
     if (this.errorHandler) {
-      const cancelResult = await this.errorHandler.executeAsync(
-        () => this.bybitService.cancelAllConditionalOrders(),
-        {
-          strategy: RecoveryStrategy.RETRY,
-          retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
-          context: 'PositionLifecycleService.openPosition.cancelAllConditionalOrders',
-          onFailure: () => {
-            this.logHangingOrderCancellationNonBlockingFailure();
-          },
-        }
-      );
-
-      if (!cancelResult.success) {
-        // SKIP: non-blocking operation - continue anyway
-        this.logHangingOrderCancellationSkipped(cancelResult.error?.message);
-      }
+      await this.cancelHangingOrdersWithResilience();
       return;
     }
 
+    await this.cancelHangingOrdersDirect();
+  }
+
+  private async resolveCurrentPriceForOpen(signalPrice: number): Promise<number> {
+    if (this.errorHandler) {
+      return this.resolveCurrentPriceWithResilience(signalPrice);
+    }
+
+    return this.bybitService.getCurrentPrice();
+  }
+
+  private async cancelHangingOrdersWithResilience(): Promise<void> {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    const cancelResult = await this.errorHandler.executeAsync(
+      () => this.bybitService.cancelAllConditionalOrders(),
+      {
+        strategy: RecoveryStrategy.RETRY,
+        retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
+        context: 'PositionLifecycleService.openPosition.cancelAllConditionalOrders',
+        onFailure: () => {
+          this.logHangingOrderCancellationNonBlockingFailure();
+        },
+      }
+    );
+
+    if (!cancelResult.success) {
+      // SKIP: non-blocking operation - continue anyway
+      this.logHangingOrderCancellationSkipped(cancelResult.error?.message);
+    }
+  }
+
+  private async cancelHangingOrdersDirect(): Promise<void> {
     try {
       await this.bybitService.cancelAllConditionalOrders();
     } catch (error) {
@@ -832,28 +852,29 @@ export class PositionLifecycleService {
     }
   }
 
-  private async resolveCurrentPriceForOpen(signalPrice: number): Promise<number> {
-    if (this.errorHandler) {
-      const priceResult = await this.errorHandler.executeAsync(
-        () => this.bybitService.getCurrentPrice(),
-        {
-          strategy: RecoveryStrategy.RETRY,
-          retryConfig: { maxAttempts: 3, initialDelayMs: 500, backoffMultiplier: 2 },
-          context: 'PositionLifecycleService.openPosition.getCurrentPrice',
-          onRetry: (attempt, error, delayMs) => {
-            this.logCurrentPriceRetry(attempt, error.message, delayMs);
-          },
-          onFailure: () => {
-            this.logCurrentPriceFallback(signalPrice);
-          },
-        }
-      );
-      return priceResult.success && priceResult.value !== undefined
-        ? priceResult.value
-        : signalPrice;
+  private async resolveCurrentPriceWithResilience(signalPrice: number): Promise<number> {
+    if (!this.errorHandler) {
+      return signalPrice;
     }
 
-    return this.bybitService.getCurrentPrice();
+    const priceResult = await this.errorHandler.executeAsync(
+      () => this.bybitService.getCurrentPrice(),
+      {
+        strategy: RecoveryStrategy.RETRY,
+        retryConfig: { maxAttempts: 3, initialDelayMs: 500, backoffMultiplier: 2 },
+        context: 'PositionLifecycleService.openPosition.getCurrentPrice',
+        onRetry: (attempt, error, delayMs) => {
+          this.logCurrentPriceRetry(attempt, error.message, delayMs);
+        },
+        onFailure: () => {
+          this.logCurrentPriceFallback(signalPrice);
+        },
+      }
+    );
+
+    return priceResult.success && priceResult.value !== undefined
+      ? priceResult.value
+      : signalPrice;
   }
 
   private logPositionOpenRetry(

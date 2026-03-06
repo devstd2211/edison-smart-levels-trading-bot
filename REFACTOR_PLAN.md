@@ -1173,6 +1173,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `recordSessionTradeEntryDirect(...)`
   - simplified `executeAtomicOpenPosition(...)` and analytics direct branches
   - preserved open order construction and direct record semantics
+- [x] 5-slice batch in pre-open resilience branch decomposition:
+  - extracted `cancelHangingOrdersWithResilience(...)`
+  - extracted `cancelHangingOrdersDirect(...)`
+  - extracted `resolveCurrentPriceWithResilience(...)`
+  - simplified orchestrators `cancelHangingOrdersBeforeOpen(...)` and `resolveCurrentPriceForOpen(...)`
+  - preserved retry/skip/fallback behavior and log callbacks
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
