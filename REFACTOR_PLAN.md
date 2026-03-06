@@ -1078,6 +1078,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logKellySizingSuccess(...)`
   - extracted `logKellySizingFallback(...)`
   - preserved sizing decision flow and fallback chain updates
+- [x] 4-slice batch in retry/cancel logging boundaries:
+  - extracted `logPositionOpenRetry(...)`
+  - extracted `logCurrentPriceRetry(...)`
+  - extracted `logHangingOrderCancellationSkipped(...)`
+  - extracted `logHangingOrderCancellationFailed(...)`
+  - normalized affected retry/cancel debug/warn messages to ASCII-safe text
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

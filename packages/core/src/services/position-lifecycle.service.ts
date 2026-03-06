@@ -756,10 +756,7 @@ export class PositionLifecycleService {
         logger: this.logger,
         context: 'PositionLifecycleService.openPosition',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.warn(`🔄 Retrying position open (attempt ${attempt}/3)`, {
-            delayMs,
-            error: error.message,
-          });
+          this.logPositionOpenRetry(attempt, error.message, delayMs);
         },
       }
     );
@@ -787,7 +784,7 @@ export class PositionLifecycleService {
   }
 
   private async cancelHangingOrdersBeforeOpen(): Promise<void> {
-    this.logger.debug('🧹 Cancelling any hanging conditional orders before opening...');
+    this.logger.debug('Cancelling any hanging conditional orders before opening...');
     if (this.errorHandler) {
       const cancelResult = await this.errorHandler.executeAsync(
         () => this.bybitService.cancelAllConditionalOrders(),
@@ -805,9 +802,7 @@ export class PositionLifecycleService {
 
       if (!cancelResult.success) {
         // SKIP: non-blocking operation - continue anyway
-        this.logger.warn('Hanging order cancellation skipped, proceeding with position open', {
-          error: cancelResult.error?.message,
-        });
+        this.logHangingOrderCancellationSkipped(cancelResult.error?.message);
       }
       return;
     }
@@ -815,9 +810,7 @@ export class PositionLifecycleService {
     try {
       await this.bybitService.cancelAllConditionalOrders();
     } catch (error) {
-      this.logger.warn('Failed to cancel hanging orders', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      this.logHangingOrderCancellationFailed(error);
       // Continue anyway - don't fail the position opening
     }
   }
@@ -831,10 +824,7 @@ export class PositionLifecycleService {
           retryConfig: { maxAttempts: 3, initialDelayMs: 500, backoffMultiplier: 2 },
           context: 'PositionLifecycleService.openPosition.getCurrentPrice',
           onRetry: (attempt, error, delayMs) => {
-            this.logger.warn(`🔄 Retrying price fetch (${attempt}/3)`, {
-              delayMs,
-              error: error.message,
-            });
+            this.logCurrentPriceRetry(attempt, error.message, delayMs);
           },
           onFailure: () => {
             this.logger.warn('⚠️ Price fetch failed, falling back to signal price', {
@@ -849,6 +839,40 @@ export class PositionLifecycleService {
     }
 
     return this.bybitService.getCurrentPrice();
+  }
+
+  private logPositionOpenRetry(
+    attempt: number,
+    errorMessage: string,
+    delayMs: number,
+  ): void {
+    this.logger.warn(`Retrying position open (attempt ${attempt}/3)`, {
+      delayMs,
+      error: errorMessage,
+    });
+  }
+
+  private logCurrentPriceRetry(
+    attempt: number,
+    errorMessage: string,
+    delayMs: number,
+  ): void {
+    this.logger.warn(`Retrying price fetch (${attempt}/3)`, {
+      delayMs,
+      error: errorMessage,
+    });
+  }
+
+  private logHangingOrderCancellationSkipped(errorMessage?: string): void {
+    this.logger.warn('Hanging order cancellation skipped, proceeding with position open', {
+      error: errorMessage,
+    });
+  }
+
+  private logHangingOrderCancellationFailed(error: unknown): void {
+    this.logger.warn('Failed to cancel hanging orders', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   private wireOpenedPositionState(position: Position, signal: Signal): void {
