@@ -1035,6 +1035,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `recordSessionTradeEntryWithResilience(sessionTrade, tradeId)`
   - isolated `SKIP`-strategy execution and fallback logging for `recordTradeEntry`
   - preserved `openPosition.recordTradeEntry` context and success/failure logs
+- [x] Decomposed post-open notification boundary:
+  - extracted `notifyPositionOpenedWithResilience(position)`
+  - preserved `SKIP` strategy + recover log for `notifyPositionOpened`
+  - kept notification before analytics recording in `openPosition` flow
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

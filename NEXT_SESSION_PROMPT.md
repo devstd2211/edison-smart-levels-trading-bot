@@ -72,9 +72,12 @@ You are continuing refactoring in `D:\src\Edison`.
 - Decomposed session-stats execution branch in analytics path:
   - extracted `recordSessionTradeEntryWithResilience(sessionTrade, tradeId)`
   - kept `SKIP` strategy context (`openPosition.recordTradeEntry`) and existing logs.
+- Decomposed post-open notification boundary:
+  - extracted `notifyPositionOpenedWithResilience(position)`
+  - kept `SKIP` strategy context and recover logging behavior.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from post-open notification boundary (`notifyPositionOpened` resilience wrapper), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from open-success logging/payload shaping (small helper split), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

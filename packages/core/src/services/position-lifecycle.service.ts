@@ -230,17 +230,7 @@ export class PositionLifecycleService {
       // STEP 6: Send notifications and record
       // Phase 8.7: SKIP strategy for Telegram (non-critical)
       // ===================================================================
-      await ErrorHandler.executeAsync(
-        () => this.telegram.notifyPositionOpened(position),
-        {
-          strategy: RecoveryStrategy.SKIP,
-          logger: this.logger,
-          context: 'PositionLifecycleService.notifyPositionOpened',
-          onRecover: () => {
-            this.logger.info('Telegram notification skipped due to error');
-          },
-        }
-      );
+      await this.notifyPositionOpenedWithResilience(position);
       await this.recordPositionOpenAnalytics({
         position,
         signal,
@@ -842,6 +832,20 @@ export class PositionLifecycleService {
   private isDynamicPositionSizingEnabled(): boolean {
     const config = this.fullConfig as Config & DynamicPositionSizingConfigView;
     return config.dynamicPositionSizing?.enabled === true;
+  }
+
+  private async notifyPositionOpenedWithResilience(position: Position): Promise<void> {
+    await ErrorHandler.executeAsync(
+      () => this.telegram.notifyPositionOpened(position),
+      {
+        strategy: RecoveryStrategy.SKIP,
+        logger: this.logger,
+        context: 'PositionLifecycleService.notifyPositionOpened',
+        onRecover: () => {
+          this.logger.info('Telegram notification skipped due to error');
+        },
+      }
+    );
   }
 
   private async recordPositionOpenAnalytics(params: {
