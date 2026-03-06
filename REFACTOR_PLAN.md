@@ -1103,6 +1103,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logJournalTradeRecorded(...)`
   - extracted `logSessionStatsTradeRecorded(...)` and `logSessionStatsTradeRecordFailure(...)`
   - preserved journal/session-stats retry-skip behavior and payload semantics
+- [x] 4-slice batch in atomic/snapshot logging boundaries:
+  - extracted `logAtomicOpenResult(...)`
+  - extracted `logAtomicCloseAlreadyInProgress(...)`
+  - extracted `logPositionSnapshotDegraded(...)`
+  - extracted `logPositionSnapshotFailure(...)`
+  - preserved atomic-open/atomic-close/snapshot fallback behavior and lock semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

@@ -753,13 +753,7 @@ export class PositionLifecycleService {
 
     const openedPosition = openResult.value;
     const orderId = openedPosition.id;
-    this.logger.info('Position opened WITH atomic SL/TP protection', {
-      orderId,
-      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
-      quantity,
-      slSet: true,
-      tpSet: tpPrices.length > 0,
-    });
+    this.logAtomicOpenResult(orderId, side, quantity, tpPrices.length > 0);
 
     const tpOrderIds: (string | undefined)[] = [];
     if (tpPrices.length > 0) {
@@ -1339,7 +1333,7 @@ export class PositionLifecycleService {
 
     // Check if already closing this position
     if (this.positionClosing.has(positionId)) {
-      this.logger.warn(`[P0.1 + P3] Position already closing: ${positionId}`, { reason });
+      this.logAtomicCloseAlreadyInProgress(positionId, reason);
       return this.positionClosing.get(positionId)!; // Wait for in-progress close
     }
 
@@ -1464,19 +1458,46 @@ export class PositionLifecycleService {
         return snapshot;
       } catch (error) {
         // FALLBACK: use reference if deep copy fails
-        this.logger.warn('[P0.3] Failed to create position snapshot, using reference (degraded mode)', {
-          error: error instanceof Error ? error.message : String(error),
-        });
+        this.logPositionSnapshotDegraded(error);
         return position;
       }
     } else {
       try {
         return clonePositionSnapshot(position);
       } catch (error) {
-        this.logger.error('[P0.3] Failed to create position snapshot', { error });
+        this.logPositionSnapshotFailure(error);
         return position; // Fallback to reference if copy fails
       }
     }
+  }
+
+  private logAtomicOpenResult(
+    orderId: string | undefined,
+    side: PositionSide,
+    quantity: number,
+    tpConfigured: boolean,
+  ): void {
+    this.logger.info('Position opened WITH atomic SL/TP protection', {
+      orderId,
+      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      quantity,
+      slSet: true,
+      tpSet: tpConfigured,
+    });
+  }
+
+  private logAtomicCloseAlreadyInProgress(positionId: string, reason: string): void {
+    this.logger.warn(`[P0.1 + P3] Position already closing: ${positionId}`, { reason });
+  }
+
+  private logPositionSnapshotDegraded(error: unknown): void {
+    this.logger.warn('[P0.3] Failed to create position snapshot, using reference (degraded mode)', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  private logPositionSnapshotFailure(error: unknown): void {
+    this.logger.error('[P0.3] Failed to create position snapshot', { error });
   }
 }
 
