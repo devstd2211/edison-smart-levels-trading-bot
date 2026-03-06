@@ -1148,6 +1148,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `restorePositionFromWebSocketAfterLookupFailure(...)`
   - simplified orchestration in `recordPositionOpenAnalytics(...)` and `restorePositionFromWebSocketSync(...)`
   - preserved all branching, retry/skip strategy usage, and degraded-mode behavior
+- [x] 4-slice logging-format cleanup for position side labels:
+  - extracted `formatPositionSideForLog(...)`
+  - applied in `logPositionOpenedSuccess(...)`
+  - applied in `logAtomicOpenRequest(...)`
+  - applied in `logAtomicOpenResult(...)`
+  - preserved log payload semantics and side mapping behavior
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

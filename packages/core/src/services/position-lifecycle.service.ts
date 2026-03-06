@@ -924,7 +924,7 @@ export class PositionLifecycleService {
   private logPositionOpenedSuccess(position: Position, side: PositionSide): void {
     this.logger.info('Position opened successfully', {
       positionId: position.id,
-      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      side: this.formatPositionSideForLog(side),
       entry: position.entryPrice,
       quantity: position.quantity,
     });
@@ -979,7 +979,7 @@ export class PositionLifecycleService {
   }): void {
     const { side, quantity, entryPrice, stopLoss } = params;
     this.logger.info('Opening position on exchange with atomic SL/TP protection', {
-      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      side: this.formatPositionSideForLog(side),
       quantity,
       entry: entryPrice,
       sl: stopLoss,
@@ -995,11 +995,15 @@ export class PositionLifecycleService {
   ): void {
     this.logger.info('Position opened WITH atomic SL/TP protection', {
       orderId,
-      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      side: this.formatPositionSideForLog(side),
       quantity,
       slSet: true,
       tpSet: tpConfigured,
     });
+  }
+
+  private formatPositionSideForLog(side: PositionSide): 'LONG' | 'SHORT' {
+    return side === PositionSide.LONG ? 'LONG' : 'SHORT';
   }
 
   private logCompoundSizingSuccess(
