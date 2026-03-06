@@ -26,14 +26,13 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-05)
-- Removed local `any` usages in:
-  - `phase-12-parallel-processing.test.ts`
-  - `position-exiting.service.test.ts`
-- Related services reviewed: `StrategyProcessingPoolService`, `PositionExitingService` (no safe behavior-preserving decomposition required in this pass).
+## Last Completed (2026-03-06)
+- God-object recovery track continued with `packages/core/src/services/position-lifecycle.service.ts` iteration 1.
+- Extracted WebSocket sync/snapshot helpers to `packages/core/src/services/position-lifecycle/position-lifecycle-sync.utils.ts`.
+- Added persistence access helpers in service (`readStoredPosition` / `writeStoredPosition`) and integrated them into storage/clear flows.
+- Progress tracking updated in `REFACTOR_PLAN.md`: 2/10 recovery candidates completed, 8/10 pending.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/phase-12-parallel-processing.test.ts packages/core/src/__tests__/position-exiting.service.test.ts` -> 2/2 suites PASS, 72/72 tests PASS.
-  - Note: Jest reports open handles after this batch (existing suite behavior; functional assertions pass).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts` -> 2/2 suites PASS, 36/36 tests PASS.
 
 ## Next Step
-- Active non-archived `__tests__` files are `any`-clean. Remaining `any` usage is only in archived suite: `__tests__/services/market-data-collector.service.test.ARCHIVED.ts`.
+- Continue recovery track with next highest-impact candidate: `packages/core/src/services/trading-journal.service.ts` (behavior-preserving extraction of write/read/stats adapters + targeted tests + progress update).

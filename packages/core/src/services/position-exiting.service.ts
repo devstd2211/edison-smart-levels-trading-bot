@@ -37,6 +37,12 @@ import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { RealityCheckService } from './reality-check.service';
+import {
+  calculateBollingerBands,
+  calculateBreakevenPrice,
+  calculateFallbackBreakevenPrice,
+  calculateTrailingStopPrice,
+} from './position-exiting/position-exit-pricing.utils';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
@@ -811,7 +817,7 @@ export class PositionExitingService {
 
         // FALLBACK: Use current SL + small offset instead of throwing
         // This prevents position from being orphaned
-        const fallbackBreakevenPrice = this.calculateFallbackBreakevenPrice(position, currentPrice);
+        const fallbackBreakevenPrice = calculateFallbackBreakevenPrice(position.stopLoss.price, position.side);
 
         this.logger.warn('⚠️ Using fallback breakeven SL', {
           positionId: position.id,
@@ -845,7 +851,7 @@ export class PositionExitingService {
         });
 
         // FALLBACK: Use fallback breakeven SL instead of throwing
-        const fallbackBreakevenPrice = this.calculateFallbackBreakevenPrice(position, currentPrice);
+        const fallbackBreakevenPrice = calculateFallbackBreakevenPrice(position.stopLoss.price, position.side);
         this.logger.warn('⚠️ Using fallback breakeven SL (invalid config)', {
           positionId: position.id,
           reason: 'Invalid breakevenOffsetPercent in riskConfig',
@@ -866,7 +872,11 @@ export class PositionExitingService {
         return;
       }
 
-      const breakevenPrice = this.calculateBreakevenPrice(position, this.riskConfig.breakevenOffsetPercent);
+      const breakevenPrice = calculateBreakevenPrice(
+        position.entryPrice,
+        position.side,
+        this.riskConfig.breakevenOffsetPercent,
+      );
 
       // Double-check result is valid
       if (isNaN(breakevenPrice)) {
@@ -937,8 +947,8 @@ export class PositionExitingService {
     position.stopLoss.trailingActivationPrice = currentPrice;
     position.stopLoss.updatedAt = Date.now();
 
-    const trailingStopPrice = this.calculateTrailingStopPrice(
-      position,
+    const trailingStopPrice = calculateTrailingStopPrice(
+      position.side,
       currentPrice,
       this.riskConfig.trailingStopPercent,
     );
@@ -958,8 +968,8 @@ export class PositionExitingService {
 
     try {
       // Calculate new trailing stop distance
-      const trailingStop = this.calculateTrailingStopPrice(
-        position,
+      const trailingStop = calculateTrailingStopPrice(
+        position.side,
         currentPrice,
         this.riskConfig.trailingStopPercent,
       );
@@ -1056,16 +1066,11 @@ export class PositionExitingService {
     try {
       // Calculate Bollinger Bands
       const closes = candles.slice(-20).map((c) => c.close);
-      const avg = closes.reduce((a, b) => a + b, 0) / closes.length;
-      const variance = closes.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / closes.length;
-      const stdDev = Math.sqrt(variance);
-
-      const upperBand = avg + 2 * stdDev;
-      const lowerBand = avg - 2 * stdDev;
+      const bands = calculateBollingerBands(closes);
 
       // Use lower band for LONG, upper band for SHORT
       const isLong = position.side === PositionSide.LONG;
-      const bbStop = isLong ? lowerBand : upperBand;
+      const bbStop = isLong ? bands.lower : bands.upper;
 
       // Only update if more favorable
       const shouldUpdate = isLong ? bbStop > position.stopLoss.price : bbStop < position.stopLoss.price;
@@ -1092,56 +1097,6 @@ export class PositionExitingService {
       });
     }
   }
-
-  /**
-   * Calculate breakeven price
-   */
-  private calculateBreakevenPrice(position: Position, offsetPercent: number): number {
-    // GUARD: Validate offsetPercent is a valid number
-    if (!offsetPercent || typeof offsetPercent !== 'number' || isNaN(offsetPercent) || !isFinite(offsetPercent)) {
-      this.logger.error('❌ Invalid breakevenOffsetPercent', {
-        offsetPercent,
-        type: typeof offsetPercent,
-        isNaN: isNaN(offsetPercent),
-      });
-      // FALLBACK: Use safe default of 0.3%
-      const safeOffsetPercent = 0.3;
-      const offset = (position.entryPrice * safeOffsetPercent) / PERCENT_MULTIPLIER;
-      const isLong = position.side === PositionSide.LONG;
-      return isLong ? position.entryPrice + offset : position.entryPrice - offset;
-    }
-
-    const offset = (position.entryPrice * offsetPercent) / PERCENT_MULTIPLIER;
-    const isLong = position.side === PositionSide.LONG;
-    return isLong ? position.entryPrice + offset : position.entryPrice - offset;
-  }
-
-  /**
-   * FALLBACK: Calculate breakeven when entry price is corrupted
-   * Uses current SL as anchor point instead of entry price
-   * This prevents position from being orphaned
-   */
-  private calculateFallbackBreakevenPrice(position: Position, currentPrice: number): number {
-    const isLong = position.side === PositionSide.LONG;
-    const safeOffsetPercent = 0.1; // 0.1% offset (smaller than regular 0.3%)
-
-    // Use current SL as the base, move it slightly in favorable direction
-    if (isLong) {
-      // LONG: Move SL up by 0.1% from current SL
-      return position.stopLoss.price * (1 + safeOffsetPercent / PERCENT_MULTIPLIER);
-    } else {
-      // SHORT: Move SL down by 0.1% from current SL
-      return position.stopLoss.price * (1 - safeOffsetPercent / PERCENT_MULTIPLIER);
-    }
-  }
-
-  /**
-   * Calculate trailing stop price
-   */
-  private calculateTrailingStopPrice(position: Position, currentPrice: number, trailingPercent: number): number {
-    const trailingDistance = (currentPrice * trailingPercent) / PERCENT_MULTIPLIER;
-    const isLong = position.side === PositionSide.LONG;
-    return isLong ? currentPrice - trailingDistance : currentPrice + trailingDistance;
-  }
 }
+
 

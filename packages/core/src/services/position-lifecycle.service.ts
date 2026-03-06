@@ -51,6 +51,11 @@ import type { DynamicPositionSizerService } from './dynamic-position-sizer.servi
 import type { PositionScalingService } from './position-scaling.service';
 import { IPositionRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import {
+  applyWebSocketPositionUpdate,
+  clonePositionSnapshot,
+  restoreWebSocketPosition,
+} from './position-lifecycle/position-lifecycle-sync.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -97,6 +102,21 @@ export class PositionLifecycleService {
     private readonly positionScalingService?: PositionScalingService, // Phase 11.2: Dynamic pyramiding
   ) {
     this.entryConfirmation = new EntryConfirmationManager(entryConfirmationConfig, logger);
+  }
+
+  private readStoredPosition(): Position | null {
+    if (this.positionRepository) {
+      return this.positionRepository.getCurrentPosition();
+    }
+    return this.currentPosition;
+  }
+
+  private writeStoredPosition(position: Position | null): void {
+    if (this.positionRepository) {
+      this.positionRepository.setCurrentPosition(position);
+      return;
+    }
+    this.currentPosition = position;
   }
 
   // =========================================================================
@@ -339,10 +359,10 @@ export class PositionLifecycleService {
       // Store position IMMEDIATELY to prevent race condition
       // Phase 6.2: Use repository if available, fallback to direct storage
       if (this.positionRepository) {
-        this.positionRepository.setCurrentPosition(position);
+        this.writeStoredPosition(position);
         this.logger.debug('[Phase 6.2] Position stored in repository', { positionId: position.id });
       } else {
-        this.currentPosition = position;
+        this.writeStoredPosition(position);
       }
 
       // Emit position-opened event
@@ -505,10 +525,7 @@ export class PositionLifecycleService {
    * Phase 6.2: Read from repository if available, fallback to direct storage
    */
   getCurrentPosition(): Position | null {
-    if (this.positionRepository) {
-      return this.positionRepository.getCurrentPosition();
-    }
-    return this.currentPosition;
+    return this.readStoredPosition();
   }
 
   /**
@@ -556,9 +573,7 @@ export class PositionLifecycleService {
    */
   async clearPosition(): Promise<void> {
     // Get position before clearing (for event emission)
-    const closedPosition = this.positionRepository
-      ? this.positionRepository.getCurrentPosition()
-      : this.currentPosition;
+    const closedPosition = this.readStoredPosition();
 
     // Phase 8.7: Cancel with RETRY strategy, then SKIP if exhausted
     this.logger.debug('🧹 Cancelling conditional orders after position close...');
@@ -589,10 +604,10 @@ export class PositionLifecycleService {
     // Clear state
     // Phase 6.2: Use repository if available
     if (this.positionRepository && closedPosition) {
-      this.positionRepository.setCurrentPosition(null);
+      this.writeStoredPosition(null);
       this.logger.debug('[Phase 6.2] Position cleared from repository', { positionId: closedPosition.id });
     } else {
-      this.currentPosition = null;
+      this.writeStoredPosition(null);
     }
     this.takeProfitManager = null;
     this.isOpeningPosition = false;
@@ -922,61 +937,50 @@ export class PositionLifecycleService {
       const openTrade = this.journal.getOpenPositionBySymbol(position.symbol);
 
       if (openTrade) {
-        // Restore journalId from open trade
-        position.journalId = openTrade.id;
+        const restored = restoreWebSocketPosition(position, openTrade.id);
         this.logger.info('✅ Position restored from WebSocket with journal ID', {
-          exchangeId: position.id,
-          journalId: position.journalId,
-          symbol: position.symbol,
+          exchangeId: restored.id,
+          journalId: restored.journalId,
+          symbol: restored.symbol,
         });
-      } else {
-        // No open trade in journal - DO NOT create journal entry (graceful degrade)
-        this.logger.warn('⚠️ Position restored from WebSocket but not found in journal - IGNORING from statistics', {
-          exchangeId: position.id,
-          symbol: position.symbol,
-          entryPrice: position.entryPrice,
-          quantity: position.quantity,
-          note: 'This position will be managed (TP/SL) but NOT recorded in journal.',
-        });
-
-        position.journalId = undefined;
+        return restored;
       }
+
+      const restored = restoreWebSocketPosition(position, undefined);
+      this.logger.warn('⚠️ Position restored from WebSocket but not found in journal - IGNORING from statistics', {
+        exchangeId: restored.id,
+        symbol: restored.symbol,
+        entryPrice: restored.entryPrice,
+        quantity: restored.quantity,
+        note: 'This position will be managed (TP/SL) but NOT recorded in journal.',
+      });
+      return restored;
     } catch (error) {
+      const restored = restoreWebSocketPosition(position, undefined);
       // Journal lookup failed - graceful degrade (continue without journalId)
       this.logger.warn('Journal lookup failed during position restoration - proceeding without journalId', {
         error: error instanceof Error ? error.message : String(error),
-        positionId: position.id,
+        positionId: restored.id,
       });
-      position.journalId = undefined;
+      return restored;
     }
-
-    // Initialize status for restored positions
-    if (!position.status) {
-      position.status = 'OPEN';
-    }
-
-    return position;
   }
 
   /**
    * Update existing position state with WebSocket data
    */
   private updatePositionState(currentPosition: Position, wsPosition: Position): Position {
-    // Update quantity and PnL from WebSocket
-    currentPosition.quantity = wsPosition.quantity;
-    currentPosition.unrealizedPnL = wsPosition.unrealizedPnL;
+    const { position, entryPriceUpdated } = applyWebSocketPositionUpdate(currentPosition, wsPosition);
 
-    // CRITICAL: Only update entryPrice if it's valid (> 0) and current is 0
-    // Bybit sends entryPrice=0 for MARKET orders before they're filled
-    if (wsPosition.entryPrice > 0 && currentPosition.entryPrice === 0) {
-      currentPosition.entryPrice = wsPosition.entryPrice;
+    // CRITICAL: Bybit can send entryPrice=0 before MARKET order fill
+    if (entryPriceUpdated) {
       this.logger.info('✅ Entry price updated from WebSocket', {
-        positionId: currentPosition.id,
+        positionId: position.id,
         entryPrice: wsPosition.entryPrice,
       });
     }
 
-    return currentPosition;
+    return position;
   }
 
   // =========================================================================
@@ -1081,7 +1085,7 @@ export class PositionLifecycleService {
     // Deep copy = atomic read (WebSocket changes won't affect copy)
     if (this.errorHandler) {
       try {
-        const snapshot = JSON.parse(JSON.stringify(position));
+        const snapshot = clonePositionSnapshot(position);
         return snapshot;
       } catch (error) {
         // FALLBACK: use reference if deep copy fails
@@ -1092,7 +1096,7 @@ export class PositionLifecycleService {
       }
     } else {
       try {
-        return JSON.parse(JSON.stringify(position));
+        return clonePositionSnapshot(position);
       } catch (error) {
         this.logger.error('[P0.3] Failed to create position snapshot', { error });
         return position; // Fallback to reference if copy fails
