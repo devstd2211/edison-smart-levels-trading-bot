@@ -1073,22 +1073,12 @@ export class PositionLifecycleService {
 
       if (openTrade) {
         const restored = restoreWebSocketPosition(position, openTrade.id);
-        this.logger.info('✅ Position restored from WebSocket with journal ID', {
-          exchangeId: restored.id,
-          journalId: restored.journalId,
-          symbol: restored.symbol,
-        });
+        this.logWebSocketRestoreWithJournal(restored);
         return restored;
       }
 
       const restored = restoreWebSocketPosition(position, undefined);
-      this.logger.warn('⚠️ Position restored from WebSocket but not found in journal - IGNORING from statistics', {
-        exchangeId: restored.id,
-        symbol: restored.symbol,
-        entryPrice: restored.entryPrice,
-        quantity: restored.quantity,
-        note: 'This position will be managed (TP/SL) but NOT recorded in journal.',
-      });
+      this.logWebSocketRestoreWithoutJournal(restored);
       return restored;
     } catch (error) {
       const restored = restoreWebSocketPosition(position, undefined);
@@ -1101,6 +1091,31 @@ export class PositionLifecycleService {
     }
   }
 
+  private logWebSocketRestoreWithJournal(position: Position): void {
+    this.logger.info('Position restored from WebSocket with journal ID', {
+      exchangeId: position.id,
+      journalId: position.journalId,
+      symbol: position.symbol,
+    });
+  }
+
+  private logWebSocketRestoreWithoutJournal(position: Position): void {
+    this.logger.warn('Position restored from WebSocket but not found in journal - IGNORING from statistics', {
+      exchangeId: position.id,
+      symbol: position.symbol,
+      entryPrice: position.entryPrice,
+      quantity: position.quantity,
+      note: 'This position will be managed (TP/SL) but NOT recorded in journal.',
+    });
+  }
+
+  private logWebSocketEntryPriceUpdate(positionId: string, entryPrice: number): void {
+    this.logger.info('Entry price updated from WebSocket', {
+      positionId,
+      entryPrice,
+    });
+  }
+
   /**
    * Update existing position state with WebSocket data
    */
@@ -1109,10 +1124,7 @@ export class PositionLifecycleService {
 
     // CRITICAL: Bybit can send entryPrice=0 before MARKET order fill
     if (entryPriceUpdated) {
-      this.logger.info('✅ Entry price updated from WebSocket', {
-        positionId: position.id,
-        entryPrice: wsPosition.entryPrice,
-      });
+      this.logWebSocketEntryPriceUpdate(position.id, wsPosition.entryPrice);
     }
 
     return position;
@@ -1246,6 +1258,7 @@ export class PositionLifecycleService {
     }
   }
 }
+
 
 
 

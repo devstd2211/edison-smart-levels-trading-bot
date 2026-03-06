@@ -1052,6 +1052,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logStopLossCalculated(...)`
   - extracted `logAtomicOpenRequest(...)`
   - preserved open flow ordering and payload semantics for all three logs
+- [x] Triple micro-slice in WebSocket sync logging (single batch):
+  - extracted `logWebSocketRestoreWithJournal(position)`
+  - extracted `logWebSocketRestoreWithoutJournal(position)`
+  - extracted `logWebSocketEntryPriceUpdate(positionId, entryPrice)`
+  - preserved restore/update behavior and warning/info semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
