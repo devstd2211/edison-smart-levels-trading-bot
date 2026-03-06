@@ -1109,6 +1109,13 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logPositionSnapshotDegraded(...)`
   - extracted `logPositionSnapshotFailure(...)`
   - preserved atomic-open/atomic-close/snapshot fallback behavior and lock semantics
+- [x] 5-slice batch in start/event logging and helper sectioning:
+  - extracted `logConditionalOrderCancelStart(...)`
+  - extracted `logHangingOrderCancellationStart(...)`
+  - extracted `logPositionOpenedEventEmitting(...)`
+  - structure-only moved `logAtomicOpenResult(...)` to open-flow logging section
+  - structure-only moved `logAtomicCloseAlreadyInProgress(...)` to atomic-close logging section
+  - preserved clear/open/event call order and all resilience behavior
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

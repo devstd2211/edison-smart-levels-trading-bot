@@ -149,9 +149,16 @@ You are continuing refactoring in `D:\src\Edison`.
   - extracted `logPositionSnapshotDegraded(...)`
   - extracted `logPositionSnapshotFailure(...)`
   with unchanged lock and snapshot fallback behavior.
+- Completed 5-slice batch in start/event logging and helper sectioning:
+  - extracted `logConditionalOrderCancelStart(...)`
+  - extracted `logHangingOrderCancellationStart(...)`
+  - extracted `logPositionOpenedEventEmitting(...)`
+  - moved `logAtomicOpenResult(...)` near open-flow logging helpers (structure-only)
+  - moved `logAtomicCloseAlreadyInProgress(...)` near atomic-close logging helpers (structure-only)
+  with unchanged behavior and call ordering.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: perform structure-only helper ordering cleanup (group atomic-close/snapshot helpers into dedicated section), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: perform structure-only helper ordering cleanup (group snapshot/logging helpers and normalize section spacing), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

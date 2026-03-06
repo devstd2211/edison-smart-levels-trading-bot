@@ -365,7 +365,7 @@ export class PositionLifecycleService {
 
   private async cancelConditionalOrdersAfterClose(): Promise<void> {
     // Phase 8.7: Cancel with RETRY strategy, then SKIP if exhausted
-    this.logger.debug('Cancelling conditional orders after position close...');
+    this.logConditionalOrderCancelStart();
     await ErrorHandler.executeAsync(
       () => this.bybitService.cancelAllConditionalOrders(),
       {
@@ -764,7 +764,7 @@ export class PositionLifecycleService {
   }
 
   private async cancelHangingOrdersBeforeOpen(): Promise<void> {
-    this.logger.debug('Cancelling any hanging conditional orders before opening...');
+    this.logHangingOrderCancellationStart();
     if (this.errorHandler) {
       const cancelResult = await this.errorHandler.executeAsync(
         () => this.bybitService.cancelAllConditionalOrders(),
@@ -851,6 +851,10 @@ export class PositionLifecycleService {
     });
   }
 
+  private logHangingOrderCancellationStart(): void {
+    this.logger.debug('Cancelling any hanging conditional orders before opening...');
+  }
+
   private logHangingOrderCancellationFailed(error: unknown): void {
     this.logger.warn('Failed to cancel hanging orders', {
       error: error instanceof Error ? error.message : String(error),
@@ -873,7 +877,7 @@ export class PositionLifecycleService {
     }
 
     // Emit position-opened event
-    this.logger.info('Emitting position-opened event', { positionId: position.id });
+    this.logPositionOpenedEventEmitting(position.id);
     this.eventBus.emit('position-opened', {
       position,
       strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
@@ -902,6 +906,10 @@ export class PositionLifecycleService {
       entry: position.entryPrice,
       quantity: position.quantity,
     });
+  }
+
+  private logPositionOpenedEventEmitting(positionId: string): void {
+    this.logger.info('Emitting position-opened event', { positionId });
   }
 
   private logPositionStoredInRepository(positionId: string): void {
@@ -954,6 +962,21 @@ export class PositionLifecycleService {
       entry: entryPrice,
       sl: stopLoss,
       leverage: this.tradingConfig.leverage,
+    });
+  }
+
+  private logAtomicOpenResult(
+    orderId: string | undefined,
+    side: PositionSide,
+    quantity: number,
+    tpConfigured: boolean,
+  ): void {
+    this.logger.info('Position opened WITH atomic SL/TP protection', {
+      orderId,
+      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      quantity,
+      slSet: true,
+      tpSet: tpConfigured,
     });
   }
 
@@ -1405,6 +1428,14 @@ export class PositionLifecycleService {
     this.logger.warn('Failed to cancel orders - proceeding with position clear');
   }
 
+  private logConditionalOrderCancelStart(): void {
+    this.logger.debug('Cancelling conditional orders after position close...');
+  }
+
+  private logAtomicCloseAlreadyInProgress(positionId: string, reason: string): void {
+    this.logger.warn(`[P0.1 + P3] Position already closing: ${positionId}`, { reason });
+  }
+
   private logAtomicCloseNoPosition(positionId: string, reason: string): void {
     this.logger.info(`[P0.1 + P3] Position already closed or not found: ${positionId}`, {
       reason,
@@ -1469,25 +1500,6 @@ export class PositionLifecycleService {
         return position; // Fallback to reference if copy fails
       }
     }
-  }
-
-  private logAtomicOpenResult(
-    orderId: string | undefined,
-    side: PositionSide,
-    quantity: number,
-    tpConfigured: boolean,
-  ): void {
-    this.logger.info('Position opened WITH atomic SL/TP protection', {
-      orderId,
-      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
-      quantity,
-      slSet: true,
-      tpSet: tpConfigured,
-    });
-  }
-
-  private logAtomicCloseAlreadyInProgress(positionId: string, reason: string): void {
-    this.logger.warn(`[P0.1 + P3] Position already closing: ${positionId}`, { reason });
   }
 
   private logPositionSnapshotDegraded(error: unknown): void {
