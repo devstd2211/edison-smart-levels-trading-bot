@@ -1091,6 +1091,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logPositionOpenedEventEmitted(...)`
   - extracted `logWebSocketRestoreJournalLookupFailure(...)`
   - preserved all call ordering and existing resilience behavior
+- [x] 4-slice batch in open/configure/clear/notify logging boundaries:
+  - extracted `logOpenPositionFailure(...)`
+  - extracted TP-setup logs: `logAdditionalTakeProfitsStart(...)`, `logAdditionalTakeProfitSet(...)`, `logAdditionalTakeProfitSetNonCriticalFailure(...)`, `logAdditionalTakeProfitSetFailure(...)`
+  - extracted `logPositionClearedFromRepository(...)`
+  - extracted `logTelegramNotificationSkipped(...)`
+  - preserved open/clear sequencing and retry/degrade semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

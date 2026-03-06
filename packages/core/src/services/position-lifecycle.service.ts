@@ -240,9 +240,7 @@ export class PositionLifecycleService {
 
       return position;
     } catch (error) {
-      this.logger.error('Failed to open position', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      this.logOpenPositionFailure(error);
       throw error;
     } finally {
       this.isOpeningPosition = false;
@@ -254,9 +252,7 @@ export class PositionLifecycleService {
       return;
     }
 
-    this.logger.info('Setting additional TP levels', {
-      additionalLevels: signal.takeProfits.length - 1,
-    });
+    this.logAdditionalTakeProfitsStart(signal.takeProfits.length - 1);
 
     for (let i = 1; i < signal.takeProfits.length; i++) {
       const tp = signal.takeProfits[i];
@@ -282,14 +278,9 @@ export class PositionLifecycleService {
         );
 
         if (tpResult.success) {
-          this.logger.debug(`TP${i + 1} set`, {
-            price: tp.price,
-            size: tpSize,
-          });
+          this.logAdditionalTakeProfitSet(i + 1, tp.price, tpSize);
         } else {
-          this.logger.warn(`Failed to set TP${i + 1} level (non-critical)`, {
-            error: tpResult.error?.message,
-          });
+          this.logAdditionalTakeProfitSetNonCriticalFailure(i + 1, tpResult.error?.message);
         }
         continue;
       }
@@ -301,14 +292,9 @@ export class PositionLifecycleService {
           index: i,
         });
 
-        this.logger.debug(`TP${i + 1} set`, {
-          price: tp.price,
-          size: tpSize,
-        });
+        this.logAdditionalTakeProfitSet(i + 1, tp.price, tpSize);
       } catch (error) {
-        this.logger.warn(`Failed to set TP${i + 1} level`, {
-          error: error instanceof Error ? error.message : String(error),
-        });
+        this.logAdditionalTakeProfitSetFailure(i + 1, error);
       }
     }
   }
@@ -407,7 +393,7 @@ export class PositionLifecycleService {
     // Phase 6.2: Use repository if available
     if (this.positionRepository && closedPosition) {
       this.writeStoredPosition(null);
-      this.logger.debug('[Phase 6.2] Position cleared from repository', { positionId: closedPosition.id });
+      this.logPositionClearedFromRepository(closedPosition.id);
     } else {
       this.writeStoredPosition(null);
     }
@@ -1025,10 +1011,47 @@ export class PositionLifecycleService {
         logger: this.logger,
         context: 'PositionLifecycleService.notifyPositionOpened',
         onRecover: () => {
-          this.logger.info('Telegram notification skipped due to error');
+          this.logTelegramNotificationSkipped();
         },
       }
     );
+  }
+
+  private logOpenPositionFailure(error: unknown): void {
+    this.logger.error('Failed to open position', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  private logAdditionalTakeProfitsStart(additionalLevels: number): void {
+    this.logger.info('Setting additional TP levels', { additionalLevels });
+  }
+
+  private logAdditionalTakeProfitSet(levelIndex: number, price: number, size: number): void {
+    this.logger.debug(`TP${levelIndex} set`, { price, size });
+  }
+
+  private logAdditionalTakeProfitSetNonCriticalFailure(
+    levelIndex: number,
+    errorMessage?: string,
+  ): void {
+    this.logger.warn(`Failed to set TP${levelIndex} level (non-critical)`, {
+      error: errorMessage,
+    });
+  }
+
+  private logAdditionalTakeProfitSetFailure(levelIndex: number, error: unknown): void {
+    this.logger.warn(`Failed to set TP${levelIndex} level`, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  private logPositionClearedFromRepository(positionId: string): void {
+    this.logger.debug('[Phase 6.2] Position cleared from repository', { positionId });
+  }
+
+  private logTelegramNotificationSkipped(): void {
+    this.logger.info('Telegram notification skipped due to error');
   }
 
   private async recordPositionOpenAnalytics(params: {
