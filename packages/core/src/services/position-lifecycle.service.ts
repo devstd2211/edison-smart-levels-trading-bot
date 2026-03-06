@@ -1275,26 +1275,50 @@ export class PositionLifecycleService {
     }
 
     if (this.errorHandler) {
-      const statsResult = await this.errorHandler.executeAsync(
-        async () => {
-          this.sessionStats!.recordTradeEntry(sessionTrade);
-        },
-        {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'PositionLifecycleService.openPosition.recordTradeEntry',
-        }
-      );
-
-      if (statsResult.success) {
-        this.logSessionStatsTradeRecorded(tradeId);
-      } else {
-        this.logSessionStatsTradeRecordFailure(statsResult.error?.message);
-      }
+      const skipResult = await this.recordSessionTradeEntryWithSkip(sessionTrade);
+      this.logSessionTradeEntrySkipResult(skipResult.success, tradeId, skipResult.errorMessage);
       return;
     }
 
     this.sessionStats.recordTradeEntry(sessionTrade);
     this.logSessionStatsTradeRecorded(tradeId);
+  }
+
+  private async recordSessionTradeEntryWithSkip(sessionTrade: SessionTradeRecord): Promise<{
+    success: boolean;
+    errorMessage?: string;
+  }> {
+    if (!this.errorHandler || !this.sessionStats) {
+      return { success: false, errorMessage: 'Session stats unavailable' };
+    }
+
+    const statsResult = await this.errorHandler.executeAsync(
+      async () => {
+        this.sessionStats!.recordTradeEntry(sessionTrade);
+      },
+      {
+        strategy: RecoveryStrategy.SKIP,
+        context: 'PositionLifecycleService.openPosition.recordTradeEntry',
+      }
+    );
+
+    return {
+      success: statsResult.success,
+      errorMessage: statsResult.error?.message,
+    };
+  }
+
+  private logSessionTradeEntrySkipResult(
+    success: boolean,
+    tradeId: string,
+    errorMessage?: string,
+  ): void {
+    if (success) {
+      this.logSessionStatsTradeRecorded(tradeId);
+      return;
+    }
+
+    this.logSessionStatsTradeRecordFailure(errorMessage);
   }
 
   private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {
