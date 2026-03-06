@@ -739,10 +739,8 @@ export class PositionLifecycleService {
     tpOrderIds: (string | undefined)[];
   }> {
     const { side, quantity, actualStopLoss, takeProfits } = params;
-    const exchangeSide: 'Buy' | 'Sell' = side === PositionSide.LONG ? 'Buy' : 'Sell';
-    const tpPrices = takeProfits && takeProfits.length > 0
-      ? takeProfits.map(tp => tp.price)
-      : [];
+    const exchangeSide = this.resolveExchangeSide(side);
+    const tpPrices = this.resolveTakeProfitPrices(takeProfits);
 
     const openResult = await ErrorHandler.executeAsync(
       () => this.bybitService.openPosition({
@@ -776,13 +774,32 @@ export class PositionLifecycleService {
     const openedPosition = openResult.value;
     const orderId = openedPosition.id;
     this.logAtomicOpenResult(orderId, side, quantity, tpPrices.length > 0);
-
-    const tpOrderIds: (string | undefined)[] = [];
-    if (tpPrices.length > 0) {
-      tpOrderIds.push(orderId);
-    }
+    const tpOrderIds = this.resolveTakeProfitOrderIds(orderId, tpPrices.length > 0);
 
     return { openedPosition, orderId, tpOrderIds };
+  }
+
+  private resolveExchangeSide(side: PositionSide): 'Buy' | 'Sell' {
+    return side === PositionSide.LONG ? 'Buy' : 'Sell';
+  }
+
+  private resolveTakeProfitPrices(
+    takeProfits: Signal['takeProfits'] | undefined,
+  ): number[] {
+    return takeProfits && takeProfits.length > 0
+      ? takeProfits.map(tp => tp.price)
+      : [];
+  }
+
+  private resolveTakeProfitOrderIds(
+    orderId: string | undefined,
+    hasTakeProfits: boolean,
+  ): (string | undefined)[] {
+    const tpOrderIds: (string | undefined)[] = [];
+    if (hasTakeProfits) {
+      tpOrderIds.push(orderId);
+    }
+    return tpOrderIds;
   }
 
   private async cancelHangingOrdersBeforeOpen(): Promise<void> {
@@ -1197,8 +1214,7 @@ export class PositionLifecycleService {
       return;
     }
 
-    this.journal.recordTradeOpen(tradeOpenPayload);
-    this.logJournalTradeRecorded(journalId);
+    this.recordTradeOpenDirect(tradeOpenPayload, journalId);
   }
 
   private createTradeOpenPayload(params: {
@@ -1265,6 +1281,11 @@ export class PositionLifecycleService {
     this.logJournalTradeOpenFailure(positionId, errorMessage);
   }
 
+  private recordTradeOpenDirect(payload: TradeOpenPayload, journalId: string): void {
+    this.journal.recordTradeOpen(payload);
+    this.logJournalTradeRecorded(journalId);
+  }
+
   private createSessionTradeRecordForOpen(params: {
     journalId: string;
     timestamp: number;
@@ -1311,8 +1332,7 @@ export class PositionLifecycleService {
       return;
     }
 
-    this.sessionStats.recordTradeEntry(sessionTrade);
-    this.logSessionStatsTradeRecorded(tradeId);
+    this.recordSessionTradeEntryDirect(sessionTrade, tradeId);
   }
 
   private async recordSessionTradeEntryWithSkip(sessionTrade: SessionTradeRecord): Promise<{
@@ -1350,6 +1370,14 @@ export class PositionLifecycleService {
     }
 
     this.logSessionStatsTradeRecordFailure(errorMessage);
+  }
+
+  private recordSessionTradeEntryDirect(
+    sessionTrade: SessionTradeRecord,
+    tradeId: string,
+  ): void {
+    this.sessionStats!.recordTradeEntry(sessionTrade);
+    this.logSessionStatsTradeRecorded(tradeId);
   }
 
   private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {

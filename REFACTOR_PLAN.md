@@ -1165,6 +1165,14 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - applied in `logAtomicCloseFailure(...)`
   - applied in `logPositionSnapshotDegraded(...)`
   - preserved all log semantics and error-string conversion behavior
+- [x] 7-slice batch in open/analytics direct-path decomposition:
+  - extracted `resolveExchangeSide(...)`
+  - extracted `resolveTakeProfitPrices(...)`
+  - extracted `resolveTakeProfitOrderIds(...)`
+  - extracted `recordTradeOpenDirect(...)`
+  - extracted `recordSessionTradeEntryDirect(...)`
+  - simplified `executeAtomicOpenPosition(...)` and analytics direct branches
+  - preserved open order construction and direct record semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

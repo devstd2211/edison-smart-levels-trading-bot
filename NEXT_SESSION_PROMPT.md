@@ -198,9 +198,17 @@ You are continuing refactoring in `D:\src\Edison`.
   - extracted `toErrorMessage(error)`
   - applied to open/cancel/sizing/tp/websocket/atomic/snapshot error logs
   with unchanged error-string conversion semantics.
+- Completed 7-slice batch in open/analytics direct-path decomposition:
+  - extracted `resolveExchangeSide(...)`
+  - extracted `resolveTakeProfitPrices(...)`
+  - extracted `resolveTakeProfitOrderIds(...)`
+  - extracted `recordTradeOpenDirect(...)`
+  - extracted `recordSessionTradeEntryDirect(...)`
+  - simplified open + analytics direct branches
+  with unchanged behavior.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: apply structure-only helper ordering cleanup for error/log helper clusters (analytics/websocket/snapshot), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: apply structure-only helper ordering cleanup for open/analytics helper clusters and spacing normalization, then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
