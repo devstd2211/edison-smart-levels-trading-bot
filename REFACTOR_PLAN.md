@@ -995,6 +995,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - duplicate-open guard now checks `readStoredPosition()` (covers repository-backed state)
   - `getOpenPositions()` now reads via repository-aware accessor
   - `syncWithWebSocket()` intentionally kept on in-memory `currentPosition` semantics for backward compatibility with existing error-handling behavior.
+- [x] Decomposed `clearPosition()` into explicit close-flow steps in `PositionLifecycleService`:
+  - `cancelConditionalOrdersAfterClose()` (retry + logging policy)
+  - `finalizePositionClear()` (state reset + close event emission)
+  - preserved close order: capture snapshot -> cancel attempts -> clear state -> emit event
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

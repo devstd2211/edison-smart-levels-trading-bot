@@ -562,9 +562,13 @@ export class PositionLifecycleService {
   async clearPosition(): Promise<void> {
     // Get position before clearing (for event emission)
     const closedPosition = this.readStoredPosition();
+    await this.cancelConditionalOrdersAfterClose();
+    this.finalizePositionClear(closedPosition);
+  }
 
+  private async cancelConditionalOrdersAfterClose(): Promise<void> {
     // Phase 8.7: Cancel with RETRY strategy, then SKIP if exhausted
-    this.logger.debug('🧹 Cancelling conditional orders after position close...');
+    this.logger.debug('?? Cancelling conditional orders after position close...');
     await ErrorHandler.executeAsync(
       () => this.bybitService.cancelAllConditionalOrders(),
       {
@@ -588,7 +592,9 @@ export class PositionLifecycleService {
         },
       }
     );
+  }
 
+  private finalizePositionClear(closedPosition: Position | null): void {
     // Clear state
     // Phase 6.2: Use repository if available
     if (this.positionRepository && closedPosition) {
@@ -1084,3 +1090,4 @@ export class PositionLifecycleService {
     }
   }
 }
+
