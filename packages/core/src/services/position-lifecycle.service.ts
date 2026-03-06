@@ -1564,21 +1564,29 @@ export class PositionLifecycleService {
 
     // Deep copy = atomic read (WebSocket changes won't affect copy)
     if (this.errorHandler) {
-      try {
-        const snapshot = clonePositionSnapshot(position);
-        return snapshot;
-      } catch (error) {
-        // FALLBACK: use reference if deep copy fails
-        this.logPositionSnapshotDegraded(error);
-        return position;
-      }
-    } else {
-      try {
-        return clonePositionSnapshot(position);
-      } catch (error) {
-        this.logPositionSnapshotFailure(error);
-        return position; // Fallback to reference if copy fails
-      }
+      return this.getPositionSnapshotWithErrorHandler(position);
+    }
+
+    return this.getPositionSnapshotWithoutErrorHandler(position);
+  }
+
+  private getPositionSnapshotWithErrorHandler(position: Position): Position {
+    try {
+      const snapshot = clonePositionSnapshot(position);
+      return snapshot;
+    } catch (error) {
+      // FALLBACK: use reference if deep copy fails
+      this.logPositionSnapshotDegraded(error);
+      return position;
+    }
+  }
+
+  private getPositionSnapshotWithoutErrorHandler(position: Position): Position {
+    try {
+      return clonePositionSnapshot(position);
+    } catch (error) {
+      this.logPositionSnapshotFailure(error);
+      return position; // Fallback to reference if copy fails
     }
   }
 

@@ -171,9 +171,14 @@ You are continuing refactoring in `D:\src\Edison`.
   - extracted `logSessionTradeEntrySkipResult(...)`
   - simplified `recordSessionTradeEntryWithResilience(...)` orchestration
   with unchanged `openPosition.recordTradeEntry` skip behavior.
+- Completed 3-slice batch in snapshot fallback decomposition:
+  - extracted `getPositionSnapshotWithErrorHandler(...)`
+  - extracted `getPositionSnapshotWithoutErrorHandler(...)`
+  - simplified `getPositionSnapshot()` orchestration
+  with unchanged fallback/degraded behavior.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: apply structure-only cleanup for analytics helper grouping (payload/retry/result helpers), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: apply structure-only cleanup for analytics + snapshot helper grouping and section comments, then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
