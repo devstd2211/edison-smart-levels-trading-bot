@@ -1141,6 +1141,13 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `restorePositionFromWebSocketWithoutJournal(...)`
   - simplified `restorePositionFromWebSocketSync(...)` journal branching
   - preserved restore semantics and journal-lookup degraded behavior
+- [x] 5-slice batch in analytics/websocket orchestration decomposition:
+  - extracted `recordSessionTradeEntryForOpen(...)`
+  - extracted `shouldRecordSessionTradeEntry(...)` type-guard helper
+  - extracted `restorePositionFromWebSocketUsingJournalLookup(...)`
+  - extracted `restorePositionFromWebSocketAfterLookupFailure(...)`
+  - simplified orchestration in `recordPositionOpenAnalytics(...)` and `restorePositionFromWebSocketSync(...)`
+  - preserved all branching, retry/skip strategy usage, and degraded-mode behavior
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

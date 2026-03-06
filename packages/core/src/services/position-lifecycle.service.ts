@@ -1129,17 +1129,44 @@ export class PositionLifecycleService {
       journalId,
     });
 
-    if (this.sessionStats && entrySnapshot) {
-      const sessionTrade = this.createSessionTradeRecordForOpen({
-        journalId,
-        timestamp,
-        signal,
-        quantity,
-        actualStopLoss,
-        entrySnapshot,
-      });
-      await this.recordSessionTradeEntryWithResilience(sessionTrade, journalId);
+    await this.recordSessionTradeEntryForOpen({
+      journalId,
+      timestamp,
+      signal,
+      quantity,
+      actualStopLoss,
+      entrySnapshot,
+    });
+  }
+
+  private async recordSessionTradeEntryForOpen(params: {
+    journalId: string;
+    timestamp: number;
+    signal: Signal;
+    quantity: number;
+    actualStopLoss: number;
+    entrySnapshot?: SessionEntryCondition;
+  }): Promise<void> {
+    const { journalId, timestamp, signal, quantity, actualStopLoss, entrySnapshot } = params;
+    if (!this.shouldRecordSessionTradeEntry(entrySnapshot)) {
+      return;
     }
+
+    const sessionTrade = this.createSessionTradeRecordForOpen({
+      journalId,
+      timestamp,
+      signal,
+      quantity,
+      actualStopLoss,
+      entrySnapshot,
+    });
+    await this.recordSessionTradeEntryWithResilience(sessionTrade, journalId);
+  }
+
+  private shouldRecordSessionTradeEntry(
+    entrySnapshot?: SessionEntryCondition,
+  ): entrySnapshot is SessionEntryCondition {
+    return Boolean(this.sessionStats && entrySnapshot);
   }
 
   private async recordTradeOpenWithResilience(params: {
@@ -1344,19 +1371,30 @@ export class PositionLifecycleService {
     // Phase 8.9.17: Try to find matching open trade in journal with graceful degradation
     // Synchronous version - ErrorHandler integration happens asynchronously
     try {
-      const openTrade = this.journal.getOpenPositionBySymbol(position.symbol);
-
-      if (openTrade) {
-        return this.restorePositionFromWebSocketWithJournal(position, openTrade.id);
-      }
-
-      return this.restorePositionFromWebSocketWithoutJournal(position);
+      return this.restorePositionFromWebSocketUsingJournalLookup(position);
     } catch (error) {
-      const restored = this.restorePositionFromWebSocketWithoutJournal(position);
-      // Journal lookup failed - graceful degrade (continue without journalId)
-      this.logWebSocketRestoreJournalLookupFailure(error, restored.id);
-      return restored;
+      return this.restorePositionFromWebSocketAfterLookupFailure(position, error);
     }
+  }
+
+  private restorePositionFromWebSocketUsingJournalLookup(position: Position): Position {
+    const openTrade = this.journal.getOpenPositionBySymbol(position.symbol);
+
+    if (openTrade) {
+      return this.restorePositionFromWebSocketWithJournal(position, openTrade.id);
+    }
+
+    return this.restorePositionFromWebSocketWithoutJournal(position);
+  }
+
+  private restorePositionFromWebSocketAfterLookupFailure(
+    position: Position,
+    error: unknown,
+  ): Position {
+    const restored = this.restorePositionFromWebSocketWithoutJournal(position);
+    // Journal lookup failed - graceful degrade (continue without journalId)
+    this.logWebSocketRestoreJournalLookupFailure(error, restored.id);
+    return restored;
   }
 
   private restorePositionFromWebSocketWithJournal(
