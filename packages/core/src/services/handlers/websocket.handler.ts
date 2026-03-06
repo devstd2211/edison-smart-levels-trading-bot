@@ -12,7 +12,7 @@
  * Extracted from bot.ts setupWebSocketHandlers() lines 271-497
  */
 
-import { LoggerService, Position, ExitType, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types/legacy';
+import { LoggerService, Position, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types/legacy';
 import type { TradeRecord } from '../../types/journal';
 import type { IExchange } from '../../interfaces/IExchange';
 import { PositionLifecycleService } from '../position-lifecycle.service';
@@ -23,6 +23,10 @@ import { TelegramService } from '../telegram.service';
 import { INTEGER_MULTIPLIERS } from '../../constants';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionNotFoundError, OrderValidationError } from '../../errors/DomainErrors';
+import {
+  resolveExitTypeFromCloseReason,
+  resolveTakeProfitLevel,
+} from './websocket-event-decoding.utils';
 
 const DECIMAL_PLACES = {
   PERCENT: 2,
@@ -282,23 +286,11 @@ export class WebSocketEventHandler {
 
     // Determine exitType based on actual close reason from WebSocket
     const lastCloseReason = this.webSocketManager.getLastCloseReason();
-    let exitType: ExitType;
-
-    if (lastCloseReason === 'TP') {
-      // Position closed by TP - use last TP hit
-      exitType = tpHits.length > 0
-        ? (ExitType[`TAKE_PROFIT_${tpHits[tpHits.length - 1]}` as 'TAKE_PROFIT_1' | 'TAKE_PROFIT_2' | 'TAKE_PROFIT_3'])
-        : ExitType.STOP_LOSS; // Fallback (shouldn't happen)
-    } else if (lastCloseReason === 'TRAILING') {
-      exitType = ExitType.TRAILING_STOP;
-    } else if (lastCloseReason === 'SL') {
-      exitType = ExitType.STOP_LOSS;
-    } else {
-      // Fallback to old logic if lastCloseReason is null (shouldn't happen)
-      exitType = tpHits.length > 0
-        ? (ExitType[`TAKE_PROFIT_${tpHits[tpHits.length - 1]}` as 'TAKE_PROFIT_1' | 'TAKE_PROFIT_2' | 'TAKE_PROFIT_3'])
-        : (position.stopLoss?.isTrailing ? ExitType.TRAILING_STOP : ExitType.STOP_LOSS);
-    }
+    const exitType = resolveExitTypeFromCloseReason(
+      lastCloseReason,
+      tpHits,
+      position.stopLoss?.isTrailing === true,
+    );
 
     // Reset lastCloseReason for next position
     this.webSocketManager.resetLastCloseReason();
@@ -445,72 +437,43 @@ export class WebSocketEventHandler {
       return;
     }
 
-    // Determine which TP level was hit
-    let tpLevel = 0;
-    const fillPrice = event.avgPrice !== undefined ? parseFloat(String(event.avgPrice)) : 0;
-    const qtyFilled = event.cumExecQty !== undefined ? parseFloat(String(event.cumExecQty)) : 0;
+    // Determine which TP level was hit (event decoding)
+    const resolution = resolveTakeProfitLevel(
+      position,
+      event,
+      PRICE_TOLERANCE.BOT_PRICE_MATCHING,
+      INTEGER_MULTIPLIERS.ONE_HUNDRED,
+      INTEGER_MULTIPLIERS.FIVE,
+    );
+    const { fillPrice, qtyFilled, method } = resolution;
+    let tpLevel = resolution.tpLevel;
 
-    // Method 1: BEST - Try to match by OrderID (most reliable)
-    if (event.orderId && position.takeProfits.length > 0) {
-      for (const tp of position.takeProfits) {
-        if (tp.orderId === event.orderId) {
-          tpLevel = tp.level;
-          this.logger.info('✅ Matched TP by OrderID (RELIABLE)', {
-            orderId: event.orderId,
-            tpLevel,
-            price: tp.price,
-          });
-          break;
-        }
-      }
-    }
-
-    // Fallback Method 2: Try to determine by price (if orderId didn't match)
-    if (tpLevel === 0 && fillPrice > 0) {
-      for (const tp of position.takeProfits) {
-        const priceDiff = Math.abs(fillPrice - tp.price) / tp.price;
-        if (priceDiff <= PRICE_TOLERANCE.BOT_PRICE_MATCHING) {
-          tpLevel = tp.level;
-          this.logger.warn('⚠️ Matched TP by price (fallback)', {
-            orderId: event.orderId,
-            tpLevel,
-            expectedPrice: tp.price,
-            actualPrice: fillPrice,
-            tolerance: PRICE_TOLERANCE.BOT_PRICE_MATCHING,
-          });
-          break;
-        }
-      }
-    }
-
-    // Fallback Method 3: Determine by quantity filled (for position size decrease events)
-    if (tpLevel === 0 && qtyFilled > 0) {
-      const initialQuantity = position.quantity + qtyFilled; // Reconstruct initial size
-      const percentFilled = (qtyFilled / initialQuantity) * INTEGER_MULTIPLIERS.ONE_HUNDRED;
-
+    if (method === 'ORDER_ID') {
+      this.logger.info('? Matched TP by OrderID (RELIABLE)', {
+        orderId: event.orderId,
+        tpLevel,
+        price: resolution.expectedPrice,
+      });
+    } else if (method === 'PRICE') {
+      this.logger.warn('?? Matched TP by price (fallback)', {
+        orderId: event.orderId,
+        tpLevel,
+        expectedPrice: resolution.expectedPrice,
+        actualPrice: fillPrice,
+        tolerance: PRICE_TOLERANCE.BOT_PRICE_MATCHING,
+      });
+    } else if (method === 'QUANTITY') {
       this.logger.debug('Determining TP level by quantity (fallback)', {
         qtyFilled,
-        initialQuantity,
-        percentFilled: percentFilled.toFixed(DECIMAL_PLACES.PERCENT) + '%',
+        initialQuantity: position.quantity + qtyFilled,
+        percentFilled: `${(resolution.percentFilled ?? 0).toFixed(DECIMAL_PLACES.PERCENT)}%`,
       });
-
-      // Find the TP level that hasn't been hit yet and matches the percentage
-      for (const tp of position.takeProfits) {
-        if (!tp.hit) {
-          const expectedPercent = tp.sizePercent;
-          const tolerance = INTEGER_MULTIPLIERS.FIVE; // 5% tolerance
-          if (Math.abs(percentFilled - expectedPercent) <= tolerance) {
-            tpLevel = tp.level;
-            this.logger.warn('⚠️ Matched TP by quantity (fallback)', {
-              orderId: event.orderId,
-              tpLevel,
-              percentFilled: percentFilled.toFixed(DECIMAL_PLACES.PERCENT) + '%',
-              expectedPercent: expectedPercent + '%',
-            });
-            break;
-          }
-        }
-      }
+      this.logger.warn('?? Matched TP by quantity (fallback)', {
+        orderId: event.orderId,
+        tpLevel,
+        percentFilled: `${(resolution.percentFilled ?? 0).toFixed(DECIMAL_PLACES.PERCENT)}%`,
+        expectedPercent: `${resolution.expectedPercent ?? 0}%`,
+      });
     }
 
     // Last resort: If still unknown, use first unhit TP
@@ -608,3 +571,4 @@ export class WebSocketEventHandler {
     }
   }
 }
+
