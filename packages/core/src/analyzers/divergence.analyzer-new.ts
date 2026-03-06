@@ -25,6 +25,13 @@ import { RSIIndicatorNew } from '../indicators/rsi.indicator-new';
 import type { LoggerService } from '../services/logger.service';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import {
+  checkBearishDivergence,
+  checkBullishDivergence,
+  DivergenceResult,
+  findSwingHighs,
+  findSwingLows,
+} from './divergence/divergence-primitives.utils';
 
 // ============================================================================
 // DEFAULT CONSTANTS (can be overridden via config)
@@ -267,26 +274,27 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
   private detectDivergence(
     candles: Candle[],
     rsiValues: number[],
-  ): {
-    type: 'NONE' | 'BULLISH' | 'BEARISH';
-    strength: number;
-    priceDiff: number;
-    rsiDiff: number;
-  } {
+  ): DivergenceResult {
     // Find swing points (local highs and lows)
     const lastN = Math.min(this.swingLookback, candles.length - 1);
     const recentCandles = candles.slice(-lastN);
     const recentRsi = rsiValues.slice(-lastN);
 
     // Find last two highs (for bearish divergence)
-    const highs = this.findSwingHighs(recentCandles, recentRsi);
+    const highs = findSwingHighs(recentCandles, recentRsi);
 
     // Find last two lows (for bullish divergence)
-    const lows = this.findSwingLows(recentCandles, recentRsi);
+    const lows = findSwingLows(recentCandles, recentRsi);
 
     // Check for bearish divergence (price HH, RSI LH)
     if (highs.length >= 2) {
-      const divergence = this.checkBearishDivergence(highs[0], highs[1]);
+      const divergence = checkBearishDivergence(
+        highs[0],
+        highs[1],
+        this.minPriceDiffPercent,
+        this.minRsiDiffPoints,
+        this.minConfidence,
+      );
       if (divergence.type === 'BEARISH') {
         return divergence;
       }
@@ -294,176 +302,19 @@ export class DivergenceAnalyzerNew implements IAnalyzer {
 
     // Check for bullish divergence (price LL, RSI HL)
     if (lows.length >= 2) {
-      const divergence = this.checkBullishDivergence(lows[0], lows[1]);
+      const divergence = checkBullishDivergence(
+        lows[0],
+        lows[1],
+        this.minPriceDiffPercent,
+        this.minRsiDiffPoints,
+        this.minConfidence,
+      );
       if (divergence.type === 'BULLISH') {
         return divergence;
       }
     }
 
     return { type: 'NONE', strength: 0, priceDiff: 0, rsiDiff: 0 };
-  }
-
-  /**
-   * Find swing highs in recent candles
-   *
-   * @private
-   * @param candles - Recent candles
-   * @param rsiValues - Corresponding RSI values
-   * @returns Array of swing high points [{index, high, rsi}]
-   */
-  private findSwingHighs(
-    candles: Candle[],
-    rsiValues: number[],
-  ): Array<{ index: number; high: number; rsi: number }> {
-    const highs: Array<{ index: number; high: number; rsi: number }> = [];
-
-    for (let i = 1; i < candles.length - 1; i++) {
-      const prevHigh = candles[i - 1].high;
-      const currentHigh = candles[i].high;
-      const nextHigh = candles[i + 1].high;
-
-      // Swing high: local maximum
-      if (currentHigh > prevHigh && currentHigh > nextHigh) {
-        const rsi = rsiValues[i];
-        if (!isNaN(rsi)) {
-          highs.push({ index: i, high: currentHigh, rsi });
-        }
-      }
-    }
-
-    return highs;
-  }
-
-  /**
-   * Find swing lows in recent candles
-   *
-   * @private
-   * @param candles - Recent candles
-   * @param rsiValues - Corresponding RSI values
-   * @returns Array of swing low points [{index, low, rsi}]
-   */
-  private findSwingLows(
-    candles: Candle[],
-    rsiValues: number[],
-  ): Array<{ index: number; low: number; rsi: number }> {
-    const lows: Array<{ index: number; low: number; rsi: number }> = [];
-
-    for (let i = 1; i < candles.length - 1; i++) {
-      const prevLow = candles[i - 1].low;
-      const currentLow = candles[i].low;
-      const nextLow = candles[i + 1].low;
-
-      // Swing low: local minimum
-      if (currentLow < prevLow && currentLow < nextLow) {
-        const rsi = rsiValues[i];
-        if (!isNaN(rsi)) {
-          lows.push({ index: i, low: currentLow, rsi });
-        }
-      }
-    }
-
-    return lows;
-  }
-
-  /**
-   * Check for bearish divergence (price HH, RSI LH)
-   *
-   * @private
-   * @param oldHigh - Earlier swing high
-   * @param recentHigh - Recent swing high
-   * @returns Divergence result
-   */
-  private checkBearishDivergence(
-    oldHigh: { index: number; high: number; rsi: number },
-    recentHigh: { index: number; high: number; rsi: number },
-  ): {
-    type: 'NONE' | 'BULLISH' | 'BEARISH';
-    strength: number;
-    priceDiff: number;
-    rsiDiff: number;
-  } {
-    // Bearish: price makes higher high, RSI makes lower high
-    const priceIsHigher = recentHigh.high > oldHigh.high;
-    const rsiIsLower = recentHigh.rsi < oldHigh.rsi;
-
-    if (priceIsHigher && rsiIsLower) {
-      const priceDiff = ((recentHigh.high - oldHigh.high) / oldHigh.high) * 100;
-      const rsiDiff = Math.abs(oldHigh.rsi - recentHigh.rsi);
-
-      // Check if differences are significant
-      if (priceDiff >= this.minPriceDiffPercent && rsiDiff >= this.minRsiDiffPoints) {
-        const strength = this.calculateDivergenceStrength(priceDiff, rsiDiff);
-        return {
-          type: 'BEARISH',
-          strength,
-          priceDiff,
-          rsiDiff,
-        };
-      }
-    }
-
-    return { type: 'NONE', strength: 0, priceDiff: 0, rsiDiff: 0 };
-  }
-
-  /**
-   * Check for bullish divergence (price LL, RSI HL)
-   *
-   * @private
-   * @param oldLow - Earlier swing low
-   * @param recentLow - Recent swing low
-   * @returns Divergence result
-   */
-  private checkBullishDivergence(
-    oldLow: { index: number; low: number; rsi: number },
-    recentLow: { index: number; low: number; rsi: number },
-  ): {
-    type: 'NONE' | 'BULLISH' | 'BEARISH';
-    strength: number;
-    priceDiff: number;
-    rsiDiff: number;
-  } {
-    // Bullish: price makes lower low, RSI makes higher low
-    const priceIsLower = recentLow.low < oldLow.low;
-    const rsiIsHigher = recentLow.rsi > oldLow.rsi;
-
-    if (priceIsLower && rsiIsHigher) {
-      const priceDiff = ((oldLow.low - recentLow.low) / oldLow.low) * 100;
-      const rsiDiff = Math.abs(recentLow.rsi - oldLow.rsi);
-
-      // Check if differences are significant
-      if (priceDiff >= this.minPriceDiffPercent && rsiDiff >= this.minRsiDiffPoints) {
-        const strength = this.calculateDivergenceStrength(priceDiff, rsiDiff);
-        return {
-          type: 'BULLISH',
-          strength,
-          priceDiff,
-          rsiDiff,
-        };
-      }
-    }
-
-    return { type: 'NONE', strength: 0, priceDiff: 0, rsiDiff: 0 };
-  }
-
-  /**
-   * Calculate divergence strength (0-1)
-   *
-   * @private
-   * @param priceDiffPercent - Price difference percentage
-   * @param rsiDiff - RSI difference in points (0-100)
-   * @returns Strength value (0-1)
-   */
-  private calculateDivergenceStrength(priceDiffPercent: number, rsiDiff: number): number {
-    // Normalize price diff (0-5% range)
-    const priceScore = Math.min(priceDiffPercent / 5, 1);
-
-    // Normalize RSI diff (0-20 points range)
-    const rsiScore = Math.min(rsiDiff / 20, 1);
-
-    // Average of both scores
-    const strength = (priceScore + rsiScore) / 2;
-
-    return Math.max(this.minConfidence, Math.min(strength, 1));
   }
 
   /**
