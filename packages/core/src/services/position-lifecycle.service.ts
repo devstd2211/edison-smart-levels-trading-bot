@@ -873,29 +873,7 @@ export class PositionLifecycleService {
         actualStopLoss,
         entrySnapshot,
       });
-
-      if (this.errorHandler) {
-        const statsResult = await this.errorHandler.executeAsync(
-          async () => {
-            this.sessionStats!.recordTradeEntry(sessionTrade);
-          },
-          {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'PositionLifecycleService.openPosition.recordTradeEntry',
-          }
-        );
-
-        if (statsResult.success) {
-          this.logger.debug('Trade recorded in session stats', { tradeId: journalId });
-        } else {
-          this.logger.warn('Failed to record session stats (non-critical)', {
-            error: statsResult.error?.message,
-          });
-        }
-      } else {
-        this.sessionStats.recordTradeEntry(sessionTrade);
-        this.logger.debug('Trade recorded in session stats', { tradeId: journalId });
-      }
+      await this.recordSessionTradeEntryWithResilience(sessionTrade, journalId);
     }
   }
 
@@ -981,6 +959,39 @@ export class PositionLifecycleService {
         trailingActivated: false,
       },
     };
+  }
+
+  private async recordSessionTradeEntryWithResilience(
+    sessionTrade: SessionTradeRecord,
+    tradeId: string,
+  ): Promise<void> {
+    if (!this.sessionStats) {
+      return;
+    }
+
+    if (this.errorHandler) {
+      const statsResult = await this.errorHandler.executeAsync(
+        async () => {
+          this.sessionStats!.recordTradeEntry(sessionTrade);
+        },
+        {
+          strategy: RecoveryStrategy.SKIP,
+          context: 'PositionLifecycleService.openPosition.recordTradeEntry',
+        }
+      );
+
+      if (statsResult.success) {
+        this.logger.debug('Trade recorded in session stats', { tradeId });
+      } else {
+        this.logger.warn('Failed to record session stats (non-critical)', {
+          error: statsResult.error?.message,
+        });
+      }
+      return;
+    }
+
+    this.sessionStats.recordTradeEntry(sessionTrade);
+    this.logger.debug('Trade recorded in session stats', { tradeId });
   }
 
   private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {
