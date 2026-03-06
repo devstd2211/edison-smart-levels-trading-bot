@@ -78,9 +78,13 @@ You are continuing refactoring in `D:\src\Edison`.
 - Decomposed open-success logging boundary:
   - extracted `logPositionOpenedSuccess(position, side)`
   - kept success log placement/fields unchanged.
+- Decomposed close-path helper boundaries:
+  - extracted `executeAtomicCloseOperation(onCloseInternal?)` from `performClose`
+  - extracted `emitPositionClosedEvent(closedPosition)` from `finalizePositionClear`
+  - preserved lock and close ordering semantics.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from close path logging/payload shaping (atomic close/clear logs), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: normalize remaining logging strings/encoding artifacts in extracted helpers (no behavior change), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

@@ -423,13 +423,18 @@ export class PositionLifecycleService {
     this.takeProfitManager = null;
     this.isOpeningPosition = false;
 
-    // Emit position-closed event
-    if (closedPosition) {
-      this.eventBus.emit('position-closed', {
-        position: closedPosition,
-        strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
-      });
+    this.emitPositionClosedEvent(closedPosition);
+  }
+
+  private emitPositionClosedEvent(closedPosition: Position | null): void {
+    if (!closedPosition) {
+      return;
     }
+
+    this.eventBus.emit('position-closed', {
+      position: closedPosition,
+      strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
+    });
   }
 
   // =========================================================================
@@ -1141,13 +1146,7 @@ export class PositionLifecycleService {
         hasCloseHandler: !!onCloseInternal,
       });
 
-      // If custom close handler provided (e.g., WebSocket), execute it within the lock
-      if (onCloseInternal) {
-        await onCloseInternal();
-      } else {
-        // Standard timeout-based close: just clear position
-        await this.clearPosition();
-      }
+      await this.executeAtomicCloseOperation(onCloseInternal);
 
       this.logger.info(`[P0.1 + P3] Position closed successfully: ${positionId}`, {
         reason,
@@ -1159,6 +1158,19 @@ export class PositionLifecycleService {
       });
       throw error;
     }
+  }
+
+  private async executeAtomicCloseOperation(
+    onCloseInternal?: () => Promise<void>,
+  ): Promise<void> {
+    // If custom close handler provided (e.g., WebSocket), execute it within the lock
+    if (onCloseInternal) {
+      await onCloseInternal();
+      return;
+    }
+
+    // Standard timeout-based close: just clear position
+    await this.clearPosition();
   }
 
   /**
