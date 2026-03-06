@@ -1057,6 +1057,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logWebSocketRestoreWithoutJournal(position)`
   - extracted `logWebSocketEntryPriceUpdate(positionId, entryPrice)`
   - preserved restore/update behavior and warning/info semantics
+- [x] 4-slice batch in close-path logging boundaries:
+  - extracted `logConditionalOrderCancelRetry(attempt, errorMessage, delayMs)`
+  - extracted `logConditionalOrderCancelFailure()`
+  - extracted `logAtomicCloseStart/Success/Failure/NoPosition(...)` payload logging helpers
+  - preserved atomic-close and cancel-retry behavior with unchanged flow ordering
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

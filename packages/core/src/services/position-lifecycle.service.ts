@@ -393,13 +393,10 @@ export class PositionLifecycleService {
         logger: this.logger,
         context: 'PositionLifecycleService.cancelAllConditionalOrders',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.warn(`🔄 Retrying order cancellation (attempt ${attempt}/3)`, {
-            delayMs,
-            error: error.message,
-          });
+          this.logConditionalOrderCancelRetry(attempt, error.message, delayMs);
         },
         onFailure: () => {
-          this.logger.warn('Failed to cancel orders - proceeding with position clear');
+          this.logConditionalOrderCancelFailure();
         },
       }
     );
@@ -1185,28 +1182,18 @@ export class PositionLifecycleService {
   ): Promise<void> {
     const position = this.getCurrentPosition();
     if (!position) {
-      this.logger.info(`[P0.1 + P3] Position already closed or not found: ${positionId}`, {
-        reason,
-      });
+      this.logAtomicCloseNoPosition(positionId, reason);
       return;
     }
 
     try {
-      this.logger.info(`[P0.1 + P3] Closing position with atomic lock: ${positionId}`, {
-        reason,
-        hasCloseHandler: !!onCloseInternal,
-      });
+      this.logAtomicCloseStart(positionId, reason, !!onCloseInternal);
 
       await this.executeAtomicCloseOperation(onCloseInternal);
 
-      this.logger.info(`[P0.1 + P3] Position closed successfully: ${positionId}`, {
-        reason,
-      });
+      this.logAtomicCloseSuccess(positionId, reason);
     } catch (error) {
-      this.logger.error(`[P0.1 + P3] Failed to close position: ${positionId}`, {
-        error: error instanceof Error ? error.message : String(error),
-        reason,
-      });
+      this.logAtomicCloseFailure(positionId, reason, error);
       throw error;
     }
   }
@@ -1222,6 +1209,55 @@ export class PositionLifecycleService {
 
     // Standard timeout-based close: just clear position
     await this.clearPosition();
+  }
+
+  private logConditionalOrderCancelRetry(
+    attempt: number,
+    errorMessage: string,
+    delayMs: number,
+  ): void {
+    this.logger.warn(`Retrying order cancellation (attempt ${attempt}/3)`, {
+      delayMs,
+      error: errorMessage,
+    });
+  }
+
+  private logConditionalOrderCancelFailure(): void {
+    this.logger.warn('Failed to cancel orders - proceeding with position clear');
+  }
+
+  private logAtomicCloseNoPosition(positionId: string, reason: string): void {
+    this.logger.info(`[P0.1 + P3] Position already closed or not found: ${positionId}`, {
+      reason,
+    });
+  }
+
+  private logAtomicCloseStart(
+    positionId: string,
+    reason: string,
+    hasCloseHandler: boolean,
+  ): void {
+    this.logger.info(`[P0.1 + P3] Closing position with atomic lock: ${positionId}`, {
+      reason,
+      hasCloseHandler,
+    });
+  }
+
+  private logAtomicCloseSuccess(positionId: string, reason: string): void {
+    this.logger.info(`[P0.1 + P3] Position closed successfully: ${positionId}`, {
+      reason,
+    });
+  }
+
+  private logAtomicCloseFailure(
+    positionId: string,
+    reason: string,
+    error: unknown,
+  ): void {
+    this.logger.error(`[P0.1 + P3] Failed to close position: ${positionId}`, {
+      error: error instanceof Error ? error.message : String(error),
+      reason,
+    });
   }
 
   /**
@@ -1258,6 +1294,7 @@ export class PositionLifecycleService {
     }
   }
 }
+
 
 
 

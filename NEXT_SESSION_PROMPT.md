@@ -92,9 +92,15 @@ You are continuing refactoring in `D:\src\Edison`.
   - extracted `logWebSocketRestoreWithoutJournal(...)`
   - extracted `logWebSocketEntryPriceUpdate(...)`
   with unchanged restore/update behavior.
+- Completed 4-slice batch in close-path logging:
+  - extracted `logConditionalOrderCancelRetry(...)`
+  - extracted `logConditionalOrderCancelFailure()`
+  - extracted `logAtomicCloseNoPosition(...)`
+  - extracted `logAtomicCloseStart/Success/Failure(...)`
+  with unchanged lock/cancel behavior.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from close/retry logging payload shaping (`cancelConditionalOrdersAfterClose` and atomic close logs), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from confirmation-path logging payload shaping (`checkPendingConfirmations` accept/reject logs), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
