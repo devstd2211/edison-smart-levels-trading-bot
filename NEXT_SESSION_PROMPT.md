@@ -27,12 +27,12 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-06)
-- God-object recovery track continued with `packages/core/src/services/position-lifecycle.service.ts` iteration 1.
-- Extracted WebSocket sync/snapshot helpers to `packages/core/src/services/position-lifecycle/position-lifecycle-sync.utils.ts`.
-- Added persistence access helpers in service (`readStoredPosition` / `writeStoredPosition`) and integrated them into storage/clear flows.
-- Progress tracking updated in `REFACTOR_PLAN.md`: 2/10 recovery candidates completed, 8/10 pending.
+- God-object recovery track continued with `packages/core/src/services/trading-journal.service.ts` iteration 1.
+- Extracted pure fee/net-PnL and stats aggregation calculations to `packages/core/src/services/trading-journal/trading-journal-calculations.utils.ts`.
+- Integrated extracted utils into trade-close and `getStatistics` flows without behavior change.
+- Progress tracking updated in `REFACTOR_PLAN.md`: 3/10 recovery candidates completed, 7/10 pending.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts` -> 2/2 suites PASS, 36/36 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` -> 2/2 suites PASS, 49/49 tests PASS.
 
 ## Next Step
-- Continue recovery track with next highest-impact candidate: `packages/core/src/services/trading-journal.service.ts` (behavior-preserving extraction of write/read/stats adapters + targeted tests + progress update).
+- Continue recovery track with next highest-impact candidate: `packages/core/src/services/websocket-manager.service.ts` (behavior-preserving isolation of connection lifecycle, auth/retry, and subscription routing + targeted tests + progress update).

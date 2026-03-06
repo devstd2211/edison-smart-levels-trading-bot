@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, TIME_UNITS, TIME_MULTIPLIERS, EXCHANGE_FEES } from '../constants';
+import { DECIMAL_PLACES, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
 import { JSON_INDENT } from '../constants/technical.constants';
 /**
  * Trading Journal Service
@@ -23,6 +23,11 @@ import {
   TradeRecordValidationError,
   CSVExportError,
 } from '../errors/DomainErrors';
+import {
+  aggregateJournalStatistics,
+  calculateTradeFeeSummary,
+  JournalStatistics,
+} from './trading-journal/trading-journal-calculations.utils';
 const DATA_DIR = 'data';
 const JOURNAL_FILE = 'trade-journal.json';
 const CSV_FILE = 'trade-journal.csv';
@@ -348,11 +353,11 @@ export class TradingJournalService {
     this.saveJournal();
 
     // Calculate fees (Bybit: 0.06% taker for market orders)
-    const positionValue = trade.quantity * trade.entryPrice;
-    const entryFee = positionValue * EXCHANGE_FEES.BYBIT_TAKER_FEE_PERCENT; // 0.06% entry
-    const exitFee = positionValue * EXCHANGE_FEES.BYBIT_TAKER_FEE_PERCENT; // 0.06% exit
-    const totalFees = entryFee + exitFee;
-    const netPnL = params.realizedPnL - totalFees;
+    const { totalFees, netPnL } = calculateTradeFeeSummary(
+      trade.entryPrice,
+      trade.quantity,
+      params.realizedPnL,
+    );
 
     // Update virtual balance with NET PnL
     if (this.virtualBalance) {
@@ -539,41 +544,9 @@ export class TradingJournalService {
   /**
    * Get statistics
    */
-  getStatistics(): {
-    totalTrades: number;
-    openTrades: number;
-    closedTrades: number;
-    winningTrades: number;
-    losingTrades: number;
-    totalPnL: number;
-    averagePnL: number;
-    winRate: number;
-    averageHoldingTimeMinutes: number;
-  } {
+  getStatistics(): JournalStatistics {
     this.ensureInitialized();
-    const closed = this.getClosedTrades();
-    const winning = closed.filter((t) => t.realizedPnL && t.realizedPnL > 0);
-    const losing = closed.filter((t) => t.realizedPnL && t.realizedPnL <= 0);
-
-    const totalPnL = closed.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-
-    const averageHoldingTime =
-      closed.reduce(
-        (sum, t) => sum + (t.exitCondition?.holdingTimeMinutes || 0),
-        0,
-      ) / (closed.length > 0 ? closed.length : 1);
-
-    return {
-      totalTrades: this.trades.size,
-      openTrades: this.getOpenTrades().length,
-      closedTrades: closed.length,
-      winningTrades: winning.length,
-      losingTrades: losing.length,
-      totalPnL,
-      averagePnL: closed.length > 0 ? totalPnL / closed.length : 0,
-      winRate: closed.length > 0 ? winning.length / closed.length : 0,
-      averageHoldingTimeMinutes: averageHoldingTime,
-    };
+    return aggregateJournalStatistics(this.getAllTrades());
   }
 
   /**
