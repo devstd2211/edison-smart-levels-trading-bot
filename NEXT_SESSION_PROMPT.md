@@ -27,15 +27,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-06)
-- God-object recovery track continued with `packages/core/src/services/public-websocket.service.ts` iteration 1.
-- Extracted pure message helpers to `packages/core/src/services/public-websocket/public-websocket-message.utils.ts`:
-  - kline topic symbol extraction
-  - closed-candle mapping
-  - orderbook snapshot detection
-- Integrated extracted helpers into service handlers with behavior preserved.
-- Progress tracking updated in `REFACTOR_PLAN.md`: 5/10 recovery candidates completed, 5/10 pending.
+- God-object recovery track continued with `packages/core/src/services/telegram.service.ts` iteration 1.
+- Extracted message-formatting helpers to `packages/core/src/services/telegram/telegram-message-format.utils.ts`:
+  - close-reason emoji resolution
+  - PnL sign formatting
+  - holding-time formatting
+- Integrated extracted helpers into `notifyPositionClosed` and `sendTradeNotification` while preserving transport/retry behavior.
+- Progress tracking updated in `REFACTOR_PLAN.md`: 6/10 recovery candidates completed, 4/10 pending.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts` -> 1/1 suite PASS, 24/24 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/telegram.error-handling.test.ts` -> 1/1 suite PASS, 29/29 tests PASS.
 
 ## Next Step
-- Continue recovery track with next highest-impact candidate: `packages/core/src/services/telegram.service.ts` (behavior-preserving isolation of message formatting from transport/retry + targeted tests + progress update).
+- Continue recovery track with next highest-impact candidate: `packages/core/src/services/handlers/websocket.handler.ts` (behavior-preserving split of event decoding vs action routing + targeted tests + progress update).

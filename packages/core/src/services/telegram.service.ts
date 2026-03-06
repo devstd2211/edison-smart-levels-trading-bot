@@ -6,7 +6,6 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
  */
 
 import { Position, SignalDirection, PositionSide, LoggerService } from '../types/legacy';
-import { TIME_MULTIPLIERS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import {
   TelegramAPIError,
@@ -14,6 +13,11 @@ import {
   TelegramMessageError,
   TelegramRateLimitError,
 } from '../errors/DomainErrors';
+import {
+  formatHoldingTime,
+  getCloseEmoji,
+  getPnlSign,
+} from './telegram/telegram-message-format.utils';
 
 export interface TelegramConfig {
   botToken?: string;
@@ -401,27 +405,11 @@ ${position.takeProfits
     realizedPnLPercent: number,
   ): Promise<void> {
     const pnlEmoji = realizedPnL >= 0 ? '💰' : '💸';
-    const pnlSign = realizedPnL >= 0 ? '+' : '';
+    const pnlSign = getPnlSign(realizedPnL);
 
     // Emoji for close type
-    let closeEmoji = '🔚';
-    if (closeReason.includes('Stop Loss') || closeReason.includes('SL')) {
-      closeEmoji = '🛡️';
-    } else if (closeReason.includes('Take Profit') || closeReason.includes('TP')) {
-      closeEmoji = '🎯';
-    } else if (closeReason.toLowerCase().includes('trailing')) {
-      closeEmoji = '📈';
-    } else if (closeReason.toLowerCase().includes('time')) {
-      closeEmoji = '⏰';
-    }
-
-    const holdingTimeMs = Date.now() - position.openedAt;
-    const holdingTimeSec = Math.floor(holdingTimeMs / TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND);
-    const holdingTimeMin = Math.floor(holdingTimeSec / TIME_MULTIPLIERS.SECONDS_PER_MINUTE);
-    const holdingTimeFormatted =
-      holdingTimeMin > 0
-        ? `${holdingTimeMin}m ${holdingTimeSec % TIME_MULTIPLIERS.SECONDS_PER_MINUTE}s`
-        : `${holdingTimeSec}s`;
+    const closeEmoji = getCloseEmoji(closeReason);
+    const holdingTimeFormatted = formatHoldingTime(position.openedAt);
 
     const tpsHit = position.takeProfits.filter((tp) => tp.hit);
 
@@ -571,11 +559,11 @@ ${emoji} <b>${params.type}: ${params.direction}</b>
     } else {
       // EXIT
       if (params.pnl !== undefined) {
-        const pnlSign = params.pnl >= 0 ? '+' : '';
+        const pnlSign = getPnlSign(params.pnl);
         message += `\n💵 PnL: ${pnlSign}$${params.pnl.toFixed(DECIMAL_PLACES.PERCENT)}`;
       }
       if (params.pnlPercent !== undefined) {
-        const pnlSign = params.pnlPercent >= 0 ? '+' : '';
+        const pnlSign = getPnlSign(params.pnlPercent);
         message += `\n📈 PnL%: ${pnlSign}${params.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT)}%`;
       }
       if (params.reason) {
@@ -612,3 +600,5 @@ ${details}
     await this.sendMessage(message);
   }
 }
+
+
