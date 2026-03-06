@@ -459,20 +459,17 @@ export class PositionLifecycleService {
     const allPending = this.entryConfirmation.getAllPending();
 
     for (const pending of allPending) {
-      const result = this.entryConfirmation.checkConfirmation(pending.id, currentCandleClose);
-
-      if (result.confirmed) {
-        this.logPendingSignalConfirmed(pending.id, pending.direction, pending.keyLevel, currentCandleClose);
-
-        return pending.signalData as unknown as Signal;
-      }
-
-      if (!result.confirmed) {
-        if (pending.direction === SignalDirection.LONG && result.reason.includes('below support')) {
-          this.logPendingLongRejected(pending.id, pending.keyLevel, currentCandleClose);
-        } else if (pending.direction === SignalDirection.SHORT && result.reason.includes('above resistance')) {
-          this.logPendingShortRejected(pending.id, pending.keyLevel, currentCandleClose);
-        }
+      const confirmedSignal = this.processPendingConfirmation(
+        pending as {
+          id: string;
+          direction: SignalDirection;
+          keyLevel: number;
+          signalData: unknown;
+        },
+        currentCandleClose,
+      );
+      if (confirmedSignal) {
+        return confirmedSignal;
       }
     }
 
@@ -515,8 +512,8 @@ export class PositionLifecycleService {
     this.logger.info(`${direction} signal confirmed - ready to enter`, {
       pendingId,
       direction,
-      [`${levelType}Level`]: keyLevel.toFixed(DECIMAL_PLACES.PRICE),
-      candleClose: candleClose.toFixed(DECIMAL_PLACES.PRICE),
+      [`${levelType}Level`]: this.formatPriceForLog(keyLevel),
+      candleClose: this.formatPriceForLog(candleClose),
     });
   }
 
@@ -525,11 +522,13 @@ export class PositionLifecycleService {
     supportLevel: number,
     candleClose: number,
   ): void {
-    this.logger.info('LONG signal rejected - falling knife avoided', {
+    this.logPendingSignalRejected(
+      'LONG signal rejected - falling knife avoided',
+      'supportLevel',
       pendingId,
-      supportLevel: supportLevel.toFixed(DECIMAL_PLACES.PRICE),
-      candleClose: candleClose.toFixed(DECIMAL_PLACES.PRICE),
-    });
+      supportLevel,
+      candleClose,
+    );
   }
 
   private logPendingShortRejected(
@@ -537,11 +536,55 @@ export class PositionLifecycleService {
     resistanceLevel: number,
     candleClose: number,
   ): void {
-    this.logger.info('SHORT signal rejected - pump continues', {
+    this.logPendingSignalRejected(
+      'SHORT signal rejected - pump continues',
+      'resistanceLevel',
       pendingId,
-      resistanceLevel: resistanceLevel.toFixed(DECIMAL_PLACES.PRICE),
-      candleClose: candleClose.toFixed(DECIMAL_PLACES.PRICE),
+      resistanceLevel,
+      candleClose,
+    );
+  }
+
+  private processPendingConfirmation(
+    pending: {
+      id: string;
+      direction: SignalDirection;
+      keyLevel: number;
+      signalData: unknown;
+    },
+    currentCandleClose: number,
+  ): Signal | null {
+    const result = this.entryConfirmation.checkConfirmation(pending.id, currentCandleClose);
+    if (result.confirmed) {
+      this.logPendingSignalConfirmed(pending.id, pending.direction, pending.keyLevel, currentCandleClose);
+      return pending.signalData as Signal;
+    }
+
+    if (pending.direction === SignalDirection.LONG && result.reason.includes('below support')) {
+      this.logPendingLongRejected(pending.id, pending.keyLevel, currentCandleClose);
+    } else if (pending.direction === SignalDirection.SHORT && result.reason.includes('above resistance')) {
+      this.logPendingShortRejected(pending.id, pending.keyLevel, currentCandleClose);
+    }
+
+    return null;
+  }
+
+  private logPendingSignalRejected(
+    message: string,
+    levelKey: 'supportLevel' | 'resistanceLevel',
+    pendingId: string,
+    level: number,
+    candleClose: number,
+  ): void {
+    this.logger.info(message, {
+      pendingId,
+      [levelKey]: this.formatPriceForLog(level),
+      candleClose: this.formatPriceForLog(candleClose),
     });
+  }
+
+  private formatPriceForLog(value: number): string {
+    return value.toFixed(DECIMAL_PLACES.PRICE);
   }
 
 

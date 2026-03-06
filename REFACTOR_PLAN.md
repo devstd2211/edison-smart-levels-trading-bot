@@ -1067,6 +1067,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logPendingLongRejected(...)`
   - extracted `logPendingShortRejected(...)`
   - preserved confirmation/rejection decision logic and pending cleanup flow
+- [x] 4-slice batch in confirmation-path processing boundaries:
+  - extracted `processPendingConfirmation(...)` from `checkPendingConfirmations(...)`
+  - extracted generic rejection logger `logPendingSignalRejected(...)`
+  - extracted price formatting helper `formatPriceForLog(...)`
+  - preserved confirm/reject branching and returned signal semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
