@@ -190,67 +190,14 @@ export class PositionLifecycleService {
         leverage: this.tradingConfig.leverage,
       });
 
-      let orderId: string | undefined;
-      let tpOrderIds: (string | undefined)[] = [];
-
-      // Convert PositionSide to IExchange side format
-      const exchangeSide: 'Buy' | 'Sell' = side === PositionSide.LONG ? 'Buy' : 'Sell';
-
-      // Get all TP levels for IExchange interface
-      const tpPrices = signal.takeProfits && signal.takeProfits.length > 0
-        ? signal.takeProfits.map(tp => tp.price)
-        : [];
-
-      // Phase 8.7: Retry exchange operation with exponential backoff
-      const openResult = await ErrorHandler.executeAsync(
-        () => this.bybitService.openPosition({
-          symbol: this.bybitService.getSymbol?.() || 'UNKNOWN',
-          side: exchangeSide,
-          quantity: sizingResult.quantity,
-          leverage: this.tradingConfig.leverage,
-          stopLoss: actualStopLoss,
-          takeProfits: tpPrices,
-        }),
-        {
-          strategy: RecoveryStrategy.RETRY,
-          retryConfig: {
-            maxAttempts: 3,
-            initialDelayMs: 500,
-            backoffMultiplier: 2,
-            maxDelayMs: 5000,
-          },
-          logger: this.logger,
-          context: 'PositionLifecycleService.openPosition',
-          onRetry: (attempt, error, delayMs) => {
-            this.logger.warn(`🔄 Retrying position open (attempt ${attempt}/3)`, {
-              delayMs,
-              error: error.message,
-            });
-          },
-        }
-      );
-
-      if (!openResult.success || !openResult.value) {
-        throw openResult.error || new Error('Failed to open position on exchange');
-      }
-
-      const openedPosition = openResult.value;
-
-      // Extract orderId from the returned Position object
-      orderId = openedPosition.id;
-
-      this.logger.info('✅ Position opened WITH atomic SL/TP protection', {
-        orderId,
-        side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      const atomicOpen = await this.executeAtomicOpenPosition({
+        side,
         quantity: sizingResult.quantity,
-        slSet: true,
-        tpSet: tpPrices.length > 0,
+        actualStopLoss,
+        takeProfits: signal.takeProfits,
       });
+      const { openedPosition, orderId, tpOrderIds } = atomicOpen;
 
-      // Store first TP order ID if TPs were set
-      if (tpPrices.length > 0) {
-        tpOrderIds.push(orderId);
-      }
 
       // Phase 8.9.17: RETRY → SKIP strategy for additional TP levels (non-critical)
       // Set additional TP levels (if more than 1)
@@ -755,6 +702,72 @@ export class PositionLifecycleService {
     const actualStopLoss = this.calculateActualStopLoss(isLong, currentPrice, slDistance);
 
     return { side, slDistance, currentPrice, actualStopLoss };
+  }
+
+  private async executeAtomicOpenPosition(params: {
+    side: PositionSide;
+    quantity: number;
+    actualStopLoss: number;
+    takeProfits: Signal['takeProfits'] | undefined;
+  }): Promise<{
+    openedPosition: Position;
+    orderId: string | undefined;
+    tpOrderIds: (string | undefined)[];
+  }> {
+    const { side, quantity, actualStopLoss, takeProfits } = params;
+    const exchangeSide: 'Buy' | 'Sell' = side === PositionSide.LONG ? 'Buy' : 'Sell';
+    const tpPrices = takeProfits && takeProfits.length > 0
+      ? takeProfits.map(tp => tp.price)
+      : [];
+
+    const openResult = await ErrorHandler.executeAsync(
+      () => this.bybitService.openPosition({
+        symbol: this.bybitService.getSymbol?.() || 'UNKNOWN',
+        side: exchangeSide,
+        quantity,
+        leverage: this.tradingConfig.leverage,
+        stopLoss: actualStopLoss,
+        takeProfits: tpPrices,
+      }),
+      {
+        strategy: RecoveryStrategy.RETRY,
+        retryConfig: {
+          maxAttempts: 3,
+          initialDelayMs: 500,
+          backoffMultiplier: 2,
+          maxDelayMs: 5000,
+        },
+        logger: this.logger,
+        context: 'PositionLifecycleService.openPosition',
+        onRetry: (attempt, error, delayMs) => {
+          this.logger.warn(`🔄 Retrying position open (attempt ${attempt}/3)`, {
+            delayMs,
+            error: error.message,
+          });
+        },
+      }
+    );
+
+    if (!openResult.success || !openResult.value) {
+      throw openResult.error || new Error('Failed to open position on exchange');
+    }
+
+    const openedPosition = openResult.value;
+    const orderId = openedPosition.id;
+    this.logger.info('Position opened WITH atomic SL/TP protection', {
+      orderId,
+      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      quantity,
+      slSet: true,
+      tpSet: tpPrices.length > 0,
+    });
+
+    const tpOrderIds: (string | undefined)[] = [];
+    if (tpPrices.length > 0) {
+      tpOrderIds.push(orderId);
+    }
+
+    return { openedPosition, orderId, tpOrderIds };
   }
 
   private async cancelHangingOrdersBeforeOpen(): Promise<void> {

@@ -1015,6 +1015,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `prepareOpenExecutionContext(signal)` for hanging-order cleanup + SL context derivation
   - preserved pre-open order: cancel hanging orders -> fetch current price -> derive actual SL
   - `openPosition()` remains orchestrator for logging and exchange open call
+- [x] Decomposed atomic exchange-open boundary in `openPosition()`:
+  - extracted `executeAtomicOpenPosition(...)` for side mapping, retry-wrapped exchange call, and order-id extraction
+  - preserved retry context (`PositionLifecycleService.openPosition`) and retry callback semantics
+  - preserved first-TP order-id propagation via returned `tpOrderIds`
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
