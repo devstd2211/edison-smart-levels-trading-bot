@@ -389,105 +389,16 @@ export class PositionLifecycleService {
           },
         }
       );
-
-      // Phase 8.9.17: Record trade opening in journal with RETRY → GRACEFUL_DEGRADE strategy
-      if (this.errorHandler) {
-        const journalResult = await this.errorHandler.executeAsync(
-          async () => {
-            this.journal.recordTradeOpen({
-              id: journalId,
-              symbol: position.symbol,
-              side,
-              entryPrice: signal.price,
-              quantity: sizingResult.quantity,
-              leverage: this.tradingConfig.leverage,
-              entryCondition: {
-                signal,
-              },
-            });
-          },
-          {
-            strategy: RecoveryStrategy.RETRY,
-            retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
-            context: 'PositionLifecycleService.openPosition.recordTradeOpen',
-            onFailure: () => {
-              this.logger.warn('⚠️ Trade opened without journal recording (degraded mode)');
-            },
-          }
-        );
-
-        if (!journalResult.success) {
-          // GRACEFUL_DEGRADE: continue without journal
-          this.logger.warn('Position opened but journal recording failed', {
-            positionId: position.id,
-            error: journalResult.error?.message,
-            note: 'Position will be managed but not recorded in journal',
-          });
-        } else {
-          this.logger.info('✅ Trade recorded in journal', { journalId });
-        }
-      } else {
-        this.journal.recordTradeOpen({
-          id: journalId,
-          symbol: position.symbol,
-          side,
-          entryPrice: signal.price,
-          quantity: sizingResult.quantity,
-          leverage: this.tradingConfig.leverage,
-          entryCondition: {
-            signal,
-          },
-        });
-
-        this.logger.info('✅ Trade recorded in journal', { journalId });
-      }
-
-      // Phase 8.9.17: Record in session stats with SKIP strategy (analytics only)
-      if (this.sessionStats && entrySnapshot) {
-        const sessionTrade: SessionTradeRecord = {
-          tradeId: journalId,
-          timestamp: new Date(timestamp).toISOString(),
-          direction: signal.direction,
-          entryPrice: signal.price,
-          exitPrice: 0,
-          quantity: sizingResult.quantity,
-          pnl: 0,
-          pnlPercent: 0,
-          exitType: ExitType.MANUAL,
-          tpHitLevels: [],
-          holdingTimeMs: 0,
-          entryCondition: entrySnapshot,
-          stopLoss: {
-            initial: actualStopLoss,
-            final: actualStopLoss,
-            movedToBreakeven: false,
-            trailingActivated: false,
-          },
-        };
-
-        if (this.errorHandler) {
-          const statsResult = await this.errorHandler.executeAsync(
-            async () => {
-              this.sessionStats!.recordTradeEntry(sessionTrade);
-            },
-            {
-              strategy: RecoveryStrategy.SKIP,
-              context: 'PositionLifecycleService.openPosition.recordTradeEntry',
-            }
-          );
-
-          if (statsResult.success) {
-            this.logger.debug('📊 Trade recorded in session stats', { tradeId: journalId });
-          } else {
-            this.logger.warn('Failed to record session stats (non-critical)', {
-              error: statsResult.error?.message,
-            });
-          }
-        } else {
-          this.sessionStats.recordTradeEntry(sessionTrade);
-          this.logger.debug('📊 Trade recorded in session stats', { tradeId: journalId });
-        }
-      }
+      await this.recordPositionOpenAnalytics({
+        position,
+        signal,
+        side,
+        quantity: sizingResult.quantity,
+        journalId,
+        timestamp,
+        actualStopLoss,
+        entrySnapshot,
+      });
 
       this.logger.info('✅ Position opened successfully', {
         positionId: position.id,
@@ -903,6 +814,114 @@ export class PositionLifecycleService {
     return config.dynamicPositionSizing?.enabled === true;
   }
 
+  private async recordPositionOpenAnalytics(params: {
+    position: Position;
+    signal: Signal;
+    side: PositionSide;
+    quantity: number;
+    journalId: string;
+    timestamp: number;
+    actualStopLoss: number;
+    entrySnapshot?: SessionEntryCondition;
+  }): Promise<void> {
+    const { position, signal, side, quantity, journalId, timestamp, actualStopLoss, entrySnapshot } = params;
+
+    if (this.errorHandler) {
+      const journalResult = await this.errorHandler.executeAsync(
+        async () => {
+          this.journal.recordTradeOpen({
+            id: journalId,
+            symbol: position.symbol,
+            side,
+            entryPrice: signal.price,
+            quantity,
+            leverage: this.tradingConfig.leverage,
+            entryCondition: {
+              signal,
+            },
+          });
+        },
+        {
+          strategy: RecoveryStrategy.RETRY,
+          retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
+          context: 'PositionLifecycleService.openPosition.recordTradeOpen',
+          onFailure: () => {
+            this.logger.warn('Trade opened without journal recording (degraded mode)');
+          },
+        }
+      );
+
+      if (!journalResult.success) {
+        this.logger.warn('Position opened but journal recording failed', {
+          positionId: position.id,
+          error: journalResult.error?.message,
+          note: 'Position will be managed but not recorded in journal',
+        });
+      } else {
+        this.logger.info('Trade recorded in journal', { journalId });
+      }
+    } else {
+      this.journal.recordTradeOpen({
+        id: journalId,
+        symbol: position.symbol,
+        side,
+        entryPrice: signal.price,
+        quantity,
+        leverage: this.tradingConfig.leverage,
+        entryCondition: {
+          signal,
+        },
+      });
+
+      this.logger.info('Trade recorded in journal', { journalId });
+    }
+
+    if (this.sessionStats && entrySnapshot) {
+      const sessionTrade: SessionTradeRecord = {
+        tradeId: journalId,
+        timestamp: new Date(timestamp).toISOString(),
+        direction: signal.direction,
+        entryPrice: signal.price,
+        exitPrice: 0,
+        quantity,
+        pnl: 0,
+        pnlPercent: 0,
+        exitType: ExitType.MANUAL,
+        tpHitLevels: [],
+        holdingTimeMs: 0,
+        entryCondition: entrySnapshot,
+        stopLoss: {
+          initial: actualStopLoss,
+          final: actualStopLoss,
+          movedToBreakeven: false,
+          trailingActivated: false,
+        },
+      };
+
+      if (this.errorHandler) {
+        const statsResult = await this.errorHandler.executeAsync(
+          async () => {
+            this.sessionStats!.recordTradeEntry(sessionTrade);
+          },
+          {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'PositionLifecycleService.openPosition.recordTradeEntry',
+          }
+        );
+
+        if (statsResult.success) {
+          this.logger.debug('Trade recorded in session stats', { tradeId: journalId });
+        } else {
+          this.logger.warn('Failed to record session stats (non-critical)', {
+            error: statsResult.error?.message,
+          });
+        }
+      } else {
+        this.sessionStats.recordTradeEntry(sessionTrade);
+        this.logger.debug('Trade recorded in session stats', { tradeId: journalId });
+      }
+    }
+  }
   private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {
     const raw = signal as unknown as Record<string, unknown>;
     for (const key of keys) {
@@ -1096,4 +1115,6 @@ export class PositionLifecycleService {
     }
   }
 }
+
+
 

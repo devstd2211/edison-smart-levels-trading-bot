@@ -1003,6 +1003,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `resolveWebSocketSyncedPosition(currentPosition, wsPosition)` for restore-vs-update routing
   - kept in-memory semantics for `syncWithWebSocket()` to preserve degraded-mode compatibility
   - normalized post-close cancellation debug log text to ASCII (`Cancelling conditional orders after position close...`)
+- [x] Decomposed `openPosition()` analytics side-effects in `PositionLifecycleService`:
+  - extracted `recordPositionOpenAnalytics(...)` to isolate journal + session-stats recording path
+  - preserved error strategies (`RETRY` for journal, `SKIP` for session stats) and same contexts
+  - kept call order in `openPosition`: notify -> analytics recording -> success log
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
