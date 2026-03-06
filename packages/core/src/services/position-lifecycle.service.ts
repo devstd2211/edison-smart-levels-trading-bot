@@ -164,21 +164,11 @@ export class PositionLifecycleService {
       });
 
       // ===================================================================
-      // STEP 2: Cancel any hanging conditional orders from previous position
-      // Phase 8.9.17: ErrorHandler integration with RETRY → SKIP strategy
+      // STEP 2-3: Cancel hanging orders and prepare SL context before open
+      // Phase 8.9.17: ErrorHandler integration with RETRY and SKIP strategy
       // ===================================================================
-      await this.cancelHangingOrdersBeforeOpen();
-
-      // ===================================================================
-      // STEP 3: Calculate SL with price recalculation
-      // Phase 8.9.17: ErrorHandler integration with RETRY → FALLBACK strategy
-      // ===================================================================
-      const isLong = signal.direction === SignalDirection.LONG;
-      const side = isLong ? PositionSide.LONG : PositionSide.SHORT;
-      const slDistance = this.calculateSLDistance(signal.price, signal.stopLoss);
-      const currentPrice = await this.resolveCurrentPriceForOpen(signal.price);
-
-      const actualStopLoss = this.calculateActualStopLoss(isLong, currentPrice, slDistance);
+      const openContext = await this.prepareOpenExecutionContext(signal);
+      const { side, slDistance, currentPrice, actualStopLoss } = openContext;
 
       this.logger.info('📊 Stop-loss calculated', {
         signalPrice: signal.price,
@@ -748,6 +738,23 @@ export class PositionLifecycleService {
     slDistance: number,
   ): number {
     return isLong ? currentPrice - slDistance : currentPrice + slDistance;
+  }
+
+  private async prepareOpenExecutionContext(signal: Signal): Promise<{
+    side: PositionSide;
+    slDistance: number;
+    currentPrice: number;
+    actualStopLoss: number;
+  }> {
+    await this.cancelHangingOrdersBeforeOpen();
+
+    const isLong = signal.direction === SignalDirection.LONG;
+    const side = isLong ? PositionSide.LONG : PositionSide.SHORT;
+    const slDistance = this.calculateSLDistance(signal.price, signal.stopLoss);
+    const currentPrice = await this.resolveCurrentPriceForOpen(signal.price);
+    const actualStopLoss = this.calculateActualStopLoss(isLong, currentPrice, slDistance);
+
+    return { side, slDistance, currentPrice, actualStopLoss };
   }
 
   private async cancelHangingOrdersBeforeOpen(): Promise<void> {

@@ -54,9 +54,12 @@ You are continuing refactoring in `D:\src\Edison`.
 - Decomposed additional TP setup path in `openPosition()`:
   - extracted `configureAdditionalTakeProfits(signal, quantity)`
   - preserved non-critical retry/skip semantics and TP-indexed retry contexts.
+- Decomposed pre-open preparation path in `openPosition()`:
+  - extracted `prepareOpenExecutionContext(signal)` for hanging-order cleanup + SL context derivation
+  - preserved pre-open sequence and existing logging behavior in orchestrator method.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from pre-open exchange prep (`cancelHangingOrdersBeforeOpen` + price resolution/calculation boundary), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from exchange-open execution boundary (wrap atomic open call + exchange-side mapping/result extraction), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

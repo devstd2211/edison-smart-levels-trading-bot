@@ -1011,6 +1011,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `configureAdditionalTakeProfits(signal, quantity)`
   - preserved `RETRY`-with-`SKIP` semantics for non-critical TP-partial updates
   - preserved TP index-based contexts (`...updateTakeProfitPartial[TPn]`) and per-TP logging
+- [x] Decomposed pre-open preparation path in `openPosition()`:
+  - extracted `prepareOpenExecutionContext(signal)` for hanging-order cleanup + SL context derivation
+  - preserved pre-open order: cancel hanging orders -> fetch current price -> derive actual SL
+  - `openPosition()` remains orchestrator for logging and exchange open call
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
