@@ -36,9 +36,13 @@ You are continuing refactoring in `D:\src\Edison`.
   - exchange/journal id derivation
   - normalized `Position` assembly with SL/TP defaults
 - Integrated helpers into `PositionLifecycleService.calculatePositionSize` with behavior preserved.
+- Hardened repository-aware state access in safe paths:
+  - duplicate-open guard now uses `readStoredPosition()`
+  - `getOpenPositions()` now uses repository-aware read
+  - `syncWithWebSocket()` intentionally remains on in-memory semantics to preserve degraded-mode behavior covered by tests
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from lifecycle transitions/persistence helpers (prefer repository-aware state access in sync/query paths or close-flow helper isolation), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from close/cleanup flow (`clearPosition` cancellation + state reset + event emission decomposition), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

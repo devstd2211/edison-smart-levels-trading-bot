@@ -991,6 +991,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - normalized `Position` object construction after successful exchange open
   - stop-loss/take-profit initialization defaults preserved
 - [x] Integrated open-position helper into `PositionLifecycleService.openPosition` (no workflow/order changes).
+- [x] Repository-aware state access hardening in `PositionLifecycleService` (safe subset):
+  - duplicate-open guard now checks `readStoredPosition()` (covers repository-backed state)
+  - `getOpenPositions()` now reads via repository-aware accessor
+  - `syncWithWebSocket()` intentionally kept on in-memory `currentPosition` semantics for backward compatibility with existing error-handling behavior.
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

@@ -140,7 +140,7 @@ export class PositionLifecycleService {
    */
   async openPosition(signal: Signal, entrySnapshot?: SessionEntryCondition): Promise<Position> {
     // Prevent duplicate position opening
-    if (this.currentPosition !== null) {
+    if (this.readStoredPosition() !== null) {
       throw new Error('Position already exists. Close existing position first.');
     }
 
@@ -527,12 +527,13 @@ export class PositionLifecycleService {
    * @returns Array of Position objects currently open
    */
   getOpenPositions(): Position[] {
-    if (!this.journal || !this.currentPosition) {
+    const currentPosition = this.readStoredPosition();
+    if (!this.journal || !currentPosition) {
       return [];
     }
 
     // Return only the current position (single open position per symbol)
-    return [this.currentPosition];
+    return [currentPosition];
   }
 
   /**
