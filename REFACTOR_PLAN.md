@@ -1072,6 +1072,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted generic rejection logger `logPendingSignalRejected(...)`
   - extracted price formatting helper `formatPriceForLog(...)`
   - preserved confirm/reject branching and returned signal semantics
+- [x] 4-slice batch in sizing-path logging boundaries:
+  - extracted `logCompoundSizingSuccess(...)`
+  - extracted `logCompoundSizingFallback(...)`
+  - extracted `logKellySizingSuccess(...)`
+  - extracted `logKellySizingFallback(...)`
+  - preserved sizing decision flow and fallback chain updates
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

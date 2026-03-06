@@ -608,16 +608,14 @@ export class PositionLifecycleService {
         positionSizeUsdt = compoundResult.positionSize;
         sizingChain.push('COMPOUND_INTEREST');
 
-        this.logger.info('💰 Position sizing: Compound interest', {
-          currentBalance: compoundResult.currentBalance,
-          totalProfit: compoundResult.totalProfit,
-          positionSize: positionSizeUsdt,
-        });
+        this.logCompoundSizingSuccess(
+          compoundResult.currentBalance,
+          compoundResult.totalProfit,
+          positionSizeUsdt,
+        );
       } catch (error) {
         // Phase 8.7: FALLBACK to fixed size if compound fails
-        this.logger.warn('Compound interest calculation failed, falling back to fixed size', {
-          error: error instanceof Error ? error.message : String(error),
-        });
+        this.logCompoundSizingFallback(error);
         positionSizeUsdt = this.riskConfig.positionSizeUsdt;
         sizingChain.push('COMPOUND_INTEREST_FAILED');
         sizingChain.push('FALLBACK_FIXED');
@@ -656,7 +654,7 @@ export class PositionLifecycleService {
           sizingChain.push(`ATR_${sizingResult.volatilityAdjustment.toFixed(2)}x`);
         }
 
-        this.logger.info('🎲 Position sizing: Kelly Criterion', {
+        this.logKellySizingSuccess({
           baseSize: sizingResult.baseSize,
           adjustedSize: sizingResult.adjustedSize,
           riskPercent: sizingResult.riskPercent,
@@ -666,9 +664,7 @@ export class PositionLifecycleService {
         });
       } catch (error) {
         // FALLBACK to fixed size if Kelly fails
-        this.logger.warn('Kelly Criterion calculation failed, falling back to fixed size', {
-          error: error instanceof Error ? error.message : String(error),
-        });
+        this.logKellySizingFallback(error);
         positionSizeUsdt = this.riskConfig.positionSizeUsdt;
         sizingChain.push('KELLY_FAILED');
         sizingChain.push('FALLBACK_FIXED');
@@ -938,6 +934,41 @@ export class PositionLifecycleService {
       entry: entryPrice,
       sl: stopLoss,
       leverage: this.tradingConfig.leverage,
+    });
+  }
+
+  private logCompoundSizingSuccess(
+    currentBalance: number,
+    totalProfit: number,
+    positionSize: number,
+  ): void {
+    this.logger.info('Position sizing: Compound interest', {
+      currentBalance,
+      totalProfit,
+      positionSize,
+    });
+  }
+
+  private logCompoundSizingFallback(error: unknown): void {
+    this.logger.warn('Compound interest calculation failed, falling back to fixed size', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  private logKellySizingSuccess(params: {
+    baseSize: number;
+    adjustedSize: number;
+    riskPercent: number;
+    confidence: number;
+    volatilityAdj: number;
+    recommendation: string;
+  }): void {
+    this.logger.info('Position sizing: Kelly Criterion', params);
+  }
+
+  private logKellySizingFallback(error: unknown): void {
+    this.logger.warn('Kelly Criterion calculation failed, falling back to fixed size', {
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 
