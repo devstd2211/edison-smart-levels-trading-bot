@@ -61,6 +61,7 @@ import {
   calculateRiskRewardRatio,
   resolveFirstTakeProfitPrice,
 } from './position-lifecycle/position-lifecycle-sizing.utils';
+import { buildOpenedPosition } from './position-lifecycle/position-lifecycle-open.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -326,40 +327,21 @@ export class PositionLifecycleService {
       // STEP 5: Create Position object
       // ===================================================================
       const timestamp = Date.now();
-      const sideName = side === PositionSide.LONG ? 'Buy' : 'Sell';
       const symbol = this.bybitService.getSymbol?.() || 'UNKNOWN';
-      const exchangeId = `${symbol}_${sideName}`;
-      const journalId = `${exchangeId}_${timestamp}`;
-
-      const position: Position = {
-        id: exchangeId,
-        journalId,
-        symbol: symbol,
+      const position = buildOpenedPosition({
+        symbol,
         side,
         quantity: sizingResult.quantity,
         entryPrice: signal.price,
         leverage: this.tradingConfig.leverage,
         marginUsed: sizingResult.marginUsed,
-        stopLoss: {
-          price: actualStopLoss,
-          initialPrice: actualStopLoss,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: (signal.takeProfits || []).map((tp, i) => ({
-          ...tp,
-          orderId: tpOrderIds[i] || undefined,
-          hit: false,
-        })),
-        openedAt: timestamp,
-        unrealizedPnL: 0,
-        orderId,
-        reason: 'Position opened',
-        protectionVerifiedOnce: true,
-        status: 'OPEN' as const,
-      };
+        stopLossPrice: actualStopLoss,
+        takeProfits: signal.takeProfits,
+        tpOrderIds,
+        orderId: orderId ?? openedPosition.id,
+        timestamp,
+      });
+      const journalId = position.journalId || `${position.id}_${timestamp}`;
 
       // Store position IMMEDIATELY to prevent race condition
       // Phase 6.2: Use repository if available, fallback to direct storage

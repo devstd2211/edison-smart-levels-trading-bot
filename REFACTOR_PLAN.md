@@ -986,6 +986,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - risk/reward ratio calculation
   - position exposure calculation (`quantity`, `marginUsed`, `notionalValue`)
 - [x] Integrated new sizing utils into `packages/core/src/services/position-lifecycle.service.ts` without behavior changes in exchange/journal/lock flows.
+- [x] Extracted position creation helper to `packages/core/src/services/position-lifecycle/position-lifecycle-open.utils.ts`:
+  - exchange/journal identifier derivation
+  - normalized `Position` object construction after successful exchange open
+  - stop-loss/take-profit initialization defaults preserved
+- [x] Integrated open-position helper into `PositionLifecycleService.openPosition` (no workflow/order changes).
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
