@@ -19,6 +19,11 @@ import { TimeframeProvider } from '../providers/timeframe.provider';
 import { TIMING_CONSTANTS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { WebSocketConnectionError } from '../errors/DomainErrors';
+import {
+  detectOrderbookSnapshot,
+  extractSymbolFromKlineTopic,
+  mapClosedCandleFromKline,
+} from './public-websocket/public-websocket-message.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -304,30 +309,14 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
     const klines = Array.isArray(data) ? data : [data];
 
     // Extract symbol from topic (e.g., "kline.1.BTCUSDT" -> "BTCUSDT")
-    let topicSymbol = '';
-    if (topic) {
-      const parts = topic.split('.');
-      if (parts.length >= 3) {
-        topicSymbol = parts[2]; // parts[0]="kline", parts[1]="interval", parts[2]="SYMBOL"
-      }
-    }
+    const topicSymbol = extractSymbolFromKlineTopic(topic);
 
     for (const kline of klines) {
       const klineData = kline;
-
-      // Only process closed candles (confirm = true)
-      if (klineData.confirm !== true) {
+      const candle = mapClosedCandleFromKline(klineData);
+      if (!candle) {
         continue;
       }
-
-      const candle: Candle = {
-        timestamp: parseInt(klineData.start ?? '0'),
-        open: parseFloat(klineData.open ?? '0'),
-        high: parseFloat(klineData.high ?? '0'),
-        low: parseFloat(klineData.low ?? '0'),
-        close: parseFloat(klineData.close ?? '0'),
-        volume: parseFloat(klineData.volume ?? '0'),
-      };
 
       // Check if this is a BTC candle - use symbol from topic (not from klineData.symbol which is empty)
       const isBtcCandle = this.btcConfirmation?.enabled && topicSymbol === (this.btcConfirmation.symbol || 'BTCUSDT');
@@ -418,12 +407,7 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
       // - "snapshot" type field OR
       // - updateId = 1 indicates service restart (treat as snapshot) OR
       // - Large number of levels (>40) on first message = snapshot
-      const isSnapshot =
-        orderbookData.type === 'snapshot' ||
-        orderbookData.u === 1 ||
-        (!this.lastIncompleteWarning && // First message
-          orderbookData.b.length > 40 &&
-          orderbookData.a.length > 40);
+      const isSnapshot = detectOrderbookSnapshot(orderbookData, this.lastIncompleteWarning);
 
       // Log snapshot detection
       if (isSnapshot) {
