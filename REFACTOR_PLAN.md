@@ -1097,6 +1097,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logPositionClearedFromRepository(...)`
   - extracted `logTelegramNotificationSkipped(...)`
   - preserved open/clear sequencing and retry/degrade semantics
+- [x] 4-slice batch in analytics logging boundaries:
+  - extracted `logJournalTradeOpenDegraded(...)`
+  - extracted `logJournalTradeOpenFailure(...)`
+  - extracted `logJournalTradeRecorded(...)`
+  - extracted `logSessionStatsTradeRecorded(...)` and `logSessionStatsTradeRecordFailure(...)`
+  - preserved journal/session-stats retry-skip behavior and payload semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

@@ -1054,6 +1054,32 @@ export class PositionLifecycleService {
     this.logger.info('Telegram notification skipped due to error');
   }
 
+  private logJournalTradeOpenDegraded(): void {
+    this.logger.warn('Trade opened without journal recording (degraded mode)');
+  }
+
+  private logJournalTradeOpenFailure(positionId: string, errorMessage?: string): void {
+    this.logger.warn('Position opened but journal recording failed', {
+      positionId,
+      error: errorMessage,
+      note: 'Position will be managed but not recorded in journal',
+    });
+  }
+
+  private logJournalTradeRecorded(journalId: string): void {
+    this.logger.info('Trade recorded in journal', { journalId });
+  }
+
+  private logSessionStatsTradeRecorded(tradeId: string): void {
+    this.logger.debug('Trade recorded in session stats', { tradeId });
+  }
+
+  private logSessionStatsTradeRecordFailure(errorMessage?: string): void {
+    this.logger.warn('Failed to record session stats (non-critical)', {
+      error: errorMessage,
+    });
+  }
+
   private async recordPositionOpenAnalytics(params: {
     position: Position;
     signal: Signal;
@@ -1118,25 +1144,21 @@ export class PositionLifecycleService {
           retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
           context: 'PositionLifecycleService.openPosition.recordTradeOpen',
           onFailure: () => {
-            this.logger.warn('Trade opened without journal recording (degraded mode)');
+            this.logJournalTradeOpenDegraded();
           },
         }
       );
 
       if (!journalResult.success) {
-        this.logger.warn('Position opened but journal recording failed', {
-          positionId,
-          error: journalResult.error?.message,
-          note: 'Position will be managed but not recorded in journal',
-        });
+        this.logJournalTradeOpenFailure(positionId, journalResult.error?.message);
       } else {
-        this.logger.info('Trade recorded in journal', { journalId });
+        this.logJournalTradeRecorded(journalId);
       }
       return;
     }
 
     this.journal.recordTradeOpen(tradeOpenPayload);
-    this.logger.info('Trade recorded in journal', { journalId });
+    this.logJournalTradeRecorded(journalId);
   }
 
   private createSessionTradeRecordForOpen(params: {
@@ -1191,17 +1213,15 @@ export class PositionLifecycleService {
       );
 
       if (statsResult.success) {
-        this.logger.debug('Trade recorded in session stats', { tradeId });
+        this.logSessionStatsTradeRecorded(tradeId);
       } else {
-        this.logger.warn('Failed to record session stats (non-critical)', {
-          error: statsResult.error?.message,
-        });
+        this.logSessionStatsTradeRecordFailure(statsResult.error?.message);
       }
       return;
     }
 
     this.sessionStats.recordTradeEntry(sessionTrade);
-    this.logger.debug('Trade recorded in session stats', { tradeId });
+    this.logSessionStatsTradeRecorded(tradeId);
   }
 
   private extractSignalNumber(signal: Signal, keys: string[]): number | undefined {
