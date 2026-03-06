@@ -1047,6 +1047,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `executeAtomicCloseOperation(onCloseInternal?)` from `performClose(...)`
   - extracted `emitPositionClosedEvent(closedPosition)` from `finalizePositionClear(...)`
   - preserved close flow ordering and lock semantics
+- [x] Triple micro-slice in open-path logging (single batch):
+  - extracted `logPositionSizingCompleted(...)`
+  - extracted `logStopLossCalculated(...)`
+  - extracted `logAtomicOpenRequest(...)`
+  - preserved open flow ordering and payload semantics for all three logs
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

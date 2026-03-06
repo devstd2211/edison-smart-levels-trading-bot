@@ -156,12 +156,7 @@ export class PositionLifecycleService {
       // ===================================================================
       const sizingResult = await this.calculatePositionSize(signal);
 
-      this.logger.info('📐 Position sizing completed', {
-        quantity: sizingResult.quantity,
-        marginUsed: sizingResult.marginUsed.toFixed(DECIMAL_PLACES.PERCENT),
-        notionalValue: sizingResult.notionalValue.toFixed(DECIMAL_PLACES.PERCENT),
-        sizingChain: sizingResult.sizingChain.join(' → '),
-      });
+      this.logPositionSizingCompleted(sizingResult);
 
       // ===================================================================
       // STEP 2-3: Cancel hanging orders and prepare SL context before open
@@ -170,11 +165,11 @@ export class PositionLifecycleService {
       const openContext = await this.prepareOpenExecutionContext(signal);
       const { side, slDistance, currentPrice, actualStopLoss } = openContext;
 
-      this.logger.info('📊 Stop-loss calculated', {
+      this.logStopLossCalculated({
         signalPrice: signal.price,
         currentPrice,
-        slDistancePercent: (slDistance / currentPrice * PERCENT_MULTIPLIER).toFixed(2) + '%',
-        actualStopLoss: actualStopLoss.toFixed(DECIMAL_PLACES.PERCENT),
+        slDistance,
+        actualStopLoss,
       });
 
       // ===================================================================
@@ -182,12 +177,11 @@ export class PositionLifecycleService {
       // This prevents race condition liquidations by setting SL atomically
       // Phase 8.7: ErrorHandler integration with RETRY strategy
       // ===================================================================
-      this.logger.info('🚀 Opening position on exchange with atomic SL/TP protection', {
-        side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      this.logAtomicOpenRequest({
+        side,
         quantity: sizingResult.quantity,
-        entry: signal.price,
-        sl: actualStopLoss,
-        leverage: this.tradingConfig.leverage,
+        entryPrice: signal.price,
+        stopLoss: actualStopLoss,
       });
 
       const atomicOpen = await this.executeAtomicOpenPosition({
@@ -835,6 +829,51 @@ export class PositionLifecycleService {
       side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
       entry: position.entryPrice,
       quantity: position.quantity,
+    });
+  }
+
+  private logPositionSizingCompleted(result: {
+    quantity: number;
+    marginUsed: number;
+    notionalValue: number;
+    sizingChain: string[];
+  }): void {
+    this.logger.info('Position sizing completed', {
+      quantity: result.quantity,
+      marginUsed: result.marginUsed.toFixed(DECIMAL_PLACES.PERCENT),
+      notionalValue: result.notionalValue.toFixed(DECIMAL_PLACES.PERCENT),
+      sizingChain: result.sizingChain.join(' -> '),
+    });
+  }
+
+  private logStopLossCalculated(params: {
+    signalPrice: number;
+    currentPrice: number;
+    slDistance: number;
+    actualStopLoss: number;
+  }): void {
+    const { signalPrice, currentPrice, slDistance, actualStopLoss } = params;
+    this.logger.info('Stop-loss calculated', {
+      signalPrice,
+      currentPrice,
+      slDistancePercent: (slDistance / currentPrice * PERCENT_MULTIPLIER).toFixed(2) + '%',
+      actualStopLoss: actualStopLoss.toFixed(DECIMAL_PLACES.PERCENT),
+    });
+  }
+
+  private logAtomicOpenRequest(params: {
+    side: PositionSide;
+    quantity: number;
+    entryPrice: number;
+    stopLoss: number;
+  }): void {
+    const { side, quantity, entryPrice, stopLoss } = params;
+    this.logger.info('Opening position on exchange with atomic SL/TP protection', {
+      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      quantity,
+      entry: entryPrice,
+      sl: stopLoss,
+      leverage: this.tradingConfig.leverage,
     });
   }
 
