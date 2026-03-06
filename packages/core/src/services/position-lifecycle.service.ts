@@ -242,12 +242,7 @@ export class PositionLifecycleService {
         entrySnapshot,
       });
 
-      this.logger.info('✅ Position opened successfully', {
-        positionId: position.id,
-        side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
-        entry: position.entryPrice,
-        quantity: position.quantity,
-      });
+      this.logPositionOpenedSuccess(position, side);
 
       return position;
     } catch (error) {
@@ -827,6 +822,15 @@ export class PositionLifecycleService {
       this.logger,
       this.errorHandler,
     );
+  }
+
+  private logPositionOpenedSuccess(position: Position, side: PositionSide): void {
+    this.logger.info('Position opened successfully', {
+      positionId: position.id,
+      side: side === PositionSide.LONG ? 'LONG' : 'SHORT',
+      entry: position.entryPrice,
+      quantity: position.quantity,
+    });
   }
 
   private isDynamicPositionSizingEnabled(): boolean {

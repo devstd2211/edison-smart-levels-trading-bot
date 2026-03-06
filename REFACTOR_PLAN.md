@@ -1039,6 +1039,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `notifyPositionOpenedWithResilience(position)`
   - preserved `SKIP` strategy + recover log for `notifyPositionOpened`
   - kept notification before analytics recording in `openPosition` flow
+- [x] Decomposed open-success logging boundary:
+  - extracted `logPositionOpenedSuccess(position, side)`
+  - centralized success-log payload shaping for opened position
+  - preserved success log semantics and placement after analytics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
