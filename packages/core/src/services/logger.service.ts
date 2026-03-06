@@ -19,13 +19,13 @@ import { LogEntry } from '../types/legacy';
 import { LogLevel } from '../types/legacy';
 import { TIME_INTERVALS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-
-const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
-  [LogLevel.DEBUG]: 0,
-  [LogLevel.INFO]: 1,
-  [LogLevel.WARN]: 2,
-  [LogLevel.ERROR]: 3,
-};
+import {
+  formatLogEntry,
+  getTodayString,
+  normalizeLogLevel,
+  shouldLogLevel,
+  validateLogLevel,
+} from './logger/logger-core.utils';
 
 interface WriteQueueItem {
   filePath: string;
@@ -50,7 +50,7 @@ export class LoggerService {
     errorHandler?: ErrorHandler,
   ) {
     // THROW: Validate minLevel (Phase 8.9.55)
-    this.validateLogLevel(minLevel);
+    validateLogLevel(minLevel);
 
     // THROW: Validate logDir when logging to file
     if (logToFile && !this.isValidLogDir(logDir)) {
@@ -58,9 +58,7 @@ export class LoggerService {
     }
 
     // Normalize string to enum (for config compatibility)
-    const normalizedLevel = typeof minLevel === 'string'
-      ? (minLevel.toUpperCase() as LogLevel)
-      : minLevel;
+    const normalizedLevel = normalizeLogLevel(minLevel);
 
     this.minLevel = normalizedLevel;
     this.logDir = logDir;
@@ -88,28 +86,6 @@ export class LoggerService {
     if (!this.initialized) {
       this.start();
     }
-  }
-
-  /**
-   * Validate that minLevel is a valid LogLevel value (accept both enum and string)
-   */
-  private validateLogLevel(level: unknown): void {
-    const validLevels = Object.values(LogLevel);
-
-    // Accept both enum values
-    if (typeof level === 'string' && validLevels.includes(level as LogLevel)) {
-      return;
-    }
-
-    // Accept uppercase strings (for config compatibility)
-    if (typeof level === 'string') {
-      const upperLevel = level.toUpperCase();
-      if (validLevels.includes(upperLevel as LogLevel)) {
-        return;
-      }
-    }
-
-    throw new Error(`Invalid log level: ${level}. Must be one of: ${validLevels.join(', ')}`);
   }
 
   /**
@@ -215,26 +191,6 @@ export class LoggerService {
   }
 
   /**
-   * Get today's date string for filename
-   */
-  private getTodayString(): string {
-    const today = new Date().toISOString().split('T')[0];
-    if (!today) {
-      throw new Error('Failed to get date string');
-    }
-    return today;
-  }
-
-  /**
-   * Format log entry as string
-   */
-  private formatLogEntry(entry: LogEntry): string {
-    const timestamp = new Date(entry.timestamp).toISOString();
-    const contextStr = entry.context ? ` | ${JSON.stringify(entry.context)}` : '';
-    return `[${timestamp}] [${entry.level}] ${entry.message}${contextStr}`;
-  }
-
-  /**
    * Write log entry to file (async queue)
    */
   private writeToFile(entry: LogEntry): void {
@@ -242,10 +198,10 @@ export class LoggerService {
       return;
     }
 
-    const today = this.getTodayString();
+    const today = getTodayString();
     const fileName = `trading-bot-${today}.log`;
     const filePath = join(this.logDir, fileName);
-    const logLine = this.formatLogEntry(entry) + '\n';
+    const logLine = formatLogEntry(entry) + '\n';
 
     this.writeQueue.push({ filePath, content: logLine });
     void this.processWriteQueue();
@@ -340,7 +296,7 @@ export class LoggerService {
     }
 
     this.safeLog(() => {
-      const formattedMessage = this.formatLogEntry(entry);
+      const formattedMessage = formatLogEntry(entry);
 
       // Use template literals instead of %s formatting to avoid console wrapping issues
       switch (entry.level) {
@@ -410,10 +366,7 @@ export class LoggerService {
    */
   private log(level: LogLevel, message: string, context?: Record<string, unknown>): void {
     this.ensureInitialized();
-    const levelPriority = LOG_LEVEL_PRIORITY[level];
-    const minPriority = LOG_LEVEL_PRIORITY[this.minLevel];
-
-    if (levelPriority < minPriority) {
+    if (!shouldLogLevel(level, this.minLevel)) {
       return; // Skip logs below minimum level
     }
 
@@ -471,7 +424,7 @@ export class LoggerService {
     if (!this.logToFile) {
       return null;
     }
-    const today = this.getTodayString();
+    const today = getTodayString();
     const fileName = `trading-bot-${today}.log`;
     return join(this.logDir, fileName);
   }

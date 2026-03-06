@@ -27,14 +27,16 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-06)
-- God-object recovery track continued with `packages/core/src/analyzers/bollinger-bands.analyzer-new.ts` iteration 1.
-- Extracted Bollinger decision primitives to `packages/core/src/analyzers/bollinger-bands/bollinger-signal.utils.ts`:
-  - `getBollingerDirection`
-  - `calculateBollingerConfidence`
-- Integrated extracted helpers into analyzer while preserving signal generation behavior.
-- Progress tracking updated in `REFACTOR_PLAN.md`: 9/10 recovery candidates completed, 1/10 pending.
+- God-object recovery track completed with `packages/core/src/services/logger.service.ts` iteration 1.
+- Extracted logger core helpers to `packages/core/src/services/logger/logger-core.utils.ts`:
+  - log-level validation/normalization
+  - level filtering
+  - log-entry formatting
+  - date-string resolution for log files
+- Integrated extracted helpers into logger service while preserving queue/sink/lifecycle behavior.
+- Progress tracking updated in `REFACTOR_PLAN.md`: 10/10 recovery candidates completed, 0/10 pending.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.functional.test.ts` -> 2/2 suites PASS, 64/64 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/logger.service.error-handling.test.ts` -> 1/1 suite PASS, 33/33 tests PASS.
 
 ## Next Step
-- Continue recovery track with final recovery candidate: `packages/core/src/services/logger.service.ts` (behavior-preserving split of facade vs sink/queue internals + targeted tests + final progress update).
+- Recovery track is complete. Start iteration-2 decomposition from highest-impact services, beginning with `packages/core/src/services/position-lifecycle.service.ts` (deeper split of lifecycle transitions/persistence/exchange-sync flows + targeted tests + progress update).
