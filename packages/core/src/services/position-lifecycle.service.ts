@@ -264,64 +264,7 @@ export class PositionLifecycleService {
 
       // Phase 8.9.17: RETRY → SKIP strategy for additional TP levels (non-critical)
       // Set additional TP levels (if more than 1)
-      if (signal.takeProfits && signal.takeProfits.length > 1) {
-        this.logger.info('📋 Setting additional TP levels', {
-          additionalLevels: signal.takeProfits.length - 1,
-        });
-
-        for (let i = 1; i < signal.takeProfits.length; i++) {
-          const tp = signal.takeProfits[i];
-          const tpSize = sizingResult.quantity / signal.takeProfits.length;
-
-          if (this.bybitService.updateTakeProfitPartial) {
-            if (this.errorHandler) {
-              const updateTPFn = this.bybitService.updateTakeProfitPartial.bind(this.bybitService);
-              const tpResult = await this.errorHandler.executeAsync(
-                () => updateTPFn({
-                  price: tp.price,
-                  size: tpSize,
-                  index: i,
-                }),
-                {
-                  strategy: RecoveryStrategy.RETRY,
-                  retryConfig: { maxAttempts: 2, initialDelayMs: 200, backoffMultiplier: 2 },
-                  context: `PositionLifecycleService.openPosition.updateTakeProfitPartial[TP${i + 1}]`,
-                }
-              );
-
-              if (tpResult.success) {
-                this.logger.debug(`✅ TP${i + 1} set`, {
-                  price: tp.price,
-                  size: tpSize,
-                });
-              } else {
-                this.logger.warn(`Failed to set TP${i + 1} level (non-critical)`, {
-                  error: tpResult.error?.message,
-                });
-                // SKIP: continue with other TPs - non-critical operation
-              }
-            } else {
-              try {
-                await this.bybitService.updateTakeProfitPartial({
-                  price: tp.price,
-                  size: tpSize,
-                  index: i,
-                });
-
-                this.logger.debug(`✅ TP${i + 1} set`, {
-                  price: tp.price,
-                  size: tpSize,
-                });
-              } catch (error) {
-                this.logger.warn(`Failed to set TP${i + 1} level`, {
-                  error: error instanceof Error ? error.message : String(error),
-                });
-                // Continue with other TPs - SKIP strategy for non-critical operation
-              }
-            }
-          }
-        }
-      }
+      await this.configureAdditionalTakeProfits(signal, sizingResult.quantity);
 
       // ===================================================================
       // STEP 5: Create Position object
@@ -418,6 +361,69 @@ export class PositionLifecycleService {
     }
   }
 
+  private async configureAdditionalTakeProfits(signal: Signal, quantity: number): Promise<void> {
+    if (!signal.takeProfits || signal.takeProfits.length <= 1) {
+      return;
+    }
+
+    this.logger.info('Setting additional TP levels', {
+      additionalLevels: signal.takeProfits.length - 1,
+    });
+
+    for (let i = 1; i < signal.takeProfits.length; i++) {
+      const tp = signal.takeProfits[i];
+      const tpSize = quantity / signal.takeProfits.length;
+
+      if (!this.bybitService.updateTakeProfitPartial) {
+        continue;
+      }
+
+      if (this.errorHandler) {
+        const updateTPFn = this.bybitService.updateTakeProfitPartial.bind(this.bybitService);
+        const tpResult = await this.errorHandler.executeAsync(
+          () => updateTPFn({
+            price: tp.price,
+            size: tpSize,
+            index: i,
+          }),
+          {
+            strategy: RecoveryStrategy.RETRY,
+            retryConfig: { maxAttempts: 2, initialDelayMs: 200, backoffMultiplier: 2 },
+            context: `PositionLifecycleService.openPosition.updateTakeProfitPartial[TP${i + 1}]`,
+          }
+        );
+
+        if (tpResult.success) {
+          this.logger.debug(`TP${i + 1} set`, {
+            price: tp.price,
+            size: tpSize,
+          });
+        } else {
+          this.logger.warn(`Failed to set TP${i + 1} level (non-critical)`, {
+            error: tpResult.error?.message,
+          });
+        }
+        continue;
+      }
+
+      try {
+        await this.bybitService.updateTakeProfitPartial({
+          price: tp.price,
+          size: tpSize,
+          index: i,
+        });
+
+        this.logger.debug(`TP${i + 1} set`, {
+          price: tp.price,
+          size: tpSize,
+        });
+      } catch (error) {
+        this.logger.warn(`Failed to set TP${i + 1} level`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
   /**
    * Get current position
    * Phase 6.2: Read from repository if available, fallback to direct storage
@@ -1115,6 +1121,8 @@ export class PositionLifecycleService {
     }
   }
 }
+
+
 
 
 

@@ -1007,6 +1007,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `recordPositionOpenAnalytics(...)` to isolate journal + session-stats recording path
   - preserved error strategies (`RETRY` for journal, `SKIP` for session stats) and same contexts
   - kept call order in `openPosition`: notify -> analytics recording -> success log
+- [x] Decomposed additional TP setup path in `openPosition()`:
+  - extracted `configureAdditionalTakeProfits(signal, quantity)`
+  - preserved `RETRY`-with-`SKIP` semantics for non-critical TP-partial updates
+  - preserved TP index-based contexts (`...updateTakeProfitPartial[TPn]`) and per-TP logging
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
