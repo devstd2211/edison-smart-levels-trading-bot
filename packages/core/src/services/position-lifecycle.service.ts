@@ -261,7 +261,7 @@ export class PositionLifecycleService {
 
   private logOpenPositionFailure(error: unknown): void {
     this.logger.error('Failed to open position', {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
     });
   }
 
@@ -879,7 +879,7 @@ export class PositionLifecycleService {
 
   private logHangingOrderCancellationFailed(error: unknown): void {
     this.logger.warn('Failed to cancel hanging orders', {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
     });
   }
 
@@ -1020,7 +1020,7 @@ export class PositionLifecycleService {
 
   private logCompoundSizingFallback(error: unknown): void {
     this.logger.warn('Compound interest calculation failed, falling back to fixed size', {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
     });
   }
 
@@ -1037,7 +1037,7 @@ export class PositionLifecycleService {
 
   private logKellySizingFallback(error: unknown): void {
     this.logger.warn('Kelly Criterion calculation failed, falling back to fixed size', {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
     });
   }
 
@@ -1079,7 +1079,7 @@ export class PositionLifecycleService {
 
   private logAdditionalTakeProfitSetFailure(levelIndex: number, error: unknown): void {
     this.logger.warn(`Failed to set TP${levelIndex} level`, {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
     });
   }
 
@@ -1436,7 +1436,7 @@ export class PositionLifecycleService {
 
   private logWebSocketRestoreJournalLookupFailure(error: unknown, positionId: string): void {
     this.logger.warn('Journal lookup failed during position restoration - proceeding without journalId', {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
       positionId,
     });
   }
@@ -1598,7 +1598,7 @@ export class PositionLifecycleService {
     error: unknown,
   ): void {
     this.logger.error(`[P0.1 + P3] Failed to close position: ${positionId}`, {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
       reason,
     });
   }
@@ -1645,12 +1645,16 @@ export class PositionLifecycleService {
 
   private logPositionSnapshotDegraded(error: unknown): void {
     this.logger.warn('[P0.3] Failed to create position snapshot, using reference (degraded mode)', {
-      error: error instanceof Error ? error.message : String(error),
+      error: this.toErrorMessage(error),
     });
   }
 
   private logPositionSnapshotFailure(error: unknown): void {
     this.logger.error('[P0.3] Failed to create position snapshot', { error });
+  }
+
+  private toErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 }
 

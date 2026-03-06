@@ -1154,6 +1154,17 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - applied in `logAtomicOpenRequest(...)`
   - applied in `logAtomicOpenResult(...)`
   - preserved log payload semantics and side mapping behavior
+- [x] 8-slice error-message normalization in logging helpers:
+  - extracted `toErrorMessage(error)` helper
+  - applied in `logOpenPositionFailure(...)`
+  - applied in `logHangingOrderCancellationFailed(...)`
+  - applied in `logCompoundSizingFallback(...)`
+  - applied in `logKellySizingFallback(...)`
+  - applied in `logAdditionalTakeProfitSetFailure(...)`
+  - applied in `logWebSocketRestoreJournalLookupFailure(...)`
+  - applied in `logAtomicCloseFailure(...)`
+  - applied in `logPositionSnapshotDegraded(...)`
+  - preserved all log semantics and error-string conversion behavior
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
