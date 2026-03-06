@@ -1027,6 +1027,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `createSessionTradeRecordForOpen(...)`
   - `recordPositionOpenAnalytics(...)` now focuses on resilience strategy orchestration
   - preserved payload shape and `recordTradeEntry` call behavior
+- [x] Decomposed journal recording branch in open analytics:
+  - extracted `recordTradeOpenWithResilience(...)` from `recordPositionOpenAnalytics(...)`
+  - isolated trade-open payload construction + retry/degraded logging behavior
+  - preserved `openPosition.recordTradeOpen` context and fallback semantics
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
