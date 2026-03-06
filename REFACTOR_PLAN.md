@@ -1179,6 +1179,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `resolveCurrentPriceWithResilience(...)`
   - simplified orchestrators `cancelHangingOrdersBeforeOpen(...)` and `resolveCurrentPriceForOpen(...)`
   - preserved retry/skip/fallback behavior and log callbacks
+- [x] 3-slice micro-decomposition in pre-open result handling:
+  - extracted `handleHangingOrderCancelResult(...)`
+  - extracted `resolveCurrentPriceResult(...)`
+  - simplified resilient branch result handling in cancel/price helpers
+  - preserved skip/fallback semantics and return values
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

@@ -212,9 +212,14 @@ You are continuing refactoring in `D:\src\Edison`.
   - extracted `resolveCurrentPriceWithResilience(...)`
   - simplified `cancelHangingOrdersBeforeOpen(...)` and `resolveCurrentPriceForOpen(...)`
   with unchanged retry/skip/fallback behavior.
+- Completed 3-slice micro-decomposition in pre-open result handling:
+  - extracted `handleHangingOrderCancelResult(...)`
+  - extracted `resolveCurrentPriceResult(...)`
+  - simplified resilient result branches in cancel/price helpers
+  with unchanged semantics.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: apply structure-only helper ordering cleanup for pre-open/open logging clusters and section boundaries, then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: apply structure-only helper ordering cleanup for pre-open/open helper clusters and section boundaries, then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

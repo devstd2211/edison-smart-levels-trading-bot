@@ -837,10 +837,7 @@ export class PositionLifecycleService {
       }
     );
 
-    if (!cancelResult.success) {
-      // SKIP: non-blocking operation - continue anyway
-      this.logHangingOrderCancellationSkipped(cancelResult.error?.message);
-    }
+    this.handleHangingOrderCancelResult(cancelResult.success, cancelResult.error?.message);
   }
 
   private async cancelHangingOrdersDirect(): Promise<void> {
@@ -872,8 +869,25 @@ export class PositionLifecycleService {
       }
     );
 
-    return priceResult.success && priceResult.value !== undefined
-      ? priceResult.value
+    return this.resolveCurrentPriceResult(priceResult.success, priceResult.value, signalPrice);
+  }
+
+  private handleHangingOrderCancelResult(success: boolean, errorMessage?: string): void {
+    if (success) {
+      return;
+    }
+
+    // SKIP: non-blocking operation - continue anyway
+    this.logHangingOrderCancellationSkipped(errorMessage);
+  }
+
+  private resolveCurrentPriceResult(
+    success: boolean,
+    value: number | undefined,
+    signalPrice: number,
+  ): number {
+    return success && value !== undefined
+      ? value
       : signalPrice;
   }
 
