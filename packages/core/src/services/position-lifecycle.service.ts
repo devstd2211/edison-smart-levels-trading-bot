@@ -56,6 +56,11 @@ import {
   clonePositionSnapshot,
   restoreWebSocketPosition,
 } from './position-lifecycle/position-lifecycle-sync.utils';
+import {
+  calculatePositionExposure,
+  calculateRiskRewardRatio,
+  resolveFirstTakeProfitPrice,
+} from './position-lifecycle/position-lifecycle-sizing.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -757,12 +762,8 @@ export class PositionLifecycleService {
         const accountBalance = balanceInfo.walletBalance || 10000; // Fallback
 
         // Calculate RR ratio
-        const stopDistance = Math.abs(signal.price - signal.stopLoss);
-        const firstTP = signal.takeProfits && signal.takeProfits[0]
-          ? signal.price * (1 + signal.takeProfits[0].percent / 100 * (signal.direction === 'LONG' ? 1 : -1))
-          : signal.price * 1.01;
-        const tpDistance = Math.abs(firstTP - signal.price);
-        const rrRatio = stopDistance > 0 ? tpDistance / stopDistance : 1.5;
+        const firstTP = resolveFirstTakeProfitPrice(signal);
+        const rrRatio = calculateRiskRewardRatio(signal.price, signal.stopLoss, firstTP);
 
         // Get ATR if available (optional)
         const currentATR = this.extractSignalNumber(signal, ['atr']) ?? signal.marketData?.atr;
@@ -810,17 +811,13 @@ export class PositionLifecycleService {
     }
 
     // Calculate quantity with leverage
-    const rawQuantity = (positionSizeUsdt * this.tradingConfig.leverage) / signal.price;
-    const quantity = Math.floor(rawQuantity * 100) / 100; // Simple rounding down
-    const marginUsed = positionSizeUsdt;
-    const notionalValue = quantity * signal.price;
+    const exposure = calculatePositionExposure(
+      positionSizeUsdt,
+      this.tradingConfig.leverage,
+      signal.price,
+    );
 
-    return {
-      quantity,
-      marginUsed,
-      notionalValue,
-      sizingChain,
-    };
+    return { ...exposure, sizingChain };
   }
 
   /**

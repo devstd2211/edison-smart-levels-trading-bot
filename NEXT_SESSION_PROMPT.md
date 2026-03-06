@@ -27,16 +27,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-06)
-- God-object recovery track completed with `packages/core/src/services/logger.service.ts` iteration 1.
-- Extracted logger core helpers to `packages/core/src/services/logger/logger-core.utils.ts`:
-  - log-level validation/normalization
-  - level filtering
-  - log-entry formatting
-  - date-string resolution for log files
-- Integrated extracted helpers into logger service while preserving queue/sink/lifecycle behavior.
-- Progress tracking updated in `REFACTOR_PLAN.md`: 10/10 recovery candidates completed, 0/10 pending.
+- Iteration-2 decomposition started for `packages/core/src/services/position-lifecycle.service.ts`.
+- Extracted sizing helpers to `packages/core/src/services/position-lifecycle/position-lifecycle-sizing.utils.ts`:
+  - first TP price resolution
+  - RR ratio calculation
+  - final exposure calculation (`quantity`, `marginUsed`, `notionalValue`)
+- Integrated helpers into `PositionLifecycleService.calculatePositionSize` with behavior preserved.
+- Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/logger.service.error-handling.test.ts` -> 1/1 suite PASS, 33/33 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Recovery track is complete. Start iteration-2 decomposition from highest-impact services, beginning with `packages/core/src/services/position-lifecycle.service.ts` (deeper split of lifecycle transitions/persistence/exchange-sync flows + targeted tests + progress update).
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: extract next behavior-safe block from lifecycle transitions/persistence helpers (prefer repository/state or close-flow helper isolation), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.

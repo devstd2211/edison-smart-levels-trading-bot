@@ -976,6 +976,20 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 5. Update README to new entrypoints.
 6. Keep old `packages/core/src/index.ts` as wrapper until migration complete.
 
+---
+
+## Session Log (2026-03-06)
+
+- [x] Iteration-2 started for `PositionLifecycleService` (post-recovery deep decomposition).
+- [x] Extracted sizing primitives to `packages/core/src/services/position-lifecycle/position-lifecycle-sizing.utils.ts`:
+  - first take-profit price resolution
+  - risk/reward ratio calculation
+  - position exposure calculation (`quantity`, `marginUsed`, `notionalValue`)
+- [x] Integrated new sizing utils into `packages/core/src/services/position-lifecycle.service.ts` without behavior changes in exchange/journal/lock flows.
+- [x] Verification (targeted lifecycle suites):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+
 
 
 
