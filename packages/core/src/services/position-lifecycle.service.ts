@@ -247,6 +247,12 @@ export class PositionLifecycleService {
     }
   }
 
+  private logOpenPositionFailure(error: unknown): void {
+    this.logger.error('Failed to open position', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
   private async configureAdditionalTakeProfits(signal: Signal, quantity: number): Promise<void> {
     if (!signal.takeProfits || signal.takeProfits.length <= 1) {
       return;
@@ -401,6 +407,10 @@ export class PositionLifecycleService {
     this.isOpeningPosition = false;
 
     this.emitPositionClosedEvent(closedPosition);
+  }
+
+  private logPositionClearedFromRepository(positionId: string): void {
+    this.logger.debug('[Phase 6.2] Position cleared from repository', { positionId });
   }
 
   private emitPositionClosedEvent(closedPosition: Position | null): void {
@@ -1034,12 +1044,6 @@ export class PositionLifecycleService {
     );
   }
 
-  private logOpenPositionFailure(error: unknown): void {
-    this.logger.error('Failed to open position', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-
   private logAdditionalTakeProfitsStart(additionalLevels: number): void {
     this.logger.info('Setting additional TP levels', { additionalLevels });
   }
@@ -1061,10 +1065,6 @@ export class PositionLifecycleService {
     this.logger.warn(`Failed to set TP${levelIndex} level`, {
       error: error instanceof Error ? error.message : String(error),
     });
-  }
-
-  private logPositionClearedFromRepository(positionId: string): void {
-    this.logger.debug('[Phase 6.2] Position cleared from repository', { positionId });
   }
 
   private logTelegramNotificationSkipped(): void {

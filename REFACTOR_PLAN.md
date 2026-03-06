@@ -1116,6 +1116,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - structure-only moved `logAtomicOpenResult(...)` to open-flow logging section
   - structure-only moved `logAtomicCloseAlreadyInProgress(...)` to atomic-close logging section
   - preserved clear/open/event call order and all resilience behavior
+- [x] 2-slice structure-only helper locality cleanup:
+  - moved `logOpenPositionFailure(...)` next to `openPosition(...)`
+  - moved `logPositionClearedFromRepository(...)` next to clear/finalize helpers
+  - preserved all behavior and call ordering
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.

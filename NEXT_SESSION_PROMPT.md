@@ -156,9 +156,13 @@ You are continuing refactoring in `D:\src\Edison`.
   - moved `logAtomicOpenResult(...)` near open-flow logging helpers (structure-only)
   - moved `logAtomicCloseAlreadyInProgress(...)` near atomic-close logging helpers (structure-only)
   with unchanged behavior and call ordering.
+- Completed 2-slice structure-only helper locality cleanup:
+  - moved `logOpenPositionFailure(...)` next to `openPosition(...)`
+  - moved `logPositionClearedFromRepository(...)` next to clear/finalize helpers
+  with unchanged behavior.
 - Progress recorded in `REFACTOR_PLAN.md` session log.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
 
 ## Next Step
-- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: perform structure-only helper ordering cleanup (group snapshot/logging helpers and normalize section spacing), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
+- Continue iteration-2 on `packages/core/src/services/position-lifecycle.service.ts`: perform structure-only helper ordering cleanup (group analytics/logging helpers into explicit sections), then run the same targeted lifecycle suites and update `REFACTOR_PLAN.md`.
