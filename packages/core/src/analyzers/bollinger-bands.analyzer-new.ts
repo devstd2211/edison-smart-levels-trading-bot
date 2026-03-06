@@ -24,6 +24,10 @@ import type { LoggerService } from '../services/logger.service';
 import type { IIndicator } from '../types/indicator';
 import { IAnalyzer } from '../types/analyzer';
 import { AnalyzerType } from '../types/analyzer';
+import {
+  calculateBollingerConfidence,
+  getBollingerDirection,
+} from './bollinger-bands/bollinger-signal.utils';
 
 // ============================================================================
 // DEFAULT CONSTANTS (can be overridden via config)
@@ -241,18 +245,11 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @returns SignalDirection (LONG, SHORT, or HOLD)
    */
   private getDirection(percentB: number, bandwidth: number): SignalDirection {
-    // Oversold with expanding bands: LONG signal
-    if (percentB < this.oversoldThreshold && bandwidth > this.squeezeThreshold) {
-      return SignalDirectionEnum.LONG;
-    }
-    // Overbought with expanding bands: SHORT signal
-    else if (percentB > this.overboughtThreshold && bandwidth > this.squeezeThreshold) {
-      return SignalDirectionEnum.SHORT;
-    }
-    // Middle zone: HOLD
-    else {
-      return SignalDirectionEnum.HOLD;
-    }
+    return getBollingerDirection(percentB, bandwidth, {
+      oversoldThreshold: this.oversoldThreshold,
+      overboughtThreshold: this.overboughtThreshold,
+      squeezeThreshold: this.squeezeThreshold,
+    });
   }
 
   /**
@@ -264,41 +261,18 @@ export class BollingerBandsAnalyzerNew implements IAnalyzer {
    * @returns Confidence value (0-100 scale)
    */
   private calculateConfidence(percentB: number, bandwidth: number): number {
-    let confidence: number;
-
-    // Distance from neutral zone (40-60)
-    const distanceFromNeutral = Math.max(
-      0,
-      Math.min(Math.abs(percentB - this.neutralLower), Math.abs(percentB - this.neutralUpper)),
-    );
-
-    // Normalize distance (0 = neutral, 1 = extreme)
-    const normalizedDistance = Math.min(1, distanceFromNeutral / this.distanceNormalizationDivisor);
-
-    // Bandwidth factor: Expanding = stronger signals, Squeeze = weaker
-    const bandwidthFactor = Math.min(1, bandwidth / this.squeezeThreshold);
-
-    if (percentB < this.oversoldThreshold) {
-      // Bullish: confidence based on how oversold + bandwidth expansion
-      const oversoldStrength = (this.oversoldThreshold - percentB) / this.oversoldThreshold;
-      confidence = this.maxConfidence * oversoldStrength * bandwidthFactor;
-    } else if (percentB > this.overboughtThreshold) {
-      // Bearish: confidence based on how overbought + bandwidth expansion
-      const overboughtStrength = (percentB - this.overboughtThreshold) / (100 - this.overboughtThreshold);
-      confidence = this.maxConfidence * overboughtStrength * bandwidthFactor;
-    } else if (percentB > this.neutralLower && percentB < this.neutralUpper) {
-      // Neutral zone: low confidence
-      confidence = this.maxConfidence * this.neutralConfidenceMultiplier * bandwidthFactor;
-    } else {
-      // Low/High zone but not extreme: moderate confidence
-      confidence = this.maxConfidence * this.moderateConfidenceMultiplier * bandwidthFactor;
-    }
-
-    // Clamp to configured bounds
-    confidence = Math.max(this.minConfidence, Math.min(this.maxConfidence, confidence));
-
-    // Convert to 0-100 scale
-    return Math.round(confidence * 100);
+    return calculateBollingerConfidence(percentB, bandwidth, {
+      minConfidence: this.minConfidence,
+      maxConfidence: this.maxConfidence,
+      oversoldThreshold: this.oversoldThreshold,
+      overboughtThreshold: this.overboughtThreshold,
+      neutralLower: this.neutralLower,
+      neutralUpper: this.neutralUpper,
+      squeezeThreshold: this.squeezeThreshold,
+      neutralConfidenceMultiplier: this.neutralConfidenceMultiplier,
+      moderateConfidenceMultiplier: this.moderateConfidenceMultiplier,
+      distanceNormalizationDivisor: this.distanceNormalizationDivisor,
+    });
   }
 
   /**
