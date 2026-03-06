@@ -10,7 +10,7 @@
  * - PositionProtectionService (SL/TP setup)
  * - PositionSizingService (size calculation)
  *
- * UNIFIED RESPONSIBILITY: Manage position lifecycle from open → close
+ * UNIFIED RESPONSIBILITY: Manage position lifecycle from open -> close
  * - Open positions with atomic SL/TP protection
  * - Sync positions with WebSocket on bot restart
  * - Track position state (currentPosition, takeProfitManager)
@@ -86,7 +86,7 @@ export class PositionLifecycleService {
   private takeProfitManager: TakeProfitManagerService | null = null;
   private entryConfirmation: EntryConfirmationManager;
 
-  // PHASE 9.P0: Atomic lock for position close (prevent timeout ↔ close race)
+  // PHASE 9.P0: Atomic lock for position close (prevent timeout -> close race)
   private positionClosing = new Map<string, Promise<void>>();
 
   constructor(
@@ -193,7 +193,7 @@ export class PositionLifecycleService {
       const { openedPosition, orderId, tpOrderIds } = atomicOpen;
 
 
-      // Phase 8.9.17: RETRY → SKIP strategy for additional TP levels (non-critical)
+      // Phase 8.9.17: RETRY -> SKIP strategy for additional TP levels (non-critical)
       // Set additional TP levels (if more than 1)
       await this.configureAdditionalTakeProfits(signal, sizingResult.quantity);
 
@@ -793,9 +793,7 @@ export class PositionLifecycleService {
           retryConfig: { maxAttempts: 2, initialDelayMs: 100, backoffMultiplier: 2 },
           context: 'PositionLifecycleService.openPosition.cancelAllConditionalOrders',
           onFailure: () => {
-            this.logger.warn('Failed to cancel hanging orders (non-blocking)', {
-              note: 'Continuing with position opening',
-            });
+            this.logHangingOrderCancellationNonBlockingFailure();
           },
         }
       );
@@ -827,9 +825,7 @@ export class PositionLifecycleService {
             this.logCurrentPriceRetry(attempt, error.message, delayMs);
           },
           onFailure: () => {
-            this.logger.warn('⚠️ Price fetch failed, falling back to signal price', {
-              signalPrice,
-            });
+            this.logCurrentPriceFallback(signalPrice);
           },
         }
       );
@@ -863,6 +859,12 @@ export class PositionLifecycleService {
     });
   }
 
+  private logCurrentPriceFallback(signalPrice: number): void {
+    this.logger.warn('Price fetch failed, falling back to signal price', {
+      signalPrice,
+    });
+  }
+
   private logHangingOrderCancellationSkipped(errorMessage?: string): void {
     this.logger.warn('Hanging order cancellation skipped, proceeding with position open', {
       error: errorMessage,
@@ -875,11 +877,17 @@ export class PositionLifecycleService {
     });
   }
 
+  private logHangingOrderCancellationNonBlockingFailure(): void {
+    this.logger.warn('Failed to cancel hanging orders (non-blocking)', {
+      note: 'Continuing with position opening',
+    });
+  }
+
   private wireOpenedPositionState(position: Position, signal: Signal): void {
     // Store position immediately to prevent race condition
     if (this.positionRepository) {
       this.writeStoredPosition(position);
-      this.logger.debug('[Phase 6.2] Position stored in repository', { positionId: position.id });
+      this.logPositionStoredInRepository(position.id);
     } else {
       this.writeStoredPosition(position);
     }
@@ -890,7 +898,7 @@ export class PositionLifecycleService {
       position,
       strategyId: this.strategyId,  // Phase 10.3c: Include strategyId for multi-strategy filtering
     });
-    this.logger.debug('[EVENT] position-opened emitted', { positionId: position.id });
+    this.logPositionOpenedEventEmitted(position.id);
 
     // Initialize TakeProfitManager for partial close tracking
     this.takeProfitManager = new TakeProfitManagerService(
@@ -914,6 +922,14 @@ export class PositionLifecycleService {
       entry: position.entryPrice,
       quantity: position.quantity,
     });
+  }
+
+  private logPositionStoredInRepository(positionId: string): void {
+    this.logger.debug('[Phase 6.2] Position stored in repository', { positionId });
+  }
+
+  private logPositionOpenedEventEmitted(positionId: string): void {
+    this.logger.debug('[EVENT] position-opened emitted', { positionId });
   }
 
   private logPositionSizingCompleted(result: {
@@ -1202,10 +1218,7 @@ export class PositionLifecycleService {
     } catch (error) {
       const restored = restoreWebSocketPosition(position, undefined);
       // Journal lookup failed - graceful degrade (continue without journalId)
-      this.logger.warn('Journal lookup failed during position restoration - proceeding without journalId', {
-        error: error instanceof Error ? error.message : String(error),
-        positionId: restored.id,
-      });
+      this.logWebSocketRestoreJournalLookupFailure(error, restored.id);
       return restored;
     }
   }
@@ -1225,6 +1238,13 @@ export class PositionLifecycleService {
       entryPrice: position.entryPrice,
       quantity: position.quantity,
       note: 'This position will be managed (TP/SL) but NOT recorded in journal.',
+    });
+  }
+
+  private logWebSocketRestoreJournalLookupFailure(error: unknown, positionId: string): void {
+    this.logger.warn('Journal lookup failed during position restoration - proceeding without journalId', {
+      error: error instanceof Error ? error.message : String(error),
+      positionId,
     });
   }
 
@@ -1255,7 +1275,7 @@ export class PositionLifecycleService {
 
   /**
    * P0.1: Close position with atomic guarantee
-   * Prevents timeout ↔ close race condition by using atomic lock
+   * Prevents timeout -> close race condition by using atomic lock
    *
    * Returns early if position already closing (returns same promise)
    * Multiple concurrent calls to same position wait for first close to complete

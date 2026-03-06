@@ -1084,6 +1084,13 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `logHangingOrderCancellationSkipped(...)`
   - extracted `logHangingOrderCancellationFailed(...)`
   - normalized affected retry/cancel debug/warn messages to ASCII-safe text
+- [x] 5-slice batch in fallback/event logging boundaries:
+  - extracted `logHangingOrderCancellationNonBlockingFailure(...)`
+  - extracted `logCurrentPriceFallback(...)`
+  - extracted `logPositionStoredInRepository(...)`
+  - extracted `logPositionOpenedEventEmitted(...)`
+  - extracted `logWebSocketRestoreJournalLookupFailure(...)`
+  - preserved all call ordering and existing resilience behavior
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
