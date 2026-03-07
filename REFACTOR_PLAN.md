@@ -1746,6 +1746,181 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - orchestration split across dedicated lifecycle modules (`open/sync/clear/atomic/snapshot/confirmation/sizing/preopen/state/notification`)
   - regression safety validated via repeated targeted lifecycle suites (latest: 3/3 suites PASS, 51/51 tests PASS)
   - next refactor focus should move to another candidate service/module
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 1 extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-calculations.utils.ts`
+  - moved pure calculation helpers out of service class:
+    - fill-price from impact
+    - slippage bps calculation
+    - execution reasoning message builder
+    - simulated VWAP volume profile generation
+    - VWAP size distribution by volume profile
+    - decimal rounding helper
+  - retained service private method surface as thin delegating wrappers to preserve behavior/test compatibility
+  - removed `any` in service logging helper (`safeLog` metadata now `Record<string, unknown>`)
+  - behavior preserved: order routing/monitoring/recovery strategy semantics unchanged
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 1610 lines (down from 1677 before extraction slice).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 2 major extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-workflows.orchestrator.ts`
+  - moved workflow orchestration out of service class:
+    - smart execution core path (`doExecuteSmartOrder`)
+    - monitor/adjust path (`doMonitorAndAdjust`)
+    - partial-fill decision path (`doHandlePartialFills`)
+    - TWAP execution path (`doExecuteTWAP`)
+    - VWAP execution path (`doExecuteVWAP`)
+  - added `resolveAdjustedPrice(...)` helper in workflow orchestrator and simplified service `adjustOrderPrice(...)`
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-split-impact.utils.ts`
+  - moved split/impact internal algorithms out of service class:
+    - `doCalculateOptimalSplit(...)`
+    - `doEstimateMarketImpact(...)`
+  - extracted service type contracts into dedicated module:
+    - `packages/core/src/services/smart-order-execution/smart-order-execution.types.ts`
+  - service now re-exports these types and remains compatibility-safe for existing imports/tests
+  - preserved private-method compatibility points used by tests (`doCalculateOptimalSplit`, `doEstimateMarketImpact`, `calculateSlippage`, `roundToDecimals`)
+  - behavior preserved for routing, fallback policies, state-map updates, and logging semantics
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-2 extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 915 lines (down from 1610 after iteration 1; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 3 compatibility-preserving extraction slice complete:
+  - moved remaining monitor-adjust decision/update logic from service class into workflow orchestrator internals
+  - retained private test seam compatibility by keeping `shouldAdjustPrice(...)` in service and wiring it through workflow deps (existing tests that spy on this method remain valid)
+  - removed type/contract bulk from service by introducing/re-exporting dedicated smart-order type module
+  - consolidated order validation via shared `validateOrderRequest(...)` helper in service
+  - preserved behavior: error strategies, fallback paths, and active-order state mutations
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-3 extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 856 lines (down from 915 after iteration 2; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 4 thin-facade consolidation slice complete:
+  - consolidated repeated async GRACEFUL_DEGRADE wrappers into shared helper:
+    - `executeWithGracefulDegrade(...)`
+    - preserved per-call semantics via options (`requireValue`, `resolveSuccess`, log levels/messages)
+  - consolidated repeated sync GRACEFUL_DEGRADE wrappers into shared helper:
+    - `executeSyncWithGracefulDegrade(...)`
+  - public methods (`executeSmartOrder`, `monitorAndAdjust`, `handlePartialFills`, `executeTWAP`, `executeVWAP`, `calculateOptimalSplit`, `estimateMarketImpact`) now primarily validate/route/delegate
+  - preserved compatibility seams used by tests (`do*` methods, `shouldAdjustPrice(...)`)
+  - behavior preserved after fixing helper semantics to match previous `result.success && result.value` branching
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 5 validation extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-validation.utils.ts`
+  - moved constructor config validation and request validation logic to dedicated utils:
+    - `validateSmartOrderConfig(...)`
+    - `validateSmartOrderRequest(...)`
+  - service constructor and `validateOrderRequest(...)` now delegate to validation utils
+  - removed bulky method-level JSDoc blocks from service to keep facade readable and compact
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-4/5 consolidation):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 596 lines (down from 856 after iteration 3; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 6 facade-compaction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-state.utils.ts`
+  - moved active-order tracking operations out of service:
+    - `getTrackedOrderState(...)`
+    - `cleanupTrackedOrder(...)`
+    - `clearTrackedOrders(...)`
+  - public service methods (`getOrderState`, `cleanupOrder`, `clearAllOrders`) now delegate to state utils
+  - added `executeStrategyWithFallback(...)` helper to collapse duplicated TWAP/VWAP entry orchestration while preserving logs/fallback semantics
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 7 resilience-util extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-resilience.utils.ts`
+  - moved generic resilience wrapper logic out of service:
+    - `executeWithGracefulDegrade(...)`
+    - `executeSyncWithGracefulDegrade(...)`
+  - service now calls resilience utils directly in public/delegating paths
+  - preserved behavior parity (including `requireValue` semantics and warn/error log-level policy per call)
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-6/7 compaction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 552 lines (down from 596 after iteration 5; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 8 seam-adapter extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-seams.utils.ts`
+  - moved strategy seam logic out of service:
+    - `shouldAdjustPriceByStrategy(...)`
+    - `simulateMarketPriceFromBase(...)`
+  - moved workflow dependency bundle construction out of service:
+    - `buildWorkflowDeps(...)`
+  - service keeps compatibility seam methods (`shouldAdjustPrice`, `simulateMarketPrice`) as thin delegating wrappers for test spy stability
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-8 seam extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 541 lines (down from 552 after iteration 7; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 9 wrapper-pruning slice complete:
+  - removed redundant private passthrough wrappers from service:
+    - `calculateFillPrice(...)`
+    - `buildReasoningMessage(...)`
+    - `generateVolumeProfile(...)`
+    - `distributeByVolume(...)`
+    - local `validateOrderRequest(...)`
+  - switched `getWorkflowDeps(...)` to direct utility wiring:
+    - calculation/reasoning/profile/distribution functions are now passed as closures or direct util refs
+  - preserved compatibility seams required by tests (`do*`, `shouldAdjustPrice`, `simulateMarketPrice`, `calculateSlippage`, `roundToDecimals`)
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-9 wrapper pruning):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 510 lines (down from 541 after iteration 8; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 10 report/id compaction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-report.utils.ts`
+  - moved common order-id/report helper logic out of service:
+    - `createSmartOrderExecutionId(...)`
+    - `buildSmartOrderFailureReport(...)`
+  - replaced inline order-id generation in `executeSmartOrder(...)` and strategy execution helper with utility call
+  - replaced inline fallback failed-report assembly in `executeSmartOrder(...)` with utility call
+  - removed unused type re-exports/imports from service (`ExecutionStrategy`, `SubOrder`) and trimmed top-level banner comment
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-10 report/id compaction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 486 lines (down from 510 after iteration 9; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 11 guard extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-guards.utils.ts`
+  - moved repeated input guard logic out of service:
+    - `assertRequiredOrderId(...)`
+    - `assertNonNegativeFilledSize(...)`
+  - updated service call sites:
+    - `monitorAndAdjust(...)`
+    - `handlePartialFills(...)`
+    - `getOrderState(...)`
+    - `cleanupOrder(...)`
+  - behavior preserved (same throw message contracts)
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-11 guard extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 480 lines (down from 486 after iteration 10; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 12 strategy-entry extraction slice complete:
+  - added `packages/core/src/services/smart-order-execution/smart-order-execution-strategy-entry.utils.ts`
+  - moved TWAP/VWAP shared entry orchestration out of service:
+    - request validation
+    - strategy order-id/start log
+    - graceful-degrade execution/fallback wiring
+  - removed private `executeStrategyWithFallback(...)` from service class
+  - behavior preserved (TWAP/VWAP fallback-to-regular semantics unchanged)
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-12 strategy-entry extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 457 lines (down from 480 after iteration 11; 1677 baseline in this track).
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 13 numeric/side guard consolidation slice complete:
+  - extended `smart-order-execution-guards.utils.ts` with:
+    - `assertPositiveFiniteNumber(...)`
+    - `assertValidOrderSide(...)`
+  - replaced inline guards in service methods:
+    - `calculateOptimalSplit(...)`
+    - `estimateMarketImpact(...)`
+  - preserved validation error message contracts and behavior
+- [x] Verification (targeted smart-order-execution suite, 2026-03-07, post-iteration-13 guard consolidation):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-execution.service.ts` now 451 lines (down from 457 after iteration 12; 1677 baseline in this track).
 
 
 

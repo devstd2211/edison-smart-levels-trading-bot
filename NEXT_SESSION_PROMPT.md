@@ -27,17 +27,26 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-07)
-- Completed major lifecycle extraction pass:
-  - Added `position-lifecycle-sync-lifecycle.orchestrator.ts` and moved websocket sync route/log orchestration out of service.
-  - Added `position-lifecycle-clear-lifecycle.orchestrator.ts` and moved clear-finalize lifecycle (repo clear log + runtime reset + close event emit) out of service.
-  - Added `position-lifecycle-open-lifecycle.orchestrator.ts` and moved full open workflow orchestration out of service.
-- `PositionLifecycleService` now primarily keeps public API guards/state access and delegates lifecycle workflows.
-- Current `packages/core/src/services/position-lifecycle.service.ts` size: 362 lines (reduced from ~1743 baseline context).
-- Behavior preserved (open lock semantics, route handling, resilience configs, and event/log ordering).
-- `PositionLifecycleService` refactor track considered closed for current scope.
+- Continued `smart-order-execution` god-object decomposition with compaction slices #6/#13:
+  - Added `smart-order-execution-state.utils.ts` and moved order state/cleanup/clear tracking ops out of service.
+  - Added `smart-order-execution-resilience.utils.ts` and moved generic async/sync GRACEFUL_DEGRADE wrapper logic out of service.
+  - Collapsed TWAP/VWAP duplicated entry orchestration with shared `executeStrategyWithFallback(...)`.
+  - Added `smart-order-execution-seams.utils.ts` and moved strategy seam + deps assembly out of service (`shouldAdjustPriceByStrategy`, `simulateMarketPriceFromBase`, `buildWorkflowDeps`).
+  - Removed redundant passthrough wrappers in service and wired workflow deps directly to extracted utility functions.
+  - Added `smart-order-execution-report.utils.ts` and moved order-id generation + failed-report builder out of service.
+  - Added `smart-order-execution-guards.utils.ts` and moved repeated orderId/filledSize guard checks out of service.
+  - Added `smart-order-execution-strategy-entry.utils.ts` and moved TWAP/VWAP shared strategy-entry execution/fallback orchestration out of service.
+  - Extended guard utils for positive-number/side validation and replaced inline guards in sizing/impact entry methods.
+  - Trimmed service top-level banner and removed unused type imports/re-exports.
+  - Preserved private compatibility seams required by tests (`do*` methods, `shouldAdjustPrice(...)`) and behavior-level parity for fallback/log semantics.
+- Behavior preserved; targeted suite remains green.
+- Current `packages/core/src/services/smart-order-execution.service.ts` size: 451 lines (from 457 in prior slice; 1677 baseline for this track).
 - Updated `REFACTOR_PLAN.md` session log.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> 3/3 suites PASS, 51/51 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-execution.test.ts` -> 1/1 suite PASS, 45/45 tests PASS.
 
 ## Next Step
-- Move to next god-object candidate from `REFACTOR_PLAN.md` and continue the same behavior-preserving extraction workflow.
+- Continue `smart-order-execution.service.ts` decomposition until thin facade target:
+  - evaluate final compat-focused thinning for remaining `do*` seam methods (possible relocation/aliasing strategy without breaking spy-based tests),
+  - keep public/private compatibility seams needed by tests,
+  - rerun targeted `smart-order-execution` suite and record each reduction slice in `REFACTOR_PLAN.md`.
