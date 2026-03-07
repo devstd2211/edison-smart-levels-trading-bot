@@ -1184,9 +1184,568 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted `resolveCurrentPriceResult(...)`
   - simplified resilient branch result handling in cancel/price helpers
   - preserved skip/fallback semantics and return values
+- [x] Structure-only helper ordering cleanup for open-flow locality:
+  - moved `configureAdditionalTakeProfits(signal, quantity)` from top-level near `openPosition(...)` into open-flow helper cluster
+  - corrected helper section boundary naming (`PRIVATE HELPERS: Entry Confirmation` / `PRIVATE HELPERS: Position Sizing`)
+  - added explicit `PRIVATE HELPERS: Open Position Flow` section boundary before pre-open/open orchestration helpers
+  - preserved all call ordering and runtime behavior
+- [x] Structure-only helper ordering cleanup for analytics/websocket/atomic-close locality:
+  - added explicit `PRIVATE HELPERS: Open Analytics` section boundary for journal/session-stats recording cluster
+  - moved `updatePositionState(...)` to the top of WebSocket helper cluster (near restore orchestration methods)
+  - renamed PHASE 9 helper boundary to `PRIVATE HELPERS: Atomic Close + Snapshots (PHASE 9.P0)`
+  - moved `logAtomicCloseAlreadyInProgress(...)` next to `closePositionWithAtomicLock(...)`
+  - preserved all behavior, side-effect order, and method contracts
+- [x] Structure-only helper locality cleanup for close-flow cancel logging:
+  - moved `logConditionalOrderCancelRetry(...)` next to `cancelConditionalOrdersAfterClose(...)`
+  - moved `logConditionalOrderCancelFailure(...)` next to `cancelConditionalOrdersAfterClose(...)`
+  - moved `logConditionalOrderCancelStart(...)` next to `cancelConditionalOrdersAfterClose(...)`
+  - preserved clear/cancel ordering and retry callback behavior
 - [x] Verification (targeted lifecycle suites):
   - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
   - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Structure-only helper locality cleanup for open analytics logging:
+  - moved `logJournalTradeOpenDegraded(...)` next to journal record/retry helpers
+  - moved `logJournalTradeOpenFailure(...)` next to journal record/retry helpers
+  - moved `logJournalTradeRecorded(...)` next to journal direct/retry record flow
+  - moved `logSessionStatsTradeRecorded(...)` next to session-stats direct/skip record flow
+  - moved `logSessionStatsTradeRecordFailure(...)` next to session-stats direct/skip record flow
+  - preserved all behavior, call ordering, and resilience semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Structure-only helper locality cleanup for open-analytics orchestration:
+  - moved `recordSessionTradeEntryForOpen(...)` next to session-stats record helpers
+  - moved `shouldRecordSessionTradeEntry(...)` next to `recordSessionTradeEntryForOpen(...)`
+  - kept `recordPositionOpenAnalytics(...)` as top-level orchestrator of journal + session flows
+  - preserved all behavior, call ordering, and retry/skip semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, rerun):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 structure-only locality pass #1 (sizing helper locality):
+  - moved `extractSignalNumber(...)` from analytics/websocket boundary area into `PRIVATE HELPERS: Position Sizing`
+  - colocated ATR signal extraction helper with its only usage in `calculatePositionSize(...)`
+  - preserved sizing/fallback behavior and runtime semantics
+- [x] Iteration-2 structure-only locality pass #2 (open-analytics journal payload locality):
+  - moved `createTradeOpenPayload(...)` to the top of open-analytics journal branch (adjacent to `recordTradeOpenWithResilience(...)`)
+  - preserved trade-open payload shape and retry/direct journal semantics
+- [x] Iteration-2 structure-only locality pass #3 (websocket degraded-log locality):
+  - moved `logWebSocketRestoreJournalLookupFailure(...)` directly below `restorePositionFromWebSocketAfterLookupFailure(...)`
+  - preserved graceful-degrade path behavior and logging payload semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-3-iteration batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 WebSocket locality pass #1 (journal-restore logging adjacency):
+  - moved `logWebSocketRestoreWithJournal(...)` directly below `restorePositionFromWebSocketWithJournal(...)`
+  - preserved restore-with-journal behavior and logging payload semantics
+- [x] Iteration-2 WebSocket locality pass #2 (no-journal-restore logging adjacency):
+  - moved `logWebSocketRestoreWithoutJournal(...)` directly below `restorePositionFromWebSocketWithoutJournal(...)`
+  - preserved restore-without-journal behavior and warning payload semantics
+- [x] Iteration-2 WebSocket locality pass #3 (entry-price update logging adjacency):
+  - moved `logWebSocketEntryPriceUpdate(...)` directly below `updatePositionState(...)`
+  - preserved entry-price-update detection and info-log payload semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-websocket-3-task batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction batch (real helper extraction from service):
+  - created `packages/core/src/services/position-lifecycle/position-lifecycle-analytics.utils.ts`
+  - moved `TradeOpenPayload` type contract from `PositionLifecycleService` to analytics utils
+  - extracted and moved `createTradeOpenPayload(...)` logic into `buildTradeOpenPayload(...)`
+  - extracted and moved `createSessionTradeRecordForOpen(...)` logic into `buildSessionTradeRecordForOpen(...)`
+  - integrated service orchestration to use utility builders with unchanged retry/skip behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-analytics-utils-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: WebSocket logging payload builders moved to sync utils:
+  - extended `packages/core/src/services/position-lifecycle/position-lifecycle-sync.utils.ts` with:
+    - `buildWebSocketRestoreWithJournalLogPayload(...)`
+    - `buildWebSocketRestoreWithoutJournalLogPayload(...)`
+    - `buildWebSocketEntryPriceUpdateLogPayload(...)`
+  - updated `PositionLifecycleService` websocket logging helpers to consume extracted builders
+  - preserved log messages, payload fields, and degraded/update behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-websocket-log-payload-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: journal-lookup-failure WebSocket log payload builder moved to sync utils:
+  - added `buildWebSocketRestoreJournalLookupFailureLogPayload(...)` in `position-lifecycle-sync.utils.ts`
+  - updated `logWebSocketRestoreJournalLookupFailure(...)` in service to use extracted payload builder
+  - preserved warning message text and error normalization via `toErrorMessage(...)`
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-journal-lookup-log-payload-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: open-boundary pure resolvers moved to open utils:
+  - extended `position-lifecycle-open.utils.ts` with:
+    - `resolveExchangeSide(...)`
+    - `resolveTakeProfitPrices(...)`
+    - `resolveTakeProfitOrderIds(...)`
+  - removed corresponding private methods from `PositionLifecycleService`
+  - updated `executeAtomicOpenPosition(...)` orchestration to consume extracted helpers
+  - preserved open-path behavior and TP order-id propagation semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-open-resolvers-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: pre-open pure result helpers moved to dedicated utils:
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-preopen.utils.ts`
+  - extracted `resolveCurrentPriceWithFallback(...)` from service pre-open flow
+  - extracted `shouldLogHangingOrderCancellationSkipped(...)` from service pre-open flow
+  - simplified `cancelHangingOrdersWithResilience(...)` and `resolveCurrentPriceWithResilience(...)` to use extracted pure helpers
+  - removed in-class pure helper methods (`handleHangingOrderCancelResult`, `resolveCurrentPriceResult`)
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-preopen-utils-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: atomic-close log payload shaping moved to dedicated utils:
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-atomic.utils.ts`
+  - extracted builders:
+    - `buildAtomicCloseAlreadyInProgressLog(...)`
+    - `buildAtomicCloseNoPositionLog(...)`
+    - `buildAtomicCloseStartLog(...)`
+    - `buildAtomicCloseSuccessLog(...)`
+    - `buildAtomicCloseFailureLog(...)`
+  - updated `PositionLifecycleService` atomic-close log methods to consume extracted builders
+  - preserved log message text, payload fields, and lock behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-atomic-log-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: snapshot log payload/error-shaping moved to atomic utils:
+  - extended `position-lifecycle-atomic.utils.ts` with:
+    - `buildPositionSnapshotDegradedLog(...)`
+    - `buildPositionSnapshotFailureLog(...)`
+  - updated `logPositionSnapshotDegraded(...)` and `logPositionSnapshotFailure(...)` in service to consume extracted builders
+  - preserved snapshot fallback behavior and log message semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-snapshot-log-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: shared error-string conversion moved to dedicated lifecycle util:
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-error.utils.ts`
+  - moved `toErrorMessage(...)` out of `PositionLifecycleService` into module utility
+  - replaced service call sites (open/cancel/sizing/tp/websocket/atomic/snapshot logging) to use imported `toErrorMessage(...)`
+  - removed now-redundant private `toErrorMessage(...)` method from service class
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-error-utils-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: open-path log payload shaping moved to open utils:
+  - extended `position-lifecycle-open.utils.ts` with:
+    - `formatPositionSideForLog(...)`
+    - `buildAtomicOpenRequestLogPayload(...)`
+    - `buildAtomicOpenResultLogPayload(...)`
+    - `buildPositionOpenedSuccessLogPayload(...)`
+  - updated service log methods (`logAtomicOpenRequest`, `logAtomicOpenResult`, `logPositionOpenedSuccess`) to consume extracted builders
+  - removed private `formatPositionSideForLog(...)` from service class
+  - preserved log messages, payload fields, and open-flow behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-open-log-payload-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: analytics/journal log payload shaping moved to analytics utils:
+  - extended `position-lifecycle-analytics.utils.ts` with:
+    - `buildJournalTradeOpenFailureLogPayload(...)`
+    - `buildJournalTradeRecordedLogPayload(...)`
+    - `buildSessionStatsTradeRecordedLogPayload(...)`
+    - `buildSessionStatsTradeRecordFailureLogPayload(...)`
+  - updated service analytics log methods (`logJournalTradeOpenFailure`, `logJournalTradeRecorded`, `logSessionStatsTradeRecorded`, `logSessionStatsTradeRecordFailure`) to consume extracted builders
+  - preserved analytics retry/skip behavior and log message semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-analytics-log-payload-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: pre-open/open retry/fallback/skip log payload shaping moved to preopen utils:
+  - extended `position-lifecycle-preopen.utils.ts` with:
+    - `buildRetryLogPayload(...)`
+    - `buildCurrentPriceFallbackLogPayload(...)`
+    - `buildHangingOrderCancellationSkippedLogPayload(...)`
+  - updated service log methods to consume extracted builders:
+    - `logPositionOpenRetry(...)`
+    - `logCurrentPriceRetry(...)`
+    - `logCurrentPriceFallback(...)`
+    - `logHangingOrderCancellationSkipped(...)`
+  - preserved retry context behavior, fallback semantics, and log message text
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-preopen-log-payload-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: open-path TP/event/repository log payload shaping moved to open utils:
+  - extended `position-lifecycle-open.utils.ts` with:
+    - `buildPositionIdLogPayload(...)`
+    - `buildAdditionalTakeProfitsStartLogPayload(...)`
+    - `buildAdditionalTakeProfitSetLogPayload(...)`
+    - `buildAdditionalTakeProfitSetNonCriticalFailureLogPayload(...)`
+  - updated service log methods to consume extracted builders:
+    - `logPositionOpenedEventEmitting(...)`
+    - `logPositionStoredInRepository(...)`
+    - `logPositionOpenedEventEmitted(...)`
+    - `logAdditionalTakeProfitsStart(...)`
+    - `logAdditionalTakeProfitSet(...)`
+    - `logAdditionalTakeProfitSetNonCriticalFailure(...)`
+  - preserved event/repository/TP logging message semantics and open-flow behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-open-tp-event-log-payload-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 extraction: close-cancel + telegram skip log shaping moved to lifecycle utils:
+  - extended `position-lifecycle-atomic.utils.ts` with:
+    - `buildConditionalOrderCancelStartLogMessage(...)`
+    - `buildConditionalOrderCancelFailureLogMessage(...)`
+    - `buildConditionalOrderCancelRetryLog(...)`
+  - extended `position-lifecycle-open.utils.ts` with:
+    - `buildTelegramNotificationSkippedLogMessage(...)`
+  - updated service log methods to consume extracted message/payload builders:
+    - `logConditionalOrderCancelStart(...)`
+    - `logConditionalOrderCancelFailure(...)`
+    - `logConditionalOrderCancelRetry(...)`
+    - `logTelegramNotificationSkipped(...)`
+  - preserved clear/open resilience behavior and log message semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-close-cancel-telegram-log-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #1 (sizing log payload extraction):
+  - extended `position-lifecycle-sizing.utils.ts` with:
+    - `buildPositionSizingCompletedLogPayload(...)`
+    - `buildStopLossCalculatedLogPayload(...)`
+  - updated service sizing log methods (`logPositionSizingCompleted`, `logStopLossCalculated`) to consume extracted builders
+  - preserved value formatting and logging semantics
+- [x] Iteration-2 multi-iteration batch #2 (event payload extraction):
+  - extended `position-lifecycle-open.utils.ts` with:
+    - `buildPositionOpenedEventPayload(...)`
+    - `buildPositionClosedEventPayload(...)`
+  - updated `wireOpenedPositionState(...)` and `emitPositionClosedEvent(...)` to use extracted payload builders for event bus emits
+  - preserved event payload shape (`position`, `strategyId`) and event ordering
+- [x] Iteration-2 multi-iteration batch #3 (positionId log payload reuse):
+  - switched `logPositionClearedFromRepository(...)` to shared `buildPositionIdLogPayload(...)`
+  - preserved repository-clear logging semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-multi-iteration-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #4 (confirmation payload extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-confirmation.utils.ts`
+  - extracted:
+    - `formatPriceForConfirmationLog(...)`
+    - `buildPendingSignalConfirmedLogPayload(...)`
+    - `buildPendingSignalRejectedLogPayload(...)`
+  - updated confirmation log methods in service (`logPendingSignalConfirmed`, `logPendingSignalRejected`) to use extracted payload builders
+  - removed private `formatPriceForLog(...)` from service
+- [x] Iteration-2 multi-iteration batch #5 (confirmation message extraction):
+  - extended confirmation utils with:
+    - `buildPendingSignalConfirmedLogMessage(...)`
+    - `buildPendingLongRejectedLogMessage(...)`
+    - `buildPendingShortRejectedLogMessage(...)`
+  - updated service confirmation/rejection log methods to consume extracted message helpers
+- [x] Iteration-2 multi-iteration batch #6 (confirmation rejection decision extraction):
+  - extended confirmation utils with `resolvePendingRejectionDirection(...)`
+  - updated `processPendingConfirmation(...)` to use extracted rejection decision helper
+  - preserved confirmation/rejection branching behavior and return semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-confirmation-multi-iteration-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #7 (sizing log payload builders):
+  - extended `position-lifecycle-sizing.utils.ts` with:
+    - `buildCompoundSizingSuccessLogPayload(...)`
+    - `buildKellySizingSuccessLogPayload(...)`
+    - `buildSizingFallbackLogPayload(...)`
+  - updated service sizing log methods (`logCompoundSizingSuccess`, `logCompoundSizingFallback`, `logKellySizingSuccess`, `logKellySizingFallback`) to consume extracted builders
+  - preserved sizing logging message semantics
+- [x] Iteration-2 multi-iteration batch #8 (sizing confidence/chain helper extraction):
+  - extended `position-lifecycle-sizing.utils.ts` with:
+    - `resolveSignalConfidence(...)`
+    - `buildKellySizingChainEntries(...)`
+  - updated `calculatePositionSize(...)` to use extracted confidence + chain helpers
+  - preserved kelly sizing calculations, chain content, and fallback behavior
+- [x] Iteration-2 multi-iteration batch #9 (sizing-path integration cleanup):
+  - simplified kelly confidence flow by computing `signalConfidence` once and reusing for:
+    - dynamic sizer call input
+    - sizingChain entries
+    - kelly success logging
+  - preserved open-path sizing behavior and call ordering
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-sizing-multi-iteration-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #10 (confirmation rejection wrapper collapse):
+  - extended confirmation utils with `buildPendingRejectionDescriptor(...)`
+  - removed service wrapper methods `logPendingLongRejected(...)` / `logPendingShortRejected(...)`
+  - updated `processPendingConfirmation(...)` to route rejection through descriptor + generic rejection logger
+  - preserved rejection message/levelKey semantics
+- [x] Iteration-2 multi-iteration batch #11 (event payload builder consolidation):
+  - replaced duplicate event payload builders in open utils with unified `buildPositionLifecycleEventPayload(...)`
+  - updated service `position-opened` / `position-closed` event emit paths to use unified builder
+  - preserved emitted payload shape (`position`, `strategyId`) and event order
+- [x] Iteration-2 multi-iteration batch #12 (hanging-order log shaping extraction):
+  - extended preopen utils with:
+    - `buildHangingOrderCancellationStartLogMessage(...)`
+    - `buildHangingOrderCancellationFailedLogPayload(...)`
+    - `buildHangingOrderCancellationNonBlockingFailureLogPayload(...)`
+  - updated service hanging-order start/failure/non-blocking log methods to consume extracted helpers
+  - preserved pre-open cancellation log semantics and skip behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-confirmation-event-preopen-multi-iteration-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #13 (atomic-close request shaping extraction):
+  - extended `position-lifecycle-atomic.utils.ts` with `buildAtomicCloseRequest(...)`
+  - updated atomic-close orchestration in service (`closePositionWithAtomicLock`, `performClose`) to consume request helper
+  - preserved lock behavior, positionId derivation, and close-handler semantics
+- [x] Iteration-2 multi-iteration batch #14 (websocket sync contract helper extraction):
+  - extended `position-lifecycle-sync.utils.ts` with:
+    - `resolveWebSocketSyncRoute(...)`
+    - `shouldLogWebSocketEntryPriceUpdate(...)`
+  - updated service WebSocket sync/update orchestration to consume extracted contract helpers
+  - preserved restore-vs-update behavior and entry-price update logging behavior
+- [x] Iteration-2 multi-iteration batch #15 (event/hanging-order helper consolidation):
+  - replaced duplicate event builders in open utils with unified `buildPositionLifecycleEventPayload(...)`
+  - extended preopen utils with hanging-order log shaping helpers:
+    - `buildHangingOrderCancellationStartLogMessage(...)`
+    - `buildHangingOrderCancellationFailedLogPayload(...)`
+    - `buildHangingOrderCancellationNonBlockingFailureLogPayload(...)`
+  - updated service to consume consolidated event + hanging-order helpers
+  - addressed TypeScript narrowing regression in `resolveWebSocketSyncedPosition(...)` by explicit null-safe guard (`route === 'restore' || currentPosition === null`)
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-atomic-websocket-consolidation-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #16 (open-analytics retry-result flattening):
+  - inlined retry result handling in `recordTradeOpenWithResilience(...)`
+  - removed pass-through helper `logTradeOpenRetryResult(...)`
+  - preserved journal retry/direct behavior and logging outcomes
+- [x] Iteration-2 multi-iteration batch #17 (session-entry skip-result flattening):
+  - inlined skip result handling in `recordSessionTradeEntryWithResilience(...)`
+  - removed pass-through helper `logSessionTradeEntrySkipResult(...)`
+  - preserved session-stats SKIP behavior and success/failure logging outcomes
+- [x] Iteration-2 multi-iteration batch #18 (session-entry guard simplification):
+  - inlined `shouldRecordSessionTradeEntry(...)` guard into `recordSessionTradeEntryForOpen(...)`
+  - removed now-redundant helper method
+  - preserved `sessionStats && entrySnapshot` gating semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-open-analytics-flattening-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 multi-iteration batch #19 (websocket restore helper flattening - lookup branch):
+  - inlined `restorePositionFromWebSocketUsingJournalLookup(...)` into `restorePositionFromWebSocketSync(...)`
+  - removed redundant helper method
+  - preserved journal-match restore behavior and fallback routing
+- [x] Iteration-2 multi-iteration batch #20 (websocket restore helper flattening - failure branch):
+  - inlined `restorePositionFromWebSocketAfterLookupFailure(...)` catch branch into `restorePositionFromWebSocketSync(...)`
+  - removed redundant helper method
+  - preserved graceful-degrade behavior + warning logging on lookup failure
+- [x] Iteration-2 multi-iteration batch #21 (atomic-close orchestration flattening):
+  - inlined `executeAtomicCloseOperation(...)` into `performClose(...)`
+  - removed redundant helper method
+  - preserved lock scope, custom close handler path, timeout clear path, and log order
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-websocket-atomic-flattening-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 major extraction batch #22 (open-analytics orchestrator module extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-analytics.orchestrator.ts`
+  - moved open-analytics orchestration out of service class:
+    - journal record path (retry/direct)
+    - session-stats record path (skip/direct)
+    - associated degraded/failure/success logging payload usage
+  - updated `openPosition(...)` path to call extracted `recordPositionOpenAnalytics(...)` with explicit dependencies
+  - removed corresponding private analytics methods from `PositionLifecycleService`
+  - service file size reduced to 1228 lines (from ~1743 baseline in handoff context)
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-open-analytics-orchestrator-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Iteration-2 major extraction batch #23 (websocket sync orchestrator module extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-sync.orchestrator.ts`
+  - moved websocket sync route orchestration (restore/update + journal-lookup degrade handling) out of service class
+  - updated `syncWithWebSocket(...)` to consume extracted orchestrator result and perform logging orchestration
+  - removed corresponding service helper methods:
+    - `resolveWebSocketSyncedPosition(...)`
+    - `restorePositionFromWebSocketSync(...)`
+    - `restorePositionFromWebSocketWithJournal(...)`
+    - `restorePositionFromWebSocketWithoutJournal(...)`
+    - `updatePositionState(...)`
+  - preserved in-memory sync semantics and log ordering (restore-without-journal before optional lookup-failure warning)
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-websocket-sync-orchestrator-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/position-lifecycle.service.ts` now 1187 lines (further reduced from 1228 after batch #22; baseline context was ~1743).
+- [x] Iteration-2 major extraction batch #24 (atomic-close orchestrator module extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-atomic.orchestrator.ts`
+  - moved atomic-close lock orchestration out of service class:
+    - lock acquisition/reuse and release
+    - close-path orchestration (custom handler vs `clearPosition`)
+    - atomic-close start/success/failure/no-position/in-progress logging
+  - updated `closePositionWithAtomicLock(...)` to delegate into extracted orchestrator
+  - removed corresponding private service methods:
+    - `performClose(...)`
+    - `logAtomicCloseAlreadyInProgress(...)`
+    - `logAtomicCloseNoPosition(...)`
+    - `logAtomicCloseStart(...)`
+    - `logAtomicCloseSuccess(...)`
+    - `logAtomicCloseFailure(...)`
+  - preserved lock semantics and log ordering
+- [x] Iteration-2 major extraction batch #25 (snapshot orchestrator module extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-snapshot.orchestrator.ts`
+  - moved snapshot deep-copy orchestration out of service class:
+    - ErrorHandler-enabled degraded fallback branch
+    - non-ErrorHandler failure fallback branch
+    - snapshot failure/degraded logging
+  - updated `getPositionSnapshot(...)` to delegate into extracted orchestrator
+  - removed corresponding private service methods:
+    - `getPositionSnapshotWithErrorHandler(...)`
+    - `getPositionSnapshotWithoutErrorHandler(...)`
+    - `logPositionSnapshotDegraded(...)`
+    - `logPositionSnapshotFailure(...)`
+  - preserved fallback semantics (`return position` on clone failure)
+- [x] Iteration-2 major extraction batch #26 (clear-position conditional-order cancel orchestrator extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-clear.orchestrator.ts`
+  - moved `clearPosition()` pre-clear conditional-order cancellation orchestration out of service class:
+    - RETRY strategy config (`maxAttempts=3`, `initialDelayMs=200`, backoff)
+    - retry/failure/start logging behavior
+    - existing resilience context string preserved
+  - updated `clearPosition(...)` to call extracted orchestrator before `finalizePositionClear(...)`
+  - removed corresponding private service methods:
+    - `cancelConditionalOrdersAfterClose(...)`
+    - `logConditionalOrderCancelRetry(...)`
+    - `logConditionalOrderCancelFailure(...)`
+    - `logConditionalOrderCancelStart(...)`
+  - preserved clear flow order: cancel -> finalize/emit
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-atomic-snapshot-clear-orchestrator-batch):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/position-lifecycle.service.ts` now 1186 lines (baseline context ~1743).
+- [x] Iteration-2 major extraction batch #27 (open-position execution + additional-TP orchestration extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-open-execution.orchestrator.ts`
+  - moved atomic exchange open execution orchestration out of service class:
+    - exchange-side resolution + TP price resolution
+    - RETRY strategy config/callback for exchange open
+    - atomic-open success log + TP order-id resolution
+  - moved additional TP-level orchestration out of service class:
+    - additional TP start logging
+    - ErrorHandler RETRY path for `updateTakeProfitPartial`
+    - direct path with non-critical warning fallback
+  - updated `executeAtomicOpenPosition(...)` and `configureAdditionalTakeProfits(...)` in service to delegate to orchestrator
+  - removed corresponding private service methods:
+    - `logPositionOpenRetry(...)`
+    - `logAtomicOpenResult(...)`
+    - `logAdditionalTakeProfitsStart(...)`
+    - `logAdditionalTakeProfitSet(...)`
+    - `logAdditionalTakeProfitSetNonCriticalFailure(...)`
+    - `logAdditionalTakeProfitSetFailure(...)`
+  - preserved resilience contexts, retry configs, and logging messages
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-open-execution-orchestrator-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/position-lifecycle.service.ts` now 1065 lines (baseline context ~1743).
+- [x] Iteration-2 major extraction batch #28 (pre-open context orchestration extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-preopen.orchestrator.ts`
+  - moved pre-open context orchestration out of service class:
+    - hanging-order cancellation path (direct + ErrorHandler RETRY/SKIP degrade)
+    - current-price resolution path (direct + ErrorHandler RETRY/fallback)
+    - side/sl-distance/actual-stop-loss derivation
+  - updated `prepareOpenExecutionContext(...)` to delegate into orchestrator
+  - removed corresponding private service methods:
+    - `cancelHangingOrdersBeforeOpen(...)`
+    - `resolveCurrentPriceForOpen(...)`
+    - `cancelHangingOrdersWithResilience(...)`
+    - `cancelHangingOrdersDirect(...)`
+    - `resolveCurrentPriceWithResilience(...)`
+    - `logCurrentPriceRetry(...)`
+    - `logCurrentPriceFallback(...)`
+    - `logHangingOrderCancellationSkipped(...)`
+    - `logHangingOrderCancellationStart(...)`
+    - `logHangingOrderCancellationFailed(...)`
+    - `logHangingOrderCancellationNonBlockingFailure(...)`
+  - preserved context strings, retry configs, and warning/debug message semantics
+- [x] Iteration-2 major extraction batch #29 (position sizing orchestration extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-sizing.orchestrator.ts`
+  - moved sizing decision orchestration out of service class:
+    - compound-interest path + fallback
+    - dynamic sizing (Kelly) path + fallback
+    - fixed-size path + exposure projection
+  - updated `calculatePositionSize(...)` to delegate into orchestrator
+  - removed corresponding private service methods:
+    - `extractSignalNumber(...)`
+    - `logCompoundSizingSuccess(...)`
+    - `logCompoundSizingFallback(...)`
+    - `logKellySizingSuccess(...)`
+    - `logKellySizingFallback(...)`
+    - `isDynamicPositionSizingEnabled(...)`
+  - preserved fallback chain markers and sizing log messages
+- [x] Iteration-2 major extraction batch #30 (opened-position state wiring extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-state.orchestrator.ts`
+  - moved opened-position state wiring out of service class:
+    - repository write + repository-write debug log
+    - position-opened event emit and surrounding logs
+    - `TakeProfitManagerService` bootstrap
+  - updated `wireOpenedPositionState(...)` to delegate and assign returned manager
+  - removed corresponding private service methods:
+    - `logPositionOpenedEventEmitting(...)`
+    - `logPositionStoredInRepository(...)`
+    - `logPositionOpenedEventEmitted(...)`
+  - preserved event/log ordering and repository-conditional behavior
+- [x] Iteration-2 major extraction batch #31 (open notification resilience extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-notification.orchestrator.ts`
+  - moved Telegram SKIP-resilience orchestration out of service class
+  - updated `notifyPositionOpenedWithResilience(...)` to delegate into orchestrator
+  - removed `logTelegramNotificationSkipped(...)` from service
+  - preserved resilience context and onRecover logging message
+- [x] Iteration-2 major extraction batch #32 (pending confirmation orchestration extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-confirmation.orchestrator.ts`
+  - moved pending confirmation decision/log orchestration out of service class:
+    - confirmed log path
+    - rejection descriptor path + rejection log
+  - updated `checkPendingConfirmations(...)` loop to delegate per-pending processing
+  - removed corresponding private service methods:
+    - `logPendingSignalConfirmed(...)`
+    - `processPendingConfirmation(...)`
+    - `logPendingSignalRejected(...)`
+  - preserved confirmation/rejection logging semantics
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-preopen-sizing-state-notification-confirmation-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/position-lifecycle.service.ts` now 669 lines (baseline context ~1743).
+- [x] Iteration-2 major extraction batch #33 (service log-wrapper flattening):
+  - removed remaining pass-through logging wrappers from service for:
+    - open-position sizing/stoploss/atomic-open-request/success/failure logs
+    - websocket restore/update log wrappers
+  - inlined direct logger + payload-builder usage at call sites in `openPosition(...)` and `syncWithWebSocket(...)`
+  - preserved message strings, payload shape, and branch log order
+  - removed corresponding private methods:
+    - `logOpenPositionFailure(...)`
+    - `logPositionOpenedSuccess(...)`
+    - `logPositionSizingCompleted(...)`
+    - `logStopLossCalculated(...)`
+    - `logAtomicOpenRequest(...)`
+    - `logWebSocketRestoreJournalLookupFailure(...)`
+    - `logWebSocketRestoreWithJournal(...)`
+    - `logWebSocketRestoreWithoutJournal(...)`
+    - `logWebSocketEntryPriceUpdate(...)`
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-log-wrapper-flattening):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/position-lifecycle.service.ts` now 615 lines (baseline context ~1743).
+- [x] Iteration-2 major extraction batch #34 (websocket sync lifecycle extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-sync-lifecycle.orchestrator.ts`
+  - moved `syncWithWebSocket(...)` route/log orchestration out of service class
+  - `PositionLifecycleService.syncWithWebSocket(...)` now delegates and applies returned position state
+  - preserved restore/update route behavior and warning/info log ordering
+- [x] Iteration-2 major extraction batch #35 (clear finalize lifecycle extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-clear-lifecycle.orchestrator.ts`
+  - moved clear finalization orchestration out of service class:
+    - repository-clear conditional logging
+    - runtime state reset (`takeProfitManager`, `isOpeningPosition`)
+    - position-closed event emission
+  - removed corresponding service methods:
+    - `finalizePositionClear(...)`
+    - `logPositionClearedFromRepository(...)`
+    - `emitPositionClosedEvent(...)`
+  - preserved clear call order: cancel orders -> finalize lifecycle
+- [x] Iteration-2 major extraction batch #36 (open-position lifecycle extraction):
+  - added `packages/core/src/services/position-lifecycle/position-lifecycle-open-lifecycle.orchestrator.ts`
+  - moved full open-position workflow orchestration out of service class:
+    - sizing + pre-open context + atomic open + additional TP
+    - position build + state wiring + notifications + analytics
+    - success/failure open logging
+  - `PositionLifecycleService.openPosition(...)` now keeps guards/lock semantics and delegates workflow orchestration
+  - removed remaining internal pass-through private methods for open flow
+  - preserved open sequencing and resilience behavior
+- [x] Verification (targeted lifecycle suites, 2026-03-07, post-sync-clear-open-lifecycle-extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts`
+  - Result: 3/3 suites PASS, 51/51 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/position-lifecycle.service.ts` now 362 lines (baseline context ~1743).
+- [x] PositionLifecycleService refactor track closed (2026-03-07):
+  - target of turning god-object into thin lifecycle facade achieved for current scope
+  - orchestration split across dedicated lifecycle modules (`open/sync/clear/atomic/snapshot/confirmation/sizing/preopen/state/notification`)
+  - regression safety validated via repeated targeted lifecycle suites (latest: 3/3 suites PASS, 51/51 tests PASS)
+  - next refactor focus should move to another candidate service/module
 
 
 
