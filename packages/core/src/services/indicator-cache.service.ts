@@ -1,6 +1,6 @@
 import { IIndicatorCache } from '../types/legacy';
 import { IMarketDataRepository } from '../repositories/IRepositories';
-import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy, ErrorLogger } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';
 
 /**
@@ -16,6 +16,13 @@ import { LoggerService } from './logger.service';
  * - Backward compatible metrics (local tracking)
  */
 export class IndicatorCacheService implements IIndicatorCache {
+  private static readonly defaultErrorLogger: ErrorLogger = {
+    debug: () => undefined,
+    info: () => undefined,
+    warn: () => undefined,
+    error: () => undefined,
+  };
+
   // Local metrics tracking (for backward compatibility with getStats/resetMetrics)
   private hits: number = 0;
   private misses: number = 0;
@@ -33,13 +40,18 @@ export class IndicatorCacheService implements IIndicatorCache {
     errorHandler?: ErrorHandler
   ) {
     this.logger = logger;
-    this.errorHandler = errorHandler || new ErrorHandler(logger || ({} as any));
+    this.errorHandler =
+      errorHandler ?? new ErrorHandler((logger as ErrorLogger | undefined) ?? IndicatorCacheService.defaultErrorLogger);
   }
 
   /**
    * Safe logging wrapper - SKIP strategy for all logger errors
    */
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, data?: any): void {
+  private safeLog(
+    level: 'debug' | 'info' | 'warn' | 'error',
+    message: string,
+    data?: Record<string, unknown>,
+  ): void {
     if (!this.logger) return;
     try {
       this.logger[level](message, data);
@@ -62,7 +74,7 @@ export class IndicatorCacheService implements IIndicatorCache {
       return this.errorHandler.handle(
         new Error('Indicator cache key must be a non-empty string'),
         { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      ) as unknown as number | null;
     }
 
     try {

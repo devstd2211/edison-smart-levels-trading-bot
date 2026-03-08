@@ -40,6 +40,15 @@ import {
 } from './whale-detection/whale-detection-confidence.utils';
 import { determineWallDisappearanceDirectionByTrend } from './whale-detection/whale-detection-direction.utils';
 import { evaluateImbalanceSpike } from './whale-detection/whale-detection-imbalance.utils';
+import {
+  getWhaleConfigValidationError,
+  getWhaleDetectionInputValidationError,
+} from './whale-detection/whale-detection-validation.utils';
+import {
+  cleanupWhaleRecentBreaks,
+  cleanupWhaleTrackedWalls,
+  updateWhaleImbalanceHistory,
+} from './whale-detection/whale-detection-state.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -167,73 +176,9 @@ export class WhaleDetectionService {
    * @throws On invalid config
    */
   private validateConfig(): void {
-    if (!this.config || typeof this.config !== 'object') {
-      this.throwValidationError('Config must be a valid object');
-    }
-
-    // Validate wall break config
-    if (this.config.modes?.wallBreak) {
-      const wb = this.config.modes.wallBreak;
-      if (typeof wb.enabled !== 'boolean') {
-        this.throwValidationError('wallBreak.enabled must be a boolean');
-      }
-
-      if (typeof wb.minWallSize !== 'number' || wb.minWallSize < 0) {
-        this.throwValidationError('wallBreak.minWallSize must be non-negative number');
-      }
-
-      if (typeof wb.breakConfirmationMs !== 'number' || wb.breakConfirmationMs < 0) {
-        this.throwValidationError('wallBreak.breakConfirmationMs must be non-negative number');
-      }
-
-      if (typeof wb.maxConfidence !== 'number' || wb.maxConfidence < 0 || wb.maxConfidence > 100) {
-        this.throwValidationError('wallBreak.maxConfidence must be between 0 and 100');
-      }
-    }
-
-    // Validate wall disappearance config
-    if (this.config.modes?.wallDisappearance) {
-      const wd = this.config.modes.wallDisappearance;
-      if (typeof wd.enabled !== 'boolean') {
-        this.throwValidationError('wallDisappearance.enabled must be a boolean');
-      }
-
-      if (typeof wd.minWallSize !== 'number' || wd.minWallSize < 0) {
-        this.throwValidationError('wallDisappearance.minWallSize must be non-negative number');
-      }
-
-      if (typeof wd.maxConfidence !== 'number' || wd.maxConfidence < 0 || wd.maxConfidence > 100) {
-        this.throwValidationError('wallDisappearance.maxConfidence must be between 0 and 100');
-      }
-    }
-
-    // Validate imbalance spike config
-    if (this.config.modes?.imbalanceSpike) {
-      const is = this.config.modes.imbalanceSpike;
-      if (typeof is.enabled !== 'boolean') {
-        this.throwValidationError('imbalanceSpike.enabled must be a boolean');
-      }
-
-      if (typeof is.minRatioChange !== 'number' || is.minRatioChange <= 0) {
-        this.throwValidationError('imbalanceSpike.minRatioChange must be positive number');
-      }
-
-      if (typeof is.maxConfidence !== 'number' || is.maxConfidence < 0 || is.maxConfidence > 100) {
-        this.throwValidationError('imbalanceSpike.maxConfidence must be between 0 and 100');
-      }
-    }
-
-    // Validate general config
-    if (typeof this.config.maxImbalanceHistory !== 'number' || this.config.maxImbalanceHistory <= 0) {
-      this.throwValidationError('maxImbalanceHistory must be positive number');
-    }
-
-    if (typeof this.config.wallExpiryMs !== 'number' || this.config.wallExpiryMs < 0) {
-      this.throwValidationError('wallExpiryMs must be non-negative number');
-    }
-
-    if (typeof this.config.breakExpiryMs !== 'number' || this.config.breakExpiryMs < 0) {
-      this.throwValidationError('breakExpiryMs must be non-negative number');
+    const validationError = getWhaleConfigValidationError(this.config);
+    if (validationError) {
+      this.throwValidationError(validationError);
     }
   }
 
@@ -283,6 +228,29 @@ export class WhaleDetectionService {
       return createDetectionFailedSignal();
     }
 
+    const modeSignal = this.runDetectionModes(analysis, currentPrice, btcMomentum, btcDirection);
+    if (modeSignal) {
+      return modeSignal;
+    }
+
+    // No whale detected - log summary (every 20th call)
+    if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_NO_DETECTION_PROBABILITY) {
+      this.safeLog('debug', '🐋 No whale activity', {
+        wallsDetected: analysis.walls.length,
+        imbalanceRatio: analysis.imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
+        imbalanceDirection: analysis.imbalance.direction,
+      });
+    }
+
+    return createNoWhaleSignal('No whale activity detected');
+  }
+
+  private runDetectionModes(
+    analysis: OrderBookAnalysis,
+    currentPrice: number,
+    btcMomentum?: number,
+    btcDirection?: string,
+  ): WhaleSignal | null {
     // MODE 3: Imbalance Spike (highest priority - immediate action)
     if (this.config.modes.imbalanceSpike.enabled) {
       const spikeSignal = this.detectImbalanceSpike(analysis);
@@ -310,16 +278,7 @@ export class WhaleDetectionService {
       }
     }
 
-    // No whale detected - log summary (every 20th call)
-    if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_NO_DETECTION_PROBABILITY) {
-      this.safeLog('debug', '🐋 No whale activity', {
-        wallsDetected: analysis.walls.length,
-        imbalanceRatio: analysis.imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
-        imbalanceDirection: analysis.imbalance.direction,
-      });
-    }
-
-    return createNoWhaleSignal('No whale activity detected');
+    return null;
   }
 
   /**
@@ -331,26 +290,13 @@ export class WhaleDetectionService {
     currentPrice: number,
     btcMomentum?: number
   ): void {
-    if (!analysis || typeof analysis !== 'object') {
-      this.throwValidationError('Analysis must be a valid object');
-    }
-
-    if (typeof currentPrice !== 'number' || !Number.isFinite(currentPrice)) {
-      this.throwValidationError('Current price must be a finite number');
-    }
-
-    if (currentPrice < 0) {
-      this.throwValidationError('Current price must be non-negative');
-    }
-
-    if (btcMomentum !== undefined) {
-      if (typeof btcMomentum !== 'number' || !Number.isFinite(btcMomentum)) {
-        this.throwValidationError('BTC momentum must be a finite number');
-      }
-
-      if (btcMomentum < 0 || btcMomentum > 1) {
-        this.throwValidationError('BTC momentum must be between 0 and 1');
-      }
+    const validationError = getWhaleDetectionInputValidationError(
+      analysis,
+      currentPrice,
+      btcMomentum,
+    );
+    if (validationError) {
+      this.throwValidationError(validationError);
     }
   }
 
@@ -649,19 +595,12 @@ export class WhaleDetectionService {
    * Update imbalance history for spike detection
    */
   private updateImbalanceHistory(analysis: OrderBookAnalysis): void {
-    const now = Date.now();
-
-    this.imbalanceHistory.push({
-      ratio: analysis.imbalance.ratio,
-      timestamp: now,
-      bidVolume: analysis.imbalance.bidVolume,
-      askVolume: analysis.imbalance.askVolume,
-    });
-
-    // Keep only recent history
-    if (this.imbalanceHistory.length > this.config.maxImbalanceHistory) {
-      this.imbalanceHistory.shift();
-    }
+    updateWhaleImbalanceHistory(
+      this.imbalanceHistory,
+      analysis.imbalance,
+      this.config.maxImbalanceHistory,
+      Date.now(),
+    );
   }
 
   /**
@@ -670,25 +609,12 @@ export class WhaleDetectionService {
   private cleanupExpiredData(): void {
     const now = Date.now();
     const wallExpiryMs = this.config.wallExpiryMs;
-    this.removeExpiredTrackedWalls(this.trackedBidWalls, now, wallExpiryMs);
-    this.removeExpiredTrackedWalls(this.trackedAskWalls, now, wallExpiryMs);
-
-    // Remove old broken walls (allow re-detection after 5 min)
-    if (this.recentlyBrokenWalls.size > WHALE_DETECTOR_THRESHOLDS.RECENT_BREAKS_MAX_SIZE) {
-      this.recentlyBrokenWalls.clear(); // Prevent memory leak
-    }
-  }
-
-  private removeExpiredTrackedWalls(
-    trackedWalls: Map<number, WhaleWall>,
-    now: number,
-    wallExpiryMs: number,
-  ): void {
-    for (const [price, wall] of trackedWalls.entries()) {
-      if (now - wall.lastSeenAt > wallExpiryMs) {
-        trackedWalls.delete(price);
-      }
-    }
+    cleanupWhaleTrackedWalls(this.trackedBidWalls, now, wallExpiryMs);
+    cleanupWhaleTrackedWalls(this.trackedAskWalls, now, wallExpiryMs);
+    cleanupWhaleRecentBreaks(
+      this.recentlyBrokenWalls,
+      WHALE_DETECTOR_THRESHOLDS.RECENT_BREAKS_MAX_SIZE,
+    );
   }
 
   // ==========================================================================

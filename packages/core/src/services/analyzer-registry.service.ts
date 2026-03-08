@@ -22,14 +22,14 @@ import {
 } from '../types/legacy';
 
 // Lazy-load analyzer types for type safety
-type AnalyzerInstance = any; // Will be typed as specific analyzer interfaces in real code
+type AnalyzerInstance = unknown; // Concrete analyzer interfaces are loaded dynamically
 
 /**
  * Analyzer metadata for registry
  */
 interface AnalyzerMetadata {
   name: string;
-  class: { new(config: any, logger: LoggerService): AnalyzerInstance };
+  class: { new(config: Record<string, unknown>, logger: LoggerService, ...args: unknown[]): AnalyzerInstance };
   description: string;
   category: 'technical' | 'advanced' | 'structure' | 'liquidity' | 'scalping';
 }
@@ -45,7 +45,7 @@ const ANALYZER_REGISTRY: Map<string, AnalyzerMetadata> = new Map();
  */
 export class AnalyzerRegistryService {
   private loadedAnalyzers: Map<string, AnalyzerInstance> = new Map();
-  private analyzerClasses: Map<string, any> = new Map();
+  private analyzerClasses: Map<string, () => Promise<unknown>> = new Map();
   private swingPointDetector: SwingPointDetectorService;
   private indicators: Map<IndicatorType, IIndicator> = new Map();
   private errorHandler: ErrorHandler;
@@ -60,7 +60,7 @@ export class AnalyzerRegistryService {
   /**
    * Safe logging wrapper - SKIP strategy for all logger errors
    */
-  private safeLog(level: 'debug' | 'warn' | 'error', message: string, data?: any): void {
+  private safeLog(level: 'debug' | 'warn' | 'error', message: string, data?: Record<string, unknown>): void {
     try {
       this.logger[level](message, data);
     } catch (error) {
@@ -211,7 +211,7 @@ export class AnalyzerRegistryService {
    * @returns Analyzer instance or null if not found/failed to load
    */
   async getAnalyzerInstance(
-    config: any,
+    config: Record<string, unknown>,
     analyzerConfig: StrategyAnalyzerConfig,
   ): Promise<AnalyzerInstance | null> {
     const analyzerName = analyzerConfig.name;
@@ -225,7 +225,7 @@ export class AnalyzerRegistryService {
       return this.errorHandler.handle(
         new Error(`Analyzer not found: ${analyzerName}`),
         { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      ) as unknown as AnalyzerInstance;
     }
 
     // Check cache
@@ -237,7 +237,10 @@ export class AnalyzerRegistryService {
     try {
       // Load analyzer class
       const loaderFn = this.analyzerClasses.get(analyzerName);
-      const AnalyzerClass = await loaderFn();
+      if (!loaderFn) {
+        throw new Error(`Analyzer loader not found: ${analyzerName}`);
+      }
+      const AnalyzerClass = await loaderFn() as new (...args: unknown[]) => AnalyzerInstance;
 
       // Build analyzer-specific config by merging defaults and strategy params
       const analyzerConfig2 = this.buildAnalyzerConfig(config, analyzerConfig);
@@ -278,12 +281,15 @@ export class AnalyzerRegistryService {
    * @param analyzerCfg Analyzer config from strategy
    * @returns Merged config for the specific analyzer
    */
-  private buildAnalyzerConfig(baseConfig: any, analyzerCfg: StrategyAnalyzerConfig): any {
+  private buildAnalyzerConfig(
+    baseConfig: Record<string, unknown>,
+    analyzerCfg: StrategyAnalyzerConfig,
+  ): Record<string, unknown> {
     const indicators = baseConfig.indicators || {};
     const analyzerDefaults = baseConfig.analyzerDefaults || {};
 
     // Start with enabled flag and metadata
-    const config: any = {
+    const config: Record<string, unknown> = {
       enabled: analyzerCfg.enabled,
       weight: analyzerCfg.weight,
       priority: analyzerCfg.priority,
@@ -292,8 +298,8 @@ export class AnalyzerRegistryService {
     };
 
     // 1. Merge analyzer defaults from main config
-    if (analyzerDefaults[analyzerCfg.name]) {
-      Object.assign(config, analyzerDefaults[analyzerCfg.name]);
+    if (this.hasKey(analyzerDefaults, analyzerCfg.name)) {
+      Object.assign(config, this.getRecord(analyzerDefaults[analyzerCfg.name]));
     }
 
     // 2. Map analyzer names to their indicator configs
@@ -308,8 +314,8 @@ export class AnalyzerRegistryService {
 
     // Merge indicator config if available (overrides defaults)
     const indicatorKey = analyzerToIndicator[analyzerCfg.name];
-    if (indicatorKey && indicators[indicatorKey]) {
-      Object.assign(config, indicators[indicatorKey]);
+    if (indicatorKey && this.hasKey(indicators, indicatorKey)) {
+      Object.assign(config, this.getRecord(indicators[indicatorKey]));
     }
 
     // 3. Add analyzer-specific params from strategy (highest priority)
@@ -329,7 +335,7 @@ export class AnalyzerRegistryService {
    */
   async getEnabledAnalyzers(
     analyzerConfigs: StrategyAnalyzerConfig[],
-    config: any,
+    config: Record<string, unknown>,
   ): Promise<Map<string, { instance: AnalyzerInstance; weight: number; priority: number }>> {
     const enabledAnalyzers = new Map();
 
@@ -353,6 +359,17 @@ export class AnalyzerRegistryService {
     }
 
     return enabledAnalyzers;
+  }
+
+  private getRecord(value: unknown): Record<string, unknown> {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private hasKey(value: unknown, key: string): value is Record<string, unknown> {
+    return !!value && typeof value === 'object' && key in value;
   }
 
   /**

@@ -42,6 +42,16 @@ const PRIMARY_EMA50_WEIGHT = 0.4; // 40% of primary weight
 // ============================================================================
 
 export class TFAlignmentService {
+  private static isWeightedTimeframe(
+    value: unknown,
+  ): value is { weight: number } {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+    const weighted = value as { weight?: unknown };
+    return Number.isFinite(weighted.weight);
+  }
+
   constructor(
     private config?: TFAlignmentConfig,
     private logger?: LoggerService,
@@ -175,7 +185,11 @@ export class TFAlignmentService {
   private validateAlignmentInput(
     direction: 'LONG' | 'SHORT',
     currentPrice: number,
-    indicators: any,
+    indicators: {
+      entry: { ema20: number };
+      primary: { ema20: number; ema50: number };
+      trend1: { ema20: number; ema50: number };
+    },
   ): void {
     if (direction !== 'LONG' && direction !== 'SHORT') {
       const error = new Error("Direction must be 'LONG' or 'SHORT'");
@@ -263,8 +277,8 @@ export class TFAlignmentService {
       throw error;
     }
 
-    const validateTFWeights = (tf: any, tfName: string) => {
-      if (!tf || !Number.isFinite(tf.weight) || tf.weight < 0) {
+    const validateTFWeights = (tf: unknown, tfName: string) => {
+      if (!TFAlignmentService.isWeightedTimeframe(tf) || tf.weight < 0) {
         const error = new Error(`Config.timeframes.${tfName}.weight must be a positive number`);
         if (this.errorHandler) {
           this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });

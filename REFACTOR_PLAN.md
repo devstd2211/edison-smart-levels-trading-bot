@@ -122,7 +122,7 @@
 - [x] Web-server any cleanup (phase 1: `packages/web-server/src`)
 - [x] Web-client any cleanup (phase 2: `packages/web-client/src`)
 - [ ] Core any cleanup (phase 3: src)
-- [ ] Tests any cleanup (phase 4: __tests__)
+- [x] Tests any cleanup (phase 4: __tests__)
 - [x] Core any cleanup batch 1: action-handlers + bot dashboard event typing
 - [x] Core any cleanup batch 2: config + bot-factory meta strategy handling
 - [x] Core any cleanup batch 3: bot-web-api orderbook typing
@@ -152,6 +152,18 @@
 - [x] Core any cleanup batch 27: TradingLifecycle emergency-close queueing typed (`IAction` close action, removed `enqueue(... as any)`)
 - [x] Core any cleanup batch 28: TradingLifecycle EventBus subscription payloads typed (`event: unknown` + extractor helpers, removed `event: any`)
 - [x] Core any cleanup batch 29: Exchange adapters funding-rate dynamic calls typed (Bybit/Binance `hasFundingRateMethod` guards, removed `as any` calls)
+- [x] Core any cleanup batch 30: safeLog/candle typing cleanup (`advanced-order-flow`, `volume-profile`, `volatility-regime`, `swing-point-detector`)
+- [x] Core any cleanup batch 31: `strategy-config-merger.service.ts` `any`/`as any` cleanup (merge helpers + change report + analyzer-defaults path typing)
+- [x] Core any cleanup batch 32: `trading-orchestrator.service.ts` targeted `any` cleanup slice (pending-decision/config/analyzer + signal/exit queue typing)
+- [x] Core any cleanup batch 33: `analyzer-registry.service.ts` typing cleanup (`any` removal for analyzer map/config/safeLog)
+- [x] Core any cleanup batch 34: `config-validator.service.ts` `any` removal (`unknown` pathing + guarded object traversal)
+- [x] Core any cleanup batch 35: `strategy-manager.service.ts` typing cleanup (initialize overloads + merged config typing without `any`)
+- [x] Core any cleanup batch 36: `indicator-registry.service.ts` `any` removal (safeLog meta typing + THROW validation branches + typed default ErrorLogger)
+- [x] Core any cleanup batch 37: `tf-alignment.service.ts` `any` removal (typed indicator validation input + guarded timeframe weight validation)
+- [x] Core any cleanup batch 38: `market-condition-analyzer.service.ts` `any` removal (safeLog metadata typing + validation THROW helper without `as any`)
+- [x] Core any cleanup batch 39: `indicator-cache.service.ts` `any` removal (typed default ErrorLogger + safeLog metadata typing + invalid-key return cast via `unknown`)
+- [x] Core any cleanup batch 40: `ml-signal-validator.service.ts` `any` removal (safeLog metadata typed as `Record<string, unknown>`)
+- [x] Core any cleanup batch 41: `liquidity-heatmap.service.ts` `any` removal (safeLog metadata typed as `Record<string, unknown>`)
 - [x] Tests any cleanup batch 1: backtest walk-forward/worker-pool/parameter-optimizer tests
 - [x] Tests any cleanup batch 2: bot-event-emitter, exit-decisions, anti-flip tests
 - [x] Tests any cleanup batch 3: event-handlers, entry-decisions, cache-integration tests
@@ -2306,6 +2318,47 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - completed iterative decomposition of validation, signal factories, side-specific detection loops, tracked-wall management, trend-direction, imbalance evaluation, and confidence math
   - behavior preserved and verified on both error-handling and service suites
   - next refactor focus should move to another candidate service/module from backlog
+- [x] WhaleDetectionService re-review pass (2026-03-08):
+  - current status re-validated after user follow-up; targeted suite still green:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts`
+    - Result: 1/1 suite PASS, 16/16 tests PASS.
+  - maintainability finding: service remains large (`packages/core/src/services/whale-detection.service.ts` = 848 lines) with additional safe decomposition headroom.
+- [x] WhaleDetectionService follow-up decomposition backlog (next session candidate):
+  - [x] extract THROW validations (`validateConfig`, `validateDetectionInput`) to dedicated validation util while preserving exact error text.
+  - [x] extract mode execution orchestration from `detectWhale(...)` into mode-runner helper(s) to reduce main method branching.
+  - [x] extract data tracking/cleanup helpers (`updateImbalanceHistory`, `cleanupExpiredData`) to state util to further thin service facade.
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 7 validation/state utility extraction slice complete:
+  - extracted THROW validation checks to `packages/core/src/services/whale-detection/whale-detection-validation.utils.ts`:
+    - `getWhaleConfigValidationError(...)`
+    - `getWhaleDetectionInputValidationError(...)`
+  - preserved exact validation error text and existing `throwValidationError(...)` + `ErrorHandler` THROW flow by keeping throw boundary in service.
+  - extracted state tracking/cleanup helpers to `packages/core/src/services/whale-detection/whale-detection-state.utils.ts`:
+    - `updateWhaleImbalanceHistory(...)`
+    - `cleanupWhaleTrackedWalls(...)`
+    - `cleanupWhaleRecentBreaks(...)`
+  - removed service-local wall expiry helper and delegated imbalance/history + cleanup mutations to state util functions.
+- [x] Verification (targeted whale detection suites, 2026-03-08, post-iteration-7 extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 16/16 tests PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detector.service.test.ts`
+  - Result: 1/1 suite PASS, 21/21 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/whale-detection.service.ts` now 679 lines (down from 848 after re-review follow-up start; 1054 at start of full track).
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 8 detect-mode orchestration extraction slice complete:
+  - extracted mode branching from `detectWhale(...)` into dedicated helper `runDetectionModes(...)`.
+  - preserved mode priority order and semantics:
+    - `IMBALANCE_SPIKE` first
+    - `WALL_BREAK` second
+    - `WALL_DISAPPEARANCE` third
+  - preserved existing detection logging behavior (`logWhaleDetection(...)` called only on detected signal).
+- [x] Verification (targeted whale detection suites, 2026-03-08, post-iteration-8 extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/whale-detector.service.test.ts`
+  - Result: 2/2 suites PASS, 37/37 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/whale-detection.service.ts` now 691 lines (up from 679 after iteration 7 due to orchestration helper extraction; down from 1054 baseline).
+- [x] WhaleDetectionService follow-up decomposition backlog closed (2026-03-08):
+  - completed validation util extraction, state util extraction, and detect-mode orchestration extraction
+  - behavior re-verified on targeted whale error-handling and service suites
 - [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 1 math helper extraction slice complete:
   - extracted split/liquidity/volatility/probability/time pure helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-math.utils.ts`
   - delegated service math paths:
@@ -2365,6 +2418,124 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - completed iterative decomposition of math, fallback builders, GRACEFUL_DEGRADE flow, validation, market-condition/priority logic, and plan metric/risk helpers
   - behavior preserved and re-verified on targeted error-handling suite
   - next refactor focus should move to another candidate service/module from backlog
+- [x] Core any cleanup batch 30 follow-up details (2026-03-08):
+  - `packages/core/src/services/advanced-order-flow.service.ts`: `safeLog(..., meta?: Record<string, unknown>)`
+  - `packages/core/src/services/volume-profile.service.ts`: `safeLog(..., meta?: Record<string, unknown>)`
+  - `packages/core/src/services/volatility-regime.service.ts`: `safeLog(..., meta?: Record<string, unknown>)`
+  - `packages/core/src/services/swing-point-detector.service.ts`:
+    - `safeLog(..., meta?: Record<string, unknown>)`
+    - `isValidCandle(candle: Partial<Candle> | null | undefined, ...)` (removed `candle: any`)
+  - behavior-preserving service review: no additional safe decomposition required in this slice beyond typing hardening.
+- [x] Verification (targeted suites, 2026-03-08, post core-any batch 30):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/volume-profile.service.test.ts packages/core/src/__tests__/services/volume-profile.error-handling.test.ts packages/core/src/__tests__/services/volatility-regime.service.test.ts packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 175/175 tests PASS.
+- [x] Tests any cleanup phase-4 status check (2026-03-08):
+  - scanned active `packages/core/src/__tests__` with `rg -n "(:\\s*any\\b|as any\\b|<any>)" ... -g "*.ts" -g "!*.ARCHIVED.ts"`
+  - Result: no matches in active non-archived files (`__tests__` scope).
+- [x] Core any cleanup batch 31 follow-up details (2026-03-08):
+  - `packages/core/src/services/strategy-config-merger.service.ts`:
+    - introduced typed helper aliases (`MergeObject`, `MergeableConfig`) and object guards (`asMergeObject`, `getAnalyzerDefaults`)
+    - removed service-local `any` / `as any` in merge/filter/risk-management/analyzer-default/change-report paths
+    - tightened `getConfigValue(...)` return to `unknown` and `ConfigChange` value fields to `unknown`
+    - preserved behavior by keeping merge copy semantics (`{ ...original }`) in merge helpers.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 31):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-config-merger.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 26/26 tests PASS.
+- [x] Core any cleanup batch 32 follow-up details (2026-03-08):
+  - `packages/core/src/services/trading-orchestrator.service.ts`:
+    - removed remaining local `any`/`as any` usage from:
+      - pending-entry state typing
+      - runtime config access paths (`filters`, `indicators`, `riskManager`, `analyzerDefaults`)
+      - indicator pre-calc cache stats access
+      - analyzer execution/config wiring helpers
+      - signal enrichment/open-position enqueue paths
+      - exit-action queue conversion path
+    - added small typed helper methods for runtime config/object guards to keep behavior while reducing cast scatter.
+  - behavior-preserving service review: no decomposition in this slice; changes limited to typing hardening and access helpers.
+- [x] Verification (targeted suites, 2026-03-08, post core-any batch 32):
+  - `npm test -- --runInBand packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts packages/core/src/__tests__/smoke-tests/orchestrator-behavior.smoke.test.ts packages/core/src/__tests__/phase-10-3b-orchestrator-implementation.test.ts`
+  - Result: 3/3 suites PASS, 86/86 tests PASS.
+- [x] Core any cleanup batch 33 follow-up details (2026-03-08):
+  - `packages/core/src/services/analyzer-registry.service.ts`:
+    - removed remaining service-local `any`/`as any` from analyzer loader map typing, config builders, and safe logger wrapper metadata.
+    - replaced dynamic config paths with guarded `Record<string, unknown>` helpers (`getRecord`, `hasKey`) while preserving merge/override behavior.
+    - kept lazy analyzer loading behavior intact with explicit loader presence guard.
+  - behavior-preserving service review: no decomposition required in this slice; only type-hardening and loader guard.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 33):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 25/25 tests PASS.
+- [x] Core any cleanup batch 34 follow-up details (2026-03-08):
+  - `packages/core/src/services/config-validator.service.ts`:
+    - replaced remaining `any` signatures with `unknown` in startup/static and instance validation paths.
+    - hardened nested path traversal (`getPathStatic`, `getPath`) via guarded `Record<string, unknown>` access.
+    - added shared object guard helper `asRecord(...)` and applied to analyzer/strategy/summary validation branches.
+    - preserved all existing validation messages and THROW behavior.
+  - behavior-preserving service review: no decomposition required in this slice; change scope limited to typing hardening and safe traversal guards.
+- [x] Verification (targeted suites, 2026-03-08, post core-any batch 34):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/config-validator.service.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts`
+  - Result: 2/2 suites PASS, 36/36 tests PASS.
+- [x] Core any cleanup batch 35 follow-up details (2026-03-08):
+  - `packages/core/src/services/strategy-manager.service.ts`:
+    - removed remaining `any` by introducing typed `initialize(...)` overloads (`null` + `ConfigNew | Config`) with runtime object validation in implementation.
+    - kept merged config path generic via `mergedConfigGeneric: ConfigNew | Config | null` and `getMergedConfig(): ConfigNew | Config`.
+    - preserved startup validation messages and loader/merger orchestration behavior.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 35):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 24/24 tests PASS.
+- [x] Core any cleanup batch 36 follow-up details (2026-03-08):
+  - `packages/core/src/services/indicator-registry.service.ts`:
+    - replaced `safeLog(..., data?: any)` with `safeLog(..., data?: Record<string, unknown>)`.
+    - removed `({} as any)` ErrorHandler fallback by wiring typed `defaultErrorLogger`.
+    - removed `return ... as any` in THROW validation branches and switched to `void this.errorHandler.handle(...)` + early return.
+    - preserved validation rejection behavior and non-throwing compatibility semantics used in existing tests.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and fallback logger typing.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 36):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 25/25 tests PASS.
+- [x] Core any cleanup batch 37 follow-up details (2026-03-08):
+  - `packages/core/src/services/tf-alignment.service.ts`:
+    - replaced `validateAlignmentInput(..., indicators: any)` with explicit indicator object shape.
+    - replaced local timeframe validator `tf: any` with `unknown` + guard helper `isWeightedTimeframe(...)`.
+    - preserved existing THROW validation messages and GRACEFUL_DEGRADE behavior.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to input typing hardening.
+- [x] Verification (targeted suites, 2026-03-08, post core-any batch 37):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts`
+  - Result: 2/2 suites PASS, 46/46 tests PASS.
+- [x] Core any cleanup batch 38 follow-up details (2026-03-08):
+  - `packages/core/src/services/market-condition-analyzer.service.ts`:
+    - replaced `safeLog(..., data?: any)` with `safeLog(..., data?: Record<string, unknown>)`.
+    - removed `as any` from THROW validation return paths by adding `handleThrowValidation(...)`.
+    - preserved existing non-throwing ErrorHandler validation flow and output messages.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 38):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 25/25 tests PASS.
+- [x] Core any cleanup batch 39 follow-up details (2026-03-08):
+  - `packages/core/src/services/indicator-cache.service.ts`:
+    - replaced fallback `({} as any)` ErrorHandler wiring with typed `defaultErrorLogger`.
+    - replaced `safeLog(..., data?: any)` with `safeLog(..., data?: Record<string, unknown>)`.
+    - removed `as any` from invalid-key `get(...)` path via `unknown` cast while preserving current return behavior.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and fallback logger typing.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 39):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 25/25 tests PASS.
+- [x] Core any cleanup batch 40 follow-up details (2026-03-08):
+  - `packages/core/src/services/ml-signal-validator.service.ts`:
+    - replaced `safeLog(..., meta?: any)` with `safeLog(..., meta?: Record<string, unknown>)`.
+    - preserved existing SKIP logging-failure behavior via ErrorHandler/non-throwing path.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to safeLog typing hardening.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 40):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+- [x] Core any cleanup batch 41 follow-up details (2026-03-08):
+  - `packages/core/src/services/liquidity-heatmap.service.ts`:
+    - replaced `safeLog(..., meta?: any)` with `safeLog(..., meta?: Record<string, unknown>)`.
+    - preserved existing SKIP logging behavior and fallback path without ErrorHandler.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to safeLog typing hardening.
+- [x] Verification (targeted suite, 2026-03-08, post core-any batch 41):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 43/43 tests PASS.
 
 
 

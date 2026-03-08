@@ -75,7 +75,7 @@ export class SwingPointDetectorService {
   private safeLog(
     level: 'info' | 'debug' | 'warn' | 'error',
     message: string,
-    meta?: any
+    meta?: Record<string, unknown>
   ): void {
     try {
       this.logger[level](message, meta);
@@ -92,7 +92,7 @@ export class SwingPointDetectorService {
   /**
    * Validate candle data - Phase 8.9.44
    */
-  private isValidCandle(candle: any, index: number): boolean {
+  private isValidCandle(candle: Partial<Candle> | null | undefined, index: number): boolean {
     if (!candle) return false;
 
     const { high, low, timestamp } = candle;

@@ -208,7 +208,7 @@ export class AdvancedOrderFlowService {
   private safeLog(
     level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
-    meta?: any,
+    meta?: Record<string, unknown>,
   ): void {
     if (!this.logger) return;
     try {

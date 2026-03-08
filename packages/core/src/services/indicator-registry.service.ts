@@ -1,5 +1,5 @@
 import { IndicatorType } from '../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy, ErrorLogger } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';
 
 /**
@@ -29,19 +29,31 @@ export interface IIndicatorMetadata {
 }
 
 export class IndicatorRegistry {
+  private static readonly defaultErrorLogger: ErrorLogger = {
+    debug: () => undefined,
+    info: () => undefined,
+    warn: () => undefined,
+    error: () => undefined,
+  };
+
   private registered = new Map<IndicatorType, IIndicatorMetadata>();
   private errorHandler: ErrorHandler;
   private logger?: LoggerService;
 
   constructor(logger?: LoggerService, errorHandler?: ErrorHandler) {
     this.logger = logger;
-    this.errorHandler = errorHandler || new ErrorHandler(logger || ({} as any));
+    this.errorHandler =
+      errorHandler ?? new ErrorHandler((logger as ErrorLogger | undefined) ?? IndicatorRegistry.defaultErrorLogger);
   }
 
   /**
    * Safe logging wrapper - SKIP strategy for all logger errors
    */
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, data?: any): void {
+  private safeLog(
+    level: 'debug' | 'info' | 'warn' | 'error',
+    message: string,
+    data?: Record<string, unknown>,
+  ): void {
     if (!this.logger) return;
     try {
       this.logger[level](message, data);
@@ -61,26 +73,29 @@ export class IndicatorRegistry {
   register(type: IndicatorType, metadata: IIndicatorMetadata): void {
     // THROW: Validate type is not null/undefined
     if (!type) {
-      return this.errorHandler.handle(
+      void this.errorHandler.handle(
         new Error('Indicator type cannot be null or undefined'),
         { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      );
+      return;
     }
 
     // THROW: Validate metadata
     if (!metadata || !metadata.name) {
-      return this.errorHandler.handle(
+      void this.errorHandler.handle(
         new Error(`Invalid indicator metadata for type ${type}`),
         { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      );
+      return;
     }
 
     // THROW: Check for duplicate registration
     if (this.registered.has(type)) {
-      return this.errorHandler.handle(
+      void this.errorHandler.handle(
         new Error(`Indicator type ${type} is already registered`),
         { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      );
+      return;
     }
 
     this.registered.set(type, metadata);

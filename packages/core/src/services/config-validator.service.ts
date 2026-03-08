@@ -58,7 +58,7 @@ export class ConfigValidatorService {
    * Static validation for use at startup (before logger is available)
    * Throws on failure with detailed error message
    */
-  static validateAtStartup(config: any): void {
+  static validateAtStartup(config: unknown): void {
     const errors: string[] = [];
 
     // 1. Check for deprecated keys
@@ -100,13 +100,13 @@ export class ConfigValidatorService {
 
     // 4. Validate ranges
     const slPercent = ConfigValidatorService.getPathStatic(config, 'riskManagement.stopLossPercent');
-    if (slPercent !== undefined) {
+    if (typeof slPercent === 'number') {
       if (slPercent <= 0) errors.push(`INVALID: riskManagement.stopLossPercent = ${slPercent} (must be > 0)`);
       if (slPercent > 20) errors.push(`INVALID: riskManagement.stopLossPercent = ${slPercent} (max 20%)`);
     }
 
     const leverage = ConfigValidatorService.getPathStatic(config, 'trading.leverage');
-    if (leverage !== undefined && (leverage < 1 || leverage > 100)) {
+    if (typeof leverage === 'number' && (leverage < 1 || leverage > 100)) {
       errors.push(`INVALID: trading.leverage = ${leverage} (must be 1-100)`);
     }
 
@@ -128,12 +128,13 @@ FIX: Update your config.json and restart.
     console.log('✅ Config validation passed');
   }
 
-  private static getPathStatic(obj: any, path: string): any {
+  private static getPathStatic(obj: unknown, path: string): unknown {
     const parts = path.split('.');
-    let current = obj;
+    let current: unknown = obj;
     for (const part of parts) {
       if (current === null || current === undefined) return undefined;
-      current = current[part];
+      if (typeof current !== 'object') return undefined;
+      current = (current as Record<string, unknown>)[part];
     }
     return current;
   }
@@ -143,17 +144,18 @@ FIX: Update your config.json and restart.
    * Ensures all required analyzer enable/disable flags are present
    * Phase 8.9.31: Uses ConfigAnalyzerValidationError with ErrorHandler support
    */
-  validateAnalyzerConfig(config: any): void {
+  validateAnalyzerConfig(config: unknown): void {
     const errors: string[] = [];
+    const configObj = this.asRecord(config);
 
     // Check strategicWeights exists
-    if (!config?.strategicWeights) {
+    if (!configObj.strategicWeights) {
       errors.push('Missing "strategicWeights" section in config.json');
       this.throwAnalyzerValidationError(errors, 'strategicWeights', []);
       return;
     }
 
-    const sw = config.strategicWeights;
+    const sw = this.asRecord(configObj.strategicWeights);
 
     // Check each section
     const requiredSections = [
@@ -168,7 +170,8 @@ FIX: Update your config.json and restart.
     for (const section of requiredSections) {
       const sectionPath = `strategicWeights.${section.path}`;
 
-      if (!sw[section.path]) {
+      const sectionConfig = this.asRecord(sw[section.path]);
+      if (Object.keys(sectionConfig).length === 0) {
         errors.push(`Missing section: "${sectionPath}"`);
         continue;
       }
@@ -176,9 +179,9 @@ FIX: Update your config.json and restart.
       for (const analyzer of section.analyzers) {
         allAnalyzers.push(analyzer);
         const fullPath = `${sectionPath}.${analyzer}`;
-        if (sw[section.path][analyzer] === undefined) {
+        if (sectionConfig[analyzer] === undefined) {
           errors.push(`Missing analyzer config: "${fullPath}" (add: "enabled": true/false)`);
-        } else if (sw[section.path][analyzer].enabled === undefined) {
+        } else if (this.asRecord(sectionConfig[analyzer]).enabled === undefined) {
           errors.push(`Missing enabled flag: "${fullPath}.enabled" (must be true or false, no null/undefined)`);
         }
       }
@@ -204,11 +207,13 @@ FIX: Update your config.json and restart.
    * Validate strategy configuration
    * Phase 8.9.31: Uses ConfigStrategyValidationError with ErrorHandler support
    */
-  validateStrategyConfig(config: any): void {
+  validateStrategyConfig(config: unknown): void {
     const errors: string[] = [];
     const missingFields: string[] = [];
+    const configObj = this.asRecord(config);
+    const strategies = this.asRecord(configObj.strategies);
 
-    if (!config?.strategies) {
+    if (Object.keys(strategies).length === 0) {
       errors.push('Missing "strategies" section in config.json');
       missingFields.push('strategies');
       this.throwStrategyValidationError(errors, 'levelBased', missingFields);
@@ -216,8 +221,8 @@ FIX: Update your config.json and restart.
     }
 
     // Check LevelBased has required flags
-    if (config.strategies.levelBased) {
-      const lb = config.strategies.levelBased;
+    if (strategies.levelBased) {
+      const lb = this.asRecord(strategies.levelBased);
 
       // Check blockLongInDowntrend
       if (lb.blockLongInDowntrend === undefined) {
@@ -232,16 +237,20 @@ FIX: Update your config.json and restart.
       }
 
       // Check trend filters
-      if (!lb.levelClustering?.trendFilters) {
+      const levelClustering = this.asRecord(lb.levelClustering);
+      const trendFilters = this.asRecord(levelClustering.trendFilters);
+      if (Object.keys(trendFilters).length === 0) {
         errors.push('Missing: strategies.levelBased.levelClustering.trendFilters');
         missingFields.push('levelClustering.trendFilters');
       } else {
-        const tf = lb.levelClustering.trendFilters;
-        if (tf.downtrend?.rsiThreshold === undefined) {
+        const tf = trendFilters;
+        const downtrend = this.asRecord(tf.downtrend);
+        const uptrend = this.asRecord(tf.uptrend);
+        if (downtrend.rsiThreshold === undefined) {
           errors.push('Missing: strategies.levelBased.levelClustering.trendFilters.downtrend.rsiThreshold');
           missingFields.push('trendFilters.downtrend.rsiThreshold');
         }
-        if (tf.uptrend?.rsiThreshold === undefined) {
+        if (uptrend.rsiThreshold === undefined) {
           errors.push('Missing: strategies.levelBased.levelClustering.trendFilters.uptrend.rsiThreshold');
           missingFields.push('trendFilters.uptrend.rsiThreshold');
         }
@@ -255,7 +264,7 @@ FIX: Update your config.json and restart.
     // Log success (non-blocking, errors are skipped)
     try {
       this.logger.info('✅ Strategy configuration validated', {
-        strategies: config.strategies,
+        strategies,
       });
     } catch (logError) {
       // SKIP strategy for logger failures - continue despite log errors
@@ -266,19 +275,20 @@ FIX: Update your config.json and restart.
   /**
    * Print all enabled analyzers for debugging
    */
-  printEnabledAnalyzers(config: any): void {
+  printEnabledAnalyzers(config: unknown): void {
     const enabled: string[] = [];
     const disabled: string[] = [];
 
-    const sw = config?.strategicWeights;
-    if (!sw) return;
+    const configObj = this.asRecord(config);
+    const sw = this.asRecord(configObj.strategicWeights);
+    if (Object.keys(sw).length === 0) return;
 
     const sections = ['technicalIndicators', 'marketStructure', 'smcMicrostructure', 'externalData'];
 
     for (const section of sections) {
       if (!sw[section]) continue;
 
-      for (const [analyzer, settings] of Object.entries(sw[section])) {
+      for (const [analyzer, settings] of Object.entries(this.asRecord(sw[section]))) {
         const isEnabled = this.isEnabledAnalyzerSettings(settings);
         const fullName = `${section}.${analyzer}`;
 
@@ -311,7 +321,7 @@ FIX: Update your config.json and restart.
    * Call this at startup for fast-fail validation
    * Phase 8.9.31: Uses typed domain errors with ErrorHandler support
    */
-  validateAll(config: any): void {
+  validateAll(config: unknown): void {
     const errors: string[] = [];
     let errorType: 'deprecation' | 'validation' | 'format' = 'validation';
 
@@ -349,9 +359,11 @@ FIX: Update your config.json and restart.
 
     // Log success (non-blocking, errors are skipped)
     try {
+      const configObj = this.asRecord(config);
+      const exchange = this.asRecord(configObj.exchange);
       this.logger.info('✅ Configuration validated successfully', {
-        version: config.version || 'unknown',
-        symbol: config.exchange?.symbol,
+        version: configObj.version || 'unknown',
+        symbol: exchange.symbol,
       });
     } catch (logError) {
       // SKIP strategy for logger failures - continue despite log errors
@@ -362,7 +374,7 @@ FIX: Update your config.json and restart.
   /**
    * Check for deprecated config keys that should no longer be used
    */
-  private checkDeprecatedKeys(config: any, errors: string[]): void {
+  private checkDeprecatedKeys(config: unknown, errors: string[]): void {
     for (const key of DEPRECATED_KEYS) {
       if (this.hasPath(config, key)) {
         errors.push(`DEPRECATED KEY: "${key}" - remove from config.json (see migration guide)`);
@@ -373,7 +385,7 @@ FIX: Update your config.json and restart.
   /**
    * Validate required fields exist
    */
-  private validateRequiredFields(config: any, errors: string[]): void {
+  private validateRequiredFields(config: unknown, errors: string[]): void {
     const requiredFields = [
       'exchange.symbol',
       'exchange.apiKey',
@@ -394,7 +406,7 @@ FIX: Update your config.json and restart.
   /**
    * Validate confidence values are in 0-1 range (not 0-100)
    */
-  private validateConfidenceFormat(config: any, errors: string[]): void {
+  private validateConfidenceFormat(config: unknown, errors: string[]): void {
     const confidencePaths = [
       'thresholds.defaults.confidence.min',
       'thresholds.defaults.confidence.clampMin',
@@ -422,10 +434,10 @@ FIX: Update your config.json and restart.
   /**
    * Validate numeric ranges
    */
-  private validateRanges(config: any, errors: string[]): void {
+  private validateRanges(config: unknown, errors: string[]): void {
     // Stop loss must be positive and reasonable
     const slPercent = this.getPath(config, 'riskManagement.stopLossPercent');
-    if (slPercent !== undefined) {
+    if (typeof slPercent === 'number') {
       if (slPercent <= 0) {
         errors.push(`INVALID RANGE: riskManagement.stopLossPercent = ${slPercent} (must be > 0)`);
       }
@@ -436,7 +448,7 @@ FIX: Update your config.json and restart.
 
     // Leverage must be 1-100
     const leverage = this.getPath(config, 'trading.leverage');
-    if (leverage !== undefined) {
+    if (typeof leverage === 'number') {
       if (leverage < 1 || leverage > 100) {
         errors.push(`INVALID RANGE: trading.leverage = ${leverage} (must be 1-100)`);
       }
@@ -444,7 +456,7 @@ FIX: Update your config.json and restart.
 
     // Position size must be positive
     const posSize = this.getPath(config, 'riskManagement.positionSizeUsdt');
-    if (posSize !== undefined && posSize <= 0) {
+    if (typeof posSize === 'number' && posSize <= 0) {
       errors.push(`INVALID RANGE: riskManagement.positionSizeUsdt = ${posSize} (must be > 0)`);
     }
   }
@@ -452,25 +464,35 @@ FIX: Update your config.json and restart.
   /**
    * Check if a nested path exists in object
    */
-  private hasPath(obj: any, path: string): boolean {
+  private hasPath(obj: unknown, path: string): boolean {
     return this.getPath(obj, path) !== undefined;
   }
 
   /**
    * Get value at nested path
    */
-  private getPath(obj: any, path: string): any {
+  private getPath(obj: unknown, path: string): unknown {
     const parts = path.split('.');
-    let current = obj;
+    let current: unknown = obj;
 
     for (const part of parts) {
       if (current === null || current === undefined) {
         return undefined;
       }
-      current = current[part];
+      if (typeof current !== 'object') {
+        return undefined;
+      }
+      current = (current as Record<string, unknown>)[part];
     }
 
     return current;
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return {};
   }
 
   /**

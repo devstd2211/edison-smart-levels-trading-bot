@@ -19,6 +19,13 @@ import { ConfigNew, StrategyConfigV2 as StrategyConfig } from '../types/legacy';
 import { Config } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
+type MergeObject = Record<string, unknown>;
+type MergeableConfig = (ConfigNew | Config) & {
+  filters?: unknown;
+  analyzers?: unknown;
+  analyzerDefaults?: unknown;
+};
+
 export class StrategyConfigMergerService {
   private errorHandler: ErrorHandler | undefined;
   private logger: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: unknown) => void>> | undefined;
@@ -67,16 +74,19 @@ export class StrategyConfigMergerService {
     }
 
     try {
-      const merged = { ...mainConfig };
+      const merged = { ...mainConfig } as MergeableConfig;
 
       // 1. Merge indicator overrides
       if (strategy.indicators && merged.indicators) {
-        merged.indicators = this.mergeIndicators(merged.indicators, strategy.indicators);
+        merged.indicators = this.mergeIndicators(
+          merged.indicators,
+          strategy.indicators,
+        ) as unknown as MergeableConfig['indicators'];
       }
 
       // 2. Merge filter overrides (only if filters exist in config)
-      if (strategy.filters && (merged as any).filters) {
-        (merged as any).filters = this.mergeFilters((merged as any).filters, strategy.filters);
+      if (strategy.filters && merged.filters) {
+        merged.filters = this.mergeFilters(merged.filters, strategy.filters);
       }
 
       // 3. Merge risk management overrides
@@ -84,24 +94,25 @@ export class StrategyConfigMergerService {
         merged.riskManagement = this.mergeRiskManagement(
           merged.riskManagement,
           strategy.riskManagement,
-        );
+        ) as unknown as MergeableConfig['riskManagement'];
       }
 
       // 4. Add analyzers from strategy
       if (strategy.analyzers) {
-        (merged as any).analyzers = strategy.analyzers;
+        merged.analyzers = strategy.analyzers;
       }
 
       // 5. Merge analyzer defaults from strategy (strategy defaults override main config defaults)
-      if ((strategy as any).analyzerDefaults) {
-        const mainDefaults = (merged as any).analyzerDefaults || {};
+      const strategyAnalyzerDefaults = this.getAnalyzerDefaults(strategy);
+      if (strategyAnalyzerDefaults) {
+        const mainDefaults = this.asMergeObject(merged.analyzerDefaults);
         const mergedDefaults = {
           ...mainDefaults,
-          ...(strategy as any).analyzerDefaults,
+          ...strategyAnalyzerDefaults,
         };
-        (merged as any).analyzerDefaults = mergedDefaults;
+        merged.analyzerDefaults = mergedDefaults;
         this.safeLog('debug', '[MERGE] StrategyConfigMerger: Added analyzerDefaults from strategy', {
-          strategyDefaultsCount: Object.keys((strategy as any).analyzerDefaults).length,
+          strategyDefaultsCount: Object.keys(strategyAnalyzerDefaults).length,
           mergedDefaultsCount: Object.keys(mergedDefaults).length,
         });
       } else {
@@ -122,26 +133,27 @@ export class StrategyConfigMergerService {
   /**
    * Merge indicator overrides
    */
-  private mergeIndicators(original: any, overrides: any): any {
-    const merged = { ...original };
+  private mergeIndicators(original: unknown, overrides: unknown): MergeObject {
+    const merged = { ...this.asMergeObject(original) };
+    const overrideValues = this.asMergeObject(overrides);
 
-    if (overrides.ema) {
-      merged.ema = { ...merged.ema, ...overrides.ema };
+    if (overrideValues.ema) {
+      merged.ema = { ...this.asMergeObject(merged.ema), ...this.asMergeObject(overrideValues.ema) };
     }
-    if (overrides.rsi) {
-      merged.rsi = { ...merged.rsi, ...overrides.rsi };
+    if (overrideValues.rsi) {
+      merged.rsi = { ...this.asMergeObject(merged.rsi), ...this.asMergeObject(overrideValues.rsi) };
     }
-    if (overrides.atr) {
-      merged.atr = { ...merged.atr, ...overrides.atr };
+    if (overrideValues.atr) {
+      merged.atr = { ...this.asMergeObject(merged.atr), ...this.asMergeObject(overrideValues.atr) };
     }
-    if (overrides.volume) {
-      merged.volume = { ...merged.volume, ...overrides.volume };
+    if (overrideValues.volume) {
+      merged.volume = { ...this.asMergeObject(merged.volume), ...this.asMergeObject(overrideValues.volume) };
     }
-    if (overrides.stochastic) {
-      merged.stochastic = { ...merged.stochastic, ...overrides.stochastic };
+    if (overrideValues.stochastic) {
+      merged.stochastic = { ...this.asMergeObject(merged.stochastic), ...this.asMergeObject(overrideValues.stochastic) };
     }
-    if (overrides.bollingerBands) {
-      merged.bollingerBands = { ...merged.bollingerBands, ...overrides.bollingerBands };
+    if (overrideValues.bollingerBands) {
+      merged.bollingerBands = { ...this.asMergeObject(merged.bollingerBands), ...this.asMergeObject(overrideValues.bollingerBands) };
     }
 
     return merged;
@@ -155,28 +167,29 @@ export class StrategyConfigMergerService {
    * - override: { blindZone: { minSignalsForLong: 2 } }
    * - result: { blindZone: { minSignalsForLong: 2, minSignalsForShort: 4 } }
    */
-  private mergeFilters(original: any, overrides: any): any {
-    const merged = { ...original };
+  private mergeFilters(original: unknown, overrides: unknown): MergeObject {
+    const merged = { ...this.asMergeObject(original) };
+    const overrideValues = this.asMergeObject(overrides);
 
-    if (overrides.blindZone) {
-      merged.blindZone = { ...merged.blindZone, ...overrides.blindZone };
+    if (overrideValues.blindZone) {
+      merged.blindZone = { ...this.asMergeObject(merged.blindZone), ...this.asMergeObject(overrideValues.blindZone) };
     }
-    if (overrides.btcCorrelation) {
+    if (overrideValues.btcCorrelation) {
       merged.btcCorrelation = {
-        ...merged.btcCorrelation,
-        ...overrides.btcCorrelation,
+        ...this.asMergeObject(merged.btcCorrelation),
+        ...this.asMergeObject(overrideValues.btcCorrelation),
       };
     }
-    if (overrides.nightTrading) {
-      merged.nightTrading = { ...merged.nightTrading, ...overrides.nightTrading };
+    if (overrideValues.nightTrading) {
+      merged.nightTrading = { ...this.asMergeObject(merged.nightTrading), ...this.asMergeObject(overrideValues.nightTrading) };
     }
-    if (overrides.atr) {
-      merged.atr = { ...merged.atr, ...overrides.atr };
+    if (overrideValues.atr) {
+      merged.atr = { ...this.asMergeObject(merged.atr), ...this.asMergeObject(overrideValues.atr) };
     }
-    if (overrides.volatilityRegime) {
+    if (overrideValues.volatilityRegime) {
       merged.volatilityRegime = {
-        ...merged.volatilityRegime,
-        ...overrides.volatilityRegime,
+        ...this.asMergeObject(merged.volatilityRegime),
+        ...this.asMergeObject(overrideValues.volatilityRegime),
       };
     }
 
@@ -186,24 +199,25 @@ export class StrategyConfigMergerService {
   /**
    * Merge risk management overrides
    */
-  private mergeRiskManagement(original: any, overrides: any): any {
-    const merged = { ...original };
+  private mergeRiskManagement(original: unknown, overrides: unknown): MergeObject {
+    const merged = { ...this.asMergeObject(original) };
+    const overrideValues = this.asMergeObject(overrides);
 
-    if (overrides.stopLoss) {
-      merged.stopLoss = { ...merged.stopLoss, ...overrides.stopLoss };
+    if (overrideValues.stopLoss) {
+      merged.stopLoss = { ...this.asMergeObject(merged.stopLoss), ...this.asMergeObject(overrideValues.stopLoss) };
     }
-    if (overrides.takeProfits) {
+    if (overrideValues.takeProfits) {
       // Replace entire TP array
-      merged.takeProfits = overrides.takeProfits;
+      merged.takeProfits = overrideValues.takeProfits;
     }
-    if (overrides.trailing) {
-      merged.trailing = { ...merged.trailing, ...overrides.trailing };
+    if (overrideValues.trailing) {
+      merged.trailing = { ...this.asMergeObject(merged.trailing), ...this.asMergeObject(overrideValues.trailing) };
     }
-    if (overrides.breakeven) {
-      merged.breakeven = { ...merged.breakeven, ...overrides.breakeven };
+    if (overrideValues.breakeven) {
+      merged.breakeven = { ...this.asMergeObject(merged.breakeven), ...this.asMergeObject(overrideValues.breakeven) };
     }
-    if (overrides.timeBasedExit) {
-      merged.timeBasedExit = { ...merged.timeBasedExit, ...overrides.timeBasedExit };
+    if (overrideValues.timeBasedExit) {
+      merged.timeBasedExit = { ...this.asMergeObject(merged.timeBasedExit), ...this.asMergeObject(overrideValues.timeBasedExit) };
     }
 
     return merged;
@@ -218,7 +232,7 @@ export class StrategyConfigMergerService {
    * @returns Value from strategy override or main config, or undefined on failure (GRACEFUL_DEGRADE)
    * @throws Error if mainConfig or strategy is null/undefined (THROW)
    */
-  getConfigValue(mainConfig: ConfigNew, strategy: StrategyConfig, path: string): any {
+  getConfigValue(mainConfig: ConfigNew, strategy: StrategyConfig, path: string): unknown {
     try {
       // THROW: Validate inputs
       if (!mainConfig || typeof mainConfig !== 'object') {
@@ -233,11 +247,11 @@ export class StrategyConfigMergerService {
 
       const merged = this.mergeConfigs(mainConfig, strategy);
       const keys = path.split('.');
-      let value: any = merged;
+      let value: unknown = merged;
 
       for (const key of keys) {
         if (value && typeof value === 'object') {
-          value = value[key];
+          value = this.asMergeObject(value)[key];
         } else {
           return undefined;
         }
@@ -284,8 +298,10 @@ export class StrategyConfigMergerService {
       }
 
       // Check filters (only if they exist in config)
-      if (strategy.filters && (mainConfig as any).filters && (merged as any).filters) {
-        this.findChanges((mainConfig as any).filters, (merged as any).filters, 'filters', changes);
+      const mainConfigWithFilters = mainConfig as MergeableConfig;
+      const mergedWithFilters = merged as MergeableConfig;
+      if (strategy.filters && mainConfigWithFilters.filters && mergedWithFilters.filters) {
+        this.findChanges(mainConfigWithFilters.filters, mergedWithFilters.filters, 'filters', changes);
       }
 
       // Check risk management
@@ -317,28 +333,45 @@ export class StrategyConfigMergerService {
     }
   }
 
-  private findChanges(original: any, merged: any, prefix: string, changes: ConfigChange[]) {
+  private findChanges(original: unknown, merged: unknown, prefix: string, changes: ConfigChange[]): void {
     // Skip if original or merged is undefined/null
     if (!original || !merged) return;
 
     // Skip arrays - we can't easily compare them
     if (Array.isArray(merged)) return;
 
-    for (const key in merged) {
-      if (typeof merged[key] === 'object' && merged[key] !== null && !Array.isArray(merged[key])) {
+    const originalValues = this.asMergeObject(original);
+    const mergedValues = this.asMergeObject(merged);
+    for (const key in mergedValues) {
+      if (typeof mergedValues[key] === 'object' && mergedValues[key] !== null && !Array.isArray(mergedValues[key])) {
         // Recursively check nested objects
-        this.findChanges(original?.[key], merged[key], `${prefix}.${key}`, changes);
+        this.findChanges(originalValues[key], mergedValues[key], `${prefix}.${key}`, changes);
       } else {
         // Compare primitive values
-        if (original?.[key] !== merged[key]) {
+        if (originalValues[key] !== mergedValues[key]) {
           changes.push({
             path: `${prefix}.${key}`,
-            original: original?.[key],
-            overridden: merged[key],
+            original: originalValues[key],
+            overridden: mergedValues[key],
           });
         }
       }
     }
+  }
+
+  private asMergeObject(value: unknown): MergeObject {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as MergeObject;
+    }
+    return {};
+  }
+
+  private getAnalyzerDefaults(strategy: StrategyConfig): MergeObject | undefined {
+    const value = (strategy as unknown as { analyzerDefaults?: unknown }).analyzerDefaults;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as MergeObject;
+    }
+    return undefined;
   }
 }
 
@@ -350,7 +383,7 @@ export interface ChangeReport {
 
 export interface ConfigChange {
   path: string;
-  original: any;
-  overridden: any;
+  original: unknown;
+  overridden: unknown;
 }
 

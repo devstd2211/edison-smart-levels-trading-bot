@@ -20,13 +20,13 @@
 
 import { StrategyLoaderService } from './strategy-loader.service';
 import { StrategyConfigMergerService } from './strategy-config-merger.service';
-import { StrategyConfigV2 as StrategyConfig, ConfigNew } from '../types/legacy';
+import { StrategyConfigV2 as StrategyConfig, ConfigNew, Config } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 export class StrategyManagerService {
   private strategy: StrategyConfig | null = null;
   private mergedConfig: ConfigNew | null = null;
-  private mergedConfigGeneric: any = null; // Generic config that can be Config or ConfigNew
+  private mergedConfigGeneric: ConfigNew | Config | null = null;
 
   constructor(
     private loader: StrategyLoaderService,
@@ -46,7 +46,9 @@ export class StrategyManagerService {
    * - GRACEFUL_DEGRADE: Loader/merger failures (propagate to caller)
    * - SKIP: Console logging failures (non-blocking)
    */
-  async initialize(strategyName: string, mainConfig: ConfigNew | any): Promise<void> {
+  async initialize(strategyName: string, mainConfig: null): Promise<void>;
+  async initialize(strategyName: string, mainConfig: ConfigNew | Config): Promise<void>;
+  async initialize(strategyName: string, mainConfig: unknown): Promise<void> {
     // THROW: Input validation
     if (strategyName === null || strategyName === undefined) {
       throw new Error('StrategyName is required');
@@ -76,10 +78,11 @@ export class StrategyManagerService {
     }
 
     // Merge with main config (supports both Config and ConfigNew types)
-    this.mergedConfigGeneric = this.merger.mergeConfigs(mainConfig, this.strategy);
+    const typedMainConfig = mainConfig as ConfigNew | Config;
+    this.mergedConfigGeneric = this.merger.mergeConfigs(typedMainConfig, this.strategy);
 
     // Log what changed
-    const changeReport = this.merger.getChangeReport(mainConfig, this.strategy);
+    const changeReport = this.merger.getChangeReport(typedMainConfig, this.strategy);
     this.safeLog(
       `[StrategyManager] Applied ${changeReport.changesCount} config overrides from strategy`,
     );
@@ -115,7 +118,7 @@ export class StrategyManagerService {
    * Used by services that need the final config
    * Returns either Config or ConfigNew depending on what was passed
    */
-  getMergedConfig(): any {
+  getMergedConfig(): ConfigNew | Config {
     if (!this.mergedConfigGeneric) {
       throw new Error(
         '[StrategyManager] Config not merged. Call initialize() first.',

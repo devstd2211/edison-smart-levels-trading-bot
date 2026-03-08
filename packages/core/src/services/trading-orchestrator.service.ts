@@ -55,10 +55,76 @@ import { ActivateTrailingHandler } from '../action-handlers/activate-trailing.ha
 import { IndicatorPreCalculationService } from './indicator-precalculation.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import type { ILifecycle } from '../interfaces/ILifecycle';
+import { Signal } from '../types/signal';
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+interface SignalTakeProfit {
+  price: number;
+  percent: number;
+  level?: number;
+}
+
+interface EnrichedSignal {
+  type?: string;
+  source?: string;
+  direction: SignalDirection | 'LONG' | 'SHORT';
+  confidence?: number;
+  price?: number;
+  stopLoss?: number;
+  entryPrice?: number;
+  takeProfits?: SignalTakeProfit[];
+  leverage?: number;
+  symbol?: string;
+  reason?: string;
+  timestamp?: number;
+  [key: string]: unknown;
+}
+
+interface PendingEntryDecision {
+  decision: 'ENTER';
+  signal: EnrichedSignal;
+  timestamp: number;
+  primaryCandle: Candle;
+  snapshotId?: string;
+}
+
+type RuntimeOrchestratorConfig = OrchestratorConfig & {
+  minSignals?: number;
+  analyzerDefaults?: Record<string, unknown>;
+  analyzers?: Record<string, unknown> | unknown[];
+  filters?: unknown;
+};
+
+interface AnalyzerConfigInput {
+  name: string;
+  enabled?: boolean;
+  weight?: number;
+  priority?: number;
+  minConfidence?: number;
+  maxConfidence?: number;
+  params?: Record<string, unknown>;
+}
+
+
+interface IndicatorPreCalcCacheStats {
+  hitRate: number;
+  hits: number;
+  misses: number;
+  size: number;
+  capacity: number;
+  evictions: number;
+}
+
+interface IndicatorPreCalcCache {
+  getStats?: () => IndicatorPreCalcCacheStats;
+}
+
+interface IndicatorPreCalcWithCache {
+  cache?: IndicatorPreCalcCache;
+}
 
 // ============================================================================
 // TRADING ORCHESTRATOR
@@ -84,7 +150,7 @@ export class TradingOrchestrator implements ILifecycle {
   private actionHandlers: IActionHandler[] = [];
 
   // Entry decision tracking (for PRIMARY->ENTRY refinement)
-  private pendingEntryDecision: any = null;
+  private pendingEntryDecision: PendingEntryDecision | null = null;
 
   // MTF Snapshot Gate (fixes race condition between HTF bias changes and ENTRY execution)
   private snapshotGate: MTFSnapshotGate | null = null;
@@ -127,7 +193,7 @@ export class TradingOrchestrator implements ILifecycle {
     // Initialize new black-box services
     this.analyzerRegistry = new AnalyzerRegistryService(this.logger);
     this.analyzerEngine = new AnalyzerEngineService(this.analyzerRegistry, this.logger);
-    const filterConfig = (this.config as any).filters || {};
+    const filterConfig = this.getRuntimeConfig().filters || {};
     this.filterOrchestrator = new FilterOrchestrator(this.logger, filterConfig);
 
     // Load indicators from config and pass to analyzer registry
@@ -214,9 +280,8 @@ export class TradingOrchestrator implements ILifecycle {
    * Can be called periodically by services or bot.ts
    */
   logCacheStats(): void {
-    if (this.indicatorPreCalc && (this.indicatorPreCalc as any).cache) {
-      const cache = (this.indicatorPreCalc as any).cache;
-      if (cache.getStats) {
+    const cache = this.getPreCalcCache();
+    if (cache?.getStats) {
         const stats = cache.getStats();
         this.logger.info('📊 Indicator Cache Statistics', {
           hitRate: `${stats.hitRate.toFixed(2)}%`,
@@ -226,7 +291,6 @@ export class TradingOrchestrator implements ILifecycle {
           evictions: stats.evictions,
         });
       }
-    }
   }
 
   /**
@@ -320,7 +384,7 @@ export class TradingOrchestrator implements ILifecycle {
         return;
       }
 
-      const indicatorsConfig = (this.config as any).indicators || {};
+      const indicatorsConfig = this.getIndicatorsConfig();
       this.logger.info('📊 Loading indicators from config', {
         configKeys: Object.keys(indicatorsConfig),
       });
@@ -328,11 +392,13 @@ export class TradingOrchestrator implements ILifecycle {
       // DEBUG: Log enabled status for each indicator
       const enabledStatus: Record<string, boolean> = {};
       Object.entries(indicatorsConfig).forEach(([key, val]) => {
-        enabledStatus[key] = (val as any)?.enabled === true;
+        enabledStatus[key] = this.isEnabledAnalyzerConfig(val);
       });
       this.logger.debug('🔍 Indicator enabled status in TradingOrchestrator:', enabledStatus);
 
-      const indicators = await this.indicatorLoader.loadIndicators(indicatorsConfig);
+      const indicators = await this.indicatorLoader.loadIndicators(
+        indicatorsConfig as unknown as Parameters<IndicatorLoader['loadIndicators']>[0],
+      );
 
       // Pass loaded indicators to AnalyzerRegistry so analyzers can receive them
       this.analyzerRegistry.setIndicators(indicators);
@@ -419,7 +485,13 @@ export class TradingOrchestrator implements ILifecycle {
           if (signals && signals.length > 0) {
             this.logger.info(`📊 Entry signals generated on PRIMARY (5m): ${signals.length}`, {
               signals: signals
-                .map((s) => `${s.source}(${s.direction}:${s.confidence.toFixed(0)}%)`)
+                .map((s) => {
+                  const signal = s as { source?: unknown; direction?: unknown; confidence?: unknown };
+                  const source = typeof signal.source === 'string' ? signal.source : 'UNKNOWN';
+                  const direction = typeof signal.direction === 'string' ? signal.direction : 'UNKNOWN';
+                  const confidenceValue = typeof signal.confidence === 'number' ? signal.confidence : 0;
+                  return `${source}(${direction}:${confidenceValue.toFixed(0)}%)`;
+                })
                 .join(', '),
             });
 
@@ -427,7 +499,9 @@ export class TradingOrchestrator implements ILifecycle {
             if (this.entryOrchestrator) {
               // NOTE: No position can exist here (already checked and returned above)
               // Get account balance (use configured position size as fallback)
-              const configBalance = (this.config as any)?.riskManager?.accountBalance || 1000;
+              const runtimeRiskManager = this.getRuntimeConfig()
+                .riskManager as unknown as { accountBalance?: number } | undefined;
+              const configBalance = runtimeRiskManager?.accountBalance || 1000;
               const currentBalance = configBalance > 0 ? configBalance : 1000;
               const openPositions: Position[] = []; // Empty - no position exists at this point
 
@@ -465,7 +539,7 @@ export class TradingOrchestrator implements ILifecycle {
                 }
 
                 const entryDecision = await this.entryOrchestrator.evaluateEntry(
-                  signals,
+                  signals as unknown as Signal[],
                   currentBalance,
                   openPositions,
                   trendAnalysis,
@@ -484,22 +558,39 @@ export class TradingOrchestrator implements ILifecycle {
                 // FIXED: Use MTF Snapshot Gate to prevent race condition
                 if (entryDecision.decision === 'ENTER') {
                   // CRITICAL: Enrich signal early to ensure all required fields are present
-                  const enrichedSignal = this.enrichSignalWithProtection(entryDecision.signal || {});
+                  const signalToEnrich = (entryDecision.signal ||
+                    ({
+                      type: 'UNKNOWN',
+                      source: 'UNKNOWN',
+                      direction: SignalDirection.LONG,
+                      confidence: 0,
+                      price: 0,
+                      stopLoss: 0,
+                      takeProfits: [],
+                      reason: 'Fallback signal',
+                      timestamp: Date.now(),
+                      symbol: this.candleProvider.getSymbol(),
+                    } as unknown)) as EnrichedSignal;
+                  const enrichedSignal = this.enrichSignalWithProtection(signalToEnrich);
 
                   // Create snapshot of trading context at PRIMARY close
                   // This prevents HTF bias changes from affecting ENTRY execution
                   if (this.snapshotGate) {
-                    const riskRules = (this.config as any)?.riskManager || {};
+                    const riskRules = this.getRuntimeConfig()
+                      .riskManager as unknown as {
+                        maxRiskPercent?: number;
+                        maxPositionSize?: number;
+                      } | undefined;
                     const snapshot = this.snapshotGate.createSnapshot(
                       htfBiasValue,
                       trendAnalysis,
-                      enrichedSignal,
+                      enrichedSignal as unknown as Signal,
                       primaryCandles[primaryCandles.length - 1],
                       currentBalance,
                       {
                         maxRiskPercent: riskRules?.maxRiskPercent,
                         maxPositionSize: riskRules?.maxPositionSize,
-                        minSignals: (this.config as any)?.minSignals,
+                        minSignals: this.getRuntimeConfig().minSignals,
                       }
                     );
 
@@ -571,7 +662,7 @@ export class TradingOrchestrator implements ILifecycle {
               const testSignal = {
                 type: 'TEST_SIGNAL',
                 source: 'TEST_MODE',
-                direction: 'LONG' as const,
+                direction: SignalDirection.LONG,
                 confidence: 100,
                 price: currentPrice,
                 stopLoss: currentPrice * 0.98, // 2% below entry
@@ -595,7 +686,7 @@ export class TradingOrchestrator implements ILifecycle {
               );
 
               // Enrich and store for ENTRY timeframe
-              const enrichedSignal = this.enrichSignalWithProtection(testSignal);
+              const enrichedSignal = this.enrichSignalWithProtection(testSignal as unknown as EnrichedSignal);
               this.pendingEntryDecision = {
                 decision: 'ENTER',
                 signal: enrichedSignal,
@@ -791,8 +882,8 @@ export class TradingOrchestrator implements ILifecycle {
    * Run strategy analysis (black box pattern)
    * Uses AnalyzerRegistry to dynamically load and run enabled analyzers
    */
-  private async runStrategyAnalysis(entryCandles: Candle[]): Promise<any[]> {
-    const analyzerConfigs = (this.config as any).analyzers as any[] | undefined;
+  private async runStrategyAnalysis(entryCandles: Candle[]): Promise<Array<Record<string, unknown>>> {
+    const analyzerConfigs = this.getConfiguredAnalyzers();
 
     if (!analyzerConfigs || analyzerConfigs.length === 0) {
       this.logger.warn('⚠️ No analyzers configured in strategy - check config.analyzers array');
@@ -820,9 +911,9 @@ export class TradingOrchestrator implements ILifecycle {
         }
       );
 
-      return result.signals.map(signal => ({
+      return result.signals.map((signal) => ({
         ...signal,
-        type: signal.source as any, // Map source to type (e.g., 'EMA_ANALYZER' → type field)
+        type: signal.source,
       }));
     } catch (error) {
       // Phase 8: ErrorHandler integration - SKIP on analyzer failure
@@ -852,26 +943,27 @@ export class TradingOrchestrator implements ILifecycle {
    * Returns a config object that includes indicator config and all analyzer defaults
    * Each analyzer instance will merge its specific config from this base
    */
-  private buildAnalyzerConfigForRegistry(): any {
-    const baseConfig = (this.config as any).indicators || {};
-    const analyzerDefaults = ((this.config as any).analyzerDefaults || {}) as Record<string, any>;
+  private buildAnalyzerConfigForRegistry(): Parameters<AnalyzerEngineService['executeAnalyzers']>[1] {
+    const baseConfig = this.getIndicatorsConfig();
+    const analyzerDefaults = this.getAnalyzerDefaults();
 
     return {
       indicators: baseConfig,
       analyzerDefaults: analyzerDefaults,
-    };
+    } as unknown as Parameters<AnalyzerEngineService['executeAnalyzers']>[1];
   }
 
   /**
    * Build analyzer config from strategy and indicator configs
    * Falls back to analyzerDefaults from main config if not specified
    */
-  private buildAnalyzerConfig(analyzerCfg: any): any {
-    const baseConfig = (this.config as any).indicators || {};
-    const analyzerDefaults = ((this.config as any).analyzerDefaults || {}) as Record<string, any>;
+  private buildAnalyzerConfig(analyzerCfg: AnalyzerConfigInput): Record<string, unknown> {
+    const baseConfig = this.getIndicatorsConfig();
+    const baseConfigMap = baseConfig as unknown as Record<string, unknown>;
+    const analyzerDefaults = this.getAnalyzerDefaults();
 
     // Common analyzer config structure
-    const config: any = {
+    const config: Record<string, unknown> = {
       enabled: analyzerCfg.enabled,
       weight: analyzerCfg.weight,
       priority: analyzerCfg.priority,
@@ -903,8 +995,8 @@ export class TradingOrchestrator implements ILifecycle {
 
     // Merge indicator config if available (overrides defaults)
     const indicatorKey = analyzerToIndicator[analyzerCfg.name];
-    if (indicatorKey && baseConfig[indicatorKey]) {
-      Object.assign(config, baseConfig[indicatorKey]);
+    if (indicatorKey && baseConfigMap[indicatorKey]) {
+      Object.assign(config, baseConfigMap[indicatorKey]);
     }
 
     // 3. Add analyzer-specific params from strategy (highest priority)
@@ -971,7 +1063,7 @@ export class TradingOrchestrator implements ILifecycle {
    * ATOMIC: All SL/TP levels computed and set together for atomic position opening
    * CRITICAL: Signal must have stopLoss and takeProfits arrays
    */
-  private enrichSignalWithProtection(signal: any): any {
+  private enrichSignalWithProtection(signal: EnrichedSignal): EnrichedSignal {
     const entryPrice = signal.price || 0;
     const isLong = signal.direction === 'LONG';
 
@@ -979,7 +1071,12 @@ export class TradingOrchestrator implements ILifecycle {
     // STEP 1: Calculate Stop Loss from config (ATR-based)
     // =====================================================================
     if (typeof signal.stopLoss !== 'number' || isNaN(signal.stopLoss)) {
-      const riskConfig = (this.config as any)?.riskManagement?.stopLoss || {};
+      const riskManagementConfig = this.getRuntimeConfig()
+        .riskManagement as unknown as {
+          stopLoss?: { atrMultiplier?: number; minDistancePercent?: number };
+          takeProfits?: SignalTakeProfit[];
+        } | undefined;
+      const riskConfig = riskManagementConfig?.stopLoss || {};
       const atrMultiplier = riskConfig.atrMultiplier || 2.0;
       const minDistancePercent = riskConfig.minDistancePercent || 0.5;
 
@@ -1004,11 +1101,16 @@ export class TradingOrchestrator implements ILifecycle {
     // STEP 2: Calculate Take Profit levels from strategy config (ATOMIC)
     // =====================================================================
     if (!signal.takeProfits || !Array.isArray(signal.takeProfits) || signal.takeProfits.length === 0) {
-      const tpConfig = (this.config as any)?.riskManagement?.takeProfits || [];
+      const riskManagementConfig = this.getRuntimeConfig()
+        .riskManagement as unknown as {
+          stopLoss?: { atrMultiplier?: number; minDistancePercent?: number };
+          takeProfits?: SignalTakeProfit[];
+        } | undefined;
+      const tpConfig = riskManagementConfig?.takeProfits || [];
 
       if (tpConfig.length > 0) {
         // Calculate TP prices based on config percentages
-        signal.takeProfits = tpConfig.map((tp: any) => ({
+        signal.takeProfits = tpConfig.map((tp) => ({
           price: isLong
             ? entryPrice * (1 + tp.percent / 100)
             : entryPrice * (1 - tp.percent / 100),
@@ -1022,7 +1124,7 @@ export class TradingOrchestrator implements ILifecycle {
           entryPrice,
           tpCount: signal.takeProfits.length,
           tpLevels: signal.takeProfits
-            .map((tp: any) => `TP${tp.level}:${tp.price.toFixed(4)}@${tp.percent}%`)
+            .map((tp) => `TP${tp.level}:${tp.price.toFixed(4)}@${tp.percent}%`)
             .join(', '),
         });
       } else {
@@ -1070,17 +1172,17 @@ export class TradingOrchestrator implements ILifecycle {
    * Enqueue and process an OpenPositionAction
    * Called when entry signal is ready to be executed
    */
-  async enqueueOpenPositionAction(signal: any): Promise<void> {
+  async enqueueOpenPositionAction(signal: EnrichedSignal): Promise<void> {
     if (!this.actionQueue) {
       this.logger.warn('Action queue not initialized - calling openPosition directly');
-      await this.positionManager.openPosition(signal);
+      await this.positionManager.openPosition(signal as unknown as Signal);
       return;
     }
 
     // Extract position parameters from signal
     const entryPrice = signal.price || signal.entryPrice || 0;
     const stopLoss = signal.stopLoss || entryPrice * 0.98;
-    const takeProfits = signal.takeProfits ? signal.takeProfits.map((tp: any) => tp.price || 0) : [];
+    const takeProfits = signal.takeProfits ? signal.takeProfits.map((tp) => tp.price || 0) : [];
     const leverage = signal.leverage || 1;
     const symbol = signal.symbol || 'XRPUSDT';
 
@@ -1092,7 +1194,7 @@ export class TradingOrchestrator implements ILifecycle {
       metadata: {
         source: 'EntryOrchestrator',
       },
-      signal: signal as any,
+      signal: signal as unknown as OpenPositionAction['signal'],
       positionSize: 0, // Will be calculated by handler
       stopLoss,
       takeProfits,
@@ -1115,25 +1217,26 @@ export class TradingOrchestrator implements ILifecycle {
   /**
    * Enqueue exit actions from ExitOrchestrator
    */
-  async enqueueExitActions(actions: any[]): Promise<void> {
+  async enqueueExitActions(actions: unknown[]): Promise<void> {
     if (!this.actionQueue) {
       this.logger.warn('Action queue not initialized - executing exit actions directly');
       const currentPosition = this.positionManager.getCurrentPosition();
       if (currentPosition && this.positionExitingService) {
         for (const action of actions) {
+          const exitAction = action as Record<string, unknown>;
           try {
             await this.positionExitingService.executeExitAction(
               currentPosition,
-              action,
+              exitAction as unknown as Parameters<PositionExitingService['executeExitAction']>[1],
               0, // price would come from action metadata
               'Orchestrator decision',
               ExitType.MANUAL,
             );
           } catch (error) {
-            this.logger.error('Failed to execute exit action', {
-              action: action.action,
-              error: error instanceof Error ? error.message : String(error),
-            });
+              this.logger.error('Failed to execute exit action', {
+                action: String(exitAction.action ?? 'UNKNOWN'),
+                error: error instanceof Error ? error.message : String(error),
+              });
           }
         }
       }
@@ -1145,9 +1248,11 @@ export class TradingOrchestrator implements ILifecycle {
     if (!currentPosition) return;
 
     for (const action of actions) {
-      let queueAction: any = null;
+      const exitAction = action as Record<string, unknown>;
+      let queueAction: ClosePercentAction | UpdateStopLossAction | ActivateTrailingAction | null = null;
 
-      switch (action.action) {
+      const actionType = String(exitAction.action ?? '');
+      switch (actionType) {
         case 'CLOSE_PERCENT':
           queueAction = {
             id: '',
@@ -1158,8 +1263,8 @@ export class TradingOrchestrator implements ILifecycle {
               source: 'ExitOrchestrator',
             },
             positionId: currentPosition.id,
-            percent: action.percent,
-            reason: action.reason || 'TP hit',
+            percent: Number(exitAction.percent ?? 100),
+            reason: String(exitAction.reason ?? 'TP hit'),
           } as ClosePercentAction;
           break;
 
@@ -1174,8 +1279,8 @@ export class TradingOrchestrator implements ILifecycle {
               source: 'ExitOrchestrator',
             },
             positionId: currentPosition.id,
-            newStopLossPrice: action.newStopLoss || action.price,
-            reason: action.reason || 'SL update',
+            newStopLossPrice: Number(exitAction.newStopLoss ?? exitAction.price ?? 0),
+            reason: String(exitAction.reason ?? 'SL update'),
           } as UpdateStopLossAction;
           break;
 
@@ -1189,7 +1294,7 @@ export class TradingOrchestrator implements ILifecycle {
               source: 'ExitOrchestrator',
             },
             positionId: currentPosition.id,
-            trailingPercent: action.trailingPercent || 1,
+            trailingPercent: Number(exitAction.trailingPercent ?? 1),
           } as ActivateTrailingAction;
           break;
 
@@ -1206,7 +1311,7 @@ export class TradingOrchestrator implements ILifecycle {
             },
             positionId: currentPosition.id,
             percent: 100,
-            reason: action.reason || 'Full close',
+            reason: String(exitAction.reason ?? 'Full close'),
           } as ClosePercentAction;
           break;
       }
@@ -1214,7 +1319,7 @@ export class TradingOrchestrator implements ILifecycle {
       if (queueAction) {
         await this.actionQueue.enqueue(queueAction);
         this.logger.debug('📤 Exit action enqueued', {
-          actionType: action.action,
+          actionType,
         });
       }
     }
@@ -1264,6 +1369,52 @@ export class TradingOrchestrator implements ILifecycle {
     }
   }
 
+  private getRuntimeConfig(): RuntimeOrchestratorConfig {
+    return this.config as RuntimeOrchestratorConfig;
+  }
+
+  private getIndicatorsConfig(): Record<string, unknown> {
+    const indicators = this.getRuntimeConfig().indicators;
+    if (indicators && typeof indicators === 'object') {
+      return indicators as unknown as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private getAnalyzerDefaults(): Record<string, unknown> {
+    const defaults = this.getRuntimeConfig().analyzerDefaults;
+    if (defaults && typeof defaults === 'object') {
+      return defaults;
+    }
+    return {};
+  }
+
+  private getConfiguredAnalyzers(): AnalyzerConfigInput[] {
+    const analyzers = this.getRuntimeConfig().analyzers;
+    if (Array.isArray(analyzers)) {
+      return analyzers as AnalyzerConfigInput[];
+    }
+    if (analyzers && typeof analyzers === 'object') {
+      return Object.values(analyzers) as AnalyzerConfigInput[];
+    }
+    return [];
+  }
+
+  private isEnabledAnalyzerConfig(value: unknown): boolean {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+    return (value as Record<string, unknown>).enabled === true;
+  }
+
+  private getPreCalcCache(): IndicatorPreCalcCache | null {
+    if (!this.indicatorPreCalc) {
+      return null;
+    }
+    const candidate = this.indicatorPreCalc as unknown as IndicatorPreCalcWithCache;
+    return candidate.cache ?? null;
+  }
+
   /**
    * Get action queue for monitoring
    */
@@ -1271,4 +1422,7 @@ export class TradingOrchestrator implements ILifecycle {
     return this.actionQueue;
   }
 }
+
+
+
 

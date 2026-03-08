@@ -37,12 +37,23 @@ export class MarketConditionAnalyzerService {
   /**
    * Safe logging wrapper - SKIP strategy for all logger errors
    */
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, data?: any): void {
+  private safeLog(
+    level: 'debug' | 'info' | 'warn' | 'error',
+    message: string,
+    data?: Record<string, unknown>,
+  ): void {
     try {
       this.logger[level](message, data);
     } catch (error) {
       this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
     }
+  }
+
+  private handleThrowValidation(message: string): TakeProfit[] {
+    return this.errorHandler.handle(
+      new Error(message),
+      { strategy: RecoveryStrategy.THROW },
+    ) as unknown as TakeProfit[];
   }
 
   /**
@@ -62,25 +73,16 @@ export class MarketConditionAnalyzerService {
   ): TakeProfit[] {
     // THROW: Validate input takeProfits
     if (!takeProfits || !Array.isArray(takeProfits) || takeProfits.length === 0) {
-      return this.errorHandler.handle(
-        new Error('TakeProfits must be a non-empty array'),
-        { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      return this.handleThrowValidation('TakeProfits must be a non-empty array');
     }
 
     // Validate each TP has required fields
     for (const tp of takeProfits) {
       if (!tp || typeof tp.price !== 'number' || !isFinite(tp.price) || tp.price <= 0) {
-        return this.errorHandler.handle(
-          new Error('Invalid TakeProfit price: must be positive finite number'),
-          { strategy: RecoveryStrategy.THROW }
-        ) as any;
+        return this.handleThrowValidation('Invalid TakeProfit price: must be positive finite number');
       }
       if (typeof tp.sizePercent !== 'number' || tp.sizePercent < 0 || tp.sizePercent > 100) {
-        return this.errorHandler.handle(
-          new Error('Invalid TakeProfit sizePercent: must be 0-100'),
-          { strategy: RecoveryStrategy.THROW }
-        ) as any;
+        return this.handleThrowValidation('Invalid TakeProfit sizePercent: must be 0-100');
       }
     }
 
@@ -90,17 +92,11 @@ export class MarketConditionAnalyzerService {
 
     // THROW: Validate flatResult confidence
     if (typeof flatResult.confidence !== 'number' || !isFinite(flatResult.confidence)) {
-      return this.errorHandler.handle(
-        new Error('Invalid market condition confidence: must be finite number'),
-        { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      return this.handleThrowValidation('Invalid market condition confidence: must be finite number');
     }
 
     if (flatResult.confidence < 0 || flatResult.confidence > 100) {
-      return this.errorHandler.handle(
-        new Error('Invalid market condition confidence: must be 0-100'),
-        { strategy: RecoveryStrategy.THROW }
-      ) as any;
+      return this.handleThrowValidation('Invalid market condition confidence: must be 0-100');
     }
 
     try {

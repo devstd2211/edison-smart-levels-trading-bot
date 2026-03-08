@@ -122,7 +122,7 @@ export class VolumeProfileService {
   private safeLog(
     level: 'info' | 'debug' | 'warn' | 'error',
     message: string,
-    meta?: any
+    meta?: Record<string, unknown>
   ): void {
     try {
       this.logger[level](message, meta);

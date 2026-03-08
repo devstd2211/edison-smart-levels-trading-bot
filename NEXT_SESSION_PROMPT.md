@@ -27,22 +27,40 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-08)
-- Closed `SmartOrderPlacementService` full refactor track for current scope (iterations 1-5):
-  - extracted pure placement math helpers to `smart-order-placement/smart-order-placement-math.utils.ts`.
-  - extracted conservative fallback builders to `smart-order-placement/smart-order-placement-fallback.utils.ts`.
-  - unified repeated GRACEFUL_DEGRADE execution flow with shared service helper while preserving warn/error logging semantics.
-  - extracted validation and market-priority helpers to:
-    - `smart-order-placement/smart-order-placement-validation.utils.ts`
-    - `smart-order-placement/smart-order-placement-market.utils.ts`
-  - extracted plan metrics/risk helpers to `smart-order-placement/smart-order-placement-plan-metrics.utils.ts`.
-  - removed obsolete service-local wrappers and tightened `safeLog` metadata typing to `Record<string, unknown>`.
-  - service reduced to 583 lines (from 1050 at start of this track) with behavior preserved.
-- Updated `REFACTOR_PLAN.md` with iteration log, candidate review, size update, and closure note.
+- Continued core `any` cleanup with behavior-preserving typing hardening (batches 35-41):
+  - `strategy-manager.service.ts`:
+    - typed `initialize(...)` overloads + runtime guard implementation (no `any`).
+    - `mergedConfigGeneric`/`getMergedConfig()` kept as `ConfigNew | Config`.
+  - `indicator-registry.service.ts`:
+    - removed `any` from logger metadata and THROW validation branches.
+    - replaced fallback `({} as any)` with typed `defaultErrorLogger`.
+  - `tf-alignment.service.ts`:
+    - typed alignment-input indicator object in validation path (no `indicators: any`).
+    - replaced timeframe weight validator `tf: any` with `unknown` + guard helper.
+  - `market-condition-analyzer.service.ts`:
+    - typed safe logger metadata (`Record<string, unknown>`).
+    - removed validation `as any` branches via `handleThrowValidation(...)` helper.
+  - `indicator-cache.service.ts`:
+    - replaced fallback `({} as any)` ErrorHandler wiring with typed `defaultErrorLogger`.
+    - typed safe logger metadata and removed remaining `as any` in invalid-key path.
+  - `ml-signal-validator.service.ts`:
+    - typed safe logger metadata (`safeLog(..., meta?: Record<string, unknown>)`).
+  - `liquidity-heatmap.service.ts`:
+    - typed safe logger metadata (`safeLog(..., meta?: Record<string, unknown>)`).
+- Updated `REFACTOR_PLAN.md` with batch 35-41 entries, follow-up details, and verification results.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS (1/1 suite, 33/33 tests) after each iteration
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts` -> PASS (1/1 suite, 24/24 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts` -> PASS (1/1 suite, 25/25 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts` -> PASS (2/2 suites, 46/46 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts` -> PASS (1/1 suite, 25/25 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts` -> PASS (1/1 suite, 25/25 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts` -> PASS (1/1 suite, 45/45 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts` -> PASS (1/1 suite, 43/43 tests).
 
 ## Next Step
-- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) now that `WhaleDetectionService` and `SmartOrderPlacementService` tracks are fully closed for current scope:
-  - prioritize behavior-preserving decomposition or remaining lifecycle/testability cleanup items,
-  - run targeted suite(s) for changed area,
-  - record candidate review + verification results in `REFACTOR_PLAN.md`.
+- Continue `Core any cleanup (phase 3: src)` on remaining high-impact candidates with dense `any` usage:
+  - move to heavier candidates in isolated batches:
+    - `indicator-precalculation.service.ts`
+    - `event-bus.ts`
+    - `performance-analytics.service.ts`
+- Execute in small behavior-preserving slices, run targeted suites for changed area, and record each slice in `REFACTOR_PLAN.md`.
