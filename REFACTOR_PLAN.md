@@ -2306,6 +2306,39 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - completed iterative decomposition of validation, signal factories, side-specific detection loops, tracked-wall management, trend-direction, imbalance evaluation, and confidence math
   - behavior preserved and verified on both error-handling and service suites
   - next refactor focus should move to another candidate service/module from backlog
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 1 math helper extraction slice complete:
+  - extracted split/liquidity/volatility/probability/time pure helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-math.utils.ts`
+  - delegated service math paths:
+    - liquidity score/factor
+    - weighted split sizing
+    - aggressiveness/volatility/size-impact
+    - combined probability + fill time
+  - preserved plan/split/fill calculation behavior and fallback semantics
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 2 fallback helper extraction slice complete:
+  - extracted safe default builders to `packages/core/src/services/smart-order-placement/smart-order-placement-fallback.utils.ts`:
+    - conservative plan
+    - single-order split
+    - market-price liquidity level
+    - conservative fill probability
+  - service fallback methods now delegate to shared builders with unchanged defaults
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 3 GRACEFUL_DEGRADE wrapper compaction slice complete:
+  - introduced shared executor helper `executeWithGracefulDegrade(...)`
+  - unified repeated ErrorHandler/non-ErrorHandler fallback flows in:
+    - `planOrderExecution(...)`
+    - `calculateOptimalSplit(...)`
+    - `findBestLiquidityLevel(...)`
+    - `estimateFillProbability(...)`
+  - preserved warning/error log messages and returned fallback objects
+- [x] Related service review after test/lifecycle slice (`SmartOrderPlacementService`): safe behavior-preserving decomposition candidate present and executed in-session; deeper split of internal orchestration left for future only if additional maintainability gain is required
+- [x] Verification (targeted smart-order-placement error-handling suite, 2026-03-08, post-iterations-1/2/3):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 33/33 tests PASS (re-run after each iteration slice).
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-placement.service.ts` now 862 lines (down from 1050 at start of this track).
+- [x] SmartOrderPlacementService refactor track closed for current scope (2026-03-08):
+  - extracted math and fallback helper modules + unified GRACEFUL_DEGRADE orchestration
+  - error-handling behavior re-verified on targeted suite
+  - next refactor focus should move to another candidate service/module from backlog
 
 
 

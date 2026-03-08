@@ -31,6 +31,24 @@ import {
   DEFAULT_SMART_ORDER_PLACEMENT,
   SMART_ORDER_PLACEMENT_TECHNICAL,
 } from '../constants/phase-10-constants';
+import {
+  calculateAggressivenessFactor,
+  calculateAvailableLiquidity,
+  calculateLiquidityFactor,
+  calculateLiquidityScore,
+  calculateSizeImpactFactor,
+  calculateWeightedSplits,
+  combineProbabilityFactors,
+  estimateFillTime,
+  estimateSplitImprovement,
+  estimateVolatility,
+} from './smart-order-placement/smart-order-placement-math.utils';
+import {
+  buildConservativeFillProbability,
+  buildConservativePlan,
+  buildMarketPriceLevel,
+  buildSingleOrderSplit,
+} from './smart-order-placement/smart-order-placement-fallback.utils';
 
 /**
  * SmartOrderPlacementService - Intelligent order placement with ErrorHandler integration
@@ -172,44 +190,21 @@ export class SmartOrderPlacementService {
     this.validateOrderbook(orderbook);
     this.validateOrderParams(size, direction, targetPrice);
 
-    // GRACEFUL_DEGRADE: Planning calculation
-    if (this.errorHandler) {
-      const result = await this.errorHandler.executeAsync(
-        async () =>
-          this.planOrderExecutionInternal(
-            orderbook,
-            size,
-            direction,
-            targetPrice,
-          ),
-        { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
-      );
-
-      if (result.success && result.value) {
-        return result.value;
-      }
-
-      this.safeLog('warn', 'Order planning failed, using conservative plan', {
-        size,
-        direction,
-      });
-      return this.getConservativePlan(orderbook, size, direction, targetPrice);
-    }
-
-    // Without ErrorHandler
-    try {
-      return await this.planOrderExecutionInternal(
-        orderbook,
-        size,
-        direction,
-        targetPrice,
-      );
-    } catch (error) {
-      this.safeLog('error', 'Order planning failed (no ErrorHandler)', {
-        error,
-      });
-      return this.getConservativePlan(orderbook, size, direction, targetPrice);
-    }
+    return this.executeWithGracefulDegrade(
+      async () =>
+        this.planOrderExecutionInternal(
+          orderbook,
+          size,
+          direction,
+          targetPrice,
+        ),
+      () => this.getConservativePlan(orderbook, size, direction, targetPrice),
+      {
+        warnMessage: 'Order planning failed, using conservative plan',
+        errorMessage: 'Order planning failed (no ErrorHandler)',
+        meta: { size, direction },
+      },
+    );
   }
 
   /**
@@ -225,31 +220,15 @@ export class SmartOrderPlacementService {
     this.validateOrderbook(orderbook);
     this.validateOrderParams(size, direction);
 
-    // GRACEFUL_DEGRADE: Split calculation
-    if (this.errorHandler) {
-      const result = await this.errorHandler.executeAsync(
-        async () => this.calculateOptimalSplitInternal(orderbook, size, direction),
-        { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
-      );
-
-      if (result.success && result.value) {
-        return result.value;
-      }
-
-      this.safeLog('warn', 'Split calculation failed, using single order', {
-        size,
-        direction,
-      });
-      return this.getSingleOrderSplit(size);
-    }
-
-    // Without ErrorHandler
-    try {
-      return await this.calculateOptimalSplitInternal(orderbook, size, direction);
-    } catch (error) {
-      this.safeLog('error', 'Split calculation failed', { error });
-      return this.getSingleOrderSplit(size);
-    }
+    return this.executeWithGracefulDegrade(
+      async () => this.calculateOptimalSplitInternal(orderbook, size, direction),
+      () => this.getSingleOrderSplit(size),
+      {
+        warnMessage: 'Split calculation failed, using single order',
+        errorMessage: 'Split calculation failed',
+        meta: { size, direction },
+      },
+    );
   }
 
   /**
@@ -267,30 +246,15 @@ export class SmartOrderPlacementService {
       throw new Error(`Invalid direction: ${direction}`);
     }
 
-    // GRACEFUL_DEGRADE: Liquidity analysis
-    if (this.errorHandler) {
-      const result = await this.errorHandler.executeAsync(
-        async () => this.findBestLiquidityLevelInternal(orderbook, direction),
-        { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
-      );
-
-      if (result.success && result.value) {
-        return result.value;
-      }
-
-      this.safeLog('warn', 'Liquidity level search failed, using market price', {
-        direction,
-      });
-      return this.getMarketPriceLevel(orderbook, direction);
-    }
-
-    // Without ErrorHandler
-    try {
-      return await this.findBestLiquidityLevelInternal(orderbook, direction);
-    } catch (error) {
-      this.safeLog('error', 'Liquidity level search failed', { error });
-      return this.getMarketPriceLevel(orderbook, direction);
-    }
+    return this.executeWithGracefulDegrade(
+      async () => this.findBestLiquidityLevelInternal(orderbook, direction),
+      () => this.getMarketPriceLevel(orderbook, direction),
+      {
+        warnMessage: 'Liquidity level search failed, using market price',
+        errorMessage: 'Liquidity level search failed',
+        meta: { direction },
+      },
+    );
   }
 
   /**
@@ -307,11 +271,30 @@ export class SmartOrderPlacementService {
     this.validateOrderbook(orderbook);
     this.validateOrderParams(size, direction, price);
 
-    // GRACEFUL_DEGRADE: Probability estimation
+    return this.executeWithGracefulDegrade(
+      async () =>
+        this.estimateFillProbabilityInternal(orderbook, price, size, direction),
+      () => this.getConservativeFillProbability(price, size),
+      {
+        warnMessage: 'Fill probability estimation failed',
+        errorMessage: 'Fill probability estimation failed',
+        meta: { price, size, direction },
+      },
+    );
+  }
+
+  private async executeWithGracefulDegrade<T>(
+    operation: () => Promise<T>,
+    fallback: () => T,
+    logContext: {
+      warnMessage: string;
+      errorMessage: string;
+      meta?: Record<string, unknown>;
+    },
+  ): Promise<T> {
     if (this.errorHandler) {
       const result = await this.errorHandler.executeAsync(
-        async () =>
-          this.estimateFillProbabilityInternal(orderbook, price, size, direction),
+        operation,
         { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
       );
 
@@ -319,25 +302,18 @@ export class SmartOrderPlacementService {
         return result.value;
       }
 
-      this.safeLog('warn', 'Fill probability estimation failed', {
-        price,
-        size,
-        direction,
-      });
-      return this.getConservativeFillProbability(price, size);
+      this.safeLog('warn', logContext.warnMessage, logContext.meta);
+      return fallback();
     }
 
-    // Without ErrorHandler
     try {
-      return await this.estimateFillProbabilityInternal(
-        orderbook,
-        price,
-        size,
-        direction,
-      );
+      return await operation();
     } catch (error) {
-      this.safeLog('error', 'Fill probability estimation failed', { error });
-      return this.getConservativeFillProbability(price, size);
+      this.safeLog('error', logContext.errorMessage, {
+        ...logContext.meta,
+        error,
+      });
+      return fallback();
     }
   }
 
@@ -727,10 +703,7 @@ export class SmartOrderPlacementService {
   private calculateAvailableLiquidity(
     levels: { price: number; volume: number }[],
   ): number {
-    return levels.reduce(
-      (sum, level) => sum + (Number.isFinite(level.volume) ? level.volume : 0),
-      0,
-    );
+    return calculateAvailableLiquidity(levels);
   }
 
   private calculateWeightedSplits(
@@ -738,37 +711,7 @@ export class SmartOrderPlacementService {
     numSplits: number,
     levels: { price: number; volume: number }[],
   ): number[] {
-    if (numSplits <= 1) return [totalSize];
-
-    const sizes: number[] = [];
-    const topLevels = levels.slice(0, numSplits);
-    const totalLiquidity = topLevels.reduce(
-      (sum, l) => sum + (Number.isFinite(l.volume) ? l.volume : 0),
-      0,
-    );
-
-    if (totalLiquidity === 0) {
-      // Equal splits if no liquidity info
-      const equalSize = totalSize / numSplits;
-      return Array(numSplits).fill(equalSize);
-    }
-
-    // Weighted by available liquidity
-    let remaining = totalSize;
-    for (let i = 0; i < numSplits - 1; i++) {
-      const volume = Number.isFinite(topLevels[i].volume)
-        ? topLevels[i].volume
-        : 0;
-      const weight = volume / totalLiquidity;
-      const size = Math.min(totalSize * weight, remaining);
-      sizes.push(size);
-      remaining -= size;
-    }
-
-    // Last split gets remainder
-    sizes.push(Math.max(0, remaining));
-
-    return sizes;
+    return calculateWeightedSplits(totalSize, numSplits, levels);
   }
 
   private estimateSplitImprovement(
@@ -776,20 +719,7 @@ export class SmartOrderPlacementService {
     subOrderSizes: number[],
     availableLiquidity: number,
   ): OrderSplit['improvement'] {
-    // Simple heuristic: smaller orders = less slippage
-    const avgSubOrderSize =
-      subOrderSizes.reduce((sum, s) => sum + s, 0) / subOrderSizes.length;
-    const sizeRatio = avgSubOrderSize / originalSize;
-
-    const slippageReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT_TECHNICAL.IMPROVEMENT.MAX_SLIPPAGE_REDUCTION_BPS;
-    const fillProbabilityIncrease = (1 - sizeRatio) * SMART_ORDER_PLACEMENT_TECHNICAL.IMPROVEMENT.MAX_FILL_PROBABILITY_INCREASE;
-    const impactReduction = (1 - sizeRatio) * SMART_ORDER_PLACEMENT_TECHNICAL.IMPROVEMENT.MAX_IMPACT_REDUCTION;
-
-    return {
-      slippageReduction: Math.max(0, slippageReduction),
-      fillProbabilityIncrease: Math.max(0, fillProbabilityIncrease),
-      impactReduction: Math.max(0, impactReduction),
-    };
+    return estimateSplitImprovement(originalSize, subOrderSizes);
   }
 
   private calculateLiquidityScore(
@@ -797,14 +727,7 @@ export class SmartOrderPlacementService {
     allLevels: { price: number; volume: number }[],
     index: number,
   ): number {
-    const totalVolume = this.calculateAvailableLiquidity(allLevels);
-    if (totalVolume === 0) return 0;
-
-    const volumeScore = (level.volume / totalVolume) * 100;
-    const depthPenalty = index * SMART_ORDER_PLACEMENT_TECHNICAL.LIQUIDITY.DEPTH_PENALTY_PER_LEVEL; // Penalty for deeper levels
-
-    const finalScore = Math.max(0, volumeScore - depthPenalty);
-    return Number.isFinite(finalScore) ? Math.min(100, finalScore) : 0;
+    return calculateLiquidityScore(level, allLevels, index);
   }
 
   private calculateLiquidityFactor(
@@ -812,18 +735,7 @@ export class SmartOrderPlacementService {
     targetPrice: number,
     orderSize: number,
   ): number {
-    // Find available volume at or better than target price
-    let availableVolume = 0;
-    for (const level of levels) {
-      if (level.price <= targetPrice) {
-        availableVolume += Number.isFinite(level.volume) ? level.volume : 0;
-      }
-    }
-
-    if (orderSize === 0) return 100;
-
-    const ratio = availableVolume / orderSize;
-    return Math.min(100, ratio * 100);
+    return calculateLiquidityFactor(levels, targetPrice, orderSize);
   }
 
   private calculateAggressivenessFactor(
@@ -831,55 +743,18 @@ export class SmartOrderPlacementService {
     marketPrice: number,
     direction: 'buy' | 'sell',
   ): number {
-    if (marketPrice === 0) return 50;
-
-    const priceDiff = direction === 'buy'
-      ? orderPrice - marketPrice
-      : marketPrice - orderPrice;
-
-    const diffBps = (priceDiff / marketPrice) * 10000;
-
-    // More aggressive (better price) = higher score
-    // 0 bps = 0 (at market), 100 bps = 50, 500 bps = 100
-    const score = Math.min(100, Math.max(0, diffBps / 5));
-
-    return Number.isFinite(score) ? score : 50;
+    return calculateAggressivenessFactor(orderPrice, marketPrice, direction);
   }
 
   private estimateVolatility(orderbook: Orderbook): number {
-    // Simple volatility estimate based on spread
-    const bestBid =
-      orderbook.bids.length > 0 ? orderbook.bids[0].price : 0;
-    const bestAsk =
-      orderbook.asks.length > 0 ? orderbook.asks[0].price : 0;
-    const midPrice = (bestBid + bestAsk) / 2;
-
-    if (midPrice === 0) return 50;
-
-    const spreadBps = ((bestAsk - bestBid) / midPrice) * 10000;
-
-    // Wider spread = higher volatility
-    // 10 bps = 20, 50 bps = 50, 100 bps = 70, 200+ bps = 100
-    const volatility = Math.min(100, 20 + spreadBps / 2);
-
-    return Number.isFinite(volatility) ? volatility : 50;
+    return estimateVolatility(orderbook);
   }
 
   private calculateSizeImpactFactor(
     orderSize: number,
     levels: { price: number; volume: number }[],
   ): number {
-    const availableLiquidity = this.calculateAvailableLiquidity(levels);
-
-    if (availableLiquidity === 0) return 0;
-
-    const ratio = orderSize / availableLiquidity;
-
-    // Smaller ratio = higher score (less impact)
-    // 0.01 = 100, 0.1 = 75, 0.5 = 50, 1.0+ = 0
-    const score = Math.max(0, 100 - ratio * 100);
-
-    return Number.isFinite(score) ? score : 50;
+    return calculateSizeImpactFactor(orderSize, levels);
   }
 
   private combineProbabilityFactors(
@@ -888,19 +763,12 @@ export class SmartOrderPlacementService {
     volatility: number,
     sizeImpact: number,
   ): number {
-    // Weighted combination
-    const weights = SMART_ORDER_PLACEMENT_TECHNICAL.FILL_PROBABILITY_WEIGHTS;
-
-    // Lower volatility = higher probability
-    const volatilityScore = 100 - volatility;
-
-    const probability =
-      liquidity * weights.LIQUIDITY +
-      aggressiveness * weights.AGGRESSIVENESS +
-      volatilityScore * weights.VOLATILITY +
-      sizeImpact * weights.SIZE_IMPACT;
-
-    return Number.isFinite(probability) ? Math.min(100, Math.max(0, probability)) : 50;
+    return combineProbabilityFactors(
+      liquidity,
+      aggressiveness,
+      volatility,
+      sizeImpact,
+    );
   }
 
   private estimateFillTime(
@@ -908,19 +776,12 @@ export class SmartOrderPlacementService {
     size: number,
     levels: { price: number; volume: number }[],
   ): number {
-    // Base time from config
-    const baseTime = this.config.executionTimeHorizon;
-
-    // Adjust by probability: lower probability = longer time
-    const probabilityFactor = 100 / Math.max(1, probability);
-
-    // Adjust by size: larger orders take longer
-    const totalLiquidity = this.calculateAvailableLiquidity(levels);
-    const sizeFactor = totalLiquidity > 0 ? size / totalLiquidity : 1;
-
-    const estimatedTime = baseTime * probabilityFactor * (1 + sizeFactor);
-
-    return Number.isFinite(estimatedTime) ? Math.min(estimatedTime, baseTime * 10) : baseTime;
+    return estimateFillTime(
+      probability,
+      size,
+      levels,
+      this.config.executionTimeHorizon,
+    );
   }
 
   // ==========================================================================
@@ -933,85 +794,36 @@ export class SmartOrderPlacementService {
     direction: 'buy' | 'sell',
     targetPrice?: number,
   ): SmartOrderPlan {
-    const levels = direction === 'buy' ? orderbook.asks : orderbook.bids;
-    const marketPrice =
-      levels.length > 0 && Number.isFinite(levels[0].price)
-        ? levels[0].price
-        : targetPrice || 0;
-
-    return {
-      totalSize: size,
-      targetPrice: targetPrice || null,
+    return buildConservativePlan({
+      orderbook,
+      size,
       direction,
-      orders: [
-        {
-          price: targetPrice || marketPrice,
-          size,
-          priority: 'immediate',
-          fillProbability: 50, // Conservative estimate
-          estimatedFillTime: this.config.executionTimeHorizon,
-        },
-      ],
-      expectedFill: 50,
-      expectedSlippage: this.config.maxSlippageBps * 2, // Conservative
-      estimatedTime: this.config.executionTimeHorizon,
-      strategy: 'single',
-      risk: 'high',
-    };
+      targetPrice,
+      executionTimeHorizon: this.config.executionTimeHorizon,
+      maxSlippageBps: this.config.maxSlippageBps,
+    });
   }
 
   private getSingleOrderSplit(size: number): OrderSplit {
-    return {
-      originalSize: size,
-      subOrderSizes: [size],
-      reason: 'size',
-      improvement: {
-        slippageReduction: 0,
-        fillProbabilityIncrease: 0,
-        impactReduction: 0,
-      },
-    };
+    return buildSingleOrderSplit(size);
   }
 
   private getMarketPriceLevel(
     orderbook: Orderbook,
     direction: 'buy' | 'sell',
   ): LiquidityLevel {
-    const levels = direction === 'buy' ? orderbook.asks : orderbook.bids;
-    const marketPrice =
-      levels.length > 0 && Number.isFinite(levels[0].price)
-        ? levels[0].price
-        : 0;
-    const volume =
-      levels.length > 0 && Number.isFinite(levels[0].volume)
-        ? levels[0].volume
-        : 0;
-
-    return {
-      price: marketPrice,
-      volume,
-      score: 50,
-      distanceBps: 0,
-      isOptimal: true,
-    };
+    return buildMarketPriceLevel(orderbook, direction);
   }
 
   private getConservativeFillProbability(
     price: number,
     size: number,
   ): FillProbability {
-    return {
-      orderSize: size,
+    return buildConservativeFillProbability(
       price,
-      probability: 50, // Conservative estimate
-      factors: {
-        liquidity: 50,
-        aggressiveness: 50,
-        volatility: 50,
-        sizeImpact: 50,
-      },
-      expectedFillTime: this.config.executionTimeHorizon,
-    };
+      size,
+      this.config.executionTimeHorizon,
+    );
   }
 
   // ==========================================================================

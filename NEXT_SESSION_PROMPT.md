@@ -27,16 +27,17 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-08)
-- Completed full `WhaleDetectionService` refactor track for current scope (iterations 1-6):
-  - extracted signal/key helpers, tracked-wall helpers, confidence math, trend-direction decision logic, and imbalance spike evaluation into dedicated `whale-detection/*` utility modules.
-  - extracted side-specific detection/update/cleanup helpers in service and preserved orchestration order + logging behavior.
-  - service reduced to 848 lines (from 1054 at start of this track) with detection sequencing and error-handling behavior preserved.
+- Closed `SmartOrderPlacementService` refactor track for current scope (iterations 1-3):
+  - extracted pure placement math helpers to `smart-order-placement/smart-order-placement-math.utils.ts`.
+  - extracted conservative fallback builders to `smart-order-placement/smart-order-placement-fallback.utils.ts`.
+  - unified repeated GRACEFUL_DEGRADE execution flow with shared service helper while preserving warn/error logging semantics.
+  - service reduced to 862 lines (from 1050 at start of this track) with planning/splitting/fallback behavior preserved.
 - Updated `REFACTOR_PLAN.md` with iteration log, candidate review, size update, and closure note.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/whale-detector.service.test.ts` -> PASS (2/2 suites, 37/37 tests)
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS (1/1 suite, 33/33 tests) after each iteration
 
 ## Next Step
-- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) now that `WhaleDetectionService` track is closed for current scope:
+- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) now that `WhaleDetectionService` and `SmartOrderPlacementService` tracks are closed for current scope:
   - prioritize behavior-preserving decomposition or remaining lifecycle/testability cleanup items,
   - run targeted suite(s) for changed area,
   - record candidate review + verification results in `REFACTOR_PLAN.md`.
