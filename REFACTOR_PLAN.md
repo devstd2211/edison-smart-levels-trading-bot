@@ -2289,6 +2289,23 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 16/16 tests PASS (re-run after each iteration slice).
 - [x] Size tracking update:
   - `packages/core/src/services/whale-detection.service.ts` now 937 lines (down from 946 after iteration 3; 1054 at start of track).
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 6 trend/imbalance/confidence utility extraction slice complete:
+  - extracted trend-aware wall disappearance direction logic to `packages/core/src/services/whale-detection/whale-detection-direction.utils.ts` (`determineWallDisappearanceDirectionByTrend(...)`)
+  - extracted imbalance spike evaluation helper to `packages/core/src/services/whale-detection/whale-detection-imbalance.utils.ts` (`evaluateImbalanceSpike(...)`)
+  - extracted confidence calculation helpers to `packages/core/src/services/whale-detection/whale-detection-confidence.utils.ts`:
+    - `calculateWallBreakConfidence(...)`
+    - `calculateWallDisappearanceConfidence(...)`
+    - `calculateImbalanceSpikeConfidence(...)`
+  - service now keeps orchestration + logging, delegating pure decision math to utility modules
+- [x] Verification (targeted whale detection suites, 2026-03-08, post-iteration-6 extraction):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/whale-detector.service.test.ts`
+  - Result: 2/2 suites PASS, 37/37 tests PASS.
+- [x] Size tracking update:
+  - `packages/core/src/services/whale-detection.service.ts` now 848 lines (down from 937 after iteration 5; 1054 at start of track).
+- [x] WhaleDetectionService full refactor track closed for current scope (2026-03-08):
+  - completed iterative decomposition of validation, signal factories, side-specific detection loops, tracked-wall management, trend-direction, imbalance evaluation, and confidence math
+  - behavior preserved and verified on both error-handling and service suites
+  - next refactor focus should move to another candidate service/module from backlog
 
 
 

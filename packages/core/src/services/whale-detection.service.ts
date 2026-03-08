@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, PERCENTAGE_THRESHOLDS, INTEGER_MULTIPLIERS } from '../constants';
+import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 /**
  * Whale Detector Service - Combined Approach
  *
@@ -33,6 +33,13 @@ import {
   createWallBreakKey,
 } from './whale-detection/whale-detection-signal.utils';
 import { upsertTrackedWhaleWall } from './whale-detection/whale-detection-wall.utils';
+import {
+  calculateImbalanceSpikeConfidence,
+  calculateWallBreakConfidence,
+  calculateWallDisappearanceConfidence,
+} from './whale-detection/whale-detection-confidence.utils';
+import { determineWallDisappearanceDirectionByTrend } from './whale-detection/whale-detection-direction.utils';
+import { evaluateImbalanceSpike } from './whale-detection/whale-detection-imbalance.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -42,25 +49,6 @@ const WHALE_DETECTOR_THRESHOLDS = {
   // Logging probabilities (every Nth call to avoid spam)
   LOG_DETECTION_PROBABILITY: 0.1,  // 10% chance to log detection state
   LOG_NO_DETECTION_PROBABILITY: 0.05,  // 5% chance to log "no whale" state
-
-  // Confidence calculation factors
-  BREAK_SIZE_SCORE_DIVISOR: 15,    // Divide wall % by this for size score
-  BREAK_SIZE_SCORE_MULTIPLIER: 60, // Multiply by this to normalize
-  BREAK_SIZE_SCORE_MAX: 60,        // Cap size score at 60
-  BREAK_DISTANCE_BASE: 30,         // Base distance score
-  BREAK_DISTANCE_MULTIPLIER: 5,    // Multiply distance by this
-  BREAK_DISTANCE_MIN: 10,          // Minimum distance score
-
-  // Disappearance confidence calculation
-  DISAPPEARANCE_SIZE_DIVISOR: 20,     // Divide wall % by this
-  DISAPPEARANCE_SIZE_MULTIPLIER: 50,  // Multiply by this
-  DISAPPEARANCE_SIZE_MAX: 50,         // Cap size score at 50
-  DISAPPEARANCE_LIFETIME_DIVISOR: 120000, // Divide lifetime (ms) by this (2 min threshold)
-  DISAPPEARANCE_LIFETIME_MULTIPLIER: 30,  // Multiply by this
-  DISAPPEARANCE_LIFETIME_MAX: 30,     // Cap lifetime score at 30
-
-  // Imbalance spike confidence
-  SPIKE_CONFIDENCE_MULTIPLIER: 50,  // Multiply (ratio - 1) by this
 
   // Recent breaks cleanup
   RECENT_BREAKS_MAX_SIZE: 100,  // Max size before clearing (prevent memory leak)
@@ -589,7 +577,6 @@ export class WhaleDetectionService {
     const detectionWindow = this.config.modes.imbalanceSpike.detectionWindow;
     const now = Date.now();
 
-    // Get imbalance from N seconds ago
     const historicalSnapshot = this.imbalanceHistory.find(
       (snap) => now - snap.timestamp <= detectionWindow,
     );
@@ -599,32 +586,34 @@ export class WhaleDetectionService {
     }
 
     const historicalRatio = historicalSnapshot.ratio;
-    const ratioChange = currentRatio / historicalRatio;
+    const spike = evaluateImbalanceSpike({
+      currentRatio,
+      historicalRatio,
+      minRatioChange: this.config.modes.imbalanceSpike.minRatioChange,
+    });
 
-    // Check for BULLISH spike (bid ratio increased)
-    if (ratioChange >= 1 + this.config.modes.imbalanceSpike.minRatioChange) {
+    if (spike.detected && spike.direction === 'LONG') {
       return {
         detected: true,
         mode: WhaleDetectionMode.IMBALANCE_SPIKE,
         direction: SignalDirection.LONG,
-        confidence: this.calculateSpikeConfidence(ratioChange),
-        reason: `BULLISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} → ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, +${((ratioChange - 1) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
+        confidence: this.calculateSpikeConfidence(spike.ratioChange),
+        reason: `BULLISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} → ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, +${((spike.ratioChange - 1) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
         metadata: {
-          imbalanceChange: ratioChange,
+          imbalanceChange: spike.ratioChange,
         },
       };
     }
 
-    // Check for BEARISH spike (ask ratio increased = bid ratio decreased)
-    if (ratioChange <= 1 / (1 + this.config.modes.imbalanceSpike.minRatioChange)) {
+    if (spike.detected && spike.direction === 'SHORT') {
       return {
         detected: true,
         mode: WhaleDetectionMode.IMBALANCE_SPIKE,
         direction: SignalDirection.SHORT,
-        confidence: this.calculateSpikeConfidence(1 / ratioChange),
-        reason: `BEARISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} → ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, ${((1 - ratioChange) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
+        confidence: this.calculateSpikeConfidence(1 / spike.ratioChange),
+        reason: `BEARISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} → ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, ${((1 - spike.ratioChange) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
         metadata: {
-          imbalanceChange: ratioChange,
+          imbalanceChange: spike.ratioChange,
         },
       };
     }
@@ -723,90 +712,28 @@ export class WhaleDetectionService {
     btcMomentum?: number,
     btcDirection?: string,
   ): { direction: SignalDirection | null; reason: string; trendInverted: boolean } {
-    // Choose direction based on strategy
-    // BREAKOUT: BID gone → SHORT (expect sell), ASK gone → LONG (expect buy)
-    // FOLLOW: BID gone → LONG (follow whale), ASK gone → SHORT (follow whale)
-    const useFollowLogic = this.strategy === 'FOLLOW';
-    const defaultDirection = useFollowLogic
-      ? (wallSide === 'BID' ? SignalDirection.LONG : SignalDirection.SHORT)
-      : (wallSide === 'BID' ? SignalDirection.SHORT : SignalDirection.LONG);
-    const invertedDirection = wallSide === 'BID' ? SignalDirection.LONG : SignalDirection.SHORT;
+    const decision = determineWallDisappearanceDirectionByTrend({
+      strategy: this.strategy,
+      wallSide,
+      wallPrice,
+      wallLifetime,
+      btcMomentum,
+      btcDirection,
+    });
 
-    // If BTC data not available, use default logic
-    if (btcMomentum === undefined || btcDirection === undefined) {
-      const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - ${
-        wallSide === 'BID' ? 'Accumulation done, distribution likely' : 'Distribution done, accumulation likely'
-      }`;
-      return { direction: defaultDirection, reason, trendInverted: false };
+    if (decision.blockedByTrend && btcMomentum !== undefined) {
+      this.safeLog('debug', '⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
+        wallSide,
+        btcDirection,
+        btcMomentum: btcMomentum.toFixed(DECIMAL_PLACES.PERCENT),
+      });
     }
 
-    // Determine trend strength
-    const isStrongTrend = btcMomentum >= MULTIPLIERS.HALF; // Strong trend threshold (0.5 = 50%)
-    const isNeutralMarket = btcMomentum < (PERCENTAGE_THRESHOLDS.MODERATE / PERCENT_MULTIPLIER); // Neutral market threshold (30% = 0.3)
-
-    // NEUTRAL MARKET: Use default logic
-    if (isNeutralMarket) {
-      const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - ${
-        wallSide === 'BID' ? 'Accumulation done, distribution likely' : 'Distribution done, accumulation likely'
-      } [NEUTRAL market]`;
-      return { direction: defaultDirection, reason, trendInverted: false };
-    }
-
-    // STRONG TREND: Apply trend-aware logic (INVERT direction to trade WITH trend)
-    if (isStrongTrend) {
-      const isBearishTrend = btcDirection === 'DOWN';
-      const isBullishTrend = btcDirection === 'UP';
-
-      // BID wall disappeared in BEARISH market → INVERT to LONG (expect bounce)
-      if (wallSide === 'BID' && isBearishTrend) {
-        const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - BEARISH trend (${(
-          btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales not buying = potential SHORT-TERM BOUNCE → LONG [INVERTED]`;
-        return { direction: invertedDirection, reason, trendInverted: true };
-      }
-
-      // ASK wall disappeared in BULLISH market → INVERT to SHORT (expect pullback)
-      if (wallSide === 'ASK' && isBullishTrend) {
-        const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - BULLISH trend (${(
-          btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales not selling = potential SHORT-TERM PULLBACK → SHORT [INVERTED]`;
-        return { direction: invertedDirection, reason, trendInverted: true };
-      }
-
-      // BID wall disappeared in BULLISH market → Keep SHORT (continuation)
-      if (wallSide === 'BID' && isBullishTrend) {
-        const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - BULLISH trend (${(
-          btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales done accumulating → continue UP (skip SHORT)`;
-        // Block this signal (it goes against trend)
-        this.safeLog('debug', '⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
-          wallSide,
-          btcDirection,
-          btcMomentum: btcMomentum.toFixed(DECIMAL_PLACES.PERCENT),
-        });
-        return { direction: null, reason, trendInverted: false };
-      }
-
-      // ASK wall disappeared in BEARISH market → Keep LONG (continuation)
-      if (wallSide === 'ASK' && isBearishTrend) {
-        const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - BEARISH trend (${(
-          btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales done distributing → continue DOWN (skip LONG)`;
-        // Block this signal (it goes against trend)
-        this.safeLog('debug', '⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
-          wallSide,
-          btcDirection,
-          btcMomentum: btcMomentum.toFixed(DECIMAL_PLACES.PERCENT),
-        });
-        return { direction: null, reason, trendInverted: false };
-      }
-    }
-
-    // MODERATE TREND (0.3 <= momentum < MULTIPLIERS.HALF): Use default logic with caution
-    const reason = `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${(wallLifetime / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(0)}s) - ${
-      wallSide === 'BID' ? 'Accumulation done, distribution likely' : 'Distribution done, accumulation likely'
-    } [MODERATE trend, BTC ${btcDirection}]`;
-    return { direction: defaultDirection, reason, trendInverted: false };
+    return {
+      direction: decision.direction,
+      reason: decision.reason,
+      trendInverted: decision.trendInverted,
+    };
   }
 
   // ==========================================================================
@@ -817,50 +744,32 @@ export class WhaleDetectionService {
    * Calculate confidence for wall break (0-100)
    */
   private calculateBreakConfidence(wall: WhaleWall): number {
-    // Factor: Wall size (bigger = higher confidence)
-    const sizeScore = Math.min(
-      (wall.percentOfTotal / WHALE_DETECTOR_THRESHOLDS.BREAK_SIZE_SCORE_DIVISOR) * WHALE_DETECTOR_THRESHOLDS.BREAK_SIZE_SCORE_MULTIPLIER,
-      WHALE_DETECTOR_THRESHOLDS.BREAK_SIZE_SCORE_MAX,
+    return calculateWallBreakConfidence(
+      wall.percentOfTotal,
+      wall.distance,
+      this.config.modes.wallBreak.maxConfidence,
     );
-
-    // Factor: Distance (closer break = higher confidence)
-    const distanceScore = Math.max(
-      WHALE_DETECTOR_THRESHOLDS.BREAK_DISTANCE_BASE - wall.distance * WHALE_DETECTOR_THRESHOLDS.BREAK_DISTANCE_MULTIPLIER,
-      WHALE_DETECTOR_THRESHOLDS.BREAK_DISTANCE_MIN,
-    );
-
-    return Math.min(sizeScore + distanceScore, this.config.modes.wallBreak.maxConfidence);
   }
 
   /**
    * Calculate confidence for wall disappearance (0-100)
    */
   private calculateDisappearanceConfidence(wall: WhaleWall, wallLifetime: number): number {
-    // Factor: Wall size
-    const sizeScore = Math.min(
-      (wall.percentOfTotal / WHALE_DETECTOR_THRESHOLDS.DISAPPEARANCE_SIZE_DIVISOR) * WHALE_DETECTOR_THRESHOLDS.DISAPPEARANCE_SIZE_MULTIPLIER,
-      WHALE_DETECTOR_THRESHOLDS.DISAPPEARANCE_SIZE_MAX,
+    return calculateWallDisappearanceConfidence(
+      wall.percentOfTotal,
+      wallLifetime,
+      this.config.modes.wallDisappearance.maxConfidence,
     );
-
-    // Factor: Lifetime (longer = higher confidence)
-    const lifetimeScore = Math.min(
-      (wallLifetime / WHALE_DETECTOR_THRESHOLDS.DISAPPEARANCE_LIFETIME_DIVISOR) * WHALE_DETECTOR_THRESHOLDS.DISAPPEARANCE_LIFETIME_MULTIPLIER,
-      WHALE_DETECTOR_THRESHOLDS.DISAPPEARANCE_LIFETIME_MAX,
-    );
-
-    return Math.min(sizeScore + lifetimeScore, this.config.modes.wallDisappearance.maxConfidence);
   }
 
   /**
    * Calculate confidence for imbalance spike (0-100)
    */
   private calculateSpikeConfidence(ratioChange: number): number {
-    // Larger spike = higher confidence
-    const confidence = Math.min(
-      (ratioChange - 1) * WHALE_DETECTOR_THRESHOLDS.SPIKE_CONFIDENCE_MULTIPLIER,
+    return calculateImbalanceSpikeConfidence(
+      ratioChange,
       this.config.modes.imbalanceSpike.maxConfidence,
     );
-    return confidence;
   }
 
   // ==========================================================================
@@ -933,5 +842,7 @@ export class WhaleDetectionService {
     }
   }
 }
+
+
 
 

@@ -27,21 +27,16 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-08)
-- Continued `WhaleDetectionService` refactor track with additional decomposition (iterations 4-5 after prior 1-3):
-  - extracted side-loop helpers for wall break/disappearance (`tryDetectWallBreakForSide`, `tryDetectWallDisappearanceForSide`).
-  - extracted per-side wall tracking and expiry helpers (`updateTrackedWallsForSide`, `removeExpiredTrackedWalls`).
-  - preserved signal ordering/semantics and cleanup behavior.
-- Current `WhaleDetectionService` track summary (iterations 1-5 in total):
-  - extracted signal/key helpers to `whale-detection/whale-detection-signal.utils.ts` (no-signal, detection-failed, wall-break key).
-  - extracted tracked-wall upsert helper to `whale-detection/whale-detection-wall.utils.ts`.
-  - compacted repeated THROW validation boilerplate via shared service helper while preserving error message text and ErrorHandler behavior.
-  - service reduced to 937 lines (from 1054 at start of this track) with detection sequencing and error-handling behavior preserved.
+- Completed full `WhaleDetectionService` refactor track for current scope (iterations 1-6):
+  - extracted signal/key helpers, tracked-wall helpers, confidence math, trend-direction decision logic, and imbalance spike evaluation into dedicated `whale-detection/*` utility modules.
+  - extracted side-specific detection/update/cleanup helpers in service and preserved orchestration order + logging behavior.
+  - service reduced to 848 lines (from 1054 at start of this track) with detection sequencing and error-handling behavior preserved.
 - Updated `REFACTOR_PLAN.md` with iteration log, candidate review, size update, and closure note.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts` -> PASS (1/1 suite, 16/16 tests) after each iteration
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/whale-detector.service.test.ts` -> PASS (2/2 suites, 37/37 tests)
 
 ## Next Step
-- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) after extended `WhaleDetectionService` decomposition:
+- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) now that `WhaleDetectionService` track is closed for current scope:
   - prioritize behavior-preserving decomposition or remaining lifecycle/testability cleanup items,
   - run targeted suite(s) for changed area,
   - record candidate review + verification results in `REFACTOR_PLAN.md`.
