@@ -2339,6 +2339,32 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted math and fallback helper modules + unified GRACEFUL_DEGRADE orchestration
   - error-handling behavior re-verified on targeted suite
   - next refactor focus should move to another candidate service/module from backlog
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 4 validation/market extraction + stale-wrapper cleanup slice complete:
+  - extracted validation helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-validation.utils.ts`:
+    - `validateSmartOrderPlacementConfig(...)`
+    - `validateSmartOrderbook(...)`
+    - `validateSmartOrderParams(...)`
+  - extracted market analysis/priority helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-market.utils.ts`:
+    - `analyzeSmartMarketConditions(...)`
+    - `determineSmartOrderPriority(...)`
+  - removed obsolete service-local validation/market/math passthrough methods and tightened `safeLog(..., meta?: Record<string, unknown>)`
+  - preserved THROW validation behavior, planning priority semantics, and GRACEFUL_DEGRADE fallback behavior
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 5 plan-metrics/risk extraction slice complete:
+  - extracted aggregation helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-plan-metrics.utils.ts`:
+    - `calculateSmartExpectedFill(...)`
+    - `calculateSmartExpectedSlippage(...)`
+    - `assessSmartOrderRisk(...)`
+  - service now delegates plan result metric/risk derivation to shared utils while keeping orchestration in class
+  - preserved slippage/risk thresholds and output structure semantics
+- [x] Verification (targeted smart-order-placement error-handling suite, 2026-03-08, post-iterations-4/5):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 33/33 tests PASS (re-run after each iteration slice).
+- [x] Size tracking update:
+  - `packages/core/src/services/smart-order-placement.service.ts` now 583 lines (down from 862 after iteration 3; 1050 at start of track).
+- [x] SmartOrderPlacementService full refactor track closed for current scope (2026-03-08):
+  - completed iterative decomposition of math, fallback builders, GRACEFUL_DEGRADE flow, validation, market-condition/priority logic, and plan metric/risk helpers
+  - behavior preserved and re-verified on targeted error-handling suite
+  - next refactor focus should move to another candidate service/module from backlog
 
 
 

@@ -20,8 +20,6 @@ import {
   LiquidityLevel,
   FillProbability,
   OrderSplit,
-  MarketConditions,
-  OrderPriority,
   Orderbook,
   LoggerService,
   SmartOrderPlacementStrategicConfig,
@@ -33,7 +31,6 @@ import {
 } from '../constants/phase-10-constants';
 import {
   calculateAggressivenessFactor,
-  calculateAvailableLiquidity,
   calculateLiquidityFactor,
   calculateLiquidityScore,
   calculateSizeImpactFactor,
@@ -49,6 +46,20 @@ import {
   buildMarketPriceLevel,
   buildSingleOrderSplit,
 } from './smart-order-placement/smart-order-placement-fallback.utils';
+import {
+  validateSmartOrderbook,
+  validateSmartOrderParams,
+  validateSmartOrderPlacementConfig,
+} from './smart-order-placement/smart-order-placement-validation.utils';
+import {
+  analyzeSmartMarketConditions,
+  determineSmartOrderPriority,
+} from './smart-order-placement/smart-order-placement-market.utils';
+import {
+  assessSmartOrderRisk,
+  calculateSmartExpectedFill,
+  calculateSmartExpectedSlippage,
+} from './smart-order-placement/smart-order-placement-plan-metrics.utils';
 
 /**
  * SmartOrderPlacementService - Intelligent order placement with ErrorHandler integration
@@ -71,7 +82,7 @@ export class SmartOrderPlacementService {
     this.strategicConfig = { ...DEFAULT_SMART_ORDER_PLACEMENT, ...strategicConfig };
 
     // THROW: Config validation OUTSIDE try-catch
-    this.validateConfig(config);
+    validateSmartOrderPlacementConfig(config);
 
     // Safe logging (SKIP strategy)
     this.safeLog('info', 'SmartOrderPlacementService initialized', {
@@ -80,96 +91,6 @@ export class SmartOrderPlacementService {
       minFillProbability: config.minFillProbability,
       strategicThresholds: this.strategicConfig,
     });
-  }
-
-  // ==========================================================================
-  // VALIDATION
-  // ==========================================================================
-
-  /**
-   * Validate configuration (THROW strategy)
-   */
-  private validateConfig(config: SmartOrderPlacementConfig): void {
-    if (!config) {
-      throw new Error('SmartOrderPlacementConfig cannot be null or undefined');
-    }
-
-    if (!Number.isFinite(config.maxOrderSize) || config.maxOrderSize <= 0) {
-      throw new Error(
-        `Invalid maxOrderSize: ${config.maxOrderSize} (must be positive)`,
-      );
-    }
-
-    if (!Number.isFinite(config.maxSlippageBps) || config.maxSlippageBps < 0) {
-      throw new Error(
-        `Invalid maxSlippageBps: ${config.maxSlippageBps} (must be >= 0)`,
-      );
-    }
-
-    if (
-      !Number.isFinite(config.minFillProbability) ||
-      config.minFillProbability < 0 ||
-      config.minFillProbability > 100
-    ) {
-      throw new Error(
-        `Invalid minFillProbability: ${config.minFillProbability} (must be 0-100)`,
-      );
-    }
-
-    if (!Number.isFinite(config.analyzeLevels) || config.analyzeLevels <= 0) {
-      throw new Error(
-        `Invalid analyzeLevels: ${config.analyzeLevels} (must be positive)`,
-      );
-    }
-
-    if (
-      !Number.isFinite(config.executionTimeHorizon) ||
-      config.executionTimeHorizon <= 0
-    ) {
-      throw new Error(
-        `Invalid executionTimeHorizon: ${config.executionTimeHorizon} (must be positive)`,
-      );
-    }
-  }
-
-  /**
-   * Validate orderbook (THROW strategy)
-   */
-  private validateOrderbook(orderbook: Orderbook): void {
-    if (!orderbook) {
-      throw new Error('Orderbook cannot be null or undefined');
-    }
-
-    if (!Array.isArray(orderbook.bids) || !Array.isArray(orderbook.asks)) {
-      throw new Error('Orderbook must have bids and asks arrays');
-    }
-  }
-
-  /**
-   * Validate order parameters (THROW strategy)
-   */
-  private validateOrderParams(
-    size: number,
-    direction: 'buy' | 'sell',
-    targetPrice?: number,
-  ): void {
-    if (!Number.isFinite(size) || size <= 0) {
-      throw new Error(`Invalid order size: ${size} (must be positive)`);
-    }
-
-    if (direction !== 'buy' && direction !== 'sell') {
-      throw new Error(
-        `Invalid direction: ${direction} (must be 'buy' or 'sell')`,
-      );
-    }
-
-    if (targetPrice !== undefined && targetPrice !== null) {
-      if (!Number.isFinite(targetPrice) || targetPrice <= 0) {
-        throw new Error(
-          `Invalid targetPrice: ${targetPrice} (must be positive or null)`,
-        );
-      }
-    }
   }
 
   // ==========================================================================
@@ -187,8 +108,8 @@ export class SmartOrderPlacementService {
     targetPrice?: number,
   ): Promise<SmartOrderPlan> {
     // THROW: Input validation OUTSIDE try-catch
-    this.validateOrderbook(orderbook);
-    this.validateOrderParams(size, direction, targetPrice);
+    validateSmartOrderbook(orderbook);
+    validateSmartOrderParams(size, direction, targetPrice);
 
     return this.executeWithGracefulDegrade(
       async () =>
@@ -217,8 +138,8 @@ export class SmartOrderPlacementService {
     direction: 'buy' | 'sell',
   ): Promise<OrderSplit> {
     // THROW: Input validation
-    this.validateOrderbook(orderbook);
-    this.validateOrderParams(size, direction);
+    validateSmartOrderbook(orderbook);
+    validateSmartOrderParams(size, direction);
 
     return this.executeWithGracefulDegrade(
       async () => this.calculateOptimalSplitInternal(orderbook, size, direction),
@@ -240,7 +161,7 @@ export class SmartOrderPlacementService {
     direction: 'buy' | 'sell',
   ): Promise<LiquidityLevel> {
     // THROW: Input validation
-    this.validateOrderbook(orderbook);
+    validateSmartOrderbook(orderbook);
 
     if (direction !== 'buy' && direction !== 'sell') {
       throw new Error(`Invalid direction: ${direction}`);
@@ -268,8 +189,8 @@ export class SmartOrderPlacementService {
     direction: 'buy' | 'sell',
   ): Promise<FillProbability> {
     // THROW: Input validation
-    this.validateOrderbook(orderbook);
-    this.validateOrderParams(size, direction, price);
+    validateSmartOrderbook(orderbook);
+    validateSmartOrderParams(size, direction, price);
 
     return this.executeWithGracefulDegrade(
       async () =>
@@ -328,7 +249,7 @@ export class SmartOrderPlacementService {
     targetPrice?: number,
   ): Promise<SmartOrderPlan> {
     // Analyze market conditions
-    const conditions = this.analyzeMarketConditions(orderbook, direction);
+    const conditions = analyzeSmartMarketConditions(orderbook, direction);
 
     // Determine if order should be split
     const shouldSplit = size > this.config.maxOrderSize;
@@ -367,7 +288,12 @@ export class SmartOrderPlacementService {
         {
           price: targetPrice || bestLevel.price,
           size,
-          priority: this.determinePriority(conditions, fillProb.probability),
+          priority: determineSmartOrderPriority(
+            conditions,
+            fillProb.probability,
+            this.config.enableAdaptive,
+            this.strategicConfig,
+          ),
           fillProbability: fillProb.probability,
           estimatedFillTime: fillProb.expectedFillTime,
         },
@@ -376,14 +302,21 @@ export class SmartOrderPlacementService {
     }
 
     // Calculate aggregated metrics
-    const expectedFill = this.calculateExpectedFill(orders);
-    const expectedSlippage = this.calculateExpectedSlippage(
-      orderbook,
+    const expectedFill = calculateSmartExpectedFill(orders);
+    const expectedSlippage = calculateSmartExpectedSlippage(
+      direction === 'buy' ? orderbook.asks : orderbook.bids,
       orders,
-      direction,
     );
     const estimatedTime = Math.max(...orders.map((o) => o.estimatedFillTime));
-    const risk = this.assessRisk(expectedSlippage, expectedFill, conditions);
+    const risk = assessSmartOrderRisk(
+      expectedSlippage,
+      expectedFill,
+      conditions,
+      this.config.maxSlippageBps,
+      this.config.minFillProbability,
+      this.strategicConfig.highRiskSlippageMultiplier,
+      this.strategicConfig.highRiskFillMultiplier,
+    );
 
     return {
       totalSize: size,
@@ -410,8 +343,6 @@ export class SmartOrderPlacementService {
 
     // Calculate number of sub-orders based on available liquidity
     const levels = direction === 'buy' ? orderbook.asks : orderbook.bids;
-    const availableLiquidity = this.calculateAvailableLiquidity(levels);
-
     // Determine optimal number of splits
     const numSplits = Math.min(
       Math.ceil(size / this.config.maxOrderSize),
@@ -420,18 +351,14 @@ export class SmartOrderPlacementService {
     );
 
     // Calculate sub-order sizes (weighted by liquidity)
-    const subOrderSizes = this.calculateWeightedSplits(
+    const subOrderSizes = calculateWeightedSplits(
       size,
       numSplits,
       levels,
     );
 
     // Estimate improvement
-    const improvement = this.estimateSplitImprovement(
-      size,
-      subOrderSizes,
-      availableLiquidity,
-    );
+    const improvement = estimateSplitImprovement(size, subOrderSizes);
 
     return {
       originalSize: size,
@@ -462,7 +389,7 @@ export class SmartOrderPlacementService {
       }
 
       // Calculate liquidity score
-      const score = this.calculateLiquidityScore(level, levels, i);
+      const score = calculateLiquidityScore(level, levels, i);
       const distanceBps =
         marketPrice > 0
           ? (Math.abs(level.price - marketPrice) / marketPrice) * 10000
@@ -501,17 +428,17 @@ export class SmartOrderPlacementService {
     const marketPrice = levels.length > 0 ? levels[0].price : price;
 
     // Calculate factors
-    const liquidity = this.calculateLiquidityFactor(levels, price, size);
-    const aggressiveness = this.calculateAggressivenessFactor(
+    const liquidity = calculateLiquidityFactor(levels, price, size);
+    const aggressiveness = calculateAggressivenessFactor(
       price,
       marketPrice,
       direction,
     );
-    const volatility = this.estimateVolatility(orderbook);
-    const sizeImpact = this.calculateSizeImpactFactor(size, levels);
+    const volatility = estimateVolatility(orderbook);
+    const sizeImpact = calculateSizeImpactFactor(size, levels);
 
     // Combine factors to estimate probability
-    const probability = this.combineProbabilityFactors(
+    const probability = combineProbabilityFactors(
       liquidity,
       aggressiveness,
       volatility,
@@ -519,10 +446,11 @@ export class SmartOrderPlacementService {
     );
 
     // Estimate fill time based on probability and market conditions
-    const expectedFillTime = this.estimateFillTime(
+    const expectedFillTime = estimateFillTime(
       probability,
       size,
       levels,
+      this.config.executionTimeHorizon,
     );
 
     return {
@@ -542,73 +470,6 @@ export class SmartOrderPlacementService {
   // ==========================================================================
   // HELPER METHODS
   // ==========================================================================
-
-  private analyzeMarketConditions(
-    orderbook: Orderbook,
-    direction: 'buy' | 'sell',
-  ): MarketConditions {
-    const bestBid =
-      orderbook.bids.length > 0 ? orderbook.bids[0].price : 0;
-    const bestAsk =
-      orderbook.asks.length > 0 ? orderbook.asks[0].price : 0;
-    const midPrice = (bestBid + bestAsk) / 2;
-
-    const spreadBps =
-      midPrice > 0 ? ((bestAsk - bestBid) / midPrice) * 10000 : 10000;
-
-    const totalBidVolume = orderbook.bids.reduce(
-      (sum, b) => sum + (Number.isFinite(b.volume) ? b.volume : 0),
-      0,
-    );
-    const totalAskVolume = orderbook.asks.reduce(
-      (sum, a) => sum + (Number.isFinite(a.volume) ? a.volume : 0),
-      0,
-    );
-
-    const totalVolume = totalBidVolume + totalAskVolume;
-    const imbalanceRatio =
-      totalVolume > 0 ? (totalBidVolume - totalAskVolume) / totalVolume : 0;
-
-    const liquidityScore = Math.min(
-      100,
-      Math.log10(totalVolume + 1) * 20,
-    );
-
-    const volatility = this.estimateVolatility(orderbook);
-
-    const isFavorable =
-      direction === 'buy' ? imbalanceRatio > 0.1 : imbalanceRatio < -0.1;
-
-    return {
-      spreadBps: Number.isFinite(spreadBps) ? spreadBps : 10000,
-      volatility: Number.isFinite(volatility) ? volatility : 50,
-      liquidityScore: Number.isFinite(liquidityScore) ? liquidityScore : 0,
-      imbalanceRatio: Number.isFinite(imbalanceRatio) ? imbalanceRatio : 0,
-      isFavorable,
-    };
-  }
-
-  private determinePriority(
-    conditions: MarketConditions,
-    fillProbability: number,
-  ): OrderPriority {
-    if (!this.config.enableAdaptive) {
-      return 'immediate';
-    }
-
-    // High probability + favorable conditions = patient
-    if (fillProbability > this.strategicConfig.patientThreshold && conditions.isFavorable) {
-      return 'patient';
-    }
-
-    // Low probability or unfavorable = immediate
-    if (fillProbability < this.strategicConfig.immediateThreshold || !conditions.isFavorable) {
-      return 'immediate';
-    }
-
-    // Otherwise adaptive
-    return 'adaptive';
-  }
 
   private async createSubOrders(
     orderbook: Orderbook,
@@ -641,147 +502,6 @@ export class SmartOrderPlacementService {
     }
 
     return subOrders;
-  }
-
-  private calculateExpectedFill(orders: SubOrder[]): number {
-    if (orders.length === 0) return 0;
-
-    const avgProbability =
-      orders.reduce((sum, o) => sum + o.fillProbability, 0) / orders.length;
-
-    return Math.min(100, avgProbability);
-  }
-
-  private calculateExpectedSlippage(
-    orderbook: Orderbook,
-    orders: SubOrder[],
-    direction: 'buy' | 'sell',
-  ): number {
-    const levels = direction === 'buy' ? orderbook.asks : orderbook.bids;
-    const marketPrice = levels.length > 0 ? levels[0].price : 0;
-
-    if (marketPrice === 0 || orders.length === 0) return 1000; // High slippage estimate
-
-    const totalSize = orders.reduce((sum, o) => sum + o.size, 0);
-    let weightedSlippage = 0;
-
-    for (const order of orders) {
-      const slippageBps =
-        (Math.abs(order.price - marketPrice) / marketPrice) * 10000;
-      const weight = order.size / totalSize;
-      weightedSlippage += slippageBps * weight;
-    }
-
-    return Number.isFinite(weightedSlippage) ? weightedSlippage : 1000;
-  }
-
-  private assessRisk(
-    slippage: number,
-    fillProbability: number,
-    conditions: MarketConditions,
-  ): 'low' | 'medium' | 'high' {
-    // High slippage or low fill probability = high risk
-    if (
-      slippage > this.config.maxSlippageBps * this.strategicConfig.highRiskSlippageMultiplier ||
-      fillProbability < this.config.minFillProbability * this.strategicConfig.highRiskFillMultiplier
-    ) {
-      return 'high';
-    }
-
-    // Medium conditions
-    if (
-      slippage > this.config.maxSlippageBps ||
-      fillProbability < this.config.minFillProbability ||
-      conditions.volatility > 70
-    ) {
-      return 'medium';
-    }
-
-    return 'low';
-  }
-
-  private calculateAvailableLiquidity(
-    levels: { price: number; volume: number }[],
-  ): number {
-    return calculateAvailableLiquidity(levels);
-  }
-
-  private calculateWeightedSplits(
-    totalSize: number,
-    numSplits: number,
-    levels: { price: number; volume: number }[],
-  ): number[] {
-    return calculateWeightedSplits(totalSize, numSplits, levels);
-  }
-
-  private estimateSplitImprovement(
-    originalSize: number,
-    subOrderSizes: number[],
-    availableLiquidity: number,
-  ): OrderSplit['improvement'] {
-    return estimateSplitImprovement(originalSize, subOrderSizes);
-  }
-
-  private calculateLiquidityScore(
-    level: { price: number; volume: number },
-    allLevels: { price: number; volume: number }[],
-    index: number,
-  ): number {
-    return calculateLiquidityScore(level, allLevels, index);
-  }
-
-  private calculateLiquidityFactor(
-    levels: { price: number; volume: number }[],
-    targetPrice: number,
-    orderSize: number,
-  ): number {
-    return calculateLiquidityFactor(levels, targetPrice, orderSize);
-  }
-
-  private calculateAggressivenessFactor(
-    orderPrice: number,
-    marketPrice: number,
-    direction: 'buy' | 'sell',
-  ): number {
-    return calculateAggressivenessFactor(orderPrice, marketPrice, direction);
-  }
-
-  private estimateVolatility(orderbook: Orderbook): number {
-    return estimateVolatility(orderbook);
-  }
-
-  private calculateSizeImpactFactor(
-    orderSize: number,
-    levels: { price: number; volume: number }[],
-  ): number {
-    return calculateSizeImpactFactor(orderSize, levels);
-  }
-
-  private combineProbabilityFactors(
-    liquidity: number,
-    aggressiveness: number,
-    volatility: number,
-    sizeImpact: number,
-  ): number {
-    return combineProbabilityFactors(
-      liquidity,
-      aggressiveness,
-      volatility,
-      sizeImpact,
-    );
-  }
-
-  private estimateFillTime(
-    probability: number,
-    size: number,
-    levels: { price: number; volume: number }[],
-  ): number {
-    return estimateFillTime(
-      probability,
-      size,
-      levels,
-      this.config.executionTimeHorizon,
-    );
   }
 
   // ==========================================================================
@@ -836,7 +556,7 @@ export class SmartOrderPlacementService {
   private safeLog(
     level: 'info' | 'warn' | 'error',
     message: string,
-    meta?: any,
+    meta?: Record<string, unknown>,
   ): void {
     if (!this.logger) return;
     if (this.errorHandler) {

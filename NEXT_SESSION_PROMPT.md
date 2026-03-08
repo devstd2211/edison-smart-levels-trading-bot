@@ -27,17 +27,22 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-08)
-- Closed `SmartOrderPlacementService` refactor track for current scope (iterations 1-3):
+- Closed `SmartOrderPlacementService` full refactor track for current scope (iterations 1-5):
   - extracted pure placement math helpers to `smart-order-placement/smart-order-placement-math.utils.ts`.
   - extracted conservative fallback builders to `smart-order-placement/smart-order-placement-fallback.utils.ts`.
   - unified repeated GRACEFUL_DEGRADE execution flow with shared service helper while preserving warn/error logging semantics.
-  - service reduced to 862 lines (from 1050 at start of this track) with planning/splitting/fallback behavior preserved.
+  - extracted validation and market-priority helpers to:
+    - `smart-order-placement/smart-order-placement-validation.utils.ts`
+    - `smart-order-placement/smart-order-placement-market.utils.ts`
+  - extracted plan metrics/risk helpers to `smart-order-placement/smart-order-placement-plan-metrics.utils.ts`.
+  - removed obsolete service-local wrappers and tightened `safeLog` metadata typing to `Record<string, unknown>`.
+  - service reduced to 583 lines (from 1050 at start of this track) with behavior preserved.
 - Updated `REFACTOR_PLAN.md` with iteration log, candidate review, size update, and closure note.
 - Verification:
   - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS (1/1 suite, 33/33 tests) after each iteration
 
 ## Next Step
-- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) now that `WhaleDetectionService` and `SmartOrderPlacementService` tracks are closed for current scope:
+- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) now that `WhaleDetectionService` and `SmartOrderPlacementService` tracks are fully closed for current scope:
   - prioritize behavior-preserving decomposition or remaining lifecycle/testability cleanup items,
   - run targeted suite(s) for changed area,
   - record candidate review + verification results in `REFACTOR_PLAN.md`.
