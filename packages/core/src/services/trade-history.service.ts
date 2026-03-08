@@ -1,4 +1,3 @@
-import { PERCENT_MULTIPLIER } from '../constants';
 /**
  * Trade History Service with Dynamic Schema
  *
@@ -25,6 +24,17 @@ import { LoggerService } from './logger.service';
 import { extractErrorMessage } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { JournalWriteError } from '../errors/DomainErrors';
+import {
+  buildCsvLineForSchema,
+  splitCsvLinePreservingQuotes,
+} from './trade-history/trade-history-csv.utils';
+import { parseCsvTradeRecordLine } from './trade-history/trade-history-parse.utils';
+import {
+  calculateTradeStatistics,
+  calculateTradeStatisticsByField,
+  createDefaultTradeStatistics,
+  TradeHistoryStatistics,
+} from './trade-history/trade-history-stats.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -278,7 +288,7 @@ export class TradeHistoryService {
 
       // Migrate each data line (add empty values for new fields)
       for (let i = 1; i < lines.length; i++) {
-        const values = this.splitCSVLine(lines[i]);
+        const values = splitCsvLinePreservingQuotes(lines[i]);
 
         // Add empty values for new fields
         for (let j = 0; j < newFields.length; j++) {
@@ -335,24 +345,7 @@ export class TradeHistoryService {
         this.verifyAndMigrateSchema();
       }
 
-      // Build CSV row according to current schema
-      const values: string[] = [];
-
-      for (const field of this.currentSchema) {
-        const value = record[field];
-
-        if (value === undefined || value === null) {
-          values.push(''); // Empty for missing fields
-        } else if (typeof value === 'string') {
-          // Escape commas and quotes
-          const escaped = value.replace(/"/g, '""');
-          values.push(`"${escaped}"`);
-        } else {
-          values.push(String(value));
-        }
-      }
-
-      const csvLine = values.join(',');
+      const csvLine = buildCsvLineForSchema(this.currentSchema, record as Record<string, unknown>);
 
       // Append to CSV
       fs.appendFileSync(this.csvPath, csvLine + '\n', 'utf-8');
@@ -473,84 +466,11 @@ export class TradeHistoryService {
    */
   private parseCSVLine(line: string, header: string[]): TradeRecord | null {
     try {
-      const values = this.splitCSVLine(line);
-
-      const record: Record<string, unknown> = {};
-
-      for (let i = 0; i < header.length; i++) {
-        const field = header[i];
-        const value = values[i] || '';
-
-        // Type conversion for known numeric fields
-        if (
-          [
-            'entryPrice',
-            'exitPrice',
-            'quantity',
-            'pnl',
-            'fees',
-            'netPnl',
-            'confidence',
-            'virtualBalanceBefore',
-            'virtualBalanceAfter',
-          ].includes(field)
-        ) {
-          record[field] = parseFloat(value) || 0;
-        } else if (field === 'leverage') {
-          record[field] = parseInt(value) || 10;
-        } else {
-          // Keep as string or try to parse as number for custom fields
-          const unquoted = value.replace(/^"|"$/g, '').replace(/""/g, '"');
-
-          // Try to parse as number if it looks like a number
-          if (!isNaN(Number(unquoted)) && unquoted !== '') {
-            record[field] = parseFloat(unquoted);
-          } else {
-            record[field] = unquoted;
-          }
-        }
-      }
-
-      return record as TradeRecord;
+      return parseCsvTradeRecordLine(line, header) as TradeRecord;
     } catch (error: unknown) {
       this.logger.warn('⚠️ Failed to parse CSV line', { line });
       return null;
     }
-  }
-
-  /**
-   * Split CSV line handling quoted values
-   */
-  private splitCSVLine(line: string): string[] {
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          // Escaped quote
-          current += '"';
-          i++;
-        } else {
-          // Toggle quotes
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        // End of value
-        values.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-
-    // Add last value
-    values.push(current);
-
-    return values;
   }
 
   /**
@@ -578,50 +498,13 @@ export class TradeHistoryService {
   /**
    * Get statistics from CSV with GRACEFUL_DEGRADE strategy
    */
-  async getStatistics(): Promise<{
-    totalTrades: number;
-    totalPnL: number;
-    winRate: number;
-    avgPnL: number;
-    byStrategy: { [key: string]: number };
-    bySession: { [key: string]: number };
-  }> {
+  async getStatistics(): Promise<TradeHistoryStatistics> {
     this.ensureInitialized();
-    const defaultStats = {
-      totalTrades: 0,
-      totalPnL: 0,
-      winRate: 0,
-      avgPnL: 0,
-      byStrategy: {},
-      bySession: {},
-    };
+    const defaultStats = createDefaultTradeStatistics();
 
     const statsOperation = async () => {
       const trades = await this.readAllTrades();
-
-      if (trades.length === 0) {
-        return defaultStats;
-      }
-
-      const wins = trades.filter((t) => t.netPnl > 0).length;
-      const totalPnL = trades.reduce((sum, t) => sum + t.netPnl, 0);
-
-      const byStrategy: { [key: string]: number } = {};
-      const bySession: { [key: string]: number } = {};
-
-      for (const trade of trades) {
-        byStrategy[trade.strategy] = (byStrategy[trade.strategy] || 0) + trade.netPnl;
-        bySession[trade.sessionVersion] = (bySession[trade.sessionVersion] || 0) + trade.netPnl;
-      }
-
-      return {
-        totalTrades: trades.length,
-        totalPnL,
-        winRate: (wins / trades.length) * PERCENT_MULTIPLIER,
-        avgPnL: totalPnL / trades.length,
-        byStrategy,
-        bySession,
-      };
+      return calculateTradeStatistics(trades);
     };
 
     // Use GRACEFUL_DEGRADE strategy for statistics
@@ -655,14 +538,7 @@ export class TradeHistoryService {
     this.ensureInitialized();
     const statsOperation = async () => {
       const trades = await this.readAllTrades();
-      const stats: { [key: string]: number } = {};
-
-      for (const trade of trades) {
-        const key = String(trade[fieldName] || 'unknown');
-        stats[key] = (stats[key] || 0) + trade.netPnl;
-      }
-
-      return stats;
+      return calculateTradeStatisticsByField(trades, fieldName);
     };
 
     // Use GRACEFUL_DEGRADE strategy for field statistics
@@ -693,3 +569,4 @@ export class TradeHistoryService {
     }
   }
 }
+

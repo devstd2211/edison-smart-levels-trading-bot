@@ -27,19 +27,21 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-08)
-- Closed `smart-order-execution` refactor track for current scope:
-  - `packages/core/src/services/smart-order-execution.service.ts` reduced to 350 lines (from 1677 baseline in this track) with private compatibility seams preserved.
-  - Added extracted support modules used by facade (`strategy-entry`, `seams`, `logging`) and completed final facade compaction slices.
-- Stabilized cross-suite flaky assertions:
-  - TP log assertions in `event-handlers.test.ts` switched to `stringContaining(...)` (emoji/encoding-safe).
-  - Phase 16 performance threshold relaxed from `> 70` to `>= 70` for non-deterministic boundary.
-- Updated `REFACTOR_PLAN.md` session log and completed full verification gate.
+- Continued `WhaleDetectionService` refactor track with additional decomposition (iterations 4-5 after prior 1-3):
+  - extracted side-loop helpers for wall break/disappearance (`tryDetectWallBreakForSide`, `tryDetectWallDisappearanceForSide`).
+  - extracted per-side wall tracking and expiry helpers (`updateTrackedWallsForSide`, `removeExpiredTrackedWalls`).
+  - preserved signal ordering/semantics and cleanup behavior.
+- Current `WhaleDetectionService` track summary (iterations 1-5 in total):
+  - extracted signal/key helpers to `whale-detection/whale-detection-signal.utils.ts` (no-signal, detection-failed, wall-break key).
+  - extracted tracked-wall upsert helper to `whale-detection/whale-detection-wall.utils.ts`.
+  - compacted repeated THROW validation boilerplate via shared service helper while preserving error message text and ErrorHandler behavior.
+  - service reduced to 937 lines (from 1054 at start of this track) with detection sequencing and error-handling behavior preserved.
+- Updated `REFACTOR_PLAN.md` with iteration log, candidate review, size update, and closure note.
 - Verification:
-  - `npm run build` -> PASS
-  - `npm test -- --runInBand` -> PASS (307/307 suites, 7021/7021 tests)
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts` -> PASS (1/1 suite, 16/16 tests) after each iteration
 
 ## Next Step
-- Select next refactor candidate from `REFACTOR_PLAN.md` / `REFACTOR_TASKS.md` backlog (SmartOrderExecutionService track is closed for current scope):
-  - prioritize behavior-preserving service decomposition or remaining `any` cleanup targets,
-  - run targeted tests for the chosen area,
-  - record verification and progress in `REFACTOR_PLAN.md`.
+- Select next candidate from backlog (`REFACTOR_PLAN.md` / `REFACTOR_TASKS.md`) after extended `WhaleDetectionService` decomposition:
+  - prioritize behavior-preserving decomposition or remaining lifecycle/testability cleanup items,
+  - run targeted suite(s) for changed area,
+  - record candidate review + verification results in `REFACTOR_PLAN.md`.

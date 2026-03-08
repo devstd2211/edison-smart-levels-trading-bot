@@ -39,6 +39,14 @@ import {
 } from '../types/legacy';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { appendJsonLine, ensureParentDirectoryExists } from './position-state-machine/position-state-machine-persistence.utils';
+import {
+  buildInvalidTransitionResult,
+  buildNextState,
+  buildSuccessfulTransitionResult,
+  buildTransitionHistoryEntry,
+} from './position-state-machine/position-state-machine-transition.utils';
+import { appendHistoryEntry } from './position-state-machine/position-state-machine-history.utils';
 
 /**
  * In-memory state cache
@@ -293,13 +301,8 @@ export class PositionStateMachineService implements IPositionStateMachine {
     if (!this.errorHandler) {
       // Fallback: no ErrorHandler available
       try {
-        const dataDir = path.dirname(this.stateFilePath);
-        if (!fs.existsSync(dataDir)) {
-          await fsPromises.mkdir(dataDir, { recursive: true });
-        }
-
-        const line = JSON.stringify(state) + '\n';
-        await fsPromises.appendFile(this.stateFilePath, line);
+        await ensureParentDirectoryExists(this.stateFilePath);
+        await appendJsonLine(this.stateFilePath, state);
       } catch (error) {
         this.logger.error('❌ Failed to persist state to disk', { error });
         throw error;
@@ -310,13 +313,8 @@ export class PositionStateMachineService implements IPositionStateMachine {
     // Phase 8.9.11: RETRY strategy for I/O operations
     const persistResult = await this.errorHandler.executeAsync(
       async () => {
-        const dataDir = path.dirname(this.stateFilePath);
-        if (!fs.existsSync(dataDir)) {
-          await fsPromises.mkdir(dataDir, { recursive: true });
-        }
-
-        const line = JSON.stringify(state) + '\n';
-        await fsPromises.appendFile(this.stateFilePath, line);
+        await ensureParentDirectoryExists(this.stateFilePath);
+        await appendJsonLine(this.stateFilePath, state);
       },
       {
         strategy: RecoveryStrategy.RETRY,
@@ -353,13 +351,8 @@ export class PositionStateMachineService implements IPositionStateMachine {
     if (!this.errorHandler) {
       // Fallback: no ErrorHandler available
       try {
-        const dataDir = path.dirname(this.historyFilePath);
-        if (!fs.existsSync(dataDir)) {
-          await fsPromises.mkdir(dataDir, { recursive: true });
-        }
-
-        const line = JSON.stringify(entry) + '\n';
-        await fsPromises.appendFile(this.historyFilePath, line);
+        await ensureParentDirectoryExists(this.historyFilePath);
+        await appendJsonLine(this.historyFilePath, entry);
       } catch (error) {
         this.logger.debug('ℹ️ Failed to persist transition (non-critical)', { error });
         // Don't throw - history is optional
@@ -370,13 +363,8 @@ export class PositionStateMachineService implements IPositionStateMachine {
     // Phase 8.9.11: GRACEFUL_DEGRADE for non-critical history
     const persistResult = await this.errorHandler.executeAsync(
       async () => {
-        const dataDir = path.dirname(this.historyFilePath);
-        if (!fs.existsSync(dataDir)) {
-          await fsPromises.mkdir(dataDir, { recursive: true });
-        }
-
-        const line = JSON.stringify(entry) + '\n';
-        await fsPromises.appendFile(this.historyFilePath, line);
+        await ensureParentDirectoryExists(this.historyFilePath);
+        await appendJsonLine(this.historyFilePath, entry);
       },
       {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
@@ -441,7 +429,6 @@ export class PositionStateMachineService implements IPositionStateMachine {
     const currentStateObj = this.stateCache.get(key);
     const currentState = currentStateObj?.currentState || PositionState.OPEN;
 
-    // Validate transition is allowed
     const validNextStates = VALID_STATE_TRANSITIONS[currentState];
     if (!validNextStates.includes(request.targetState)) {
       const error = `Invalid state transition: ${currentState} → ${request.targetState}`;
@@ -453,60 +440,22 @@ export class PositionStateMachineService implements IPositionStateMachine {
         reason: request.reason,
       });
 
-      return {
-        allowed: false,
-        currentState,
-        error,
-        stateChange: `${currentState} ✗ ${request.targetState}`,
-      };
+      return buildInvalidTransitionResult(currentState, request.targetState, error);
     }
 
-    // Create new state object
-    const newState: PositionStateMachineState = {
-      symbol: request.symbol,
-      positionId: request.positionId,
-      currentState: request.targetState,
-      stateChangedAt: Date.now(),
-      createdAt: currentStateObj?.createdAt || Date.now(),
-      closedAt: request.targetState === PositionState.CLOSED ? Date.now() : undefined,
-      reason: request.reason,
-      preBEMode: request.metadata?.preBEMode,
-      trailingMode: request.metadata?.trailingMode,
-      bbTrailingMode: request.metadata?.bbTrailingMode,
-      // Add closure details if closing
-      closureReason: request.closureReason,
-      closurePrice: request.closurePrice,
-      closurePnL: request.closurePnL,
-    };
-
-    // Update cache
+    const now = Date.now();
+    const newState = buildNextState(request, currentStateObj, now);
     this.stateCache.set(key, newState);
 
-    // Phase 8.9.11: Persist to disk with error handling (async, don't wait)
-    // But use ErrorHandler internally via persistStateToDisk()
     this.persistStateToDisk(newState).catch(err => {
       this.logger.error('❌ Failed to persist state transition', { error: err });
     });
 
-    // Record transition history
-    const historyEntry: TransitionHistoryEntry = {
-      request,
-      result: {
-        allowed: true,
-        currentState: request.targetState,
-        previousState: currentState,
-        stateChange: `${currentState} → ${request.targetState}`,
-      },
-      timestamp: Date.now(),
-    };
+    const successResult = buildSuccessfulTransitionResult(request.targetState, currentState);
+    const historyEntry: TransitionHistoryEntry = buildTransitionHistoryEntry(request, successResult, now);
 
-    if (!this.transitionHistory.has(key)) {
-      this.transitionHistory.set(key, []);
-    }
-    this.transitionHistory.get(key)!.push(historyEntry);
+    appendHistoryEntry(this.transitionHistory, key, historyEntry);
 
-    // Phase 8.9.11: Persist history with GRACEFUL_DEGRADE (async, don't wait)
-    // But use ErrorHandler internally via persistTransitionToDisk()
     this.persistTransitionToDisk(historyEntry).catch(err => {
       this.logger.debug('ℹ️ Failed to persist transition history (non-critical)', { error: err });
     });
@@ -518,12 +467,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
       reason: request.reason,
     });
 
-    return {
-      allowed: true,
-      currentState: request.targetState,
-      previousState: currentState,
-      stateChange: `${currentState} → ${request.targetState}`,
-    };
+    return successResult;
   }
 
   /**

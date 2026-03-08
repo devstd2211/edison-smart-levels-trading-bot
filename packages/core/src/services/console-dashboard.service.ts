@@ -21,6 +21,21 @@ import { EventEmitter } from 'events';
 import { Position } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import type { ILifecycle } from '../interfaces/ILifecycle';
+import {
+  formatDashboardDuration,
+  formatDashboardPercent,
+  formatDashboardPnL,
+  getDashboardEventTypeColor,
+  getDashboardRsiColor,
+  getDashboardTrendColor,
+  getDashboardWinRateColor,
+  renderDashboardProgressBar,
+} from './console-dashboard/console-dashboard-format.utils';
+import {
+  appendDashboardEventWithLimit,
+  buildDashboardTakeProfitLevels,
+  createInitialDashboardState,
+} from './console-dashboard/console-dashboard-state.utils';
 
 interface DashboardConfig {
   enabled: boolean;
@@ -78,7 +93,6 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
 
   // Non-blocking render control
   private renderScheduled = false;
-  private updateQueue: Array<() => void> = [];
 
   constructor(
     config: DashboardConfig = { enabled: true },
@@ -88,17 +102,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     // THROW: Config validation
     this.validateConfig(config);
     this.config = { ...config };
-    this.state = {
-      metrics: new Map(),
-      currentPrice: 0,
-      priceUpdatedAt: 0,
-      tpLevels: [],
-      dailyWins: 0,
-      dailyLosses: 0,
-      dailyPnL: 0,
-      events: [],
-      lastUpdate: new Date(),
-    };
+    this.state = createInitialDashboardState() as DashboardState;
 
   }
 
@@ -108,48 +112,36 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   private validateConfig(config: DashboardConfig): void {
     if (!config || typeof config !== 'object') {
-      const error = new Error('Config must be a valid object');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Config must be a valid object');
     }
 
     if (typeof config.enabled !== 'boolean') {
-      const error = new Error('Config.enabled must be a boolean');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Config.enabled must be a boolean');
     }
 
     if (config.updateInterval !== undefined) {
       if (typeof config.updateInterval !== 'number' || !Number.isFinite(config.updateInterval)) {
-        const error = new Error('Config.updateInterval must be a finite number');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('Config.updateInterval must be a finite number');
       }
 
       if (config.updateInterval < 0) {
-        const error = new Error('Config.updateInterval must be non-negative');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('Config.updateInterval must be non-negative');
       }
     }
 
     if (config.theme !== undefined) {
       if (!['dark', 'light'].includes(config.theme)) {
-        const error = new Error('Config.theme must be "dark" or "light"');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('Config.theme must be "dark" or "light"');
       }
     }
+  }
+
+  private throwValidationError(message: string): never {
+    const error = new Error(message);
+    if (this.errorHandler) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+    }
+    throw error;
   }
 
   /**
@@ -409,46 +401,28 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    * Format P&L with color (green=profit, red=loss)
    */
   private formatPnL(value: number): string {
-    const color = value >= 0 ? '{green-fg}' : '{red-fg}';
-    const sign = value > 0 ? '+' : '';
-    return `${color}${sign}$${value.toFixed(2)}{/}`;
+    return formatDashboardPnL(value);
   }
 
   /**
    * Format percentage with color
    */
   private formatPercent(value: number): string {
-    const color = value >= 0 ? '{green-fg}' : '{red-fg}';
-    const sign = value > 0 ? '+' : '';
-    return `${color}${sign}${value.toFixed(2)}%{/}`;
+    return formatDashboardPercent(value);
   }
 
   /**
    * Render ASCII progress bar
    */
   private renderProgressBar(current: number, target: number, width: number = 20): string {
-    if (target === 0) return '░'.repeat(width);
-    const percent = Math.min(100, Math.max(0, (current / target) * 100));
-    const filled = Math.floor((percent / 100) * width);
-    const empty = width - filled;
-    return '{green-fg}' + '█'.repeat(filled) + '{/}' + '{gray-fg}' + '░'.repeat(empty) + '{/}';
+    return renderDashboardProgressBar(current, target, width);
   }
 
   /**
    * Format duration (seconds to human-readable)
    */
   private formatDuration(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${secs}s`;
-    } else {
-      return `${secs}s`;
-    }
+    return formatDashboardDuration(seconds);
   }
 
   private renderMetrics(): void {
@@ -466,8 +440,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
 
     if (this.state.metrics.size > 0) {
       for (const [tf, metrics] of this.state.metrics) {
-        const trendColor = metrics.trend === 'UPTREND' ? '{green-fg}' :
-                          metrics.trend === 'DOWNTREND' ? '{red-fg}' : '{yellow-fg}';
+        const trendColor = getDashboardTrendColor(metrics.trend);
         content += `{bold}${tf}:{/bold} ${trendColor}${metrics.trend}{/}\n`;
         content += `  RSI: ${metrics.rsi.toFixed(1)}`;
         if (metrics.ema20) content += ` | EMA20: ${metrics.ema20.toFixed(2)}`;
@@ -557,8 +530,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     const avgPnL = totalTrades > 0 ? dailyPnL / totalTrades : 0;
 
     // Win rate color
-    const wrColor = winRate >= 60 ? '{green-fg}' :
-                    winRate >= 40 ? '{yellow-fg}' : '{red-fg}';
+    const wrColor = getDashboardWinRateColor(winRate);
 
     let content = '{bold}Daily Stats:{/bold}\n';
     content += `Trades: {bold}${totalTrades}{/bold} `;
@@ -583,15 +555,13 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
 
     let content = '';
     for (const [tf, metrics] of this.state.metrics) {
-      const trendColor = metrics.trend === 'UPTREND' ? '{green-fg}' :
-                        metrics.trend === 'DOWNTREND' ? '{red-fg}' : '{yellow-fg}';
+      const trendColor = getDashboardTrendColor(metrics.trend);
 
       content += `{bold}{cyan-fg}${tf.toUpperCase()}{/}{/bold}\n`;
       content += `  Trend: ${trendColor}${metrics.trend}{/}\n`;
 
       // RSI with color (overbought/oversold)
-      const rsiColor = metrics.rsi > 70 ? '{red-fg}' :
-                       metrics.rsi < 30 ? '{green-fg}' : '{white-fg}';
+      const rsiColor = getDashboardRsiColor(metrics.rsi);
       content += `  RSI: ${rsiColor}${metrics.rsi.toFixed(1)}{/}`;
 
       // RSI bar
@@ -635,16 +605,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       const time = event.timestamp.toLocaleTimeString();
 
       // Color by event type
-      let typeColor = '{white-fg}';
-      if (event.type.includes('win') || event.type.includes('profit')) {
-        typeColor = '{green-fg}';
-      } else if (event.type.includes('loss') || event.type.includes('sl-hit')) {
-        typeColor = '{red-fg}';
-      } else if (event.type.includes('position-open') || event.type.includes('tp-hit')) {
-        typeColor = '{cyan-fg}';
-      } else if (event.type.includes('error') || event.type.includes('warning')) {
-        typeColor = '{yellow-fg}';
-      }
+      const typeColor = getDashboardEventTypeColor(event.type);
 
       content += `{gray-fg}[${time}]{/} ${typeColor}${event.type}{/}: ${event.message}\n`;
     }
@@ -685,19 +646,11 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
   public updatePrice(price: number): void {
     // THROW: Input validation (outside try-catch to propagate)
     if (typeof price !== 'number' || !Number.isFinite(price)) {
-      const error = new Error('Price must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Price must be a finite number');
     }
 
     if (price < 0) {
-      const error = new Error('Price must be non-negative');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Price must be non-negative');
     }
 
     try {
@@ -747,19 +700,11 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
   public updatePnL(pnl: number, pnlPercent: number): void {
     // THROW: Input validation (outside try-catch to propagate)
     if (typeof pnl !== 'number' || !Number.isFinite(pnl)) {
-      const error = new Error('PnL must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('PnL must be a finite number');
     }
 
     if (typeof pnlPercent !== 'number' || !Number.isFinite(pnlPercent)) {
-      const error = new Error('PnL percent must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('PnL percent must be a finite number');
     }
 
     try {
@@ -843,12 +788,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     }
 
     try {
-      this.state.tpLevels = levels.map((l, idx) => ({
-        price: l.price || 0,
-        percent: l.percent,
-        level: l.level ?? idx + 1,
-        reached: false,
-      }));
+      this.state.tpLevels = buildDashboardTakeProfitLevels(levels);
     } catch (error) {
       // GRACEFUL_DEGRADE: TP levels update failure
       this.safeLog(`Take profit update failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -865,19 +805,11 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
   public setStopLoss(price: number): void {
     // THROW: Input validation (outside try-catch to propagate)
     if (typeof price !== 'number' || !Number.isFinite(price)) {
-      const error = new Error('Stop loss price must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Stop loss price must be a finite number');
     }
 
     if (price < 0) {
-      const error = new Error('Stop loss price must be non-negative');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Stop loss price must be non-negative');
     }
 
     try {
@@ -898,11 +830,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
   public recordWin(pnl: number): void {
     // THROW: Input validation (outside try-catch to propagate)
     if (typeof pnl !== 'number' || !Number.isFinite(pnl)) {
-      const error = new Error('PnL must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('PnL must be a finite number');
     }
 
     try {
@@ -924,11 +852,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
   public recordLoss(pnl: number): void {
     // THROW: Input validation (outside try-catch to propagate)
     if (typeof pnl !== 'number' || !Number.isFinite(pnl)) {
-      const error = new Error('PnL must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('PnL must be a finite number');
     }
 
     try {
@@ -954,32 +878,19 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
   public recordEvent(type: string, message: string): void {
     // THROW: Input validation (outside try-catch to propagate)
     if (typeof type !== 'string' || type.length === 0) {
-      const error = new Error('Event type must be a non-empty string');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Event type must be a non-empty string');
     }
 
     if (typeof message !== 'string' || message.length === 0) {
-      const error = new Error('Event message must be a non-empty string');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Event message must be a non-empty string');
     }
 
     try {
-      this.state.events.push({
+      appendDashboardEventWithLimit(this.state.events, {
         timestamp: new Date(),
         type,
         message,
-      });
-
-      // Keep only last 50 events (prevent memory leak)
-      if (this.state.events.length > 50) {
-        this.state.events.shift();
-      }
+      }, 50);
     } catch (error) {
       // GRACEFUL_DEGRADE: Event record failure
       this.safeLog(`Event record failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -1147,3 +1058,4 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     this.destroy();
   }
 }
+

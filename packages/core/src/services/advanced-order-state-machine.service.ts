@@ -30,6 +30,31 @@ import {
   TRANSITION_ID_PREFIX,
   STATE_MACHINE_ORDER_ID_PREFIX,
 } from '../constants/phase-13-constants';
+import {
+  applyStateTransition,
+  createBlockedStateTransitionRecord,
+  createStateTransitionRecord,
+} from './advanced-order-state-machine/advanced-order-state-machine-transition.utils';
+import {
+  invokeErrorCallback,
+  invokeStateChangeCallback,
+  invokeTimeoutCallback,
+} from './advanced-order-state-machine/advanced-order-state-machine-callback.utils';
+import { handleSkippableError } from './advanced-order-state-machine/advanced-order-state-machine-error.utils';
+import {
+  markLockAcquired,
+  markLockReleased,
+} from './advanced-order-state-machine/advanced-order-state-machine-lock.utils';
+import {
+  requireErrorObject,
+  requireOrderId,
+  requirePositiveFillSizes,
+  requireStateMachine,
+  requireTargetState,
+} from './advanced-order-state-machine/advanced-order-state-machine-guards.utils';
+import { shouldProcessTimeout } from './advanced-order-state-machine/advanced-order-state-machine-timeout.utils';
+import { safeLogWithRecovery } from './advanced-order-state-machine/advanced-order-state-machine-logging.utils';
+import { buildInitialStateMachine } from './advanced-order-state-machine/advanced-order-state-machine-factory.utils';
 
 // ============================================================================
 // INTERFACES
@@ -45,7 +70,7 @@ export interface StateTransition {
   timestamp: number;
   reason: string;
   triggeredBy: TransitionTrigger;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -81,7 +106,7 @@ export interface OrderStateMachine {
 export interface TransitionOptions {
   reason: string;
   triggeredBy: TransitionTrigger;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   skipValidation?: boolean; // For emergency rollbacks
 }
 
@@ -161,30 +186,14 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
       onError?: (error: Error) => void;
     }
   ): OrderStateMachine {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required for state machine creation');
-    }
+    requireOrderId(orderId, 'Order ID is required for state machine creation');
 
     if (this.stateMachines.has(orderId)) {
       throw new Error(`State machine already exists for order ${orderId}`);
     }
 
     const now = Date.now();
-    const stateMachine: OrderStateMachine = {
-      orderId,
-      currentState: OrderState.PENDING,
-      previousState: undefined,
-      transitions: [],
-      createdAt: now,
-      updatedAt: now,
-      timeoutMs: options?.timeoutMs ?? DEFAULT_ORDER_TIMEOUT_MS,
-      timeoutAt: now + (options?.timeoutMs ?? DEFAULT_ORDER_TIMEOUT_MS),
-      locked: false,
-      onStateChange: options?.onStateChange,
-      onTimeout: options?.onTimeout,
-      onError: options?.onError,
-    };
+    const stateMachine = buildInitialStateMachine(orderId, now, options);
 
     this.stateMachines.set(orderId, stateMachine);
     this.safeLog(`State machine created for order ${orderId}`);
@@ -200,19 +209,9 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     toState: OrderState,
     options: TransitionOptions
   ): Promise<StateTransition> {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required for state transition');
-    }
-
-    if (!toState) {
-      throw new Error('Target state is required for transition');
-    }
-
-    const stateMachine = this.stateMachines.get(orderId);
-    if (!stateMachine) {
-      throw new Error(`State machine not found for order ${orderId}`);
-    }
+    requireOrderId(orderId, 'Order ID is required for state transition');
+    requireTargetState(toState);
+    const stateMachine = requireStateMachine(this.stateMachines.get(orderId), orderId);
 
     // Acquire lock (GRACEFUL_DEGRADE: if can't acquire, return gracefully)
     const lockAcquired = await this.acquireLock(orderId);
@@ -228,27 +227,20 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
         );
 
         if (!result.success) {
-          // Return dummy transition to indicate failure
-          return {
-            id: `${TRANSITION_ID_PREFIX}failed_${Date.now()}`,
-            from: stateMachine.currentState,
-            to: stateMachine.currentState, // Stay in same state
-            timestamp: Date.now(),
-            reason: 'Lock acquisition failed',
-            triggeredBy: TransitionTrigger.ERROR,
-          };
+          return createBlockedStateTransitionRecord(
+            TRANSITION_ID_PREFIX,
+            stateMachine.currentState,
+            Date.now()
+          );
         }
       }
 
       // Fallback without ErrorHandler
-      return {
-        id: `${TRANSITION_ID_PREFIX}failed_${Date.now()}`,
-        from: stateMachine.currentState,
-        to: stateMachine.currentState,
-        timestamp: Date.now(),
-        reason: 'Lock acquisition failed',
-        triggeredBy: TransitionTrigger.ERROR,
-      };
+      return createBlockedStateTransitionRecord(
+        TRANSITION_ID_PREFIX,
+        stateMachine.currentState,
+        Date.now()
+      );
     }
 
     try {
@@ -266,53 +258,32 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
         }
       }
 
-      // Create transition record
-      const transition: StateTransition = {
-        id: `${TRANSITION_ID_PREFIX}${orderId}_${Date.now()}`,
-        from: stateMachine.currentState,
-        to: toState,
-        timestamp: Date.now(),
+      const transition = createStateTransitionRecord({
+        transitionIdPrefix: TRANSITION_ID_PREFIX,
+        orderId,
+        fromState: stateMachine.currentState,
+        toState,
         reason: options.reason,
         triggeredBy: options.triggeredBy,
         metadata: options.metadata,
-      };
-
-      // Update state machine
-      stateMachine.previousState = stateMachine.currentState;
-      stateMachine.currentState = toState;
-      stateMachine.updatedAt = transition.timestamp;
-      stateMachine.transitions.push(transition);
-
-      // Trim history if needed
-      if (stateMachine.transitions.length > MAX_TRANSITION_HISTORY) {
-        stateMachine.transitions = stateMachine.transitions.slice(-MAX_TRANSITION_HISTORY);
-      }
-
-      // Update timeout for new state
-      const stateTimeout = STATE_TIMEOUTS[toState];
-      if (stateTimeout > 0) {
-        stateMachine.timeoutAt = transition.timestamp + stateTimeout;
-      } else {
-        stateMachine.timeoutAt = undefined; // Terminal state, no timeout
-      }
+        timestamp: Date.now(),
+      });
+      applyStateTransition({
+        stateMachine,
+        transition,
+        maxTransitionHistory: MAX_TRANSITION_HISTORY,
+        stateTimeouts: STATE_TIMEOUTS,
+      });
 
       // Update stats
       this.stats.totalTransitions++;
 
-      // Trigger callback (SKIP strategy: don't fail if callback throws)
-      if (stateMachine.onStateChange) {
-        try {
-          stateMachine.onStateChange(transition);
-        } catch (error) {
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, {
-              strategy: RecoveryStrategy.SKIP,
-              context: 'AdvancedOrderStateMachineService.transitionState.callback',
-            });
-          }
-          this.safeLog(`State change callback failed for order ${orderId}: ${error}`);
-        }
-      }
+      invokeStateChangeCallback(stateMachine.onStateChange, transition, {
+        errorHandler: this.errorHandler,
+        context: 'AdvancedOrderStateMachineService.transitionState.callback',
+        onLogFailure: (message) => this.safeLog(message),
+        failureMessage: `State change callback failed for order ${orderId}`,
+      });
 
       this.safeLog(
         `State transition: ${transition.from} → ${transition.to} (${orderId})`
@@ -371,15 +342,8 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
    * Handle timeout for an order
    */
   async handleTimeout(orderId: string): Promise<StateTransition | null> {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required for timeout handling');
-    }
-
-    const stateMachine = this.stateMachines.get(orderId);
-    if (!stateMachine) {
-      throw new Error(`State machine not found for order ${orderId}`);
-    }
+    requireOrderId(orderId, 'Order ID is required for timeout handling');
+    const stateMachine = requireStateMachine(this.stateMachines.get(orderId), orderId);
 
     // Check if order has timed out
     const now = Date.now();
@@ -390,20 +354,12 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     this.safeLog(`Order ${orderId} timed out in state ${stateMachine.currentState}`);
     this.stats.timeoutCount++;
 
-    // Trigger timeout callback (SKIP strategy)
-    if (stateMachine.onTimeout) {
-      try {
-        stateMachine.onTimeout();
-      } catch (error) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'AdvancedOrderStateMachineService.handleTimeout.callback',
-          });
-        }
-        this.safeLog(`Timeout callback failed for order ${orderId}: ${error}`);
-      }
-    }
+    invokeTimeoutCallback(stateMachine.onTimeout, {
+      errorHandler: this.errorHandler,
+      context: 'AdvancedOrderStateMachineService.handleTimeout.callback',
+      onLogFailure: (message) => this.safeLog(message),
+      failureMessage: `Timeout callback failed for order ${orderId}`,
+    });
 
     // Transition to EXPIRED state
     return this.transitionState(orderId, OrderState.EXPIRED, {
@@ -421,23 +377,9 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     filledSize: number,
     totalSize: number
   ): Promise<StateTransition> {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required for partial fill handling');
-    }
-
-    if (filledSize <= 0 || totalSize <= 0) {
-      throw new Error('Invalid fill sizes: both must be positive');
-    }
-
-    if (filledSize >= totalSize) {
-      throw new Error('Filled size >= total size, use handleFilled() instead');
-    }
-
-    const stateMachine = this.stateMachines.get(orderId);
-    if (!stateMachine) {
-      throw new Error(`State machine not found for order ${orderId}`);
-    }
+    requireOrderId(orderId, 'Order ID is required for partial fill handling');
+    requirePositiveFillSizes(filledSize, totalSize);
+    requireStateMachine(this.stateMachines.get(orderId), orderId);
 
     const fillPercentage = (filledSize / totalSize) * 100;
 
@@ -456,15 +398,8 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     reason: string,
     triggeredBy: TransitionTrigger = TransitionTrigger.USER
   ): Promise<StateTransition> {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required for cancellation');
-    }
-
-    const stateMachine = this.stateMachines.get(orderId);
-    if (!stateMachine) {
-      throw new Error(`State machine not found for order ${orderId}`);
-    }
+    requireOrderId(orderId, 'Order ID is required for cancellation');
+    requireStateMachine(this.stateMachines.get(orderId), orderId);
 
     return this.transitionState(orderId, OrderState.CANCELLED, {
       reason: reason || 'Order cancelled',
@@ -480,37 +415,19 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     error: Error,
     failState: OrderState = OrderState.FAILED
   ): Promise<StateTransition> {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required for error handling');
-    }
-
-    if (!error) {
-      throw new Error('Error object is required');
-    }
-
-    const stateMachine = this.stateMachines.get(orderId);
-    if (!stateMachine) {
-      throw new Error(`State machine not found for order ${orderId}`);
-    }
+    requireOrderId(orderId, 'Order ID is required for error handling');
+    requireErrorObject(error);
+    const stateMachine = requireStateMachine(this.stateMachines.get(orderId), orderId);
 
     this.safeLog(`Error occurred for order ${orderId}: ${error.message}`);
     this.stats.errorCount++;
 
-    // Trigger error callback (SKIP strategy)
-    if (stateMachine.onError) {
-      try {
-        stateMachine.onError(error);
-      } catch (callbackError) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(callbackError, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'AdvancedOrderStateMachineService.handleError.callback',
-          });
-        }
-        this.safeLog(`Error callback failed for order ${orderId}: ${callbackError}`);
-      }
-    }
+    invokeErrorCallback(stateMachine.onError, error, {
+      errorHandler: this.errorHandler,
+      context: 'AdvancedOrderStateMachineService.handleError.callback',
+      onLogFailure: (message) => this.safeLog(message),
+      failureMessage: `Error callback failed for order ${orderId}`,
+    });
 
     return this.transitionState(orderId, failState, {
       reason: `Error: ${error.message}`,
@@ -523,16 +440,8 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
    * Get complete order history
    */
   getOrderHistory(orderId: string): StateTransition[] {
-    // Validation (THROW strategy)
-    if (!orderId) {
-      throw new Error('Order ID is required to get history');
-    }
-
-    const stateMachine = this.stateMachines.get(orderId);
-    if (!stateMachine) {
-      throw new Error(`State machine not found for order ${orderId}`);
-    }
-
+    requireOrderId(orderId, 'Order ID is required to get history');
+    const stateMachine = requireStateMachine(this.stateMachines.get(orderId), orderId);
     return [...stateMachine.transitions]; // Return copy
   }
 
@@ -569,9 +478,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
    * Remove state machine (cleanup)
    */
   removeStateMachine(orderId: string): void {
-    if (!orderId) {
-      throw new Error('Order ID is required for removal');
-    }
+    requireOrderId(orderId, 'Order ID is required for removal');
 
     this.stateMachines.delete(orderId);
     this.locks.delete(orderId);
@@ -601,11 +508,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     while (Date.now() - startTime < STATE_LOCK_TIMEOUT_MS) {
       if (!this.locks.get(orderId)) {
         this.locks.set(orderId, true);
-        const stateMachine = this.stateMachines.get(orderId);
-        if (stateMachine) {
-          stateMachine.locked = true;
-          stateMachine.lockAcquiredAt = Date.now();
-        }
+        markLockAcquired(this.stateMachines.get(orderId), Date.now());
         return true;
       }
 
@@ -621,11 +524,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
    */
   private releaseLock(orderId: string): void {
     this.locks.set(orderId, false);
-    const stateMachine = this.stateMachines.get(orderId);
-    if (stateMachine) {
-      stateMachine.locked = false;
-      stateMachine.lockAcquiredAt = undefined;
-    }
+    markLockReleased(this.stateMachines.get(orderId));
   }
 
   /**
@@ -648,14 +547,13 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
         skipValidation: true, // Emergency rollback, skip normal validation
       });
     } catch (rollbackError) {
-      this.safeLog(`Rollback failed for order ${orderId}: ${rollbackError}`);
-
-      if (this.errorHandler) {
-        this.errorHandler.handle(rollbackError, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'AdvancedOrderStateMachineService.rollbackState',
-        });
-      }
+      handleSkippableError({
+        error: rollbackError,
+        errorHandler: this.errorHandler,
+        context: 'AdvancedOrderStateMachineService.rollbackState',
+        logMessage: `Rollback failed for order ${orderId}: ${rollbackError}`,
+        safeLog: (message) => this.safeLog(message),
+      });
     }
   }
 
@@ -665,12 +563,13 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
   private startTimeoutChecker(): void {
     this.timeoutCheckInterval = setInterval(() => {
       this.checkTimeouts().catch((error) => {
-        this.safeLog(`Timeout checker error: ${error}`);
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-          });
-        }
+        handleSkippableError({
+          error,
+          errorHandler: this.errorHandler,
+          context: 'AdvancedOrderStateMachineService.startTimeoutChecker',
+          logMessage: `Timeout checker error: ${error}`,
+          safeLog: (message) => this.safeLog(message),
+        });
       });
     }, STATE_CHECK_INTERVAL_MS);
   }
@@ -682,29 +581,20 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
     const now = Date.now();
 
     for (const [orderId, stateMachine] of this.stateMachines) {
-      // Skip if locked (transition in progress)
-      if (stateMachine.locked) {
+      if (!shouldProcessTimeout(stateMachine, now)) {
         continue;
       }
 
-      // Skip if already in terminal state
-      if (TERMINAL_STATES.has(stateMachine.currentState)) {
-        continue;
-      }
-
-      // Check timeout
-      if (stateMachine.timeoutAt && now >= stateMachine.timeoutAt) {
-        try {
-          await this.handleTimeout(orderId);
-        } catch (error) {
-          this.safeLog(`Failed to handle timeout for order ${orderId}: ${error}`);
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, {
-              strategy: RecoveryStrategy.SKIP,
-              context: 'AdvancedOrderStateMachineService.checkTimeouts',
-            });
-          }
-        }
+      try {
+        await this.handleTimeout(orderId);
+      } catch (error) {
+        handleSkippableError({
+          error,
+          errorHandler: this.errorHandler,
+          context: 'AdvancedOrderStateMachineService.checkTimeouts',
+          logMessage: `Failed to handle timeout for order ${orderId}: ${error}`,
+          safeLog: (message) => this.safeLog(message),
+        });
       }
     }
   }
@@ -720,25 +610,13 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
    * Safe logging wrapper (SKIP strategy)
    */
   private safeLog(message: string, level: 'info' | 'warn' | 'error' = 'info'): void {
-    if (!this.logger) return;
-
-    try {
-      const context = { service: 'AdvancedOrderStateMachineService' };
-      if (level === 'warn') {
-        this.logger.warn(message, context);
-      } else if (level === 'error') {
-        this.logger.error(message, context);
-      } else {
-        this.logger.info(message, context);
-      }
-    } catch (error) {
-      // SKIP: Silently ignore logging errors
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'AdvancedOrderStateMachineService.safeLog',
-        });
-      }
-    }
+    safeLogWithRecovery({
+      logger: this.logger,
+      errorHandler: this.errorHandler,
+      message,
+      level,
+      context: { service: 'AdvancedOrderStateMachineService' },
+      errorContext: 'AdvancedOrderStateMachineService.safeLog',
+    });
   }
 }

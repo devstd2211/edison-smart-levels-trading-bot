@@ -10,6 +10,11 @@ import {
 import { SignalDirection } from '../types/legacy';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
+import {
+  scoreByAtLeastThreshold,
+  scoreByAtMostThreshold,
+} from './weight-matrix/weight-matrix-threshold.utils';
+import { safeRatio } from './weight-matrix/weight-matrix-ratio.utils';
 
 /**
  * Weight Matrix Calculator Service
@@ -642,11 +647,11 @@ export class WeightMatrixCalculatorService {
     atr: { current: number; average: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { current, average } = atr;
 
-    // GRACEFUL_DEGRADE: Handle division by zero
-    if (!Number.isFinite(current) || !Number.isFinite(average) || average <= 0) {
+    const ratio = safeRatio(current, average);
+    if (ratio === null) {
       return {
         points: 0,
         maxPoints,
@@ -654,35 +659,15 @@ export class WeightMatrixCalculatorService {
       };
     }
 
-    const ratio = current / average;
-
-    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
-    if (!Number.isFinite(ratio)) {
-      return {
-        points: 0,
-        maxPoints,
-        reason: 'ATR calculation failed',
-      };
+    const points = scoreByAtLeastThreshold(ratio, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `ATR ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (excellent)` };
     }
-
-    if (thresholds.excellent && ratio >= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `ATR ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (excellent)`,
-      };
-    } else if (thresholds.good && ratio >= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `ATR ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (good)`,
-      };
-    } else if (thresholds.ok && ratio >= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `ATR ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (ok)`,
-      };
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `ATR ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `ATR ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (ok)` };
     }
 
     return {
@@ -700,11 +685,11 @@ export class WeightMatrixCalculatorService {
     volume: { current: number; average: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { current, average } = volume;
 
-    // GRACEFUL_DEGRADE: Handle division by zero
-    if (!Number.isFinite(current) || !Number.isFinite(average) || average <= 0) {
+    const ratio = safeRatio(current, average);
+    if (ratio === null) {
       return {
         points: 0,
         maxPoints,
@@ -712,41 +697,18 @@ export class WeightMatrixCalculatorService {
       };
     }
 
-    const ratio = current / average;
-
-    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
-    if (!Number.isFinite(ratio)) {
-      return {
-        points: 0,
-        maxPoints,
-        reason: 'Volume calculation failed',
-      };
+    const points = scoreByAtLeastThreshold(ratio, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (excellent)` };
     }
-
-    if (thresholds.excellent && ratio >= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (excellent)`,
-      };
-    } else if (thresholds.good && ratio >= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (good)`,
-      };
-    } else if (thresholds.ok && ratio >= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (ok)`,
-      };
-    } else if (thresholds.weak && ratio >= thresholds.weak) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.WEAK,
-        maxPoints,
-        reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (weak)`,
-      };
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (ok)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.WEAK) {
+      return { points, maxPoints, reason: `Volume ${ratio.toFixed(DECIMAL_PLACES.PERCENT)}x avg (weak)` };
     }
 
     return {
@@ -769,10 +731,7 @@ export class WeightMatrixCalculatorService {
     const { maxPoints, thresholds } = weight;
     const { buyPressure, sellPressure } = delta;
 
-    // GRACEFUL_DEGRADE: Handle division by zero
-    if (!Number.isFinite(buyPressure) || !Number.isFinite(sellPressure) ||
-        (direction === SignalDirection.LONG && sellPressure <= 0) ||
-        (direction === SignalDirection.SHORT && buyPressure <= 0)) {
+    if (!Number.isFinite(buyPressure) || !Number.isFinite(sellPressure)) {
       return {
         points: 0,
         maxPoints,
@@ -781,14 +740,12 @@ export class WeightMatrixCalculatorService {
     }
 
     const isLong = direction === SignalDirection.LONG;
-    const ratio = isLong ? buyPressure / sellPressure : sellPressure / buyPressure;
-
-    // GRACEFUL_DEGRADE: Handle NaN/Infinity result
-    if (!Number.isFinite(ratio)) {
+    const ratio = isLong ? safeRatio(buyPressure, sellPressure) : safeRatio(sellPressure, buyPressure);
+    if (ratio === null) {
       return {
         points: 0,
         maxPoints,
-        reason: 'Delta calculation failed',
+        reason: 'Delta invalid values',
       };
     }
 
@@ -827,27 +784,17 @@ export class WeightMatrixCalculatorService {
     orderbook: { wallStrength: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { wallStrength } = orderbook;
-
-    if (thresholds.excellent && wallStrength >= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `Wall strength ${wallStrength.toFixed(0)} (excellent)`,
-      };
-    } else if (thresholds.good && wallStrength >= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `Wall strength ${wallStrength.toFixed(0)} (good)`,
-      };
-    } else if (thresholds.ok && wallStrength >= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `Wall strength ${wallStrength.toFixed(0)} (ok)`,
-      };
+    const points = scoreByAtLeastThreshold(wallStrength, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `Wall strength ${wallStrength.toFixed(0)} (excellent)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `Wall strength ${wallStrength.toFixed(0)} (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `Wall strength ${wallStrength.toFixed(0)} (ok)` };
     }
 
     return {
@@ -919,27 +866,17 @@ export class WeightMatrixCalculatorService {
     levelStrength: { touches: number; strength: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { touches, strength } = levelStrength;
-
-    if (thresholds.excellent && touches >= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `Level ${touches} touches (excellent)`,
-      };
-    } else if (thresholds.good && touches >= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `Level ${touches} touches (good)`,
-      };
-    } else if (thresholds.ok && touches >= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `Level ${touches} touches (ok)`,
-      };
+    const points = scoreByAtLeastThreshold(touches, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `Level ${touches} touches (excellent)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `Level ${touches} touches (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `Level ${touches} touches (ok)` };
     }
 
     return {
@@ -957,33 +894,20 @@ export class WeightMatrixCalculatorService {
     levelDistance: { percent: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { percent } = levelDistance;
-
-    if (thresholds.excellent && percent <= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (excellent)`,
-      };
-    } else if (thresholds.good && percent <= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (good)`,
-      };
-    } else if (thresholds.ok && percent <= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (ok)`,
-      };
-    } else if (thresholds.weak && percent <= thresholds.weak) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.WEAK,
-        maxPoints,
-        reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (weak)`,
-      };
+    const points = scoreByAtMostThreshold(percent, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (excellent)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (ok)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.WEAK) {
+      return { points, maxPoints, reason: `Level ${percent.toFixed(DECIMAL_PLACES.PERCENT)}% away (weak)` };
     }
 
     return {
@@ -1022,27 +946,17 @@ export class WeightMatrixCalculatorService {
     chartPatterns: { type: string; strength: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { type, strength } = chartPatterns;
-
-    if (thresholds.excellent && strength >= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `Pattern ${type} ${strength.toFixed(0)}% (excellent)`,
-      };
-    } else if (thresholds.good && strength >= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `Pattern ${type} ${strength.toFixed(0)}% (good)`,
-      };
-    } else if (thresholds.ok && strength >= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `Pattern ${type} ${strength.toFixed(0)}% (ok)`,
-      };
+    const points = scoreByAtLeastThreshold(strength, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `Pattern ${type} ${strength.toFixed(0)}% (excellent)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `Pattern ${type} ${strength.toFixed(0)}% (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `Pattern ${type} ${strength.toFixed(0)}% (ok)` };
     }
 
     return {
@@ -1060,27 +974,17 @@ export class WeightMatrixCalculatorService {
     candlePatterns: { type: string; strength: number },
     weight: IndicatorWeight,
   ): { points: number; maxPoints: number; reason: string } {
-    const { maxPoints, thresholds } = weight;
+    const { maxPoints } = weight;
     const { type, strength } = candlePatterns;
-
-    if (thresholds.excellent && strength >= thresholds.excellent) {
-      return {
-        points: maxPoints,
-        maxPoints,
-        reason: `Candle ${type} ${strength.toFixed(0)}% (excellent)`,
-      };
-    } else if (thresholds.good && strength >= thresholds.good) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.GOOD,
-        maxPoints,
-        reason: `Candle ${type} ${strength.toFixed(0)}% (good)`,
-      };
-    } else if (thresholds.ok && strength >= thresholds.ok) {
-      return {
-        points: maxPoints * SCORE_MULTIPLIERS.OK,
-        maxPoints,
-        reason: `Candle ${type} ${strength.toFixed(0)}% (ok)`,
-      };
+    const points = scoreByAtLeastThreshold(strength, weight, SCORE_MULTIPLIERS);
+    if (points === maxPoints) {
+      return { points, maxPoints, reason: `Candle ${type} ${strength.toFixed(0)}% (excellent)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.GOOD) {
+      return { points, maxPoints, reason: `Candle ${type} ${strength.toFixed(0)}% (good)` };
+    }
+    if (points === maxPoints * SCORE_MULTIPLIERS.OK) {
+      return { points, maxPoints, reason: `Candle ${type} ${strength.toFixed(0)}% (ok)` };
     }
 
     return {

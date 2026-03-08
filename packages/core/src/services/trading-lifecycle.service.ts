@@ -38,6 +38,9 @@ import {
 import { ActionQueueService } from './action-queue.service';
 import type { ILifecycle } from '../interfaces/ILifecycle';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { evaluatePositionTimeout } from './trading-lifecycle/trading-lifecycle-timeout.utils';
+import { tryUpdatePositionState } from './trading-lifecycle/trading-lifecycle-state.utils';
+import { publishEventWithRetryOrWarn } from './trading-lifecycle/trading-lifecycle-event.utils';
 
 /**
  * TradingLifecycleManager: Orchestrates position lifecycle with timeout detection
@@ -235,26 +238,18 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       const maxHoldingMinutes = this.config.maxHoldingTimeMinutes;
       const warningThresholdMinutes = this.config.warningThresholdMinutes;
 
-      let newState = position.state;
-      let isWarning = false;
-      let isCritical = false;
-
-      // Check timeout thresholds
-      if (holdingTimeMinutes >= maxHoldingMinutes) {
-        // Position has exceeded maximum holding time
-        newState = PositionLifecycleState.CRITICAL;
-        isCritical = true;
+      const timeout = evaluatePositionTimeout({
+        position,
+        holdingTimeMinutes,
+        maxHoldingMinutes,
+        warningThresholdMinutes,
+      });
+      let newState = timeout.newState;
+      if (timeout.isCritical) {
         anyCritical = true;
-
-        // Emit critical alert
-        const criticalAlert: TimeoutAlert = {
-          positionId: position.positionId,
-          symbol: position.symbol,
-          holdingTimeMinutes: Math.round(holdingTimeMinutes),
-          state: newState,
-          minutesUntilTimeout: Math.round(holdingTimeMinutes - maxHoldingMinutes) * -1,
-        };
-        alerts.push(criticalAlert);
+        if (timeout.alert) {
+          alerts.push(timeout.alert);
+        }
 
         this.logger.warn(
           `[TradingLifecycleManager] CRITICAL TIMEOUT: ${position.symbol} position has exceeded max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
@@ -264,24 +259,16 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
         if (this.config.enableAutomaticTimeout) {
           await this.handlePositionTimeout(position);
         }
-      } else if (holdingTimeMinutes >= warningThresholdMinutes) {
-        // Position is approaching timeout threshold
-        newState = PositionLifecycleState.WARNING;
-        isWarning = true;
+      } else if (timeout.isWarning) {
         anyWarnings = true;
 
         // Emit warning alert only once per position
         if (!this.warningEmittedFor.has(positionId)) {
-          const roundedHoldingMinutes = Math.round(holdingTimeMinutes);
-          const minutesUntilTimeout = Math.round(maxHoldingMinutes - holdingTimeMinutes);
-          const warningAlert: TimeoutAlert = {
-            positionId: position.positionId,
-            symbol: position.symbol,
-            holdingTimeMinutes: roundedHoldingMinutes,
-            state: newState,
-            minutesUntilTimeout,
-          };
-          alerts.push(warningAlert);
+          if (timeout.alert) {
+            alerts.push(timeout.alert);
+          }
+          const roundedHoldingMinutes = timeout.alert?.holdingTimeMinutes ?? Math.round(holdingTimeMinutes);
+          const minutesUntilTimeout = timeout.alert?.minutesUntilTimeout ?? Math.round(maxHoldingMinutes - holdingTimeMinutes);
 
           await this.emitWarningTimeoutEvent({
             positionId: position.positionId,
@@ -296,31 +283,18 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
             `[TradingLifecycleManager] WARNING TIMEOUT: ${position.symbol} position approaching max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
           );
         }
-      } else {
-        // Position is safe
-        newState = PositionLifecycleState.OPEN;
       }
 
-      // GRACEFUL_DEGRADE Strategy: Update position state despite validation errors
-      if (newState !== position.state) {
-        if (this.validateStateTransition(position.state, newState)) {
-          try {
-            position.state = newState;
-            position.lastUpdateTime = now;
-          } catch (error) {
-            // GRACEFUL_DEGRADE: Log error but continue with old state
-            if (this.errorHandler) {
-              await this.errorHandler.handle(error, {
-                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-                context: `TradingLifecycleManager.updatePositionState[${position.positionId}]`,
-              });
-            }
-            this.logger.warn(
-              `[TradingLifecycleManager] Failed to update state for ${position.positionId}, continuing with old state`
-            );
-          }
-        }
-      }
+      await tryUpdatePositionState({
+        position,
+        nextState: newState,
+        validateTransition: (from, to) => this.validateStateTransition(from, to),
+        errorHandler: this.errorHandler,
+        logger: this.logger,
+        context: `TradingLifecycleManager.updatePositionState[${position.positionId}]`,
+        warnMessage: `[TradingLifecycleManager] Failed to update state for ${position.positionId}, continuing with old state`,
+        timestamp: now,
+      });
     }
 
     return {
@@ -344,41 +318,18 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       minutesUntilTimeout: payload.minutesUntilTimeout,
     };
 
-    if (this.errorHandler) {
-      try {
-        await this.errorHandler.executeAsync(
-          async () => {
-            this.eventBus.publishSync({
-              type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
-              data: eventData,
-              timestamp: payload.timestamp,
-            });
-          },
-          {
-            strategy: RecoveryStrategy.RETRY,
-            context: `TradingLifecycleManager.emitWarningEvent[${payload.positionId}]`,
-            retryConfig: {
-              maxAttempts: 2,
-              initialDelayMs: 100,
-              backoffMultiplier: 2,
-              maxDelayMs: 400,
-            },
-          }
-        );
-      } catch (error) {
-        // SKIP: Event publishing failure doesn't block timeout detection
-        this.logger.warn(
-          `[TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-      return;
-    }
-
-    // Fallback without ErrorHandler
-    this.eventBus.publishSync({
+    await publishEventWithRetryOrWarn({
+      eventBus: this.eventBus,
+      errorHandler: this.errorHandler,
       type: LiveTradingEventType.POSITION_TIMEOUT_WARNING,
       data: eventData,
       timestamp: payload.timestamp,
+      context: `TradingLifecycleManager.emitWarningEvent[${payload.positionId}]`,
+      onFailure: (error) => {
+        this.logger.warn(
+          `[TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      },
     });
   }
 
@@ -390,40 +341,19 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       details: request.details,
     };
 
-    if (this.errorHandler) {
-      try {
-        await this.errorHandler.executeAsync(
-          async () => {
-            this.eventBus.publishSync({
-              type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
-              data: eventData,
-              timestamp: Date.now(),
-            });
-          },
-          {
-            strategy: RecoveryStrategy.RETRY,
-            context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
-            retryConfig: {
-              maxAttempts: 2,
-              initialDelayMs: 100,
-              backoffMultiplier: 2,
-              maxDelayMs: 400,
-            },
-          }
-        );
-      } catch (error) {
-        // SKIP: Event publication failure should not block emergency close execution
+    const timestamp = Date.now();
+    await publishEventWithRetryOrWarn({
+      eventBus: this.eventBus,
+      errorHandler: this.errorHandler,
+      type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
+      data: eventData,
+      timestamp,
+      context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
+      onFailure: (error) => {
         this.logger.warn(
           `[TradingLifecycleManager] Failed emergency close event publication for ${request.positionId}: ${error instanceof Error ? error.message : String(error)}`
         );
-      }
-      return;
-    }
-
-    this.eventBus.publishSync({
-      type: LiveTradingEventType.POSITION_TIMEOUT_TRIGGERED,
-      data: eventData,
-      timestamp: Date.now(),
+      },
     });
   }
 
@@ -478,24 +408,16 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     }
 
     try {
-      // Update position state to CLOSING
-      if (this.validateStateTransition(position.state, PositionLifecycleState.CLOSING)) {
-        try {
-          position.state = PositionLifecycleState.CLOSING;
-          position.lastUpdateTime = Date.now();
-        } catch (stateError) {
-          // GRACEFUL_DEGRADE: State update failure doesn't block emergency close
-          if (this.errorHandler) {
-            await this.errorHandler.handle(stateError, {
-              strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-              context: `TradingLifecycleManager.setClosingState[${request.positionId}]`,
-            });
-          }
-          this.logger.warn(
-            `[TradingLifecycleManager] Failed to update state to CLOSING, proceeding with emergency close`
-          );
-        }
-      }
+      await tryUpdatePositionState({
+        position,
+        nextState: PositionLifecycleState.CLOSING,
+        validateTransition: (from, to) => this.validateStateTransition(from, to),
+        errorHandler: this.errorHandler,
+        logger: this.logger,
+        context: `TradingLifecycleManager.setClosingState[${request.positionId}]`,
+        warnMessage: '[TradingLifecycleManager] Failed to update state to CLOSING, proceeding with emergency close',
+        timestamp: Date.now(),
+      });
 
       await this.emitEmergencyCloseEvent(request);
 

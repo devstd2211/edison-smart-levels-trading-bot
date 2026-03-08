@@ -23,6 +23,8 @@ import {
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { calculateDirectionalProfitPercent } from './enhanced-exit/enhanced-exit-profit.utils';
+import { blockedRiskRewardValidation } from './enhanced-exit/enhanced-exit-riskreward.utils';
 
 // Local Level type definition
 interface Level {
@@ -421,13 +423,7 @@ export class EnhancedExitService {
             { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
           );
         }
-        return {
-          valid: false,
-          riskRewardRatio: 0,
-          riskPercent: 0,
-          rewardPercent: 0,
-          recommendation: 'Invalid entry price - trade blocked',
-        };
+        return blockedRiskRewardValidation('Invalid entry price - trade blocked');
       }
 
       if (!Number.isFinite(stopLoss)) {
@@ -437,13 +433,7 @@ export class EnhancedExitService {
             { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
           );
         }
-        return {
-          valid: false,
-          riskRewardRatio: 0,
-          riskPercent: 0,
-          rewardPercent: 0,
-          recommendation: 'Invalid stop loss - trade blocked',
-        };
+        return blockedRiskRewardValidation('Invalid stop loss - trade blocked');
       }
 
       if (!Number.isFinite(takeProfit)) {
@@ -453,13 +443,7 @@ export class EnhancedExitService {
             { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
           );
         }
-        return {
-          valid: false,
-          riskRewardRatio: 0,
-          riskPercent: 0,
-          rewardPercent: 0,
-          recommendation: 'Invalid take profit - trade blocked',
-        };
+        return blockedRiskRewardValidation('Invalid take profit - trade blocked');
       }
 
       if (!config.enabled) {
@@ -483,13 +467,7 @@ export class EnhancedExitService {
             { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
           );
         }
-        return {
-          valid: false,
-          riskRewardRatio: 0,
-          riskPercent: 0,
-          rewardPercent: 0,
-          recommendation: 'SL equals entry - trade blocked',
-        };
+        return blockedRiskRewardValidation('SL equals entry - trade blocked');
       }
 
       const riskPercent = (riskDistance / entryPrice) * PERCENT_MULTIPLIER;
@@ -503,13 +481,7 @@ export class EnhancedExitService {
             { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
           );
         }
-        return {
-          valid: false,
-          riskRewardRatio: 0,
-          riskPercent: 0,
-          rewardPercent: 0,
-          recommendation: 'Calculation error - position blocked for safety',
-        };
+        return blockedRiskRewardValidation('Calculation error - position blocked for safety');
       }
 
       const riskRewardRatio = rewardDistance / riskDistance;
@@ -541,13 +513,7 @@ export class EnhancedExitService {
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
-      return {
-        valid: false,
-        riskRewardRatio: 0,
-        riskPercent: 0,
-        rewardPercent: 0,
-        recommendation: 'Unexpected error - trade blocked',
-      };
+      return blockedRiskRewardValidation('Unexpected error - trade blocked');
     }
   }
 
@@ -936,9 +902,7 @@ export class EnhancedExitService {
     }
 
     const isLong = direction === SignalDirection.LONG;
-    const profitPercent = isLong
-      ? ((currentPrice - entryPrice) / entryPrice) * PERCENT_MULTIPLIER
-      : ((entryPrice - currentPrice) / entryPrice) * PERCENT_MULTIPLIER;
+    const profitPercent = calculateDirectionalProfitPercent(entryPrice, currentPrice, direction);
 
     // Check % activation
     let shouldActivate = profitPercent >= config.activationPercent;
@@ -1051,9 +1015,7 @@ export class EnhancedExitService {
     }
 
     const isLong = direction === SignalDirection.LONG;
-    const profitPercent = isLong
-      ? ((currentPrice - entryPrice) / entryPrice) * PERCENT_MULTIPLIER
-      : ((entryPrice - currentPrice) / entryPrice) * PERCENT_MULTIPLIER;
+    const profitPercent = calculateDirectionalProfitPercent(entryPrice, currentPrice, direction);
 
     // Check % activation
     let shouldActivate = profitPercent >= config.activationPercent;

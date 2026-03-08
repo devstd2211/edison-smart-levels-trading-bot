@@ -27,6 +27,12 @@ import { LoggerService } from './logger.service';
 import { OrderBookAnalysis } from '../types/legacy';
 import { SignalDirection } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import {
+  createDetectionFailedSignal,
+  createNoWhaleSignal,
+  createWallBreakKey,
+} from './whale-detection/whale-detection-signal.utils';
+import { upsertTrackedWhaleWall } from './whale-detection/whale-detection-wall.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -160,52 +166,40 @@ export class WhaleDetectionService {
     this.validateConfig();
   }
 
+  private throwValidationError(message: string): never {
+    const error = new Error(message);
+    if (this.errorHandler) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
+    }
+    throw error;
+  }
+
   /**
    * Validate configuration values
    * @throws On invalid config
    */
   private validateConfig(): void {
     if (!this.config || typeof this.config !== 'object') {
-      const error = new Error('Config must be a valid object');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Config must be a valid object');
     }
 
     // Validate wall break config
     if (this.config.modes?.wallBreak) {
       const wb = this.config.modes.wallBreak;
       if (typeof wb.enabled !== 'boolean') {
-        const error = new Error('wallBreak.enabled must be a boolean');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallBreak.enabled must be a boolean');
       }
 
       if (typeof wb.minWallSize !== 'number' || wb.minWallSize < 0) {
-        const error = new Error('wallBreak.minWallSize must be non-negative number');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallBreak.minWallSize must be non-negative number');
       }
 
       if (typeof wb.breakConfirmationMs !== 'number' || wb.breakConfirmationMs < 0) {
-        const error = new Error('wallBreak.breakConfirmationMs must be non-negative number');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallBreak.breakConfirmationMs must be non-negative number');
       }
 
       if (typeof wb.maxConfidence !== 'number' || wb.maxConfidence < 0 || wb.maxConfidence > 100) {
-        const error = new Error('wallBreak.maxConfidence must be between 0 and 100');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallBreak.maxConfidence must be between 0 and 100');
       }
     }
 
@@ -213,27 +207,15 @@ export class WhaleDetectionService {
     if (this.config.modes?.wallDisappearance) {
       const wd = this.config.modes.wallDisappearance;
       if (typeof wd.enabled !== 'boolean') {
-        const error = new Error('wallDisappearance.enabled must be a boolean');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallDisappearance.enabled must be a boolean');
       }
 
       if (typeof wd.minWallSize !== 'number' || wd.minWallSize < 0) {
-        const error = new Error('wallDisappearance.minWallSize must be non-negative number');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallDisappearance.minWallSize must be non-negative number');
       }
 
       if (typeof wd.maxConfidence !== 'number' || wd.maxConfidence < 0 || wd.maxConfidence > 100) {
-        const error = new Error('wallDisappearance.maxConfidence must be between 0 and 100');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('wallDisappearance.maxConfidence must be between 0 and 100');
       }
     }
 
@@ -241,53 +223,29 @@ export class WhaleDetectionService {
     if (this.config.modes?.imbalanceSpike) {
       const is = this.config.modes.imbalanceSpike;
       if (typeof is.enabled !== 'boolean') {
-        const error = new Error('imbalanceSpike.enabled must be a boolean');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('imbalanceSpike.enabled must be a boolean');
       }
 
       if (typeof is.minRatioChange !== 'number' || is.minRatioChange <= 0) {
-        const error = new Error('imbalanceSpike.minRatioChange must be positive number');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('imbalanceSpike.minRatioChange must be positive number');
       }
 
       if (typeof is.maxConfidence !== 'number' || is.maxConfidence < 0 || is.maxConfidence > 100) {
-        const error = new Error('imbalanceSpike.maxConfidence must be between 0 and 100');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('imbalanceSpike.maxConfidence must be between 0 and 100');
       }
     }
 
     // Validate general config
     if (typeof this.config.maxImbalanceHistory !== 'number' || this.config.maxImbalanceHistory <= 0) {
-      const error = new Error('maxImbalanceHistory must be positive number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('maxImbalanceHistory must be positive number');
     }
 
     if (typeof this.config.wallExpiryMs !== 'number' || this.config.wallExpiryMs < 0) {
-      const error = new Error('wallExpiryMs must be non-negative number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('wallExpiryMs must be non-negative number');
     }
 
     if (typeof this.config.breakExpiryMs !== 'number' || this.config.breakExpiryMs < 0) {
-      const error = new Error('breakExpiryMs must be non-negative number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('breakExpiryMs must be non-negative number');
     }
   }
 
@@ -334,14 +292,7 @@ export class WhaleDetectionService {
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
-      return {
-        detected: false,
-        mode: null,
-        direction: null,
-        confidence: 0,
-        reason: 'Whale detection failed',
-        metadata: {},
-      };
+      return createDetectionFailedSignal();
     }
 
     // MODE 3: Imbalance Spike (highest priority - immediate action)
@@ -380,14 +331,7 @@ export class WhaleDetectionService {
       });
     }
 
-    return {
-      detected: false,
-      mode: null,
-      direction: null,
-      confidence: 0,
-      reason: 'No whale activity detected',
-      metadata: {},
-    };
+    return createNoWhaleSignal('No whale activity detected');
   }
 
   /**
@@ -400,44 +344,24 @@ export class WhaleDetectionService {
     btcMomentum?: number
   ): void {
     if (!analysis || typeof analysis !== 'object') {
-      const error = new Error('Analysis must be a valid object');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Analysis must be a valid object');
     }
 
     if (typeof currentPrice !== 'number' || !Number.isFinite(currentPrice)) {
-      const error = new Error('Current price must be a finite number');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Current price must be a finite number');
     }
 
     if (currentPrice < 0) {
-      const error = new Error('Current price must be non-negative');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
+      this.throwValidationError('Current price must be non-negative');
     }
 
     if (btcMomentum !== undefined) {
       if (typeof btcMomentum !== 'number' || !Number.isFinite(btcMomentum)) {
-        const error = new Error('BTC momentum must be a finite number');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('BTC momentum must be a finite number');
       }
 
       if (btcMomentum < 0 || btcMomentum > 1) {
-        const error = new Error('BTC momentum must be between 0 and 1');
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
+        this.throwValidationError('BTC momentum must be between 0 and 1');
       }
     }
   }
@@ -456,88 +380,83 @@ export class WhaleDetectionService {
   private detectWallBreak(currentPrice: number): WhaleSignal {
     const now = Date.now();
     const confirmationMs = this.config.modes.wallBreak.breakConfirmationMs;
+    const minWallSize = this.config.modes.wallBreak.minWallSize;
 
-    // Check if any BID walls were broken (price dropped below)
-    for (const [wallPrice, wall] of this.trackedBidWalls.entries()) {
-      // Check if wall is significant
-      if (wall.percentOfTotal < this.config.modes.wallBreak.minWallSize) {
+    const bidSignal = this.tryDetectWallBreakForSide(
+      'BID',
+      this.trackedBidWalls,
+      currentPrice,
+      now,
+      confirmationMs,
+      minWallSize,
+    );
+    if (bidSignal) {
+      return bidSignal;
+    }
+
+    const askSignal = this.tryDetectWallBreakForSide(
+      'ASK',
+      this.trackedAskWalls,
+      currentPrice,
+      now,
+      confirmationMs,
+      minWallSize,
+    );
+    if (askSignal) {
+      return askSignal;
+    }
+
+    return createNoWhaleSignal();
+  }
+
+  private tryDetectWallBreakForSide(
+    side: 'BID' | 'ASK',
+    trackedWalls: Map<number, WhaleWall>,
+    currentPrice: number,
+    now: number,
+    confirmationMs: number,
+    minWallSize: number,
+  ): WhaleSignal | null {
+    for (const [wallPrice, wall] of trackedWalls.entries()) {
+      if (wall.percentOfTotal < minWallSize) {
         continue;
       }
 
-      // Check if price is now BELOW the wall
-      if (currentPrice < wallPrice) {
-        // Check if wall was broken recently (not just now)
-        const timeSinceLastSeen = now - wall.lastSeenAt;
-        if (timeSinceLastSeen < confirmationMs) {
-          continue; // Too soon, wait for confirmation
-        }
-
-        // Check if we already detected this break
-        const wallKey = `BID_${wallPrice.toFixed(DECIMAL_PLACES.PRICE)}`;
-        if (this.recentlyBrokenWalls.has(wallKey)) {
-          continue; // Already detected
-        }
-
-        // WALL BREAK DETECTED - BID wall broken → LONG signal
-        // Logic: BID wall absorbed selling pressure → buyers push price UP
-        this.recentlyBrokenWalls.add(wallKey);
-        this.trackedBidWalls.delete(wallPrice);
-
-        return {
-          detected: true,
-          mode: WhaleDetectionMode.WALL_BREAK,
-          direction: SignalDirection.LONG,
-          confidence: this.calculateBreakConfidence(wall),
-          reason: `BID wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed sells, Momentum UP`,
-          metadata: {
-            wall,
-            breakPrice: currentPrice,
-          },
-        };
-      }
-    }
-
-    // Check if any ASK walls were broken (price rose above)
-    for (const [wallPrice, wall] of this.trackedAskWalls.entries()) {
-      // Check if wall is significant
-      if (wall.percentOfTotal < this.config.modes.wallBreak.minWallSize) {
+      const priceBroken = side === 'BID' ? currentPrice < wallPrice : currentPrice > wallPrice;
+      if (!priceBroken) {
         continue;
       }
 
-      // Check if price is now ABOVE the wall
-      if (currentPrice > wallPrice) {
-        // Check if wall was broken recently (not just now)
-        const timeSinceLastSeen = now - wall.lastSeenAt;
-        if (timeSinceLastSeen < confirmationMs) {
-          continue; // Too soon, wait for confirmation
-        }
-
-        // Check if we already detected this break
-        const wallKey = `ASK_${wallPrice.toFixed(DECIMAL_PLACES.PRICE)}`;
-        if (this.recentlyBrokenWalls.has(wallKey)) {
-          continue; // Already detected
-        }
-
-        // WALL BREAK DETECTED - ASK wall broken → SHORT signal
-        // Logic: ASK wall absorbed buying pressure → sellers push price DOWN
-        this.recentlyBrokenWalls.add(wallKey);
-        this.trackedAskWalls.delete(wallPrice);
-
-        return {
-          detected: true,
-          mode: WhaleDetectionMode.WALL_BREAK,
-          direction: SignalDirection.SHORT,
-          confidence: this.calculateBreakConfidence(wall),
-          reason: `ASK wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed buys, Momentum DOWN`,
-          metadata: {
-            wall,
-            breakPrice: currentPrice,
-          },
-        };
+      const timeSinceLastSeen = now - wall.lastSeenAt;
+      if (timeSinceLastSeen < confirmationMs) {
+        continue;
       }
+
+      const wallKey = createWallBreakKey(side, wallPrice, DECIMAL_PLACES.PRICE);
+      if (this.recentlyBrokenWalls.has(wallKey)) {
+        continue;
+      }
+
+      this.recentlyBrokenWalls.add(wallKey);
+      trackedWalls.delete(wallPrice);
+
+      const isBid = side === 'BID';
+      return {
+        detected: true,
+        mode: WhaleDetectionMode.WALL_BREAK,
+        direction: isBid ? SignalDirection.LONG : SignalDirection.SHORT,
+        confidence: this.calculateBreakConfidence(wall),
+        reason: isBid
+          ? `BID wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed sells, Momentum UP`
+          : `ASK wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed buys, Momentum DOWN`,
+        metadata: {
+          wall,
+          breakPrice: currentPrice,
+        },
+      };
     }
 
-    return { detected: false, mode: null, direction: null, confidence: 0, reason: '', metadata: {} };
+    return null;
   }
 
   // ==========================================================================
@@ -562,102 +481,92 @@ export class WhaleDetectionService {
   private detectWallDisappearance(btcMomentum?: number, btcDirection?: string): WhaleSignal {
     const now = Date.now();
     const wallGoneThresholdMs = this.config.modes.wallDisappearance.wallGoneThresholdMs;
+    const minWallSize = this.config.modes.wallDisappearance.minWallSize;
+    const minWallDuration = this.config.modes.wallDisappearance.minWallDuration;
 
-    // Check BID walls that disappeared
-    for (const [wallPrice, wall] of this.trackedBidWalls.entries()) {
-      // Check if wall is significant
-      if (wall.percentOfTotal < this.config.modes.wallDisappearance.minWallSize) {
-        continue;
-      }
-
-      // Check if wall existed long enough
-      const wallLifetime = wall.lastSeenAt - wall.detectedAt;
-      if (wallLifetime < this.config.modes.wallDisappearance.minWallDuration) {
-        continue;
-      }
-
-      // Check if wall disappeared (not seen recently)
-      const timeSinceLastSeen = now - wall.lastSeenAt;
-      if (timeSinceLastSeen > wallGoneThresholdMs) {
-        // WALL DISAPPEARED - BID wall gone
-        this.trackedBidWalls.delete(wallPrice);
-
-        // Determine signal direction based on market trend
-        const { direction, reason, trendInverted } = this.determineWallDisappearanceDirection(
-          'BID',
-          wallPrice,
-          wallLifetime,
-          btcMomentum,
-          btcDirection,
-        );
-
-        if (direction == null) {
-          // Signal blocked by trend filter
-          continue;
-        }
-
-        return {
-          detected: true,
-          mode: WhaleDetectionMode.WALL_DISAPPEARANCE,
-          direction,
-          confidence: this.calculateDisappearanceConfidence(wall, wallLifetime),
-          reason,
-          metadata: {
-            wall,
-            trendInverted,
-          },
-        };
-      }
+    const bidSignal = this.tryDetectWallDisappearanceForSide(
+      'BID',
+      this.trackedBidWalls,
+      now,
+      wallGoneThresholdMs,
+      minWallSize,
+      minWallDuration,
+      btcMomentum,
+      btcDirection,
+    );
+    if (bidSignal) {
+      return bidSignal;
     }
 
-    // Check ASK walls that disappeared
-    for (const [wallPrice, wall] of this.trackedAskWalls.entries()) {
-      // Check if wall is significant
-      if (wall.percentOfTotal < this.config.modes.wallDisappearance.minWallSize) {
-        continue;
-      }
-
-      // Check if wall existed long enough
-      const wallLifetime = wall.lastSeenAt - wall.detectedAt;
-      if (wallLifetime < this.config.modes.wallDisappearance.minWallDuration) {
-        continue;
-      }
-
-      // Check if wall disappeared (not seen recently)
-      const timeSinceLastSeen = now - wall.lastSeenAt;
-      if (timeSinceLastSeen > wallGoneThresholdMs) {
-        // WALL DISAPPEARED - ASK wall gone
-        this.trackedAskWalls.delete(wallPrice);
-
-        // Determine signal direction based on market trend
-        const { direction, reason, trendInverted } = this.determineWallDisappearanceDirection(
-          'ASK',
-          wallPrice,
-          wallLifetime,
-          btcMomentum,
-          btcDirection,
-        );
-
-        if (direction == null) {
-          // Signal blocked by trend filter
-          continue;
-        }
-
-        return {
-          detected: true,
-          mode: WhaleDetectionMode.WALL_DISAPPEARANCE,
-          direction,
-          confidence: this.calculateDisappearanceConfidence(wall, wallLifetime),
-          reason,
-          metadata: {
-            wall,
-            trendInverted,
-          },
-        };
-      }
+    const askSignal = this.tryDetectWallDisappearanceForSide(
+      'ASK',
+      this.trackedAskWalls,
+      now,
+      wallGoneThresholdMs,
+      minWallSize,
+      minWallDuration,
+      btcMomentum,
+      btcDirection,
+    );
+    if (askSignal) {
+      return askSignal;
     }
 
-    return { detected: false, mode: null, direction: null, confidence: 0, reason: '', metadata: {} };
+    return createNoWhaleSignal();
+  }
+
+  private tryDetectWallDisappearanceForSide(
+    side: 'BID' | 'ASK',
+    trackedWalls: Map<number, WhaleWall>,
+    now: number,
+    wallGoneThresholdMs: number,
+    minWallSize: number,
+    minWallDuration: number,
+    btcMomentum?: number,
+    btcDirection?: string,
+  ): WhaleSignal | null {
+    for (const [wallPrice, wall] of trackedWalls.entries()) {
+      if (wall.percentOfTotal < minWallSize) {
+        continue;
+      }
+
+      const wallLifetime = wall.lastSeenAt - wall.detectedAt;
+      if (wallLifetime < minWallDuration) {
+        continue;
+      }
+
+      const timeSinceLastSeen = now - wall.lastSeenAt;
+      if (timeSinceLastSeen <= wallGoneThresholdMs) {
+        continue;
+      }
+
+      trackedWalls.delete(wallPrice);
+      const { direction, reason, trendInverted } = this.determineWallDisappearanceDirection(
+        side,
+        wallPrice,
+        wallLifetime,
+        btcMomentum,
+        btcDirection,
+      );
+
+      if (direction == null) {
+        continue;
+      }
+
+      return {
+        detected: true,
+        mode: WhaleDetectionMode.WALL_DISAPPEARANCE,
+        direction,
+        confidence: this.calculateDisappearanceConfidence(wall, wallLifetime),
+        reason,
+        metadata: {
+          wall,
+          trendInverted,
+        },
+      };
+    }
+
+    return null;
   }
 
   // ==========================================================================
@@ -673,7 +582,7 @@ export class WhaleDetectionService {
    */
   private detectImbalanceSpike(analysis: OrderBookAnalysis): WhaleSignal {
     if (this.imbalanceHistory.length < 3) {
-      return { detected: false, mode: null, direction: null, confidence: 0, reason: '', metadata: {} };
+      return createNoWhaleSignal();
     }
 
     const currentRatio = analysis.imbalance.ratio;
@@ -686,7 +595,7 @@ export class WhaleDetectionService {
     );
 
     if (!historicalSnapshot) {
-      return { detected: false, mode: null, direction: null, confidence: 0, reason: '', metadata: {} };
+      return createNoWhaleSignal();
     }
 
     const historicalRatio = historicalSnapshot.ratio;
@@ -720,7 +629,7 @@ export class WhaleDetectionService {
       };
     }
 
-    return { detected: false, mode: null, direction: null, confidence: 0, reason: '', metadata: {} };
+    return createNoWhaleSignal();
   }
 
   // ==========================================================================
@@ -732,47 +641,18 @@ export class WhaleDetectionService {
    */
   private updateTrackedWalls(analysis: OrderBookAnalysis): void {
     const now = Date.now();
+    this.updateTrackedWallsForSide('BID', analysis, this.trackedBidWalls, now);
+    this.updateTrackedWallsForSide('ASK', analysis, this.trackedAskWalls, now);
+  }
 
-    // Update BID walls
-    for (const wall of analysis.walls.filter((w) => w.side === 'BID')) {
-      const existing = this.trackedBidWalls.get(wall.price);
-      if (existing) {
-        existing.lastSeenAt = now;
-        existing.quantity = wall.quantity;
-        existing.percentOfTotal = wall.percentOfTotal;
-        existing.distance = wall.distance;
-      } else {
-        this.trackedBidWalls.set(wall.price, {
-          side: wall.side,
-          price: wall.price,
-          quantity: wall.quantity,
-          percentOfTotal: wall.percentOfTotal,
-          distance: wall.distance,
-          detectedAt: now,
-          lastSeenAt: now,
-        });
-      }
-    }
-
-    // Update ASK walls
-    for (const wall of analysis.walls.filter((w) => w.side === 'ASK')) {
-      const existing = this.trackedAskWalls.get(wall.price);
-      if (existing) {
-        existing.lastSeenAt = now;
-        existing.quantity = wall.quantity;
-        existing.percentOfTotal = wall.percentOfTotal;
-        existing.distance = wall.distance;
-      } else {
-        this.trackedAskWalls.set(wall.price, {
-          side: wall.side,
-          price: wall.price,
-          quantity: wall.quantity,
-          percentOfTotal: wall.percentOfTotal,
-          distance: wall.distance,
-          detectedAt: now,
-          lastSeenAt: now,
-        });
-      }
+  private updateTrackedWallsForSide(
+    side: 'BID' | 'ASK',
+    analysis: OrderBookAnalysis,
+    trackedWalls: Map<number, WhaleWall>,
+    now: number,
+  ): void {
+    for (const wall of analysis.walls.filter((currentWall) => currentWall.side === side)) {
+      upsertTrackedWhaleWall(trackedWalls, wall, now);
     }
   }
 
@@ -801,23 +681,24 @@ export class WhaleDetectionService {
   private cleanupExpiredData(): void {
     const now = Date.now();
     const wallExpiryMs = this.config.wallExpiryMs;
-    const breakExpiryMs = this.config.breakExpiryMs;
-
-    // Remove old walls
-    for (const [price, wall] of this.trackedBidWalls.entries()) {
-      if (now - wall.lastSeenAt > wallExpiryMs) {
-        this.trackedBidWalls.delete(price);
-      }
-    }
-    for (const [price, wall] of this.trackedAskWalls.entries()) {
-      if (now - wall.lastSeenAt > wallExpiryMs) {
-        this.trackedAskWalls.delete(price);
-      }
-    }
+    this.removeExpiredTrackedWalls(this.trackedBidWalls, now, wallExpiryMs);
+    this.removeExpiredTrackedWalls(this.trackedAskWalls, now, wallExpiryMs);
 
     // Remove old broken walls (allow re-detection after 5 min)
     if (this.recentlyBrokenWalls.size > WHALE_DETECTOR_THRESHOLDS.RECENT_BREAKS_MAX_SIZE) {
       this.recentlyBrokenWalls.clear(); // Prevent memory leak
+    }
+  }
+
+  private removeExpiredTrackedWalls(
+    trackedWalls: Map<number, WhaleWall>,
+    now: number,
+    wallExpiryMs: number,
+  ): void {
+    for (const [price, wall] of trackedWalls.entries()) {
+      if (now - wall.lastSeenAt > wallExpiryMs) {
+        trackedWalls.delete(price);
+      }
     }
   }
 
@@ -1052,3 +933,5 @@ export class WhaleDetectionService {
     }
   }
 }
+
+
