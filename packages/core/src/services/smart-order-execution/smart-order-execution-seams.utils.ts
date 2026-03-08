@@ -1,4 +1,16 @@
-import { MIN_PRICE_MOVEMENT_BPS, PRICE_DECIMALS } from '../../constants/phase-13-constants';
+import {
+  MIN_PRICE_MOVEMENT_BPS,
+  MIN_SIZE_DIFFERENCE,
+  PRICE_DECIMALS,
+  SIZE_DECIMALS,
+  SUB_ORDER_ID_PREFIX,
+} from '../../constants/phase-13-constants';
+import {
+  buildExecutionReasoningMessage,
+  calculateFillPriceFromImpact,
+  distributeSizeByVolumeProfile,
+  generateSimulatedVolumeProfile,
+} from './smart-order-execution-calculations.utils';
 import type {
   ExecutionReport,
   OrderSide,
@@ -68,4 +80,56 @@ export function buildWorkflowDeps(params: {
     generateVolumeProfile: params.generateVolumeProfile,
     distributeByVolume: params.distributeByVolume,
   };
+}
+
+export function buildFacadeWorkflowDeps(params: {
+  config: SmartOrderConfig;
+  activeOrders: Map<string, ExecutionReport>;
+  orderStartTimes: Map<string, number>;
+  safeLog: SmartOrderExecutionWorkflowDeps['safeLog'];
+  estimateMarketImpact: SmartOrderExecutionWorkflowDeps['estimateMarketImpact'];
+  calculateOptimalSplit: SmartOrderExecutionWorkflowDeps['calculateOptimalSplit'];
+  calculateSlippage: SmartOrderExecutionWorkflowDeps['calculateSlippage'];
+  roundToDecimals: SmartOrderExecutionWorkflowDeps['roundToDecimals'];
+  simulateMarketPrice: SmartOrderExecutionWorkflowDeps['simulateMarketPrice'];
+  shouldAdjustPrice: SmartOrderExecutionWorkflowDeps['shouldAdjustPrice'];
+}): SmartOrderExecutionWorkflowDeps {
+  return buildWorkflowDeps({
+    config: params.config,
+    activeOrders: params.activeOrders,
+    orderStartTimes: params.orderStartTimes,
+    safeLog: params.safeLog,
+    estimateMarketImpact: params.estimateMarketImpact,
+    calculateOptimalSplit: params.calculateOptimalSplit,
+    calculateFillPrice: (targetPrice, side, marketImpactBps) =>
+      calculateFillPriceFromImpact(targetPrice, side, marketImpactBps, PRICE_DECIMALS),
+    calculateSlippage: params.calculateSlippage,
+    buildReasoningMessage: (
+      strategy,
+      numberOfSplits,
+      marketImpact,
+      slippage,
+      fullyFilled
+    ) => buildExecutionReasoningMessage(
+      strategy,
+      numberOfSplits,
+      marketImpact,
+      slippage,
+      fullyFilled
+    ),
+    roundToDecimals: params.roundToDecimals,
+    simulateMarketPrice: params.simulateMarketPrice,
+    shouldAdjustPrice: params.shouldAdjustPrice,
+    generateVolumeProfile: generateSimulatedVolumeProfile,
+    distributeByVolume: (orderId, totalSize, targetPrice, volumeProfile) =>
+      distributeSizeByVolumeProfile({
+        orderId,
+        totalSize,
+        targetPrice,
+        volumeProfile,
+        sizeDecimals: SIZE_DECIMALS,
+        minSizeDifference: MIN_SIZE_DIFFERENCE,
+        subOrderIdPrefix: SUB_ORDER_ID_PREFIX,
+      }),
+  });
 }

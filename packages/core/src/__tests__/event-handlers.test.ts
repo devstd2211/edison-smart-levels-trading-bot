@@ -473,7 +473,10 @@ describe('WebSocketEventHandler', () => {
 
       await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
-      expect(mockLogger.info).toHaveBeenCalledWith('✅ Matched TP by OrderID (RELIABLE)', expect.any(Object));
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Matched TP by OrderID (RELIABLE)'),
+        expect.any(Object)
+      );
       expect(mockPositionExitingService.onTakeProfitHit).toHaveBeenCalledWith(expect.any(Object), 1, 2.012);
     });
 
@@ -486,7 +489,10 @@ describe('WebSocketEventHandler', () => {
 
       await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('⚠️ Matched TP by price (fallback)', expect.any(Object));
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Matched TP by price (fallback)'),
+        expect.any(Object)
+      );
       expect(mockPositionExitingService.onTakeProfitHit).toHaveBeenCalledWith(expect.any(Object), 1, expect.closeTo(2.0121, 0.01));
     });
 
@@ -499,7 +505,10 @@ describe('WebSocketEventHandler', () => {
 
       await handler.handleTakeProfitFilled(event as unknown as Parameters<typeof handler.handleTakeProfitFilled>[0]);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('⚠️ Matched TP by quantity (fallback)', expect.any(Object));
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Matched TP by quantity (fallback)'),
+        expect.any(Object)
+      );
       expect(mockPositionExitingService.onTakeProfitHit).toHaveBeenCalledWith(expect.any(Object), 1, expect.any(Number));
     });
 

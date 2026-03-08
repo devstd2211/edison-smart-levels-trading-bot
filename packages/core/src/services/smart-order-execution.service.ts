@@ -1,19 +1,9 @@
 /** Smart order execution facade (behavior-preserving thin service). */
 
 import { LoggerService } from './logger.service';
-import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { ErrorHandler } from '../errors';
 import {
-  PRICE_DECIMALS,
-  SIZE_DECIMALS,
-  MIN_SIZE_DIFFERENCE,
-  SUB_ORDER_ID_PREFIX,
-} from '../constants/phase-13-constants';
-import {
-  buildExecutionReasoningMessage,
-  calculateFillPriceFromImpact,
   calculateSlippageBps,
-  distributeSizeByVolumeProfile,
-  generateSimulatedVolumeProfile,
   roundToDecimals,
 } from './smart-order-execution/smart-order-execution-calculations.utils';
 import {
@@ -43,9 +33,10 @@ import {
   executeSyncWithGracefulDegrade as executeSyncWithGracefulDegradeUtil,
   executeWithGracefulDegrade as executeWithGracefulDegradeUtil,
 } from './smart-order-execution/smart-order-execution-resilience.utils';
-import { executeStrategyWithFallback } from './smart-order-execution/smart-order-execution-strategy-entry.utils';
+import { safeLogWithRecovery } from './smart-order-execution/smart-order-execution-logging.utils';
+import { executeNamedStrategyWithFallback } from './smart-order-execution/smart-order-execution-strategy-entry.utils';
 import {
-  buildWorkflowDeps,
+  buildFacadeWorkflowDeps,
   shouldAdjustPriceByStrategy,
   simulateMarketPriceFromBase,
 } from './smart-order-execution/smart-order-execution-seams.utils';
@@ -55,7 +46,6 @@ import {
   executeVwapWorkflow,
   handlePartialFillsWorkflow,
   monitorAndAdjustWorkflow,
-  type SmartOrderExecutionWorkflowDeps,
 } from './smart-order-execution/smart-order-execution-workflows.orchestrator';
 import type {
   ExecutionReport,
@@ -73,28 +63,18 @@ export type {
   SmartOrderRequest,
 } from './smart-order-execution/smart-order-execution.types';
 
-// ============================================================================
-// TYPES & INTERFACES
-// ============================================================================
-
-// ============================================================================
-// SERVICE CLASS
-// ============================================================================
-
 export class SmartOrderExecutionService {
-  private readonly config: SmartOrderConfig;
-
-  // Internal state tracking for active orders
-  private readonly activeOrders: Map<string, ExecutionReport> = new Map();
-  private readonly orderStartTimes: Map<string, number> = new Map();
+  private readonly safeLogBound = this.safeLog.bind(this);
+  private readonly roundToDecimalsBound = this.roundToDecimals.bind(this);
+  private readonly activeOrders = new Map<string, ExecutionReport>();
+  private readonly orderStartTimes = new Map<string, number>();
 
   constructor(
-    config: SmartOrderConfig,
+    private readonly config: SmartOrderConfig,
     private logger?: LoggerService,
     private errorHandler?: ErrorHandler
   ) {
     validateSmartOrderConfig(config);
-    this.config = config;
   }
 
   async executeSmartOrder(
@@ -117,7 +97,7 @@ export class SmartOrderExecutionService {
     return executeWithGracefulDegradeUtil({
       errorHandler: this.errorHandler,
       operation: () => this.doExecuteSmartOrder(orderId, order, startTime),
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
       options: {
         failureLogLevel: 'error',
         directFailureLogLevel: 'error',
@@ -140,12 +120,7 @@ export class SmartOrderExecutionService {
     order: SmartOrderRequest,
     startTime: number
   ): Promise<ExecutionReport> {
-    return executeSmartOrderWorkflow({
-      deps: this.getWorkflowDeps(),
-      orderId,
-      order,
-      startTime,
-    });
+    return executeSmartOrderWorkflow({ deps: this.getWorkflowDeps(), orderId, order, startTime });
   }
 
   private calculateSlippage(targetPrice: number, actualPrice: number): number {
@@ -158,7 +133,7 @@ export class SmartOrderExecutionService {
     return executeWithGracefulDegradeUtil({
       errorHandler: this.errorHandler,
       operation: () => this.doMonitorAndAdjust(orderId),
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
       options: {
         requireValue: false,
         resolveSuccess: value => value ?? null,
@@ -171,10 +146,7 @@ export class SmartOrderExecutionService {
   }
 
   private async doMonitorAndAdjust(orderId: string): Promise<ExecutionReport | null> {
-    return monitorAndAdjustWorkflow({
-      deps: this.getWorkflowDeps(),
-      orderId,
-    });
+    return monitorAndAdjustWorkflow({ deps: this.getWorkflowDeps(), orderId });
   }
 
   private shouldAdjustPrice(
@@ -190,7 +162,7 @@ export class SmartOrderExecutionService {
   }
 
   private simulateMarketPrice(basePrice: number, _side: OrderSide): number {
-    return simulateMarketPriceFromBase(basePrice, this.roundToDecimals.bind(this));
+    return simulateMarketPriceFromBase(basePrice, this.roundToDecimalsBound);
   }
 
   async handlePartialFills(
@@ -203,7 +175,7 @@ export class SmartOrderExecutionService {
     return executeWithGracefulDegradeUtil({
       errorHandler: this.errorHandler,
       operation: () => this.doHandlePartialFills(orderId, filledSize),
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
       options: {
         requireValue: true,
         failureLogMessage: 'handlePartialFills failed, cancelling remaining',
@@ -218,11 +190,7 @@ export class SmartOrderExecutionService {
     orderId: string,
     filledSize: number
   ): Promise<'continue' | 'cancel' | 'adjust'> {
-    return handlePartialFillsWorkflow({
-      deps: this.getWorkflowDeps(),
-      orderId,
-      filledSize,
-    });
+    return handlePartialFillsWorkflow({ deps: this.getWorkflowDeps(), orderId, filledSize });
   }
 
   calculateOptimalSplit(
@@ -235,7 +203,7 @@ export class SmartOrderExecutionService {
     return executeSyncWithGracefulDegradeUtil({
       errorHandler: this.errorHandler,
       operation: () => this.doCalculateOptimalSplit(totalSize, currentPrice),
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
       options: {
         failureLogMessage: 'calculateOptimalSplit failed, returning single order',
         onFailure: () => [totalSize],
@@ -253,8 +221,8 @@ export class SmartOrderExecutionService {
       currentPrice,
       maxOrderSplits: this.config.maxOrderSplits,
       estimateMarketImpact: this.estimateMarketImpact.bind(this),
-      roundToDecimals: this.roundToDecimals.bind(this),
-      safeLog: this.safeLog.bind(this),
+      roundToDecimals: this.roundToDecimalsBound,
+      safeLog: this.safeLogBound,
     });
   }
 
@@ -265,7 +233,7 @@ export class SmartOrderExecutionService {
     return executeSyncWithGracefulDegradeUtil({
       errorHandler: this.errorHandler,
       operation: () => this.doEstimateMarketImpact(size, side),
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
       options: {
         failureLogMessage: 'estimateMarketImpact failed, returning 0',
         onFailure: () => 0,
@@ -278,29 +246,37 @@ export class SmartOrderExecutionService {
     return estimateMarketImpactInternal({
       size,
       side,
-      roundToDecimals: this.roundToDecimals.bind(this),
-      safeLog: this.safeLog.bind(this),
+      roundToDecimals: this.roundToDecimalsBound,
+      safeLog: this.safeLogBound,
     });
   }
 
   async executeTWAP(order: SmartOrderRequest): Promise<ExecutionReport> {
-    return executeStrategyWithFallback({
+    return this.executeNamedStrategy(order, 'twap', (orderId, startTime) =>
+      this.doExecuteTWAP(orderId, order, startTime)
+    );
+  }
+
+  async executeVWAP(order: SmartOrderRequest): Promise<ExecutionReport> {
+    return this.executeNamedStrategy(order, 'vwap', (orderId, startTime) =>
+      this.doExecuteVWAP(orderId, order, startTime)
+    );
+  }
+
+  private executeNamedStrategy(
+    order: SmartOrderRequest,
+    strategy: 'twap' | 'vwap',
+    operation: (orderId: string, startTime: number) => Promise<ExecutionReport>
+  ): Promise<ExecutionReport> {
+    return executeNamedStrategyWithFallback({
       order,
-      methodName: 'executeTWAP',
-      orderIdPrefix: 'twap',
-      startLogMessage: 'Executing TWAP strategy',
-      startLogMetadata: id => ({
-        orderId: id,
-        symbol: order.symbol,
-        size: order.size,
-        interval: this.config.twapInterval,
-      }),
-      operation: (orderId, startTime) => this.doExecuteTWAP(orderId, order, startTime),
-      failureLogMessage: 'TWAP execution failed, falling back to regular execution',
-      directFailureLogMessage: 'TWAP execution failed (no ErrorHandler), falling back to regular execution',
+      strategy,
+      twapInterval: this.config.twapInterval,
+      vwapLookback: this.config.vwapLookback,
+      operation,
       executeSmartOrderFallback: () => this.executeSmartOrder(order),
       errorHandler: this.errorHandler,
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
     });
   }
 
@@ -309,33 +285,7 @@ export class SmartOrderExecutionService {
     order: SmartOrderRequest,
     startTime: number
   ): Promise<ExecutionReport> {
-    return executeTwapWorkflow({
-      deps: this.getWorkflowDeps(),
-      orderId,
-      order,
-      startTime,
-    });
-  }
-
-  async executeVWAP(order: SmartOrderRequest): Promise<ExecutionReport> {
-    return executeStrategyWithFallback({
-      order,
-      methodName: 'executeVWAP',
-      orderIdPrefix: 'vwap',
-      startLogMessage: 'Executing VWAP strategy',
-      startLogMetadata: id => ({
-        orderId: id,
-        symbol: order.symbol,
-        size: order.size,
-        lookback: this.config.vwapLookback,
-      }),
-      operation: (orderId, startTime) => this.doExecuteVWAP(orderId, order, startTime),
-      failureLogMessage: 'VWAP execution failed, falling back to regular execution',
-      directFailureLogMessage: 'VWAP execution failed (no ErrorHandler), falling back to regular execution',
-      executeSmartOrderFallback: () => this.executeSmartOrder(order),
-      errorHandler: this.errorHandler,
-      safeLog: this.safeLog.bind(this),
-    });
+    return executeTwapWorkflow({ deps: this.getWorkflowDeps(), orderId, order, startTime });
   }
 
   private async doExecuteVWAP(
@@ -343,56 +293,21 @@ export class SmartOrderExecutionService {
     order: SmartOrderRequest,
     startTime: number
   ): Promise<ExecutionReport> {
-    return executeVwapWorkflow({
-      deps: this.getWorkflowDeps(),
-      orderId,
-      order,
-      startTime,
-    });
+    return executeVwapWorkflow({ deps: this.getWorkflowDeps(), orderId, order, startTime });
   }
 
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
-
-  private getWorkflowDeps(): SmartOrderExecutionWorkflowDeps {
-    return buildWorkflowDeps({
+  private getWorkflowDeps() {
+    return buildFacadeWorkflowDeps({
       config: this.config,
       activeOrders: this.activeOrders,
       orderStartTimes: this.orderStartTimes,
-      safeLog: this.safeLog.bind(this),
+      safeLog: this.safeLogBound,
       estimateMarketImpact: this.estimateMarketImpact.bind(this),
       calculateOptimalSplit: this.calculateOptimalSplit.bind(this),
-      calculateFillPrice: (targetPrice, side, marketImpactBps) =>
-        calculateFillPriceFromImpact(targetPrice, side, marketImpactBps, PRICE_DECIMALS),
       calculateSlippage: this.calculateSlippage.bind(this),
-      buildReasoningMessage: (
-        strategy,
-        numberOfSplits,
-        marketImpact,
-        slippage,
-        fullyFilled
-      ) => buildExecutionReasoningMessage(
-        strategy,
-        numberOfSplits,
-        marketImpact,
-        slippage,
-        fullyFilled
-      ),
-      roundToDecimals: this.roundToDecimals.bind(this),
+      roundToDecimals: this.roundToDecimalsBound,
       simulateMarketPrice: this.simulateMarketPrice.bind(this),
       shouldAdjustPrice: this.shouldAdjustPrice.bind(this),
-      generateVolumeProfile: generateSimulatedVolumeProfile,
-      distributeByVolume: (orderId, totalSize, targetPrice, volumeProfile) =>
-        distributeSizeByVolumeProfile({
-          orderId,
-          totalSize,
-          targetPrice,
-          volumeProfile,
-          sizeDecimals: SIZE_DECIMALS,
-          minSizeDifference: MIN_SIZE_DIFFERENCE,
-          subOrderIdPrefix: SUB_ORDER_ID_PREFIX,
-        }),
     });
   }
 
@@ -401,18 +316,13 @@ export class SmartOrderExecutionService {
     message: string,
     metadata?: Record<string, unknown>
   ): void {
-    try {
-      if (this.logger) {
-        this.logger[level](message, metadata);
-      }
-    } catch (error) {
-      // SKIP: Logging failures should not crash the service
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.SKIP,
-        });
-      }
-    }
+    safeLogWithRecovery({
+      logger: this.logger,
+      errorHandler: this.errorHandler,
+      level,
+      message,
+      metadata,
+    });
   }
 
   private roundToDecimals(value: number, decimals: number): number {
@@ -421,19 +331,12 @@ export class SmartOrderExecutionService {
 
   getOrderState(orderId: string): ExecutionReport | null {
     assertRequiredOrderId('getOrderState', orderId);
-
     return getTrackedOrderState(this.activeOrders, orderId);
   }
 
   cleanupOrder(orderId: string): boolean {
     assertRequiredOrderId('cleanupOrder', orderId);
-
-    return cleanupTrackedOrder({
-      activeOrders: this.activeOrders,
-      orderStartTimes: this.orderStartTimes,
-      orderId,
-      safeLog: this.safeLog.bind(this),
-    });
+    return cleanupTrackedOrder({ activeOrders: this.activeOrders, orderStartTimes: this.orderStartTimes, orderId, safeLog: this.safeLogBound });
   }
 
   getActiveOrderCount(): number {
@@ -441,11 +344,7 @@ export class SmartOrderExecutionService {
   }
 
   clearAllOrders(): void {
-    clearTrackedOrders({
-      activeOrders: this.activeOrders,
-      orderStartTimes: this.orderStartTimes,
-      safeLog: this.safeLog.bind(this),
-    });
+    clearTrackedOrders({ activeOrders: this.activeOrders, orderStartTimes: this.orderStartTimes, safeLog: this.safeLogBound });
   }
 }
 
