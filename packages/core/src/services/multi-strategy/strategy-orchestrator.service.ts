@@ -33,19 +33,22 @@ import { PositionExitingService } from '../position-exiting.service';
 import { RiskManager } from '../risk-manager.service';
 import { TelegramService } from '../telegram.service';
 import { StrategyOrchestratorCacheService } from './strategy-orchestrator-cache.service';
+import { CandleProvider } from '../../providers/candle.provider';
+import { TimeframeProvider } from '../../providers/timeframe.provider';
+import { PositionLifecycleService } from '../position-lifecycle.service';
 
 export class StrategyOrchestratorService {
   private activeContext: IsolatedStrategyContext | null = null;
   private contextMap = new Map<string, IsolatedStrategyContext>();
 
   // Phase 10.3b: Replace with cache service
-  private orchestratorCache: StrategyOrchestratorCacheService;
+  private orchestratorCache: StrategyOrchestratorCacheService<TradingOrchestrator>;
 
   // Phase 10.3b: Shared services injected for orchestrator creation
   private sharedServices: {
-    candleProvider: any;
-    timeframeProvider: any;
-    positionManager: any;
+    candleProvider: CandleProvider;
+    timeframeProvider: TimeframeProvider;
+    positionManager: PositionLifecycleService;
     riskManager: RiskManager;
     telegram: TelegramService | null;
     positionExitingService: PositionExitingService;
@@ -60,10 +63,10 @@ export class StrategyOrchestratorService {
     private logger: LoggerService,
     private eventBus: BotEventBus,
   ) {
-    this.orchestratorCache = new StrategyOrchestratorCacheService(this.logger);
+    this.orchestratorCache = new StrategyOrchestratorCacheService<TradingOrchestrator>(this.logger);
   }
 
-  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, any>): void {
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     if (this.logger) {
       this.logger[level](message, meta);
     } else {
@@ -382,7 +385,7 @@ export class StrategyOrchestratorService {
       //
       // This follows composition pattern: same orchestrator with different configurations per strategy
       const orchestrator = new TradingOrchestrator(
-        context.config as any,  // Merged config (base + strategy overrides)
+        context.config as unknown as ConstructorParameters<typeof TradingOrchestrator>[0],  // Merged config (base + strategy overrides)
         this.sharedServices.candleProvider,
         this.sharedServices.timeframeProvider,
         context.exchange,
@@ -401,7 +404,7 @@ export class StrategyOrchestratorService {
 
       this.logger.info(`[Phase 10.3b] ✅ Created TradingOrchestrator for ${context.strategyId}`, {
         symbol: context.symbol,
-        configVersion: (context.config as any).version || 'unknown',
+        configVersion: this.getConfigVersion(context.config),
       });
 
       return orchestrator;
@@ -429,7 +432,7 @@ export class StrategyOrchestratorService {
    *
    * For system-wide events that should notify all strategies.
    */
-  async broadcastEvent(event: any): Promise<void> {
+  async broadcastEvent(event: unknown): Promise<void> {
     this.log('info', `[StrategyOrchestrator] Broadcasting event to ${this.contextMap.size} strategies`);
 
     const promises = Array.from(this.contextMap.values()).map(
@@ -482,9 +485,9 @@ export class StrategyOrchestratorService {
    * [Phase 10.3b] Dependency injection for shared infrastructure
    */
   setSharedServices(sharedServices: {
-    candleProvider: any;
-    timeframeProvider: any;
-    positionManager: any;
+    candleProvider: CandleProvider;
+    timeframeProvider: TimeframeProvider;
+    positionManager: PositionLifecycleService;
     riskManager: RiskManager;
     telegram: TelegramService | null;
     positionExitingService: PositionExitingService;
@@ -498,8 +501,13 @@ export class StrategyOrchestratorService {
    *
    * [Phase 10.3b] For monitoring cache performance
    */
-  getCacheStats(): any {
+  getCacheStats(): ReturnType<StrategyOrchestratorCacheService['getStats']> {
     return this.orchestratorCache.getStats();
+  }
+
+  private getConfigVersion(config: IsolatedStrategyContext['config']): string {
+    const version = (config as unknown as Record<string, unknown>).version;
+    return typeof version === 'string' ? version : 'unknown';
   }
 }
 

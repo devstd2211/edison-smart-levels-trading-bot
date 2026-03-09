@@ -353,7 +353,7 @@ export class StructureAwareExitService {
         price: fallbackPrice,
         percent: fallbackPercent,
         structureLevel: entryPrice,
-        structureType: 'UNKNOWN' as any,
+        structureType: 'UNKNOWN',
         confidence: 0.1, // Very low confidence
         wasConstrained: true,
       };

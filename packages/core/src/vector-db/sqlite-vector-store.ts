@@ -6,7 +6,43 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import * as fs from 'fs';
-import { EmbeddedDocument, ProjectIndex, SearchCache } from './vector-db.types';
+import { EmbeddedDocument, SearchResultItem } from './vector-db.types';
+
+type QueryParam = string | number;
+
+interface SqlDocumentRow {
+  id: string;
+  type: EmbeddedDocument['type'] | string;
+  filePath: string;
+  name: string;
+  description: string;
+  category: string;
+  tags: string | null;
+  content: string;
+  keywords: string | null;
+  lineNumber: number | null;
+  size: number;
+  lastUpdated: string;
+  relatedModules: string | null;
+}
+
+interface SqlCacheRow {
+  results: string;
+}
+
+interface SqlCountByCategoryRow {
+  category: string;
+  count: number;
+}
+
+interface SqlCountByTypeRow {
+  type: string;
+  count: number;
+}
+
+interface SqlTotalCountRow {
+  count: number;
+}
 
 export class SQLiteVectorStore {
   private db: sqlite3.Database | null = null;
@@ -222,7 +258,7 @@ export class SQLiteVectorStore {
       this.db!.get(
         `SELECT * FROM documents WHERE id = ?`,
         [id],
-        (err, row: any) => {
+        (err, row: SqlDocumentRow | undefined) => {
           if (err) {
             reject(err);
             return;
@@ -232,22 +268,7 @@ export class SQLiteVectorStore {
             resolve(null);
             return;
           }
-
-          resolve({
-            id: row.id,
-            type: row.type,
-            filePath: row.filePath,
-            name: row.name,
-            description: row.description,
-            category: row.category,
-            tags: JSON.parse(row.tags || '[]'),
-            content: row.content,
-            keywords: JSON.parse(row.keywords || '[]'),
-            lineNumber: row.lineNumber,
-            size: row.size,
-            lastUpdated: row.lastUpdated,
-            relatedModules: JSON.parse(row.relatedModules || '[]'),
-          });
+          resolve(this.mapRowToDocument(row));
         }
       );
     });
@@ -264,7 +285,7 @@ export class SQLiteVectorStore {
   ): Promise<EmbeddedDocument[]> {
     return new Promise((resolve, reject) => {
       let query = 'SELECT * FROM documents WHERE 1=1';
-      const params: any[] = [];
+      const params: QueryParam[] = [];
 
       if (category) {
         query += ' AND category = ?';
@@ -285,27 +306,13 @@ export class SQLiteVectorStore {
       query += ' LIMIT ?';
       params.push(limit);
 
-      this.db!.all(query, params, (err, rows: any[]) => {
+      this.db!.all(query, params, (err, rows: SqlDocumentRow[]) => {
         if (err) {
           reject(err);
           return;
         }
 
-        const documents = (rows || []).map((row) => ({
-          id: row.id,
-          type: row.type,
-          filePath: row.filePath,
-          name: row.name,
-          description: row.description,
-          category: row.category,
-          tags: JSON.parse(row.tags || '[]'),
-          content: row.content,
-          keywords: JSON.parse(row.keywords || '[]'),
-          lineNumber: row.lineNumber,
-          size: row.size,
-          lastUpdated: row.lastUpdated,
-          relatedModules: JSON.parse(row.relatedModules || '[]'),
-        }));
+        const documents = (rows || []).map((row) => this.mapRowToDocument(row));
 
         resolve(documents);
       });
@@ -325,7 +332,7 @@ export class SQLiteVectorStore {
       this.db!.all(
         `SELECT * FROM documents LIMIT ?`,
         [limit * 2], // Get more than needed to score
-        (err, rows: any[]) => {
+        (err, rows: SqlDocumentRow[]) => {
           if (err) {
             reject(err);
             return;
@@ -333,21 +340,7 @@ export class SQLiteVectorStore {
 
           const results = (rows || [])
             .map((row) => {
-              const doc: EmbeddedDocument = {
-                id: row.id,
-                type: row.type,
-                filePath: row.filePath,
-                name: row.name,
-                description: row.description,
-                category: row.category,
-                tags: JSON.parse(row.tags || '[]'),
-                content: row.content,
-                keywords: JSON.parse(row.keywords || '[]'),
-                lineNumber: row.lineNumber,
-                size: row.size,
-                lastUpdated: row.lastUpdated,
-                relatedModules: JSON.parse(row.relatedModules || '[]'),
-              };
+              const doc: EmbeddedDocument = this.mapRowToDocument(row);
 
               // Calculate relevance score
               let score = 0;
@@ -376,7 +369,7 @@ export class SQLiteVectorStore {
   /**
    * Cache search results
    */
-  async cacheSearchResult(query: string, results: any[], ttl: number = 3600): Promise<void> {
+  async cacheSearchResult(query: string, results: SearchResultItem[], ttl: number = 3600): Promise<void> {
     return new Promise((resolve, reject) => {
       const stmt = this.db!.prepare(
         `INSERT OR REPLACE INTO search_cache (query, results, timestamp, ttl)
@@ -395,7 +388,7 @@ export class SQLiteVectorStore {
   /**
    * Get cached search result
    */
-  async getCachedResult(query: string): Promise<any[] | null> {
+  async getCachedResult(query: string): Promise<SearchResultItem[] | null> {
     return new Promise((resolve, reject) => {
       const now = Date.now() / 1000; // seconds
 
@@ -403,7 +396,7 @@ export class SQLiteVectorStore {
         `SELECT results FROM search_cache
          WHERE query = ? AND timestamp + ttl > ?`,
         [query, now],
-        (err, row: any) => {
+        (err, row: SqlCacheRow | undefined) => {
           if (err) {
             reject(err);
             return;
@@ -414,7 +407,8 @@ export class SQLiteVectorStore {
             return;
           }
 
-          resolve(JSON.parse(row.results));
+          const parsed = JSON.parse(row.results) as unknown;
+          resolve(Array.isArray(parsed) ? (parsed as SearchResultItem[]) : []);
         }
       );
     });
@@ -438,7 +432,7 @@ export class SQLiteVectorStore {
     return new Promise((resolve, reject) => {
       this.db!.all(
         `SELECT category, COUNT(*) as count FROM documents GROUP BY category`,
-        (err, byCategory: any[]) => {
+        (err, byCategory: SqlCountByCategoryRow[]) => {
           if (err) {
             reject(err);
             return;
@@ -446,20 +440,20 @@ export class SQLiteVectorStore {
 
           this.db!.all(
             `SELECT type, COUNT(*) as count FROM documents GROUP BY type`,
-            (err, byType: any[]) => {
+            (err, byType: SqlCountByTypeRow[]) => {
               if (err) {
                 reject(err);
                 return;
               }
 
-              this.db!.get(`SELECT COUNT(*) as count FROM documents`, (err, row: any) => {
+              this.db!.get(`SELECT COUNT(*) as count FROM documents`, (err, row: SqlTotalCountRow | undefined) => {
                 if (err) {
                   reject(err);
                   return;
                 }
 
                 resolve({
-                  totalDocuments: row.count,
+                  totalDocuments: row?.count ?? 0,
                   byCategory: Object.fromEntries(
                     (byCategory || []).map((c) => [c.category, c.count])
                   ),
@@ -471,6 +465,29 @@ export class SQLiteVectorStore {
         }
       );
     });
+  }
+
+  private mapRowToDocument(row: SqlDocumentRow): EmbeddedDocument {
+    return {
+      id: row.id,
+      type: this.normalizeDocumentType(row.type),
+      filePath: row.filePath,
+      name: row.name,
+      description: row.description,
+      category: row.category,
+      tags: JSON.parse(row.tags || '[]'),
+      content: row.content,
+      keywords: JSON.parse(row.keywords || '[]'),
+      lineNumber: row.lineNumber ?? undefined,
+      size: row.size,
+      lastUpdated: row.lastUpdated,
+      relatedModules: JSON.parse(row.relatedModules || '[]'),
+    };
+  }
+
+  private normalizeDocumentType(type: string): EmbeddedDocument['type'] {
+    const validTypes: EmbeddedDocument['type'][] = ['file', 'module', 'class', 'function', 'service', 'analyzer', 'indicator'];
+    return validTypes.includes(type as EmbeddedDocument['type']) ? (type as EmbeddedDocument['type']) : 'file';
   }
 
   /**

@@ -77,10 +77,10 @@ export interface IMarketDataRepository {
   // Indicator caching (TTL-based)
   cacheIndicator(
     key: string, // e.g., "RSI-14-1h"
-    value: any,
+    value: unknown,
     ttlMs?: number,
   ): void;
-  getIndicator(key: string): any | null;
+  getIndicator(key: string): unknown | null;
   hasIndicator(key: string): boolean;
 
   // Cache maintenance

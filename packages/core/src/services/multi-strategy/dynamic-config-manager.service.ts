@@ -17,6 +17,7 @@
 
 import type {
   StrategyConfigV2 as StrategyConfig,
+  StrategyAnalyzerConfigV2 as StrategyAnalyzerConfig,
   ConfigValidationResult,
   ConfigMergeChange,
   ConfigNew,
@@ -61,13 +62,18 @@ export class DynamicConfigManagerService {
 
       // Placeholder
       const config: StrategyConfig = {
+        version: 1,
         metadata: {
           name: strategyName,
           version: '1.0.0',
+          description: '',
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          tags: [],
         },
         indicators: {},
         analyzers: [],
-      } as any;
+      };
 
       // Validate
       const validation = this.validateConfig(config);
@@ -114,14 +120,22 @@ export class DynamicConfigManagerService {
     try {
       // Merge updates
       const merged: StrategyConfig = {
+        version: updates.version ?? 1,
         metadata: {
-          ...updates.metadata,
-        } as any,
+          name: updates.metadata?.name ?? strategyId,
+          version: updates.metadata?.version ?? '1.0.0',
+          description: updates.metadata?.description ?? '',
+          author: updates.metadata?.author,
+          createdAt: updates.metadata?.createdAt ?? new Date().toISOString(),
+          lastModified: updates.metadata?.lastModified ?? new Date().toISOString(),
+          tags: updates.metadata?.tags ?? [],
+          backtest: updates.metadata?.backtest,
+        },
         indicators: {
-          ...updates.indicators,
+          ...this.getIndicatorOverrides(updates.indicators),
         },
         analyzers: updates.analyzers || [],
-      } as any;
+      };
 
       // Validate
       const validation = this.validateConfig(merged);
@@ -186,8 +200,8 @@ export class DynamicConfigManagerService {
     if (config.analyzers && config.analyzers.length > 0) {
       let totalWeight = 0;
       for (const analyzer of config.analyzers) {
-        if ((analyzer as any).weight && typeof (analyzer as any).weight === 'number') {
-          totalWeight += (analyzer as any).weight;
+        if (this.hasNumericWeight(analyzer)) {
+          totalWeight += analyzer.weight;
         }
       }
 
@@ -221,7 +235,7 @@ export class DynamicConfigManagerService {
     if (strategy.indicators) {
       merged.indicators = {
         ...merged.indicators,
-        ...(strategy.indicators as any),
+        ...this.getIndicatorOverrides(strategy.indicators),
       };
     }
 
@@ -242,7 +256,8 @@ export class DynamicConfigManagerService {
     // Check indicator changes
     if (strategy.indicators) {
       for (const [key, value] of Object.entries(strategy.indicators)) {
-        const baseValue = (base.indicators as any)?.[key];
+        const baseIndicators = this.getIndicatorOverrides(base.indicators);
+        const baseValue = baseIndicators[key];
         if (JSON.stringify(baseValue) !== JSON.stringify(value)) {
           changes.push({
             path: `indicators.${key}`,
@@ -311,13 +326,28 @@ export class DynamicConfigManagerService {
   getCachedConfigs(): string[] {
     return Array.from(this.configCache.keys());
   }
+
+  private hasNumericWeight(analyzer: StrategyAnalyzerConfig): analyzer is StrategyAnalyzerConfig & { weight: number } {
+    return typeof analyzer.weight === 'number';
+  }
+
+  private getIndicatorOverrides(indicators: unknown): Record<string, unknown> {
+    if (indicators && typeof indicators === 'object' && !Array.isArray(indicators)) {
+      return indicators as Record<string, unknown>;
+    }
+    return {};
+  }
 }
 
 /**
  * Flatten nested object for easier comparison
  */
-function flattenObject(obj: any, prefix = ''): Record<string, any> {
-  const flattened: Record<string, any> = {};
+function flattenObject(obj: unknown, prefix = ''): Record<string, unknown> {
+  const flattened: Record<string, unknown> = {};
+
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return flattened;
+  }
 
   for (const [key, value] of Object.entries(obj)) {
     const newKey = prefix ? `${prefix}.${key}` : key;
@@ -335,4 +365,3 @@ function flattenObject(obj: any, prefix = ''): Record<string, any> {
 
   return flattened;
 }
-

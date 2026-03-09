@@ -13,6 +13,7 @@
 
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
+import type { ProtectionVerification } from '../../types/legacy';
 
 /**
  * Binance Service - Direct exchange integration
@@ -261,7 +262,7 @@ export class BinanceService {
   /**
    * Get active orders
    */
-  async getActiveOrders(): Promise<any[]> {
+  async getActiveOrders(): Promise<unknown[]> {
     // In real implementation, fetch open orders from Binance
     return [];
   }
@@ -334,11 +335,13 @@ export class BinanceService {
   /**
    * Verify protection (SL/TP) is set
    */
-  async verifyProtectionSet(side: PositionSide): Promise<any> {
+  async verifyProtectionSet(side: PositionSide): Promise<ProtectionVerification> {
     // In real implementation: check active orders for SL/TP
     return {
       hasStopLoss: false,
       hasTakeProfit: false,
+      activeOrders: 0,
+      verified: false,
     };
   }
 }

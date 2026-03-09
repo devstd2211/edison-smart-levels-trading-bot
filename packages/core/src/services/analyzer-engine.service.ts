@@ -135,8 +135,8 @@ export class AnalyzerEngineService {
       // ========== STEP 1: Load enabled analyzers ==========
       const enabledAnalyzers = await this.analyzerRegistry.getEnabledAnalyzers(
         strategyConfig.analyzers,
-        strategyConfig,
-      );
+        strategyConfig as unknown as Record<string, unknown>,
+      ) as Map<string, { instance: IAnalyzer; weight: number; priority: number }>;
 
       if (enabledAnalyzers.size === 0) {
         if (mergedConfig.verbose && this.logger) {

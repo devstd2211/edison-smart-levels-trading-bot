@@ -18,14 +18,14 @@ import { LoggerService } from './logger.service';
 export interface BotEvent {
   type: string;
   timestamp: number;
-  data: any;
+  data: unknown;
   strategyId?: string; // [Phase 10.2] Optional: which strategy does this event belong to?
 }
 
 /**
  * Event handler function signature
  */
-export type EventHandler = (data: any) => Promise<void> | void;
+export type EventHandler<TData = unknown> = (data: TData) => Promise<void> | void;
 
 /**
  * Performance metrics for event processing
@@ -36,6 +36,16 @@ interface EventMetrics {
   status: 'success' | 'failure';
   timestamp: number;
   error?: string;
+}
+
+interface EventMetricSummary {
+  total: number;
+  successes: number;
+  failures: number;
+  errorRate: string;
+  avgDuration: string;
+  minDuration: string;
+  maxDuration: string;
 }
 
 /**
@@ -79,13 +89,13 @@ export class BotEventBus extends EventEmitter {
    * });
    * unsubscribe(); // Remove listener
    */
-  subscribe(eventType: string, handler: EventHandler): () => void {
-    const wrappedHandler = async (data: any) => {
+  subscribe<TData = unknown>(eventType: string, handler: EventHandler<TData>): () => void {
+    const wrappedHandler = async (data: unknown) => {
       const startTime = performance.now();
 
       try {
         // Handle both sync and async handlers
-        const result = handler(data);
+        const result = handler(data as TData);
         if (result instanceof Promise) {
           await result;
         }
@@ -205,8 +215,8 @@ export class BotEventBus extends EventEmitter {
    *
    * @returns Metrics summary with event counts, error rates, and durations
    */
-  getMetrics(): Record<string, any> {
-    const summary: Record<string, any> = {};
+  getMetrics(): Record<string, EventMetricSummary> {
+    const summary: Record<string, EventMetricSummary> = {};
 
     for (const [eventType, metrics] of this.metrics.entries()) {
       if (metrics.length === 0) continue;

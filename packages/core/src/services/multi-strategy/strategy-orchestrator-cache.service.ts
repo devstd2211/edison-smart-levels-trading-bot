@@ -23,9 +23,9 @@ import type { LoggerService } from '../../types/legacy';
 /**
  * Cache entry for a strategy's orchestrator
  */
-interface CacheEntry {
+interface CacheEntry<TOrchestrator = unknown> {
   strategyId: string;
-  orchestrator: any; // TradingOrchestrator - using any to avoid circular deps
+  orchestrator: TOrchestrator;
   createdAt: Date;
   lastAccessedAt: Date;
   accessCount: number;
@@ -36,8 +36,8 @@ interface CacheEntry {
  *
  * Maintains per-strategy TradingOrchestrator instances
  */
-export class StrategyOrchestratorCacheService {
-  private cache = new Map<string, CacheEntry>();
+export class StrategyOrchestratorCacheService<TOrchestrator = unknown> {
+  private cache = new Map<string, CacheEntry<TOrchestrator>>();
   private maxCacheSize = 10; // Max strategies to cache simultaneously
 
   constructor(private logger: LoggerService) {
@@ -49,7 +49,7 @@ export class StrategyOrchestratorCacheService {
    * @param strategyId Strategy identifier
    * @returns Cached orchestrator or undefined if not cached
    */
-  getOrchestrator(strategyId: string): any | undefined {
+  getOrchestrator(strategyId: string): TOrchestrator | undefined {
     const entry = this.cache.get(strategyId);
 
     if (entry) {
@@ -70,13 +70,13 @@ export class StrategyOrchestratorCacheService {
    * @param strategyId Strategy identifier
    * @param orchestrator TradingOrchestrator instance
    */
-  cacheOrchestrator(strategyId: string, orchestrator: any): void {
+  cacheOrchestrator(strategyId: string, orchestrator: TOrchestrator): void {
     // Check cache size and evict LRU if needed
     if (this.cache.size >= this.maxCacheSize) {
       this.evictLRU();
     }
 
-    const entry: CacheEntry = {
+    const entry: CacheEntry<TOrchestrator> = {
       strategyId,
       orchestrator,
       createdAt: new Date(),

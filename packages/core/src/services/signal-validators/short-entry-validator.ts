@@ -14,6 +14,11 @@ export interface ShortValidatorConfig {
   logValidations: boolean;
 }
 
+interface ShortValidationSignal {
+  direction: SignalDirection;
+  confidence: number;
+}
+
 export class ShortEntryValidator {
   private config: ShortValidatorConfig;
 
@@ -29,7 +34,7 @@ export class ShortEntryValidator {
     };
   }
 
-  validate(signal: any, data: StrategyMarketData): { valid: boolean; adjustedConfidence: number } {
+  validate(signal: ShortValidationSignal, data: StrategyMarketData): { valid: boolean; adjustedConfidence: number } {
     if (!this.config.enabled || signal.direction !== SignalDirection.SHORT) {
       return { valid: true, adjustedConfidence: signal.confidence };
     }

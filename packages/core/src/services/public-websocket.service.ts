@@ -36,6 +36,13 @@ const PING_INTERVAL_MS = TIMING_CONSTANTS.PING_INTERVAL_MS;
 const RECONNECT_DELAY_MS = TIMING_CONSTANTS.RECONNECT_DELAY_MS;
 const MAX_RECONNECT_ATTEMPTS = TIMING_CONSTANTS.MAX_RECONNECT_ATTEMPTS;
 
+interface BtcConfirmationConfig {
+  enabled?: boolean;
+  timeframe?: string;
+  symbol?: string;
+  lookbackCandles?: number;
+}
+
 // ============================================================================
 // PUBLIC WEBSOCKET SERVICE
 // ============================================================================
@@ -48,7 +55,7 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
   private shouldReconnect: boolean = true;
   private subscribedTopics: Set<string> = new Set();
   private lastIncompleteWarning: number = 0; // Timestamp of last incomplete orderbook warning
-  private btcConfirmation?: any; // BTC confirmation config (optional)
+  private btcConfirmation?: BtcConfirmationConfig; // BTC confirmation config (optional)
   private btcCandlesStore?: { btcCandles1m: Candle[] }; // Reference to bot services for updating BTC candles
 
   constructor(
@@ -57,7 +64,7 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
     private readonly timeframeProvider: TimeframeProvider,
     private readonly logger: LoggerService,
     private readonly errorHandler?: ErrorHandler,
-    btcConfirmation?: any,
+    btcConfirmation?: BtcConfirmationConfig,
   ) {
     super();
     this.btcConfirmation = btcConfirmation;
@@ -336,7 +343,7 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
         // Handle BTC candle - update the BTC candles store
         if (this.btcCandlesStore) {
           // Keep only the last N candles (same as lookbackCandles)
-          const maxCandles = this.btcConfirmation.lookbackCandles || 100;
+          const maxCandles = this.btcConfirmation?.lookbackCandles || 100;
           this.btcCandlesStore.btcCandles1m.push(candle);
           if (this.btcCandlesStore.btcCandles1m.length > maxCandles) {
             this.btcCandlesStore.btcCandles1m.shift();

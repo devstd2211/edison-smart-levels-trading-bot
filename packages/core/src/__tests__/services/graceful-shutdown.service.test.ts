@@ -270,7 +270,8 @@ describe('GracefulShutdownManager', () => {
       );
 
       expect(startedEvent).toBeDefined();
-      expect(startedEvent![0].data.reason).toBe('User interrupt');
+      const startedData = startedEvent?.[0].data as { reason?: string } | undefined;
+      expect(startedData?.reason).toBe('User interrupt');
     });
 
     it('should wait for action queue to empty', async () => {

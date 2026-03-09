@@ -23,7 +23,7 @@ import { LoggerService } from '../services/logger.service';
 export class JournalFileRepository implements IJournalRepository {
   private trades: Map<string, TradeRecord> = new Map();
   private sessions: Map<string, SessionRecord> = new Map();
-  private generalData: Map<string, any> = new Map();
+  private generalData: Map<string, unknown> = new Map();
 
   private readonly journalFile: string;
   private readonly sessionsFile: string;
@@ -265,13 +265,13 @@ export class JournalFileRepository implements IJournalRepository {
   // GENERIC PERSISTENCE
   // ============================================================================
 
-  async saveData(key: string, data: any): Promise<void> {
+  async saveData(key: string, data: unknown): Promise<void> {
     this.ensureLoaded();
     this.generalData.set(key, data);
     // Could persist to separate file if needed
   }
 
-  async getData(key: string): Promise<any | null> {
+  async getData(key: string): Promise<unknown | null> {
     this.ensureLoaded();
     return this.generalData.get(key) || null;
   }

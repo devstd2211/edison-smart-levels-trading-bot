@@ -9,6 +9,7 @@
  */
 
 import { Position, TakeProfit } from '../types/core';
+import { PositionSide } from '../types/enums';
 import {
   AnyPositionEvent,
   PositionEventType,
@@ -273,13 +274,13 @@ export class PositionStateProjection implements IPositionStateProjection {
     }));
 
     // Map side: 'LONG' | 'SHORT' → PositionSide
-    const positionSide = event.side === 'LONG' ? 'LONG' : 'SHORT';
+    const positionSide = event.side === 'LONG' ? PositionSide.LONG : PositionSide.SHORT;
 
     return {
       id: event.positionId,
       symbol: event.symbol,
       status: 'OPEN',
-      side: positionSide as any, // Type mismatch but structurally compatible
+      side: positionSide,
       quantity: event.quantity,
       entryPrice: event.entryPrice,
       leverage: event.leverage,

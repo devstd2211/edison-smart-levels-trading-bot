@@ -14,6 +14,18 @@ export interface TrendConflictConfig {
   logDetections: boolean;
 }
 
+interface TrendSignal {
+  direction: SignalDirection;
+}
+
+interface TrendConflictSignal {
+  source: 'TREND_CONFLICT';
+  direction: SignalDirection;
+  confidence: number;
+  weight: number;
+  priority: number;
+}
+
 export class TrendConflictDetector {
   private config: TrendConflictConfig;
 
@@ -29,7 +41,7 @@ export class TrendConflictDetector {
     };
   }
 
-  detectConflict(signals: any[], trendDirection: SignalDirection): any {
+  detectConflict(signals: TrendSignal[], trendDirection: SignalDirection): TrendConflictSignal | null {
     if (!this.config.enabled || !signals || signals.length < this.config.minConflictingSignals) {
       return null;
     }

@@ -571,8 +571,8 @@ export class BybitOrders extends BybitBase {
 
       if (response.retCode !== BYBIT_SUCCESS_CODE) {
         // Check if this is a critical error
-        const error = new Error(`Bybit API error: ${response.retMsg}. (code: ${response.retCode})`);
-        (error as any).code = response.retCode;
+        const error = new Error(`Bybit API error: ${response.retMsg}. (code: ${response.retCode})`) as Error & { code?: number };
+        error.code = response.retCode;
 
         if (isCriticalApiError(error)) {
           this.logger.error('🚨 CRITICAL API ERROR in getActiveOrders - throwing immediately!', {
@@ -618,8 +618,8 @@ export class BybitOrders extends BybitBase {
 
       if (response.retCode !== BYBIT_SUCCESS_CODE) {
         // Check if this is a critical error
-        const error = new Error(`Bybit API error: ${response.retMsg}. (code: ${response.retCode})`);
-        (error as any).code = response.retCode;
+        const error = new Error(`Bybit API error: ${response.retMsg}. (code: ${response.retCode})`) as Error & { code?: number };
+        error.code = response.retCode;
 
         if (isCriticalApiError(error)) {
           this.logger.error('🚨 CRITICAL API ERROR in getOrderHistory - throwing immediately!', {

@@ -14,6 +14,11 @@ export interface EntryCostValidatorConfig {
   logDecisions: boolean;
 }
 
+interface EntrySignal {
+  direction: SignalDirection;
+  confidence: number;
+}
+
 export class EntryCostValidator {
   private config: EntryCostValidatorConfig;
 
@@ -30,7 +35,7 @@ export class EntryCostValidator {
   }
 
   validate(
-    signal: any,
+    signal: EntrySignal,
     totalAnalyzers: number,
     votingAnalyzers: number
   ): { valid: boolean; reason: string } {

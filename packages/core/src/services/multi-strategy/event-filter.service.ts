@@ -17,7 +17,13 @@
 
 import { LoggerService } from '../../types/legacy';
 
-export type StrategyEventCallback = (event: any) => void;
+interface StrategyEvent {
+  type: string;
+  strategyId?: string;
+  [key: string]: unknown;
+}
+
+export type StrategyEventCallback = (event: StrategyEvent) => void;
 
 export class StrategyEventFilterService {
   private strategyListeners = new Map<
@@ -109,8 +115,8 @@ export class StrategyEventFilterService {
    * Route event to strategy-specific listeners
    * @param event - Event with strategyId field
    */
-  routeStrategyEvent(event: any): void {
-    if (!event) {
+  routeStrategyEvent(event: unknown): void {
+    if (!this.isStrategyEvent(event)) {
       return;
     }
 
@@ -151,8 +157,8 @@ export class StrategyEventFilterService {
    * Route event to all strategy listeners (broadcast)
    * @param event - Event to broadcast
    */
-  broadcastStrategyEvent(event: any): void {
-    if (!event) {
+  broadcastStrategyEvent(event: unknown): void {
+    if (!this.isStrategyEvent(event)) {
       return;
     }
 
@@ -281,5 +287,13 @@ export class StrategyEventFilterService {
       totalListeners,
       listenersByStrategy,
     };
+  }
+
+  private isStrategyEvent(event: unknown): event is StrategyEvent {
+    return (
+      !!event &&
+      typeof event === 'object' &&
+      typeof (event as { type?: unknown }).type === 'string'
+    );
   }
 }

@@ -19,6 +19,7 @@ import {
   MultiTimeframeAnalysis,
   TimeframeAnalysis,
   TrendBias,
+  SwingPoint,
 } from '../types/legacy';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
@@ -74,10 +75,10 @@ export class MultiTimeframeTrendService {
     if (this.errorHandler) {
       const result = await this.errorHandler.executeAsync(
         async () => ({
-          '5m': this.analyzeTimeframe((multiTFData as any).candles5m || [], '5m'),
-          '15m': this.analyzeTimeframe((multiTFData as any).candles15m || [], '15m'),
-          '1h': this.analyzeTimeframe((multiTFData as any).candles1h || [], '1h'),
-          '4h': this.analyzeTimeframe((multiTFData as any).candles4h || [], '4h'),
+          '5m': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles5m'), '5m'),
+          '15m': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles15m'), '15m'),
+          '1h': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles1h'), '1h'),
+          '4h': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles4h'), '4h'),
         }),
         { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
       );
@@ -94,10 +95,10 @@ export class MultiTimeframeTrendService {
       }
     } else {
       byTimeframe = {
-        '5m': this.analyzeTimeframe((multiTFData as any).candles5m || [], '5m'),
-        '15m': this.analyzeTimeframe((multiTFData as any).candles15m || [], '15m'),
-        '1h': this.analyzeTimeframe((multiTFData as any).candles1h || [], '1h'),
-        '4h': this.analyzeTimeframe((multiTFData as any).candles4h || [], '4h'),
+        '5m': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles5m'), '5m'),
+        '15m': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles15m'), '15m'),
+        '1h': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles1h'), '1h'),
+        '4h': this.analyzeTimeframe(this.getTimeframeCandles(multiTFData, 'candles4h'), '4h'),
       };
     }
 
@@ -233,8 +234,8 @@ export class MultiTimeframeTrendService {
     // DETECT SWING POINTS (GRACEFUL_DEGRADE)
     // ========================================================================
 
-    let highs: { price: number; timestamp: number }[] = [];
-    let lows: { price: number; timestamp: number }[] = [];
+    let highs: SwingPoint[] = [];
+    let lows: SwingPoint[] = [];
 
     try {
       const result = this.swingPointDetector.detectSwingPoints(candles);
@@ -261,8 +262,8 @@ export class MultiTimeframeTrendService {
     try {
       strength = this.swingPointDetector.calculateStrengthFromSwingPoints(
         bias,
-        highs as any,
-        lows as any,
+        highs,
+        lows,
       );
     } catch {
       // Return safe default on strength calculation failure
@@ -304,8 +305,8 @@ export class MultiTimeframeTrendService {
    * @returns Trend bias (BULLISH, BEARISH, NEUTRAL)
    */
   private calculateBias(
-    highs: { price: number; timestamp: number }[],
-    lows: { price: number; timestamp: number }[],
+    highs: SwingPoint[],
+    lows: SwingPoint[],
     candles: Candle[],
   ): TrendBias {
     // ========================================================================
@@ -378,8 +379,8 @@ export class MultiTimeframeTrendService {
    * @returns Pattern name ('HH_HL', 'LH_LL', 'FLAT')
    */
   private getPattern(
-    highs: { price: number }[],
-    lows: { price: number }[],
+    highs: SwingPoint[],
+    lows: SwingPoint[],
   ): string | undefined {
     // ========================================================================
     // VALIDATE INPUT
@@ -571,6 +572,14 @@ export class MultiTimeframeTrendService {
 
     // Clamp to [0, 1]
     return Math.max(0, Math.min(1, weighted));
+  }
+
+  private getTimeframeCandles(
+    multiTFData: MultiTimeframeData,
+    key: keyof MultiTimeframeData,
+  ): Candle[] {
+    const value = (multiTFData as unknown as Record<string, unknown>)[key];
+    return Array.isArray(value) ? (value as Candle[]) : [];
   }
 
   /**

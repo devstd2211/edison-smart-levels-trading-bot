@@ -1,7 +1,12 @@
 import { CandleProvider } from '../providers/candle.provider';
-import { IIndicatorCache, IIndicatorCalculator, IIndicatorPreCalculationService } from '../types/legacy';
+import {
+  Candle,
+  IIndicatorCache,
+  IIndicatorCalculator,
+  IIndicatorPreCalculationService,
+  TimeframeRole,
+} from '../types/legacy';
 import { LoggerService } from './logger.service';
-import { TimeframeRole } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   IndicatorCalculationError,
@@ -186,7 +191,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
       }
 
       // Get candles for all required timeframes
-      const candlesByTf = new Map<string, any[]>();
+      const candlesByTf = new Map<string, Candle[]>();
       for (const [tf, minCount] of tfRequirements) {
         try {
           // Try to get candles - TF string might be different format
@@ -253,7 +258,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
           // Phase 8.9.16: Calculator execution with SKIP strategy
           return calc
             .calculate({
-              candlesByTimeframe: candlesByTf as any,
+              candlesByTimeframe: candlesByTf,
               timestamp: Date.now(),
             })
             .catch((error: unknown) => {
@@ -272,7 +277,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
           // Original behavior without ErrorHandler
           return calc
             .calculate({
-              candlesByTimeframe: candlesByTf as any,
+              candlesByTimeframe: candlesByTf,
               timestamp: Date.now(),
             })
             .catch((error) => {
@@ -319,7 +324,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
       this.logger.debug(`Recalculated indicators for ${closedTimeframe}`, {
         calculatorsRun: affectedCalculators.length,
         entriesUpdated: Array.from(allResults).reduce(
-          (sum, m: any) => sum + m.size,
+          (sum, m: Map<string, number>) => sum + m.size,
           0
         ),
       });

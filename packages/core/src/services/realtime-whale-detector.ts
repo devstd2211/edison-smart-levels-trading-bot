@@ -2,6 +2,15 @@ import { INTEGER_MULTIPLIERS } from '../constants';
 import { OrderBook } from '../types/legacy';
 import type { IWhaleDetectorServices } from '../interfaces';
 
+interface WhaleToggleConfigSection {
+  enabled?: boolean;
+}
+
+interface RealTimeWhaleDetectorConfig {
+  whaleHunter?: WhaleToggleConfigSection;
+  whaleHunterFollow?: WhaleToggleConfigSection;
+}
+
 /**
  * Real-Time Whale Detector
  *
@@ -20,7 +29,7 @@ export class RealTimeWhaleDetector {
   private lastWhaleAnalysis: number = 0;
   private readonly whaleThrottle = INTEGER_MULTIPLIERS.ONE_HUNDRED; // 100ms
 
-  constructor(private services: IWhaleDetectorServices, private config: any) {
+  constructor(private services: IWhaleDetectorServices, private config: RealTimeWhaleDetectorConfig) {
     this.logger = services.logger;
   }
 
@@ -60,7 +69,7 @@ export class RealTimeWhaleDetector {
    * Check if whale hunting is enabled in config
    */
   private isWhaleHuntingEnabled(): boolean {
-    return this.config.whaleHunter?.enabled || this.config.whaleHunterFollow?.enabled;
+    return (this.config.whaleHunter?.enabled ?? false) || (this.config.whaleHunterFollow?.enabled ?? false);
   }
 
   /**

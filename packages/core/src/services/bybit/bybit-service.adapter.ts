@@ -36,7 +36,7 @@ import {
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import { BybitService } from './bybit.service';
-import { LoggerService } from '../../types/legacy';
+import type { BybitOrder, LoggerService, ProtectionVerification } from '../../types/legacy';
 
 /**
  * BybitServiceAdapter implements IExchange by wrapping BybitService
@@ -63,6 +63,10 @@ export class BybitServiceAdapter implements IExchange {
     }
     const candidate = service as { getFundingRate?: unknown };
     return typeof candidate.getFundingRate === 'function';
+  }
+
+  private asBybitOrders(orders: unknown): BybitOrder[] {
+    return Array.isArray(orders) ? (orders as BybitOrder[]) : [];
   }
 
   // ============================================================================
@@ -676,9 +680,8 @@ export class BybitServiceAdapter implements IExchange {
   }> {
     try {
       // Simplified: check if order exists in active orders
-      const activeOrders = await this.bybitService.getActiveOrders();
-
-      const order = activeOrders?.find((o: any) => o.orderId === orderId);
+      const activeOrders = this.asBybitOrders(await this.bybitService.getActiveOrders());
+      const order = activeOrders.find((o) => o.orderId === orderId);
 
       if (order) {
         return {
@@ -780,11 +783,11 @@ export class BybitServiceAdapter implements IExchange {
    * Get order history
    * MISMATCH RESOLUTION: Missing method - implement wrapper
    */
-  async getOrderHistory(limit?: number): Promise<any[]> {
+  async getOrderHistory(limit?: number): Promise<unknown[]> {
     try {
       // Try to get active orders as substitute for history
-      const activeOrders = await this.bybitService.getActiveOrders();
-      return Array.isArray(activeOrders) ? activeOrders.slice(0, limit || 50) : [];
+      const activeOrders = this.asBybitOrders(await this.bybitService.getActiveOrders());
+      return activeOrders.slice(0, limit || 50);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.warn('⚠️ Failed to get order history', { error: errorMsg });
@@ -926,21 +929,21 @@ export class BybitServiceAdapter implements IExchange {
    * Get active orders (stop loss and take profit orders)
    * MATCHES IExchange - delegates to BybitService
    */
-  async getActiveOrders(): Promise<any[]> {
-    return this.bybitService.getActiveOrders();
+  async getActiveOrders(): Promise<unknown[]> {
+    return this.asBybitOrders(await this.bybitService.getActiveOrders());
   }
 
   /**
    * Verify if protection (SL/TP) is set for position
    * MATCHES IExchange - delegates to BybitService
    */
-  async verifyProtectionSet(side: string): Promise<any> {
+  async verifyProtectionSet(side: string): Promise<ProtectionVerification> {
     // Convert 'Buy'/'Sell' to PositionSide enum for BybitService
     const positionSide: PositionSide = side === 'Buy' || side === 'LONG'
       ? PositionSide.LONG
       : PositionSide.SHORT;
 
-    return this.bybitService.verifyProtectionSet(positionSide);
+    return (await this.bybitService.verifyProtectionSet(positionSide)) as unknown as ProtectionVerification;
   }
 
   /**

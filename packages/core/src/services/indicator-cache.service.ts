@@ -79,7 +79,7 @@ export class IndicatorCacheService implements IIndicatorCache {
 
     try {
       const value = this.marketDataRepo.getIndicator(key);
-      if (value !== null && value !== undefined) {
+      if (typeof value === 'number' && isFinite(value)) {
         this.hits++;
         this.safeLog('debug', `Cache hit: ${key}`);
         return value;

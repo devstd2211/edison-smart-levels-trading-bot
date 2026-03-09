@@ -17,7 +17,7 @@ import { IMarketDataRepository } from './IRepositories';
  * Cached indicator entry with TTL
  */
 interface CachedIndicator {
-  value: any;
+  value: unknown;
   timestamp: number;
   ttlMs: number; // Time to live in milliseconds
 }
@@ -108,7 +108,7 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * @param value - Calculated indicator value
    * @param ttlMs - Time to live in milliseconds (default 60s)
    */
-  cacheIndicator(key: string, value: any, ttlMs: number = this.defaultIndicatorTTL): void {
+  cacheIndicator(key: string, value: unknown, ttlMs: number = this.defaultIndicatorTTL): void {
     // Evict old indicators if over limit
     if (this.indicators.size >= this.maxIndicators) {
       this.evictOldestIndicator();
@@ -127,7 +127,7 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * @param key - Indicator key
    * @returns Cached value or null
    */
-  getIndicator(key: string): any | null {
+  getIndicator(key: string): unknown | null {
     const cached = this.indicators.get(key);
 
     if (!cached) {
@@ -279,7 +279,7 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * Estimate size of indicator value
    * Numbers: ~8 bytes each, Arrays: ~24 + value*8
    */
-  private estimateIndicatorSize(value: any): number {
+  private estimateIndicatorSize(value: unknown): number {
     if (typeof value === 'number') return 8;
     if (Array.isArray(value)) return 24 + value.length * 8;
     if (typeof value === 'object') return 100; // Rough estimate for objects

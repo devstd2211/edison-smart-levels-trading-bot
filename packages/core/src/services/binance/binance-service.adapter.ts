@@ -26,7 +26,7 @@ import {
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import { BinanceService } from './binance.service';
-import { LoggerService } from '../../types/legacy';
+import type { LoggerService, ProtectionVerification } from '../../types/legacy';
 
 /**
  * BinanceServiceAdapter implements IExchange by wrapping BinanceService
@@ -53,6 +53,10 @@ export class BinanceServiceAdapter implements IExchange {
     }
     const candidate = service as { getFundingRate?: unknown };
     return typeof candidate.getFundingRate === 'function';
+  }
+
+  private asOrderRecords(orders: unknown): Array<{ orderId: string }> {
+    return Array.isArray(orders) ? (orders as Array<{ orderId: string }>) : [];
   }
 
   // ============================================================================
@@ -528,9 +532,8 @@ export class BinanceServiceAdapter implements IExchange {
     averagePrice: number;
   }> {
     try {
-      const activeOrders = await this.binanceService.getActiveOrders();
-
-      const order = activeOrders?.find((o: any) => o.orderId === orderId);
+      const activeOrders = this.asOrderRecords(await this.binanceService.getActiveOrders());
+      const order = activeOrders.find((o) => o.orderId === orderId);
 
       if (order) {
         return {
@@ -607,10 +610,10 @@ export class BinanceServiceAdapter implements IExchange {
     }
   }
 
-  async getOrderHistory(limit?: number): Promise<any[]> {
+  async getOrderHistory(limit?: number): Promise<unknown[]> {
     try {
-      const activeOrders = await this.binanceService.getActiveOrders();
-      return Array.isArray(activeOrders) ? activeOrders.slice(0, limit || 50) : [];
+      const activeOrders = this.asOrderRecords(await this.binanceService.getActiveOrders());
+      return activeOrders.slice(0, limit || 50);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.warn('⚠️ Failed to get order history', { error: errorMsg });
@@ -705,16 +708,16 @@ export class BinanceServiceAdapter implements IExchange {
     return this.binanceService.getSymbol();
   }
 
-  async getActiveOrders(): Promise<any[]> {
-    return this.binanceService.getActiveOrders();
+  async getActiveOrders(): Promise<unknown[]> {
+    return this.asOrderRecords(await this.binanceService.getActiveOrders());
   }
 
-  async verifyProtectionSet(side: string): Promise<any> {
+  async verifyProtectionSet(side: string): Promise<ProtectionVerification> {
     const positionSide: PositionSide = side === 'Buy' || side === 'LONG'
       ? PositionSide.LONG
       : PositionSide.SHORT;
 
-    return this.binanceService.verifyProtectionSet(positionSide);
+    return (await this.binanceService.verifyProtectionSet(positionSide)) as unknown as ProtectionVerification;
   }
 
   roundQuantity(qty: number): number {

@@ -10,6 +10,12 @@ import { SemanticSearchService } from './semantic-search.service';
 import { ProjectIndexer } from './project-indexer';
 import { EmbeddedDocument, SearchQuery, SearchResult, SearchResultItem, ProjectIndex, IndexConfig } from './vector-db.types';
 
+interface VectorStoreStats {
+  totalDocuments: number;
+  byCategory: Record<string, number>;
+  byType: Record<string, number>;
+}
+
 export class VectorDatabaseService {
   private store: SQLiteVectorStore;
   private searchService: SemanticSearchService;
@@ -167,7 +173,7 @@ export class VectorDatabaseService {
   /**
    * Get database statistics
    */
-  async getStats(): Promise<any> {
+  async getStats(): Promise<VectorStoreStats> {
     if (!this.initialized) await this.init();
     return this.store.getStats();
   }

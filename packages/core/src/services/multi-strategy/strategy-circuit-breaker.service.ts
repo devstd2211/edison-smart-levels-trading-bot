@@ -134,7 +134,7 @@ export class StrategyCircuitBreakerService {
       // Store error information
       const cbError: CircuitBreakerError = {
         message: error.message,
-        code: (error as any).code || 'UNKNOWN',
+        code: this.getErrorCode(error),
         timestamp: Date.now(),
         stackTrace: error.stack,
       };
@@ -657,5 +657,11 @@ export class StrategyCircuitBreakerService {
       }
     }
   }
-}
 
+  private getErrorCode(error: Error): string {
+    const maybeCode = (error as Error & { code?: unknown }).code;
+    return typeof maybeCode === 'string' || typeof maybeCode === 'number'
+      ? String(maybeCode)
+      : 'UNKNOWN';
+  }
+}

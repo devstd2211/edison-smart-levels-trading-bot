@@ -1,4 +1,8 @@
-ï»¿# Edison Refactor Plan (Global + Detailed Checklists)
+# Archived Note
+- Archived on 2026-03-09 as completed history.
+- Active/open items are tracked in ACTIVE_REFACTOR_PLAN.md.
+
+# Edison Refactor Plan (Global + Detailed Checklists)
 
 ## Global Phased Plan (High-Level)
 1. **Freeze Baseline**
@@ -164,6 +168,29 @@
 - [x] Core any cleanup batch 39: `indicator-cache.service.ts` `any` removal (typed default ErrorLogger + safeLog metadata typing + invalid-key return cast via `unknown`)
 - [x] Core any cleanup batch 40: `ml-signal-validator.service.ts` `any` removal (safeLog metadata typed as `Record<string, unknown>`)
 - [x] Core any cleanup batch 41: `liquidity-heatmap.service.ts` `any` removal (safeLog metadata typed as `Record<string, unknown>`)
+- [x] Core any cleanup batch 42: `event-bus.ts` `any` removal (generic payload typing + typed metrics summary)
+- [x] Core any cleanup batch 43: `indicator-precalculation.service.ts` `any` removal (typed candle map + typed result reduction)
+- [x] Core any cleanup batch 44: `performance-analytics.service.ts` `any` removal (typed trade model + direction normalization)
+- [x] Core any cleanup batch 45: `multi-strategy/strategy-orchestrator.service.ts` `any` removal (typed shared services + typed cache stats + unknown event payload)
+- [x] Core any cleanup batch 46: `multi-timeframe-trend.service.ts` `any` removal (timeframe candle guards + swing-point typing)
+- [x] Core any cleanup batch 47: `multi-strategy/event-filter.service.ts` `any` removal (typed strategy event envelope + unknown routing input)
+- [x] Core any cleanup batch 48: `multi-strategy/dynamic-config-manager.service.ts` `any` removal (typed analyzer weight guard + indicator override guards + typed flatten helper)
+- [x] Core any cleanup batch 49: `bybit/bybit-service.adapter.ts` `any` removal (typed order arrays + unknown history payload + typed protection verification)
+- [x] Core any cleanup batch 50: `binance/binance-service.adapter.ts` `any` removal (typed order records + unknown history payload + typed protection verification)
+- [x] Core any cleanup batch 51: `multi-strategy/strategy-orchestrator-cache.service.ts` `any` removal (generic cache typing for orchestrator instances)
+- [x] Core any cleanup batch 52: `multi-strategy/strategy-processing-pool.service.ts` `any` removal (`ProcessingFunction` + failed-result error boundary typed as `unknown`)
+- [x] Core any cleanup batch 53: `resilience/bulkhead.service.ts` `any` removal (resource queue typed to `unknown` + normalized error boundary)
+- [x] Core any cleanup batch 54: `binance/binance.service.ts` `any` removal (`getActiveOrders` unknown-array return + typed `ProtectionVerification`)
+- [x] Core any cleanup batch 55: `bybit/bybit-positions.partial.ts` `any` removal (typed order payload + typed API error code attachment)
+- [x] Core any cleanup batch 56: `bybit/bybit-orders.partial.ts` `any` removal (typed API error code attachment in active/history order paths)
+- [x] Core any cleanup batch 57: `public-websocket.service.ts` `any` removal (typed BTC confirmation config boundary)
+- [x] Core any cleanup batch 58: `multi-strategy/strategy-circuit-breaker.service.ts` `any` removal (typed error-code extraction helper)
+- [x] Core any cleanup batch 59: `realtime-whale-detector.ts` `any` removal (typed detector config boundary)
+- [x] Core any cleanup batch 60: `signal-validators` `any` removal (`entry-cost-validator`, `short-entry-validator`, `trend-conflict-detector`)
+- [x] Core any cleanup batch 61: `structure-aware-exit` + `multi-strategy` log metadata typing (`unknown` boundaries, removed final `as any`)
+- [x] Core any cleanup batch 62: validators/utils/event-sourcing typing cleanup (`position.validator`, `analyzer-config.utils`, `position-state-projection`)
+- [x] Core any cleanup batch 63: vector-db typing cleanup + compile compatibility fixes (`vector-db`, Bybit order payload typing, unknown event-data test access)
+- [x] Core any cleanup batch 64: repositories typing cleanup (`market-data.cache-repository`, `journal.file-repository`, `IRepositories`) + indicator-cache compatibility guard
 - [x] Tests any cleanup batch 1: backtest walk-forward/worker-pool/parameter-optimizer tests
 - [x] Tests any cleanup batch 2: bot-event-emitter, exit-decisions, anti-flip tests
 - [x] Tests any cleanup batch 3: event-handlers, entry-decisions, cache-integration tests
@@ -284,16 +311,16 @@
 - [x] Tests any cleanup status (active suites): all non-archived files under `packages/core/src/__tests__` are `any`-clean; only `services/market-data-collector.service.test.ARCHIVED.ts` remains with `any`
 - [x] Prompt-rule compliance note (2026-03-05): for each test cleanup batch, related production service(s) were reviewed and explicitly recorded; when no safe behavior-preserving refactor candidate exists, that outcome is logged; any future candidate must be added as a pending/completed item in this plan.
 - [x] Post-hoc recovery audit (2026-03-05): rebuilt `test -> production` dependency map across all non-archived `packages/core/src/__tests__` and scored complexity candidates (heuristics: lines, constructor params, method count, field count, test reach)
-- [x] God-object candidate: `packages/core/src/services/position-exiting.service.ts` (score 7; ~1148 LOC, 11 ctor params, 66 methods) â€” iteration 1 complete: extracted pricing/BB pure calculations to `services/position-exiting/position-exit-pricing.utils.ts`, integrated in service, removed duplicated private calc methods; verification: `npm test -- --runInBand packages/core/src/__tests__/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts` (2/2 suites PASS, 85/85 tests PASS) (2026-03-05)
-- [x] God-object candidate: `packages/core/src/services/position-lifecycle.service.ts` (score 7; ~1103 LOC, 17 ctor params, 65 methods) â€” iteration 1 complete: extracted WebSocket sync/snapshot helpers to `services/position-lifecycle/position-lifecycle-sync.utils.ts`, integrated persistence access helpers (`readStoredPosition`/`writeStoredPosition`), and kept lifecycle behavior unchanged; verification: `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts` (2/2 suites PASS, 36/36 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/services/trading-journal.service.ts` (score 6; ~759 LOC, 7 ctor params, 43 methods) â€” iteration 1 complete: extracted fee/net-PnL and journal stats aggregation calculations to `services/trading-journal/trading-journal-calculations.utils.ts`, integrated into close/statistics flows while preserving behavior; verification: `npm test -- --runInBand packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` (2/2 suites PASS, 49/49 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/services/websocket-manager.service.ts` (score 5; ~792 LOC, 7 ctor params, 43 methods) â€” iteration 1 complete: extracted WebSocket position-to-domain mapping (`PositionData -> Position`) to `services/websocket-manager/websocket-position-mapping.utils.ts`, integrated into `processPositionData` with behavior preserved; verification: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts` (2/2 suites PASS, 31/31 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/services/public-websocket.service.ts` (score 5; ~571 LOC, 6 ctor params, 55 methods) â€” iteration 1 complete: extracted pure message helpers (`kline topic symbol extraction`, `closed-candle mapping`, `orderbook snapshot detection`) to `services/public-websocket/public-websocket-message.utils.ts` and integrated into service handlers without behavior changes; verification: `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts` (1/1 suite PASS, 24/24 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/services/telegram.service.ts` (score 5; ~615 LOC, 3 ctor params, 46 methods) â€” iteration 1 complete: extracted message-formatting helpers (`getCloseEmoji`, `getPnlSign`, `formatHoldingTime`) to `services/telegram/telegram-message-format.utils.ts` and integrated into close/trade-notification flows while preserving transport/retry behavior; verification: `npm test -- --runInBand packages/core/src/__tests__/services/telegram.error-handling.test.ts` (1/1 suite PASS, 29/29 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/services/handlers/websocket.handler.ts` (score 5; ~611 LOC, 7 ctor params, 45 methods) â€” iteration 1 complete: extracted event-decoding logic (`resolveTakeProfitLevel`, `resolveExitTypeFromCloseReason`) to `services/handlers/websocket-event-decoding.utils.ts` and integrated into handler routing flow with behavior preserved; verification: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts` (1/1 suite PASS, 21/21 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/analyzers/divergence.analyzer-new.ts` (score 5; ~629 LOC, 2 ctor params, 49 methods) â€” iteration 1 complete: extracted divergence detection primitives (`findSwingHighs`, `findSwingLows`, `checkBearishDivergence`, `checkBullishDivergence`, strength calc) to `analyzers/divergence/divergence-primitives.utils.ts` and kept analyzer orchestration/signal assembly in class; verification: `npm test -- --runInBand packages/core/src/__tests__/analyzers/divergence.analyzer-new.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.functional.test.ts` (2/2 suites PASS, 30/30 tests PASS) (2026-03-06)
-- [x] God-object candidate: `packages/core/src/analyzers/bollinger-bands.analyzer-new.ts` (score 5; ~521 LOC, 3 ctor params, 39 methods) â€” iteration 1 complete: extracted Bollinger decision primitives (`getBollingerDirection`, `calculateBollingerConfidence`) to `analyzers/bollinger-bands/bollinger-signal.utils.ts` and integrated into analyzer while preserving behavior; verification: `npm test -- --runInBand packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.functional.test.ts` (2/2 suites PASS, 64/64 tests PASS) (2026-03-06)
-- [x] Cross-cutting god-object hotspot: `packages/core/src/services/logger.service.ts` (score 5; ~479 LOC, test reach 54 files) â€” iteration 1 complete: extracted logger core helpers (`validateLogLevel`, `normalizeLogLevel`, level filtering, entry formatting, date resolution) to `services/logger/logger-core.utils.ts` and retained queue/sink lifecycle behavior in service; verification: `npm test -- --runInBand packages/core/src/__tests__/services/logger.service.error-handling.test.ts` (1/1 suite PASS, 33/33 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/services/position-exiting.service.ts` (score 7; ~1148 LOC, 11 ctor params, 66 methods) — iteration 1 complete: extracted pricing/BB pure calculations to `services/position-exiting/position-exit-pricing.utils.ts`, integrated in service, removed duplicated private calc methods; verification: `npm test -- --runInBand packages/core/src/__tests__/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts` (2/2 suites PASS, 85/85 tests PASS) (2026-03-05)
+- [x] God-object candidate: `packages/core/src/services/position-lifecycle.service.ts` (score 7; ~1103 LOC, 17 ctor params, 65 methods) — iteration 1 complete: extracted WebSocket sync/snapshot helpers to `services/position-lifecycle/position-lifecycle-sync.utils.ts`, integrated persistence access helpers (`readStoredPosition`/`writeStoredPosition`), and kept lifecycle behavior unchanged; verification: `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts` (2/2 suites PASS, 36/36 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/services/trading-journal.service.ts` (score 6; ~759 LOC, 7 ctor params, 43 methods) — iteration 1 complete: extracted fee/net-PnL and journal stats aggregation calculations to `services/trading-journal/trading-journal-calculations.utils.ts`, integrated into close/statistics flows while preserving behavior; verification: `npm test -- --runInBand packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` (2/2 suites PASS, 49/49 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/services/websocket-manager.service.ts` (score 5; ~792 LOC, 7 ctor params, 43 methods) — iteration 1 complete: extracted WebSocket position-to-domain mapping (`PositionData -> Position`) to `services/websocket-manager/websocket-position-mapping.utils.ts`, integrated into `processPositionData` with behavior preserved; verification: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts` (2/2 suites PASS, 31/31 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/services/public-websocket.service.ts` (score 5; ~571 LOC, 6 ctor params, 55 methods) — iteration 1 complete: extracted pure message helpers (`kline topic symbol extraction`, `closed-candle mapping`, `orderbook snapshot detection`) to `services/public-websocket/public-websocket-message.utils.ts` and integrated into service handlers without behavior changes; verification: `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts` (1/1 suite PASS, 24/24 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/services/telegram.service.ts` (score 5; ~615 LOC, 3 ctor params, 46 methods) — iteration 1 complete: extracted message-formatting helpers (`getCloseEmoji`, `getPnlSign`, `formatHoldingTime`) to `services/telegram/telegram-message-format.utils.ts` and integrated into close/trade-notification flows while preserving transport/retry behavior; verification: `npm test -- --runInBand packages/core/src/__tests__/services/telegram.error-handling.test.ts` (1/1 suite PASS, 29/29 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/services/handlers/websocket.handler.ts` (score 5; ~611 LOC, 7 ctor params, 45 methods) — iteration 1 complete: extracted event-decoding logic (`resolveTakeProfitLevel`, `resolveExitTypeFromCloseReason`) to `services/handlers/websocket-event-decoding.utils.ts` and integrated into handler routing flow with behavior preserved; verification: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts` (1/1 suite PASS, 21/21 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/analyzers/divergence.analyzer-new.ts` (score 5; ~629 LOC, 2 ctor params, 49 methods) — iteration 1 complete: extracted divergence detection primitives (`findSwingHighs`, `findSwingLows`, `checkBearishDivergence`, `checkBullishDivergence`, strength calc) to `analyzers/divergence/divergence-primitives.utils.ts` and kept analyzer orchestration/signal assembly in class; verification: `npm test -- --runInBand packages/core/src/__tests__/analyzers/divergence.analyzer-new.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.functional.test.ts` (2/2 suites PASS, 30/30 tests PASS) (2026-03-06)
+- [x] God-object candidate: `packages/core/src/analyzers/bollinger-bands.analyzer-new.ts` (score 5; ~521 LOC, 3 ctor params, 39 methods) — iteration 1 complete: extracted Bollinger decision primitives (`getBollingerDirection`, `calculateBollingerConfidence`) to `analyzers/bollinger-bands/bollinger-signal.utils.ts` and integrated into analyzer while preserving behavior; verification: `npm test -- --runInBand packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.functional.test.ts` (2/2 suites PASS, 64/64 tests PASS) (2026-03-06)
+- [x] Cross-cutting god-object hotspot: `packages/core/src/services/logger.service.ts` (score 5; ~479 LOC, test reach 54 files) — iteration 1 complete: extracted logger core helpers (`validateLogLevel`, `normalizeLogLevel`, level filtering, entry formatting, date resolution) to `services/logger/logger-core.utils.ts` and retained queue/sink lifecycle behavior in service; verification: `npm test -- --runInBand packages/core/src/__tests__/services/logger.service.error-handling.test.ts` (1/1 suite PASS, 33/33 tests PASS) (2026-03-06)
 - [x] Recovery-track status snapshot (2026-03-06): 10/10 candidates done (`position-exiting.service.ts`, `position-lifecycle.service.ts`, `trading-journal.service.ts`, `websocket-manager.service.ts`, `public-websocket.service.ts`, `telegram.service.ts`, `handlers/websocket.handler.ts`, `divergence.analyzer-new.ts`, `bollinger-bands.analyzer-new.ts`, `logger.service.ts`), 0/10 pending
 - [x] BotServices.toObject reduced to grouped services
 - [x] CoreServices container introduced and TradingBot wired
@@ -459,7 +486,7 @@
 - [x] Added helper scripts for no-force triage runs: `test:core:noforce`, `test:core:noforce:shard1`, `test:core:noforce:shard2` (2026-03-01)
 - [x] Added aggregate triage script `test:core:handles:smoke` to run A/B/CDEF + heavy handle suites in one command (2026-03-01)
 - [x] Refactored `bot-initializer.error-handling` test cleanup via shared helper (`cleanupMonitoringResources`) in section C (2026-03-01)
-- [x] Normalized mojibake arrows in `bot-initializer.error-handling` test names (`Ã¢â€ â€™` -> `->`) for readability (2026-03-01)
+- [x] Normalized mojibake arrows in `bot-initializer.error-handling` test names (`â†’` -> `->`) for readability (2026-03-01)
 - [x] Clarified `web-client` test/build behavior: `npm --prefix packages/web-client run test` runs Jest only; `vite` is invoked only by build scripts (2026-03-03)
 - [x] Added Windows mitigation for intermittent `vite build` `spawn EPERM`: one-time retry wrapper (`packages/web-client/scripts/vite-build-retry.cjs`) wired in `packages/web-client/package.json` (2026-03-03)
 - [x] Re-verified package web-client checks after mitigation: `npm run build:web-client` and `npm run test:web-client -- --runInBand` PASS (2026-03-03)
@@ -1758,7 +1785,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - orchestration split across dedicated lifecycle modules (`open/sync/clear/atomic/snapshot/confirmation/sizing/preopen/state/notification`)
   - regression safety validated via repeated targeted lifecycle suites (latest: 3/3 suites PASS, 51/51 tests PASS)
   - next refactor focus should move to another candidate service/module
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 1 extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 1 extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-calculations.utils.ts`
   - moved pure calculation helpers out of service class:
     - fill-price from impact
@@ -1775,7 +1802,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 1610 lines (down from 1677 before extraction slice).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 2 major extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 2 major extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-workflows.orchestrator.ts`
   - moved workflow orchestration out of service class:
     - smart execution core path (`doExecuteSmartOrder`)
@@ -1798,7 +1825,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 915 lines (down from 1610 after iteration 1; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 3 compatibility-preserving extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 3 compatibility-preserving extraction slice complete:
   - moved remaining monitor-adjust decision/update logic from service class into workflow orchestrator internals
   - retained private test seam compatibility by keeping `shouldAdjustPrice(...)` in service and wiring it through workflow deps (existing tests that spy on this method remain valid)
   - removed type/contract bulk from service by introducing/re-exporting dedicated smart-order type module
@@ -1809,7 +1836,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 856 lines (down from 915 after iteration 2; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 4 thin-facade consolidation slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 4 thin-facade consolidation slice complete:
   - consolidated repeated async GRACEFUL_DEGRADE wrappers into shared helper:
     - `executeWithGracefulDegrade(...)`
     - preserved per-call semantics via options (`requireValue`, `resolveSuccess`, log levels/messages)
@@ -1818,7 +1845,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - public methods (`executeSmartOrder`, `monitorAndAdjust`, `handlePartialFills`, `executeTWAP`, `executeVWAP`, `calculateOptimalSplit`, `estimateMarketImpact`) now primarily validate/route/delegate
   - preserved compatibility seams used by tests (`do*` methods, `shouldAdjustPrice(...)`)
   - behavior preserved after fixing helper semantics to match previous `result.success && result.value` branching
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 5 validation extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 5 validation extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-validation.utils.ts`
   - moved constructor config validation and request validation logic to dedicated utils:
     - `validateSmartOrderConfig(...)`
@@ -1830,7 +1857,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 596 lines (down from 856 after iteration 3; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 6 facade-compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 6 facade-compaction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-state.utils.ts`
   - moved active-order tracking operations out of service:
     - `getTrackedOrderState(...)`
@@ -1838,7 +1865,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
     - `clearTrackedOrders(...)`
   - public service methods (`getOrderState`, `cleanupOrder`, `clearAllOrders`) now delegate to state utils
   - added `executeStrategyWithFallback(...)` helper to collapse duplicated TWAP/VWAP entry orchestration while preserving logs/fallback semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 7 resilience-util extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 7 resilience-util extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-resilience.utils.ts`
   - moved generic resilience wrapper logic out of service:
     - `executeWithGracefulDegrade(...)`
@@ -1850,7 +1877,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 552 lines (down from 596 after iteration 5; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 8 seam-adapter extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 8 seam-adapter extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-seams.utils.ts`
   - moved strategy seam logic out of service:
     - `shouldAdjustPriceByStrategy(...)`
@@ -1863,7 +1890,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 541 lines (down from 552 after iteration 7; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 9 wrapper-pruning slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 9 wrapper-pruning slice complete:
   - removed redundant private passthrough wrappers from service:
     - `calculateFillPrice(...)`
     - `buildReasoningMessage(...)`
@@ -1878,7 +1905,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 510 lines (down from 541 after iteration 8; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 10 report/id compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 10 report/id compaction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-report.utils.ts`
   - moved common order-id/report helper logic out of service:
     - `createSmartOrderExecutionId(...)`
@@ -1891,7 +1918,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 486 lines (down from 510 after iteration 9; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 11 guard extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 11 guard extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-guards.utils.ts`
   - moved repeated input guard logic out of service:
     - `assertRequiredOrderId(...)`
@@ -1907,7 +1934,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 480 lines (down from 486 after iteration 10; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 12 strategy-entry extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 12 strategy-entry extraction slice complete:
   - added `packages/core/src/services/smart-order-execution/smart-order-execution-strategy-entry.utils.ts`
   - moved TWAP/VWAP shared entry orchestration out of service:
     - request validation
@@ -1920,7 +1947,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 457 lines (down from 480 after iteration 11; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) â€” iteration 13 numeric/side guard consolidation slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-07) — iteration 13 numeric/side guard consolidation slice complete:
   - extended `smart-order-execution-guards.utils.ts` with:
     - `assertPositiveFiniteNumber(...)`
     - `assertValidOrderSide(...)`
@@ -1933,7 +1960,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 451 lines (down from 457 after iteration 12; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 14 compat-thinning slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 14 compat-thinning slice complete:
   - collapsed duplicated TWAP/VWAP service-entry wiring via shared private strategy execution helper:
     - unified call contract passed into `executeStrategyWithFallback(...)`
     - retained per-strategy metadata/log/fallback message differences
@@ -1946,16 +1973,16 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 470 lines (up from 451 after iteration 13; helper-driven dedup slice, 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 15 strategy-entry util consolidation slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 15 strategy-entry util consolidation slice complete:
   - extended `smart-order-execution-strategy-entry.utils.ts` with `executeNamedStrategyWithFallback(...)`
   - moved TWAP/VWAP message/metadata selection into strategy-entry util
   - service `executeTWAP(...)`/`executeVWAP(...)` now delegate to one strategy-keyed utility path
   - preserved private seam compatibility (`doExecuteTWAP(...)`, `doExecuteVWAP(...)`) for spy-based tests
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 16 workflow-deps facade extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 16 workflow-deps facade extraction slice complete:
   - extended `smart-order-execution-seams.utils.ts` with `buildFacadeWorkflowDeps(...)`
   - moved calculation/reasoning/volume-profile wiring closures out of service `getWorkflowDeps(...)`
   - service now passes only facade-level callbacks/maps into deps builder
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 17 safe-log extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 17 safe-log extraction slice complete:
   - added `smart-order-execution-logging.utils.ts` with `safeLogWithRecovery(...)`
   - moved logger-failure SKIP handling out of service `safeLog(...)`
   - service `safeLog(...)` kept as compatibility seam and now thinly delegates to logging util
@@ -1964,15 +1991,15 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 395 lines (down from 470 after iteration 14; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 18 async-degrade entry normalization slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 18 async-degrade entry normalization slice complete:
   - added facade helper `runAsyncWithGracefulDegrade(...)` to centralize repeated async resilience utility wiring
   - switched async public methods to pass only operation/options payloads
   - preserved behavior contracts for error log levels, fallback values, and metadata payloads
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 19 sync-degrade entry normalization slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 19 sync-degrade entry normalization slice complete:
   - added facade helper `runSyncWithGracefulDegrade(...)` to centralize repeated sync resilience utility wiring
   - switched `calculateOptimalSplit(...)` and `estimateMarketImpact(...)` to normalized sync entry path
   - preserved fallback semantics (`[totalSize]` and `0`) and warning metadata contracts
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 20 strategy-dispatch normalization slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 20 strategy-dispatch normalization slice complete:
   - added facade helper `executeNamedStrategy(...)` and unified TWAP/VWAP service dispatch shape
   - retained explicit strategy-specific seam operations:
     - `doExecuteTWAP(...)`
@@ -1983,15 +2010,15 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 416 lines (up from 395 after iteration 17 due helper normalization; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 21 async helper rollback-for-size slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 21 async helper rollback-for-size slice complete:
   - removed local facade wrapper `runAsyncWithGracefulDegrade(...)`
   - switched async methods back to direct `executeWithGracefulDegradeUtil(...)` calls
   - preserved behavior semantics/log levels/fallback payloads
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 22 sync helper rollback-for-size slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 22 sync helper rollback-for-size slice complete:
   - removed local facade wrapper `runSyncWithGracefulDegrade(...)`
   - switched sync methods back to direct `executeSyncWithGracefulDegradeUtil(...)` calls
   - preserved fallback semantics and warning metadata contracts
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 23 dispatch/helper/banner compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 23 dispatch/helper/banner compaction slice complete:
   - removed local `executeNamedStrategy(...)` wrapper and delegated TWAP/VWAP directly to `executeNamedStrategyWithFallback(...)`
   - removed non-functional section banner blocks/comments in facade file
   - preserved private spy-compatible seams (`doExecuteTWAP`, `doExecuteVWAP`, other `do*` methods)
@@ -2000,17 +2027,17 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 383 lines (down from 416 after iteration 20; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 24 constructor/typing compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 24 constructor/typing compaction slice complete:
   - removed explicit `config` field assignment by switching to constructor parameter property (`private readonly config`)
   - removed explicit workflow-deps return type annotation/import in `getWorkflowDeps()` where inference is sufficient
   - behavior preserved; validation and config access semantics unchanged
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 25 bound-seam compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 25 bound-seam compaction slice complete:
   - introduced stable bound references:
     - `safeLogBound`
     - `roundToDecimalsBound`
   - replaced repeated inline `.bind(this)` usage for safe log + rounding callbacks across facade delegation points
   - behavior preserved for logging fallback and numeric rounding pathways
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 26 strategy dispatch micro-compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 26 strategy dispatch micro-compaction slice complete:
   - reintroduced compact private `executeNamedStrategy(...)` helper to reduce TWAP/VWAP duplication while keeping explicit per-strategy `do*` seams
   - kept spy-compatible private seam methods unchanged (`doExecuteTWAP`, `doExecuteVWAP`)
 - [x] Verification (targeted smart-order-execution suite, 2026-03-08, post-iteration-24/25/26 slices):
@@ -2018,7 +2045,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 45/45 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/smart-order-execution.service.ts` now 381 lines (down from 383 after iteration 23; 1677 baseline in this track).
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 27 delegating-workflow compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 27 delegating-workflow compaction slice complete:
   - compacted pure delegation `do*` workflow methods into single-return form:
     - `doExecuteSmartOrder(...)`
     - `doMonitorAndAdjust(...)`
@@ -2026,10 +2053,10 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
     - `doExecuteTWAP(...)`
     - `doExecuteVWAP(...)`
   - behavior preserved; orchestration call graph unchanged
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 28 state-field/type compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 28 state-field/type compaction slice complete:
   - removed redundant explicit field type annotations where generic initializer already conveys type (`activeOrders`, `orderStartTimes`)
   - preserved map key/value contracts and state tracking behavior
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) â€” iteration 29 state-helper callsite compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-execution.service.ts` (2026-03-08) — iteration 29 state-helper callsite compaction slice complete:
   - compacted state utility callsites in facade methods:
     - `cleanupOrder(...)`
     - `clearAllOrders(...)`
@@ -2052,7 +2079,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Final verification gate before commit (2026-03-08):
   - `npm run build` PASS
   - `npm test -- --runInBand` PASS (`307/307` suites, `7021/7021` tests)
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 1 transition orchestration extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 1 transition orchestration extraction slice complete:
   - extracted transition record/build/apply helpers to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-transition.utils.ts`
   - service now delegates lock-failure transition record creation and transition state-application/timeout bookkeeping to shared utility module
   - preserved lifecycle/lock/error-handler semantics and public API behavior
@@ -2060,14 +2087,14 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-1 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 2 callback-failure handling extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 2 callback-failure handling extraction slice complete:
   - extracted callback execution/failure handling helpers to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-callback.utils.ts`
   - service now delegates `onStateChange` / `onTimeout` / `onError` invocation + SKIP-recovery handling to callback utility module
   - preserved callback failure log messages, ErrorHandler SKIP contexts, and transition/timeout/error control flow behavior
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-2 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 3 skippable-error handling extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 3 skippable-error handling extraction slice complete:
   - extracted shared SKIP error handling helper to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-error.utils.ts`
   - service now delegates repeated SKIP-handling paths in:
     - timeout checker catch path
@@ -2077,14 +2104,14 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-3 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 4 lock-state helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 4 lock-state helper extraction slice complete:
   - extracted lock state mutation helpers to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-lock.utils.ts`
   - service `acquireLock(...)` / `releaseLock(...)` now delegate lock flag/timestamp mutation to utility functions
   - preserved lock map semantics and lock acquisition/release behavior
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-4 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 5 guard-validation extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 5 guard-validation extraction slice complete:
   - extracted guard helpers to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-guards.utils.ts`
   - centralized repeated validations for:
     - required order id
@@ -2096,21 +2123,21 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-5 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 6 timeout-gating extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 6 timeout-gating extraction slice complete:
   - extracted timeout candidate gating helper to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-timeout.utils.ts`
   - `checkTimeouts()` now delegates locked/terminal/expired eligibility decision to shared helper
   - preserved timeout processing flow and SKIP error handling
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-6 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 7 logging utility extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 7 logging utility extraction slice complete:
   - extracted safe logging wrapper to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-logging.utils.ts`
   - service `safeLog(...)` kept as compatibility seam and now delegates to logging utility
   - preserved logger-level routing and ErrorHandler SKIP behavior on logger failures
 - [x] Verification (targeted advanced-order-state-machine suite, 2026-03-08, post-iteration-7 extraction):
   - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts`
   - Result: 1/1 suite PASS, 40/40 tests PASS.
-- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) â€” iteration 8 state-machine factory extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/advanced-order-state-machine.service.ts` (2026-03-08) — iteration 8 state-machine factory extraction slice complete:
   - extracted initial state machine builder to `packages/core/src/services/advanced-order-state-machine/advanced-order-state-machine-factory.utils.ts`
   - `createStateMachine(...)` now delegates default timeout/state/callback field assembly to factory util
   - preserved initial state defaults and callback wiring behavior
@@ -2123,15 +2150,15 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted transition/callback/error/lock/guard/timeout/logging/factory helper modules with behavior-preserving delegation
   - state-machine lock/rollback/timeout/error semantics preserved and regression-checked repeatedly via targeted suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/position-state-machine.service.ts` (2026-03-08) â€” iteration 1 persistence helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/position-state-machine.service.ts` (2026-03-08) — iteration 1 persistence helper extraction slice complete:
   - extracted JSONL persistence helpers to `packages/core/src/services/position-state-machine/position-state-machine-persistence.utils.ts`
   - centralized parent-directory ensure + append-json-line logic used by state/history persistence paths
   - preserved RETRY/GRACEFUL_DEGRADE error strategies and logging behavior
-- [x] God-object candidate follow-up: `packages/core/src/services/position-state-machine.service.ts` (2026-03-08) â€” iteration 2 transition assembly extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/position-state-machine.service.ts` (2026-03-08) — iteration 2 transition assembly extraction slice complete:
   - extracted transition-state/result/history-entry builders to `packages/core/src/services/position-state-machine/position-state-machine-transition.utils.ts`
   - simplified `transitionState(...)` orchestration by delegating object construction to pure helpers
   - preserved transition validation, persistence side-effects, and emitted transition metadata
-- [x] God-object candidate follow-up: `packages/core/src/services/position-state-machine.service.ts` (2026-03-08) â€” iteration 3 history map update extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/position-state-machine.service.ts` (2026-03-08) — iteration 3 history map update extraction slice complete:
   - extracted history map append helper to `packages/core/src/services/position-state-machine/position-state-machine-history.utils.ts`
   - replaced inline `has/set/push` transition-history mutation with shared helper
   - preserved per-position transition history behavior
@@ -2145,15 +2172,15 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted persistence/transition/history helpers with behavior-preserving delegation
   - persistence + recovery semantics re-verified on service + error-handling suites
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/trading-lifecycle.service.ts` (2026-03-08) â€” iteration 1 timeout-evaluation extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trading-lifecycle.service.ts` (2026-03-08) — iteration 1 timeout-evaluation extraction slice complete:
   - extracted pure timeout classification helper to `packages/core/src/services/trading-lifecycle/trading-lifecycle-timeout.utils.ts`
   - `checkPositionTimeouts()` now delegates warning/critical/safe state evaluation + alert payload construction to utility function
   - preserved warning-once policy, critical emergency-close trigger, and timeout event emission behavior
-- [x] God-object candidate follow-up: `packages/core/src/services/trading-lifecycle.service.ts` (2026-03-08) â€” iteration 2 state-update degrade helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trading-lifecycle.service.ts` (2026-03-08) — iteration 2 state-update degrade helper extraction slice complete:
   - extracted GRACEFUL_DEGRADE state mutation helper to `packages/core/src/services/trading-lifecycle/trading-lifecycle-state.utils.ts`
   - unified position state updates in timeout loop and emergency-close path through shared helper
   - preserved transition validation, ErrorHandler GRACEFUL_DEGRADE context handling, and warning log semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/trading-lifecycle.service.ts` (2026-03-08) â€” iteration 3 event publish retry helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trading-lifecycle.service.ts` (2026-03-08) — iteration 3 event publish retry helper extraction slice complete:
   - extracted EventBus RETRY publish helper to `packages/core/src/services/trading-lifecycle/trading-lifecycle-event.utils.ts`
   - unified warning/emergency event publishing with shared retry policy while preserving fallback behavior without ErrorHandler
   - preserved per-event failure warning logs and non-blocking execution semantics
@@ -2167,15 +2194,15 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted timeout/state/event helper modules with behavior-preserving delegation
   - timeout detection + emergency close resilience behavior re-verified on error-handling suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/weight-matrix-calculator.service.ts` (2026-03-08) â€” iteration 1 threshold-tier extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/weight-matrix-calculator.service.ts` (2026-03-08) — iteration 1 threshold-tier extraction slice complete:
   - extracted tiered threshold scoring helpers to `packages/core/src/services/weight-matrix/weight-matrix-threshold.utils.ts`
   - applied helper delegation for ATR/Volume/LevelDistance scoring branches
   - preserved score points and textual reason semantics for all threshold tiers
-- [x] God-object candidate follow-up: `packages/core/src/services/weight-matrix-calculator.service.ts` (2026-03-08) â€” iteration 2 ratio-safety extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/weight-matrix-calculator.service.ts` (2026-03-08) — iteration 2 ratio-safety extraction slice complete:
   - extracted ratio guard helpers to `packages/core/src/services/weight-matrix/weight-matrix-ratio.utils.ts`
   - unified finite/denominator-safe ratio calculation for ATR/Volume/Delta paths
   - preserved GRACEFUL_DEGRADE return behavior for invalid numeric inputs
-- [x] God-object candidate follow-up: `packages/core/src/services/weight-matrix-calculator.service.ts` (2026-03-08) â€” iteration 3 threshold-helper expansion slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/weight-matrix-calculator.service.ts` (2026-03-08) — iteration 3 threshold-helper expansion slice complete:
   - expanded threshold helper usage to additional `>=`-tier methods:
     - `calculateOrderbookScore(...)`
     - `calculateLevelStrengthScore(...)`
@@ -2192,11 +2219,11 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted threshold/ratio helper modules with behavior-preserving delegation
   - score output and error-handling behavior re-verified on service + error-handling suites
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/enhanced-exit.service.ts` (2026-03-08) â€” iteration 1 directional-profit helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/enhanced-exit.service.ts` (2026-03-08) — iteration 1 directional-profit helper extraction slice complete:
   - extracted directional profit percentage helper to `packages/core/src/services/enhanced-exit/enhanced-exit-profit.utils.ts`
   - reused helper in `checkBreakeven(...)` and `checkAdaptiveTrailing(...)`
   - preserved activation thresholds and reason text semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/enhanced-exit.service.ts` (2026-03-08) â€” iteration 2 blocked-validation response extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/enhanced-exit.service.ts` (2026-03-08) — iteration 2 blocked-validation response extraction slice complete:
   - extracted blocked `RiskRewardValidation` response helper to `packages/core/src/services/enhanced-exit/enhanced-exit-riskreward.utils.ts`
   - unified repeated GRACEFUL_DEGRADE/error fallback responses in `validateRiskReward(...)`
   - preserved recommendation strings and safety defaults
@@ -2210,18 +2237,18 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted profit and risk/reward response helpers with behavior-preserving delegation
   - error-handling and threshold behavior re-verified on targeted suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) â€” iteration 1 CSV line-builder extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) — iteration 1 CSV line-builder extraction slice complete:
   - extracted CSV line assembly helper to `packages/core/src/services/trade-history/trade-history-csv.utils.ts` (`buildCsvLineForSchema(...)`)
   - `appendTrade(...)` now delegates schema-ordered CSV row construction to shared utility
   - preserved field ordering, string escaping, and append semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) â€” iteration 2 CSV parse-record extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) — iteration 2 CSV parse-record extraction slice complete:
   - extracted CSV row parsing/type-coercion helper to `packages/core/src/services/trade-history/trade-history-parse.utils.ts` (`parseCsvTradeRecordLine(...)`)
   - `parseCSVLine(...)` now delegates row decoding and keeps existing parse-failure handling in service layer
   - preserved numeric/leverage/default coercion rules and quoted-string decoding
-- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) â€” iteration 3 split delegation cleanup slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) — iteration 3 split delegation cleanup slice complete:
   - removed redundant service-local CSV split wrapper and switched migration path to direct util call (`splitCsvLinePreservingQuotes(...)`)
   - preserved migration behavior for quoted CSV values and added-empty-column flow
-- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) â€” iteration 4 statistics aggregation extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/trade-history.service.ts` (2026-03-08) — iteration 4 statistics aggregation extraction slice complete:
   - extracted statistics helpers to `packages/core/src/services/trade-history/trade-history-stats.utils.ts`:
     - `createDefaultTradeStatistics(...)`
     - `calculateTradeStatistics(...)`
@@ -2238,20 +2265,20 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted CSV write/read parsing and statistics aggregation helpers with behavior-preserving delegation
   - RETRY/GRACEFUL_DEGRADE/SKIP error-handling behaviors re-verified on targeted suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/console-dashboard.service.ts` (2026-03-08) â€” iteration 1 format/color helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/console-dashboard.service.ts` (2026-03-08) — iteration 1 format/color helper extraction slice complete:
   - extracted dashboard formatting and color-selection helpers to `packages/core/src/services/console-dashboard/console-dashboard-format.utils.ts`:
     - PnL/percent/duration/progress-bar formatters
     - trend/RSI/win-rate/event-type color classifiers
   - service render/format methods now delegate to shared util functions with behavior preserved
   - removed unused `updateQueue` field (no runtime usage)
-- [x] God-object candidate follow-up: `packages/core/src/services/console-dashboard.service.ts` (2026-03-08) â€” iteration 2 state helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/console-dashboard.service.ts` (2026-03-08) — iteration 2 state helper extraction slice complete:
   - extracted dashboard state helpers to `packages/core/src/services/console-dashboard/console-dashboard-state.utils.ts`:
     - `createInitialDashboardState(...)`
     - `buildDashboardTakeProfitLevels(...)`
     - `appendDashboardEventWithLimit(...)`
   - constructor/state mutation paths now delegate to shared helper logic for initial state, TP level mapping, and bounded event history
   - preserved max-50 event cap and TP default level/reached semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/console-dashboard.service.ts` (2026-03-08) â€” iteration 3 THROW validation-path compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/console-dashboard.service.ts` (2026-03-08) — iteration 3 THROW validation-path compaction slice complete:
   - added shared validation helper `throwValidationError(...)` in service
   - replaced repeated THROW boilerplate in config/price/pnl/stop-loss/win-loss/event validations with helper calls
   - preserved error message text and ErrorHandler THROW strategy semantics
@@ -2265,15 +2292,15 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted formatting/state helper modules and compacted THROW validation paths with behavior-preserving delegation
   - error-handling and integration behavior re-verified on targeted suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 1 signal/key helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 1 signal/key helper extraction slice complete:
   - extracted shared no-signal and detection-failed signal builders + break-key helper to `packages/core/src/services/whale-detection/whale-detection-signal.utils.ts`
   - detection fallback and "no activity" return paths now delegate to helper functions
   - preserved signal payload structure, reason text, and wall-break key format
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 2 THROW validation-path compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 2 THROW validation-path compaction slice complete:
   - added shared `throwValidationError(...)` helper in service
   - replaced repeated THROW boilerplate in `validateConfig(...)` and `validateDetectionInput(...)`
   - preserved all validation error messages and ErrorHandler THROW strategy behavior
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 3 tracked-wall upsert extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 3 tracked-wall upsert extraction slice complete:
   - extracted tracked wall upsert helper to `packages/core/src/services/whale-detection/whale-detection-wall.utils.ts`
   - `updateTrackedWalls(...)` now delegates per-wall map mutation to shared helper for BID/ASK paths
   - preserved detected/last-seen timestamp update semantics and wall field mutation behavior
@@ -2287,12 +2314,12 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted signal and tracked-wall helpers + compacted THROW validation paths with behavior-preserving delegation
   - error-handling and integration behavior re-verified on targeted suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 4 side-loop decomposition slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 4 side-loop decomposition slice complete:
   - extracted side-specific wall-break loop logic into `tryDetectWallBreakForSide(...)`
   - extracted side-specific wall-disappearance loop logic into `tryDetectWallDisappearanceForSide(...)`
   - `detectWallBreak(...)` and `detectWallDisappearance(...)` now orchestrate BID/ASK helper invocations
   - preserved wall break/disappearance ordering, signal direction mapping, and reason text semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 5 tracking/expiry helper decomposition slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 5 tracking/expiry helper decomposition slice complete:
   - extracted per-side wall update helper `updateTrackedWallsForSide(...)`
   - extracted expiry cleanup helper `removeExpiredTrackedWalls(...)` and reused for BID/ASK maps
   - preserved tracked wall mutation and expiry cleanup behavior
@@ -2301,7 +2328,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 16/16 tests PASS (re-run after each iteration slice).
 - [x] Size tracking update:
   - `packages/core/src/services/whale-detection.service.ts` now 937 lines (down from 946 after iteration 3; 1054 at start of track).
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 6 trend/imbalance/confidence utility extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 6 trend/imbalance/confidence utility extraction slice complete:
   - extracted trend-aware wall disappearance direction logic to `packages/core/src/services/whale-detection/whale-detection-direction.utils.ts` (`determineWallDisappearanceDirectionByTrend(...)`)
   - extracted imbalance spike evaluation helper to `packages/core/src/services/whale-detection/whale-detection-imbalance.utils.ts` (`evaluateImbalanceSpike(...)`)
   - extracted confidence calculation helpers to `packages/core/src/services/whale-detection/whale-detection-confidence.utils.ts`:
@@ -2327,7 +2354,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - [x] extract THROW validations (`validateConfig`, `validateDetectionInput`) to dedicated validation util while preserving exact error text.
   - [x] extract mode execution orchestration from `detectWhale(...)` into mode-runner helper(s) to reduce main method branching.
   - [x] extract data tracking/cleanup helpers (`updateImbalanceHistory`, `cleanupExpiredData`) to state util to further thin service facade.
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 7 validation/state utility extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 7 validation/state utility extraction slice complete:
   - extracted THROW validation checks to `packages/core/src/services/whale-detection/whale-detection-validation.utils.ts`:
     - `getWhaleConfigValidationError(...)`
     - `getWhaleDetectionInputValidationError(...)`
@@ -2344,7 +2371,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 21/21 tests PASS.
 - [x] Size tracking update:
   - `packages/core/src/services/whale-detection.service.ts` now 679 lines (down from 848 after re-review follow-up start; 1054 at start of full track).
-- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) â€” iteration 8 detect-mode orchestration extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/whale-detection.service.ts` (2026-03-08) — iteration 8 detect-mode orchestration extraction slice complete:
   - extracted mode branching from `detectWhale(...)` into dedicated helper `runDetectionModes(...)`.
   - preserved mode priority order and semantics:
     - `IMBALANCE_SPIKE` first
@@ -2359,7 +2386,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] WhaleDetectionService follow-up decomposition backlog closed (2026-03-08):
   - completed validation util extraction, state util extraction, and detect-mode orchestration extraction
   - behavior re-verified on targeted whale error-handling and service suites
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) â€” iteration 1 math helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 1 math helper extraction slice complete:
   - extracted split/liquidity/volatility/probability/time pure helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-math.utils.ts`
   - delegated service math paths:
     - liquidity score/factor
@@ -2367,14 +2394,14 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
     - aggressiveness/volatility/size-impact
     - combined probability + fill time
   - preserved plan/split/fill calculation behavior and fallback semantics
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) â€” iteration 2 fallback helper extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 2 fallback helper extraction slice complete:
   - extracted safe default builders to `packages/core/src/services/smart-order-placement/smart-order-placement-fallback.utils.ts`:
     - conservative plan
     - single-order split
     - market-price liquidity level
     - conservative fill probability
   - service fallback methods now delegate to shared builders with unchanged defaults
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) â€” iteration 3 GRACEFUL_DEGRADE wrapper compaction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 3 GRACEFUL_DEGRADE wrapper compaction slice complete:
   - introduced shared executor helper `executeWithGracefulDegrade(...)`
   - unified repeated ErrorHandler/non-ErrorHandler fallback flows in:
     - `planOrderExecution(...)`
@@ -2392,7 +2419,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - extracted math and fallback helper modules + unified GRACEFUL_DEGRADE orchestration
   - error-handling behavior re-verified on targeted suite
   - next refactor focus should move to another candidate service/module from backlog
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) â€” iteration 4 validation/market extraction + stale-wrapper cleanup slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 4 validation/market extraction + stale-wrapper cleanup slice complete:
   - extracted validation helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-validation.utils.ts`:
     - `validateSmartOrderPlacementConfig(...)`
     - `validateSmartOrderbook(...)`
@@ -2402,7 +2429,7 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
     - `determineSmartOrderPriority(...)`
   - removed obsolete service-local validation/market/math passthrough methods and tightened `safeLog(..., meta?: Record<string, unknown>)`
   - preserved THROW validation behavior, planning priority semantics, and GRACEFUL_DEGRADE fallback behavior
-- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) â€” iteration 5 plan-metrics/risk extraction slice complete:
+- [x] God-object candidate follow-up: `packages/core/src/services/smart-order-placement.service.ts` (2026-03-08) — iteration 5 plan-metrics/risk extraction slice complete:
   - extracted aggregation helpers to `packages/core/src/services/smart-order-placement/smart-order-placement-plan-metrics.utils.ts`:
     - `calculateSmartExpectedFill(...)`
     - `calculateSmartExpectedSlippage(...)`
@@ -2536,6 +2563,247 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 - [x] Verification (targeted suite, 2026-03-08, post core-any batch 41):
   - `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts`
   - Result: 1/1 suite PASS, 43/43 tests PASS.
+- [x] Core any cleanup batch 42 follow-up details (2026-03-09):
+  - `packages/core/src/services/event-bus.ts`:
+    - replaced `BotEvent.data: any` with `BotEvent.data: unknown`.
+    - replaced `EventHandler(data: any)` with generic `EventHandler<TData = unknown>`.
+    - updated `subscribe(...)` to generic payload handling with typed boundary cast from `unknown`.
+    - replaced `getMetrics(): Record<string, any>` with typed `Record<string, EventMetricSummary>`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and metrics-summary typing.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 42):
+  - `npm test -- --runInBand packages/core/src/__tests__/event-bus.test.ts`
+  - Result: 1/1 suite PASS, 22/22 tests PASS.
+- [x] Core any cleanup batch 43 follow-up details (2026-03-09):
+  - `packages/core/src/services/indicator-precalculation.service.ts`:
+    - replaced `Map<string, any[]>` with `Map<string, Candle[]>` for `candlesByTf`.
+    - removed `candlesByTimeframe: candlesByTf as any` casts in calculator calls.
+    - typed results reduction callback as `Map<string, number>` instead of `any`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening in candle/result wiring.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 43):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 20/20 tests PASS.
+- [x] Core any cleanup batch 44 follow-up details (2026-03-09):
+  - `packages/core/src/services/performance-analytics.service.ts`:
+    - replaced `Map<string, any>` cache typing with `Map<string, unknown>`.
+    - replaced all `any[]` trade parameters with a typed local `AnalyticsTrade` model.
+    - tightened win/loss calculations via null-safe numeric normalization (`?? 0`) to preserve runtime behavior with partial journal records.
+    - added `normalizeTradeDirection(...)` helper to keep `TopTrade.direction` strictly `'LONG' | 'SHORT'`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and strict return-shape normalization.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 44):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.service.test.ts packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts`
+  - Result: 2/2 suites PASS, 68/68 tests PASS.
+- [x] Core any cleanup batch 45 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-strategy/strategy-orchestrator.service.ts`:
+    - replaced `sharedServices` `any` fields with concrete types (`CandleProvider`, `TimeframeProvider`, `PositionLifecycleService`).
+    - replaced `log(..., meta?: Record<string, any>)` with `Record<string, unknown>`.
+    - replaced `broadcastEvent(event: any)` with `broadcastEvent(event: unknown)`.
+    - replaced `getCacheStats(): any` with typed `ReturnType<StrategyOrchestratorCacheService['getStats']>`.
+    - removed `as any` usage in orchestrator config wiring by switching to typed constructor-parameter cast through `unknown`.
+    - added guarded `getConfigVersion(...)` helper to keep logging behavior without `any`.
+  - related service compatibility fix (verification unblock):
+    - `packages/core/src/services/analyzer-engine.service.ts`: typed `getEnabledAnalyzers(...)` integration cast (`strategyConfig` as record via `unknown`, enabled map instance typed as `IAnalyzer`) to satisfy strict type flow in phase-10 suites.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and strict typing compatibility.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 45):
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-3b-orchestrator-implementation.test.ts packages/core/src/__tests__/phase-10-multi-strategy.test.ts`
+  - Result: 2/2 suites PASS, 129/129 tests PASS.
+- [x] Core any cleanup batch 46 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-timeframe-trend.service.ts`:
+    - removed `as any` access to `candles5m/15m/1h/4h` via guarded helper `getTimeframeCandles(...)`.
+    - replaced local swing arrays with `SwingPoint[]` and removed `highs as any` / `lows as any`.
+    - tightened helper signatures (`calculateBias`, `getPattern`) to `SwingPoint[]`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and guarded timeframe data access.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 46):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/multi-timeframe-trend.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 20/20 tests PASS.
+- [x] Core any cleanup batch 47 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-strategy/event-filter.service.ts`:
+    - replaced `StrategyEventCallback(event: any)` with typed `StrategyEvent` envelope callback.
+    - replaced `routeStrategyEvent(event: any)` / `broadcastStrategyEvent(event: any)` with `unknown` + `isStrategyEvent(...)` guard.
+    - preserved strategyId/eventType routing semantics and broadcast target tagging.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to event typing boundaries and runtime guards.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 47):
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-3c-event-tagging.test.ts packages/core/src/__tests__/orchestrators/filter-strategy.test.ts`
+  - Result: 2/2 suites PASS, 49/49 tests PASS.
+- [x] Core any cleanup batch 48 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-strategy/dynamic-config-manager.service.ts`:
+    - replaced `StrategyAnalyzerConfig` import with `StrategyAnalyzerConfigV2` alias and removed service-local `any` casts.
+    - replaced analyzer-weight `as any` access with typed guard `hasNumericWeight(...)`.
+    - replaced indicator merge/read `as any` with guarded `getIndicatorOverrides(...)`.
+    - replaced `flattenObject(obj: any): Record<string, any>` with `flattenObject(obj: unknown): Record<string, unknown>`.
+    - kept placeholder config behavior while making metadata/version shape explicit for current `StrategyConfigV2` contract.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typing hardening and config-shape compatibility.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 48):
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts`
+  - Result: 1/1 suite PASS, 85/85 tests PASS.
+- [x] Core any cleanup batch 49 follow-up details (2026-03-09):
+  - `packages/core/src/services/bybit/bybit-service.adapter.ts`:
+    - replaced active-order lookup callback `o: any` with typed `BybitOrder` via `asBybitOrders(...)` helper.
+    - replaced `getOrderHistory(): Promise<any[]>` with `Promise<unknown[]>` and typed order-array slicing.
+    - replaced `getActiveOrders(): Promise<any[]>` with `Promise<unknown[]>` while preserving adapter return semantics.
+    - replaced `verifyProtectionSet(...): Promise<any>` with `Promise<ProtectionVerification>` via explicit unknown boundary cast.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to adapter typing boundaries.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 49):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts`
+  - Result: 1/1 suite PASS, 27/27 tests PASS.
+- [x] Core any cleanup batch 50 follow-up details (2026-03-09):
+  - `packages/core/src/services/binance/binance-service.adapter.ts`:
+    - replaced active-order lookup callback `o: any` with typed order-record helper `asOrderRecords(...)`.
+    - replaced `getOrderHistory(): Promise<any[]>` with `Promise<unknown[]>`.
+    - replaced `getActiveOrders(): Promise<any[]>` with `Promise<unknown[]>`.
+    - replaced `verifyProtectionSet(...): Promise<any>` with `Promise<ProtectionVerification>` via explicit unknown boundary cast.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to adapter typing boundaries.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 50):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts`
+  - Result: 2/2 suites PASS, 51/51 tests PASS.
+- [x] Core any cleanup batch 51 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-strategy/strategy-orchestrator-cache.service.ts`:
+    - replaced cache-entry `orchestrator: any` with generic `CacheEntry<TOrchestrator>`.
+    - replaced service-level `getOrchestrator(...): any | undefined` with typed `TOrchestrator | undefined`.
+    - replaced `cacheOrchestrator(..., orchestrator: any)` with `cacheOrchestrator(..., orchestrator: TOrchestrator)`.
+  - `packages/core/src/services/multi-strategy/strategy-orchestrator.service.ts`:
+    - typed cache field as `StrategyOrchestratorCacheService<TradingOrchestrator>` and aligned constructor instantiation.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to cache typing boundaries and orchestrator generic alignment.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 51):
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-3b-orchestrator-implementation.test.ts packages/core/src/__tests__/services/multi-strategy.cache.test.ts`
+  - Result: 2/2 suites PASS, 68/68 tests PASS.
+- [x] Core any cleanup batch 52 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-strategy/strategy-processing-pool.service.ts`:
+    - replaced `ProcessingFunction` return `Promise<any>` with `Promise<unknown>`.
+    - replaced `createFailedResult(error: any)` with `createFailedResult(error: unknown)`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to function/error typing boundaries.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 52):
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-12-parallel-processing.test.ts`
+  - Result: 1/1 suite PASS, 34/34 tests PASS.
+  - Note: Jest reported open-handle warning after completion (suite still PASS; pre-existing async cleanup gap in tests).
+- [x] Core any cleanup batch 53 follow-up details (2026-03-09):
+  - `packages/core/src/services/resilience/bulkhead.service.ts`:
+    - replaced `ResourcePool.queue: QueuedOperation<any>[]` with `QueuedOperation<unknown>[]`.
+    - replaced `catch (error: any)` with `catch (error: unknown)` and normalized to `Error` for reject path.
+    - kept generic enqueue/timeout behavior via explicit unknown-boundary casts where required by type variance.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to queue/error typing boundaries.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 53):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/resilience/bulkhead.test.ts`
+  - Result: 1/1 suite PASS, 16/16 tests PASS.
+- [x] Core any cleanup batch 54 follow-up details (2026-03-09):
+  - `packages/core/src/services/binance/binance.service.ts`:
+    - replaced `getActiveOrders(): Promise<any[]>` with `Promise<unknown[]>`.
+    - replaced `verifyProtectionSet(...): Promise<any>` with `Promise<ProtectionVerification>`.
+    - completed minimal placeholder `ProtectionVerification` fields (`activeOrders`, `verified`) in fallback return object.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to service return-type boundaries and placeholder shape typing.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 54):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts`
+  - Result: 2/2 suites PASS, 51/51 tests PASS.
+- [x] Core any cleanup batch 55 follow-up details (2026-03-09):
+  - `packages/core/src/services/bybit/bybit-positions.partial.ts`:
+    - replaced `orderPayload: any` with `Record<string, string | number>`.
+    - replaced `(error as any).code = ...` with typed boundary `Error & { code?: number }`.
+    - kept atomic SL/TP order payload behavior unchanged.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to payload/error typing hardening.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 55):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bybit.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 17/17 tests PASS.
+- [x] Core any cleanup batch 56 follow-up details (2026-03-09):
+  - `packages/core/src/services/bybit/bybit-orders.partial.ts`:
+    - replaced remaining `(error as any).code = ...` assignments with typed `Error & { code?: number }` boundaries.
+    - applied in both `getActiveOrders()` and `getOrderHistory()` critical-error classification paths.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to typed error metadata attachment.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 56):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bybit.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 17/17 tests PASS.
+- [x] Core any cleanup batch 57 follow-up details (2026-03-09):
+  - `packages/core/src/services/public-websocket.service.ts`:
+    - replaced `btcConfirmation?: any` with local typed `BtcConfirmationConfig`.
+    - replaced constructor `btcConfirmation?: any` with `btcConfirmation?: BtcConfirmationConfig`.
+    - preserved BTC subscription/update behavior with optional-safe field access.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to config typing boundary hardening.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 57):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 24/24 tests PASS.
+- [x] Core any cleanup batch 58 follow-up details (2026-03-09):
+  - `packages/core/src/services/multi-strategy/strategy-circuit-breaker.service.ts`:
+    - replaced `code: (error as any).code || 'UNKNOWN'` with typed helper `getErrorCode(error: Error)`.
+    - preserved existing error-classification behavior for string/number codes with `'UNKNOWN'` fallback.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to error metadata typing hardening.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 58):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 20/20 tests PASS.
+- [x] Core any cleanup batch 59 follow-up details (2026-03-09):
+  - `packages/core/src/services/realtime-whale-detector.ts`:
+    - replaced constructor `config: any` with typed `RealTimeWhaleDetectorConfig`.
+    - introduced typed optional whale-toggle sections (`whaleHunter`, `whaleHunterFollow`) without behavior change.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to config typing boundary.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 59):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/event-handlers.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 27/27 tests PASS.
+- [x] Core any cleanup batch 60 follow-up details (2026-03-09):
+  - `packages/core/src/services/signal-validators/entry-cost-validator.ts`:
+    - replaced `signal: any` with typed `EntrySignal`.
+  - `packages/core/src/services/signal-validators/short-entry-validator.ts`:
+    - replaced `signal: any` with typed `ShortValidationSignal`.
+  - `packages/core/src/services/signal-validators/trend-conflict-detector.ts`:
+    - replaced `signals: any[]` with typed `TrendSignal[]`.
+    - replaced return `any` with typed `TrendConflictSignal | null`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to validator input/output typing boundaries.
+- [x] Verification (targeted suite, 2026-03-09, post core-any batch 60):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/phase-10-integration.test.ts`
+  - Result: 1/1 suite PASS, 12/12 tests PASS.
+- [x] Core any cleanup batch 61 follow-up details (2026-03-09):
+  - `packages/core/src/services/structure-aware-exit.service.ts`:
+    - removed fallback `structureType: 'UNKNOWN' as any` cast by returning string literal directly.
+  - `packages/core/src/services/multi-strategy/strategy-state-manager.service.ts`:
+    - replaced `log(..., meta?: Record<string, any>)` with `Record<string, unknown>`.
+  - `packages/core/src/services/multi-strategy/strategy-registry.service.ts`:
+    - replaced `log(..., meta?: Record<string, any>)` with `Record<string, unknown>`.
+  - `packages/core/src/services/multi-strategy/strategy-factory.service.ts`:
+    - replaced `log(..., meta?: Record<string, any>)` with `Record<string, unknown>`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to logging metadata and fallback-cast typing hardening.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 61):
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts packages/core/src/__tests__/services/structure-aware-exit.service.test.ts`
+  - Result: 3/3 suites PASS, 130/130 tests PASS.
+- [x] Core any cleanup batch 62 follow-up details (2026-03-09):
+  - `packages/core/src/validators/position.validator.ts`:
+    - replaced `isInvalidNumber(value: any)` with `isInvalidNumber(value: unknown)`.
+  - `packages/core/src/utils/analyzer-config.utils.ts`:
+    - replaced all `config: any` extractor inputs with `config: unknown`.
+    - added guarded `AnalyzerConfigEnvelope` + `asAnalyzerConfigEnvelope(...)` helper to preserve fallback defaults with typed boundaries.
+  - `packages/core/src/event-sourcing/position-state-projection.service.ts`:
+    - removed `side: positionSide as any` by mapping to explicit enum values (`PositionSide.LONG` / `PositionSide.SHORT`).
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to boundary typing hardening in validators/utils/event-sourcing.
+- [x] Verification (targeted suites, 2026-03-09, post core-any batch 62):
+  - `npm test -- --runInBand packages/core/src/__tests__/validators/position.validator.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.test.ts packages/core/src/__tests__/event-sourcing/position-event-sourcing.integration.test.ts`
+  - Result: 3/3 suites PASS, 42/42 tests PASS.
+- [x] Core any cleanup batch 63 follow-up details (2026-03-09):
+  - `packages/core/src/vector-db/vector-db.service.ts`:
+    - replaced `getStats(): Promise<any>` with typed stats return shape.
+  - `packages/core/src/vector-db/sqlite-vector-store.ts`:
+    - removed remaining `any` callback/param/cache boundaries via typed SQL row interfaces and typed cache payloads (`SearchResultItem[]`).
+    - added typed document-row normalization (`normalizeDocumentType`, `lineNumber` null-to-undefined mapping) preserving persisted-data compatibility.
+  - compile-compatibility fixes (no behavior change):
+    - `packages/core/src/services/bybit/bybit-positions.partial.ts`: typed `submitOrder` payload via `Parameters<typeof this.restClient.submitOrder>[0]`; restored static `ORDER_MARKET` field placement inside class.
+    - `packages/core/src/services/realtime-whale-detector.ts`: boolean optional config fallback (`?? false`) to satisfy strict typing without changing enablement semantics.
+    - `packages/core/src/__tests__/services/graceful-shutdown.service.test.ts`: typed event-data access from `unknown` boundary in assertion.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to type-boundary hardening and strict-typing compatibility.
+- [x] Verification (build + targeted suites, 2026-03-09, post core-any batch 63):
+  - `npm test -- --runInBand packages/core/src/__tests__/validators/position.validator.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.test.ts packages/core/src/__tests__/event-sourcing/position-event-sourcing.integration.test.ts`
+  - Result: 3/3 suites PASS, 42/42 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Core any cleanup batch 64 follow-up details (2026-03-09):
+  - `packages/core/src/repositories/IRepositories.ts`:
+    - replaced indicator cache interface boundaries `value: any` / `getIndicator(): any | null` with `unknown`.
+  - `packages/core/src/repositories/market-data.cache-repository.ts`:
+    - replaced cached indicator value and indicator-cache methods from `any` to `unknown`.
+    - replaced `estimateIndicatorSize(value: any)` with `estimateIndicatorSize(value: unknown)`.
+  - `packages/core/src/repositories/journal.file-repository.ts`:
+    - replaced `generalData: Map<string, any>` with `Map<string, unknown>`.
+    - replaced `saveData(..., data: any)` / `getData(...): Promise<any | null>` with `unknown` boundaries.
+  - compatibility follow-up:
+    - `packages/core/src/services/indicator-cache.service.ts`: added numeric guard when reading `marketDataRepo.getIndicator(...)` (`unknown` -> finite number) to preserve typed `get(...): number | null`.
+  - behavior-preserving service review: no decomposition required in this slice; scope limited to repository type boundaries and strict typing compatibility.
+- [x] Verification (build, 2026-03-09, post core-any batch 64):
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+
 
 
 

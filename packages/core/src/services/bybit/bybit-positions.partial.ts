@@ -18,6 +18,8 @@ import { isCriticalApiError } from '../../utils/error-helper';
 // ============================================================================
 
 export class BybitPositions extends BybitBase {
+  private static readonly ORDER_MARKET = 'Market';
+
   // ==========================================================================
   // MARGIN & LEVERAGE
   // ==========================================================================
@@ -137,27 +139,27 @@ export class BybitPositions extends BybitBase {
       });
 
       // Build order with SL/TP for atomic execution
-      const orderPayload: any = {
+      const orderPayload: Parameters<typeof this.restClient.submitOrder>[0] = {
         category: 'linear',
         symbol: this.symbol,
         side: side === PositionSide.LONG ? 'Buy' : 'Sell',
-        orderType: 'Market',
+        orderType: BybitPositions.ORDER_MARKET,
         qty: orderQty,
         positionIdx: POSITION_IDX_ONE_WAY,
+        ...(slPrice !== undefined
+          ? {
+            stopLoss: slPrice.toString(),
+            slOrderType: BybitPositions.ORDER_MARKET,
+          }
+          : {}),
+        ...(tpPrice !== undefined
+          ? {
+            takeProfit: tpPrice.toString(),
+            tpOrderType: BybitPositions.ORDER_MARKET,
+            tpslMode: 'Partial',
+          }
+          : {}),
       };
-
-      // CRITICAL: Add SL atomically to prevent race condition liquidations
-      if (slPrice !== undefined) {
-        orderPayload.stopLoss = slPrice.toString();
-        orderPayload.slOrderType = 'Market'; // Market execution for SL
-      }
-
-      // Optional: Add TP (can be modified later with setTradingStop for multiple levels)
-      if (tpPrice !== undefined) {
-        orderPayload.takeProfit = tpPrice.toString();
-        orderPayload.tpOrderType = 'Market'; // Market execution for TP
-        orderPayload.tpslMode = 'Partial'; // Allow multiple TP levels
-      }
 
       // Place MARKET order for immediate execution with protection
       const response = await this.restClient.submitOrder(orderPayload);
@@ -191,8 +193,8 @@ export class BybitPositions extends BybitBase {
 
       if (response.retCode !== BYBIT_SUCCESS_CODE) {
         // Check if this is a critical error
-        const error = new Error(`Bybit API error: ${response.retMsg} (code: ${response.retCode})`);
-        (error as any).code = response.retCode;
+        const error = new Error(`Bybit API error: ${response.retMsg} (code: ${response.retCode})`) as Error & { code?: number };
+        error.code = response.retCode;
 
         if (isCriticalApiError(error)) {
           this.logger.error('🚨 CRITICAL API ERROR in getPosition - throwing immediately!', {

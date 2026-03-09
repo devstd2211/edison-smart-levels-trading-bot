@@ -28,7 +28,7 @@ const DEFAULT_CONFIG: StrategyProcessingPoolConfig = {
   maxRetries: 1,
 };
 
-export type ProcessingFunction = (job: StrategyProcessingJob) => Promise<any>;
+export type ProcessingFunction = (job: StrategyProcessingJob) => Promise<unknown>;
 
 export class StrategyProcessingPoolService {
   private jobQueue: StrategyProcessingJob[] = [];
@@ -365,7 +365,7 @@ export class StrategyProcessingPoolService {
     );
   }
 
-  private createFailedResult(error: any): StrategyProcessingResult {
+  private createFailedResult(error: unknown): StrategyProcessingResult {
     return {
       jobId: randomUUID(),
       strategyId: 'unknown',

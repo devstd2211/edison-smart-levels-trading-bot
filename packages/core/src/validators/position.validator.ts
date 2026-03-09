@@ -94,7 +94,7 @@ export class PositionValidator {
    * Helper: Check if value is invalid number
    * Rejects: null, undefined, "", string, NaN
    */
-  private isInvalidNumber(value: any): boolean {
+  private isInvalidNumber(value: unknown): boolean {
     // Reject: null, undefined
     if (value === null || value === undefined) return true;
 

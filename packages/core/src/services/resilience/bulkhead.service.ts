@@ -67,7 +67,7 @@ interface QueuedOperation<T> {
 interface ResourcePool {
   config: BulkheadConfig;
   activeWorkers: number;
-  queue: QueuedOperation<any>[];
+  queue: QueuedOperation<unknown>[];
   stats: BulkheadStats;
 }
 
@@ -347,7 +347,7 @@ export class BulkheadService implements ILifecycle {
         }, pool.config.timeoutMs);
       }
 
-      pool.queue.push(queuedOp);
+      pool.queue.push(queuedOp as unknown as QueuedOperation<unknown>);
       pool.stats.queuedRequests = pool.queue.length;
 
       this.safeLog('debug', `Operation queued for pool "${poolName}"`, {
@@ -381,8 +381,9 @@ export class BulkheadService implements ILifecycle {
       const result = await queuedOp.operation();
       pool.stats.totalCompleted++;
       queuedOp.resolve(result);
-    } catch (error: any) {
-      queuedOp.reject(error);
+    } catch (error: unknown) {
+      const normalizedError = error instanceof Error ? error : new Error(String(error));
+      queuedOp.reject(normalizedError);
     } finally {
       pool.activeWorkers--;
       pool.stats.activeWorkers = pool.activeWorkers;
@@ -398,7 +399,7 @@ export class BulkheadService implements ILifecycle {
     queuedOp: QueuedOperation<T>
   ): void {
     // Remove from queue
-    const index = pool.queue.indexOf(queuedOp);
+    const index = pool.queue.indexOf(queuedOp as unknown as QueuedOperation<unknown>);
     if (index !== -1) {
       pool.queue.splice(index, 1);
       pool.stats.queuedRequests = pool.queue.length;

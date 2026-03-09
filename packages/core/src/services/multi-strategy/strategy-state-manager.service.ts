@@ -33,7 +33,7 @@ export class StrategyStateManagerService {
       this.stateDirectory = stateDir;
     }
   }
-  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, any>): void {
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     if (this.logger) {
       this.logger[level](message, meta);
     } else {
