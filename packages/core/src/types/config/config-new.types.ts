@@ -641,7 +641,7 @@ export interface AntiFlipConfigNew {
 
 export function isConfigNew(config: unknown): config is ConfigNew {
   if (!config || typeof config !== 'object') return false;
-  const c = config as any;
+  const c = config as Record<string, unknown>;
   return (
     typeof c.version === 'number' &&
     typeof c.meta === 'object' &&

@@ -19,7 +19,7 @@ function createMockLogger(): LoggerService {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  } as any;
+  } as unknown as LoggerService;
 }
 
 /**

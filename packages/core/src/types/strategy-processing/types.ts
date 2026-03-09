@@ -83,7 +83,7 @@ export interface StrategyProcessingResult {
   /**
    * Processing result (if successful)
    */
-  result?: any;
+  result?: unknown;
 
   /**
    * Error message (if failed)

@@ -19,9 +19,42 @@ import type { CandleParams, OpenPositionParams, ClosePositionParams, UpdateStopL
 jest.mock('../bybit.service');
 
 describe('BybitServiceAdapter', () => {
+  type MockFn = jest.Mock<unknown, unknown[]>;
+  type MockLogger = jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
+  interface MockBybitServiceShape {
+    [key: string]: string | MockFn;
+    name: string;
+    symbol: string;
+    getSymbol: MockFn;
+    connect: MockFn;
+    disconnect: MockFn;
+    isConnected: MockFn;
+    getCandles: MockFn;
+    getLatestPrice: MockFn;
+    getExchangeTime: MockFn;
+    getCurrentPrice: MockFn;
+    getServerTime: MockFn;
+    getSymbolPrecision: MockFn;
+    openPosition: MockFn;
+    closePosition: MockFn;
+    updateStopLoss: MockFn;
+    activateTrailing: MockFn;
+    getOpenPositions: MockFn;
+    getPosition: MockFn;
+    hasPosition: MockFn;
+    createConditionalOrder: MockFn;
+    cancelOrder: MockFn;
+    getOrderStatus: MockFn;
+    cancelAllOrders: MockFn;
+    cancelAllConditionalOrders: MockFn;
+    getBalance: MockFn;
+    getLeverage: MockFn;
+    setLeverage: MockFn;
+  }
+
   let adapter: BybitServiceAdapter;
-  let mockBybitService: any; // Use 'any' to mock all methods
-  let mockLogger: any;
+  let mockBybitService: MockBybitServiceShape;
+  let mockLogger: MockLogger;
 
   beforeEach(() => {
     // Clear all mocks
@@ -33,7 +66,7 @@ describe('BybitServiceAdapter', () => {
       warn: jest.fn(),
       error: jest.fn(),
       debug: jest.fn(),
-    } as any;
+    };
 
     // Create a flexible mock that allows any method to be called
     mockBybitService = {
@@ -64,10 +97,13 @@ describe('BybitServiceAdapter', () => {
       getBalance: jest.fn(),
       getLeverage: jest.fn(),
       setLeverage: jest.fn(),
-    } as any;
+    };
 
     // Create adapter with mocked BybitService and logger
-    adapter = new BybitServiceAdapter(mockBybitService, mockLogger);
+    adapter = new BybitServiceAdapter(
+      mockBybitService as unknown as BybitService,
+      mockLogger as unknown as LoggerService,
+    );
   });
 
   // ============================================================================

@@ -75,7 +75,7 @@ export interface EmergencyCloseRequest {
   positionId: string;
   reason: EmergencyCloseReason;
   priority: 'HIGH' | 'CRITICAL';
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -199,7 +199,7 @@ export interface RiskAlert {
   alertType: RiskAlertType;
   severity: 'INFO' | 'WARNING' | 'CRITICAL';
   message: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   timestamp: number;
   shouldEmergencyClose: boolean;
 }
@@ -407,6 +407,24 @@ export interface TopTrade {
 }
 
 /**
+ * Input trade shape used by performance analytics calculations.
+ * Fields are optional to preserve compatibility with partial journal records.
+ */
+export interface PerformanceAnalyticsTradeInput {
+  pnl?: number;
+  pnlPercent?: number;
+  openedAt?: number;
+  entryTime?: number;
+  exitTime?: number;
+  tradeId?: string;
+  symbol?: string;
+  direction?: string;
+  entryPrice?: number;
+  exitPrice?: number;
+  exitReason?: string;
+}
+
+/**
  * Strategy-specific analytics (for Phase 10)
  */
 export interface StrategyAnalytics {
@@ -468,7 +486,7 @@ export interface PersistedPositionState {
   currentPrice?: number;
   currentPnL?: number;
   currentPnLPercent?: number;
-  openOrders?: any[];
+  openOrders?: unknown[];
   state: string;
   persistedAt: number;
 }
@@ -616,9 +634,9 @@ export interface IOrderExecutionPipeline {
  * PerformanceAnalytics interface
  */
 export interface IPerformanceAnalytics {
-  calculateWinRate(trades: any[], period: number): number;
-  calculateProfitFactor(trades: any[]): number;
-  calculateAverageHoldTime(trades: any[]): number;
+  calculateWinRate(trades: PerformanceAnalyticsTradeInput[], period: number): number;
+  calculateProfitFactor(trades: PerformanceAnalyticsTradeInput[]): number;
+  calculateAverageHoldTime(trades: PerformanceAnalyticsTradeInput[]): number;
   getMetrics(period: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'): Promise<TradeStatistics>;
   getTopTrades(limit: number): Promise<TopTrade[]>;
 }

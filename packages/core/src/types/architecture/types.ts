@@ -90,7 +90,7 @@ export interface IAction {
   priority: 'HIGH' | 'NORMAL' | 'LOW';
 
   /** Additional context/metadata */
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 
   /** Number of retry attempts */
   retries?: number;
@@ -191,7 +191,7 @@ export interface ActionResult {
   success: boolean;
   actionId: string;
   error?: Error;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -477,17 +477,17 @@ export interface IEventEmitter {
   /**
    * Emit event
    */
-  emit(event: string, data?: any): void;
+  emit(event: string, data?: unknown): void;
 
   /**
    * Subscribe to event
    */
-  on(event: string, listener: (data?: any) => void): void;
+  on(event: string, listener: (data?: unknown) => void): void;
 
   /**
    * Unsubscribe from event
    */
-  off(event: string, listener: (data?: any) => void): void;
+  off(event: string, listener: (data?: unknown) => void): void;
 }
 
 // ============================================================================

@@ -25,21 +25,8 @@ import {
   TradeStatistics,
   TopTrade,
   IPerformanceAnalytics,
+  PerformanceAnalyticsTradeInput,
 } from '../types/legacy';
-
-interface AnalyticsTrade {
-  pnl?: number;
-  pnlPercent?: number;
-  openedAt?: number;
-  entryTime?: number;
-  exitTime?: number;
-  tradeId?: string;
-  symbol?: string;
-  direction?: string;
-  entryPrice?: number;
-  exitPrice?: number;
-  exitReason?: string;
-}
 
 /**
  * PerformanceAnalytics: Comprehensive trade performance analysis
@@ -84,7 +71,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * Win rate = (winning trades / total trades) * 100
    * Phase 8.9.36: Added input validation with THROW strategy and calculation GRACEFUL_DEGRADE
    */
-  public calculateWinRate(trades: AnalyticsTrade[], period: number = 10): number {
+  public calculateWinRate(trades: PerformanceAnalyticsTradeInput[], period: number = 10): number {
     // Phase 8.9.36: THROW on invalid trades array
     if (!trades || !Array.isArray(trades)) {
       const error = new PerformanceCalculationError(
@@ -150,7 +137,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * Value > 1.0 indicates profitable trading
    * Phase 8.9.36: Added input validation with THROW strategy and calculation GRACEFUL_DEGRADE
    */
-  public calculateProfitFactor(trades: AnalyticsTrade[]): number {
+  public calculateProfitFactor(trades: PerformanceAnalyticsTradeInput[]): number {
     // Phase 8.9.36: THROW on invalid trades array
     if (!trades || !Array.isArray(trades)) {
       const error = new PerformanceCalculationError(
@@ -208,7 +195,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * Returns average in minutes
    * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
    */
-  public calculateAverageHoldTime(trades: AnalyticsTrade[]): number {
+  public calculateAverageHoldTime(trades: PerformanceAnalyticsTradeInput[]): number {
     // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length === 0) return 0;
@@ -448,7 +435,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * Simplified: Avg PnL / Std Dev of PnL
    * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
    */
-  private calculateSharpeRatio(trades: AnalyticsTrade[]): number {
+  private calculateSharpeRatio(trades: PerformanceAnalyticsTradeInput[]): number {
     // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length < 2) return 0;
@@ -482,7 +469,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * Like Sharpe but only penalizes downside volatility
    * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
    */
-  private calculateSortinoRatio(trades: AnalyticsTrade[]): number {
+  private calculateSortinoRatio(trades: PerformanceAnalyticsTradeInput[]): number {
     // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length < 2) return 0;
@@ -517,7 +504,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * Max drawdown = (Peak - Trough) / Peak
    * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
    */
-  private calculateMaxDrawdown(trades: AnalyticsTrade[]): number {
+  private calculateMaxDrawdown(trades: PerformanceAnalyticsTradeInput[]): number {
     // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length === 0) return 0;
@@ -558,7 +545,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
    * - MONTH: Trades opened in last 30 days
    * Phase 8.9.36: Added GRACEFUL_DEGRADE for journal access failures
    */
-  private getTradesForPeriod(period: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'): AnalyticsTrade[] {
+  private getTradesForPeriod(period: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'): PerformanceAnalyticsTradeInput[] {
     // Phase 8.9.36: GRACEFUL_DEGRADE for journal access failure
     try {
       const allTrades = this.journalService.getAllTrades();
@@ -591,7 +578,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       }
 
       // Filter trades by openedAt timestamp
-      return allTrades.filter((trade: AnalyticsTrade) => {
+      return allTrades.filter((trade: PerformanceAnalyticsTradeInput) => {
         const tradeOpenTime = trade.openedAt || trade.entryTime || 0;
         return tradeOpenTime >= cutoffTime;
       });
@@ -610,7 +597,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
   /**
    * Helper: Calculate holding time for a single trade
    */
-  private calculateTradeHoldingTime(trade: AnalyticsTrade): number {
+  private calculateTradeHoldingTime(trade: PerformanceAnalyticsTradeInput): number {
     const exitTime = trade.exitTime || Date.now();
     const entryTime = trade.entryTime || Date.now();
     return Math.round(((exitTime - entryTime) / 1000 / 60) * 10) / 10; // Minutes, 1 decimal

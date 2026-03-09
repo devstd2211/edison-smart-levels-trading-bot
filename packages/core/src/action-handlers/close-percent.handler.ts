@@ -50,7 +50,8 @@ export class ClosePercentHandler implements IActionHandler {
       }
 
       // Get current price from metadata or use entry price
-      const currentPrice = action.metadata?.currentPrice || position.entryPrice;
+      const metadataPrice = action.metadata?.currentPrice;
+      const currentPrice = typeof metadataPrice === 'number' ? metadataPrice : position.entryPrice;
 
       // Create exit action object with strict typing
       const exitAction: ClosePercentExitActionDTO = {

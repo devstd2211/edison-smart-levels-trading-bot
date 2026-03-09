@@ -28,32 +28,39 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-09)
-- Completed core `any` cleanup batches 61-64 (behavior-preserving):
-  - `services/structure-aware-exit.service.ts`: removed fallback `structureType: 'UNKNOWN' as any`.
-  - `services/multi-strategy/strategy-state-manager.service.ts`: `Record<string, any>` -> `Record<string, unknown>` in log metadata.
-  - `services/multi-strategy/strategy-registry.service.ts`: `Record<string, any>` -> `Record<string, unknown>` in log metadata.
-  - `services/multi-strategy/strategy-factory.service.ts`: `Record<string, any>` -> `Record<string, unknown>` in log metadata.
-  - `validators/position.validator.ts`: `isInvalidNumber(value: any)` -> `unknown`.
-  - `utils/analyzer-config.utils.ts`: all extractor inputs `config: any` -> `config: unknown` with guarded envelope helper.
-  - `event-sourcing/position-state-projection.service.ts`: removed `side: positionSide as any` by explicit `PositionSide` mapping.
-  - `vector-db/vector-db.service.ts`: typed `getStats()` return.
-  - `vector-db/sqlite-vector-store.ts`: removed remaining `any` SQL/callback/cache boundaries with typed row interfaces and cache payloads.
-  - `repositories/IRepositories.ts`: indicator cache interface boundaries `any` -> `unknown`.
-  - `repositories/market-data.cache-repository.ts`: cached indicator value/method boundaries `any` -> `unknown`.
-  - `repositories/journal.file-repository.ts`: generic data-map and data persistence boundaries `any` -> `unknown`.
-  - compile-compatibility fixes applied with no behavior change:
-    - `services/bybit/bybit-positions.partial.ts` (typed `submitOrder` payload + static field placement).
-    - `services/realtime-whale-detector.ts` (optional boolean fallback).
-    - `__tests__/services/graceful-shutdown.service.test.ts` (typed access for `unknown` event data).
-    - `services/indicator-cache.service.ts` (finite-number guard for `unknown` repository read path).
-- Updated `REFACTOR_PLAN.md` with batch 61-64 details and verification.
-- Created `ACTIVE_REFACTOR_PLAN.md` and migrated open tasks there.
+- Completed core `any` cleanup batches 65-72 (behavior-preserving):
+  - `types/strategy-processing/types.ts`: `StrategyProcessingResult.result` changed `any` -> `unknown`.
+  - `types/architecture/types.ts`: `metadata` payload maps and `IEventEmitter` event payload/listener signatures changed `any` -> `unknown`.
+  - `types/config/config.types.ts`: analyzer params and disabled-section index signatures changed `any` -> `unknown`.
+  - `types/live-trading/types.ts`: risk/event payload maps and perf-analytics trade arrays changed `any` -> `unknown`.
+  - `types/multi-strategy/types.ts`: strategy snapshot/event/config-merge payload boundaries changed `any` -> `unknown`.
+  - `types/config/config-new.types.ts`: replaced `const c = config as any` with `Record<string, unknown>` in `isConfigNew`.
+  - `types/legacy.ts`: replaced remaining runtime `any` boundaries with `unknown` (analyzer/default/config payload fields), preserving mixed-shape compatibility for `analyzers`.
+  - `repositories/__tests__/journal.file-repository.test.ts`: replaced test mock cast `as any` with `as unknown as LoggerService`.
+  - `services/bybit/__tests__/bybit-service.adapter.test.ts`: replaced `mockBybitService: any`/`mockLogger: any` and setup `as any` with explicit typed mocks.
+  - compatibility-first unknown narrowing:
+    - `types/live-trading/types.ts`: added `PerformanceAnalyticsTradeInput`; narrowed `IPerformanceAnalytics` trade-array methods from `unknown[]` to explicit input shape.
+    - `services/performance-analytics.service.ts`: aligned method/helper signatures to shared `PerformanceAnalyticsTradeInput`.
+    - `types/legacy.ts`: re-exported `PerformanceAnalyticsTradeInput`.
+    - `types/multi-strategy/types.ts`: narrowed `StrategyMetadata.configOverrides` to `Partial<ConfigNew>`, `StrategyStateSnapshot.positions/journal` to `Record<string, unknown>[]`, and aligned `riskMonitorState` + `StrategyEvent.data` on shared `StrategySnapshotRecord`.
+  - compile-compatibility guard updates:
+    - `action-handlers/activate-trailing.handler.ts`: typed `currentPrice` extraction from metadata.
+    - `action-handlers/close-percent.handler.ts`: typed `currentPrice` extraction from metadata.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts packages/core/src/__tests__/services/structure-aware-exit.service.test.ts` -> PASS (3/3 suites, 130/130 tests).
-  - `npm test -- --runInBand packages/core/src/__tests__/validators/position.validator.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.test.ts packages/core/src/__tests__/event-sourcing/position-event-sourcing.integration.test.ts` -> PASS (3/3 suites, 42/42 tests).
-  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`) after batch 63 and again after batch 64.
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts` -> PASS (2/2 suites, 73/73 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/phase-9-live-trading.integration.test.ts packages/core/src/__tests__/services/performance-analytics.service.test.ts` -> PASS (3/3 suites, 151/151 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-config-merger.error-handling.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (2/2 suites, 38/38 tests).
+  - `rg -n "\\bany\\b"` across target `types/*` files -> only comment/doc matches.
+  - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+  - `npm test -- --runInBand packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts` -> PASS (1/1 suite, 47/47 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.service.test.ts packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts` -> PASS (2/2 suites, 68/68 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (2/2 suites, 97/97 tests).
+  - `rg -n "as any" packages/core/src --glob '!packages/core/src/services/**' --glob '!packages/core/src/types/**' --glob '!packages/core/src/**/*.ARCHIVED.ts'` -> no matches.
+  - `rg -n "(:\\s*any\\b|as any\\b|<any>|any\\[\\]|Record<string,\\s*any>)" packages/core/src/services packages/core/src/__tests__/services --glob '!**/*.ARCHIVED.ts'` -> no matches.
 
 ## Next Step
 - Continue `Core any cleanup (phase 3: src)` outside `services` in isolated batches:
-  - `types/*` (`strategy-processing`, `architecture`, `config`, `live-trading`, `multi-strategy`, `legacy`) with compatibility-first typing.
+  - production scan result: non-`services`/non-`types` and `services/*` runtime `any` is clear.
+  - continue compatibility-first narrowing for selected `unknown` boundaries where stable domain shapes are known (next candidates: non-multi-strategy payload boundaries and selective event payload contracts).
 - Keep behavior unchanged, run targeted tests per slice, log each batch in `ACTIVE_REFACTOR_PLAN.md`.

@@ -222,13 +222,13 @@ export interface AnalyzerConfig {
   priority: number;
   minConfidence: number;
   maxConfidence: number;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   warning?: string;
 }
 
 export interface DisabledAnalyzersConfig {
   _comment: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ============================================================================
@@ -302,7 +302,7 @@ export interface VolatilityRegimeConfig {
 
 export interface DisabledFiltersConfig {
   _comment: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ============================================================================

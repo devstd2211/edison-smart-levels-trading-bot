@@ -400,6 +400,7 @@ export type {
   ExecutionMetrics,
   IOrderExecutionPipeline,
   PerformanceAnalyticsConfig,
+  PerformanceAnalyticsTradeInput,
   TradeStatistics,
   PeriodMetrics,
   SessionAnalytics,
@@ -1174,12 +1175,12 @@ export interface Config {
   strategies: StrategiesConfig; // Individual strategy configurations
   strategy: StrategyConfig; // Legacy strategy config
   indicators: IndicatorsConfig;
-  analyzers?: Record<string, any>; // Analyzer configurations
+  analyzers?: unknown; // Analyzer configurations
   riskManagement: RiskManagementConfig;
   logging: LoggingConfig;
   system: SystemConfig;
   dataSubscriptions: DataSubscriptionsConfig; // Data subscriptions (candles, orderbook, ticks)
-  analyzerDefaults?: Record<string, any>; // Default analyzer parameters (optional)
+  analyzerDefaults?: Record<string, unknown>; // Default analyzer parameters (optional)
   entryConfig: {
     divergenceDetector: {
       minStrength: number;
@@ -1245,7 +1246,7 @@ export interface Config {
   // Trading Orchestrator Options (optional)
   enableEntryScannerFallback?: boolean; // Enable legacy EntryScanner fallback when strategies don't signal (default: true)
   // Analyzer weights for weighted voting system (config-driven enabling/disabling)
-  strategicWeights?: any; // Strategic weights for each analyzer (enables/disables analyzers)
+  strategicWeights?: unknown; // Strategic weights for each analyzer (enables/disables analyzers)
   filters?: FilterOverrides; // Optional filter overrides
   // Trend Confirmation Filter (optional)
   trendConfirmation?: TrendConfirmationConfig; // Multi-timeframe trend confirmation filter
@@ -3564,8 +3565,8 @@ export interface OrchestratorConfig {
   scalpingLadderTp?: ScalpingLadderTpConfig;
   scalpingTickDelta?: ScalpingTickDeltaConfig;
   scalpingOrderFlow?: ScalpingOrderFlowConfig;
-  fractalBreakoutRetest?: any; // FractalStrategyConfig
-  marketHealth?: any; // MarketHealthConfig
+  fractalBreakoutRetest?: unknown; // FractalStrategyConfig
+  marketHealth?: unknown; // MarketHealthConfig
   // Funding rate filter config
   fundingRateFilter?: FundingRateFilterConfig;
   // Session-based SL config
@@ -3577,7 +3578,7 @@ export interface OrchestratorConfig {
   // Indicators config (for Stochastic and Bollinger Bands)
   indicators?: IndicatorsConfig;
   // Analyzers config (for all registered analyzers)
-  analyzers?: Record<string, any>;
+  analyzers?: unknown;
   // Phase 1: Smart Entry & Breakeven config
   fastEntry?: FastEntryConfig;
   smartBreakeven?: SmartBreakevenConfig;
@@ -3602,9 +3603,9 @@ export interface OrchestratorConfig {
   // EntryScanner fallback (default: true for backward compatibility)
   enableEntryScannerFallback?: boolean;
   // Analyzer weights for weighted voting system (config-driven enabling/disabling)
-  strategicWeights?: any;
+  strategicWeights?: unknown;
   // Analysis configuration (pattern detectors, market structure, flat market, liquidity)
-  analysisConfig?: any; // Flexible analysis config for all analyzer needs
+  analysisConfig?: unknown; // Flexible analysis config for all analyzer needs
   // PHASE 4: RiskManager configuration
   riskManager?: RiskManagerConfig;
   // Full riskManagement config (for exit services)

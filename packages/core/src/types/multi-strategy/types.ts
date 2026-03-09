@@ -10,6 +10,8 @@ import type { StrategyConfig } from '../strategy-config';
 import type { IAnalyzer } from '../analyzer';
 import type { IExchange } from '../../interfaces/IExchange';
 
+export type StrategySnapshotRecord = Record<string, unknown>;
+
 /**
  * Metadata for a loaded strategy
  */
@@ -33,7 +35,7 @@ export interface StrategyMetadata {
   loadedAt: Date;
 
   /** Configuration overrides specific to this instance */
-  configOverrides?: Record<string, any>;
+  configOverrides?: Partial<ConfigNew>;
 }
 
 /**
@@ -47,10 +49,10 @@ export interface StrategyStateSnapshot {
   strategyName: string;
 
   /** All open positions */
-  positions: any[];
+  positions: StrategySnapshotRecord[];
 
   /** Trade history/journal */
-  journal: any[];
+  journal: StrategySnapshotRecord[];
 
   /** Performance metrics at snapshot time */
   metrics: {
@@ -68,7 +70,7 @@ export interface StrategyStateSnapshot {
   lastCandleTime?: Date;
 
   /** Risk monitor state */
-  riskMonitorState?: Record<string, any>;
+  riskMonitorState?: StrategySnapshotRecord;
 }
 
 /**
@@ -203,8 +205,8 @@ export interface ConfigValidationResult {
  */
 export interface ConfigMergeChange {
   path: string; // e.g., "orchestration.entry.minConfidenceThreshold"
-  from: any;
-  to: any;
+  from: unknown;
+  to: unknown;
 }
 
 /**
@@ -256,7 +258,7 @@ export interface StrategyEvent {
   strategyId: string;
   strategyName: string;
   timestamp: Date;
-  data?: Record<string, any>;
+  data?: StrategySnapshotRecord;
   error?: string;
 }
 
