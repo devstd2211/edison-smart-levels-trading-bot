@@ -8,8 +8,8 @@
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 
 export interface IWebApiLogger {
-  error(message: string, meta?: unknown): void;
-  warn(message: string, meta?: unknown): void;
+  error(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
 }
 
 export interface IWebApiWallTracker {

@@ -12,7 +12,7 @@ import type { ICoreServices } from './ICoreServices';
 export interface ITradingBotServices extends IWebApiReadServices {
   coreServices: ICoreServices;
   positionMonitor: {
-    on(event: string, listener: (...args: unknown[]) => void): void;
+    on(event: string, listener: (data?: unknown) => void): void;
   };
   monitoringServices: IMonitoringReadServices;
   executionServices: Pick<IExecutionServices, 'positionManager' | 'tradingOrchestrator'>;

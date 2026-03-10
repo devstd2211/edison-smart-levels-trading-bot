@@ -32,11 +32,39 @@ export interface IBotInstance extends EventEmitter {
   stop(): void;
 }
 
+type BotPositionEventPayload =
+  | Position
+  | {
+    position?: Position;
+    closedPosition?: Position;
+    strategyId?: string;
+    positionId?: string;
+    pnl?: number;
+    exitType?: string;
+  };
+
+type BotEventPayloadMap = {
+  signal: unknown;
+  'position-opened': BotPositionEventPayload;
+  'position-closed': BotPositionEventPayload;
+  error: unknown;
+  'bot-started': boolean;
+  'bot-stopped': boolean;
+};
+
+type BotEventName = keyof BotEventPayloadMap;
+type BotEventListener<K extends BotEventName> = (data: BotEventPayloadMap[K]) => void;
+
 export class BotBridgeService extends EventEmitter {
-  private botEventForwarding: Array<
-    'signal' | 'position-opened' | 'position-closed' | 'error' | 'bot-started' | 'bot-stopped'
-  > = ['signal', 'position-opened', 'position-closed', 'error', 'bot-started', 'bot-stopped'];
-  private botListeners = new Map<string, (data?: unknown) => void>();
+  private botEventForwarding: BotEventName[] = [
+    'signal',
+    'position-opened',
+    'position-closed',
+    'error',
+    'bot-started',
+    'bot-stopped',
+  ];
+  private botListeners = new Map<BotEventName, BotEventListener<BotEventName>>();
   private recentSignals: Signal[] = [];
 
   private readonly webApi?: IWebApiAdapter;
@@ -52,7 +80,7 @@ export class BotBridgeService extends EventEmitter {
    */
   private setupEventForwarding() {
     for (const botEvent of this.botEventForwarding) {
-      const listener = (data?: unknown) => {
+      const listener: BotEventListener<typeof botEvent> = (data) => {
         switch (botEvent) {
           case 'signal': {
             const mappedSignal = this.toWebSignal(data);
@@ -81,7 +109,9 @@ export class BotBridgeService extends EventEmitter {
             return;
           }
           case 'position-opened': {
-            const position = this.toWebPosition(this.extractPositionPayload(data));
+            const position = this.toWebPosition(
+              this.extractPositionPayload(data as BotPositionEventPayload),
+            );
             const message: WebSocketMessage<'POSITION_OPENED'> = {
               type: 'POSITION_OPENED',
               payload: position ? { position } : {},
@@ -91,7 +121,7 @@ export class BotBridgeService extends EventEmitter {
             return;
           }
           case 'position-closed': {
-            const { pnl, exitType } = this.extractClosePayload(data);
+            const { pnl, exitType } = this.extractClosePayload(data as BotPositionEventPayload);
             const message: WebSocketMessage<'POSITION_CLOSED'> = {
               type: 'POSITION_CLOSED',
               payload: { pnl, exitType },
@@ -274,15 +304,15 @@ export class BotBridgeService extends EventEmitter {
     return marketData;
   }
 
-  private extractPositionPayload(data: unknown): unknown {
+  private extractPositionPayload(data: BotPositionEventPayload): Position | BotPositionEventPayload {
     if (!this.isRecord(data)) {
       return data;
     }
     if (this.isRecord(data.position)) {
-      return data.position;
+      return data.position as Position;
     }
     if (this.isRecord(data.closedPosition)) {
-      return data.closedPosition;
+      return data.closedPosition as Position;
     }
     return data;
   }
@@ -392,7 +422,7 @@ export class BotBridgeService extends EventEmitter {
     };
   }
 
-  private extractClosePayload(data: unknown): { pnl?: number; exitType?: string } {
+  private extractClosePayload(data: BotPositionEventPayload): { pnl?: number; exitType?: string } {
     if (!this.isRecord(data)) {
       return {};
     }
@@ -401,8 +431,8 @@ export class BotBridgeService extends EventEmitter {
     if (pnlValue !== undefined || exitTypeValue !== undefined) {
       return { pnl: pnlValue, exitType: exitTypeValue };
     }
-    const position = this.extractPositionPayload(data);
-    if (!this.isRecord(position)) {
+    const position = this.toWebPosition(this.extractPositionPayload(data));
+    if (!position) {
       return {};
     }
     const pnl = typeof position.unrealizedPnL === 'number' ? position.unrealizedPnL : undefined;

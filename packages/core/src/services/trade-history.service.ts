@@ -345,7 +345,7 @@ export class TradeHistoryService {
         this.verifyAndMigrateSchema();
       }
 
-      const csvLine = buildCsvLineForSchema(this.currentSchema, record as Record<string, unknown>);
+      const csvLine = buildCsvLineForSchema(this.currentSchema, record);
 
       // Append to CSV
       fs.appendFileSync(this.csvPath, csvLine + '\n', 'utf-8');

@@ -35,6 +35,10 @@ import {
   Position,
   IAction,
 } from '../types/legacy';
+import type {
+  PositionClosedEventPayload,
+  PositionOpenedEventPayload,
+} from '../types/bot-events';
 import { ActionQueueService } from './action-queue.service';
 import type { ILifecycle } from '../interfaces/ILifecycle';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
@@ -100,7 +104,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
   private initializeEventSubscriptions(): void {
     this.unsubscribeHandlers = [];
     // Listen for position opens
-    const unsubscribeOpened = this.eventBus.subscribe('position-opened', (event: unknown) => {
+    const unsubscribeOpened = this.eventBus.subscribe('position-opened', (event: PositionOpenedEventPayload) => {
       const position = this.getOpenedPosition(event);
       if (position && position.id) {
         this.trackPosition({
@@ -119,7 +123,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     });
 
     // Listen for position closes
-    const unsubscribeClosed = this.eventBus.subscribe('position-closed', (event: unknown) => {
+    const unsubscribeClosed = this.eventBus.subscribe('position-closed', (event: PositionClosedEventPayload) => {
       const positionId = this.getClosedPositionId(event);
       if (positionId) {
         this.untrackPosition(positionId);
@@ -135,29 +139,34 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     }
   }
 
-  private getOpenedPosition(event: unknown): Position | null {
-    if (typeof event !== 'object' || event === null) {
-      return null;
+  private getOpenedPosition(event: PositionOpenedEventPayload): Position | null {
+    if (this.isPosition(event)) {
+      return event;
     }
-    const candidate = event as { position?: unknown };
-    if (typeof candidate.position !== 'object' || candidate.position === null) {
-      return null;
-    }
-    return candidate.position as Position;
+    return this.isPosition(event.position) ? event.position : null;
   }
 
-  private getClosedPositionId(event: unknown): string | null {
-    if (typeof event !== 'object' || event === null) {
-      return null;
+  private getClosedPositionId(event: PositionClosedEventPayload): string | null {
+    if (this.isPosition(event)) {
+      return event.id;
     }
-    const candidate = event as { positionId?: unknown; position?: { id?: unknown } };
-    if (typeof candidate.positionId === 'string' && candidate.positionId.length > 0) {
-      return candidate.positionId;
+    if (typeof event.positionId === 'string' && event.positionId.length > 0) {
+      return event.positionId;
     }
-    if (typeof candidate.position?.id === 'string' && candidate.position.id.length > 0) {
-      return candidate.position.id;
+    if (this.isPosition(event.position) && event.position.id.length > 0) {
+      return event.position.id;
+    }
+    if (this.isPosition(event.closedPosition) && event.closedPosition.id.length > 0) {
+      return event.closedPosition.id;
     }
     return null;
+  }
+
+  private isPosition(value: unknown): value is Position {
+    return typeof value === 'object'
+      && value !== null
+      && typeof (value as Position).id === 'string'
+      && typeof (value as Position).symbol === 'string';
   }
 
   /**

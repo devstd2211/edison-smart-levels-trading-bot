@@ -36,6 +36,7 @@ import {
   LiveTradingEventType,
   Position,
 } from '../types/legacy';
+import type { PositionClosedEventPayload } from '../types/bot-events';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   PositionNotFoundError,
@@ -103,7 +104,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
 
     // [P1] Subscribe to position-closed event for cache invalidation
     if (this.eventBus && typeof this.eventBus.subscribe === 'function') {
-      this.unsubscribePositionClosed = this.eventBus.subscribe('position-closed', (data: unknown) => {
+      this.unsubscribePositionClosed = this.eventBus.subscribe('position-closed', (data: PositionClosedEventPayload) => {
         this.onPositionClosed(data);
       });
       this.logger.debug('[RealTimeRiskMonitor] Subscribed to position-closed events');
@@ -611,7 +612,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
    * [P1] Handle position-closed event
    * Invalidate health score cache when position closes
    */
-  private onPositionClosed(data: unknown): void {
+  private onPositionClosed(data: PositionClosedEventPayload): void {
     const positionId = this.extractPositionIdFromClosedEvent(data);
 
     if (!positionId) {
@@ -626,13 +627,27 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     this.logger.debug('[RealTimeRiskMonitor] Cache invalidated', { positionId });
   }
 
-  private extractPositionIdFromClosedEvent(data: unknown): string | undefined {
-    if (!data || typeof data !== 'object') {
-      return undefined;
+  private extractPositionIdFromClosedEvent(data: PositionClosedEventPayload): string | undefined {
+    if (this.isPosition(data)) {
+      return data.id;
     }
+    if (typeof data.positionId === 'string') {
+      return data.positionId;
+    }
+    if (this.isPosition(data.position)) {
+      return data.position.id;
+    }
+    if (this.isPosition(data.closedPosition)) {
+      return data.closedPosition.id;
+    }
+    return undefined;
+  }
 
-    const maybeEvent = data as { position?: { id?: unknown } };
-    return typeof maybeEvent.position?.id === 'string' ? maybeEvent.position.id : undefined;
+  private isPosition(value: unknown): value is Position {
+    return typeof value === 'object'
+      && value !== null
+      && typeof (value as Position).id === 'string'
+      && typeof (value as Position).symbol === 'string';
   }
 
   /**

@@ -2,6 +2,10 @@ import type { Candle } from './types/core';
 import type { Position } from './types/position';
 import type { Config } from './types/legacy';
 import type {
+  PositionClosedEventPayload,
+  PositionOpenedEventPayload,
+} from './types/bot-events';
+import type {
   WebApiFundingRateView,
   WebApiMarketData,
   WebApiOrderBookView,
@@ -66,6 +70,31 @@ export class TradingBot {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
+  }
+
+  private isPositionShape(value: unknown): value is Position {
+    return this.isRecord(value)
+      && typeof value.side === 'string'
+      && typeof value.entryPrice === 'number'
+      && typeof value.quantity === 'number';
+  }
+
+  private getPositionFromEvent(
+    data: PositionOpenedEventPayload | PositionClosedEventPayload,
+  ): Position | null {
+    if (this.isPositionShape(data)) {
+      return data;
+    }
+    if (!this.isRecord(data)) {
+      return null;
+    }
+    if (this.isPositionShape(data.position)) {
+      return data.position;
+    }
+    if ('closedPosition' in data && this.isPositionShape(data.closedPosition)) {
+      return data.closedPosition;
+    }
+    return null;
   }
 
   private isDashboardEnabled(): boolean {
@@ -254,30 +283,9 @@ export class TradingBot {
     if (!dashboard) {
       return;
     }
-    const isPositionShape = (value: unknown): value is Position =>
-      this.isRecord(value)
-      && typeof value.side === 'string'
-      && typeof value.entryPrice === 'number'
-      && typeof value.quantity === 'number';
-
-    const getPositionFromEvent = (data: unknown): Position | null => {
-      if (!this.isRecord(data)) {
-        return null;
-      }
-      if (isPositionShape(data.position)) {
-        return data.position;
-      }
-      if (isPositionShape(data.closedPosition)) {
-        return data.closedPosition;
-      }
-      if (isPositionShape(data)) {
-        return data;
-      }
-      return null;
-    };
     // Listen for position-opened events
-    this.eventBus.on('position-opened', (data: unknown) => {
-      const position = getPositionFromEvent(data);
+    this.eventBus.on('position-opened', (data: PositionOpenedEventPayload) => {
+      const position = this.getPositionFromEvent(data);
       if (!position) {
         return;
       }
@@ -286,8 +294,8 @@ export class TradingBot {
     });
 
     // Listen for position-closed events
-    this.eventBus.on('position-closed', (data: unknown) => {
-      const position = getPositionFromEvent(data);
+    this.eventBus.on('position-closed', (data: PositionClosedEventPayload) => {
+      const position = this.getPositionFromEvent(data);
       if (!position) {
         return;
       }

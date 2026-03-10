@@ -7,17 +7,13 @@
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
 import type { WebServerConfig, IBotInstance, IWebApiAdapter } from 'trading-bot-web-server';
-
-type EventBusLike = {
-  on(event: string, listener: (...args: unknown[]) => void): void;
-  off(event: string, listener: (...args: unknown[]) => void): void;
-  emit(event: string, ...args: unknown[]): void;
-};
+import type { Position } from '../types/position';
+import type { BotRuntimeEventBusLike } from '../types/bot-events';
 
 type WebBotAdapter = {
-  eventBus: EventBusLike;
+  eventBus: BotRuntimeEventBusLike;
   isRunning: boolean;
-  getCurrentPosition(): unknown;
+  getCurrentPosition(): Position | null;
   getBalance(): Promise<number>;
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -71,9 +67,9 @@ export async function startWebServer(
   // Make bot instance behave like EventEmitter for BotBridgeService
   const botInstance = {
     ...bot,
-    on: (event: string, listener: (...args: unknown[]) => void) => bot.eventBus.on(event, listener),
-    off: (event: string, listener: (...args: unknown[]) => void) => bot.eventBus.off(event, listener),
-    emit: (event: string, ...args: unknown[]) => bot.eventBus.emit(event, ...args),
+    on: (event: string, listener: (data?: unknown) => void) => bot.eventBus.on(event, listener),
+    off: (event: string, listener: (data?: unknown) => void) => bot.eventBus.off(event, listener),
+    emit: (event: string, data?: unknown) => bot.eventBus.emit(event, data),
     stop: () => { void bot.stop(); },
   };
 

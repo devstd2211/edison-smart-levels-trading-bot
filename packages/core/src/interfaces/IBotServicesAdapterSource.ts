@@ -38,7 +38,7 @@ export interface IBotServicesAdapterSource {
     'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'
   >;
   positionMonitor: {
-    on(event: string, listener: (...args: unknown[]) => void): void;
+    on(event: string, listener: (data?: unknown) => void): void;
   };
   positionManager: {
     syncWithWebSocket(position?: Position): void;

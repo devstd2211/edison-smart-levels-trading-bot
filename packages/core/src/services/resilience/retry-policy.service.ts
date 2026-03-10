@@ -134,7 +134,7 @@ export class RetryPolicyService implements ILifecycle {
       budgetLimit: 0,
     };
 
-    this.safeLog('info', 'RetryPolicyService initialized', this.config);
+    this.safeLog('info', 'RetryPolicyService initialized', { ...this.config });
   }
 
   // ============================================================================
@@ -396,10 +396,10 @@ export class RetryPolicyService implements ILifecycle {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private safeLog(level: 'info' | 'warn' | 'error' | 'debug', message: string, meta?: unknown): void {
+  private safeLog(level: 'info' | 'warn' | 'error' | 'debug', message: string, meta?: Record<string, unknown>): void {
     try {
       if (this.logger) {
-        this.logger[level](message, meta as Record<string, unknown> | undefined);
+        this.logger[level](message, meta);
       }
     } catch (error) {
       // SKIP strategy: Logging failures should never block retry operations

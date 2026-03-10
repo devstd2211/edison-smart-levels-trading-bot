@@ -276,7 +276,7 @@ export class BulkheadService implements ILifecycle {
       };
 
       this.pools.set(poolName, pool);
-      this.safeLog('info', `Pool "${poolName}" created`, effectiveConfig);
+      this.safeLog('info', `Pool "${poolName}" created`, { ...effectiveConfig });
     }
 
     return pool;
@@ -438,10 +438,10 @@ export class BulkheadService implements ILifecycle {
     this.queueCheckInterval = interval;
   }
 
-  private safeLog(level: 'info' | 'warn' | 'error' | 'debug', message: string, meta?: unknown): void {
+  private safeLog(level: 'info' | 'warn' | 'error' | 'debug', message: string, meta?: Record<string, unknown>): void {
     try {
       if (this.logger) {
-        this.logger[level](message, meta as Record<string, unknown> | undefined);
+        this.logger[level](message, meta);
       }
     } catch (error) {
       // SKIP strategy: Logging failures should never block bulkhead operations

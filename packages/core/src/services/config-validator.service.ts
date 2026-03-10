@@ -132,11 +132,17 @@ FIX: Update your config.json and restart.
     const parts = path.split('.');
     let current: unknown = obj;
     for (const part of parts) {
-      if (current === null || current === undefined) return undefined;
-      if (typeof current !== 'object') return undefined;
-      current = (current as Record<string, unknown>)[part];
+      current = ConfigValidatorService.getChildValueStatic(current, part);
+      if (current === undefined) return undefined;
     }
     return current;
+  }
+
+  private static getChildValueStatic(value: unknown, key: string): unknown {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    return (value as Record<string, unknown>)[key];
   }
 
   /**
@@ -476,16 +482,20 @@ FIX: Update your config.json and restart.
     let current: unknown = obj;
 
     for (const part of parts) {
-      if (current === null || current === undefined) {
+      current = this.getChildValue(current, part);
+      if (current === undefined) {
         return undefined;
       }
-      if (typeof current !== 'object') {
-        return undefined;
-      }
-      current = (current as Record<string, unknown>)[part];
     }
 
     return current;
+  }
+
+  private getChildValue(value: unknown, key: string): unknown {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    return (value as Record<string, unknown>)[key];
   }
 
   private asRecord(value: unknown): Record<string, unknown> {

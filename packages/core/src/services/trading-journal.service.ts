@@ -368,7 +368,9 @@ export class TradingJournalService {
 
     // Append to permanent CSV history with SKIP strategy
     if (this.tradeHistory && this.tradeHistoryConfig?.enabled) {
-      const md = (trade.entryCondition.signal.marketData || {}) as Record<string, unknown>;
+      const md = this.getSignalMarketData(trade.entryCondition.signal);
+      const stochastic = this.getIndicatorData(md, 'stochastic');
+      const bollingerBands = this.getIndicatorData(md, 'bollingerBands');
       const duration = this.formatDuration(trade.closedAt - trade.openedAt);
 
       const csvRecord: CSVTradeRecord = {
@@ -408,17 +410,17 @@ export class TradingJournalService {
         atr: md.atr,
         btcCorrelation: md.btcCorrelation,
         // NEW: Stochastic indicator data
-        stochasticK: (md.stochastic as Record<string, unknown>)?.k,
-        stochasticD: (md.stochastic as Record<string, unknown>)?.d,
-        stochasticOversold: (md.stochastic as Record<string, unknown>)?.isOversold,
-        stochasticOverbought: (md.stochastic as Record<string, unknown>)?.isOverbought,
+        stochasticK: stochastic.k,
+        stochasticD: stochastic.d,
+        stochasticOversold: stochastic.isOversold,
+        stochasticOverbought: stochastic.isOverbought,
         // NEW: Bollinger Bands data
-        bollingerUpper: (md.bollingerBands as Record<string, unknown>)?.upper,
-        bollingerMiddle: (md.bollingerBands as Record<string, unknown>)?.middle,
-        bollingerLower: (md.bollingerBands as Record<string, unknown>)?.lower,
-        bollingerWidth: (md.bollingerBands as Record<string, unknown>)?.width,
-        bollingerPercentB: (md.bollingerBands as Record<string, unknown>)?.percentB,
-        bollingerSqueeze: (md.bollingerBands as Record<string, unknown>)?.isSqueeze,
+        bollingerUpper: bollingerBands.upper,
+        bollingerMiddle: bollingerBands.middle,
+        bollingerLower: bollingerBands.lower,
+        bollingerWidth: bollingerBands.width,
+        bollingerPercentB: bollingerBands.percentB,
+        bollingerSqueeze: bollingerBands.isSqueeze,
 
         // Exit condition details
         exitReason: params.exitCondition.reason,
@@ -566,6 +568,20 @@ export class TradingJournalService {
     }
   }
 
+  private getSignalMarketData(signal: EntryCondition['signal']): Record<string, unknown> {
+    return signal.marketData ?? {};
+  }
+
+  private getIndicatorData(
+    marketData: Record<string, unknown>,
+    key: 'stochastic' | 'bollingerBands',
+  ): Record<string, unknown> {
+    const value = marketData[key];
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
+  }
+
   /**
    * Get virtual balance (for compound interest calculation)
    */
@@ -642,7 +658,7 @@ export class TradingJournalService {
         const ec = t.entryCondition;
         const ex = t.exitCondition;
         const sig = ec.signal;
-        const md = (sig.marketData || {}) as Record<string, unknown>;
+        const md = this.getSignalMarketData(sig);
 
         return [
           t.id,

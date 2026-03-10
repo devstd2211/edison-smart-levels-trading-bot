@@ -14,17 +14,17 @@ export interface ILogger {
   /**
    * Log debug message
    */
-  debug(message: string, data?: unknown): void;
+  debug(message: string, data?: Record<string, unknown>): void;
 
   /**
    * Log info message
    */
-  info(message: string, data?: unknown): void;
+  info(message: string, data?: Record<string, unknown>): void;
 
   /**
    * Log warning message
    */
-  warn(message: string, data?: unknown): void;
+  warn(message: string, data?: Record<string, unknown>): void;
 
   /**
    * Log error message

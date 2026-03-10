@@ -40,7 +40,7 @@ import { BotEventBus } from './event-bus';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { TakeProfitManagerService } from './take-profit-manager.service';
-import { EntryConfirmationManager } from './entry-confirmation.service';
+import { EntryConfirmationManager, type PendingSignalData } from './entry-confirmation.service';
 import { CompoundInterestCalculatorService } from './compound-interest-calculator.service';
 import { SessionStatsService } from './session-stats.service';
 import type { DynamicPositionSizerService } from './dynamic-position-sizer.service';
@@ -252,7 +252,7 @@ export class PositionLifecycleService {
       direction: signal.direction,
       keyLevel,
       detectedAt: Date.now(),
-      signalData: signal as unknown as Record<string, unknown>,
+      signalData: this.toPendingSignalData(signal),
     });
   }
 
@@ -268,7 +268,7 @@ export class PositionLifecycleService {
           id: string;
           direction: SignalDirection;
           keyLevel: number;
-          signalData: unknown;
+          signalData: PendingSignalData;
         },
         currentCandleClose,
         entryConfirmation: this.entryConfirmation,
@@ -350,6 +350,10 @@ export class PositionLifecycleService {
       errorHandler: this.errorHandler,
       logger: this.logger,
     });
+  }
+
+  private toPendingSignalData(signal: Signal): PendingSignalData {
+    return { ...signal };
   }
 
 }

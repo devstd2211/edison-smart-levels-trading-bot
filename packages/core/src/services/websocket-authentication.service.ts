@@ -33,10 +33,10 @@ export interface WebSocketAuthPayload {
  */
 export class WebSocketAuthenticationService {
   private errorHandler: ErrorHandler | undefined;
-  private logger: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: unknown) => void>> | undefined;
+  private logger: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>> | undefined;
 
   constructor(
-    logger?: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: unknown) => void>>,
+    logger?: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>>,
     errorHandler?: ErrorHandler,
   ) {
     this.logger = logger;
@@ -46,7 +46,7 @@ export class WebSocketAuthenticationService {
   /**
    * Safely log messages, catching any logger errors
    */
-  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, context?: unknown): void {
+  private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
     if (!this.logger) return;
     try {
       if (this.logger[level]) {

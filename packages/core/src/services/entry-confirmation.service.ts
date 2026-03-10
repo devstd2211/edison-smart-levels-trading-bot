@@ -37,6 +37,8 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
 // TYPES
 // ============================================================================
 
+export type PendingSignalData = Record<string, unknown>;
+
 export interface PendingEntry {
   id: string; // Unique ID for tracking
   symbol: string;
@@ -44,7 +46,7 @@ export interface PendingEntry {
   keyLevel: number; // Support (LONG) or Resistance (SHORT) price level
   detectedAt: number; // Timestamp when signal detected
   expiresAt: number; // Timestamp when signal expires
-  signalData: Record<string, unknown>; // Original signal data to use if confirmed (flexible type for different signal structures)
+  signalData: PendingSignalData; // Original signal data to use if confirmed
 }
 
 export interface ConfirmationResult {

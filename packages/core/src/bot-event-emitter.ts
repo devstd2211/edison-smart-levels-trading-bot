@@ -1,8 +1,12 @@
 import { EventEmitter } from 'events';
 import type { Signal } from './types/signal';
-import type { Position } from './types/position';
 import type { LoggerService } from './services/logger.service';
 import { BotEventBus } from './services/event-bus';
+import type {
+  BotLifecycleStatusEvent,
+  PositionClosedEventPayload,
+  PositionOpenedEventPayload,
+} from './types/bot-events';
 
 /**
  * BotEventEmitter - Event Adapter for TradingBot
@@ -56,12 +60,12 @@ export class BotEventEmitter extends EventEmitter {
     }));
 
     // Position lifecycle events
-    this.unsubscribeHandlers.push(this.eventBus.subscribe('position-opened', (position: Position) => {
-      this.emit('position-opened', position);
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('position-opened', (payload: PositionOpenedEventPayload) => {
+      this.emit('position-opened', payload);
     }));
 
-    this.unsubscribeHandlers.push(this.eventBus.subscribe('position-closed', (position: Position) => {
-      this.emit('position-closed', position);
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('position-closed', (payload: PositionClosedEventPayload) => {
+      this.emit('position-closed', payload);
     }));
 
     // Error events
@@ -70,13 +74,13 @@ export class BotEventEmitter extends EventEmitter {
     }));
 
     // Status events
-    this.unsubscribeHandlers.push(this.eventBus.subscribe('bot-started', (isRunning: boolean) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('bot-started', (isRunning: BotLifecycleStatusEvent) => {
       if (isRunning) {
         this.emit('bot-started');
       }
     }));
 
-    this.unsubscribeHandlers.push(this.eventBus.subscribe('bot-stopped', (isRunning: boolean) => {
+    this.unsubscribeHandlers.push(this.eventBus.subscribe('bot-stopped', (isRunning: BotLifecycleStatusEvent) => {
       if (!isRunning) {
         this.emit('bot-stopped');
       }
@@ -98,7 +102,7 @@ export class BotEventEmitter extends EventEmitter {
    * @param handler Callback function for position opened events
    * @returns Unsubscribe function
    */
-  onPositionOpened(handler: (position: Position) => void): () => void {
+  onPositionOpened(handler: (payload: PositionOpenedEventPayload) => void): () => void {
     this.on('position-opened', handler);
     return () => this.off('position-opened', handler);
   }
@@ -108,7 +112,7 @@ export class BotEventEmitter extends EventEmitter {
    * @param handler Callback function for position closed events
    * @returns Unsubscribe function
    */
-  onPositionClosed(handler: (position: Position) => void): () => void {
+  onPositionClosed(handler: (payload: PositionClosedEventPayload) => void): () => void {
     this.on('position-closed', handler);
     return () => this.off('position-closed', handler);
   }

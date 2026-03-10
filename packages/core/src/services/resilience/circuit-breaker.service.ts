@@ -361,10 +361,10 @@ export class CircuitBreakerService {
     return this.circuits.get(name)!;
   }
 
-  private safeLog(level: 'info' | 'warn' | 'error', message: string, meta?: unknown): void {
+  private safeLog(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     try {
       if (this.logger) {
-        this.logger[level](message, meta as Record<string, unknown> | undefined);
+        this.logger[level](message, meta);
       }
     } catch (error) {
       // SKIP strategy: Logging failures should never block circuit breaker operations

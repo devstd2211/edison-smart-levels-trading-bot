@@ -212,16 +212,18 @@ export interface IJournalService {
  * - Handle notification batching
  */
 export interface ITelegramService {
-  sendMessage(message: string, options?: unknown): Promise<void>;
-  sendTradeOpened(position: Position, signal: Signal): Promise<void>;
-  sendTradeClosed(
+  notifyBotStarted(symbol: string, timeframes: string[]): Promise<void>;
+  notifyBotStopped(reason?: string): Promise<void>;
+  notifyPositionOpened(position: Position): Promise<void>;
+  notifyPositionClosed(
     position: Position,
-    exitType: ExitType,
-    pnl: number,
-    pnlPercent: number,
+    closeReason: string,
+    closePrice: number,
+    realizedPnL: number,
+    realizedPnLPercent: number,
   ): Promise<void>;
-  sendAlert(title: string, message: string): Promise<void>;
-  sendError(error: Error | string): Promise<void>;
+  notifyError(errorType: string, details: string): Promise<void>;
+  sendAlert(message: string): Promise<void>;
 }
 
 // ============================================================================

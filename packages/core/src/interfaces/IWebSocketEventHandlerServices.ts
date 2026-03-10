@@ -7,6 +7,7 @@
 import type { Candle } from '../types/core';
 import type { TimeframeRole } from '../types/enums';
 import type { OrderBook } from '../types/orderbook';
+import type { ImbalanceAnalysis } from '../types/legacy';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IExecutionServices } from './IExecutionServices';
 import type { IEventHandlerServices } from './IEventHandlerServices';
@@ -27,8 +28,8 @@ export interface IWebSocketEventHandlerServices {
   eventHandlerServices: IEventHandlerServices;
   executionServices: Pick<IExecutionServices, 'positionMonitor'>;
   publicWebSocket: {
-    on(event: string, listener: (...args: unknown[]) => void): void;
-    off(event: string, listener?: (...args: unknown[]) => void): void;
+    on(event: string, listener: (data?: unknown) => void): void;
+    off(event: string, listener?: (data?: unknown) => void): void;
     setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void;
   };
   marketDataServices: Pick<
@@ -36,7 +37,7 @@ export interface IWebSocketEventHandlerServices {
     'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
   >;
   orderbookImbalanceService?: {
-    analyze(input: { bids: [number, number][]; asks: [number, number][] }): unknown;
+    analyze(input: { bids: [number, number][]; asks: [number, number][] }): ImbalanceAnalysis;
   };
   advancedOrderFlowService?: {
     processOrderbook(input: { bids: [number, number][]; asks: [number, number][] }): void;

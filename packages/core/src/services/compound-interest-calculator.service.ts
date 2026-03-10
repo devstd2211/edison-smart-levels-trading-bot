@@ -267,22 +267,21 @@ export class CompoundInterestCalculatorService {
   private safeLog(
     level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
-    data?: Record<string, unknown> | unknown
+    data?: Record<string, unknown>
   ): void {
     try {
-      const logData = data as Record<string, unknown> | undefined;
       switch (level) {
         case 'debug':
-          this.logger.debug(message, logData);
+          this.logger.debug(message, data);
           break;
         case 'info':
-          this.logger.info(message, logData);
+          this.logger.info(message, data);
           break;
         case 'warn':
-          this.logger.warn(message, logData);
+          this.logger.warn(message, data);
           break;
         case 'error':
-          this.logger.error(message, logData);
+          this.logger.error(message, data);
           break;
       }
     } catch (logError: unknown) {

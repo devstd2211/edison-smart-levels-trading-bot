@@ -1,5 +1,5 @@
 import { DECIMAL_PLACES } from '../../constants';
-import { EntryConfirmationManager } from '../entry-confirmation.service';
+import { EntryConfirmationManager, type PendingSignalData } from '../entry-confirmation.service';
 import { LoggerService, Signal, SignalDirection } from '../../types/legacy';
 import {
   buildPendingRejectionDescriptor,
@@ -14,7 +14,7 @@ type PendingConfirmationInput = {
     id: string;
     direction: SignalDirection;
     keyLevel: number;
-    signalData: unknown;
+    signalData: PendingSignalData;
   };
   currentCandleClose: number;
   entryConfirmation: EntryConfirmationManager;
@@ -36,7 +36,7 @@ export function processPendingConfirmationOrchestrated(
       DECIMAL_PLACES.PRICE,
     );
     logger.info(message, payload);
-    return pending.signalData as Signal;
+    return pending.signalData as unknown as Signal;
   }
 
   const rejectedDirection = resolvePendingRejectionDirection(pending.direction, result.reason);

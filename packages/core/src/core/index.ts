@@ -6,15 +6,12 @@
 
 import type { Config } from '../types/legacy';
 import type { Position } from '../types/position';
+import type { BotRuntimeEventBusLike } from '../types/bot-events';
 import { BotFactory } from '../bot-factory';
 
 export type BotLike = {
   isRunning: boolean;
-  eventBus: {
-    on(event: string, listener: (...args: unknown[]) => void): void;
-    off(event: string, listener: (...args: unknown[]) => void): void;
-    emit(event: string, ...args: unknown[]): void;
-  };
+  eventBus: BotRuntimeEventBusLike;
   getCurrentPosition(): Position | null;
   getBalance(): Promise<number>;
   start(): Promise<void>;

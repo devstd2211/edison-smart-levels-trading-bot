@@ -38,9 +38,9 @@ export class WebSocketEventHandlerManager {
 
   // Track event listeners for cleanup
   private eventListeners: Array<{
-    emitter: { on(event: string, listener: (...args: unknown[]) => void): void; off(event: string, listener: (...args: unknown[]) => void): void };
+    emitter: { on(event: string, listener: (data?: unknown) => void): void; off(event: string, listener: (data?: unknown) => void): void };
     event: string;
-    handler: (...args: unknown[]) => void;
+    handler: (data?: unknown) => void;
   }> = [];
 
   constructor(private services: IWebSocketEventHandlerServices, private config: Config) {
@@ -369,7 +369,7 @@ export class WebSocketEventHandlerManager {
       if (snapshot) {
         // Analyze orderbook imbalance
         if (this.services.orderbookImbalanceService) {
-          const imbalanceAnalysis = this.services.orderbookImbalanceService.analyze({
+          this.services.orderbookImbalanceService.analyze({
             bids: snapshot.bids.map((b) => [b.price, b.size] as [number, number]),
             asks: snapshot.asks.map((a) => [a.price, a.size] as [number, number]),
           });
@@ -470,9 +470,9 @@ export class WebSocketEventHandlerManager {
    * Private: Register event listener with tracking for cleanup
    */
   private registerListener(
-    emitter: { on(event: string, listener: (...args: unknown[]) => void): void; off(event: string, listener: (...args: unknown[]) => void): void },
+    emitter: { on(event: string, listener: (data?: unknown) => void): void; off(event: string, listener: (data?: unknown) => void): void },
     event: string,
-    handler: (...args: unknown[]) => void,
+    handler: (data?: unknown) => void,
   ): void {
     emitter.on(event, handler);
     this.eventListeners.push({ emitter, event, handler });

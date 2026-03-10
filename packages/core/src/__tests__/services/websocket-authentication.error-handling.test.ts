@@ -8,7 +8,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { ErrorLogger } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 
-type AuthLogger = Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: unknown) => void>>;
+type AuthLogger = Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>>;
 type TestErrorLogger = jest.Mocked<ErrorLogger>;
 
 const createMockAuthLogger = (): AuthLogger => ({
