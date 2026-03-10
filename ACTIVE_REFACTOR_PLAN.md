@@ -30,6 +30,46 @@ Archived completed history is in `REFACTOR_PLAN.md`.
 5. Keep `NEXT_SESSION_PROMPT.md` short (`Last Completed` + `Next Step`).
 
 ## Latest Progress (2026-03-10)
+- Completed compatibility-first typing batch 141 (behavior-preserving orderbook service interface alignment):
+  - `packages/core/src/interfaces/IServices.ts`:
+    - aligned stale `IOrderbookManagerService` methods from legacy `updateOrderbook()/getOrderbook()` `unknown` contracts to the current runtime API `processUpdate(update: OrderbookUpdate)` and `getSnapshot(): OrderbookSnapshot | null`.
+    - matched the existing `OrderbookManagerService` surface already used by WebSocket handler and web API flows.
+    - preserved runtime behavior; this was an interface-only compatibility cleanup for an otherwise stale DI contract.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts` -> PASS (4/4 suites, 80/80 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 140 (behavior-preserving pre-calculation service interface narrowing):
+  - `packages/core/src/interfaces/IServices.ts`:
+    - narrowed `ITradingOrchestratorService.setIndicatorPreCalculationService()` from broad `unknown` to shared `IIndicatorPreCalculationService`.
+    - aligned the interface with the existing `IndicatorPreCalculationService` / mock pre-calculation implementations already used in runtime and tests.
+    - preserved orchestrator wiring behavior; this was an interface-only compatibility cleanup.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (3/3 suites, 50/50 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 139 (behavior-preserving service interface contract narrowing):
+  - `packages/core/src/interfaces/IServices.ts`:
+    - narrowed `IPositionLifecycleService.getTakeProfitManager()` from `unknown` to `TakeProfitManagerService | null` to match the current runtime implementation.
+    - narrowed `IPublicWebSocketService.setBtcCandlesStore()` and `ITradingOrchestratorService.setBtcCandlesStore()` from broad `unknown` to the existing `{ btcCandles1m: Candle[] }` store shape already used by implementations and builders.
+    - preserved all runtime behavior; this was an interface-only compatibility cleanup.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts` -> PASS (3/3 suites, 94/94 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 138 (behavior-preserving journal repository error-helper cleanup):
+  - `packages/core/src/repositories/journal.file-repository.ts`:
+    - removed the remaining local `getErrorMessage()` duplication and reused shared `utils/error.utils.ts#getErrorMessage()` for load/save warning and error logging paths.
+    - preserved repository file IO behavior, log payload shape, and in-memory trade/session handling.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 136-137 (behavior-preserving loader error-helper cleanup):
+  - `packages/core/src/loaders/indicator.loader.ts`:
+    - replaced inline `Error` message extraction in the load failure path with the shared `getErrorMessage()` helper while preserving the existing `{ message } | {}` log metadata shape.
+  - `packages/core/src/loaders/analyzer.loader.ts`:
+    - aligned analyzer load failure logging with the shared `getErrorMessage()` helper instead of duplicating inline `Error | String(...)` normalization.
+    - preserved loader control flow, emitted log key shape, and rethrow behavior.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/loaders/analyzer.loader.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts` -> PASS (3/3 suites, 61/61 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 - Completed compatibility-first typing batch 112 (behavior-preserving exchange order record propagation):
   - `packages/core/src/services/bybit/bybit-service.adapter.ts`, `packages/core/src/services/binance/binance-service.adapter.ts`, and `packages/core/src/services/binance/binance.service.ts`:
     - aligned `getOrderHistory()` / `getActiveOrders()` implementations with the shared exchange order-record contract.

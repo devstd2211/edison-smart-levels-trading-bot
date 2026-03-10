@@ -11,12 +11,14 @@
  */
 
 import { LoggerService } from '../services/logger.service';
-import { SessionTradeRecord } from '../types/legacy';
+import { Candle, SessionTradeRecord, IIndicatorPreCalculationService } from '../types/legacy';
 import { Position } from '../types/position';
 import { Signal } from '../types/signal';
 import { ExitAction, ExitType } from '../types/enums';
 import type { IExchange } from './IExchange';
 import { ExitActionDTO } from '../types/architecture';
+import type { TakeProfitManagerService } from '../services/take-profit-manager.service';
+import type { OrderbookSnapshot, OrderbookUpdate } from '../services/orderbook-manager.service';
 
 // ============================================================================
 // POSITION MANAGEMENT SERVICES
@@ -35,7 +37,7 @@ import { ExitActionDTO } from '../types/architecture';
 export interface IPositionLifecycleService {
   // State accessors
   getCurrentPosition(): Position | null;
-  getTakeProfitManager(): unknown; // TakeProfitManagerService
+  getTakeProfitManager(): TakeProfitManagerService | null;
 
   // Position operations
   openPosition(signal: Signal, price?: number): Promise<Position | null>;
@@ -152,7 +154,7 @@ export interface IPublicWebSocketService {
   connect(): void;
   disconnect(): void;
   isConnected(): boolean;
-  setBtcCandlesStore(store: unknown): void;
+  setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void;
 }
 
 /**
@@ -164,8 +166,8 @@ export interface IPublicWebSocketService {
  * - Monitor liquidity
  */
 export interface IOrderbookManagerService {
-  updateOrderbook(symbol: string, orderbook: unknown): void;
-  getOrderbook(symbol: string): unknown;
+  processUpdate(update: OrderbookUpdate): void;
+  getSnapshot(): OrderbookSnapshot | null;
 }
 
 // ============================================================================
@@ -258,8 +260,8 @@ export interface ITimeService {
 export interface ITradingOrchestratorService {
   runStrategyAnalysis(): Promise<void>;
   getCurrentSignal(): Signal | null;
-  setIndicatorPreCalculationService(service: unknown): void;
-  setBtcCandlesStore(store: unknown): void;
+  setIndicatorPreCalculationService(service: IIndicatorPreCalculationService): void;
+  setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void;
 }
 
 

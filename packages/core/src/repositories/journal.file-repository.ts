@@ -15,6 +15,7 @@ import * as path from 'path';
 import { IJournalRepository } from './IRepositories';
 import { TradeRecord, SessionRecord, RepositoryDataValue } from '../interfaces/IRepository';
 import { LoggerService } from '../services/logger.service';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * File-based journal repository
@@ -69,10 +70,6 @@ export class JournalFileRepository implements IJournalRepository {
     }
   }
 
-  private getErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
-  }
-
   private getTradeValues(): TradeRecord[] {
     return Array.from(this.trades.values());
   }
@@ -93,7 +90,7 @@ export class JournalFileRepository implements IJournalRepository {
           }
         }
       } catch (error) {
-        this.logger.warn('Failed to load trades.json', { error: this.getErrorMessage(error) });
+        this.logger.warn('Failed to load trades.json', { error: getErrorMessage(error) });
       }
     }
 
@@ -107,7 +104,7 @@ export class JournalFileRepository implements IJournalRepository {
           }
         }
       } catch (error) {
-        this.logger.warn('Failed to load sessions.json', { error: this.getErrorMessage(error) });
+        this.logger.warn('Failed to load sessions.json', { error: getErrorMessage(error) });
       }
     }
 
@@ -126,7 +123,7 @@ export class JournalFileRepository implements IJournalRepository {
       const tradesArray = this.getTradeValues();
       fs.writeFileSync(this.journalFile, JSON.stringify(tradesArray, null, 2));
     } catch (error) {
-      this.logger.error('Failed to save trades', { error: this.getErrorMessage(error) });
+      this.logger.error('Failed to save trades', { error: getErrorMessage(error) });
     }
   }
 
@@ -138,7 +135,7 @@ export class JournalFileRepository implements IJournalRepository {
       const sessionsArray = Array.from(this.sessions.values());
       fs.writeFileSync(this.sessionsFile, JSON.stringify(sessionsArray, null, 2));
     } catch (error) {
-      this.logger.error('Failed to save sessions', { error: this.getErrorMessage(error) });
+      this.logger.error('Failed to save sessions', { error: getErrorMessage(error) });
     }
   }
 

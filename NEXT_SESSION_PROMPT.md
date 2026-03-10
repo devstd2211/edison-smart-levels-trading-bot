@@ -28,6 +28,39 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-10)
+- Completed compatibility-first typing batch 141 (behavior-preserving orderbook service interface alignment):
+  - `interfaces/IServices.ts`:
+    - aligned `IOrderbookManagerService` with the actual runtime `OrderbookManagerService` API: `processUpdate(update: OrderbookUpdate)` and `getSnapshot(): OrderbookSnapshot | null`.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts` -> PASS (4/4 suites, 80/80 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 140 (behavior-preserving pre-calculation service interface narrowing):
+  - `interfaces/IServices.ts`:
+    - narrowed `setIndicatorPreCalculationService()` to shared `IIndicatorPreCalculationService`.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (3/3 suites, 50/50 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 139 (behavior-preserving service interface contract narrowing):
+  - `interfaces/IServices.ts`:
+    - narrowed `getTakeProfitManager()` to `TakeProfitManagerService | null`.
+    - narrowed both `setBtcCandlesStore(...)` contracts to the existing `{ btcCandles1m: Candle[] }` store shape already used by implementations.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts` -> PASS (3/3 suites, 94/94 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 138 (behavior-preserving journal repository error-helper cleanup):
+  - `repositories/journal.file-repository.ts`:
+    - removed the last local repository-level `getErrorMessage()` duplication and reused shared `utils/error.utils.ts#getErrorMessage()` in load/save logging paths.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 136-137 (behavior-preserving loader error-helper cleanup):
+  - `loaders/indicator.loader.ts`:
+    - replaced inline load-failure `Error` message extraction with the shared `getErrorMessage()` helper while preserving the existing `{ message } | {}` logger metadata shape.
+  - `loaders/analyzer.loader.ts`:
+    - replaced duplicated analyzer load-failure error normalization with the shared `getErrorMessage()` helper.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/loaders/analyzer.loader.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts` -> PASS (3/3 suites, 61/61 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 - Completed compatibility-first typing batches 110-112 (behavior-preserving notification/exchange order boundary cleanup):
   - `interfaces/IMonitoring.ts`:
     - introduced shared `NotificationPayload` alias and narrowed `INotification.send()` metadata input from broad `unknown` to the shared notification payload record shape.
@@ -210,6 +243,11 @@ You are continuing refactoring in `D:\src\Edison`.
   - production scan result: non-`services`/non-`types` and `services/*` runtime `any` is clear.
   - continue compatibility-first narrowing for selected `unknown` boundaries where stable domain shapes are known.
   - latest completed batches:
+    - orderbook service interface alignment in `IServices.ts` to the current `OrderbookManagerService` runtime API.
+    - pre-calculation service interface narrowing in `IServices.ts` via shared `IIndicatorPreCalculationService`.
+    - service interface contract narrowing in `IServices.ts` for take-profit manager and BTC candle store boundaries.
+    - journal repository error-helper cleanup in `journal.file-repository.ts` via shared `getErrorMessage()` reuse.
+    - loader error-helper cleanup in `indicator.loader.ts` and `analyzer.loader.ts` via shared `getErrorMessage()` reuse.
     - trade-history CSV/statistics boundary cleanup via shared `TradeHistoryCsvValue` / `TradeHistoryCsvRecord` plus local adapters in `trade-history.service.ts`.
     - helper/interface cleanup around notification error payloads, JSONL persistence payloads, indicator-cache array guards, and Binance active-order guards.
     - exchange/helper guard cleanup in `bybit-service.adapter.ts`, `exit-type-detector.service.ts`, and `ladder-exit-detector.service.ts`.
@@ -217,5 +255,5 @@ You are continuing refactoring in `D:\src\Edison`.
     - `journal.file-repository.ts` helper cleanup for error extraction and shared trade-array access.
     - utility cleanup in `error-helper.ts`, `error.utils.ts`, and `analyzer-config.utils.ts` for repeated string-property / analyzer-section narrowing.
     - `exchange-factory.service.ts` helper cleanup for repeated error-message normalization in factory failure paths.
-  - next candidates: remaining low-risk helper/repository boundaries and selected shared utility DTOs/interfaces still using broad `Record<string, unknown>` or `unknown`; strongest next target is another small repository/utility slice with repeated local narrowing logic, comparable in risk to the recent utils/repository helper cleanups.
+  - next candidates: remaining low-risk helper/repository boundaries and selected shared utility DTOs/interfaces still using broad `Record<string, unknown>` or `unknown`; strongest next target is another small shared interface slice with clearly confirmed runtime shape, while avoiding ambiguous contracts like `getCurrentSession()` that still map to multiple domain types.
 - Keep behavior unchanged, run targeted tests per slice, log each batch in `ACTIVE_REFACTOR_PLAN.md`.

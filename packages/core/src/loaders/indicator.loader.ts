@@ -23,6 +23,7 @@ import { IIndicator } from '../types/indicator';
 import { IndicatorType } from '../types/indicator';
 import { IndicatorsConfig } from '../types/config/config.types';
 import { LoggerService } from '../services/logger.service';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Loader imports the ACTUAL indicator implementations
@@ -111,7 +112,10 @@ export class IndicatorLoader {
 
       return indicators;
     } catch (error) {
-      this.logger.error('Failed to load indicators:', error instanceof Error ? { message: error.message } : {});
+      this.logger.error(
+        'Failed to load indicators:',
+        error instanceof Error ? { message: getErrorMessage(error) } : {}
+      );
       throw error;
     }
   }

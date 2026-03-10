@@ -30,6 +30,7 @@ import { LoggerService } from '../services/logger.service';
 import { IIndicator } from '../types/indicator';
 import { IndicatorType } from '../types/indicator';
 import type { AnalyzersConfigNew } from '../types/config/config-new.types';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Loader imports the ACTUAL analyzer implementations
@@ -281,7 +282,7 @@ export class AnalyzerLoader {
       return analyzers;
     } catch (error) {
       this.logger.error('Failed to load analyzers', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
