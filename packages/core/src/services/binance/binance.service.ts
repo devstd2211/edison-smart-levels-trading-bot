@@ -14,6 +14,7 @@
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import type { ProtectionVerification } from '../../types/legacy';
+import type { ExchangeOrderRecord } from '../../interfaces/IExchange';
 
 /**
  * Binance Service - Direct exchange integration
@@ -262,7 +263,7 @@ export class BinanceService {
   /**
    * Get active orders
    */
-  async getActiveOrders(): Promise<unknown[]> {
+  async getActiveOrders(): Promise<ExchangeOrderRecord[]> {
     // In real implementation, fetch open orders from Binance
     return [];
   }

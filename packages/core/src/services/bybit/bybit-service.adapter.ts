@@ -32,6 +32,7 @@ import {
   PlaceOrderParams,
   OrderResult,
   AccountBalance,
+  ExchangeOrderRecord,
 } from '../../interfaces/IExchange';
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
@@ -65,8 +66,17 @@ export class BybitServiceAdapter implements IExchange {
     return typeof candidate.getFundingRate === 'function';
   }
 
+  private isBybitOrder(value: unknown): value is BybitOrder {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    const order = value as Record<string, unknown>;
+    return typeof order.orderId === 'string';
+  }
+
   private asBybitOrders(orders: unknown): BybitOrder[] {
-    return Array.isArray(orders) ? (orders as BybitOrder[]) : [];
+    return Array.isArray(orders) ? orders.filter((order) => this.isBybitOrder(order)) : [];
   }
 
   // ============================================================================
@@ -783,7 +793,7 @@ export class BybitServiceAdapter implements IExchange {
    * Get order history
    * MISMATCH RESOLUTION: Missing method - implement wrapper
    */
-  async getOrderHistory(limit?: number): Promise<unknown[]> {
+  async getOrderHistory(limit?: number): Promise<ExchangeOrderRecord[]> {
     try {
       // Try to get active orders as substitute for history
       const activeOrders = this.asBybitOrders(await this.bybitService.getActiveOrders());
@@ -929,7 +939,7 @@ export class BybitServiceAdapter implements IExchange {
    * Get active orders (stop loss and take profit orders)
    * MATCHES IExchange - delegates to BybitService
    */
-  async getActiveOrders(): Promise<unknown[]> {
+  async getActiveOrders(): Promise<ExchangeOrderRecord[]> {
     return this.asBybitOrders(await this.bybitService.getActiveOrders());
   }
 

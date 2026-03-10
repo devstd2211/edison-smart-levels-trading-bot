@@ -21,11 +21,37 @@ interface AnalyzerConfigEnvelope {
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getAnalyzerParameterSection<T extends object>(
+  analyzerParameters: Record<string, unknown>,
+  key: string,
+): Partial<T> | undefined {
+  const section = analyzerParameters[key];
+  return isRecord(section) ? (section as Partial<T>) : undefined;
+}
+
 function asAnalyzerConfigEnvelope(config: unknown): AnalyzerConfigEnvelope {
-  if (typeof config !== 'object' || config === null) {
+  if (!isRecord(config)) {
     return {};
   }
-  return config as AnalyzerConfigEnvelope;
+
+  const analyzerParameters = config.analyzerParameters;
+  if (!isRecord(analyzerParameters)) {
+    return {};
+  }
+
+  return {
+    analyzerParameters: {
+      atr: getAnalyzerParameterSection<AtrAnalyzerParams>(analyzerParameters, 'atr'),
+      bollingerBands: getAnalyzerParameterSection<BollingerBandsAnalyzerParams>(analyzerParameters, 'bollingerBands'),
+      breakout: getAnalyzerParameterSection<BreakoutAnalyzerParams>(analyzerParameters, 'breakout'),
+      orderBlock: getAnalyzerParameterSection<OrderBlockAnalyzerParams>(analyzerParameters, 'orderBlock'),
+      wick: getAnalyzerParameterSection<WickAnalyzerParams>(analyzerParameters, 'wick'),
+    },
+  };
 }
 
 // ============================================================================

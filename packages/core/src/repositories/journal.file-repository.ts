@@ -13,7 +13,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { IJournalRepository } from './IRepositories';
-import { TradeRecord, SessionRecord } from '../interfaces/IRepository';
+import { TradeRecord, SessionRecord, RepositoryDataValue } from '../interfaces/IRepository';
 import { LoggerService } from '../services/logger.service';
 
 /**
@@ -23,7 +23,7 @@ import { LoggerService } from '../services/logger.service';
 export class JournalFileRepository implements IJournalRepository {
   private trades: Map<string, TradeRecord> = new Map();
   private sessions: Map<string, SessionRecord> = new Map();
-  private generalData: Map<string, unknown> = new Map();
+  private generalData: Map<string, RepositoryDataValue> = new Map();
 
   private readonly journalFile: string;
   private readonly sessionsFile: string;
@@ -69,6 +69,14 @@ export class JournalFileRepository implements IJournalRepository {
     }
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  private getTradeValues(): TradeRecord[] {
+    return Array.from(this.trades.values());
+  }
+
   /**
    * Load data from disk
    */
@@ -85,7 +93,7 @@ export class JournalFileRepository implements IJournalRepository {
           }
         }
       } catch (error) {
-        this.logger.warn('Failed to load trades.json', { error: error instanceof Error ? error.message : String(error) });
+        this.logger.warn('Failed to load trades.json', { error: this.getErrorMessage(error) });
       }
     }
 
@@ -99,7 +107,7 @@ export class JournalFileRepository implements IJournalRepository {
           }
         }
       } catch (error) {
-        this.logger.warn('Failed to load sessions.json', { error: error instanceof Error ? error.message : String(error) });
+        this.logger.warn('Failed to load sessions.json', { error: this.getErrorMessage(error) });
       }
     }
 
@@ -115,10 +123,10 @@ export class JournalFileRepository implements IJournalRepository {
    */
   private saveTrades(): void {
     try {
-      const tradesArray = Array.from(this.trades.values());
+      const tradesArray = this.getTradeValues();
       fs.writeFileSync(this.journalFile, JSON.stringify(tradesArray, null, 2));
     } catch (error) {
-      this.logger.error('Failed to save trades', { error: error instanceof Error ? error.message : String(error) });
+      this.logger.error('Failed to save trades', { error: this.getErrorMessage(error) });
     }
   }
 
@@ -130,13 +138,26 @@ export class JournalFileRepository implements IJournalRepository {
       const sessionsArray = Array.from(this.sessions.values());
       fs.writeFileSync(this.sessionsFile, JSON.stringify(sessionsArray, null, 2));
     } catch (error) {
-      this.logger.error('Failed to save sessions', { error: error instanceof Error ? error.message : String(error) });
+      this.logger.error('Failed to save sessions', { error: this.getErrorMessage(error) });
     }
   }
 
   // ============================================================================
   // TRADE PERSISTENCE
   // ============================================================================
+
+  private isTradeInSession(trade: TradeRecord, session: SessionRecord): boolean {
+    return trade.entryTime >= session.startTime && (!session.endTime || trade.entryTime <= session.endTime);
+  }
+
+  private getSessionTrades(sessionId: string): TradeRecord[] {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return [];
+    }
+
+    return this.getTradeValues().filter((trade) => this.isTradeInSession(trade, session));
+  }
 
   async recordTrade(trade: TradeRecord): Promise<void> {
     this.ensureLoaded();
@@ -151,7 +172,7 @@ export class JournalFileRepository implements IJournalRepository {
 
   async getAllTrades(): Promise<TradeRecord[]> {
     this.ensureLoaded();
-    return Array.from(this.trades.values());
+    return this.getTradeValues();
   }
 
   async getTrades(filter: {
@@ -162,7 +183,7 @@ export class JournalFileRepository implements IJournalRepository {
     strategy?: string;
   }): Promise<TradeRecord[]> {
     this.ensureLoaded();
-    let results = Array.from(this.trades.values());
+    let results = this.getTradeValues();
 
     if (filter.symbol) {
       results = results.filter(t => t.symbol === filter.symbol);
@@ -237,23 +258,14 @@ export class JournalFileRepository implements IJournalRepository {
 
   async calculateSessionPnL(sessionId: string): Promise<number> {
     this.ensureLoaded();
-    const trades = Array.from(this.trades.values()).filter(t => {
-      // Find trades in this session (created after session start)
-      const session = this.sessions.get(sessionId);
-      if (!session) return false;
-      return t.entryTime >= session.startTime && (!session.endTime || t.entryTime <= session.endTime);
-    });
+    const trades = this.getSessionTrades(sessionId);
 
     return trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
   }
 
   async calculateWinRate(sessionId: string): Promise<number> {
     this.ensureLoaded();
-    const trades = Array.from(this.trades.values()).filter(t => {
-      const session = this.sessions.get(sessionId);
-      if (!session) return false;
-      return t.entryTime >= session.startTime && (!session.endTime || t.entryTime <= session.endTime);
-    });
+    const trades = this.getSessionTrades(sessionId);
 
     if (trades.length === 0) return 0;
 
@@ -265,13 +277,13 @@ export class JournalFileRepository implements IJournalRepository {
   // GENERIC PERSISTENCE
   // ============================================================================
 
-  async saveData(key: string, data: unknown): Promise<void> {
+  async saveData(key: string, data: RepositoryDataValue): Promise<void> {
     this.ensureLoaded();
     this.generalData.set(key, data);
     // Could persist to separate file if needed
   }
 
-  async getData(key: string): Promise<unknown | null> {
+  async getData(key: string): Promise<RepositoryDataValue | null> {
     this.ensureLoaded();
     return this.generalData.get(key) || null;
   }

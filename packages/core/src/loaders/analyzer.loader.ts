@@ -29,6 +29,7 @@ import { AnalyzerType } from '../types/analyzer';
 import { LoggerService } from '../services/logger.service';
 import { IIndicator } from '../types/indicator';
 import { IndicatorType } from '../types/indicator';
+import type { AnalyzersConfigNew } from '../types/config/config-new.types';
 
 /**
  * Loader imports the ACTUAL analyzer implementations
@@ -69,21 +70,6 @@ import { DeltaAnalyzerNew } from '../analyzers/delta.analyzer-new';
 import { PriceMomentumAnalyzerNew } from '../analyzers/price-momentum.analyzer-new';
 import { VolumeProfileAnalyzerNew } from '../analyzers/volume-profile.analyzer-new';
 
-/**
- * Config type for analyzer instantiation
- * Mirrors the pattern used in IndicatorLoader
- */
-export interface AnalyzerConfig {
-  [key: string]: unknown;
-  enabled: boolean;
-  weight: number;
-  priority: number;
-}
-
-export interface AnalyzersConfig {
-  [key: string]: AnalyzerConfig;
-}
-
 export class AnalyzerLoader {
   constructor(
     private registry: AnalyzerRegistryService,
@@ -103,7 +89,7 @@ export class AnalyzerLoader {
    * @throws Error if analyzer registered but config missing
    */
   async loadAnalyzers(
-    config: AnalyzersConfig,
+    config: AnalyzersConfigNew,
     indicators?: Map<IndicatorType, IIndicator>
   ): Promise<Map<AnalyzerType, IAnalyzer>> {
     const analyzers = new Map<AnalyzerType, IAnalyzer>();
@@ -122,7 +108,7 @@ export class AnalyzerLoader {
           priority: config.ema.priority,
         });
         const indicator = this.getIndicator(IndicatorType.EMA);
-        analyzers.set(AnalyzerType.EMA, new EmaAnalyzerNew(this.asConfig(config.ema), this.logger, indicator));
+        analyzers.set(AnalyzerType.EMA, new EmaAnalyzerNew(config.ema, this.logger, indicator));
       }
 
       if (config.rsi?.enabled) {
@@ -131,19 +117,19 @@ export class AnalyzerLoader {
           priority: config.rsi.priority,
         });
         const indicator = this.getIndicator(IndicatorType.RSI);
-        analyzers.set(AnalyzerType.RSI, new RsiAnalyzerNew(this.asConfig(config.rsi), this.logger, indicator));
+        analyzers.set(AnalyzerType.RSI, new RsiAnalyzerNew(config.rsi, this.logger, indicator));
       }
 
       if (config.atr?.enabled) {
         this.logger.debug('Loading ATR analyzer');
         const indicator = this.getIndicator(IndicatorType.ATR);
-        analyzers.set(AnalyzerType.ATR, new AtrAnalyzerNew(this.asConfig(config.atr), this.logger, indicator));
+        analyzers.set(AnalyzerType.ATR, new AtrAnalyzerNew(config.atr, this.logger, indicator));
       }
 
       if (config.volume?.enabled) {
         this.logger.debug('Loading Volume analyzer');
         const indicator = this.getIndicator(IndicatorType.VOLUME);
-        analyzers.set(AnalyzerType.VOLUME, new VolumeAnalyzerNew(this.asConfig(config.volume), this.logger, indicator));
+        analyzers.set(AnalyzerType.VOLUME, new VolumeAnalyzerNew(config.volume, this.logger, indicator));
       }
 
       if (config.stochastic?.enabled) {
@@ -151,7 +137,7 @@ export class AnalyzerLoader {
         const indicator = this.getIndicator(IndicatorType.STOCHASTIC);
         analyzers.set(
           AnalyzerType.STOCHASTIC,
-          new StochasticAnalyzerNew(this.asConfig(config.stochastic), this.logger, indicator)
+          new StochasticAnalyzerNew(config.stochastic, this.logger, indicator)
         );
       }
 
@@ -160,14 +146,14 @@ export class AnalyzerLoader {
         const indicator = this.getIndicator(IndicatorType.BOLLINGER_BANDS);
         analyzers.set(
           AnalyzerType.BOLLINGER_BANDS,
-          new BollingerBandsAnalyzerNew(this.asConfig(config.bollingerBands), this.logger, indicator)
+          new BollingerBandsAnalyzerNew(config.bollingerBands, this.logger, indicator)
         );
       }
 
       // ========== DIVERGENCE ==========
       if (config.divergence?.enabled) {
         this.logger.debug('Loading Divergence analyzer');
-        analyzers.set(AnalyzerType.DIVERGENCE, new DivergenceAnalyzerNew(this.asConfig(config.divergence), this.logger));
+        analyzers.set(AnalyzerType.DIVERGENCE, new DivergenceAnalyzerNew(config.divergence, this.logger));
       }
 
       // ========== BREAKOUT ==========
@@ -207,7 +193,7 @@ export class AnalyzerLoader {
         this.logger.debug('Loading Trend Detector analyzer');
         analyzers.set(
           AnalyzerType.TREND_DETECTOR,
-          new TrendDetectorAnalyzerNew(this.asConfig(config.trendDetector), this.logger)
+          new TrendDetectorAnalyzerNew(config.trendDetector, this.logger)
         );
       }
 
@@ -279,7 +265,7 @@ export class AnalyzerLoader {
         this.logger.debug('Loading Price Momentum analyzer');
         analyzers.set(
           AnalyzerType.PRICE_MOMENTUM,
-          new PriceMomentumAnalyzerNew(this.asConfig(config.priceMomentum), this.logger)
+          new PriceMomentumAnalyzerNew(config.priceMomentum, this.logger)
         );
       }
 
@@ -312,10 +298,6 @@ export class AnalyzerLoader {
       return null;
     }
     return this.indicators.get(type) || null;
-  }
-
-  private asConfig<T>(config: AnalyzerConfig): T {
-    return config as unknown as T;
   }
 }
 

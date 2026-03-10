@@ -10,6 +10,21 @@
  * @param error - Unknown error type
  * @returns Error message as string
  */
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function getStringProperty(record: Record<string, unknown> | null, key: string): string | undefined {
+  if (!record) {
+    return undefined;
+  }
+
+  const value = record[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
@@ -21,11 +36,12 @@ export function getErrorMessage(error: unknown): string {
     return 'Unknown error (null/undefined)';
   }
   // For objects, try to get message property or stringify
-  if (typeof error === 'object') {
-    const err = error as Record<string, unknown>;
-    if (typeof err.message === 'string') {
-      return err.message;
-    }
+  const err = asRecord(error);
+  const message = getStringProperty(err, 'message');
+  if (message) {
+    return message;
+  }
+  if (err) {
     return JSON.stringify(error);
   }
   return String(error);
@@ -40,13 +56,7 @@ export function getErrorStack(error: unknown): string | undefined {
   if (error instanceof Error && error.stack) {
     return error.stack;
   }
-  if (typeof error === 'object' && error !== null) {
-    const err = error as Record<string, unknown>;
-    if (typeof err.stack === 'string') {
-      return err.stack;
-    }
-  }
-  return undefined;
+  return getStringProperty(asRecord(error), 'stack');
 }
 
 /**
@@ -78,12 +88,24 @@ export function createErrorLogObject(error: unknown): {
   let errorType: string | undefined;
   if (error instanceof Error) {
     errorType = error.constructor.name;
-  } else if (typeof error === 'object' && error !== null) {
-    const err = error as Record<string, unknown>;
+  } else {
+    const err = asRecord(error);
+    if (!err) {
+      return {
+        error,
+        errorMessage: message,
+        stack,
+        errorType,
+      };
+    }
+
     if (typeof err.code === 'string') {
       errorType = `Error(${err.code})`;
     } else {
-      errorType = (error as Record<string, unknown>).constructor?.name as string;
+      const constructorName = err.constructor?.name;
+      if (typeof constructorName === 'string') {
+        errorType = constructorName;
+      }
     }
   }
 

@@ -11,13 +11,13 @@
  */
 
 import { Candle } from '../types/core';
-import { IMarketDataRepository } from './IRepositories';
+import { IMarketDataRepository, IndicatorCacheValue } from './IRepositories';
 
 /**
  * Cached indicator entry with TTL
  */
 interface CachedIndicator {
-  value: unknown;
+  value: IndicatorCacheValue;
   timestamp: number;
   ttlMs: number; // Time to live in milliseconds
 }
@@ -108,7 +108,7 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * @param value - Calculated indicator value
    * @param ttlMs - Time to live in milliseconds (default 60s)
    */
-  cacheIndicator(key: string, value: unknown, ttlMs: number = this.defaultIndicatorTTL): void {
+  cacheIndicator(key: string, value: IndicatorCacheValue, ttlMs: number = this.defaultIndicatorTTL): void {
     // Evict old indicators if over limit
     if (this.indicators.size >= this.maxIndicators) {
       this.evictOldestIndicator();
@@ -127,7 +127,7 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * @param key - Indicator key
    * @returns Cached value or null
    */
-  getIndicator(key: string): unknown | null {
+  getIndicator(key: string): IndicatorCacheValue | null {
     const cached = this.indicators.get(key);
 
     if (!cached) {
@@ -279,10 +279,22 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * Estimate size of indicator value
    * Numbers: ~8 bytes each, Arrays: ~24 + value*8
    */
-  private estimateIndicatorSize(value: unknown): number {
+  private isObjectLike(value: IndicatorCacheValue): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isIndicatorArray(value: IndicatorCacheValue): value is IndicatorCacheValue[] {
+    return Array.isArray(value);
+  }
+
+  private estimateArraySize(values: IndicatorCacheValue[]): number {
+    return 24 + values.length * 8;
+  }
+
+  private estimateIndicatorSize(value: IndicatorCacheValue): number {
     if (typeof value === 'number') return 8;
-    if (Array.isArray(value)) return 24 + value.length * 8;
-    if (typeof value === 'object') return 100; // Rough estimate for objects
+    if (this.isIndicatorArray(value)) return this.estimateArraySize(value);
+    if (this.isObjectLike(value)) return 100; // Rough estimate for objects
     return 16; // Default
   }
 }

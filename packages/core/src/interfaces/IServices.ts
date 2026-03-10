@@ -65,8 +65,8 @@ export interface IPositionLifecycleService {
   registerConfirmedCandle(): void;
 
   // Event listeners
-  on(event: string, listener: (...args: unknown[]) => void): void;
-  off(event: string, listener?: (...args: unknown[]) => void): void;
+  on(event: string, listener: (data?: unknown) => void): void;
+  off(event: string, listener?: (data?: unknown) => void): void;
   removeAllListeners(event?: string): void;
 }
 

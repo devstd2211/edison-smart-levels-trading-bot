@@ -1,0 +1,422 @@
+# Active Refactor Plan
+
+This file is the active source of truth for open refactor tasks.
+Archived completed history is in `REFACTOR_PLAN.md`.
+
+## Open Tasks Migrated (2026-03-09)
+- [ ] Move optional services behind feature toggles with explicit "capability" interfaces.
+- [ ] Update tests to build only the required groups (no global container).
+- [ ] Core any cleanup (phase 3: src).
+- [ ] Update tests to use `createServices()` + explicit `start/stop`.
+
+## Current Execution Focus
+- [ ] Continue `Core any cleanup (phase 3: src)` outside `services` in isolated batches.
+- [x] Complete `types/*` cleanup with compatibility-first typing:
+  - `types/strategy-processing/types.ts`
+  - `types/architecture/types.ts`
+  - `types/config/config.types.ts`
+  - `types/config/config-new.types.ts`
+  - `types/live-trading/types.ts`
+  - `types/multi-strategy/types.ts`
+  - `types/legacy.ts`
+- [x] Continue phase 3 in non-`services`/non-`types` remaining `src` boundaries with compatibility-first typing.
+- [ ] Continue phase 3 in `services/*` + related tests with compatibility-first typing.
+
+## Session Workflow
+1. Pick next item from this file.
+2. Apply minimal behavior-preserving changes.
+3. Run targeted tests/build for changed area.
+4. Log progress and verification in this file.
+5. Keep `NEXT_SESSION_PROMPT.md` short (`Last Completed` + `Next Step`).
+
+## Latest Progress (2026-03-10)
+- Completed compatibility-first typing batch 112 (behavior-preserving exchange order record propagation):
+  - `packages/core/src/services/bybit/bybit-service.adapter.ts`, `packages/core/src/services/binance/binance-service.adapter.ts`, and `packages/core/src/services/binance/binance.service.ts`:
+    - aligned `getOrderHistory()` / `getActiveOrders()` implementations with the shared exchange order-record contract.
+    - preserved existing adapter/service runtime behavior and fallback flows.
+- Completed compatibility-first typing batch 111 (behavior-preserving shared exchange order record alias introduction):
+  - `packages/core/src/interfaces/IExchange.ts`:
+    - introduced shared `ExchangeOrderRecord` alias.
+    - replaced broad `unknown[]` in optional `getOrderHistory()` / `getActiveOrders()` exchange contracts with the shared order-record array type.
+- Completed compatibility-first typing batch 110 (behavior-preserving notification payload alias introduction):
+  - `packages/core/src/interfaces/IMonitoring.ts`:
+    - introduced shared `NotificationPayload` alias.
+    - narrowed `INotification.send()` metadata input from broad `unknown` to the shared notification payload record shape.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts` -> PASS (3/3 suites, 96/96 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 109 (behavior-preserving indicator-cache validation helper cleanup):
+  - `packages/core/src/services/indicator-cache.service.ts`:
+    - extracted `isValidKey()`, `isFiniteIndicatorValue()`, and `handleInvalidKey()` helpers for cache input validation.
+    - removed the remaining inline validation duplication around cache key/value handling while preserving THROW/GRACEFUL_DEGRADE behavior.
+- Completed compatibility-first typing batch 108 (behavior-preserving market-data indicator cache alias propagation):
+  - `packages/core/src/repositories/market-data.cache-repository.ts`:
+    - aligned cached indicator storage and retrieval with the shared `IndicatorCacheValue` alias.
+    - narrowed private indicator-size estimation helpers to the same shared cache payload contract.
+- Completed compatibility-first typing batch 107 (behavior-preserving shared indicator cache payload alias introduction):
+  - `packages/core/src/repositories/IRepositories.ts`:
+    - introduced shared `IndicatorCacheValue` alias for market-data indicator cache payloads.
+    - replaced broad `unknown` in `IMarketDataRepository.cacheIndicator()` / `getIndicator()` with the shared alias.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/repositories/__tests__/market-data.cache-repository.test.ts` -> PASS (2/2 suites, 43/43 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/backtest/cache-integration.test.ts` -> PASS (1/1 suite, 12/12 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 106 (behavior-preserving journal repository session helper extraction):
+  - `packages/core/src/repositories/journal.file-repository.ts`:
+    - extracted `isTradeInSession()` and `getSessionTrades()` helpers to remove duplicated session-trade filtering logic from `calculateSessionPnL()` and `calculateWinRate()`.
+    - preserved repository persistence and statistics behavior.
+- Completed compatibility-first typing batch 105 (behavior-preserving journal repository payload alias propagation):
+  - `packages/core/src/repositories/IRepositories.ts` and `packages/core/src/repositories/journal.file-repository.ts`:
+    - propagated shared generic repository payload typing to `IJournalRepository.saveData()` / `getData()` and the in-memory `generalData` store.
+- Completed compatibility-first typing batch 104 (behavior-preserving generic repository payload alias introduction):
+  - `packages/core/src/interfaces/IRepository.ts`:
+    - introduced `RepositoryDataValue` alias for generic persisted payloads.
+    - replaced broad `unknown` in `saveData()` / `getData()` with the shared repository payload alias.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 103 (behavior-preserving market-data cache helper narrowing):
+  - `packages/core/src/repositories/market-data.cache-repository.ts`:
+    - extracted local `isObjectLike()` and `estimateArraySize()` helpers for indicator size estimation.
+    - removed the remaining broad inline object/array size checks in the indicator cache sizing path while preserving all cache behavior and stats semantics.
+- Completed compatibility-first typing batch 102 (behavior-preserving config-new type-guard cleanup):
+  - `packages/core/src/types/config/config-new.types.ts`:
+    - introduced a local `isRecord()` helper and replaced the top-level `Record<string, unknown>` cast inside `isConfigNew()` with explicit object guards.
+    - preserved existing required-section validation behavior for `ConfigNew`.
+- Completed compatibility-first typing batch 101 (behavior-preserving logger level helper cleanup):
+  - `packages/core/src/services/logger/logger-core.utils.ts`:
+    - introduced `isLogLevel()` helper for runtime log-level narrowing.
+    - removed repeated enum compatibility casts in `validateLogLevel()` and consolidated `normalizeLogLevel()` around the same guard.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/repositories/__tests__/market-data.cache-repository.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts` -> PASS (2/2 suites, 51/51 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 100 (behavior-preserving volatility-spike shared config alignment):
+  - `packages/core/src/types/config/config-new.types.ts`:
+    - added `VolatilitySpikeAnalyzerConfigNew` to the shared analyzer config contract.
+    - added `volatilitySpike` to `AnalyzersConfigNew` so the shared aggregate type now matches the already-supported runtime analyzer loader path.
+  - `packages/core/src/loaders/analyzer.loader.ts`:
+    - removed the temporary local compatibility extension for `volatilitySpike` and now consumes the fully shared `AnalyzersConfigNew` contract directly.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/integration/strategy-integration.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (2/2 suites, 34/34 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 99 (behavior-preserving shared error utility record-guard cleanup):
+  - `packages/core/src/utils/error.utils.ts`:
+    - introduced a shared local `asRecord()` helper for object narrowing.
+    - removed repeated inline `Record<string, unknown>` casts in error message/stack/type extraction while preserving existing fallback behavior.
+- Completed compatibility-first typing batch 98 (behavior-preserving error-helper record-guard cleanup):
+  - `packages/core/src/utils/error-helper.ts`:
+    - introduced a shared local `asRecord()` helper and replaced repeated object casts in `extractErrorMessage()`, `extractErrorCode()`, `isErrorContext()`, and `isCriticalApiError()`.
+    - preserved existing critical API error keyword/code detection behavior.
+- Completed compatibility-first typing batch 97 (behavior-preserving position validator helper narrowing):
+  - `packages/core/src/validators/position.validator.ts`:
+    - extracted explicit `isFiniteNumber()`, `isRecord()`, and `hasValidStopLossPrice()` helpers for validation paths.
+    - removed repeated inline object/number shape checks in stop-loss validation while preserving current Phase 9 validation semantics and backward-compatibility filling behavior.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/validators/position.validator.test.ts` -> PASS (1/1 suite, 23/23 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 96 (behavior-preserving analyzer config utility narrowing):
+  - `packages/core/src/utils/analyzer-config.utils.ts`:
+    - replaced the broad top-level analyzer config envelope cast with explicit record guards and narrowed extraction of `atr`, `bollingerBands`, `breakout`, `orderBlock`, and `wick` parameter sections.
+    - preserved all existing default fallback behavior for missing or malformed nested config shapes.
+- Completed compatibility-first typing batch 95 (behavior-preserving analyzer loader shared-config alignment):
+  - `packages/core/src/loaders/analyzer.loader.ts`:
+    - replaced the local broad `AnalyzerConfig` / `AnalyzersConfig` abstractions with shared `AnalyzersConfigNew`-based typing.
+    - removed the generic `asConfig<T>()` bridge and passed stable analyzer config DTOs directly to the typed analyzer constructors.
+    - added a local compatibility extension for the existing `volatilitySpike` loader path because that runtime-supported analyzer is still absent from the shared aggregate `AnalyzersConfigNew` contract.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/integration/strategy-integration.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (2/2 suites, 34/34 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 94 (behavior-preserving position-scaling logging boundary narrowing):
+  - `packages/core/src/services/position-scaling.service.ts`:
+    - narrowed `safeLog()` metadata input from broad `unknown` to `Record<string, unknown>`.
+    - replaced inline object-cast bridge with a dedicated local record guard before forwarding metadata to the logger.
+- Completed compatibility-first typing batch 93 (behavior-preserving console dashboard logging boundary cleanup):
+  - `packages/core/src/services/console-dashboard.service.ts`:
+    - narrowed `safeLog()` / `safeWarn()` metadata input from `unknown` to stable `string | Record<string, unknown>`.
+    - added `toLogMeta()` helper to normalize `Error`, string, and object log payloads before console logging.
+    - preserved existing non-blocking dashboard and error-handling behavior.
+- Completed compatibility-first typing batch 92 (behavior-preserving console dashboard state DTO alignment):
+  - `packages/core/src/services/console-dashboard/console-dashboard-state.utils.ts`:
+    - introduced explicit `DashboardMetricSnapshot` and exported `DashboardEvent` DTOs for dashboard state initialization.
+  - `packages/core/src/services/console-dashboard.service.ts`:
+    - aligned local dashboard state with the utility DTOs and removed the constructor-time `createInitialDashboardState() as DashboardState` cast.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/position-scaling.test.ts` -> PASS (2/2 suites, 61/61 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 91 (behavior-preserving event-bus single-payload contract alignment):
+  - `packages/core/src/services/event-bus.ts`:
+    - added explicit single-payload `on()` / `off()` / `emit()` wrappers around `EventEmitter` to align the public `BotEventBus` API with the already-established single-payload runtime event flow.
+    - preserved `off(event)` behavior via `removeAllListeners(event)` fallback when no listener is provided.
+    - introduced typed `EventBusErrorPayload` for the internal `eventBusError` publish path without changing emitted runtime values.
+  - `packages/core/src/interfaces/IServices.ts`:
+    - aligned `IPositionLifecycleService.on()` / `off()` from stale variadic listeners to single optional payload `(data?: unknown) => void`.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/event-bus.test.ts packages/core/src/__tests__/bot-event-emitter.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (3/3 suites, 57/57 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 90 (behavior-preserving telegram interface alignment):
+  - `interfaces/IServices.ts`:
+    - replaced stale `ITelegramService` method set with the actual public `TelegramService` surface used in current runtime code:
+      - `notifyBotStarted()`
+      - `notifyBotStopped()`
+      - `notifyPositionOpened()`
+      - `notifyPositionClosed()`
+      - `notifyError()`
+      - `sendAlert()`
+    - removed outdated `sendTradeOpened()` / `sendTradeClosed()` and old two-argument `sendAlert(title, message)` contract from the interface only.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/telegram.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts` -> PASS (4/4 suites, 87/87 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 89 (behavior-preserving web event-bus adapter cleanup):
+  - `types/bot-events.ts`:
+    - aligned fallback `on()` / `off()` listener overloads with single optional payload `(data?: unknown)`.
+  - `web/index.ts`:
+    - aligned local `botInstance` event bridge wrapper from variadic `on/off/emit` signatures to single-payload forwarding that matches `BotRuntimeEventBusLike`.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/bot-event-emitter.test.ts` -> PASS (2/2 suites, 35/35 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 88 (behavior-preserving single-payload listener bridge cleanup):
+  - `interfaces/ITradingBotServices.ts` and `interfaces/IBotServicesAdapterSource.ts`:
+    - narrowed `positionMonitor.on()` listener shape from variadic `(...args: unknown[])` to single-payload `(data?: unknown)`.
+  - `interfaces/IWebSocketEventHandlerServices.ts`:
+    - narrowed `publicWebSocket.on()` / `off()` listener shape from variadic to single-payload `(data?: unknown)`.
+  - `services/websocket-event-handler-manager.ts`:
+    - aligned tracked emitter/listener bridge types with the single-payload listener contract.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts` -> PASS (4/4 suites, 78/78 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 87 (behavior-preserving websocket handler imbalance contract cleanup):
+  - `interfaces/IWebSocketEventHandlerServices.ts`:
+    - narrowed `orderbookImbalanceService.analyze()` return type from `unknown` to shared `ImbalanceAnalysis`.
+  - `services/websocket-event-handler-manager.ts`:
+    - removed unused local assignment of imbalance analysis result while preserving the existing analysis side-effect call.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts` -> PASS (2/2 suites, 40/40 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 86 (behavior-preserving monitoring logger contract narrowing):
+  - `interfaces/IMonitoring.ts`:
+    - narrowed `ILogger.debug()` / `info()` / `warn()` metadata boundary from `unknown` to `Record<string, unknown>`.
+    - left `ILogger.error()` unchanged to preserve broader error payload compatibility.
+  - impact:
+    - aligned shared monitoring logger contract with actual structured metadata usage in event-sourcing and multi-strategy helper services.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/event-sourcing/position-event-store.test.ts` -> PASS (1/1 suite, 11/11 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 85 (behavior-preserving trading journal market-data helper cleanup):
+  - `services/trading-journal.service.ts`:
+    - extracted `getSignalMarketData()` helper for stable `signal.marketData` access.
+    - extracted `getIndicatorData()` helper for nested `stochastic` / `bollingerBands` record access.
+    - replaced repeated inline `Record<string, unknown>` casts in CSV export and trade-history append paths with helper-based narrowing.
+- Completed compatibility-first typing batch 84 (behavior-preserving trade-history CSV boundary cleanup):
+  - `services/trade-history.service.ts`:
+    - removed redundant `as Record<string, unknown>` bridge cast when passing `TradeRecord` to CSV line builder; direct structural contract is now used.
+- Completed compatibility-first typing batch 83 (behavior-preserving web API logger contract narrowing):
+  - `interfaces/IWebApiServices.ts`:
+    - narrowed `IWebApiLogger.error()` / `warn()` metadata boundary from `unknown` to `Record<string, unknown>`.
+    - aligned the narrow web API logger contract with actual structured metadata usage in `api/bot-web-api.ts`.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/event-sourcing/position-event-store.test.ts` -> PASS (4/4 suites, 90/90 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 82 (behavior-preserving resilience logging boundary cleanup):
+  - `services/resilience/retry-policy.service.ts`:
+    - narrowed `safeLog()` metadata input from `unknown` to `Record<string, unknown>`.
+    - replaced log-site casts with explicit object-spread metadata for config logging.
+  - `services/resilience/rate-limiter.service.ts`:
+    - narrowed `safeLog()` metadata input from `unknown` to `Record<string, unknown>`.
+    - replaced config log-site cast with explicit object-spread metadata.
+  - `services/resilience/circuit-breaker.service.ts`:
+    - narrowed `safeLog()` metadata input from `unknown` to `Record<string, unknown>`.
+    - removed redundant logger bridge cast in `safeLog()`.
+  - `services/resilience/bulkhead.service.ts`:
+    - narrowed `safeLog()` metadata input from `unknown` to `Record<string, unknown>`.
+    - replaced pool config log-site cast with explicit object-spread metadata.
+- Completed compatibility-first typing batch 81 (behavior-preserving websocket auth logging cleanup):
+  - `services/websocket-authentication.service.ts`:
+    - narrowed constructor logger contract and `safeLog()` context boundary from `unknown` to `Record<string, unknown>`.
+  - `__tests__/services/websocket-authentication.error-handling.test.ts`:
+    - aligned local auth logger helper type with narrowed metadata contract.
+- Completed compatibility-first typing batch 80 (behavior-preserving strategy config merger logging cleanup):
+  - `services/strategy-config-merger.service.ts`:
+    - narrowed constructor logger contract and `safeLog()` context boundary from `unknown` to `Record<string, unknown>`.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-config-merger.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.service.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/resilience/retry-policy.test.ts packages/core/src/__tests__/services/resilience/rate-limiter.test.ts packages/core/src/__tests__/services/resilience/circuit-breaker.test.ts packages/core/src/__tests__/services/resilience/bulkhead.test.ts` -> PASS (7/7 suites, 162/162 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 78 (behavior-preserving entry-confirmation payload cleanup):
+  - `services/entry-confirmation.service.ts`:
+    - introduced explicit `PendingSignalData = Record<string, unknown>` alias for pending confirmation payloads.
+  - `services/position-lifecycle.service.ts`:
+    - replaced `signal as unknown as Record<string, unknown>` with explicit `toPendingSignalData()` record conversion for pending confirmation storage.
+    - narrowed confirmation orchestrator bridge input from raw `unknown` to `PendingSignalData`.
+  - `services/position-lifecycle/position-lifecycle-confirmation.orchestrator.ts`:
+    - aligned pending confirmation payload contract with shared `PendingSignalData` alias while preserving compatibility bridge to `Signal` on confirmation.
+- Completed compatibility-first typing batch 77 (behavior-preserving logging boundary cleanup):
+  - `services/compound-interest-calculator.service.ts`:
+    - narrowed `safeLog()` metadata input from `Record<string, unknown> | unknown` to explicit `Record<string, unknown>`.
+    - removed internal log metadata bridge cast; runtime logging behavior unchanged.
+- Completed compatibility-first typing batch 76 (behavior-preserving config traversal helper cleanup):
+  - `services/config-validator.service.ts`:
+    - replaced repeated raw nested-object casts in `getPathStatic()` / `getPath()` with dedicated child-value helpers.
+    - preserved existing validation semantics for missing/null/non-object paths.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/config-validator.service.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.service.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/entry-confirmation.service.test.ts packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts` -> PASS (7/7 suites, 166/166 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 75 (behavior-preserving event-emitter boundary narrowing):
+  - `packages/core/src/bot-event-emitter.ts`:
+    - aligned `position-opened` / `position-closed` internal subscription payloads with shared runtime event contracts from `types/bot-events.ts`.
+    - aligned lifecycle status subscription payloads with shared boolean lifecycle event contract.
+    - widened convenience method handler input types for position lifecycle events to match actual supported runtime payload variants while preserving emitted runtime values.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-event-emitter.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (2/2 suites, 35/35 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 74 (behavior-preserving web bridge event narrowing):
+  - `packages/web-server/src/services/bot-bridge.service.ts`:
+    - introduced local runtime bot event payload contracts for forwarded bot lifecycle/position events.
+    - narrowed forwarded event name/listener maps from generic `string -> unknown` to explicit bot event union.
+    - narrowed `position-opened` / `position-closed` bridge handling to shared local payload variants while preserving existing runtime parsing and fallback behavior.
+    - kept signal/error parsing behavior unchanged; build-only typing cleanup.
+- Verification:
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 73 (behavior-preserving event payload narrowing):
+  - added `types/bot-events.ts` with shared runtime bot event contracts for `signal`, `position-opened`, `position-closed`, `error`, `bot-started`, and `bot-stopped`.
+  - `core/index.ts`: narrowed `BotLike.eventBus` from generic `unknown` listeners to shared `BotRuntimeEventBusLike`.
+  - `web/index.ts`: narrowed `WebBotAdapter.eventBus` to shared runtime event contract and aligned `getCurrentPosition()` from `unknown` to `Position | null`.
+  - `bot.ts`: replaced dashboard event listener `unknown` payload handling with shared `PositionOpenedEventPayload` / `PositionClosedEventPayload` and extracted reusable position-event narrowing helper.
+  - `services/trading-lifecycle.service.ts`: narrowed `position-opened` / `position-closed` subscription payloads to shared event contracts and replaced local `unknown` extraction flow with explicit position/payload guards.
+  - `services/real-time-risk-monitor.service.ts`: narrowed `position-closed` cache-invalidation path from `unknown` to shared closed-position event contract while preserving compatibility for `position`, `closedPosition`, direct `Position`, and explicit `positionId` payloads.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-event-emitter.test.ts packages/core/src/__tests__/services/trading-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (5/5 suites, 111/111 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 72 (behavior-preserving unknown narrowing):
+  - `types/multi-strategy/types.ts`:
+    - narrowed `riskMonitorState` from `Record<string, unknown>` to shared `StrategySnapshotRecord`.
+    - narrowed `StrategyEvent.data` from `Record<string, unknown>` to shared `StrategySnapshotRecord`.
+- Completed compatibility-first typing batch 71 (behavior-preserving unknown narrowing):
+  - `types/multi-strategy/types.ts`:
+    - narrowed `StrategyMetadata.configOverrides` from `Record<string, unknown>` to `Partial<ConfigNew>`.
+    - introduced `StrategySnapshotRecord = Record<string, unknown>`.
+    - narrowed `StrategyStateSnapshot.positions/journal` from `unknown[]` to `StrategySnapshotRecord[]`.
+- Completed compatibility-first typing batch 70 (behavior-preserving unknown narrowing):
+  - `types/live-trading/types.ts`:
+    - added explicit `PerformanceAnalyticsTradeInput` contract for analytics input shape.
+    - narrowed `IPerformanceAnalytics` trade-array method signatures from `unknown[]` to `PerformanceAnalyticsTradeInput[]`.
+  - `services/performance-analytics.service.ts`:
+    - aligned implementation signatures and internal helpers with `PerformanceAnalyticsTradeInput`.
+    - removed duplicate local trade-shape interface in favor of shared contract type.
+  - `types/legacy.ts`:
+    - re-exported `PerformanceAnalyticsTradeInput` from live-trading types.
+- Completed core `any` cleanup batch 65-69 (behavior-preserving):
+  - `services/bybit/__tests__/bybit-service.adapter.test.ts`:
+    - replaced `mockBybitService: any` and `mockLogger: any` with explicit typed mocks.
+    - removed `as any` casts in setup; retained constructor compatibility via `unknown` bridge casts.
+    - preserved flexible late-bound mock methods via typed index signature.
+- Completed core `any` cleanup batch 65-68 (behavior-preserving):
+  - `repositories/__tests__/journal.file-repository.test.ts`: replaced `as any` mock logger cast with `as unknown as LoggerService` (test-only typing cleanup, no behavior change).
+- Completed core `any` cleanup batch 65-67 (behavior-preserving) in `types/*`:
+  - `types/strategy-processing/types.ts`: `StrategyProcessingResult.result` changed `any` -> `unknown`.
+  - `types/architecture/types.ts`:
+    - `IAction.metadata` and `ActionResult.metadata` changed `Record<string, any>` -> `Record<string, unknown>`.
+    - `IEventEmitter` payload/listener signatures changed `any` -> `unknown`.
+  - `types/config/config.types.ts`:
+    - `AnalyzerConfig.params` changed `Record<string, any>` -> `Record<string, unknown>`.
+    - `DisabledAnalyzersConfig` and `DisabledFiltersConfig` index signatures changed `any` -> `unknown`.
+  - `types/live-trading/types.ts`:
+    - `EmergencyCloseRequest.details` and `RiskAlert.data` changed `Record<string, any>` -> `Record<string, unknown>`.
+    - `PersistedPositionState.openOrders` changed `any[]` -> `unknown[]`.
+    - `IPerformanceAnalytics` trade-array method params changed `any[]` -> `unknown[]`.
+  - `types/multi-strategy/types.ts`:
+    - `StrategyMetadata.configOverrides` and `StrategyStateSnapshot.riskMonitorState` changed `Record<string, any>` -> `Record<string, unknown>`.
+    - `StrategyStateSnapshot.positions/journal` changed `any[]` -> `unknown[]`.
+    - `ConfigMergeChange.from/to` changed `any` -> `unknown`.
+    - `StrategyEvent.data` changed `Record<string, any>` -> `Record<string, unknown>`.
+  - `types/config/config-new.types.ts`:
+    - `isConfigNew()` replaced `const c = config as any` with `Record<string, unknown>` guard cast.
+  - `types/legacy.ts`:
+    - remaining runtime `any` boundaries replaced with `unknown` for analyzer/default/config payload fields.
+    - kept compatibility by widening `analyzers` to `unknown` (array/object shapes both allowed in existing merge paths).
+- Compile-compatibility fixes (no behavior change):
+  - `action-handlers/activate-trailing.handler.ts`: guarded metadata `currentPrice` extraction with runtime `number` check.
+  - `action-handlers/close-percent.handler.ts`: guarded metadata `currentPrice` extraction with runtime `number` check.
+- Verification:
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts` -> PASS (2/2 suites, 73/73 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/phase-9-live-trading.integration.test.ts packages/core/src/__tests__/services/performance-analytics.service.test.ts` -> PASS (3/3 suites, 151/151 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-config-merger.error-handling.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (2/2 suites, 38/38 tests).
+  - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+  - `npm test -- --runInBand packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts` -> PASS (1/1 suite, 47/47 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.service.test.ts packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts` -> PASS (2/2 suites, 68/68 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (2/2 suites, 97/97 tests).
+  - `rg -n "\\bany\\b" [target types/* list]` -> only comment/doc matches, no remaining runtime `any` in targeted files.
+  - `rg -n "as any" packages/core/src --glob '!packages/core/src/services/**' --glob '!packages/core/src/types/**' --glob '!packages/core/src/**/*.ARCHIVED.ts'` -> no matches.
+  - `rg -n "(:\\s*any\\b|as any\\b|<any>|any\\[\\]|Record<string,\\s*any>)" packages/core/src/services packages/core/src/__tests__/services --glob '!**/*.ARCHIVED.ts'` -> no matches.
+- Completed compatibility-first typing batches 113-115 (behavior-preserving trade-history boundary cleanup):
+  - `packages/core/src/services/trade-history/trade-history-csv.utils.ts`:
+    - added shared `TradeHistoryCsvValue` / `TradeHistoryCsvRecord` aliases for CSV-safe payloads.
+    - narrowed `buildCsvLineForSchema()` away from generic `Record<string, unknown>`.
+  - `packages/core/src/services/trade-history/trade-history-parse.utils.ts` and `packages/core/src/services/trade-history/trade-history-stats.utils.ts`:
+    - propagated the shared CSV-safe record/value contracts through parse and statistics helpers.
+    - kept all numeric parsing and field-grouping behavior unchanged.
+  - `packages/core/src/services/trade-history.service.ts`:
+    - aligned the CSV parse boundary with `TradeHistoryCsvRecord`.
+    - added local adapters for CSV serialization and statistics aggregation so dynamic `TradeRecord` fields still preserve existing `String(value)` fallback semantics.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/trade-history.error-handling.test.ts` -> PASS (1/1 suite, 30/30 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 116-119 (behavior-preserving helper/interface boundary cleanup):
+  - `packages/core/src/interfaces/IMonitoring.ts`:
+    - added `NotificationErrorPayload` and aligned `INotification.sendError()` with the existing record-shaped notification payload contract.
+  - `packages/core/src/services/position-state-machine/position-state-machine-persistence.utils.ts`:
+    - introduced `JsonLinePayload` and narrowed `appendJsonLine()` to generic object payloads instead of broad `unknown`.
+    - preserved append-only JSONL persistence behavior.
+  - `packages/core/src/repositories/market-data.cache-repository.ts`:
+    - added `isIndicatorArray()` and aligned array size estimation with shared `IndicatorCacheValue[]`.
+  - `packages/core/src/services/binance/binance-service.adapter.ts`:
+    - replaced the broad active-order array cast with an explicit `orderId` guard returning typed `ExchangeOrderRecord` entries.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/position-state-machine.service.test.ts packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/repositories/__tests__/market-data.cache-repository.test.ts packages/core/src/__tests__/services/telegram.error-handling.test.ts` -> PASS (4/4 suites, 85/85 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 120-123 (behavior-preserving exchange/helper guard cleanup):
+  - `packages/core/src/services/bybit/bybit-service.adapter.ts`:
+    - replaced the broad active-order cast with an explicit compatibility guard keyed on `orderId`.
+    - preserved the adapter's existing runtime acceptance of partial active-order payloads used by tests and legacy call paths.
+  - `packages/core/src/services/exit-type-detector.service.ts`:
+    - introduced a local `getUpdatedTime()` helper and removed inline `Record<string, unknown>` casts from filled-order sorting.
+  - `packages/core/src/services/ladder-exit-detector.service.ts`:
+    - introduced the same `getUpdatedTime()` helper for both complete-ladder detection and exit-type inference sort paths.
+    - kept missing `updatedTime` fallback semantics unchanged by defaulting to `0`.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/__tests__/services/ladder-exit-detector.service.error-handling.test.ts packages/core/src/__tests__/services/exit-type-detector.service.test.ts packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts` -> PASS (6/6 suites, 174/174 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 124-126 (behavior-preserving position-sync helper cleanup):
+  - `packages/core/src/services/position-sync.service.ts`:
+    - added local `getErrorMessage()` helper and replaced duplicated `error instanceof Error ? ...` extraction in sync/deep-sync failure paths.
+    - introduced `hasCorrectCloseSide()` so stop-loss / take-profit protection checks reuse a single side-matching rule.
+    - aligned local `BybitOrder` guard with the existing compatibility approach used in adjacent exchange helpers by narrowing only the fields required by this service (`orderId`, `side`).
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/__tests__/services/ladder-exit-detector.service.error-handling.test.ts packages/core/src/__tests__/services/exit-type-detector.service.test.ts packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts` -> PASS (6/6 suites, 174/174 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 127-129 (behavior-preserving journal repository helper cleanup):
+  - `packages/core/src/repositories/journal.file-repository.ts`:
+    - added local `getErrorMessage()` to remove repeated inline error-string extraction in load/save paths.
+    - introduced `getTradeValues()` and reused it across trade query, save, and session-statistics paths.
+    - preserved all file persistence and session-filter semantics unchanged.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 130-132 (behavior-preserving utility helper cleanup):
+  - `packages/core/src/utils/error-helper.ts`:
+    - added local `getStringProperty()` to reuse string-field extraction for `message`, `code`, and `name`.
+  - `packages/core/src/utils/error.utils.ts`:
+    - added the same local string-property helper and removed repeated inline `message` / `stack` narrowing.
+  - `packages/core/src/utils/analyzer-config.utils.ts`:
+    - introduced generic `getAnalyzerParameterSection<T>()` and replaced repeated analyzer-section record casts with a single helper path.
+    - preserved all existing analyzer default fallback semantics.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/integration/strategy-integration.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (5/5 suites, 90/90 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 133-135 (behavior-preserving exchange-factory helper cleanup):
+  - `packages/core/src/services/exchange-factory.service.ts`:
+    - added local `getErrorMessage()` and reused it in exchange creation failure logging.
+    - removed duplicated inline error-to-message conversion from the Bybit service instantiation failure path.
+    - preserved all factory retry/degrade behavior and error payload shapes.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts` -> PASS (2/2 suites, 51/51 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

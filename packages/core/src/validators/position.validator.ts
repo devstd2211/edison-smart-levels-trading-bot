@@ -17,6 +17,22 @@ import { LoggerService } from '../services/logger.service';
 export class PositionValidator {
   constructor(private logger: LoggerService) {}
 
+  private static isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isFiniteNumber(value: unknown): value is number {
+    return typeof value === 'number' && !isNaN(value);
+  }
+
+  private hasValidStopLossPrice(value: unknown): boolean {
+    if (!PositionValidator.isRecord(value)) {
+      return false;
+    }
+
+    return this.isFiniteNumber(value.price);
+  }
+
   /**
    * Validate position has all required fields for Phase 9 monitoring
    * Throws if validation fails with detailed error message
@@ -59,9 +75,9 @@ export class PositionValidator {
         errors.push(`Invalid takeProfits: not an array`);
       }
       if (position.stopLoss !== undefined) {
-        if (typeof position.stopLoss !== 'object') {
+        if (!PositionValidator.isRecord(position.stopLoss)) {
           errors.push(`Invalid stopLoss: not an object`);
-        } else if (typeof position.stopLoss.price !== 'number' || isNaN(position.stopLoss.price)) {
+        } else if (!this.hasValidStopLossPrice(position.stopLoss)) {
           errors.push(`Invalid stopLoss.price: ${position.stopLoss.price}`);
         }
       }
@@ -95,19 +111,7 @@ export class PositionValidator {
    * Rejects: null, undefined, "", string, NaN
    */
   private isInvalidNumber(value: unknown): boolean {
-    // Reject: null, undefined
-    if (value === null || value === undefined) return true;
-
-    // Reject: empty string or any string
-    if (value === '' || typeof value === 'string') return true;
-
-    // Reject: non-number types
-    if (typeof value !== 'number') return true;
-
-    // Reject: NaN
-    if (isNaN(value)) return true;
-
-    return false; // Valid number
+    return !this.isFiniteNumber(value);
   }
 
   /**

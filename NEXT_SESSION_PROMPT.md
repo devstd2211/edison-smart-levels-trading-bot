@@ -28,6 +28,97 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-10)
+- Completed compatibility-first typing batches 110-112 (behavior-preserving notification/exchange order boundary cleanup):
+  - `interfaces/IMonitoring.ts`:
+    - introduced shared `NotificationPayload` alias and narrowed `INotification.send()` metadata input from broad `unknown` to the shared notification payload record shape.
+  - `interfaces/IExchange.ts`:
+    - introduced shared `ExchangeOrderRecord` alias and replaced broad `unknown[]` in optional `getOrderHistory()` / `getActiveOrders()` contracts with the shared order-record array type.
+  - `services/bybit/bybit-service.adapter.ts`, `services/binance/binance-service.adapter.ts`, and `services/binance/binance.service.ts`:
+    - propagated the shared exchange order-record contract through adapter/service implementations without changing runtime behavior.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts` -> PASS (3/3 suites, 96/96 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 107-109 (behavior-preserving indicator cache boundary cleanup):
+  - `repositories/IRepositories.ts`:
+    - introduced shared `IndicatorCacheValue` alias and replaced broad `unknown` in `IMarketDataRepository.cacheIndicator()` / `getIndicator()` with the shared cache payload contract.
+  - `repositories/market-data.cache-repository.ts`:
+    - aligned cached indicator storage/retrieval and private size-estimation helpers with the shared indicator cache payload alias.
+  - `services/indicator-cache.service.ts`:
+    - extracted `isValidKey()`, `isFiniteIndicatorValue()`, and `handleInvalidKey()` helpers for cache input validation and removed inline validation duplication.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/repositories/__tests__/market-data.cache-repository.test.ts` -> PASS (2/2 suites, 43/43 tests).
+    - `npm test -- --runInBand packages/core/src/__tests__/backtest/cache-integration.test.ts` -> PASS (1/1 suite, 12/12 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 104-106 (behavior-preserving repository payload/helper cleanup):
+  - `interfaces/IRepository.ts`:
+    - introduced shared `RepositoryDataValue` alias and replaced broad `unknown` in generic `saveData()` / `getData()` persistence contracts.
+  - `repositories/IRepositories.ts` and `repositories/journal.file-repository.ts`:
+    - propagated the shared repository payload alias to `IJournalRepository` generic data methods and the in-memory `generalData` store.
+    - extracted `isTradeInSession()` and `getSessionTrades()` helpers to remove duplicated session-trade filtering logic from session PnL/win-rate calculations.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/repositories/__tests__/journal.file-repository.test.ts` -> PASS (1/1 suite, 18/18 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 101-103 (behavior-preserving logger/config/cache helper cleanup):
+  - `services/logger/logger-core.utils.ts`:
+    - introduced `isLogLevel()` helper and removed repeated enum compatibility casts in log-level validation/normalization.
+  - `types/config/config-new.types.ts`:
+    - introduced a local `isRecord()` helper and replaced the top-level `Record<string, unknown>` cast inside `isConfigNew()` with explicit object guards.
+  - `repositories/market-data.cache-repository.ts`:
+    - extracted local object/array helpers for indicator size estimation and removed the remaining inline broad object size check in the cache stats path.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/repositories/__tests__/market-data.cache-repository.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts` -> PASS (2/2 suites, 51/51 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 100 (behavior-preserving volatility-spike shared config alignment):
+  - `types/config/config-new.types.ts`:
+    - added `VolatilitySpikeAnalyzerConfigNew` and wired `volatilitySpike` into the shared `AnalyzersConfigNew` aggregate contract.
+  - `loaders/analyzer.loader.ts`:
+    - removed the temporary local compatibility extension for `volatilitySpike` and now consumes the shared analyzer config contract directly.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/integration/strategy-integration.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (2/2 suites, 34/34 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 97-99 (behavior-preserving validator/error-helper cleanup):
+  - `validators/position.validator.ts`:
+    - extracted explicit `isFiniteNumber()`, `isRecord()`, and `hasValidStopLossPrice()` helpers and removed repeated inline validation casts/checks in Phase 9 position validation.
+  - `utils/error-helper.ts`:
+    - introduced a shared local `asRecord()` helper and replaced repeated object casts in error/context/code detection paths.
+  - `utils/error.utils.ts`:
+    - introduced a shared local `asRecord()` helper and removed repeated object casts in error message/stack/type extraction.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/validators/position.validator.test.ts` -> PASS (1/1 suite, 23/23 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 95-96 (behavior-preserving analyzer loader/config utility alignment):
+  - `loaders/analyzer.loader.ts`:
+    - replaced local broad analyzer config abstractions with shared `AnalyzersConfigNew`-based typing.
+    - removed the generic `asConfig<T>()` bridge and passed stable analyzer config DTOs directly to typed analyzer constructors.
+    - added a local compatibility extension for the existing `volatilitySpike` loader path because that runtime-supported analyzer is still absent from the shared aggregate `AnalyzersConfigNew` contract.
+  - `utils/analyzer-config.utils.ts`:
+    - replaced the broad analyzer config envelope cast with explicit record guards for nested parameter extraction.
+    - preserved existing default fallback semantics for missing/malformed config sections.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/integration/strategy-integration.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (2/2 suites, 34/34 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batches 92-94 (behavior-preserving console dashboard + scaling boundary cleanup):
+  - `services/console-dashboard/console-dashboard-state.utils.ts`:
+    - introduced explicit `DashboardMetricSnapshot` and exported `DashboardEvent` DTOs for dashboard state initialization.
+  - `services/console-dashboard.service.ts`:
+    - aligned dashboard state with the utility DTOs and removed the constructor-time `createInitialDashboardState() as DashboardState` cast.
+    - narrowed `safeLog()` / `safeWarn()` metadata from `unknown` to stable `string | Record<string, unknown>` and normalized `Error`/object payloads via `toLogMeta()`.
+  - `services/position-scaling.service.ts`:
+    - narrowed `safeLog()` metadata input from `unknown` to `Record<string, unknown>`.
+    - replaced inline logger bridge casts with a dedicated record guard.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/position-scaling.test.ts` -> PASS (2/2 suites, 61/61 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 91 (behavior-preserving event-bus single-payload contract alignment):
+  - `services/event-bus.ts`:
+    - added explicit single-payload `on()` / `off()` / `emit()` wrappers around `EventEmitter` to align the public `BotEventBus` API with the runtime event flow already used across bot lifecycle consumers.
+    - preserved `off(event)` compatibility by falling back to `removeAllListeners(event)` when no specific listener is provided.
+    - introduced typed `EventBusErrorPayload` for the internal failure publication path without changing emitted runtime values.
+  - `interfaces/IServices.ts`:
+    - aligned `IPositionLifecycleService.on()` / `off()` from stale variadic listeners to single optional payload `(data?: unknown) => void`.
+  - verification:
+    - `npm test -- --runInBand packages/core/src/__tests__/event-bus.test.ts packages/core/src/__tests__/bot-event-emitter.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (3/3 suites, 57/57 tests).
+    - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 - Completed compatibility-first typing batch 90 (behavior-preserving telegram interface alignment):
   - `interfaces/IServices.ts`:
     - aligned `ITelegramService` with the actual current public `TelegramService` API (`notifyBotStarted`, `notifyBotStopped`, `notifyPositionOpened`, `notifyPositionClosed`, `notifyError`, `sendAlert`).
@@ -118,5 +209,13 @@ You are continuing refactoring in `D:\src\Edison`.
 - Continue `Core any cleanup (phase 3: src)` outside `services` in isolated batches:
   - production scan result: non-`services`/non-`types` and `services/*` runtime `any` is clear.
   - continue compatibility-first narrowing for selected `unknown` boundaries where stable domain shapes are known.
-  - next candidates: selective non-multi-strategy payload contracts still using broad `Record<string, unknown>` or `unknown`, especially `services/event-bus.ts` adjacent handler/data contracts, remaining notification-adjacent abstractions, and stable loader/validator DTO boundaries.
+  - latest completed batches:
+    - trade-history CSV/statistics boundary cleanup via shared `TradeHistoryCsvValue` / `TradeHistoryCsvRecord` plus local adapters in `trade-history.service.ts`.
+    - helper/interface cleanup around notification error payloads, JSONL persistence payloads, indicator-cache array guards, and Binance active-order guards.
+    - exchange/helper guard cleanup in `bybit-service.adapter.ts`, `exit-type-detector.service.ts`, and `ladder-exit-detector.service.ts`.
+    - `position-sync.service.ts` helper cleanup for error extraction, close-side matching, and compatible `BybitOrder` guard narrowing.
+    - `journal.file-repository.ts` helper cleanup for error extraction and shared trade-array access.
+    - utility cleanup in `error-helper.ts`, `error.utils.ts`, and `analyzer-config.utils.ts` for repeated string-property / analyzer-section narrowing.
+    - `exchange-factory.service.ts` helper cleanup for repeated error-message normalization in factory failure paths.
+  - next candidates: remaining low-risk helper/repository boundaries and selected shared utility DTOs/interfaces still using broad `Record<string, unknown>` or `unknown`; strongest next target is another small repository/utility slice with repeated local narrowing logic, comparable in risk to the recent utils/repository helper cleanups.
 - Keep behavior unchanged, run targeted tests per slice, log each batch in `ACTIVE_REFACTOR_PLAN.md`.

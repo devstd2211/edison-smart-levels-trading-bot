@@ -7,16 +7,19 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   [LogLevel.ERROR]: 3,
 };
 
+function isLogLevel(value: unknown): value is LogLevel {
+  return typeof value === 'string' && Object.values(LogLevel).includes(value as LogLevel);
+}
+
 export function validateLogLevel(level: unknown): void {
   const validLevels = Object.values(LogLevel);
-
-  if (typeof level === 'string' && validLevels.includes(level as LogLevel)) {
+  if (isLogLevel(level)) {
     return;
   }
 
   if (typeof level === 'string') {
     const upperLevel = level.toUpperCase();
-    if (validLevels.includes(upperLevel as LogLevel)) {
+    if (isLogLevel(upperLevel)) {
       return;
     }
   }
@@ -25,9 +28,7 @@ export function validateLogLevel(level: unknown): void {
 }
 
 export function normalizeLogLevel(level: LogLevel | string): LogLevel {
-  return typeof level === 'string'
-    ? (level.toUpperCase() as LogLevel)
-    : level;
+  return isLogLevel(level) ? level : level.toUpperCase() as LogLevel;
 }
 
 export function shouldLogLevel(level: LogLevel, minLevel: LogLevel): boolean {

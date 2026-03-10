@@ -1,4 +1,7 @@
-import { splitCsvLinePreservingQuotes } from './trade-history-csv.utils';
+import {
+  splitCsvLinePreservingQuotes,
+  type TradeHistoryCsvRecord,
+} from './trade-history-csv.utils';
 
 const NUMERIC_FIELDS = new Set([
   'entryPrice',
@@ -15,9 +18,9 @@ const NUMERIC_FIELDS = new Set([
 export function parseCsvTradeRecordLine(
   line: string,
   header: string[],
-): Record<string, unknown> {
+): TradeHistoryCsvRecord {
   const values = splitCsvLinePreservingQuotes(line);
-  const record: Record<string, unknown> = {};
+  const record: TradeHistoryCsvRecord = {};
 
   for (let i = 0; i < header.length; i++) {
     const field = header[i];

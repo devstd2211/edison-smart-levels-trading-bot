@@ -44,6 +44,22 @@ export class IndicatorCacheService implements IIndicatorCache {
       errorHandler ?? new ErrorHandler((logger as ErrorLogger | undefined) ?? IndicatorCacheService.defaultErrorLogger);
   }
 
+  private isValidKey(key: string): boolean {
+    return Boolean(key) && typeof key === 'string';
+  }
+
+  private isFiniteIndicatorValue(value: unknown): value is number {
+    return typeof value === 'number' && isFinite(value);
+  }
+
+  private handleInvalidKey(message: string): number | null {
+    void this.errorHandler.handle(
+      new Error(message),
+      { strategy: RecoveryStrategy.THROW }
+    );
+    return null;
+  }
+
   /**
    * Safe logging wrapper - SKIP strategy for all logger errors
    */
@@ -70,16 +86,13 @@ export class IndicatorCacheService implements IIndicatorCache {
    */
   get(key: string): number | null {
     // THROW: Validate key
-    if (!key || typeof key !== 'string') {
-      return this.errorHandler.handle(
-        new Error('Indicator cache key must be a non-empty string'),
-        { strategy: RecoveryStrategy.THROW }
-      ) as unknown as number | null;
+    if (!this.isValidKey(key)) {
+      return this.handleInvalidKey('Indicator cache key must be a non-empty string');
     }
 
     try {
       const value = this.marketDataRepo.getIndicator(key);
-      if (typeof value === 'number' && isFinite(value)) {
+      if (this.isFiniteIndicatorValue(value)) {
         this.hits++;
         this.safeLog('debug', `Cache hit: ${key}`);
         return value;
@@ -106,16 +119,16 @@ export class IndicatorCacheService implements IIndicatorCache {
    */
   set(key: string, value: number, ttlMs: number = this.DEFAULT_TTL_MS): void {
     // THROW: Validate inputs
-    if (!key || typeof key !== 'string') {
-      this.errorHandler.handle(
+    if (!this.isValidKey(key)) {
+      void this.errorHandler.handle(
         new Error('Indicator cache key must be a non-empty string'),
         { strategy: RecoveryStrategy.THROW }
       );
       return;
     }
 
-    if (typeof value !== 'number' || !isFinite(value)) {
-      this.errorHandler.handle(
+    if (!this.isFiniteIndicatorValue(value)) {
+      void this.errorHandler.handle(
         new Error('Indicator cache value must be a finite number'),
         { strategy: RecoveryStrategy.THROW }
       );
@@ -123,7 +136,7 @@ export class IndicatorCacheService implements IIndicatorCache {
     }
 
     if (ttlMs <= 0) {
-      this.errorHandler.handle(
+      void this.errorHandler.handle(
         new Error('Indicator cache TTL must be positive'),
         { strategy: RecoveryStrategy.THROW }
       );
@@ -148,8 +161,8 @@ export class IndicatorCacheService implements IIndicatorCache {
    */
   invalidate(key: string): void {
     // THROW: Validate key
-    if (!key || typeof key !== 'string') {
-      this.errorHandler.handle(
+    if (!this.isValidKey(key)) {
+      void this.errorHandler.handle(
         new Error('Indicator cache key must be a non-empty string'),
         { strategy: RecoveryStrategy.THROW }
       );

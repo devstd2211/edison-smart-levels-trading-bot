@@ -1,3 +1,13 @@
+export type DashboardMetricSnapshot = {
+  timeframe: string;
+  trend: string;
+  rsi: number;
+  ema20?: number;
+  ema50?: number;
+  atr?: number;
+  volume?: number;
+};
+
 export type DashboardTpInput = { price?: number; percent: number; level?: number };
 export type DashboardTpLevel = {
   price: number;
@@ -6,10 +16,10 @@ export type DashboardTpLevel = {
   reached?: boolean;
 };
 
-type DashboardEvent = { timestamp: Date; type: string; message: string };
+export type DashboardEvent = { timestamp: Date; type: string; message: string };
 
 type DashboardStateInit = {
-  metrics: Map<string, unknown>;
+  metrics: Map<string, DashboardMetricSnapshot>;
   currentPrice: number;
   priceUpdatedAt: number;
   tpLevels: DashboardTpLevel[];

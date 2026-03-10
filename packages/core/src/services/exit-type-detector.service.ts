@@ -26,6 +26,10 @@ export class ExitTypeDetectorService {
     private readonly errorHandler?: ErrorHandler,
   ) {}
 
+  private getUpdatedTime(order: BybitOrder): number {
+    return typeof order.updatedTime === 'number' ? order.updatedTime : 0;
+  }
+
   /**
    * Determine position exit type from order history
    * Analyzes filled orders to identify SL/TP/Trailing/Manual close
@@ -54,11 +58,7 @@ export class ExitTypeDetectorService {
     // Find filled orders for this symbol
     const filledOrders = orderHistory
       .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled')
-      .sort((a, b) => {
-        const aTime = (a as Record<string, unknown>).updatedTime as number;
-        const bTime = (b as Record<string, unknown>).updatedTime as number;
-        return bTime - aTime;
-      }); // Most recent first
+      .sort((a, b) => this.getUpdatedTime(b) - this.getUpdatedTime(a)); // Most recent first
 
     if (filledOrders.length === 0) {
       // Phase 8.9.18: SKIP strategy for missing order history

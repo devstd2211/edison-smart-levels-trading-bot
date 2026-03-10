@@ -62,6 +62,16 @@ export class PositionSyncService {
     this.errorHandler = errorHandler || new ErrorHandler(logger);
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  private hasCorrectCloseSide(position: Position, order: BybitOrder): boolean {
+    return position.side === PositionSide.LONG
+      ? order.side === 'Sell'
+      : order.side === 'Buy';
+  }
+
   /**
    * Sync closed position state when WebSocket event was missed
    * Queries order history to determine correct exitType
@@ -214,10 +224,9 @@ export class PositionSyncService {
         priceUsed: currentPrice,
       });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.error('Failed to sync closed position', {
         positionId: position.id,
-        error: errorMsg,
+        error: this.getErrorMessage(error),
       });
 
       // Fallback: clear position anyway
@@ -225,7 +234,7 @@ export class PositionSyncService {
         await this.positionManager.clearPosition();
       } catch (clearError) {
         this.logger.error('Failed to clear position in fallback', {
-          error: clearError instanceof Error ? clearError.message : String(clearError),
+          error: this.getErrorMessage(clearError),
         });
       }
     }
@@ -342,18 +351,14 @@ export class PositionSyncService {
       // Check for Stop Loss order
       const hasStopLoss = activeOrders.some((order: BybitOrder) => {
         const isSL = isStopLossOrder(order);
-        const correctSide = position.side === PositionSide.LONG
-          ? order.side === 'Sell'
-          : order.side === 'Buy';
+        const correctSide = this.hasCorrectCloseSide(position, order);
         return isSL && correctSide;
       });
 
       // Check for Take Profit orders
       const hasTakeProfit = activeOrders.some((order: BybitOrder) => {
         const isTP = isTakeProfitOrder(order);
-        const correctSide = position.side === PositionSide.LONG
-          ? order.side === 'Sell'
-          : order.side === 'Buy';
+        const correctSide = this.hasCorrectCloseSide(position, order);
         return isTP && correctSide;
       });
 
@@ -516,10 +521,9 @@ export class PositionSyncService {
         quantityMatch: exchangePos ? Math.abs(exchangePos.quantity - position.quantity) < 0.01 : undefined,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Deep sync check failed', {
         positionId: position?.id,
-        error: errorMessage,
+        error: this.getErrorMessage(error),
       });
       // Re-throw to let caller handle (preserves critical protection errors)
       throw error;
@@ -539,9 +543,6 @@ export class PositionSyncService {
     }
     const order = value as Record<string, unknown>;
     return typeof order.orderId === 'string'
-      && typeof order.orderType === 'string'
-      && typeof order.side === 'string'
-      && typeof order.price === 'string'
-      && typeof order.reduceOnly === 'boolean';
+      && typeof order.side === 'string';
   }
 }

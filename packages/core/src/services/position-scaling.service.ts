@@ -53,6 +53,9 @@ export interface PositionState {
 
 export class PositionScalingService {
   private readonly config: ScalingConfig;
+  private static isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
 
   constructor(
     config: ScalingConfig,
@@ -409,14 +412,14 @@ export class PositionScalingService {
   private safeLog(
     level: 'info' | 'warn' | 'error',
     message: string,
-    meta?: unknown
+    meta?: Record<string, unknown>
   ): void {
     if (!this.logger) return;
     try {
-      const context = typeof meta === 'object' && meta !== null
-        ? (meta as Record<string, unknown>)
-        : undefined;
-      this.logger[level](message, context);
+      this.logger[level](
+        message,
+        PositionScalingService.isRecord(meta) ? meta : undefined,
+      );
     } catch (error) {
       // SKIP - never throw on logging failure
     }

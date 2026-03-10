@@ -1,6 +1,9 @@
+export type TradeHistoryCsvValue = string | number | boolean | null;
+export type TradeHistoryCsvRecord = Record<string, TradeHistoryCsvValue>;
+
 export function buildCsvLineForSchema(
   schema: string[],
-  record: Record<string, unknown>,
+  record: TradeHistoryCsvRecord,
 ): string {
   const values: string[] = [];
 

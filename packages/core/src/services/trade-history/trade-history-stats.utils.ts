@@ -1,10 +1,11 @@
 import { PERCENT_MULTIPLIER } from '../../constants';
+import type { TradeHistoryCsvValue } from './trade-history-csv.utils';
 
 type TradeStatsRecord = {
   netPnl: number;
   strategy: string;
   sessionVersion: string;
-  [key: string]: unknown;
+  [key: string]: TradeHistoryCsvValue;
 };
 
 export type TradeHistoryStatistics = {
@@ -54,7 +55,7 @@ export function calculateTradeStatistics(trades: TradeStatsRecord[]): TradeHisto
 }
 
 export function calculateTradeStatisticsByField(
-  trades: Array<{ netPnl: number; [key: string]: unknown }>,
+  trades: Array<{ netPnl: number; [key: string]: TradeHistoryCsvValue }>,
   fieldName: string,
 ): { [key: string]: number } {
   const stats: { [key: string]: number } = {};

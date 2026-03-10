@@ -7,6 +7,9 @@
 import type { Position } from '../types/core';
 import type { HealthStatus, MemorySnapshot } from '../types/architecture';
 
+export type NotificationPayload = Record<string, unknown>;
+export type NotificationErrorPayload = Error | NotificationPayload;
+
 /**
  * Logger interface
  */
@@ -105,12 +108,12 @@ export interface INotification {
   /**
    * Send message
    */
-  send(message: string, data?: unknown): Promise<void>;
+  send(message: string, data?: NotificationPayload): Promise<void>;
 
   /**
    * Send error notification
    */
-  sendError(message: string, error?: Error): Promise<void>;
+  sendError(message: string, error?: NotificationErrorPayload): Promise<void>;
 
   /**
    * Check if notification is enabled

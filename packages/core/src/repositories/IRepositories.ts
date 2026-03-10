@@ -7,7 +7,9 @@
 
 import { Position } from '../types/position';
 import { Candle } from '../types/core';
-import { TradeRecord, SessionRecord } from '../interfaces/IRepository';
+import { TradeRecord, SessionRecord, RepositoryDataValue } from '../interfaces/IRepository';
+
+export type IndicatorCacheValue = RepositoryDataValue;
 
 /**
  * Position Repository - Manage current and historical positions
@@ -59,6 +61,12 @@ export interface IJournalRepository {
   calculateSessionPnL(sessionId: string): Promise<number>;
   calculateWinRate(sessionId: string): Promise<number>;
 
+  // Generic persistence
+  saveData(key: string, data: RepositoryDataValue): Promise<void>;
+  getData(key: string): Promise<RepositoryDataValue | null>;
+  deleteData(key: string): Promise<void>;
+  hasData(key: string): Promise<boolean>;
+
   // Maintenance
   clear(): Promise<void>;
   getSize(): Promise<number>;
@@ -77,10 +85,10 @@ export interface IMarketDataRepository {
   // Indicator caching (TTL-based)
   cacheIndicator(
     key: string, // e.g., "RSI-14-1h"
-    value: unknown,
+    value: IndicatorCacheValue,
     ttlMs?: number,
   ): void;
-  getIndicator(key: string): unknown | null;
+  getIndicator(key: string): IndicatorCacheValue | null;
   hasIndicator(key: string): boolean;
 
   // Cache maintenance

@@ -52,6 +52,14 @@ export interface SessionRecord {
   notes?: string;
 }
 
+export type RepositoryDataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | Record<string, unknown>
+  | unknown[];
+
 // ============================================================================
 // REPOSITORY INTERFACE
 // ============================================================================
@@ -132,12 +140,12 @@ export interface IRepository {
   /**
    * Save arbitrary JSON data
    */
-  saveData(key: string, data: unknown): Promise<void>;
+  saveData(key: string, data: RepositoryDataValue): Promise<void>;
 
   /**
    * Get arbitrary JSON data
    */
-  getData(key: string): Promise<unknown | null>;
+  getData(key: string): Promise<RepositoryDataValue | null>;
 
   /**
    * Delete data

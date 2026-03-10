@@ -7,6 +7,21 @@
 
 import { ErrorContext } from '../types/legacy';
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function getStringProperty(record: Record<string, unknown> | null, key: string): string | undefined {
+  if (!record) {
+    return undefined;
+  }
+
+  const value = record[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
 /**
  * Extract error message from unknown error type
  * Handles Error objects, strings, and other types safely
@@ -20,11 +35,9 @@ export function extractErrorMessage(error: unknown): string {
     return error;
   }
 
-  if (typeof error === 'object' && error !== null) {
-    const err = error as Record<string, unknown>;
-    if (typeof err.message === 'string') {
-      return err.message;
-    }
+  const message = getStringProperty(asRecord(error), 'message');
+  if (message) {
+    return message;
   }
 
   return String(error);
@@ -63,14 +76,15 @@ export function extractErrorCode(error: unknown): string | undefined {
     return error.name;
   }
 
-  if (typeof error === 'object' && error !== null) {
-    const err = error as Record<string, unknown>;
-    if (typeof err.code === 'string') {
-      return err.code;
-    }
-    if (typeof err.name === 'string') {
-      return err.name;
-    }
+  const err = asRecord(error);
+  const code = getStringProperty(err, 'code');
+  if (code) {
+    return code;
+  }
+
+  const name = getStringProperty(err, 'name');
+  if (name) {
+    return name;
   }
 
   return undefined;
@@ -91,7 +105,11 @@ export function isErrorContext(value: unknown): value is ErrorContext {
     return false;
   }
 
-  const ctx = value as Record<string, unknown>;
+  const ctx = asRecord(value);
+  if (!ctx) {
+    return false;
+  }
+
   return (
     typeof ctx.message === 'string' &&
     typeof ctx.timestamp === 'number'
@@ -138,9 +156,9 @@ export function isCriticalApiError(error: unknown): boolean {
     9000,  // Access Denied
   ];
 
-  if (typeof error === 'object' && error !== null) {
-    const err = error as Record<string, unknown>;
-    const errorCode = err.code as unknown;
+  const err = asRecord(error);
+  if (err) {
+    const errorCode = err.code;
     if (typeof errorCode === 'number' && criticalBybitCodes.includes(errorCode)) {
       return true;
     }

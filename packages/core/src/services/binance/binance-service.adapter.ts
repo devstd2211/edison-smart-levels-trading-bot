@@ -22,6 +22,7 @@ import {
   PlaceOrderParams,
   OrderResult,
   AccountBalance,
+  ExchangeOrderRecord,
 } from '../../interfaces/IExchange';
 import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
@@ -55,8 +56,16 @@ export class BinanceServiceAdapter implements IExchange {
     return typeof candidate.getFundingRate === 'function';
   }
 
-  private asOrderRecords(orders: unknown): Array<{ orderId: string }> {
-    return Array.isArray(orders) ? (orders as Array<{ orderId: string }>) : [];
+  private isExchangeOrderRecord(value: unknown): value is ExchangeOrderRecord & { orderId: string } {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    return typeof (value as { orderId?: unknown }).orderId === 'string';
+  }
+
+  private asOrderRecords(orders: unknown): Array<ExchangeOrderRecord & { orderId: string }> {
+    return Array.isArray(orders) ? orders.filter((order) => this.isExchangeOrderRecord(order)) : [];
   }
 
   // ============================================================================
@@ -610,7 +619,7 @@ export class BinanceServiceAdapter implements IExchange {
     }
   }
 
-  async getOrderHistory(limit?: number): Promise<unknown[]> {
+  async getOrderHistory(limit?: number): Promise<ExchangeOrderRecord[]> {
     try {
       const activeOrders = this.asOrderRecords(await this.binanceService.getActiveOrders());
       return activeOrders.slice(0, limit || 50);
@@ -708,7 +717,7 @@ export class BinanceServiceAdapter implements IExchange {
     return this.binanceService.getSymbol();
   }
 
-  async getActiveOrders(): Promise<unknown[]> {
+  async getActiveOrders(): Promise<ExchangeOrderRecord[]> {
     return this.asOrderRecords(await this.binanceService.getActiveOrders());
   }
 

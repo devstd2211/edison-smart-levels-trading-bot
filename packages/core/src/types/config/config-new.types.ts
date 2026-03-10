@@ -230,6 +230,7 @@ export interface AnalyzersConfigNew {
   footprint: FootprintAnalyzerConfigNew;
   microWall: MicroWallAnalyzerConfigNew;
   whale: WhaleAnalyzerConfigNew;
+  volatilitySpike: VolatilitySpikeAnalyzerConfigNew;
   priceAction: PriceActionAnalyzerConfigNew;
   // SCALPING (3)
   tickDelta: TickDeltaAnalyzerConfigNew;
@@ -391,6 +392,19 @@ export interface MicroWallAnalyzerConfigNew extends BaseAnalyzerConfigNew {
 
 export interface WhaleAnalyzerConfigNew extends BaseAnalyzerConfigNew {
   minWallPercent: number;
+}
+
+export interface VolatilitySpikeAnalyzerConfigNew extends BaseAnalyzerConfigNew {
+  maxConfidence?: number;
+  minCandlesForVolatility?: number;
+  minConfidence?: number;
+  volatilityHighMultiplier?: number;
+  volatilityLowMultiplier?: number;
+  neutralConfidence?: number;
+  maxAtrEstimate?: number;
+  period?: number;
+  minimumATR?: number;
+  maximumATR?: number;
 }
 
 export interface PriceActionAnalyzerConfigNew extends BaseAnalyzerConfigNew {
@@ -639,23 +653,27 @@ export interface AntiFlipConfigNew {
 // TYPE GUARDS & VALIDATORS
 // ============================================================================
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 export function isConfigNew(config: unknown): config is ConfigNew {
-  if (!config || typeof config !== 'object') return false;
-  const c = config as Record<string, unknown>;
+  if (!isRecord(config)) return false;
+  const c = config;
   return (
     typeof c.version === 'number' &&
-    typeof c.meta === 'object' &&
-    typeof c.exchange === 'object' &&
-    typeof c.trading === 'object' &&
-    typeof c.riskManagement === 'object' &&
-    typeof c.timeframes === 'object' &&
-    typeof c.indicators === 'object' &&
-    typeof c.analyzers === 'object' &&
-    typeof c.filters === 'object' &&
-    typeof c.confidence === 'object' &&
-    typeof c.strategies === 'object' &&
-    typeof c.services === 'object' &&
-    typeof c.monitoring === 'object'
+    isRecord(c.meta) &&
+    isRecord(c.exchange) &&
+    isRecord(c.trading) &&
+    isRecord(c.riskManagement) &&
+    isRecord(c.timeframes) &&
+    isRecord(c.indicators) &&
+    isRecord(c.analyzers) &&
+    isRecord(c.filters) &&
+    isRecord(c.confidence) &&
+    isRecord(c.strategies) &&
+    isRecord(c.services) &&
+    isRecord(c.monitoring)
   );
 }
 

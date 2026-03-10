@@ -26,6 +26,13 @@ export interface BotEvent {
  * Event handler function signature
  */
 export type EventHandler<TData = unknown> = (data: TData) => Promise<void> | void;
+type EventListener<TData = unknown> = (data: TData) => void;
+
+interface EventBusErrorPayload {
+  originalEvent: string;
+  error: string;
+  errorTime: number;
+}
 
 /**
  * Performance metrics for event processing
@@ -89,6 +96,23 @@ export class BotEventBus extends EventEmitter {
    * });
    * unsubscribe(); // Remove listener
    */
+  on<TData = unknown>(eventName: string | symbol, listener: EventListener<TData>): this {
+    return super.on(eventName, listener);
+  }
+
+  off<TData = unknown>(eventName: string | symbol, listener?: EventListener<TData>): this {
+    if (listener) {
+      return super.off(eventName, listener);
+    }
+
+    this.removeAllListeners(eventName);
+    return this;
+  }
+
+  emit(eventName: string | symbol, data?: unknown): boolean {
+    return super.emit(eventName, data);
+  }
+
   subscribe<TData = unknown>(eventType: string, handler: EventHandler<TData>): () => void {
     const wrappedHandler = async (data: unknown) => {
       const startTime = performance.now();
@@ -119,14 +143,16 @@ export class BotEventBus extends EventEmitter {
         });
 
         // Publish error event for error recovery
+        const errorPayload: EventBusErrorPayload = {
+          originalEvent: eventType,
+          error: errorMessage,
+          errorTime: duration,
+        };
+
         this.publishSync({
           type: 'eventBusError',
           timestamp: Date.now(),
-          data: {
-            originalEvent: eventType,
-            error: errorMessage,
-            errorTime: duration,
-          },
+          data: errorPayload,
         });
       }
     };

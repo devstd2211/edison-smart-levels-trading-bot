@@ -277,11 +277,7 @@ export class LadderExitDetectorService {
     // Check if all 3 TP levels have filled orders
     const filledOrders = (orders ?? [])
       .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled' && o.reduceOnly)
-      .sort((a, b) => {
-        const aTime = (a as Record<string, unknown>).updatedTime as number;
-        const bTime = (b as Record<string, unknown>).updatedTime as number;
-        return aTime - bTime;
-      });
+      .sort((a, b) => this.getUpdatedTime(a) - this.getUpdatedTime(b));
 
     // Must have at least 3 filled orders for complete ladder
     if (filledOrders.length < 3) {
@@ -372,6 +368,10 @@ export class LadderExitDetectorService {
       && typeof order.reduceOnly === 'boolean';
   }
 
+  private getUpdatedTime(order: BybitOrder): number {
+    return typeof order.updatedTime === 'number' ? order.updatedTime : 0;
+  }
+
   /**
    * Check if TP level has been hit
    * Accounts for position direction (LONG vs SHORT)
@@ -411,11 +411,7 @@ export class LadderExitDetectorService {
     // Find filled orders for this symbol
     const filledOrders = orderHistory
       .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled')
-      .sort((a, b) => {
-        const aTime = (a as Record<string, unknown>).updatedTime as number;
-        const bTime = (b as Record<string, unknown>).updatedTime as number;
-        return bTime - aTime;
-      }); // Most recent first
+      .sort((a, b) => this.getUpdatedTime(b) - this.getUpdatedTime(a)); // Most recent first
 
     if (filledOrders.length === 0) {
       // SKIP strategy for missing order history

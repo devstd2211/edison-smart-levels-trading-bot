@@ -58,6 +58,10 @@ export class ExchangeFactory {
     this.validateConfig();
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
   /**
    * Create exchange service instance
    * Returns cached instance if already created
@@ -113,7 +117,7 @@ export class ExchangeFactory {
       return exchange;
     } catch (error) {
       // Phase 8.9.37: GRACEFUL_DEGRADE on critical failure - return cached if available or throw
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = this.getErrorMessage(error);
 
       // Phase 8.9.37: Log error but handle gracefully
       try {
@@ -208,12 +212,12 @@ export class ExchangeFactory {
         bybitService = new BybitService(bybitConfig, this.logger);
       } catch (error) {
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BybitService: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create BybitService: ${this.getErrorMessage(error)}`,
           {
             exchangeName: 'bybit',
             symbol: this.config.symbol,
             operation: 'service_creation',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: this.getErrorMessage(error),
           },
           error instanceof Error ? error : undefined
         );

@@ -9,6 +9,8 @@ import type { Candle } from '../types/core';
 import type { Position } from '../types/position';
 import type { ProtectionVerification } from '../types/legacy';
 
+export type ExchangeOrderRecord = Record<string, unknown>;
+
 // ============================================================================
 // CANDLE & MARKET DATA
 // ============================================================================
@@ -256,7 +258,7 @@ export interface IExchangeOrders {
   /**
    * Get order history
    */
-  getOrderHistory?(limit?: number): Promise<unknown[]>;
+  getOrderHistory?(limit?: number): Promise<ExchangeOrderRecord[]>;
 }
 
 // ============================================================================
@@ -354,7 +356,7 @@ export interface IExchange
   /**
    * Get active orders (stop loss and take profit orders)
    */
-  getActiveOrders?(): Promise<unknown[]>;
+  getActiveOrders?(): Promise<ExchangeOrderRecord[]>;
 
   /**
    * Verify if protection (SL/TP) is set for position

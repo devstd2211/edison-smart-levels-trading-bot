@@ -35,6 +35,8 @@ import {
   appendDashboardEventWithLimit,
   buildDashboardTakeProfitLevels,
   createInitialDashboardState,
+  type DashboardEvent,
+  type DashboardMetricSnapshot,
 } from './console-dashboard/console-dashboard-state.utils';
 
 interface DashboardConfig {
@@ -43,15 +45,9 @@ interface DashboardConfig {
   theme?: 'dark' | 'light';
 }
 
-interface TimeframeMetrics {
-  timeframe: string;
-  trend: string; // UPTREND | DOWNTREND | NEUTRAL
-  rsi: number;
-  ema20?: number;
-  ema50?: number;
-  atr?: number;
-  volume?: number;
-}
+interface TimeframeMetrics extends DashboardMetricSnapshot {}
+
+type DashboardLogMeta = string | Record<string, unknown>;
 
 interface DashboardState {
   // Market data by timeframe
@@ -77,7 +73,7 @@ interface DashboardState {
   dailyPnL: number;
 
   // Events log
-  events: Array<{ timestamp: Date; type: string; message: string }>;
+  events: DashboardEvent[];
 
   // UI state
   lastUpdate: Date;
@@ -102,7 +98,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     // THROW: Config validation
     this.validateConfig(config);
     this.config = { ...config };
-    this.state = createInitialDashboardState() as DashboardState;
+    this.state = createInitialDashboardState();
 
   }
 
@@ -170,7 +166,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
 
       this.safeLog('[DASHBOARD] ✅ Initialized (non-blocking mode)');
     } catch (error) {
-      this.safeWarn('[DASHBOARD] Initialization failed:', error);
+      this.safeWarn('[DASHBOARD] Initialization failed:', this.toLogMeta(error));
       this.config.enabled = false;
       // GRACEFUL_DEGRADE: Dashboard init failure
       if (this.errorHandler) {
@@ -1005,7 +1001,26 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    * @param message - Log message
    * @param meta - Optional metadata
    */
-  private safeLog(message: string, meta?: unknown): void {
+  private toLogMeta(value: unknown): DashboardLogMeta {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (value instanceof Error) {
+      return {
+        name: value.name,
+        message: value.message,
+      };
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      return value as Record<string, unknown>;
+    }
+
+    return String(value);
+  }
+
+  private safeLog(message: string, meta?: DashboardLogMeta): void {
     try {
       console.log(`[DASHBOARD] ${message}`, meta || '');
     } catch (error) {
@@ -1021,7 +1036,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    * @param message - Warn message
    * @param meta - Optional metadata
    */
-  private safeWarn(message: string, meta?: unknown): void {
+  private safeWarn(message: string, meta?: DashboardLogMeta): void {
     try {
       console.warn(`[DASHBOARD] ${message}`, meta || '');
     } catch (error) {

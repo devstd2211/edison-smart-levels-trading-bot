@@ -27,6 +27,7 @@ import { JournalWriteError } from '../errors/DomainErrors';
 import {
   buildCsvLineForSchema,
   splitCsvLinePreservingQuotes,
+  type TradeHistoryCsvRecord,
 } from './trade-history/trade-history-csv.utils';
 import { parseCsvTradeRecordLine } from './trade-history/trade-history-parse.utils';
 import {
@@ -62,6 +63,48 @@ const CORE_FIELDS = [
   'sessionVersion',
   'notes',
 ];
+
+function toTradeHistoryCsvValue(value: unknown): string | number | boolean | null | undefined {
+  if (
+    value === undefined ||
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+
+  return String(value);
+}
+
+function toTradeHistoryCsvRecord(record: TradeRecord): TradeHistoryCsvRecord {
+  const csvRecord: TradeHistoryCsvRecord = {};
+
+  for (const [key, value] of Object.entries(record)) {
+    const csvValue = toTradeHistoryCsvValue(value);
+    if (csvValue !== undefined) {
+      csvRecord[key] = csvValue;
+    }
+  }
+
+  return csvRecord;
+}
+
+type TradeHistoryStatsRecord = TradeHistoryCsvRecord & {
+  netPnl: number;
+  strategy: string;
+  sessionVersion: string;
+};
+
+function toTradeHistoryStatsRecord(record: TradeRecord): TradeHistoryStatsRecord {
+  return {
+    ...toTradeHistoryCsvRecord(record),
+    netPnl: record.netPnl,
+    strategy: record.strategy,
+    sessionVersion: record.sessionVersion,
+  };
+}
 
 // ============================================================================
 // TYPES
@@ -345,7 +388,7 @@ export class TradeHistoryService {
         this.verifyAndMigrateSchema();
       }
 
-      const csvLine = buildCsvLineForSchema(this.currentSchema, record);
+      const csvLine = buildCsvLineForSchema(this.currentSchema, toTradeHistoryCsvRecord(record));
 
       // Append to CSV
       fs.appendFileSync(this.csvPath, csvLine + '\n', 'utf-8');
@@ -466,7 +509,8 @@ export class TradeHistoryService {
    */
   private parseCSVLine(line: string, header: string[]): TradeRecord | null {
     try {
-      return parseCsvTradeRecordLine(line, header) as TradeRecord;
+      const record: TradeHistoryCsvRecord = parseCsvTradeRecordLine(line, header);
+      return record as TradeRecord;
     } catch (error: unknown) {
       this.logger.warn('⚠️ Failed to parse CSV line', { line });
       return null;
@@ -504,7 +548,7 @@ export class TradeHistoryService {
 
     const statsOperation = async () => {
       const trades = await this.readAllTrades();
-      return calculateTradeStatistics(trades);
+      return calculateTradeStatistics(trades.map(toTradeHistoryStatsRecord));
     };
 
     // Use GRACEFUL_DEGRADE strategy for statistics
@@ -538,7 +582,7 @@ export class TradeHistoryService {
     this.ensureInitialized();
     const statsOperation = async () => {
       const trades = await this.readAllTrades();
-      return calculateTradeStatisticsByField(trades, fieldName);
+      return calculateTradeStatisticsByField(trades.map(toTradeHistoryStatsRecord), fieldName);
     };
 
     // Use GRACEFUL_DEGRADE strategy for field statistics
