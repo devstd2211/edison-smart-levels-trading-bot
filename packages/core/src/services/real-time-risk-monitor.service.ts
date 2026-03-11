@@ -43,6 +43,7 @@ import {
   OrderValidationError,
   PositionSizingError,
 } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * RealTimeRiskMonitor: Continuous position health monitoring
@@ -456,7 +457,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
                 this.logger.warn('⚠️ Failed to publish RISK_ALERT_TRIGGERED event, skipping', {
                   positionId: position.id,
                   alert: alert.alertType,
-                  error: error instanceof Error ? error.message : String(error),
+                  error: getErrorMessage(error),
                 });
               },
             });
@@ -488,7 +489,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
               this.logger.warn('⚠️ Failed to publish HEALTH_SCORE_UPDATED event, skipping', {
                 positionId: position.id,
                 newScore: healthScore.overallScore,
-                error: error instanceof Error ? error.message : String(error),
+                error: getErrorMessage(error),
               });
             },
           });
@@ -505,7 +506,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
             this.logger.warn('⚠️ Position monitoring failed, skipping to next position', {
               positionId: position.id,
               symbol: position.symbol,
-              error: error instanceof Error ? error.message : String(error),
+              error: getErrorMessage(error),
             });
           },
         });

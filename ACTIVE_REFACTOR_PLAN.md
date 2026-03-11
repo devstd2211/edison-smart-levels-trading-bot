@@ -29,7 +29,286 @@ Archived completed history is in `REFACTOR_PLAN.md`.
 4. Log progress and verification in this file.
 5. Keep `NEXT_SESSION_PROMPT.md` short (`Last Completed` + `Next Step`).
 
-## Latest Progress (2026-03-10)
+## Latest Progress (2026-03-11)
+- Completed compatibility-first typing batch 198 (behavior-preserving real-time risk monitor error-message cleanup):
+  - `packages/core/src/services/real-time-risk-monitor.service.ts`:
+    - replaced inline recovery warning error-message extraction with shared `utils/error.utils.ts#getErrorMessage()` in event publication and position-monitoring SKIP paths.
+    - preserved health-score caching, alert emission, and cache-invalidation behavior.
+- Completed compatibility-first typing batch 197 (behavior-preserving trading journal error-message cleanup):
+  - `packages/core/src/services/trading-journal.service.ts`:
+    - replaced inline file/parse/export/logging error-message normalization with shared `utils/error.utils.ts#getErrorMessage()`.
+    - preserved retry/save/load, corrupted-journal backup, CSV export, and async virtual-balance sync behavior.
+- Completed compatibility-first typing batch 196 (behavior-preserving monitoring server error-helper cleanup):
+  - `packages/core/src/services/monitoring-server.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - removed repeated direct forwarding of unknown errors in start/stop, route-handler, and safe-log SKIP paths.
+    - preserved HTTP status behavior, route payloads, and logger fallback semantics.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts` -> PASS (6/6 suites, 118/118 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 195 (behavior-preserving session stats error-message cleanup):
+  - `packages/core/src/services/session-stats.service.ts`:
+    - replaced inline file/parse/backup/load error-message normalization with shared `utils/error.utils.ts#getErrorMessage()`.
+    - preserved retry/save/load/corrupted-backup behavior and existing logger payload shapes.
+- Completed compatibility-first typing batch 194 (behavior-preserving analyzer registry error-helper cleanup):
+  - `packages/core/src/services/analyzer-registry.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline analyzer-load error normalization with shared `getErrorMessage()`.
+    - removed repeated direct forwarding of unknown errors in SKIP and GRACEFUL_DEGRADE paths while preserving partial-load behavior.
+- Completed compatibility-first typing batch 193 (behavior-preserving action queue error normalization cleanup):
+  - `packages/core/src/services/action-queue.service.ts`:
+    - replaced the remaining thrown-handler normalization branch with shared `utils/error.utils.ts#normalizeError()`.
+    - preserved retry, dequeue, and result-storage semantics for handler exceptions.
+- Completed compatibility-first typing batch 192 (behavior-preserving trading lifecycle error-helper cleanup):
+  - `packages/core/src/services/trading-lifecycle.service.ts`:
+    - introduced a local async recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline event-publication and emergency-close error-message normalization with shared `getErrorMessage()`.
+    - preserved warning/critical timeout flow, FALLBACK queueing semantics, and event publication behavior.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/trading-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts` -> PASS (4/4 suites, 106/106 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 191 (behavior-preserving analyzer engine error-helper cleanup):
+  - `packages/core/src/services/analyzer-engine.service.ts`:
+    - introduced a local async recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline error-message normalization with shared `getErrorMessage()` in registry/analyzer failure paths.
+    - preserved strict vs lenient execution semantics, error aggregation, and SKIP/GRACEFUL_DEGRADE forwarding behavior.
+- Completed compatibility-first typing batch 190 (behavior-preserving advanced order flow error-forwarding cleanup):
+  - `packages/core/src/services/advanced-order-flow.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - removed repeated direct forwarding of unknown errors in SKIP and GRACEFUL_DEGRADE paths.
+    - preserved calculation fallbacks, logging-skip behavior, and the existing protection against `ErrorHandler.handle()` throwing.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts` -> PASS (4/4 suites, 103/103 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 189 (behavior-preserving bot factory error-helper cleanup):
+  - `packages/core/src/services/bot-factory.service.ts`:
+    - introduced a local `logError()` helper and routed validation/initialization logging through shared `utils/error.utils.ts#getErrorMessage()`.
+    - replaced the non-`Error` bridge in `createSafe()` with shared `normalizeError()`.
+    - preserved validation THROW behavior, initialization error wrapping, and override-warning semantics.
+- Completed compatibility-first typing batch 188 (behavior-preserving wall tracker error-message cleanup):
+  - `packages/core/src/services/wall-tracker.service.ts`:
+    - replaced inline fallback error-message extraction with shared `utils/error.utils.ts#getErrorMessage()` in detect/remove/cluster/strength recovery paths.
+    - preserved SKIP and GRACEFUL_DEGRADE behavior, wall tracking state, and safe-default returns.
+- Completed compatibility-first typing batch 187 (behavior-preserving anomaly detection error-helper cleanup):
+  - `packages/core/src/services/anomaly-detection.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline detection/logging error normalization with shared `getErrorMessage()`.
+    - removed repeated direct forwarding of unknown errors in GRACEFUL_DEGRADE and SKIP paths while preserving no-anomaly/no-flags fallbacks.
+- Completed compatibility-first typing batch 186 (behavior-preserving bot metrics error-helper cleanup):
+  - `packages/core/src/services/bot-metrics.service.ts`:
+    - replaced local fallback error extraction with shared `utils/error.utils.ts#getErrorMessage()`.
+    - introduced a local recovery helper for RETRY/SKIP/GRACEFUL_DEGRADE forwarding to remove repeated inline `new Error(...)` handling blocks.
+    - preserved startup, trade/event recording, report generation, and reset fallback behavior.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-metrics.service.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/wall-tracker.service.test.ts packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts` -> PASS (7/7 suites, 201/201 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Completed compatibility-first typing batch 185 (behavior-preserving TF alignment error-helper cleanup):
+  - `packages/core/src/services/tf-alignment.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline alignment-failure error normalization with shared `getErrorMessage()`.
+    - removed remaining `as Error` bridge casts in GRACEFUL_DEGRADE and SKIP forwarding while preserving disabled-result fallback behavior.
+- Completed compatibility-first typing batch 184 (behavior-preserving timeframe weighting error-helper cleanup):
+  - `packages/core/src/services/timeframe-weighting.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline combination-failure error normalization with shared `getErrorMessage()`.
+    - removed remaining `as Error` bridge casts in GRACEFUL_DEGRADE and SKIP forwarding while preserving neutral fallback behavior.
+- Completed compatibility-first typing batch 183 (behavior-preserving virtual balance error-message cleanup):
+  - `packages/core/src/services/virtual-balance.service.ts`:
+    - replaced repeated inline file/logging error-message normalization with shared `utils/error.utils.ts#getErrorMessage()`.
+    - preserved retry/save/load/updateBalance behavior and existing persistence/log payload shapes.
+- Completed compatibility-first typing batch 182 (behavior-preserving ML feature extractor error-helper cleanup):
+  - `packages/core/src/services/ml-feature-extractor.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline extraction failure error normalization with shared `getErrorMessage()`.
+    - removed remaining `as Error` bridge casts in GRACEFUL_DEGRADE and SKIP forwarding while preserving rethrow behavior for failed extraction paths.
+- Completed compatibility-first typing batch 181 (behavior-preserving websocket authentication error-helper cleanup):
+  - `packages/core/src/services/websocket-authentication.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline auth/credential validation error-message extraction with shared `getErrorMessage()`.
+    - removed remaining `as Error` bridge casts in SKIP and GRACEFUL_DEGRADE forwarding while preserving safe default auth payload and `false` credential fallback behavior.
+- Completed compatibility-first typing batch 180 (behavior-preserving enhanced exit error-helper cleanup):
+  - `packages/core/src/services/enhanced-exit.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline config-update error-message extraction with shared `getErrorMessage()`.
+    - removed remaining `as Error` bridge casts in safe-log, risk/reward catch-all, and config-update recovery forwarding while preserving GRACEFUL_DEGRADE and SKIP behavior.
+- Completed compatibility-first typing batch 179 (behavior-preserving whale wall TP error-helper cleanup):
+  - `packages/core/src/services/whale-wall-tp.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline error-message interpolation with shared `getErrorMessage()` in the adjustment failure path.
+    - removed remaining `as Error` bridge casts in GRACEFUL_DEGRADE and SKIP forwarding while preserving wall-adjustment fallback behavior.
+- Completed compatibility-first typing batch 178 (behavior-preserving whale detection error-helper cleanup):
+  - `packages/core/src/services/whale-detection.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - replaced inline setup-failure error normalization with shared `getErrorMessage()`.
+    - removed remaining `as Error` bridge casts in detection setup, safe-log fallback, and clear-path recovery forwarding while preserving no-signal fallback behavior.
+- Completed compatibility-first typing batch 177 (behavior-preserving performance analytics error-forwarding cleanup):
+  - `packages/core/src/services/performance-analytics.service.ts`:
+    - introduced a local recovery helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - removed repeated `as Error` bridge casts across GRACEFUL_DEGRADE and SKIP forwarding in calculation, retrieval, journal-access, cache-access, and cache-clear paths.
+    - preserved validation THROW behavior, safe fallback metrics, and cache semantics.
+- Completed compatibility-first typing batch 176 (behavior-preserving exchange factory error-helper cleanup):
+  - `packages/core/src/services/exchange-factory.service.ts`:
+    - replaced the local error-message helper with shared `utils/error.utils.ts#getErrorMessage()`.
+    - introduced a local `handleSkipError()` helper backed by `normalizeError()` to remove `as Error` bridge casts in factory logging fallback paths.
+    - normalized adapter/service initialization failure wrapping through shared error utilities while preserving GRACEFUL_DEGRADE behavior and cached-instance semantics.
+- Completed compatibility-first typing batch 175 (behavior-preserving funding-rate filter error-forwarding cleanup):
+  - `packages/core/src/services/funding-rate-filter.service.ts`:
+    - introduced a local `handleSkipError()` helper backed by shared `utils/error.utils.ts#normalizeError()`.
+    - removed repeated `as Error` bridge casts in logger-skip forwarding across signal checks, cache logging, fetch logging, success logging, and cache-clear logging.
+    - preserved fail-safe signal allowance, cache fallback, and RETRY/GRACEFUL_DEGRADE behavior.
+- Completed compatibility-first typing batch 174 (behavior-preserving volatility regime error-helper cleanup):
+  - `packages/core/src/services/volatility-regime.service.ts`:
+    - replaced inline error-message extraction with shared `utils/error.utils.ts#getErrorMessage()`.
+    - removed redundant `as Error` bridge casts in safe-log and config-update forwarding while preserving MEDIUM fallback behavior.
+- Completed compatibility-first typing batch 173 (behavior-preserving volume profile error-helper cleanup):
+  - `packages/core/src/services/volume-profile.service.ts`:
+    - replaced inline error-message extraction with shared `utils/error.utils.ts#getErrorMessage()`.
+    - removed redundant `as Error` bridge casts in safe-log, config-update, calculation, and price-level fallback forwarding.
+- Completed compatibility-first typing batch 172 (behavior-preserving micro wall detector error-helper cleanup):
+  - `packages/core/src/services/micro-wall-detector.service.ts`:
+    - replaced inline error-message extraction with shared `utils/error.utils.ts#getErrorMessage()` for detection/confidence/cleanup/reset warnings.
+    - removed the remaining `as Error` bridge cast in safe-log forwarding.
+- Completed compatibility-first typing batch 171 (behavior-preserving fractal weighting error-helper cleanup):
+  - `packages/core/src/services/fractal-smc-weighting.service.ts`:
+    - replaced inline error-message normalization with shared `utils/error.utils.ts#getErrorMessage()`.
+    - removed redundant `as Error` bridge casts in calculation degrade and logging-skip forwarding.
+- Completed compatibility-first typing batch 170 (behavior-preserving retest entry error-forwarding cleanup):
+  - `packages/core/src/services/retest-entry.service.ts`:
+    - removed unnecessary `as Error` bridge casts from safe-log, impulse detection, and retest-zone creation error-handler forwarding.
+    - preserved retest-zone state management and THROW/GRACEFUL_DEGRADE behavior.
+- Completed compatibility-first typing batch 169 (behavior-preserving order flow analyzer error-forwarding cleanup):
+  - `packages/core/src/services/order-flow-analyzer.service.ts`:
+    - removed remaining `as Error` bridge casts in logger-skip and calculation degrade paths.
+    - preserved flow history, imbalance detection, and fallback semantics.
+- Completed compatibility-first typing batch 168 (behavior-preserving candle aggregator shared error-helper cleanup):
+  - `packages/core/src/services/candle-aggregator.service.ts`:
+    - replaced inline error-message normalization with shared `utils/error.utils.ts#getErrorMessage()`.
+    - removed redundant `as Error` bridge casts in aggregation and logging failure forwarding.
+- Completed compatibility-first typing batch 167 (behavior-preserving orderbook imbalance error-forwarding cleanup):
+  - `packages/core/src/services/orderbook-imbalance.service.ts`:
+    - removed unnecessary `as Error` bridge casts in safe-log and calculation failure forwarding.
+    - preserved neutral-analysis fallback behavior and existing imbalance calculation semantics.
+- Completed compatibility-first typing batch 166 (behavior-preserving order execution detector error-forwarding cleanup):
+  - `packages/core/src/services/order-execution-detector.service.ts`:
+    - removed unnecessary `as Error` bridge casts when forwarding caught failures to the optional error handler.
+    - preserved THROW/GRACEFUL_DEGRADE behavior and existing execution classification semantics.
+- Completed compatibility-first typing batch 165 (behavior-preserving monitoring server shared error-helper cleanup):
+  - `packages/core/src/services/monitoring-server.service.ts`:
+    - replaced repeated inline error-to-string interpolation with shared `utils/error.utils.ts#getErrorMessage()`.
+    - preserved monitoring server startup/shutdown flow and route-level error responses/log payloads.
+- Completed compatibility-first typing batch 164 (behavior-preserving dynamic config manager record-helper cleanup):
+  - `packages/core/src/services/multi-strategy/dynamic-config-manager.service.ts`:
+    - introduced a local record helper for indicator override extraction.
+    - removed the remaining inline object cast in `getIndicatorOverrides()` while preserving empty-object fallback behavior.
+- Completed compatibility-first typing batch 163 (behavior-preserving websocket receiver message-guard cleanup):
+  - `packages/core/src/services/data-collector/websocket-receiver.ts`:
+    - introduced a local record helper for parsed websocket message narrowing.
+    - replaced the direct `JSON.parse(... ) as Record<string, unknown>` bridge with explicit runtime object validation before downstream field access.
+- Completed compatibility-first typing batch 162 (behavior-preserving trading journal indicator-record cleanup):
+  - `packages/core/src/services/trading-journal.service.ts`:
+    - introduced a local record helper for nested indicator payload extraction.
+    - removed the remaining inline record cast in `getIndicatorData()`.
+- Completed compatibility-first typing batch 161 (behavior-preserving Binance adapter guard cleanup):
+  - `packages/core/src/services/binance/binance-service.adapter.ts`:
+    - introduced a local record helper for funding-rate and order-record guards.
+    - removed inline object bridge casts in `hasFundingRateMethod()` and `isExchangeOrderRecord()`.
+- Completed compatibility-first typing batch 160 (behavior-preserving Bybit adapter guard cleanup):
+  - `packages/core/src/services/bybit/bybit-service.adapter.ts`:
+    - introduced a local record helper for funding-rate and order guards.
+    - removed inline object bridge casts in `hasFundingRateMethod()` and `isBybitOrder()`.
+- Completed compatibility-first typing batch 159 (behavior-preserving position-sync error/guard cleanup):
+  - `packages/core/src/services/position-sync.service.ts`:
+    - replaced the local error-message helper with shared `utils/error.utils.ts#getErrorMessage()`.
+    - introduced a local record helper for Bybit order guards.
+    - preserved `toBybitOrders()` runtime behavior after a same-batch regression fix to keep predicate binding explicit.
+- Completed compatibility-first typing batch 158 (behavior-preserving monitoring/resilience builder config-helper cleanup):
+  - `packages/core/src/services/factories/builders/monitoring-resilience.builder.ts`:
+    - introduced local record/number helpers for optional resilience config access.
+    - removed repeated bridge casts when reading circuit-breaker and retry logging metadata from `config.resilience`.
+- Completed compatibility-first typing batch 157 (behavior-preserving multi-timeframe trend record-helper cleanup):
+  - `packages/core/src/services/multi-timeframe-trend.service.ts`:
+    - introduced a local record helper for `getTimeframeCandles()`.
+    - removed the remaining bridge cast when reading dynamic timeframe candle arrays.
+- Completed compatibility-first typing batch 156 (behavior-preserving dynamic position sizer log-meta cleanup):
+  - `packages/core/src/services/dynamic-position-sizer.service.ts`:
+    - introduced a local record helper for `safeLog()` metadata narrowing.
+    - removed the remaining inline `Record<string, unknown>` cast in logging flow.
+- Completed compatibility-first typing batch 155 (behavior-preserving bot initializer lifecycle-guard cleanup):
+  - `packages/core/src/services/bot-initializer.ts`:
+    - introduced a local record helper for lifecycle service detection.
+    - removed the remaining inline `start/stop` object cast in `isLifecycleService()`.
+- Completed compatibility-first typing batch 154 (behavior-preserving market-data cache object-guard tightening):
+  - `packages/core/src/repositories/market-data.cache-repository.ts`:
+    - tightened `isObjectLike()` to exclude arrays explicitly while preserving the existing size-estimation order and cache behavior.
+- Completed compatibility-first typing batch 153 (behavior-preserving config-validator record-helper reuse):
+  - `packages/core/src/services/config-validator.service.ts`:
+    - routed static and instance child-value access through shared local record helpers instead of repeated inline object casts.
+    - preserved startup and runtime validation messages, THROW behavior, and logger-skip semantics.
+- Completed compatibility-first typing batch 152 (behavior-preserving indicator loader failure-meta helper cleanup):
+  - `packages/core/src/loaders/indicator.loader.ts`:
+    - extracted a local `getLoadFailureMeta()` helper for load-failure logging while preserving the existing `{ message } | undefined` logger metadata behavior.
+- Completed compatibility-first typing batch 151 (behavior-preserving strategy manager config-guard cleanup):
+  - `packages/core/src/services/strategy-manager.service.ts`:
+    - introduced a local config guard helper for `initialize(...)` input narrowing instead of a direct bridge cast.
+    - removed the unnecessary `Error` cast in `safeLog()` error-handler forwarding.
+- Completed compatibility-first typing batch 150 (behavior-preserving trading orchestrator record-helper cleanup):
+  - `packages/core/src/services/trading-orchestrator.service.ts`:
+    - introduced a local record helper for runtime config object narrowing.
+    - removed the remaining inline indicator/enabled-flag object casts in `getIndicatorsConfig()` and `isEnabledAnalyzerConfig()`.
+- Completed compatibility-first typing batch 149 (behavior-preserving analyzer registry config-guard cleanup):
+  - `packages/core/src/services/analyzer-registry.service.ts`:
+    - normalized `baseConfig.indicators` and `baseConfig.analyzerDefaults` through the existing record helper before analyzer-specific merging.
+    - tightened the local `hasKey()` guard to reject arrays while preserving analyzer loading behavior.
+- Completed compatibility-first typing batch 148 (behavior-preserving strategy merger analyzer-defaults helper cleanup):
+  - `packages/core/src/services/strategy-config-merger.service.ts`:
+    - replaced the local `strategy as unknown as { analyzerDefaults?: unknown }` bridge with direct `StrategyConfig.analyzerDefaults` access.
+    - introduced a local `StrategyAnalyzerDefaults` alias for the stable per-analyzer default map shape already used by merges.
+- Completed compatibility-first typing batch 147 (behavior-preserving strategy loader record-guard cleanup):
+  - `packages/core/src/services/strategy-loader.service.ts`:
+    - introduced a shared local `asRecord()` helper for strategy/metadata/override validation paths.
+    - removed repeated inline object casts in strategy root, metadata, backtest, analyzer, and override validation while preserving validation semantics and error messages.
+- Completed compatibility-first typing batch 146 (behavior-preserving orchestrator builder bridge cleanup):
+  - `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts`:
+    - removed local compatibility casts for `config.analyzerDefaults` and `config.multiStrategy`.
+    - consumed the shared legacy `Config` contract directly after aligning its optional fields with the already-used runtime shape.
+- Completed compatibility-first typing batch 145 (behavior-preserving runtime orchestrator analyzer-defaults narrowing):
+  - `packages/core/src/services/trading-orchestrator.service.ts`:
+    - narrowed runtime `analyzerDefaults` from `Record<string, unknown>` to `Record<string, Record<string, unknown>>`.
+    - aligned `getAnalyzerDefaults()` with the actual per-analyzer object map consumed by analyzer config merge paths.
+- Completed compatibility-first typing batch 144 (behavior-preserving legacy config optional slice alignment):
+  - `packages/core/src/types/legacy.ts`:
+    - narrowed `Config.analyzerDefaults` to the stable per-analyzer record map shape used by strategy/analyzer flows.
+    - added optional `multiStrategy.enabled` to the shared legacy config contract to match the existing builder/runtime access pattern.
+- Completed compatibility-first typing batch 143 (behavior-preserving anomaly metadata cleanup):
+  - `packages/core/src/types/anomaly-detection/anomaly-detection.interface.ts`:
+    - replaced `AnomalyResult.metadata` `Record<string, any>` with `Record<string, unknown>`.
+    - preserved anomaly detection payload structure and service behavior.
+- Completed compatibility-first typing batch 142 (behavior-preserving strategy config DTO cleanup):
+  - `packages/core/src/types/strategy-config/types.ts`:
+    - replaced the last remaining `any` in `StrategyConfig.analyzerDefaults` with `Record<string, unknown>`.
+    - preserved the existing analyzer-defaults runtime shape used by strategy loading, merging, and analyzer registry flows.
+    - kept this batch type-only and behavior-preserving.
+- Verification:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts` -> PASS (6/6 suites, 160/160 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-authentication.service.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` -> PASS (2/2 suites, 43/43 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts` -> PASS (1/1 suite, 25/25 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.service.test.ts packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/whale-wall-tp.service.test.ts packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts` -> PASS (5/5 suites, 133/133 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/funding-rate-filter.service.test.ts packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts` -> PASS (4/4 suites, 79/79 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/fractal-smc-weighting.error-handling.test.ts packages/core/src/__tests__/services/micro-wall-detector.service.test.ts packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts packages/core/src/__tests__/services/volume-profile.service.test.ts packages/core/src/__tests__/services/volume-profile.error-handling.test.ts packages/core/src/__tests__/services/volatility-regime.service.test.ts packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts` -> PASS (7/7 suites, 190/190 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts packages/core/src/__tests__/services/order-flow-analyzer.service.test.ts packages/core/src/__tests__/services/retest-entry.service.test.ts packages/core/src/__tests__/services/retest-entry.error-handling.test.ts` -> PASS (6/6 suites, 151/151 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts` -> PASS (6/6 suites, 167/167 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` -> PASS (6/6 suites, 170/170 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/dynamic-position-sizer.test.ts packages/core/src/__tests__/services/multi-timeframe-trend.error-handling.test.ts packages/core/src/__tests__/services/resilience/circuit-breaker.test.ts packages/core/src/__tests__/services/resilience/rate-limiter.test.ts packages/core/src/__tests__/services/resilience/retry-policy.test.ts packages/core/src/__tests__/services/resilience/bulkhead.test.ts packages/core/src/__tests__/services/resilience/resilience-coordinator.test.ts` -> PASS (9/9 suites, 222/222 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/config-validator.service.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/repositories/__tests__/market-data.cache-repository.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts` -> PASS (6/6 suites, 126/126 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-loader.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts packages/core/src/__tests__/services/strategy-config-merger.error-handling.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (6/6 suites, 140/140 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts packages/core/src/__tests__/services/strategy-loader.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (6/6 suites, 143/143 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-loader.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/integration/strategy-integration.test.ts` -> PASS (4/4 suites, 77/77 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 - Completed compatibility-first typing batch 141 (behavior-preserving orderbook service interface alignment):
   - `packages/core/src/interfaces/IServices.ts`:
     - aligned stale `IOrderbookManagerService` methods from legacy `updateOrderbook()/getOrderbook()` `unknown` contracts to the current runtime API `processUpdate(update: OrderbookUpdate)` and `getSnapshot(): OrderbookSnapshot | null`.

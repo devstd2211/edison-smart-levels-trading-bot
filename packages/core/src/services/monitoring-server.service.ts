@@ -16,6 +16,7 @@ import { Server } from 'http';
 import { LoggerService } from './logger.service';
 import type { ILifecycle } from '../interfaces/ILifecycle';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 import type {
   IMonitoringHealthReader,
   IMonitoringMetricsReader,
@@ -63,6 +64,17 @@ export class MonitoringServer implements ILifecycle {
     this.safeLog('MonitoringServer initialized', 'info');
   }
 
+  private handleRecoveryError(error: unknown, context: string): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), {
+      strategy: RecoveryStrategy.SKIP,
+      context,
+    });
+  }
+
   // ============================================================================
   // PUBLIC API
   // ============================================================================
@@ -104,13 +116,8 @@ export class MonitoringServer implements ILifecycle {
         }
       });
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'MonitoringServer.start',
-        });
-      }
-      this.safeLog(`Failed to start MonitoringServer: ${error}`, 'error');
+      this.handleRecoveryError(error, 'MonitoringServer.start');
+      this.safeLog(`Failed to start MonitoringServer: ${getErrorMessage(error)}`, 'error');
       throw error;
     }
   }
@@ -137,13 +144,8 @@ export class MonitoringServer implements ILifecycle {
         });
       });
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'MonitoringServer.stop',
-        });
-      }
-      this.safeLog(`Failed to stop MonitoringServer: ${error}`, 'error');
+      this.handleRecoveryError(error, 'MonitoringServer.stop');
+      this.safeLog(`Failed to stop MonitoringServer: ${getErrorMessage(error)}`, 'error');
       throw error;
     }
   }
@@ -216,13 +218,8 @@ export class MonitoringServer implements ILifecycle {
         res.set('Content-Type', contentType);
         res.send(metrics);
       } catch (error) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'MonitoringServer./metrics',
-          });
-        }
-        this.safeLog(`/metrics error: ${error}`, 'error');
+        this.handleRecoveryError(error, 'MonitoringServer./metrics');
+        this.safeLog(`/metrics error: ${getErrorMessage(error)}`, 'error');
         res.status(500).json({ error: 'Failed to retrieve metrics' });
       }
     });
@@ -240,13 +237,8 @@ export class MonitoringServer implements ILifecycle {
 
         res.status(statusCode).json(health);
       } catch (error) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'MonitoringServer./health',
-          });
-        }
-        this.safeLog(`/health error: ${error}`, 'error');
+        this.handleRecoveryError(error, 'MonitoringServer./health');
+        this.safeLog(`/health error: ${getErrorMessage(error)}`, 'error');
         res.status(500).json({ error: 'Failed to retrieve health status' });
       }
     });
@@ -264,13 +256,8 @@ export class MonitoringServer implements ILifecycle {
 
         res.status(statusCode).json({ alive: isAlive });
       } catch (error) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'MonitoringServer./health/live',
-          });
-        }
-        this.safeLog(`/health/live error: ${error}`, 'error');
+        this.handleRecoveryError(error, 'MonitoringServer./health/live');
+        this.safeLog(`/health/live error: ${getErrorMessage(error)}`, 'error');
         res.status(500).json({ alive: false, error: 'Failed to check liveness' });
       }
     });
@@ -288,13 +275,8 @@ export class MonitoringServer implements ILifecycle {
 
         res.status(statusCode).json({ ready: isReady });
       } catch (error) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'MonitoringServer./health/ready',
-          });
-        }
-        this.safeLog(`/health/ready error: ${error}`, 'error');
+        this.handleRecoveryError(error, 'MonitoringServer./health/ready');
+        this.safeLog(`/health/ready error: ${getErrorMessage(error)}`, 'error');
         res.status(500).json({ ready: false, error: 'Failed to check readiness' });
       }
     });
@@ -324,12 +306,7 @@ export class MonitoringServer implements ILifecycle {
       }
     } catch (error) {
       // SKIP: Silently ignore logging errors
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'MonitoringServer.safeLog',
-        });
-      }
+      this.handleRecoveryError(error, 'MonitoringServer.safeLog');
     }
   }
 }

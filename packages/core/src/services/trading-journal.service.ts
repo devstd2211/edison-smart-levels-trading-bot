@@ -28,6 +28,7 @@ import {
   calculateTradeFeeSummary,
   JournalStatistics,
 } from './trading-journal/trading-journal-calculations.utils';
+import { getErrorMessage } from '../utils/error.utils';
 const DATA_DIR = 'data';
 const JOURNAL_FILE = 'trade-journal.json';
 const CSV_FILE = 'trade-journal.csv';
@@ -113,7 +114,7 @@ export class TradingJournalService {
         allTrades.map(t => ({ id: t.id, netPnl: t.netPnl })),
       );
     } catch (error: unknown) {
-      this.logger.error('❌ Failed to sync virtual balance', { error, errorMessage: error instanceof Error ? error.message : String(error) });
+      this.logger.error('❌ Failed to sync virtual balance', { error, errorMessage: getErrorMessage(error) });
     }
   }
 
@@ -141,7 +142,7 @@ export class TradingJournalService {
         this.logger.warn('⚠️ Corrupted journal file, starting with empty journal', {
           path: this.journalPath,
           backupPath: this.journalPath + '.corrupted',
-          reason: parseError instanceof Error ? parseError.message : 'JSON parse error',
+          reason: getErrorMessage(parseError),
         });
 
         // Backup corrupted file for manual recovery
@@ -149,7 +150,7 @@ export class TradingJournalService {
           fs.copyFileSync(this.journalPath, this.journalPath + '.corrupted');
         } catch (backupError) {
           this.logger.error('Failed to backup corrupted journal', {
-            error: backupError instanceof Error ? backupError.message : String(backupError),
+            error: getErrorMessage(backupError),
           });
         }
 
@@ -167,7 +168,7 @@ export class TradingJournalService {
       });
     } catch (error) {
       // File read error - degrade gracefully
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       this.logger.error('❌ Failed to load trade journal', {
         error: errorMsg,
         path: this.journalPath,
@@ -230,7 +231,7 @@ export class TradingJournalService {
       fs.writeFileSync(this.journalPath, data, 'utf-8');
       this.logger.debug('💾 Trade journal saved', { entriesCount: entries.length });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       this.logger.error('❌ Failed to save trade journal', { error: errorMsg });
     }
   }
@@ -448,7 +449,7 @@ export class TradingJournalService {
           );
         }
         this.logger.error('❌ Failed to append to CSV history', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
           tradeId: params.id,
         });
       });
@@ -576,10 +577,7 @@ export class TradingJournalService {
     marketData: Record<string, unknown>,
     key: 'stochastic' | 'bollingerBands',
   ): Record<string, unknown> {
-    const value = marketData[key];
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? value as Record<string, unknown>
-      : {};
+    return this.asRecord(marketData[key]) ?? {};
   }
 
   /**
@@ -717,7 +715,7 @@ export class TradingJournalService {
           () => {
             throw new CSVExportError('Failed to export journal to CSV', {
               filePath: csvPath,
-              reason: error instanceof Error ? error.message : 'Unknown error',
+                reason: getErrorMessage(error),
               recordsCount: this.trades.size,
             });
           },
@@ -728,7 +726,7 @@ export class TradingJournalService {
         );
       }
 
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       this.logger.error('❌ Failed to export trade journal to CSV', {
         error: errorMsg,
         path: csvPath,
@@ -743,5 +741,11 @@ export class TradingJournalService {
     this.ensureInitialized();
     this.trades.clear();
     this.saveJournal();
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }
