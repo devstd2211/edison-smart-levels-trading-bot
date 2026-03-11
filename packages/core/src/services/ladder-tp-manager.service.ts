@@ -30,6 +30,7 @@ import {
 import type { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ConfigurationError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -216,7 +217,7 @@ export class LadderTpManagerService {
     } catch (error) {
       this.logger.error(`Failed to execute TP${level.level} partial close`, {
         level: level.level,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return false;
     }
@@ -285,7 +286,7 @@ export class LadderTpManagerService {
       return true;
     } catch (error) {
       this.logger.error('Failed to move SL to breakeven', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return false;
     }
@@ -378,7 +379,7 @@ export class LadderTpManagerService {
       return true;
     } catch (error) {
       this.logger.error('Failed to move trailing SL', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return false;
     }

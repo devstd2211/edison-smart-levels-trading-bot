@@ -23,6 +23,7 @@ import { TelegramService } from '../telegram.service';
 import { INTEGER_MULTIPLIERS } from '../../constants';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionNotFoundError, OrderValidationError } from '../../errors/DomainErrors';
+import { getErrorMessage } from '../../utils/error.utils';
 import {
   resolveExitTypeFromCloseReason,
   resolveTakeProfitLevel,
@@ -116,7 +117,7 @@ export class WebSocketEventHandler {
         onRecover: () => {
           this.logger.warn('⚠️ getCurrentPrice failed, using fallback entry price', {
             fallback: fallbackPrice,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -194,7 +195,7 @@ export class WebSocketEventHandler {
         context: 'WebSocketEventHandler.handlePositionClosed',
         onRecover: () => {
           this.logger.warn('⚠️ Position close handling failed, continuing with degraded state', {
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -239,7 +240,7 @@ export class WebSocketEventHandler {
           onRetry: (attempt, error) => {
             this.logger.warn(`⚠️ Retry ${attempt}/2: Journal lookup failed`, {
               journalId,
-              error: error instanceof Error ? error.message : String(error),
+              error: getErrorMessage(error),
             });
           },
           onFailure: () => {
@@ -311,7 +312,7 @@ export class WebSocketEventHandler {
         onRecover: () => {
           this.logger.warn('⚠️ Failed to record position close in journal, continuing with degraded state', {
             positionId: position.id,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -358,7 +359,7 @@ export class WebSocketEventHandler {
         onRecover: () => {
           this.logger.error('⚠️ Failed to clear position from memory, position may appear open but is closed on exchange', {
             positionId: position.id,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -560,13 +561,13 @@ export class WebSocketEventHandler {
   async handleError(error: Error): Promise<void> {
     try {
       this.logger.error('WebSocket error', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     } catch (logError) {
       // Fallback logging (don't use ErrorHandler here to avoid recursion)
       console.error('⚠️ WebSocket error logging failed:', {
-        originalError: error instanceof Error ? error.message : String(error),
-        logError: logError instanceof Error ? logError.message : String(logError),
+        originalError: getErrorMessage(error),
+        logError: getErrorMessage(logError),
       });
     }
   }

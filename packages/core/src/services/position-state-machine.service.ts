@@ -39,6 +39,7 @@ import {
 } from '../types/legacy';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { getErrorMessage } from '../utils/error.utils';
 import { appendJsonLine, ensureParentDirectoryExists } from './position-state-machine/position-state-machine-persistence.utils';
 import {
   buildInvalidTransitionResult,
@@ -187,7 +188,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
           this.logger.warn('⚠️ Main state file corrupted, attempting backup recovery', {
             original: this.stateFilePath,
             backup: backupPath,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
           try {
             content = await fsPromises.readFile(backupPath, 'utf-8');
@@ -215,7 +216,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
           invalidLines++;
           this.logger.warn('⚠️ Skipped corrupted state line', {
             line: line.substring(0, 50) + '...',
-            error: err instanceof Error ? err.message : String(err),
+            error: getErrorMessage(err),
           });
         }
       }
@@ -278,7 +279,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         } catch (err) {
           skippedCount++;
           this.logger.debug('ℹ️ Skipped corrupted history line', {
-            error: err instanceof Error ? err.message : String(err),
+            error: getErrorMessage(err),
           });
         }
       }

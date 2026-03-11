@@ -31,6 +31,7 @@ import {
   ExchangeConnectionError,
   ExchangeAPIError,
 } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -178,7 +179,7 @@ export class LimitOrderExecutorService {
       } catch (error) {
         lastError = error as Error;
         this.logger.warn(`Limit order placement failed (attempt ${attempt})`, {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
 
         if (attempt < this.config.maxRetries + 1) {
@@ -257,7 +258,7 @@ export class LimitOrderExecutorService {
       } catch (error) {
         this.logger.warn('Error checking order status', {
           orderId,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
         await this.sleep(ORDER_CHECK_INTERVAL_MS);
       }
@@ -400,7 +401,7 @@ export class LimitOrderExecutorService {
       // SKIP strategy: log and continue
       this.logger.warn('Order cancellation failed (non-critical, continuing)', {
         orderId,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return false;
     }
@@ -475,7 +476,7 @@ export class LimitOrderExecutorService {
       } catch (error) {
         lastError = error as Error;
         this.logger.warn(`Market order attempt ${attempt} failed`, {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
 
         if (attempt < 2) {
@@ -559,7 +560,7 @@ export class LimitOrderExecutorService {
         // LimitOrderFillTimeoutError thrown - continue to cancel and fallback
         this.logger.warn('Limit order fill timeout - proceeding to cancel and fallback', {
           orderId: limitResult.orderId,
-          error: timeoutError instanceof Error ? timeoutError.message : String(timeoutError),
+          error: getErrorMessage(timeoutError),
         });
         filled = false;
       }
@@ -604,7 +605,7 @@ export class LimitOrderExecutorService {
       };
     } catch (error) {
       this.logger.error('Limit order execution failed', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       // If fallback enabled, try market order
@@ -614,7 +615,7 @@ export class LimitOrderExecutorService {
           return await this.fallbackToMarket(direction, quantity, leverage);
         } catch (fallbackError) {
           this.logger.error('Market order fallback also failed', {
-            error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+            error: getErrorMessage(fallbackError),
           });
           throw fallbackError;
         }

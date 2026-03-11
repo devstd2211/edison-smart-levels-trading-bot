@@ -2813,3 +2813,62 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
 
 
 
+- [x] Compatibility-first typing batch 219 (2026-03-11):
+  - `packages/core/src/services/ml-signal-validator.service.ts`:
+    - replaced the remaining inline error-message extraction in fallback validation, win-rate, regime-adjustment, and quality-scoring logging paths with shared `getErrorMessage()`.
+  - behavior-preserving service review: no broader decomposition required in this slice; scope limited to final compact error-normalization cleanup in a service with dedicated error-handling coverage.
+- [x] Verification (targeted suite + build, 2026-03-11, post compatibility-first typing batch 219):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 45/45 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Compatibility-first typing batch 220 (2026-03-11):
+  - `packages/core/src/services/funding-rate-filter.service.ts`:
+    - replaced the remaining cache-write error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/multi-strategy/strategy-state-manager.service.ts`:
+    - replaced the remaining strategy-switch failure error-message extraction with shared `getErrorMessage()`.
+  - behavior-preserving service review: no broader decomposition required in this slice; scope limited to final compact error-normalization cleanup in two already-covered services.
+- [x] Verification (targeted suites + build, 2026-03-11, post compatibility-first typing batch 220):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/phase-10-multi-strategy.test.ts`
+  - Result: 2/2 suites PASS, 101/101 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Compatibility-first typing batch 221 (2026-03-11):
+  - `packages/core/src/services/ladder-tp-manager.service.ts`:
+    - replaced the remaining partial-close / breakeven / trailing error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/limit-order-executor.service.ts`:
+    - replaced the remaining placement / timeout / cancellation / fallback error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/position-state-machine.service.ts`:
+    - replaced the remaining corrupted-state and corrupted-history recovery error-message extraction with shared `getErrorMessage()`.
+  - behavior-preserving service review: no broader decomposition required in this slice; scope limited to final compact error-normalization cleanup in three already-covered services.
+- [x] Verification (targeted suites + build, 2026-03-11, post compatibility-first typing batch 221):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/__tests__/services/position-state-machine.service.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/limit-order-executor.service.test.ts`
+  - Result: 5/5 suites PASS, 110/110 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Compatibility-first typing batch 222 (2026-03-11):
+  - `packages/core/src/services/console-dashboard.service.ts`:
+    - replaced the remaining dashboard update and initialization error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/multi-strategy/strategy-orchestrator.service.ts`:
+    - replaced the remaining candle-routing and orchestrator-creation error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/event-deduplication.service.ts`:
+    - replaced the remaining degraded-cleanup warning error-message extraction with shared `getErrorMessage()`.
+  - behavior-preserving service review: no broader decomposition required in this slice; scope limited to final compact error-normalization cleanup in three already-covered services.
+- [x] Verification (targeted suites + build, 2026-03-11, post compatibility-first typing batch 222):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.service.test.ts packages/core/src/__tests__/phase-10-multi-strategy.test.ts`
+  - Result: 4/4 suites PASS, 147/147 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Compatibility-first typing batch 223 (2026-03-11):
+  - `packages/core/src/services/handlers/websocket.handler.ts`:
+    - replaced the remaining fallback/recovery/logging error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/handlers/position.handler.ts`:
+    - replaced the remaining monitoring/fallback error-message extraction with shared `getErrorMessage()`.
+  - `packages/core/src/services/data-collector/database-writer.ts`:
+    - replaced the remaining batch/final-write error-message extraction with shared `getErrorMessage()`.
+  - behavior-preserving service review: no broader decomposition required in this slice; scope limited to final compact error-normalization cleanup in three boundary files with adjacent coverage.
+- [x] Verification (targeted suites + build, 2026-03-11, post compatibility-first typing batch 223):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 63/63 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

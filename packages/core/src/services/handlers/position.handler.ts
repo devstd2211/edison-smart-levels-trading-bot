@@ -19,6 +19,7 @@ import { TelegramService } from '../telegram.service';
 import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionMonitoringError } from '../../errors/DomainErrors';
+import { getErrorMessage } from '../../utils/error.utils';
 
 const DECIMAL_PLACES = {
   PERCENT: 2,
@@ -76,7 +77,7 @@ export class PositionEventHandler {
         onRecover: () => {
           this.logger.warn('⚠️ SL hit logging failed, continuing monitoring', {
             positionId: event.position?.id,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -108,7 +109,7 @@ export class PositionEventHandler {
           this.logger.warn('⚠️ TP hit logging failed, continuing monitoring', {
             positionId: event.position?.id,
             tpLevel: event.tpLevel,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -146,7 +147,7 @@ export class PositionEventHandler {
         onRecover: () => {
           this.logger.warn('⚠️ Failed to clear position memory, continuing with degraded state', {
             positionId: position.id,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -168,7 +169,7 @@ export class PositionEventHandler {
         onRecover: () => {
           this.logger.warn('⚠️ Telegram notification failed, continuing', {
             positionId: position.id,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -219,7 +220,7 @@ export class PositionEventHandler {
           onRetry: (attempt, error) => {
             this.logger.warn(`⚠️ Retry ${attempt}/3: Failed to close position on exchange`, {
               positionId: event.position.id,
-              error: error instanceof Error ? error.message : String(error),
+              error: getErrorMessage(error),
             });
           },
           onFailure: () => {
@@ -243,7 +244,7 @@ export class PositionEventHandler {
       // No need to call recordPositionClose() here - avoid duplicates
     } catch (error) {
       this.logger.error('Exchange close failed, activating FALLBACK strategy', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: event.position.id,
       });
 
@@ -272,7 +273,7 @@ export class PositionEventHandler {
           onRecover: () => {
             this.logger.error('⚠️ Both exchange close and fallback failed, position may remain open', {
               positionId: event.position.id,
-              error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+              error: getErrorMessage(fallbackError),
             });
           },
         });
@@ -296,7 +297,7 @@ export class PositionEventHandler {
       {
         operation: 'handleMonitorError',
         positionId: 'unknown',
-        reason: error instanceof Error ? error.message : String(error),
+        reason: getErrorMessage(error),
       },
     );
 
@@ -307,7 +308,7 @@ export class PositionEventHandler {
         context: 'PositionEventHandler.handleMonitorError',
         onFailure: () => {
           this.logger.error('🚨 Position Monitor error - manual intervention required', {
-            originalError: error instanceof Error ? error.message : String(error),
+            originalError: getErrorMessage(error),
           });
         },
       });

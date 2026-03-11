@@ -28,6 +28,7 @@ import {
   DEFAULT_SIGNAL_VALIDATION,
   ML_SIGNAL_VALIDATOR_TECHNICAL,
 } from '../constants/phase-10-constants';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * MLSignalValidatorService
@@ -134,7 +135,7 @@ export class MLSignalValidatorService {
       return this.performValidation(signal, context);
     } catch (error) {
       this.safeLog('error', 'Signal validation failed without ErrorHandler', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return this.getConservativeResult(signal);
     }
@@ -171,7 +172,7 @@ export class MLSignalValidatorService {
 
       this.safeLog('warn', 'Win rate calculation failed, using default 50%', {
         signalsCount: signals.length,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       return 50; // Default neutral win rate
@@ -216,7 +217,7 @@ export class MLSignalValidatorService {
       this.safeLog('warn', 'Regime adjustment failed, using original confidence', {
         regime,
         signalType,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       return confidence; // No adjustment on failure
@@ -267,7 +268,7 @@ export class MLSignalValidatorService {
       return this.performQualityScoring(signal, context);
     } catch (error) {
       this.safeLog('error', 'Quality scoring failed without ErrorHandler', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return 50; // Neutral score on failure
     }

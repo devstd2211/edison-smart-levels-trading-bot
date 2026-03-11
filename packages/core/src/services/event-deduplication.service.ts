@@ -16,6 +16,7 @@
 import { TIME_UNITS, INTEGER_MULTIPLIERS } from '../constants';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Event Deduplication Service
@@ -135,7 +136,7 @@ export class EventDeduplicationService {
       } else {
         // Fallback for backward compatibility: just warn and continue
         this.logger?.warn('Cache cleanup degraded - continuing with current cache state', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
       }
     }

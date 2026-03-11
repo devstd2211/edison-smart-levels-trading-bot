@@ -22,7 +22,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
 import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { FundingRateApiError, FundingRateCacheError } from '../errors/DomainErrors';
-import { normalizeError } from '../utils/error.utils';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // INTERFACES
@@ -244,7 +244,7 @@ export class FundingRateFilterService {
         await this.errorHandler.handle(
           new FundingRateCacheError('Failed to update funding rate cache', {
             operation: 'set',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: getErrorMessage(error),
           }),
           {
             strategy: RecoveryStrategy.GRACEFUL_DEGRADE,

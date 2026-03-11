@@ -10,6 +10,7 @@ import * as zlib from 'zlib';
 import { promisify } from 'util';
 import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors'; // Phase 8.9.35
+import { getErrorMessage } from '../../utils/error.utils';
 
 const gzip = promisify(zlib.gzip);
 
@@ -76,7 +77,7 @@ export class DatabaseWriter {
         }
       } catch (error) {
         this.logger.error('Failed to write batch', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
       }
     }, this.batchIntervalMs);
@@ -123,7 +124,7 @@ export class DatabaseWriter {
       });
     } catch (error) {
       this.logger.error('Failed to write final batch', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }
@@ -162,7 +163,7 @@ export class DatabaseWriter {
         );
       } catch (error) {
         this.logger.error('Failed to write candles batch', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
           chunkSize: chunk.length,
         });
       }
@@ -206,7 +207,7 @@ export class DatabaseWriter {
         );
       } catch (error) {
         this.logger.error('Failed to write orderbooks batch', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
           chunkSize: chunk.length,
         });
       }
@@ -244,7 +245,7 @@ export class DatabaseWriter {
         );
       } catch (error) {
         this.logger.error('Failed to write ticks batch', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
           chunkSize: chunk.length,
         });
       }

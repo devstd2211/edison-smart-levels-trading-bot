@@ -36,6 +36,7 @@ import { StrategyOrchestratorCacheService } from './strategy-orchestrator-cache.
 import { CandleProvider } from '../../providers/candle.provider';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import { PositionLifecycleService } from '../position-lifecycle.service';
+import { getErrorMessage } from '../../utils/error.utils';
 
 export class StrategyOrchestratorService {
   private activeContext: IsolatedStrategyContext | null = null;
@@ -349,7 +350,7 @@ export class StrategyOrchestratorService {
     } catch (error) {
       this.logger.error('[Phase 10.2] Error routing candle to active strategy', {
         strategyId: this.activeContext?.strategyId,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         errorStack: error instanceof Error ? error.stack : undefined,
       });
     }
@@ -410,7 +411,7 @@ export class StrategyOrchestratorService {
       return orchestrator;
     } catch (error) {
       this.logger.error(`[Phase 10.3b] Failed to create TradingOrchestrator for ${context.strategyId}`, {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
       return null;

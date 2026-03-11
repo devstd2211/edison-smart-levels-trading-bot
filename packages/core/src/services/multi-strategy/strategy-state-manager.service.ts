@@ -21,6 +21,7 @@ import type {
   IsolatedStrategyContext,
 } from '../../types/legacy';
 import type { ILogger } from '../../interfaces/IMonitoring';
+import { getErrorMessage } from '../../utils/error.utils';
 
 export class StrategyStateManagerService {
   private stateDirectory = './strategy-states';
@@ -123,7 +124,7 @@ export class StrategyStateManagerService {
         savedState,
       };
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       this.log('error', `[StrategyStateManager] ❌ Switch failed: ${errorMsg}`);
 
       return {

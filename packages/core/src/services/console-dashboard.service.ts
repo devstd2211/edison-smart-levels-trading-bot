@@ -38,6 +38,7 @@ import {
   type DashboardEvent,
   type DashboardMetricSnapshot,
 } from './console-dashboard/console-dashboard-state.utils';
+import { getErrorMessage } from '../utils/error.utils';
 
 interface DashboardConfig {
   enabled: boolean;
@@ -187,7 +188,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     try {
       this.initialize();
     } catch (error) {
-      this.safeWarn('[DASHBOARD] Failed to initialize:', error instanceof Error ? error.message : String(error));
+      this.safeWarn('[DASHBOARD] Failed to initialize:', getErrorMessage(error));
       this.config.enabled = false;
       this.started = false;
     }
@@ -628,7 +629,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.lastUpdate = new Date();
     } catch (error) {
       // GRACEFUL_DEGRADE: Metrics update failure
-      this.safeLog(`Metrics update failed for ${timeframe}: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Metrics update failed for ${timeframe}: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -654,7 +655,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.priceUpdatedAt = Date.now();
     } catch (error) {
       // GRACEFUL_DEGRADE: State update failure
-      this.safeLog(`Price state update failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Price state update failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -682,7 +683,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       }
     } catch (error) {
       // GRACEFUL_DEGRADE: Position update failure
-      this.safeLog(`Position update failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Position update failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -708,7 +709,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.currentPnLPercent = pnlPercent;
     } catch (error) {
       // GRACEFUL_DEGRADE: State update failure
-      this.safeLog(`PnL state update failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`PnL state update failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -787,7 +788,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.tpLevels = buildDashboardTakeProfitLevels(levels);
     } catch (error) {
       // GRACEFUL_DEGRADE: TP levels update failure
-      this.safeLog(`Take profit update failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Take profit update failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -812,7 +813,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.slLevel = price;
     } catch (error) {
       // GRACEFUL_DEGRADE: Stop loss update failure
-      this.safeLog(`Stop loss update failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Stop loss update failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -834,7 +835,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.dailyPnL += pnl;
     } catch (error) {
       // GRACEFUL_DEGRADE: Win record failure
-      this.safeLog(`Win record failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Win record failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -856,7 +857,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       this.state.dailyPnL += pnl;
     } catch (error) {
       // GRACEFUL_DEGRADE: Loss record failure
-      this.safeLog(`Loss record failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Loss record failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -889,7 +890,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       }, 50);
     } catch (error) {
       // GRACEFUL_DEGRADE: Event record failure
-      this.safeLog(`Event record failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog(`Event record failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
