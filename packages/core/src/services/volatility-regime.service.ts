@@ -24,6 +24,7 @@ import {
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ValidationError, ConfigurationError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -131,7 +132,7 @@ export class VolatilityRegimeService {
       this.logger[level](message, meta);
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.SKIP,
           context: `VolatilityRegimeService.${level}`,
         });
@@ -248,9 +249,9 @@ export class VolatilityRegimeService {
         {
           field: 'analyze',
           value: atrPercent,
-          reason: (error as Error).message,
+          reason: getErrorMessage(error),
         },
-        error as Error
+        error instanceof Error ? error : undefined
       );
 
       if (this.errorHandler) {
@@ -260,7 +261,7 @@ export class VolatilityRegimeService {
           onRecover: () => {
             this.safeLog('warn', 'Analysis failed - returning safe defaults', {
               atrPercent,
-              reason: (error as Error).message,
+              reason: getErrorMessage(error),
             });
           },
         });
@@ -499,7 +500,7 @@ export class VolatilityRegimeService {
       });
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.SKIP,
           context: 'VolatilityRegimeService.updateConfig',
         });

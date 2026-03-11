@@ -93,7 +93,7 @@ interface PendingEntryDecision {
 
 type RuntimeOrchestratorConfig = OrchestratorConfig & {
   minSignals?: number;
-  analyzerDefaults?: Record<string, unknown>;
+  analyzerDefaults?: Record<string, Record<string, unknown>>;
   analyzers?: Record<string, unknown> | unknown[];
   filters?: unknown;
 };
@@ -1374,14 +1374,10 @@ export class TradingOrchestrator implements ILifecycle {
   }
 
   private getIndicatorsConfig(): Record<string, unknown> {
-    const indicators = this.getRuntimeConfig().indicators;
-    if (indicators && typeof indicators === 'object') {
-      return indicators as unknown as Record<string, unknown>;
-    }
-    return {};
+    return this.asRecord(this.getRuntimeConfig().indicators);
   }
 
-  private getAnalyzerDefaults(): Record<string, unknown> {
+  private getAnalyzerDefaults(): Record<string, Record<string, unknown>> {
     const defaults = this.getRuntimeConfig().analyzerDefaults;
     if (defaults && typeof defaults === 'object') {
       return defaults;
@@ -1401,10 +1397,7 @@ export class TradingOrchestrator implements ILifecycle {
   }
 
   private isEnabledAnalyzerConfig(value: unknown): boolean {
-    if (!value || typeof value !== 'object') {
-      return false;
-    }
-    return (value as Record<string, unknown>).enabled === true;
+    return this.asRecord(value).enabled === true;
   }
 
   private getPreCalcCache(): IndicatorPreCalcCache | null {
@@ -1420,6 +1413,12 @@ export class TradingOrchestrator implements ILifecycle {
    */
   getActionQueue(): ActionQueueService | null {
     return this.actionQueue;
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
   }
 }
 

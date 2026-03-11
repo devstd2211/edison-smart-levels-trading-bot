@@ -103,7 +103,7 @@ export class OrderFlowAnalyzerService {
     } catch (error) {
       // SKIP: Non-critical logging failure (never block service operation)
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
     }
   }
@@ -199,7 +199,7 @@ export class OrderFlowAnalyzerService {
     } catch (error) {
       // GRACEFUL_DEGRADE: Continue with last known state on processing error
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         });
       }
@@ -321,7 +321,7 @@ export class OrderFlowAnalyzerService {
         };
       } catch (error) {
         if (this.errorHandler) {
-          this.errorHandler.handle(error as Error, {
+          this.errorHandler.handle(error, {
             strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
           });
         }
@@ -330,7 +330,7 @@ export class OrderFlowAnalyzerService {
     } catch (error) {
       // GRACEFUL_DEGRADE: Return null on any unexpected error
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         });
       }
@@ -436,7 +436,7 @@ export class OrderFlowAnalyzerService {
       return midPrice;
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         });
       }

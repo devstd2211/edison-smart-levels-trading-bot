@@ -19,6 +19,7 @@ import { SignalDirection } from '../types/legacy';
 import { WallTrackerService } from './wall-tracker.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // CONFIGURATION
@@ -150,6 +151,14 @@ export class WhaleWallTPService {
     if (wallTracker && !config?.qualityValidation) {
       this.config.qualityValidation.enabled = true;
     }
+  }
+
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), { strategy }).catch(() => { /* Silent */ });
   }
 
   /**
@@ -379,10 +388,8 @@ export class WhaleWallTPService {
       return result;
     } catch (error) {
       // GRACEFUL_DEGRADE: Adjustment operation failure
-      this.safeLog('error', `Whale wall adjustment failed: ${error instanceof Error ? error.message : String(error)}`);
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.safeLog('error', `Whale wall adjustment failed: ${getErrorMessage(error)}`);
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return this.noAdjustment('Wall adjustment failed');
     }
   }
@@ -776,9 +783,7 @@ export class WhaleWallTPService {
       }
     } catch (error) {
       // SKIP: Logging failures never block execution
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 }

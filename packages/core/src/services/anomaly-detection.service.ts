@@ -30,6 +30,7 @@ import {
   DEFAULT_ANOMALY_DETECTION,
   ANOMALY_DETECTION_TECHNICAL,
 } from '../constants/phase-10-constants';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 /**
  * AnomalyDetectionService
@@ -82,6 +83,17 @@ export class AnomalyDetectionService {
     });
   }
 
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy, context: string): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), {
+      strategy,
+      context,
+    });
+  }
+
   /**
    * Detect volume anomaly
    *
@@ -106,16 +118,11 @@ export class AnomalyDetectionService {
     try {
       return this.performVolumeAnomalyDetection(volume);
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'detectVolumeAnomaly',
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'detectVolumeAnomaly');
 
       this.safeLog('warn', 'Volume anomaly detection failed, returning no anomaly', {
         volume,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       return this.getNoAnomalyResult('volume');
@@ -146,16 +153,11 @@ export class AnomalyDetectionService {
     try {
       return this.performVolatilitySpikeDetection(currentVolatility);
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'detectVolatilitySpike',
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'detectVolatilitySpike');
 
       this.safeLog('warn', 'Volatility spike detection failed, returning no spike', {
         currentVolatility,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       return {
@@ -197,16 +199,11 @@ export class AnomalyDetectionService {
     try {
       return this.performWhaleDetection(trades);
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'detectWhaleActivity',
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'detectWhaleActivity');
 
       this.safeLog('warn', 'Whale activity detection failed, returning empty array', {
         tradesCount: trades.length,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       return [];
@@ -227,15 +224,10 @@ export class AnomalyDetectionService {
     try {
       return this.performManipulationDetection();
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'flagPossibleManipulation',
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'flagPossibleManipulation');
 
       this.safeLog('warn', 'Manipulation detection failed, returning no flags', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
 
       return this.getNoManipulationFlags();
@@ -632,12 +624,7 @@ export class AnomalyDetectionService {
       this.logger[level](message, meta);
     } catch (error) {
       // Silently skip logging errors (SKIP strategy)
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'logging',
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP, 'logging');
     }
   }
 }

@@ -25,6 +25,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { calculateDirectionalProfitPercent } from './enhanced-exit/enhanced-exit-profit.utils';
 import { blockedRiskRewardValidation } from './enhanced-exit/enhanced-exit-riskreward.utils';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // Local Level type definition
 interface Level {
@@ -245,6 +246,14 @@ export class EnhancedExitService {
     this.validateConfig();
   }
 
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), { strategy }).catch(() => { /* Silent */ });
+  }
+
   /**
    * Validate configuration on construction
    * THROW: Invalid config parameters prevent service creation
@@ -373,9 +382,7 @@ export class EnhancedExitService {
     try {
       this.logger[level](message, context);
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 
@@ -510,9 +517,7 @@ export class EnhancedExitService {
       };
     } catch (error) {
       // Catch-all for unexpected errors
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return blockedRiskRewardValidation('Unexpected error - trade blocked');
     }
   }
@@ -1148,10 +1153,8 @@ export class EnhancedExitService {
     } catch (error) {
       // GRACEFUL_DEGRADE: Keep existing config on validation failure
       this.config = oldConfig;
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
-      this.safeLog('warn', 'Config update failed, reverting to existing config', { error: (error as Error).message });
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
+      this.safeLog('warn', 'Config update failed, reverting to existing config', { error: getErrorMessage(error) });
     }
   }
 }

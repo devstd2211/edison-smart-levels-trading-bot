@@ -1,6 +1,7 @@
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ValidationError, ConfigurationError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Volume Profile Service (PHASE 4 Feature 3)
@@ -128,7 +129,7 @@ export class VolumeProfileService {
       this.logger[level](message, meta);
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.SKIP,
           context: `VolumeProfileService.${level}`,
         });
@@ -196,13 +197,13 @@ export class VolumeProfileService {
       this.safeLog('info', '✅ VolumeProfileService config updated', { config: this.config });
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
           context: 'VolumeProfileService.updateConfig',
         });
       }
       // Keep existing config on failure
-      this.safeLog('warn', '⚠️ Config update failed, keeping existing config', { error: (error as Error).message });
+      this.safeLog('warn', '⚠️ Config update failed, keeping existing config', { error: getErrorMessage(error) });
     }
   }
 
@@ -379,13 +380,13 @@ export class VolumeProfileService {
     } catch (error) {
       // GRACEFUL_DEGRADE - Phase 8.9.47
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
           context: 'VolumeProfileService.calculate',
         });
       }
       this.safeLog('warn', '⚠️ Volume profile calculation failed, returning null', {
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
       return null;
     }
@@ -420,7 +421,7 @@ export class VolumeProfileService {
     } catch (error) {
       // GRACEFUL_DEGRADE - return fallback price level
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
+        this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
           context: 'VolumeProfileService.getPriceLevels',
         });

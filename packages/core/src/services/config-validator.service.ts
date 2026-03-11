@@ -139,10 +139,7 @@ FIX: Update your config.json and restart.
   }
 
   private static getChildValueStatic(value: unknown, key: string): unknown {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return undefined;
-    }
-    return (value as Record<string, unknown>)[key];
+    return ConfigValidatorService.asRecordStatic(value)?.[key];
   }
 
   /**
@@ -492,17 +489,21 @@ FIX: Update your config.json and restart.
   }
 
   private getChildValue(value: unknown, key: string): unknown {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return undefined;
-    }
-    return (value as Record<string, unknown>)[key];
+    return this.asRecordOrNull(value)?.[key];
   }
 
   private asRecord(value: unknown): Record<string, unknown> {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value as Record<string, unknown>;
-    }
-    return {};
+    return this.asRecordOrNull(value) ?? {};
+  }
+
+  private asRecordOrNull(value: unknown): Record<string, unknown> | null {
+    return ConfigValidatorService.asRecordStatic(value);
+  }
+
+  private static asRecordStatic(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 
   /**

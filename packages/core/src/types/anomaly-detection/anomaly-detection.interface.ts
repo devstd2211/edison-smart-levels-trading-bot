@@ -70,7 +70,7 @@ export interface AnomalyResult {
   timestamp: number;
 
   /** Additional metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

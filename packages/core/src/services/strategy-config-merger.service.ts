@@ -20,6 +20,7 @@ import { Config } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 type MergeObject = Record<string, unknown>;
+type StrategyAnalyzerDefaults = Record<string, Record<string, unknown>>;
 type MergeableConfig = (ConfigNew | Config) & {
   filters?: unknown;
   analyzers?: unknown;
@@ -366,10 +367,10 @@ export class StrategyConfigMergerService {
     return {};
   }
 
-  private getAnalyzerDefaults(strategy: StrategyConfig): MergeObject | undefined {
-    const value = (strategy as unknown as { analyzerDefaults?: unknown }).analyzerDefaults;
+  private getAnalyzerDefaults(strategy: StrategyConfig): StrategyAnalyzerDefaults | undefined {
+    const value = strategy.analyzerDefaults;
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value as MergeObject;
+      return value;
     }
     return undefined;
   }

@@ -32,6 +32,7 @@ import {
   SessionStatsWriteError,
   SessionRecordValidationError,
 } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -509,7 +510,7 @@ export class SessionStatsService {
 
       this.logger.debug('💾 Session stats saved', { path: this.filePath });
     } catch (error) {
-      this.logger.error('❌ Failed to save session stats', { error: String(error) });
+      this.logger.error('❌ Failed to save session stats', { error: getErrorMessage(error) });
     }
   }
 
@@ -535,7 +536,7 @@ export class SessionStatsService {
         this.logger.warn('⚠️ Corrupted session stats file, starting with empty database', {
           path: this.filePath,
           backupPath: this.filePath + '.corrupted',
-          reason: parseError instanceof Error ? parseError.message : 'JSON parse error',
+          reason: getErrorMessage(parseError),
         });
 
         // Backup corrupted file for manual recovery
@@ -543,7 +544,7 @@ export class SessionStatsService {
           fs.copyFileSync(this.filePath, this.filePath + '.corrupted');
         } catch (backupError) {
           this.logger.error('Failed to backup corrupted session stats', {
-            error: backupError instanceof Error ? backupError.message : String(backupError),
+            error: getErrorMessage(backupError),
           });
         }
 
@@ -569,7 +570,7 @@ export class SessionStatsService {
       }
     } catch (error) {
       // File read error - degrade gracefully
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       this.logger.error('❌ Failed to load session stats', {
         error: errorMsg,
         path: this.filePath,

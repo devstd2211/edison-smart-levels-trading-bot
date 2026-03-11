@@ -15,6 +15,16 @@ export const initializeMonitoringAndResilience = (
   config: Config,
   monitoring?: MonitoringConfig,
 ): void => {
+  const asRecord = (value: unknown): Record<string, unknown> | null =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
+
+  const getNumberOption = (value: unknown, key: string, fallback: number): number => {
+    const candidate = asRecord(value)?.[key];
+    return typeof candidate === 'number' ? candidate : fallback;
+  };
+
   if (monitoring?.healthCheckEnabled) {
     state.healthCheckService = new HealthCheckService(
       state.bybitService,
@@ -58,7 +68,7 @@ export const initializeMonitoringAndResilience = (
     });
   }
 
-  const resilience = (config as Partial<{ resilience: ResilienceConfig }>).resilience;
+  const resilience = asRecord(config)?.resilience as ResilienceConfig | undefined;
   if (resilience?.enabled) {
     const isMetricsRecorder = (value: unknown): value is IMonitoringMetricsRecorder => {
       if (typeof value !== 'object' || value === null) {
@@ -83,8 +93,8 @@ export const initializeMonitoringAndResilience = (
       state.errorHandler,
     );
     state.logger.info('✅ Circuit Breaker initialized (Phase 14.2.1)', {
-      failureThreshold: (resilience.circuitBreaker as { failureThreshold?: number } | undefined)?.failureThreshold || 5,
-      timeout: (resilience.circuitBreaker as { timeout?: number } | undefined)?.timeout || 60000,
+      failureThreshold: getNumberOption(resilience.circuitBreaker, 'failureThreshold', 5),
+      timeout: getNumberOption(resilience.circuitBreaker, 'timeout', 60000),
     });
 
     state.rateLimiter = new RateLimiterService(
@@ -116,8 +126,8 @@ export const initializeMonitoringAndResilience = (
       state.errorHandler,
     );
     state.logger.info('✅ Retry Policy initialized (Phase 14.2.3)', {
-      maxAttempts: (resilience.retry as { maxAttempts?: number } | undefined)?.maxAttempts || 3,
-      retryBudget: `${(resilience.retry as { retryBudgetPercent?: number } | undefined)?.retryBudgetPercent || 10}%`,
+      maxAttempts: getNumberOption(resilience.retry, 'maxAttempts', 3),
+      retryBudget: `${getNumberOption(resilience.retry, 'retryBudgetPercent', 10)}%`,
     });
 
     state.bulkhead = new BulkheadService(

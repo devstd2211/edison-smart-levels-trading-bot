@@ -547,12 +547,16 @@ export class DynamicPositionSizerService {
   ): void {
     if (!this.logger) return;
     try {
-      const context = typeof meta === 'object' && meta !== null
-        ? (meta as Record<string, unknown>)
-        : undefined;
+      const context = this.asRecord(meta) ?? undefined;
       this.logger[level](message, context);
     } catch (error) {
       // SKIP - never throw on logging failure
     }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }

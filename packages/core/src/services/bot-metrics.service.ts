@@ -18,7 +18,7 @@
 
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { extractErrorMessage } from '../utils/error-helper';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Trade result snapshot
@@ -88,6 +88,17 @@ export class BotMetricsService {
     this.errorHandler = errorHandler;
   }
 
+  private handleRecoveryError(message: string, strategy: RecoveryStrategy, context: string): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(new Error(message), {
+      strategy,
+      context,
+    });
+  }
+
   /**
    * Start service initialization (explicit lifecycle)
    */
@@ -102,15 +113,12 @@ export class BotMetricsService {
     } catch (error: unknown) {
       // RETRY strategy: logger might be temporarily unavailable
       if (this.errorHandler) {
-        this.errorHandler.handle(new Error('Failed to log initialization'), {
-          strategy: RecoveryStrategy.RETRY,
-          context: 'BotMetricsService.start',
-        });
+        this.handleRecoveryError('Failed to log initialization', RecoveryStrategy.RETRY, 'BotMetricsService.start');
       } else {
         try {
           this.logger.error('??? Failed to initialize BotMetrics service', {
             error,
-            errorMessage: extractErrorMessage(error),
+            errorMessage: getErrorMessage(error),
           });
         } catch {
           // Even error logging failed - continue silently to never block startup
@@ -164,13 +172,10 @@ export class BotMetricsService {
     } catch (error: unknown) {
       // SKIP strategy: losing one trade record doesn't impact trading logic
       if (this.errorHandler) {
-        this.errorHandler.handle(new Error('Failed to record trade metrics'), {
-          strategy: RecoveryStrategy.SKIP,
-          context: `BotMetricsService.recordTrade [${trade.id}]`,
-        });
+        this.handleRecoveryError('Failed to record trade metrics', RecoveryStrategy.SKIP, `BotMetricsService.recordTrade [${trade.id}]`);
       } else {
         try {
-          this.logger.error('❌ Failed to record trade', { error, errorMessage: extractErrorMessage(error) });
+          this.logger.error('❌ Failed to record trade', { error, errorMessage: getErrorMessage(error) });
         } catch {
           // Even error logging failed - continue silently to never block trading
         }
@@ -228,22 +233,16 @@ export class BotMetricsService {
       } catch (logError: unknown) {
         // SKIP strategy: losing event logging doesn't impact core trading logic
         if (this.errorHandler) {
-          this.errorHandler.handle(new Error('Failed to log event metrics'), {
-            strategy: RecoveryStrategy.SKIP,
-            context: `BotMetricsService.recordEvent [${eventType}]`,
-          });
+          this.handleRecoveryError('Failed to log event metrics', RecoveryStrategy.SKIP, `BotMetricsService.recordEvent [${eventType}]`);
         }
       }
     } catch (err: unknown) {
       // SKIP strategy: losing event metrics doesn't impact core trading logic
       if (this.errorHandler) {
-        this.errorHandler.handle(new Error('Failed to record event metrics'), {
-          strategy: RecoveryStrategy.SKIP,
-          context: `BotMetricsService.recordEvent [${eventType}]`,
-        });
+        this.handleRecoveryError('Failed to record event metrics', RecoveryStrategy.SKIP, `BotMetricsService.recordEvent [${eventType}]`);
       } else {
         try {
-          this.logger.error('❌ Failed to record event', { error: err, errorMessage: extractErrorMessage(err) });
+          this.logger.error('❌ Failed to record event', { error: err, errorMessage: getErrorMessage(err) });
         } catch {
           // Even error logging failed - continue silently to never block trading
         }
@@ -365,13 +364,10 @@ export class BotMetricsService {
     } catch (error: unknown) {
       // GRACEFUL_DEGRADE strategy: never blocks trading due to logging failure
       if (this.errorHandler) {
-        this.errorHandler.handle(new Error('Failed to print metrics report'), {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'BotMetricsService.printReport',
-        });
+        this.handleRecoveryError('Failed to print metrics report', RecoveryStrategy.GRACEFUL_DEGRADE, 'BotMetricsService.printReport');
       } else {
         try {
-          this.logger.error('❌ Failed to print metrics report', { error, errorMessage: extractErrorMessage(error) });
+          this.logger.error('❌ Failed to print metrics report', { error, errorMessage: getErrorMessage(error) });
         } catch {
           // Even error logging failed - continue silently to never block trading
         }
@@ -399,13 +395,10 @@ export class BotMetricsService {
     } catch (error: unknown) {
       // SKIP strategy: reset must complete even if logging fails
       if (this.errorHandler) {
-        this.errorHandler.handle(new Error('Failed to reset metrics'), {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'BotMetricsService.reset',
-        });
+        this.handleRecoveryError('Failed to reset metrics', RecoveryStrategy.SKIP, 'BotMetricsService.reset');
       } else {
         try {
-          this.logger.error('❌ Failed to reset metrics', { error, errorMessage: extractErrorMessage(error) });
+          this.logger.error('❌ Failed to reset metrics', { error, errorMessage: getErrorMessage(error) });
         } catch {
           // Even error logging failed - continue silently to never block trading
         }

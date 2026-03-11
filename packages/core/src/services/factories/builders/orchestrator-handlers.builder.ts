@@ -4,8 +4,6 @@ import { TradingOrchestrator } from '../../trading-orchestrator.service';
 import { StrategyRegistryService } from '../../multi-strategy/strategy-registry.service';
 import { PositionEventHandler, WebSocketEventHandler } from '../../handlers';
 import { RiskManager } from '../../risk-manager.service';
-import type { MultiStrategyConfig } from './bot-services.types';
-
 export const initializeOrchestratorAndHandlers = (
   state: BotServicesState,
   riskManager: RiskManager,
@@ -46,7 +44,7 @@ export const initializeOrchestratorAndHandlers = (
     riskManagement: config.riskManagement,
     indicators: config.indicators,
     analyzers: config.analyzers,
-    analyzerDefaults: (config as Partial<{ analyzerDefaults: Record<string, unknown> }>).analyzerDefaults,
+    analyzerDefaults: config.analyzerDefaults,
   };
 
   state.logger.info('🔬 OrchestratorConfig prepared', {
@@ -74,7 +72,7 @@ export const initializeOrchestratorAndHandlers = (
     state.logger.info('🔬 BTC candles store linked to TradingOrchestrator');
   }
 
-  const multiStrategyMode = (config as Partial<{ multiStrategy: MultiStrategyConfig }>).multiStrategy?.enabled || false;
+  const multiStrategyMode = config.multiStrategy?.enabled || false;
   if (multiStrategyMode) {
     try {
       const strategyRegistry = new StrategyRegistryService();

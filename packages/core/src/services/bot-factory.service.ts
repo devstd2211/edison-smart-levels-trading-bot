@@ -40,6 +40,7 @@ import {
 } from '../errors/DomainErrors';
 import { applyBotServiceOverrides } from './factories/bot-services.overrides';
 import { validateBotConfig } from './factories/bot-services.validate';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 /**
  * Factory options for partial DI overrides
@@ -65,6 +66,17 @@ export interface BotFactoryOptions {
  * BotFactory - Creates BotServices state with dependency injection
  */
 export class BotFactory {
+  private static logError(logger: LoggerService | undefined, message: string, error: unknown): void {
+    if (!logger) {
+      return;
+    }
+
+    logger.error(message, {
+      error: getErrorMessage(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  }
+
   /**
    * Validate bot configuration
    *
@@ -134,11 +146,7 @@ export class BotFactory {
     try {
       this.validateConfig(config);
     } catch (err) {
-      if (logger) {
-        logger.error('❌ Config validation failed', {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
+      this.logError(logger, '❌ Config validation failed', err);
       throw err;
     }
 
@@ -147,14 +155,8 @@ export class BotFactory {
     try {
       services = buildBotServices(config);
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : 'Unknown initialization error';
-      if (logger) {
-        logger.error('❌ BotServices initialization failed', {
-          error: errorMsg,
-          stack: err instanceof Error ? err.stack : undefined,
-        });
-      }
+      const errorMsg = getErrorMessage(err);
+      this.logError(logger, '❌ BotServices initialization failed', err);
 
       throw new BotFactoryInitializationError(
         `Failed to initialize BotServices: ${errorMsg}`,
@@ -169,7 +171,7 @@ export class BotFactory {
       // SKIP: Log but don't throw (DI overrides are non-critical)
       if (logger) {
         logger.warn('⚠️ Could not apply all DI overrides', {
-          error: err instanceof Error ? err.message : String(err),
+          error: getErrorMessage(err),
         });
       }
       // Continue anyway - overrides are optional
@@ -220,10 +222,7 @@ export class BotFactory {
       const services = this.createWithValidation(config, options, logger);
       return { success: true, services };
     } catch (err) {
-      const error =
-        err instanceof Error
-          ? err
-          : new Error(String(err));
+      const error = normalizeError(err);
       return { success: false, error };
     }
   }

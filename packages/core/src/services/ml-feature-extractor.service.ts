@@ -22,6 +22,7 @@ import {
   SECOND_INDEX,
   PERCENT_MULTIPLIER,
 } from '../constants/technical.constants';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 export interface MultiTimeframeContext {
   candles1m: Candle[];
@@ -35,6 +36,14 @@ export class MLFeatureExtractorService {
 
   constructor(private logger?: LoggerService, private errorHandler?: ErrorHandler) {
     this.aggregator = new CandleAggregatorService(logger, errorHandler);
+  }
+
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), { strategy }).catch(() => { /* Silent */ });
   }
 
   /**
@@ -112,10 +121,8 @@ export class MLFeatureExtractorService {
       };
     } catch (error) {
       // GRACEFUL_DEGRADE: Feature extraction failures
-      this.safeLog('error', `Feature extraction failed: ${error instanceof Error ? error.message : String(error)}`);
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.safeLog('error', `Feature extraction failed: ${getErrorMessage(error)}`);
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       throw error;
     }
   }
@@ -591,10 +598,8 @@ export class MLFeatureExtractorService {
       };
     } catch (error) {
       // GRACEFUL_DEGRADE: Multi-timeframe extraction failures
-      this.safeLog('error', `Multi-timeframe extraction failed: ${error instanceof Error ? error.message : String(error)}`);
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.safeLog('error', `Multi-timeframe extraction failed: ${getErrorMessage(error)}`);
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       throw error;
     }
   }
@@ -721,9 +726,7 @@ export class MLFeatureExtractorService {
       }
     } catch (error) {
       // SKIP: Logging failures never block execution
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 

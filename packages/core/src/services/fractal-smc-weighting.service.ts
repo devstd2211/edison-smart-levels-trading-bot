@@ -23,6 +23,7 @@ import {
 } from '../types/legacy';
 import { INTEGER_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage } from '../utils/error.utils';
 
 export class FractalSmcWeightingService {
   // Fractal weights (total max: 125 normalized points)
@@ -164,9 +165,9 @@ export class FractalSmcWeightingService {
       };
     } catch (error) {
       // GRACEFUL_DEGRADE: Calculation failures
-      this.safeLog('error', `Weighted score calculation failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog('error', `Weighted score calculation failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       // Return safe default
       return {
@@ -459,7 +460,7 @@ export class FractalSmcWeightingService {
     } catch (error) {
       // SKIP: Logging failures never block execution
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
     }
   }

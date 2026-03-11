@@ -59,24 +59,29 @@ export class BybitServiceAdapter implements IExchange {
   private hasFundingRateMethod(
     service: unknown,
   ): service is { getFundingRate: (symbol: string) => Promise<number | { fundingRate: number }> } {
-    if (typeof service !== 'object' || service === null) {
+    const candidate = this.asRecord(service);
+    if (!candidate) {
       return false;
     }
-    const candidate = service as { getFundingRate?: unknown };
     return typeof candidate.getFundingRate === 'function';
   }
 
   private isBybitOrder(value: unknown): value is BybitOrder {
-    if (typeof value !== 'object' || value === null) {
+    const order = this.asRecord(value);
+    if (!order) {
       return false;
     }
-
-    const order = value as Record<string, unknown>;
     return typeof order.orderId === 'string';
   }
 
   private asBybitOrders(orders: unknown): BybitOrder[] {
     return Array.isArray(orders) ? orders.filter((order) => this.isBybitOrder(order)) : [];
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 
   // ============================================================================

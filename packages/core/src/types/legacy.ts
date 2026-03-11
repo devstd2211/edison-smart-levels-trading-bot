@@ -1180,7 +1180,10 @@ export interface Config {
   logging: LoggingConfig;
   system: SystemConfig;
   dataSubscriptions: DataSubscriptionsConfig; // Data subscriptions (candles, orderbook, ticks)
-  analyzerDefaults?: Record<string, unknown>; // Default analyzer parameters (optional)
+  analyzerDefaults?: Record<string, Record<string, unknown>>; // Default analyzer parameters (optional)
+  multiStrategy?: {
+    enabled?: boolean;
+  };
   entryConfig: {
     divergenceDetector: {
       minStrength: number;

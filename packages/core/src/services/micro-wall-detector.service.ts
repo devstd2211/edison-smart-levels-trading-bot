@@ -21,6 +21,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
 
 import { LoggerService, SignalDirection, MicroWallDetectorConfig, MicroWall, OrderBook, OrderbookLevel } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // MICRO WALL DETECTOR SERVICE
@@ -78,7 +79,7 @@ export class MicroWallDetectorService {
       else if (level === 'error') this.logger.error(message, context);
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
       // Silent fail - never block operation due to logger errors
     }
@@ -293,7 +294,7 @@ export class MicroWallDetectorService {
       return detectedWalls;
     } catch (error) {
       // GRACEFUL_DEGRADE: Return empty array if processing fails
-      this.safeLog('warn', '⚠️ MicroWall detection failed', { error: (error as Error).message });
+      this.safeLog('warn', '⚠️ MicroWall detection failed', { error: getErrorMessage(error) });
       return [];
     }
   }
@@ -341,7 +342,7 @@ export class MicroWallDetectorService {
       return confidence;
     } catch (error) {
       // GRACEFUL_DEGRADE: Return safe default on calculation failure
-      this.safeLog('warn', '⚠️ MicroWall confidence calculation failed', { error: (error as Error).message });
+      this.safeLog('warn', '⚠️ MicroWall confidence calculation failed', { error: getErrorMessage(error) });
       return 0;
     }
   }
@@ -489,7 +490,7 @@ export class MicroWallDetectorService {
       }
     } catch (error) {
       // SKIP: Silent fail for cleanup errors
-      this.safeLog('warn', '⚠️ MicroWall cleanup failed', { error: (error as Error).message });
+      this.safeLog('warn', '⚠️ MicroWall cleanup failed', { error: getErrorMessage(error) });
     }
   }
 
@@ -537,7 +538,7 @@ export class MicroWallDetectorService {
       this.safeLog('debug', '🔄 MicroWallDetector reset');
     } catch (error) {
       // SKIP: Silent fail for reset errors
-      this.safeLog('warn', '⚠️ MicroWall reset failed', { error: (error as Error).message });
+      this.safeLog('warn', '⚠️ MicroWall reset failed', { error: getErrorMessage(error) });
     }
   }
 

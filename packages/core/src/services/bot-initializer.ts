@@ -346,10 +346,10 @@ export class BotInitializer {
   private isLifecycleService(
     value: unknown,
   ): value is { start: () => void | Promise<void>; stop: () => void | Promise<void> } {
-    if (typeof value !== 'object' || value === null) {
+    const candidate = this.asRecord(value);
+    if (!candidate) {
       return false;
     }
-    const candidate = value as { start?: unknown; stop?: unknown };
     return typeof candidate.start === 'function' && typeof candidate.stop === 'function';
   }
 
@@ -357,6 +357,12 @@ export class BotInitializer {
     if (this.isLifecycleService(value)) {
       this.lifecycleManager.register(value);
     }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 
   /**

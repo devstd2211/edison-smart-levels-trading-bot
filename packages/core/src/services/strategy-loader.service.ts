@@ -172,18 +172,18 @@ export class StrategyLoaderService {
    * @throws StrategyValidationError if validation fails
    */
   private validateStrategy(strategy: unknown): void {
-    if (!strategy || typeof strategy !== 'object') {
+    const config = this.asRecord(strategy);
+    if (!config) {
       throw new StrategyValidationError('Strategy must be an object');
     }
-
-    const config = strategy as Record<string, unknown>;
 
     // Validate required fields
     if (typeof config.version !== 'number') {
       throw new StrategyValidationError('version must be a number', 'version');
     }
 
-    if (!config.metadata || typeof config.metadata !== 'object') {
+    const metadata = this.asRecord(config.metadata);
+    if (!metadata) {
       throw new StrategyValidationError('metadata is required and must be an object', 'metadata');
     }
 
@@ -195,22 +195,25 @@ export class StrategyLoaderService {
     }
 
     // Validate metadata
-    this.validateMetadata(config.metadata as StrategyMetadata);
+    this.validateMetadata(metadata);
 
     // Validate analyzers
     this.validateAnalyzers(config.analyzers as StrategyAnalyzerConfig[]);
 
     // Validate overrides if present
-    if (config.indicators && typeof config.indicators === 'object') {
-      this.validateIndicatorOverrides(config.indicators as Record<string, unknown>);
+    const indicators = this.asRecord(config.indicators);
+    if (indicators) {
+      this.validateIndicatorOverrides(indicators);
     }
 
-    if (config.filters && typeof config.filters === 'object') {
-      this.validateFilterOverrides(config.filters as Record<string, unknown>);
+    const filters = this.asRecord(config.filters);
+    if (filters) {
+      this.validateFilterOverrides(filters);
     }
 
-    if (config.riskManagement && typeof config.riskManagement === 'object') {
-      this.validateRiskManagementOverrides(config.riskManagement as Record<string, unknown>);
+    const riskManagement = this.asRecord(config.riskManagement);
+    if (riskManagement) {
+      this.validateRiskManagementOverrides(riskManagement);
     }
   }
 
@@ -218,11 +221,10 @@ export class StrategyLoaderService {
    * Validate metadata section
    */
   private validateMetadata(metadata: unknown): void {
-    if (!metadata || typeof metadata !== 'object') {
+    const meta = this.asRecord(metadata);
+    if (!meta) {
       throw new StrategyValidationError('metadata must be an object', 'metadata');
     }
-
-    const meta = metadata as Record<string, unknown>;
 
     const requiredFields = ['name', 'version', 'description', 'createdAt', 'lastModified', 'tags'];
     for (const field of requiredFields) {
@@ -254,7 +256,13 @@ export class StrategyLoaderService {
           'metadata.backtest',
         );
       }
-      const backtest = meta.backtest as Record<string, unknown>;
+      const backtest = this.asRecord(meta.backtest);
+      if (!backtest) {
+        throw new StrategyValidationError(
+          'metadata.backtest must be an object',
+          'metadata.backtest',
+        );
+      }
       if (
         typeof backtest.winRate !== 'number' ||
         backtest.winRate < 0 ||
@@ -288,7 +296,13 @@ export class StrategyLoaderService {
         );
       }
 
-      const a = analyzer as Record<string, unknown>;
+      const a = this.asRecord(analyzer);
+      if (!a) {
+        throw new StrategyValidationError(
+          `analyzers[${i}] must be an object`,
+          `analyzers[${i}]`,
+        );
+      }
 
       // Validate required fields
       if (typeof a.name !== 'string') {
@@ -513,6 +527,12 @@ export class StrategyLoaderService {
     }
 
     return strategies;
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }
 

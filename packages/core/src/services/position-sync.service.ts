@@ -15,6 +15,7 @@ import { PositionLifecycleService } from './position-lifecycle.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';
 import { TelegramService } from './telegram.service';
 import { ErrorHandler, RecoveryStrategy, type ErrorHandlingConfig } from '../errors/ErrorHandler';
+import { getErrorMessage } from '../utils/error.utils';
 import {
   PositionExchangeSyncError,
   PositionProtectionError,
@@ -60,10 +61,6 @@ export class PositionSyncService {
   ) {
     // If no errorHandler provided, create one with the logger
     this.errorHandler = errorHandler || new ErrorHandler(logger);
-  }
-
-  private getErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
   }
 
   private hasCorrectCloseSide(position: Position, order: BybitOrder): boolean {
@@ -226,7 +223,7 @@ export class PositionSyncService {
     } catch (error) {
       this.logger.error('Failed to sync closed position', {
         positionId: position.id,
-        error: this.getErrorMessage(error),
+        error: getErrorMessage(error),
       });
 
       // Fallback: clear position anyway
@@ -234,7 +231,7 @@ export class PositionSyncService {
         await this.positionManager.clearPosition();
       } catch (clearError) {
         this.logger.error('Failed to clear position in fallback', {
-          error: this.getErrorMessage(clearError),
+          error: getErrorMessage(clearError),
         });
       }
     }
@@ -523,7 +520,7 @@ export class PositionSyncService {
     } catch (error) {
       this.logger.error('Deep sync check failed', {
         positionId: position?.id,
-        error: this.getErrorMessage(error),
+        error: getErrorMessage(error),
       });
       // Re-throw to let caller handle (preserves critical protection errors)
       throw error;
@@ -534,15 +531,21 @@ export class PositionSyncService {
     if (!Array.isArray(value)) {
       return [];
     }
-    return value.filter(this.isBybitOrder);
+    return value.filter((order) => this.isBybitOrder(order));
   }
 
   private isBybitOrder(value: unknown): value is BybitOrder {
-    if (typeof value !== 'object' || value === null) {
+    const order = this.asRecord(value);
+    if (!order) {
       return false;
     }
-    const order = value as Record<string, unknown>;
     return typeof order.orderId === 'string'
       && typeof order.side === 'string';
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }

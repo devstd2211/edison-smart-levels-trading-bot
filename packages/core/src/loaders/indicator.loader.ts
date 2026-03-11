@@ -114,7 +114,7 @@ export class IndicatorLoader {
     } catch (error) {
       this.logger.error(
         'Failed to load indicators:',
-        error instanceof Error ? { message: getErrorMessage(error) } : {}
+        this.getLoadFailureMeta(error),
       );
       throw error;
     }
@@ -129,6 +129,10 @@ export class IndicatorLoader {
     if (!this.registry.isRegistered(type)) {
       throw new Error(`Indicator ${type} is not registered in registry. Make sure IndicatorRegistry.register() was called during initialization.`);
     }
+  }
+
+  private getLoadFailureMeta(error: unknown): { message: string } | undefined {
+    return error instanceof Error ? { message: getErrorMessage(error) } : undefined;
   }
 }
 

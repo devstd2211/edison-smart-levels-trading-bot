@@ -22,6 +22,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
 import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { FundingRateApiError, FundingRateCacheError } from '../errors/DomainErrors';
+import { normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // INTERFACES
@@ -53,6 +54,17 @@ export class FundingRateFilterService {
     private logger: LoggerService,
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.32
   ) {}
+
+  private async handleSkipError(error: unknown, context: string): Promise<void> {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    await this.errorHandler.handle(normalizeError(error), {
+      strategy: RecoveryStrategy.SKIP,
+      context,
+    });
+  }
 
   /**
    * Check if signal is allowed based on funding rate
@@ -88,12 +100,7 @@ export class FundingRateFilterService {
               reason: 'Funding too high (too many longs)',
             });
           } catch (logError) {
-            if (this.errorHandler) {
-              await this.errorHandler.handle(logError as Error, {
-                strategy: RecoveryStrategy.SKIP,
-                context: 'FundingRateFilterService.checkSignal.longBlockLogging',
-              });
-            }
+            await this.handleSkipError(logError, 'FundingRateFilterService.checkSignal.longBlockLogging');
           }
 
           return {
@@ -115,12 +122,7 @@ export class FundingRateFilterService {
               reason: 'Funding too low (too many shorts)',
             });
           } catch (logError) {
-            if (this.errorHandler) {
-              await this.errorHandler.handle(logError as Error, {
-                strategy: RecoveryStrategy.SKIP,
-                context: 'FundingRateFilterService.checkSignal.shortBlockLogging',
-              });
-            }
+            await this.handleSkipError(logError, 'FundingRateFilterService.checkSignal.shortBlockLogging');
           }
 
           return {
@@ -138,12 +140,7 @@ export class FundingRateFilterService {
           fundingRate: (fundingRate * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
         });
       } catch (logError) {
-        if (this.errorHandler) {
-          await this.errorHandler.handle(logError as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'FundingRateFilterService.checkSignal.allowedLogging',
-          });
-        }
+        await this.handleSkipError(logError, 'FundingRateFilterService.checkSignal.allowedLogging');
       }
 
       return {
@@ -155,12 +152,7 @@ export class FundingRateFilterService {
       try {
         this.logger.error('Error checking funding rate filter', { error });
       } catch (logError) {
-        if (this.errorHandler) {
-          await this.errorHandler.handle(logError as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'FundingRateFilterService.checkSignal.errorLogging',
-          });
-        }
+        await this.handleSkipError(logError, 'FundingRateFilterService.checkSignal.errorLogging');
       }
       // Allow signal if filter fails (fail-safe)
       return { allowed: true, reason: 'Filter error (allowed by default)' };
@@ -188,12 +180,7 @@ export class FundingRateFilterService {
           cacheAge: Math.floor((now - this.lastFetchTime) / INTEGER_MULTIPLIERS.ONE_THOUSAND) + 's',
         });
       } catch (error) {
-        if (this.errorHandler) {
-          await this.errorHandler.handle(error as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'FundingRateFilterService.getCurrentFundingRate.cacheLogging',
-          });
-        }
+        await this.handleSkipError(error, 'FundingRateFilterService.getCurrentFundingRate.cacheLogging');
       }
       return this.cachedFundingRate;
     }
@@ -202,12 +189,7 @@ export class FundingRateFilterService {
     try {
       this.logger.debug('🔄 Fetching funding rate from API');
     } catch (error) {
-      if (this.errorHandler) {
-        await this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'FundingRateFilterService.getCurrentFundingRate.fetchLogging',
-        });
-      }
+      await this.handleSkipError(error, 'FundingRateFilterService.getCurrentFundingRate.fetchLogging');
     }
 
     let fundingData: FundingRateData;
@@ -280,12 +262,7 @@ export class FundingRateFilterService {
         nextFundingTime: new Date(fundingData.nextFundingTime).toISOString(),
       });
     } catch (error) {
-      if (this.errorHandler) {
-        await this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'FundingRateFilterService.getCurrentFundingRate.successLogging',
-        });
-      }
+      await this.handleSkipError(error, 'FundingRateFilterService.getCurrentFundingRate.successLogging');
     }
 
     return fundingData;
@@ -302,12 +279,7 @@ export class FundingRateFilterService {
     try {
       this.logger.debug('🗑️ Funding rate cache cleared');
     } catch (error) {
-      if (this.errorHandler) {
-        await this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'FundingRateFilterService.clearCache.logging',
-        });
-      }
+      await this.handleSkipError(error, 'FundingRateFilterService.clearCache.logging');
     }
   }
 

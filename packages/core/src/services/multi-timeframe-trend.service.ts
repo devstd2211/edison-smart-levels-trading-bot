@@ -578,7 +578,7 @@ export class MultiTimeframeTrendService {
     multiTFData: MultiTimeframeData,
     key: keyof MultiTimeframeData,
   ): Candle[] {
-    const value = (multiTFData as unknown as Record<string, unknown>)[key];
+    const value = this.asRecord(multiTFData)?.[key];
     return Array.isArray(value) ? (value as Candle[]) : [];
   }
 
@@ -611,5 +611,11 @@ export class MultiTimeframeTrendService {
         alignment: 'MIXED',
       },
     };
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }

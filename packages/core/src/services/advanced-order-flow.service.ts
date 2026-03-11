@@ -31,6 +31,7 @@ import {
   DEFAULT_ORDER_FLOW_ANALYSIS,
   ADVANCED_ORDER_FLOW_TECHNICAL,
 } from '../constants/phase-10-constants';
+import { normalizeError } from '../utils/error.utils';
 
 /**
  * AdvancedOrderFlowService - Modular order flow analysis with ErrorHandler integration
@@ -68,6 +69,18 @@ export class AdvancedOrderFlowService {
       enableMomentum: config.enableMomentum,
       strategicThresholds: this.strategicConfig,
     });
+  }
+
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    try {
+      this.errorHandler.handle(normalizeError(error), { strategy });
+    } catch {
+      // Preserve existing non-blocking recovery semantics if ErrorHandler itself fails
+    }
   }
 
   // ==========================================================================
@@ -214,11 +227,7 @@ export class AdvancedOrderFlowService {
     try {
       this.logger[level](message, meta);
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 
@@ -302,12 +311,10 @@ export class AdvancedOrderFlowService {
 
       // Validate result
       if (!Number.isFinite(imbalance)) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(
-            new Error('Imbalance calculation produced invalid result'),
-            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
-          );
-        }
+        this.handleRecoveryError(
+          new Error('Imbalance calculation produced invalid result'),
+          RecoveryStrategy.GRACEFUL_DEGRADE,
+        );
         return {
           buyVolume: buyVol,
           sellVolume: sellVol,
@@ -328,11 +335,7 @@ export class AdvancedOrderFlowService {
         confidence,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return {
         buyVolume: 0,
         sellVolume: 0,
@@ -397,11 +400,7 @@ export class AdvancedOrderFlowService {
         duration,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return {
         pattern: 'neutral',
         confidence: 0,
@@ -487,11 +486,7 @@ export class AdvancedOrderFlowService {
         confidence: detected ? this.strategicConfig.spoofingConfidence : 0,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return {
         detected: false,
         confidence: 0,
@@ -540,12 +535,10 @@ export class AdvancedOrderFlowService {
 
       // Validate
       if (!Number.isFinite(momentum)) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(
-            new Error('Momentum calculation produced invalid result'),
-            { strategy: RecoveryStrategy.GRACEFUL_DEGRADE },
-          );
-        }
+        this.handleRecoveryError(
+          new Error('Momentum calculation produced invalid result'),
+          RecoveryStrategy.GRACEFUL_DEGRADE,
+        );
         return {
           value: 0,
           direction: 'NEUTRAL',
@@ -573,11 +566,7 @@ export class AdvancedOrderFlowService {
         rate,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return {
         value: 0,
         direction: 'NEUTRAL',
@@ -646,11 +635,7 @@ export class AdvancedOrderFlowService {
         orderbookCount: this.orderbookHistory.length,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
 
       // Return neutral analysis on error
       return {

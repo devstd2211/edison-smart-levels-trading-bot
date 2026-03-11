@@ -280,7 +280,7 @@ export class MarketDataCacheRepository implements IMarketDataRepository {
    * Numbers: ~8 bytes each, Arrays: ~24 + value*8
    */
   private isObjectLike(value: IndicatorCacheValue): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null;
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
   private isIndicatorArray(value: IndicatorCacheValue): value is IndicatorCacheValue[] {

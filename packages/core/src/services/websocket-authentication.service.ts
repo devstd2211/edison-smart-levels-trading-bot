@@ -16,6 +16,7 @@
 import crypto from 'crypto';
 import { TIMING_CONSTANTS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 const AUTH_EXPIRES_OFFSET_MS = TIMING_CONSTANTS.AUTH_EXPIRES_OFFSET_MS;
 
@@ -43,6 +44,14 @@ export class WebSocketAuthenticationService {
     this.errorHandler = errorHandler;
   }
 
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), { strategy }).catch(() => { /* Silent */ });
+  }
+
   /**
    * Safely log messages, catching any logger errors
    */
@@ -53,9 +62,7 @@ export class WebSocketAuthenticationService {
         this.logger[level](message, context);
       }
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 
@@ -97,11 +104,9 @@ export class WebSocketAuthenticationService {
     } catch (error) {
       // GRACEFUL_DEGRADE: On signature generation failure, return safe default payload
       this.safeLog('warn', 'Failed to generate WebSocket auth payload', {
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
 
       // Return a safe default with empty signature
       const expires = Date.now() + AUTH_EXPIRES_OFFSET_MS;
@@ -142,11 +147,9 @@ export class WebSocketAuthenticationService {
     } catch (error) {
       // GRACEFUL_DEGRADE: Return false on validation failure
       this.safeLog('debug', 'Credential validation failed', {
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return false;
     }
   }

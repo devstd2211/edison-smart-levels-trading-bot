@@ -49,23 +49,29 @@ export class BinanceServiceAdapter implements IExchange {
   private hasFundingRateMethod(
     service: unknown,
   ): service is { getFundingRate: (symbol: string) => Promise<number> } {
-    if (typeof service !== 'object' || service === null) {
+    const candidate = this.asRecord(service);
+    if (!candidate) {
       return false;
     }
-    const candidate = service as { getFundingRate?: unknown };
     return typeof candidate.getFundingRate === 'function';
   }
 
   private isExchangeOrderRecord(value: unknown): value is ExchangeOrderRecord & { orderId: string } {
-    if (typeof value !== 'object' || value === null) {
+    const candidate = this.asRecord(value);
+    if (!candidate) {
       return false;
     }
-
-    return typeof (value as { orderId?: unknown }).orderId === 'string';
+    return typeof candidate.orderId === 'string';
   }
 
   private asOrderRecords(orders: unknown): Array<ExchangeOrderRecord & { orderId: string }> {
     return Array.isArray(orders) ? orders.filter((order) => this.isExchangeOrderRecord(order)) : [];
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 
   // ============================================================================

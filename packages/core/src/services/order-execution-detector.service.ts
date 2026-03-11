@@ -47,7 +47,7 @@ export class OrderExecutionDetectorService {
     } catch (error) {
       // SKIP: Non-critical logging failure
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
     }
   }
@@ -77,7 +77,7 @@ export class OrderExecutionDetectorService {
     } catch (error) {
       this.safeLog('debug', 'Failed to parse closedSize', { closedSize: execData.closedSize });
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       closedSize = 0;
     }
@@ -172,7 +172,7 @@ export class OrderExecutionDetectorService {
     } catch (error) {
       this.safeLog('debug', 'Failed to parse execPrice', { execPrice: execData.execPrice });
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       execPrice = 0;
     }

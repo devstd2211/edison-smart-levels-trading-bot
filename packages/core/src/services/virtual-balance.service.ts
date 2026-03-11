@@ -29,6 +29,7 @@ import { createErrorContext } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { FileSystemError, ValidationError } from '../errors/DomainErrors';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // TYPES
@@ -108,7 +109,7 @@ export class VirtualBalanceService {
         break; // Success, exit loop
       } catch (error: unknown) {
         retryCount++;
-        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorMsg = getErrorMessage(error);
 
         if (retryCount < maxRetries) {
           // RETRY: Exponential backoff for recoverable errors
@@ -195,7 +196,7 @@ export class VirtualBalanceService {
         return; // Success
       } catch (error: unknown) {
         retryCount++;
-        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorMsg = getErrorMessage(error);
 
         if (retryCount < maxRetries) {
           // RETRY: Continue with exponential backoff
@@ -317,7 +318,7 @@ export class VirtualBalanceService {
       });
     } catch (error: unknown) {
       // SKIP: Log error but don't throw
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       this.logger.error('❌ Error logging balance update', {
         error: errorMsg,
         tradeId,

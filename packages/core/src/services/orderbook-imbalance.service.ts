@@ -67,7 +67,7 @@ export class OrderbookImbalanceService {
       try {
         logFn();
       } catch (error) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
     }
   }
@@ -178,7 +178,7 @@ export class OrderbookImbalanceService {
       // GRACEFUL_DEGRADE: Unexpected calculation error, return neutral
       this.safeLog(() => this.logger.error('Orderbook imbalance calculation failed', { error }));
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       return this.getNeutralAnalysis();
     }

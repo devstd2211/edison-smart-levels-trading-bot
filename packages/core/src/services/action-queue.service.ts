@@ -10,6 +10,7 @@
 
 import { randomUUID } from 'crypto';
 import { IAction, IActionQueue, ActionResult, IActionHandler, AnyAction } from '../types/legacy';
+import { normalizeError } from '../utils/error.utils';
 
 export class ActionQueueService implements IActionQueue {
   private queue: IAction[] = [];
@@ -152,7 +153,7 @@ export class ActionQueueService implements IActionQueue {
               const errorResult: ActionResult = {
                 success: false,
                 actionId: action.id,
-                error: error instanceof Error ? error : new Error(String(error)),
+                error: normalizeError(error),
                 timestamp: Date.now(),
               };
 

@@ -62,7 +62,8 @@ export class StrategyManagerService {
       throw new Error('Main config is required');
     }
 
-    if (typeof mainConfig !== 'object') {
+    const typedMainConfig = this.asConfig(mainConfig);
+    if (!typedMainConfig) {
       throw new Error('Main config must be an object');
     }
 
@@ -78,7 +79,6 @@ export class StrategyManagerService {
     }
 
     // Merge with main config (supports both Config and ConfigNew types)
-    const typedMainConfig = mainConfig as ConfigNew | Config;
     this.mergedConfigGeneric = this.merger.mergeConfigs(typedMainConfig, this.strategy);
 
     // Log what changed
@@ -186,10 +186,14 @@ export class StrategyManagerService {
     } catch (error: unknown) {
       // SKIP strategy: non-blocking console failure (never throw)
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
       // Silent failure - continue regardless
     }
+  }
+
+  private asConfig(value: unknown): ConfigNew | Config | null {
+    return value && typeof value === 'object' ? value as ConfigNew | Config : null;
   }
 }
 

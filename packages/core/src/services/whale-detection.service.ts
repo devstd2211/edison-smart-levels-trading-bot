@@ -49,6 +49,7 @@ import {
   cleanupWhaleTrackedWalls,
   updateWhaleImbalanceHistory,
 } from './whale-detection/whale-detection-state.utils';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -171,6 +172,14 @@ export class WhaleDetectionService {
     throw error;
   }
 
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), { strategy }).catch(() => { /* Silent */ });
+  }
+
   /**
    * Validate configuration values
    * @throws On invalid config
@@ -221,10 +230,8 @@ export class WhaleDetectionService {
       }
     } catch (error) {
       // GRACEFUL_DEGRADE: Detection setup failures
-      this.safeLog('error', `Whale detection setup failed: ${error instanceof Error ? error.message : String(error)}`);
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.safeLog('error', `Whale detection setup failed: ${getErrorMessage(error)}`);
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return createDetectionFailedSignal();
     }
 
@@ -744,9 +751,7 @@ export class WhaleDetectionService {
       }
     } catch (error) {
       // SKIP: Logging failures never block execution
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 
@@ -762,9 +767,7 @@ export class WhaleDetectionService {
       this.safeLog('debug', 'WhaleDetector data cleared');
     } catch (error) {
       // GRACEFUL_DEGRADE: Clear failure
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
     }
   }
 }

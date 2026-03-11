@@ -100,7 +100,7 @@ export class RetestEntryService {
     } catch (error) {
       // SKIP: Non-critical logging failure
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
     }
   }
@@ -176,7 +176,7 @@ export class RetestEntryService {
       // GRACEFUL_DEGRADE: Unexpected calculation error
       this.safeLog('error', 'Impulse detection calculation failed', { error });
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       return { hasImpulse: false, impulseStart: 0, impulseEnd: 0 };
     }
@@ -271,7 +271,7 @@ export class RetestEntryService {
       // GRACEFUL_DEGRADE: Unexpected calculation error
       this.safeLog('error', 'Zone creation calculation failed', { error });
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       // Return minimal zone on error (GRACEFUL_DEGRADE)
       return {

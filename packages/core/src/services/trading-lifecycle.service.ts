@@ -45,6 +45,7 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { evaluatePositionTimeout } from './trading-lifecycle/trading-lifecycle-timeout.utils';
 import { tryUpdatePositionState } from './trading-lifecycle/trading-lifecycle-state.utils';
 import { publishEventWithRetryOrWarn } from './trading-lifecycle/trading-lifecycle-event.utils';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 /**
  * TradingLifecycleManager: Orchestrates position lifecycle with timeout detection
@@ -96,6 +97,17 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     this.errorHandler = errorHandler;
     this.trackedPositions = new Map();
     this.warningEmittedFor = new Set();
+  }
+
+  private async handleRecoveryError(error: unknown, strategy: RecoveryStrategy, context: string): Promise<void> {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    await this.errorHandler.handle(normalizeError(error), {
+      strategy,
+      context,
+    });
   }
 
   /**
@@ -336,7 +348,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       context: `TradingLifecycleManager.emitWarningEvent[${payload.positionId}]`,
       onFailure: (error) => {
         this.logger.warn(
-          `[TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${error instanceof Error ? error.message : String(error)}`
+          `[TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${getErrorMessage(error)}`
         );
       },
     });
@@ -360,7 +372,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
       onFailure: (error) => {
         this.logger.warn(
-          `[TradingLifecycleManager] Failed emergency close event publication for ${request.positionId}: ${error instanceof Error ? error.message : String(error)}`
+          `[TradingLifecycleManager] Failed emergency close event publication for ${request.positionId}: ${getErrorMessage(error)}`
         );
       },
     });
@@ -460,10 +472,11 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
           `[TradingLifecycleManager] Fallback: Failed to queue emergency close, attempting direct notification`
         );
         if (this.errorHandler) {
-          await this.errorHandler.handle(queueError, {
-            strategy: RecoveryStrategy.FALLBACK,
-            context: `TradingLifecycleManager.emergencyCloseFallback[${request.positionId}]`,
-          });
+          await this.handleRecoveryError(
+            queueError,
+            RecoveryStrategy.FALLBACK,
+            `TradingLifecycleManager.emergencyCloseFallback[${request.positionId}]`,
+          );
         }
       }
 
@@ -473,7 +486,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     } catch (error) {
       this.logger.error(`[TradingLifecycleManager] Error triggering emergency close: ${error}`, {
         positionId: request.positionId,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }

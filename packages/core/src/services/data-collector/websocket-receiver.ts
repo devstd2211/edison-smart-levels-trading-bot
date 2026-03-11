@@ -71,7 +71,10 @@ export class WebSocketReceiver {
    */
   parseMessage(data: string): ParsedMessage | null {
     try {
-      const message = JSON.parse(data) as Record<string, unknown>;
+      const message = this.asRecord(JSON.parse(data));
+      if (!message) {
+        return null;
+      }
 
       // Subscription response
       if (message.op === 'subscribe') {
@@ -85,7 +88,7 @@ export class WebSocketReceiver {
 
       // Server-initiated ping
       if (message.op === 'ping') {
-        const argsValue = message.args as unknown;
+        const argsValue = message.args;
         const args: string[] = Array.isArray(argsValue) ? (argsValue as string[]) : [];
         return {
           type: 'server-ping',
@@ -226,6 +229,12 @@ export class WebSocketReceiver {
       '240': '4h',
     };
     return map[timeframe] || timeframe;
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }
 

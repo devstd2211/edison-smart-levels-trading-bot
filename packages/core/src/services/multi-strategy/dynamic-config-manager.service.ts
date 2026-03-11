@@ -332,10 +332,13 @@ export class DynamicConfigManagerService {
   }
 
   private getIndicatorOverrides(indicators: unknown): Record<string, unknown> {
-    if (indicators && typeof indicators === 'object' && !Array.isArray(indicators)) {
-      return indicators as Record<string, unknown>;
-    }
-    return {};
+    return this.asRecord(indicators) ?? {};
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }
 

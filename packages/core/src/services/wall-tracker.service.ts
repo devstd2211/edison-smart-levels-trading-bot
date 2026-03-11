@@ -23,6 +23,7 @@ import { WallEvent, WallLifetime, WallCluster } from '../types/legacy';
 import { WallTrackingConfig } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { WallTrackingError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -117,10 +118,8 @@ export class WallTrackerService {
     } catch (error) {
       if (this.errorHandler) {
         // SKIP strategy: log error but continue processing
-        const errorMsg =
-          error instanceof Error ? error.message : 'Unknown error in detectWall';
         this.logger.warn('Error in wall detection, skipping wall', {
-          error: errorMsg,
+          error: getErrorMessage(error),
           price,
           size,
           side,
@@ -191,10 +190,8 @@ export class WallTrackerService {
     } catch (error) {
       if (this.errorHandler) {
         // SKIP strategy: log error but continue processing
-        const errorMsg =
-          error instanceof Error ? error.message : 'Unknown error in removeWall';
         this.logger.warn('Error in wall removal, skipping', {
-          error: errorMsg,
+          error: getErrorMessage(error),
           price,
           side,
         });
@@ -297,10 +294,8 @@ export class WallTrackerService {
     } catch (error) {
       if (this.errorHandler) {
         // SKIP strategy: log error but continue
-        const errorMsg =
-          error instanceof Error ? error.message : 'Unknown error in detectClusters';
         this.logger.warn('Error detecting wall clusters, returning empty array', {
-          error: errorMsg,
+          error: getErrorMessage(error),
         });
       }
       return []; // SKIP: safe default (empty clusters)
@@ -522,10 +517,8 @@ export class WallTrackerService {
     } catch (error) {
       if (this.errorHandler) {
         // GRACEFUL_DEGRADE strategy: log error but return safe default
-        const errorMsg =
-          error instanceof Error ? error.message : 'Unknown error in getWallStrength';
         this.logger.warn('Error calculating wall strength, returning 0', {
-          error: errorMsg,
+          error: getErrorMessage(error),
           price,
           side,
         });

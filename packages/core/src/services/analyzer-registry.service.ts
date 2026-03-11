@@ -20,6 +20,7 @@ import {
   IIndicator,
   IndicatorType,
 } from '../types/legacy';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // Lazy-load analyzer types for type safety
 type AnalyzerInstance = unknown; // Concrete analyzer interfaces are loaded dynamically
@@ -57,6 +58,10 @@ export class AnalyzerRegistryService {
     this.swingPointDetector = new SwingPointDetectorService(this.logger, 2);
   }
 
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): unknown {
+    return this.errorHandler.handle(normalizeError(error), { strategy });
+  }
+
   /**
    * Safe logging wrapper - SKIP strategy for all logger errors
    */
@@ -64,7 +69,7 @@ export class AnalyzerRegistryService {
     try {
       this.logger[level](message, data);
     } catch (error) {
-      this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 
@@ -266,10 +271,10 @@ export class AnalyzerRegistryService {
       return instance;
     } catch (error) {
       this.safeLog('error', `Failed to load analyzer: ${analyzerName}`, {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       // GRACEFUL_DEGRADE: Return null instead of throwing (allow partial loading)
-      return this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE }) === null
+      return this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE) === null
         ? null
         : null;
     }
@@ -285,8 +290,8 @@ export class AnalyzerRegistryService {
     baseConfig: Record<string, unknown>,
     analyzerCfg: StrategyAnalyzerConfig,
   ): Record<string, unknown> {
-    const indicators = baseConfig.indicators || {};
-    const analyzerDefaults = baseConfig.analyzerDefaults || {};
+    const indicators = this.getRecord(baseConfig.indicators);
+    const analyzerDefaults = this.getRecord(baseConfig.analyzerDefaults);
 
     // Start with enabled flag and metadata
     const config: Record<string, unknown> = {
@@ -353,7 +358,7 @@ export class AnalyzerRegistryService {
         }
       } catch (error) {
         // GRACEFUL_DEGRADE: Continue loading other analyzers even if one fails
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
         this.safeLog('warn', `Skipping failed analyzer: ${analyzerCfg.name}`);
       }
     }
@@ -369,7 +374,7 @@ export class AnalyzerRegistryService {
   }
 
   private hasKey(value: unknown, key: string): value is Record<string, unknown> {
-    return !!value && typeof value === 'object' && key in value;
+    return !!value && typeof value === 'object' && !Array.isArray(value) && key in value;
   }
 
   /**

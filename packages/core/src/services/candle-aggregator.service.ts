@@ -13,6 +13,7 @@
 import { Candle } from '../types/legacy';
 import { TIME_INTERVALS } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage } from '../utils/error.utils';
 
 export interface Logger {
   info(msg: string): void;
@@ -101,9 +102,9 @@ export class CandleAggregatorService {
       return aggregated;
     } catch (error) {
       // GRACEFUL_DEGRADE: Aggregation failures
-      this.safeLog('error', `Aggregation failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog('error', `Aggregation failed: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       return [];
     }
@@ -148,9 +149,9 @@ export class CandleAggregatorService {
       };
     } catch (error) {
       // GRACEFUL_DEGRADE: Return null on aggregation failure
-      this.safeLog('warn', `Failed to create aggregated candle: ${error instanceof Error ? error.message : String(error)}`);
+      this.safeLog('warn', `Failed to create aggregated candle: ${getErrorMessage(error)}`);
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
       return null;
     }
@@ -167,7 +168,7 @@ export class CandleAggregatorService {
     } catch (error) {
       // SKIP: Logging failures never block execution
       if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
+        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
       }
     }
   }

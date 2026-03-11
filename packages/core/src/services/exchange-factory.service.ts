@@ -29,6 +29,7 @@ import { BybitService } from './bybit/bybit.service';
 import { BybitServiceAdapter } from './bybit/bybit-service.adapter';
 import { BinanceServiceAdapter } from './binance/binance-service.adapter';
 import { BinanceService } from './binance/binance.service';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 /**
  * Exchange configuration from app config
@@ -58,8 +59,15 @@ export class ExchangeFactory {
     this.validateConfig();
   }
 
-  private getErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
+  private handleSkipError(error: unknown, context: string): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), {
+      strategy: RecoveryStrategy.SKIP,
+      context,
+    }).catch(() => { /* Silent */ });
   }
 
   /**
@@ -106,18 +114,13 @@ export class ExchangeFactory {
           symbol: this.config.symbol,
         });
       } catch (logError) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(logError as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'ExchangeFactory.createExchange[logging]',
-          }).catch(() => { /* Silent */ });
-        }
+        this.handleSkipError(logError, 'ExchangeFactory.createExchange[logging]');
       }
 
       return exchange;
     } catch (error) {
       // Phase 8.9.37: GRACEFUL_DEGRADE on critical failure - return cached if available or throw
-      const errorMsg = this.getErrorMessage(error);
+      const errorMsg = getErrorMessage(error);
 
       // Phase 8.9.37: Log error but handle gracefully
       try {
@@ -126,12 +129,7 @@ export class ExchangeFactory {
           error: errorMsg,
         });
       } catch (logError) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(logError as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'ExchangeFactory.createExchange[error-logging]',
-          }).catch(() => { /* Silent */ });
-        }
+        this.handleSkipError(logError, 'ExchangeFactory.createExchange[error-logging]');
       }
 
       throw error;
@@ -211,15 +209,16 @@ export class ExchangeFactory {
         // Create BybitService instance (takes config and logger)
         bybitService = new BybitService(bybitConfig, this.logger);
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BybitService: ${this.getErrorMessage(error)}`,
+          `Failed to create BybitService: ${errorMessage}`,
           {
             exchangeName: 'bybit',
             symbol: this.config.symbol,
             operation: 'service_creation',
-            reason: this.getErrorMessage(error),
+            reason: errorMessage,
           },
-          error instanceof Error ? error : undefined
+          normalizeError(error)
         );
 
         if (this.errorHandler) {
@@ -237,15 +236,16 @@ export class ExchangeFactory {
         // Create adapter that implements IExchange
         adapter = new BybitServiceAdapter(bybitService, this.logger);
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BybitServiceAdapter: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create BybitServiceAdapter: ${errorMessage}`,
           {
             exchangeName: 'bybit',
             symbol: this.config.symbol,
             operation: 'adapter_creation',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: errorMessage,
           },
-          error instanceof Error ? error : undefined
+          normalizeError(error)
         );
 
         if (this.errorHandler) {
@@ -262,15 +262,16 @@ export class ExchangeFactory {
         // Initialize the adapter
         await adapter.initialize();
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to initialize BybitServiceAdapter: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to initialize BybitServiceAdapter: ${errorMessage}`,
           {
             exchangeName: 'bybit',
             symbol: this.config.symbol,
             operation: 'initialization',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: errorMessage,
           },
-          error instanceof Error ? error : undefined
+          normalizeError(error)
         );
 
         if (this.errorHandler) {
@@ -281,7 +282,7 @@ export class ExchangeFactory {
         }
         // Allow initialization to fail gracefully - adapter may still be usable
         this.logger.warn('⚠️ Bybit adapter initialization failed, but proceeding', {
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage,
         });
       }
 
@@ -292,17 +293,12 @@ export class ExchangeFactory {
           demo: this.config.demo,
         });
       } catch (logError) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(logError as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'ExchangeFactory.createBybitExchange[logging]',
-          }).catch(() => { /* Silent */ });
-        }
+        this.handleSkipError(logError, 'ExchangeFactory.createBybitExchange[logging]');
       }
 
       return adapter;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       throw new Error(`Failed to create Bybit exchange: ${errorMsg}`);
     }
   }
@@ -326,15 +322,16 @@ export class ExchangeFactory {
           this.config.apiSecret ?? '',
         );
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BinanceService: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create BinanceService: ${errorMessage}`,
           {
             exchangeName: 'binance',
             symbol: this.config.symbol,
             operation: 'service_creation',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: errorMessage,
           },
-          error instanceof Error ? error : undefined
+          normalizeError(error)
         );
 
         if (this.errorHandler) {
@@ -352,15 +349,16 @@ export class ExchangeFactory {
         // Create adapter that implements IExchange
         adapter = new BinanceServiceAdapter(binanceService, this.logger);
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BinanceServiceAdapter: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to create BinanceServiceAdapter: ${errorMessage}`,
           {
             exchangeName: 'binance',
             symbol: this.config.symbol,
             operation: 'adapter_creation',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: errorMessage,
           },
-          error instanceof Error ? error : undefined
+          normalizeError(error)
         );
 
         if (this.errorHandler) {
@@ -377,15 +375,16 @@ export class ExchangeFactory {
         // Initialize the adapter
         await adapter.initialize();
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         const err = new ExchangeAdapterInstantiationError(
-          `Failed to initialize BinanceServiceAdapter: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to initialize BinanceServiceAdapter: ${errorMessage}`,
           {
             exchangeName: 'binance',
             symbol: this.config.symbol,
             operation: 'initialization',
-            reason: error instanceof Error ? error.message : String(error),
+            reason: errorMessage,
           },
-          error instanceof Error ? error : undefined
+          normalizeError(error)
         );
 
         if (this.errorHandler) {
@@ -396,7 +395,7 @@ export class ExchangeFactory {
         }
         // Allow initialization to fail gracefully - adapter may still be usable
         this.logger.warn('⚠️ Binance adapter initialization failed, but proceeding', {
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMessage,
         });
       }
 
@@ -407,17 +406,12 @@ export class ExchangeFactory {
           demo: this.config.demo,
         });
       } catch (logError) {
-        if (this.errorHandler) {
-          this.errorHandler.handle(logError as Error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: 'ExchangeFactory.createBinanceExchange[logging]',
-          }).catch(() => { /* Silent */ });
-        }
+        this.handleSkipError(logError, 'ExchangeFactory.createBinanceExchange[logging]');
       }
 
       return adapter;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
       throw new Error(`Failed to create Binance exchange: ${errorMsg}`);
     }
   }

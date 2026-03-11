@@ -27,6 +27,7 @@ import {
   IPerformanceAnalytics,
   PerformanceAnalyticsTradeInput,
 } from '../types/legacy';
+import { normalizeError } from '../utils/error.utils';
 
 /**
  * PerformanceAnalytics: Comprehensive trade performance analysis
@@ -64,6 +65,17 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     this.journalService = journalService;
     this.logger = logger;
     this.errorHandler = errorHandler;
+  }
+
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy, context: string): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), {
+      strategy,
+      context,
+    }).catch(() => { /* Silent */ });
   }
 
   /**
@@ -121,12 +133,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
       return (winningTrades / recentTrades.length) * 100;
     } catch (calcError) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(calcError as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.calculateWinRate.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(calcError, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateWinRate.calculation');
       return 0; // Safe default
     }
   }
@@ -180,12 +187,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       if (!Number.isFinite(result)) return 0;
       return result;
     } catch (calcError) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(calcError as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.calculateProfitFactor.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(calcError, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateProfitFactor.calculation');
       return 0; // Safe default
     }
   }
@@ -211,12 +213,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       if (!Number.isFinite(result)) return 0;
       return result;
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.calculateAverageHoldTime.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateAverageHoldTime.calculation');
       return 0; // Safe default
     }
   }
@@ -303,12 +300,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
         totalPnLPercent: Math.round(totalPnLPercent * 100) / 100,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.getMetrics.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getMetrics.calculation');
       return this.getEmptyStatistics(); // Safe fallback
     }
   }
@@ -361,12 +353,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
       return topTrades;
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.getTopTrades.retrieval',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getTopTrades.retrieval');
       return []; // Safe fallback
     }
   }
@@ -419,12 +406,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
       return worstTrades;
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.getWorstTrades.retrieval',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getWorstTrades.retrieval');
       return []; // Safe fallback
     }
   }
@@ -454,12 +436,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
       return ratio;
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.calculateSharpeRatio.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateSharpeRatio.calculation');
       return 0; // Safe default
     }
   }
@@ -489,12 +466,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
       return ratio;
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.calculateSortinoRatio.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateSortinoRatio.calculation');
       return 0; // Safe default
     }
   }
@@ -525,12 +497,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       if (!Number.isFinite(result)) return 0;
       return result;
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.calculateMaxDrawdown.calculation',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateMaxDrawdown.calculation');
       return 0; // Safe default
     }
   }
@@ -584,12 +551,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       });
     } catch (error) {
       // Phase 8.9.36: GRACEFUL_DEGRADE on journal access failure
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.getTradesForPeriod.journalAccess',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getTradesForPeriod.journalAccess');
       return []; // Return empty array - safe fallback
     }
   }
@@ -646,12 +608,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
         lastUpdateTime: this.lastUpdateTime,
       };
     } catch (error) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'PerformanceAnalyticsService.getStatistics.cacheAccess',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getStatistics.cacheAccess');
       // Return safe defaults
       return {
         totalAnalyzed: 0,
@@ -672,12 +629,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     try {
       this.logger.debug('[PerformanceAnalytics] Cleared metrics cache');
     } catch (logError) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(logError as Error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: 'PerformanceAnalyticsService.clearCache.debugLog',
-        }).catch(() => { /* Silent */ });
-      }
+      this.handleRecoveryError(logError, RecoveryStrategy.SKIP, 'PerformanceAnalyticsService.clearCache.debugLog');
     }
   }
 }

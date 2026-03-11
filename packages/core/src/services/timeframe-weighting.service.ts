@@ -21,6 +21,7 @@
 
 import { LoggerService, MultiTimeframeAnalysis, TradingMode, TrendBias } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // TrendBias enum values for comparisons
 
@@ -76,6 +77,14 @@ export class TimeframeWeightingService {
     private readonly errorHandler?: ErrorHandler,
   ) {
     this.safeLog('info', '✅ TimeframeWeightingService initialized');
+  }
+
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(normalizeError(error), { strategy }).catch(() => { /* Silent */ });
   }
 
   /**
@@ -165,10 +174,8 @@ export class TimeframeWeightingService {
       };
     } catch (error) {
       // GRACEFUL_DEGRADE: Combination failures
-      this.safeLog('error', `Weighting combination failed: ${error instanceof Error ? error.message : String(error)}`);
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
+      this.safeLog('error', `Weighting combination failed: ${getErrorMessage(error)}`);
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       // Return safe default
       return {
         bias: TrendBias.NEUTRAL,
@@ -378,9 +385,7 @@ export class TimeframeWeightingService {
       }
     } catch (error) {
       // SKIP: Logging failures never block execution
-      if (this.errorHandler) {
-        this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 }

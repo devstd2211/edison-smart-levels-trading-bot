@@ -25,6 +25,7 @@ import type { Candle, AnalyzerSignal, SignalDirection, StrategyConfigV2 as Strat
 import { LoggerService } from './logger.service';
 import type { AnalyzerRegistryService } from './analyzer-registry.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // TYPES
@@ -102,6 +103,17 @@ export class AnalyzerEngineService {
     private logger?: LoggerService,
     private errorHandler?: ErrorHandler,
   ) {}
+
+  private async handleRecoveryError(error: unknown, strategy: RecoveryStrategy, context: string): Promise<void> {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    await this.errorHandler.handle(normalizeError(error), {
+      strategy,
+      context,
+    });
+  }
 
   /**
    * Main entry point: Execute analyzers and return signals
@@ -319,7 +331,7 @@ export class AnalyzerEngineService {
       return result;
     } catch (error) {
       const executionTimeMs = Date.now() - startTime;
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
 
       if (this.logger) {
         this.logger.error('[AnalyzerEngine] Critical error during execution', {
@@ -330,10 +342,11 @@ export class AnalyzerEngineService {
 
       // Use ErrorHandler if available (Phase 8.9.13 - GRACEFUL_DEGRADE for registry failures)
       if (this.errorHandler && mergedConfig.errorHandling === 'lenient') {
-        await this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'AnalyzerEngineService.executeAnalyzers[registry-failure]',
-        });
+        await this.handleRecoveryError(
+          error,
+          RecoveryStrategy.GRACEFUL_DEGRADE,
+          'AnalyzerEngineService.executeAnalyzers[registry-failure]',
+        );
       }
 
       if (mergedConfig.errorHandling === 'strict') {
@@ -390,7 +403,7 @@ export class AnalyzerEngineService {
 
       return signal;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = getErrorMessage(error);
 
       if (this.logger) {
         this.logger.warn(`[AnalyzerEngine] ❌ ${analyzerName} failed: ${errorMsg}`);
@@ -403,10 +416,11 @@ export class AnalyzerEngineService {
 
       // Use ErrorHandler if available (Phase 8.9.13 - SKIP strategy for non-critical failures)
       if (this.errorHandler) {
-        await this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.SKIP,
-          context: `AnalyzerEngineService.executeAnalyzer[${analyzerName}]`,
-        });
+        await this.handleRecoveryError(
+          error,
+          RecoveryStrategy.SKIP,
+          `AnalyzerEngineService.executeAnalyzer[${analyzerName}]`,
+        );
       }
 
       return null;
