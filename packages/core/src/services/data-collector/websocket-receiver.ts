@@ -6,6 +6,7 @@
  */
 
 import { CandleRecord, TradeTickRecord, LoggerService } from '../../types/legacy';
+import { getErrorMessage } from '../../utils/error.utils';
 
 // ============================================================================
 // INTERFACES (Bybit V5 format)
@@ -123,7 +124,7 @@ export class WebSocketReceiver {
       };
     } catch (error) {
       this.logger.error('Failed to parse WebSocket message', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         data: data.substring(0, 200),
       });
       return null;
@@ -163,7 +164,7 @@ export class WebSocketReceiver {
       };
     } catch (error) {
       this.logger.error('Failed to parse kline data', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return null;
     }
@@ -184,7 +185,7 @@ export class WebSocketReceiver {
       };
     } catch (error) {
       this.logger.error('Failed to parse orderbook data', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return null;
     }
@@ -210,7 +211,7 @@ export class WebSocketReceiver {
       };
     } catch (error) {
       this.logger.error('Failed to parse trade data', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return null;
     }

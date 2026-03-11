@@ -19,6 +19,7 @@ import { RealTimeWhaleDetector } from './realtime-whale-detector';
 import { type OrderbookUpdate } from './orderbook-manager.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { OrderValidationError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * WebSocket Event Handler Manager
@@ -307,8 +308,7 @@ export class WebSocketEventHandlerManager {
 
     // WebSocket errors
     this.registerListener(publicWebSocket, 'error', (error) => {
-      const err = error as Error;
-      this.logger.error('Public WebSocket error', { error: err.message });
+      this.logger.error('Public WebSocket error', { error: getErrorMessage(error) });
     });
 
     this.logger.debug('✅ Public WebSocket handlers registered');
@@ -400,7 +400,7 @@ export class WebSocketEventHandlerManager {
     } catch (error) {
       this.logger.error('Error handling orderbook update', {
         error,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
       });
     }
   }
@@ -461,7 +461,7 @@ export class WebSocketEventHandlerManager {
     } catch (error) {
       this.logger.error('Error handling trade update', {
         error,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
       });
     }
   }

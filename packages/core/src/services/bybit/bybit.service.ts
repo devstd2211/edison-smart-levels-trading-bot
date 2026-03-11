@@ -26,6 +26,7 @@ import { BybitOrders } from './bybit-orders.partial';
 import { isCriticalApiError } from '../../utils/error-helper';
 import type { IMarketDataRepository } from '../../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import { getErrorMessage } from '../../utils/error.utils';
 
 // ============================================================================
 // BYBIT SERVICE (MAIN ORCHESTRATOR)
@@ -213,7 +214,7 @@ export class BybitService {
         driftChange: newOffset - oldOffset,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
 
       // Check if this is a critical error
       if (isCriticalApiError(error)) {

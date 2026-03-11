@@ -32,6 +32,7 @@ import {
   validateCompoundConfig,
   CompoundCalculationResult,
 } from '../utils/compound-interest.helpers';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 export class CompoundInterestCalculatorService {
   constructor(
@@ -54,7 +55,7 @@ export class CompoundInterestCalculatorService {
     } catch (error: unknown) {
       this.safeLog('error', '❌ Invalid CompoundInterest config', {
         error,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
       });
       throw error;
     }
@@ -130,7 +131,7 @@ export class CompoundInterestCalculatorService {
     } catch (error: unknown) {
       this.safeLog('error', 'Error calculating compound position size', {
         error,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
       });
       throw error;
     }
@@ -164,7 +165,7 @@ export class CompoundInterestCalculatorService {
       this.config = oldConfig;
       this.safeLog('error', '❌ Invalid config update, reverted to previous', {
         error,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
       });
       throw error;
     }
@@ -245,7 +246,7 @@ export class CompoundInterestCalculatorService {
     } catch (error: unknown) {
       // GRACEFUL_DEGRADE: Return safe defaults on error (e.g., negative balance)
       this.safeLog('warn', '⚠️ Growth metrics calculation failed', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return {
         currentSize: this.config.minPositionSize,
@@ -288,7 +289,7 @@ export class CompoundInterestCalculatorService {
       // SKIP: Silently ignore logging failures - never block operations
       if (this.errorHandler) {
         this.errorHandler.handle(
-          logError instanceof Error ? logError : new Error(String(logError)),
+          normalizeError(logError),
           { strategy: RecoveryStrategy.SKIP }
         );
       }

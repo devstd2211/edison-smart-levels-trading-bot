@@ -7,6 +7,7 @@
 
 import type { ILifecycle } from '../interfaces/ILifecycle';
 import type { LoggerService } from './logger.service';
+import { getErrorMessage } from '../utils/error.utils';
 
 export class LifecycleManager {
   private readonly services: ILifecycle[] = [];
@@ -24,7 +25,7 @@ export class LifecycleManager {
       } catch (error) {
         if (this.logger) {
           this.logger.error('LifecycleManager failed to start service', {
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         }
         throw error;
@@ -40,7 +41,7 @@ export class LifecycleManager {
       } catch (error) {
         if (this.logger) {
           this.logger.warn('LifecycleManager failed to stop service', {
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         }
         if (options.throwOnError) {

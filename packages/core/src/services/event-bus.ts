@@ -11,6 +11,7 @@
 
 import { EventEmitter } from 'events';
 import { LoggerService } from './logger.service';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Standard bot event structure
@@ -135,7 +136,7 @@ export class BotEventBus extends EventEmitter {
         const duration = performance.now() - startTime;
         this.recordMetric(eventType, duration, 'failure', error);
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = getErrorMessage(error);
         this.logger.error(`❌ Event handler failed`, {
           event: eventType,
           duration: `${duration.toFixed(2)}ms`,
@@ -217,7 +218,7 @@ export class BotEventBus extends EventEmitter {
       duration,
       status,
       timestamp: Date.now(),
-      error: error instanceof Error ? error.message : undefined,
+      error: error === undefined ? undefined : getErrorMessage(error),
     };
 
     // Initialize metrics array if needed

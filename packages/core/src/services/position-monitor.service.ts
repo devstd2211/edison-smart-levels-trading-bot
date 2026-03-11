@@ -29,6 +29,7 @@ import {
   PositionProtectionError,
   PositionPriceFetchError,
 } from '../errors/DomainErrors';
+import { getErrorMessage, getErrorStack } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -297,7 +298,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
             return; // Exit monitoring - position closed
           } catch (closeError) {
             this.logger.error('🚨🚨🚨 CRITICAL: Failed to close unprotected position!', {
-              error: closeError instanceof Error ? closeError.message : String(closeError),
+              error: getErrorMessage(closeError),
             });
 
             // Send critical alert with SKIP strategy
@@ -362,7 +363,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
           currentPrice = await this.bybitService.getCurrentPrice();
         } catch (priceError) {
           this.logger.warn('Failed to get current price', {
-            error: priceError instanceof Error ? priceError.message : String(priceError),
+            error: getErrorMessage(priceError),
           });
         }
       }
@@ -397,7 +398,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
         timeBasedExit = this.checkTimeBasedExit(currentPosition, currentPrice);
       } catch (timeExitError) {
         this.logger.warn('Failed to check time-based exit', {
-          error: timeExitError instanceof Error ? timeExitError.message : String(timeExitError),
+          error: getErrorMessage(timeExitError),
         });
         return; // Skip this monitoring cycle
       }
@@ -413,8 +414,8 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
+      const errorMessage = getErrorMessage(error);
+      const errorStack = getErrorStack(error);
 
       // Check if this is a critical API error (e.g., API key expired)
       if (isCriticalApiError(error)) {
@@ -441,7 +442,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
           'Bot will shutdown immediately.',
         ).catch((telegramError) => {
           this.logger.error('Failed to send Telegram alert', {
-            error: telegramError instanceof Error ? telegramError.message : String(telegramError),
+            error: getErrorMessage(telegramError),
           });
         });
 
@@ -574,7 +575,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
         await this.positionSyncService.deepSyncCheck(position);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
 
       // Check if this is a critical API error
       if (isCriticalApiError(error)) {
@@ -600,7 +601,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
           'Bot will shutdown immediately.',
         ).catch((telegramError) => {
           this.logger.error('Failed to send Telegram alert', {
-            error: telegramError instanceof Error ? telegramError.message : String(telegramError),
+            error: getErrorMessage(telegramError),
           });
         });
 

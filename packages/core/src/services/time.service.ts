@@ -14,6 +14,7 @@ import { LoggerService } from './logger.service';
 import type { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { TimeSyncError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * Sync info return type
@@ -151,7 +152,7 @@ export class TimeService {
       try {
         if (result.error) {
           this.logger.error('❌ Failed to sync time with exchange', {
-            error: result.error instanceof Error ? result.error.message : result.error,
+            error: getErrorMessage(result.error),
             failureCount: this.criticalSyncFailures,
             maxAllowed: this.maxSyncFailures,
           });

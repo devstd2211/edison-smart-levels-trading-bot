@@ -56,6 +56,7 @@ import { IndicatorPreCalculationService } from './indicator-precalculation.servi
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import type { ILifecycle } from '../interfaces/ILifecycle';
 import { Signal } from '../types/signal';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // TYPES
@@ -409,7 +410,7 @@ export class TradingOrchestrator implements ILifecycle {
       });
     } catch (error) {
       this.logger.error('❌ Failed to load indicators:', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       // Don't throw - allow bot to continue without indicators
       // Analyzers will handle missing indicators gracefully
@@ -447,7 +448,7 @@ export class TradingOrchestrator implements ILifecycle {
           await this.indicatorPreCalc.onCandleClosed(role, candle.timestamp);
         } catch (err) {
           this.logger.debug('Pre-calculation service error (non-critical)', {
-            error: err instanceof Error ? err.message : String(err),
+            error: getErrorMessage(err),
           });
         }
       }
@@ -534,7 +535,7 @@ export class TradingOrchestrator implements ILifecycle {
                 } catch (error) {
                   // Funding rate is optional, continue without it
                   this.logger.debug('Could not fetch funding rate, continuing without it', {
-                    error: error instanceof Error ? error.message : String(error),
+                    error: getErrorMessage(error),
                   });
                 }
 
@@ -728,13 +729,13 @@ export class TradingOrchestrator implements ILifecycle {
               }
             } catch (exitEvalError) {
               this.logger.error('Failed to evaluate exit conditions', {
-                error: exitEvalError instanceof Error ? exitEvalError.message : String(exitEvalError),
+                error: getErrorMessage(exitEvalError),
               });
             }
           }
         } catch (primaryError) {
           this.logger.error('Error analyzing PRIMARY candle', {
-            error: primaryError instanceof Error ? primaryError.message : String(primaryError),
+            error: getErrorMessage(primaryError),
           });
         }
       }
@@ -846,7 +847,7 @@ export class TradingOrchestrator implements ILifecycle {
                 this.logger.info('✅ Position opened successfully');
               } catch (openPositionError) {
                 this.logger.error('❌ Failed to open position', {
-                  error: openPositionError instanceof Error ? openPositionError.message : String(openPositionError),
+                  error: getErrorMessage(openPositionError),
                 });
               }
             } else {
@@ -864,7 +865,7 @@ export class TradingOrchestrator implements ILifecycle {
             }
           } catch (entryRefinementError) {
             this.logger.error('Error refining entry point on ENTRY timeframe', {
-              error: entryRefinementError instanceof Error ? entryRefinementError.message : String(entryRefinementError),
+              error: getErrorMessage(entryRefinementError),
             });
           }
         }
@@ -873,7 +874,7 @@ export class TradingOrchestrator implements ILifecycle {
     } catch (error) {
       this.logger.error('Error in orchestrator onCandleClosed', {
         role,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }
@@ -1033,7 +1034,7 @@ export class TradingOrchestrator implements ILifecycle {
       // For now, just log the drift - actual correction happens in SDK
     } catch (error) {
       this.logger.warn('Failed to sync time with exchange', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }
@@ -1235,7 +1236,7 @@ export class TradingOrchestrator implements ILifecycle {
           } catch (error) {
               this.logger.error('Failed to execute exit action', {
                 action: String(exitAction.action ?? 'UNKNOWN'),
-                error: error instanceof Error ? error.message : String(error),
+                error: getErrorMessage(error),
               });
           }
         }
@@ -1364,7 +1365,7 @@ export class TradingOrchestrator implements ILifecycle {
       });
     } catch (error) {
       this.logger.error('Error processing action queue', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }

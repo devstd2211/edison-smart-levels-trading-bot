@@ -14,6 +14,7 @@ import {
   PositionMonitoringError,
   ConfigurationError,
 } from '../errors/DomainErrors';
+import { getErrorMessage, getErrorStack } from '../utils/error.utils';
 
 /**
  * BotInitializer - Manages bot lifecycle (initialization and shutdown)
@@ -116,7 +117,7 @@ export class BotInitializer {
     operation: string,
     context: Record<string, unknown> = {},
   ): Error {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     const originalError = error instanceof Error ? error : undefined;
 
     // Network/connection errors
@@ -165,7 +166,7 @@ export class BotInitializer {
       return new WebSocketConnectionError(
         `WS failed during ${operation}`,
         {
-          url: context.url as string | undefined,
+          url: typeof context.url === 'string' ? context.url : undefined,
           ...context,
         },
         originalError,
@@ -255,7 +256,7 @@ export class BotInitializer {
       this.logger.info('✅ Bot initialization complete - ready to connect WebSockets');
     } catch (error) {
       this.logger.error('Failed to initialize bot', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
@@ -303,7 +304,7 @@ export class BotInitializer {
       this.logger.error('🔥🔥🔥 initializeTrendAnalysisAfterWebSocket() RETURNED 🔥🔥🔥');
     } catch (error) {
       this.logger.error('Failed to connect WebSockets', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
@@ -389,8 +390,8 @@ export class BotInitializer {
       }
     } catch (error) {
       this.logger.error('🚨 Exception during trend initialization after WebSocket', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
+        error: getErrorMessage(error),
+        stack: getErrorStack(error),
       });
       // Non-fatal - trend will initialize on first PRIMARY candle close
     }
@@ -417,7 +418,7 @@ export class BotInitializer {
       this.logger.info('✅ Position monitor and maintenance tasks started');
     } catch (error) {
       this.logger.error('Failed to start monitoring', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
@@ -507,7 +508,7 @@ export class BotInitializer {
       }
     } catch (error) {
       this.logger.error('Failed to restore open positions', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       // Non-fatal error - continue startup but log the issue
       // User should investigate why position restoration failed
@@ -530,7 +531,7 @@ export class BotInitializer {
             await fn();
           } catch (error) {
             this.logger.warn(`⚠️ Error during ${name}, skipping:`, {
-              error: error instanceof Error ? error.message : String(error),
+              error: getErrorMessage(error),
             });
           }
         };
@@ -608,7 +609,7 @@ export class BotInitializer {
       this.logger.info('✅ Shutdown complete');
     } catch (error) {
       this.logger.error('Error during shutdown', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
@@ -692,7 +693,7 @@ export class BotInitializer {
         await performStats();
       } catch (error) {
         this.logger.warn('⚠️ Session statistics failed - continuing without stats', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
         // Non-critical - continue without stats
       }
@@ -701,7 +702,7 @@ export class BotInitializer {
         await performStats();
       } catch (error) {
         this.logger.warn('⚠️ Session statistics failed - continuing without stats', {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
       }
     }
@@ -826,7 +827,7 @@ export class BotInitializer {
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = getErrorMessage(error);
 
         // Check if this is a critical error
         if (isCriticalApiError(error)) {
@@ -887,8 +888,7 @@ export class BotInitializer {
         latestTimestamp: btcCandles.length > 0 ? new Date(btcCandles[btcCandles.length - 1].timestamp).toISOString() : 'N/A',
       });
     } catch (error) {
-      const errorObj = error instanceof Error ? { error: error.message } : { error: String(error) };
-      this.logger.error('Failed to load BTC candles', errorObj);
+      this.logger.error('Failed to load BTC candles', { error: getErrorMessage(error) });
       // Don't throw - allow bot to continue without BTC confirmation
       this.services.btcCandles1m = [];
     }
@@ -949,7 +949,7 @@ export class BotInitializer {
       await service.start();
     } catch (error) {
       this.logger.error(`Failed to start ${name}`, {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       if (options.throwOnError) {
         throw error;

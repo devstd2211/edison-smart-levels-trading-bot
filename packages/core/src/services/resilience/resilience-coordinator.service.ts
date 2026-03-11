@@ -5,6 +5,7 @@ import { RateLimiterService } from './rate-limiter.service';
 import { RetryPolicyService, RetryPolicyConfig } from './retry-policy.service';
 import { BulkheadService, BulkheadConfig } from './bulkhead.service';
 import type { IMonitoringMetricsRecorder } from '../../interfaces/IMonitoringRecorders';
+import { getErrorMessage, normalizeError } from '../../utils/error.utils';
 
 /**
  * Options for resilient operation execution
@@ -213,13 +214,13 @@ export class ResilienceCoordinator {
       }
 
       this.safeLog('error', `Operation failed: ${options.operationName || 'unknown'}`, {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         metadata
       });
 
       return {
         success: false,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: normalizeError(error),
         metadata
       };
     }
@@ -261,7 +262,7 @@ export class ResilienceCoordinator {
       };
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error instanceof Error ? error : new Error(String(error)), {
+        this.errorHandler.handle(normalizeError(error), {
           strategy: RecoveryStrategy.SKIP,
           context: 'getStats'
         });
@@ -325,7 +326,7 @@ export class ResilienceCoordinator {
       return true;
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error instanceof Error ? error : new Error(String(error)), {
+        this.errorHandler.handle(normalizeError(error), {
           strategy: RecoveryStrategy.SKIP,
           context: 'isHealthy'
         });
@@ -350,7 +351,7 @@ export class ResilienceCoordinator {
       this.safeLog('info', 'All resilience patterns reset successfully');
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error instanceof Error ? error : new Error(String(error)), {
+        this.errorHandler.handle(normalizeError(error), {
           strategy: RecoveryStrategy.SKIP,
           context: 'reset'
         });
@@ -369,7 +370,7 @@ export class ResilienceCoordinator {
       this.safeLog('info', 'ResilienceCoordinator stopped');
     } catch (error) {
       if (this.errorHandler) {
-        this.errorHandler.handle(error instanceof Error ? error : new Error(String(error)), {
+        this.errorHandler.handle(normalizeError(error), {
           strategy: RecoveryStrategy.SKIP,
           context: 'stop'
         });
@@ -404,7 +405,7 @@ export class ResilienceCoordinator {
     } catch (error) {
       // Metrics recording should never throw
       this.safeLog('error', 'Failed to record success metrics', {
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }
@@ -418,7 +419,7 @@ export class ResilienceCoordinator {
     } catch (error) {
       // Metrics recording should never throw
       this.safeLog('error', 'Failed to record failure metrics', {
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }
@@ -431,7 +432,7 @@ export class ResilienceCoordinator {
     } catch (error) {
       // Never throw from logging
       if (this.errorHandler) {
-        this.errorHandler.handle(error instanceof Error ? error : new Error(String(error)), {
+        this.errorHandler.handle(normalizeError(error), {
           strategy: RecoveryStrategy.SKIP,
           context: 'safeLog'
         });

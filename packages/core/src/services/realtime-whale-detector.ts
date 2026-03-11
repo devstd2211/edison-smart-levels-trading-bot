@@ -1,6 +1,7 @@
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { OrderBook } from '../types/legacy';
 import type { IWhaleDetectorServices } from '../interfaces';
+import { getErrorMessage } from '../utils/error.utils';
 
 interface WhaleToggleConfigSection {
   enabled?: boolean;
@@ -60,7 +61,7 @@ export class RealTimeWhaleDetector {
       await this.services.tradingOrchestrator.checkWhaleSignalRealtime(orderbookSnapshot);
     } catch (error) {
       this.logger.error('Error checking whale signal', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }

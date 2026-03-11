@@ -31,6 +31,7 @@ import { EventDeduplicationService } from './event-deduplication.service';
 import { WebSocketKeepAliveService } from './websocket-keep-alive.service';
 import { mapPositionFromWebSocketData } from './websocket-manager/websocket-position-mapping.utils';
 import { ErrorHandler, RecoveryStrategy, WebSocketConnectionError, WebSocketAuthenticationError, WebSocketSubscriptionError, ErrorLogger } from '../errors';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -138,7 +139,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
         await this.connectOnce(wsUrl);
         return; // Success
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = normalizeError(error);
 
         if (attempt < maxAttempts) {
           // Calculate delay with exponential backoff
@@ -246,7 +247,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
           }
         });
       } catch (error) {
-        reject(new WebSocketConnectionError(`Failed to create WebSocket: ${String(error)}`, { url: wsUrl }));
+        reject(new WebSocketConnectionError(`Failed to create WebSocket: ${getErrorMessage(error)}`, { url: wsUrl }));
       }
     });
   }
@@ -267,7 +268,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
         this.ws = null;
       }
     } catch (error) {
-      const disconnectError = error instanceof Error ? error : new Error(String(error));
+      const disconnectError = normalizeError(error);
       const tradingError = new WebSocketConnectionError(
         `Disconnect error: ${disconnectError.message}`
       );
@@ -352,7 +353,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
 
         return; // Success
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = normalizeError(error);
 
         if (attempt < maxAttempts) {
           const delayMs = Math.min(baseDelay * Math.pow(backoffMultiplier, attempt - 1), 2000);
@@ -420,7 +421,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
       });
     } catch (error) {
       // GRACEFUL_DEGRADE: log error but continue operation
-      const subscriptionError = error instanceof Error ? error : new Error(String(error));
+      const subscriptionError = normalizeError(error);
       const tradingError = new WebSocketSubscriptionError(
         `Subscription failed: ${subscriptionError.message}`
       );
@@ -449,7 +450,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
 
       this.routeMessage(message);
     } catch (error) {
-      this.emit('error', new Error(`Failed to parse message: ${String(error)}`));
+      this.emit('error', new Error(`Failed to parse message: ${getErrorMessage(error)}`));
     }
   }
 

@@ -37,6 +37,7 @@ import {
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_3_LOSSES,
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_4_LOSSES,
 } from '../constants';
+import { getErrorMessage } from '../utils/error.utils';
 
 export class RiskManager {
   // Config values (from RiskManagerConfig)
@@ -447,7 +448,7 @@ export class RiskManager {
           // Skip invalid position exposure, continue with others
           this.logger.warn('[RiskManager] Invalid position exposure, skipping', {
             position: pos,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         }
       }
@@ -502,7 +503,7 @@ export class RiskManager {
           );
           this.logger.warn('[RiskManager] New signal exposure calculation failed, assuming zero exposure', {
             signal: newSignal,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         }
       }
@@ -518,7 +519,7 @@ export class RiskManager {
         }
       );
       this.logger.error('[RiskManager] Critical error calculating total exposure, returning zero', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return 0;
     }
@@ -610,7 +611,7 @@ export class RiskManager {
         }
       );
       this.logger.error('[RiskManager] Critical error recording trade, operation skipped', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
   }

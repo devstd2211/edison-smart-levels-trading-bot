@@ -18,6 +18,7 @@ import {
   getCloseEmoji,
   getPnlSign,
 } from './telegram/telegram-message-format.utils';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 export interface TelegramConfig {
   botToken?: string;
@@ -195,7 +196,7 @@ export class TelegramService {
           throw classifiedError;
         } else {
           // Unknown error: skip
-          lastError = classifiedError instanceof Error ? classifiedError : new Error(String(error));
+          lastError = normalizeError(classifiedError ?? error);
           throw lastError;
         }
       }
@@ -241,7 +242,7 @@ export class TelegramService {
       }
 
       // Network error
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       throw new TelegramNetworkError(
         `Failed to send Telegram notification: ${errorMessage}`,
         {
@@ -262,7 +263,7 @@ export class TelegramService {
     if (error instanceof TelegramMessageError) return error;
     if (error instanceof TelegramRateLimitError) return error;
 
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
 
     // Network errors
     if (
@@ -295,7 +296,7 @@ export class TelegramService {
     }
 
     // Unknown error
-    return error instanceof Error ? error : new Error(errorMessage);
+    return normalizeError(error);
   }
 
   /**

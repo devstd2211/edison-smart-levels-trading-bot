@@ -45,6 +45,7 @@ import {
 } from './position-exiting/position-exit-pricing.utils';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // ============================================================================
 // POSITION EXITING SERVICE
@@ -119,7 +120,7 @@ export class PositionExitingService {
       }
     } catch (error) {
       this.logger.error('Failed to execute exit action', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position?.id,
         action: action?.action,
       });
@@ -206,7 +207,7 @@ export class PositionExitingService {
       return true;
     } catch (error) {
       this.logger.error('Failed to close partial position', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
       });
       return false;
@@ -281,7 +282,7 @@ export class PositionExitingService {
       return true;
     } catch (error) {
       this.logger.error('Failed to close full position', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position?.id || 'UNKNOWN',
       });
       if (position) {
@@ -306,7 +307,7 @@ export class PositionExitingService {
     try {
       await this.closePositionWithRetry(position, exitPrice);
     } catch (closeError) {
-      const errorMsg = closeError instanceof Error ? closeError.message : String(closeError);
+      const errorMsg = getErrorMessage(closeError);
       // If position is already zero, this is expected (closed by SL/TP on exchange)
       if (errorMsg.includes('position is zero') || errorMsg.includes('reduce-only')) {
         this.logger.info('📝 Position already closed on exchange (SL/TP triggered)', {
@@ -324,7 +325,7 @@ export class PositionExitingService {
       await this.bybitService.cancelAllConditionalOrders();
     } catch (error) {
       this.logger.warn('Failed to cancel orders after close', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
     }
 
@@ -372,7 +373,7 @@ export class PositionExitingService {
       // [P1] Journal recording failed - log error but don't fail close
       // Position is already marked CLOSED, journal will be retried later
       this.logger.error('❌ Journal recording failed', {
-        error: journalError instanceof Error ? journalError.message : String(journalError),
+        error: getErrorMessage(journalError),
         positionId: position.id,
       });
       // Continue with stats update since position close succeeded on exchange
@@ -403,7 +404,7 @@ export class PositionExitingService {
       } catch (statsError) {
         // [P1] CRITICAL: Session stats update failed - rollback journal
         this.logger.error('❌ CRITICAL: Session stats update failed - rolling back journal', {
-          error: statsError instanceof Error ? statsError.message : String(statsError),
+          error: getErrorMessage(statsError),
           journalId: position.journalId,
         });
 
@@ -446,7 +447,7 @@ export class PositionExitingService {
         });
         return; // Success
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = normalizeError(error);
 
         if (attempt < maxAttempts) {
           // Calculate exponential backoff delay
@@ -540,7 +541,7 @@ export class PositionExitingService {
         onRecover: () => {
           this.logger.warn('⚠️ Exit notification failed, skipping notification', {
             positionId: position.id,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
@@ -586,7 +587,7 @@ export class PositionExitingService {
       return true;
     } catch (error) {
       this.logger.error('Failed to update stop-loss', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
       });
       return false;
@@ -624,7 +625,7 @@ export class PositionExitingService {
       return true;
     } catch (error) {
       this.logger.error('Failed to activate trailing stop', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
       });
       return false;
@@ -699,7 +700,7 @@ export class PositionExitingService {
       return journalResult;
     } catch (error) {
       this.logger.error('Failed to record position close in journal', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         journalId: position.journalId,
       });
       // Return empty rollback function if journal fails (graceful degradation)
@@ -786,7 +787,7 @@ export class PositionExitingService {
       }
     } catch (error) {
       this.logger.error('Failed to handle TP hit', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position?.id,
         tpLevel,
       });
@@ -902,7 +903,7 @@ export class PositionExitingService {
       );
     } catch (error) {
       this.logger.error('Failed to move SL to breakeven', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
         entryPrice: position.entryPrice,
         currentPrice,
@@ -995,7 +996,7 @@ export class PositionExitingService {
       });
     } catch (error) {
       this.logger.error('Failed to update trailing stop', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
       });
     }
@@ -1049,7 +1050,7 @@ export class PositionExitingService {
       });
     } catch (error) {
       this.logger.error('Failed to update TP3', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
       });
     }
@@ -1092,7 +1093,7 @@ export class PositionExitingService {
       });
     } catch (error) {
       this.logger.error('Failed to update BB trailing stop', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         positionId: position.id,
       });
     }

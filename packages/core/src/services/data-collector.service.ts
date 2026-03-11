@@ -29,6 +29,7 @@ import { DataQueue } from './data-collector/data-queue';
 import { DatabaseWriter } from './data-collector/database-writer';
 import { WebSocketReceiver } from './data-collector/websocket-receiver';
 import { TIME_MULTIPLIERS, TIMING_CONSTANTS, ORDERBOOK_SNAPSHOT_INTERVAL_MS } from '../constants/technical.constants';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -103,7 +104,7 @@ export class DataCollectorService {
       this.logger.info('Database initialized', { path: this.config.database.path });
     } catch (error) {
       this.logger.error('Failed to initialize database', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
@@ -290,7 +291,7 @@ export class DataCollectorService {
       });
     } catch (error) {
       this.logger.error('Failed to connect WebSocket', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       this.isConnecting = false;
       await this.scheduleReconnect();

@@ -14,15 +14,13 @@ import type { IExchange } from '../interfaces/IExchange';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';
 import { TelegramService } from './telegram.service';
-import { ErrorHandler, RecoveryStrategy, type ErrorHandlingConfig } from '../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage } from '../utils/error.utils';
 import {
   PositionExchangeSyncError,
   PositionProtectionError,
   PositionPriceFetchError,
   TelegramNetworkError,
-  ExchangeConnectionError,
-  ExchangeRateLimitError,
 } from '../errors/DomainErrors';
 import { DECIMAL_PLACES, TIME_UNITS } from '../constants';
 import { INTEGER_MULTIPLIERS } from '../constants/technical.constants';
@@ -503,10 +501,9 @@ export class PositionSyncService {
             },
           );
         } catch (syncError) {
-          const syncErr = syncError instanceof Error ? syncError.message : String(syncError);
           this.logger.warn('Position sync failed, using local value (degraded)', {
             positionId: position.id,
-            error: syncErr,
+            error: getErrorMessage(syncError),
           });
         }
       }

@@ -28,6 +28,7 @@ import {
   RETRYABLE_HTTP_STATUS_CODES,
   NON_RETRYABLE_HTTP_STATUS_CODES,
 } from '../../constants/phase-14-2-constants';
+import { normalizeError } from '../../utils/error.utils';
 
 // ============================================================================
 // TYPES
@@ -167,7 +168,7 @@ export class RetryPolicyService implements ILifecycle {
 
         return result;
       } catch (error: unknown) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = normalizeError(error);
         attempt++;
 
         // Check if should retry

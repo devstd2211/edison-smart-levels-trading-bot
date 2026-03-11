@@ -31,6 +31,7 @@ import { IExchange } from '../interfaces/IExchange';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { getErrorMessage } from '../utils/error.utils';
 
 import {
   GracefulShutdownConfig,
@@ -226,7 +227,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
       this.eventBus.publishSync({
         type: LiveTradingEventType.SHUTDOWN_FAILED,
         data: {
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
           timestamp: Date.now(),
         },
         timestamp: Date.now(),
@@ -238,7 +239,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         closedPositions: 0,
         cancelledOrders: 0,
         persistedState: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
         timestamp: Date.now(),
       };
     }
@@ -481,7 +482,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         context: 'GracefulShutdownManager.recoverState',
         onRecover: () => {
           this.logger.warn('⚠️ State recovery failed, starting with fresh state', {
-            reason: error instanceof Error ? error.message : String(error),
+            reason: getErrorMessage(error),
           });
         },
       });
@@ -510,7 +511,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         onRecover: () => {
           this.logger.warn('⚠️ Could not create state directory, persistence will be disabled', {
             directory: this.stateDirectory,
-            error: error instanceof Error ? error.message : String(error),
+            error: getErrorMessage(error),
           });
         },
       });
