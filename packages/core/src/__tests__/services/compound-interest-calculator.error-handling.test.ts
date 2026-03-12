@@ -10,41 +10,20 @@
  */
 
 import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
-import { LoggerService, CompoundInterestConfig, LogLevel } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { LoggerService } from '../../types/legacy';
+import {
+  createCompoundInterestConfig,
+  createCompoundInterestHarness,
+} from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
-  let errorHandler: ErrorHandler;
   let mockGetBalance: jest.Mock;
 
-  const defaultConfig: CompoundInterestConfig = {
-    enabled: true,
-    useVirtualBalance: true,
-    baseDeposit: 100,
-    reinvestmentPercent: 50,
-    maxRiskPerTrade: 2,
-    minPositionSize: 10,
-    maxPositionSize: 1000,
-    profitLockPercent: 30,
-  };
-
-  const createMockLogger = (): LoggerService => {
-    return {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      getLogLevel: jest.fn(() => LogLevel.ERROR),
-      setLogLevel: jest.fn(),
-      logToFile: jest.fn(),
-    } as unknown as LoggerService;
-  };
+  const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-    mockGetBalance = jest.fn();
+    ({ logger, mockGetBalance } = createCompoundInterestHarness({ withErrorHandler: false }));
   });
 
   // ============================================================================

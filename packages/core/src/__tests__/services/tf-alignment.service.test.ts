@@ -4,25 +4,19 @@
  */
 
 import { TFAlignmentService } from '../../services/tf-alignment.service';
-import { LoggerService, LogLevel, TFAlignmentConfig } from '../../types/legacy';
+import { TFAlignmentConfig } from '../../types/legacy';
+import {
+  createTFAlignmentConfig,
+  createTFAlignmentHarness,
+} from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
-  let logger: LoggerService;
   let config: TFAlignmentConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      enabled: true,
-      timeframes: {
-        entry: { weight: 20 },
-        primary: { weight: 50 },
-        trend1: { weight: 30 },
-      },
-      minAlignmentScore: 70,
-    };
-    service = new TFAlignmentService(config, logger);
+    config = createTFAlignmentConfig();
+    ({ service } = createTFAlignmentHarness({ configOverrides: config }));
   });
 
   describe('calculateAlignment - LONG', () => {
@@ -143,16 +137,13 @@ describe('TFAlignmentService', () => {
   describe('disabled mode', () => {
     it('should return disabled result when service disabled', () => {
       const disabledConfig: TFAlignmentConfig = {
+        ...createTFAlignmentConfig(),
         enabled: false,
-        timeframes: {
-          entry: { weight: 20 },
-          primary: { weight: 50 },
-          trend1: { weight: 30 },
-        },
-        minAlignmentScore: 70,
       };
 
-      const disabledService = new TFAlignmentService(disabledConfig, logger);
+      const { service: disabledService } = createTFAlignmentHarness({
+        configOverrides: disabledConfig,
+      });
 
       const result = disabledService.calculateAlignment('LONG', 100, {
         entry: { ema20: 99 },
@@ -191,16 +182,13 @@ describe('TFAlignmentService', () => {
 
     it('should handle custom minAlignmentScore threshold', () => {
       const customConfig: TFAlignmentConfig = {
-        enabled: true,
-        timeframes: {
-          entry: { weight: 20 },
-          primary: { weight: 50 },
-          trend1: { weight: 30 },
-        },
+        ...createTFAlignmentConfig(),
         minAlignmentScore: 50, // Lower threshold
       };
 
-      const customService = new TFAlignmentService(customConfig, logger);
+      const { service: customService } = createTFAlignmentHarness({
+        configOverrides: customConfig,
+      });
 
       const result = customService.calculateAlignment('LONG', 100, {
         entry: { ema20: 101 }, // ❌

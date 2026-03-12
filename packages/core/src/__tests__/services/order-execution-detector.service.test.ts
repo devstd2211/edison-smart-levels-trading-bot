@@ -4,29 +4,17 @@
  */
 
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { LoggerService, LogLevel, OrderExecutionData } from '../../types/legacy';
+import { LoggerService, OrderExecutionData } from '../../types/legacy';
+import {
+  createOrderExecutionDetectorExecutionData,
+  createOrderExecutionDetectorHarness,
+} from '../helpers/order-execution-detector-test.utils';
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createMockExecutionData = (overrides?: Partial<OrderExecutionData>): OrderExecutionData => ({
-  orderId: 'test-order-123',
-  symbol: 'APEXUSDT',
-  side: 'Buy',
-  execType: 'Trade',
-  execPrice: '100.50',
-  execQty: '10',
-  closedSize: '10',
-  stopOrderType: 'UNKNOWN',
-  orderType: 'Market',
-  createType: 'CreateByUser',
-  ...overrides,
-});
+const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 
 // ============================================================================
 // TESTS
@@ -37,8 +25,7 @@ describe('OrderExecutionDetectorService', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    service = new OrderExecutionDetectorService(logger);
+    ({ service, logger } = createOrderExecutionDetectorHarness({ withErrorHandler: false }));
   });
 
   describe('detectExecution', () => {

@@ -1,0 +1,100 @@
+import { ErrorHandler } from '../../errors';
+import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
+import {
+  BybitOrder,
+  ExitType,
+  LoggerService,
+  LogLevel,
+  Position,
+  PositionSide,
+} from '../../types/legacy';
+
+export function createExitTypeDetectorLogger(): LoggerService {
+  return new LoggerService(LogLevel.ERROR, './logs', false);
+}
+
+export function createExitTypeDetectorMockLogger(): LoggerService {
+  return {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as LoggerService;
+}
+
+export function createExitTypeDetectorHarness(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createExitTypeDetectorLogger();
+  const errorHandler = new ErrorHandler(logger);
+  const service = new ExitTypeDetectorService(
+    logger,
+    options.withErrorHandler === false ? undefined : errorHandler,
+  );
+
+  return {
+    service,
+    logger,
+    errorHandler,
+  };
+}
+
+export function createExitTypeDetectorPosition(
+  side: PositionSide = PositionSide.LONG,
+): Position {
+  return {
+    id: 'test-position-123',
+    symbol: 'APEXUSDT',
+    side,
+    entryPrice: 100,
+    quantity: 10,
+    leverage: 10,
+    marginUsed: 10,
+    stopLoss: {
+      price: 99,
+      initialPrice: 99,
+      orderId: 'sl-order-123',
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    },
+    takeProfits: [
+      { level: 1, price: 101, percent: 1, sizePercent: 33.33, orderId: 'tp1-order', hit: false },
+      { level: 2, price: 102, percent: 2, sizePercent: 33.33, orderId: 'tp2-order', hit: false },
+      { level: 3, price: 103, percent: 3, sizePercent: 33.34, orderId: 'tp3-order', hit: false },
+    ],
+    openedAt: Date.now(),
+    unrealizedPnL: 0,
+    orderId: 'entry-order-123',
+    reason: 'Test position',
+    status: 'OPEN',
+  };
+}
+
+export function createExitTypeDetectorOrder(
+  overrides?: Partial<BybitOrder>,
+): BybitOrder {
+  return {
+    orderId: 'order-123',
+    symbol: 'APEXUSDT',
+    orderType: 'Limit',
+    side: 'Sell',
+    price: '101.0',
+    qty: '10',
+    orderStatus: 'Filled',
+    stopOrderType: undefined,
+    triggerPrice: undefined,
+    reduceOnly: false,
+    updatedTime: Date.now(),
+    ...overrides,
+  } as BybitOrder;
+}
+
+export const asExitTypeDetectorPosition = (value: unknown): Position => value as Position;
+export const asExitTypeDetectorOrder = (value: unknown): BybitOrder => value as BybitOrder;
+export const takeProfitExitTypes = [
+  ExitType.TAKE_PROFIT_1,
+  ExitType.TAKE_PROFIT_2,
+  ExitType.TAKE_PROFIT_3,
+];

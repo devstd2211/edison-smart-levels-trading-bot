@@ -3,7 +3,7 @@
  */
 
 import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
-import { LoggerService, CompoundInterestConfig, LogLevel } from '../../types/legacy';
+import { LoggerService } from '../../types/legacy';
 import {
   calculateLockedProfit,
   calculateReinvestment,
@@ -12,25 +12,19 @@ import {
   validateCompoundConfig,
   calculateGrowthFactor,
 } from '../../utils/compound-interest.helpers';
+import {
+  createCompoundInterestConfig,
+  createCompoundInterestHarness,
+} from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
 
-  const defaultConfig: CompoundInterestConfig = {
-    enabled: true,
-    useVirtualBalance: true,
-    baseDeposit: 100,
-    reinvestmentPercent: 50,
-    maxRiskPerTrade: 2,
-    minPositionSize: 10,
-    maxPositionSize: 1000,
-    profitLockPercent: 30,
-  };
+  const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    mockGetBalance = jest.fn();
+    ({ logger, mockGetBalance } = createCompoundInterestHarness({ withErrorHandler: false }));
   });
 
   // ============================================================================

@@ -3,7 +3,12 @@
  */
 
 import { FundingRateFilterService, FundingRateData } from '../../services/funding-rate-filter.service';
-import { LoggerService, LogLevel, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
+import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
+import {
+  createFundingRateData,
+  createFundingRateFilterConfig,
+  createFundingRateFilterHarness,
+} from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
   let logger: LoggerService;
@@ -11,23 +16,16 @@ describe('FundingRateFilterService', () => {
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      enabled: true,
-      blockLongThreshold: 0.0005, // 0.05%
-      blockShortThreshold: -0.0005, // -0.05%
-      cacheTimeMs: 3600000, // 1 hour
-    };
-    mockGetFundingRate = jest.fn();
+    ({ logger, config, mockGetFundingRate } = createFundingRateFilterHarness({
+      withErrorHandler: false,
+    }));
   });
 
   describe('checkSignal', () => {
     it('should allow LONG when funding rate is below threshold', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: 0.0001, // 0.01% (below 0.05%)
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(
+        createFundingRateData({ fundingRate: 0.0001 }),
+      );
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
       const result = await filter.checkSignal(SignalDirection.LONG);
@@ -38,11 +36,9 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should block LONG when funding rate exceeds threshold', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: 0.001, // 0.1% (above 0.05%)
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(
+        createFundingRateData({ fundingRate: 0.001 }),
+      );
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
       const result = await filter.checkSignal(SignalDirection.LONG);
@@ -53,11 +49,9 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should allow SHORT when funding rate is above threshold', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: -0.0001, // -0.01% (above -0.05%)
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(
+        createFundingRateData({ fundingRate: -0.0001 }),
+      );
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
       const result = await filter.checkSignal(SignalDirection.SHORT);
@@ -67,11 +61,9 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should block SHORT when funding rate is below threshold', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: -0.001, // -0.1% (below -0.05%)
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(
+        createFundingRateData({ fundingRate: -0.001 }),
+      );
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
       const result = await filter.checkSignal(SignalDirection.SHORT);
@@ -82,11 +74,9 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should always allow HOLD signals', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: 0.01, // Extreme funding rate
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(
+        createFundingRateData({ fundingRate: 0.01 }),
+      );
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
       const result = await filter.checkSignal(SignalDirection.HOLD);
@@ -118,11 +108,7 @@ describe('FundingRateFilterService', () => {
 
   describe('caching', () => {
     it('should cache funding rate data', async () => {
-      const fundingData: FundingRateData = {
-        fundingRate: 0.0001,
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      };
+      const fundingData: FundingRateData = createFundingRateData();
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
@@ -139,11 +125,7 @@ describe('FundingRateFilterService', () => {
 
     it('should refetch after cache expires', async () => {
       const shortCacheConfig = { ...config, cacheTimeMs: 100 }; // 100ms cache
-      const fundingData: FundingRateData = {
-        fundingRate: 0.0001,
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      };
+      const fundingData: FundingRateData = createFundingRateData();
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
@@ -162,11 +144,7 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should clear cache', async () => {
-      const fundingData: FundingRateData = {
-        fundingRate: 0.0001,
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      };
+      const fundingData: FundingRateData = createFundingRateData();
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
@@ -184,11 +162,7 @@ describe('FundingRateFilterService', () => {
 
   describe('edge cases', () => {
     it('should handle zero funding rate', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: 0,
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(createFundingRateData({ fundingRate: 0 }));
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
 
@@ -200,11 +174,9 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should handle funding rate exactly at threshold', async () => {
-      mockGetFundingRate.mockResolvedValue({
-        fundingRate: 0.0005, // Exactly at threshold
-        timestamp: Date.now(),
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-      });
+      mockGetFundingRate.mockResolvedValue(
+        createFundingRateData({ fundingRate: 0.0005 }),
+      );
 
       const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
       const result = await filter.checkSignal(SignalDirection.LONG);

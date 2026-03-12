@@ -6,31 +6,13 @@
 
 import { WhaleDetectionService, WhaleDetectionMode, WhaleDetectorConfig } from '../../services/whale-detection.service';
 import { OrderBookAnalysis, OrderBookWall, LoggerService, LogLevel, SignalDirection } from '../../types/legacy';
+import {
+  createWhaleDetectionAnalysis,
+  createWhaleDetectionConfig,
+  createWhaleDetectionHarness,
+} from '../helpers/whale-detection-test.utils';
 
-function createAnalysis(walls: OrderBookWall[], ratio: number, direction: 'BULLISH' | 'BEARISH' | 'NEUTRAL'): OrderBookAnalysis {
-  return {
-    timestamp: Date.now(),
-    orderBook: {
-      symbol: 'APEXUSDT',
-      timestamp: Date.now(),
-      bids: [],
-      asks: [],
-      updateId: 0,
-    },
-    walls,
-    imbalance: {
-      bidVolume: 1000,
-      askVolume: 1000,
-      ratio,
-      direction,
-      strength: 0.5,
-    },
-    strongestBid: null,
-    strongestAsk: null,
-    spread: 0.05,
-    depth: { bid: 50, ask: 50 },
-  };
-}
+const createAnalysis = createWhaleDetectionAnalysis;
 
 describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
@@ -39,34 +21,10 @@ describe('WhaleDetectionService', () => {
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      modes: {
-        wallBreak: {
-          enabled: true,
-          minWallSize: 15, // 15%
-          breakConfirmationMs: 3000, // 3s
-          maxConfidence: 85,
-        },
-        wallDisappearance: {
-          enabled: true,
-          minWallSize: 20, // 20%
-          minWallDuration: 60000, // 60s
-          wallGoneThresholdMs: 15000,
-          maxConfidence: 80,
-        },
-        imbalanceSpike: {
-          enabled: true,
-          minRatioChange: 0.5, // 50%
-          detectionWindow: 10000, // 10s
-          maxConfidence: 90,
-        },
-      },
-      maxImbalanceHistory: 20,
-      wallExpiryMs: 60000,
-      breakExpiryMs: 300000,
-    };
-    detector = new WhaleDetectionService(config, logger, 'BREAKOUT');
+    ({ detector, logger, config } = createWhaleDetectionHarness({
+      strategy: 'BREAKOUT',
+      withErrorHandler: false,
+    }));
   });
 
   afterEach(() => {

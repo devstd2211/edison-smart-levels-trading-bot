@@ -4,7 +4,11 @@
  */
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
-import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types/legacy';
+import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
+import {
+  createOrderbookImbalanceConfig,
+  createOrderbookImbalanceHarness,
+} from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
@@ -12,13 +16,7 @@ describe('OrderbookImbalanceService', () => {
   let config: OrderbookImbalanceConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      enabled: true,
-      minImbalancePercent: 30, // 30% threshold for significant imbalance
-      levels: 10, // Analyze top 10 levels
-    };
-    service = new OrderbookImbalanceService(config, logger);
+    ({ service, logger, config } = createOrderbookImbalanceHarness({ withErrorHandler: false }));
   });
 
   describe('initialization', () => {

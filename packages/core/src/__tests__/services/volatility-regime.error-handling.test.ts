@@ -10,36 +10,17 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolatilityRegimeService } from '../../services/volatility-regime.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { ValidationError, ConfigurationError } from '../../errors/DomainErrors';
 import { LoggerService, VolatilityRegime } from '../../types/legacy';
+import {
+  createVolatilityRegimeHarness,
+  createVolatilityRegimeMockLogger,
+} from '../helpers/volatility-regime-test.utils';
+
+const createMockLogger = createVolatilityRegimeMockLogger;
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
-
-/**
- * Create mock logger for testing
- */
-function createMockLogger(methodToFail?: string): LoggerService {
-  return {
-    minLevel: 'debug',
-    logDir: '/tmp',
-    logToFile: false,
-    logs: [],
-    info: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'info') throw new Error('Logger.info failed');
-    }),
-    warn: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'warn') throw new Error('Logger.warn failed');
-    }),
-    debug: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'debug') throw new Error('Logger.debug failed');
-    }),
-    error: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'error') throw new Error('Logger.error failed');
-    }),
-  } as unknown as LoggerService;
-}
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
@@ -47,8 +28,8 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let mockLogger: LoggerService;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    errorHandler = new ErrorHandler(mockLogger);
+    mockLogger = createVolatilityRegimeMockLogger();
+    ({ errorHandler } = createVolatilityRegimeHarness({ logger: mockLogger }));
   });
 
   // =========================================================================

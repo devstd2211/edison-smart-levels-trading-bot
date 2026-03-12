@@ -37,8 +37,16 @@
  */
 
 import { RetestEntryService } from '../../services/retest-entry.service';
-import { LoggerService, LogLevel, RetestConfig, Signal, Candle, SignalDirection, SignalType } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { LoggerService, RetestConfig, Signal, Candle, SignalDirection } from '../../types/legacy';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import {
+  createRetestEntryCandles,
+  createRetestEntryConfig,
+  createRetestEntryHarness,
+  createRetestEntryLogger,
+  createRetestEntryMockLogger,
+  createRetestEntrySignal,
+} from '../helpers/retest-entry-test.utils';
 
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   const asCandles = (value: unknown): Candle[] => value as Candle[];
@@ -48,49 +56,16 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-
-  const mockConfig: RetestConfig = {
-    enabled: true,
-    minImpulsePercent: 0.5,
-    retestZoneFibStart: 50,
-    retestZoneFibEnd: 61.8,
-    maxRetestWaitMs: 300000,
-    volumeMultiplier: 0.8,
-    requireStructureIntact: true,
-  };
-
-  const mockSignal: Signal = {
-    direction: SignalDirection.LONG,
-    type: SignalType.TREND_FOLLOWING,
-    confidence: 85,
-    price: 1.1575,
-    stopLoss: 1.1475,
-    takeProfits: [
-      { level: 1, price: 1.1635, percent: 0.5, sizePercent: 33.33, hit: false },
-      { level: 2, price: 1.1695, percent: 1.0, sizePercent: 33.33, hit: false },
-      { level: 3, price: 1.1815, percent: 2.0, sizePercent: 33.34, hit: false },
-    ],
-    reason: 'Test signal',
-    timestamp: Date.now(),
-    marketData: {
-      rsi: 60,
-      ema20: 1.1500,
-      ema50: 1.1450,
-      atr: 0.01,
-    },
-  };
-
-  const mockCandles: Candle[] = [
-    { timestamp: Date.now() - 5000, open: 1.1500, high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 },
-    { timestamp: Date.now() - 4000, open: 1.1505, high: 1.1520, low: 1.1500, close: 1.1515, volume: 1000 },
-    { timestamp: Date.now() - 3000, open: 1.1515, high: 1.1540, low: 1.1510, close: 1.1535, volume: 1000 },
-    { timestamp: Date.now() - 2000, open: 1.1535, high: 1.1560, low: 1.1530, close: 1.1555, volume: 1000 },
-    { timestamp: Date.now() - 1000, open: 1.1555, high: 1.1580, low: 1.1550, close: 1.1575, volume: 1000 },
-  ];
+  let mockConfig: RetestConfig;
+  let mockSignal: Signal;
+  let mockCandles: Candle[];
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
+    logger = createRetestEntryLogger();
     errorHandler = new ErrorHandler(logger);
+    mockConfig = createRetestEntryConfig();
+    mockSignal = createRetestEntrySignal();
+    mockCandles = createRetestEntryCandles();
   });
 
   // ============================================================================
@@ -263,14 +238,13 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   describe('SKIP - Logging Failures', () => {
     it('should continue despite logger failures in detectImpulse', () => {
       const failingLogger = {
+        ...createRetestEntryMockLogger(),
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
         debug: jest.fn(() => {
           throw new Error('Logger debug failed');
         }),
-        warn: jest.fn(),
-        error: jest.fn(),
       };
 
       const service = new RetestEntryService(mockConfig, asLogger(failingLogger), errorHandler);
@@ -283,12 +257,10 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
     it('should continue despite logger failures in createRetestZone', () => {
       const failingLogger = {
+        ...createRetestEntryMockLogger(),
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-        debug: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
       };
 
       const service = new RetestEntryService(mockConfig, asLogger(failingLogger), errorHandler);
@@ -301,14 +273,13 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
     it('should continue despite logger failures in checkRetest', () => {
       const failingLogger = {
+        ...createRetestEntryMockLogger(),
         debug: jest.fn(() => {
           throw new Error('Logger debug failed');
         }),
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-        warn: jest.fn(),
-        error: jest.fn(),
       };
 
       const service = new RetestEntryService(mockConfig, asLogger(failingLogger), errorHandler);
@@ -389,7 +360,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (optional DI)', () => {
-      const service = new RetestEntryService(mockConfig, logger); // No errorHandler
+      const { service } = createRetestEntryHarness({ withErrorHandler: false });
 
       const impulseResult = service.detectImpulse('BTCUSDT', 1.1575, mockCandles);
       expect(impulseResult.hasImpulse).toBe(true);

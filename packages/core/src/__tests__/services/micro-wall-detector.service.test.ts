@@ -5,38 +5,22 @@
 import { MicroWallDetectorService } from '../../services/micro-wall-detector.service';
 import {
   LoggerService,
-  LogLevel,
   SignalDirection,
   MicroWallDetectorConfig,
   OrderBook,
 } from '../../types/legacy';
+import {
+  createMicroWallDetectorConfig,
+  createMicroWallDetectorHarness,
+  createMicroWallOrderBook,
+} from '../helpers/micro-wall-detector-test.utils';
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
 
-function createOrderBook(
-  bids: Array<[number, number]>,
-  asks: Array<[number, number]>,
-): OrderBook {
-  return {
-    symbol: 'APEXUSDT',
-    timestamp: Date.now(),
-    bids,
-    asks,
-    updateId: 1,
-  };
-}
-
-function createConfig(overrides?: Partial<MicroWallDetectorConfig>): MicroWallDetectorConfig {
-  return {
-    minWallSizePercent: 5,
-    breakConfirmationMs: 1000,
-    maxConfidence: 75,
-    wallExpiryMs: 60000,
-    ...overrides,
-  };
-}
+const createOrderBook = createMicroWallOrderBook;
+const createConfig = createMicroWallDetectorConfig;
 
 // ============================================================================
 // TESTS
@@ -48,9 +32,7 @@ describe('MicroWallDetectorService', () => {
   let config: MicroWallDetectorConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = createConfig();
-    detector = new MicroWallDetectorService(config, logger);
+    ({ detector, logger, config } = createMicroWallDetectorHarness({ withErrorHandler: false }));
   });
 
   describe('detectMicroWalls', () => {

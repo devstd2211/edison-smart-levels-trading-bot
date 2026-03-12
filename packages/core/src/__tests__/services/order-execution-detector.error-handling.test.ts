@@ -29,8 +29,13 @@
  */
 
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { LoggerService, LogLevel, OrderExecutionData } from '../../types/legacy';
+import { LoggerService, OrderExecutionData } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import {
+  createOrderExecutionDetectorExecutionData,
+  createOrderExecutionDetectorHarness,
+  createOrderExecutionDetectorLogger,
+} from '../helpers/order-execution-detector-test.utils';
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>
@@ -42,23 +47,10 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
+    ({ logger, errorHandler } = createOrderExecutionDetectorHarness());
   });
 
-  const createMockExecutionData = (overrides?: Partial<OrderExecutionData>): OrderExecutionData => ({
-    orderId: 'test-order-123',
-    symbol: 'APEXUSDT',
-    side: 'Buy',
-    execType: 'Trade',
-    execPrice: '100.50',
-    execQty: '10',
-    closedSize: '10',
-    stopOrderType: 'UNKNOWN',
-    orderType: 'Market',
-    createType: 'CreateByUser',
-    ...overrides,
-  });
+  const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 
   // ============================================================================
   // THROW VALIDATION TESTS (3)

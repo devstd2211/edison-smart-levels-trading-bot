@@ -29,16 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-12)
-- Completed testability batches 256-258 (behavior-preserving `wall-tracker` / `volume-profile` / `weight-matrix-calculator` follow-up):
-  - added shared helpers for canonical service wiring, reusable candle/input fixtures, and broken-logger variants where the error-handling suites needed them.
-  - aligned the touched suites on shared builders instead of repeated local logger/config/mock constructor blocks, while keeping the scenario-specific constructor calls only where individual tests need custom overrides.
-  - reviewed `services/wall-tracker.service.ts`, `services/volume-profile.service.ts`, and `services/weight-matrix-calculator.service.ts`; kept production code unchanged because this batch only needed test-fixture consolidation.
+- Completed testability batches 269-271 (behavior-preserving `retest-entry` / `tf-alignment` / `circuit-breaker` follow-up):
+  - added shared helpers for canonical config/logger/error-handler wiring plus reusable retest signal/candle fixtures and alignment/circuit mock builders, and aligned the touched suites on the same setup path instead of repeated inline bootstrap blocks.
+  - reviewed `services/retest-entry.service.ts`, `services/tf-alignment.service.ts`, and `services/circuit-breaker.service.ts`; kept production code unchanged because this batch only needed test-fixture consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/wall-tracker.service.test.ts packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts packages/core/src/__tests__/services/volume-profile.service.test.ts packages/core/src/__tests__/services/volume-profile.error-handling.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.service.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.error-handling.test.ts` -> PASS (6/6 suites, 172/172 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/retest-entry.service.test.ts packages/core/src/__tests__/services/retest-entry.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts` -> PASS (6/6 suites, 129/129 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- If starting a fresh session after commit/fixation, resume from the next compact lifecycle/testability boundary that still repeats local service construction beyond the now-covered `position-*`, `websocket-*`, `risk-manager`, `strategy-manager`, `telegram`, `take-profit-manager`, `ladder-tp-manager`, `orderbook-manager`, `wall-tracker`, `volume-profile`, and `weight-matrix-calculator` slices.
+- If starting a fresh session after commit/fixation, resume from the next compact lifecycle/testability boundary that still repeats local service construction beyond the now-covered `position-*`, `websocket-*`, `risk-manager`, `strategy-manager`, `telegram`, `take-profit-manager`, `ladder-tp-manager`, `orderbook-manager`, `wall-tracker`, `volume-profile`, `weight-matrix-calculator`, `compound-interest-calculator`, `entry-confirmation`, `exit-type-detector`, `volatility-regime`, `funding-rate-filter`, `order-execution-detector`, `micro-wall-detector`, `orderbook-imbalance`, `trading-journal`, `whale-detection`, `retest-entry`, `tf-alignment`, and `circuit-breaker` slices.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.

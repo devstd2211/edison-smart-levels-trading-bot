@@ -12,43 +12,24 @@
 import { MicroWallDetectorService } from '../../services/micro-wall-detector.service';
 import {
   LoggerService,
-  LogLevel,
   MicroWallDetectorConfig,
   OrderBook,
 } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import {
+  createMicroWallDetectorConfig,
+  createMicroWallDetectorHarness,
+  createMicroWallDetectorLogger,
+  createMicroWallOrderBook,
+} from '../helpers/micro-wall-detector-test.utils';
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
 
-function createConfig(overrides?: Partial<MicroWallDetectorConfig>): MicroWallDetectorConfig {
-  return {
-    minWallSizePercent: 5,
-    breakConfirmationMs: 1000,
-    maxConfidence: 75,
-    wallExpiryMs: 60000,
-    ...overrides,
-  };
-}
-
-function createOrderBook(
-  bids: Array<[number, number]>,
-  asks: Array<[number, number]>,
-): OrderBook {
-  return {
-    symbol: 'APEXUSDT',
-    timestamp: Date.now(),
-    bids,
-    asks,
-    updateId: 1,
-  };
-}
-
-function createMockLogger(): LoggerService {
-  const logger = new LoggerService(LogLevel.ERROR, './logs', false);
-  return logger;
-}
+const createConfig = createMicroWallDetectorConfig;
+const createOrderBook = createMicroWallOrderBook;
+const createMockLogger = createMicroWallDetectorLogger;
 
 // ============================================================================
 // TESTS

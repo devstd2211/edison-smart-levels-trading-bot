@@ -5,30 +5,29 @@
  */
 
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../types/legacy';
+import {
+  createCircuitBreakerConfig,
+  createCircuitBreakerHarness,
+  createCircuitBreakerMockLogger,
+} from '../helpers/circuit-breaker-test.utils';
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
-
-  const config: CircuitBreakerConfig = {
-    errorThreshold: 2,
-    cooldownMs: 100,
-    autoReset: true,
-  };
+  let config: CircuitBreakerConfig;
 
   beforeEach(() => {
-    logger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    };
+    config = createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 });
+    logger = createCircuitBreakerMockLogger();
 
     errorHandler = new ErrorHandler(logger as LoggerService);
-    service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+    ({ service } = createCircuitBreakerHarness({
+      configOverrides: config,
+      logger: logger as LoggerService,
+    }));
   });
 
   // =========================================================================
@@ -38,6 +37,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   describe('SKIP Strategy - Logging Failures', () => {
     it('should skip logger errors in constructor', () => {
       const failingLogger = {
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('Logger init failed');
         }),
@@ -51,6 +51,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should skip logger errors in state transitions (isOpen)', () => {
       const failingLogger = {
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('State transition log failed');
         }),
@@ -74,7 +75,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should skip logger errors in recordSuccess', () => {
       const failingLogger = {
-        ...logger,
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('Success log failed');
         }),
@@ -95,7 +96,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should skip logger errors in recordError', () => {
       const failingLogger = {
-        ...logger,
+        ...createCircuitBreakerMockLogger(),
         warn: jest.fn().mockImplementationOnce(() => {
           throw new Error('Error log failed');
         }),
@@ -113,7 +114,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should skip logger errors in trip', () => {
       const failingLogger = {
-        ...logger,
+        ...createCircuitBreakerMockLogger(),
         error: jest.fn().mockImplementationOnce(() => {
           throw new Error('Trip log failed');
         }),
@@ -132,7 +133,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should skip logger errors in reset', () => {
       const failingLogger = {
-        ...logger,
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('Reset log failed');
         }),
@@ -263,6 +264,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should handle logger-only failures without ErrorHandler', () => {
       const failingLogger = {
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementation(() => {
           throw new Error('Log failed');
         }),
@@ -316,6 +318,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   describe('Integration Tests', () => {
     it('should handle multiple concurrent failures gracefully', () => {
       const failingLogger = {
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementation(() => {
           throw new Error('Log failed');
         }),
@@ -342,14 +345,13 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     it('should recover from errors and continue functioning', () => {
       let logErrorCount = 0;
       const intermittentLogger = {
+        ...createCircuitBreakerMockLogger(),
         info: jest.fn().mockImplementation(() => {
           logErrorCount++;
           if (logErrorCount === 1) {
             throw new Error('Transient log failure');
           }
         }),
-        warn: jest.fn(),
-        error: jest.fn(),
       };
 
       const testService = new CircuitBreakerService(config, intermittentLogger as unknown as LoggerService, errorHandler);

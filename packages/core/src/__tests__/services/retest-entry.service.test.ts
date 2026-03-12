@@ -5,55 +5,25 @@
  */
 
 import { RetestEntryService } from '../../services/retest-entry.service';
-import { LoggerService } from '../../services/logger.service';
-import { LogLevel, RetestConfig, Signal, Candle, SignalDirection, SignalType } from '../../types/legacy';
+import { Candle, Signal, SignalDirection } from '../../types/legacy';
+import {
+  createRetestEntryCandles,
+  createRetestEntryConfig,
+  createRetestEntryHarness,
+  createRetestEntrySignal,
+} from '../helpers/retest-entry-test.utils';
 
 describe('RetestEntryService', () => {
   let service: RetestEntryService;
-  let logger: LoggerService;
-
-  const mockConfig: RetestConfig = {
-    enabled: true,
-    minImpulsePercent: 0.5,
-    retestZoneFibStart: 50,
-    retestZoneFibEnd: 61.8,
-    maxRetestWaitMs: 300000, // 5 minutes
-    volumeMultiplier: 0.8,
-    requireStructureIntact: true,
-  };
-
-  const mockSignal: Signal = {
-    direction: SignalDirection.LONG,
-    type: SignalType.TREND_FOLLOWING,
-    confidence: 85,
-    price: 1.1575,
-    stopLoss: 1.1475,
-    takeProfits: [
-      { level: 1, price: 1.1635, percent: 0.5, sizePercent: 33.33, hit: false },
-      { level: 2, price: 1.1695, percent: 1.0, sizePercent: 33.33, hit: false },
-      { level: 3, price: 1.1815, percent: 2.0, sizePercent: 33.34, hit: false },
-    ],
-    reason: 'Test signal',
-    timestamp: Date.now(),
-    marketData: {
-      rsi: 60,
-      ema20: 1.1500,
-      ema50: 1.1450,
-      atr: 0.01,
-    },
-  };
-
-  const mockCandles: Candle[] = [
-    { timestamp: Date.now() - 5000, open: 1.1500, high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 },
-    { timestamp: Date.now() - 4000, open: 1.1505, high: 1.1520, low: 1.1500, close: 1.1515, volume: 1000 },
-    { timestamp: Date.now() - 3000, open: 1.1515, high: 1.1540, low: 1.1510, close: 1.1535, volume: 1000 },
-    { timestamp: Date.now() - 2000, open: 1.1535, high: 1.1560, low: 1.1530, close: 1.1555, volume: 1000 },
-    { timestamp: Date.now() - 1000, open: 1.1555, high: 1.1580, low: 1.1550, close: 1.1575, volume: 1000 },
-  ];
+  let mockConfig = createRetestEntryConfig();
+  let mockSignal: Signal = createRetestEntrySignal();
+  let mockCandles: Candle[] = createRetestEntryCandles();
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    service = new RetestEntryService(mockConfig, logger);
+    ({ service } = createRetestEntryHarness());
+    mockConfig = createRetestEntryConfig();
+    mockSignal = createRetestEntrySignal();
+    mockCandles = createRetestEntryCandles();
   });
 
   describe('detectImpulse', () => {
@@ -79,7 +49,9 @@ describe('RetestEntryService', () => {
 
     it('should not detect impulse when service disabled', () => {
       const disabledConfig = { ...mockConfig, enabled: false };
-      const disabledService = new RetestEntryService(disabledConfig, logger);
+      const { service: disabledService } = createRetestEntryHarness({
+        configOverrides: disabledConfig,
+      });
 
       const result = disabledService.detectImpulse('BTCUSDT', 1.1600, mockCandles);
 
@@ -172,8 +144,9 @@ describe('RetestEntryService', () => {
     });
 
     it('should use config Fibonacci levels', () => {
-      const customConfig = { ...mockConfig, retestZoneFibStart: 38.2, retestZoneFibEnd: 50 };
-      const customService = new RetestEntryService(customConfig, logger);
+      const { service: customService } = createRetestEntryHarness({
+        configOverrides: { retestZoneFibStart: 38.2, retestZoneFibEnd: 50 },
+      });
 
       const impulseRange = 0.01; // 1.1600 - 1.1500
       const zone = customService.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600);
@@ -280,8 +253,9 @@ describe('RetestEntryService', () => {
     });
 
     it('should skip structure check when not required', () => {
-      const noStructureConfig = { ...mockConfig, requireStructureIntact: false };
-      const noStructureService = new RetestEntryService(noStructureConfig, logger);
+      const { service: noStructureService } = createRetestEntryHarness({
+        configOverrides: { requireStructureIntact: false },
+      });
 
       noStructureService.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600);
 

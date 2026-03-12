@@ -4,23 +4,18 @@
  */
 
 import { EntryConfirmationManager } from '../../services/entry-confirmation.service';
-import { LoggerService, LogLevel, SignalDirection, EntryConfirmationConfig } from '../../types/legacy';
+import { LoggerService, SignalDirection } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
+import {
+  createEntryConfirmationConfig,
+  createEntryConfirmationHarness,
+} from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-const defaultConfig: EntryConfirmationConfig = {
-  long: {
-    enabled: true,
-    expirySeconds: 120,
-  },
-  short: {
-    enabled: true,
-    expirySeconds: 120,
-  },
-};
+const defaultConfig = createEntryConfirmationConfig();
 
 // ============================================================================
 // TESTS
@@ -32,9 +27,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-    manager = new EntryConfirmationManager(defaultConfig, logger, errorHandler);
+    ({ manager, logger, errorHandler } = createEntryConfirmationHarness());
   });
 
   // TEST 1-3: Logger failure SKIP strategy

@@ -31,6 +31,11 @@ import {
   ExitType,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
+import {
+  cleanupTradingJournalTempDir,
+  createJournalEntryCondition,
+  createJournalExitCondition,
+} from '../helpers/trading-journal-test.utils';
 
 /**
  * Mock Logger for testing
@@ -41,48 +46,16 @@ class MockLogger extends LoggerService {
   }
 }
 
-/**
- * Helper to create a valid entry condition
- */
-function createEntryCondition(): EntryCondition {
-  return {
-    signal: {
-      price: 100,
-      confidence: 75,
-      type: SignalType.LEVEL_BASED,
-      direction: SignalDirection.LONG,
-      stopLoss: 90,
-      takeProfits: [{ level: 1, percent: 50 }] as TakeProfit[],
-      reason: 'test signal',
-      timestamp: Date.now(),
-    },
-  };
-}
-
-/**
- * Helper to create a valid exit condition
- */
-function createExitCondition(): ExitCondition {
-  return {
-    exitType: ExitType.TAKE_PROFIT_1,
-    price: 51000,
-    timestamp: Date.now(),
-    reason: 'Take profit 1',
-    pnlUsdt: 1000,
-    pnlPercent: 0.5,
-    realizedPnL: 1000,
-    tpLevelsHit: [1],
-    tpLevelsHitCount: 1,
-    stoppedOut: false,
-    slMovedToBreakeven: false,
-    trailingStopActivated: false,
-    maxProfitPercent: 0.5,
-    maxDrawdownPercent: 0,
-    holdingTimeMinutes: 10,
-    holdingTimeMs: 10 * 60 * 1000,
-    holdingTimeHours: 10 / 60,
-  };
-}
+const createEntryCondition = createJournalEntryCondition;
+const createExitCondition = () => createJournalExitCondition(
+  ExitType.TAKE_PROFIT_1,
+  51000,
+  0.5,
+  1000,
+  10,
+  [1],
+  false,
+);
 
 describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
   let journal: TradingJournalService;
@@ -104,10 +77,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   });
 
   afterEach(() => {
-    // Clean up temp directory
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
+    cleanupTradingJournalTempDir(tempDir);
   });
 
   // ============================================================================

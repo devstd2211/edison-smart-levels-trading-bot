@@ -31,8 +31,12 @@
  */
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
-import { OrderbookImbalanceConfig, LoggerService, LogLevel } from '../../types/legacy';
+import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import {
+  createOrderbookImbalanceConfig,
+  createOrderbookImbalanceHarness,
+} from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   const asOrderbook = (
@@ -45,8 +49,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
+    ({ logger, errorHandler } = createOrderbookImbalanceHarness());
   });
 
   // ============================================================================

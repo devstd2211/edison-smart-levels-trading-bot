@@ -12,64 +12,27 @@ import { WhaleDetectionService, WhaleDetectorConfig, WhaleDetectionMode } from '
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { OrderBookAnalysis, SignalDirection } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
+import {
+  createWhaleDetectionAnalysis,
+  createWhaleDetectionConfig,
+  createWhaleDetectionMockLogger,
+} from '../helpers/whale-detection-test.utils';
 
-const createMockLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  silly: jest.fn(),
-});
-
-const createValidConfig = (): WhaleDetectorConfig => ({
-  modes: {
-    wallBreak: {
-      enabled: true,
-      minWallSize: 15,
-      breakConfirmationMs: 3000,
-      maxConfidence: 85,
+const createMockLogger = createWhaleDetectionMockLogger;
+const createValidAnalysis = () => createWhaleDetectionAnalysis([], 1.2, 'BULLISH');
+const createValidConfig = (): WhaleDetectorConfig => {
+  const config = createWhaleDetectionConfig();
+  return {
+    ...config,
+    modes: {
+      ...config.modes,
+      imbalanceSpike: {
+        ...config.modes.imbalanceSpike,
+        minRatioChange: 1.5,
+      },
     },
-    wallDisappearance: {
-      enabled: true,
-      minWallSize: 20,
-      minWallDuration: 60000,
-      wallGoneThresholdMs: 15000,
-      maxConfidence: 80,
-    },
-    imbalanceSpike: {
-      enabled: true,
-      minRatioChange: 1.5,
-      detectionWindow: 10000,
-      maxConfidence: 90,
-    },
-  },
-  maxImbalanceHistory: 20,
-  wallExpiryMs: 60000,
-  breakExpiryMs: 300000,
-});
-
-const createValidAnalysis = (): OrderBookAnalysis => ({
-  timestamp: Date.now(),
-  orderBook: {
-    symbol: 'BTCUSDT',
-    timestamp: Date.now(),
-    bids: [],
-    asks: [],
-    updateId: 1,
-  },
-  imbalance: {
-    ratio: 1.2,
-    direction: 'BULLISH',
-    bidVolume: 100,
-    askVolume: 83.33,
-    strength: 0.2,
-  },
-  walls: [],
-  strongestBid: null,
-  strongestAsk: null,
-  spread: 0.002,
-  depth: { bid: 50, ask: 50 },
-});
+  };
+};
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   // ============================================================================

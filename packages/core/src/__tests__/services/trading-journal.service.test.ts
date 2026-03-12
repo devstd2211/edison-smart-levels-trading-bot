@@ -14,50 +14,19 @@ import { TradingJournalService } from '../../services/trading-journal.service';
 import { LoggerService, LogLevel, PositionSide, SignalType, SignalDirection, TakeProfit, ExitCondition, ExitType } from '../../types/legacy';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+import {
+  cleanupTradingJournalTempDir,
+  createJournalExitCondition,
+  createJournalTakeProfit,
+  createTradingJournalHarness,
+} from '../helpers/trading-journal-test.utils';
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
-function createTakeProfit(level: number, price: number, percent: number = 1.0, sizePercent: number = 100): TakeProfit {
-  return {
-    level,
-    price,
-    percent,
-    sizePercent,
-    hit: false,
-  };
-}
-
-function createExitCondition(
-  exitType: ExitType,
-  price: number,
-  pnlPercent: number,
-  realizedPnL: number,
-  holdingTimeMinutes: number,
-  tpLevelsHit: number[] = [],
-  stoppedOut: boolean = false,
-): ExitCondition {
-  const timestamp = Date.now();
-  return {
-    exitType,
-    price,
-    timestamp,
-    reason: `${exitType} hit`,
-    pnlUsdt: realizedPnL,
-    pnlPercent,
-    realizedPnL,
-    tpLevelsHit,
-    tpLevelsHitCount: tpLevelsHit.length,
-    holdingTimeMs: holdingTimeMinutes * 60 * 1000,
-    holdingTimeMinutes,
-    holdingTimeHours: holdingTimeMinutes / 60,
-    stoppedOut,
-    slMovedToBreakeven: false,
-    trailingStopActivated: false,
-  };
-}
+const createTakeProfit = createJournalTakeProfit;
+const createExitCondition = createJournalExitCondition;
 
 describe('TradingJournalService', () => {
   let journal: TradingJournalService;
@@ -65,17 +34,13 @@ describe('TradingJournalService', () => {
   let testDataDir: string;
 
   beforeEach(() => {
-    // Create temp directory for each test
-    testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'trading-journal-test-'));
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    journal = new TradingJournalService(logger, testDataDir);
+    ({ journal, logger, dataDir: testDataDir } = createTradingJournalHarness({
+      withErrorHandler: false,
+    }));
   });
 
   afterEach(() => {
-    // Cleanup temp directory
-    if (fs.existsSync(testDataDir)) {
-      fs.rmSync(testDataDir, { recursive: true, force: true });
-    }
+    cleanupTradingJournalTempDir(testDataDir);
   });
 
   // ============================================================================

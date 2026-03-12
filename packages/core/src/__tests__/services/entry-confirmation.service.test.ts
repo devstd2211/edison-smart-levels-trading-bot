@@ -3,22 +3,17 @@
  */
 
 import { EntryConfirmationManager } from '../../services/entry-confirmation.service';
-import { LoggerService, LogLevel, SignalDirection, EntryConfirmationConfig } from '../../types/legacy';
+import { LoggerService, SignalDirection } from '../../types/legacy';
+import {
+  createEntryConfirmationConfig,
+  createEntryConfirmationHarness,
+} from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-const defaultConfig: EntryConfirmationConfig = {
-  long: {
-    enabled: true,
-    expirySeconds: 120,
-  },
-  short: {
-    enabled: true,
-    expirySeconds: 120,
-  },
-};
+const defaultConfig = createEntryConfirmationConfig();
 
 // ============================================================================
 // TESTS
@@ -29,8 +24,7 @@ describe('EntryConfirmationManager', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    manager = new EntryConfirmationManager(defaultConfig, logger);
+    ({ manager, logger } = createEntryConfirmationHarness({ withErrorHandler: false }));
   });
 
   // TEST 1-2: Basic operations
@@ -495,16 +489,12 @@ describe('EntryConfirmationManager', () => {
     });
 
     it('should respect disabled configuration', () => {
-      const disabledConfig: EntryConfirmationConfig = {
+      const disabledConfig = createEntryConfirmationConfig({
         long: {
           enabled: false,
           expirySeconds: 120,
         },
-        short: {
-          enabled: true,
-          expirySeconds: 120,
-        },
-      };
+      });
 
       const disabledManager = new EntryConfirmationManager(disabledConfig, logger);
 

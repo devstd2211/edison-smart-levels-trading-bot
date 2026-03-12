@@ -3,17 +3,10 @@
  */
 
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
-import { LoggerService, LogLevel } from '../../types/legacy';
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-const defaultConfig: CircuitBreakerConfig = {
-  errorThreshold: 5,
-  cooldownMs: 5000, // 5 seconds for testing
-  autoReset: true,
-};
+import {
+  createCircuitBreakerConfig,
+  createCircuitBreakerHarness,
+} from '../helpers/circuit-breaker-test.utils';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -23,11 +16,11 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerService;
-  let logger: LoggerService;
+  let defaultConfig: CircuitBreakerConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    service = new CircuitBreakerService(defaultConfig, logger);
+    defaultConfig = createCircuitBreakerConfig();
+    ({ service } = createCircuitBreakerHarness({ configOverrides: defaultConfig }));
   });
 
   // TEST 1-2: Initial state

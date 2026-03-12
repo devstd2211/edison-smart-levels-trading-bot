@@ -1,18 +1,17 @@
 import { VolatilityRegimeService } from '../../services/volatility-regime.service';
 import {
   LoggerService,
-  LogLevel,
   VolatilityRegime,
   VolatilityRegimeConfig,
 } from '../../types/legacy';
+import { createVolatilityRegimeHarness } from '../helpers/volatility-regime-test.utils';
 
 describe('VolatilityRegimeService', () => {
   let service: VolatilityRegimeService;
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    service = new VolatilityRegimeService(logger);
+    ({ service, logger } = createVolatilityRegimeHarness({ withErrorHandler: false }));
   });
 
   describe('initialization', () => {

@@ -4,58 +4,20 @@
  */
 
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { LoggerService, LogLevel, ExitType, PositionSide, Position, BybitOrder } from '../../types/legacy';
+import { LoggerService, ExitType, PositionSide, Position, BybitOrder } from '../../types/legacy';
+import {
+  createExitTypeDetectorHarness,
+  createExitTypeDetectorOrder,
+  createExitTypeDetectorPosition,
+  takeProfitExitTypes,
+} from '../helpers/exit-type-detector-test.utils';
+
+const createMockPosition = createExitTypeDetectorPosition;
+const createMockOrder = createExitTypeDetectorOrder;
 
 // ============================================================================
 // MOCKS
 // ============================================================================
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createMockPosition = (side: PositionSide = PositionSide.LONG): Position => ({
-  id: 'test-position-123',
-  symbol: 'APEXUSDT',
-  side,
-  entryPrice: 100,
-  quantity: 10,
-  leverage: 10,
-  marginUsed: 10,
-  stopLoss: {
-    price: 99,
-    initialPrice: 99,
-    orderId: 'sl-order-123',
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: [
-    { level: 1, price: 101, percent: 1, sizePercent: 33.33, orderId: 'tp1-order', hit: false },
-    { level: 2, price: 102, percent: 2, sizePercent: 33.33, orderId: 'tp2-order', hit: false },
-    { level: 3, price: 103, percent: 3, sizePercent: 33.34, orderId: 'tp3-order', hit: false },
-  ],
-  openedAt: Date.now(),
-  unrealizedPnL: 0,
-  orderId: 'entry-order-123',
-  reason: 'Test position',
-  status: 'OPEN',
-});
-
-const createMockOrder = (overrides?: Partial<BybitOrder>): BybitOrder => ({
-  orderId: 'order-123',
-  symbol: 'APEXUSDT',
-  orderType: 'Limit',
-  side: 'Sell',
-  price: '101.0',
-  qty: '10',
-  orderStatus: 'Filled',
-  stopOrderType: undefined,
-  triggerPrice: undefined,
-  reduceOnly: false,
-  updatedTime: Date.now(),
-  ...overrides,
-} as BybitOrder);
 
 // ============================================================================
 // TESTS
@@ -66,8 +28,7 @@ describe('ExitTypeDetectorService', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    service = new ExitTypeDetectorService(logger);
+    ({ service, logger } = createExitTypeDetectorHarness({ withErrorHandler: false }));
   });
 
   // ==========================================================================
@@ -76,9 +37,9 @@ describe('ExitTypeDetectorService', () => {
 
   describe('determineExitTypeFromHistory', () => {
     it('should detect STOP_LOSS from stopOrderType "StopLoss"', () => {
-      const position = createMockPosition();
+      const position = createExitTypeDetectorPosition();
       const orderHistory: BybitOrder[] = [
-        createMockOrder({
+        createExitTypeDetectorOrder({
           orderStatus: 'Filled',
           stopOrderType: 'StopLoss',
           updatedTime: Date.now(),
@@ -91,9 +52,9 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect STOP_LOSS from stopOrderType "Stop"', () => {
-      const position = createMockPosition();
+      const position = createExitTypeDetectorPosition();
       const orderHistory: BybitOrder[] = [
-        createMockOrder({
+        createExitTypeDetectorOrder({
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
           updatedTime: Date.now(),
@@ -106,9 +67,9 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect TRAILING_STOP from stopOrderType "TrailingStop"', () => {
-      const position = createMockPosition();
+      const position = createExitTypeDetectorPosition();
       const orderHistory: BybitOrder[] = [
-        createMockOrder({
+        createExitTypeDetectorOrder({
           orderStatus: 'Filled',
           stopOrderType: 'TrailingStop',
           updatedTime: Date.now(),
@@ -121,9 +82,9 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect TAKE_PROFIT from Limit order with reduceOnly', () => {
-      const position = createMockPosition();
+      const position = createExitTypeDetectorPosition();
       const orderHistory: BybitOrder[] = [
-        createMockOrder({
+        createExitTypeDetectorOrder({
           orderType: 'Limit',
           reduceOnly: true,
           stopOrderType: undefined,
@@ -134,7 +95,7 @@ describe('ExitTypeDetectorService', () => {
 
       const exitType = service.determineExitTypeFromHistory(orderHistory, position);
 
-      expect([ExitType.TAKE_PROFIT_1, ExitType.TAKE_PROFIT_2, ExitType.TAKE_PROFIT_3]).toContain(exitType);
+      expect(takeProfitExitTypes).toContain(exitType);
     });
 
     it('should detect MANUAL close from Market order with reduceOnly', () => {

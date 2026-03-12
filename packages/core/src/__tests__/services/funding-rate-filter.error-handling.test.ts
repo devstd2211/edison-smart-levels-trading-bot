@@ -10,8 +10,12 @@
  */
 
 import { FundingRateFilterService, FundingRateData } from '../../services/funding-rate-filter.service';
-import { LoggerService, LogLevel, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
+import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import {
+  createFundingRateData,
+  createFundingRateFilterHarness,
+} from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   let logger: LoggerService;
@@ -20,15 +24,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      enabled: true,
-      blockLongThreshold: 0.0005, // 0.05%
-      blockShortThreshold: -0.0005, // -0.05%
-      cacheTimeMs: 3600000, // 1 hour
-    };
-    mockGetFundingRate = jest.fn();
-    errorHandler = new ErrorHandler(logger);
+    ({ logger, config, mockGetFundingRate, errorHandler } = createFundingRateFilterHarness());
   });
 
   // ============================================================================
