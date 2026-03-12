@@ -5,20 +5,18 @@
  */
 
 import { PositionMonitorService } from '../../services/position-monitor.service';
-import { BybitService } from '../../services/bybit';
-import { IExchange } from '../../interfaces/IExchange';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { TelegramService } from '../../services/telegram.service';
-import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
-import { PositionSyncService } from '../../services/position-sync.service';
 import {
   Position,
   PositionSide,
   RiskManagementConfig,
   LoggerService,
-  LogLevel,
 } from '../../types/legacy';
+import {
+  createMockMonitoredPosition,
+  createPositionMonitorHarness,
+  createPositionMonitorService,
+  defaultPositionMonitorRiskConfig,
+} from '../helpers/position-monitor-test.utils';
 
 // ============================================================================
 // MOCKS
@@ -30,105 +28,14 @@ const createMockPosition = (
   stopLossPrice: number,
   takeProfits: Array<{ level: number; price: number; hit?: boolean }>,
   openedAt: number = Date.now(),
-): Position => ({
-  id: 'test-position-123',
-  symbol: 'APEXUSDT',
-  side,
-  entryPrice,
-  quantity: 100,
-  leverage: 10,
-  marginUsed: 10, // 10 USDT margin
-  stopLoss: {
-    price: stopLossPrice,
-    initialPrice: stopLossPrice,
-    orderId: 'sl-order-123',
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: takeProfits.map(tp => ({
-    level: tp.level,
-    price: tp.price,
-    percent: 1.0,
-    sizePercent: 33.33,
-    orderId: `tp${tp.level}-order-123`,
-    hit: tp.hit ?? false,
-    hitAt: tp.hit ? Date.now() : undefined,
-  })),
-  openedAt,
-  unrealizedPnL: 0,
-  orderId: 'entry-order-123',
-  reason: 'Test position',
-  status: 'OPEN',
-});
-
-const createMockBybitService = () => ({
-  getPosition: jest.fn(),
-  getCurrentPrice: jest.fn(),
-  verifyProtectionSet: jest.fn().mockResolvedValue({
-    hasStopLoss: true,
-    hasTakeProfit: true,
-    stopLossPrice: 100,
-    takeProfitPrices: [102, 104, 106],
-    activeOrders: 4,
-    verified: true,
-  }),
-  placeStopLoss: jest.fn().mockResolvedValue('sl-emergency'),
-  placeTakeProfitLevels: jest.fn().mockResolvedValue(['tp-emergency']),
-  closePosition: jest.fn().mockResolvedValue(undefined),
-  getOrderHistory: jest.fn().mockResolvedValue([]), // Session #60
-  getActiveOrders: jest.fn().mockResolvedValue([]), // Session #60
-});
-
-const createMockPositionManager = () => ({
-  getCurrentPosition: jest.fn(),
-  clearPosition: jest.fn(),
-  onTakeProfitHit: jest.fn(),
-});
-
-const createMockTelegram = () => ({
-  notifyTakeProfitHit: jest.fn(),
-  sendAlert: jest.fn(),
-});
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createMockExitTypeDetectorService = () => ({
-  determineExitTypeFromHistory: jest.fn(),
-  identifyTPLevel: jest.fn(),
-});
-
-const createMockPositionPnLCalculatorService = () => ({
-  calculatePnL: jest.fn((position, currentPrice) => {
-    // Simple mock implementation
-    if (position.side === PositionSide.LONG) {
-      return ((currentPrice - position.entryPrice) / position.entryPrice) * 100;
-    } else {
-      return ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
-    }
-  }),
-});
-
-const createMockPositionSyncService = () => ({
-  syncClosedPosition: jest.fn().mockResolvedValue(undefined),
-  deepSyncCheck: jest.fn().mockResolvedValue(undefined),
-});
-
-const defaultRiskConfig: RiskManagementConfig = {
-  positionSizeUsdt: 10,
-  takeProfits: [],
-  stopLossPercent: 1.0,
-  minStopLossPercent: 1.0,
-  breakevenOffsetPercent: 0.3,
-  trailingStopEnabled: true,
-  trailingStopPercent: 1.0,
-  trailingStopActivationLevel: 2,
-  timeBasedExitEnabled: false,
-  timeBasedExitMinutes: 30,
-  timeBasedExitMinPnl: 0.2,
-};
+): Position =>
+  createMockMonitoredPosition(side, entryPrice, stopLossPrice, takeProfits, openedAt, {
+    id: 'test-position-123',
+    symbol: 'APEXUSDT',
+    quantity: 100,
+    marginUsed: 10,
+    orderId: 'entry-order-123',
+  });
 
 // ============================================================================
 // TESTS
@@ -136,36 +43,46 @@ const defaultRiskConfig: RiskManagementConfig = {
 
 describe('PositionMonitorService', () => {
   let monitor: PositionMonitorService;
-  let mockBybit: ReturnType<typeof createMockBybitService>;
-  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
-  let mockTelegram: ReturnType<typeof createMockTelegram>;
-  let mockExitTypeDetector: ReturnType<typeof createMockExitTypeDetectorService>;
-  let mockPnLCalculator: ReturnType<typeof createMockPositionPnLCalculatorService>;
-  let mockPositionSync: ReturnType<typeof createMockPositionSyncService>;
+  let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
+  let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
+  let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
+  let mockExitTypeDetector: ReturnType<typeof createPositionMonitorHarness>['mockExitTypeDetector'];
+  let mockPnLCalculator: ReturnType<typeof createPositionMonitorHarness>['mockPnLCalculator'];
+  let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
   let logger: LoggerService;
+  const rebuildMonitor = (config: RiskManagementConfig): void => {
+    monitor.stop();
+    monitor = createPositionMonitorService(
+      {
+        mockBybit,
+        mockPositionManager,
+        mockTelegram,
+        mockExitTypeDetector,
+        mockPnLCalculator,
+        mockPositionSync,
+        logger,
+      },
+      { riskConfig: config },
+    );
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
-    mockBybit = createMockBybitService();
-    mockPositionManager = createMockPositionManager();
-    mockTelegram = createMockTelegram();
-    mockExitTypeDetector = createMockExitTypeDetectorService();
-    mockPnLCalculator = createMockPositionPnLCalculatorService();
-    mockPositionSync = createMockPositionSyncService();
-    logger = createMockLogger();
-
-    monitor = new PositionMonitorService(
-      mockBybit as unknown as IExchange,
-      mockPositionManager as unknown as PositionLifecycleService,
-      defaultRiskConfig,
-      mockTelegram as unknown as TelegramService,
-      logger,
-      mockExitTypeDetector as unknown as ExitTypeDetectorService,
-      mockPnLCalculator as unknown as PositionPnLCalculatorService,
-      mockPositionSync as unknown as PositionSyncService,
-    );
+    const harness = createPositionMonitorHarness({
+      riskConfig: {
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
+      },
+    });
+    monitor = harness.monitor;
+    mockBybit = harness.mockBybit;
+    mockPositionManager = harness.mockPositionManager;
+    mockTelegram = harness.mockTelegram;
+    mockExitTypeDetector = harness.mockExitTypeDetector;
+    mockPnLCalculator = harness.mockPnLCalculator;
+    mockPositionSync = harness.mockPositionSync;
+    logger = harness.logger;
   });
 
   afterEach(() => {
@@ -421,22 +338,13 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultRiskConfig,
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
         timeBasedExitMinPnl: 0.2,
       };
-
-      monitor = new PositionMonitorService(
-        mockBybit as unknown as IExchange,
-        mockPositionManager as unknown as PositionLifecycleService,
-        config,
-        mockTelegram as unknown as TelegramService,
-        logger,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockPnLCalculator as unknown as PositionPnLCalculatorService,
-        mockPositionSync as unknown as PositionSyncService,
-      );
+      rebuildMonitor(config);
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -462,22 +370,13 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.505); // +0.33% PnL (> 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultRiskConfig,
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
         timeBasedExitMinPnl: 0.2,
       };
-
-      monitor = new PositionMonitorService(
-        mockBybit as unknown as IExchange,
-        mockPositionManager as unknown as PositionLifecycleService,
-        config,
-        mockTelegram as unknown as TelegramService,
-        logger,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockPnLCalculator as unknown as PositionPnLCalculatorService,
-        mockPositionSync as unknown as PositionSyncService,
-      );
+      rebuildMonitor(config);
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -496,22 +395,13 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultRiskConfig,
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
         timeBasedExitMinPnl: 0.2,
       };
-
-      monitor = new PositionMonitorService(
-        mockBybit as unknown as IExchange,
-        mockPositionManager as unknown as PositionLifecycleService,
-        config,
-        mockTelegram as unknown as TelegramService,
-        logger,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockPnLCalculator as unknown as PositionPnLCalculatorService,
-        mockPositionSync as unknown as PositionSyncService,
-      );
+      rebuildMonitor(config);
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -530,20 +420,11 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL
 
       const config: RiskManagementConfig = {
-        ...defaultRiskConfig,
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
         timeBasedExitEnabled: false, // DISABLED
       };
-
-      monitor = new PositionMonitorService(
-        mockBybit as unknown as IExchange,
-        mockPositionManager as unknown as PositionLifecycleService,
-        config,
-        mockTelegram as unknown as TelegramService,
-        logger,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockPnLCalculator as unknown as PositionPnLCalculatorService,
-        mockPositionSync as unknown as PositionSyncService,
-      );
+      rebuildMonitor(config);
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -562,22 +443,13 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.499); // +0.067% PnL (< 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultRiskConfig,
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
         timeBasedExitMinPnl: 0.2,
       };
-
-      monitor = new PositionMonitorService(
-        mockBybit as unknown as IExchange,
-        mockPositionManager as unknown as PositionLifecycleService,
-        config,
-        mockTelegram as unknown as TelegramService,
-        logger,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockPnLCalculator as unknown as PositionPnLCalculatorService,
-        mockPositionSync as unknown as PositionSyncService,
-      );
+      rebuildMonitor(config);
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);

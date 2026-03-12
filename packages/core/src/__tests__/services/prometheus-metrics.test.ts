@@ -22,6 +22,17 @@ describe('PrometheusMetricsService', () => {
   let service: PrometheusMetricsService;
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
+  let trackedServices: PrometheusMetricsService[];
+
+  const createTrackedMetricsService = (
+    config: ConstructorParameters<typeof PrometheusMetricsService>[0] = {},
+    logger: LoggerService | undefined = mockLogger,
+    handler: ErrorHandler | undefined = errorHandler,
+  ): PrometheusMetricsService => {
+    const metricsService = new PrometheusMetricsService(config, logger, handler);
+    trackedServices.push(metricsService);
+    return metricsService;
+  };
 
   beforeEach(() => {
     mockLogger = new LoggerService('ERROR', './logs', false);
@@ -31,11 +42,14 @@ describe('PrometheusMetricsService', () => {
     jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
 
     errorHandler = new ErrorHandler(mockLogger);
-    service = new PrometheusMetricsService({}, mockLogger, errorHandler);
+    trackedServices = [];
+    service = createTrackedMetricsService({}, mockLogger, errorHandler);
   });
 
   afterEach(() => {
-    service.stop();
+    trackedServices.forEach((metricsService) => {
+      metricsService.stop();
+    });
   });
 
   // ==========================================================================
@@ -44,48 +58,45 @@ describe('PrometheusMetricsService', () => {
 
   describe('Initialization', () => {
     it('should initialize with default config', () => {
-      const svc = new PrometheusMetricsService();
+      const svc = createTrackedMetricsService(undefined, undefined, undefined);
       expect(svc).toBeDefined();
-      svc.stop();
     });
 
     it('should initialize with custom prefix', () => {
-      const svc = new PrometheusMetricsService({ prefix: 'my_bot_' }, mockLogger);
+      const svc = createTrackedMetricsService({ prefix: 'my_bot_' }, mockLogger, undefined);
       expect(svc).toBeDefined();
-      svc.stop();
     });
 
     it('should initialize with logger', () => {
-      const svc = new PrometheusMetricsService({}, mockLogger);
+      const svc = createTrackedMetricsService({}, mockLogger, undefined);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('initialized'),
         expect.any(Object)
       );
-      svc.stop();
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = new PrometheusMetricsService(
+      const svc = createTrackedMetricsService(
         { collectInterval: 1000 },
-        mockLogger
+        mockLogger,
+        undefined,
       );
       svc.start();
       expect(svc).toBeDefined();
-      svc.stop();
     });
 
     it('should initialize with default labels', () => {
-      const svc = new PrometheusMetricsService(
+      const svc = createTrackedMetricsService(
         {
           defaultLabels: {
             env: 'test',
             bot: 'v1',
           },
         },
-        mockLogger
+        mockLogger,
+        undefined,
       );
       expect(svc).toBeDefined();
-      svc.stop();
     });
   });
 
@@ -339,9 +350,10 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = new PrometheusMetricsService(
+      const svc = createTrackedMetricsService(
         { collectInterval: 100 },
-        mockLogger
+        mockLogger,
+        undefined,
       );
 
       // Should start collection
@@ -368,23 +380,21 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without logger', () => {
-      const svc = new PrometheusMetricsService();
+      const svc = createTrackedMetricsService(undefined, undefined, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
 
       expect(svc).toBeDefined();
-      svc.stop();
     });
 
     it('should work without errorHandler', () => {
-      const svc = new PrometheusMetricsService({}, mockLogger);
+      const svc = createTrackedMetricsService({}, mockLogger, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
 
       expect(svc).toBeDefined();
-      svc.stop();
     });
   });
 });

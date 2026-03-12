@@ -200,10 +200,14 @@ describe('BotInitializer', () => {
   let mockServices: IBotInitializerServices;
   let mockConfig: Config;
 
+  const rebuildInitializer = (): void => {
+    initializer = new BotInitializer(mockServices, mockConfig);
+  };
+
   beforeEach(() => {
     mockServices = createMockBotServices();
     mockConfig = createMinimalConfig();
-    initializer = new BotInitializer(mockServices, mockConfig);
+    rebuildInitializer();
 
     // Clear all mocks
     jest.clearAllMocks();
@@ -262,7 +266,7 @@ describe('BotInitializer', () => {
 
     it('should skip candle provider when disabled', async () => {
       mockConfig.dataSubscriptions.candles.enabled = false;
-      initializer = new BotInitializer(mockServices, mockConfig);
+      rebuildInitializer();
 
       await initializer.initialize();
 
@@ -474,7 +478,7 @@ describe('BotInitializer', () => {
       mockConfig.dataSubscriptions.candles.enabled = false;
       mockConfig.dataSubscriptions.candles.calculateIndicators = false;
       mockConfig.dataSubscriptions.orderbook.enabled = false;
-      initializer = new BotInitializer(mockServices, mockConfig);
+      rebuildInitializer();
 
       initializer.logDataSubscriptionStatus();
 

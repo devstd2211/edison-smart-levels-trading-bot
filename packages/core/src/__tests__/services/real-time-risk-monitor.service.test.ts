@@ -17,36 +17,27 @@ import { BotEventBus } from '../../services/event-bus';
 import { LoggerService, PositionSide } from '../../types/legacy';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import {
-  RiskMonitoringConfig,
   DangerLevel,
   RiskAlertType,
   LiveTradingEventType,
 } from '../../types/legacy';
 import { Position, TakeProfit, StopLossConfig } from '../../types/legacy';
+import {
+  createMockRiskMonitorPosition,
+  createRealTimeRiskMonitorHarness,
+} from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
 // MOCKS & FIXTURES
 // ============================================================================
 
-const mockConfig: RiskMonitoringConfig = {
-  enabled: true,
-  checkIntervalCandles: 5,
-  healthScoreThreshold: 30,
-  emergencyCloseOnCritical: true,
-};
-
-const createMockPosition = (overrides?: Partial<Position>): Position => {
-  const basePosition: Position = {
+const createMockPosition = (overrides: Partial<Position> = {}): Position =>
+  createMockRiskMonitorPosition({
     id: 'POS-123',
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
     quantity: 1.0,
-    entryPrice: 45000,
-    leverage: 10,
     marginUsed: 4500,
     unrealizedPnL: 0,
-    status: 'OPEN',
-    openedAt: Date.now() - 3600000, // 1 hour ago
+    openedAt: Date.now() - 3600000,
     orderId: 'ORDER-123',
     reason: 'Test entry',
     takeProfits: [
@@ -72,10 +63,8 @@ const createMockPosition = (overrides?: Partial<Position>): Position => {
       isTrailing: false,
       updatedAt: Date.now(),
     },
-  };
-
-  return { ...basePosition, ...overrides };
-};
+    ...overrides,
+  });
 
 describe('RealTimeRiskMonitor Service Tests', () => {
   let monitor: RealTimeRiskMonitor;
@@ -84,30 +73,15 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   let mockLogger: jest.Mocked<LoggerService>;
 
   beforeEach(() => {
-    // Create mocks
-    mockPositionService = {
-      getCurrentPosition: jest.fn(),
-    };
+    const harness = createRealTimeRiskMonitorHarness();
+    monitor = harness.monitor;
+    mockPositionService = harness.mockPositionService as unknown as Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
+    mockEventBus = harness.mockEventBus as unknown as Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
+    mockLogger = harness.mockLogger as unknown as jest.Mocked<LoggerService>;
+  });
 
-    mockEventBus = {
-      publishSync: jest.fn(),
-      subscribe: jest.fn().mockReturnValue(() => undefined),
-    };
-
-    mockLogger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    // Initialize monitor
-    monitor = new RealTimeRiskMonitor(
-      mockConfig,
-      mockPositionService as unknown as PositionLifecycleService,
-      mockLogger,
-      mockEventBus as unknown as BotEventBus
-    );
+  afterEach(() => {
+    monitor.stop();
   });
 
   // ========================================================================

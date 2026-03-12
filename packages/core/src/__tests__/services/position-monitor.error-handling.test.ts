@@ -8,13 +8,6 @@
  */
 
 import { PositionMonitorService } from '../../services/position-monitor.service';
-import { BybitService } from '../../services/bybit';
-import { IExchange } from '../../interfaces/IExchange';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { TelegramService } from '../../services/telegram.service';
-import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
-import { PositionSyncService } from '../../services/position-sync.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   PositionMonitoringError,
@@ -25,87 +18,21 @@ import {
 import {
   Position,
   PositionSide,
-  RiskManagementConfig,
   LoggerService,
-  LogLevel,
 } from '../../types/legacy';
+import {
+  createMockMonitoredPosition,
+  createPositionMonitorHarness,
+  createPositionMonitorService,
+  defaultPositionMonitorRiskConfig,
+} from '../helpers/position-monitor-test.utils';
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
-const createMockPosition = (side: PositionSide = PositionSide.LONG): Position => ({
-  id: 'test-pos-123',
-  symbol: 'BTCUSDT',
-  side,
-  entryPrice: 50000,
-  quantity: 0.01,
-  leverage: 10,
-  marginUsed: 50,
-  stopLoss: {
-    price: 49500,
-    initialPrice: 49500,
-    orderId: 'sl-123',
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: [
-    { level: 1, price: 51000, percent: 0.5, sizePercent: 33.33, orderId: 'tp1-123', hit: false },
-  ],
-  openedAt: Date.now(),
-  unrealizedPnL: 100,
-  orderId: 'entry-123',
-  reason: 'Test position',
-  status: 'OPEN',
-  protectionVerifiedOnce: false,
-});
-
-const createMockBybitService = () => ({
-  getPosition: jest.fn(),
-  getCurrentPrice: jest.fn(),
-  verifyProtectionSet: jest.fn().mockResolvedValue({
-    verified: true,
-    hasStopLoss: true,
-    hasTakeProfit: true,
-    hasTrailingStop: false,
-    activeOrders: 3,
-  }),
-  closePosition: jest.fn().mockResolvedValue(undefined),
-  getOrderHistory: jest.fn().mockResolvedValue([]),
-  getActiveOrders: jest.fn().mockResolvedValue([]),
-});
-
-const createMockPositionManager = () => ({
-  getCurrentPosition: jest.fn(),
-  clearPosition: jest.fn().mockResolvedValue(undefined),
-});
-
-const createMockTelegram = () => ({
-  sendAlert: jest.fn().mockResolvedValue(undefined),
-});
-
-const createMockPositionSync = () => ({
-  syncClosedPosition: jest.fn().mockResolvedValue(undefined),
-  deepSyncCheck: jest.fn().mockResolvedValue(undefined),
-});
-
-const createMockLogger = (): LoggerService =>
-  new LoggerService(LogLevel.ERROR, './logs', false);
-
-const defaultRiskConfig: RiskManagementConfig = {
-  positionSizeUsdt: 100,
-  takeProfits: [],
-  stopLossPercent: 1.0,
-  minStopLossPercent: 1.0,
-  breakevenOffsetPercent: 0.3,
-  trailingStopEnabled: true,
-  trailingStopPercent: 1.0,
-  trailingStopActivationLevel: 2,
-  timeBasedExitEnabled: false,
-  timeBasedExitMinutes: 30,
-  timeBasedExitMinPnl: 0.2,
-};
+const createMockPosition = (side: PositionSide = PositionSide.LONG): Position =>
+  createMockMonitoredPosition(side);
 
 // ============================================================================
 // TESTS
@@ -113,35 +40,39 @@ const defaultRiskConfig: RiskManagementConfig = {
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let monitor: PositionMonitorService;
-  let mockBybit: ReturnType<typeof createMockBybitService>;
-  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
-  let mockTelegram: ReturnType<typeof createMockTelegram>;
-  let mockPositionSync: ReturnType<typeof createMockPositionSync>;
+  let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
+  let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
+  let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
+  let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
-    mockBybit = createMockBybitService();
-    mockPositionManager = createMockPositionManager();
-    mockTelegram = createMockTelegram();
-    mockPositionSync = createMockPositionSync();
-    logger = createMockLogger();
+    const harness = createPositionMonitorHarness({
+      riskConfig: defaultPositionMonitorRiskConfig,
+    });
+    mockBybit = harness.mockBybit;
+    mockPositionManager = harness.mockPositionManager;
+    mockTelegram = harness.mockTelegram;
+    mockPositionSync = harness.mockPositionSync;
+    logger = harness.logger;
     errorHandler = new ErrorHandler(logger);
-
-    monitor = new PositionMonitorService(
-      mockBybit as unknown as IExchange,
-      mockPositionManager as unknown as PositionLifecycleService,
-      defaultRiskConfig,
-      mockTelegram as unknown as TelegramService,
-      logger,
-      {} as ExitTypeDetectorService,
-      {} as PositionPnLCalculatorService,
-      mockPositionSync as unknown as PositionSyncService,
-      undefined,
-      errorHandler,
+    monitor = createPositionMonitorService(
+      {
+        mockBybit,
+        mockPositionManager,
+        mockTelegram,
+        mockExitTypeDetector: {} as never,
+        mockPnLCalculator: {} as never,
+        mockPositionSync,
+        logger,
+      },
+      {
+        riskConfig: defaultPositionMonitorRiskConfig,
+        errorHandler,
+      },
     );
   });
 

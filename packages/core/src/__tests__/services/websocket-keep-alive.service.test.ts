@@ -30,6 +30,10 @@ describe('WebSocketKeepAliveService', () => {
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: Partial<WebSocket>;
+  const createService = (interval?: number, customLogger: LoggerService | undefined = logger): WebSocketKeepAliveService => {
+    service = new WebSocketKeepAliveService(interval, customLogger);
+    return service;
+  };
 
   beforeEach(() => {
     logger = createMockLogger();
@@ -39,13 +43,14 @@ describe('WebSocketKeepAliveService', () => {
   });
 
   afterEach(() => {
+    service?.stop();
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
   });
 
   describe('start', () => {
     it('should create ping interval when started', () => {
-      service = new WebSocketKeepAliveService(20000, logger);
+      service = createService(20000, logger);
 
       service.start(mockWs as WebSocket);
 
@@ -53,7 +58,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should send ping messages at configured interval', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
 
@@ -70,7 +75,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should use default ping interval (20 seconds)', () => {
-      service = new WebSocketKeepAliveService(undefined, logger);
+      service = createService(undefined, logger);
 
       service.start(mockWs as WebSocket);
 
@@ -84,7 +89,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should send correct ping payload', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
       jest.advanceTimersByTime(5000);
@@ -93,7 +98,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should stop existing interval before starting new one', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
       const mockWs2 = createMockWebSocket();
 
       service.start(mockWs as WebSocket);
@@ -107,7 +112,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should only send ping when WebSocket is OPEN', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
       Object.defineProperty(mockWs, 'readyState', { value: WebSocket.CONNECTING, writable: true });
 
       service.start(mockWs as WebSocket);
@@ -125,7 +130,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle CLOSING state', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
       Object.defineProperty(mockWs, 'readyState', { value: WebSocket.CLOSING, writable: true });
 
       service.start(mockWs as WebSocket);
@@ -135,7 +140,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle CLOSED state', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
       Object.defineProperty(mockWs, 'readyState', { value: WebSocket.CLOSED, writable: true });
 
       service.start(mockWs as WebSocket);
@@ -147,7 +152,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('stop', () => {
     it('should clear ping interval when stopped', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
       expect(jest.getTimerCount()).toBeGreaterThan(0);
@@ -157,7 +162,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should prevent further pings after stop', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
       jest.advanceTimersByTime(5000);
@@ -171,7 +176,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should be safe to call stop multiple times', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
       service.stop();
@@ -182,7 +187,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should be safe to call stop without start', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       expect(() => {
         service.stop();
@@ -192,7 +197,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Lifecycle', () => {
     it('should handle start-stop-start cycle', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       // First start
       service.start(mockWs as WebSocket);
@@ -211,7 +216,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle multiple WebSocket instances', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
       const mockWs1 = createMockWebSocket();
       const mockWs2 = createMockWebSocket();
 
@@ -232,7 +237,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Interval Configuration', () => {
     it('should respect custom ping interval', () => {
-      service = new WebSocketKeepAliveService(3000, logger);
+      service = createService(3000, logger);
 
       service.start(mockWs as WebSocket);
 
@@ -247,7 +252,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle very short intervals', () => {
-      service = new WebSocketKeepAliveService(100, logger);
+      service = createService(100, logger);
 
       service.start(mockWs as WebSocket);
       jest.advanceTimersByTime(1000);
@@ -257,7 +262,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle very long intervals', () => {
-      service = new WebSocketKeepAliveService(60000, logger);
+      service = createService(60000, logger);
 
       service.start(mockWs as WebSocket);
       jest.advanceTimersByTime(30000);
@@ -274,7 +279,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Concurrent Operations', () => {
     it('should handle rapid start/stop operations', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
       service.stop();
@@ -286,7 +291,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle state changes during ping', () => {
-      service = new WebSocketKeepAliveService(5000, logger);
+      service = createService(5000, logger);
 
       service.start(mockWs as WebSocket);
 
@@ -306,7 +311,7 @@ describe('WebSocketKeepAliveService', () => {
       const mockLogger = createMockLogger();
       jest.spyOn(mockLogger, 'debug');
 
-      service = new WebSocketKeepAliveService(5000, mockLogger);
+      service = createService(5000, mockLogger);
 
       service.start(mockWs as WebSocket);
       jest.advanceTimersByTime(5000);
@@ -315,7 +320,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should work without logger', () => {
-      service = new WebSocketKeepAliveService(5000); // No logger
+      service = createService(5000, undefined); // No logger
 
       expect(() => {
         service.start(mockWs as WebSocket);

@@ -14,7 +14,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - [ ] Continue `Update tests to build only the required groups (no global container)` in bot/lifecycle-focused tests.
 
 ## Immediate Next Candidates
-- [ ] Extend explicit lifecycle teardown coverage beyond `bot-factory` / `trading-bot` suites into the next lifecycle-adjacent test slices.
+- [ ] Extend explicit lifecycle teardown coverage beyond `bot-factory` / `trading-bot` suites into the next lifecycle-adjacent test slices (`create-services.lifecycle`, `trading-bot.create-services`, then remaining initializer-adjacent boundaries).
 - [ ] Continue replacing broad service-state construction in tests with the minimal required grouped services or tracked `createServices()` state.
 
 ## Working Rules
@@ -48,6 +48,12 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - `indicator-precalculation.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining calculation-classification error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
 - Compact-service cleanup status on 2026-03-12: the remaining obvious inline error-message leftovers in `services/*` are now concentrated in exchange-adapter/partial files (`services/binance/*`, `services/bybit/*`) plus minor builder/utils boundaries; do not expand that stream unless a testability task directly requires it.
 - Testability batch status on 2026-03-12: started the `createServices()` + explicit lifecycle stream with tracked teardown helpers and real service-state coverage in `bot-factory` / `trading-bot` suites; continue this stream before reopening adapter cleanup.
+- Testability batch status on 2026-03-12 follow-up: extended the tracked lifecycle fixture into `create-services.lifecycle` and `trading-bot.create-services` suites and aligned `bot-initializer.test.ts` setup around a single initializer rebuild helper; continue with the remaining lifecycle-adjacent suites before reopening adapter cleanup.
+- Testability batch status on 2026-03-12 follow-up: aligned `bot-initializer.error-handling.test.ts` and `bot-event-emitter.test.ts` around shared setup / teardown helpers so initializer rebuilds and started secondary emitters are cleaned up consistently.
+- Testability batch status on 2026-03-12 follow-up: aligned `monitoring-server.test.ts`, `prometheus-metrics.test.ts`, and `websocket-keep-alive.service.test.ts` around local tracked builders and suite-level teardown helpers instead of ad hoc per-test lifecycle cleanup.
+- Testability batch status on 2026-03-12 follow-up: added shared `mtf-snapshot-gate` test fixtures and tracked auxiliary gate teardown so the unit / functional / error-handling suites use one startup path and destroy every started gate.
+- Testability batch status on 2026-03-12 follow-up: added shared `real-time-risk-monitor` fixtures and explicit `monitor.stop()` teardown; the cache-invalidation suite now exercises the real `position-closed` subscription path instead of isolated `Map` simulations.
+- Testability batch status on 2026-03-12 follow-up: added shared `position-monitor` fixtures and service construction helpers; the unit and error-handling suites now share one harness and reuse a local config rebuild helper for time-based-exit scenarios instead of hand-written constructor blocks.
 - Verification on 2026-03-12 for the compact-service cleanup slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts` -> PASS (3/3 suites, 77/77 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
@@ -56,4 +62,22 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 - Verification on 2026-03-12 for the lifecycle testability slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (3/3 suites, 57/57 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the lifecycle testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/bot-initializer.test.ts` -> PASS (3/3 suites, 25/25 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the initializer/event-emitter follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/bot-event-emitter.test.ts` -> PASS (2/2 suites, 47/47 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the monitoring/websocket lifecycle follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts` -> PASS (3/3 suites, 65/65 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the `mtf-snapshot-gate` lifecycle follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/mtf-snapshot-gate.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.functional.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts` -> PASS (3/3 suites, 44/44 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the `real-time-risk-monitor` lifecycle follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts` -> PASS (3/3 suites, 59/59 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the `position-monitor` lifecycle follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts` -> PASS (2/2 suites, 46/46 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

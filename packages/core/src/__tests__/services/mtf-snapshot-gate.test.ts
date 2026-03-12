@@ -10,26 +10,24 @@ import {
   MTFSnapshot,
   SnapshotValidationResult,
 } from '../../services/mtf-snapshot-gate.service';
-import { LoggerService } from '../../services/logger.service';
 import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
+import {
+  createMockSnapshotLogger,
+  createSnapshotCandle,
+  createSnapshotSignal,
+  createSnapshotTrendAnalysis,
+  createStartedSnapshotGate,
+} from '../helpers/mtf-snapshot-gate-test.utils';
 
-// Mock logger
-const mockLogger: LoggerService = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  setContext: jest.fn(),
-} as unknown as LoggerService;
+const mockLogger = createMockSnapshotLogger();
 
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    gate = new MTFSnapshotGate(mockLogger);
-    gate.start();
+    gate = createStartedSnapshotGate(mockLogger);
   });
 
   afterEach(() => {
@@ -43,33 +41,21 @@ describe('MTFSnapshotGate', () => {
 
   describe('createSnapshot', () => {
     it('should create a snapshot with all required fields', () => {
-      const signal: Signal = {
-        direction: SignalDirection.LONG,
-        type: SignalType.TREND_FOLLOWING,
+      const signal = createSnapshotSignal({
         confidence: 85,
-        price: 1000,
-        stopLoss: 990,
-        takeProfits: [],
         reason: 'Test signal',
-        timestamp: Date.now(),
-      };
+      });
+      const candle = createSnapshotCandle({ low: 995 });
 
-      const candle = {
-        open: 1000,
-        high: 1010,
-        low: 995,
-        close: 1005,
-        volume: 1000,
-        timestamp: Date.now(),
-      };
-
-      const snapshot = gate.createSnapshot(TrendBias.BULLISH, {
-        bias: TrendBias.BULLISH,
-        strength: 0.8,
-        timeframe: '4h',
-        reasoning: ['HH_HL pattern'],
-        restrictedDirections: [],
-      } as unknown as TrendAnalysis, signal, candle);
+      const snapshot = gate.createSnapshot(
+        TrendBias.BULLISH,
+        createSnapshotTrendAnalysis({
+          bias: TrendBias.BULLISH,
+          reasoning: ['HH_HL pattern'],
+        }),
+        signal,
+        candle,
+      );
 
       expect(snapshot).toBeDefined();
       expect(snapshot.htfBias).toBe(TrendBias.BULLISH);
@@ -79,52 +65,44 @@ describe('MTFSnapshotGate', () => {
     });
 
     it('should set expiration time to 60 seconds', () => {
-      const signal: Signal = {
-        direction: SignalDirection.LONG,
-        type: SignalType.TREND_FOLLOWING,
-        confidence: 80,
-        price: 1000,
-        stopLoss: 990,
-        takeProfits: [],
-        reason: 'Test',
-        timestamp: Date.now(),
-      };
+      const signal = createSnapshotSignal();
+      const candle = createSnapshotCandle();
 
-      const candle = { open: 1000, high: 1010, low: 990, close: 1005, volume: 1000, timestamp: Date.now() };
-
-      const snapshot = gate.createSnapshot(TrendBias.BULLISH, {
-        bias: TrendBias.BULLISH,
-        strength: 0.8,
-        timeframe: '4h',
-        reasoning: [],
-        restrictedDirections: [],
-      } as unknown as TrendAnalysis, signal, candle);
+      const snapshot = gate.createSnapshot(
+        TrendBias.BULLISH,
+        createSnapshotTrendAnalysis({ bias: TrendBias.BULLISH }),
+        signal,
+        candle,
+      );
 
       const expirationTime = snapshot.expiresAt - snapshot.timestamp;
       expect(expirationTime).toBe(120000); // 120 seconds (increased from 60s to prevent race conditions)
     });
 
     it('should store and retrieve active snapshot', () => {
-      const signal: Signal = {
+      const signal = createSnapshotSignal({
         direction: SignalDirection.SHORT,
-        type: SignalType.TREND_FOLLOWING,
         confidence: 90,
         price: 2000,
         stopLoss: 2050,
-        takeProfits: [],
-        reason: 'Test',
-        timestamp: Date.now(),
-      };
+      });
+      const candle = createSnapshotCandle({
+        open: 2000,
+        high: 2010,
+        low: 1990,
+        close: 1995,
+      });
 
-      const candle = { open: 2000, high: 2010, low: 1990, close: 1995, volume: 1000, timestamp: Date.now() };
-
-      const snapshot = gate.createSnapshot(TrendBias.BEARISH, {
-        bias: TrendBias.BEARISH,
-        strength: 0.9,
-        timeframe: '4h',
-        reasoning: ['LH_LL'],
-        restrictedDirections: [],
-      } as unknown as TrendAnalysis, signal, candle);
+      const snapshot = gate.createSnapshot(
+        TrendBias.BEARISH,
+        createSnapshotTrendAnalysis({
+          bias: TrendBias.BEARISH,
+          strength: 0.9,
+          reasoning: ['LH_LL'],
+        }),
+        signal,
+        candle,
+      );
 
       const retrieved = gate.getActiveSnapshot();
       expect(retrieved).toEqual(snapshot);

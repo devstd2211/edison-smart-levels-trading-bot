@@ -1,0 +1,137 @@
+import { BotEventBus } from '../../services/event-bus';
+import { PositionLifecycleService } from '../../services/position-lifecycle.service';
+import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
+import type {
+  LoggerService,
+  Position,
+  RiskMonitoringConfig,
+} from '../../types/legacy';
+import { PositionSide } from '../../types/legacy';
+import type { PositionClosedEventPayload } from '../../types/bot-events';
+
+type PositionClosedHandler = (data: PositionClosedEventPayload) => void;
+
+export type MockRiskMonitorPositionService = {
+  getCurrentPosition: jest.Mock;
+  getPositionHistory: jest.Mock;
+  updatePosition: jest.Mock;
+};
+
+export type MockRiskMonitorLogger = {
+  info: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+  debug: jest.Mock;
+  log: jest.Mock;
+};
+
+export type MockRiskMonitorEventBus = {
+  publishSync: jest.Mock;
+  publish: jest.Mock;
+  subscribe: jest.Mock;
+  unsubscribe: jest.Mock;
+  emitPositionClosed: (payload: PositionClosedEventPayload) => void;
+};
+
+export const mockRiskMonitorConfig: RiskMonitoringConfig = {
+  enabled: true,
+  checkIntervalCandles: 5,
+  healthScoreThreshold: 30,
+  emergencyCloseOnCritical: true,
+};
+
+export function createMockRiskMonitorPosition(
+  overrides: Partial<Position> = {},
+): Position {
+  return {
+    id: 'pos-123',
+    symbol: 'BTCUSDT',
+    side: PositionSide.LONG,
+    quantity: 0.1,
+    entryPrice: 45000,
+    leverage: 10,
+    marginUsed: 450,
+    unrealizedPnL: 500,
+    status: 'OPEN',
+    openedAt: Date.now() - 3600000,
+    orderId: 'order-123',
+    reason: 'test-position',
+    takeProfits: [{ level: 1, percent: 0.5, sizePercent: 50, price: 46000, hit: false }],
+    stopLoss: {
+      price: 44000,
+      initialPrice: 44000,
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    },
+    ...overrides,
+  };
+}
+
+export function createMockRiskMonitorPositionService(): MockRiskMonitorPositionService {
+  return {
+    getCurrentPosition: jest.fn(),
+    getPositionHistory: jest.fn().mockReturnValue([]),
+    updatePosition: jest.fn(),
+  };
+}
+
+export function createMockRiskMonitorLogger(): MockRiskMonitorLogger {
+  return {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    log: jest.fn(),
+  };
+}
+
+export function createMockRiskMonitorEventBus(): MockRiskMonitorEventBus {
+  let positionClosedHandler: PositionClosedHandler | undefined;
+
+  const eventBus: MockRiskMonitorEventBus = {
+    publishSync: jest.fn(),
+    publish: jest.fn(),
+    subscribe: jest.fn((eventName: string, handler: PositionClosedHandler) => {
+      if (eventName === 'position-closed') {
+        positionClosedHandler = handler;
+      }
+
+      return () => {
+        eventBus.unsubscribe(eventName, handler);
+        if (positionClosedHandler === handler) {
+          positionClosedHandler = undefined;
+        }
+      };
+    }),
+    unsubscribe: jest.fn(),
+    emitPositionClosed: (payload: PositionClosedEventPayload) => {
+      positionClosedHandler?.(payload);
+    },
+  };
+
+  return eventBus;
+}
+
+export function createRealTimeRiskMonitorHarness(): {
+  monitor: RealTimeRiskMonitor;
+  mockPositionService: MockRiskMonitorPositionService;
+  mockLogger: MockRiskMonitorLogger;
+  mockEventBus: MockRiskMonitorEventBus;
+} {
+  const mockPositionService = createMockRiskMonitorPositionService();
+  const mockLogger = createMockRiskMonitorLogger();
+  const mockEventBus = createMockRiskMonitorEventBus();
+
+  return {
+    monitor: new RealTimeRiskMonitor(
+      mockRiskMonitorConfig,
+      mockPositionService as unknown as PositionLifecycleService,
+      mockLogger as unknown as LoggerService,
+      mockEventBus as unknown as BotEventBus,
+    ),
+    mockPositionService,
+    mockLogger,
+    mockEventBus,
+  };
+}

@@ -186,6 +186,20 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let mockServices: MockBotServices;
   let mockConfig: Config;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  const rebuildInitializer = (): void => {
+    initializer = new BotInitializer(
+      mockServices as unknown as IBotInitializerServices,
+      mockConfig,
+      mockErrorHandler,
+    );
+  };
+  const createInitializerWithoutHandler = (): BotInitializer => {
+    return new BotInitializer(
+      mockServices as unknown as IBotInitializerServices,
+      mockConfig,
+      undefined,
+    );
+  };
   const cleanupMonitoringResources = async (): Promise<void> => {
     await initializer.shutdown();
   };
@@ -194,11 +208,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     mockServices = createMockBotServices();
     mockConfig = createMinimalConfig();
     mockErrorHandler = createMockErrorHandler();
-    initializer = new BotInitializer(
-      mockServices as unknown as IBotInitializerServices,
-      mockConfig,
-      mockErrorHandler,
-    );
+    rebuildInitializer();
 
     jest.clearAllMocks();
   });
@@ -474,12 +484,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
   describe('F: Backward Compatibility (without ErrorHandler)', () => {
     test('F1: Service works without ErrorHandler -> errors propagate as before', async () => {
-      // Create initializer without error handler
-      const initWithoutHandler = new BotInitializer(
-        mockServices as unknown as IBotInitializerServices,
-        mockConfig,
-        undefined,
-      );
+      const initWithoutHandler = createInitializerWithoutHandler();
 
       // Make Bybit fail
       mockServices.marketDataServices.bybitService.initialize.mockRejectedValueOnce(

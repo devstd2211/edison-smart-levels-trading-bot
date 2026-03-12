@@ -9,18 +9,14 @@ import {
   MTFSnapshotGate,
   MTFSnapshot,
 } from '../../services/mtf-snapshot-gate.service';
-import { LoggerService } from '../../services/logger.service';
 import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
+import {
+  createMockSnapshotLogger,
+  createStartedSnapshotGate,
+} from '../helpers/mtf-snapshot-gate-test.utils';
 
-// Mock logger
-const mockLogger: LoggerService = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  setContext: jest.fn(),
-} as unknown as LoggerService;
+const mockLogger = createMockSnapshotLogger();
 
 /**
  * Helper: Create realistic candles for a market pattern
@@ -125,8 +121,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    gate = new MTFSnapshotGate(mockLogger);
-    gate.start();
+    gate = createStartedSnapshotGate(mockLogger);
   });
 
   afterEach(() => {

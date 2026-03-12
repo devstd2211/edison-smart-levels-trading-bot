@@ -18,6 +18,7 @@ You are continuing refactoring in `D:\src\Edison`.
 3. For each test refactor, review the related production service as refactor candidate.
 4. If service is a candidate, perform a behavior-preserving service refactor in same session (or add explicit pending item to `ACTIVE_REFACTOR_PLAN.md` with reason).
 5. Keep this file short: only refresh "Last Completed" and "Next Step".
+6. Keep user-facing replies short by default unless the user explicitly asks for more detail.
 
 ## Working Order Per Session
 1. Pick next target from `ACTIVE_REFACTOR_PLAN.md` unchecked/in-progress items.
@@ -28,15 +29,16 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-12)
-- Completed testability batch 226 (behavior-preserving lifecycle-test cleanup):
-  - added tracked `createServices()` teardown helper for lifecycle-oriented test suites.
-  - updated `services/bot-factory.service.test.ts` and `services/bot-factory.error-handling.test.ts` to use tracked real service-state creation with explicit shutdown cleanup.
-  - updated `trading-bot.lifecycle.test.ts` to use real `createServices()` state and explicit `bot.start()` / `bot.stop()` assertions.
+- Completed testability batch 232 (behavior-preserving `position-monitor` follow-up):
+  - added shared `position-monitor` test fixtures for monitored positions, service dependencies, default risk config, and monitor construction.
+  - aligned `services/position-monitor.service.test.ts` and `services/position-monitor.error-handling.test.ts` on the shared harness.
+  - collapsed repeated time-based-exit constructor blocks behind a local monitor rebuild helper that reuses the same mocked dependencies.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (3/3 suites, 57/57 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts` -> PASS (2/2 suites, 46/46 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Extend explicit lifecycle teardown and minimal grouped-service construction into the next lifecycle-adjacent suites beyond `bot-factory` / `trading-bot`.
+- Extend explicit lifecycle teardown and minimal grouped-service construction into the next lifecycle-adjacent suites beyond the current `bot` / `initializer` / `mtf-snapshot-gate` / `real-time-risk-monitor` / `position-monitor` slices.
+- Prefer the next clustered boundary with repeated service startup/shutdown patterns (`position-*`, monitoring-adjacent, or similarly grouped suites) so three-at-a-time iterations stay cohesive.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.

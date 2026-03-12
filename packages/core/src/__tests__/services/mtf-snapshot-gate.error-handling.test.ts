@@ -11,33 +11,43 @@ import { ErrorRegistry } from '../../errors/ErrorRegistry';
 import { LoggerService } from '../../services/logger.service';
 import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
-
-// Mock logger
-const createMockLogger = (): LoggerService => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  setContext: jest.fn(),
-} as unknown as LoggerService);
+import {
+  createMockSnapshotLogger,
+  createSnapshotCandle,
+  createSnapshotSignal,
+  createSnapshotTrendAnalysis,
+  createStartedSnapshotGate,
+} from '../helpers/mtf-snapshot-gate-test.utils';
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let gate: MTFSnapshotGate;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let trackedGates: MTFSnapshotGate[];
+
+  const createTrackedGate = (
+    logger: LoggerService,
+    handler: ErrorHandler | undefined = errorHandler,
+  ): MTFSnapshotGate => {
+    const snapshotGate = createStartedSnapshotGate(logger, handler);
+    trackedGates.push(snapshotGate);
+    return snapshotGate;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    mockLogger = createMockLogger();
+    trackedGates = [];
+    mockLogger = createMockSnapshotLogger();
     errorHandler = new ErrorHandler(mockLogger);
-    gate = new MTFSnapshotGate(mockLogger, errorHandler);
-    gate.start();
+    gate = createTrackedGate(mockLogger);
   });
 
   afterEach(() => {
-    gate.destroy();
+    while (trackedGates.length > 0) {
+      trackedGates.pop()?.destroy();
+    }
     jest.useRealTimers();
     ErrorRegistry.clear();
   });
@@ -49,43 +59,30 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   describe('createSnapshot with logging failures', () => {
     it('should create snapshot even if logging fails (SKIP strategy)', () => {
       // Mock logger to throw
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.info as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
-      const signal: Signal = {
-        direction: SignalDirection.LONG,
-        type: SignalType.TREND_FOLLOWING,
+      const signal = createSnapshotSignal({
         confidence: 85,
-        price: 1000,
-        stopLoss: 990,
-        takeProfits: [],
         reason: 'Test signal',
-        timestamp: Date.now(),
-      };
-
-      const candle = {
-        open: 1000,
-        high: 1010,
-        low: 995,
-        close: 1005,
-        volume: 1000,
-        timestamp: Date.now(),
-      };
+      });
+      const candle = createSnapshotCandle({ low: 995 });
 
       // Should not throw despite logger failure
       expect(() => {
-        gateWithFailingLogger.createSnapshot(TrendBias.BULLISH, {
-          bias: TrendBias.BULLISH,
-          strength: 0.8,
-          timeframe: '4h',
-          reasoning: ['HH_HL pattern'],
-          restrictedDirections: [],
-        } as unknown as TrendAnalysis, signal, candle);
+        gateWithFailingLogger.createSnapshot(
+          TrendBias.BULLISH,
+          createSnapshotTrendAnalysis({
+            bias: TrendBias.BULLISH,
+            reasoning: ['HH_HL pattern'],
+          }),
+          signal,
+          candle,
+        );
       }).not.toThrow();
 
       // Verify snapshot was actually created
@@ -96,38 +93,14 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     });
 
     it('should work without ErrorHandler (backward compatible)', () => {
-      const gateWithoutErrorHandler = new MTFSnapshotGate(mockLogger);
-      gateWithoutErrorHandler.start();
+      const gateWithoutErrorHandler = createTrackedGate(mockLogger, undefined);
 
-      const signal: Signal = {
-        direction: SignalDirection.LONG,
-        type: SignalType.TREND_FOLLOWING,
-        confidence: 80,
-        price: 1000,
-        stopLoss: 990,
-        takeProfits: [],
-        reason: 'Test',
-        timestamp: Date.now(),
-      };
-
-      const candle = {
-        open: 1000,
-        high: 1010,
-        low: 990,
-        close: 1005,
-        volume: 1000,
-        timestamp: Date.now(),
-      };
+      const signal = createSnapshotSignal();
+      const candle = createSnapshotCandle();
 
       const snapshot = gateWithoutErrorHandler.createSnapshot(
         TrendBias.BULLISH,
-        {
-          bias: TrendBias.BULLISH,
-          strength: 0.8,
-          timeframe: '4h',
-          reasoning: [],
-          restrictedDirections: [],
-        } as unknown as TrendAnalysis,
+        createSnapshotTrendAnalysis({ bias: TrendBias.BULLISH }),
         signal,
         candle
       );
@@ -144,13 +117,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   describe('validateSnapshot with logging failures', () => {
     it('should validate snapshot even if expired logging fails (SKIP)', () => {
 
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.warn as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -195,13 +167,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     });
 
     it('should validate snapshot even if bias mismatch logging fails (SKIP)', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.warn as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -243,13 +214,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     });
 
     it('should validate snapshot even if valid logging fails (SKIP)', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.info as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -296,13 +266,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
   describe('clearActiveSnapshot with logging failures', () => {
     it('should clear snapshot even if logging fails (SKIP strategy)', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.debug as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -351,13 +320,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   describe('cleanupExpiredSnapshots with GRACEFUL_DEGRADE', () => {
     it('should continue cleanup even if logger fails during cleanup', (done) => {
 
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.debug as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure during cleanup');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       // Create multiple snapshots
       const signal1: Signal = {
@@ -422,8 +390,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
     it('should work without ErrorHandler during cleanup', (done) => {
 
-      const gateWithoutErrorHandler = new MTFSnapshotGate(mockLogger);
-      gateWithoutErrorHandler.start();
+      const gateWithoutErrorHandler = createTrackedGate(mockLogger, undefined);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -470,7 +437,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
   describe('Integration scenarios with ErrorHandler', () => {
     it('should handle full workflow with logging failures', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       let callCount = 0;
 
       // Fail on every 2nd logger call
@@ -481,8 +448,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         }
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -525,7 +491,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     });
 
     it('should maintain snapshot integrity across multiple validations with failures', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.info as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
@@ -533,8 +499,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -582,13 +547,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     });
 
     it('should handle parallel snapshot operations with logging failures', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.info as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const candle = {
         open: 1000,
@@ -642,13 +606,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
   describe('Edge cases with error handling', () => {
     it('should handle non-Error throws from logger', () => {
-      const brokenLogger = createMockLogger();
+      const brokenLogger = createMockSnapshotLogger();
       (brokenLogger.info as jest.Mock).mockImplementation(() => {
         throw 'string error'; // Not an Error object
       });
 
-      const gateWithBrokenLogger = new MTFSnapshotGate(brokenLogger, errorHandler);
-      gateWithBrokenLogger.start();
+      const gateWithBrokenLogger = createTrackedGate(brokenLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -694,8 +657,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
         setContext: null,
       } as unknown as LoggerService;
       // Gate should handle null logger gracefully
-      const gateWithNullLogger = new MTFSnapshotGate(nullLogger, errorHandler);
-      gateWithNullLogger.start();
+      const gateWithNullLogger = createTrackedGate(nullLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -736,8 +698,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       const throwingErrorHandler = {
         handle: jest.fn().mockResolvedValue({ success: false }),
       } as unknown as ErrorHandler;
-      const gateWithThrowingHandler = new MTFSnapshotGate(mockLogger, throwingErrorHandler);
-      gateWithThrowingHandler.start();
+      const gateWithThrowingHandler = createTrackedGate(mockLogger, throwingErrorHandler);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,
@@ -779,13 +740,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
 
   describe('Error tracking via ErrorRegistry', () => {
     it('should track logging failures in ErrorRegistry', () => {
-      const failingLogger = createMockLogger();
+      const failingLogger = createMockSnapshotLogger();
       (failingLogger.debug as jest.Mock).mockImplementation(() => {
         throw new Error('Logger failure');
       });
 
-      const gateWithFailingLogger = new MTFSnapshotGate(failingLogger, errorHandler);
-      gateWithFailingLogger.start();
+      const gateWithFailingLogger = createTrackedGate(failingLogger);
 
       const signal: Signal = {
         direction: SignalDirection.LONG,

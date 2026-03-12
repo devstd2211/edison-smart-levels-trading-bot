@@ -58,15 +58,28 @@ describe('BotEventEmitter', () => {
   let eventBus: BotEventBus;
   let emitter: BotEventEmitter;
   let mockLogger: LoggerService;
+  let secondaryEmitters: BotEventEmitter[];
+
+  const createStartedEmitter = (): BotEventEmitter => {
+    const extraEmitter = new BotEventEmitter(eventBus);
+    extraEmitter.start();
+    secondaryEmitters.push(extraEmitter);
+    return extraEmitter;
+  };
 
   beforeEach(() => {
     mockLogger = createMockLogger() as LoggerService;
     eventBus = new BotEventBus(mockLogger);
     emitter = new BotEventEmitter(eventBus, mockLogger);
+    secondaryEmitters = [];
     emitter.start();
   });
 
   afterEach(() => {
+    secondaryEmitters.forEach((extraEmitter) => {
+      extraEmitter.stop();
+      extraEmitter.removeAllListeners();
+    });
     emitter.stop();
     emitter.removeAllListeners();
   });
@@ -557,8 +570,7 @@ describe('BotEventEmitter', () => {
 
   describe('isolation - prevent external interference', () => {
     it('should work with multiple independent emitters', (done) => {
-      const emitter2 = new BotEventEmitter(eventBus);
-      emitter2.start();
+      const emitter2 = createStartedEmitter();
 
       const handler1 = jest.fn();
       const handler2 = jest.fn();
@@ -580,14 +592,12 @@ describe('BotEventEmitter', () => {
       setTimeout(() => {
         expect(handler1).toHaveBeenCalled();
         expect(handler2).toHaveBeenCalled();
-        emitter2.stop();
         done();
       }, 10);
     });
 
     it('removing listener from one emitter should not affect another', (done) => {
-      const emitter2 = new BotEventEmitter(eventBus);
-      emitter2.start();
+      const emitter2 = createStartedEmitter();
 
       const handler1 = jest.fn();
       const handler2 = jest.fn();
@@ -610,7 +620,6 @@ describe('BotEventEmitter', () => {
       setTimeout(() => {
         expect(handler1).not.toHaveBeenCalled();
         expect(handler2).toHaveBeenCalled();
-        emitter2.stop();
         done();
       }, 10);
     });

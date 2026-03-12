@@ -2912,3 +2912,85 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 3/3 suites PASS, 57/57 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 227 (2026-03-12):
+  - `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts`:
+    - expanded the shared lifecycle fixture with reusable minimal config plus mock exchange/telegram builders for `createServices()`-driven tests.
+  - `packages/core/src/__tests__/services/create-services.lifecycle.test.ts`:
+    - switched the suite to tracked service-state creation and shared lifecycle fixture helpers for explicit shutdown cleanup.
+  - `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`:
+    - switched the suite to the shared lifecycle fixture for tracked `createServices()` state, mock exchange/telegram setup, and explicit shutdown cleanup.
+  - `packages/core/src/__tests__/bot-initializer.test.ts`:
+    - collapsed repeated `new BotInitializer(...)` setup into a single local rebuild helper to keep initializer reset paths consistent across the suite.
+  - behavior-preserving production review: reviewed `bot-initializer.ts` and adjacent startup/shutdown orchestration while updating these tests; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 227):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/bot-initializer.test.ts`
+  - Result: 3/3 suites PASS, 25/25 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 228 (2026-03-12):
+  - `packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`:
+    - aligned repeated setup around a shared `rebuildInitializer()` helper and extracted the no-`ErrorHandler` construction path into a dedicated helper.
+  - `packages/core/src/__tests__/bot-event-emitter.test.ts`:
+    - added tracked secondary-emitter construction so isolation scenarios stop every started emitter via shared cleanup instead of ad hoc `start()` / `stop()` pairs.
+  - behavior-preserving production review: reviewed `bot-initializer.ts` and `bot-event-emitter.ts` while tightening test lifecycle cleanup; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 228):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/bot-event-emitter.test.ts`
+  - Result: 2/2 suites PASS, 47/47 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 229 (2026-03-12):
+  - `packages/core/src/__tests__/services/monitoring-server.test.ts`:
+    - collapsed repeated `MonitoringServer` construction into a local helper while preserving the distinction between omitted options and explicitly passed `undefined`.
+  - `packages/core/src/__tests__/services/prometheus-metrics.test.ts`:
+    - introduced tracked metrics-service setup so lifecycle cleanup runs centrally in `afterEach` instead of per-test stop calls.
+  - `packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts`:
+    - added a shared service builder and unified stop cleanup through suite-level teardown.
+  - behavior-preserving production review: reviewed `monitoring-server.ts`, `prometheus-metrics.ts`, and `websocket-keep-alive.service.ts`; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 229):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts`
+  - Result: 3/3 suites PASS, 65/65 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 230 (2026-03-12):
+  - `packages/core/src/__tests__/helpers/mtf-snapshot-gate-test.utils.ts`:
+    - added shared mock logger, started-gate, and snapshot fixture builders for the `mtf-snapshot-gate` test cluster.
+  - `packages/core/src/__tests__/services/mtf-snapshot-gate.test.ts`:
+    - switched baseline snapshot creation cases to the shared builders and central gate startup helper.
+  - `packages/core/src/__tests__/services/mtf-snapshot-gate.functional.test.ts`:
+    - reused the shared mock logger and gate startup helper to keep suite bootstrap aligned with the unit suite.
+  - `packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts`:
+    - added tracked gate construction so every auxiliary `MTFSnapshotGate` started inside failure-path tests is destroyed in `afterEach`, and replaced the repeated baseline snapshot fixtures with shared builders.
+  - behavior-preserving production review: reviewed `mtf-snapshot-gate.service.ts` while tightening the adjacent tests; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 230):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/mtf-snapshot-gate.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.functional.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 44/44 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 231 (2026-03-12):
+  - `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts`:
+    - added shared fixture builders for `RealTimeRiskMonitor`, its mocked position service/logger/event-bus, and position-closed event emission.
+  - `packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts`:
+    - switched suite bootstrap to the shared harness and added explicit `monitor.stop()` teardown so the subscription lifecycle created by `calculatePositionHealth()` does not leak across tests.
+  - `packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts`:
+    - switched error-handling coverage to the same shared harness and explicit stop teardown, keeping the failure-path assertions unchanged.
+  - `packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts`:
+    - replaced pure `Map` simulations with a minimal real-service harness that validates cache invalidation through the actual `position-closed` subscription path, including missing-ID and idempotent close scenarios.
+  - behavior-preserving production review: reviewed `real-time-risk-monitor.service.ts` while tightening the adjacent tests; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 231):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts`
+  - Result: 3/3 suites PASS, 59/59 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 232 (2026-03-12):
+  - `packages/core/src/__tests__/helpers/position-monitor-test.utils.ts`:
+    - added shared position-monitor fixtures for monitored positions, exchange/manager/telegram/sync mocks, default risk config, and service construction with optional `ErrorHandler`.
+  - `packages/core/src/__tests__/services/position-monitor.service.test.ts`:
+    - switched the suite to the shared harness and collapsed repeated time-based-exit service re-instantiation behind a local `rebuildMonitor(config)` helper that preserves the same mock dependency instances.
+  - `packages/core/src/__tests__/services/position-monitor.error-handling.test.ts`:
+    - switched the suite to the shared harness and shared monitored-position fixture while preserving the same `ErrorHandler` wiring and timer teardown behavior.
+  - behavior-preserving production review: reviewed `position-monitor.service.ts` while tightening the adjacent tests; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 232):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts`
+  - Result: 2/2 suites PASS, 46/46 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

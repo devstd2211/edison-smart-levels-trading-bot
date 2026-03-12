@@ -1,0 +1,209 @@
+import { IExchange } from '../../interfaces/IExchange';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
+import { PositionLifecycleService } from '../../services/position-lifecycle.service';
+import { PositionMonitorService } from '../../services/position-monitor.service';
+import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
+import { PositionSyncService } from '../../services/position-sync.service';
+import { TelegramService } from '../../services/telegram.service';
+import {
+  LogLevel,
+  LoggerService,
+  Position,
+  PositionSide,
+  RiskManagementConfig,
+} from '../../types/legacy';
+
+export function createMockMonitoredPosition(
+  side: PositionSide = PositionSide.LONG,
+  entryPrice: number = 50000,
+  stopLossPrice: number = side === PositionSide.LONG ? entryPrice * 0.99 : entryPrice * 1.01,
+  takeProfits: Array<{ level: number; price: number; hit?: boolean }> = [
+    { level: 1, price: side === PositionSide.LONG ? entryPrice * 1.02 : entryPrice * 0.98, hit: false },
+  ],
+  openedAt: number = Date.now(),
+  overrides: Partial<Position> = {},
+): Position {
+  return {
+    id: 'test-pos-123',
+    symbol: 'BTCUSDT',
+    side,
+    entryPrice,
+    quantity: 0.01,
+    leverage: 10,
+    marginUsed: 50,
+    stopLoss: {
+      price: stopLossPrice,
+      initialPrice: stopLossPrice,
+      orderId: 'sl-123',
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    },
+    takeProfits: takeProfits.map(tp => ({
+      level: tp.level,
+      price: tp.price,
+      percent: 0.5,
+      sizePercent: 33.33,
+      orderId: `tp${tp.level}-123`,
+      hit: tp.hit ?? false,
+      hitAt: tp.hit ? Date.now() : undefined,
+    })),
+    openedAt,
+    unrealizedPnL: 100,
+    orderId: 'entry-123',
+    reason: 'Test position',
+    status: 'OPEN',
+    protectionVerifiedOnce: false,
+    ...overrides,
+  };
+}
+
+export function createMockPositionMonitorExchange() {
+  return {
+    getPosition: jest.fn(),
+    getCurrentPrice: jest.fn(),
+    verifyProtectionSet: jest.fn().mockResolvedValue({
+      verified: true,
+      hasStopLoss: true,
+      hasTakeProfit: true,
+      hasTrailingStop: false,
+      activeOrders: 3,
+      stopLossPrice: 100,
+      takeProfitPrices: [102, 104, 106],
+    }),
+    placeStopLoss: jest.fn().mockResolvedValue('sl-emergency'),
+    placeTakeProfitLevels: jest.fn().mockResolvedValue(['tp-emergency']),
+    closePosition: jest.fn().mockResolvedValue(undefined),
+    getOrderHistory: jest.fn().mockResolvedValue([]),
+    getActiveOrders: jest.fn().mockResolvedValue([]),
+  };
+}
+
+export function createMockPositionMonitorManager() {
+  return {
+    getCurrentPosition: jest.fn(),
+    clearPosition: jest.fn().mockResolvedValue(undefined),
+    onTakeProfitHit: jest.fn(),
+  };
+}
+
+export function createMockPositionMonitorTelegram() {
+  return {
+    notifyTakeProfitHit: jest.fn(),
+    sendAlert: jest.fn().mockResolvedValue(undefined),
+  };
+}
+
+export function createMockPositionMonitorLogger(): LoggerService {
+  return new LoggerService(LogLevel.ERROR, './logs', false);
+}
+
+export function createMockPositionMonitorExitTypeDetector() {
+  return {
+    determineExitTypeFromHistory: jest.fn(),
+    identifyTPLevel: jest.fn(),
+  };
+}
+
+export function createMockPositionMonitorPnlCalculator() {
+  return {
+    calculatePnL: jest.fn((position: Position, currentPrice: number) => {
+      if (position.side === PositionSide.LONG) {
+        return ((currentPrice - position.entryPrice) / position.entryPrice) * 100;
+      }
+
+      return ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
+    }),
+  };
+}
+
+export function createMockPositionMonitorSync() {
+  return {
+    syncClosedPosition: jest.fn().mockResolvedValue(undefined),
+    deepSyncCheck: jest.fn().mockResolvedValue(undefined),
+  };
+}
+
+export const defaultPositionMonitorRiskConfig: RiskManagementConfig = {
+  positionSizeUsdt: 100,
+  takeProfits: [],
+  stopLossPercent: 1.0,
+  minStopLossPercent: 1.0,
+  breakevenOffsetPercent: 0.3,
+  trailingStopEnabled: true,
+  trailingStopPercent: 1.0,
+  trailingStopActivationLevel: 2,
+  timeBasedExitEnabled: false,
+  timeBasedExitMinutes: 30,
+  timeBasedExitMinPnl: 0.2,
+};
+
+type PositionMonitorDependencies = {
+  monitor: PositionMonitorService;
+  mockBybit: ReturnType<typeof createMockPositionMonitorExchange>;
+  mockPositionManager: ReturnType<typeof createMockPositionMonitorManager>;
+  mockTelegram: ReturnType<typeof createMockPositionMonitorTelegram>;
+  mockExitTypeDetector: ReturnType<typeof createMockPositionMonitorExitTypeDetector>;
+  mockPnLCalculator: ReturnType<typeof createMockPositionMonitorPnlCalculator>;
+  mockPositionSync: ReturnType<typeof createMockPositionMonitorSync>;
+  logger: LoggerService;
+};
+
+export function createPositionMonitorService(
+  dependencies: Omit<PositionMonitorDependencies, 'monitor'>,
+  options: {
+    riskConfig?: RiskManagementConfig;
+    errorHandler?: ErrorHandler;
+  } = {},
+): PositionMonitorService {
+  return new PositionMonitorService(
+    dependencies.mockBybit as unknown as IExchange,
+    dependencies.mockPositionManager as unknown as PositionLifecycleService,
+    options.riskConfig ?? defaultPositionMonitorRiskConfig,
+    dependencies.mockTelegram as unknown as TelegramService,
+    dependencies.logger,
+    dependencies.mockExitTypeDetector as unknown as ExitTypeDetectorService,
+    dependencies.mockPnLCalculator as unknown as PositionPnLCalculatorService,
+    dependencies.mockPositionSync as unknown as PositionSyncService,
+    undefined,
+    options.errorHandler,
+  );
+}
+
+export function createPositionMonitorHarness(
+  options: {
+    riskConfig?: RiskManagementConfig;
+    errorHandler?: ErrorHandler;
+  } = {},
+): PositionMonitorDependencies {
+  const mockBybit = createMockPositionMonitorExchange();
+  const mockPositionManager = createMockPositionMonitorManager();
+  const mockTelegram = createMockPositionMonitorTelegram();
+  const mockExitTypeDetector = createMockPositionMonitorExitTypeDetector();
+  const mockPnLCalculator = createMockPositionMonitorPnlCalculator();
+  const mockPositionSync = createMockPositionMonitorSync();
+  const logger = createMockPositionMonitorLogger();
+
+  return {
+    monitor: createPositionMonitorService(
+      {
+        mockBybit,
+        mockPositionManager,
+        mockTelegram,
+        mockExitTypeDetector,
+        mockPnLCalculator,
+        mockPositionSync,
+        logger,
+      },
+      options,
+    ),
+    mockBybit,
+    mockPositionManager,
+    mockTelegram,
+    mockExitTypeDetector,
+    mockPnLCalculator,
+    mockPositionSync,
+    logger,
+  };
+}

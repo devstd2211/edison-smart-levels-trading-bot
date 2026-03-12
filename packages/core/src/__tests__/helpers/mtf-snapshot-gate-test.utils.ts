@@ -1,0 +1,63 @@
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { MTFSnapshotGate } from '../../services/mtf-snapshot-gate.service';
+import { LoggerService } from '../../services/logger.service';
+import { Candle, Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
+import { TrendBias, SignalType } from '../../types/enums';
+
+export function createMockSnapshotLogger(): LoggerService {
+  return {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    setContext: jest.fn(),
+  } as unknown as LoggerService;
+}
+
+export function createStartedSnapshotGate(
+  logger: LoggerService,
+  errorHandler?: ErrorHandler,
+): MTFSnapshotGate {
+  const gate = new MTFSnapshotGate(logger, errorHandler);
+  gate.start();
+  return gate;
+}
+
+export function createSnapshotSignal(overrides: Partial<Signal> = {}): Signal {
+  return {
+    direction: SignalDirection.LONG,
+    type: SignalType.TREND_FOLLOWING,
+    confidence: 80,
+    price: 1000,
+    stopLoss: 990,
+    takeProfits: [],
+    reason: 'Test',
+    timestamp: Date.now(),
+    ...overrides,
+  };
+}
+
+export function createSnapshotCandle(overrides: Partial<Candle> = {}): Candle {
+  return {
+    open: 1000,
+    high: 1010,
+    low: 990,
+    close: 1005,
+    volume: 1000,
+    timestamp: Date.now(),
+    ...overrides,
+  };
+}
+
+export function createSnapshotTrendAnalysis(
+  overrides: Partial<TrendAnalysis> = {},
+): TrendAnalysis {
+  return {
+    bias: TrendBias.BULLISH,
+    strength: 0.8,
+    timeframe: '4h',
+    reasoning: [],
+    restrictedDirections: [],
+    ...overrides,
+  } as TrendAnalysis;
+}

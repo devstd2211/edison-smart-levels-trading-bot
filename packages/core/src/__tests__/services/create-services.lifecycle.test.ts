@@ -1,63 +1,29 @@
 import { BotInitializer } from '../../services/bot-initializer';
-import { createServices } from '../../services/bot-factory.service';
-import type { Config } from '../../types/legacy';
-import type { IExchange, IBotInitializerServices } from '../../interfaces';
-
-function getMinimalConfig(): Config {
-  return {
-    exchange: {
-      name: 'bybit',
-      symbol: 'XRPUSDT',
-      apiKey: 'test-key',
-      apiSecret: 'test-secret',
-      demo: true,
-      testnet: true,
-    },
-    trading: { leverage: 10, marginType: 'CROSS' },
-    riskManagement: {
-      stopLossPercent: 2,
-      takeProfits: [0.5, 1, 1.5],
-      positionSizeUsdt: 100,
-    },
-    logging: { level: 'info', logDir: './logs' },
-    telegram: { enabled: false },
-    timeframes: {
-      entry: { interval: '1', candleLimit: 1000, enabled: true },
-      primary: { interval: '5', candleLimit: 500, enabled: true },
-    },
-    dataSubscriptions: {
-      candles: { enabled: false, calculateIndicators: false },
-      orderbook: { enabled: true, updateIntervalMs: 100 },
-      ticks: { enabled: true, calculateDelta: true },
-    },
-    system: { timeSyncIntervalMs: 60000, timeSyncMaxFailures: 3 },
-    indicators: { rsiPeriod: 14, slowEmaPeriod: 50 },
-    entryConfig: {
-      divergenceDetector: false,
-    },
-    strategy: {
-      priceAction: false,
-    },
-    strategies: {},
-    analyzers: [],
-  } as unknown as Config;
-}
+import type { IBotInitializerServices } from '../../interfaces';
+import {
+  createMinimalLifecycleConfig,
+  createMockLifecycleExchange,
+  createTrackedServices,
+  shutdownTrackedServices,
+  type TrackedServiceState,
+} from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
-    const config = getMinimalConfig();
-    const mockExchange = {
-      name: 'MockExchange',
-      initialize: jest.fn().mockResolvedValue(undefined),
-      resyncTime: jest.fn().mockResolvedValue(undefined),
-      cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
-      getOpenPositions: jest.fn().mockResolvedValue([]),
-      getCandles: jest.fn().mockResolvedValue([]),
-      getServerTime: jest.fn().mockResolvedValue(Date.now()),
-      isConnected: jest.fn(() => true),
-    } as unknown as IExchange;
+  let trackedServices: TrackedServiceState[];
 
-    const services = createServices(config, {
+  beforeEach(() => {
+    trackedServices = [];
+  });
+
+  afterEach(async () => {
+    await shutdownTrackedServices(trackedServices);
+  });
+
+  test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
+    const config = createMinimalLifecycleConfig();
+    const mockExchange = createMockLifecycleExchange();
+
+    const services = createTrackedServices(trackedServices, config, {
       bybitService: mockExchange,
     });
     const initializer = new BotInitializer(services as unknown as IBotInitializerServices, config);

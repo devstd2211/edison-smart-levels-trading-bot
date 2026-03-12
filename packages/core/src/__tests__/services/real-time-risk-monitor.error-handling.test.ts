@@ -10,98 +10,38 @@
  * Total: 15 comprehensive tests
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide, Position } from '../../types/legacy';
-import { RiskMonitoringConfig, DangerLevel, LiveTradingEventType } from '../../types/legacy';
+import { DangerLevel, LiveTradingEventType, Position } from '../../types/legacy';
+import {
+  createMockRiskMonitorPosition,
+  createRealTimeRiskMonitorHarness,
+  type MockRiskMonitorEventBus,
+  type MockRiskMonitorLogger,
+  type MockRiskMonitorPositionService,
+} from '../helpers/real-time-risk-monitor-test.utils';
+
+const createMockPosition = (overrides: Partial<Position> = {}): Position =>
+  createMockRiskMonitorPosition(overrides);
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
-  type MockPositionLifecycleService = {
-    getCurrentPosition: jest.Mock;
-    getPositionHistory: jest.Mock;
-    updatePosition: jest.Mock;
-  };
-  type MockLogger = {
-    info: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-    debug: jest.Mock;
-    log: jest.Mock;
-  };
-  type MockEventBus = {
-    publishSync: jest.Mock;
-    publish: jest.Mock;
-    subscribe: jest.Mock;
-    unsubscribe: jest.Mock;
-  };
-  let mockPositionLifecycleService: MockPositionLifecycleService;
-  let mockLogger: MockLogger;
-  let mockEventBus: MockEventBus;
-
-  const mockConfig: RiskMonitoringConfig = {
-    enabled: true,
-    checkIntervalCandles: 5,
-    healthScoreThreshold: 30,
-    emergencyCloseOnCritical: true,
-  };
-
-  const createMockPosition = (overrides: Partial<Position> = {}): Position => ({
-    id: 'pos-123',
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
-    quantity: 0.1,
-    entryPrice: 45000,
-    leverage: 10,
-    marginUsed: 450,
-    unrealizedPnL: 500,
-    status: 'OPEN',
-    openedAt: Date.now() - 3600000,
-    orderId: 'order-123',
-    reason: 'test-position',
-    takeProfits: [{ level: 1, percent: 0.5, sizePercent: 50, price: 46000, hit: false }],
-    stopLoss: {
-      price: 44000,
-      initialPrice: 44000,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-    ...overrides,
-  });
+  let mockPositionLifecycleService: MockRiskMonitorPositionService;
+  let mockLogger: MockRiskMonitorLogger;
+  let mockEventBus: MockRiskMonitorEventBus;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockPositionLifecycleService = {
-      getCurrentPosition: jest.fn(),
-      getPositionHistory: jest.fn().mockReturnValue([]),
-      updatePosition: jest.fn(),
-    };
+    const harness = createRealTimeRiskMonitorHarness();
+    monitor = harness.monitor;
+    mockPositionLifecycleService = harness.mockPositionService;
+    mockLogger = harness.mockLogger;
+    mockEventBus = harness.mockEventBus;
+  });
 
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      log: jest.fn(),
-    };
-
-    mockEventBus = {
-      publishSync: jest.fn(),
-      publish: jest.fn(),
-      subscribe: jest.fn(),
-      unsubscribe: jest.fn(),
-    };
-
-    monitor = new RealTimeRiskMonitor(
-      mockConfig,
-      mockPositionLifecycleService as unknown as PositionLifecycleService,
-      mockLogger as unknown as LoggerService,
-      mockEventBus as unknown as BotEventBus
-    );
+  afterEach(() => {
+    monitor.stop();
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {
