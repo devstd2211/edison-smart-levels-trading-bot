@@ -15,6 +15,17 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { Position, ExitType, PositionSide, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import { LoggerService, TelegramService, TradingJournalService, SessionStatsService } from '../../services';
+import {
+  createMockExitedPosition,
+  createMockPositionExitingConfig,
+  createMockPositionExitingExchange,
+  createMockPositionExitingJournal,
+  createMockPositionExitingLogger,
+  createMockPositionExitingRiskConfig,
+  createMockPositionExitingSessionStats,
+  createMockPositionExitingTelegram,
+  createMockPositionExitingTradingConfig,
+} from '../helpers/position-exiting-test.utils';
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockExchange: jest.Mocked<IExchange>;
@@ -23,31 +34,21 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockJournal: jest.Mocked<TradingJournalService>;
   let mockSessionStats: jest.Mocked<SessionStatsService>;
 
-  const mockTradingConfig: TradingConfig = {
-    leverage: 10,
-    tradingFeeRate: 0.0002,
-    positionSizeUsdt: 100,
-    riskPercent: 2,
-    maxPositions: 1,
-    tradingCycleIntervalMs: 1000,
-    orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
-    favorableMovementThresholdPercent: 0.1,
-  };
+  const mockTradingConfig: TradingConfig = createMockPositionExitingTradingConfig();
 
-  const mockRiskConfig: RiskManagementConfig = {
+  const mockRiskConfig: RiskManagementConfig = createMockPositionExitingRiskConfig({
     trailingStopActivationLevel: 2,
-  } as unknown as RiskManagementConfig;
+  });
 
-  const mockConfig: Config = {
-    exchange: { name: 'bybit', testnet: true } as unknown,
-    trading: mockTradingConfig,
-    riskManagement: mockRiskConfig,
-  } as unknown as Config;
+  const mockConfig: Config = createMockPositionExitingConfig(
+    { exchange: { name: 'bybit', testnet: true } as never },
+    mockTradingConfig,
+    mockRiskConfig,
+  );
 
-  const mockPosition: Position = {
+  const mockPosition: Position = createMockExitedPosition({
     id: 'POS1',
     symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
     entryPrice: 40000,
     quantity: 0.1,
     leverage: 10,
@@ -63,6 +64,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       isBreakeven: false,
       isTrailing: false,
       updatedAt: Date.now(),
+      orderId: undefined,
     },
     takeProfits: [
       { level: 1, price: 41000, percent: 0.5, sizePercent: 50, hit: false },
@@ -70,35 +72,19 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       { level: 3, price: 43000, percent: 1.5, sizePercent: 20, hit: false },
     ],
     unrealizedPnL: 1000,
-  };
+  });
 
   beforeEach(() => {
     mockExchange = {
-      closePosition: jest.fn(),
-      cancelAllConditionalOrders: jest.fn(),
-      updateStopLoss: jest.fn(),
-      openPosition: jest.fn(),
+      ...createMockPositionExitingExchange(),
       getCandles: jest.fn(),
     } as unknown as jest.Mocked<IExchange>;
 
-    mockTelegram = {
-      sendAlert: jest.fn(),
-    } as unknown as jest.Mocked<TelegramService>;
-
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockJournal = {
-      recordTradeClose: jest.fn().mockReturnValue({ rollback: jest.fn() }),
-    } as unknown as jest.Mocked<TradingJournalService>;
-
-    mockSessionStats = {
-      updateTradeExit: jest.fn(),
-    } as unknown as jest.Mocked<SessionStatsService>;
+    mockTelegram = createMockPositionExitingTelegram() as unknown as jest.Mocked<TelegramService>;
+    mockLogger = createMockPositionExitingLogger() as unknown as jest.Mocked<LoggerService>;
+    mockJournal = createMockPositionExitingJournal() as unknown as jest.Mocked<TradingJournalService>;
+    mockSessionStats =
+      createMockPositionExitingSessionStats() as unknown as jest.Mocked<SessionStatsService>;
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

@@ -11,182 +11,62 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { Position, PositionSide, TakeProfit, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
+import { Position } from '../../types/legacy';
+import {
+  createMockPositionExitingExchange,
+  createMockPositionExitingJournal,
+  createMockPositionExitingLogger,
+  createMockPositionExitingManager,
+  createMockPositionExitingRiskConfig,
+  createMockPositionExitingSessionStats,
+  createMockPositionExitingTelegram,
+  createPositionExitingHarness,
+  createRealScenarioPosition,
+} from '../helpers/position-exiting-test.utils';
 
-const createMockLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-});
-
-const createMockBybitService = () => ({
-  closePosition: jest.fn().mockResolvedValue(true),
-  updateStopLoss: jest.fn().mockResolvedValue(true),
-  placeTakeProfitLevels: jest.fn().mockResolvedValue(['TP1', 'TP2', 'TP3']),
-  openPosition: jest.fn().mockResolvedValue('ORDER_123'),
-  cancelAllConditionalOrders: jest.fn().mockResolvedValue(true),
-});
-
-const createMockTelegramService = () => ({
-  sendAlert: jest.fn().mockResolvedValue(true),
-});
-
-const createMockJournalService = () => ({
-  recordTradeOpen: jest.fn().mockResolvedValue(true),
-  recordTradeClose: jest.fn().mockResolvedValue(true),
-});
-
-const createMockSessionStatsService = () => ({
-  updateTradeExit: jest.fn().mockResolvedValue(true),
-});
-
-const createMockPositionManager = () => ({
-  getTakeProfitManager: jest.fn().mockReturnValue(null),
-});
-
-const createMockTradingConfig = (): TradingConfig => ({
-  leverage: 10,
-  riskPercent: 2,
-  maxPositions: 1,
-  positionSizeUsdt: 100,
-  tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
-  tradingFeeRate: 0.0002,
-  favorableMovementThresholdPercent: 0.1,
-});
-
-const createMockRiskConfig = (): RiskManagementConfig => ({
-  takeProfits: [
-    { level: 1, percent: 1.5, sizePercent: 33 },
-    { level: 2, percent: 3, sizePercent: 33 },
-    { level: 3, percent: 5, sizePercent: 34 },
-  ],
-  stopLossPercent: 1,
-  minStopLossPercent: 0.5,
-  breakevenOffsetPercent: 0.3,
-  trailingStopEnabled: true,
-  trailingStopPercent: 1,
-  trailingStopActivationLevel: 2,
-  positionSizeUsdt: 100,
-});
-
-const createMockConfig = (): Config => ({
-  exchange: { symbol: 'XRPUSDT' } as unknown as Config['exchange'],
-  timeframes: {},
-  trading: createMockTradingConfig(),
-  strategies: {} as unknown as Config['strategies'],
-  strategy: {} as unknown as Config['strategy'],
-  indicators: {} as unknown as Config['indicators'],
-  riskManagement: createMockRiskConfig(),
-  logging: {} as unknown as Config['logging'],
-  system: {} as unknown as Config['system'],
-  dataSubscriptions: {
-    candles: { enabled: true, calculateIndicators: true },
-    orderbook: { enabled: false, updateIntervalMs: 5000 },
-    ticks: { enabled: false, calculateDelta: false },
-  },
-  entryConfig: {
-    divergenceDetector: { minStrength: 0.3, priceDiffPercent: 0.2 },
-    rsiPeriod: 14,
-    rsiOversold: 30,
-    rsiOverbought: 70,
-    fastEmaPeriod: 9,
-    slowEmaPeriod: 21,
-    zigzagDepth: 2,
-  },
-  entryConfirmation: {} as unknown as Config['entryConfirmation'],
-});
-
-/**
- * REAL SCENARIO: Position from logs
- * - Entry: 1.892
- * - TP1: 1.9203 (1.5%)
- * - TP2: 1.9488 (3%)
- * - TP3: 1.9866 (5%)
- * - SL: 1.8732 (1%)
- */
-const createRealScenarioPosition = (): Position => ({
-  id: 'XRPUSDT_Buy',
-  journalId: 'XRPUSDT_Buy_1769181601722',
-  symbol: 'XRPUSDT',
-  side: PositionSide.LONG,
-  quantity: 52.85,
-  entryPrice: 1.892, // ← CRITICAL: Must stay valid
-  leverage: 10,
-  marginUsed: 100,
-  stopLoss: {
-    price: 1.8732,
-    initialPrice: 1.8732,
-    orderId: undefined,
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: [
-    { level: 1, percent: 1.5, sizePercent: 33, price: 1.9203, hit: false } as TakeProfit,
-    { level: 2, percent: 3, sizePercent: 33, price: 1.9488, hit: false } as TakeProfit,
-    { level: 3, percent: 5, sizePercent: 34, price: 1.9866, hit: false } as TakeProfit,
-  ],
-  openedAt: Date.now() - 1800000, // 30 min ago
-  unrealizedPnL: 0,
-  orderId: 'ORD_XRPUSDT',
-  reason: 'Position opened',
-  protectionVerifiedOnce: true,
-  status: 'OPEN' as const,
-});
-
-const asExchange = (v: ReturnType<typeof createMockBybitService>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[0];
-const asTelegram = (v: ReturnType<typeof createMockTelegramService>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[1];
-const asLogger = (v: ReturnType<typeof createMockLogger>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[2];
-const asJournal = (v: ReturnType<typeof createMockJournalService>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[3];
-const asSessionStats = (v: ReturnType<typeof createMockSessionStatsService>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[7];
-const asPositionManager = (v: ReturnType<typeof createMockPositionManager>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[8];
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
   let service: PositionExitingService;
-  let mockBybitService: ReturnType<typeof createMockBybitService>;
-  let mockTelegramService: ReturnType<typeof createMockTelegramService>;
-  let mockLogger: ReturnType<typeof createMockLogger>;
-  let mockJournalService: ReturnType<typeof createMockJournalService>;
-  let mockSessionStats: ReturnType<typeof createMockSessionStatsService>;
-  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
+  let mockBybitService: ReturnType<typeof createMockPositionExitingExchange>;
+  let mockTelegramService: ReturnType<typeof createMockPositionExitingTelegram>;
+  let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
+  let mockJournalService: ReturnType<typeof createMockPositionExitingJournal>;
+  let mockSessionStats: ReturnType<typeof createMockPositionExitingSessionStats>;
+  let mockPositionManager: ReturnType<typeof createMockPositionExitingManager>;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    mockBybitService = createMockBybitService();
-    mockTelegramService = createMockTelegramService();
-    mockJournalService = createMockJournalService();
-    mockSessionStats = createMockSessionStatsService();
-    mockPositionManager = createMockPositionManager();
-
-    service = new PositionExitingService(
-      asExchange(mockBybitService),
-      asTelegram(mockTelegramService),
-      asLogger(mockLogger),
-      asJournal(mockJournalService),
-      createMockTradingConfig(),
-      createMockRiskConfig(),
-      createMockConfig(),
-      asSessionStats(mockSessionStats),
-      asPositionManager(mockPositionManager),
-    );
+    const harness = createPositionExitingHarness({
+      withTakeProfitManager: false,
+      riskConfig: {
+        takeProfits: [
+          { level: 1, percent: 1.5, sizePercent: 33 },
+          { level: 2, percent: 3, sizePercent: 33 },
+          { level: 3, percent: 5, sizePercent: 34 },
+        ],
+        stopLossPercent: 1,
+        minStopLossPercent: 0.5,
+        trailingStopPercent: 1,
+      },
+      fullConfig: {
+        exchange: { symbol: 'XRPUSDT' } as never,
+      },
+    });
+    service = harness.service;
+    mockLogger = harness.mockLogger;
+    mockBybitService = harness.mockBybit;
+    mockTelegramService = harness.mockTelegram;
+    mockJournalService = harness.mockJournal;
+    mockSessionStats = harness.mockSessionStats;
+    mockPositionManager = harness.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {
     it('Should calculate breakeven correctly when entryPrice is valid', () => {
       const position = createRealScenarioPosition();
-      const entryPrice = position.entryPrice; // 1.892
+      const entryPrice = position.entryPrice;
 
-      // Calculate breakeven like the service does
-      const offsetPercent = createMockRiskConfig().breakevenOffsetPercent; // 0.3%
-      const offset = (entryPrice * offsetPercent) / 10000; // Should be 0.00005676 (1.892 * 0.3 / 10000)
-      const breakevenPrice = entryPrice + offset; // Should be 1.89205676
+      const offsetPercent = createMockPositionExitingRiskConfig().breakevenOffsetPercent;
+      const offset = (entryPrice * offsetPercent) / 10000;
+      const breakevenPrice = entryPrice + offset;
 
       console.log(`
         BREAKEVEN CALCULATION:
@@ -205,11 +85,9 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
 
     it('Should detect when entryPrice becomes NaN', () => {
       const position = createRealScenarioPosition();
-
-      // Simulate what happens if entryPrice gets corrupted
       position.entryPrice = NaN;
 
-      const offsetPercent = createMockRiskConfig().breakevenOffsetPercent;
+      const offsetPercent = createMockPositionExitingRiskConfig().breakevenOffsetPercent;
       const offset = (position.entryPrice * offsetPercent) / 10000;
       const breakevenPrice = position.entryPrice + offset;
 
@@ -230,13 +108,12 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
       const position = createRealScenarioPosition();
       position.entryPrice = undefined as unknown as number;
 
-      // Attempt calculation like the service would
       let breakevenPrice: number | undefined;
       try {
-        const offsetPercent = createMockRiskConfig().breakevenOffsetPercent;
+        const offsetPercent = createMockPositionExitingRiskConfig().breakevenOffsetPercent;
         const offset = (position.entryPrice * offsetPercent) / 10000;
         breakevenPrice = position.entryPrice + offset;
-      } catch (e) {
+      } catch {
         breakevenPrice = undefined;
       }
 
@@ -251,36 +128,29 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
 
     it('CRITICAL: Call handleTP1Hit and verify it handles NaN gracefully', async () => {
       const position = createRealScenarioPosition();
-      const currentPrice = 1.9203; // TP1 hit price
-
-      // Simulate TP1 hit by marking it as hit
+      const currentPrice = 1.9203;
       position.takeProfits[0].hit = true;
 
-      // This is what should happen in handleTP1Hit
-      // BUT: What if entryPrice becomes NaN?
       const testHandleTP1HitWithValidEntry = () => {
         if (!position.entryPrice || isNaN(position.entryPrice)) {
-          console.log('❌ ERROR: Entry price is invalid!');
+          console.log('ERROR: Entry price is invalid!');
           return null;
         }
 
-        const offsetPercent = createMockRiskConfig().breakevenOffsetPercent;
+        const offsetPercent = createMockPositionExitingRiskConfig().breakevenOffsetPercent;
         const offset = (position.entryPrice * offsetPercent) / 10000;
-        const breakevenPrice = position.entryPrice + offset;
-
-        return breakevenPrice;
+        return position.entryPrice + offset;
       };
 
       const breakevenPrice1 = testHandleTP1HitWithValidEntry();
       expect(breakevenPrice1).not.toBeNull();
       expect(isNaN(breakevenPrice1 || 0)).toBe(false);
-      console.log(`✓ Breakeven calculated: ${breakevenPrice1}`);
+      console.log(`Breakeven calculated: ${breakevenPrice1}`);
 
-      // Now simulate corruption
       position.entryPrice = NaN;
       const breakevenPrice2 = testHandleTP1HitWithValidEntry();
       expect(breakevenPrice2).toBeNull();
-      console.log(`✓ Gracefully handled NaN entry price`);
+      console.log('Gracefully handled NaN entry price');
     });
 
     it('Should log detailed info before/after TP1 hit', async () => {
@@ -295,11 +165,7 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - TP1 Hit: ${position.takeProfits[0].hit}
       `);
 
-      // Simulate TP1 hit
       position.takeProfits[0].hit = true;
-
-      // WebSocket might update position here
-      // This is where entryPrice might get corrupted!
 
       console.log(`
         POSITION STATE AFTER TP1:
@@ -334,12 +200,11 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - Entry Price Should Still Be: ${initialEntryPrice}
       `);
 
-      // CRITICAL: Entry price should NOT change during partial close!
       expect(position.entryPrice).toBe(initialEntryPrice);
 
-      // Simulate what might corrupt it
-      // (e.g., if someone tries to recalculate average entry price)
-      const corruptedEntryPrice = (initialEntryPrice * position.quantity - tp1Price * partialCloseQty) / (position.quantity - partialCloseQty);
+      const corruptedEntryPrice =
+        (initialEntryPrice * position.quantity - tp1Price * partialCloseQty)
+        / (position.quantity - partialCloseQty);
 
       console.log(`
         POTENTIAL CORRUPTION SOURCE:
@@ -347,27 +212,19 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - Is it NaN? ${isNaN(corruptedEntryPrice)}
       `);
 
-      // Entry price should NOT be recalculated!
       expect(position.entryPrice).toBe(initialEntryPrice);
     });
 
     it('Should validate TP1 close does NOT corrupt entryPrice', async () => {
       const position = createRealScenarioPosition();
       const initialEntryPrice = position.entryPrice;
-
-      // Record the state we're testing
       const testState: { entryPriceBefore: number; entryPriceAfter?: number; entryPriceValid?: boolean } = {
         entryPriceBefore: position.entryPrice,
         entryPriceValid: !isNaN(position.entryPrice),
       };
 
-      // Mock the Bybit API call that closes TP1
       mockBybitService.closePosition.mockResolvedValue(true);
-
-      // Simulate partial close
       position.quantity = position.quantity * (1 - position.takeProfits[0].sizePercent / 100);
-
-      // CRITICAL POINT: Does entryPrice change?
       testState.entryPriceAfter = position.entryPrice;
 
       console.log(`
@@ -386,14 +243,11 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     it('Should trace how WebSocket update might corrupt entryPrice', () => {
       const position = createRealScenarioPosition();
       const originalEntryPrice = position.entryPrice;
-
-      // Simulate WebSocket position update
-      // This might have incorrect data or missing fields
       const wsUpdate = {
         symbol: 'XRPUSDT',
         side: 'Buy',
-        qty: '52.85', // After TP1 close: 52.85 * (1 - 0.33) ≈ 35.41
-        avgPrice: '1.9203', // ← DANGER! This is TP1 price, not entry price!
+        qty: '52.85',
+        avgPrice: '1.9203',
         mode: 'MergedSingleTP',
       };
 
@@ -404,24 +258,18 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - If service uses avgPrice instead of entryPrice: CORRUPTION!
       `);
 
-      // This is likely where the bug is!
-      // If updatePositionState uses avgPrice as entryPrice
       const corruptedEntry = parseFloat(wsUpdate.avgPrice);
-      expect(corruptedEntry).toBe(1.9203); // NOT the original 1.892!
+      expect(corruptedEntry).toBe(1.9203);
     });
 
     it('Should identify which service method corrupts entryPrice', () => {
       const position = createRealScenarioPosition();
-
-      // HYPOTHESIS: position-lifecycle.service.ts updatePositionState()
-      // might be using wrong field from WebSocket
-
       const wsPosition = {
         symbol: 'XRPUSDT',
         side: 'Buy',
-        qty: 35.41, // After TP1
-        entryPrice: 0, // Empty (not yet filled)
-        avgPrice: 1.9203, // Current average (includes TP1 exit)
+        qty: 35.41,
+        entryPrice: 0,
+        avgPrice: 1.9203,
       };
 
       console.log(`
@@ -440,5 +288,3 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     });
   });
 });
-
-

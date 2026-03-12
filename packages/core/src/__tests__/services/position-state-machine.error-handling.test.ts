@@ -18,6 +18,12 @@ import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors';
 import type { StateTransitionResult } from '../../types/position-state-machine';
+import {
+  createMockPositionStateMachineLogger,
+  createTestStateMachinePaths,
+  ensureParentDir,
+  removeStateMachineArtifacts,
+} from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: LoggerService;
@@ -26,13 +32,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let service: PositionStateMachineService;
 
   beforeEach(() => {
-    logger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      log: jest.fn(),
-    } as unknown as LoggerService;
+    logger = createMockPositionStateMachineLogger();
 
     errorHandler = new ErrorHandler(logger);
 
@@ -41,14 +41,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   });
 
   afterEach(async () => {
-    // Clean up test files
-    try {
-      if (fs.existsSync(testDataDir)) {
-        await fsPromises.rm(testDataDir, { recursive: true, force: true });
-      }
-    } catch (error) {
-      // Ignore cleanup errors
-    }
+    await removeStateMachineArtifacts(testDataDir);
   });
 
   // ============================================================================
@@ -72,10 +65,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       service = new PositionStateMachineService(logger, errorHandler);
 
       // Create corrupted history file
-      const historyFilePath = path.join(process.cwd(), 'data', 'position-transitions.jsonl');
-      if (!fs.existsSync(path.dirname(historyFilePath))) {
-        await fsPromises.mkdir(path.dirname(historyFilePath), { recursive: true });
-      }
+      const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      await ensureParentDir(historyFilePath);
       await fsPromises.writeFile(historyFilePath, 'INVALID JSON { corrupted');
 
       // Should initialize without throwing (GRACEFUL_DEGRADE strategy)
@@ -110,10 +101,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       service = new PositionStateMachineService(logger, errorHandler);
 
       // Create main state file with invalid JSON
-      const stateFilePath = path.join(process.cwd(), 'data', 'position-states.jsonl');
-      if (!fs.existsSync(path.dirname(stateFilePath))) {
-        await fsPromises.mkdir(path.dirname(stateFilePath), { recursive: true });
-      }
+      const { stateFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      await ensureParentDir(stateFilePath);
 
       // Both main and backup are corrupted
       const backupPath = stateFilePath + '.backup';
@@ -209,10 +198,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       service = new PositionStateMachineService(logger, errorHandler);
 
       // Create state file with mixed valid/invalid lines
-      const stateFilePath = path.join(process.cwd(), 'data', 'position-states.jsonl');
-      if (!fs.existsSync(path.dirname(stateFilePath))) {
-        await fsPromises.mkdir(path.dirname(stateFilePath), { recursive: true });
-      }
+      const { stateFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      await ensureParentDir(stateFilePath);
 
       const validState = {
         symbol: 'BTCUSDT',
@@ -278,10 +265,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       service = new PositionStateMachineService(logger, errorHandler);
 
       // Create history file with mixed valid/invalid entries
-      const historyFilePath = path.join(process.cwd(), 'data', 'position-transitions.jsonl');
-      if (!fs.existsSync(path.dirname(historyFilePath))) {
-        await fsPromises.mkdir(path.dirname(historyFilePath), { recursive: true });
-      }
+      const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      await ensureParentDir(historyFilePath);
 
       const validEntry = {
         request: {
@@ -317,10 +302,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       service = new PositionStateMachineService(logger, errorHandler);
 
       // Create history file with many entries for one position
-      const historyFilePath = path.join(process.cwd(), 'data', 'position-transitions.jsonl');
-      if (!fs.existsSync(path.dirname(historyFilePath))) {
-        await fsPromises.mkdir(path.dirname(historyFilePath), { recursive: true });
-      }
+      const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      await ensureParentDir(historyFilePath);
 
       const entries = Array.from({ length: 1500 }, (_, i) => ({
         request: {

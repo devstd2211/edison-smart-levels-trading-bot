@@ -11,18 +11,13 @@
 import { PositionStateMachineService } from '../../services/position-state-machine.service';
 import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
+import { createMockPositionStateMachineLogger } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      log: jest.fn(),
-    } as unknown as LoggerService;
+    logger = createMockPositionStateMachineLogger();
   });
 
   describe('State Transitions', () => {

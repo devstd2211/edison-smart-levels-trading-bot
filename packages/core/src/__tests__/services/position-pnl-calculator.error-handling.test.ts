@@ -8,6 +8,11 @@
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { Position, PositionSide, type LoggerService } from '../../types/legacy';
+import {
+  createMockPnlErrorHandler,
+  createMockPnlLogger,
+  createMockPnlPosition,
+} from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
 // FIXTURES
@@ -16,61 +21,11 @@ import { Position, PositionSide, type LoggerService } from '../../types/legacy';
 const createMockPosition = (
   side: PositionSide = PositionSide.LONG,
   entryPrice: number = 100,
-): Position => ({
-  id: 'test-position-123',
-  symbol: 'APEXUSDT',
-  side,
-  entryPrice,
-  quantity: 10,
-  leverage: 10,
-  marginUsed: 10,
-  stopLoss: {
-    price: side === PositionSide.LONG ? 99 : 101,
-    initialPrice: side === PositionSide.LONG ? 99 : 101,
-    orderId: 'sl-order-123',
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: [
-    {
-      level: 1,
-      price: side === PositionSide.LONG ? 101 : 99,
-      percent: 1,
-      sizePercent: 33.33,
-      orderId: 'tp1-order',
-      hit: false,
-    },
-  ],
-  openedAt: Date.now(),
-  unrealizedPnL: 0,
-  orderId: 'entry-order-123',
-  reason: 'Test position',
-  status: 'OPEN',
-});
-
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  getLogs: jest.fn(() => []),
-  getLogsByLevel: jest.fn(() => []),
-  clear: jest.fn(),
-  disableConsoleOutput: jest.fn(),
-  enableConsoleOutputMode: jest.fn(),
-});
+): Position => createMockPnlPosition(side, entryPrice);
 
 const asPosition = (value: unknown): Position => value as Position;
 
-const createMockErrorHandler = () => {
-  const errorLogger = createMockLogger() as unknown as Pick<
-    LoggerService,
-    'debug' | 'info' | 'warn' | 'error'
-  >;
-  const errorHandler = new ErrorHandler(errorLogger);
-  return errorHandler;
-};
+const createMockErrorHandler = () => createMockPnlErrorHandler();
 
 // ============================================================================
 // TESTS

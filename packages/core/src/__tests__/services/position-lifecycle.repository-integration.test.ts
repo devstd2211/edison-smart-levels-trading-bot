@@ -5,48 +5,30 @@
  * Ensures position state is correctly delegated to repository
  */
 
-import { PositionMemoryRepository } from '../../repositories/position.memory-repository';
 import { IPositionRepository } from '../../repositories/IRepositories';
-import { Position, PositionSide } from '../../types/legacy';
+import { Position } from '../../types/legacy';
+import {
+  createPositionRepositoryHarness,
+  createRepositoryPosition,
+  createRepositoryPositions,
+} from '../helpers/position-repository-test.utils';
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
   let repository: IPositionRepository;
 
   beforeEach(() => {
-    repository = new PositionMemoryRepository();
+    repository = createPositionRepositoryHarness();
   });
 
   describe('Basic Position Operations', () => {
     it('should store position in repository', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
+      const position: Position = createRepositoryPosition({
         takeProfits: [
           { level: 1, price: 50500, percent: 30, sizePercent: 30, hit: false, orderId: undefined },
           { level: 2, price: 51000, percent: 30, sizePercent: 30, hit: false, orderId: undefined },
           { level: 3, price: 51500, percent: 40, sizePercent: 40, hit: false, orderId: undefined },
         ],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'OPEN',
-      };
+      });
 
       repository.setCurrentPosition(position);
       const stored = repository.getCurrentPosition();
@@ -57,31 +39,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should retrieve current position from repository', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'OPEN',
-      };
+      const position: Position = createRepositoryPosition();
 
       repository.setCurrentPosition(position);
 
@@ -95,31 +53,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should clear position from repository', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'OPEN',
-      };
+      const position: Position = createRepositoryPosition();
 
       repository.setCurrentPosition(position);
       expect(repository.getCurrentPosition()).not.toBeNull();
@@ -131,31 +65,11 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position History', () => {
     it('should add positions to history', () => {
-      const position1: Position = {
+      const position1: Position = createRepositoryPosition({
         id: 'BTCUSDT_Buy_1',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 100,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
         status: 'CLOSED',
-      };
+        unrealizedPnL: 100,
+      });
 
       repository.addToHistory(position1);
       const history = repository.getHistory();
@@ -165,36 +79,13 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should maintain history limit (max 100)', () => {
-      // Add 150 positions
-      for (let i = 0; i < 150; i++) {
-        const position: Position = {
+      createRepositoryPositions(150, (i) => ({
           id: `BTCUSDT_Buy_${i}`,
           journalId: `trade-${i}`,
-          symbol: 'BTCUSDT',
-          side: PositionSide.LONG,
-          quantity: 0.1,
           entryPrice: 50000 + i,
-          leverage: 10,
-          marginUsed: 500,
-          stopLoss: {
-            price: 49000,
-            initialPrice: 49000,
-            orderId: undefined,
-            isBreakeven: false,
-            isTrailing: false,
-            updatedAt: Date.now(),
-          },
-          takeProfits: [],
-          openedAt: Date.now(),
-          unrealizedPnL: 0,
           orderId: `order-${i}`,
-          reason: 'Entry signal',
-          protectionVerifiedOnce: true,
           status: 'CLOSED',
-        };
-
-        repository.addToHistory(position);
-      }
+        })).forEach((position) => repository.addToHistory(position));
 
       const history = repository.getHistory();
 
@@ -203,66 +94,19 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should get limited history', () => {
-      for (let i = 0; i < 50; i++) {
-        const position: Position = {
+      createRepositoryPositions(50, (i) => ({
           id: `BTCUSDT_Buy_${i}`,
           journalId: `trade-${i}`,
-          symbol: 'BTCUSDT',
-          side: PositionSide.LONG,
-          quantity: 0.1,
-          entryPrice: 50000,
-          leverage: 10,
-          marginUsed: 500,
-          stopLoss: {
-            price: 49000,
-            initialPrice: 49000,
-            orderId: undefined,
-            isBreakeven: false,
-            isTrailing: false,
-            updatedAt: Date.now(),
-          },
-          takeProfits: [],
-          openedAt: Date.now(),
-          unrealizedPnL: 0,
           orderId: `order-${i}`,
-          reason: 'Entry signal',
-          protectionVerifiedOnce: true,
           status: 'CLOSED',
-        };
-
-        repository.addToHistory(position);
-      }
+        })).forEach((position) => repository.addToHistory(position));
 
       const limited = repository.getHistory(10);
       expect(limited).toHaveLength(10);
     });
 
     it('should clear history', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'CLOSED',
-      };
+      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
 
       repository.addToHistory(position);
       expect(repository.getHistory()).toHaveLength(1);
@@ -274,31 +118,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position Queries', () => {
     it('should find position by ID', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'CLOSED',
-      };
+      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
 
       repository.addToHistory(position);
 
@@ -313,31 +133,10 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should get all positions', () => {
-      const position1: Position = {
+      const position1: Position = createRepositoryPosition({
         id: 'BTCUSDT_Buy_1',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
         status: 'CLOSED',
-      };
+      });
 
       repository.addToHistory(position1);
       repository.setCurrentPosition({
@@ -353,31 +152,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Repository Maintenance', () => {
     it('should get repository size', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'CLOSED',
-      };
+      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
 
       repository.addToHistory(position);
       repository.setCurrentPosition(position);
@@ -387,31 +162,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should clear all repository data', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'CLOSED',
-      };
+      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
 
       repository.addToHistory(position);
       repository.setCurrentPosition(position);
@@ -426,31 +177,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position Updates', () => {
     it('should update position fields', () => {
-      const position: Position = {
-        id: 'BTCUSDT_Buy',
-        journalId: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        quantity: 0.1,
-        entryPrice: 50000,
-        leverage: 10,
-        marginUsed: 500,
-        stopLoss: {
-          price: 49000,
-          initialPrice: 49000,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [],
-        openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'order-1',
-        reason: 'Entry signal',
-        protectionVerifiedOnce: true,
-        status: 'OPEN',
-      };
+      const position: Position = createRepositoryPosition();
 
       repository.setCurrentPosition(position);
 
@@ -464,37 +191,14 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should handle concurrent position updates', () => {
-      const positions: Position[] = [];
-
-      for (let i = 0; i < 5; i++) {
-        const position: Position = {
+      const positions: Position[] = createRepositoryPositions(5, (i) => ({
           id: `BTCUSDT_Buy_${i}`,
           journalId: `trade-${i}`,
-          symbol: 'BTCUSDT',
-          side: PositionSide.LONG,
           quantity: 0.1 + i * 0.01,
-          entryPrice: 50000,
-          leverage: 10,
-          marginUsed: 500,
-          stopLoss: {
-            price: 49000,
-            initialPrice: 49000,
-            orderId: undefined,
-            isBreakeven: false,
-            isTrailing: false,
-            updatedAt: Date.now(),
-          },
-          takeProfits: [],
-          openedAt: Date.now(),
           unrealizedPnL: i * 100,
           orderId: `order-${i}`,
-          reason: 'Entry signal',
-          protectionVerifiedOnce: true,
-          status: 'OPEN',
-        };
-        positions.push(position);
-        repository.addToHistory(position);
-      }
+        }));
+      positions.forEach((position) => repository.addToHistory(position));
 
       const all = repository.getAllPositions();
       expect(all.length).toBeGreaterThanOrEqual(5);

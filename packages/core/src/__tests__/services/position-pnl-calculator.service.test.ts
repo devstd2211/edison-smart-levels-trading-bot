@@ -6,6 +6,7 @@
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { Position, PositionSide } from '../../types/legacy';
 import { PERCENT_MULTIPLIER } from '../../constants';
+import { createMockPnlPosition } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
 // MOCKS
@@ -14,38 +15,7 @@ import { PERCENT_MULTIPLIER } from '../../constants';
 const createMockPosition = (
   side: PositionSide = PositionSide.LONG,
   entryPrice: number = 100,
-): Position => ({
-  id: 'test-position-123',
-  symbol: 'APEXUSDT',
-  side,
-  entryPrice,
-  quantity: 10,
-  leverage: 10,
-  marginUsed: 10,
-  stopLoss: {
-    price: side === PositionSide.LONG ? 99 : 101,
-    initialPrice: side === PositionSide.LONG ? 99 : 101,
-    orderId: 'sl-order-123',
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: [
-    {
-      level: 1,
-      price: side === PositionSide.LONG ? 101 : 99,
-      percent: 1,
-      sizePercent: 33.33,
-      orderId: 'tp1-order',
-      hit: false,
-    },
-  ],
-  openedAt: Date.now(),
-  unrealizedPnL: 0,
-  orderId: 'entry-order-123',
-  reason: 'Test position',
-  status: 'OPEN',
-});
+): Position => createMockPnlPosition(side, entryPrice);
 
 // ============================================================================
 // TESTS

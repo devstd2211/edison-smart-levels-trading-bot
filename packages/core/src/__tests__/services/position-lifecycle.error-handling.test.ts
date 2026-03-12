@@ -34,6 +34,11 @@ import {
 } from '../../services';
 import { BotEventBus } from '../../services/event-bus';
 import { IPositionRepository } from '../../repositories/IRepositories';
+import {
+  createMockLifecyclePosition,
+  createMockLifecycleSignal,
+  createPositionLifecycleRepositoryHarness,
+} from '../helpers/position-lifecycle-test.utils';
 
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
   let service: PositionLifecycleService;
@@ -44,138 +49,26 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockEventBus: jest.Mocked<BotEventBus>;
   let mockRepository: jest.Mocked<IPositionRepository>;
 
-  const mockTradingConfig: TradingConfig = {
-    leverage: 10,
-    tradingFeeRate: 0.0002,
-    positionSizeUsdt: 100,
-    riskPercent: 2,
-  } as unknown as TradingConfig;
-
-  const mockRiskConfig: RiskManagementConfig = {
-    trailingStopActivationLevel: 2,
-  } as unknown as RiskManagementConfig;
-
-  const mockEntryConfirmationConfig: EntryConfirmationConfig = {
-    longEnabled: false,
-    shortEnabled: false,
-  } as unknown as EntryConfirmationConfig;
-
-  const mockConfig: Config = {
-    exchange: { name: 'bybit', testnet: true } as unknown as Config['exchange'],
-    trading: mockTradingConfig,
-    riskManagement: mockRiskConfig,
-  } as unknown as Config;
-
-  const mockSignal: Signal = {
-    direction: SignalDirection.LONG,
-    price: 40000,
-    stopLoss: 39000,
-    takeProfits: [
-      { level: 1, price: 41000, percent: 0.5, sizePercent: 50, hit: false },
-      { level: 2, price: 42000, percent: 1, sizePercent: 30, hit: false },
-      { level: 3, price: 43000, percent: 1.5, sizePercent: 20, hit: false },
-    ],
-    timestamp: Date.now(),
-    confidence: 0.85,
-    type: 'technical',
-  } as unknown as Signal;
-
-  const mockPosition: Position = {
-    id: 'BTC_BUY',
-    journalId: 'JOURNAL1',
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
-    entryPrice: 40000,
-    quantity: 0.25,
-    leverage: 10,
-    marginUsed: 100,
-    orderId: 'ORDER1',
-    reason: 'ENTRY_SIGNAL',
-    status: 'OPEN',
-    openedAt: Date.now(),
-    stopLoss: {
-      price: 39000,
-      initialPrice: 39000,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-    takeProfits: [
-      { level: 1, price: 41000, percent: 0.5, sizePercent: 50, hit: false },
-      { level: 2, price: 42000, percent: 1, sizePercent: 30, hit: false },
-      { level: 3, price: 43000, percent: 1.5, sizePercent: 20, hit: false },
-    ],
-    unrealizedPnL: 250,
-  };
+  const mockPosition: Position = createMockLifecyclePosition();
+  const mockSignal: Signal = createMockLifecycleSignal();
+  let mockTradingConfig: TradingConfig;
+  let mockRiskConfig: RiskManagementConfig;
+  let mockEntryConfirmationConfig: EntryConfirmationConfig;
+  let mockConfig: Config;
 
   beforeEach(() => {
-    const openPositionFn = jest.fn<() => Promise<Position>>().mockResolvedValue(mockPosition);
-    const closePositionFn = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
-    const cancelAllOrdersFn = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
-    const updateTPFn = jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined);
-    const getPriceFn = jest.fn<() => Promise<number>>().mockResolvedValue(40000);
-    const getSymbolFn = jest.fn<() => string>().mockReturnValue('BTCUSDT');
-
-    const notifyOpenedFn = jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined);
-    const sendAlertFn = jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined);
-
-    const recordOpenFn = jest.fn();
-    const recordCloseFn = jest.fn();
-    const getOpenPosFn = jest.fn().mockReturnValue({ id: 'JOURNAL1' });
-
-    mockExchange = {
-      openPosition: openPositionFn,
-      closePosition: closePositionFn,
-      cancelAllConditionalOrders: cancelAllOrdersFn,
-      updateTakeProfitPartial: updateTPFn,
-      getCurrentPrice: getPriceFn,
-      getSymbol: getSymbolFn,
-    } as unknown as jest.Mocked<IExchange>;
-
-    mockTelegram = {
-      notifyPositionOpened: notifyOpenedFn,
-      sendAlert: sendAlertFn,
-    } as unknown as jest.Mocked<TelegramService>;
-
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockJournal = {
-      recordTradeOpen: recordOpenFn,
-      recordTradeClose: recordCloseFn,
-      getOpenPositionBySymbol: getOpenPosFn,
-    } as unknown as jest.Mocked<TradingJournalService>;
-
-    mockEventBus = {
-      emit: jest.fn(),
-      on: jest.fn(),
-      off: jest.fn(),
-    } as unknown as jest.Mocked<BotEventBus>;
-
-    mockRepository = {
-      getCurrentPosition: jest.fn().mockReturnValue(mockPosition),
-      setCurrentPosition: jest.fn(),
-    } as unknown as jest.Mocked<IPositionRepository>;
-
-    service = new PositionLifecycleService(
-      mockExchange,
-      mockTradingConfig,
-      mockRiskConfig,
-      mockTelegram,
-      mockLogger,
-      mockJournal,
-      mockEntryConfirmationConfig,
-      mockConfig,
-      mockEventBus,
-      undefined,
-      undefined,
-      'TEST_STRATEGY',
-      mockRepository,
-    );
+    const harness = createPositionLifecycleRepositoryHarness();
+    service = harness.service;
+    mockExchange = harness.mockExchange as unknown as jest.Mocked<IExchange>;
+    mockTelegram = harness.mockTelegram as unknown as jest.Mocked<TelegramService>;
+    mockLogger = harness.mockLogger as unknown as jest.Mocked<LoggerService>;
+    mockJournal = harness.mockJournal as unknown as jest.Mocked<TradingJournalService>;
+    mockEventBus = harness.mockEventBus as unknown as jest.Mocked<BotEventBus>;
+    mockRepository = harness.mockRepository as jest.Mocked<IPositionRepository>;
+    mockTradingConfig = harness.tradingConfig;
+    mockRiskConfig = harness.riskConfig;
+    mockEntryConfirmationConfig = harness.entryConfig;
+    mockConfig = harness.fullConfig;
   });
 
   // ========================================================================

@@ -29,16 +29,16 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-12)
-- Completed testability batch 232 (behavior-preserving `position-monitor` follow-up):
-  - added shared `position-monitor` test fixtures for monitored positions, service dependencies, default risk config, and monitor construction.
-  - aligned `services/position-monitor.service.test.ts` and `services/position-monitor.error-handling.test.ts` on the shared harness.
-  - collapsed repeated time-based-exit constructor blocks behind a local monitor rebuild helper that reuses the same mocked dependencies.
+- Completed testability batches 243-245 (behavior-preserving `dynamic-position-sizer` / `position-scaling` / repository follow-up):
+  - added shared `dynamic-position-sizer` and `position-scaling` harnesses for canonical logger/config/error-handler setup plus broken-logger fixtures.
+  - extended the repository helper with batched position builders and aligned the repository-integration suite on it.
+  - reviewed `services/dynamic-position-sizer.service.ts`, `services/position-scaling.service.ts`, and the repository slice; kept production code unchanged because this batch only needed test-fixture consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts` -> PASS (2/2 suites, 46/46 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/dynamic-position-sizer.test.ts packages/core/src/__tests__/services/position-scaling.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> PASS (3/3 suites, 97/97 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Extend explicit lifecycle teardown and minimal grouped-service construction into the next lifecycle-adjacent suites beyond the current `bot` / `initializer` / `mtf-snapshot-gate` / `real-time-risk-monitor` / `position-monitor` slices.
-- Prefer the next clustered boundary with repeated service startup/shutdown patterns (`position-*`, monitoring-adjacent, or similarly grouped suites) so three-at-a-time iterations stay cohesive.
+- If starting a fresh session after commit/fixation, resume from the next compact lifecycle/testability boundary that still repeats local service construction outside the now-covered `position-*` sizing/exiting slices.
+- Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.

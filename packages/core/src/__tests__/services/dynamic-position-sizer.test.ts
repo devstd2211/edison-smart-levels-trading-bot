@@ -24,9 +24,13 @@ import {
   FALLBACK_POSITION_SIZE,
   MIN_CONFIDENCE_THRESHOLD,
 } from '../../constants/phase-11-constants';
+import {
+  createDynamicPositionSizerBrokenLogger,
+  createDynamicPositionSizerConfig,
+  createDynamicPositionSizerHarness,
+} from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
-  type LoggerMock = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
@@ -36,25 +40,11 @@ describe('DynamicPositionSizerService', () => {
   let mockConfig: SizingConfig;
 
   beforeEach(() => {
-    const mockLogger: LoggerMock = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    };
-    logger = mockLogger as unknown as LoggerService;
-    errorHandler = new ErrorHandler(logger);
-
-    mockConfig = {
-      baseRiskPercent: 1.0,
-      maxRiskPercent: 3.0,
-      minPositionSize: 10,
-      maxPositionSize: 1000,
-      volatilityMultiplier: 1.0,
-      confidenceThreshold: 0.5,
-    };
-
-    service = new DynamicPositionSizerService(mockConfig, logger, errorHandler);
+    const harness = createDynamicPositionSizerHarness();
+    service = harness.service;
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
+    mockConfig = harness.config;
   });
 
   // ============================================================================
@@ -263,7 +253,7 @@ describe('DynamicPositionSizerService', () => {
 
     it('should handle risk calculation overflow', async () => {
       const hugeConfig: SizingConfig = {
-        ...mockConfig,
+        ...createDynamicPositionSizerConfig(),
         maxPositionSize: Number.MAX_VALUE,
       };
 
@@ -297,21 +287,7 @@ describe('DynamicPositionSizerService', () => {
     let brokenLogger: LoggerService;
 
     beforeEach(() => {
-      const mockBrokenLogger: LoggerMock = {
-        debug: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-        info: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-        warn: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-        error: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-      };
-      brokenLogger = mockBrokenLogger as unknown as LoggerService;
+      brokenLogger = createDynamicPositionSizerBrokenLogger() as unknown as LoggerService;
     });
 
     it('should not throw when logging fails in calculateOptimalSize', async () => {

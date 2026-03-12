@@ -9,84 +9,16 @@
  */
 
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { PositionSide } from '../../types/legacy';
-import { Position, TradingConfig, RiskManagementConfig, EntryConfirmationConfig, Config, LoggerService } from '../../types/legacy';
+import { Position } from '../../types/legacy';
 import { BotEventBus } from '../../services/event-bus';
+import { LoggerService } from '../../services';
 import { TelegramService } from '../../services/telegram.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { IExchange } from '../../interfaces/IExchange';
-
-// Mock dependencies
-const mockExchange = {
-  closePosition: jest.fn().mockResolvedValue(undefined),
-  placeOrder: jest.fn(),
-  cancelOrder: jest.fn(),
-  cancelAllOrders: jest.fn(),
-  cancelAllConditionalOrders: jest.fn(),
-  getSymbols: jest.fn().mockResolvedValue([]),
-  getBalance: jest.fn().mockResolvedValue({}),
-  getTicker: jest.fn(),
-  getKlines: jest.fn(),
-  getOrderHistory: jest.fn(),
-  getOpenOrders: jest.fn(),
-  getPositions: jest.fn(),
-  getTradingPairs: jest.fn(),
-  subscribeToTicker: jest.fn(),
-  subscribeToPositions: jest.fn(),
-  subscribeToOrders: jest.fn(),
-  unsubscribeTicker: jest.fn(),
-} as unknown as IExchange;
-
-const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  log: jest.fn(),
-} as unknown as LoggerService;
-
-const mockEventBus = {
-  emit: jest.fn(),
-  on: jest.fn(),
-  off: jest.fn(),
-  publishSync: jest.fn(),
-  publish: jest.fn(),
-  subscribe: jest.fn(),
-  unsubscribe: jest.fn(),
-} as unknown as BotEventBus;
-
-const mockTelegram = {
-  sendMessage: jest.fn(),
-} as unknown as TelegramService;
-
-const mockJournal = {
-  recordTrade: jest.fn(),
-} as unknown as TradingJournalService;
-
-const createMockPosition = (): Position => ({
-  id: 'BTCUSDT_Buy',
-  symbol: 'BTCUSDT',
-  side: PositionSide.LONG,
-  quantity: 1.0,
-  entryPrice: 45000,
-  leverage: 10,
-  marginUsed: 4500,
-  unrealizedPnL: 500,
-  status: 'OPEN',
-  openedAt: Date.now() - 3600000,
-  orderId: 'order-123',
-  reason: 'Test entry',
-  takeProfits: [
-    { level: 1, percent: 0.5, sizePercent: 50, price: 45225, hit: false },
-  ],
-  stopLoss: {
-    price: 44000,
-    initialPrice: 44000,
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-});
+import {
+  createMockLifecyclePosition,
+  createPositionLifecycleMemoryHarness,
+} from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
   let service: PositionLifecycleService;
@@ -100,43 +32,67 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   const setCurrentPosition = (value: Position | null): void => {
     internals().currentPosition = value;
   };
-
-  const mockConfig: TradingConfig = {
-    leverage: 10,
-    positionSize: 100,
-  } as unknown as TradingConfig;
-
-  const mockRiskConfig: RiskManagementConfig = {
-    dailyLossLimit: 1000,
-    maxConsecutiveLosses: 3,
-  } as unknown as RiskManagementConfig;
-
-  const mockEntryConfig: EntryConfirmationConfig = {
-    enabled: false,
-  } as unknown as EntryConfirmationConfig;
-
-  const mockFullConfig: Config = {
-    trading: mockConfig,
-    riskManagement: mockRiskConfig,
-    entryConfirmation: mockEntryConfig,
-  } as unknown as Config;
+  let mockExchange: IExchange;
+  let mockLogger: LoggerService;
+  let mockEventBus: BotEventBus;
+  let mockTelegram: TelegramService;
+  let mockJournal: TradingJournalService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    service = new PositionLifecycleService(
-      mockExchange,
-      mockConfig,
-      mockRiskConfig,
-      mockTelegram,
-      mockLogger,
-      mockJournal,
-      mockEntryConfig,
-      mockFullConfig,
-      mockEventBus
-    );
-
-    position = createMockPosition();
+    const harness = createPositionLifecycleMemoryHarness({
+      positionOverrides: {
+        id: 'BTCUSDT_Buy',
+        symbol: 'BTCUSDT',
+        quantity: 1,
+        entryPrice: 45000,
+        marginUsed: 4500,
+        unrealizedPnL: 500,
+        openedAt: Date.now() - 3600000,
+        orderId: 'order-123',
+        reason: 'Test entry',
+        takeProfits: [
+          { level: 1, percent: 0.5, sizePercent: 50, price: 45225, hit: false },
+        ],
+        stopLoss: {
+          price: 44000,
+          initialPrice: 44000,
+          isBreakeven: false,
+          isTrailing: false,
+          updatedAt: Date.now(),
+        },
+      },
+      tradingOverrides: {
+        positionSize: 100,
+      } as never,
+    });
+    service = harness.service;
+    mockExchange = harness.mockExchange;
+    mockLogger = harness.mockLogger;
+    mockEventBus = harness.mockEventBus;
+    mockTelegram = harness.mockTelegram;
+    mockJournal = harness.mockJournal;
+    position = createMockLifecyclePosition({
+      id: 'BTCUSDT_Buy',
+      symbol: 'BTCUSDT',
+      quantity: 1,
+      entryPrice: 45000,
+      marginUsed: 4500,
+      unrealizedPnL: 500,
+      openedAt: Date.now() - 3600000,
+      orderId: 'order-123',
+      reason: 'Test entry',
+      takeProfits: [
+        { level: 1, percent: 0.5, sizePercent: 50, price: 45225, hit: false },
+      ],
+      stopLoss: {
+        price: 44000,
+        initialPrice: 44000,
+        isBreakeven: false,
+        isTrailing: false,
+        updatedAt: Date.now(),
+      },
+    });
   });
 
   // =========================================================================
@@ -254,7 +210,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       const snapshot = service.getPositionSnapshot();
 
       // Simulate WebSocket update
-      const updated = createMockPosition();
+      const updated = createMockLifecyclePosition();
       updated.unrealizedPnL = 9000; // Large change
       setCurrentPosition(updated);
 

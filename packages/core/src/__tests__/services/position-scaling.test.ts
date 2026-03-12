@@ -24,6 +24,11 @@ import {
   MAX_SCALE_INS,
   MIN_POSITION_SIZE_FOR_SCALING,
 } from '../../constants/phase-11-constants';
+import {
+  createPositionScalingBrokenLogger,
+  createPositionScalingHarness,
+  createPositionScalingPosition,
+} from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
   let service: PositionScalingService;
@@ -35,32 +40,12 @@ describe('PositionScalingService', () => {
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
-    logger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as LoggerService;
-    errorHandler = new ErrorHandler(logger);
-
-    mockConfig = {
-      scaleInThreshold: 0.5, // Scale at 50% of TP
-      maxScales: 3,
-      scaleReduction: 0.5, // Each scale is 50% of previous
-      breakevenThreshold: 0.5, // Move SL to BE at 50% of TP
-    };
-
-    mockPosition = {
-      entryPrice: 100,
-      currentPrice: 105, // 50% to TP
-      size: 100,
-      stopLoss: 95,
-      profitTarget: 110, // 10% target
-      scaleCount: 0,
-      side: 'long',
-    };
-
-    service = new PositionScalingService(mockConfig, logger, errorHandler);
+    const harness = createPositionScalingHarness();
+    service = harness.service;
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
+    mockConfig = harness.config;
+    mockPosition = harness.position;
   });
 
   // ============================================================================
@@ -262,20 +247,7 @@ describe('PositionScalingService', () => {
     let brokenLogger: LoggerService;
 
     beforeEach(() => {
-      brokenLogger = {
-        debug: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-        info: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-        warn: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-        error: jest.fn(() => {
-          throw new Error('Logger broken');
-        }),
-      } as unknown as LoggerService;
+      brokenLogger = createPositionScalingBrokenLogger() as unknown as LoggerService;
     });
 
     it('should not throw when logging fails in shouldScale', async () => {
@@ -510,15 +482,12 @@ describe('PositionScalingService', () => {
 
   describe('Short Position Scaling', () => {
     it('should scale short position correctly', async () => {
-      const shortPosition: PositionState = {
-        entryPrice: 100,
-        currentPrice: 95, // Profit for short
-        size: 100,
+      const shortPosition: PositionState = createPositionScalingPosition({
+        currentPrice: 95,
         stopLoss: 105,
-        profitTarget: 90, // 10% down
-        scaleCount: 0,
+        profitTarget: 90,
         side: 'short',
-      };
+      });
 
       const result = await service.shouldScale(shortPosition);
 
@@ -528,15 +497,12 @@ describe('PositionScalingService', () => {
     });
 
     it('should move SL to breakeven for short position', async () => {
-      const shortPosition: PositionState = {
-        entryPrice: 100,
+      const shortPosition: PositionState = createPositionScalingPosition({
         currentPrice: 95,
-        size: 100,
         stopLoss: 105,
         profitTarget: 90,
-        scaleCount: 0,
         side: 'short',
-      };
+      });
 
       const result = await service.reduceRiskOnProfit(shortPosition);
 

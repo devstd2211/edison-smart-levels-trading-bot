@@ -9,34 +9,19 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { Position, ExitType, LoggerService } from '../../types/legacy';
+import { Position, ExitType } from '../../types/legacy';
+import {
+  createMockPositionExitingTradingConfig,
+  createPositionExitingHarness,
+  createMockRacePosition,
+} from '../helpers/position-exiting-test.utils';
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
 
 function createMockPosition(): Position {
-  return {
-    id: 'XRPUSDT_Buy',
-    journalId: 'j-123',
-    symbol: 'XRPUSDT',
-    side: 'Buy' as unknown as Position['side'],
-    quantity: 52.9,
-    entryPrice: 1.85,
-    leverage: 10,
-    openedAt: Date.now() - 3600000,
-    unrealizedPnL: 50,
-    orderId: 'order-123',
-    reason: 'Test position',
-    status: 'OPEN',
-    takeProfits: [
-      { level: 1, percent: 0.5, price: 1.859, sizePercent: 33, hit: false, orderId: 'tp1' },
-      { level: 2, percent: 1.0, price: 1.869, sizePercent: 33, hit: false, orderId: 'tp2' },
-      { level: 3, percent: 1.5, price: 1.879, sizePercent: 34, hit: false, orderId: 'tp3' },
-    ],
-    stopLoss: { price: 1.80, isBreakeven: false, isTrailing: false, updatedAt: Date.now() } as unknown as Position['stopLoss'],
-  } as Position;
+  return createMockRacePosition();
 }
 
 // ============================================================================
@@ -62,59 +47,41 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   let mockSessionStats: { updateTradeExit: jest.Mock };
 
   beforeEach(() => {
-    mockLogger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      getLogFilePath: jest.fn().mockReturnValue('/mock/log'),
-    };
-
-    mockBybitService = {
-      closePosition: jest.fn().mockResolvedValue({}),
-      cancelAllConditionalOrders: jest.fn().mockResolvedValue({}),
-      getCurrentPrice: jest.fn().mockResolvedValue(1.871),
-    };
-
-    mockTelegram = {
-      sendAlert: jest.fn().mockResolvedValue(undefined),
-      notifyPositionClosed: jest.fn().mockResolvedValue(undefined),
-    };
-
-    mockJournal = {
-      recordPositionClose: jest.fn().mockReturnValue({
-        rollback: jest.fn(),
+    const harness = createPositionExitingHarness({
+      tradingConfig: createMockPositionExitingTradingConfig({
+        tradingFeeRate: 0.0006,
       }),
-      getTrade: jest.fn().mockReturnValue(null),
-    };
+      riskConfig: {
+        maxRiskPercent: 2,
+        maxPositionSize: 1000,
+      } as never,
+      fullConfig: {} as never,
+      exchangeOverrides: {
+        closePosition: jest.fn().mockResolvedValue({}),
+        cancelAllConditionalOrders: jest.fn().mockResolvedValue({}),
+        getCurrentPrice: jest.fn().mockResolvedValue(1.871),
+      },
+      telegramOverrides: {
+        sendAlert: jest.fn().mockResolvedValue(undefined),
+        notifyPositionClosed: jest.fn().mockResolvedValue(undefined),
+      },
+      journalOverrides: {
+        recordPositionClose: jest.fn().mockReturnValue({
+          rollback: jest.fn(),
+        }),
+        getTrade: jest.fn().mockReturnValue(null),
+      },
+      sessionStatsOverrides: {
+        updateTradeExit: jest.fn().mockResolvedValue({}),
+      },
+    });
 
-    mockSessionStats = {
-      updateTradeExit: jest.fn().mockResolvedValue({}),
-    };
-
-    const mockTradingConfig = {
-      leverage: 10,
-      tradingFeeRate: 0.0006,
-      minPositionSize: 10,
-      maxPositionSize: 1000,
-    } as unknown;
-
-    const mockRiskConfig = {
-      maxRiskPercent: 2,
-      maxPositionSize: 1000,
-    } as unknown;
-    const mockFullConfig = {} as unknown as ConstructorParameters<typeof PositionExitingService>[6];
-
-    positionExitingService = new PositionExitingService(
-      mockBybitService as unknown as ConstructorParameters<typeof PositionExitingService>[0],
-      mockTelegram as unknown as ConstructorParameters<typeof PositionExitingService>[1],
-      mockLogger as unknown as ConstructorParameters<typeof PositionExitingService>[2],
-      mockJournal as unknown as ConstructorParameters<typeof PositionExitingService>[3],
-      mockTradingConfig as unknown as ConstructorParameters<typeof PositionExitingService>[4],
-      mockRiskConfig as unknown as ConstructorParameters<typeof PositionExitingService>[5],
-      mockFullConfig,
-      mockSessionStats as unknown as ConstructorParameters<typeof PositionExitingService>[7],
-    );
+    positionExitingService = harness.service;
+    mockLogger = harness.mockLogger;
+    mockBybitService = harness.mockBybit;
+    mockTelegram = harness.mockTelegram;
+    mockJournal = harness.mockJournal;
+    mockSessionStats = harness.mockSessionStats;
   });
 
   // =========================================================================

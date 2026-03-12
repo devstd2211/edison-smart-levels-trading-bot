@@ -14,103 +14,20 @@
 
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
-import { Position, PositionSide, TakeProfit, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
-
-const createMockLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-});
-
-const createMockBybitService = () => ({
-  closePosition: jest.fn().mockResolvedValue(true),
-  updateStopLoss: jest.fn().mockResolvedValue(true),
-  placeTakeProfitLevels: jest.fn().mockResolvedValue(['TP1', 'TP2', 'TP3']),
-  openPosition: jest.fn().mockResolvedValue('ORDER_123'),
-  cancelAllConditionalOrders: jest.fn().mockResolvedValue(true),
-});
-
-const createMockTelegramService = () => ({
-  sendAlert: jest.fn().mockResolvedValue(true),
-  notifyPositionOpened: jest.fn().mockResolvedValue(true),
-  notifyTakeProfitHit: jest.fn().mockResolvedValue(true),
-  enabled: true,
-  botToken: 'test',
-  chatId: 'test',
-  logger: createMockLogger(),
-});
-
-const createMockJournalService = () => ({
-  recordTradeOpen: jest.fn(),
-  recordTradeClose: jest.fn(),
-  getOpenPositionBySymbol: jest.fn().mockReturnValue(null),
-});
-
-const createMockSessionStatsService = () => ({
-  updateTradeExit: jest.fn(),
-});
-
-const createMockTradingConfig = (): TradingConfig => ({
-  leverage: 10,
-  riskPercent: 2,
-  maxPositions: 1,
-  positionSizeUsdt: 100,
-  tradingCycleIntervalMs: 1000,
-  orderType: 'LIMIT' as unknown as TradingConfig['orderType'],
-  tradingFeeRate: 0.0002,
-  favorableMovementThresholdPercent: 0.1,
-});
-
-const createMockRiskConfig = (): RiskManagementConfig => ({
-  takeProfits: [
-    { level: 1, percent: 0.5, sizePercent: 33 },
-    { level: 2, percent: 1.0, sizePercent: 33 },
-    { level: 3, percent: 1.5, sizePercent: 34 },
-  ],
-  stopLossPercent: 1,
-  minStopLossPercent: 0.5,
-  breakevenOffsetPercent: 0.3,
-  trailingStopEnabled: true,
-  trailingStopPercent: 1,
-  trailingStopActivationLevel: 2,
-  positionSizeUsdt: 100,
-});
-
-const createMockConfig = (): Config => ({
-  exchange: { symbol: 'XRPUSDT' } as unknown as Config['exchange'],
-  timeframes: {},
-  trading: createMockTradingConfig(),
-  strategies: {} as unknown as Config['strategies'],
-  strategy: {} as unknown as Config['strategy'],
-  indicators: {} as unknown as Config['indicators'],
-  riskManagement: createMockRiskConfig(),
-  logging: {} as unknown as Config['logging'],
-  system: {} as unknown as Config['system'],
-  dataSubscriptions: {
-    candles: { enabled: true, calculateIndicators: true },
-    orderbook: { enabled: false, updateIntervalMs: 5000 },
-    ticks: { enabled: false, calculateDelta: false },
-  },
-  entryConfig: {} as unknown as Config['entryConfig'],
-  entryConfirmation: {} as unknown as Config['entryConfirmation'],
-});
-
-const asExchange = (v: ReturnType<typeof createMockBybitService>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[0];
-const asLogger = (v: ReturnType<typeof createMockLogger>) =>
-  v as unknown as ConstructorParameters<typeof PositionExitingService>[2];
+import { Position, PositionSide, TakeProfit } from '../../types/legacy';
+import {
+  createMockPositionExitingLogger,
+  createPositionExitingHarness,
+  createRealScenarioPosition,
+} from '../helpers/position-exiting-test.utils';
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   let service: PositionExitingService;
-  let mockBybitService: ReturnType<typeof createMockBybitService>;
-  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockBybitService: ReturnType<typeof createPositionExitingHarness>['mockBybit'];
+  let mockLogger: ReturnType<typeof createPositionExitingHarness>['mockLogger'];
   let mockTakeProfitManager: TakeProfitManagerService;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    mockBybitService = createMockBybitService();
-
-    // Create REAL TakeProfitManager with real entry price
+    mockLogger = createMockPositionExitingLogger();
     mockTakeProfitManager = new TakeProfitManagerService(
       {
         positionId: 'XRPUSDT_Buy',
@@ -120,25 +37,34 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
         totalQuantity: 52.85,
         leverage: 10,
       },
-      asLogger(mockLogger),
+      mockLogger as unknown as ConstructorParameters<typeof TakeProfitManagerService>[1],
     );
 
-    // Mock positionManager to return the real TakeProfitManager
-    const mockPositionManager = {
-      getTakeProfitManager: jest.fn().mockReturnValue(mockTakeProfitManager),
-    };
-
-    service = new PositionExitingService(
-      asExchange(mockBybitService),
-      createMockTelegramService() as unknown as ConstructorParameters<typeof PositionExitingService>[1],
-      asLogger(mockLogger),
-      createMockJournalService() as unknown as ConstructorParameters<typeof PositionExitingService>[3],
-      createMockTradingConfig(),
-      createMockRiskConfig(),
-      createMockConfig(),
-      createMockSessionStatsService() as unknown as ConstructorParameters<typeof PositionExitingService>[7],
-      mockPositionManager as unknown as ConstructorParameters<typeof PositionExitingService>[8],
-    );
+    const harness = createPositionExitingHarness({
+      takeProfitManager: mockTakeProfitManager,
+      positionManager: {
+        getTakeProfitManager: jest.fn().mockReturnValue(mockTakeProfitManager),
+      },
+      tradingConfig: { positionSizeUsdt: 100 },
+      riskConfig: {
+        takeProfits: [
+          { level: 1, percent: 0.5, sizePercent: 33 },
+          { level: 2, percent: 1.0, sizePercent: 33 },
+          { level: 3, percent: 1.5, sizePercent: 34 },
+        ],
+        stopLossPercent: 1,
+        minStopLossPercent: 0.5,
+        trailingStopPercent: 1,
+      },
+      fullConfig: {
+        exchange: { symbol: 'XRPUSDT' } as never,
+        entryConfig: {} as never,
+      },
+      loggerOverrides: mockLogger,
+    });
+    service = harness.service;
+    mockLogger = harness.mockLogger;
+    mockBybitService = harness.mockBybit;
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {
@@ -196,35 +122,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
     });
 
     it('Should NOT corrupt entryPrice during position update', async () => {
-      const position: Position = {
-        id: 'XRPUSDT_Buy',
-        journalId: 'XRPUSDT_Buy_1769181601722',
-        symbol: 'XRPUSDT',
-        side: PositionSide.LONG,
-        quantity: 52.85,
-        entryPrice: 1.892,
-        leverage: 10,
-        marginUsed: 100,
-        stopLoss: {
-          price: 1.8732,
-          initialPrice: 1.8732,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
-        takeProfits: [
-          { level: 1, percent: 0.5, sizePercent: 33, price: 1.9203, hit: false } as TakeProfit,
-          { level: 2, percent: 1.0, sizePercent: 33, price: 1.9488, hit: false } as TakeProfit,
-          { level: 3, percent: 1.5, sizePercent: 34, price: 1.9866, hit: false } as TakeProfit,
-        ],
-        openedAt: Date.now() - 1800000,
-        unrealizedPnL: 0,
-        orderId: 'ORD_XRPUSDT',
-        reason: 'Position opened',
-        protectionVerifiedOnce: true,
-        status: 'OPEN',
-      };
+      const position: Position = createRealScenarioPosition();
 
       const originalEntryPrice = position.entryPrice;
 
@@ -249,35 +147,15 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       // const breakevenPrice = this.calculateBreakevenPrice(position, ...);
 
       const position: Position = {
-        id: 'XRPUSDT_Buy',
-        journalId: 'XRPUSDT_Buy_1769181601722',
-        symbol: 'XRPUSDT',
-        side: PositionSide.LONG,
-        quantity: 52.85,
-        entryPrice: 1.892, // Valid at start
-        leverage: 10,
-        marginUsed: 100,
-        stopLoss: {
-          price: 1.8732,
-          initialPrice: 1.8732,
-          orderId: undefined,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
+        ...createRealScenarioPosition(),
         takeProfits: [
           { level: 1, percent: 0.5, sizePercent: 33, price: 1.9203, hit: false } as TakeProfit,
         ],
         openedAt: Date.now(),
-        unrealizedPnL: 0,
-        orderId: 'ORD_XRPUSDT',
-        reason: 'Position opened',
-        protectionVerifiedOnce: true,
-        status: 'OPEN',
       };
 
       // Check what breakeven calculation would give
-      const offsetPercent = createMockRiskConfig().breakevenOffsetPercent; // 0.3
+      const offsetPercent = 0.3;
       const offset = (position.entryPrice * offsetPercent) / 10000;
       const breakevenPrice = position.entryPrice + offset;
 

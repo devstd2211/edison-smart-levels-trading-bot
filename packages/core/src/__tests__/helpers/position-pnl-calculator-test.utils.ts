@@ -1,0 +1,64 @@
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { Position, PositionSide, type LoggerService } from '../../types/legacy';
+
+export function createMockPnlPosition(
+  side: PositionSide = PositionSide.LONG,
+  entryPrice: number = 100,
+  overrides: Partial<Position> = {},
+): Position {
+  return {
+    id: 'test-position-123',
+    symbol: 'APEXUSDT',
+    side,
+    entryPrice,
+    quantity: 10,
+    leverage: 10,
+    marginUsed: 10,
+    stopLoss: {
+      price: side === PositionSide.LONG ? 99 : 101,
+      initialPrice: side === PositionSide.LONG ? 99 : 101,
+      orderId: 'sl-order-123',
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    },
+    takeProfits: [
+      {
+        level: 1,
+        price: side === PositionSide.LONG ? 101 : 99,
+        percent: 1,
+        sizePercent: 33.33,
+        orderId: 'tp1-order',
+        hit: false,
+      },
+    ],
+    openedAt: Date.now(),
+    unrealizedPnL: 0,
+    orderId: 'entry-order-123',
+    reason: 'Test position',
+    status: 'OPEN',
+    ...overrides,
+  };
+}
+
+export function createMockPnlLogger() {
+  return {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    getLogs: jest.fn(() => []),
+    getLogsByLevel: jest.fn(() => []),
+    clear: jest.fn(),
+    disableConsoleOutput: jest.fn(),
+    enableConsoleOutputMode: jest.fn(),
+  };
+}
+
+export function createMockPnlErrorHandler(): ErrorHandler {
+  const errorLogger = createMockPnlLogger() as unknown as Pick<
+    LoggerService,
+    'debug' | 'info' | 'warn' | 'error'
+  >;
+  return new ErrorHandler(errorLogger);
+}

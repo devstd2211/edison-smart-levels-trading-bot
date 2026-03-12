@@ -27,69 +27,23 @@ import {
   PositionPriceFetchError,
   TelegramNetworkError,
 } from '../../errors/DomainErrors';
+import {
+  asPositionCloseRecorder,
+  createMockPositionSyncExchange,
+  createMockPositionSyncExitTypeDetector,
+  createMockPositionSyncManager,
+  createMockPositionSyncTelegram,
+  createMockPositionCloseRecorder,
+  createMockSyncedPosition,
+  createPositionSyncHarness,
+} from '../helpers/position-sync-test.utils';
 
 // ============================================================================
 // MOCKS & HELPERS
 // ============================================================================
 
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createMockBybitService = () => ({
-  getOrderHistory: jest.fn(),
-  getCurrentPrice: jest.fn(),
-  getPosition: jest.fn(),
-  closePosition: jest.fn(),
-  getActiveOrders: jest.fn(),
-});
-
-const createMockPositionManager = () => ({
-  getCurrentPosition: jest.fn(),
-  clearPosition: jest.fn(),
-  syncWithWebSocket: jest.fn(),
-});
-
-const createMockExitTypeDetectorService = () => ({
-  determineExitTypeFromHistory: jest.fn().mockReturnValue(ExitType.TAKE_PROFIT_1),
-  identifyTPLevel: jest.fn(),
-});
-
-const createMockTelegramService = () => ({
-  sendAlert: jest.fn().mockResolvedValue(undefined),
-});
-
 const createMockPosition = (side: PositionSide = PositionSide.LONG, openedAt?: number): Position => ({
-  id: 'test-position-123',
-  symbol: 'APEXUSDT',
-  side,
-  entryPrice: 100,
-  quantity: 10,
-  leverage: 10,
-  marginUsed: 10,
-  stopLoss: {
-    price: side === PositionSide.LONG ? 99 : 101,
-    initialPrice: side === PositionSide.LONG ? 99 : 101,
-    orderId: 'sl-order-123',
-    isBreakeven: false,
-    isTrailing: false,
-    updatedAt: Date.now(),
-  },
-  takeProfits: [
-    {
-      level: 1,
-      price: side === PositionSide.LONG ? 101 : 99,
-      percent: 1,
-      sizePercent: 33.33,
-      orderId: 'tp1-order',
-      hit: false,
-    },
-  ],
-  openedAt: openedAt || Date.now(),
-  unrealizedPnL: 0,
-  orderId: 'entry-order-123',
-  reason: 'Test position',
-  status: 'OPEN',
+  ...createMockSyncedPosition(side, openedAt || Date.now()),
 });
 
 const createStopLossOrder = (side: string = 'Sell'): BybitOrder => ({
@@ -127,48 +81,24 @@ const createTakeProfitOrder = (side: string = 'Sell', level: number = 1): BybitO
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  type PositionCloseRecorder = {
-    closeFullPosition: jest.Mock;
-  };
-  const asPositionCloseRecorder = (value: PositionCloseRecorder) =>
-    value as unknown as {
-      closeFullPosition(
-        position: Position | null | undefined,
-        exitPrice: number,
-        exitReason: string,
-        exitType: ExitType,
-      ): Promise<boolean>;
-    };
-
   let service: PositionSyncService;
-  let mockBybit: ReturnType<typeof createMockBybitService>;
-  let mockPositionManager: ReturnType<typeof createMockPositionManager>;
-  let mockExitTypeDetector: ReturnType<typeof createMockExitTypeDetectorService>;
-  let mockTelegram: ReturnType<typeof createMockTelegramService>;
+  let mockBybit: ReturnType<typeof createMockPositionSyncExchange>;
+  let mockPositionManager: ReturnType<typeof createMockPositionSyncManager>;
+  let mockExitTypeDetector: ReturnType<typeof createMockPositionSyncExitTypeDetector>;
+  let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockBybit = createMockBybitService();
-    mockPositionManager = createMockPositionManager();
-    mockExitTypeDetector = createMockExitTypeDetectorService();
-    mockTelegram = createMockTelegramService();
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-
-    service = new PositionSyncService(
-      mockBybit as unknown as IExchange,
-      mockPositionManager as unknown as PositionLifecycleService,
-      mockExitTypeDetector as unknown as ExitTypeDetectorService,
-      mockTelegram as unknown as TelegramService,
-      logger,
-      asPositionCloseRecorder({
-        closeFullPosition: jest.fn().mockResolvedValue(true),
-      }),
-      errorHandler,
-    );
+    errorHandler = new ErrorHandler(new LoggerService(LogLevel.ERROR, './logs', false));
+    const harness = createPositionSyncHarness({ errorHandler });
+    service = harness.service;
+    mockBybit = harness.mockBybit;
+    mockPositionManager = harness.mockPositionManager;
+    mockExitTypeDetector = harness.mockExitTypeDetector;
+    mockTelegram = harness.mockTelegram;
+    logger = harness.logger;
   });
 
   // ============================================================================
@@ -231,9 +161,8 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockBybit.getOrderHistory.mockResolvedValue([]);
       mockBybit.getCurrentPrice.mockResolvedValue(101);
 
-      const mockPositionExiting = {
-        closeFullPosition: jest.fn().mockRejectedValue(closeError),
-      };
+      const mockPositionExiting = createMockPositionCloseRecorder();
+      mockPositionExiting.closeFullPosition.mockRejectedValue(closeError);
       service = new PositionSyncService(
         mockBybit as unknown as IExchange,
         mockPositionManager as unknown as PositionLifecycleService,
@@ -301,9 +230,8 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockBybit.getCurrentPrice.mockRejectedValue(new ExchangeConnectionError('', {exchangeName: 'Bybit'}));
       mockTelegram.sendAlert.mockRejectedValue(new TelegramNetworkError('', {operation: '', reason: ''}));
 
-      const mockPositionExiting = {
-        closeFullPosition: jest.fn().mockRejectedValue(new ExchangeAPIError('', {})),
-      };
+      const mockPositionExiting = createMockPositionCloseRecorder();
+      mockPositionExiting.closeFullPosition.mockRejectedValue(new ExchangeAPIError('', {}));
       service = new PositionSyncService(
         mockBybit as unknown as IExchange,
         mockPositionManager as unknown as PositionLifecycleService,
@@ -504,11 +432,10 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       );
 
       // Close fails
-      const mockPositionExiting = {
-        closeFullPosition: jest.fn().mockRejectedValue(
-          new ExchangeAPIError('Server error', {})
-        ),
-      };
+      const mockPositionExiting = createMockPositionCloseRecorder();
+      mockPositionExiting.closeFullPosition.mockRejectedValue(
+        new ExchangeAPIError('Server error', {})
+      );
       service = new PositionSyncService(
         mockBybit as unknown as IExchange,
         mockPositionManager as unknown as PositionLifecycleService,
