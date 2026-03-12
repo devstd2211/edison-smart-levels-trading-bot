@@ -1,111 +1,98 @@
 import { TradingBot } from '../bot';
-import type { TradingBotServiceBundle } from '../bot';
+import { createTradingBotServiceBundle } from '../services/bot-services-adapter';
 import { BotInitializer } from '../services/bot-initializer';
+import { createTrackedServices, shutdownTrackedServices, type TrackedServiceState } from './helpers/service-lifecycle-test.utils';
 import { WebSocketEventHandlerManager } from '../services/websocket-event-handler-manager';
+import type { BotFactoryOptions } from '../services/bot-factory.service';
 import type { Config } from '../types/legacy';
+import type { IExchange } from '../interfaces';
 
 const createConfig = (): Config => ({
-  exchange: { symbol: 'XRPUSDT' },
-  trading: {},
+  exchange: {
+    name: 'bybit',
+    symbol: 'XRPUSDT',
+    apiKey: 'test-key',
+    apiSecret: 'test-secret',
+    demo: true,
+    testnet: true,
+  },
+  trading: { leverage: 10, marginType: 'CROSS' },
+  riskManagement: {
+    stopLossPercent: 2,
+    takeProfits: [0.5, 1, 1.5],
+    positionSizeUsdt: 100,
+  },
+  logging: { level: 'info', logDir: './logs' },
+  telegram: { enabled: false },
   timeframes: {
-    entry: { enabled: true, interval: '1' },
-    primary: { enabled: true, interval: '5' },
+    entry: { interval: '1', candleLimit: 1000, enabled: true },
+    primary: { interval: '5', candleLimit: 500, enabled: true },
   },
   dashboard: { enabled: false },
+  dataSubscriptions: {
+    candles: { enabled: false, calculateIndicators: false },
+    orderbook: { enabled: true, updateIntervalMs: 100 },
+    ticks: { enabled: true, calculateDelta: true },
+  },
+  system: { timeSyncIntervalMs: 60000, timeSyncMaxFailures: 3 },
+  indicators: { rsiPeriod: 14, slowEmaPeriod: 50 },
+  entryConfig: {
+    divergenceDetector: false,
+  },
+  strategy: {
+    priceAction: false,
+  },
+  strategies: {},
+  analyzers: [],
 } as unknown as Config);
 
-const createServices = (): TradingBotServiceBundle => {
-  const logger = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  };
+const createMockExchange = (): IExchange => ({
+  name: 'MockExchange',
+  initialize: jest.fn().mockResolvedValue(undefined),
+  resyncTime: jest.fn().mockResolvedValue(undefined),
+  cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
+  getOpenPositions: jest.fn().mockResolvedValue([]),
+  getCandles: jest.fn().mockResolvedValue([]),
+  getServerTime: jest.fn().mockResolvedValue(Date.now()),
+  isConnected: jest.fn(() => true),
+} as unknown as IExchange);
 
-  const positionMonitor = {
-    on: jest.fn(),
-    start: jest.fn(),
-    stop: jest.fn(),
-    removeAllListeners: jest.fn(),
-  };
-
-  const publicWebSocket = {
-    on: jest.fn(),
-    off: jest.fn(),
-    start: jest.fn(),
-    stop: jest.fn(),
-    setBtcCandlesStore: jest.fn(),
-    removeAllListeners: jest.fn(),
-  };
-
-  return {
-    logger,
-    coreServices: {
-      logger,
-      eventBus: {
-        on: jest.fn(),
-        emit: jest.fn(),
-      },
-      telegram: {
-        notifyBotStarted: jest.fn().mockResolvedValue(undefined),
-        notifyBotStopped: jest.fn().mockResolvedValue(undefined),
-      },
-      timeService: {
-        syncWithExchange: jest.fn().mockResolvedValue(undefined),
-        getSyncInfo: jest.fn().mockReturnValue({ offset: 0, nextSyncIn: 1000 }),
-      },
-    },
-    marketDataServices: {
-      bybitService: {},
-      candleProvider: {},
-      orderbookManager: {},
-      webSocketManager: {
-        on: jest.fn(),
-        off: jest.fn(),
-        start: jest.fn(),
-        stop: jest.fn(),
-        removeAllListeners: jest.fn(),
-      },
-      publicWebSocket,
-    },
-    executionServices: {
-      positionManager: {
-        getCurrentPosition: jest.fn().mockReturnValue(null),
-        isPositionOpening: jest.fn().mockReturnValue(false),
-        syncWithWebSocket: jest.fn(),
-      },
-      tradingOrchestrator: {},
-      positionMonitor,
-    },
-    positionMonitor,
-    monitoringServices: {
-      metrics: {},
-      dashboard: {
-        start: jest.fn(),
-        stop: jest.fn(),
-        recordEvent: jest.fn(),
-      },
-    },
-    webApiServices: {
-      bybitService: { getBalance: jest.fn() },
-    },
-    publicWebSocket,
-    eventHandlerServices: {},
-    tradingOrchestrator: {
-      onCandleClosed: jest.fn(),
-      onOrderbookUpdate: jest.fn(),
-      checkWhaleSignalRealtime: jest.fn(),
-    },
-  } as unknown as TradingBotServiceBundle;
-};
+const createMockTelegram = (): NonNullable<BotFactoryOptions['telegram']> => ({
+  notifyBotStarted: jest.fn().mockResolvedValue(undefined),
+  notifyBotStopped: jest.fn().mockResolvedValue(undefined),
+} as unknown as NonNullable<BotFactoryOptions['telegram']>);
 
 describe('TradingBot lifecycle delegation', () => {
-  afterEach(() => {
+  let trackedServices: TrackedServiceState[];
+
+  beforeEach(() => {
+    trackedServices = [];
+  });
+
+  afterEach(async () => {
+    await shutdownTrackedServices(trackedServices);
     jest.restoreAllMocks();
   });
 
+  const createBot = () => {
+    const config = createConfig();
+    const exchange = createMockExchange();
+    const telegram = createMockTelegram();
+    const serviceState = createTrackedServices(trackedServices, config, {
+      bybitService: exchange,
+      telegram,
+    });
+
+    return {
+      bot: new TradingBot(createTradingBotServiceBundle(serviceState), config),
+      config,
+      exchange,
+      telegram,
+    };
+  };
+
   test('start() delegates startup to initializer.bootstrap()', async () => {
-    const services = createServices();
+    const { bot, telegram } = createBot();
     const registerAllHandlersSpy = jest
       .spyOn(WebSocketEventHandlerManager.prototype, 'registerAllHandlers')
       .mockImplementation(() => {});
@@ -114,18 +101,22 @@ describe('TradingBot lifecycle delegation', () => {
       .mockImplementation(async (hooks) => {
         await hooks?.beforeMonitoring?.();
       });
+    jest.spyOn(BotInitializer.prototype, 'shutdown').mockResolvedValue(undefined);
 
-    const bot = new TradingBot(services, createConfig());
-    await bot.start();
+    try {
+      await bot.start();
 
-    expect(bootstrapSpy).toHaveBeenCalledTimes(1);
-    expect(registerAllHandlersSpy).toHaveBeenCalledTimes(1);
-    expect(services.coreServices.telegram.notifyBotStarted).toHaveBeenCalledTimes(1);
-    expect(bot.isRunning).toBe(true);
+      expect(bootstrapSpy).toHaveBeenCalledTimes(1);
+      expect(registerAllHandlersSpy).toHaveBeenCalledTimes(1);
+      expect(telegram.notifyBotStarted).toHaveBeenCalledTimes(1);
+      expect(bot.isRunning).toBe(true);
+    } finally {
+      await bot.stop();
+    }
   });
 
   test('stop() delegates shutdown to initializer.shutdown()', async () => {
-    const services = createServices();
+    const { bot } = createBot();
     jest.spyOn(BotInitializer.prototype, 'bootstrap').mockImplementation(async (hooks) => {
       await hooks?.beforeMonitoring?.();
     });
@@ -136,7 +127,6 @@ describe('TradingBot lifecycle delegation', () => {
       .spyOn(WebSocketEventHandlerManager.prototype, 'cleanupAllListeners')
       .mockImplementation(() => {});
 
-    const bot = new TradingBot(services, createConfig());
     await bot.start();
     await bot.stop();
 
@@ -146,7 +136,7 @@ describe('TradingBot lifecycle delegation', () => {
   });
 
   test('start() propagates bootstrap error and keeps bot stopped', async () => {
-    const services = createServices();
+    const { bot, telegram } = createBot();
     jest
       .spyOn(BotInitializer.prototype, 'bootstrap')
       .mockRejectedValue(new Error('bootstrap failed'));
@@ -154,11 +144,10 @@ describe('TradingBot lifecycle delegation', () => {
       .spyOn(BotInitializer.prototype, 'shutdown')
       .mockResolvedValue(undefined);
 
-    const bot = new TradingBot(services, createConfig());
     await expect(bot.start()).rejects.toThrow('bootstrap failed');
 
     expect(bot.isRunning).toBe(false);
     expect(shutdownSpy).not.toHaveBeenCalled();
-    expect(services.coreServices.telegram.notifyBotStarted).not.toHaveBeenCalled();
+    expect(telegram.notifyBotStarted).not.toHaveBeenCalled();
   });
 });

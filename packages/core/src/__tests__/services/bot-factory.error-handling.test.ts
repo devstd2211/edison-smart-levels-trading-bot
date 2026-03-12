@@ -21,8 +21,11 @@ import {
   BotFactoryConfigValidationError,
   BotFactoryInitializationError,
 } from '../../errors/DomainErrors';
-import * as fs from 'fs';
-import * as path from 'path';
+import {
+  shutdownTrackedServices,
+  trackCreatedServices,
+  type TrackedServiceState,
+} from '../helpers/service-lifecycle-test.utils';
 
 /**
  * Get minimal valid config for testing
@@ -113,25 +116,15 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let validConfig: Config;
-  const createdServices: Array<{ dashboard?: { destroy?: () => void } }> = [];
+  let trackedServices: TrackedServiceState[];
 
-  beforeAll(() => {
+  beforeEach(() => {
     validConfig = getValidConfig();
+    trackedServices = [];
   });
 
-  afterEach(() => {
-    // Clean up any created services instances (stop timers, close connections)
-    createdServices.forEach((services) => {
-      try {
-        // Try to clean up any timers or intervals
-        if (services.dashboard && typeof services.dashboard.destroy === 'function') {
-          services.dashboard.destroy();
-        }
-      } catch (err) {
-        // Ignore cleanup errors
-      }
-    });
-    createdServices.length = 0;
+  afterEach(async () => {
+    await shutdownTrackedServices(trackedServices);
   });
 
   describe('Config Validation - THROW Strategy', () => {
@@ -424,6 +417,32 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       expect(mockLogger.error).toHaveBeenCalled();
     });
 
+    test('T31: createSafe returns services for valid config with explicit teardown path', async () => {
+      const config = getValidConfig();
+      const result = BotFactory.createSafe(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        const services = trackCreatedServices(trackedServices, config, result.services);
+        const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
+
+        expect(services.logger).toBeDefined();
+        expect(services.executionServices.positionManager).toBeDefined();
+        expect(initializeSpy).not.toHaveBeenCalled();
+      }
+    });
+
+    test('T32: createForTesting returns valid services for explicit lifecycle control', () => {
+      const config = getValidConfig();
+      const services = trackCreatedServices(
+        trackedServices,
+        config,
+        BotFactory.createForTesting(config),
+      );
+
+      expect(services.coreServices.eventBus).toBeDefined();
+      expect(services.marketDataServices.webSocketManager).toBeDefined();
+    });
   });
 
   describe('Error Context Tracking', () => {

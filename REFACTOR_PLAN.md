@@ -2897,3 +2897,18 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 1/1 suite PASS, 20/20 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 226 (2026-03-12):
+  - `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts`:
+    - added tracked `createServices()` helpers and explicit `BotInitializer.shutdown()` teardown for lifecycle-oriented test suites.
+  - `packages/core/src/__tests__/services/bot-factory.service.test.ts`:
+    - switched factory tests to tracked real service-state creation with explicit teardown after each test instead of untracked bundle construction.
+  - `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`:
+    - replaced dead dashboard-only cleanup with tracked explicit teardown and added valid-config success-path coverage for `createSafe()` / `createForTesting()`.
+  - `packages/core/src/__tests__/trading-bot.lifecycle.test.ts`:
+    - replaced the hand-rolled service bundle with real `createServices()` state plus explicit `bot.start()` / `bot.stop()` lifecycle assertions around mocked initializer hooks.
+  - behavior-preserving production review: reviewed `bot-factory.service.ts`, `bot.ts`, and `bot-initializer.ts` for adjacent refactor need; no safe production change was required in this slice beyond test harness/test coverage updates.
+- [x] Verification (targeted suites + build, 2026-03-12, post testability batch 226):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
+  - Result: 3/3 suites PASS, 57/57 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

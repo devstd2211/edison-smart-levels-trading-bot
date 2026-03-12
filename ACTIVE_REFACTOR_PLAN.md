@@ -10,12 +10,12 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - [ ] Update tests to use `createServices()` + explicit `start/stop`.
 
 ## Current Execution Focus
-- [ ] Continue `Core any cleanup (phase 3: src)` in `services/*` + related tests with compatibility-first typing.
-- [ ] Continue `Core any cleanup (phase 3: src)` outside `services` in isolated batches where remaining boundaries are still mixed.
+- [ ] Continue `Update tests to use createServices() + explicit start/stop` in lifecycle-adjacent suites.
+- [ ] Continue `Update tests to build only the required groups (no global container)` in bot/lifecycle-focused tests.
 
 ## Immediate Next Candidates
-- [ ] Confirm whether only adapter-scale service leftovers remain after the compact-service cleanup sweep.
-- [ ] If compact-service leftovers are exhausted, close phase-3 service cleanup for `services/*` and move to the remaining testability items.
+- [ ] Extend explicit lifecycle teardown coverage beyond `bot-factory` / `trading-bot` suites into the next lifecycle-adjacent test slices.
+- [ ] Continue replacing broad service-state construction in tests with the minimal required grouped services or tracked `createServices()` state.
 
 ## Working Rules
 1. Pick the next unchecked item from this file.
@@ -47,9 +47,13 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - `strategy-loader.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining load/directory-read error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
 - `indicator-precalculation.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining calculation-classification error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
 - Compact-service cleanup status on 2026-03-12: the remaining obvious inline error-message leftovers in `services/*` are now concentrated in exchange-adapter/partial files (`services/binance/*`, `services/bybit/*`) plus minor builder/utils boundaries; do not expand that stream unless a testability task directly requires it.
+- Testability batch status on 2026-03-12: started the `createServices()` + explicit lifecycle stream with tracked teardown helpers and real service-state coverage in `bot-factory` / `trading-bot` suites; continue this stream before reopening adapter cleanup.
 - Verification on 2026-03-12 for the compact-service cleanup slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts` -> PASS (3/3 suites, 77/77 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 - Verification on 2026-03-12 for the indicator pre-calculation cleanup slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the lifecycle testability slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (3/3 suites, 57/57 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

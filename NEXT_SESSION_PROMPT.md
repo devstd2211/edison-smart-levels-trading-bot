@@ -28,14 +28,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-12)
-- Completed compatibility-first typing batch 225 (behavior-preserving compact-service cleanup follow-up):
-  - `services/indicator-precalculation.service.ts`:
-    - replaced the remaining calculation-classification error-message extraction with shared `getErrorMessage()`.
+- Completed testability batch 226 (behavior-preserving lifecycle-test cleanup):
+  - added tracked `createServices()` teardown helper for lifecycle-oriented test suites.
+  - updated `services/bot-factory.service.test.ts` and `services/bot-factory.error-handling.test.ts` to use tracked real service-state creation with explicit shutdown cleanup.
+  - updated `trading-bot.lifecycle.test.ts` to use real `createServices()` state and explicit `bot.start()` / `bot.stop()` assertions.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` -> PASS (3/3 suites, 57/57 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
-- Treat the compact-service cleanup stream as effectively exhausted outside exchange-adapter/partial files and minor builder/utils boundaries.
-- Switch to the remaining testability tasks from `ACTIVE_REFACTOR_PLAN.md` unless an adjacent change explicitly requires adapter cleanup.
+- Continue the testability stream before reopening adapter cleanup.
+- Extend explicit lifecycle teardown and minimal grouped-service construction into the next lifecycle-adjacent suites beyond `bot-factory` / `trading-bot`.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.
