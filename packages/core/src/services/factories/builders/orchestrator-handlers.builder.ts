@@ -4,6 +4,7 @@ import { TradingOrchestrator } from '../../trading-orchestrator.service';
 import { StrategyRegistryService } from '../../multi-strategy/strategy-registry.service';
 import { PositionEventHandler, WebSocketEventHandler } from '../../handlers';
 import { RiskManager } from '../../risk-manager.service';
+import { getErrorMessage } from '../../../utils/error.utils';
 export const initializeOrchestratorAndHandlers = (
   state: BotServicesState,
   riskManager: RiskManager,
@@ -47,7 +48,7 @@ export const initializeOrchestratorAndHandlers = (
     analyzerDefaults: config.analyzerDefaults,
   };
 
-  state.logger.info('🔬 OrchestratorConfig prepared', {
+  state.logger.info('[Orchestrator] Config prepared', {
     hasBtcConfirmation: !!orchestratorConfig.btcConfirmation,
     btcEnabled: orchestratorConfig.btcConfirmation?.enabled,
   });
@@ -65,22 +66,22 @@ export const initializeOrchestratorAndHandlers = (
   );
 
   state.tradingOrchestrator.setIndicatorPreCalculationService(state.indicatorPreCalc);
-  state.logger.info('🔬 Pre-calculation service linked to TradingOrchestrator');
+  state.logger.info('[Orchestrator] Pre-calculation service linked to TradingOrchestrator');
 
   if (config.btcConfirmation?.enabled) {
     state.tradingOrchestrator.setBtcCandlesStore(state);
-    state.logger.info('🔬 BTC candles store linked to TradingOrchestrator');
+    state.logger.info('[Orchestrator] BTC candles store linked to TradingOrchestrator');
   }
 
   const multiStrategyMode = config.multiStrategy?.enabled || false;
   if (multiStrategyMode) {
     try {
       const strategyRegistry = new StrategyRegistryService();
-      state.logger.warn('⚠️ StrategyOrchestratorService not initialized: missing factory/state manager');
+      state.logger.warn('[StrategyOrchestrator] Not initialized: missing factory/state manager');
       state.strategyOrchestrator = undefined;
     } catch (error) {
-      state.logger.warn('⚠️  Failed to initialize StrategyOrchestratorService', {
-        error: error instanceof Error ? error.message : String(error),
+      state.logger.warn('[StrategyOrchestrator] Failed to initialize', {
+        error: getErrorMessage(error),
         fallbackMode: 'single-strategy',
       });
     }
@@ -106,6 +107,6 @@ export const initializeOrchestratorAndHandlers = (
 
   if (config.btcConfirmation?.enabled) {
     state.publicWebSocket.setBtcCandlesStore(state);
-    state.logger.info('🔬 BTC candles store linked to PublicWebSocket');
+    state.logger.info('[PublicWebSocket] BTC candles store linked');
   }
 };

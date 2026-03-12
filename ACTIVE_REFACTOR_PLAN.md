@@ -14,8 +14,8 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - [ ] Continue `Core any cleanup (phase 3: src)` outside `services` in isolated batches where remaining boundaries are still mixed.
 
 ## Immediate Next Candidates
-- [ ] Scan remaining `packages/core/src/services/*` for the final isolated inline error-normalization leftovers.
-- [ ] If no meaningful leftovers remain, close phase-3 service cleanup and move to the remaining testability items.
+- [ ] Confirm whether only adapter-scale service leftovers remain after the compact-service cleanup sweep.
+- [ ] If compact-service leftovers are exhausted, close phase-3 service cleanup for `services/*` and move to the remaining testability items.
 
 ## Working Rules
 1. Pick the next unchecked item from this file.
@@ -42,3 +42,9 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - `multi-strategy/strategy-state-manager.service.ts` was cleared from the active candidate list on 2026-03-11 after replacing its remaining strategy-switch failure message extraction with shared `getErrorMessage()` and re-running the multi-strategy suite plus full `npm run build`.
 - `ml-signal-validator.service.ts` was cleared from the active candidate list on 2026-03-11 after replacing its remaining inline error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
 - `lifecycle-manager.service.ts`, `graceful-shutdown.service.ts`, and `event-bus.ts` were cleared from the active candidate list on 2026-03-11 after replacing their remaining inline error-message extraction with shared helpers and re-running targeted tests/build.
+- `pattern-recognition.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining fallback logging error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
+- `orderbook-manager.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining WallTracker warning error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
+- `strategy-loader.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining load/directory-read error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
+- Verification on 2026-03-12 for the compact-service cleanup slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts` -> PASS (3/3 suites, 77/77 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

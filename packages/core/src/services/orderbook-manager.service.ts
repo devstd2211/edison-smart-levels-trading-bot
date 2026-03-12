@@ -19,6 +19,7 @@ import { MAX_ORDERBOOK_LEVELS } from '../constants/technical.constants';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { WallTrackerService } from './wall-tracker.service';
+import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -302,7 +303,7 @@ export class OrderbookManagerService {
                   this.logger.warn(`WallTracker removeWall failed (continuing)`, {
                     price,
                     side,
-                    error: error instanceof Error ? error.message : String(error),
+                    error: getErrorMessage(error),
                   });
                 },
               });
@@ -329,7 +330,7 @@ export class OrderbookManagerService {
                     price,
                     size,
                     side,
-                    error: error instanceof Error ? error.message : String(error),
+                    error: getErrorMessage(error),
                   });
                 },
               });

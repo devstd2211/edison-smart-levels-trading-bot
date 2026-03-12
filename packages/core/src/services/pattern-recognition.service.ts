@@ -32,6 +32,7 @@ import {
   DEFAULT_PATTERN_RECOGNITION,
   PATTERN_RECOGNITION_TECHNICAL,
 } from '../constants/phase-10-constants';
+import { getErrorMessage } from '../utils/error.utils';
 
 /**
  * PatternRecognitionService
@@ -131,7 +132,7 @@ export class PatternRecognitionService {
       return this.performPatternRecognition(candles);
     } catch (error) {
       this.safeLog('error', 'Pattern recognition failed without ErrorHandler', {
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       return [];
     }

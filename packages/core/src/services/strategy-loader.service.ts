@@ -23,6 +23,7 @@ import {
 } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import { StrategyLoadError, StrategyParseError } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 const AVAILABLE_ANALYZERS: Set<AvailableAnalyzer> = new Set([
   // Technical Indicators
@@ -129,7 +130,7 @@ export class StrategyLoaderService {
     }
 
     // Handle file system errors
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
 
     if (errorMessage.includes('ENOENT') || errorMessage.includes('not found')) {
       return new StrategyLoadError(
@@ -511,7 +512,7 @@ export class StrategyLoaderService {
       // Directory read failure: GRACEFUL_DEGRADE and return empty map
       if (this.errorHandler) {
         const loadError = new StrategyLoadError(
-          `Could not read strategies directory: ${error instanceof Error ? error.message : String(error)}`,
+          `Could not read strategies directory: ${getErrorMessage(error)}`,
           {
             strategyName: 'directory',
             reason: 'unknown',

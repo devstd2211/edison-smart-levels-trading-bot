@@ -27,20 +27,20 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-11)
-- Completed compatibility-first typing batch 223 (behavior-preserving boundary-handler cleanup):
-  - `services/handlers/websocket.handler.ts`:
-    - replaced the remaining fallback/recovery/logging error-message extraction with shared `getErrorMessage()`.
-  - `services/handlers/position.handler.ts`:
-    - replaced the remaining monitoring/fallback error-message extraction with shared `getErrorMessage()`.
-  - `services/data-collector/database-writer.ts`:
-    - replaced the remaining batch/final-write error-message extraction with shared `getErrorMessage()`.
+## Last Completed (2026-03-12)
+- Completed compatibility-first typing batch 224 (behavior-preserving compact-service cleanup):
+  - `services/pattern-recognition.service.ts`:
+    - replaced the remaining fallback logging error-message extraction with shared `getErrorMessage()`.
+  - `services/orderbook-manager.service.ts`:
+    - replaced the remaining WallTracker warning error-message extraction with shared `getErrorMessage()`.
+  - `services/strategy-loader.service.ts`:
+    - replaced the remaining load/directory-read error-message extraction with shared `getErrorMessage()`.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts` -> PASS (3/3 suites, 63/63 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts` -> PASS (3/3 suites, 77/77 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue `Core any cleanup (phase 3: src)` in isolated compatibility-first batches.
-- Prefer a final scan for any remaining small non-adapter leftovers (`pattern-recognition.service.ts`, `orderbook-manager.service.ts`, `strategy-loader.service.ts`, minor builder/utils boundaries), then decide whether to close the compact-service stream before touching the larger exchange adapters.
-- If no meaningful service leftovers remain, close the service cleanup stream and switch to the remaining testability tasks from `ACTIVE_REFACTOR_PLAN.md`.
+- Confirm whether any meaningful non-adapter service leftovers remain beyond minor builder/utils boundaries; if not, close the compact-service stream.
+- If the compact-service stream is closed, switch to the remaining testability tasks from `ACTIVE_REFACTOR_PLAN.md` rather than expanding into large exchange-adapter churn.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.
