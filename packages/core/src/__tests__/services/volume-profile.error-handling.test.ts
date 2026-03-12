@@ -11,53 +11,16 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolumeProfileService } from '../../services/volume-profile.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { ValidationError, ConfigurationError } from '../../errors/DomainErrors';
-import { LoggerService, Candle } from '../../types/legacy';
+import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
+import {
+  createVolumeProfileCandles,
+  createVolumeProfileHarness,
+  createVolumeProfileMockLogger,
+} from '../helpers/volume-profile-test.utils';
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
-
-/**
- * Create mock logger for testing
- */
-function createMockLogger(methodToFail?: string): LoggerService {
-  return {
-    minLevel: 'debug',
-    logDir: '/tmp',
-    logToFile: false,
-    logs: [],
-    info: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'info') throw new Error('Logger.info failed');
-    }),
-    warn: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'warn') throw new Error('Logger.warn failed');
-    }),
-    debug: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'debug') throw new Error('Logger.debug failed');
-    }),
-    error: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'error') throw new Error('Logger.error failed');
-    }),
-  } as unknown as LoggerService;
-}
-
-/**
- * Create valid candles for testing
- */
-function createValidCandles(count: number = 10): Candle[] {
-  const candles: Candle[] = [];
-  for (let i = 0; i < count; i++) {
-    candles.push({
-      timestamp: 1000 + i * 60,
-      open: 100 + i * 0.1,
-      high: 100.5 + i * 0.1,
-      low: 99.5 + i * 0.1,
-      close: 100 + i * 0.1,
-      volume: 1000 + i * 10,
-    });
-  }
-  return candles;
-}
 
 // ============================================================================
 // TEST SUITES
@@ -70,9 +33,20 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
+    mockLogger = createVolumeProfileMockLogger();
     errorHandler = new ErrorHandler(mockLogger);
   });
+
+  const createService = (
+    configOverrides?: Partial<VolumeProfileConfig>,
+    logger: LoggerService = mockLogger,
+    withErrorHandler: boolean = true,
+  ): VolumeProfileService =>
+    createVolumeProfileHarness({
+      configOverrides,
+      logger,
+      withErrorHandler,
+    }).service;
 
   // =========================================================================
   // THROW VALIDATION TESTS
@@ -80,7 +54,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('THROW: Input Validation', () => {
     it('should throw on null candles array', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       expect(() => {
         service.calculate(null as unknown as VolumeCandlesInput);
@@ -88,7 +62,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on non-array candles input', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       expect(() => {
         service.calculate({ high: 100, low: 99 } as unknown as VolumeCandlesInput);
@@ -96,7 +70,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on empty candles array', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       expect(() => {
         service.calculate([]);
@@ -104,7 +78,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on candles with NaN values', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const badCandles: Candle[] = [
         {
@@ -123,7 +97,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on candles with Infinity values', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const badCandles: Candle[] = [
         {
@@ -142,7 +116,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on negative volume in candles', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const badCandles: Candle[] = [
         {
@@ -239,8 +213,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     it('should calculate volume profile with valid candles', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(10);
+      service = createService();
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
 
@@ -253,14 +227,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should return null when service is disabled', () => {
-      service = new VolumeProfileService(
-        mockLogger,
-        {
-          enabled: false,
-        },
-        errorHandler
-      );
-      const candles = createValidCandles(10);
+      service = createService({ enabled: false });
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
 
@@ -268,7 +236,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should gracefully handle updateConfig with invalid priceTickSize', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const initialConfig = service.getConfig();
 
@@ -282,7 +250,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should gracefully handle updateConfig with negative lookbackCandles', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const initialConfig = service.getConfig();
 
@@ -296,7 +264,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should gracefully handle updateConfig with invalid valueAreaPercent', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const initialConfig = service.getConfig();
 
@@ -310,8 +278,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate POC correctly', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(10);
+      service = createService();
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
 
@@ -320,8 +288,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate VAH and VAL correctly', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(10);
+      service = createService();
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
 
@@ -331,14 +299,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should respect lookback parameter', () => {
-      service = new VolumeProfileService(
-        mockLogger,
-        {
-          lookbackCandles: 5,
-        },
-        errorHandler
-      );
-      const candles = createValidCandles(20);
+      service = createService({ lookbackCandles: 5 });
+      const candles = createVolumeProfileCandles(20);
 
       const result = service.calculate(candles);
 
@@ -347,8 +309,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle single candle', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(1);
+      service = createService();
+      const candles = createVolumeProfileCandles(1);
 
       const result = service.calculate(candles);
 
@@ -363,9 +325,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('SKIP: Logging Failures', () => {
     it('should skip logger errors during calculate', () => {
-      const failingLogger = createMockLogger('debug');
-      service = new VolumeProfileService(failingLogger, undefined, errorHandler);
-      const candles = createValidCandles(10);
+      const failingLogger = createVolumeProfileMockLogger('debug');
+      service = createService(undefined, failingLogger);
+      const candles = createVolumeProfileCandles(10);
 
       // Should not throw despite logger errors
       const result = service.calculate(candles);
@@ -373,18 +335,18 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should skip logger errors during constructor init', () => {
-      const failingLogger = createMockLogger('info');
+      const failingLogger = createVolumeProfileMockLogger('info');
 
       expect(() => {
-        service = new VolumeProfileService(failingLogger, undefined, errorHandler);
+        service = createService(undefined, failingLogger);
       }).not.toThrow();
 
       expect(service).toBeDefined();
     });
 
     it('should skip logger errors during config update', () => {
-      const failingLogger = createMockLogger('info');
-      service = new VolumeProfileService(failingLogger, undefined, errorHandler);
+      const failingLogger = createVolumeProfileMockLogger('info');
+      service = createService(undefined, failingLogger);
 
       // Should not throw despite logger errors
       expect(() => {
@@ -395,9 +357,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should continue operation despite logger warn failure', () => {
-      const failingLogger = createMockLogger('warn');
-      service = new VolumeProfileService(failingLogger, undefined, errorHandler);
-      const candles = createValidCandles(10);
+      const failingLogger = createVolumeProfileMockLogger('warn');
+      service = createService(undefined, failingLogger);
+      const candles = createVolumeProfileCandles(10);
 
       // Should handle gracefully
       const result = service.calculate(candles);
@@ -411,8 +373,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('Integration: E2E Scenarios', () => {
     it('should calculate complete volume profile with E2E workflow', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(20);
+      service = createService();
+      const candles = createVolumeProfileCandles(20);
 
       const result = service.calculate(candles);
 
@@ -425,8 +387,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate accurate POC from volume distribution', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(10);
+      service = createService();
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
 
@@ -436,8 +398,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should maintain VAL < VAH relationship', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(15);
+      service = createService();
+      const candles = createVolumeProfileCandles(15);
 
       const result = service.calculate(candles);
 
@@ -446,7 +408,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should update config successfully', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const initialConfig = service.getConfig();
       expect(initialConfig.enabled).toBe(true);
@@ -475,9 +437,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle multiple calculations with same config', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles1 = createValidCandles(10);
-      const candles2 = createValidCandles(15);
+      service = createService();
+      const candles1 = createVolumeProfileCandles(10);
+      const candles2 = createVolumeProfileCandles(15);
 
       const result1 = service.calculate(candles1);
       const result2 = service.calculate(candles2);
@@ -489,8 +451,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle config changes between calculations', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
-      const candles = createValidCandles(20);
+      service = createService();
+      const candles = createVolumeProfileCandles(20);
 
       const result1 = service.calculate(candles);
 
@@ -511,8 +473,8 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (backward compatible)', () => {
-      service = new VolumeProfileService(mockLogger);
-      const candles = createValidCandles(10);
+      service = createService(undefined, mockLogger, false);
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
 
@@ -521,7 +483,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw validation errors without ErrorHandler', () => {
-      service = new VolumeProfileService(mockLogger);
+      service = createService(undefined, mockLogger, false);
 
       expect(() => {
         service.calculate([]);
@@ -529,7 +491,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on invalid candles without ErrorHandler', () => {
-      service = new VolumeProfileService(mockLogger);
+      service = createService(undefined, mockLogger, false);
 
       const badCandles: Candle[] = [
         {
@@ -582,7 +544,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('Edge Cases', () => {
     it('should handle candles with very small price range', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const candles = [
         {
@@ -600,7 +562,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle candles with very large volume', () => {
-      service = new VolumeProfileService(mockLogger, undefined, errorHandler);
+      service = createService();
 
       const candles = [
         {
@@ -625,7 +587,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
         },
         errorHandler
       );
-      const candles = createValidCandles(10);
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
       expect(result).toBeDefined();
@@ -639,7 +601,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
         },
         errorHandler
       );
-      const candles = createValidCandles(10);
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
       expect(result).toBeDefined();
@@ -653,7 +615,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
         },
         errorHandler
       );
-      const candles = createValidCandles(10);
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
       expect(result).toBeDefined();
@@ -668,7 +630,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
         },
         errorHandler
       );
-      const candles = createValidCandles(10);
+      const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
       expect(result).toBeDefined();

@@ -4,7 +4,12 @@
  */
 
 import { VolumeProfileService } from '../../services/volume-profile.service';
-import { VolumeProfileConfig, Candle, LoggerService, LogLevel } from '../../types/legacy';
+import { VolumeProfileConfig, Candle, LoggerService } from '../../types/legacy';
+import {
+  createVolumeProfileCandle,
+  createVolumeProfileConfig,
+  createVolumeProfileHarness,
+} from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileService;
@@ -12,23 +17,7 @@ describe('VolumeProfileService', () => {
   let config: VolumeProfileConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      enabled: true,
-      lookbackCandles: 100,
-      valueAreaPercent: 70, // 70% of volume for value area
-      priceTickSize: 0.01, // Price granularity
-    };
-    service = new VolumeProfileService(logger, config);
-  });
-
-  const createCandle = (low: number, high: number, close: number, volume: number): Candle => ({
-    timestamp: Date.now(),
-    open: (low + high) / 2,
-    high,
-    low,
-    close,
-    volume,
+    ({ service, logger, config } = createVolumeProfileHarness({ withErrorHandler: false }));
   });
 
   describe('initialization', () => {
@@ -37,7 +26,7 @@ describe('VolumeProfileService', () => {
     });
 
     it('should initialize with disabled config', () => {
-      const disabledConfig = { ...config, enabled: false };
+      const disabledConfig = createVolumeProfileConfig({ ...config, enabled: false });
       const disabledService = new VolumeProfileService(logger, disabledConfig);
       expect(disabledService).toBeDefined();
     });
@@ -46,9 +35,9 @@ describe('VolumeProfileService', () => {
   describe('calculate() - basic functionality', () => {
     it('should calculate volume profile from candles', () => {
       const candles = [
-        createCandle(100, 105, 102, 1000), // Distribute 1000 vol across 100-105
-        createCandle(102, 107, 105, 500),  // Distribute 500 vol across 102-107
-        createCandle(98, 103, 101, 800),   // Distribute 800 vol across 98-103
+        createVolumeProfileCandle(100, 105, 102, 1000), // Distribute 1000 vol across 100-105
+        createVolumeProfileCandle(102, 107, 105, 500),  // Distribute 500 vol across 102-107
+        createVolumeProfileCandle(98, 103, 101, 800),   // Distribute 800 vol across 98-103
       ];
 
       const result = service.calculate(candles);
@@ -64,8 +53,8 @@ describe('VolumeProfileService', () => {
     it('should return POC as price with highest volume', () => {
       // Create candles where price 100-101 gets most volume
       const candles = [
-        createCandle(100, 101, 100.5, 5000), // Heavy volume at 100-101
-        createCandle(105, 106, 105.5, 1000), // Light volume at 105-106
+        createVolumeProfileCandle(100, 101, 100.5, 5000), // Heavy volume at 100-101
+        createVolumeProfileCandle(105, 106, 105.5, 1000), // Light volume at 105-106
       ];
 
       const result = service.calculate(candles);
@@ -78,8 +67,8 @@ describe('VolumeProfileService', () => {
 
     it('should calculate VAH >= VAL', () => {
       const candles = [
-        createCandle(100, 110, 105, 1000),
-        createCandle(105, 115, 110, 1000),
+        createVolumeProfileCandle(100, 110, 105, 1000),
+        createVolumeProfileCandle(105, 115, 110, 1000),
       ];
 
       const result = service.calculate(candles);
@@ -90,8 +79,8 @@ describe('VolumeProfileService', () => {
 
     it('should have POC within VAH-VAL range', () => {
       const candles = [
-        createCandle(100, 110, 105, 2000),
-        createCandle(108, 118, 113, 1000),
+        createVolumeProfileCandle(100, 110, 105, 2000),
+        createVolumeProfileCandle(108, 118, 113, 1000),
       ];
 
       const result = service.calculate(candles);
@@ -106,7 +95,7 @@ describe('VolumeProfileService', () => {
   describe('calculate() - value area (70%)', () => {
     it('should calculate value area containing ~70% of volume', () => {
       const candles = [
-        createCandle(100, 110, 105, 10000), // Total: 10000
+        createVolumeProfileCandle(100, 110, 105, 10000), // Total: 10000
       ];
 
       const result = service.calculate(candles);
@@ -128,10 +117,10 @@ describe('VolumeProfileService', () => {
   describe('calculate() - lookback parameter', () => {
     it('should use only last N candles', () => {
       const candles = [
-        createCandle(100, 105, 102, 1000), // Old candle 1
-        createCandle(105, 110, 107, 1000), // Old candle 2
-        createCandle(110, 115, 112, 1000), // Old candle 3
-        createCandle(115, 120, 117, 5000), // Recent candle (should dominate)
+        createVolumeProfileCandle(100, 105, 102, 1000), // Old candle 1
+        createVolumeProfileCandle(105, 110, 107, 1000), // Old candle 2
+        createVolumeProfileCandle(110, 115, 112, 1000), // Old candle 3
+        createVolumeProfileCandle(115, 120, 117, 5000), // Recent candle (should dominate)
       ];
 
       const config2Candles = { ...config, lookbackCandles: 2 };
@@ -145,8 +134,8 @@ describe('VolumeProfileService', () => {
 
     it('should handle lookback > candles.length', () => {
       const candles = [
-        createCandle(100, 105, 102, 1000),
-        createCandle(105, 110, 107, 1000),
+        createVolumeProfileCandle(100, 105, 102, 1000),
+        createVolumeProfileCandle(105, 110, 107, 1000),
       ];
 
       const config100Candles = { ...config, lookbackCandles: 100 };
@@ -168,7 +157,7 @@ describe('VolumeProfileService', () => {
     });
 
     it('should handle single candle', () => {
-      const candles = [createCandle(100, 105, 102, 1000)];
+      const candles = [createVolumeProfileCandle(100, 105, 102, 1000)];
 
       const result = service.calculate(candles);
 
@@ -180,8 +169,8 @@ describe('VolumeProfileService', () => {
 
     it('should handle candle with zero volume', () => {
       const candles = [
-        createCandle(100, 105, 102, 0), // Zero volume
-        createCandle(105, 110, 107, 1000),
+        createVolumeProfileCandle(100, 105, 102, 0), // Zero volume
+        createVolumeProfileCandle(105, 110, 107, 1000),
       ];
 
       const result = service.calculate(candles);
@@ -191,7 +180,7 @@ describe('VolumeProfileService', () => {
     });
 
     it('should handle candle with high = low (single price)', () => {
-      const candles = [createCandle(100, 100, 100, 1000)]; // Single price level
+      const candles = [createVolumeProfileCandle(100, 100, 100, 1000)]; // Single price level
 
       const result = service.calculate(candles);
 
@@ -204,7 +193,7 @@ describe('VolumeProfileService', () => {
 
   describe('calculate() - price tick size', () => {
     it('should respect tick size for price levels', () => {
-      const candles = [createCandle(100, 100.1, 100.05, 1000)]; // 0.1 range
+      const candles = [createVolumeProfileCandle(100, 100.1, 100.05, 1000)]; // 0.1 range
 
       const config01Tick = { ...config, priceTickSize: 0.1 };
       const service01Tick = new VolumeProfileService(logger, config01Tick);
@@ -216,7 +205,7 @@ describe('VolumeProfileService', () => {
     });
 
     it('should create more nodes with smaller tick size', () => {
-      const candles = [createCandle(100, 101, 100.5, 1000)]; // 1.0 range
+      const candles = [createVolumeProfileCandle(100, 101, 100.5, 1000)]; // 1.0 range
 
       const config01Tick = { ...config, priceTickSize: 0.1 };
       const service01Tick = new VolumeProfileService(logger, config01Tick);
@@ -237,7 +226,7 @@ describe('VolumeProfileService', () => {
   describe('calculate() - nodes sorting', () => {
     it('should sort nodes by volume (descending)', () => {
       const candles = [
-        createCandle(100, 110, 105, 10000),
+        createVolumeProfileCandle(100, 110, 105, 10000),
       ];
 
       const result = service.calculate(candles);
@@ -253,8 +242,8 @@ describe('VolumeProfileService', () => {
 
     it('should have POC as first node (highest volume)', () => {
       const candles = [
-        createCandle(100, 110, 105, 5000),
-        createCandle(105, 115, 110, 3000),
+        createVolumeProfileCandle(100, 110, 105, 5000),
+        createVolumeProfileCandle(105, 115, 110, 3000),
       ];
 
       const result = service.calculate(candles);
@@ -269,10 +258,10 @@ describe('VolumeProfileService', () => {
 
   describe('calculate() - disabled mode', () => {
     it('should return null when disabled', () => {
-      const disabledConfig = { ...config, enabled: false };
+      const disabledConfig = createVolumeProfileConfig({ ...config, enabled: false });
       const disabledService = new VolumeProfileService(logger, disabledConfig);
 
-      const candles = [createCandle(100, 110, 105, 1000)];
+      const candles = [createVolumeProfileCandle(100, 110, 105, 1000)];
       const result = disabledService.calculate(candles);
 
       expect(result).toBeNull();

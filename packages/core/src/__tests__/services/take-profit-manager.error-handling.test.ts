@@ -15,14 +15,17 @@ import { TakeProfitManagerService } from '../../services/take-profit-manager.ser
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
 import { TakeProfitCalculationError } from '../../errors/DomainErrors';
+import {
+  createTakeProfitManagerConfig,
+  createTakeProfitManagerHarness,
+} from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
+    ({ logger, errorHandler } = createTakeProfitManagerHarness());
   });
 
   // ============================================================================

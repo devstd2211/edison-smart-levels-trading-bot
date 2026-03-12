@@ -22,48 +22,15 @@ import {
   LadderTpLevel,
   Position,
 } from '../../types/legacy';
+import {
+  createLadderTpConfig,
+  createLadderTpHarness,
+  createLadderTpPosition,
+} from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
 // MOCKS
 // ============================================================================
-
-const createMockBybitService = (): jest.Mocked<IExchange> => {
-  return {
-    closePosition: jest.fn(),
-    updateStopLoss: jest.fn(),
-  } as unknown as jest.Mocked<IExchange>;
-};
-
-const createMockPosition = (
-  side: PositionSide,
-  entryPrice: number,
-  quantity: number,
-  openedAt: number = Date.now(),
-): Position => {
-  const slPrice = side === PositionSide.LONG ? entryPrice * 0.998 : entryPrice * 1.002;
-  return {
-    id: 'APEXUSDT_' + side,
-    symbol: 'APEXUSDT',
-    side,
-    entryPrice,
-    quantity,
-    stopLoss: {
-      price: slPrice,
-      initialPrice: slPrice,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-    takeProfits: [],
-    leverage: 10,
-    marginUsed: 100,
-    openedAt,
-    unrealizedPnL: 0,
-    orderId: 'ORDER_123',
-    reason: 'Test',
-    status: 'OPEN',
-  };
-};
 
 // ============================================================================
 // TEST SUITE
@@ -76,24 +43,7 @@ describe('LadderTpManagerService', () => {
   let config: LadderTpManagerConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    bybitService = createMockBybitService();
-
-    // Default config: 3 levels (0.08%, 0.15%, 0.25%) with 33%, 33%, 34% closes
-    config = {
-      levels: [
-        { pricePercent: 0.08, closePercent: 33 },
-        { pricePercent: 0.15, closePercent: 33 },
-        { pricePercent: 0.25, closePercent: 34 },
-      ],
-      moveToBreakevenAfterTP1: true,
-      trailingAfterTP2: true,
-      minPartialClosePercent: 10,
-      maxPartialClosePercent: 90,
-      trailingDistancePercent: 0.05,
-    };
-
-    service = new LadderTpManagerService(config, bybitService, logger);
+    ({ service, logger, bybitService, config } = createLadderTpHarness());
   });
 
   // ==========================================================================
@@ -308,7 +258,7 @@ describe('LadderTpManagerService', () => {
         hit: true,
       };
 
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
 
       bybitService.closePosition.mockResolvedValue(undefined);
 
@@ -332,7 +282,7 @@ describe('LadderTpManagerService', () => {
         hit: true,
       };
 
-      const position = createMockPosition(PositionSide.SHORT, 1.0, 50);
+      const position = createLadderTpPosition(PositionSide.SHORT, 1.0, 50);
 
       bybitService.closePosition.mockResolvedValue(undefined);
 
@@ -356,7 +306,7 @@ describe('LadderTpManagerService', () => {
         hit: true,
       };
 
-      const position = createMockPosition(PositionSide.LONG, 1.0, 0.01); // Tiny position
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 0.01); // Tiny position
 
       const success = await service.executePartialClose(level, position);
 
@@ -373,7 +323,7 @@ describe('LadderTpManagerService', () => {
         hit: true,
       };
 
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
 
       bybitService.closePosition.mockRejectedValue(new Error('Bybit API error'));
 
@@ -389,7 +339,7 @@ describe('LadderTpManagerService', () => {
 
   describe('moveToBreakeven', () => {
     it('should move SL to breakeven after TP1 (LONG)', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -405,7 +355,7 @@ describe('LadderTpManagerService', () => {
     });
 
     it('should move SL to breakeven after TP1 (SHORT)', async () => {
-      const position = createMockPosition(PositionSide.SHORT, 2.0, 50);
+      const position = createLadderTpPosition(PositionSide.SHORT, 2.0, 50);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -428,7 +378,7 @@ describe('LadderTpManagerService', () => {
 
       const disabledService = new LadderTpManagerService(disabledConfig, bybitService, logger);
 
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
 
       const success = await disabledService.moveToBreakeven(position);
 
@@ -437,7 +387,7 @@ describe('LadderTpManagerService', () => {
     });
 
     it('should handle update SL error gracefully', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
 
       bybitService.updateStopLoss.mockRejectedValue(new Error('Bybit API error'));
 
@@ -453,7 +403,7 @@ describe('LadderTpManagerService', () => {
 
   describe('moveTrailing', () => {
     it('should move trailing SL after TP2 (LONG)', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
       const currentPrice = 1.002; // Price moved up after TP2
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
@@ -473,7 +423,7 @@ describe('LadderTpManagerService', () => {
     });
 
     it('should move trailing SL after TP2 (SHORT)', async () => {
-      const position = createMockPosition(PositionSide.SHORT, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.SHORT, 1.0, 100);
       const currentPrice = 0.998; // Price moved down after TP2
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
@@ -493,7 +443,7 @@ describe('LadderTpManagerService', () => {
     });
 
     it('should NOT move trailing if new SL worse than current (LONG)', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
       position.stopLoss.price = 1.0016; // Current SL very high
 
       const currentPrice = 1.002;
@@ -513,7 +463,7 @@ describe('LadderTpManagerService', () => {
 
       const disabledService = new LadderTpManagerService(disabledConfig, bybitService, logger);
 
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
       const currentPrice = 1.002;
 
       const success = await disabledService.moveTrailing(position, currentPrice);
@@ -523,7 +473,7 @@ describe('LadderTpManagerService', () => {
     });
 
     it('should handle update SL error gracefully', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.0, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
       const currentPrice = 1.002;
 
       bybitService.updateStopLoss.mockRejectedValue(new Error('Bybit API error'));

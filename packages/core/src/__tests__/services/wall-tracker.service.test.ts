@@ -5,7 +5,11 @@
  */
 
 import { WallTrackerService } from '../../services/wall-tracker.service';
-import { LoggerService, LogLevel, WallTrackingConfig } from '../../types/legacy';
+import { LoggerService, WallTrackingConfig } from '../../types/legacy';
+import {
+  createWallTrackerConfig,
+  createWallTrackerHarness,
+} from '../helpers/wall-tracker-test.utils';
 
 describe('WallTrackerService', () => {
   let service: WallTrackerService;
@@ -13,14 +17,7 @@ describe('WallTrackerService', () => {
   let config: WallTrackingConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    config = {
-      enabled: true,
-      minLifetimeMs: 60000,
-      spoofingThresholdMs: 5000,
-      trackHistoryCount: 100,
-    };
-    service = new WallTrackerService(config, logger);
+    ({ service, logger, config } = createWallTrackerHarness({ withErrorHandler: false }));
   });
 
   describe('detectWall', () => {
@@ -57,7 +54,7 @@ describe('WallTrackerService', () => {
     });
 
     it('should not detect walls when disabled', () => {
-      config.enabled = false;
+      config = createWallTrackerConfig({ enabled: false });
       service = new WallTrackerService(config, logger);
 
       service.detectWall(100, 50000, 'BID');
@@ -225,7 +222,7 @@ describe('WallTrackerService', () => {
     });
 
     it('should limit history size', () => {
-      config.trackHistoryCount = 10;
+      config = createWallTrackerConfig({ trackHistoryCount: 10 });
       service = new WallTrackerService(config, logger);
 
       // Generate 20 events

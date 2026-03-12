@@ -13,10 +13,15 @@ import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbo
 import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../services/logger.service';
 import { WallTrackerService } from '../../services/wall-tracker.service';
+import {
+  createOrderbookMockLogger,
+  createOrderbookManagerHarness,
+} from '../helpers/orderbook-manager-test.utils';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler;
+  let mockLogger: ReturnType<typeof createOrderbookMockLogger>;
   let mockWallTracker: {
     detectWall: jest.Mock;
     removeWall: jest.Mock;
@@ -24,28 +29,14 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     reset: jest.Mock;
   };
 
-  const mockLogger: Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'> = {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWallTracker = {
-      detectWall: jest.fn(),
-      removeWall: jest.fn(),
-      getWalls: jest.fn(() => ({})),
-      reset: jest.fn(),
-    };
-    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
-    service = new OrderbookManagerService(
-      'BTCUSDT',
-      mockLogger as unknown as LoggerService,
-      mockWallTracker as unknown as WallTrackerService,
-      errorHandler
-    );
+    ({
+      service,
+      mockLogger,
+      mockWallTracker,
+      errorHandler,
+    } = createOrderbookManagerHarness());
   });
 
   // ==========================================================================

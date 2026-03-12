@@ -9,8 +9,11 @@ import {
   WeightMatrixInput,
   SignalDirection,
   LoggerService,
-  LogLevel,
 } from '../../types/legacy';
+import {
+  createWeightMatrixConfig,
+  createWeightMatrixHarness,
+} from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
   let calculator: WeightMatrixCalculatorService;
@@ -18,114 +21,8 @@ describe('WeightMatrixCalculatorService', () => {
   let config: WeightMatrixConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-
-    // Default config (all weights enabled)
-    config = {
-      enabled: true,
-      minConfidenceToEnter: 65,
-      minConfidenceForReducedSize: 50,
-      reducedSizeMultiplier: 0.5,
-      weights: {
-        rsi: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: { excellent: 20, good: 30, ok: 40, weak: 50 },
-        },
-        stochastic: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: { excellent: 15, good: 20, ok: 30 },
-        },
-        ema: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: { excellent: 0.5, good: 1.0, ok: 1.5 },
-        },
-        bollingerBands: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: { excellent: 95, good: 85, ok: 75 },
-        },
-        atr: {
-          enabled: true,
-          maxPoints: 10,
-          thresholds: { excellent: 2.0, good: 1.5, ok: 1.2 },
-        },
-        volume: {
-          enabled: true,
-          maxPoints: 25,
-          thresholds: { excellent: 2.0, good: 1.5, ok: 1.2, weak: 1.0 },
-        },
-        delta: {
-          enabled: false,
-          maxPoints: 15,
-          thresholds: { excellent: 2.0, good: 1.5, ok: 1.0 },
-        },
-        orderbook: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: { excellent: 20, good: 15, ok: 10 },
-        },
-        imbalance: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: { excellent: 60, good: 45, ok: 30 },
-        },
-        levelStrength: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: { excellent: 4, good: 3, ok: 2 },
-        },
-        levelDistance: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: { excellent: 0.2, good: 0.5, ok: 1.0, weak: 1.5 },
-        },
-        swingPoints: {
-          enabled: true,
-          maxPoints: 10,
-          thresholds: {},
-        },
-        chartPatterns: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: { excellent: 90, good: 70, ok: 50 },
-        },
-        candlePatterns: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: { excellent: 90, good: 70, ok: 50 },
-        },
-        seniorTFAlignment: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: {},
-        },
-        btcCorrelation: {
-          enabled: true,
-          maxPoints: 15,
-          thresholds: {},
-        },
-        tfAlignment: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: { excellent: 90, good: 70, ok: 50 },
-        },
-        divergence: {
-          enabled: true,
-          maxPoints: 25,
-          thresholds: {},
-        },
-        liquiditySweep: {
-          enabled: true,
-          maxPoints: 20,
-          thresholds: {},
-        },
-      },
-    };
-
-    calculator = new WeightMatrixCalculatorService(config, logger);
+    ({ service: calculator, logger } = createWeightMatrixHarness({ withErrorHandler: false }));
+    config = createWeightMatrixConfig();
   });
 
   // ========================================================================

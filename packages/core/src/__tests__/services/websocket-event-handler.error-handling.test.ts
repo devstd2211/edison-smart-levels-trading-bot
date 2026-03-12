@@ -12,137 +12,41 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { PositionExitingService } from '../../services/position-exiting.service';
-import { WebSocketManagerService } from '../../services/websocket-manager.service';
-import { TradingJournalService } from '../../services/trading-journal.service';
-import { TelegramService } from '../../services/telegram.service';
 import {
-  LoggerService,
   Position,
-  PositionSide,
   type OrderFilledEvent,
   type StopLossFilledEvent,
   type TakeProfitFilledEvent,
 } from '../../types/legacy';
-import { IExchange } from '../../interfaces/IExchange';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { RecoveryStrategy } from '../../errors/ErrorHandler';
+import {
+  createMockWebSocketEventPosition,
+  createWebSocketEventHandlerHarness,
+  type WebSocketEventHandlerHarness,
+} from '../helpers/websocket-event-handler-test.utils';
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
-  let mockPositionManager: jest.Mocked<PositionLifecycleService>;
-  let mockPositionExitingService: jest.Mocked<PositionExitingService>;
-  let mockBybitService: jest.Mocked<IExchange>;
-  let mockWebSocketManager: jest.Mocked<WebSocketManagerService>;
-  let mockJournal: jest.Mocked<TradingJournalService>;
-  let mockTelegram: jest.Mocked<TelegramService>;
-  let mockLogger: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
-
-  const asPositionLifecycleService = (
-    value: unknown,
-  ): jest.Mocked<PositionLifecycleService> => value as jest.Mocked<PositionLifecycleService>;
-  const asPositionExitingService = (
-    value: unknown,
-  ): jest.Mocked<PositionExitingService> => value as jest.Mocked<PositionExitingService>;
-  const asExchange = (value: unknown): jest.Mocked<IExchange> => value as jest.Mocked<IExchange>;
-  const asWebSocketManagerService = (
-    value: unknown,
-  ): jest.Mocked<WebSocketManagerService> => value as jest.Mocked<WebSocketManagerService>;
-  const asTradingJournalService = (
-    value: unknown,
-  ): jest.Mocked<TradingJournalService> => value as jest.Mocked<TradingJournalService>;
-  const asTelegramService = (value: unknown): jest.Mocked<TelegramService> =>
-    value as jest.Mocked<TelegramService>;
-  const asLoggerService = (value: unknown): LoggerService => value as LoggerService;
-
-  const createMockPosition = (overrides: Partial<Position> = {}): Position => ({
-    id: 'pos-123',
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
-    quantity: 0.1,
-    entryPrice: 45000,
-    leverage: 10,
-    marginUsed: 450,
-    unrealizedPnL: 500,
-    status: 'OPEN',
-    openedAt: Date.now() - 3600000,
-    orderId: 'order-123',
-    reason: 'test-position',
-    takeProfits: [
-      { level: 1, percent: 0.5, sizePercent: 50, price: 46000, hit: false, orderId: 'tp-order-1' },
-      { level: 2, percent: 1.0, sizePercent: 30, price: 47000, hit: false, orderId: 'tp-order-2' },
-    ],
-    stopLoss: {
-      price: 44000,
-      initialPrice: 44000,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-    ...overrides,
-  });
+  let mockPositionManager: WebSocketEventHandlerHarness['mockPositionManager'];
+  let mockPositionExitingService: WebSocketEventHandlerHarness['mockPositionExitingService'];
+  let mockBybitService: WebSocketEventHandlerHarness['mockBybitService'];
+  let mockWebSocketManager: WebSocketEventHandlerHarness['mockWebSocketManager'];
+  let mockJournal: WebSocketEventHandlerHarness['mockJournal'];
+  let mockTelegram: WebSocketEventHandlerHarness['mockTelegram'];
+  let mockLogger: WebSocketEventHandlerHarness['mockLogger'];
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockPositionManager = asPositionLifecycleService({
-      getCurrentPosition: jest.fn(),
-      syncWithWebSocket: jest.fn(),
-      closePositionWithAtomicLock: jest.fn(async (_reason: string, callback: () => Promise<void>) => {
-        await callback();
-      }),
-      clearPosition: jest.fn(),
-    });
-
-    mockPositionExitingService = asPositionExitingService({
-      closeFullPosition: jest.fn(),
-      onTakeProfitHit: jest.fn(),
-    });
-
-    mockBybitService = asExchange({
-      getCurrentPrice: jest.fn(),
-    });
-
-    mockWebSocketManager = asWebSocketManagerService({
-      getLastCloseReason: jest.fn().mockReturnValue('TP'),
-      resetLastCloseReason: jest.fn(),
-    });
-
-    mockJournal = asTradingJournalService({
-      getTrade: jest.fn(),
-      recordTrade: jest.fn(),
-    });
-
-    mockTelegram = asTelegramService({
-      notifyPositionClosed: jest.fn(),
-    });
-
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
-    // Mock the static ErrorHandler.handle method
-    jest.spyOn(ErrorHandler, 'handle').mockResolvedValue({
-      success: true,
-      recovered: true,
-      attempts: 1,
-      message: 'mocked',
-      strategy: RecoveryStrategy.SKIP,
-    });
-
-    handler = new WebSocketEventHandler(
+    ({
+      handler,
       mockPositionManager,
       mockPositionExitingService,
       mockBybitService,
       mockWebSocketManager,
       mockJournal,
       mockTelegram,
-      asLoggerService(mockLogger),
-    );
+      mockLogger,
+    } = createWebSocketEventHandlerHarness());
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {
@@ -154,7 +58,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.2: Should skip update when position missing symbol', async () => {
-      const position = createMockPosition({ symbol: '' });
+      const position = createMockWebSocketEventPosition({ symbol: '' });
       await handler.handlePositionUpdate(position);
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
@@ -162,7 +66,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.3: Should skip update when position has NaN entryPrice', async () => {
-      const position = createMockPosition({ entryPrice: NaN });
+      const position = createMockWebSocketEventPosition({ entryPrice: NaN });
       await handler.handlePositionUpdate(position);
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
@@ -170,7 +74,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.4: Should process update when position is valid', async () => {
-      const position = createMockPosition();
+      const position = createMockWebSocketEventPosition();
       await handler.handlePositionUpdate(position);
 
       expect(ErrorHandler.handle).not.toHaveBeenCalled();
@@ -183,7 +87,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     it('test-8.6.5: Should use fallback when getCurrentPrice throws error', async () => {
       mockBybitService.getCurrentPrice.mockRejectedValue(new Error('API error'));
 
-      const position = createMockPosition();
+      const position = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
       mockJournal.getTrade.mockReturnValue(undefined);
@@ -193,14 +97,14 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
       // Verify fallback price (entry price) was used - position.entryPrice = 45000
-      const callArgs = (mockPositionExitingService.closeFullPosition as jest.Mock).mock.calls[0];
+      const callArgs = mockPositionExitingService.closeFullPosition.mock.calls[0];
       expect(callArgs[1]).toBe(position.entryPrice); // Should use fallback
     });
 
     it('test-8.6.6: Should use fallback when getCurrentPrice returns NaN', async () => {
       mockBybitService.getCurrentPrice.mockResolvedValue(NaN);
 
-      const position = createMockPosition();
+      const position = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
       mockJournal.getTrade.mockReturnValue(undefined);
@@ -208,14 +112,14 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       await handler.handlePositionClosed();
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
-      const callArgs = (mockPositionExitingService.closeFullPosition as jest.Mock).mock.calls[0];
+      const callArgs = mockPositionExitingService.closeFullPosition.mock.calls[0];
       expect(callArgs[1]).toBe(position.entryPrice); // Should use fallback
     });
 
     it('test-8.6.7: Should use valid price when getCurrentPrice succeeds', async () => {
       mockBybitService.getCurrentPrice.mockResolvedValue(46000);
 
-      const position = createMockPosition();
+      const position = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
       mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
       mockJournal.getTrade.mockReturnValue(undefined);
@@ -223,7 +127,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       await handler.handlePositionClosed();
 
       expect(mockPositionExitingService.closeFullPosition).toHaveBeenCalled();
-      const callArgs = (mockPositionExitingService.closeFullPosition as jest.Mock).mock.calls[0];
+      const callArgs = mockPositionExitingService.closeFullPosition.mock.calls[0];
       expect(callArgs[1]).toBe(46000); // currentPrice argument - should be API price
     });
   });
@@ -263,7 +167,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.11: Should process when TP event is valid', async () => {
-      const position = createMockPosition();
+      const position = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
 
       const event: TakeProfitFilledEvent = {
@@ -339,12 +243,12 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       expect(ErrorHandler.handle).toHaveBeenCalledTimes(1);
 
       // Second invalid update with different error
-      const invalidPosition = createMockPosition({ entryPrice: NaN });
+      const invalidPosition = createMockWebSocketEventPosition({ entryPrice: NaN });
       await handler.handlePositionUpdate(invalidPosition);
       expect(ErrorHandler.handle).toHaveBeenCalledTimes(2);
 
       // Third valid update should work
-      const validPosition = createMockPosition();
+      const validPosition = createMockWebSocketEventPosition();
       await handler.handlePositionUpdate(validPosition);
       expect(mockPositionManager.syncWithWebSocket).toHaveBeenCalledWith(validPosition);
     });
@@ -354,7 +258,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockBybitService.getCurrentPrice.mockRejectedValue(new Error('API down'));
 
       // Invalid position update
-      const invalidPosition = createMockPosition({ symbol: '' });
+      const invalidPosition = createMockWebSocketEventPosition({ symbol: '' });
       await handler.handlePositionUpdate(invalidPosition);
       expect(ErrorHandler.handle).toHaveBeenCalled();
 
@@ -368,7 +272,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       expect(ErrorHandler.handle).toHaveBeenCalledTimes(2);
 
       // Handler should still be functional
-      const validPosition = createMockPosition();
+      const validPosition = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(validPosition);
 
       const validEvent: TakeProfitFilledEvent = {

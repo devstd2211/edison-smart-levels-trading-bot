@@ -4,25 +4,22 @@
 
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
 import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
+import {
+  createTakeProfitManagerConfig,
+  createTakeProfitManagerHarness,
+} from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
+    ({ logger } = createTakeProfitManagerHarness());
   });
 
   describe('recordPartialClose', () => {
     it('should record TP1 close correctly', () => {
       const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_123',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
+        createTakeProfitManagerConfig(),
         logger,
       );
 
@@ -36,14 +33,7 @@ describe('TakeProfitManagerService', () => {
 
     it('should record multiple TP levels', () => {
       const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_123',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
+        createTakeProfitManagerConfig(),
         logger,
       );
 

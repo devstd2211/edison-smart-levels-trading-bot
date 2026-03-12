@@ -5,6 +5,7 @@
 
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import crypto from 'crypto';
+import { createWebSocketAuthenticationHarness } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
 // TESTS
@@ -14,7 +15,7 @@ describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
 
   beforeEach(() => {
-    service = new WebSocketAuthenticationService();
+    ({ service } = createWebSocketAuthenticationHarness());
   });
 
   describe('generateAuthPayload', () => {

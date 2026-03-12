@@ -9,50 +9,16 @@ import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calc
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import { WeightMatrixConfig, WeightMatrixInput, SignalDirection, LoggerService } from '../../types/legacy';
+import {
+  createWeightMatrixErrorConfig,
+  createWeightMatrixHarness,
+  createWeightMatrixInput,
+  createWeightMatrixLogger,
+} from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
 // FIXTURES
 // ============================================================================
-
-const createMockLogger = (): LoggerService => new LoggerService('ERROR', './logs', false);
-
-const createMockErrorHandler = () => {
-  return new ErrorHandler(createMockLogger());
-};
-
-const createMockConfig = (): WeightMatrixConfig => ({
-  enabled: true,
-  minConfidenceToEnter: 65,
-  minConfidenceForReducedSize: 50,
-  reducedSizeMultiplier: 0.5,
-  weights: {
-    rsi: { enabled: true, maxPoints: 20, thresholds: { excellent: 20, good: 30, ok: 40, weak: 50 } },
-    stochastic: { enabled: false, maxPoints: 15, thresholds: { excellent: 15, good: 20, ok: 30 } },
-    ema: { enabled: false, maxPoints: 15, thresholds: { excellent: 0.5, good: 1.0, ok: 1.5 } },
-    bollingerBands: { enabled: false, maxPoints: 20, thresholds: { excellent: 95, good: 85, ok: 75 } },
-    atr: { enabled: true, maxPoints: 10, thresholds: { excellent: 2.0, good: 1.5, ok: 1.2 } },
-    volume: { enabled: true, maxPoints: 15, thresholds: { excellent: 2.0, good: 1.5, ok: 1.2, weak: 1.0 } },
-    delta: { enabled: false, maxPoints: 10, thresholds: { excellent: 2.0, good: 1.5, ok: 1.2 } },
-    orderbook: { enabled: false, maxPoints: 10, thresholds: { excellent: 80, good: 60, ok: 40 } },
-    imbalance: { enabled: false, maxPoints: 10, thresholds: { excellent: 70, good: 50, ok: 30 } },
-    levelStrength: { enabled: false, maxPoints: 15, thresholds: { excellent: 5, good: 3, ok: 2 } },
-    levelDistance: { enabled: false, maxPoints: 15, thresholds: { excellent: 0.5, good: 1.0, ok: 1.5, weak: 2.0 } },
-    swingPoints: { enabled: false, maxPoints: 15, thresholds: {} },
-    chartPatterns: { enabled: false, maxPoints: 10, thresholds: { excellent: 90, good: 70, ok: 50 } },
-    candlePatterns: { enabled: false, maxPoints: 10, thresholds: { excellent: 90, good: 70, ok: 50 } },
-    seniorTFAlignment: { enabled: false, maxPoints: 20, thresholds: {} },
-    btcCorrelation: { enabled: false, maxPoints: 15, thresholds: {} },
-    tfAlignment: { enabled: false, maxPoints: 15, thresholds: { excellent: 90, good: 70, ok: 50 } },
-    divergence: { enabled: false, maxPoints: 15, thresholds: {} },
-    liquiditySweep: { enabled: false, maxPoints: 10, thresholds: {} },
-  },
-});
-
-const createMockInput = (): WeightMatrixInput => ({
-  rsi: 25,
-  atr: { current: 2.5, average: 1.0 },
-  volume: { current: 2.0, average: 1.0 },
-});
 
 // ============================================================================
 // TESTS
@@ -64,9 +30,19 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let mockLogger: LoggerService;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    errorHandler = createMockErrorHandler();
+    mockLogger = createWeightMatrixLogger();
+    errorHandler = new ErrorHandler(mockLogger);
   });
+
+  const createService = (
+    config: WeightMatrixConfig = createWeightMatrixErrorConfig(),
+    withErrorHandler: boolean = true,
+  ): WeightMatrixCalculatorService =>
+    createWeightMatrixHarness({
+      config,
+      logger: mockLogger,
+      withErrorHandler,
+    }).service;
 
   // ==========================================================================
   // GROUP 1: THROW Config Validation Tests (6 tests)
@@ -94,7 +70,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on invalid minConfidenceToEnter (negative)', () => {
-      const config = createMockConfig();
+      const config = createWeightMatrixErrorConfig();
       config.minConfidenceToEnter = -10;
 
       expect(() => {
@@ -103,7 +79,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on invalid minConfidenceToEnter (>100)', () => {
-      const config = createMockConfig();
+      const config = createWeightMatrixErrorConfig();
       config.minConfidenceToEnter = 150;
 
       expect(() => {
@@ -112,7 +88,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on invalid minConfidenceForReducedSize (negative)', () => {
-      const config = createMockConfig();
+      const config = createWeightMatrixErrorConfig();
       config.minConfidenceForReducedSize = -5;
 
       expect(() => {
@@ -121,7 +97,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on invalid minConfidenceForReducedSize (>100)', () => {
-      const config = createMockConfig();
+      const config = createWeightMatrixErrorConfig();
       config.minConfidenceForReducedSize = 120;
 
       expect(() => {
@@ -136,7 +112,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
   describe('THROW: Input Validation', () => {
     beforeEach(() => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+      service = createService();
     });
 
     it('should throw on null input', () => {
@@ -152,7 +128,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on null direction', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
 
       expect(() => {
         service.calculateScore(input, null as unknown as SignalDirection);
@@ -160,7 +136,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on invalid direction', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
 
       expect(() => {
         service.calculateScore(input, 'MIDDLE' as unknown as SignalDirection);
@@ -174,11 +150,11 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+      service = createService();
     });
 
     it('should handle NaN in ATR average (division by zero)', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
       input.atr = { current: 2.5, average: NaN };
 
       const result = service.calculateScore(input, SignalDirection.LONG);
@@ -188,7 +164,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should handle Infinity in ATR current', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
       input.atr = { current: Infinity, average: 1.0 };
 
       const result = service.calculateScore(input, SignalDirection.LONG);
@@ -198,7 +174,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should handle zero volume average (division by zero)', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
       input.volume = { current: 2.0, average: 0 };
 
       const result = service.calculateScore(input, SignalDirection.LONG);
@@ -208,7 +184,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should handle negative ATR values', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
       input.atr = { current: -1.0, average: 1.0 };
 
       const result = service.calculateScore(input, SignalDirection.LONG);
@@ -218,7 +194,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should handle negative volume values', () => {
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
       input.volume = { current: -2.0, average: 1.0 };
 
       const result = service.calculateScore(input, SignalDirection.LONG);
@@ -234,7 +210,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
   describe('SKIP: Logger Errors', () => {
     beforeEach(() => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+      service = createService();
     });
 
     it('should skip logger errors during initialization', () => {
@@ -243,7 +219,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       });
 
       expect(() => {
-        new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+        createService();
       }).not.toThrow();
     });
 
@@ -252,7 +228,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
         throw new Error('Logger failed');
       });
 
-      const input = createMockInput();
+      const input = createWeightMatrixInput();
 
       expect(() => {
         service.calculateScore(input, SignalDirection.LONG);
@@ -272,7 +248,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on null input without ErrorHandler', () => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger);
+      service = createService(createWeightMatrixErrorConfig(), false);
 
       expect(() => {
         service.calculateScore(null as unknown as WeightMatrixInput, SignalDirection.LONG);
@@ -280,8 +256,8 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should calculate score correctly without ErrorHandler', () => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger);
-      const input = createMockInput();
+      service = createService(createWeightMatrixErrorConfig(), false);
+      const input = createWeightMatrixInput();
 
       const result = service.calculateScore(input, SignalDirection.LONG);
 
@@ -296,22 +272,22 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
   describe('E2E: Error Recovery Scenarios', () => {
     beforeEach(() => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+      service = createService();
     });
 
     it('should recover from invalid config and succeed with valid config', () => {
       // First attempt with invalid config
       expect(() => {
         new WeightMatrixCalculatorService(
-          { ...createMockConfig(), minConfidenceToEnter: 150 },
+          { ...createWeightMatrixErrorConfig(), minConfidenceToEnter: 150 },
           mockLogger,
           errorHandler
         );
       }).toThrow();
 
       // Second attempt with valid config
-      const validService = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
-      const input = createMockInput();
+      const validService = createService();
+      const input = createWeightMatrixInput();
 
       expect(() => {
         validService.calculateScore(input, SignalDirection.LONG);
@@ -335,9 +311,9 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
     it('should maintain consistency across multiple calculations', () => {
       const inputs = [
-        createMockInput(),
-        createMockInput(),
-        createMockInput(),
+        createWeightMatrixInput(),
+        createWeightMatrixInput(),
+        createWeightMatrixInput(),
       ];
 
       const results = inputs.map(input => service.calculateScore(input, SignalDirection.LONG));
@@ -355,7 +331,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
   describe('Edge Cases: Complex Scenarios', () => {
     beforeEach(() => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+      service = createService();
     });
 
     it('should handle all factors with extreme values', () => {
@@ -393,7 +369,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
   describe('Threshold Decision Functions', () => {
     beforeEach(() => {
-      service = new WeightMatrixCalculatorService(createMockConfig(), mockLogger, errorHandler);
+      service = createService();
     });
 
     it('should correctly evaluate shouldEnter threshold', () => {

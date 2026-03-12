@@ -12,14 +12,10 @@
 
 import { TelegramService, TelegramConfig } from '../../services/telegram.service';
 import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
-import {
-  TelegramAPIError,
-  TelegramNetworkError,
-  TelegramMessageError,
-  TelegramRateLimitError,
-} from '../../errors/DomainErrors';
+import { TelegramRateLimitError } from '../../errors/DomainErrors';
 import { UnknownTradingError, TradingError } from '../../errors/BaseError';
 import { LoggerService, Position } from '../../types/legacy';
+import { createTelegramHarness } from '../helpers/telegram-test.utils';
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;
@@ -34,40 +30,12 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   };
 
   beforeEach(() => {
-    // Mock logger
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      trace: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    // Mock ErrorHandler
-    mockErrorHandler = {
-      handle: jest.fn(async (error, options): Promise<ErrorHandlingResult> => {
-        const tradingError =
-          error instanceof TradingError
-            ? error
-            : new UnknownTradingError(String(error), error instanceof Error ? error : undefined);
-
-        return {
-          success: true,
-          recovered: options.strategy !== RecoveryStrategy.SKIP,
-          attempts: 1,
-          message: 'Handled successfully',
-          strategy: options.strategy,
-          error: tradingError,
-        };
-      }),
-    } as unknown as jest.Mocked<ErrorHandler>;
-
-    // Mock fetch globally
-    fetchMock = jest.fn();
-    global.fetch = fetchMock;
-
-    // Create service with error handler
-    telegramService = new TelegramService(mockConfig, mockLogger, mockErrorHandler);
+    ({
+      telegramService,
+      mockLogger,
+      mockErrorHandler,
+      fetchMock,
+    } = createTelegramHarness());
   });
 
   afterEach(() => {

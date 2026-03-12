@@ -5,30 +5,12 @@
  */
 
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
-import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
-import { EventDeduplicationService } from '../../services/event-deduplication.service';
-import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
-import { ExchangeConfig, LoggerService, LogLevel } from '../../types/legacy';
-import { ErrorHandler } from '../../errors';
+import type { ExchangeConfig } from '../../types/legacy';
+import { createWebSocketManagerHarness, type WebSocketManagerHarness } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
 // MOCKS
 // ============================================================================
-
-const createMockConfig = (): ExchangeConfig => ({
-  name: 'bybit',
-  symbol: 'APEXUSDT',
-  timeframe: '1m',
-  apiKey: 'test-api-key',
-  apiSecret: 'test-api-secret',
-  testnet: false,
-  demo: false,
-});
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
 
 const getIsDuplicateEvent = (
   manager: WebSocketManagerService,
@@ -52,28 +34,17 @@ const getIsDuplicateEvent = (
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
+  let harness: WebSocketManagerHarness;
   let wsManager: WebSocketManagerService;
   let config: ExchangeConfig;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let orderExecutionDetector: OrderExecutionDetectorService;
-  let authService: WebSocketAuthenticationService;
-  let deduplicationService: EventDeduplicationService;
-  let keepAliveService: WebSocketKeepAliveService;
 
   beforeEach(() => {
-    config = createMockConfig();
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-    orderExecutionDetector = new OrderExecutionDetectorService(logger);
-    authService = new WebSocketAuthenticationService();
-    deduplicationService = new EventDeduplicationService(100, 60000, logger);
-    keepAliveService = new WebSocketKeepAliveService(20000, logger);
-    wsManager = new WebSocketManagerService(config, 'APEXUSDT', errorHandler, orderExecutionDetector, authService, deduplicationService, keepAliveService);
+    harness = createWebSocketManagerHarness();
+    ({ wsManager, config } = harness);
   });
 
-  afterEach(() => {
-    wsManager.disconnect();
+  afterEach(async () => {
+    await wsManager.disconnect();
   });
 
   // ============================================================================

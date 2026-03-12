@@ -10,46 +10,17 @@
 
 import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbook-manager.service';
 import { LoggerService, LogLevel } from '../../types/legacy';
+import {
+  createOrderbookDeltaUpdate,
+  createOrderbookLogger,
+  createOrderbookManagerHarness,
+  createOrderbookSnapshotUpdate,
+  setOrderbookLastSnapshotTime,
+} from '../helpers/orderbook-manager-test.utils';
 
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-const createLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createSnapshotUpdate = (
-  bids: Array<[string, string]>,
-  asks: Array<[string, string]>,
-  updateId: number = 1,
-): OrderbookUpdate => ({
-  type: 'snapshot',
-  bids,
-  asks,
-  updateId,
-  timestamp: Date.now(),
-});
-
-const createDeltaUpdate = (
-  bids: Array<[string, string]>,
-  asks: Array<[string, string]>,
-  updateId: number,
-): OrderbookUpdate => ({
-  type: 'delta',
-  bids,
-  asks,
-  updateId,
-  timestamp: Date.now(),
-});
-
-type OrderbookManagerInternals = {
-  lastSnapshotTime: number;
-};
-
-const setLastSnapshotTime = (manager: OrderbookManagerService, timestamp: number): void => {
-  (manager as unknown as OrderbookManagerInternals).lastSnapshotTime = timestamp;
-};
 
 // ============================================================================
 // TESTS
@@ -60,13 +31,13 @@ describe('OrderbookManagerService', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createLogger();
-    manager = new OrderbookManagerService('BTCUSDT', logger);
+    logger = createOrderbookLogger();
+    ({ service: manager } = createOrderbookManagerHarness({ withErrorHandler: false }));
   });
 
   describe('Snapshot handling', () => {
     it('should initialize with snapshot', () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10'], ['99', '5']],
         [['101', '8'], ['102', '12']],
       );
@@ -91,7 +62,7 @@ describe('OrderbookManagerService', () => {
 
     it('should reset orderbook on new snapshot', () => {
       // First snapshot
-      const snapshot1 = createSnapshotUpdate(
+      const snapshot1 = createOrderbookSnapshotUpdate(
         [['100', '10']],
         [['101', '8']],
         1,
@@ -103,7 +74,7 @@ describe('OrderbookManagerService', () => {
       expect(result!.asks).toHaveLength(1);
 
       // Second snapshot (should replace first)
-      const snapshot2 = createSnapshotUpdate(
+      const snapshot2 = createOrderbookSnapshotUpdate(
         [['200', '20'], ['199', '15']],
         [['201', '18']],
         2,
@@ -126,7 +97,7 @@ describe('OrderbookManagerService', () => {
   describe('Delta handling', () => {
     beforeEach(() => {
       // Initialize with snapshot
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10'], ['99', '5'], ['98', '3']],
         [['101', '8'], ['102', '12'], ['103', '6']],
         1,
@@ -135,7 +106,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should update existing level', () => {
-      const delta = createDeltaUpdate(
+      const delta = createOrderbookDeltaUpdate(
         [['100', '20']], // Update price 100 from size 10 to 20
         [],
         2,
@@ -149,7 +120,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should insert new level', () => {
-      const delta = createDeltaUpdate(
+      const delta = createOrderbookDeltaUpdate(
         [['97', '7']], // New bid level
         [['104', '9']], // New ask level
         2,
@@ -169,7 +140,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should delete level when size = 0', () => {
-      const delta = createDeltaUpdate(
+      const delta = createOrderbookDeltaUpdate(
         [['99', '0']], // Delete price level 99
         [['102', '0']], // Delete price level 102
         2,
@@ -189,7 +160,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should handle multiple changes in one delta', () => {
-      const delta = createDeltaUpdate(
+      const delta = createOrderbookDeltaUpdate(
         [
           ['100', '20'], // Update existing
           ['97', '7'],   // Insert new
@@ -219,7 +190,7 @@ describe('OrderbookManagerService', () => {
     it('should ignore delta before snapshot', () => {
       const freshManager = new OrderbookManagerService('BTCUSDT', logger);
 
-      const delta = createDeltaUpdate(
+      const delta = createOrderbookDeltaUpdate(
         [['100', '10']],
         [['101', '8']],
         2,
@@ -234,7 +205,7 @@ describe('OrderbookManagerService', () => {
 
   describe('Sorting', () => {
     it('should sort bids descending (highest first)', () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['95', '5'], ['100', '10'], ['97', '7']], // Unsorted
         [['101', '8']],
       );
@@ -248,7 +219,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should sort asks ascending (lowest first)', () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10']],
         [['105', '12'], ['101', '8'], ['103', '6']], // Unsorted
       );
@@ -273,7 +244,7 @@ describe('OrderbookManagerService', () => {
         largeAsks.push([`${101 + i}`, '10']);
       }
 
-      const snapshot = createSnapshotUpdate(largeBids, largeAsks);
+      const snapshot = createOrderbookSnapshotUpdate(largeBids, largeAsks);
       manager.processUpdate(snapshot);
 
       const result = manager.getSnapshot();
@@ -290,7 +261,7 @@ describe('OrderbookManagerService', () => {
 
   describe('Stale data detection', () => {
     it('should return null if snapshot is stale', async () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10']],
         [['101', '8']],
       );
@@ -298,14 +269,14 @@ describe('OrderbookManagerService', () => {
       manager.processUpdate(snapshot);
 
       // Manually set lastSnapshotTime to 2 minutes ago
-      setLastSnapshotTime(manager, Date.now() - 120000);
+      setOrderbookLastSnapshotTime(manager, Date.now() - 120000);
 
       const result = manager.getSnapshot();
       expect(result).toBeNull();
     });
 
     it('should return snapshot if fresh', () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10']],
         [['101', '8']],
       );
@@ -319,7 +290,7 @@ describe('OrderbookManagerService', () => {
 
   describe('Reset', () => {
     it('should reset orderbook state', () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10']],
         [['101', '8']],
       );
@@ -341,7 +312,7 @@ describe('OrderbookManagerService', () => {
 
   describe('Statistics', () => {
     it('should return correct statistics', () => {
-      const snapshot = createSnapshotUpdate(
+      const snapshot = createOrderbookSnapshotUpdate(
         [['100', '10'], ['99', '5']],
         [['101', '8'], ['102', '12'], ['103', '6']],
       );

@@ -16,24 +16,26 @@ import { WallTrackerService } from '../../services/wall-tracker.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { WallTrackingError } from '../../errors/DomainErrors';
 import { WallTrackingConfig, LoggerService } from '../../types/legacy';
+import {
+  createWallTrackerConfig,
+  createWallTrackerHarness,
+  createWallTrackerLogger,
+} from '../helpers/wall-tracker-test.utils';
 
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
 
-  const mockConfig: WallTrackingConfig = {
-    enabled: true,
+  const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
-    spoofingThresholdMs: 5000,
     trackHistoryCount: 1000,
-  };
+  });
 
   beforeEach(() => {
-    mockLogger = new LoggerService('ERROR', './logs', false);
-
-    errorHandler = new ErrorHandler(mockLogger);
-    service = new WallTrackerService(mockConfig, mockLogger, errorHandler);
+    ({ service, logger: mockLogger, errorHandler } = createWallTrackerHarness({
+      configOverrides: mockConfig,
+    }));
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================
@@ -355,7 +357,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   describe('Category 5: Backward Compatibility', () => {
     it('test-8.9.28.17: Should work without ErrorHandler parameter', () => {
       // Arrange
-      const serviceWithoutErrorHandler = new WallTrackerService(mockConfig, mockLogger);
+      const serviceWithoutErrorHandler = createWallTrackerHarness({
+        configOverrides: mockConfig,
+        withErrorHandler: false,
+      }).service;
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -370,7 +375,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.18: Should preserve existing behavior with ErrorHandler undefined', () => {
       // Arrange
-      const serviceWithoutErrorHandler = new WallTrackerService(mockConfig, mockLogger);
+      const serviceWithoutErrorHandler = createWallTrackerHarness({
+        configOverrides: mockConfig,
+        withErrorHandler: false,
+      }).service;
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -393,7 +401,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.19: Should handle wall removal without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = new WallTrackerService(mockConfig, mockLogger);
+      const serviceWithoutErrorHandler = createWallTrackerHarness({
+        configOverrides: mockConfig,
+        withErrorHandler: false,
+      }).service;
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -408,7 +419,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.20: Should detect clusters without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = new WallTrackerService(mockConfig, mockLogger);
+      const serviceWithoutErrorHandler = createWallTrackerHarness({
+        configOverrides: mockConfig,
+        withErrorHandler: false,
+      }).service;
       const basePrice = 40000;
       const validSize = 1000;
 

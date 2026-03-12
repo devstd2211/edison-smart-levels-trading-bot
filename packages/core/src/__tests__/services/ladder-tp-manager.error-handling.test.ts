@@ -23,61 +23,15 @@ import {
   Position,
 } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
+import {
+  createLadderTpConfig,
+  createLadderTpHarness,
+  createLadderTpPosition,
+} from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
 // MOCKS & HELPERS
 // ============================================================================
-
-const createMockBybitService = (): jest.Mocked<IExchange> => {
-  return {
-    closePosition: jest.fn().mockResolvedValue(undefined),
-    updateStopLoss: jest.fn().mockResolvedValue(undefined),
-  } as unknown as jest.Mocked<IExchange>;
-};
-
-const createMockPosition = (
-  side: PositionSide,
-  entryPrice: number,
-  quantity: number = 1,
-): Position => {
-  const slPrice = side === PositionSide.LONG ? entryPrice * 0.998 : entryPrice * 1.002;
-  return {
-    id: 'APEXUSDT_' + side,
-    symbol: 'APEXUSDT',
-    side,
-    entryPrice,
-    quantity,
-    stopLoss: {
-      price: slPrice,
-      initialPrice: slPrice,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-    takeProfits: [],
-    leverage: 10,
-    marginUsed: 100,
-    openedAt: Date.now(),
-    unrealizedPnL: 0,
-    orderId: 'ORDER_123',
-    reason: 'Test',
-    status: 'OPEN',
-  };
-};
-
-const createConfig = (overrides?: Partial<LadderTpManagerConfig>): LadderTpManagerConfig => ({
-  levels: [
-    { pricePercent: 0.08, closePercent: 33 },
-    { pricePercent: 0.15, closePercent: 33 },
-    { pricePercent: 0.25, closePercent: 34 },
-  ],
-  moveToBreakevenAfterTP1: true,
-  trailingAfterTP2: true,
-  minPartialClosePercent: 10,
-  maxPartialClosePercent: 90,
-  trailingDistancePercent: 0.05,
-  ...overrides,
-});
 
 // ============================================================================
 // TEST SUITE
@@ -89,9 +43,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    bybitService = createMockBybitService();
-    errorHandler = new ErrorHandler(logger);
+    ({ logger, bybitService, errorHandler } = createLadderTpHarness());
   });
 
   // ========================================================================
@@ -100,14 +52,14 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
   describe('Configuration Validation (THROW Strategy)', () => {
     it('should throw ConfigurationError for empty levels', () => {
-      const config = createConfig({ levels: [] });
+      const config = createLadderTpConfig({ levels: [] });
       expect(() => {
         new LadderTpManagerService(config, bybitService, logger, errorHandler);
       }).toThrow(ConfigurationError);
     });
 
     it('should throw ConfigurationError for invalid pricePercent', () => {
-      const config = createConfig({
+      const config = createLadderTpConfig({
         levels: [{ pricePercent: -0.5, closePercent: 100 }],
       });
 
@@ -117,7 +69,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should throw ConfigurationError for invalid closePercent', () => {
-      const config = createConfig({
+      const config = createLadderTpConfig({
         levels: [{ pricePercent: 0.08, closePercent: 5 }], // Below minPartialClosePercent (10)
         minPartialClosePercent: 10,
       });
@@ -128,7 +80,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should throw ConfigurationError for invalid trailingDistancePercent', () => {
-      const config = createConfig({
+      const config = createLadderTpConfig({
         trailingAfterTP2: true,
         trailingDistancePercent: -0.05,
       });
@@ -139,7 +91,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should handle config validation without ErrorHandler (backward compatibility)', () => {
-      const config = createConfig({ levels: [] });
+      const config = createLadderTpConfig({ levels: [] });
 
       expect(() => {
         new LadderTpManagerService(config, bybitService, logger);
@@ -154,12 +106,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   describe('Execute Partial Close (RETRY Strategy)', () => {
     it('should execute partial close successfully with ErrorHandler', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100, 1);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 1);
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       bybitService.closePosition.mockResolvedValue(undefined);
@@ -175,12 +127,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should retry on API failure and fallback to false', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100, 1);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 1);
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       bybitService.closePosition.mockRejectedValue(new Error('Network error'));
@@ -192,12 +144,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should handle close quantity too small', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100, 0.001); // Very small qty
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 0.001); // Very small qty
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       const result = await service.executePartialClose(level, position);
@@ -207,8 +159,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should work without ErrorHandler (backward compatibility)', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100, 1);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 1);
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       bybitService.closePosition.mockResolvedValue(undefined);
@@ -227,12 +179,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   describe('Move to Breakeven (RETRY + FALLBACK Strategies)', () => {
     it('should move SL to breakeven successfully', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -247,12 +199,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should FALLBACK on retry exhaustion', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       // Mock multiple failures for retries
       bybitService.updateStopLoss.mockRejectedValue(new Error('API rate limited'));
@@ -265,12 +217,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should respect disabled config', async () => {
       const service = new LadderTpManagerService(
-        createConfig({ moveToBreakevenAfterTP1: false }),
+        createLadderTpConfig({ moveToBreakevenAfterTP1: false }),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       const result = await service.moveToBreakeven(position);
 
@@ -279,8 +231,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should work without ErrorHandler (backward compatibility)', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -298,12 +250,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   describe('Move Trailing (RETRY + GRACEFUL_DEGRADE Strategies)', () => {
     it('should move trailing SL successfully', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -315,12 +267,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should GRACEFUL_DEGRADE on API failure', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockRejectedValue(new Error('Network timeout'));
 
@@ -332,12 +284,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should skip if new SL is not better', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       const result = await service.moveTrailing(position, 99); // Price moved down, SL worse
 
@@ -347,12 +299,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should handle SHORT positions correctly', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.SHORT, 100);
+      const position = createLadderTpPosition(PositionSide.SHORT, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -362,8 +314,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should work without ErrorHandler (backward compatibility)', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -375,12 +327,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should respect disabled config', async () => {
       const service = new LadderTpManagerService(
-        createConfig({ trailingAfterTP2: false }),
+        createLadderTpConfig({ trailingAfterTP2: false }),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       const result = await service.moveTrailing(position, 101);
 
@@ -396,12 +348,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   describe('Integration Scenarios', () => {
     it('should handle cascading failures gracefully', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100, 1);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 1);
       const levels = [
         { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false },
         { level: 2, pricePercent: 0.15, closePercent: 33, targetPrice: 100.15, hit: false },
@@ -421,12 +373,12 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
     it('should successfully execute full TP sequence', async () => {
       const service = new LadderTpManagerService(
-        createConfig(),
+        createLadderTpConfig(),
         bybitService,
         logger,
         errorHandler,
       );
-      const position = createMockPosition(PositionSide.LONG, 100, 3);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 3);
 
       bybitService.closePosition.mockResolvedValue(undefined);
       bybitService.updateStopLoss.mockResolvedValue(undefined);
@@ -462,14 +414,14 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
   describe('Backward Compatibility', () => {
     it('should initialize and work without ErrorHandler parameter', () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
 
       expect(service).toBeDefined();
     });
 
     it('should maintain existing behavior without ErrorHandler', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
       const levels = service['config'].levels.map((l, i) => ({
         ...l,
         level: i + 1,
@@ -489,8 +441,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should handle all three async methods without ErrorHandler', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       bybitService.closePosition.mockResolvedValue(undefined);
@@ -512,7 +464,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
   describe('LONG/SHORT Position Handling', () => {
     it('should create correct TP levels for LONG positions', () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
 
       const levels = service.createLadderLevels(100, SignalDirection.LONG);
 
@@ -523,7 +475,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should create correct TP levels for SHORT positions', () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
 
       const levels = service.createLadderLevels(100, SignalDirection.SHORT);
 
@@ -534,8 +486,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should handle LONG breakeven correctly', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -549,8 +501,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should handle SHORT breakeven correctly', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.SHORT, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.SHORT, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 
@@ -570,8 +522,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
   describe('Edge Cases', () => {
     it('should handle very small position quantities', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100, 0.01);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 0.01);
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       const result = await service.executePartialClose(level, position);
@@ -580,8 +532,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should handle very large position quantities', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100, 10000);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100, 10000);
       const level = { level: 1, pricePercent: 0.08, closePercent: 33, targetPrice: 100.08, hit: false };
 
       bybitService.closePosition.mockResolvedValue(undefined);
@@ -592,8 +544,8 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
     });
 
     it('should handle extreme price movements in trailing SL', async () => {
-      const service = new LadderTpManagerService(createConfig(), bybitService, logger);
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const service = new LadderTpManagerService(createLadderTpConfig(), bybitService, logger);
+      const position = createLadderTpPosition(PositionSide.LONG, 100);
 
       bybitService.updateStopLoss.mockResolvedValue(undefined);
 

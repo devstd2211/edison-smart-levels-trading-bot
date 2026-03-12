@@ -3,27 +3,12 @@
  * Phase 8.9.78: THROW (input validation) + GRACEFUL_DEGRADE (signature generation) + SKIP (logging)
  */
 
-import { WebSocketAuthenticationService, WebSocketAuthPayload } from '../../services/websocket-authentication.service';
+import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import type { ErrorLogger } from '../../errors/ErrorHandler';
-import { RecoveryStrategy } from '../../errors/ErrorHandler';
-
-type AuthLogger = Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>>;
-type TestErrorLogger = jest.Mocked<ErrorLogger>;
-
-const createMockAuthLogger = (): AuthLogger => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-
-const createMockErrorLogger = (): TestErrorLogger => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
+import {
+  createWebSocketAuthenticationHarness,
+  type AuthLogger,
+} from '../helpers/websocket-authentication-test.utils';
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
@@ -31,9 +16,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let mockLogger: AuthLogger;
 
   beforeEach(() => {
-    mockLogger = createMockAuthLogger();
-    errorHandler = new ErrorHandler(createMockErrorLogger());
-    service = new WebSocketAuthenticationService(mockLogger, errorHandler);
+    ({ service, errorHandler, mockLogger } = createWebSocketAuthenticationHarness());
   });
 
   // ===== THROW: Input Validation =====
