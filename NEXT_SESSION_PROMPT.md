@@ -28,19 +28,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-12)
-- Completed compatibility-first typing batch 224 (behavior-preserving compact-service cleanup):
-  - `services/pattern-recognition.service.ts`:
-    - replaced the remaining fallback logging error-message extraction with shared `getErrorMessage()`.
-  - `services/orderbook-manager.service.ts`:
-    - replaced the remaining WallTracker warning error-message extraction with shared `getErrorMessage()`.
-  - `services/strategy-loader.service.ts`:
-    - replaced the remaining load/directory-read error-message extraction with shared `getErrorMessage()`.
+- Completed compatibility-first typing batch 225 (behavior-preserving compact-service cleanup follow-up):
+  - `services/indicator-precalculation.service.ts`:
+    - replaced the remaining calculation-classification error-message extraction with shared `getErrorMessage()`.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts` -> PASS (3/3 suites, 77/77 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
-- Continue `Core any cleanup (phase 3: src)` in isolated compatibility-first batches.
-- Confirm whether any meaningful non-adapter service leftovers remain beyond minor builder/utils boundaries; if not, close the compact-service stream.
-- If the compact-service stream is closed, switch to the remaining testability tasks from `ACTIVE_REFACTOR_PLAN.md` rather than expanding into large exchange-adapter churn.
+- Treat the compact-service cleanup stream as effectively exhausted outside exchange-adapter/partial files and minor builder/utils boundaries.
+- Switch to the remaining testability tasks from `ACTIVE_REFACTOR_PLAN.md` unless an adjacent change explicitly requires adapter cleanup.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.

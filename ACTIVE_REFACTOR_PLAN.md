@@ -45,6 +45,11 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - `pattern-recognition.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining fallback logging error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
 - `orderbook-manager.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining WallTracker warning error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
 - `strategy-loader.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining load/directory-read error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
+- `indicator-precalculation.service.ts` was cleared from the active candidate list on 2026-03-12 after replacing its remaining calculation-classification error-message extraction with shared `getErrorMessage()` and re-running its targeted error-handling suite plus full `npm run build`.
+- Compact-service cleanup status on 2026-03-12: the remaining obvious inline error-message leftovers in `services/*` are now concentrated in exchange-adapter/partial files (`services/binance/*`, `services/bybit/*`) plus minor builder/utils boundaries; do not expand that stream unless a testability task directly requires it.
 - Verification on 2026-03-12 for the compact-service cleanup slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts` -> PASS (3/3 suites, 77/77 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Verification on 2026-03-12 for the indicator pre-calculation cleanup slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

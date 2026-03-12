@@ -13,6 +13,7 @@ import {
   IndicatorCacheSyncError,
   CandleDataMissingError,
 } from '../errors/DomainErrors';
+import { getErrorMessage } from '../utils/error.utils';
 
 interface PendingClose {
   timeframe: TimeframeRole;
@@ -344,8 +345,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
     error: unknown,
     calculator: IIndicatorCalculator
   ): Error {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     const calculatorName = calculator.constructor.name;
 
     // NaN or Infinity results
