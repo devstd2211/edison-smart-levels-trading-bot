@@ -10,24 +10,23 @@ import {
 } from '../../../services/resilience/rate-limiter.service';
 import { ErrorHandler, RecoveryStrategy } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
+import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
 
 describe('RateLimiterService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
+  let harness: ResilienceTestHarness;
+  let service: RateLimiterService | undefined;
 
   beforeEach(() => {
-    logger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
-    errorHandler = new ErrorHandler(logger as LoggerService);
+    harness = createResilienceTestHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
   });
 
   afterEach(() => {
-    // Clean up any running services
+    harness.stopTrackedServices();
+    service = undefined;
     jest.clearAllTimers();
   });
 
@@ -37,11 +36,9 @@ describe('RateLimiterService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      const service = new RateLimiterService();
-      service.start();
+      service = harness.trackLifecycle(new RateLimiterService());
       expect(service).toBeDefined();
       expect(service.getKeys()).toEqual([]);
-      service.stop();
     });
 
     it('should throw on invalid maxRequests', () => {
@@ -80,27 +77,23 @@ describe('RateLimiterService', () => {
 
   describe('Token Bucket Mechanics', () => {
     it('should acquire tokens successfully', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       const acquired = await service.acquire('test', 3);
       expect(acquired).toBe(true);
       expect(service.getRemainingTokens('test')).toBe(7);
-
-      service.stop();
     });
 
     it('should refill tokens over time', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10, // 10 tokens per second
         windowMs: 1000,
         burstSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Consume all tokens
       await service.acquire('test', 10);
@@ -111,50 +104,41 @@ describe('RateLimiterService', () => {
       const remaining = service.getRemainingTokens('test');
       expect(remaining).toBeGreaterThanOrEqual(4);
       expect(remaining).toBeLessThanOrEqual(6);
-
-      service.stop();
     });
 
     it('should respect burst capacity', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 15, // Allow burst of 15
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Should allow burst up to 15 tokens
       const acquired = await service.acquire('test', 15);
       expect(acquired).toBe(true);
       expect(service.getRemainingTokens('test')).toBe(0);
-
-      service.stop();
     });
 
     it('should not exceed max tokens on refill', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Don't consume tokens, just wait
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Should not exceed burst size
       expect(service.getRemainingTokens('test')).toBeLessThanOrEqual(10);
-
-      service.stop();
     });
 
     it('should track multiple independent rate limiters', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       await service.acquire('endpoint1', 3);
       await service.acquire('endpoint2', 5);
@@ -163,8 +147,6 @@ describe('RateLimiterService', () => {
       expect(service.getRemainingTokens('endpoint2')).toBe(5);
       expect(service.getKeys()).toContain('endpoint1');
       expect(service.getKeys()).toContain('endpoint2');
-
-      service.stop();
     });
   });
 
@@ -174,13 +156,12 @@ describe('RateLimiterService', () => {
 
   describe('Rate Limiting', () => {
     it('should reject when tokens exhausted', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
         queueSize: 0, // Disable queue
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Consume all tokens
       await service.acquire('test', 5);
@@ -188,18 +169,15 @@ describe('RateLimiterService', () => {
       // Should reject next request
       const acquired = await service.acquire('test', 1);
       expect(acquired).toBe(false);
-
-      service.stop();
     });
 
     it('should throw RateLimitExceededError in execute', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 2,
         windowMs: 1000,
         burstSize: 2,
         queueSize: 0,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       const operation = jest.fn(async () => 'success');
 
@@ -212,18 +190,15 @@ describe('RateLimiterService', () => {
         .rejects.toThrow(RateLimitExceededError);
 
       expect(operation).toHaveBeenCalledTimes(2);
-
-      service.stop();
     });
 
     it('should queue requests when queue enabled', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
         queueSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Consume all tokens
       await service.acquire('test', 5);
@@ -238,18 +213,15 @@ describe('RateLimiterService', () => {
       // Queued request should be processed
       const acquired = await queuedPromise;
       expect(acquired).toBe(true);
-
-      service.stop();
     });
 
     it('should reject when queue is full', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 2,
         windowMs: 1000,
         burstSize: 2,
         queueSize: 2, // Small queue
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Consume all tokens
       await service.acquire('test', 2);
@@ -262,22 +234,18 @@ describe('RateLimiterService', () => {
       // Next request should be rejected (queue full)
       const rejected = await service.acquire('test', 1);
       expect(rejected).toBe(false);
-
-      service.stop();
-
       // Clean up promises
       await Promise.race([queued1, Promise.resolve(false)]);
       await Promise.race([queued2, Promise.resolve(false)]);
     });
 
     it('should provide accurate statistics', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
         queueSize: 0,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // 5 successful acquires
       for (let i = 0; i < 5; i++) {
@@ -294,8 +262,6 @@ describe('RateLimiterService', () => {
       expect(stats!.totalRequests).toBe(8);
       expect(stats!.rejectedRequests).toBe(3);
       expect(stats!.tokens).toBeLessThanOrEqual(10);
-
-      service.stop();
     });
   });
 
@@ -305,13 +271,12 @@ describe('RateLimiterService', () => {
 
   describe('Adaptive Rate Limiting', () => {
     it('should reduce rate on 429 error', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
         adaptiveEnabled: true,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       const error429 = Object.assign(new Error('Too Many Requests'), { status: 429 });
 
@@ -330,18 +295,15 @@ describe('RateLimiterService', () => {
 
       const statsAfter = service.getStats('test');
       expect(statsAfter!.refillRate).toBeLessThan(rateBefor);
-
-      service.stop();
     });
 
     it('should increase rate on success when adaptive enabled', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
         adaptiveEnabled: true,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // First reduce rate
       const error429 = Object.assign(new Error('Rate limited'), { status: 429 });
@@ -359,18 +321,15 @@ describe('RateLimiterService', () => {
 
       const statsAfterRecovery = service.getStats('test');
       expect(statsAfterRecovery!.refillRate).toBeGreaterThan(rateAfterReduction);
-
-      service.stop();
     });
 
     it('should not adjust rate when adaptive disabled', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
         adaptiveEnabled: false,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       const error429 = Object.assign(new Error('Too Many Requests'), { status: 429 });
 
@@ -385,17 +344,14 @@ describe('RateLimiterService', () => {
 
       const statsAfter = service.getStats('test');
       expect(statsAfter!.refillRate).toBe(rateBefore);
-
-      service.stop();
     });
 
     it('should manually adjust rate with adjustRate', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Initialize bucket and stats
       await service.acquire('test', 1);
@@ -408,17 +364,14 @@ describe('RateLimiterService', () => {
 
       const statsAfter = service.getStats('test');
       expect(statsAfter!.refillRate).toBe(rateBefore * 0.5);
-
-      service.stop();
     });
 
     it('should respect minimum rate limit', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Initialize bucket and stats
       await service.acquire('test', 1);
@@ -428,8 +381,6 @@ describe('RateLimiterService', () => {
 
       const stats = service.getStats('test');
       expect(stats!.refillRate).toBeGreaterThan(0);
-
-      service.stop();
     });
   });
 
@@ -439,8 +390,7 @@ describe('RateLimiterService', () => {
 
   describe('Edge Cases', () => {
     it('should throw on invalid key', async () => {
-      const service = new RateLimiterService({}, logger as LoggerService, errorHandler);
-      service.start();
+      service = harness.trackLifecycle(new RateLimiterService({}, logger as LoggerService, errorHandler));
       type AcquireKey = Parameters<RateLimiterService['acquire']>[0];
 
       await expect(service.acquire('', 1))
@@ -448,21 +398,16 @@ describe('RateLimiterService', () => {
 
       await expect(service.acquire(null as unknown as AcquireKey, 1))
         .rejects.toThrow('Rate limiter key must be a non-empty string');
-
-      service.stop();
     });
 
     it('should throw on invalid token count', async () => {
-      const service = new RateLimiterService({}, logger as LoggerService, errorHandler);
-      service.start();
+      service = harness.trackLifecycle(new RateLimiterService({}, logger as LoggerService, errorHandler));
 
       await expect(service.acquire('test', 0))
         .rejects.toThrow('Token count must be positive');
 
       await expect(service.acquire('test', -5))
         .rejects.toThrow('Token count must be positive');
-
-      service.stop();
     });
 
     it('should handle logging errors with SKIP strategy', async () => {
@@ -482,11 +427,10 @@ describe('RateLimiterService', () => {
       };
 
       // Should not throw despite logging errors
-      const service = new RateLimiterService({}, faultyLogger as unknown as LoggerService, errorHandler);
-      service.start();
+      service = harness.trackLifecycle(
+        new RateLimiterService({}, faultyLogger as unknown as LoggerService, errorHandler),
+      );
       await expect(service.acquire('test', 1)).resolves.toBe(true);
-
-      service.stop();
     });
   });
 
@@ -496,33 +440,27 @@ describe('RateLimiterService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
-      }, logger as LoggerService);
-      service.start();
+      }, logger as LoggerService));
 
       const acquired = await service.acquire('test', 3);
       expect(acquired).toBe(true);
       expect(service.getRemainingTokens('test')).toBe(2);
-
-      service.stop();
     });
 
     it('should work without Logger', async () => {
-      const service = new RateLimiterService({
+      service = harness.trackLifecycle(new RateLimiterService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
-      });
-      service.start();
+      }));
 
       const acquired = await service.acquire('test', 3);
       expect(acquired).toBe(true);
       expect(service.getRemainingTokens('test')).toBe(2);
-
-      service.stop();
     });
   });
 });

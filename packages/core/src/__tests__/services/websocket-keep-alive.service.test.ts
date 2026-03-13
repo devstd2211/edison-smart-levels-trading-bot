@@ -5,22 +5,12 @@
 
 import WebSocket from 'ws';
 import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
-import { LoggerService, LogLevel } from '../../types/legacy';
-
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createMockWebSocket = (): Partial<WebSocket> => {
-  return {
-    readyState: WebSocket.OPEN,
-    send: jest.fn(),
-  };
-};
+import { LoggerService } from '../../types/legacy';
+import {
+  createWebSocketKeepAliveHarness,
+  type MockWebSocket,
+  type WebSocketKeepAliveHarness,
+} from '../helpers/websocket-keep-alive-test.utils';
 
 // ============================================================================
 // TESTS
@@ -29,15 +19,17 @@ const createMockWebSocket = (): Partial<WebSocket> => {
 describe('WebSocketKeepAliveService', () => {
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
-  let mockWs: Partial<WebSocket>;
+  let mockWs: MockWebSocket;
+  let harness: WebSocketKeepAliveHarness;
   const createService = (interval?: number, customLogger: LoggerService | undefined = logger): WebSocketKeepAliveService => {
-    service = new WebSocketKeepAliveService(interval, customLogger);
+    service = harness.createService(interval, customLogger);
     return service;
   };
 
   beforeEach(() => {
-    logger = createMockLogger();
-    mockWs = createMockWebSocket();
+    harness = createWebSocketKeepAliveHarness();
+    logger = harness.logger;
+    mockWs = harness.createWebSocket();
     jest.clearAllTimers();
     jest.useFakeTimers();
   });
@@ -99,7 +91,7 @@ describe('WebSocketKeepAliveService', () => {
 
     it('should stop existing interval before starting new one', () => {
       service = createService(5000, logger);
-      const mockWs2 = createMockWebSocket();
+      const mockWs2 = harness.createWebSocket();
 
       service.start(mockWs as WebSocket);
       const firstTimerCount = jest.getTimerCount();
@@ -217,8 +209,8 @@ describe('WebSocketKeepAliveService', () => {
 
     it('should handle multiple WebSocket instances', () => {
       service = createService(5000, logger);
-      const mockWs1 = createMockWebSocket();
-      const mockWs2 = createMockWebSocket();
+      const mockWs1 = harness.createWebSocket();
+      const mockWs2 = harness.createWebSocket();
 
       // Start with first WebSocket
       service.start(mockWs1 as WebSocket);
@@ -308,7 +300,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Logger Integration', () => {
     it('should log debug message on ping', () => {
-      const mockLogger = createMockLogger();
+      const mockLogger = createWebSocketKeepAliveHarness().logger;
       jest.spyOn(mockLogger, 'debug');
 
       service = createService(5000, mockLogger);

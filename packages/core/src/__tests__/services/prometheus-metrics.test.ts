@@ -17,39 +17,36 @@
 import { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
 import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import {
+  createPrometheusMetricsHarness,
+  type PrometheusMetricsHarness,
+} from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
   let service: PrometheusMetricsService;
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let trackedServices: PrometheusMetricsService[];
+  let harness: PrometheusMetricsHarness;
 
   const createTrackedMetricsService = (
     config: ConstructorParameters<typeof PrometheusMetricsService>[0] = {},
     logger: LoggerService | undefined = mockLogger,
     handler: ErrorHandler | undefined = errorHandler,
   ): PrometheusMetricsService => {
-    const metricsService = new PrometheusMetricsService(config, logger, handler);
-    trackedServices.push(metricsService);
-    return metricsService;
+    return harness.createTrackedService(trackedServices, config, logger, handler);
   };
 
   beforeEach(() => {
-    mockLogger = new LoggerService('ERROR', './logs', false);
-    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
-
-    errorHandler = new ErrorHandler(mockLogger);
+    harness = createPrometheusMetricsHarness();
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler;
     trackedServices = [];
     service = createTrackedMetricsService({}, mockLogger, errorHandler);
   });
 
   afterEach(() => {
-    trackedServices.forEach((metricsService) => {
-      metricsService.stop();
-    });
+    harness.stopTrackedServices(trackedServices);
   });
 
   // ==========================================================================

@@ -19,6 +19,10 @@ import { PrometheusMetricsService } from '../../services/prometheus-metrics.serv
 import { HealthCheckService } from '../../services/health-check.service';
 import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import {
+  createMonitoringServerHarness,
+  type MonitoringServerHarness,
+} from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
   let server: MonitoringServer;
@@ -26,67 +30,28 @@ describe('MonitoringServer', () => {
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let errorHandler: ErrorHandler;
+  let harness: MonitoringServerHarness;
+  let trackedServers: MonitoringServer[];
   const createServer = (options: {
     port: number;
     metricsService?: PrometheusMetricsService;
     healthService?: HealthCheckService;
   }): MonitoringServer => {
-    const metricsService =
-      Object.prototype.hasOwnProperty.call(options, 'metricsService')
-        ? options.metricsService
-        : mockMetricsService;
-    const healthService =
-      Object.prototype.hasOwnProperty.call(options, 'healthService')
-        ? options.healthService
-        : mockHealthService;
-    server = new MonitoringServer(
-      metricsService,
-      healthService,
-      { port: options.port },
-      mockLogger,
-      errorHandler
-    );
+    server = harness.createServer(options, trackedServers);
     return server;
   };
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    errorHandler = new ErrorHandler(mockLogger);
-
-    // Mock PrometheusMetricsService
-    mockMetricsService = {
-      getMetrics: jest.fn().mockResolvedValue('# HELP trading_bot_orders_placed_total Total orders placed\ntrading_bot_orders_placed_total{side="Buy"} 10'),
-      getContentType: jest.fn().mockReturnValue('text/plain; version=0.0.4; charset=utf-8'),
-    } as unknown as jest.Mocked<PrometheusMetricsService>;
-
-    // Mock HealthCheckService
-    mockHealthService = {
-      checkHealth: jest.fn().mockResolvedValue({
-        status: 'healthy',
-        timestamp: Date.now(),
-        uptime: 100,
-        components: {
-          exchange: { status: 'up', lastCheck: Date.now() },
-          websocket: { status: 'up', lastCheck: Date.now() },
-          system: { status: 'up', lastCheck: Date.now() },
-          trading: { status: 'up', lastCheck: Date.now() },
-        },
-      }),
-      isAlive: jest.fn().mockResolvedValue(true),
-      isReady: jest.fn().mockResolvedValue(true),
-    } as unknown as jest.Mocked<HealthCheckService>;
+    harness = createMonitoringServerHarness();
+    trackedServers = [];
+    mockLogger = harness.logger;
+    mockMetricsService = harness.metricsService;
+    mockHealthService = harness.healthService;
+    errorHandler = harness.errorHandler;
   });
 
   afterEach(async () => {
-    if (server && server.isRunning()) {
-      await server.stop();
-    }
+    await harness.stopTrackedServers(trackedServers);
   });
 
   // ==========================================================================

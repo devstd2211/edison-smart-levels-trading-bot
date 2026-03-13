@@ -11,6 +11,7 @@ import {
 } from '../../../services/resilience/retry-policy.service';
 import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
+import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
@@ -18,26 +19,19 @@ type ErrorWithStatus = Error & { status?: number };
 describe('RetryPolicyService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
+  let harness: ResilienceTestHarness;
 
   let service: RetryPolicyService | undefined;
 
   beforeEach(() => {
-    logger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
-    errorHandler = new ErrorHandler(logger as LoggerService);
+    harness = createResilienceTestHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
   });
 
   afterEach(() => {
-    // Clean up service to stop intervals
-    if (service) {
-      service.stop();
-      service = undefined;
-    }
+    harness.stopTrackedServices();
+    service = undefined;
     // Always restore real timers
     jest.useRealTimers();
     jest.clearAllTimers();
@@ -49,8 +43,7 @@ describe('RetryPolicyService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      service = new RetryPolicyService();
-      service.start();
+      service = harness.trackLifecycle(new RetryPolicyService());
       expect(service).toBeDefined();
 
       const stats = service.getStats();
@@ -91,12 +84,11 @@ describe('RetryPolicyService', () => {
 
   describe('Exponential Backoff', () => {
     it('should calculate exponential backoff correctly', () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: false,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Attempt 1: 100 * 2^0 = 100ms
       expect(service.getBackoffDelay(1, 100, { jitterEnabled: false })).toBe(100);
@@ -109,12 +101,11 @@ describe('RetryPolicyService', () => {
     });
 
     it('should add jitter when enabled', () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: true,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       const delays = [];
       for (let i = 0; i < 10; i++) {
@@ -133,13 +124,12 @@ describe('RetryPolicyService', () => {
     });
 
     it('should respect maximum delay', () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 10,
         maxDelayMs: 500,
         jitterEnabled: false,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Attempt 5: 100 * 10^4 = 100000ms, but should cap at 500ms
       const delay = service.getBackoffDelay(5, 100, { maxDelayMs: 500, jitterEnabled: false });
@@ -147,12 +137,11 @@ describe('RetryPolicyService', () => {
     });
 
     it('should respect minimum delay', () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         baseDelayMs: 1,
         exponentialBase: 1,
         jitterEnabled: false,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Should never go below MIN_RETRY_DELAY_MS (10ms)
       const delay = service.getBackoffDelay(1, 1, { jitterEnabled: false });
@@ -160,12 +149,11 @@ describe('RetryPolicyService', () => {
     });
 
     it('should handle custom exponential base', () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         baseDelayMs: 100,
         exponentialBase: 3,
         jitterEnabled: false,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Attempt 1: 100 * 3^0 = 100ms
       expect(service.getBackoffDelay(1, 100, { exponentialBase: 3, jitterEnabled: false })).toBe(100);
@@ -184,12 +172,11 @@ describe('RetryPolicyService', () => {
 
   describe('Retry Budget', () => {
     it('should track retry budget correctly', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5, // 50% of operations can retry
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const failTwice = async () => {
@@ -209,12 +196,11 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should throw RetryBudgetExceededError when budget exhausted', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10% budget
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Run 10 operations to establish budget
       for (let i = 0; i < 10; i++) {
@@ -244,12 +230,11 @@ describe('RetryPolicyService', () => {
     it('should reset budget periodically', () => {
       jest.useFakeTimers();
 
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         retryBudgetPercent: 0.1,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // Manually set budget usage
       service['stats'].budgetUsage = 5;
@@ -266,12 +251,11 @@ describe('RetryPolicyService', () => {
     });
 
     it('should manually reset budget', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const failTwice = async () => {
@@ -290,12 +274,11 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should calculate budget limit correctly', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10%
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // 0 operations → budget limit = 0
       expect(service.getStats().budgetLimit).toBe(0);
@@ -320,11 +303,10 @@ describe('RetryPolicyService', () => {
 
   describe('Conditional Retry', () => {
     it('should retry on transient errors (network errors)', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const transientError = async () => {
@@ -343,11 +325,10 @@ describe('RetryPolicyService', () => {
     });
 
     it('should retry on retryable HTTP errors (429, 5xx)', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const http429Error = async () => {
@@ -366,11 +347,10 @@ describe('RetryPolicyService', () => {
     });
 
     it('should not retry on non-retryable HTTP errors (4xx)', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const http404Error = async () => {
@@ -393,11 +373,10 @@ describe('RetryPolicyService', () => {
 
   describe('Integration Tests', () => {
     it('should succeed after retries', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const failTwice = async () => {
@@ -416,11 +395,10 @@ describe('RetryPolicyService', () => {
     });
 
     it('should throw MaxRetriesExceededError when all retries fail', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const alwaysFail = async () => {
@@ -438,11 +416,10 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should handle immediate success (no retries)', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 3,
         baseDelayMs: 10,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       const immediateSuccess = async () => 'success';
 
@@ -455,12 +432,11 @@ describe('RetryPolicyService', () => {
     });
 
     it('should track statistics correctly', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       // 3 successful operations
       for (let i = 0; i < 3; i++) {
@@ -484,11 +460,10 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should work with custom config per operation', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 1,
         baseDelayMs: 100,
-      }, logger as LoggerService, errorHandler);
-      service.start();
+      }, logger as LoggerService, errorHandler));
 
       let callCount = 0;
       const failTwice = async () => {
@@ -510,12 +485,11 @@ describe('RetryPolicyService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
-      }, logger as LoggerService);
-      service.start();
+      }, logger as LoggerService));
 
       let callCount = 0;
       const failOnce = async () => {
@@ -530,12 +504,11 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should work without Logger', async () => {
-      service = new RetryPolicyService({
+      service = harness.trackLifecycle(new RetryPolicyService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
-      });
-      service.start();
+      }));
 
       let callCount = 0;
       const failOnce = async () => {

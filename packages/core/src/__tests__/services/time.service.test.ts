@@ -19,41 +19,25 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeSyncError, TimeSyncTimeoutError } from '../../errors/DomainErrors';
 import { LoggerService } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
-
-type MockExchange = {
-  getServerTime: jest.MockedFunction<() => Promise<number | undefined>>;
-};
+import {
+  createTimeServiceHarness,
+  type MockTimeExchange,
+  type TimeServiceHarness,
+} from '../helpers/time-service-test.utils';
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let timeService: TimeService;
   let mockLogger: LoggerService;
-  let mockExchange: MockExchange;
+  let mockExchange: MockTimeExchange;
   let errorHandler: ErrorHandler;
+  let harness: TimeServiceHarness;
 
   beforeEach(() => {
-    mockLogger = new LoggerService('ERROR', './logs', false);
-    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
-
-    // Mock exchange service
-    mockExchange = {
-      getServerTime: jest.fn<() => Promise<number | undefined>>(),
-    };
-
-    // Create ErrorHandler
-    errorHandler = new ErrorHandler(mockLogger);
-
-    // Create TimeService with ErrorHandler
-    timeService = new TimeService(
-      mockLogger,
-      1000, // syncIntervalMs
-      3, // maxSyncFailures
-      errorHandler,
-    );
-
-    timeService.setBybitService(mockExchange as unknown as IExchange);
+    harness = createTimeServiceHarness();
+    mockLogger = harness.logger;
+    mockExchange = harness.exchange;
+    errorHandler = harness.errorHandler;
+    timeService = harness.createService();
   });
 
   afterEach(() => {
@@ -244,8 +228,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
   describe('Bybit Service Not Set', () => {
     it('should handle missing bybit service gracefully', async () => {
-      timeService = new TimeService(mockLogger, 1000, 3, errorHandler);
-      // Don't set bybit service
+      timeService = harness.createService({ attachExchange: false });
 
       await timeService.syncWithExchange();
 
@@ -254,7 +237,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should use default offset (0) when service not set', async () => {
-      timeService = new TimeService(mockLogger, 1000, 3, errorHandler);
+      timeService = harness.createService({ attachExchange: false });
 
       await timeService.syncWithExchange();
 
@@ -367,8 +350,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     it('should work without ErrorHandler parameter', async () => {
-      const service = new TimeService(mockLogger, 1000, 3);
-      service.setBybitService(mockExchange as unknown as IExchange);
+      const service = harness.createService({ errorHandler: undefined });
 
       const serverTime = Date.now();
       mockExchange.getServerTime.mockResolvedValue(serverTime);
@@ -379,8 +361,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should use auto-created ErrorHandler when not provided', async () => {
-      const service = new TimeService(mockLogger, 1000, 3);
-      service.setBybitService(mockExchange as unknown as IExchange);
+      const service = harness.createService({ errorHandler: undefined });
 
       mockExchange.getServerTime.mockResolvedValue(Date.now());
 
@@ -390,8 +371,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should maintain backward compatible behavior', async () => {
-      const legacyService = new TimeService(mockLogger, 1000, 3);
-      legacyService.setBybitService(mockExchange as unknown as IExchange);
+      const legacyService = harness.createService({ errorHandler: undefined });
 
       mockExchange.getServerTime.mockResolvedValue(Date.now() + 3000);
 

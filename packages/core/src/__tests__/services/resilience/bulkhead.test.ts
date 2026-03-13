@@ -11,29 +11,23 @@ import {
 } from '../../../services/resilience/bulkhead.service';
 import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
+import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
 
 describe('BulkheadService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
   let service: BulkheadService | undefined;
+  let harness: ResilienceTestHarness;
 
   beforeEach(() => {
-    logger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
-    errorHandler = new ErrorHandler(logger as LoggerService);
+    harness = createResilienceTestHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
   });
 
   afterEach(() => {
-    // Clean up service to stop intervals
-    if (service) {
-      service.stop();
-      service = undefined;
-    }
+    harness.stopTrackedServices();
+    service = undefined;
     jest.clearAllTimers();
   });
 
@@ -70,11 +64,11 @@ describe('BulkheadService', () => {
 
   describe('Pool Management', () => {
     it('should create pool on first use', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 2, queueSize: 5 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       await service.execute('api-pool', async () => 'success');
 
@@ -84,11 +78,11 @@ describe('BulkheadService', () => {
     });
 
     it('should throw when max pools exceeded', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 1 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       // Create 50 pools (MAX_BULKHEADS)
       for (let i = 0; i < 50; i++) {
@@ -107,11 +101,11 @@ describe('BulkheadService', () => {
 
   describe('Execution', () => {
     it('should execute immediately when pool not full', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 2 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       const result = await service.execute('test-pool', async () => 'success');
       expect(result).toBe('success');
@@ -122,11 +116,11 @@ describe('BulkheadService', () => {
     });
 
     it('should track active workers correctly', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 2 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       let resolve1: () => void;
       let resolve2: () => void;
@@ -158,11 +152,11 @@ describe('BulkheadService', () => {
     });
 
     it('should handle operation errors correctly', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 1 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       await expect(service.execute('test-pool', async () => {
         throw new Error('Operation failed');
@@ -177,11 +171,11 @@ describe('BulkheadService', () => {
     });
 
     it('should execute operations in FIFO order from queue', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 1, queueSize: 5 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       const results: number[] = [];
       let resolveFirst: () => void;
@@ -212,11 +206,11 @@ describe('BulkheadService', () => {
     });
 
     it('should use custom config per pool', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 1 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       // Create pool with custom config
       await service.execute('custom-pool', async () => 'success', {
@@ -234,7 +228,7 @@ describe('BulkheadService', () => {
 
   describe('Rejection Policies', () => {
     it('should reject immediately with FAIL_FAST policy', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         {
           maxConcurrent: 1,
           queueSize: 0,
@@ -242,7 +236,7 @@ describe('BulkheadService', () => {
         },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       let resolveFirst: () => void;
 
@@ -263,7 +257,7 @@ describe('BulkheadService', () => {
     });
 
     it('should queue operations with QUEUE policy', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         {
           maxConcurrent: 1,
           queueSize: 5,
@@ -271,7 +265,7 @@ describe('BulkheadService', () => {
         },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       let resolveFirst: () => void;
 
@@ -296,7 +290,7 @@ describe('BulkheadService', () => {
     });
 
     it('should timeout queued operations with TIMEOUT policy', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         {
           maxConcurrent: 1,
           queueSize: 5,
@@ -305,7 +299,7 @@ describe('BulkheadService', () => {
         },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       let resolveFirst: () => void;
 
@@ -337,11 +331,11 @@ describe('BulkheadService', () => {
 
   describe('Integration Tests', () => {
     it('should handle multiple pools independently', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 1, queueSize: 5 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       let resolveApi: () => void;
       let resolveWs: () => void;
@@ -373,11 +367,11 @@ describe('BulkheadService', () => {
     });
 
     it('should reset pool correctly', async () => {
-      service = new BulkheadService(
+      service = harness.trackLifecycle(new BulkheadService(
         { maxConcurrent: 1, queueSize: 5 },
         logger as LoggerService,
         errorHandler
-      );
+      ));
 
       let resolveFirst: () => void;
 
@@ -415,7 +409,7 @@ describe('BulkheadService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler and Logger', async () => {
-      service = new BulkheadService({ maxConcurrent: 2 });
+      service = harness.trackLifecycle(new BulkheadService({ maxConcurrent: 2 }));
 
       const result = await service.execute('test-pool', async () => 'success');
       expect(result).toBe('success');

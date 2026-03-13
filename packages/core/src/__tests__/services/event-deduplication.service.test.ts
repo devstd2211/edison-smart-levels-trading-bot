@@ -4,15 +4,11 @@
  */
 
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
-import { LoggerService, LogLevel } from '../../types/legacy';
-
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
+import { LoggerService } from '../../types/legacy';
+import {
+  createEventDeduplicationHarness,
+  type EventDeduplicationHarness,
+} from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
 // TESTS
@@ -21,14 +17,16 @@ const createMockLogger = (): LoggerService => {
 describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
+  let harness: EventDeduplicationHarness;
 
   beforeEach(() => {
-    logger = createMockLogger();
+    harness = createEventDeduplicationHarness();
+    logger = harness.logger;
   });
 
   describe('isDuplicate', () => {
     beforeEach(() => {
-      service = new EventDeduplicationService(10, 1000, logger); // Small cache for testing
+      service = harness.createService(10, 1000, logger); // Small cache for testing
     });
 
     it('should return false for first occurrence of event', () => {
@@ -117,7 +115,7 @@ describe('EventDeduplicationService', () => {
 
   describe('clear', () => {
     beforeEach(() => {
-      service = new EventDeduplicationService(100, 60000, logger);
+      service = harness.createService(100, 60000, logger);
     });
 
     it('should clear all cached events', () => {
@@ -142,7 +140,7 @@ describe('EventDeduplicationService', () => {
 
   describe('Cache Management', () => {
     it('should use default cache size (100)', () => {
-      const service1 = new EventDeduplicationService(100, 60000, logger);
+      const service1 = harness.createService(100, 60000, logger);
       const timestamp = 1000; // Use fixed timestamp
 
       // Add 100 events with different timestamps
@@ -156,7 +154,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should use custom cache size', () => {
-      service = new EventDeduplicationService(50, 60000, logger);
+      service = harness.createService(50, 60000, logger);
       const timestamp = 1000;
 
       // Add 50 events with different timestamps
@@ -169,7 +167,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should use custom TTL', () => {
-      service = new EventDeduplicationService(100, 500, logger); // 500ms TTL
+      service = harness.createService(100, 500, logger); // 500ms TTL
       const timestamp = Date.now();
 
       service.isDuplicate('TP', 'order-123', timestamp);
@@ -194,7 +192,7 @@ describe('EventDeduplicationService', () => {
 
   describe('Integration Scenarios', () => {
     beforeEach(() => {
-      service = new EventDeduplicationService(100, 60000, logger);
+      service = harness.createService(100, 60000, logger);
     });
 
     it('should handle real WebSocket event stream', () => {
@@ -250,7 +248,7 @@ describe('EventDeduplicationService', () => {
 
   describe('Performance', () => {
     it('should handle rapid duplicate checks efficiently', () => {
-      service = new EventDeduplicationService(1000, 60000, logger);
+      service = harness.createService(1000, 60000, logger);
 
       const startTime = Date.now();
 
@@ -266,7 +264,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should handle large timestamps efficiently', () => {
-      service = new EventDeduplicationService(100, 60000, logger);
+      service = harness.createService(100, 60000, logger);
 
       const timestamps = Array.from({ length: 100 }, (_, i) => Date.now() + i * 1000);
 

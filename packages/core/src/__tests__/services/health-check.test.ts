@@ -16,6 +16,10 @@
 import { HealthCheckService, IExchangeService, IWebSocketService } from '../../services/health-check.service';
 import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import {
+  createHealthCheckHarness,
+  type HealthCheckTestHarness,
+} from '../helpers/health-check-test.utils';
 
 describe('HealthCheckService', () => {
   let service: HealthCheckService;
@@ -23,33 +27,15 @@ describe('HealthCheckService', () => {
   let mockExchange: jest.Mocked<IExchangeService>;
   let mockWebSocket: jest.Mocked<IWebSocketService>;
   let errorHandler: ErrorHandler;
+  let harness: HealthCheckTestHarness;
 
   beforeEach(() => {
-    mockLogger = new LoggerService('ERROR', './logs', false);
-    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
-
-    mockExchange = {
-      testConnection: jest.fn().mockResolvedValue(true),
-      getServerTime: jest.fn().mockResolvedValue(Date.now()),
-    };
-
-    mockWebSocket = {
-      isConnected: jest.fn().mockReturnValue(true),
-      getLastMessageTime: jest.fn().mockReturnValue(Date.now()),
-    };
-
-    errorHandler = new ErrorHandler(mockLogger);
-
-    service = new HealthCheckService(
-      mockExchange,
-      mockWebSocket,
-      {},
-      mockLogger,
-      errorHandler
-    );
+    harness = createHealthCheckHarness();
+    mockLogger = harness.logger;
+    mockExchange = harness.exchange;
+    mockWebSocket = harness.websocket;
+    errorHandler = harness.errorHandler;
+    service = harness.createService();
   });
 
   // ==========================================================================
@@ -96,7 +82,11 @@ describe('HealthCheckService', () => {
     });
 
     it('should report exchange as degraded when service not available', async () => {
-      const svc = new HealthCheckService(undefined, undefined, {}, mockLogger);
+      const svc = harness.createService({
+        exchange: undefined,
+        websocket: undefined,
+        errorHandler: undefined,
+      });
 
       const health = await svc.checkExchange();
 
@@ -152,7 +142,11 @@ describe('HealthCheckService', () => {
     });
 
     it('should report WebSocket as degraded when service not available', async () => {
-      const svc = new HealthCheckService(undefined, undefined, {}, mockLogger);
+      const svc = harness.createService({
+        exchange: undefined,
+        websocket: undefined,
+        errorHandler: undefined,
+      });
 
       const health = await svc.checkWebSocket();
 
@@ -177,17 +171,16 @@ describe('HealthCheckService', () => {
     });
 
     it('should report system as degraded when memory usage high', async () => {
-      // Create service with low memory threshold
-      const svc = new HealthCheckService(
-        undefined,
-        undefined,
-        {
+      const svc = harness.createService({
+        exchange: undefined,
+        websocket: undefined,
+        config: {
           thresholds: {
-            memoryUsagePercent: 1, // 1% threshold (will always exceed)
+            memoryUsagePercent: 1,
           },
         },
-        mockLogger
-      );
+        errorHandler: undefined,
+      });
 
       const health = await svc.checkSystem();
 
@@ -196,17 +189,16 @@ describe('HealthCheckService', () => {
     });
 
     it('should report system as degraded when CPU usage high', async () => {
-      // Create service with low CPU threshold
-      const svc = new HealthCheckService(
-        undefined,
-        undefined,
-        {
+      const svc = harness.createService({
+        exchange: undefined,
+        websocket: undefined,
+        config: {
           thresholds: {
-            cpuUsagePercent: 1, // 1% threshold (will always exceed)
+            cpuUsagePercent: 1,
           },
         },
-        mockLogger
-      );
+        errorHandler: undefined,
+      });
 
       const health = await svc.checkSystem();
 
@@ -268,13 +260,9 @@ describe('HealthCheckService', () => {
         getLastMessageTime: jest.fn().mockReturnValue(0),
       };
 
-      const svc = new HealthCheckService(
-        mockExchange,
-        degradedWs,
-        {},
-        mockLogger,
-        errorHandler
-      );
+      const svc = harness.createService({
+        websocket: degradedWs,
+      });
 
       const health = await svc.checkHealth();
 
@@ -287,13 +275,9 @@ describe('HealthCheckService', () => {
         getServerTime: jest.fn().mockResolvedValue(Date.now()),
       };
 
-      const svc = new HealthCheckService(
-        downExchange,
-        mockWebSocket,
-        {},
-        mockLogger,
-        errorHandler
-      );
+      const svc = harness.createService({
+        exchange: downExchange,
+      });
 
       const health = await svc.checkHealth();
 
@@ -305,13 +289,10 @@ describe('HealthCheckService', () => {
 
     it('should handle complete health check errors gracefully', async () => {
       // Mock checkExchange to throw
-      const svc = new HealthCheckService(
-        undefined,
-        undefined,
-        {},
-        mockLogger,
-        errorHandler
-      );
+      const svc = harness.createService({
+        exchange: undefined,
+        websocket: undefined,
+      });
 
       const health = await svc.checkHealth();
 
@@ -342,18 +323,16 @@ describe('HealthCheckService', () => {
         getLastMessageTime: jest.fn().mockReturnValue(Date.now()),
       };
 
-      const healthySvc = new HealthCheckService(
-        healthyExchange,
-        healthyWs,
-        {
+      const healthySvc = harness.createService({
+        exchange: healthyExchange,
+        websocket: healthyWs,
+        config: {
           thresholds: {
             memoryUsagePercent: 95,
             cpuUsagePercent: 95,
           },
         },
-        mockLogger,
-        errorHandler
-      );
+      });
 
       const isReady = await healthySvc.isReady();
       expect(typeof isReady).toBe('boolean');
@@ -365,13 +344,9 @@ describe('HealthCheckService', () => {
         getLastMessageTime: jest.fn().mockReturnValue(0),
       };
 
-      const degradedSvc = new HealthCheckService(
-        mockExchange,
-        degradedWs,
-        {},
-        mockLogger,
-        errorHandler
-      );
+      const degradedSvc = harness.createService({
+        websocket: degradedWs,
+      });
 
       const isReady = await degradedSvc.isReady();
       expect(isReady).toBe(false);

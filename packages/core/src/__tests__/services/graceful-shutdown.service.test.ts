@@ -18,7 +18,7 @@ import { GracefulShutdownManager } from '../../services/graceful-shutdown.servic
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide, Position, TakeProfit, StopLossConfig } from '../../types/legacy';
+import { LoggerService } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
 import {
   GracefulShutdownConfig,
@@ -27,7 +27,13 @@ import {
 } from '../../types/legacy';
 import { ActionType } from '../../types/legacy';
 import * as fs from 'fs';
-import * as path from 'path';
+import {
+  createGracefulShutdownManager,
+  createGracefulShutdownMocks,
+  createMockShutdownPosition,
+  defaultGracefulShutdownConfig,
+  setupGracefulShutdownFsMocks,
+} from '../helpers/graceful-shutdown-test.utils';
 
 // Mock fs and path modules
 jest.mock('fs');
@@ -54,106 +60,18 @@ describe('GracefulShutdownManager', () => {
   const asInternals = (manager: GracefulShutdownManager): { cancelAllPendingOrders: () => Promise<number> } =>
     manager as unknown as { cancelAllPendingOrders: () => Promise<number> };
 
-  const mockConfig: GracefulShutdownConfig = {
-    enabled: true,
-    timeoutMs: 30000, // 30 seconds
-    forceExitOnTimeout: true,
-    closeAllPositions: true,
-    persistState: true,
-  };
-
-  const createMockPosition = (): Position => ({
-    id: 'pos-123',
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
-    quantity: 0.1,
-    entryPrice: 45000,
-    leverage: 10,
-    marginUsed: 450,
-    unrealizedPnL: 500,
-    status: 'OPEN',
-    openedAt: Date.now() - 3600000,
-    orderId: 'order-123',
-    reason: 'shutdown-test',
-    takeProfits: [
-      { level: 1, percent: 0.5, sizePercent: 50, price: 46000, hit: false },
-    ],
-    stopLoss: {
-      price: 44000,
-      initialPrice: 44000,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-  });
+  const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Create mocks
-    mockPositionLifecycleService = {
-      getCurrentPosition: jest.fn().mockReturnValue(createMockPosition()),
-      getPositionHistory: jest.fn().mockReturnValue([]),
-      updatePosition: jest.fn(),
-    } as unknown as jest.Mocked<PositionLifecycleService>;
-
-    mockActionQueue = {
-      enqueue: jest.fn(),
-      waitEmpty: jest.fn().mockResolvedValue(undefined),
-      getQueueSize: jest.fn().mockReturnValue(0),
-      clear: jest.fn(),
-    } as unknown as jest.Mocked<ActionQueueService>;
-
-    mockExchange = {
-      cancelAllOrders: jest.fn().mockResolvedValue(undefined),
-      cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
-      getSymbols: jest.fn().mockResolvedValue([]),
-      getBalance: jest.fn().mockResolvedValue({}),
-      placeOrder: jest.fn(),
-      cancelOrder: jest.fn(),
-      getOrderHistory: jest.fn(),
-      getOpenOrders: jest.fn(),
-      getPositions: jest.fn(),
-      getTradingPairs: jest.fn(),
-      getTicker: jest.fn(),
-      getKlines: jest.fn(),
-      subscribeToTicker: jest.fn(),
-      subscribeToPositions: jest.fn(),
-      subscribeToOrders: jest.fn(),
-      unsubscribeTicker: jest.fn(),
-    } as unknown as jest.Mocked<IExchange>;
-
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      log: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockEventBus = {
-      publishSync: jest.fn(),
-      publish: jest.fn(),
-      subscribe: jest.fn(),
-      unsubscribe: jest.fn(),
-    } as unknown as jest.Mocked<BotEventBus>;
-
-    // Mock fs functions
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
-    (fs.readFileSync as jest.Mock).mockReturnValue('{}');
-
-    // Create shutdown manager with mocks
-    shutdownManager = new GracefulShutdownManager(
-      mockConfig,
-      mockPositionLifecycleService,
-      mockActionQueue,
-      mockExchange,
-      mockLogger,
-      mockEventBus,
-      './test-shutdown-state'
-    );
+    const mocks = createGracefulShutdownMocks();
+    mockPositionLifecycleService = mocks.positionLifecycleService;
+    mockActionQueue = mocks.actionQueue;
+    mockExchange = mocks.exchange;
+    mockLogger = mocks.logger;
+    mockEventBus = mocks.eventBus;
+    setupGracefulShutdownFsMocks();
+    shutdownManager = createGracefulShutdownManager(mocks);
   });
 
   describe('Signal Handler Registration', () => {
@@ -221,15 +139,13 @@ describe('GracefulShutdownManager', () => {
       );
 
       // Create a new manager
-      const manager1 = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
-      );
+      const manager1 = createGracefulShutdownManager({
+        positionLifecycleService: mockPositionLifecycleService,
+        actionQueue: mockActionQueue,
+        exchange: mockExchange,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
 
       // Start first shutdown (won't complete due to mocked waitEmpty)
       const promise1 = manager1.initiateShutdown('First');
@@ -249,15 +165,13 @@ describe('GracefulShutdownManager', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       // Use a separate manager instance for this test
-      const manager = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
-      );
+      const manager = createGracefulShutdownManager({
+        positionLifecycleService: mockPositionLifecycleService,
+        actionQueue: mockActionQueue,
+        exchange: mockExchange,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
 
       try {
         await manager.initiateShutdown('User interrupt');
@@ -277,15 +191,13 @@ describe('GracefulShutdownManager', () => {
     it('should wait for action queue to empty', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const manager = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
-      );
+      const manager = createGracefulShutdownManager({
+        positionLifecycleService: mockPositionLifecycleService,
+        actionQueue: mockActionQueue,
+        exchange: mockExchange,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
 
       try {
         await manager.initiateShutdown('Queue test');
@@ -299,15 +211,13 @@ describe('GracefulShutdownManager', () => {
     it('should emit shutdown-completed event before exit', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const manager = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
-      );
+      const manager = createGracefulShutdownManager({
+        positionLifecycleService: mockPositionLifecycleService,
+        actionQueue: mockActionQueue,
+        exchange: mockExchange,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
 
       try {
         await manager.initiateShutdown('Test');
@@ -382,7 +292,7 @@ describe('GracefulShutdownManager', () => {
 
   describe('Position Closure', () => {
     it('should close positions via action queue', async () => {
-      const position = createMockPosition();
+      const position = createMockShutdownPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
       await shutdownManager.closeAllPositions(EmergencyCloseReason.BOT_SHUTDOWN);
@@ -407,17 +317,18 @@ describe('GracefulShutdownManager', () => {
 
     it('should skip closure if disabled in config', async () => {
       const noCloseConfig = { ...mockConfig, closeAllPositions: false };
-      const noCloseManager = new GracefulShutdownManager(
-        noCloseConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
+      const noCloseManager = createGracefulShutdownManager(
+        {
+          positionLifecycleService: mockPositionLifecycleService,
+          actionQueue: mockActionQueue,
+          exchange: mockExchange,
+          logger: mockLogger,
+          eventBus: mockEventBus,
+        },
+        { config: noCloseConfig },
       );
 
-      const position = createMockPosition();
+      const position = createMockShutdownPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
       await noCloseManager.initiateShutdown('No close test');
@@ -428,7 +339,7 @@ describe('GracefulShutdownManager', () => {
 
   describe('State Persistence', () => {
     it('should persist bot state to disk', async () => {
-      const position = createMockPosition();
+      const position = createMockShutdownPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
       await shutdownManager.persistState();
@@ -466,14 +377,15 @@ describe('GracefulShutdownManager', () => {
 
     it('should skip persistence if disabled in config', async () => {
       const noPersistConfig = { ...mockConfig, persistState: false };
-      const noPersistManager = new GracefulShutdownManager(
-        noPersistConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
+      const noPersistManager = createGracefulShutdownManager(
+        {
+          positionLifecycleService: mockPositionLifecycleService,
+          actionQueue: mockActionQueue,
+          exchange: mockExchange,
+          logger: mockLogger,
+          eventBus: mockEventBus,
+        },
+        { config: noPersistConfig },
       );
 
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
@@ -610,15 +522,13 @@ describe('GracefulShutdownManager', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
       mockActionQueue.waitEmpty.mockRejectedValue(new Error('Queue timeout'));
 
-      const manager = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-shutdown-state'
-      );
+      const manager = createGracefulShutdownManager({
+        positionLifecycleService: mockPositionLifecycleService,
+        actionQueue: mockActionQueue,
+        exchange: mockExchange,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
 
       try {
         await manager.initiateShutdown('Queue timeout');

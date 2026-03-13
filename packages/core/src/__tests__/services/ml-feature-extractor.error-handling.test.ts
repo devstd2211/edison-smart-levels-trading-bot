@@ -1,40 +1,28 @@
 /**
  * MLFeatureExtractorService Error Handling Tests (Phase 8.9.68)
- *
- * Test Coverage:
- * - THROW: Input validation (null/invalid candles, pattern type, outcome)
- * - THROW: Multi-timeframe validation (min candles, valid params)
- * - GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity in indicators)
- * - SKIP: Logging errors
- * - Integration: Feature extraction with proper context
- * - Backward Compatibility: Tests without ErrorHandler still work
  */
 
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.service';
 import { Candle, LoggerService } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import {
+  createMLFeatureCandle,
+  createMLFeatureCandleSequence,
+  createMLFeatureExtractorHarness,
+  createMLFeatureExtractorLogger,
+} from '../helpers/ml-feature-extractor-test.utils';
 
-type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>;
 const asCandles = (value: unknown): Candle[] => value as Candle[];
 const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
-const asLogger = (value: LoggerLike): LoggerService => value as unknown as LoggerService;
-
-const createMockLogger = (): LoggerLike => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-});
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler;
-  const mockLogger = asLogger(createMockLogger());
+  let mockLogger: LoggerService;
 
   beforeEach(() => {
-    errorHandler = new ErrorHandler(mockLogger);
-    service = new MLFeatureExtractorService(mockLogger, errorHandler);
+    ({ service, errorHandler, logger: mockLogger } = createMLFeatureExtractorHarness());
   });
 
   describe('THROW: extractFeatures Input Validation', () => {
@@ -57,28 +45,28 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should throw when candles length < 5', () => {
-      const candles = [createMockCandle(1000, 100), createMockCandle(2000, 101)];
+      const candles = [createMLFeatureCandle(100), createMLFeatureCandle(101)];
       expect(() => {
         service.extractFeatures(candles, 'BREAKOUT', 'WIN');
       }).toThrow('Need at least 5 candles to extract features');
     });
 
     test('should throw on null pattern type', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       expect(() => {
         service.extractFeatures(candles, asPatternType(null), 'WIN');
       }).toThrow('Pattern type must be a non-empty string');
     });
 
     test('should throw on empty pattern type', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       expect(() => {
         service.extractFeatures(candles, '', 'WIN');
       }).toThrow('Pattern type must be a non-empty string');
     });
 
     test('should throw on invalid outcome', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       expect(() => {
         service.extractFeatures(candles, 'BREAKOUT', asOutcome('INVALID'));
       }).toThrow("Outcome must be 'WIN' or 'LOSS'");
@@ -93,21 +81,21 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should throw when candles1m length < minCandlesFor1m', () => {
-      const candles = createCandles(30);
+      const candles = createMLFeatureCandleSequence(30);
       expect(() => {
         service.extractFeaturesMultiTimeframe(candles, 'BREAKOUT', 'WIN', 50);
       }).toThrow('Need at least 50 1m candles for multi-timeframe extraction');
     });
 
     test('should throw on invalid minCandlesFor1m', () => {
-      const candles = createCandles(100);
+      const candles = createMLFeatureCandleSequence(100);
       expect(() => {
         service.extractFeaturesMultiTimeframe(candles, 'BREAKOUT', 'WIN', -10);
       }).toThrow('minCandlesFor1m must be a positive finite number');
     });
 
     test('should throw on NaN minCandlesFor1m', () => {
-      const candles = createCandles(100);
+      const candles = createMLFeatureCandleSequence(100);
       expect(() => {
         service.extractFeaturesMultiTimeframe(candles, 'BREAKOUT', 'WIN', NaN);
       }).toThrow('minCandlesFor1m must be a positive finite number');
@@ -117,11 +105,11 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   describe('GRACEFUL_DEGRADE: Feature Extraction Failures', () => {
     test('should handle candles with mixed valid/invalid data', () => {
       const candles = [
-        createMockCandle(1000, 100),
-        createMockCandle(2000, 101),
-        createMockCandle(3000, 102),
-        createMockCandle(4000, 103),
-        createMockCandle(5000, 104),
+        createMLFeatureCandle(100, { timestamp: 1_000 }),
+        createMLFeatureCandle(101, { timestamp: 2_000 }),
+        createMLFeatureCandle(102, { timestamp: 3_000 }),
+        createMLFeatureCandle(103, { timestamp: 4_000 }),
+        createMLFeatureCandle(104, { timestamp: 5_000 }),
       ];
       const result = service.extractFeatures(candles, 'BREAKOUT', 'WIN');
       expect(result).toBeDefined();
@@ -130,18 +118,18 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should handle feature extraction with extreme prices', () => {
       const candles = [
-        { ...createMockCandle(1000, 0.00001), close: 0.00001 },
-        { ...createMockCandle(2000, 0.000011), close: 0.000011 },
-        { ...createMockCandle(3000, 0.000012), close: 0.000012 },
-        { ...createMockCandle(4000, 0.000013), close: 0.000013 },
-        { ...createMockCandle(5000, 0.000014), close: 0.000014 },
+        createMLFeatureCandle(0.00001, { timestamp: 1_000, close: 0.00001 }),
+        createMLFeatureCandle(0.000011, { timestamp: 2_000, close: 0.000011 }),
+        createMLFeatureCandle(0.000012, { timestamp: 3_000, close: 0.000012 }),
+        createMLFeatureCandle(0.000013, { timestamp: 4_000, close: 0.000013 }),
+        createMLFeatureCandle(0.000014, { timestamp: 5_000, close: 0.000014 }),
       ];
       const result = service.extractFeatures(candles, 'MICRO_PRICE', 'WIN');
       expect(result).toBeDefined();
     });
 
     test('should handle multi-timeframe aggregation gracefully', () => {
-      const candles = createCandles(50);
+      const candles = createMLFeatureCandleSequence(50);
       const result = service.extractFeaturesMultiTimeframe(candles, 'BREAKOUT', 'WIN', 50);
       expect(result).toBeDefined();
       expect(result.patternType).toBe('BREAKOUT');
@@ -152,18 +140,13 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails on info', () => {
       const badLogger = {
+        ...createMLFeatureExtractorLogger(),
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-      };
-      const badService = new MLFeatureExtractorService(
-        asLogger(badLogger as LoggerLike),
-        errorHandler
-      );
-      const candles = createCandles(10);
+      } as unknown as LoggerService;
+      const badService = new MLFeatureExtractorService(badLogger, errorHandler);
+      const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
         badService.extractFeatures(candles, 'BREAKOUT', 'WIN');
@@ -172,18 +155,13 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should not throw when logger fails on error', () => {
       const badLogger = {
-        info: jest.fn(),
-        warn: jest.fn(),
+        ...createMLFeatureExtractorLogger(),
         error: jest.fn(() => {
           throw new Error('Logger error failed');
         }),
-        debug: jest.fn(),
-      };
-      const badService = new MLFeatureExtractorService(
-        asLogger(badLogger as LoggerLike),
-        errorHandler
-      );
-      const candles = createCandles(10);
+      } as unknown as LoggerService;
+      const badService = new MLFeatureExtractorService(badLogger, errorHandler);
+      const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
         badService.extractFeatures(candles, 'BREAKOUT', 'WIN');
@@ -193,7 +171,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   describe('Integration: Feature Extraction', () => {
     test('should extract features with valid 5+ candles', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       const result = service.extractFeatures(candles, 'BREAKOUT', 'WIN');
 
       expect(result).toBeDefined();
@@ -205,7 +183,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should extract multi-timeframe features with 50+ candles', () => {
-      const candles = createCandles(60);
+      const candles = createMLFeatureCandleSequence(60);
       const result = service.extractFeaturesMultiTimeframe(candles, 'RETEST', 'LOSS', 50);
 
       expect(result).toBeDefined();
@@ -218,21 +196,21 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should handle exactly 50 candles for multi-timeframe', () => {
-      const candles = createCandles(50);
+      const candles = createMLFeatureCandleSequence(50);
       expect(() => {
         service.extractFeaturesMultiTimeframe(candles, 'PATTERN', 'WIN', 50);
       }).not.toThrow();
     });
 
     test('should handle exactly 5 candles for extractFeatures', () => {
-      const candles = createCandles(5);
+      const candles = createMLFeatureCandleSequence(5);
       expect(() => {
         service.extractFeatures(candles, 'SIMPLE', 'WIN');
       }).not.toThrow();
     });
 
     test('should extract features with LOSS outcome', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       const result = service.extractFeatures(candles, 'LOSING_PATTERN', 'LOSS');
 
       expect(result.label).toBe('LOSS');
@@ -240,7 +218,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should extract features with various pattern types', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       const patterns = ['BREAKOUT', 'RETEST', 'REVERSAL', 'CONSOLIDATION', 'LIQUIDITY_SWEEP'];
 
       for (const pattern of patterns) {
@@ -253,7 +231,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
       const basicService = new MLFeatureExtractorService(mockLogger);
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
         basicService.extractFeatures(candles, 'BREAKOUT', 'WIN');
@@ -262,7 +240,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should work without logger', () => {
       const basicService = new MLFeatureExtractorService(undefined, errorHandler);
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
         basicService.extractFeatures(candles, 'BREAKOUT', 'WIN');
@@ -271,7 +249,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should work without any optional parameters', () => {
       const basicService = new MLFeatureExtractorService();
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
         basicService.extractFeatures(candles, 'BREAKOUT', 'WIN');
@@ -289,7 +267,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   describe('Edge Cases', () => {
     test('should handle pattern type with special characters', () => {
-      const candles = createCandles(10);
+      const candles = createMLFeatureCandleSequence(10);
       expect(() => {
         service.extractFeatures(candles, 'PATTERN_WITH_SPECIAL-CHARS_123', 'WIN');
       }).not.toThrow();
@@ -297,8 +275,8 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should handle very large candle price', () => {
       const candles = [
-        ...createCandles(4),
-        { ...createMockCandle(5000, 100000), close: 100000.50 },
+        ...createMLFeatureCandleSequence(4),
+        createMLFeatureCandle(100_000.5, { timestamp: 5_000, close: 100_000.5 }),
       ];
       expect(() => {
         service.extractFeatures(candles, 'HIGH_PRICE', 'WIN');
@@ -307,8 +285,8 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should handle very small candle price', () => {
       const candles = [
-        ...createCandles(4),
-        { ...createMockCandle(5000, 0.00001), close: 0.00001 },
+        ...createMLFeatureCandleSequence(4),
+        createMLFeatureCandle(0.00001, { timestamp: 5_000, close: 0.00001 }),
       ];
       expect(() => {
         service.extractFeatures(candles, 'SMALL_PRICE', 'WIN');
@@ -317,8 +295,8 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should handle candles with zero volume', () => {
       const candles = [
-        ...createCandles(4),
-        { ...createMockCandle(5000, 100), volume: 0 },
+        ...createMLFeatureCandleSequence(4),
+        createMLFeatureCandle(100, { timestamp: 5_000, volume: 0 }),
       ];
       expect(() => {
         service.extractFeatures(candles, 'ZERO_VOLUME', 'WIN');
@@ -326,21 +304,21 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should handle 100+ candles for multi-timeframe', () => {
-      const candles = createCandles(100);
+      const candles = createMLFeatureCandleSequence(100);
       expect(() => {
         service.extractFeaturesMultiTimeframe(candles, 'LONG_HISTORY', 'WIN', 50);
       }).not.toThrow();
     });
 
     test('should handle identical prices across candles', () => {
-      const candles = Array(10).fill(null).map((_, i) => ({
-        timestamp: 1000 + i * 1000,
-        open: 100,
-        high: 100,
-        low: 100,
-        close: 100,
-        volume: 1000,
-      }));
+      const candles = Array.from({ length: 10 }, (_, i) =>
+        createMLFeatureCandle(100, {
+          timestamp: 1_000 + i * 1_000,
+          high: 100,
+          low: 100,
+          volume: 1_000,
+        }),
+      );
 
       expect(() => {
         service.extractFeatures(candles, 'FLAT_MARKET', 'WIN');
@@ -348,34 +326,3 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
   });
 });
-
-// Helper functions
-function createMockCandle(timestamp: number, price: number): Candle {
-  return {
-    timestamp,
-    open: price,
-    high: price + 0.5,
-    low: price - 0.5,
-    close: price,
-    volume: 1000,
-  };
-}
-
-function createCandles(count: number): Candle[] {
-  const candles: Candle[] = [];
-  let price = 100;
-
-  for (let i = 0; i < count; i++) {
-    candles.push({
-      timestamp: 1000 + i * 60000, // 1 minute intervals
-      open: price,
-      high: price + Math.random() * 0.5,
-      low: price - Math.random() * 0.5,
-      close: price + (Math.random() - 0.5) * 0.2,
-      volume: 1000 + Math.random() * 500,
-    });
-    price += (Math.random() - 0.5) * 0.5; // Random walk
-  }
-
-  return candles;
-}

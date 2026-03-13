@@ -15,11 +15,17 @@ import { GracefulShutdownManager } from '../../services/graceful-shutdown.servic
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';
-import { LoggerService, PositionSide, Position } from '../../types/legacy';
+import { LoggerService } from '../../types/legacy';
 import { IExchange } from '../../interfaces/IExchange';
 import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/legacy';
 import * as fs from 'fs';
-import * as path from 'path';
+import {
+  createGracefulShutdownManager,
+  createGracefulShutdownMocks,
+  createMockShutdownPosition,
+  defaultGracefulShutdownConfig,
+  setupGracefulShutdownFsMocks,
+} from '../helpers/graceful-shutdown-test.utils';
 
 jest.mock('fs');
 jest.mock('path', () => {
@@ -43,101 +49,19 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
 
-  const mockConfig: GracefulShutdownConfig = {
-    enabled: true,
-    timeoutMs: 30000,
-    forceExitOnTimeout: true,
-    closeAllPositions: true,
-    persistState: true,
-  };
-
-  const createMockPosition = (): Position => ({
-    id: 'pos-123',
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
-    quantity: 0.1,
-    entryPrice: 45000,
-    leverage: 10,
-    marginUsed: 450,
-    unrealizedPnL: 500,
-    status: 'OPEN',
-    openedAt: Date.now() - 3600000,
-    orderId: 'order-123',
-    reason: 'error-handling-test',
-    takeProfits: [{ level: 1, percent: 0.5, sizePercent: 50, price: 46000, hit: false }],
-    stopLoss: {
-      price: 44000,
-      initialPrice: 44000,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-  });
+  const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockPositionLifecycleService = {
-      getCurrentPosition: jest.fn().mockReturnValue(createMockPosition()),
-      getPositionHistory: jest.fn().mockReturnValue([]),
-      updatePosition: jest.fn(),
-    } as unknown as jest.Mocked<PositionLifecycleService>;
-
-    mockActionQueue = {
-      enqueue: jest.fn(),
-      waitEmpty: jest.fn(),
-      getQueueSize: jest.fn(),
-      clear: jest.fn(),
-    } as unknown as jest.Mocked<ActionQueueService>;
-
-    mockExchange = {
-      cancelAllOrders: jest.fn(),
-      cancelAllConditionalOrders: jest.fn(),
-      getSymbols: jest.fn(),
-      getBalance: jest.fn(),
-      placeOrder: jest.fn(),
-      cancelOrder: jest.fn(),
-      getOrderHistory: jest.fn(),
-      getOpenOrders: jest.fn(),
-      getPositions: jest.fn(),
-      getTradingPairs: jest.fn(),
-      getTicker: jest.fn(),
-      getKlines: jest.fn(),
-      subscribeToTicker: jest.fn(),
-      subscribeToPositions: jest.fn(),
-      subscribeToOrders: jest.fn(),
-      unsubscribeTicker: jest.fn(),
-    } as unknown as jest.Mocked<IExchange>;
-
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      log: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockEventBus = {
-      publishSync: jest.fn(),
-      publish: jest.fn(),
-      subscribe: jest.fn(),
-      unsubscribe: jest.fn(),
-    } as unknown as jest.Mocked<BotEventBus>;
-
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
-    (fs.readFileSync as jest.Mock).mockReturnValue('{}');
-
-    shutdownManager = new GracefulShutdownManager(
-      mockConfig,
-      mockPositionLifecycleService,
-      mockActionQueue,
-      mockExchange,
-      mockLogger,
-      mockEventBus,
-      './test-shutdown-state'
-    );
+    const mocks = createGracefulShutdownMocks(createMockShutdownPosition({ reason: 'error-handling-test' }));
+    mockPositionLifecycleService =
+      mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
+    mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
+    mockExchange = mocks.exchange as unknown as jest.Mocked<IExchange>;
+    mockLogger = mocks.logger as unknown as jest.Mocked<LoggerService>;
+    mockEventBus = mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
+    setupGracefulShutdownFsMocks({ exists: true });
+    shutdownManager = createGracefulShutdownManager(mocks);
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {
@@ -344,14 +268,15 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
       (fs.mkdirSync as jest.Mock).mockImplementationOnce(() => {});
 
-      const newManager = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-new-dir'
+      const newManager = createGracefulShutdownManager(
+        {
+          positionLifecycleService: mockPositionLifecycleService,
+          actionQueue: mockActionQueue,
+          exchange: mockExchange,
+          logger: mockLogger,
+          eventBus: mockEventBus,
+        },
+        { stateDirectory: './test-new-dir' },
       );
 
       newManager.registerShutdownHandlers();
@@ -368,14 +293,15 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         throw new Error('EACCES: permission denied');
       });
 
-      const newManager = new GracefulShutdownManager(
-        mockConfig,
-        mockPositionLifecycleService,
-        mockActionQueue,
-        mockExchange,
-        mockLogger,
-        mockEventBus,
-        './test-permission-denied'
+      const newManager = createGracefulShutdownManager(
+        {
+          positionLifecycleService: mockPositionLifecycleService,
+          actionQueue: mockActionQueue,
+          exchange: mockExchange,
+          logger: mockLogger,
+          eventBus: mockEventBus,
+        },
+        { stateDirectory: './test-permission-denied' },
       );
 
       newManager.registerShutdownHandlers();
@@ -394,14 +320,15 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let constructorFailed = false;
       try {
-        const newManager = new GracefulShutdownManager(
-          mockConfig,
-          mockPositionLifecycleService,
-          mockActionQueue,
-          mockExchange,
-          mockLogger,
-          mockEventBus,
-          './test-fs-error'
+        const newManager = createGracefulShutdownManager(
+          {
+            positionLifecycleService: mockPositionLifecycleService,
+            actionQueue: mockActionQueue,
+            exchange: mockExchange,
+            logger: mockLogger,
+            eventBus: mockEventBus,
+          },
+          { config: mockConfig, stateDirectory: './test-fs-error' },
         );
         newManager.registerShutdownHandlers();
       } catch (error) {
@@ -541,7 +468,9 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
     it('test-5.3: Should emit shutdown-completed even with partial failures', async () => {
       // Mock position exists
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(createMockPosition());
+      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(
+        createMockShutdownPosition({ reason: 'error-handling-test' }),
+      );
       // Orders fail to cancel but we degrade
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('Timeout'));
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('Timeout'));

@@ -17,93 +17,21 @@ import {
   SignalDirection,
   SignalType,
 } from '../../types/legacy';
-
-const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-};
-
-function createTestSignal(): Signal {
-  return {
-    direction: SignalDirection.LONG,
-    type: SignalType.LEVEL_BASED,
-    confidence: 70,
-    price: 100,
-    stopLoss: 95,
-    takeProfits: [{ level: 1, percent: 100, sizePercent: 100, price: 110, hit: false }],
-    reason: 'test',
-    timestamp: Date.now(),
-  };
-}
-
-// Helper to create a simple test action
-function createTestAction(
-  id: string,
-  type: ActionType = ActionType.OPEN_POSITION,
-  maxRetries = 2
-): IAction {
-  const base: IAction = {
-    id,
-    type,
-    timestamp: Date.now(),
-    maxRetries,
-    retries: 0,
-    priority: 'NORMAL',
-    metadata: {},
-  };
-
-  if (type === ActionType.OPEN_POSITION) {
-    return {
-      ...base,
-      signal: createTestSignal(),
-      positionSize: 1,
-      stopLoss: 100,
-      takeProfits: [110],
-      leverage: 1,
-      symbol: 'BTCUSDT',
-    } as OpenPositionAction;
-  }
-
-  if (type === ActionType.CLOSE_POSITION) {
-    return {
-      ...base,
-      positionId: 'pos-123',
-      reason: 'Test',
-    } as ClosePositionAction;
-  }
-
-  return base;
-}
-
-// Helper to create a test handler
-function createTestHandler(
-  name: string,
-  canHandleType: ActionType | null = null,
-  implementation?: (a: AnyAction) => Promise<ActionResult>
-): IActionHandler {
-  return {
-    name,
-    canHandle: (a: IAction): a is AnyAction => {
-      if (canHandleType === null) return true;
-      return a.type === canHandleType;
-    },
-    handle: implementation || (async (a: AnyAction) => ({
-      success: true,
-      actionId: a.id,
-      timestamp: Date.now(),
-    })),
-  };
-}
+import {
+  createActionQueueHarness,
+  createTestAction,
+  createTestHandler,
+  mockActionQueueLogger,
+} from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    service = new ActionQueueService();
-    errorHandler = new ErrorHandler(mockLogger);
+    const harness = createActionQueueHarness();
+    service = harness.service;
+    errorHandler = harness.errorHandler;
     jest.clearAllMocks();
   });
 

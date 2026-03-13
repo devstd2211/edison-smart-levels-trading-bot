@@ -6,6 +6,7 @@ import { RateLimiterService } from '../../../services/resilience/rate-limiter.se
 import { RetryPolicyService } from '../../../services/resilience/retry-policy.service';
 import { BulkheadService } from '../../../services/resilience/bulkhead.service';
 import { PrometheusMetricsService } from '../../../services/prometheus-metrics.service';
+import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
   let coordinator: ResilienceCoordinator;
@@ -16,8 +17,10 @@ describe('ResilienceCoordinator', () => {
   let metrics: PrometheusMetricsService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let harness: ResilienceTestHarness;
 
   beforeEach(() => {
+    harness = createResilienceTestHarness();
     logger = new LoggerService('ERROR', './logs', false);
     jest.spyOn(logger, 'debug').mockImplementation(() => undefined);
     jest.spyOn(logger, 'info').mockImplementation(() => undefined);
@@ -40,7 +43,7 @@ describe('ResilienceCoordinator', () => {
       errorHandler
     );
 
-    rateLimiter = new RateLimiterService(
+    rateLimiter = harness.trackLifecycle(new RateLimiterService(
       {
         maxRequests: 5,
         windowMs: 1000,
@@ -50,10 +53,9 @@ describe('ResilienceCoordinator', () => {
       },
       logger,
       errorHandler
-    );
-    rateLimiter.start();
+    ));
 
-    retryPolicy = new RetryPolicyService(
+    retryPolicy = harness.trackLifecycle(new RetryPolicyService(
       {
         maxAttempts: 3,
         baseDelayMs: 50,
@@ -64,10 +66,9 @@ describe('ResilienceCoordinator', () => {
       },
       logger,
       errorHandler
-    );
-    retryPolicy.start();
+    ));
 
-    bulkhead = new BulkheadService(
+    bulkhead = harness.trackLifecycle(new BulkheadService(
       {
         maxConcurrent: 5,
         queueSize: 10,
@@ -76,14 +77,13 @@ describe('ResilienceCoordinator', () => {
       },
       logger,
       errorHandler
-    );
+    ));
 
-    metrics = new PrometheusMetricsService(
+    metrics = harness.trackLifecycle(new PrometheusMetricsService(
       { enabled: true },
       logger,
       errorHandler
-    );
-    metrics.start();
+    ));
 
     // Create coordinator
     coordinator = new ResilienceCoordinator(
@@ -99,6 +99,7 @@ describe('ResilienceCoordinator', () => {
 
   afterEach(() => {
     coordinator.stop();
+    harness.stopTrackedServices();
   });
 
   // ===========================

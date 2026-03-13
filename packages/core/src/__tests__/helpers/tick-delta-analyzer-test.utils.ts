@@ -1,0 +1,82 @@
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { LoggerService, Tick, TickDeltaAnalyzerConfig } from '../../types/legacy';
+import { TickDeltaAnalyzerService } from '../../services/tick-delta-analyzer.service';
+
+export type TickDeltaAnalyzerMockLogger = {
+  debug: jest.Mock;
+  info: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+  getLogs: jest.Mock;
+  getLogsByLevel: jest.Mock;
+  clear: jest.Mock;
+  disableConsoleOutput: jest.Mock;
+  enableConsoleOutputMode: jest.Mock;
+};
+
+export type TickDeltaAnalyzerHarness = {
+  service: TickDeltaAnalyzerService;
+  config: TickDeltaAnalyzerConfig;
+  logger: LoggerService;
+  mockLogger: TickDeltaAnalyzerMockLogger;
+  errorHandler: ErrorHandler;
+};
+
+export function createTickDeltaAnalyzerMockLogger(): TickDeltaAnalyzerMockLogger {
+  return {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    getLogs: jest.fn(() => []),
+    getLogsByLevel: jest.fn(() => []),
+    clear: jest.fn(),
+    disableConsoleOutput: jest.fn(),
+    enableConsoleOutputMode: jest.fn(),
+  };
+}
+
+export function createTickDeltaAnalyzerConfig(
+  overrides: Partial<TickDeltaAnalyzerConfig> = {},
+): TickDeltaAnalyzerConfig {
+  return {
+    minDeltaRatio: 2.0,
+    detectionWindow: 5_000,
+    minTickCount: 20,
+    minVolumeUSDT: 1_000,
+    maxConfidence: 85,
+    ...overrides,
+  };
+}
+
+export function createTickDeltaAnalyzerTick(
+  overrides: Partial<Tick> = {},
+): Tick {
+  return {
+    side: 'BUY',
+    price: 1.0,
+    size: 100,
+    timestamp: Date.now(),
+    ...overrides,
+  };
+}
+
+export function createTickDeltaAnalyzerHarness(options: {
+  config?: TickDeltaAnalyzerConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): TickDeltaAnalyzerHarness {
+  const config = options.config ?? createTickDeltaAnalyzerConfig();
+  const mockLogger = createTickDeltaAnalyzerMockLogger();
+  const logger = options.logger ?? (mockLogger as unknown as LoggerService);
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const service = new TickDeltaAnalyzerService(config, logger, errorHandler);
+
+  return {
+    service,
+    config,
+    logger,
+    mockLogger,
+    errorHandler,
+  };
+}

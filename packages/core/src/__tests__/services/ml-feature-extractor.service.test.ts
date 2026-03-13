@@ -3,55 +3,23 @@
  */
 
 import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.service';
-import { LoggerService, LogLevel, Candle } from '../../types/legacy';
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-function createMockCandle(close: number, high: number, low: number, volume: number = 1000): Candle {
-  return {
-    timestamp: Date.now(),
-    open: close,
-    high,
-    low,
-    close,
-    volume,
-  };
-}
-
-function createCandleSequence(length: number, startPrice: number = 100): Candle[] {
-  const candles: Candle[] = [];
-  let price = startPrice;
-
-  for (let i = 0; i < length; i++) {
-    const change = (Math.random() - 0.5) * 2; // ±1 price change
-    price += change;
-    const high = price + Math.random();
-    const low = price - Math.random();
-
-    candles.push(createMockCandle(price, high, low, 1000 + Math.random() * 500));
-  }
-
-  return candles;
-}
-
-// ============================================================================
-// TESTS
-// ============================================================================
+import { Candle } from '../../types/legacy';
+import {
+  createMLFeatureCandle,
+  createMLFeatureCandleSequence,
+  createMLFeatureExtractorHarness,
+} from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
-  let logger: LoggerService;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    service = new MLFeatureExtractorService(logger);
+    ({ service } = createMLFeatureExtractorHarness());
   });
 
   describe('extractFeatures', () => {
     it('should extract features from valid candle sequence', () => {
-      const candles = createCandleSequence(50);
+      const candles = createMLFeatureCandleSequence(50);
       const features = service.extractFeatures(candles, 'BULLISH_ENGULFING', 'WIN');
 
       expect(features).toBeDefined();
@@ -61,7 +29,7 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should throw error for insufficient candles (< 5)', () => {
-      const candles = createCandleSequence(3);
+      const candles = createMLFeatureCandleSequence(3);
 
       expect(() => {
         service.extractFeatures(candles, 'PATTERN', 'WIN');
@@ -69,7 +37,7 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should extract price action features', () => {
-      const candles = createCandleSequence(20);
+      const candles = createMLFeatureCandleSequence(20);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       expect(features.priceAction).toBeDefined();
@@ -81,7 +49,7 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should extract technical indicators', () => {
-      const candles = createCandleSequence(50);
+      const candles = createMLFeatureCandleSequence(50);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       expect(features.technicalIndicators).toBeDefined();
@@ -96,7 +64,7 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should extract volatility features', () => {
-      const candles = createCandleSequence(50);
+      const candles = createMLFeatureCandleSequence(50);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       expect(features.volatility).toBeDefined();
@@ -106,7 +74,7 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should extract order flow features', () => {
-      const candles = createCandleSequence(20);
+      const candles = createMLFeatureCandleSequence(20);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       expect(features.orderFlow).toBeDefined();
@@ -117,14 +85,14 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should handle LOSS outcome', () => {
-      const candles = createCandleSequence(20);
+      const candles = createMLFeatureCandleSequence(20);
       const features = service.extractFeatures(candles, 'PATTERN', 'LOSS');
 
       expect(features.label).toBe('LOSS');
     });
 
     it('should handle different pattern types', () => {
-      const candles = createCandleSequence(20);
+      const candles = createMLFeatureCandleSequence(20);
       const patterns = [
         'BULLISH_ENGULFING',
         'BEARISH_ENGULFING',
@@ -140,27 +108,21 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should calculate consistent returns', () => {
-      const candles = createCandleSequence(10, 100);
+      const candles = createMLFeatureCandleSequence(10, { startPrice: 100 });
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       const returns = features.priceAction.returns;
       expect(returns.length).toBe(5);
-      expect(returns[0]).toBe(0); // First candle has 0 return
+      expect(returns[0]).toBe(0);
     });
 
     it('should handle high volatility candles', () => {
-      const candles: Candle[] = [];
-      let price = 100;
-
-      for (let i = 0; i < 50; i++) {
-        const change = (Math.random() - 0.5) * 10; // ±5 price change (high volatility)
-        price += change;
-        const high = price + 5;
-        const low = price - 5;
-
-        candles.push(createMockCandle(price, high, low, 5000 + Math.random() * 1000));
-      }
-
+      const candles = createMLFeatureCandleSequence(50, {
+        swing: 5,
+        wickSize: 5,
+        volumeBase: 5_000,
+        volumeStep: 100,
+      });
       const features = service.extractFeatures(candles, 'VOLATILE', 'WIN');
 
       expect(features.volatility.atrPercent).toBeGreaterThanOrEqual(0);
@@ -168,18 +130,13 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should handle low volatility candles', () => {
-      const candles: Candle[] = [];
-      let price = 100;
-
-      for (let i = 0; i < 50; i++) {
-        const change = (Math.random() - 0.5) * 0.1; // ±0.05 price change (low volatility)
-        price += change;
-        const high = price + 0.01;
-        const low = price - 0.01;
-
-        candles.push(createMockCandle(price, high, low, 500));
-      }
-
+      const candles = createMLFeatureCandleSequence(50, {
+        swing: 0.05,
+        drift: 0,
+        wickSize: 0.01,
+        volumeBase: 500,
+        volumeStep: 0,
+      });
       const features = service.extractFeatures(candles, 'STABLE', 'WIN');
 
       expect(features.volatility.atrPercent).toBeLessThan(0.5);
@@ -187,16 +144,15 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should extract last 5 candles only for price action', () => {
-      const candles = createCandleSequence(100);
+      const candles = createMLFeatureCandleSequence(100);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
-      // Verify that price action uses the last 5 candles
       expect(features.priceAction.closes[4]).toBe(candles[candles.length - 1].close);
       expect(features.priceAction.closes[0]).toBe(candles[candles.length - 5].close);
     });
 
     it('should calculate RSI values in valid range', () => {
-      const candles = createCandleSequence(50);
+      const candles = createMLFeatureCandleSequence(50);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       expect(features.technicalIndicators.rsi).toBeGreaterThanOrEqual(0);
@@ -204,10 +160,9 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should handle EMA calculation with limited data', () => {
-      const candles = createCandleSequence(10);
+      const candles = createMLFeatureCandleSequence(10);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
-      // EMA50 should be calculated as SMA when < 50 candles
       expect(features.technicalIndicators.ema50).toBeGreaterThan(0);
       expect(features.technicalIndicators.ema20).toBeGreaterThan(0);
     });
@@ -215,39 +170,43 @@ describe('MLFeatureExtractorService', () => {
     it('should detect bullish close position', () => {
       const candles: Candle[] = [];
 
-      // Create candles with close near the top (bullish)
       for (let i = 0; i < 20; i++) {
-        const low = 100;
-        const high = 102;
-        const close = 101.5; // Near top
-        candles.push({ timestamp: Date.now() + i * 1000, open: 100.5, high, low, close, volume: 1000 });
+        candles.push({
+          timestamp: 1_700_300_000_000 + i * 1_000,
+          open: 100.5,
+          high: 102,
+          low: 100,
+          close: 101.5,
+          volume: 1_000,
+        });
       }
 
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
-      // Bullish close should produce positive bid/ask imbalance
       expect(features.orderFlow.microStructure).toBe('BULLISH');
     });
 
     it('should detect bearish close position', () => {
       const candles: Candle[] = [];
 
-      // Create candles with close near the bottom (bearish)
       for (let i = 0; i < 20; i++) {
-        const low = 100;
-        const high = 102;
-        const close = 100.5; // Near bottom
-        candles.push({ timestamp: Date.now() + i * 1000, open: 101.5, high, low, close, volume: 1000 });
+        candles.push({
+          timestamp: 1_700_400_000_000 + i * 1_000,
+          open: 101.5,
+          high: 102,
+          low: 100,
+          close: 100.5,
+          volume: 1_000,
+        });
       }
 
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
-      // Bearish close should produce negative bid/ask imbalance
       expect(features.orderFlow.microStructure).toBe('BEARISH');
     });
 
     it('should handle very long candle sequence', () => {
-      const candles = createCandleSequence(1000);
+      const candles = createMLFeatureCandleSequence(1000);
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
       expect(features).toBeDefined();
@@ -257,7 +216,7 @@ describe('MLFeatureExtractorService', () => {
 
   describe('Edge Cases', () => {
     it('should handle exactly 5 candles (minimum)', () => {
-      const candles = createCandleSequence(5);
+      const candles = createMLFeatureCandleSequence(5);
       const features = service.extractFeatures(candles, 'MIN', 'WIN');
 
       expect(features).toBeDefined();
@@ -265,25 +224,35 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should handle candles with identical prices', () => {
-      const candles: Candle[] = [];
-
-      for (let i = 0; i < 20; i++) {
-        candles.push(createMockCandle(100, 100, 100, 1000));
-      }
+      const candles = Array.from({ length: 20 }, (_, index) =>
+        createMLFeatureCandle(100, {
+          timestamp: 1_700_500_000_000 + index * 60_000,
+          high: 100,
+          low: 100,
+          volume: 1_000,
+        }),
+      );
 
       const features = service.extractFeatures(candles, 'FLAT', 'WIN');
 
       expect(features).toBeDefined();
       expect(features.volatility.atrPercent).toBe(0);
-      expect(features.technicalIndicators.rsi).toBe(50); // Neutral RSI for flat market
+      expect(features.technicalIndicators.rsi).toBe(50);
     });
 
     it('should calculate volume imbalance correctly', () => {
       const candles: Candle[] = [];
 
       for (let i = 0; i < 20; i++) {
-        const volume = i < 18 ? 1000 : 5000; // Last 2 candles have higher volume
-        candles.push(createMockCandle(100 + i, 101 + i, 99 + i, volume));
+        const volume = i < 18 ? 1_000 : 5_000;
+        candles.push(
+          createMLFeatureCandle(100 + i, {
+            timestamp: 1_700_600_000_000 + i * 60_000,
+            high: 101 + i,
+            low: 99 + i,
+            volume,
+          }),
+        );
       }
 
       const features = service.extractFeatures(candles, 'VOLUME', 'WIN');
