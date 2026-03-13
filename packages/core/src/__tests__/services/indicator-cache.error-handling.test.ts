@@ -14,55 +14,25 @@
  */
 
 import { IndicatorCacheService } from '../../services/indicator-cache.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { IMarketDataRepository } from '../../repositories/IRepositories';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-
-type LoggerMock = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
-type MockRepository = IMarketDataRepository & {
-  getIndicator: jest.Mock;
-  cacheIndicator: jest.Mock;
-  clearExpiredIndicators: jest.Mock;
-  getStats: jest.Mock;
-  clear: jest.Mock;
-};
-
-// Mock Logger
-const createMockLogger = (overrides?: Partial<LoggerMock>): LoggerService =>
-  ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  ...overrides,
-} as unknown as LoggerService);
-
-// Mock Repository
-const createMockRepository = (overrides?: Partial<MockRepository>): MockRepository => ({
-  getIndicator: jest.fn().mockReturnValue(null),
-  cacheIndicator: jest.fn(),
-  clearExpiredIndicators: jest.fn(),
-  getStats: jest.fn().mockReturnValue({ indicatorCount: 0 }),
-  clear: jest.fn(),
-  // Add other required methods as no-ops
-  setCandles: jest.fn(),
-  getCandles: jest.fn().mockReturnValue([]),
-  checkExists: jest.fn().mockReturnValue(false),
-  ...overrides,
-}) as MockRepository;
+import {
+  asIndicatorCacheKey,
+  createIndicatorCacheHarness,
+  createIndicatorCacheMockLogger,
+  createIndicatorCacheMockRepository,
+  type IndicatorCacheMockRepository,
+} from '../helpers/indicator-cache-test.utils';
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
-  const asCacheKey = (value: unknown): string => value as string;
-
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let mockRepo: MockRepository;
+  let mockRepo: IndicatorCacheMockRepository;
   let cache: IndicatorCacheService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-    mockRepo = createMockRepository();
+    ({ logger, errorHandler, repository: mockRepo, cache } =
+      createIndicatorCacheHarness());
   });
 
   // ============================================================================
@@ -70,13 +40,9 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   // ============================================================================
 
   describe('THROW: Input Validation', () => {
-    beforeEach(() => {
-      cache = new IndicatorCacheService(mockRepo, logger, errorHandler);
-    });
-
     it('should THROW on null cache key in get()', () => {
       expect(() => {
-        cache.get(asCacheKey(null));
+        cache.get(asIndicatorCacheKey(null));
       }).not.toThrow(); // ErrorHandler catches it
 
       // Should not increment metrics
@@ -93,7 +59,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
     it('should THROW on null key in set()', () => {
       expect(() => {
-        cache.set(asCacheKey(null), 50.5);
+        cache.set(asIndicatorCacheKey(null), 50.5);
       }).not.toThrow();
 
       expect(mockRepo.cacheIndicator).not.toHaveBeenCalled();
@@ -121,10 +87,6 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Repository Failures', () => {
-    beforeEach(() => {
-      cache = new IndicatorCacheService(mockRepo, logger, errorHandler);
-    });
-
     it('should return null when repository getIndicator throws', () => {
       mockRepo.getIndicator.mockImplementation(() => {
         throw new Error('Repository read error');
@@ -189,14 +151,16 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
   describe('SKIP: Logging Failures with Safe Wrapper', () => {
     it('should skip debug logging failures in get()', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createIndicatorCacheMockLogger({
         debug: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      mockRepo.getIndicator.mockReturnValue(75);
-      const cache = new IndicatorCacheService(mockRepo, failingLogger, errorHandler);
+      const repo = createIndicatorCacheMockRepository({
+        getIndicator: jest.fn().mockReturnValue(75),
+      });
+      const cache = new IndicatorCacheService(repo, failingLogger, errorHandler);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -209,17 +173,18 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     });
 
     it('should skip warn logging failures in set()', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createIndicatorCacheMockLogger({
         warn: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      mockRepo.cacheIndicator.mockImplementation(() => {
-        throw new Error('Repo error');
+      const repo = createIndicatorCacheMockRepository({
+        cacheIndicator: jest.fn().mockImplementation(() => {
+          throw new Error('Repo error');
+        }),
       });
-
-      const cache = new IndicatorCacheService(mockRepo, failingLogger, errorHandler);
+      const cache = new IndicatorCacheService(repo, failingLogger, errorHandler);
 
       // Should not throw despite logger failure
       expect(() => {
@@ -228,7 +193,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     });
 
     it('should skip logging failures in resetMetrics()', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createIndicatorCacheMockLogger({
         debug: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
@@ -248,10 +213,6 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   // ============================================================================
 
   describe('Integration: End-to-End Scenarios', () => {
-    beforeEach(() => {
-      cache = new IndicatorCacheService(mockRepo, logger, errorHandler);
-    });
-
     it('should cache and retrieve indicator values', () => {
       mockRepo.getIndicator.mockReturnValue(null);
       mockRepo.cacheIndicator.mockImplementation((key: string, value: number) => {
@@ -365,10 +326,6 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   // ============================================================================
 
   describe('Edge Cases & Corner Cases', () => {
-    beforeEach(() => {
-      cache = new IndicatorCacheService(mockRepo, logger, errorHandler);
-    });
-
     it('should handle Infinity values', () => {
       expect(() => {
         cache.set('test', Infinity);

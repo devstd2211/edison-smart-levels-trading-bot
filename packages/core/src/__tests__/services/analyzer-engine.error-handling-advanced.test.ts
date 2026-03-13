@@ -25,6 +25,15 @@ import {
 } from '../../errors/ErrorHandler';
 import { ErrorRegistry } from '../../errors/ErrorRegistry';
 import { TradingError } from '../../errors/BaseError';
+import {
+  asAnalyzerEngineLogger,
+  createAnalyzerEngineMockAnalyzer,
+  createAnalyzerEngineMockCandles,
+  createAnalyzerEngineMockLogger,
+  createAnalyzerEngineMockRegistry,
+  createAnalyzerEngineMockStrategyConfig,
+  type AnalyzerEngineMockLogger,
+} from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
 // MOCK UTILITIES (Reused & Extended from Phase 8.9.13)
@@ -33,109 +42,26 @@ import { TradingError } from '../../errors/BaseError';
 /**
  * Create mock analyzer with configurable behavior
  */
-function createMockAnalyzer(
-  name: string,
-  direction: 'LONG' | 'SHORT' | 'HOLD' = 'LONG',
-  options: {
-    isReady?: boolean;
-    throwError?: unknown;
-    minCandlesRequired?: number;
-    weight?: number;
-    priority?: number;
-    delayMs?: number; // Simulate processing delay
-  } = {},
-): IAnalyzer {
-  const {
-    isReady: shouldBeReady = true,
-    throwError = null,
-    minCandlesRequired = 20,
-    weight = 0.5,
-    priority = 5,
-    delayMs = 0,
-  } = options;
-
-  return {
-    getType: jest.fn(() => name),
-    analyze: jest.fn((candles: Candle[]) => {
-      if (throwError) {
-        throw throwError;
-      }
-
-      return {
-        source: name,
-        direction,
-        confidence: 0.75,
-        weight,
-        priority,
-      } as AnalyzerSignal;
-    }),
-    isReady: jest.fn(() => shouldBeReady),
-    getMinCandlesRequired: jest.fn(() => minCandlesRequired),
-    isEnabled: jest.fn(() => true),
-    getWeight: jest.fn(() => weight),
-    getPriority: jest.fn(() => priority),
-    getMaxConfidence: jest.fn(() => 1.0),
-  };
-}
+const createMockAnalyzer = createAnalyzerEngineMockAnalyzer;
 
 /**
  * Create mock analyzer registry
  */
-function createMockAnalyzerRegistry(
-  analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
-): AnalyzerRegistryService {
-  return {
-    getEnabledAnalyzers: jest.fn(async () => analyzers),
-  } as unknown as AnalyzerRegistryService;
-}
+const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
 
 /**
  * Create mock strategy config
  */
-function createMockStrategyConfig(analyzerNames: string[]): StrategyConfig {
-  return {
-    version: 1,
-    metadata: {
-      name: 'test-strategy',
-      version: '1.0',
-      description: 'Test strategy',
-      createdAt: new Date().toISOString(),
-      lastModified: new Date().toISOString(),
-      tags: [],
-    },
-    analyzers: analyzerNames.map((name, idx) => ({
-      name,
-      enabled: true,
-      weight: 0.5 + idx * 0.1,
-      priority: 5 + idx,
-      minConfidence: 0.5,
-      maxConfidence: 1.0,
-    })),
-  };
-}
+const createMockStrategyConfig = createAnalyzerEngineMockStrategyConfig;
 
 /**
  * Create mock candles
  */
-function createMockCandles(count: number): Candle[] {
-  return Array.from({ length: count }, (_, i) => ({
-    timestamp: Date.now() - (count - i) * 60000,
-    open: 100,
-    high: 101,
-    low: 99,
-    close: 100 + i * 0.1,
-    volume: 1000,
-  }));
-}
+const createMockCandles = createAnalyzerEngineMockCandles;
 
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-type MockLogger = ReturnType<typeof createMockLogger>;
-const asLogger = (logger: MockLogger): LoggerService => logger as unknown as LoggerService;
+const createMockLogger = createAnalyzerEngineMockLogger;
+type MockLogger = AnalyzerEngineMockLogger;
+const asLogger = asAnalyzerEngineLogger;
 
 /**
  * Create ErrorHandler with callback spies

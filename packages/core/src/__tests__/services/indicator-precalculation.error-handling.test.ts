@@ -14,75 +14,18 @@
 import { IndicatorPreCalculationService } from '../../services/indicator-precalculation.service';
 import { CandleProvider } from '../../providers/candle.provider';
 import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LogLevel, TimeframeRole } from '../../types/legacy';
 import type { IIndicatorCache, IIndicatorCalculator } from '../../types/legacy';
 import {
-  IndicatorCalculationError,
-  IndicatorCacheSyncError,
-  CandleDataMissingError,
-} from '../../errors/DomainErrors';
-
-// ============================================================================
-// MOCK HELPERS
-// ============================================================================
-
-function createMockCalculator(name: string) {
-  return {
-    calculate: jest.fn(),
-    getConfig: jest.fn().mockReturnValue({
-      indicators: [
-        {
-          name,
-          periods: [14],
-          timeframes: ['ENTRY'],
-          minCandlesRequired: 100,
-        },
-      ],
-    }),
-  };
-}
-
-type MockCalculator = ReturnType<typeof createMockCalculator>;
-type MockCache = ReturnType<typeof createMockCache>;
-type MockCandleProvider = ReturnType<typeof createMockCandleProvider>;
-
-function createMockCache() {
-  return {
-    set: jest.fn(),
-    get: jest.fn(),
-    invalidate: jest.fn(),
-    clear: jest.fn(),
-    getStatistics: jest.fn().mockReturnValue({
-      hitCount: 0,
-      missCount: 0,
-      size: 0,
-    }),
-  };
-}
-
-function createMockCandleProvider() {
-  return {
-    getCandles: jest.fn().mockResolvedValue([
-      {
-        timestamp: Date.now(),
-        open: 100,
-        high: 101,
-        low: 99,
-        close: 100.5,
-        volume: 1000,
-      },
-      {
-        timestamp: Date.now() - 60000,
-        open: 99,
-        high: 100,
-        low: 98,
-        close: 100,
-        volume: 1000,
-      },
-    ]),
-  };
-}
+  createIndicatorPrecalculationHarness,
+  createIndicatorPrecalculationMockCache,
+  createIndicatorPrecalculationMockCalculator,
+  createIndicatorPrecalculationMockCandleProvider,
+  type IndicatorPrecalculationMockCache,
+  type IndicatorPrecalculationMockCalculator,
+  type IndicatorPrecalculationMockCandleProvider,
+} from '../helpers/indicator-precalculation-test.utils';
 
 // ============================================================================
 // TEST SUITE
@@ -92,32 +35,19 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let service: IndicatorPreCalculationService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
-  let mockCandleProvider: MockCandleProvider;
-  let mockCache: MockCache;
-  let mockCalculators: MockCalculator[];
+  let mockCandleProvider: IndicatorPrecalculationMockCandleProvider;
+  let mockCache: IndicatorPrecalculationMockCache;
+  let mockCalculators: IndicatorPrecalculationMockCalculator[];
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-
-    mockCandleProvider = createMockCandleProvider();
-    mockCache = createMockCache();
-    mockCalculators = [
-      createMockCalculator('RSI'),
-      createMockCalculator('EMA'),
-      createMockCalculator('BB'),
-    ];
-
-    service = new IndicatorPreCalculationService(
-      mockCandleProvider as unknown as CandleProvider,
-      mockCache as unknown as IIndicatorCache,
-      mockCalculators as unknown as IIndicatorCalculator[],
+    ({
+      service,
       logger,
-      errorHandler // With ErrorHandler
-    );
-
-    // Setup default callback
-    service.setOnIndicatorsReady(jest.fn().mockResolvedValue(undefined));
+      errorHandler,
+      candleProvider: mockCandleProvider,
+      cache: mockCache,
+      calculators: mockCalculators,
+    } = createIndicatorPrecalculationHarness());
   });
 
   // ==========================================
@@ -196,16 +126,12 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
         debug: jest.fn(),
       };
 
-      const customService = new IndicatorPreCalculationService(
-        mockCandleProvider as unknown as CandleProvider,
-        mockCache as unknown as IIndicatorCache,
-        mockCalculators as unknown as IIndicatorCalculator[],
-        customLogger as unknown as LoggerService,
-        errorHandler
-      );
-      customService.setOnIndicatorsReady(
-        jest.fn().mockResolvedValue(undefined)
-      );
+      const { service: customService } = createIndicatorPrecalculationHarness({
+        logger: customLogger as unknown as LoggerService,
+        candleProvider: mockCandleProvider,
+        cache: mockCache,
+        calculators: mockCalculators,
+      });
 
       mockCalculators[0].calculate.mockRejectedValue(
         new Error('Infinity detected')
@@ -562,17 +488,14 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   describe('E. Backward Compatibility - Without ErrorHandler', () => {
     it('test-E1: Should work without ErrorHandler parameter', async () => {
       // Arrange: Create service without errorHandler
-      const serviceWithoutHandler = new IndicatorPreCalculationService(
-        mockCandleProvider as unknown as CandleProvider,
-        mockCache as unknown as IIndicatorCache,
-        mockCalculators as unknown as IIndicatorCalculator[],
-        logger
-        // No errorHandler parameter
-      );
-
-      serviceWithoutHandler.setOnIndicatorsReady(
-        jest.fn().mockResolvedValue(undefined)
-      );
+      const { service: serviceWithoutHandler } =
+        createIndicatorPrecalculationHarness({
+          logger,
+          candleProvider: mockCandleProvider,
+          cache: mockCache,
+          calculators: mockCalculators,
+          withErrorHandler: false,
+        });
 
       mockCalculators[0].calculate.mockResolvedValue(
         new Map([['RSI-14-ENTRY', 45]])
@@ -592,16 +515,14 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
 
     it('test-E2: Should maintain original behavior for cache failures', async () => {
       // Arrange: Without errorHandler, cache failures logged to console
-      const serviceWithoutHandler = new IndicatorPreCalculationService(
-        mockCandleProvider as unknown as CandleProvider,
-        mockCache as unknown as IIndicatorCache,
-        mockCalculators as unknown as IIndicatorCalculator[],
-        logger
-      );
-
-      serviceWithoutHandler.setOnIndicatorsReady(
-        jest.fn().mockResolvedValue(undefined)
-      );
+      const { service: serviceWithoutHandler } =
+        createIndicatorPrecalculationHarness({
+          logger,
+          candleProvider: mockCandleProvider,
+          cache: mockCache,
+          calculators: mockCalculators,
+          withErrorHandler: false,
+        });
 
       mockCache.set.mockImplementation(() => {
         throw new Error('Cache write failed');

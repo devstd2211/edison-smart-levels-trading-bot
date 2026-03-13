@@ -12,46 +12,22 @@
 import { TradingLifecycleManager } from '../../services/trading-lifecycle.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { TradingError } from '../../errors/BaseError';
+import { PositionLifecycleState, EmergencyCloseReason } from '../../types/legacy';
 import {
-  PositionLifecycleState,
-  EmergencyCloseReason,
-  TrackedPosition,
-  PositionLifecycleConfig,
-} from '../../types/legacy';
-import { ActionQueueService } from '../../services/action-queue.service';
-import { BotEventBus } from '../../services/event-bus';
-import type { LoggerService } from '../../services/logger.service';
+  createMockTradingLifecycleActionQueue,
+  createMockTradingLifecycleEventBus,
+  createMockTradingLifecycleLogger,
+  createTrackedPositionFixture,
+  createTradingLifecycleConfig,
+  createTradingLifecycleTestHarness,
+  type MockTradingLifecycleActionQueue,
+  type MockTradingLifecycleEventBus,
+  type MockTradingLifecycleLogger,
+} from '../helpers/trading-lifecycle-test.utils';
 
 // ============================================================================
 // MOCK UTILITIES
 // ============================================================================
-
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-
-const createMockEventBus = () => ({
-  subscribe: jest.fn(),
-  publishSync: jest.fn(),
-  publish: jest.fn(),
-  unsubscribe: jest.fn(),
-  clear: jest.fn(),
-  getSubscribers: jest.fn(() => ({})),
-});
-
-const createMockActionQueue = () => ({
-  enqueue: jest.fn(),
-  process: jest.fn(),
-  getQueue: jest.fn(() => []),
-  getPendingActions: jest.fn(() => []),
-  getResults: jest.fn(() => new Map()),
-  getMetrics: jest.fn(() => ({ enqueued: 0, processed: 0, failed: 0 })),
-  clear: jest.fn(),
-  resetMetrics: jest.fn(),
-});
 
 const createMockErrorHandler = () => {
   type ExecuteAsyncResult = { success: boolean; value?: unknown; error?: TradingError };
@@ -93,7 +69,7 @@ const createMockErrorHandler = () => {
         return { success: false, error: lastError instanceof TradingError ? lastError : undefined };
       }
     ),
-    getLogger: jest.fn(() => createMockLogger()),
+    getLogger: jest.fn(() => createMockTradingLifecycleLogger()),
     addCallback: jest.fn(),
     removeCallback: jest.fn(),
     isRecoveryMode: jest.fn(() => true),
@@ -102,54 +78,34 @@ const createMockErrorHandler = () => {
   return mockEH;
 };
 
-const createTrackedPosition = (overrides?: Partial<TrackedPosition>): TrackedPosition => ({
-  positionId: 'pos-123',
-  symbol: 'BTCUSDT',
-  direction: 'LONG',
-  entryPrice: 50000,
-  entryTime: Date.now() - 60000, // 1 minute ago
-  quantity: 1,
-  totalExposureUsdt: 50000,
-  state: PositionLifecycleState.OPEN,
-  lastUpdateTime: Date.now(),
-  ...overrides,
-});
-
-const createConfig = (
-  overrides?: Partial<PositionLifecycleConfig>,
-): PositionLifecycleConfig => ({
-  maxHoldingTimeMinutes: 60,
-  warningThresholdMinutes: 45,
-  enableAutomaticTimeout: true,
-  ...overrides,
-});
+const createTrackedPosition = createTrackedPositionFixture;
+const createConfig = createTradingLifecycleConfig;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
+  let harness: ReturnType<typeof createTradingLifecycleTestHarness>;
   let manager: TradingLifecycleManager;
-  let mockLogger: ReturnType<typeof createMockLogger>;
-  let mockEventBus: ReturnType<typeof createMockEventBus>;
-  let mockActionQueue: ReturnType<typeof createMockActionQueue>;
+  let mockLogger: MockTradingLifecycleLogger;
+  let mockEventBus: MockTradingLifecycleEventBus;
+  let mockActionQueue: MockTradingLifecycleActionQueue;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    mockEventBus = createMockEventBus();
-    mockActionQueue = createMockActionQueue();
+    harness = createTradingLifecycleTestHarness();
+    mockLogger = harness.logger;
+    mockEventBus = harness.eventBus;
+    mockActionQueue = harness.actionQueue;
     mockErrorHandler = createMockErrorHandler();
-
-    manager = new TradingLifecycleManager(
-      createConfig(),
-      mockLogger as unknown as LoggerService,
-      mockEventBus as unknown as BotEventBus,
-      mockActionQueue as unknown as ActionQueueService,
-      mockErrorHandler
-    );
+    manager = harness.createManager({ errorHandler: mockErrorHandler });
 
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    harness.stopTrackedManagers();
   });
 
   // ==================== RETRY Strategy - Event Publishing ====================
@@ -567,16 +523,16 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('Event Subscription & Position Tracking', () => {
     it('should setup event subscriptions during initialization', () => {
       // Create a new manager to verify subscription calls
-      const newLogger = createMockLogger();
-      const newEventBus = createMockEventBus();
-      const newActionQueue = createMockActionQueue();
+      const newLogger = createMockTradingLifecycleLogger();
+      const newEventBus = createMockTradingLifecycleEventBus();
+      const newActionQueue = createMockTradingLifecycleActionQueue();
 
-      const newManager = new TradingLifecycleManager(
-        createConfig(),
-        newLogger as unknown as LoggerService,
-        newEventBus as unknown as BotEventBus,
-        newActionQueue as unknown as ActionQueueService
-      );
+      const newManager = harness.createManager({
+        logger: newLogger,
+        eventBus: newEventBus,
+        actionQueue: newActionQueue,
+        errorHandler: undefined,
+      });
 
       newManager.start();
 
@@ -784,12 +740,10 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
   describe('Configuration & Edge Cases', () => {
     it('should respect automatic timeout configuration', async () => {
-      const autoManager = new TradingLifecycleManager(
-        createConfig({ enableAutomaticTimeout: false }),
-        mockLogger as unknown as LoggerService,
-        mockEventBus as unknown as BotEventBus,
-        mockActionQueue as unknown as ActionQueueService
-      );
+      const autoManager = harness.createManager({
+        config: createConfig({ enableAutomaticTimeout: false }),
+        errorHandler: undefined,
+      });
 
       const position = createTrackedPosition({
         entryTime: Date.now() - 65 * 60000, // Over timeout
@@ -840,12 +794,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
       expect(() => {
-        new TradingLifecycleManager(
-          createConfig(),
-          mockLogger as unknown as LoggerService,
-          mockEventBus as unknown as BotEventBus,
-          mockActionQueue as unknown as ActionQueueService
-        );
+        harness.createManager({ errorHandler: undefined });
       }).not.toThrow();
     });
 

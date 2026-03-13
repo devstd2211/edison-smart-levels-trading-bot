@@ -14,137 +14,48 @@ import * as path from 'path';
 import { TradeHistoryService } from '../../services/trade-history.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { JournalWriteError } from '../../errors/DomainErrors';
-import { LoggerService, LogLevel } from '../../types/legacy';
-
-type TradeRecordInput = Parameters<TradeHistoryService['appendTrade']>[0];
-type ExecuteAsyncConfig = Parameters<ErrorHandler['executeAsync']>[1];
-type ExecuteAsyncResult<T = unknown> = { success: boolean; value?: T; error?: unknown };
-type RetryError = Parameters<NonNullable<ExecuteAsyncConfig['onRetry']>>[1];
-type FailureError = Parameters<NonNullable<ExecuteAsyncConfig['onFailure']>>[0];
+import {
+  cleanupTradeHistoryTempDir,
+  createTradeHistoryErrorHandler,
+  createTradeHistoryHarness,
+  createTradeHistoryRecord,
+  type ExecuteAsyncConfig,
+  type FailureError,
+  type RetryError,
+  type TradeHistoryMockLogger,
+  type TradeRecordInput,
+} from '../helpers/trade-history-test.utils';
 
 const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
 
 /**
- * Mock Logger for testing
- */
-class MockLogger extends LoggerService {
-  constructor() {
-    super(LogLevel.INFO, './logs', false);
-  }
-}
-
-/**
  * Helper to create a valid trade record
  */
-function createTradeRecord(overrides: Partial<TradeRecordInput> = {}): TradeRecordInput {
-  return {
-    timestamp: new Date().toISOString(),
-    id: `trade-${Date.now()}`,
-    symbol: 'BTCUSDT',
-    side: 'LONG',
-    strategy: 'test-strategy',
-    entryPrice: 50000,
-    exitPrice: 51000,
-    quantity: 1,
-    leverage: 10,
-    pnl: 1000,
-    fees: 10,
-    netPnl: 990,
-    duration: '1h',
-    exitType: 'TAKE_PROFIT_1',
-    confidence: 0.85,
-    virtualBalanceBefore: 10000,
-    virtualBalanceAfter: 10990,
-    sessionVersion: 'v2.6',
-    notes: 'test trade',
-    ...overrides,
-  };
-}
+const createTradeRecord = createTradeHistoryRecord;
 
 /**
  * Helper to create mock ErrorHandler
  */
-function createMockErrorHandler() {
-  const mockEH = {
-    handle: jest.fn((error: unknown, options: { strategy: RecoveryStrategy }) => {
-      if (options.strategy === RecoveryStrategy.THROW) {
-        throw error;
-      }
-      return {
-        success: false,
-        error: error instanceof Error ? error : undefined,
-        strategy: options.strategy,
-      };
-    }),
-    executeAsync: jest.fn(
-      async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig): Promise<ExecuteAsyncResult> => {
-        // Simulate RETRY with exponential backoff
-        let lastError: unknown = null;
-        const maxAttempts = config?.retryConfig?.maxAttempts ?? 1;
-
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          try {
-            const value = await fn();
-            if (config.onRecover) {
-              config.onRecover(config.strategy, attempt + 1);
-            }
-            return { success: true, value };
-          } catch (error: unknown) {
-            lastError = error;
-            if (attempt < maxAttempts - 1 && config.retryConfig) {
-              if (config.onRetry) {
-                config.onRetry(attempt + 1, asRetryError(error), config.retryConfig.initialDelayMs);
-              }
-              // Wait before retry
-              await new Promise((resolve) =>
-                setTimeout(resolve, config?.retryConfig?.initialDelayMs ?? 100)
-              );
-            }
-          }
-        }
-
-        // Return gracefully (don't throw)
-        if (config.onFailure) {
-          config.onFailure(asFailureError(lastError), maxAttempts);
-        }
-        return { success: false, value: config.strategy === RecoveryStrategy.GRACEFUL_DEGRADE ? undefined : null, error: lastError };
-      }
-    ),
-    getLogger: jest.fn(() => new MockLogger()),
-    addCallback: jest.fn(),
-    removeCallback: jest.fn(),
-    isRecoveryMode: jest.fn(() => true),
-  };
-
-  return mockEH as unknown as jest.Mocked<ErrorHandler>;
-}
+const createMockErrorHandler = createTradeHistoryErrorHandler;
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
   let service: TradeHistoryService;
   let errorHandler: jest.Mocked<ErrorHandler>;
-  let logger: MockLogger;
+  let logger: TradeHistoryMockLogger;
   let tempDir: string;
 
   beforeEach(() => {
-    logger = new MockLogger();
-    errorHandler = createMockErrorHandler();
-    tempDir = path.join(process.cwd(), 'test-trade-history-' + Date.now());
-
-    // Ensure temp directory exists
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    service = new TradeHistoryService(logger, tempDir, errorHandler);
+    const harness = createTradeHistoryHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
+    tempDir = harness.tempDir;
+    service = harness.service;
   });
 
   afterEach(() => {
-    // Cleanup
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
+    cleanupTradeHistoryTempDir(tempDir);
   });
 
   // ============================================================================

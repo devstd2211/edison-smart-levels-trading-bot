@@ -14,48 +14,25 @@
  */
 
 import { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-registry.service';
-import { ErrorHandler, RecoveryStrategy, ErrorLogger } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { IndicatorType } from '../../types/indicator';
-import { LoggerService } from '../../types/legacy';
-
-// Mock Logger
-type LoggerLike = {
-  debug: jest.Mock;
-  info: jest.Mock;
-  warn: jest.Mock;
-  error: jest.Mock;
-};
-const asIndicatorType = (value: unknown): IndicatorType => value as IndicatorType;
-const asMetadata = (value: unknown): IIndicatorMetadata => value as IIndicatorMetadata;
-const asErrorLogger = (value: LoggerLike): ErrorLogger =>
-  value as unknown as ErrorLogger;
-const asRegistryLogger = (value: LoggerLike): LoggerService =>
-  value as unknown as LoggerService;
-
-const createMockLogger = (overrides?: Partial<LoggerLike>): LoggerLike => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  ...overrides,
-});
-
-// Helper to create indicator metadata
-const createMetadata = (name: string, enabled = true): IIndicatorMetadata => ({
-  type: IndicatorType.EMA,
-  name,
-  description: `${name} indicator`,
-  enabled,
-});
+import {
+  asIndicatorRegistryLogger,
+  asIndicatorRegistryMetadata,
+  asIndicatorRegistryType,
+  createIndicatorRegistryHarness,
+  createIndicatorRegistryMetadata,
+  createIndicatorRegistryMockLogger,
+  type IndicatorRegistryMockLogger,
+} from '../helpers/indicator-registry-test.utils';
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
-  let logger: LoggerLike;
+  let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(asErrorLogger(logger));
+    ({ logger, errorHandler, registry } = createIndicatorRegistryHarness());
   });
 
   // ============================================================================
@@ -63,15 +40,11 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   // ============================================================================
 
   describe('THROW: Registration Validation', () => {
-    beforeEach(() => {
-      registry = new IndicatorRegistry(asRegistryLogger(logger), errorHandler);
-    });
-
     it('should THROW on null indicator type', () => {
-      const metadata = createMetadata('Test Indicator');
+      const metadata = createIndicatorRegistryMetadata('Test Indicator');
 
       expect(() => {
-        registry.register(asIndicatorType(null), metadata);
+        registry.register(asIndicatorRegistryType(null), metadata);
       }).not.toThrow(); // ErrorHandler handles it gracefully
 
       // Verify error was handled
@@ -79,35 +52,38 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
 
     it('should THROW on undefined indicator type', () => {
-      const metadata = createMetadata('Test Indicator');
+      const metadata = createIndicatorRegistryMetadata('Test Indicator');
 
       expect(() => {
-        registry.register(asIndicatorType(undefined), metadata);
+        registry.register(asIndicatorRegistryType(undefined), metadata);
       }).not.toThrow();
     });
 
     it('should THROW on null/undefined metadata', () => {
       expect(() => {
-        registry.register(IndicatorType.EMA, asMetadata(null));
+        registry.register(IndicatorType.EMA, asIndicatorRegistryMetadata(null));
       }).not.toThrow();
 
       expect(() => {
         registry.register(
           IndicatorType.RSI,
-          asMetadata({ type: IndicatorType.RSI, name: '' })
+          asIndicatorRegistryMetadata({ type: IndicatorType.RSI, name: '' })
         );
       }).not.toThrow();
     });
 
     it('should THROW on duplicate indicator registration', () => {
-      const metadata = createMetadata('First Indicator');
+      const metadata = createIndicatorRegistryMetadata('First Indicator');
 
       // First registration should succeed
       registry.register(IndicatorType.EMA, metadata);
 
       // Second registration with same type should throw
       expect(() => {
-        registry.register(IndicatorType.EMA, createMetadata('Duplicate'));
+        registry.register(
+          IndicatorType.EMA,
+          createIndicatorRegistryMetadata('Duplicate'),
+        );
       }).not.toThrow();
 
       // Verify count is still 1
@@ -121,7 +97,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
       };
 
       expect(() => {
-        registry.register(IndicatorType.ATR, asMetadata(invalidMetadata));
+        registry.register(
+          IndicatorType.ATR,
+          asIndicatorRegistryMetadata(invalidMetadata),
+        );
       }).not.toThrow();
     });
   });
@@ -132,10 +111,8 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
   describe('GRACEFUL_DEGRADE: Unregistered Indicators & Query Failures', () => {
     beforeEach(() => {
-      registry = new IndicatorRegistry(asRegistryLogger(logger), errorHandler);
-      // Pre-register some indicators
-      registry.register(IndicatorType.EMA, createMetadata('EMA'));
-      registry.register(IndicatorType.RSI, createMetadata('RSI'));
+      registry.register(IndicatorType.EMA, createIndicatorRegistryMetadata('EMA'));
+      registry.register(IndicatorType.RSI, createIndicatorRegistryMetadata('RSI'));
     });
 
     it('should return null for unregistered indicator metadata', () => {
@@ -144,14 +121,14 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
 
     it('should handle null indicator type in getMetadata gracefully', () => {
-      const result = registry.getMetadata(asIndicatorType(null));
+      const result = registry.getMetadata(asIndicatorRegistryType(null));
       expect(result).toBeNull();
       expect(logger.warn).toHaveBeenCalled();
     });
 
     it('should continue querying despite metadata failures', () => {
       // Register some indicators
-      const emaMetadata = createMetadata('EMA', true);
+      const emaMetadata = createIndicatorRegistryMetadata('EMA', true);
       registry.register(IndicatorType.EMA, emaMetadata);
 
       // Query unregistered
@@ -186,17 +163,23 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
   describe('SKIP: Logging Failures with Safe Wrapper', () => {
     it('should skip debug logging failures during registration', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createIndicatorRegistryMockLogger({
         debug: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const reg = new IndicatorRegistry(asRegistryLogger(failingLogger), errorHandler);
+      const reg = new IndicatorRegistry(
+        asIndicatorRegistryLogger(failingLogger),
+        errorHandler,
+      );
 
       // Should not throw despite logger failure
       expect(() => {
-        reg.register(IndicatorType.EMA, createMetadata('EMA'));
+        reg.register(
+          IndicatorType.EMA,
+          createIndicatorRegistryMetadata('EMA'),
+        );
       }).not.toThrow();
 
       // Indicator should still be registered
@@ -204,17 +187,20 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
 
     it('should skip warn logging failures in getMetadata', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createIndicatorRegistryMockLogger({
         warn: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const reg = new IndicatorRegistry(asRegistryLogger(failingLogger), errorHandler);
+      const reg = new IndicatorRegistry(
+        asIndicatorRegistryLogger(failingLogger),
+        errorHandler,
+      );
 
       // Should not throw despite logger failure
       expect(() => {
-        reg.getMetadata(asIndicatorType(null));
+        reg.getMetadata(asIndicatorRegistryType(null));
       }).not.toThrow();
 
       const result = reg.getMetadata(IndicatorType.EMA);
@@ -222,14 +208,20 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
 
     it('should skip logging failures in list operations', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createIndicatorRegistryMockLogger({
         debug: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const reg = new IndicatorRegistry(asRegistryLogger(failingLogger), errorHandler);
-      reg.register(IndicatorType.EMA, createMetadata('EMA'));
+      const reg = new IndicatorRegistry(
+        asIndicatorRegistryLogger(failingLogger),
+        errorHandler,
+      );
+      reg.register(
+        IndicatorType.EMA,
+        createIndicatorRegistryMetadata('EMA'),
+      );
 
       // Should not throw despite logger failure
       expect(() => {
@@ -246,15 +238,20 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   // ============================================================================
 
   describe('Integration: End-to-End Scenarios', () => {
-    beforeEach(() => {
-      registry = new IndicatorRegistry(asRegistryLogger(logger), errorHandler);
-    });
-
     it('should register multiple indicators and retrieve them', () => {
       const indicators = [
-        { type: IndicatorType.EMA, metadata: createMetadata('EMA') },
-        { type: IndicatorType.RSI, metadata: createMetadata('RSI') },
-        { type: IndicatorType.ATR, metadata: createMetadata('ATR') },
+        {
+          type: IndicatorType.EMA,
+          metadata: createIndicatorRegistryMetadata('EMA'),
+        },
+        {
+          type: IndicatorType.RSI,
+          metadata: createIndicatorRegistryMetadata('RSI'),
+        },
+        {
+          type: IndicatorType.ATR,
+          metadata: createIndicatorRegistryMetadata('ATR'),
+        },
       ];
 
       // Register all
@@ -274,9 +271,18 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
 
     it('should filter enabled vs disabled indicators', () => {
-      const emaMeta: IIndicatorMetadata = { ...createMetadata('EMA', true), type: IndicatorType.EMA };
-      const rsiMeta: IIndicatorMetadata = { ...createMetadata('RSI', false), type: IndicatorType.RSI };
-      const atrMeta: IIndicatorMetadata = { ...createMetadata('ATR', true), type: IndicatorType.ATR };
+      const emaMeta: IIndicatorMetadata = {
+        ...createIndicatorRegistryMetadata('EMA', true),
+        type: IndicatorType.EMA,
+      };
+      const rsiMeta: IIndicatorMetadata = {
+        ...createIndicatorRegistryMetadata('RSI', false, IndicatorType.RSI),
+        type: IndicatorType.RSI,
+      };
+      const atrMeta: IIndicatorMetadata = {
+        ...createIndicatorRegistryMetadata('ATR', true, IndicatorType.ATR),
+        type: IndicatorType.ATR,
+      };
 
       registry.register(IndicatorType.EMA, emaMeta);
       registry.register(IndicatorType.RSI, rsiMeta);
@@ -293,8 +299,14 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
     });
 
     it('should clear registry and start fresh', () => {
-      registry.register(IndicatorType.EMA, createMetadata('EMA'));
-      registry.register(IndicatorType.RSI, createMetadata('RSI'));
+      registry.register(
+        IndicatorType.EMA,
+        createIndicatorRegistryMetadata('EMA'),
+      );
+      registry.register(
+        IndicatorType.RSI,
+        createIndicatorRegistryMetadata('RSI'),
+      );
       expect(registry.getCount()).toBe(2);
 
       // Clear
@@ -303,12 +315,15 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
       expect(registry.getAll().length).toBe(0);
 
       // Should accept new registrations
-      registry.register(IndicatorType.ATR, createMetadata('ATR'));
+      registry.register(
+        IndicatorType.ATR,
+        createIndicatorRegistryMetadata('ATR', true, IndicatorType.ATR),
+      );
       expect(registry.getCount()).toBe(1);
     });
 
     it('should handle mixed successful and failed registrations', () => {
-      const validMetadata = createMetadata('Valid');
+      const validMetadata = createIndicatorRegistryMetadata('Valid');
       const invalidMetadata = { description: 'No name' };
 
       // Valid registration
@@ -318,7 +333,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
       // Invalid registration (should be rejected)
       expect(() => {
-        registry.register(IndicatorType.RSI, asMetadata(invalidMetadata));
+        registry.register(
+          IndicatorType.RSI,
+          asIndicatorRegistryMetadata(invalidMetadata),
+        );
       }).not.toThrow();
 
       // Valid EMA should be registered, RSI should not
@@ -335,16 +353,19 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = new IndicatorRegistry(asRegistryLogger(logger));
+      const reg = new IndicatorRegistry(asIndicatorRegistryLogger(logger));
       expect(reg).toBeDefined();
       expect(reg.getCount()).toBe(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const reg = new IndicatorRegistry(asRegistryLogger(logger));
+      const reg = new IndicatorRegistry(asIndicatorRegistryLogger(logger));
 
       // Register should work as before
-      reg.register(IndicatorType.EMA, { ...createMetadata('EMA'), type: IndicatorType.EMA });
+      reg.register(IndicatorType.EMA, {
+        ...createIndicatorRegistryMetadata('EMA'),
+        type: IndicatorType.EMA,
+      });
       expect(reg.isRegistered(IndicatorType.EMA)).toBe(true);
 
       // getMetadata should work
@@ -362,7 +383,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
       expect(reg).toBeDefined();
 
       // Basic operations should work
-      reg.register(IndicatorType.EMA, { ...createMetadata('EMA'), type: IndicatorType.EMA });
+      reg.register(IndicatorType.EMA, {
+        ...createIndicatorRegistryMetadata('EMA'),
+        type: IndicatorType.EMA,
+      });
       expect(reg.getCount()).toBe(1);
       expect(reg.isRegistered(IndicatorType.EMA)).toBe(true);
     });
@@ -373,19 +397,18 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   // ============================================================================
 
   describe('Edge Cases & Corner Cases', () => {
-    beforeEach(() => {
-      registry = new IndicatorRegistry(asRegistryLogger(logger), errorHandler);
-    });
-
     it('should handle rapid successive registrations of same type', () => {
-      const metadata = createMetadata('EMA');
+      const metadata = createIndicatorRegistryMetadata('EMA');
 
       // First registration
       registry.register(IndicatorType.EMA, { ...metadata, type: IndicatorType.EMA });
       expect(registry.getCount()).toBe(1);
 
       // Second attempt should be rejected (duplicate)
-      registry.register(IndicatorType.EMA, createMetadata('EMA Updated'));
+      registry.register(
+        IndicatorType.EMA,
+        createIndicatorRegistryMetadata('EMA Updated'),
+      );
       expect(registry.getCount()).toBe(1);
     });
 
@@ -455,7 +478,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
     it('should handle concurrent getMetadata calls during registration', async () => {
       // Register first
-      registry.register(IndicatorType.EMA, { ...createMetadata('EMA'), type: IndicatorType.EMA });
+      registry.register(IndicatorType.EMA, {
+        ...createIndicatorRegistryMetadata('EMA'),
+        type: IndicatorType.EMA,
+      });
 
       // Concurrent gets
       const promises = [

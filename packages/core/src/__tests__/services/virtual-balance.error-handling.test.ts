@@ -9,59 +9,63 @@ import * as path from 'path';
 import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
-import type { LoggerService } from '../../services/logger.service';
-
-// Simple mock logger for error handling tests
-const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-} as unknown as LoggerService;
-
-// Test data directory
-const testDataDir = './test-data-vb';
+import {
+  asVirtualBalanceLogger,
+  cleanupVirtualBalanceTempDir,
+  createVirtualBalanceHarness,
+  createVirtualBalanceMockLogger,
+  createVirtualBalanceTempDir,
+  type VirtualBalanceLogger,
+} from '../helpers/virtual-balance-test.utils';
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
-  const testPath = path.join(testDataDir, 'virtual-balance.json');
+  let mockLogger: VirtualBalanceLogger;
+  let testDataDir: string;
+  let testPath: string;
+  const createService = (baseDeposit: number = 100): VirtualBalanceService =>
+    createVirtualBalanceHarness({
+      baseDeposit,
+      dataDir: testDataDir,
+      logger: mockLogger,
+      errorHandler,
+    }).service;
 
   beforeEach(() => {
-    // Clean up test directory
-    if (fs.existsSync(testDataDir)) {
-      fs.rmSync(testDataDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(testDataDir, { recursive: true });
-
+    testDataDir = createVirtualBalanceTempDir();
+    testPath = path.join(testDataDir, 'virtual-balance.json');
     jest.clearAllMocks();
-    errorHandler = new ErrorHandler(mockLogger);
+    mockLogger = createVirtualBalanceMockLogger();
+    errorHandler = new ErrorHandler(asVirtualBalanceLogger(mockLogger));
   });
 
   afterEach(() => {
-    // Clean up test directory
-    if (fs.existsSync(testDataDir)) {
-      fs.rmSync(testDataDir, { recursive: true, force: true });
-    }
+    cleanupVirtualBalanceTempDir(testDataDir);
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========
   describe('Scenario 1: Constructor validation (THROW)', () => {
     it('should throw ValidationError for negative base deposit', () => {
       expect(() => {
-        new VirtualBalanceService(mockLogger, errorHandler, -100, testDataDir);
+        new VirtualBalanceService(asVirtualBalanceLogger(mockLogger), errorHandler, -100, testDataDir);
       }).toThrow(ValidationError);
     });
 
     it('should throw ValidationError for zero deposit', () => {
       expect(() => {
-        new VirtualBalanceService(mockLogger, errorHandler, -50, testDataDir);
+        new VirtualBalanceService(asVirtualBalanceLogger(mockLogger), errorHandler, -50, testDataDir);
       }).toThrow(ValidationError);
     });
 
     it('should successfully initialize with valid deposit', () => {
       expect(() => {
-        service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+        service = createVirtualBalanceHarness({
+          baseDeposit: 100,
+          dataDir: testDataDir,
+          logger: mockLogger,
+          errorHandler,
+        }).service;
       }).not.toThrow();
 
       expect(service.getCurrentBalance()).toBe(100);
@@ -71,7 +75,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 2: File Load Errors (RETRY) ==========
   describe('Scenario 2: File load with RETRY strategy', () => {
     it('should initialize with fresh state when file does not exist', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 50, testDataDir);
+      service = createVirtualBalanceHarness({
+        baseDeposit: 50,
+        dataDir: testDataDir,
+        logger: mockLogger,
+        errorHandler,
+      }).service;
       expect(service.getCurrentBalance()).toBe(50);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('✅'),
@@ -95,7 +104,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       fs.mkdirSync(testDataDir, { recursive: true });
       fs.writeFileSync(testPath, JSON.stringify(validState), 'utf-8');
 
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createVirtualBalanceHarness({
+        baseDeposit: 100,
+        dataDir: testDataDir,
+        logger: mockLogger,
+        errorHandler,
+      }).service;
       expect(service.getCurrentBalance()).toBe(150.5);
       expect(service.getState().totalTrades).toBe(5);
     });
@@ -115,7 +129,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       fs.mkdirSync(testDataDir, { recursive: true });
       fs.writeFileSync(testPath, JSON.stringify(oldState), 'utf-8');
 
-      service = new VirtualBalanceService(mockLogger, errorHandler, 120, testDataDir);
+      service = createVirtualBalanceHarness({
+        baseDeposit: 120,
+        dataDir: testDataDir,
+        logger: mockLogger,
+        errorHandler,
+      }).service;
 
       // Should update base deposit
       expect(service.getBaseDeposit()).toBe(120);
@@ -129,7 +148,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 3: File Save Errors (RETRY) ==========
   describe('Scenario 3: File save with RETRY strategy', () => {
     it('should save balance successfully on update', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(10, 'TRADE_001');
 
       expect(fs.existsSync(testPath)).toBe(true);
@@ -139,7 +158,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should save balance with correct state after multiple updates', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(10, 'TRADE_001');
       service.updateBalance(-5, 'TRADE_002');
       service.updateBalance(20, 'TRADE_003');
@@ -154,7 +173,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 4: Balance Update Validation (THROW) ==========
   describe('Scenario 4: Balance update with validation', () => {
     it('should throw ValidationError for empty trade ID', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
 
       expect(() => {
         service.updateBalance(10, '');
@@ -162,7 +181,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should update balance with valid trade ID', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(10, 'TRADE_001');
 
       expect(service.getCurrentBalance()).toBe(110);
@@ -170,7 +189,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should update balance for negative PnL', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(-15, 'TRADE_001');
 
       expect(service.getCurrentBalance()).toBe(85);
@@ -178,7 +197,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should update allTimeHigh when balance increases', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(50, 'TRADE_001');
 
       const state = service.getState();
@@ -186,7 +205,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should update allTimeLow when balance decreases', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(-30, 'TRADE_001');
 
       const state = service.getState();
@@ -197,7 +216,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 5: Profit Calculation ==========
   describe('Scenario 5: Profit calculations', () => {
     it('should calculate total profit correctly', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(25, 'TRADE_001');
       service.updateBalance(-10, 'TRADE_002');
 
@@ -205,7 +224,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should calculate profit percentage correctly', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(50, 'TRADE_001');
 
       // (150 - 100) / 100 * 100 = 50%
@@ -213,7 +232,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should handle zero division in percentage', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 0.0001, testDataDir);
+      service = createService(0.0001);
       expect(service.getProfitPercent()).toBeDefined();
     });
   });
@@ -221,7 +240,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 6: Reset with Validation (THROW) ==========
   describe('Scenario 6: Reset with validation', () => {
     it('should reset balance to base deposit', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(50, 'TRADE_001');
 
       expect(service.getCurrentBalance()).toBe(150);
@@ -233,7 +252,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should reset to new base deposit', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(50, 'TRADE_001');
 
       service.reset(200);
@@ -243,7 +262,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should throw ValidationError for negative reset deposit', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
 
       expect(() => {
         service.reset(-50);
@@ -251,7 +270,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should clear all-time highs/lows on reset', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(100, 'TRADE_001');
       service.updateBalance(-50, 'TRADE_002');
 
@@ -270,7 +289,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 7: Sync from History (GRACEFUL_DEGRADE) ==========
   describe('Scenario 7: Sync from history with GRACEFUL_DEGRADE', () => {
     it('should detect balance mismatch and sync', async () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(10, 'TRADE_001');
       service.updateBalance(5, 'TRADE_002');
 
@@ -286,7 +305,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should log when balance is in sync', async () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       // Manually set current balance to what trades would give us (100 + 10 + 5 = 115)
       service.updateBalance(10, 'TRADE_001');
       service.updateBalance(5, 'TRADE_002');
@@ -304,7 +323,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should update balance on sync from history', async () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
 
       const trades = [
         { id: 'TRADE_001', netPnl: 25 },
@@ -323,7 +342,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 8: State Snapshots ==========
   describe('Scenario 8: State management', () => {
     it('should return immutable state copy', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       const state1 = service.getState();
       const state2 = service.getState();
 
@@ -332,7 +351,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should track total trades accurately', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
 
       for (let i = 0; i < 10; i++) {
         service.updateBalance(10, `TRADE_${i.toString().padStart(3, '0')}`);
@@ -342,7 +361,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should track last trade ID correctly', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(10, 'FIRST');
       service.updateBalance(5, 'SECOND');
       service.updateBalance(3, 'LAST');
@@ -354,27 +373,27 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 9: Persistence and Recovery ==========
   describe('Scenario 9: Persistence and recovery', () => {
     it('should persist balance to disk on update', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(50, 'TRADE_001');
 
       expect(fs.existsSync(testPath)).toBe(true);
     });
 
     it('should recover balance from disk on restart', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(50, 'TRADE_001');
 
-      const service2 = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      const service2 = createService();
       expect(service2.getCurrentBalance()).toBe(150);
       expect(service2.getState().totalTrades).toBe(1);
     });
 
     it('should preserve all-time highs/lows across restarts', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(100, 'TRADE_001'); // 200
       service.updateBalance(-250, 'TRADE_002'); // -50 (triggers allTimeLow update)
 
-      const service2 = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      const service2 = createService();
       const state = service2.getState();
 
       expect(state.allTimeHigh).toBe(200);
@@ -385,7 +404,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 10: Logging and Monitoring ==========
   describe('Scenario 10: Logging behavior', () => {
     it('should log balance updates with emoji for profit', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(20, 'TRADE_001');
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -395,7 +414,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should log balance updates with emoji for loss', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.updateBalance(-20, 'TRADE_001');
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -405,7 +424,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should log initialization message', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.getCurrentBalance(); // trigger lazy initialization lifecycle
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -415,7 +434,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
 
     it('should log reset message', () => {
-      service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+      service = createService();
       service.reset();
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -430,26 +449,29 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 describe('VirtualBalanceService - Integration Scenarios', () => {
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
-  const testDataDir = './test-data-vb-integration';
+  let mockLogger: VirtualBalanceLogger;
+  let testDataDir: string;
+  const createIntegrationService = (baseDeposit: number = 100): VirtualBalanceService =>
+    createVirtualBalanceHarness({
+      baseDeposit,
+      dataDir: testDataDir,
+      logger: mockLogger,
+      errorHandler,
+    }).service;
 
   beforeEach(() => {
-    if (fs.existsSync(testDataDir)) {
-      fs.rmSync(testDataDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(testDataDir, { recursive: true });
-
+    testDataDir = createVirtualBalanceTempDir('virtual-balance-integration-');
     jest.clearAllMocks();
-    errorHandler = new ErrorHandler(mockLogger);
+    mockLogger = createVirtualBalanceMockLogger();
+    errorHandler = new ErrorHandler(asVirtualBalanceLogger(mockLogger));
   });
 
   afterEach(() => {
-    if (fs.existsSync(testDataDir)) {
-      fs.rmSync(testDataDir, { recursive: true, force: true });
-    }
+    cleanupVirtualBalanceTempDir(testDataDir);
   });
 
   it('should handle complete trading session lifecycle', () => {
-    service = new VirtualBalanceService(mockLogger, errorHandler, 1000, testDataDir);
+    service = createIntegrationService(1000);
 
     service.updateBalance(50, 'ENTRY_001');
     expect(service.getCurrentBalance()).toBe(1050);
@@ -461,13 +483,13 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     expect(service.getCurrentBalance()).toBe(1225);
 
     // Verify persistence
-    const service2 = new VirtualBalanceService(mockLogger, errorHandler, 1000, testDataDir);
+    const service2 = createIntegrationService(1000);
     expect(service2.getCurrentBalance()).toBe(1225);
     expect(service2.getProfitPercent()).toBeCloseTo(22.5, 1);
   });
 
   it('should handle complex profit/loss scenarios', () => {
-    service = new VirtualBalanceService(mockLogger, errorHandler, 100, testDataDir);
+    service = createIntegrationService();
 
     const trades = [
       { id: 'T1', pnl: 25 },   // 125

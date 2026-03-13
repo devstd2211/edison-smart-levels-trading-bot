@@ -14,48 +14,27 @@
  */
 
 import { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { TakeProfit, LoggerService } from '../../types/legacy';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import type { TakeProfit } from '../../types/legacy';
+import {
+  asMarketConditionLogger,
+  createMarketConditionHarness,
+  createMarketConditionMockLogger,
+  createMarketConditionResult,
+  createMarketConditionTakeProfit,
+  type MarketConditionMockLogger,
+} from '../helpers/market-condition-analyzer-test.utils';
 
-// Mock Logger
-type MockLogger = {
-  debug: jest.Mock;
-  info: jest.Mock;
-  warn: jest.Mock;
-  error: jest.Mock;
-};
-const asLoggerService = (logger: MockLogger): LoggerService => logger as unknown as LoggerService;
-
-const createMockLogger = (overrides?: Partial<MockLogger>): MockLogger => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  ...overrides,
-});
-
-// Helper to create TakeProfit objects
-const createTP = (level: number, price: number, sizePercent: number, percent: number): TakeProfit => ({
-  level,
-  price,
-  sizePercent,
-  percent,
-  hit: false,
-});
-
-const createFlatResult = (isFlat: boolean, confidence: number) => ({
-  isFlat,
-  confidence,
-});
+const createTP = createMarketConditionTakeProfit;
+const createFlatResult = createMarketConditionResult;
 
 describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
-  let logger: MockLogger;
+  let logger: MarketConditionMockLogger;
   let errorHandler: ErrorHandler;
   let service: MarketConditionAnalyzerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger as unknown as LoggerService);
+    ({ logger, errorHandler, service } = createMarketConditionHarness());
   });
 
   // ============================================================================
@@ -63,10 +42,6 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   // ============================================================================
 
   describe('THROW: Input Validation', () => {
-    beforeEach(() => {
-      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
-    });
-
     it('should THROW on null takeProfits array', () => {
       const flatResult = createFlatResult(true, 75);
 
@@ -119,10 +94,6 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Market Condition Processing', () => {
-    beforeEach(() => {
-      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
-    });
-
     it('should handle NaN confidence gracefully', () => {
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = { isFlat: true, confidence: NaN };
@@ -173,13 +144,13 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('SKIP: Logging Failures with Safe Wrapper', () => {
     it('should skip info logging failures in FLAT market', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createMarketConditionMockLogger({
         info: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(asLoggerService(failingLogger), errorHandler);
+      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(failingLogger), errorHandler);
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(true, 75);
 
@@ -190,13 +161,13 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should skip warn logging failures on error', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createMarketConditionMockLogger({
         warn: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(asLoggerService(failingLogger), errorHandler);
+      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(failingLogger), errorHandler);
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const badFlatResult = { isFlat: true, confidence: NaN };
 
@@ -207,13 +178,13 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should skip logging failures in TRENDING market', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createMarketConditionMockLogger({
         info: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(asLoggerService(failingLogger), errorHandler);
+      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(failingLogger), errorHandler);
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(false, 80);
 
@@ -229,10 +200,6 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   // ============================================================================
 
   describe('Integration: End-to-End Scenarios', () => {
-    beforeEach(() => {
-      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
-    });
-
     it('should adjust TPs for FLAT market (single TP)', () => {
       const takeProfits = [
         createTP(1, 100, 50, 0.5),
@@ -306,7 +273,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
-      const service = new MarketConditionAnalyzerService(asLoggerService(logger));
+      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
       expect(service).toBeDefined();
 
       const takeProfits = [createTP(1, 100, 50, 0.5)];
@@ -317,7 +284,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const service = new MarketConditionAnalyzerService(asLoggerService(logger));
+      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
 
       const takeProfits = [
         createTP(1, 100, 50, 0.5),
@@ -333,7 +300,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should support null flatResult without ErrorHandler', () => {
-      const service = new MarketConditionAnalyzerService(asLoggerService(logger));
+      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
 
       const takeProfits = [createTP(1, 100, 50, 0.5)];
 
@@ -347,10 +314,6 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   // ============================================================================
 
   describe('Edge Cases & Corner Cases', () => {
-    beforeEach(() => {
-      service = new MarketConditionAnalyzerService(asLoggerService(logger), errorHandler);
-    });
-
     it('should handle very small TP prices', () => {
       const takeProfits = [createTP(1, 0.00001, 50, 0.0001)];
       const flatResult = createFlatResult(true, 75);

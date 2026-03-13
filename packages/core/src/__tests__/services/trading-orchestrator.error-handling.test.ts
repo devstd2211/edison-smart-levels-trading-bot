@@ -10,27 +10,31 @@
 
 import { describe, it, expect, jest } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy, StrategyExecutionError, EntryValidationError } from '../../errors';
+import {
+  createEntryValidationTestError,
+  createStrategyExecutionTestError,
+  createTradingOrchestratorMockLogger,
+  TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
+  TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
+  type TradingOrchestratorMockLogger,
+} from '../helpers/trading-orchestrator-test.utils';
 
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
-  const mockLogger = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  };
+  let mockLogger: TradingOrchestratorMockLogger;
+
+  beforeEach(() => {
+    mockLogger = createTradingOrchestratorMockLogger();
+    jest.clearAllMocks();
+  });
 
   describe('runStrategyAnalysis Error Handling (4 tests)', () => {
     it('test-1.1: Should return empty signals on analyzer failure with SKIP strategy', async () => {
-      const error = new StrategyExecutionError('Analyzer failed', {
-        strategyId: 'STRAT1',
-        phase: 'AnalyzerExecution',
-        reason: 'Network timeout'
-      });
+      const error = createStrategyExecutionTestError('Analyzer failed', 'Network timeout');
 
       const handled = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.SKIP,
         logger: mockLogger,
-        context: 'TradingOrchestrator.runStrategyAnalysis'
+        context: TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
       });
 
       expect(handled.success).toBe(true);
@@ -39,17 +43,13 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-1.2: Should log analyzer error with ErrorHandler diagnostics', async () => {
-      const error = new StrategyExecutionError('Analyzer timeout', {
-        strategyId: 'STRAT1',
-        phase: 'AnalyzerExecution',
-        reason: 'API timeout after 30s'
-      });
+      const error = createStrategyExecutionTestError('Analyzer timeout', 'API timeout after 30s');
 
       // Use THROW strategy to inspect error in result
       const handled = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.THROW,
         logger: mockLogger,
-        context: 'TradingOrchestrator.runStrategyAnalysis'
+        context: TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
       });
 
       expect(handled.error?.metadata?.code).toBe('STRATEGY_EXECUTION_ERROR');
@@ -57,17 +57,13 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-1.3: Should NOT retry on analyzer SKIP strategy', async () => {
-      const error = new StrategyExecutionError('Analyzer fails', {
-        strategyId: 'STRAT1',
-        phase: 'AnalyzerExecution',
-        reason: 'transient error'
-      });
+      const error = createStrategyExecutionTestError('Analyzer fails', 'transient error');
 
       // SKIP strategy only attempts once
       const handled = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.SKIP,
         logger: mockLogger,
-        context: 'TradingOrchestrator.runStrategyAnalysis'
+        context: TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
       });
 
       expect(handled.attempts).toBe(1); // SKIP = 1 attempt
@@ -75,17 +71,13 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-1.4: Should preserve error metadata through ErrorHandler normalization', async () => {
-      const error = new StrategyExecutionError('Analyzer offline', {
-        strategyId: 'STRAT1',
-        phase: 'AnalyzerExecution',
-        reason: 'service unavailable'
-      });
+      const error = createStrategyExecutionTestError('Analyzer offline', 'service unavailable');
 
       // Use THROW strategy to inspect error metadata in result
       const handled = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.THROW,
         logger: mockLogger,
-        context: 'TradingOrchestrator.runStrategyAnalysis'
+        context: TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
       });
 
       expect(handled.error?.metadata?.domain).toBe('TRADING');
@@ -96,15 +88,16 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
 
   describe('entryOrchestrator.evaluateEntry Error Handling (4 tests)', () => {
     it('test-2.1: Should handle entry validation errors with SKIP recovery', async () => {
-      const error = new EntryValidationError('Entry validation failed', {
-        reason: 'Signal confidence too low',
-        confidence: 0.3
-      });
+      const error = createEntryValidationTestError(
+        'Entry validation failed',
+        'Signal confidence too low',
+        0.3,
+      );
 
       const handled = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.SKIP,
         logger: mockLogger,
-        context: 'TradingOrchestrator.entryOrchestrator.evaluateEntry'
+        context: TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
       });
 
       expect(handled.success).toBe(true);
@@ -113,10 +106,10 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-2.2: Should classify entry errors as MEDIUM severity (recoverable)', async () => {
-      const error = new EntryValidationError('Risk check failed', {
-        reason: 'Account balance insufficient',
-        confidence: 0
-      });
+      const error = createEntryValidationTestError(
+        'Risk check failed',
+        'Account balance insufficient',
+      );
 
       // Check error metadata before handling
       expect(error.metadata.severity).toBe('MEDIUM');
@@ -126,7 +119,7 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
       const handled = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.SKIP,
         logger: mockLogger,
-        context: 'TradingOrchestrator.entryOrchestrator.evaluateEntry'
+        context: TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
       });
 
       expect(handled.recovered).toBe(true);
@@ -140,7 +133,7 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
       const handled = await ErrorHandler.handle(unknownError, {
         strategy: RecoveryStrategy.THROW,
         logger: mockLogger,
-        context: 'TradingOrchestrator.entryOrchestrator.evaluateEntry'
+        context: TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
       });
 
       // Error should be normalized to TradingError
@@ -151,17 +144,17 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-2.4: Should allow recovery callbacks on entry evaluation failure', async () => {
-      const error = new EntryValidationError('Entry orchestrator error', {
-        reason: 'Critical validation failure',
-        confidence: 0
-      });
+      const error = createEntryValidationTestError(
+        'Entry orchestrator error',
+        'Critical validation failure',
+      );
 
       const onRecoverCallback = jest.fn();
 
       const result = await ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.SKIP,
         logger: mockLogger,
-        context: 'TradingOrchestrator.entryOrchestrator.evaluateEntry',
+        context: TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
         onRecover: onRecoverCallback
       });
 
@@ -244,11 +237,10 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
 
   describe('Error Recovery Strategy Selection (3 tests)', () => {
     it('test-4.1: Should select SKIP strategy for non-critical analyzer failures', () => {
-      const error = new StrategyExecutionError('Analyzer unavailable', {
-        strategyId: 'STRAT1',
-        phase: 'AnalyzerExecution',
-        reason: 'service temporarily down'
-      });
+      const error = createStrategyExecutionTestError(
+        'Analyzer unavailable',
+        'service temporarily down',
+      );
 
       // SKIP is appropriate because:
       // - Analyzer failure is recoverable
@@ -259,9 +251,10 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-4.2: Should select SKIP strategy for entry validation failures', () => {
-      const error = new EntryValidationError('Entry rejected', {
-        reason: 'confidence threshold not met'
-      });
+      const error = createEntryValidationTestError(
+        'Entry rejected',
+        'confidence threshold not met',
+      );
 
       // SKIP is appropriate because:
       // - Entry validation is non-critical (we don't always enter)
@@ -272,9 +265,10 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-4.3: Should recognize critical errors that should THROW', () => {
-      const error = new EntryValidationError('Account closed', {
-        reason: 'Trading account is disabled'
-      });
+      const error = createEntryValidationTestError(
+        'Account closed',
+        'Trading account is disabled',
+      );
 
       // Critical account errors could map to CRITICAL severity
       // But EntryValidationError is MEDIUM, so SKIP is still correct
@@ -286,13 +280,9 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
 
   describe('Error Context Preservation (2 tests)', () => {
     it('test-5.1: Should preserve operation context through ErrorHandler', () => {
-      const error = new StrategyExecutionError('Analyzer error', {
-        strategyId: 'STRAT1',
-        phase: 'AnalyzerExecution',
-        reason: 'Network timeout'
-      });
+      const error = createStrategyExecutionTestError('Analyzer error', 'Network timeout');
 
-      const context = 'TradingOrchestrator.runStrategyAnalysis';
+      const context = TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT;
 
       // Context is passed but not stored in ErrorHandler result
       // It's used for logging
@@ -301,9 +291,7 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
     });
 
     it('test-5.2: Should include error code in logs for debugging', () => {
-      const error = new EntryValidationError('Entry failed', {
-        reason: 'Signal too weak'
-      });
+      const error = createEntryValidationTestError('Entry failed', 'Signal too weak');
 
       const errorInfo = {
         code: error.metadata.code,

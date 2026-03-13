@@ -15,55 +15,25 @@
 
 import { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
 import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { StrategyAnalyzerConfig } from '../../types/strategy-config';
 import { IndicatorType } from '../../types/indicator';
-
-// Mock Logger
-type MockLogger = {
-  debug: jest.Mock;
-  info: jest.Mock;
-  warn: jest.Mock;
-  error: jest.Mock;
-};
-
-const createMockLogger = (overrides?: Partial<MockLogger>): MockLogger => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  ...overrides,
-});
-
-// Mock Indicators
-const createMockIndicator = (name: string) => ({
-  calculate: jest.fn().mockResolvedValue([]),
-  getValue: jest.fn().mockReturnValue(50),
-  isReady: jest.fn().mockReturnValue(true),
-  getType: jest.fn().mockReturnValue(name),
-  getMinCandlesRequired: jest.fn().mockReturnValue(14),
-});
-
-// Helper to create base config
-const createBaseConfig = () => ({
-  indicators: {
-    ema: { period: 20 },
-    rsi: { period: 14 },
-    atr: { period: 14 },
-  },
-  analyzerDefaults: {
-    EMA_ANALYZER_NEW: { minConfidence: 0.5 },
-  },
-});
+import {
+  asAnalyzerRegistryLogger,
+  createAnalyzerRegistryBaseConfig,
+  createAnalyzerRegistryHarness,
+  createAnalyzerRegistryMockIndicator,
+  createAnalyzerRegistryMockLogger,
+  type AnalyzerRegistryMockLogger,
+} from '../helpers/analyzer-registry-test.utils';
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let logger: MockLogger;
+  let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger as unknown as LoggerService);
+    ({ logger, errorHandler, registry } = createAnalyzerRegistryHarness());
   });
 
   // ============================================================================
@@ -71,12 +41,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   // ============================================================================
 
   describe('THROW: Analyzer Validation', () => {
-    beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
-    });
-
     it('should THROW on unknown analyzer name', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER_NEW',
         enabled: true,
@@ -95,7 +61,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should throw on invalid analyzer config with null name', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig = {
         name: null,
         enabled: true,
@@ -111,7 +77,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should validate analyzer exists before attempting load', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'INVALID_ANALYZER',
         enabled: true,
@@ -128,7 +94,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should list all available analyzers when unknown analyzer requested', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN',
         enabled: true,
@@ -147,7 +113,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should throw on empty analyzer configuration', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const emptyAnalyzerConfig = {} as unknown as StrategyAnalyzerConfig;
 
       await registry.getAnalyzerInstance(config, emptyAnalyzerConfig);
@@ -160,12 +126,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Load Failures & Recovery', () => {
-    beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
-    });
-
     it('should return null when analyzer fails to load', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'EMA_ANALYZER_NEW',
         enabled: true,
@@ -182,7 +144,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should continue loading other analyzers on partial failure', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },
         { name: 'UNKNOWN_ANALYZER', enabled: true, weight: 1, priority: 5 },
@@ -202,7 +164,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should cache loaded analyzers to avoid reloading on GRACEFUL_DEGRADE', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'EMA_ANALYZER_NEW',
         enabled: true,
@@ -224,7 +186,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should handle concurrent analyzer loading with GRACEFUL_DEGRADE', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },
         { name: 'ATR_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },
@@ -256,15 +218,21 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('SKIP: Logging Failures with Safe Wrapper', () => {
     it('should skip debug logging failures silently', () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createAnalyzerRegistryMockLogger({
         debug: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const reg = new AnalyzerRegistryService(failingLogger as unknown as LoggerService, errorHandler);
+      const reg = new AnalyzerRegistryService(
+        asAnalyzerRegistryLogger(failingLogger),
+        errorHandler,
+      );
       const indicators = new Map();
-      indicators.set(IndicatorType.EMA, createMockIndicator('EMA'));
+      indicators.set(
+        IndicatorType.EMA,
+        createAnalyzerRegistryMockIndicator('EMA'),
+      );
 
       // Should not throw even though logger.debug fails
       expect(() => {
@@ -276,14 +244,17 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should skip warn logging failures silently', async () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createAnalyzerRegistryMockLogger({
         warn: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const reg = new AnalyzerRegistryService(failingLogger as unknown as LoggerService, errorHandler);
-      const config = createBaseConfig();
+      const reg = new AnalyzerRegistryService(
+        asAnalyzerRegistryLogger(failingLogger),
+        errorHandler,
+      );
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
         enabled: true,
@@ -298,14 +269,17 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should skip error logging failures silently', async () => {
-      const failingLogger = createMockLogger({
+      const failingLogger = createAnalyzerRegistryMockLogger({
         error: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
 
-      const reg = new AnalyzerRegistryService(failingLogger as unknown as LoggerService, errorHandler);
-      const config = createBaseConfig();
+      const reg = new AnalyzerRegistryService(
+        asAnalyzerRegistryLogger(failingLogger),
+        errorHandler,
+      );
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'EMA_ANALYZER_NEW',
         enabled: true,
@@ -325,12 +299,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   // ============================================================================
 
   describe('Integration: End-to-End Scenarios', () => {
-    beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
-    });
-
     it('should load all enabled analyzers from strategy config', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1.5, priority: 5 },
         { name: 'RSI_ANALYZER_NEW', enabled: true, weight: 1.0, priority: 4 },
@@ -346,7 +316,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should handle disabled analyzers by skipping them', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },
         { name: 'RSI_ANALYZER_NEW', enabled: false, weight: 1, priority: 4 },
@@ -360,9 +330,9 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
     it('should set and retrieve indicators for analyzer injection', () => {
       const indicators = new Map([
-        [IndicatorType.EMA, createMockIndicator('EMA')],
-        [IndicatorType.RSI, createMockIndicator('RSI')],
-        [IndicatorType.ATR, createMockIndicator('ATR')],
+        [IndicatorType.EMA, createAnalyzerRegistryMockIndicator('EMA')],
+        [IndicatorType.RSI, createAnalyzerRegistryMockIndicator('RSI')],
+        [IndicatorType.ATR, createAnalyzerRegistryMockIndicator('ATR')],
       ]);
 
       registry.setIndicators(indicators);
@@ -400,14 +370,14 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = new AnalyzerRegistryService(logger as unknown as LoggerService);
+      const reg = new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
       expect(reg).toBeDefined();
       expect(reg.getAvailableAnalyzers().length).toBeGreaterThan(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', async () => {
-      const reg = new AnalyzerRegistryService(logger as unknown as LoggerService);
-      const config = createBaseConfig();
+      const reg = new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
         enabled: true,
@@ -424,8 +394,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should support legacy calls to getEnabledAnalyzers without ErrorHandler', async () => {
-      const reg = new AnalyzerRegistryService(logger as unknown as LoggerService);
-      const config = createBaseConfig();
+      const reg = new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
+      const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },
       ];
@@ -440,12 +410,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   // ============================================================================
 
   describe('Edge Cases & Corner Cases', () => {
-    beforeEach(() => {
-      registry = new AnalyzerRegistryService(logger as unknown as LoggerService, errorHandler);
-    });
-
     it('should handle undefined analyzer config gracefully', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig = undefined as unknown as StrategyAnalyzerConfig;
 
       try {
@@ -473,7 +439,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should handle very large config with many analyzers', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = Array.from({ length: 50 }, (_, i) => ({
         name: i % 2 === 0 ? 'EMA_ANALYZER_NEW' : 'UNKNOWN_ANALYZER',
         enabled: true,
@@ -487,9 +453,9 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should handle rapid consecutive calls to different methods', async () => {
-      const config = createBaseConfig();
+      const config = createAnalyzerRegistryBaseConfig();
       const indicators = new Map([
-        [IndicatorType.EMA, createMockIndicator('EMA')],
+        [IndicatorType.EMA, createAnalyzerRegistryMockIndicator('EMA')],
       ]);
 
       registry.setIndicators(indicators);

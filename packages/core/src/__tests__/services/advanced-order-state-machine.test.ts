@@ -17,29 +17,24 @@
  */
 
 import { AdvancedOrderStateMachineService } from '../../services/advanced-order-state-machine.service';
-import { LoggerService } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   OrderState,
   TransitionTrigger,
-  STATE_LOCK_TIMEOUT_MS,
 } from '../../constants/phase-13-constants';
+import {
+  createAdvancedOrderStateMachineHarness,
+  type AdvancedOrderStateMachineMockLogger,
+} from '../helpers/advanced-order-state-machine-test.utils';
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
-  let mockLogger: jest.Mocked<LoggerService>;
+  let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    errorHandler = new ErrorHandler(mockLogger);
-    service = new AdvancedOrderStateMachineService(mockLogger, errorHandler);
+    ({ service, logger: mockLogger, errorHandler } =
+      createAdvancedOrderStateMachineHarness());
   });
 
   afterEach(() => {
@@ -565,7 +560,10 @@ describe('AdvancedOrderStateMachineService', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
       service.cleanup();
-      service = new AdvancedOrderStateMachineService(mockLogger); // No ErrorHandler
+      ({ service } = createAdvancedOrderStateMachineHarness({
+        logger: mockLogger,
+        withErrorHandler: false,
+      }));
     });
 
     it('should work without ErrorHandler - basic transitions', async () => {
