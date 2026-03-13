@@ -5,54 +5,29 @@
  */
 
 import { AntiFlipService } from '../services/anti-flip.service';
-import { SignalDirection, Candle, LoggerService } from '../types/legacy';
-
-type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
-
-// Mock Logger
-const mockLogger: LoggerLike = {
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-};
+import { SignalDirection } from '../types/legacy';
+import {
+  asAntiFlipLogger,
+  createAntiFlipConfig,
+  createAntiFlipMockLogger,
+  createBearishAntiFlipCandle,
+  createBullishAntiFlipCandle,
+  type AntiFlipLoggerLike,
+} from './helpers/anti-flip-test.utils';
 
 describe('AntiFlipService', () => {
   let service: AntiFlipService;
+  let mockLogger: AntiFlipLoggerLike;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    service = new AntiFlipService(mockLogger as LoggerService, {
-      enabled: true,
-      cooldownCandles: 3,
-      cooldownMs: 300000, // 5 minutes
-      requiredConfirmationCandles: 2,
-      overrideConfidenceThreshold: 85,
-      strongReversalRsiThreshold: 25,
-    });
+    mockLogger = createAntiFlipMockLogger();
+    service = new AntiFlipService(asAntiFlipLogger(mockLogger), createAntiFlipConfig());
   });
 
   afterEach(() => {
     jest.useRealTimers();
-  });
-
-  const createBullishCandle = (price: number): Candle => ({
-    timestamp: Date.now(),
-    open: price - 1,
-    high: price + 0.5,
-    low: price - 1.5,
-    close: price,
-    volume: 100,
-  });
-
-  const createBearishCandle = (price: number): Candle => ({
-    timestamp: Date.now(),
-    open: price + 1,
-    high: price + 1.5,
-    low: price - 0.5,
-    close: price,
-    volume: 100,
   });
 
   describe('shouldBlockSignal', () => {
@@ -172,8 +147,8 @@ describe('AntiFlipService', () => {
       service.recordSignal(SignalDirection.LONG, 100);
 
       const bearishCandles = [
-        createBearishCandle(99),
-        createBearishCandle(98),
+        createBearishAntiFlipCandle(99),
+        createBearishAntiFlipCandle(98),
       ];
 
       const result = service.shouldBlockSignal(
@@ -192,8 +167,8 @@ describe('AntiFlipService', () => {
       service.recordSignal(SignalDirection.LONG, 100);
 
       const mixedCandles = [
-        createBullishCandle(101),
-        createBearishCandle(100),
+        createBullishAntiFlipCandle(101),
+        createBearishAntiFlipCandle(100),
       ];
 
       const result = service.shouldBlockSignal(
@@ -280,9 +255,10 @@ describe('AntiFlipService', () => {
 
   describe('configuration', () => {
     it('should respect disabled config', () => {
-      const disabledService = new AntiFlipService(mockLogger as LoggerService, {
-        enabled: false,
-      });
+      const disabledService = new AntiFlipService(
+        asAntiFlipLogger(mockLogger),
+        createAntiFlipConfig({ enabled: false }),
+      );
 
       disabledService.recordSignal(SignalDirection.LONG, 100);
 
@@ -304,11 +280,10 @@ describe('AntiFlipService', () => {
     });
 
     it('should use custom cooldown values', () => {
-      const customService = new AntiFlipService(mockLogger as LoggerService, {
-        enabled: true,
-        cooldownCandles: 1,
-        cooldownMs: 1000,
-      });
+      const customService = new AntiFlipService(
+        asAntiFlipLogger(mockLogger),
+        createAntiFlipConfig({ cooldownCandles: 1, cooldownMs: 1000 }),
+      );
 
       customService.recordSignal(SignalDirection.LONG, 100);
       customService.onNewCandle();

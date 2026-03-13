@@ -4,41 +4,11 @@
  */
 
 import { ConfigValidatorService } from '../../services/config-validator.service';
+import { createValidConfigValidatorConfig } from '../helpers/config-validator-test.utils';
 
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
-    const validConfig = {
-      exchange: {
-        symbol: 'BTCUSDT',
-        apiKey: 'test-key',
-        apiSecret: 'test-secret',
-      },
-      riskManagement: {
-        stopLossPercent: 2.5,
-        positionSizeUsdt: 10,
-      },
-      trading: {
-        leverage: 10,
-      },
-      thresholds: {
-        defaults: {
-          confidence: {
-            min: 0.6,
-          },
-        },
-      },
-      strategies: {
-        levelBased: {
-          minConfidenceThreshold: 0.65,
-        },
-      },
-      entryScanner: {
-        minConfidenceThreshold: 0.3,
-      },
-      entryThresholds: {
-        minTotalScore: 0.55,
-      },
-    };
+    const validConfig = createValidConfigValidatorConfig();
 
     it('should pass validation for valid config', () => {
       expect(() => ConfigValidatorService.validateAtStartup(validConfig)).not.toThrow();

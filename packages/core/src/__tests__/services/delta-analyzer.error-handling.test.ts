@@ -7,54 +7,17 @@
 
 import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { RecoveryStrategy } from '../../errors/ErrorHandler';
-import { DeltaConfig, DeltaTick, LoggerService, Signal, SignalDirection } from '../../types/legacy';
-
-// ============================================================================
-// FIXTURES
-// ============================================================================
-
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  getLogs: jest.fn(() => []),
-  getLogsByLevel: jest.fn(() => []),
-  clear: jest.fn(),
-  disableConsoleOutput: jest.fn(),
-  enableConsoleOutputMode: jest.fn(),
-});
-type MockLogger = ReturnType<typeof createMockLogger>;
-const asLoggerService = (logger: MockLogger): LoggerService => logger as unknown as LoggerService;
-
-const createMockErrorHandler = () => {
-  return new ErrorHandler(asLoggerService(createMockLogger()));
-};
-
-const createMockConfig = (): DeltaConfig => ({
-  enabled: true,
-  windowSizeMs: 60000, // 60 seconds
-  minDeltaThreshold: 100,
-});
-
-const createMockTick = (): DeltaTick => ({
-  side: 'BUY',
-  quantity: 10.5,
-  price: 1000.0,
-  timestamp: Date.now(),
-});
-
-const createMockSignal = (direction: SignalDirection = SignalDirection.LONG): Signal => ({
-  timestamp: Date.now(),
-  type: 'ENTRY' as unknown as Signal['type'],
-  direction,
-  price: 1000.0,
-  stopLoss: 990,
-  takeProfits: [{ level: 1, price: 1010, percent: 1, sizePercent: 50, hit: false }],
-  confidence: 0.75,
-  reason: 'Test signal',
-});
+import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types/legacy';
+import {
+  asDeltaAnalyzerLogger,
+  createDeltaAnalyzerConfig,
+  createDeltaAnalyzerErrorHandler,
+  createDeltaAnalyzerMockLogger,
+  createDeltaAnalyzerService,
+  createDeltaAnalyzerSignal,
+  createDeltaAnalyzerTick,
+  type DeltaAnalyzerMockLogger,
+} from '../helpers/delta-analyzer-test.utils';
 
 // ============================================================================
 // TESTS
@@ -63,11 +26,11 @@ const createMockSignal = (direction: SignalDirection = SignalDirection.LONG): Si
 describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: MockLogger;
+  let mockLogger: DeltaAnalyzerMockLogger;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    errorHandler = createMockErrorHandler();
+    mockLogger = createDeltaAnalyzerMockLogger();
+    errorHandler = createDeltaAnalyzerErrorHandler();
   });
 
   // ==========================================================================
@@ -77,31 +40,29 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new DeltaAnalyzerService(null as unknown as DeltaConfig, asLoggerService(mockLogger), errorHandler);
+        new DeltaAnalyzerService(null as unknown as DeltaConfig, asDeltaAnalyzerLogger(mockLogger), errorHandler);
       }).toThrow('DeltaConfig cannot be null or undefined');
     });
 
     it('should throw on undefined config', () => {
       expect(() => {
-        new DeltaAnalyzerService(undefined as unknown as DeltaConfig, asLoggerService(mockLogger), errorHandler);
+        new DeltaAnalyzerService(undefined as unknown as DeltaConfig, asDeltaAnalyzerLogger(mockLogger), errorHandler);
       }).toThrow('DeltaConfig cannot be null or undefined');
     });
 
     it('should throw on invalid windowSizeMs (zero)', () => {
-      const config = createMockConfig();
-      config.windowSizeMs = 0;
+      const config = createDeltaAnalyzerConfig({ minDeltaThreshold: 100, windowSizeMs: 0 });
 
       expect(() => {
-        new DeltaAnalyzerService(config, asLoggerService(mockLogger), errorHandler);
+        new DeltaAnalyzerService(config, asDeltaAnalyzerLogger(mockLogger), errorHandler);
       }).toThrow('windowSizeMs must be > 0');
     });
 
     it('should throw on invalid minDeltaThreshold (negative)', () => {
-      const config = createMockConfig();
-      config.minDeltaThreshold = -50;
+      const config = createDeltaAnalyzerConfig({ minDeltaThreshold: -50 });
 
       expect(() => {
-        new DeltaAnalyzerService(config, asLoggerService(mockLogger), errorHandler);
+        new DeltaAnalyzerService(config, asDeltaAnalyzerLogger(mockLogger), errorHandler);
       }).toThrow('minDeltaThreshold must be >= 0');
     });
   });
@@ -112,7 +73,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler,
+      });
     });
 
     it('should throw on null tick', () => {
@@ -122,7 +87,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should throw on invalid tick side', () => {
-      const tick = createMockTick();
+      const tick = createDeltaAnalyzerTick();
       tick.side = 'NEUTRAL' as unknown as DeltaTick['side'];
 
       expect(() => {
@@ -131,7 +96,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should throw on NaN quantity', () => {
-      const tick = createMockTick();
+      const tick = createDeltaAnalyzerTick();
       tick.quantity = NaN;
 
       expect(() => {
@@ -140,7 +105,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should throw on NaN price', () => {
-      const tick = createMockTick();
+      const tick = createDeltaAnalyzerTick();
       tick.price = NaN;
 
       expect(() => {
@@ -155,7 +120,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Signal Validation', () => {
     beforeEach(() => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler,
+      });
     });
 
     it('should throw on null signal', () => {
@@ -165,7 +134,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should throw on invalid signal direction', () => {
-      const signal = createMockSignal();
+      const signal = createDeltaAnalyzerSignal();
       signal.direction = 'MIDDLE' as unknown as Signal['direction'];
 
       expect(() => {
@@ -180,12 +149,15 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler,
+      });
     });
 
     it('should throw on Infinity quantity (validation prevents accumulation)', () => {
-      const tick = createMockTick();
-      tick.quantity = Infinity;
+      const tick = createDeltaAnalyzerTick({ price: 1000, quantity: Infinity });
 
       // Adding Infinity should throw during validation
       expect(() => {
@@ -194,10 +166,9 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should handle extreme volume values', () => {
-      const tick = createMockTick();
-      tick.quantity = 1e308; // Very large number
+      const tick = createDeltaAnalyzerTick({ price: 1000, quantity: 1e308 });
 
-      service.addTick(createMockTick());
+      service.addTick(createDeltaAnalyzerTick({ price: 1000, quantity: 10.5 }));
       service.addTick(tick);
 
       const analysis = service.analyze();
@@ -221,7 +192,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('SKIP: Logger Errors', () => {
     beforeEach(() => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler,
+      });
     });
 
     it('should skip logger errors during initialization', () => {
@@ -230,7 +205,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
       });
 
       expect(() => {
-        new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+        createDeltaAnalyzerService({
+          config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+          logger: asDeltaAnalyzerLogger(mockLogger),
+          errorHandler,
+        });
       }).not.toThrow();
     });
 
@@ -239,7 +218,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
         throw new Error('Logger failed');
       });
 
-      const tick = createMockTick();
+      const tick = createDeltaAnalyzerTick({ price: 1000, quantity: 10.5 });
       service.addTick(tick);
 
       expect(() => {
@@ -254,13 +233,17 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('Integration: Complex Scenarios', () => {
     beforeEach(() => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler,
+      });
     });
 
     it('should handle multiple ticks and analyze correctly', () => {
       // Need delta >= 100 to be BULLISH (threshold is 100)
-      const buyTick = { ...createMockTick(), side: 'BUY' as const, quantity: 200 };
-      const sellTick = { ...createMockTick(), side: 'SELL' as const, quantity: 50 };
+      const buyTick = createDeltaAnalyzerTick({ price: 1000, quantity: 200, side: 'BUY' });
+      const sellTick = createDeltaAnalyzerTick({ price: 1000, quantity: 50, side: 'SELL' });
 
       service.addTick(buyTick);
       service.addTick(sellTick);
@@ -274,12 +257,22 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should confirm and reject signals correctly', () => {
-      const buyTick = { ...createMockTick(), side: 'BUY' as const, quantity: 200 };
+      const buyTick = createDeltaAnalyzerTick({ price: 1000, quantity: 200, side: 'BUY' });
 
       service.addTick(buyTick);
 
-      const longSignal = createMockSignal(SignalDirection.LONG);
-      const shortSignal = createMockSignal(SignalDirection.SHORT);
+      const longSignal = createDeltaAnalyzerSignal(SignalDirection.LONG, {
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [{ level: 1, price: 1010, percent: 1, sizePercent: 50, hit: false }],
+        confidence: 0.75,
+      });
+      const shortSignal = createDeltaAnalyzerSignal(SignalDirection.SHORT, {
+        price: 1000,
+        stopLoss: 990,
+        takeProfits: [{ level: 1, price: 1010, percent: 1, sizePercent: 50, hit: false }],
+        confidence: 0.75,
+      });
 
       expect(service.confirmSignal(longSignal)).toBe(true);
       expect(service.confirmSignal(shortSignal)).toBe(false);
@@ -293,12 +286,15 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        new DeltaAnalyzerService(null as unknown as DeltaConfig, asLoggerService(mockLogger));
+        new DeltaAnalyzerService(null as unknown as DeltaConfig, asDeltaAnalyzerLogger(mockLogger));
       }).toThrow('DeltaConfig cannot be null or undefined');
     });
 
     it('should throw on null tick without ErrorHandler', () => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger));
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+      });
 
       expect(() => {
         service.addTick(null as unknown as DeltaTick);
@@ -312,12 +308,15 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      service = new DeltaAnalyzerService(createMockConfig(), asLoggerService(mockLogger), errorHandler);
+      service = createDeltaAnalyzerService({
+        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
+        logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler,
+      });
     });
 
     it('should handle zero quantity ticks', () => {
-      const tick = createMockTick();
-      tick.quantity = 0;
+      const tick = createDeltaAnalyzerTick({ price: 1000, quantity: 0 });
 
       expect(() => {
         service.addTick(tick);
@@ -328,8 +327,8 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should handle exactly matching buy and sell volumes', () => {
-      const buyTick = { ...createMockTick(), side: 'BUY' as const, quantity: 100 };
-      const sellTick = { ...createMockTick(), side: 'SELL' as const, quantity: 100 };
+      const buyTick = createDeltaAnalyzerTick({ price: 1000, quantity: 100, side: 'BUY' });
+      const sellTick = createDeltaAnalyzerTick({ price: 1000, quantity: 100, side: 'SELL' });
 
       service.addTick(buyTick);
       service.addTick(sellTick);
@@ -342,7 +341,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should reset ticks without error', () => {
-      service.addTick(createMockTick());
+      service.addTick(createDeltaAnalyzerTick({ price: 1000, quantity: 10.5 }));
 
       expect(service.getTickCount()).toBeGreaterThan(0);
 

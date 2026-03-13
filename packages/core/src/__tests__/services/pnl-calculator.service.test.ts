@@ -4,108 +4,138 @@
 
 import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calculator.service';
 import { PositionSide } from '../../types/legacy';
+import {
+  createBybitPartialCloseSet,
+  createBybitTradeValidationSet,
+  createPartialCloseInput,
+  createPnlTradeInput,
+} from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
   describe('calculate', () => {
     it('should calculate PnL correctly for SHORT with profit', () => {
-      // Real Bybit trade: SHORT @ 1.1316 → 1.1428 (stop loss)
+      const trade = createPnlTradeInput({
+        side: PositionSide.SHORT,
+        entry: 1.1316,
+        exit: 1.1428,
+        quantity: 88.4,
+      });
       const result = PnLCalculatorService.calculate(
-        PositionSide.SHORT,
-        1.1316,
-        1.1428,
-        88.4,
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
         BYBIT_TAKER_FEE,
       );
 
       expect(result.pnlGross).toBeCloseTo(-0.9901, 3);
       expect(result.fees).toBeCloseTo(0.1106, 3);
-      expect(result.pnlNet).toBeCloseTo(-1.1007, 3); // Matches Bybit exactly!
+      expect(result.pnlNet).toBeCloseTo(-1.1007, 3);
       expect(result.pnlPercent).toBeCloseTo(-0.99, 2);
     });
 
     it('should calculate PnL correctly for SHORT partial close (TP1)', () => {
-      // Real Bybit trade: SHORT @ 1.1748 → 1.1676 (TP1)
+      const trade = createPnlTradeInput({
+        side: PositionSide.SHORT,
+        entry: 1.1748,
+        exit: 1.1676,
+        quantity: 28.4,
+      });
       const result = PnLCalculatorService.calculate(
-        PositionSide.SHORT,
-        1.1748,
-        1.1676,
-        28.4,
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
         BYBIT_TAKER_FEE,
       );
 
       expect(result.pnlGross).toBeCloseTo(0.2045, 3);
-      // Note: Bybit shows 0.1795, our calc shows 0.1679 (difference due to rounding/other factors)
-      expect(result.pnlNet).toBeGreaterThan(0.16); // Should be profitable
-      expect(result.pnlNet).toBeLessThan(0.21); // But less than gross
+      expect(result.pnlNet).toBeGreaterThan(0.16);
+      expect(result.pnlNet).toBeLessThan(0.21);
     });
 
     it('should calculate PnL correctly for SHORT partial close (TP3)', () => {
-      // Real Bybit trade: SHORT @ 1.1748 → 1.1363 (TP3)
+      const trade = createPnlTradeInput({
+        side: PositionSide.SHORT,
+        entry: 1.1748,
+        exit: 1.1363,
+        quantity: 28.4,
+      });
       const result = PnLCalculatorService.calculate(
-        PositionSide.SHORT,
-        1.1748,
-        1.1363,
-        28.4,
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
         BYBIT_TAKER_FEE,
       );
 
       expect(result.pnlGross).toBeCloseTo(1.0934, 3);
-      expect(result.pnlNet).toBeCloseTo(1.0573, 2); // Matches Bybit!
+      expect(result.pnlNet).toBeCloseTo(1.0573, 2);
     });
 
     it('should calculate PnL correctly for LONG with loss', () => {
-      // Real Bybit trade: LONG @ 1.1517 → 1.1492 (stop loss)
+      const trade = createPnlTradeInput({
+        side: PositionSide.LONG,
+        entry: 1.1517,
+        exit: 1.1492,
+        quantity: 86.8,
+      });
       const result = PnLCalculatorService.calculate(
-        PositionSide.LONG,
-        1.1517,
-        1.1492,
-        86.8,
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
         BYBIT_TAKER_FEE,
       );
 
-      // Gross: (1.1492 - 1.1517) × 86.8 = -0.217 USDT
       expect(result.pnlGross).toBeCloseTo(-0.217, 2);
-      expect(result.pnlNet).toBeCloseTo(-0.328, 2); // With fees
+      expect(result.pnlNet).toBeCloseTo(-0.328, 2);
       expect(result.pnlPercent).toBeLessThan(0);
     });
 
     it('should calculate PnL correctly for LONG with profit', () => {
+      const trade = createPnlTradeInput();
       const result = PnLCalculatorService.calculate(
-        PositionSide.LONG,
-        1.1500,
-        1.1600,
-        50.0,
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
         BYBIT_TAKER_FEE,
       );
 
-      // LONG: profit when price goes up
-      // Gross: (1.1600 - 1.1500) × 50 = 0.5 USDT
       expect(result.pnlGross).toBeCloseTo(0.5, 2);
-      expect(result.pnlNet).toBeLessThan(result.pnlGross); // Fees deducted
+      expect(result.pnlNet).toBeLessThan(result.pnlGross);
       expect(result.pnlPercent).toBeGreaterThan(0);
     });
 
     it('should return zero PnL for same entry/exit price (before fees)', () => {
+      const trade = createPnlTradeInput({ exit: 1.15 });
       const result = PnLCalculatorService.calculate(
-        PositionSide.LONG,
-        1.1500,
-        1.1500,
-        50.0,
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
         BYBIT_TAKER_FEE,
       );
 
       expect(result.pnlGross).toBe(0);
-      expect(result.pnlNet).toBeLessThan(0); // Loss due to fees
+      expect(result.pnlNet).toBeLessThan(0);
       expect(result.fees).toBeGreaterThan(0);
     });
 
     it('should handle zero fee rate', () => {
+      const trade = createPnlTradeInput({
+        side: PositionSide.SHORT,
+        entry: 1.1748,
+        exit: 1.1676,
+        quantity: 28.4,
+      });
       const result = PnLCalculatorService.calculate(
-        PositionSide.SHORT,
-        1.1748,
-        1.1676,
-        28.4,
-        0, // No fees
+        trade.side,
+        trade.entry,
+        trade.exit,
+        trade.quantity,
+        0,
       );
 
       expect(result.fees).toBe(0);
@@ -115,19 +145,13 @@ describe('PnLCalculatorService', () => {
 
   describe('calculatePartialCloses', () => {
     it('should sum PnL from multiple partial closes', () => {
-      // Real Bybit position: SHORT @ 1.1748 with 3 partial closes
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,
-        [
-          { quantity: 28.4, exitPrice: 1.1676 }, // TP1: +0.1679
-          { quantity: 28.4, exitPrice: 1.1617 }, // TP2: +0.3356
-          { quantity: 28.4, exitPrice: 1.1363 }, // TP3: +1.0573
-        ],
+        createBybitPartialCloseSet(),
         BYBIT_TAKER_FEE,
       );
 
-      // Total PnL: 0.1679 + 0.3356 + 1.0573 = 1.5608 USDT
       expect(result.pnlNet).toBeCloseTo(1.5607, 2);
       expect(result.pnlGross).toBeGreaterThan(result.pnlNet);
     });
@@ -136,27 +160,23 @@ describe('PnLCalculatorService', () => {
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,
-        [
-          { quantity: 28.4, exitPrice: 1.1676 },
-          { quantity: 28.4, exitPrice: 1.1617 },
-          { quantity: 28.4, exitPrice: 1.1363 },
-        ],
+        createBybitPartialCloseSet(),
         BYBIT_TAKER_FEE,
       );
 
-      expect(result.pnlPercent).toBeGreaterThan(0); // Profit
-      expect(result.pnlPercent).toBeLessThan(5); // Reasonable range
+      expect(result.pnlPercent).toBeGreaterThan(0);
+      expect(result.pnlPercent).toBeLessThan(5);
     });
 
     it('should handle single close', () => {
+      const close = createPartialCloseInput({ quantity: 85.2, exitPrice: 1.1676 });
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,
-        [{ quantity: 85.2, exitPrice: 1.1676 }],
+        [close],
         BYBIT_TAKER_FEE,
       );
 
-      // Should match single calculate() call
       const single = PnLCalculatorService.calculate(
         PositionSide.SHORT,
         1.1748,
@@ -171,17 +191,15 @@ describe('PnLCalculatorService', () => {
 
   describe('calculateBreakeven', () => {
     it('should calculate breakeven price for LONG', () => {
-      const entryPrice = 1.1500;
+      const entryPrice = 1.15;
       const breakeven = PnLCalculatorService.calculateBreakeven(
         PositionSide.LONG,
         entryPrice,
         BYBIT_TAKER_FEE,
       );
 
-      // For LONG, breakeven should be slightly above entry (need to cover fees)
       expect(breakeven).toBeGreaterThan(entryPrice);
 
-      // Verify: PnL at breakeven should be ~0
       const pnl = PnLCalculatorService.calculate(
         PositionSide.LONG,
         entryPrice,
@@ -194,17 +212,15 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should calculate breakeven price for SHORT', () => {
-      const entryPrice = 1.1500;
+      const entryPrice = 1.15;
       const breakeven = PnLCalculatorService.calculateBreakeven(
         PositionSide.SHORT,
         entryPrice,
         BYBIT_TAKER_FEE,
       );
 
-      // For SHORT, breakeven should be slightly below entry (need to cover fees)
       expect(breakeven).toBeLessThan(entryPrice);
 
-      // Verify: PnL at breakeven should be ~0
       const pnl = PnLCalculatorService.calculate(
         PositionSide.SHORT,
         entryPrice,
@@ -217,33 +233,27 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should handle zero fees', () => {
-      const entryPrice = 1.1500;
+      const entryPrice = 1.15;
       const breakeven = PnLCalculatorService.calculateBreakeven(
         PositionSide.LONG,
         entryPrice,
-        0, // No fees
+        0,
       );
 
-      // With no fees, breakeven = entry
       expect(breakeven).toBe(entryPrice);
     });
   });
 
   describe('real-world validation', () => {
     it('should match all Bybit trades from today', () => {
-      const trades = [
-        { side: PositionSide.SHORT, entry: 1.1316, exit: 1.1428, qty: 88.4, expectedPnL: -1.1007 },
-        { side: PositionSide.SHORT, entry: 1.1748, exit: 1.1676, qty: 28.4, expectedPnL: 0.1679 },
-        { side: PositionSide.SHORT, entry: 1.1748, exit: 1.1617, qty: 28.4, expectedPnL: 0.3356 },
-        { side: PositionSide.SHORT, entry: 1.1748, exit: 1.1363, qty: 28.4, expectedPnL: 1.0573 },
-      ];
+      const trades = createBybitTradeValidationSet();
 
       trades.forEach((trade) => {
         const result = PnLCalculatorService.calculate(
           trade.side,
           trade.entry,
           trade.exit,
-          trade.qty,
+          trade.quantity,
           BYBIT_TAKER_FEE,
         );
 

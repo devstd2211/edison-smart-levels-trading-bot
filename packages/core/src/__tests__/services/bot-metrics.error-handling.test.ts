@@ -11,102 +11,21 @@
 
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LoggerService, LogLevel } from '../../types/legacy';
 import { TradeMetrics } from '../../services/bot-metrics.service';
-
-/**
- * Mock Logger for testing
- */
-class MockLogger extends LoggerService {
-  logCalls: Array<{ level: string; message: string; meta?: unknown }> = [];
-  throwOnCall: boolean = false;
-
-  constructor() {
-    super(LogLevel.INFO, './logs', false);
-  }
-
-  info(message: string, meta?: unknown): void {
-    this.logCalls.push({ level: 'info', message, meta });
-    if (this.throwOnCall) {
-      throw new Error('Logger failed');
-    }
-  }
-
-  debug(message: string, meta?: unknown): void {
-    this.logCalls.push({ level: 'debug', message, meta });
-    if (this.throwOnCall) {
-      throw new Error('Logger failed');
-    }
-  }
-
-  warn(message: string, meta?: unknown): void {
-    this.logCalls.push({ level: 'warn', message, meta });
-    if (this.throwOnCall) {
-      throw new Error('Logger failed');
-    }
-  }
-
-  error(message: string, meta?: unknown): void {
-    this.logCalls.push({ level: 'error', message, meta });
-    if (this.throwOnCall) {
-      throw new Error('Logger failed');
-    }
-  }
-
-  getLogFilePath(): string | null {
-    return null;
-  }
-
-  setConsoleOutputEnabled(enabled: boolean): void {}
-}
-
-/**
- * Helper to create trade metrics
- */
-function createTradeMetrics(overrides?: Partial<TradeMetrics>): TradeMetrics {
-  return {
-    id: `trade-${Date.now()}`,
-    direction: 'LONG' as const,
-    entryPrice: 50000,
-    exitPrice: 51000,
-    quantity: 1,
-    pnl: 1000,
-    pnlPercent: 2.0,
-    duration: 3600000, // 1 hour in ms
-    exitType: 'TAKE_PROFIT_1',
-    timestamp: Date.now(),
-    ...overrides,
-  };
-}
-
-/**
- * Helper to create mock ErrorHandler
- */
-function createMockErrorHandler() {
-  type HandleConfig = Parameters<ErrorHandler['handle']>[1];
-  const mockEH = {
-    handle: jest.fn((error: unknown, options: HandleConfig) => {
-      if (options.strategy === RecoveryStrategy.THROW) {
-        throw error;
-      }
-      return {
-        success: false,
-        error: error instanceof Error ? error : undefined,
-        strategy: options.strategy,
-      };
-    }),
-  };
-  return mockEH as unknown as ErrorHandler;
-}
+import {
+  BotMetricsTestLogger,
+  createBotMetricsErrorHandler,
+  createBotMetricsTrade,
+} from '../helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
-  let logger: MockLogger;
+  let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
 
   beforeEach(() => {
-    logger = new MockLogger();
-    errorHandler = createMockErrorHandler();
+    logger = new BotMetricsTestLogger();
+    errorHandler = createBotMetricsErrorHandler();
     metricsService = new BotMetricsService(logger, errorHandler);
     jest.clearAllMocks();
   });
@@ -150,15 +69,35 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('recordTrade with ErrorHandler', () => {
     it('should successfully record a trade', () => {
-      const trade = createTradeMetrics();
+      const trade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
       metricsService.recordTrade(trade);
       expect(metricsService.getTrades().length).toBe(1);
       expect(metricsService.getTrades()[0].id).toBe(trade.id);
     });
 
     it('should record multiple trades', () => {
-      const trade1 = createTradeMetrics({ id: 'trade-1' });
-      const trade2 = createTradeMetrics({ id: 'trade-2', pnl: -500 });
+      const trade1 = createBotMetricsTrade({
+        id: 'trade-1',
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
+      const trade2 = createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 49500,
+        pnl: -500,
+        pnlPercent: -1,
+        duration: 3600000,
+      });
       metricsService.recordTrade(trade1);
       metricsService.recordTrade(trade2);
       expect(metricsService.getTrades().length).toBe(2);
@@ -166,7 +105,13 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should use SKIP strategy when trade recording fails', () => {
       logger.throwOnCall = true;
-      const trade = createTradeMetrics();
+      const trade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
       metricsService.recordTrade(trade);
       // Should still record despite logger error
       expect(errorHandler.handle).toHaveBeenCalledWith(
@@ -176,7 +121,13 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should calculate profit correctly', () => {
-      const winTrade = createTradeMetrics({ pnl: 500 });
+      const winTrade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 50500,
+        pnl: 500,
+        pnlPercent: 1,
+        duration: 3600000,
+      });
       metricsService.recordTrade(winTrade);
       const metrics = metricsService.getPerformanceMetrics();
       expect(metrics.totalPnL).toBe(500);
@@ -184,7 +135,13 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should calculate loss correctly', () => {
-      const lossTrade = createTradeMetrics({ pnl: -300 });
+      const lossTrade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 49700,
+        pnl: -300,
+        pnlPercent: -0.6,
+        duration: 3600000,
+      });
       metricsService.recordTrade(lossTrade);
       const metrics = metricsService.getPerformanceMetrics();
       expect(metrics.totalPnL).toBe(-300);
@@ -192,8 +149,21 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should calculate max drawdown', () => {
-      const winTrade = createTradeMetrics({ pnl: 1000 });
-      const lossTrade = createTradeMetrics({ pnl: -500, id: 'trade-2' });
+      const winTrade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
+      const lossTrade = createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 49500,
+        pnl: -500,
+        pnlPercent: -1,
+        duration: 3600000,
+      });
       metricsService.recordTrade(winTrade);
       metricsService.recordTrade(lossTrade);
       const metrics = metricsService.getPerformanceMetrics();
@@ -203,7 +173,13 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     it('should handle trade recording without ErrorHandler', () => {
       const serviceNoEH = new BotMetricsService(logger);
       logger.throwOnCall = true;
-      const trade = createTradeMetrics();
+      const trade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
       serviceNoEH.recordTrade(trade);
       expect(logger.logCalls.some(c => c.level === 'error')).toBe(true);
     });
@@ -269,8 +245,21 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   describe('printReport with ErrorHandler (GRACEFUL_DEGRADE)', () => {
     beforeEach(() => {
       // Add some trades for report
-      metricsService.recordTrade(createTradeMetrics({ pnl: 500 }));
-      metricsService.recordTrade(createTradeMetrics({ pnl: -200, id: 'trade-2' }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 50500,
+        pnl: 500,
+        pnlPercent: 1,
+        duration: 3600000,
+      }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 49800,
+        pnl: -200,
+        pnlPercent: -0.4,
+        duration: 3600000,
+      }));
       metricsService.recordEvent('TEST_EVENT', 100, true);
     });
 
@@ -296,7 +285,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should handle report generation without ErrorHandler', () => {
-      const freshLogger = new MockLogger();
+      const freshLogger = new BotMetricsTestLogger();
       const serviceNoEH = new BotMetricsService(freshLogger);
       freshLogger.throwOnCall = true;
       serviceNoEH.printReport(); // Should not throw
@@ -310,18 +299,58 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('getPerformanceMetrics', () => {
     it('should calculate win rate correctly', () => {
-      metricsService.recordTrade(createTradeMetrics({ pnl: 100 }));
-      metricsService.recordTrade(createTradeMetrics({ pnl: 200, id: 'trade-2' }));
-      metricsService.recordTrade(createTradeMetrics({ pnl: -100, id: 'trade-3' }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 50100,
+        pnl: 100,
+        pnlPercent: 0.2,
+        duration: 3600000,
+      }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 50200,
+        pnl: 200,
+        pnlPercent: 0.4,
+        duration: 3600000,
+      }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-3',
+        entryPrice: 50000,
+        exitPrice: 49900,
+        pnl: -100,
+        pnlPercent: -0.2,
+        duration: 3600000,
+      }));
       const metrics = metricsService.getPerformanceMetrics();
       expect(metrics.winRate).toBeCloseTo(66.67, 1);
       expect(metrics.totalTrades).toBe(3);
     });
 
     it('should calculate profit factor', () => {
-      metricsService.recordTrade(createTradeMetrics({ pnl: 500 }));
-      metricsService.recordTrade(createTradeMetrics({ pnl: 300, id: 'trade-2' }));
-      metricsService.recordTrade(createTradeMetrics({ pnl: -200, id: 'trade-3' }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 50500,
+        pnl: 500,
+        pnlPercent: 1,
+        duration: 3600000,
+      }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 50300,
+        pnl: 300,
+        pnlPercent: 0.6,
+        duration: 3600000,
+      }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-3',
+        entryPrice: 50000,
+        exitPrice: 49800,
+        pnl: -200,
+        pnlPercent: -0.4,
+        duration: 3600000,
+      }));
       const metrics = metricsService.getPerformanceMetrics();
       expect(metrics.profitFactor).toBeCloseTo(4, 1);
     });
@@ -340,7 +369,13 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('reset with ErrorHandler', () => {
     beforeEach(() => {
-      metricsService.recordTrade(createTradeMetrics());
+      metricsService.recordTrade(createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      }));
       metricsService.recordEvent('TEST', 50, true);
     });
 
@@ -374,24 +409,57 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   describe('Integration Tests', () => {
     it('should handle multiple errors gracefully', () => {
       logger.throwOnCall = false;
-      metricsService.recordTrade(createTradeMetrics());
+      metricsService.recordTrade(createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      }));
       metricsService.recordEvent('EVENT1', 50, true);
 
       logger.throwOnCall = true;
-      metricsService.recordTrade(createTradeMetrics({ id: 'trade-2' }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      }));
       metricsService.recordEvent('EVENT2', 75, false, 'test error'); // Error with logging attempt
 
       logger.throwOnCall = false;
-      metricsService.recordTrade(createTradeMetrics({ id: 'trade-3' }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-3',
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      }));
 
       // Should have at least 1 error handler call (from trade or event)
       expect((errorHandler.handle as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should maintain metrics state across errors', () => {
-      metricsService.recordTrade(createTradeMetrics({ pnl: 1000 }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      }));
       logger.throwOnCall = true;
-      metricsService.recordTrade(createTradeMetrics({ pnl: 500, id: 'trade-2' }));
+      metricsService.recordTrade(createBotMetricsTrade({
+        id: 'trade-2',
+        entryPrice: 50000,
+        exitPrice: 50500,
+        pnl: 500,
+        pnlPercent: 1,
+        duration: 3600000,
+      }));
       logger.throwOnCall = false;
 
       const metrics = metricsService.getPerformanceMetrics();
@@ -405,7 +473,14 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
         promises.push(
           Promise.resolve(
             metricsService.recordTrade(
-              createTradeMetrics({ id: `trade-${i}`, pnl: Math.random() * 1000 - 500 })
+              createBotMetricsTrade({
+                id: `trade-${i}`,
+                entryPrice: 50000,
+                exitPrice: 50000,
+                pnl: Math.random() * 1000 - 500,
+                pnlPercent: 0,
+                duration: 3600000,
+              })
             )
           )
         );
@@ -426,7 +501,14 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should get trade by ID', () => {
-      const trade = createTradeMetrics({ id: 'unique-trade-123' });
+      const trade = createBotMetricsTrade({
+        id: 'unique-trade-123',
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
       metricsService.recordTrade(trade);
       const retrieved = metricsService.getTradeById('unique-trade-123');
       expect(retrieved).toEqual(trade);
@@ -438,7 +520,13 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should return copy of trades array', () => {
-      const trade = createTradeMetrics();
+      const trade = createBotMetricsTrade({
+        entryPrice: 50000,
+        exitPrice: 51000,
+        pnl: 1000,
+        pnlPercent: 2,
+        duration: 3600000,
+      });
       metricsService.recordTrade(trade);
       const trades1 = metricsService.getTrades();
       const trades2 = metricsService.getTrades();

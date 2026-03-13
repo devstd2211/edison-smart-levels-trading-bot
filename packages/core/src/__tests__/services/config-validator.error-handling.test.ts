@@ -16,8 +16,7 @@
  */
 
 import { ConfigValidatorService } from '../../services/config-validator.service';
-import { LoggerService, LogLevel } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import { ErrorHandler } from '../../errors';
 import {
   ConfigValidationError,
   ConfigDeprecationError,
@@ -25,121 +24,26 @@ import {
   ConfigAnalyzerValidationError,
   ConfigStrategyValidationError,
 } from '../../errors/DomainErrors';
-
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
-
-const createMockErrorHandler = (): ErrorHandler & { handle: jest.Mock } => {
-  const handler = new ErrorHandler({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  });
-
-  // Mock the handle method
-  jest.spyOn(handler, 'handle').mockResolvedValue({
-    success: true,
-    recovered: true,
-    message: 'Handled',
-    strategy: RecoveryStrategy.THROW,
-  } as Awaited<ReturnType<ErrorHandler['handle']>>);
-
-  return handler as ErrorHandler & { handle: jest.Mock };
-};
-const asConfigInput = (value: unknown): Parameters<ConfigValidatorService['validateAll']>[0] =>
-  value as Parameters<ConfigValidatorService['validateAll']>[0];
-
-const validConfig = {
-  exchange: {
-    symbol: 'BTCUSDT',
-    apiKey: 'test-key',
-    apiSecret: 'test-secret',
-  },
-  riskManagement: {
-    stopLossPercent: 2.5,
-    positionSizeUsdt: 10,
-  },
-  trading: {
-    leverage: 10,
-  },
-  thresholds: {
-    defaults: {
-      confidence: {
-        min: 0.6,
-        clampMin: 0.3,
-        clampMax: 0.9,
-      },
-    },
-    regimes: {
-      LOW: { confidence: { min: 0.5 } },
-      MEDIUM: { confidence: { min: 0.6 } },
-      HIGH: { confidence: { min: 0.7 } },
-    },
-  },
-  strategies: {
-    levelBased: {
-      minConfidenceThreshold: 0.65,
-      blockLongInDowntrend: true,
-      blockShortInUptrend: false,
-      levelClustering: {
-        trendFilters: {
-          downtrend: { rsiThreshold: 30 },
-          uptrend: { rsiThreshold: 70 },
-        },
-      },
-    },
-  },
-  entryScanner: {
-    minConfidenceThreshold: 0.3,
-    confidenceClampMin: 0.2,
-    confidenceClampMax: 0.95,
-  },
-  entryThresholds: {
-    minTotalScore: 0.55,
-  },
-  strategicWeights: {
-    technicalIndicators: {
-      rsi: { enabled: true },
-      ema: { enabled: true },
-      atr: { enabled: true },
-    },
-    marketStructure: {
-      liquidity: { enabled: false },
-      divergence: { enabled: false },
-      breakout: { enabled: false },
-      flatMarket: { enabled: false },
-    },
-    smcMicrostructure: {
-      footprint: { enabled: true },
-      orderBlock: { enabled: true },
-      fairValueGap: { enabled: false },
-    },
-    externalData: {
-      btcCorrelation: { enabled: false },
-      fundingRate: { enabled: false },
-      orderbookImbalance: { enabled: false },
-    },
-  },
-};
+import {
+  asConfigValidatorInput,
+  createConfigValidatorErrorHandler,
+  createConfigValidatorLogger,
+  createValidConfigValidatorConfig,
+} from '../helpers/config-validator-test.utils';
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: LoggerService;
+  let logger: ReturnType<typeof createConfigValidatorLogger>;
   let errorHandler: ErrorHandler;
+  const validConfig = createValidConfigValidatorConfig();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    logger = createMockLogger();
-    errorHandler = createMockErrorHandler();
+    logger = createConfigValidatorLogger();
+    errorHandler = createConfigValidatorErrorHandler();
   });
 
   // ========================================================================
@@ -189,7 +93,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       const validator = new ConfigValidatorService(logger, errorHandler);
       const config = { ...validConfig, exchange: { ...validConfig.exchange, symbol: null } };
 
-      expect(() => validator.validateAll(asConfigInput(config))).toThrow(ConfigValidationError);
+      expect(() => validator.validateAll(asConfigValidatorInput(config))).toThrow(ConfigValidationError);
     });
 
     it('test-8.9.31.B3: Should throw for missing riskManagement.stopLossPercent', () => {
@@ -199,7 +103,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         riskManagement: { ...validConfig.riskManagement, stopLossPercent: undefined },
       };
 
-      expect(() => validator.validateAll(asConfigInput(config))).toThrow(ConfigValidationError);
+      expect(() => validator.validateAll(asConfigValidatorInput(config))).toThrow(ConfigValidationError);
     });
 
     it('test-8.9.31.B4: Should collect multiple missing required fields', () => {
@@ -211,7 +115,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       };
 
       try {
-        validator.validateAll(asConfigInput(config));
+        validator.validateAll(asConfigValidatorInput(config));
         fail('Should have thrown');
       } catch (error: unknown) {
         expect(error).toBeInstanceOf(ConfigValidationError);
@@ -236,7 +140,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         },
       };
 
-      expect(() => validator.validateAll(asConfigInput(config))).toThrow(ConfigFormatError);
+      expect(() => validator.validateAll(asConfigValidatorInput(config))).toThrow(ConfigFormatError);
     });
 
     it('test-8.9.31.C2: Should collect multiple confidence format errors', () => {
@@ -252,7 +156,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       };
 
       try {
-        validator.validateAll(asConfigInput(config));
+        validator.validateAll(asConfigValidatorInput(config));
         fail('Should have thrown');
       } catch (error: unknown) {
         expect(error).toBeInstanceOf(ConfigFormatError);
@@ -309,7 +213,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       const config: Record<string, unknown> = { ...validConfig };
       delete config.strategicWeights;
 
-      expect(() => validator.validateAnalyzerConfig(asConfigInput(config))).toThrow(ConfigAnalyzerValidationError);
+      expect(() => validator.validateAnalyzerConfig(asConfigValidatorInput(config))).toThrow(ConfigAnalyzerValidationError);
     });
 
     it('test-8.9.31.E2: Should throw for missing analyzer enabled flag', () => {
@@ -326,7 +230,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         },
       };
 
-      expect(() => validator.validateAnalyzerConfig(asConfigInput(config))).toThrow(ConfigAnalyzerValidationError);
+      expect(() => validator.validateAnalyzerConfig(asConfigValidatorInput(config))).toThrow(ConfigAnalyzerValidationError);
     });
   });
 
@@ -340,7 +244,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       const config: Record<string, unknown> = { ...validConfig };
       delete config.strategies;
 
-      expect(() => validator.validateStrategyConfig(asConfigInput(config))).toThrow(ConfigStrategyValidationError);
+      expect(() => validator.validateStrategyConfig(asConfigValidatorInput(config))).toThrow(ConfigStrategyValidationError);
     });
 
     it('test-8.9.31.F2: Should throw for missing blockLongInDowntrend flag', () => {
@@ -355,7 +259,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         },
       };
 
-      expect(() => validator.validateStrategyConfig(asConfigInput(config))).toThrow(ConfigStrategyValidationError);
+      expect(() => validator.validateStrategyConfig(asConfigValidatorInput(config))).toThrow(ConfigStrategyValidationError);
     });
   });
 
@@ -386,7 +290,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('H. Logger Failures - SKIP Strategy (1 test)', () => {
     it('test-8.9.31.H1: Should skip logger errors during validation (SKIP strategy)', () => {
-      const mockLogger = createMockLogger();
+      const mockLogger = createConfigValidatorLogger();
       jest.spyOn(mockLogger, 'info').mockImplementation(() => {
         throw new Error('Logger write failed');
       });

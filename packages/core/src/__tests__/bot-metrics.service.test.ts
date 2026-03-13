@@ -13,23 +13,19 @@
 
 import { BotMetricsService, TradeMetrics } from '../services/bot-metrics.service';
 import { LoggerService } from '../types/legacy';
-
-// Mock logger
-const createMockLogger = (): Partial<LoggerService> => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  getLogFilePath: jest.fn().mockReturnValue('/mock/log/path'),
-});
+import {
+  createBotMetricsMockLogger,
+  createBotMetricsService,
+  createBotMetricsTrade,
+} from './helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService', () => {
   let metricsService: BotMetricsService;
   let mockLogger: Partial<LoggerService>;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    metricsService = new BotMetricsService(mockLogger as LoggerService);
+    mockLogger = createBotMetricsMockLogger();
+    metricsService = createBotMetricsService({ logger: mockLogger as LoggerService });
   });
 
   describe('initialization', () => {
@@ -54,18 +50,7 @@ describe('BotMetricsService', () => {
 
   describe('recordTrade', () => {
     it('should record a profitable trade', () => {
-      const trade: TradeMetrics = {
-        id: 'trade-1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 5,
-        pnlPercent: 5,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: 'trade-1' });
 
       metricsService.recordTrade(trade);
       const trades = metricsService.getTrades();
@@ -75,18 +60,15 @@ describe('BotMetricsService', () => {
     });
 
     it('should record a losing trade', () => {
-      const trade: TradeMetrics = {
+      const trade: TradeMetrics = createBotMetricsTrade({
         id: 'trade-2',
         direction: 'SHORT',
-        entryPrice: 100,
         exitPrice: 95,
-        quantity: 1,
         pnl: -5,
         pnlPercent: -5,
         duration: 30000,
         exitType: 'STOP_LOSS',
-        timestamp: Date.now(),
-      };
+      });
 
       metricsService.recordTrade(trade);
       const trades = metricsService.getTrades();
@@ -96,31 +78,8 @@ describe('BotMetricsService', () => {
     });
 
     it('should track total profit correctly', () => {
-      const trade1: TradeMetrics = {
-        id: 'trade-1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 110,
-        quantity: 1,
-        pnl: 10,
-        pnlPercent: 10,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
-
-      const trade2: TradeMetrics = {
-        id: 'trade-2',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 5,
-        pnlPercent: 5,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade1: TradeMetrics = createBotMetricsTrade({ id: 'trade-1', exitPrice: 110, pnl: 10, pnlPercent: 10 });
+      const trade2: TradeMetrics = createBotMetricsTrade({ id: 'trade-2' });
 
       metricsService.recordTrade(trade1);
       metricsService.recordTrade(trade2);
@@ -131,32 +90,14 @@ describe('BotMetricsService', () => {
 
     it('should calculate drawdown correctly', () => {
       // First winning trade - new peak
-      const trade1: TradeMetrics = {
-        id: 'trade-1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 110,
-        quantity: 1,
-        pnl: 10,
-        pnlPercent: 10,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
-
-      // Losing trade - creates drawdown
-      const trade2: TradeMetrics = {
+      const trade1: TradeMetrics = createBotMetricsTrade({ id: 'trade-1', exitPrice: 110, pnl: 10, pnlPercent: 10 });
+      const trade2: TradeMetrics = createBotMetricsTrade({
         id: 'trade-2',
-        direction: 'LONG',
-        entryPrice: 100,
         exitPrice: 95,
-        quantity: 1,
         pnl: -5,
         pnlPercent: -5,
-        duration: 60000,
         exitType: 'STOP_LOSS',
-        timestamp: Date.now(),
-      };
+      });
 
       metricsService.recordTrade(trade1);
       const perf1 = metricsService.getPerformanceMetrics();
@@ -168,18 +109,7 @@ describe('BotMetricsService', () => {
     });
 
     it('should log trade recording', () => {
-      const trade: TradeMetrics = {
-        id: 'trade-1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 5,
-        pnlPercent: 5.5,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: 'trade-1', pnlPercent: 5.5 });
 
       metricsService.recordTrade(trade);
 
@@ -196,18 +126,7 @@ describe('BotMetricsService', () => {
 
   describe('getTradeById', () => {
     it('should find trade by ID', () => {
-      const trade: TradeMetrics = {
-        id: 'specific-trade',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 5,
-        pnlPercent: 5,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: 'specific-trade' });
 
       metricsService.recordTrade(trade);
       const found = metricsService.getTradeById('specific-trade');
@@ -343,18 +262,7 @@ describe('BotMetricsService', () => {
     });
 
     it('should handle zero division in profit factor', () => {
-      const trade: TradeMetrics = {
-        id: '1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 110,
-        quantity: 1,
-        pnl: 10,
-        pnlPercent: 10,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: '1', exitPrice: 110, pnl: 10, pnlPercent: 10 });
 
       metricsService.recordTrade(trade);
 
@@ -363,18 +271,13 @@ describe('BotMetricsService', () => {
     });
 
     it('should handle zero division in win/loss ratio', () => {
-      const trade: TradeMetrics = {
+      const trade: TradeMetrics = createBotMetricsTrade({
         id: '1',
-        direction: 'LONG',
-        entryPrice: 100,
         exitPrice: 95,
-        quantity: 1,
         pnl: -5,
         pnlPercent: -5,
-        duration: 60000,
         exitType: 'STOP_LOSS',
-        timestamp: Date.now(),
-      };
+      });
 
       metricsService.recordTrade(trade);
 
@@ -472,18 +375,7 @@ describe('BotMetricsService', () => {
 
   describe('reset', () => {
     it('should clear all trades', () => {
-      const trade: TradeMetrics = {
-        id: '1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 5,
-        pnlPercent: 5,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: '1' });
 
       metricsService.recordTrade(trade);
       expect(metricsService.getTrades()).toHaveLength(1);
@@ -501,18 +393,7 @@ describe('BotMetricsService', () => {
     });
 
     it('should reset drawdown and profit/loss tracking', () => {
-      const trade: TradeMetrics = {
-        id: '1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 110,
-        quantity: 1,
-        pnl: 10,
-        pnlPercent: 10,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: '1', exitPrice: 110, pnl: 10, pnlPercent: 10 });
 
       metricsService.recordTrade(trade);
       const perfBefore = metricsService.getPerformanceMetrics();
@@ -535,18 +416,7 @@ describe('BotMetricsService', () => {
 
   describe('getTrades', () => {
     it('should return a copy of trades array', () => {
-      const trade: TradeMetrics = {
-        id: '1',
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 5,
-        pnlPercent: 5,
-        duration: 60000,
-        exitType: 'TAKE_PROFIT_1',
-        timestamp: Date.now(),
-      };
+      const trade: TradeMetrics = createBotMetricsTrade({ id: '1' });
 
       metricsService.recordTrade(trade);
       const trades1 = metricsService.getTrades();

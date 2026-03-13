@@ -11,67 +11,18 @@
  */
 
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
-import { TradingJournalService } from '../../services/trading-journal.service';
-import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult, PerformanceCalculationError } from '../../errors';
+import { ErrorHandler, RecoveryStrategy, PerformanceCalculationError } from '../../errors';
 import type { PerformanceAnalyticsConfig } from '../../types/legacy';
-
-// ============================================================================
-// MOCK UTILITIES
-// ============================================================================
-
-const createMockConfig = (): PerformanceAnalyticsConfig => ({
-  enabled: true,
-  metricsInterval: 10,
-  historicalPeriods: {
-    last10Trades: true,
-    last30Trades: true,
-    last100Trades: true,
-    sessionMetrics: true,
-    allTimeMetrics: true,
-  },
-});
-
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-
-type MockJournal = {
-  getAllTrades: jest.Mock;
-};
-const createMockJournalService = (trades: unknown[] = []): MockJournal => ({
-  getAllTrades: jest.fn(() => trades),
-});
-const asJournal = (value: MockJournal): TradingJournalService =>
-  value as unknown as TradingJournalService;
-const asLogger = (value: ReturnType<typeof createMockLogger>): LoggerService =>
-  value as unknown as LoggerService;
-const asTrades = (value: unknown): Parameters<PerformanceAnalytics['calculateWinRate']>[0] =>
-  value as Parameters<PerformanceAnalytics['calculateWinRate']>[0];
-const asMetricsPeriod = (value: unknown): Parameters<PerformanceAnalytics['getMetrics']>[0] =>
-  value as Parameters<PerformanceAnalytics['getMetrics']>[0];
-
-const createMockErrorHandler = () => ({
-  handle: jest.fn((error, options): Promise<ErrorHandlingResult> => {
-    // For THROW strategy, immediately throw the error synchronously
-    if (options.strategy === RecoveryStrategy.THROW) {
-      throw error;
-    }
-    // Return a resolved promise for other strategies
-    return Promise.resolve({
-      success: true,
-      recovered: options.strategy !== RecoveryStrategy.SKIP && options.strategy !== RecoveryStrategy.THROW,
-      attempts: 1,
-      message: 'Handled successfully',
-      strategy: options.strategy,
-      error: error as ErrorHandlingResult['error'],
-    });
-  }),
-  getLogger: jest.fn(() => createMockLogger()),
-} as unknown as jest.Mocked<ErrorHandler>);
+import {
+  asPerformanceAnalyticsJournal,
+  asPerformanceAnalyticsLogger,
+  asPerformanceAnalyticsPeriod,
+  asPerformanceAnalyticsTrades,
+  createPerformanceAnalyticsConfig,
+  createPerformanceAnalyticsErrorHandler,
+  createPerformanceAnalyticsJournal,
+  createPerformanceAnalyticsLogger,
+} from '../helpers/performance-analytics-test.utils';
 
 // ============================================================================
 // TESTS
@@ -79,28 +30,33 @@ const createMockErrorHandler = () => ({
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let service: PerformanceAnalytics;
-  let mockLogger: ReturnType<typeof createMockLogger>;
-  let mockJournal: MockJournal;
+  let mockLogger: ReturnType<typeof createPerformanceAnalyticsLogger>;
+  let mockJournal: ReturnType<typeof createPerformanceAnalyticsJournal>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
 
   beforeEach(() => {
-    mockConfig = createMockConfig();
-    mockLogger = createMockLogger();
-    mockJournal = createMockJournalService();
-    mockErrorHandler = createMockErrorHandler();
+    mockConfig = createPerformanceAnalyticsConfig();
+    mockLogger = createPerformanceAnalyticsLogger();
+    mockJournal = createPerformanceAnalyticsJournal();
+    mockErrorHandler = createPerformanceAnalyticsErrorHandler();
   });
 
   // ==================== THROW Strategy - Input Validation ====================
 
   describe('THROW Strategy - Input Validation', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should throw PerformanceCalculationError on null trades array', () => {
       expect(() => {
-        service.calculateWinRate(asTrades(null), 10);
+        service.calculateWinRate(asPerformanceAnalyticsTrades(null), 10);
       }).toThrow('Invalid trades array for win rate calculation');
     });
 
@@ -129,7 +85,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
     });
 
     it('should throw PerformanceCalculationError on invalid period enum in getMetrics', async () => {
-      await expect(service.getMetrics(asMetricsPeriod('INVALID'))).rejects.toThrow(PerformanceCalculationError);
+      await expect(service.getMetrics(asPerformanceAnalyticsPeriod('INVALID'))).rejects.toThrow(PerformanceCalculationError);
     });
 
     it('should throw PerformanceCalculationError on invalid limit in getTopTrades', async () => {
@@ -150,7 +106,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should throw on invalid trades in calculateProfitFactor', () => {
       expect(() => {
-        service.calculateProfitFactor(asTrades(undefined));
+        service.calculateProfitFactor(asPerformanceAnalyticsTrades(undefined));
       }).toThrow('Invalid trades array for profit factor calculation');
     });
   });
@@ -159,7 +115,12 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('GRACEFUL_DEGRADE Strategy - Calculation Failures', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should return 0 on Sharpe ratio calculation with zero variance', async () => {
@@ -233,7 +194,12 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('GRACEFUL_DEGRADE Strategy - Data Access Failures', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should handle journal access failure gracefully', async () => {
@@ -299,7 +265,12 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('SKIP Strategy - Logging Operations', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should continue cache clear despite logger failure', () => {
@@ -339,7 +310,12 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('GRACEFUL_DEGRADE Strategy - Cache Operations', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should return safe defaults on cache access failure', () => {
@@ -369,7 +345,11 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
       // Create service WITHOUT ErrorHandler
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger));
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+      );
     });
 
     it('should work without ErrorHandler parameter', () => {
@@ -382,7 +362,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should still throw validation errors without ErrorHandler', () => {
       expect(() => {
-        service.calculateWinRate(asTrades(null), 10);
+        service.calculateWinRate(asPerformanceAnalyticsTrades(null), 10);
       }).toThrow(PerformanceCalculationError);
     });
 
@@ -420,7 +400,12 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('Integration Scenarios', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should handle cascading failures (journal → calculation → logging)', async () => {
@@ -539,12 +524,17 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('Error Handler Strategy Invocation', () => {
     beforeEach(() => {
-      service = new PerformanceAnalytics(mockConfig, asJournal(mockJournal), asLogger(mockLogger), mockErrorHandler);
+      service = new PerformanceAnalytics(
+        mockConfig,
+        asPerformanceAnalyticsJournal(mockJournal),
+        asPerformanceAnalyticsLogger(mockLogger),
+        mockErrorHandler,
+      );
     });
 
     it('should call ErrorHandler with THROW strategy for validation errors', () => {
       try {
-        service.calculateWinRate(asTrades(null), 10);
+        service.calculateWinRate(asPerformanceAnalyticsTrades(null), 10);
       } catch (e) {
         // Expected
       }

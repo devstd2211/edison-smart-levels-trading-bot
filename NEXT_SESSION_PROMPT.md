@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-13)
-- Completed the `exchange-factory` testability follow-up slice:
-  - added shared helpers for canonical mocked logger/error-handler/config bootstrap plus reusable config coercion helpers, and aligned the unit and error-handling suites on one setup path instead of repeated inline logger/config builders and local `ErrorHandler` test doubles.
-  - reviewed `services/exchange-factory.service.ts`; kept production code unchanged because this batch only needed test-fixture consolidation.
+- Completed the `performance-analytics` testability follow-up slice:
+  - added shared helpers for canonical config/logger/journal bootstrap, reusable performance trade fixtures, and ErrorHandler stubs, and aligned the unit and error-handling suites on one fixture path instead of repeating local config objects, mock journal/logger factories, and duplicated trade builders/coercion helpers.
+  - reviewed `services/performance-analytics.service.ts`; kept production code unchanged because this batch only needed test-fixture consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts` -> PASS (2/2 suites, 51/51 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.service.test.ts packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts` -> PASS (2/2 suites, 68/68 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- If starting a fresh session after commit/fixation, resume from the next compact lifecycle/testability boundary that still repeats local service construction or interval teardown beyond the now-covered `position-*`, `websocket-*`, `risk-manager`, `strategy-manager`, `telegram`, `take-profit-manager`, `ladder-tp-manager`, `orderbook-manager`, `wall-tracker`, `volume-profile`, `weight-matrix-calculator`, `compound-interest-calculator`, `entry-confirmation`, `exit-type-detector`, `volatility-regime`, `funding-rate-filter`, `order-execution-detector`, `micro-wall-detector`, `orderbook-imbalance`, `trading-journal`, `whale-detection`, `retest-entry`, `tf-alignment`, `circuit-breaker`, `services/resilience/*`, `graceful-shutdown`, `health-check`, `websocket-keep-alive`, `prometheus-metrics`, `monitoring-server`, `action-queue`, `event-deduplication`, `time-service`, `ml-feature-extractor`, `tick-delta-analyzer`, and `exchange-factory` slices.
+- If starting a fresh session after commit/fixation, resume from the next compact lifecycle/testability boundary that still repeats local service construction or interval teardown beyond the now-covered `position-*`, `websocket-*`, `risk-manager`, `strategy-manager`, `telegram`, `take-profit-manager`, `ladder-tp-manager`, `orderbook-manager`, `wall-tracker`, `volume-profile`, `weight-matrix-calculator`, `compound-interest-calculator`, `entry-confirmation`, `exit-type-detector`, `volatility-regime`, `funding-rate-filter`, `order-execution-detector`, `micro-wall-detector`, `orderbook-imbalance`, `trading-journal`, `whale-detection`, `retest-entry`, `tf-alignment`, `circuit-breaker`, `services/resilience/*`, `graceful-shutdown`, `health-check`, `websocket-keep-alive`, `prometheus-metrics`, `monitoring-server`, `action-queue`, `event-deduplication`, `time-service`, `ml-feature-extractor`, `tick-delta-analyzer`, `exchange-factory`, `delta-analyzer`, `pnl-calculator`, `anti-flip`, `bot-metrics`, `config-validator`, and `performance-analytics` slices.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.
 - Keep behavior unchanged, run targeted tests per slice, and log the batch in `ACTIVE_REFACTOR_PLAN.md`.
