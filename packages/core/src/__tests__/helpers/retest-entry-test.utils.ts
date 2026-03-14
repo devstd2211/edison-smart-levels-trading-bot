@@ -82,12 +82,13 @@ export function createRetestEntryHarness(options: {
 } = {}) {
   const logger = options.logger ?? createRetestEntryLogger();
   const config = createRetestEntryConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const service = new RetestEntryService(
-    config,
+  const errorHandler = createRetestEntryErrorHandler(logger);
+  const service = createRetestEntryService({
+    configOverrides: options.configOverrides,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -95,4 +96,26 @@ export function createRetestEntryHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createRetestEntryErrorHandler(
+  logger: LoggerService = createRetestEntryLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createRetestEntryService(options: {
+  configOverrides?: Partial<RetestConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createRetestEntryLogger();
+  const config = createRetestEntryConfig(options.configOverrides);
+
+  return new RetestEntryService(
+    config,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

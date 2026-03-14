@@ -2,6 +2,8 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WhaleWallTPConfig, WhaleWallTPService } from '../../services/whale-wall-tp.service';
 import { LoggerService, OrderBookWall } from '../../types/legacy';
 
+type WhaleWallTPMockLogger = ReturnType<typeof createWhaleWallTPMockLogger>;
+
 export function createWhaleWallTPMockLogger() {
   return {
     info: jest.fn(),
@@ -89,12 +91,44 @@ export function createWhaleWallTPHarness(options: {
   withErrorHandler?: boolean;
 } = {}) {
   const logger = options.logger ?? (createWhaleWallTPMockLogger() as unknown as LoggerService);
-  const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
-  const service = new WhaleWallTPService(logger, options.config ?? createWhaleWallTPConfig(), undefined, errorHandler);
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createWhaleWallTPErrorHandler(logger);
+  const service = createWhaleWallTPService({
+    logger,
+    config: options.config,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createWhaleWallTPErrorHandler(
+  logger: LoggerService | WhaleWallTPMockLogger = createWhaleWallTPMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger as LoggerService);
+}
+
+export function createWhaleWallTPService(options: {
+  logger?: LoggerService;
+  config?: Partial<WhaleWallTPConfig>;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger =
+    options.logger ??
+    (createWhaleWallTPMockLogger() as unknown as LoggerService);
+
+  return new WhaleWallTPService(
+    logger,
+    options.config ?? createWhaleWallTPConfig(),
+    undefined,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

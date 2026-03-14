@@ -88,14 +88,31 @@ export const createSwingPointDetectorHarness = (
       : options.errorHandler ?? createSwingPointDetectorMockErrorHandler();
 
   return {
-    service: new SwingPointDetectorService(
+    service: createSwingPointDetectorService({
       logger,
-      options.lookbackPeriod ?? 2,
+      lookbackPeriod: options.lookbackPeriod,
       errorHandler,
-    ),
+      withErrorHandler: options.withErrorHandler,
+    }),
     logger,
     errorHandler,
   };
+};
+
+export const createSwingPointDetectorService = (
+  options: SwingPointDetectorHarnessOptions = {},
+): SwingPointDetectorService => {
+  const logger = options.logger ?? createSwingPointDetectorMockLogger();
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : options.errorHandler ?? createSwingPointDetectorMockErrorHandler();
+
+  return new SwingPointDetectorService(
+    logger,
+    options.lookbackPeriod ?? 2,
+    options.withErrorHandler === false ? undefined : errorHandler,
+  );
 };
 
 export const asSwingPointDetectorCandles = (value: unknown): Candle[] => value as Candle[];

@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
+import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../services/logger.service';
+import { PositionStateMachineService } from '../../services/position-state-machine.service';
 
 export function createMockPositionStateMachineLogger(): LoggerService {
   return {
@@ -36,4 +38,45 @@ export async function removeStateMachineArtifacts(baseDir: string): Promise<void
   } catch {
     // Ignore cleanup errors in tests.
   }
+}
+
+export function createPositionStateMachineErrorHandler(
+  logger: LoggerService = createMockPositionStateMachineLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createPositionStateMachineService(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createMockPositionStateMachineLogger();
+
+  return new PositionStateMachineService(
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
+}
+
+export function createPositionStateMachineHarness(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createMockPositionStateMachineLogger();
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createPositionStateMachineErrorHandler(logger);
+  const service = createPositionStateMachineService({
+    logger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    errorHandler,
+  };
 }

@@ -5,50 +5,14 @@
 
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { RecoveryStrategy } from '../../errors/ErrorHandler';
-
-const createMockLogger = () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-
-const createMockConfig = () => ({
-  version: 1,
-  meta: { description: 'Test', lastUpdated: '2024-01-01', activeAnalyzers: [] },
-  exchange: { name: 'Bybit', symbol: 'BTCUSDT', demo: false, testnet: false, apiKey: 'key', apiSecret: 'secret' },
-  trading: { leverage: 1, positionSizeUsdt: 100, maxPositions: 5, orderType: 'MARKET', tradingCycleIntervalMs: 1000 },
-  riskManagement: {
-    maxRiskPercent: 1,
-    stopLoss: { type: 'ATR', multiplier: 2 },
-    takeProfits: [],
-  },
-  timeframes: {},
-  indicators: {
-    ema: { enabled: true, fast: 12, slow: 26 },
-    rsi: { enabled: true, period: 14 },
-  },
-  analyzers: {},
-  filters: {},
-  confidence: {},
-  strategies: {},
-  services: {},
-  monitoring: {},
-});
-
-const createMockStrategy = () => ({
-  version: 1,
-  metadata: { name: 'test-strategy', version: '1.0' },
-  indicators: {
-    ema: { fast: 10 },
-  },
-  riskManagement: {
-    stopLoss: { type: 'FIXED', percent: 2 },
-    takeProfits: [{ percent: 1 }],
-  },
-  analyzers: [],
-});
+import {
+  createStrategyConfigMergerErrorHandler,
+  createStrategyConfigMergerHarness,
+  createStrategyConfigMergerLogger,
+  createStrategyConfigMergerMainConfig as createMockConfig,
+  createStrategyConfigMergerService,
+  createStrategyConfigMergerStrategy as createMockStrategy,
+} from '../helpers/strategy-config-merger-test.utils';
 
 describe('StrategyConfigMergerService - Error Handling', () => {
   let service: StrategyConfigMergerService;
@@ -61,7 +25,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   const asConfigValueMain = (value: unknown): ConfigValueMainInput => value as ConfigValueMainInput;
   const asStrategy = (value: unknown): StrategyInput => value as StrategyInput;
   const asPath = (value: unknown): PathInput => value as PathInput;
-  const asErrorLogger = (value: ReturnType<typeof createMockLogger>) =>
+  const asErrorLogger = (value: ReturnType<typeof createStrategyConfigMergerLogger>) =>
     value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
   const viewMerged = (value: ReturnType<StrategyConfigMergerService['mergeConfigs']>) =>
     value as unknown as {
@@ -78,12 +42,14 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       exchange: unknown;
       indicators: { ema: { enabled?: boolean } };
     };
-  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    errorHandler = new ErrorHandler(asErrorLogger(mockLogger));
-    service = new StrategyConfigMergerService(mockLogger, errorHandler);
+    mockLogger = createStrategyConfigMergerLogger();
+    ({ service, errorHandler } = createStrategyConfigMergerHarness({
+      logger: mockLogger,
+      errorHandler: createStrategyConfigMergerErrorHandler(asErrorLogger(mockLogger)),
+    }));
   });
 
   // ===== THROW: Input Validation =====
@@ -197,7 +163,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
         }),
       };
 
-      const serviceWithBadLogger = new StrategyConfigMergerService(loggerWithError, errorHandler);
+      const serviceWithBadLogger = createStrategyConfigMergerService({ logger: loggerWithError, errorHandler });
 
       expect(() => {
         serviceWithBadLogger.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(createMockStrategy()));
@@ -211,7 +177,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
         }),
       };
 
-      const serviceWithBadLogger = new StrategyConfigMergerService(loggerWithError, errorHandler);
+      const serviceWithBadLogger = createStrategyConfigMergerService({ logger: loggerWithError, errorHandler });
 
       const result = serviceWithBadLogger.getConfigValue(
         asConfigValueMain(createMockConfig()),
@@ -223,7 +189,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should handle missing logger gracefully', () => {
-      const serviceNoLogger = new StrategyConfigMergerService(undefined, errorHandler);
+      const serviceNoLogger = createStrategyConfigMergerService({ logger: undefined, errorHandler });
 
       const result = serviceNoLogger.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(createMockStrategy()));
 
@@ -231,7 +197,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should handle missing errorHandler in SKIP operations', () => {
-      const serviceNoHandler = new StrategyConfigMergerService(mockLogger);
+      const serviceNoHandler = createStrategyConfigMergerService({ logger: mockLogger, withErrorHandler: false });
 
       const result = serviceNoHandler.getConfigValue(
         asConfigValueMain(createMockConfig()),
@@ -333,7 +299,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   // ===== Backward Compatibility =====
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const serviceNoHandler = new StrategyConfigMergerService(mockLogger);
+      const serviceNoHandler = createStrategyConfigMergerService({ logger: mockLogger, withErrorHandler: false });
 
       const result = serviceNoHandler.mergeConfigs(
         asMainConfig(createMockConfig()),
@@ -353,7 +319,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should throw on validation errors even without ErrorHandler', () => {
-      const serviceNoHandler = new StrategyConfigMergerService();
+      const serviceNoHandler = createStrategyConfigMergerService({ logger: undefined, withErrorHandler: false });
 
       expect(() => {
         serviceNoHandler.mergeConfigs(asMainConfig(null), asStrategy(createMockStrategy()));

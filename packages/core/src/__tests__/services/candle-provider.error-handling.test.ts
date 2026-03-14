@@ -12,7 +12,6 @@
  */
 
 import { CandleProvider } from '../../providers/candle.provider';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   ExchangeConnectionError,
   ExchangeRateLimitError,
@@ -23,6 +22,7 @@ import {
   createCandleProviderHarness,
   createCandleProviderMockCandle,
   createCandleProviderMockExchange,
+  createCandleProviderErrorHandler,
   createCandleProviderMockLogger,
   createCandleProviderMockRepository,
   createCandleProviderMockTimeframeProvider,
@@ -36,7 +36,7 @@ describe('CandleProvider - RETRY Strategy', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockRejectedValue(
         new Error('ECONNREFUSED: Connection refused'),
@@ -70,7 +70,7 @@ describe('CandleProvider - RETRY Strategy', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockRejectedValue(new Error('429: Rate limit exceeded'));
 
@@ -96,7 +96,7 @@ describe('CandleProvider - RETRY Strategy', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles
         .mockRejectedValueOnce(new Error('timeout'))
@@ -130,7 +130,7 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockImplementation(
         ({ timeframe }: CandleProviderGetCandlesParams) => {
@@ -171,7 +171,7 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockRejectedValue(new Error('network error'));
 
@@ -198,7 +198,7 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       const { provider } = createCandleProviderHarness({
         logger,
@@ -226,7 +226,7 @@ describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       repository.getCandles.mockReturnValueOnce([]).mockReturnValueOnce([
         { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
@@ -261,7 +261,7 @@ describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
       const mockCandles = [
         { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
       ];
@@ -289,7 +289,7 @@ describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       repository.getCandles.mockReturnValue([]);
       exchange.getCandles.mockRejectedValue(new Error('API error'));
@@ -317,7 +317,7 @@ describe('CandleProvider - onCandleClosed() with SKIP', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       repository.saveCandles.mockImplementation(() => {
         throw new Error('Repository write failed');
@@ -346,7 +346,7 @@ describe('CandleProvider - onCandleClosed() with SKIP', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       timeframeProvider.getTimeframe.mockReturnValue(null);
 
@@ -375,7 +375,7 @@ describe('CandleProvider - Error Classification', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockRejectedValue(
         new Error('ECONNREFUSED: Connection refused'),
@@ -401,7 +401,7 @@ describe('CandleProvider - Error Classification', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockRejectedValue(new Error('429: Too Many Requests'));
 
@@ -425,7 +425,7 @@ describe('CandleProvider - Error Classification', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockRejectedValue(new Error('Unknown API error'));
 
@@ -475,7 +475,7 @@ describe('CandleProvider - Backward Compatibility', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles
         .mockRejectedValueOnce(new Error('timeout'))
@@ -506,7 +506,7 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       exchange.getCandles.mockImplementation(
         ({ timeframe }: CandleProviderGetCandlesParams) => {
@@ -547,7 +547,7 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       let callCount = 0;
       repository.saveCandles.mockImplementation(() => {
@@ -583,7 +583,7 @@ describe('CandleProvider - Integration Tests', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
 
       let attempt = 0;
       exchange.getCandles.mockImplementation(
@@ -622,7 +622,7 @@ describe('CandleProvider - Integration Tests', () => {
       const timeframeProvider = createCandleProviderMockTimeframeProvider();
       const exchange = createCandleProviderMockExchange();
       const repository = createCandleProviderMockRepository();
-      const errorHandler = new ErrorHandler(logger);
+      const errorHandler = createCandleProviderErrorHandler(logger);
       const mockCandles = [
         { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
         { timestamp: 2, open: 105, high: 115, low: 95, close: 110, volume: 1100 },

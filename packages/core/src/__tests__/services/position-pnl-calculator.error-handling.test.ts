@@ -9,6 +9,8 @@ import { PositionPnLCalculatorService } from '../../services/position-pnl-calcul
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { Position, PositionSide, type LoggerService } from '../../types/legacy';
 import {
+  createPositionPnLCalculatorHarness,
+  createPositionPnLCalculatorService,
   createMockPnlErrorHandler,
   createMockPnlLogger,
   createMockPnlPosition,
@@ -37,7 +39,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   beforeEach(() => {
     errorHandler = createMockErrorHandler();
-    service = new PositionPnLCalculatorService(errorHandler);
+    service = createPositionPnLCalculatorService({ errorHandler });
   });
 
   // ==========================================================================
@@ -237,7 +239,9 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     let serviceWithoutHandler: PositionPnLCalculatorService;
 
     beforeEach(() => {
-      serviceWithoutHandler = new PositionPnLCalculatorService(); // No ErrorHandler
+      ({ service: serviceWithoutHandler } = createPositionPnLCalculatorHarness({
+        withErrorHandler: false,
+      }));
     });
 
     it('should still throw on null position without ErrorHandler', () => {

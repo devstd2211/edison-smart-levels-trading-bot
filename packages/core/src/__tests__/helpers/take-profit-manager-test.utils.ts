@@ -39,11 +39,12 @@ export function createTakeProfitManagerHarness(options: {
   const logger = createTakeProfitManagerLogger();
   const errorHandler = new ErrorHandler(logger);
   const config = createTakeProfitManagerConfig(options.configOverrides);
-  const manager = new TakeProfitManagerService(
-    config,
+  const manager = createTakeProfitManagerService({
+    configOverrides: options.configOverrides,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     manager,
@@ -51,4 +52,27 @@ export function createTakeProfitManagerHarness(options: {
     errorHandler,
     config,
   };
+}
+
+export function createTakeProfitManagerService(options: {
+  configOverrides?: Partial<{
+    positionId: string;
+    symbol: string;
+    side: PositionSide;
+    entryPrice: number;
+    totalQuantity: number;
+    leverage: number;
+  }>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createTakeProfitManagerLogger();
+  const config = createTakeProfitManagerConfig(options.configOverrides);
+
+  return new TakeProfitManagerService(
+    config,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

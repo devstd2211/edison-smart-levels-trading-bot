@@ -28,9 +28,11 @@ import {
   asLiquidityHeatmapOrderbook as asOrderbook,
   createDeepLiquidityHeatmapOrderbook,
   createLiquidityHeatmapConfig,
+  createLiquidityHeatmapErrorHandler,
   createLiquidityHeatmapHarness,
   createLiquidityHeatmapLogger,
   createLiquidityHeatmapOrderbook,
+  createLiquidityHeatmapService,
   createThinLiquidityHeatmapOrderbook,
 } from '../helpers/liquidity-heatmap-test.utils';
 
@@ -43,7 +45,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     const logger = createLiquidityHeatmapLogger();
 
     expect(() => {
-      new LiquidityHeatmapService(asConfig(null), undefined, logger);
+      createLiquidityHeatmapService({ config: asConfig(null), logger });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
@@ -51,7 +53,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     const logger = createLiquidityHeatmapLogger();
 
     expect(() => {
-      new LiquidityHeatmapService(asConfig(undefined), undefined, logger);
+      createLiquidityHeatmapService({ config: asConfig(undefined), logger });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
@@ -61,7 +63,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     config.maxLevels = -10;
 
     expect(() => {
-      new LiquidityHeatmapService(config, undefined, logger);
+      createLiquidityHeatmapService({ config, logger });
     }).toThrow('Invalid maxLevels');
   });
 
@@ -71,7 +73,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     config.minStrengthThreshold = 150; // > 100
 
     expect(() => {
-      new LiquidityHeatmapService(config, undefined, logger);
+      createLiquidityHeatmapService({ config, logger });
     }).toThrow('Invalid minStrengthThreshold');
   });
 
@@ -81,7 +83,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     config.clusteringTolerance = -0.5;
 
     expect(() => {
-      new LiquidityHeatmapService(config, undefined, logger);
+      createLiquidityHeatmapService({ config, logger });
     }).toThrow('Invalid clusteringTolerance');
   });
 });
@@ -328,7 +330,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
-    errorHandler = new ErrorHandler(mockLogger);
+    errorHandler = createLiquidityHeatmapErrorHandler(mockLogger);
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -337,17 +339,22 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
     // Should not throw despite logger.info failure
     expect(() => {
-      new LiquidityHeatmapService(config, undefined, loggerWithFailingInfo, errorHandler);
+      createLiquidityHeatmapService({
+        config,
+        logger: loggerWithFailingInfo,
+        errorHandler,
+      });
     }).not.toThrow();
   });
 
   it('should SKIP logger.warn failure during calculations', async () => {
     const loggerWithFailingWarn = createLiquidityHeatmapLogger('warn');
     const config = createLiquidityHeatmapConfig();
-    const service = new LiquidityHeatmapService(
-      config, undefined, loggerWithFailingWarn,
+    const service = createLiquidityHeatmapService({
+      config,
+      logger: loggerWithFailingWarn,
       errorHandler,
-    );
+    });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.bids.forEach((b) => (b.volume = NaN));
@@ -360,10 +367,11 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   it('should SKIP logger.error failure during error handling', async () => {
     const loggerWithFailingError = createLiquidityHeatmapLogger('error');
     const config = createLiquidityHeatmapConfig();
-    const service = new LiquidityHeatmapService(
-      config, undefined, loggerWithFailingError,
+    const service = createLiquidityHeatmapService({
+      config,
+      logger: loggerWithFailingError,
       errorHandler,
-    );
+    });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.price = NaN));
@@ -598,7 +606,11 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
     const config = createLiquidityHeatmapConfig();
 
     expect(() => {
-      new LiquidityHeatmapService(config, undefined, failingLogger);
+      createLiquidityHeatmapService({
+        config,
+        logger: failingLogger,
+        withErrorHandler: false,
+      });
     }).not.toThrow();
   });
 

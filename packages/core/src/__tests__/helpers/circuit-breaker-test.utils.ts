@@ -37,12 +37,13 @@ export function createCircuitBreakerHarness(options: {
 } = {}) {
   const logger = options.logger ?? createCircuitBreakerLogger();
   const config = createCircuitBreakerConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const service = new CircuitBreakerService(
-    config,
+  const errorHandler = createCircuitBreakerErrorHandler(logger);
+  const service = createCircuitBreakerService({
+    configOverrides: options.configOverrides,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -50,4 +51,26 @@ export function createCircuitBreakerHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createCircuitBreakerErrorHandler(
+  logger: LoggerService = createCircuitBreakerLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createCircuitBreakerService(options: {
+  configOverrides?: Partial<CircuitBreakerConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createCircuitBreakerLogger();
+  const config = createCircuitBreakerConfig(options.configOverrides);
+
+  return new CircuitBreakerService(
+    config,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

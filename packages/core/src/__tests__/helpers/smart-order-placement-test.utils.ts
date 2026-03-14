@@ -97,8 +97,16 @@ export function createSmartOrderPlacementHarness(options: {
 } = {}) {
   const logger = options.logger ?? createSmartOrderPlacementLogger();
   const config = options.config ?? createSmartOrderPlacementConfig();
-  const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
-  const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createSmartOrderPlacementErrorHandler(logger);
+  const service = createSmartOrderPlacementService({
+    config,
+    logger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -106,4 +114,30 @@ export function createSmartOrderPlacementHarness(options: {
     errorHandler,
     config,
   };
+}
+
+export function createSmartOrderPlacementErrorHandler(
+  logger: LoggerService = createSmartOrderPlacementLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createSmartOrderPlacementService(options: {
+  config?: SmartOrderPlacementConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createSmartOrderPlacementLogger();
+  const config =
+    Object.prototype.hasOwnProperty.call(options, 'config')
+      ? options.config
+      : createSmartOrderPlacementConfig();
+
+  return new SmartOrderPlacementService(
+    config as SmartOrderPlacementConfig,
+    undefined,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

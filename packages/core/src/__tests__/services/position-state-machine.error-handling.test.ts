@@ -19,6 +19,8 @@ import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors';
 import type { StateTransitionResult } from '../../types/position-state-machine';
 import {
+  createPositionStateMachineErrorHandler,
+  createPositionStateMachineService,
   createMockPositionStateMachineLogger,
   createTestStateMachinePaths,
   ensureParentDir,
@@ -34,7 +36,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   beforeEach(() => {
     logger = createMockPositionStateMachineLogger();
 
-    errorHandler = new ErrorHandler(logger);
+    errorHandler = createPositionStateMachineErrorHandler(logger);
 
     // Use temporary test directory
     testDataDir = path.join(process.cwd(), 'data', 'test-state-machine');
@@ -50,7 +52,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('File I/O Errors', () => {
     it('should initialize successfully with ErrorHandler', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Should not throw when ErrorHandler is provided
       await expect(service.initialize()).resolves.not.toThrow();
@@ -62,7 +64,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle corrupted history file gracefully', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Create corrupted history file
       const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
@@ -77,7 +79,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should create backup file after successful state load', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Initialize service
       await service.initialize();
@@ -98,7 +100,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log warning when backup is also corrupted', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Create main state file with invalid JSON
       const { stateFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
@@ -124,7 +126,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should RETRY on state persistence disk full error', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       let retryCount = 0;
@@ -173,7 +175,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('State Persistence & Recovery', () => {
     it('should create backup file after successful state load', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Initialize creates backup
       await service.initialize();
@@ -195,7 +197,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle mixed valid and invalid state lines gracefully', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Create state file with mixed valid/invalid lines
       const { stateFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
@@ -227,7 +229,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log statistics about loaded states', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Create state file with multiple states
       const stateFilePath = path.join(process.cwd(), 'data', 'position-states.jsonl');
@@ -262,7 +264,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transition History Recovery', () => {
     it('should skip corrupted history entries and continue loading', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Create history file with mixed valid/invalid entries
       const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
@@ -299,7 +301,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should limit history entries per position for memory efficiency', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
 
       // Create history file with many entries for one position
       const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
@@ -337,7 +339,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transactional Integrity', () => {
     it('should maintain consistency between cache and disk during transitions', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       const posId = `pos-tx-test-${Date.now()}`;
@@ -363,7 +365,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle exit mode updates with persistence', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       // Create position
@@ -389,7 +391,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should validate state transitions before persistence', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       const posId = `pos-invalid-tx-${Date.now()}`;
@@ -413,7 +415,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('E2E Lifecycle Scenarios', () => {
     it('should maintain full position lifecycle with error recovery', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       const posId = 'pos-e2e-full';
@@ -467,7 +469,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle multiple positions concurrently without interference', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       const timestamp = Date.now();
@@ -523,7 +525,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should provide accurate statistics after state transitions', async () => {
-      service = new PositionStateMachineService(logger, errorHandler);
+      service = createPositionStateMachineService({ logger, errorHandler });
       await service.initialize();
 
       const timestamp = Date.now();
@@ -593,7 +595,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (optional DI)', async () => {
       // Create service without ErrorHandler
-      service = new PositionStateMachineService(logger);
+      service = createPositionStateMachineService({ logger, withErrorHandler: false });
       await service.initialize();
 
       const result = service.transitionState({
@@ -608,7 +610,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle missing files gracefully without ErrorHandler', async () => {
-      service = new PositionStateMachineService(logger);
+      service = createPositionStateMachineService({ logger, withErrorHandler: false });
 
       // Clean up any existing data files first
       try {

@@ -9,37 +9,16 @@
  */
 
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { Position, LoggerService } from '../../types/legacy';
+import type { ErrorHandler } from '../../errors/ErrorHandler';
+import type { Position } from '../../types/legacy';
+import {
+  createConsoleDashboardErrorHandler,
+  createConsoleDashboardHarness,
+  createConsoleDashboardPosition as createValidPosition,
+  createConsoleDashboardService,
+} from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-
-const createMockErrorHandler = () => {
-  const mockLogger: Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'> & { silly: jest.Mock } = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    silly: jest.fn(),
-  };
-  return new ErrorHandler(mockLogger as unknown as LoggerService);
-};
-
-const createValidPosition = (): Position => ({
-  id: 'test-pos',
-  symbol: 'BTC/USDT',
-  entryPrice: 50000,
-  quantity: 0.1,
-  side: 'LONG',
-  status: 'OPEN',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  pnl: 1000,
-  pnlPercent: 2,
-  fees: 10,
-  takeProfits: [],
-  stopLoss: 49000,
-} as unknown as Position);
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
@@ -49,31 +28,37 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   describe('THROW: Config Validation', () => {
     test('should throw on null config', () => {
       expect(() => {
-        new ConsoleDashboardService(null as unknown as DashboardConfigInput, createMockErrorHandler());
+        createConsoleDashboardService({
+          config: null as unknown as DashboardConfigInput,
+          errorHandler: createConsoleDashboardErrorHandler(),
+        });
       }).toThrow('Config must be a valid object');
     });
 
     test('should throw on invalid enabled (not boolean)', () => {
       expect(() => {
-        new ConsoleDashboardService(
-          { enabled: 'yes' as unknown as boolean } as DashboardConfigInput,
-          createMockErrorHandler()
-        );
+        createConsoleDashboardService({
+          config: { enabled: 'yes' as unknown as boolean } as DashboardConfigInput,
+          errorHandler: createConsoleDashboardErrorHandler(),
+        });
       }).toThrow('Config.enabled must be a boolean');
     });
 
     test('should throw on negative updateInterval', () => {
       expect(() => {
-        new ConsoleDashboardService({ enabled: true, updateInterval: -100 }, createMockErrorHandler());
+        createConsoleDashboardService({
+          config: { enabled: true, updateInterval: -100 },
+          errorHandler: createConsoleDashboardErrorHandler(),
+        });
       }).toThrow('Config.updateInterval must be non-negative');
     });
 
     test('should throw on invalid theme', () => {
       expect(() => {
-        new ConsoleDashboardService(
-          { enabled: true, theme: 'rainbow' as unknown as 'dark' | 'light' } as DashboardConfigInput,
-          createMockErrorHandler()
-        );
+        createConsoleDashboardService({
+          config: { enabled: true, theme: 'rainbow' as unknown as 'dark' | 'light' } as DashboardConfigInput,
+          errorHandler: createConsoleDashboardErrorHandler(),
+        });
       }).toThrow('Config.theme must be "dark" or "light"');
     });
   });
@@ -83,11 +68,13 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('THROW: Input Validation', () => {
-    const errorHandler = createMockErrorHandler();
+    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+      ({ service } = createConsoleDashboardHarness({
+        config: { enabled: false },
+      }));
     });
 
     test('should throw on invalid price (NaN)', () => {
@@ -126,11 +113,13 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Update Failures', () => {
-    const errorHandler = createMockErrorHandler();
+    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+      ({ service } = createConsoleDashboardHarness({
+        config: { enabled: false },
+      }));
     });
 
     test('should handle valid price update', () => {
@@ -164,14 +153,20 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when updating price', () => {
-      const service = new ConsoleDashboardService({ enabled: false }, createMockErrorHandler());
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        errorHandler: createConsoleDashboardErrorHandler(),
+      });
       expect(() => {
         service.updatePrice(50000);
       }).not.toThrow();
     });
 
     test('should not throw when recording event', () => {
-      const service = new ConsoleDashboardService({ enabled: false }, createMockErrorHandler());
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        errorHandler: createConsoleDashboardErrorHandler(),
+      });
       expect(() => {
         service.recordEvent('position-open', 'New position opened');
       }).not.toThrow();
@@ -183,11 +178,13 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('Integration: Data Updates', () => {
-    const errorHandler = createMockErrorHandler();
+    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+      ({ service } = createConsoleDashboardHarness({
+        config: { enabled: false },
+      }));
     });
 
     test('should update multiple metrics correctly', () => {
@@ -226,33 +223,48 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should create service without ErrorHandler', () => {
-      const service = new ConsoleDashboardService({ enabled: false });
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        withErrorHandler: false,
+      });
       expect(service).toBeDefined();
     });
 
     test('should handle price update', () => {
-      const service = new ConsoleDashboardService({ enabled: false });
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        withErrorHandler: false,
+      });
       expect(() => {
         service.updatePrice(50000);
       }).not.toThrow();
     });
 
     test('should throw on invalid price even without ErrorHandler', () => {
-      const service = new ConsoleDashboardService({ enabled: false });
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        withErrorHandler: false,
+      });
       expect(() => {
         service.updatePrice(NaN);
       }).toThrow('Price must be a finite number');
     });
 
     test('should handle destroy gracefully', () => {
-      const service = new ConsoleDashboardService({ enabled: false });
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        withErrorHandler: false,
+      });
       expect(() => {
         service.destroy();
       }).not.toThrow();
     });
 
     test('should handle multiple sequential updates', () => {
-      const service = new ConsoleDashboardService({ enabled: false });
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        withErrorHandler: false,
+      });
       expect(() => {
         service.updatePrice(50000);
         service.updatePrice(50100);
@@ -262,7 +274,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should maintain event history (max 50)', () => {
-      const service = new ConsoleDashboardService({ enabled: false });
+      const service = createConsoleDashboardService({
+        config: { enabled: false },
+        withErrorHandler: false,
+      });
       for (let i = 0; i < 60; i++) {
         service.recordEvent('test', `Event ${i}`);
       }
@@ -275,11 +290,13 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('Edge Cases', () => {
-    const errorHandler = createMockErrorHandler();
+    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      service = new ConsoleDashboardService({ enabled: false }, errorHandler);
+      ({ service } = createConsoleDashboardHarness({
+        config: { enabled: false },
+      }));
     });
 
     test('should handle zero values correctly', () => {

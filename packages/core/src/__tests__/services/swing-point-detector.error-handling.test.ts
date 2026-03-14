@@ -26,6 +26,7 @@ import {
   createSwingPointDetectorCandleArray,
   createSwingPointDetectorFailingLogger,
   createSwingPointDetectorHarness,
+  createSwingPointDetectorService,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
 } from '../helpers/swing-point-detector-test.utils';
@@ -377,11 +378,11 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     it('test-E2: Throws on validation error without ErrorHandler', () => {
       // Constructor with invalid lookbackPeriod, no ErrorHandler
       expect(() => {
-        new SwingPointDetectorService(mockLogger, 0); // Invalid: must be >= 1
+        createSwingPointDetectorService({ logger: mockLogger, lookbackPeriod: 0, withErrorHandler: false });
       }).toThrow(ValidationError);
 
       expect(() => {
-        new SwingPointDetectorService(mockLogger, -5);
+        createSwingPointDetectorService({ logger: mockLogger, lookbackPeriod: -5, withErrorHandler: false });
       }).toThrow(ValidationError);
     });
   });

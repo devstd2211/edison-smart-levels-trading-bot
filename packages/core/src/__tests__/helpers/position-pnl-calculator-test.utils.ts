@@ -1,4 +1,5 @@
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { Position, PositionSide, type LoggerService } from '../../types/legacy';
 
 export function createMockPnlPosition(
@@ -61,4 +62,29 @@ export function createMockPnlErrorHandler(): ErrorHandler {
     'debug' | 'info' | 'warn' | 'error'
   >;
   return new ErrorHandler(errorLogger);
+}
+
+export function createPositionPnLCalculatorService(options: {
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  return new PositionPnLCalculatorService(
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
+}
+
+export function createPositionPnLCalculatorHarness(options: {
+  withErrorHandler?: boolean;
+} = {}) {
+  const errorHandler =
+    options.withErrorHandler === false ? undefined : createMockPnlErrorHandler();
+  const service = createPositionPnLCalculatorService({
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
+
+  return {
+    service,
+    errorHandler,
+  };
 }

@@ -71,18 +71,21 @@ export function createLadderTpPosition(
 
 export function createLadderTpHarness(options: {
   configOverrides?: Partial<LadderTpManagerConfig>;
+  logger?: LoggerService;
+  bybitService?: jest.Mocked<IExchange>;
   withErrorHandler?: boolean;
 } = {}) {
-  const logger = createLadderTpLogger();
-  const bybitService = createMockLadderTpBybitService();
-  const errorHandler = new ErrorHandler(logger);
+  const logger = options.logger ?? createLadderTpLogger();
+  const bybitService = options.bybitService ?? createMockLadderTpBybitService();
+  const errorHandler = createLadderTpErrorHandler(logger);
   const config = createLadderTpConfig(options.configOverrides);
-  const service = new LadderTpManagerService(
-    config,
-    bybitService,
+  const service = createLadderTpService({
+    configOverrides: options.configOverrides,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    bybitService,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -91,4 +94,29 @@ export function createLadderTpHarness(options: {
     errorHandler,
     config,
   };
+}
+
+export function createLadderTpErrorHandler(
+  logger: LoggerService = createLadderTpLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createLadderTpService(options: {
+  configOverrides?: Partial<LadderTpManagerConfig>;
+  logger?: LoggerService;
+  bybitService?: jest.Mocked<IExchange>;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createLadderTpLogger();
+  const bybitService = options.bybitService ?? createMockLadderTpBybitService();
+  const config = createLadderTpConfig(options.configOverrides);
+
+  return new LadderTpManagerService(
+    config,
+    bybitService,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

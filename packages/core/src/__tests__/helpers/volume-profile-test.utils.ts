@@ -91,12 +91,13 @@ export function createVolumeProfileHarness(options: {
 } = {}) {
   const logger = options.logger ?? createVolumeProfileLogger();
   const config = createVolumeProfileConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const service = new VolumeProfileService(
+  const errorHandler = createVolumeProfileErrorHandler(logger);
+  const service = createVolumeProfileService({
+    configOverrides: options.configOverrides,
     logger,
-    config,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -104,4 +105,30 @@ export function createVolumeProfileHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createVolumeProfileErrorHandler(
+  logger: LoggerService = createVolumeProfileLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createVolumeProfileService(options: {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  config?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createVolumeProfileLogger();
+  const config =
+    Object.prototype.hasOwnProperty.call(options, 'config')
+      ? options.config
+      : createVolumeProfileConfig(options.configOverrides);
+
+  return new VolumeProfileService(
+    logger,
+    config,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

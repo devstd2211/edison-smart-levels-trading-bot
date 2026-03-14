@@ -133,8 +133,16 @@ export function createLiquidityHeatmapHarness(options: {
 } = {}) {
   const logger = options.logger ?? createLiquidityHeatmapLogger();
   const config = options.config ?? createLiquidityHeatmapConfig();
-  const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
-  const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createLiquidityHeatmapErrorHandler(logger);
+  const service = createLiquidityHeatmapService({
+    config,
+    logger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -142,4 +150,30 @@ export function createLiquidityHeatmapHarness(options: {
     errorHandler,
     config,
   };
+}
+
+export function createLiquidityHeatmapErrorHandler(
+  logger: LoggerService = createLiquidityHeatmapLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createLiquidityHeatmapService(options: {
+  config?: LiquidityHeatmapConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createLiquidityHeatmapLogger();
+  const config =
+    Object.prototype.hasOwnProperty.call(options, 'config')
+      ? options.config
+      : createLiquidityHeatmapConfig();
+
+  return new LiquidityHeatmapService(
+    config as LiquidityHeatmapConfig,
+    undefined,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

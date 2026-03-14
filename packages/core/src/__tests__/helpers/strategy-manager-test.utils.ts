@@ -61,11 +61,11 @@ export function createStrategyManagerHarness() {
   const mockLoader = createMockStrategyLoader();
   const mockMerger = createMockStrategyMerger();
   const mockErrorHandler = createMockStrategyErrorHandler();
-  const strategyManager = new StrategyManagerService(
-    mockLoader,
-    mockMerger,
-    mockErrorHandler,
-  );
+  const strategyManager = createStrategyManagerService({
+    loader: mockLoader,
+    merger: mockMerger,
+    errorHandler: mockErrorHandler,
+  });
 
   return {
     strategyManager,
@@ -75,4 +75,20 @@ export function createStrategyManagerHarness() {
     mockStrategy: createMockStrategyConfig(),
     mockMainConfig: createMockStrategyMainConfig(),
   };
+}
+
+export function createStrategyManagerService(options: {
+  loader?: jest.Mocked<StrategyLoaderService>;
+  merger?: jest.Mocked<StrategyConfigMergerService>;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+  withErrorHandler?: boolean;
+} = {}) {
+  const loader = options.loader ?? createMockStrategyLoader();
+  const merger = options.merger ?? createMockStrategyMerger();
+
+  return new StrategyManagerService(
+    loader,
+    merger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

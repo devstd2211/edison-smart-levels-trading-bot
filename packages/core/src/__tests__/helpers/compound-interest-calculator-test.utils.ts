@@ -31,13 +31,14 @@ export function createCompoundInterestHarness(options: {
   const logger = options.logger ?? createCompoundInterestLogger();
   const config = createCompoundInterestConfig(options.configOverrides);
   const mockGetBalance = options.getBalance ?? jest.fn();
-  const errorHandler = new ErrorHandler(logger);
-  const service = new CompoundInterestCalculatorService(
-    config,
+  const errorHandler = createCompoundInterestErrorHandler(logger);
+  const service = createCompoundInterestService({
+    configOverrides: options.configOverrides,
     logger,
-    mockGetBalance,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    getBalance: mockGetBalance,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -46,4 +47,29 @@ export function createCompoundInterestHarness(options: {
     mockGetBalance,
     errorHandler,
   };
+}
+
+export function createCompoundInterestErrorHandler(
+  logger: LoggerService = createCompoundInterestLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createCompoundInterestService(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createCompoundInterestLogger();
+  const config = createCompoundInterestConfig(options.configOverrides);
+  const getBalance = options.getBalance ?? jest.fn();
+
+  return new CompoundInterestCalculatorService(
+    config,
+    logger,
+    getBalance,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

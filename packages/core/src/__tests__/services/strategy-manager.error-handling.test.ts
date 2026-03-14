@@ -21,6 +21,7 @@ import {
   createMockStrategyLoader,
   createMockStrategyMainConfig,
   createMockStrategyMerger,
+  createStrategyManagerService,
 } from '../helpers/strategy-manager-test.utils';
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
@@ -29,6 +30,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let consoleLogSpy: jest.SpyInstance;
+  let createManager: (options?: { withErrorHandler?: boolean }) => StrategyManagerService;
   type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
 
@@ -41,6 +43,13 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     mockMerger = createMockStrategyMerger();
     mockErrorHandler = createMockStrategyErrorHandler();
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    createManager = (options = {}) =>
+      createStrategyManagerService({
+        loader: mockLoader,
+        merger: mockMerger,
+        errorHandler: mockErrorHandler,
+        withErrorHandler: options.withErrorHandler,
+      });
   });
 
   afterEach(() => {
@@ -54,7 +63,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
 
   describe('THROW - Input Validation', () => {
     test('1.1: should THROW on null strategyName', async () => {
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize(null as unknown as InitStrategyName, mockMainConfig)).rejects.toThrow(
         'StrategyName is required'
@@ -62,7 +71,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     });
 
     test('1.2: should THROW on empty strategyName', async () => {
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize('', mockMainConfig)).rejects.toThrow(
         'StrategyName cannot be empty'
@@ -70,7 +79,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     });
 
     test('1.3: should THROW on null mainConfig', async () => {
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize('test-strategy', null)).rejects.toThrow(
         'Main config is required'
@@ -78,7 +87,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     });
 
     test('1.4: should THROW on invalid mainConfig (not object)', async () => {
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize('test-strategy', 'not-an-object' as unknown as InitMainConfig)).rejects.toThrow(
         'Main config must be an object'
@@ -96,7 +105,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       // Should continue despite loader failure
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow();
@@ -108,7 +117,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
         throw new Error('Merge failed');
       });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow();
     });
@@ -117,7 +126,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockLoader.loadStrategy.mockResolvedValue(null as unknown as StrategyConfig);
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow();
     });
@@ -125,7 +134,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     test('2.4: should return safe default on getStrategy after failed initialize', async () => {
       mockLoader.loadStrategy.mockRejectedValue(new Error('Load failed'));
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       // Should throw on getStrategy after failed initialize
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow();
@@ -138,7 +147,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     test('2.5: should handle getMergedConfig after failed initialize', async () => {
       mockLoader.loadStrategy.mockRejectedValue(new Error('Load failed'));
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow();
 
@@ -162,7 +171,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       // Should complete successfully despite console.log failures
       await strategyManager.initialize('test-strategy', mockMainConfig);
@@ -193,7 +202,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
         }
       });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -211,7 +220,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -227,7 +236,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -241,7 +250,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -256,7 +265,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -279,7 +288,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
       // Create without error handler
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger);
+      strategyManager = createManager({ withErrorHandler: false });
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -288,7 +297,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     });
 
     test('5.2: should still throw validation errors without ErrorHandler', async () => {
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger);
+      strategyManager = createManager({ withErrorHandler: false });
 
       await expect(strategyManager.initialize(null as unknown as InitStrategyName, mockMainConfig)).rejects.toThrow(
         'StrategyName is required'
@@ -298,7 +307,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     test('5.3: should propagate loader errors without ErrorHandler', async () => {
       mockLoader.loadStrategy.mockRejectedValue(new Error('Custom load error'));
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger);
+      strategyManager = createManager({ withErrorHandler: false });
 
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow(
         'Custom load error'
@@ -322,7 +331,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -344,7 +353,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -366,7 +375,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
         changes: manyChanges,
       });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('test-strategy', mockMainConfig);
 
@@ -380,7 +389,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize(specialName, mockMainConfig);
 
@@ -413,7 +422,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       await strategyManager.initialize('strategy1', mockMainConfig);
       expect(strategyManager.getStrategyName()).toBe('strategy1');
@@ -430,7 +439,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockMerger.mergeConfigs.mockReturnValue(mockMainConfig);
       mockMerger.getChangeReport.mockReturnValue({ strategyName: 'test-strategy', changesCount: 0, changes: [] });
 
-      strategyManager = new StrategyManagerService(mockLoader, mockMerger, mockErrorHandler);
+      strategyManager = createManager();
 
       // First attempt fails
       await expect(strategyManager.initialize('test-strategy', mockMainConfig)).rejects.toThrow();

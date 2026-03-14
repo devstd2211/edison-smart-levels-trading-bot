@@ -23,9 +23,11 @@ import {
   asSmartOrderPlacementConfig as asConfig,
   asSmartOrderPlacementOrderbook as asOrderbook,
   createSmartOrderPlacementConfig,
+  createSmartOrderPlacementErrorHandler,
   createSmartOrderPlacementHarness,
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
+  createSmartOrderPlacementService,
   createThinSmartOrderPlacementOrderbook,
 } from '../helpers/smart-order-placement-test.utils';
 
@@ -38,7 +40,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     const logger = createSmartOrderPlacementLogger();
 
     expect(() => {
-      new SmartOrderPlacementService(asConfig(null), undefined, logger);
+      createSmartOrderPlacementService({ config: asConfig(null), logger });
     }).toThrow('SmartOrderPlacementConfig cannot be null or undefined');
   });
 
@@ -48,7 +50,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.maxOrderSize = -10;
 
     expect(() => {
-      new SmartOrderPlacementService(config, undefined, logger);
+      createSmartOrderPlacementService({ config, logger });
     }).toThrow('Invalid maxOrderSize');
   });
 
@@ -58,7 +60,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.maxSlippageBps = -1;
 
     expect(() => {
-      new SmartOrderPlacementService(config, undefined, logger);
+      createSmartOrderPlacementService({ config, logger });
     }).toThrow('Invalid maxSlippageBps');
   });
 
@@ -68,7 +70,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.minFillProbability = 150;
 
     expect(() => {
-      new SmartOrderPlacementService(config, undefined, logger);
+      createSmartOrderPlacementService({ config, logger });
     }).toThrow('Invalid minFillProbability');
   });
 
@@ -78,7 +80,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.executionTimeHorizon = 0;
 
     expect(() => {
-      new SmartOrderPlacementService(config, undefined, logger);
+      createSmartOrderPlacementService({ config, logger });
     }).toThrow('Invalid executionTimeHorizon');
   });
 });
@@ -248,7 +250,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
   beforeEach(() => {
     const mockLogger = createSmartOrderPlacementLogger();
-    errorHandler = new ErrorHandler(mockLogger);
+    errorHandler = createSmartOrderPlacementErrorHandler(mockLogger);
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -256,17 +258,22 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
     const config = createSmartOrderPlacementConfig();
 
     expect(() => {
-      new SmartOrderPlacementService(config, undefined, loggerWithFailingInfo, errorHandler);
+      createSmartOrderPlacementService({
+        config,
+        logger: loggerWithFailingInfo,
+        errorHandler,
+      });
     }).not.toThrow();
   });
 
   it('should SKIP logger.warn failure during planning', async () => {
     const loggerWithFailingWarn = createSmartOrderPlacementLogger('warn');
     const config = createSmartOrderPlacementConfig();
-    const service = new SmartOrderPlacementService(
-      config, undefined, loggerWithFailingWarn,
+    const service = createSmartOrderPlacementService({
+      config,
+      logger: loggerWithFailingWarn,
       errorHandler,
-    );
+    });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.volume = NaN));
@@ -278,10 +285,11 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   it('should SKIP logger.error failure during error handling', async () => {
     const loggerWithFailingError = createSmartOrderPlacementLogger('error');
     const config = createSmartOrderPlacementConfig();
-    const service = new SmartOrderPlacementService(
-      config, undefined, loggerWithFailingError,
+    const service = createSmartOrderPlacementService({
+      config,
+      logger: loggerWithFailingError,
       errorHandler,
-    );
+    });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.bids.forEach((b) => {
@@ -482,7 +490,11 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
     const config = createSmartOrderPlacementConfig();
 
     expect(() => {
-      new SmartOrderPlacementService(config, undefined, failingLogger);
+      createSmartOrderPlacementService({
+        config,
+        logger: failingLogger,
+        withErrorHandler: false,
+      });
     }).not.toThrow();
   });
 });

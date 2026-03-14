@@ -92,13 +92,14 @@ export function createWhaleDetectionHarness(options: {
 } = {}) {
   const logger = options.logger ?? createWhaleDetectionLogger();
   const config = options.config ?? createWhaleDetectionConfig();
-  const errorHandler = new ErrorHandler(logger);
-  const detector = new WhaleDetectionService(
-    config,
+  const errorHandler = createWhaleDetectionErrorHandler(logger);
+  const detector = createWhaleDetectionService({
     logger,
-    options.strategy ?? 'BREAKOUT',
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    config,
+    strategy: options.strategy,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     detector,
@@ -106,4 +107,31 @@ export function createWhaleDetectionHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createWhaleDetectionErrorHandler(
+  logger: LoggerService = createWhaleDetectionLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createWhaleDetectionService(options: {
+  logger?: LoggerService;
+  config?: WhaleDetectorConfig;
+  strategy?: 'BREAKOUT' | 'FOLLOW';
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createWhaleDetectionLogger();
+  const config =
+    Object.prototype.hasOwnProperty.call(options, 'config')
+      ? options.config
+      : createWhaleDetectionConfig();
+
+  return new WhaleDetectionService(
+    config as WhaleDetectorConfig,
+    logger,
+    options.strategy ?? 'BREAKOUT',
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }

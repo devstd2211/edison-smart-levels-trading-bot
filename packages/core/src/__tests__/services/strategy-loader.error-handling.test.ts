@@ -20,6 +20,10 @@ import { StrategyValidationError } from '../../types/strategy-config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import * as path from 'path';
+import {
+  createStrategyLoaderErrorHandler,
+  createStrategyLoaderService,
+} from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let loaderService: StrategyLoaderService;
@@ -38,21 +42,13 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     }
 
     // Mock ErrorHandler
-    mockErrorHandler = {
-      handle: jest.fn(async (error, options): Promise<ErrorHandlingResult> => {
-        return {
-          success: true,
-          recovered: options.strategy !== RecoveryStrategy.SKIP && options.strategy !== RecoveryStrategy.THROW,
-          attempts: 1,
-          message: 'Handled successfully',
-          strategy: options.strategy,
-          error: error instanceof Error ? undefined : undefined,
-        };
-      }),
-    } as unknown as jest.Mocked<ErrorHandler>;
+    mockErrorHandler = createStrategyLoaderErrorHandler();
 
     // Create service with error handler
-    loaderService = new StrategyLoaderService(testStrategiesDir, mockErrorHandler);
+    loaderService = createStrategyLoaderService({
+      strategiesDir: testStrategiesDir,
+      errorHandler: mockErrorHandler,
+    });
 
     // Setup spies for file operations
     fileReadSpy = jest.spyOn(fs, 'readFile');
@@ -375,7 +371,10 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   describe('G: Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
       // Create service without error handler
-      loaderService = new StrategyLoaderService(testStrategiesDir);
+      loaderService = createStrategyLoaderService({
+        strategiesDir: testStrategiesDir,
+        withErrorHandler: false,
+      });
     });
 
     test('G1: Service works without ErrorHandler injected', async () => {

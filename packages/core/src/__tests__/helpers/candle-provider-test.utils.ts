@@ -1,5 +1,5 @@
 import { CandleProvider } from '../../providers/candle.provider';
-import type { ErrorHandler } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/enums';
 
 type ProviderLogger = ConstructorParameters<typeof CandleProvider>[2];
@@ -154,14 +154,14 @@ export function createCandleProviderHarness(options?: {
   const repository =
     options?.repository ?? createCandleProviderMockRepository();
   const symbol = options?.symbol ?? 'APEXUSDT';
-  const provider = new CandleProvider(
+  const provider = createCandleProviderService({
     timeframeProvider,
     exchange,
     logger,
     symbol,
     repository,
-    options?.errorHandler,
-  );
+    errorHandler: options?.errorHandler,
+  });
 
   return {
     provider,
@@ -169,6 +169,40 @@ export function createCandleProviderHarness(options?: {
     timeframeProvider,
     exchange,
     repository,
+    errorHandler: options?.errorHandler,
     symbol,
   };
+}
+
+export function createCandleProviderErrorHandler(
+  logger: CandleProviderMockLogger & ProviderLogger = createCandleProviderMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createCandleProviderService(options?: {
+  logger?: CandleProviderMockLogger & ProviderLogger;
+  timeframeProvider?: CandleProviderMockTimeframeProvider &
+    ProviderTimeframeProvider;
+  exchange?: CandleProviderMockExchange & ProviderExchange;
+  repository?: CandleProviderMockRepository & ProviderRepository;
+  errorHandler?: ErrorHandler;
+  symbol?: string;
+}) {
+  const logger = options?.logger ?? createCandleProviderMockLogger();
+  const timeframeProvider =
+    options?.timeframeProvider ?? createCandleProviderMockTimeframeProvider();
+  const exchange = options?.exchange ?? createCandleProviderMockExchange();
+  const repository =
+    options?.repository ?? createCandleProviderMockRepository();
+  const symbol = options?.symbol ?? 'APEXUSDT';
+
+  return new CandleProvider(
+    timeframeProvider,
+    exchange,
+    logger,
+    symbol,
+    repository,
+    options?.errorHandler,
+  );
 }

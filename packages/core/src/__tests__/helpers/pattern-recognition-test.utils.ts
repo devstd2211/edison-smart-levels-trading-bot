@@ -105,14 +105,48 @@ export function createPatternRecognitionHarness(options: {
   withErrorHandler?: boolean;
 } = {}) {
   const logger = options.logger ?? createPatternRecognitionLogger();
-  const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
-  const service = new PatternRecognitionService(options.config, undefined, logger, errorHandler);
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createPatternRecognitionErrorHandler(logger);
+  const service = createPatternRecognitionService({
+    config: options.config,
+    logger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createPatternRecognitionErrorHandler(
+  logger: LoggerService = createPatternRecognitionLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createPatternRecognitionService(options: {
+  config?: Partial<PatternRecognitionConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createPatternRecognitionLogger();
+  const config =
+    Object.prototype.hasOwnProperty.call(options, 'config')
+      ? options.config
+      : undefined;
+
+  return new PatternRecognitionService(
+    config,
+    undefined,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }
 
 export function asPatternRecognitionInternals(

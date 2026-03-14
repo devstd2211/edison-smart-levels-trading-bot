@@ -9,13 +9,14 @@
  */
 
 import { WhaleDetectionService, WhaleDetectorConfig } from '../../services/whale-detection.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
 import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
+  createWhaleDetectionErrorHandler,
   createWhaleDetectionHarness,
   createWhaleDetectionMockLogger,
+  createWhaleDetectionService,
 } from '../helpers/whale-detection-test.utils';
 
 const createMockLogger = createWhaleDetectionMockLogger;
@@ -44,19 +45,22 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     type WhaleConfigInput = ConstructorParameters<typeof WhaleDetectionService>[0];
 
     test('should throw on null config', () => {
-      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+      const errorHandler = createWhaleDetectionErrorHandler(
+        mockLogger as unknown as LoggerService,
+      );
       expect(() => {
-        new WhaleDetectionService(
-          null as unknown as WhaleConfigInput,
-          mockLogger as unknown as LoggerService,
-          'BREAKOUT',
-          errorHandler
-        );
+        createWhaleDetectionService({
+          config: null as unknown as WhaleConfigInput,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('Config must be a valid object');
     });
 
     test('should throw on invalid wallBreak minWallSize', () => {
-      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+      const errorHandler = createWhaleDetectionErrorHandler(
+        mockLogger as unknown as LoggerService,
+      );
       const config = {
         ...createValidConfig(),
         modes: {
@@ -68,12 +72,18 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
         },
       };
       expect(() => {
-        new WhaleDetectionService(config, mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+        createWhaleDetectionService({
+          config,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('wallBreak.minWallSize must be non-negative number');
     });
 
     test('should throw on invalid maxConfidence (>100)', () => {
-      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+      const errorHandler = createWhaleDetectionErrorHandler(
+        mockLogger as unknown as LoggerService,
+      );
       const config = {
         ...createValidConfig(),
         modes: {
@@ -85,15 +95,25 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
         },
       };
       expect(() => {
-        new WhaleDetectionService(config, mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+        createWhaleDetectionService({
+          config,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('wallBreak.maxConfidence must be between 0 and 100');
     });
 
     test('should throw on invalid maxImbalanceHistory', () => {
-      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+      const errorHandler = createWhaleDetectionErrorHandler(
+        mockLogger as unknown as LoggerService,
+      );
       const config = { ...createValidConfig(), maxImbalanceHistory: 0 };
       expect(() => {
-        new WhaleDetectionService(config, mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+        createWhaleDetectionService({
+          config,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('maxImbalanceHistory must be positive number');
     });
   });
@@ -183,8 +203,14 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
         debug: jest.fn(),
         silly: jest.fn(),
       };
-      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
-      const service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+      const errorHandler = createWhaleDetectionErrorHandler(
+        mockLogger as unknown as LoggerService,
+      );
+      const service = createWhaleDetectionService({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+        errorHandler,
+      });
 
       expect(() => {
         service.detectWhale(createValidAnalysis(), 50000);
@@ -201,8 +227,14 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
         }),
         silly: jest.fn(),
       };
-      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
-      const service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+      const errorHandler = createWhaleDetectionErrorHandler(
+        mockLogger as unknown as LoggerService,
+      );
+      const service = createWhaleDetectionService({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+        errorHandler,
+      });
 
       expect(() => {
         service.detectWhale(createValidAnalysis(), 50000);

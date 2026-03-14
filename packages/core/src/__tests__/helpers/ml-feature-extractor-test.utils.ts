@@ -10,6 +10,12 @@ export type MLFeatureExtractorHarness = {
   logger: LoggerService;
 };
 
+type MLFeatureExtractorServiceOptions = {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
 type CandleOptions = {
   timestamp?: number;
   open?: number;
@@ -45,13 +51,24 @@ export function createMLFeatureExtractorHarness(options: {
 } = {}): MLFeatureExtractorHarness {
   const logger = options.logger ?? createMLFeatureExtractorLogger();
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
-  const service = new MLFeatureExtractorService(logger, errorHandler);
+  const service = createMLFeatureExtractorService({ logger, errorHandler });
 
   return {
     service,
     errorHandler,
     logger,
   };
+}
+
+export function createMLFeatureExtractorService(options: MLFeatureExtractorServiceOptions = {}): MLFeatureExtractorService {
+  if (options.withErrorHandler === false) {
+    return new MLFeatureExtractorService(options.logger);
+  }
+
+  return new MLFeatureExtractorService(
+    options.logger,
+    options.errorHandler ?? (options.logger ? new ErrorHandler(options.logger) : undefined),
+  );
 }
 
 export function createMLFeatureCandle(price: number, options: CandleOptions = {}): Candle {

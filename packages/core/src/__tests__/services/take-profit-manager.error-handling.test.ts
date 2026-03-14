@@ -18,14 +18,33 @@ import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
   createTakeProfitManagerConfig,
   createTakeProfitManagerHarness,
+  createTakeProfitManagerService,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let createManager: (options?: {
+    configOverrides?: Partial<{
+      positionId: string;
+      symbol: string;
+      side: PositionSide;
+      entryPrice: number;
+      totalQuantity: number;
+      leverage: number;
+    }>;
+    withErrorHandler?: boolean;
+  }) => TakeProfitManagerService;
 
   beforeEach(() => {
     ({ logger, errorHandler } = createTakeProfitManagerHarness());
+    createManager = (options = {}) =>
+      createTakeProfitManagerService({
+        configOverrides: options.configOverrides,
+        logger,
+        errorHandler,
+        withErrorHandler: options.withErrorHandler,
+      });
   });
 
   // ============================================================================
@@ -34,18 +53,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   describe('Quantity Validation - THROW Strategy (3 tests)', () => {
     it('should THROW when recording close exceeds total quantity', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_qty_001',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_qty_001' },
+      });
 
       manager.recordPartialClose(1, 50, 1.1676);
 
@@ -56,18 +66,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should preserve state after THROW (no partial state)', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_qty_002',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_qty_002' },
+      });
 
       manager.recordPartialClose(1, 50, 1.1676);
 
@@ -83,18 +84,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should work without ErrorHandler - keep original behavior', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_qty_003',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        // No ErrorHandler
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_qty_003' },
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 85, 1.1676); // Use 85 of 85.2
 
@@ -110,18 +103,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   describe('ErrorHandler Integration - GRACEFUL_DEGRADE (3 tests)', () => {
     it('should record close even with ErrorHandler in use', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_eh_001',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_eh_001' },
+      });
 
       // Record with ErrorHandler
       const close = manager.recordPartialClose(1, 28.4, 1.1676);
@@ -133,18 +117,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should handle PnL calculation correctly with ErrorHandler', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_eh_002',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_eh_002' },
+      });
 
       // Record 3 TP levels
       const close1 = manager.recordPartialClose(1, 28.4, 1.1676);
@@ -161,18 +136,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should maintain PnL calculation accuracy with ErrorHandler', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_eh_003',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_eh_003' },
+      });
 
       // Record partial closes
       manager.recordPartialClose(1, 28.4, 1.1676);
@@ -194,18 +160,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   describe('Logger Failures - SKIP Strategy (3 tests)', () => {
     it('should NOT block on logger errors (SKIP strategy)', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_log_001',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_log_001' },
+      });
 
       // Mock logger to throw
       logger.info = jest.fn(() => {
@@ -221,18 +178,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should record multiple closes despite logger failures', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_log_002',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_log_002' },
+      });
 
       // Mock logger to fail on all calls
       logger.info = jest.fn(() => {
@@ -253,18 +201,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should handle intermittent logger failures gracefully', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_log_003',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_log_003' },
+      });
 
       // Mock logger to fail intermittently
       let callCount = 0;
@@ -290,18 +229,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   describe('calculateFinalPnL - GRACEFUL_DEGRADE Strategy (3 tests)', () => {
     it('should calculate final PnL with ErrorHandler', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_final_001',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_final_001' },
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -316,18 +246,12 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should handle extreme prices in calculation', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_final_002',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
           entryPrice: 0.0001,
-          totalQuantity: 85.2,
-          leverage: 10,
         },
-        logger,
-        errorHandler,
-      );
+      });
 
       manager.recordPartialClose(1, 28.4, 0.00009);
 
@@ -339,18 +263,15 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should return consistent PnL values', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_final_003',
-          symbol: 'APEXUSDT',
           side: PositionSide.LONG,
-          entryPrice: 1.1500,
-          totalQuantity: 100.0,
+          entryPrice: 1.15,
+          totalQuantity: 100,
           leverage: 5,
         },
-        logger,
-        errorHandler,
-      );
+      });
 
       manager.recordPartialClose(1, 25.0, 1.1600);
       manager.recordPartialClose(2, 25.0, 1.1650);
@@ -370,18 +291,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   describe('Integration - Full TP Workflow (3 tests)', () => {
     it('should handle complete TP1-TP2-TP3 sequence with ErrorHandler', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_integration_001',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_integration_001' },
+      });
 
       // Mock logger to fail on TP2
       let callCount = 0;
@@ -404,18 +316,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should maintain accurate PnL across multiple closes', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_integration_002',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_integration_002' },
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -430,18 +333,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should track TP levels correctly', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_integration_003',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_integration_003' },
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -458,18 +352,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler (3 tests)', () => {
     it('should work identically without ErrorHandler parameter', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_compat_001',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        // No ErrorHandler
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_compat_001' },
+        withErrorHandler: false,
+      });
 
       const close = manager.recordPartialClose(1, 28.4, 1.1676);
 
@@ -479,31 +365,14 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should maintain original PnL calculations', () => {
-      const managerWithHandler = new TakeProfitManagerService(
-        {
-          positionId: 'test_compat_with',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        errorHandler,
-      );
+      const managerWithHandler = createManager({
+        configOverrides: { positionId: 'test_compat_with' },
+      });
 
-      const managerWithoutHandler = new TakeProfitManagerService(
-        {
-          positionId: 'test_compat_without',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-        // No ErrorHandler
-      );
+      const managerWithoutHandler = createManager({
+        configOverrides: { positionId: 'test_compat_without' },
+        withErrorHandler: false,
+      });
 
       // Both should produce identical results
       const close1 = managerWithHandler.recordPartialClose(1, 28.4, 1.1676);
@@ -515,17 +384,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     });
 
     it('should still throw on validation errors without ErrorHandler', () => {
-      const manager = new TakeProfitManagerService(
-        {
-          positionId: 'test_compat_003',
-          symbol: 'APEXUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 1.1748,
-          totalQuantity: 85.2,
-          leverage: 10,
-        },
-        logger,
-      );
+      const manager = createManager({
+        configOverrides: { positionId: 'test_compat_003' },
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 85.2, 1.1676); // Full close
 
