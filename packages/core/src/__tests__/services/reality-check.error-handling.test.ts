@@ -9,73 +9,28 @@
  * - Backward compatibility (tests without ErrorHandler)
  */
 
-import { RealityCheckService, RealityCheckEvent } from '../../services/reality-check.service';
-import { LoggerService, LogLevel } from '../../types/legacy';
-import { Signal } from '../../types/core';
-import { SignalDirection, SignalType } from '../../types/enums';
+import { RealityCheckService } from '../../services/reality-check.service';
+import { LoggerService } from '../../types/legacy';
+import { SignalDirection } from '../../types/enums';
 import { AnalyzerSignal } from '../../types/strategy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import {
+  createRealityCheckAnalyzerSignal,
+  createRealityCheckEvent,
+  createRealityCheckHarness,
+  createRealityCheckSignal,
+} from '../helpers/reality-check-test.utils';
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
 
-  const createMockLogger = (): LoggerService => {
-    return {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      getLogLevel: jest.fn(() => LogLevel.ERROR),
-      setLogLevel: jest.fn(),
-      logToFile: jest.fn(),
-    } as unknown as LoggerService;
-  };
-
-  const createValidSignal = (override?: Partial<Signal>): Signal => ({
-    direction: SignalDirection.LONG,
-    type: SignalType.LEVEL_BASED,
-    confidence: 75,
-    price: 100,
-    stopLoss: 99,
-    takeProfits: [{ level: 1, percent: 2, sizePercent: 50, price: 102, hit: false }],
-    reason: 'Test signal',
-    timestamp: Date.now(),
-    ...override,
-  });
-
-  const createValidEvent = (override?: Partial<RealityCheckEvent>): RealityCheckEvent => ({
-    symbol: 'BTCUSDT',
-    tradeId: 'trade-1',
-    openedAt: Date.now() - 3600000,
-    closedAt: Date.now(),
-    direction: 'LONG',
-    signalConfidence: 75,
-    signalReason: 'Support bounce',
-    trendAtEntry: 'UPTREND',
-    entryPrice: 100,
-    targetPrice: 102,
-    stoplossPrice: 99,
-    highestPrice: 101,
-    lowestPrice: 98,
-    closingPrice: 98.5,
-    exitType: 'SL_HIT',
-    actualTrendAtExit: 'DOWNTREND',
-    priceMovedAgainst: true,
-    priceReachedTarget: false,
-    breakingAssumptions: ['Trend reversal not detected'],
-    reason: 'REGIME_CHANGE',
-    explanation: 'Expected uptrend but downtrend occurred',
-    signingAnalyzers: ['RSI', 'MACD'],
-    conflictingSignals: false,
-    ...override,
-  });
-
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-    service = new RealityCheckService(logger);
+    const harness = createRealityCheckHarness();
+    logger = harness.logger as LoggerService;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    service = harness.service;
   });
 
   // ============================================================================
@@ -84,9 +39,9 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('THROW - Input validation', () => {
     it('should accept valid signal for analysis', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [
-        { source: 'RSI', direction: SignalDirection.LONG, confidence: 80, weight: 0.5, priority: 5 },
+        createRealityCheckAnalyzerSignal(),
       ];
 
       const result = service.analyzeClosedTrade(
@@ -110,7 +65,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should return null for low confidence signal', () => {
-      const signal = createValidSignal({ confidence: 40 }); // Below 60 threshold
+      const signal = createRealityCheckSignal({ confidence: 40 }); // Below 60 threshold
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -134,7 +89,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle NaN prices in analysis', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       // NaN prices might cause calculation issues
@@ -159,7 +114,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle Infinity prices in analysis', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -183,7 +138,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle negative prices', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       // Negative prices don't make sense in trading
@@ -214,9 +169,9 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('GRACEFUL_DEGRADE - Analysis failures', () => {
     it('should handle high confidence signal that fails', () => {
-      const signal = createValidSignal({ confidence: 85 });
+      const signal = createRealityCheckSignal({ confidence: 85 });
       const signingAnalyzers: AnalyzerSignal[] = [
-        { source: 'RSI', direction: SignalDirection.LONG, confidence: 80, weight: 0.5, priority: 5 },
+        createRealityCheckAnalyzerSignal(),
       ];
 
       const result = service.analyzeClosedTrade(
@@ -240,7 +195,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should skip low confidence signals', () => {
-      const signal = createValidSignal({ confidence: 45 }); // Below 60 threshold
+      const signal = createRealityCheckSignal({ confidence: 45 }); // Below 60 threshold
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -264,7 +219,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle TP_HIT exit (no reality check needed)', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -288,7 +243,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should detect regime change (UPTREND to DOWNTREND)', () => {
-      const signal = createValidSignal({ direction: SignalDirection.LONG, confidence: 75 });
+      const signal = createRealityCheckSignal({ direction: SignalDirection.LONG, confidence: 75 });
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -312,7 +267,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should detect liquidity event (support broken) via slippage', () => {
-      const signal = createValidSignal({ direction: SignalDirection.LONG, stopLoss: 99 });
+      const signal = createRealityCheckSignal({ direction: SignalDirection.LONG, stopLoss: 99 });
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       // When support breaks with large slippage, SLIPPAGE reason is returned (last check wins)
@@ -340,7 +295,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should detect slippage on SL hit', () => {
-      const signal = createValidSignal({ direction: SignalDirection.LONG, stopLoss: 99 });
+      const signal = createRealityCheckSignal({ direction: SignalDirection.LONG, stopLoss: 99 });
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -370,8 +325,8 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('GRACEFUL_DEGRADE - Stats update failures', () => {
     it('should handle multiple events and maintain stats', () => {
-      const event1 = createValidEvent({ tradeId: 'trade-1' });
-      const event2 = createValidEvent({ tradeId: 'trade-2', reason: 'SLIPPAGE' });
+      const event1 = createRealityCheckEvent({ tradeId: 'trade-1' });
+      const event2 = createRealityCheckEvent({ tradeId: 'trade-2', reason: 'SLIPPAGE' });
 
       service.recordEvent(event1);
       service.recordEvent(event2);
@@ -383,7 +338,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle analyzer tracking', () => {
-      const event = createValidEvent({
+      const event = createRealityCheckEvent({
         signingAnalyzers: ['RSI', 'MACD', 'Bollinger'],
       });
 
@@ -396,10 +351,10 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should accumulate duplicate assumptions', () => {
-      const event1 = createValidEvent({
+      const event1 = createRealityCheckEvent({
         breakingAssumptions: ['Trend reversal not detected'],
       });
-      const event2 = createValidEvent({
+      const event2 = createRealityCheckEvent({
         breakingAssumptions: ['Trend reversal not detected', 'Support broken'],
       });
 
@@ -418,8 +373,8 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('SKIP - Logging failures (Service without error handling)', () => {
     it('should record events with optional logger', () => {
-      const event = createValidEvent();
-      const serviceWithoutLogger = new RealityCheckService();
+      const event = createRealityCheckEvent();
+      const serviceWithoutLogger = createRealityCheckHarness({ withLogger: false }).service;
 
       // Should not throw even without logger
       expect(() => {
@@ -430,7 +385,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should work with logger that does not throw', () => {
-      const event = createValidEvent();
+      const event = createRealityCheckEvent();
 
       // Should not throw with real logger
       expect(() => {
@@ -447,10 +402,10 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('Integration - Complete analysis workflow', () => {
     it('should analyze trade and generate event from start to finish', () => {
-      const signal = createValidSignal({ confidence: 80 });
+      const signal = createRealityCheckSignal({ confidence: 80 });
       const signingAnalyzers: AnalyzerSignal[] = [
-        { source: 'RSI', direction: SignalDirection.LONG, confidence: 80, weight: 0.5, priority: 5 },
-        { source: 'MACD', direction: SignalDirection.LONG, confidence: 70, weight: 0.5, priority: 5 },
+        createRealityCheckAnalyzerSignal(),
+        createRealityCheckAnalyzerSignal({ source: 'MACD', confidence: 70 }),
       ];
 
       const event = service.analyzeClosedTrade(
@@ -481,8 +436,8 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should generate report from recorded events', () => {
-      const event1 = createValidEvent({ reason: 'REGIME_CHANGE' });
-      const event2 = createValidEvent({ reason: 'LIQUIDITY_EVENT' });
+      const event1 = createRealityCheckEvent({ reason: 'REGIME_CHANGE' });
+      const event2 = createRealityCheckEvent({ reason: 'LIQUIDITY_EVENT' });
 
       service.recordEvent(event1);
       service.recordEvent(event2);
@@ -495,7 +450,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should export events to JSON', () => {
-      const event = createValidEvent();
+      const event = createRealityCheckEvent();
       service.recordEvent(event);
 
       const json = service.exportToJson();
@@ -513,8 +468,8 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('Backward compatibility - Without ErrorHandler', () => {
     it('should work with optional logger', () => {
-      const serviceWithoutLogger = new RealityCheckService();
-      const event = createValidEvent();
+      const serviceWithoutLogger = createRealityCheckHarness({ withLogger: false }).service;
+      const event = createRealityCheckEvent();
 
       // Should not throw even without logger
       expect(() => {
@@ -525,8 +480,8 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should analyze trades without logger', () => {
-      const serviceWithoutLogger = new RealityCheckService();
-      const signal = createValidSignal();
+      const serviceWithoutLogger = createRealityCheckHarness({ withLogger: false }).service;
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = serviceWithoutLogger.analyzeClosedTrade(
@@ -549,7 +504,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should maintain all event data in records', () => {
-      const event = createValidEvent({
+      const event = createRealityCheckEvent({
         symbol: 'ETHUSDT',
         direction: 'SHORT',
         reason: 'ASSUMPTION_BROKEN',
@@ -575,7 +530,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle zero prices', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       // Zero prices don't make sense but shouldn't crash
@@ -599,7 +554,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle very large prices (Infinity)', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -623,7 +578,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should handle very small prices', () => {
-      const signal = createValidSignal();
+      const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       const result = service.analyzeClosedTrade(
@@ -649,7 +604,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     it('should handle many events in stats', () => {
       // Add many events
       for (let i = 0; i < 100; i++) {
-        const event = createValidEvent({
+        const event = createRealityCheckEvent({
           tradeId: `trade-${i}`,
           reason: i % 2 === 0 ? 'REGIME_CHANGE' : 'LIQUIDITY_EVENT',
         });
@@ -667,7 +622,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
     it('should handle extremely long strings', () => {
       const longString = 'A'.repeat(10000);
-      const event = createValidEvent({
+      const event = createRealityCheckEvent({
         explanation: longString,
         signalReason: longString,
       });
@@ -696,9 +651,9 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
       let eventCount = 0;
 
       for (const trade of trades) {
-        const signal = createValidSignal({ confidence: 75 });
+        const signal = createRealityCheckSignal({ confidence: 75 });
         const signingAnalyzers: AnalyzerSignal[] = [
-          { source: 'RSI', direction: SignalDirection.LONG, confidence: 80, weight: 1, priority: 5 },
+          createRealityCheckAnalyzerSignal({ weight: 1 }),
         ];
 
         const result = service.analyzeClosedTrade(
@@ -734,7 +689,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     it('should track analyzer accuracy across multiple trades', () => {
       // Create events with multiple analyzer signatures
       for (let i = 0; i < 10; i++) {
-        const event = createValidEvent({
+        const event = createRealityCheckEvent({
           tradeId: `trade-${i}`,
           signingAnalyzers: ['RSI', 'MACD', 'Bollinger', 'EMA'],
         });

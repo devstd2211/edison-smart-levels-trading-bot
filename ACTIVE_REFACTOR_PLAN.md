@@ -336,3 +336,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `risk-calculator` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts` -> PASS (1/1 suite, 37/37 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `reality-check` helpers for canonical logger bootstrap plus reusable signal/event/analyzer fixtures, then aligned the error-handling suite on that harness instead of repeating local logger, signal, event, and no-logger service builders across the file; reviewed `services/reality-check.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `reality-check` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/reality-check.error-handling.test.ts` -> PASS (1/1 suite, 30/30 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
