@@ -20,139 +20,19 @@ import {
   Orderbook,
   LiquidityHeatmapOrderbookLevel as OrderbookLevel,
 } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../types/legacy';
-
-// ============================================================================
-// TEST HELPERS
-// ============================================================================
-
-type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
-const asConfig = (value: unknown): LiquidityHeatmapConfig =>
-  value as LiquidityHeatmapConfig;
-const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
-const asDirection = (value: unknown): 'buy' | 'sell' => value as 'buy' | 'sell';
-
-/**
- * Create mock logger for testing
- */
-function createMockLogger(methodToFail?: string): LoggerService {
-  const logger: LoggerLike = {
-    info: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'info') throw new Error('Logger.info failed');
-    }),
-    warn: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'warn') throw new Error('Logger.warn failed');
-    }),
-    debug: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'debug') throw new Error('Logger.debug failed');
-    }),
-    error: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'error') throw new Error('Logger.error failed');
-    }),
-  };
-  return logger as unknown as LoggerService;
-}
-
-/**
- * Create valid configuration
- */
-function createValidConfig(): LiquidityHeatmapConfig {
-  return {
-    maxLevels: 50,
-    minStrengthThreshold: 10, // Lowered to 10 to allow more zones
-    clusteringTolerance: 0.1,
-    enableSupportResistance: true,
-    enableSlippageCalc: true,
-    enableExecutionCost: true,
-  };
-}
-
-/**
- * Create mock orderbook with realistic data
- */
-function createMockOrderbook(): Orderbook {
-  const bids: OrderbookLevel[] = [];
-  const asks: OrderbookLevel[] = [];
-
-  // Generate realistic bid levels (descending price)
-  // Higher volumes to ensure zones are created
-  for (let i = 0; i < 20; i++) {
-    bids.push({
-      price: 50000 - i * 10,
-      volume: Math.random() * 10 + 5, // Increased from 5+0.5
-      orderCount: Math.floor(Math.random() * 20) + 5, // Increased
-    });
-  }
-
-  // Generate realistic ask levels (ascending price)
-  for (let i = 0; i < 20; i++) {
-    asks.push({
-      price: 50010 + i * 10,
-      volume: Math.random() * 10 + 5, // Increased from 5+0.5
-      orderCount: Math.floor(Math.random() * 20) + 5, // Increased
-    });
-  }
-
-  return {
-    symbol: 'BTCUSDT',
-    timestamp: Date.now(),
-    bids,
-    asks,
-  };
-}
-
-/**
- * Create thin orderbook (low liquidity)
- */
-function createThinOrderbook(): Orderbook {
-  return {
-    symbol: 'BTCUSDT',
-    timestamp: Date.now(),
-    bids: [
-      { price: 50000, volume: 0.1, orderCount: 1 },
-      { price: 49990, volume: 0.05, orderCount: 1 },
-    ],
-    asks: [
-      { price: 50010, volume: 0.1, orderCount: 1 },
-      { price: 50020, volume: 0.05, orderCount: 1 },
-    ],
-  };
-}
-
-/**
- * Create deep orderbook (high liquidity)
- */
-function createDeepOrderbook(): Orderbook {
-  const bids: OrderbookLevel[] = [];
-  const asks: OrderbookLevel[] = [];
-
-  // Very deep liquidity with concentration at top levels
-  for (let i = 0; i < 50; i++) {
-    // Larger volumes at top of book (exponential decay)
-    const volumeMultiplier = Math.exp(-i / 10);
-    const baseVolume = 50; // Increased base volume
-
-    bids.push({
-      price: 50000 - i * 5,
-      volume: baseVolume * volumeMultiplier + Math.random() * 10,
-      orderCount: Math.floor(100 * volumeMultiplier) + 10,
-    });
-
-    asks.push({
-      price: 50010 + i * 5,
-      volume: baseVolume * volumeMultiplier + Math.random() * 10,
-      orderCount: Math.floor(100 * volumeMultiplier) + 10,
-    });
-  }
-
-  return {
-    symbol: 'BTCUSDT',
-    timestamp: Date.now(),
-    bids,
-    asks,
-  };
-}
+import {
+  asLiquidityDirection as asDirection,
+  asLiquidityHeatmapConfig as asConfig,
+  asLiquidityHeatmapOrderbook as asOrderbook,
+  createDeepLiquidityHeatmapOrderbook,
+  createLiquidityHeatmapConfig,
+  createLiquidityHeatmapHarness,
+  createLiquidityHeatmapLogger,
+  createLiquidityHeatmapOrderbook,
+  createThinLiquidityHeatmapOrderbook,
+} from '../helpers/liquidity-heatmap-test.utils';
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
@@ -160,7 +40,7 @@ function createDeepOrderbook(): Orderbook {
 
 describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   it('should THROW when config is null', () => {
-    const logger = createMockLogger();
+    const logger = createLiquidityHeatmapLogger();
 
     expect(() => {
       new LiquidityHeatmapService(asConfig(null), undefined, logger);
@@ -168,7 +48,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when config is undefined', () => {
-    const logger = createMockLogger();
+    const logger = createLiquidityHeatmapLogger();
 
     expect(() => {
       new LiquidityHeatmapService(asConfig(undefined), undefined, logger);
@@ -176,8 +56,8 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when maxLevels is invalid', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createLiquidityHeatmapLogger();
+    const config = createLiquidityHeatmapConfig();
     config.maxLevels = -10;
 
     expect(() => {
@@ -186,8 +66,8 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when minStrengthThreshold is out of range', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createLiquidityHeatmapLogger();
+    const config = createLiquidityHeatmapConfig();
     config.minStrengthThreshold = 150; // > 100
 
     expect(() => {
@@ -196,8 +76,8 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when clusteringTolerance is invalid', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createLiquidityHeatmapLogger();
+    const config = createLiquidityHeatmapConfig();
     config.clusteringTolerance = -0.5;
 
     expect(() => {
@@ -212,9 +92,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   it('should THROW when orderbook is null', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(null)),
@@ -222,9 +100,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is undefined', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(undefined)),
@@ -232,11 +108,9 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid symbol', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
 
-    const invalidOrderbook = createMockOrderbook();
+    const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.symbol = null as unknown as string;
 
     await expect(
@@ -245,11 +119,9 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid timestamp', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
 
-    const invalidOrderbook = createMockOrderbook();
+    const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.timestamp = NaN;
 
     await expect(
@@ -258,11 +130,9 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has missing bids/asks arrays', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
 
-    const invalidOrderbook = createMockOrderbook();
+    const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.bids = null as unknown as OrderbookLevel[];
 
     await expect(
@@ -277,10 +147,8 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   it('should THROW when slippage size is invalid', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
-    const orderbook = createMockOrderbook();
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
       service.calculateSlippageForSize(orderbook, -1, 'buy'),
@@ -288,10 +156,8 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when slippage direction is invalid', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
-    const orderbook = createMockOrderbook();
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
       service.calculateSlippageForSize(orderbook, 1.0, asDirection('invalid')),
@@ -299,10 +165,8 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when execution cost size is invalid', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger);
-    const orderbook = createMockOrderbook();
+    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
       service.estimateExecutionCost(orderbook, 0),
@@ -315,21 +179,18 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', () => {
-  let errorHandler: ErrorHandler;
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
+    ({ logger } = createLiquidityHeatmapHarness());
   });
 
   it('should return safe default heatmap on calculation failure', async () => {
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    const { service } = createLiquidityHeatmapHarness({ logger });
 
     // Corrupt orderbook to force calculation error
     // Make >50% of levels invalid to trigger data quality check
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.bids = corruptOrderbook.bids.map((b) => ({
       ...b,
       volume: NaN, // Force NaN propagation
@@ -351,10 +212,9 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return empty support/resistance on detection failure', async () => {
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    const { service } = createLiquidityHeatmapHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     // Corrupt both bids and asks to force failure
     corruptOrderbook.bids.forEach((b) => {
       b.volume = NaN;
@@ -374,10 +234,9 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return pessimistic slippage estimate on calculation failure', async () => {
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    const { service } = createLiquidityHeatmapHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.volume = NaN));
 
     const result = await service.calculateSlippageForSize(
@@ -392,10 +251,9 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return conservative execution cost on failure', async () => {
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    const { service } = createLiquidityHeatmapHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.price = Infinity));
 
     const result = await service.estimateExecutionCost(corruptOrderbook, 1.0);
@@ -405,8 +263,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle empty orderbook gracefully', async () => {
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    const { service } = createLiquidityHeatmapHarness({ logger });
 
     const emptyOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -424,13 +281,14 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle disabled features gracefully', async () => {
-    const config = createValidConfig();
-    config.enableSupportResistance = false;
-    config.enableSlippageCalc = false;
-    config.enableExecutionCost = false;
+    const config = createLiquidityHeatmapConfig({
+      enableSupportResistance: false,
+      enableSlippageCalc: false,
+      enableExecutionCost: false,
+    });
 
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
-    const orderbook = createMockOrderbook();
+    const { service } = createLiquidityHeatmapHarness({ config, logger });
+    const orderbook = createLiquidityHeatmapOrderbook();
 
     const heatmap = await service.buildLiquidityHeatmap(orderbook);
     expect(heatmap.supportResistance).toBeNull();
@@ -443,8 +301,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should survive when all calculations fail', async () => {
-    const config = createValidConfig();
-    const service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    const { service } = createLiquidityHeatmapHarness({ logger });
 
     const corruptOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -470,13 +327,13 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    const mockLogger = createMockLogger();
+    const mockLogger = createLiquidityHeatmapLogger();
     errorHandler = new ErrorHandler(mockLogger);
   });
 
   it('should SKIP logger.info failure during construction', () => {
-    const loggerWithFailingInfo = createMockLogger('info');
-    const config = createValidConfig();
+    const loggerWithFailingInfo = createLiquidityHeatmapLogger('info');
+    const config = createLiquidityHeatmapConfig();
 
     // Should not throw despite logger.info failure
     expect(() => {
@@ -485,14 +342,14 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   });
 
   it('should SKIP logger.warn failure during calculations', async () => {
-    const loggerWithFailingWarn = createMockLogger('warn');
-    const config = createValidConfig();
+    const loggerWithFailingWarn = createLiquidityHeatmapLogger('warn');
+    const config = createLiquidityHeatmapConfig();
     const service = new LiquidityHeatmapService(
       config, undefined, loggerWithFailingWarn,
       errorHandler,
     );
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.bids.forEach((b) => (b.volume = NaN));
 
     // Should not throw despite logger.warn failure
@@ -501,14 +358,14 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   });
 
   it('should SKIP logger.error failure during error handling', async () => {
-    const loggerWithFailingError = createMockLogger('error');
-    const config = createValidConfig();
+    const loggerWithFailingError = createLiquidityHeatmapLogger('error');
+    const config = createLiquidityHeatmapConfig();
     const service = new LiquidityHeatmapService(
       config, undefined, loggerWithFailingError,
       errorHandler,
     );
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.price = NaN));
 
     // Should not throw despite logger.error failure
@@ -527,18 +384,13 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
 describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let service: LiquidityHeatmapService;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-    const config = createValidConfig();
-    service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    ({ service } = createLiquidityHeatmapHarness());
   });
 
   it('should build complete heatmap for normal orderbook', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     expect(result.symbol).toBe('BTCUSDT');
@@ -550,7 +402,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should identify support/resistance levels', async () => {
-    const orderbook = createDeepOrderbook();
+    const orderbook = createDeepLiquidityHeatmapOrderbook();
     const result = await service.findSupportResistance(orderbook);
 
     expect(result.support.length).toBeGreaterThan(0);
@@ -559,7 +411,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should calculate slippage for buy order', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.calculateSlippageForSize(orderbook, 1.0, 'buy');
 
     expect(result.direction).toBe('buy');
@@ -570,7 +422,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should calculate slippage for sell order', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.calculateSlippageForSize(orderbook, 1.0, 'sell');
 
     expect(result.direction).toBe('sell');
@@ -580,7 +432,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should estimate execution cost accurately', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.estimateExecutionCost(orderbook, 1.0);
 
     expect(result.orderSize).toBe(1.0);
@@ -590,7 +442,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should handle thin orderbook with low liquidity', async () => {
-    const orderbook = createThinOrderbook();
+    const orderbook = createThinLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     expect(result.liquidityScore).toBeLessThan(50); // Low score for thin orderbook
@@ -598,7 +450,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should handle deep orderbook with high liquidity', async () => {
-    const orderbook = createDeepOrderbook();
+    const orderbook = createDeepLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     expect(result.liquidityScore).toBeGreaterThan(50); // High score for deep orderbook
@@ -606,7 +458,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should calculate bid/ask imbalance correctly', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     expect(result.imbalanceRatio).toBeGreaterThanOrEqual(-1);
@@ -614,7 +466,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should identify strong liquidity zones', async () => {
-    const orderbook = createDeepOrderbook();
+    const orderbook = createDeepLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     // Strong zones have strength >= 35 (matching support/resistance threshold)
@@ -623,7 +475,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   });
 
   it('should classify zones as support/resistance/neutral', async () => {
-    const orderbook = createDeepOrderbook();
+    const orderbook = createDeepLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     const supportZones = result.zones.filter((z) => z.type === 'support');
@@ -639,18 +491,13 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
 
 describe('LiquidityHeatmapService - Edge Cases', () => {
   let service: LiquidityHeatmapService;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-    const config = createValidConfig();
-    service = new LiquidityHeatmapService(config, undefined, logger, errorHandler);
+    ({ service } = createLiquidityHeatmapHarness());
   });
 
   it('should handle single-sided orderbook (only bids)', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     orderbook.asks = []; // No asks
 
     const result = await service.buildLiquidityHeatmap(orderbook);
@@ -660,7 +507,7 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
   });
 
   it('should handle single-sided orderbook (only asks)', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     orderbook.bids = []; // No bids
 
     const result = await service.buildLiquidityHeatmap(orderbook);
@@ -669,7 +516,7 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
   });
 
   it('should handle very large order size (exceeds available liquidity)', async () => {
-    const orderbook = createThinOrderbook();
+    const orderbook = createThinLiquidityHeatmapOrderbook();
     const result = await service.calculateSlippageForSize(orderbook, 100.0, 'buy');
 
     expect(result.fillablePercent).toBeLessThan(100);
@@ -677,7 +524,7 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
   });
 
   it('should handle zero volume levels gracefully', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     orderbook.bids[0].volume = 0;
     orderbook.asks[0].volume = 0;
 
@@ -699,7 +546,7 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
   });
 
   it('should handle extreme bid/ask imbalance', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     orderbook.bids.forEach((b) => (b.volume = 100)); // Very high bid liquidity
     orderbook.asks.forEach((a) => (a.volume = 0.01)); // Very low ask liquidity
 
@@ -715,16 +562,13 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
 
 describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let service: LiquidityHeatmapService;
-  let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    const config = createValidConfig();
-    service = new LiquidityHeatmapService(config, undefined, logger); // No ErrorHandler
+    ({ service } = createLiquidityHeatmapHarness({ withErrorHandler: false }));
   });
 
   it('should work without ErrorHandler', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.buildLiquidityHeatmap(orderbook);
 
     expect(result).toBeDefined();
@@ -732,7 +576,7 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
   });
 
   it('should handle calculation failures gracefully without ErrorHandler', async () => {
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createLiquidityHeatmapOrderbook();
     // Corrupt >50% of data
     corruptOrderbook.bids.forEach((b) => {
       b.volume = NaN;
@@ -750,8 +594,8 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
   });
 
   it('should handle logger failures without ErrorHandler', async () => {
-    const failingLogger = createMockLogger('info');
-    const config = createValidConfig();
+    const failingLogger = createLiquidityHeatmapLogger('info');
+    const config = createLiquidityHeatmapConfig();
 
     expect(() => {
       new LiquidityHeatmapService(config, undefined, failingLogger);
@@ -759,7 +603,7 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
   });
 
   it('should calculate slippage without ErrorHandler', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createLiquidityHeatmapOrderbook();
     const result = await service.calculateSlippageForSize(orderbook, 1.0, 'buy');
 
     expect(result).toBeDefined();

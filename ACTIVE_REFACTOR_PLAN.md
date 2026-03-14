@@ -300,3 +300,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `anomaly-detection` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts` -> PASS (1/1 suite, 35/35 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `liquidity-heatmap` helpers for canonical logger/ErrorHandler bootstrap, typed config/orderbook coercion, and reusable normal/thin/deep orderbook fixtures, then aligned the error-handling suite on that harness instead of repeating local logger/config/service/orderbook builders; reviewed `services/liquidity-heatmap.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `liquidity-heatmap` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts` -> PASS (1/1 suite, 43/43 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
