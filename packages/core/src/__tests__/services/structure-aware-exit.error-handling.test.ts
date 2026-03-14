@@ -15,39 +15,24 @@
 import { StructureAwareExitService } from '../../services/structure-aware-exit.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointType } from '../../types/legacy';
+import {
+  createStructureAwareExitConfig,
+  createStructureAwareExitHarness,
+  createStructureAwareExitMockLogger,
+  createStructureAwareLiquidityZone,
+  createStructureAwareSwingPoint,
+  createStructureAwareVolumeProfile,
+} from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
-
-  const defaultConfig: StructureAwareExitConfig = {
-    enabled: true,
-    dynamicTP2: {
-      enabled: true,
-      useSwingPoints: true,
-      useLiquidityZones: true,
-      useVolumeProfile: true,
-      bufferPercent: 0.4,
-      minTP2Percent: 2.0,
-      maxTP2Percent: 6.0,
-      minZoneStrength: 0.6,
-    },
-    trailingStopAfterTP1: {
-      enabled: true,
-      trailingDistancePercent: 0.8,
-      useBybitNativeTrailing: true,
-    },
-  };
+  let defaultConfig: StructureAwareExitConfig;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as LoggerService;
-
+    mockLogger = createStructureAwareExitMockLogger();
     errorHandler = new ErrorHandler(mockLogger);
+    defaultConfig = createStructureAwareExitConfig();
   });
 
   // ============================================================================
@@ -56,7 +41,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
   describe('Config Validation (THROW)', () => {
     it('should THROW on invalid bufferPercent > 10%', () => {
-      const badConfig = { ...defaultConfig, dynamicTP2: { ...defaultConfig.dynamicTP2, bufferPercent: 15 } };
+      const badConfig = createStructureAwareExitConfig({ dynamicTP2: { bufferPercent: 15 } });
 
       expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
         /Invalid bufferPercent/,
@@ -64,7 +49,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should THROW on invalid minTP2Percent > 50%', () => {
-      const badConfig = { ...defaultConfig, dynamicTP2: { ...defaultConfig.dynamicTP2, minTP2Percent: 60 } };
+      const badConfig = createStructureAwareExitConfig({ dynamicTP2: { minTP2Percent: 60 } });
 
       expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
         /Invalid minTP2Percent/,
@@ -72,7 +57,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should THROW on invalid maxTP2Percent > 50%', () => {
-      const badConfig = { ...defaultConfig, dynamicTP2: { ...defaultConfig.dynamicTP2, maxTP2Percent: 100 } };
+      const badConfig = createStructureAwareExitConfig({ dynamicTP2: { maxTP2Percent: 100 } });
 
       expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
         /Invalid maxTP2Percent/,
@@ -80,10 +65,9 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should THROW when minTP2Percent > maxTP2Percent', () => {
-      const badConfig = {
-        ...defaultConfig,
-        dynamicTP2: { ...defaultConfig.dynamicTP2, minTP2Percent: 8.0, maxTP2Percent: 4.0 },
-      };
+      const badConfig = createStructureAwareExitConfig({
+        dynamicTP2: { minTP2Percent: 8.0, maxTP2Percent: 4.0 },
+      });
 
       expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
         /Invalid TP2 range/,
@@ -91,7 +75,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should THROW on invalid minZoneStrength outside 0-1', () => {
-      const badConfig = { ...defaultConfig, dynamicTP2: { ...defaultConfig.dynamicTP2, minZoneStrength: 1.5 } };
+      const badConfig = createStructureAwareExitConfig({ dynamicTP2: { minZoneStrength: 1.5 } });
 
       expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
         /Invalid minZoneStrength/,
@@ -107,7 +91,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = new StructureAwareExitService(defaultConfig, mockLogger, errorHandler);
+      service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+      }).service;
     });
 
     it('should THROW on invalid currentPrice (NaN)', () => {
@@ -156,19 +143,14 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = new StructureAwareExitService(defaultConfig, mockLogger, errorHandler);
+      service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+      }).service;
     });
 
     it('should GRACEFUL_DEGRADE when swing points processing fails', () => {
-      const liquidityZones = [
-        {
-          price: 2.039,
-          type: 'RESISTANCE' as const,
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
-      ];
+      const liquidityZones = [createStructureAwareLiquidityZone(2.039)];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, null);
 
@@ -178,9 +160,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should GRACEFUL_DEGRADE when liquidity zones processing fails', () => {
-      const swingPoints = [
-        { price: 2.05, type: SwingPointType.HIGH, timestamp: Date.now() },
-      ];
+      const swingPoints = [createStructureAwareSwingPoint(2.05, SwingPointType.HIGH)];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, [], null);
 
@@ -190,19 +170,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should GRACEFUL_DEGRADE when volume profile processing fails', () => {
-      const liquidityZones = [
-        {
-          price: 2.039,
-          type: 'RESISTANCE' as const,
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
-      ];
-
-      const badProfile: { nodes: Array<{ price: number; volume: number }> } = {
-        nodes: [{ price: NaN, volume: 1000 }],
-      };
+      const liquidityZones = [createStructureAwareLiquidityZone(2.039)];
+      const badProfile = createStructureAwareVolumeProfile([{ price: NaN, volume: 1000 }]);
 
       // Should still detect structure from liquidity zones
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, badProfile);
@@ -212,9 +181,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should return null when all structure sources fail', () => {
-      const badProfile: { nodes: Array<{ price: number; volume: number }> } = {
-        nodes: [{ price: NaN, volume: NaN }],
-      };
+      const badProfile = createStructureAwareVolumeProfile([{ price: NaN, volume: NaN }]);
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], [], badProfile);
 
@@ -230,7 +197,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = new StructureAwareExitService(defaultConfig, mockLogger, errorHandler);
+      service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+      }).service;
     });
 
     it('should GRACEFUL_DEGRADE when calculation produces NaN', () => {
@@ -285,7 +255,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      service = new StructureAwareExitService(defaultConfig, throwingLogger, errorHandler);
+      service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: throwingLogger,
+      }).service;
     });
 
     it('should SKIP logger.info failures in calculateDynamicTP2', () => {
@@ -303,22 +276,19 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should SKIP multiple logging failures without blocking calculation', () => {
-      const badLogger = {
+      const badLogger = createStructureAwareExitMockLogger({
         info: jest.fn(() => {
           throw new Error('Log failed');
         }),
         debug: jest.fn(() => {
           throw new Error('Log failed');
         }),
-        warn: jest.fn(() => {
-          throw new Error('Log failed');
-        }),
-        error: jest.fn(() => {
-          throw new Error('Log failed');
-        }),
-      } as unknown as LoggerService;
+      });
 
-      const svc = new StructureAwareExitService(defaultConfig, badLogger, errorHandler);
+      const svc = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: badLogger,
+      }).service;
       const structure = { price: 2.05, type: 'SWING_POINT' as const, strength: 0.8 };
 
       // Should not throw despite all logging failing
@@ -332,7 +302,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
   describe('Integration E2E Scenarios', () => {
     it('should handle cascading failures gracefully: detect → calculate with all errors', () => {
-      const service = new StructureAwareExitService(defaultConfig, mockLogger, errorHandler);
+      const service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+      }).service;
 
       // Simulate: no valid structures found
       const structure = service.detectNearestResistance(2.0, SignalDirection.LONG, [], [], null);
@@ -349,11 +322,13 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
     it('should work correctly without ErrorHandler (backward compatibility)', () => {
       // Create service WITHOUT errorHandler (legacy mode)
-      const service = new StructureAwareExitService(defaultConfig, mockLogger);
+      const service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).service;
 
-      const swingPoints = [
-        { price: 2.05, type: SwingPointType.HIGH, timestamp: Date.now() },
-      ];
+      const swingPoints = [createStructureAwareSwingPoint(2.05, SwingPointType.HIGH)];
 
       const structure = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, [], null);
 
@@ -374,12 +349,16 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
   describe('Backward Compatibility', () => {
     it('should maintain original behavior without ErrorHandler', () => {
-      const service = new StructureAwareExitService(defaultConfig, mockLogger);
+      const service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).service;
 
       // Structure detection without ErrorHandler
       const swingPoints = [
-        { price: 2.05, type: SwingPointType.HIGH, timestamp: Date.now() },
-        { price: 2.08, type: SwingPointType.HIGH, timestamp: Date.now() },
+        createStructureAwareSwingPoint(2.05, SwingPointType.HIGH),
+        createStructureAwareSwingPoint(2.08, SwingPointType.HIGH),
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, [], null);
@@ -389,13 +368,17 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should still validate config even without ErrorHandler', () => {
-      const badConfig = { ...defaultConfig, dynamicTP2: { ...defaultConfig.dynamicTP2, bufferPercent: 50 } };
+      const badConfig = createStructureAwareExitConfig({ dynamicTP2: { bufferPercent: 50 } });
 
       expect(() => new StructureAwareExitService(badConfig, mockLogger)).toThrow();
     });
 
     it('should apply constraints in TP2 calculation consistently', () => {
-      const service = new StructureAwareExitService(defaultConfig, mockLogger);
+      const service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).service;
 
       const structureLevel = {
         price: 2.01, // Very close to entry
@@ -419,7 +402,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = new StructureAwareExitService(defaultConfig, mockLogger, errorHandler);
+      service = createStructureAwareExitHarness({
+        config: defaultConfig,
+        logger: mockLogger,
+      }).service;
     });
 
     it('should handle empty arrays gracefully', () => {
@@ -429,9 +415,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should handle null volumeProfile gracefully', () => {
-      const swingPoints = [
-        { price: 2.05, type: SwingPointType.HIGH, timestamp: Date.now() },
-      ];
+      const swingPoints = [createStructureAwareSwingPoint(2.05, SwingPointType.HIGH)];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, [], null);
 
@@ -441,20 +425,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
     it('should handle very small structure level differences', () => {
       const liquidityZones = [
-        {
-          price: 2.0001,
-          type: 'RESISTANCE' as const,
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
-        {
-          price: 2.0002,
-          type: 'RESISTANCE' as const,
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
+        createStructureAwareLiquidityZone(2.0001),
+        createStructureAwareLiquidityZone(2.0002),
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, null);

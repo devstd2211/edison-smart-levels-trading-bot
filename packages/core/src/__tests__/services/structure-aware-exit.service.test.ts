@@ -10,29 +10,18 @@
 
 import { StructureAwareExitService } from '../../services/structure-aware-exit.service';
 import { LoggerService, SignalDirection, SwingPointType, StructureAwareExitConfig, LiquidityZone, SwingPoint } from '../../types/legacy';
+import {
+  createStructureAwareExitConfig,
+  createStructureAwareExitHarness,
+  createStructureAwareLiquidityZone,
+  createStructureAwareSwingPoint,
+  createStructureAwareVolumeProfile,
+} from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService', () => {
   let service: StructureAwareExitService;
   let mockLogger: LoggerService;
-
-  const defaultConfig: StructureAwareExitConfig = {
-    enabled: true,
-    dynamicTP2: {
-      enabled: true,
-      useSwingPoints: true,
-      useLiquidityZones: true,
-      useVolumeProfile: true,
-      bufferPercent: 0.4,
-      minTP2Percent: 2.0,
-      maxTP2Percent: 6.0,
-      minZoneStrength: 0.6,
-    },
-    trailingStopAfterTP1: {
-      enabled: true,
-      trailingDistancePercent: 0.8,
-      useBybitNativeTrailing: true,
-    },
-  };
+  let defaultConfig: StructureAwareExitConfig;
 
   beforeEach(() => {
     mockLogger = new LoggerService('ERROR', './logs', false);
@@ -41,7 +30,12 @@ describe('StructureAwareExitService', () => {
     jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
     jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
 
-    service = new StructureAwareExitService(defaultConfig, mockLogger);
+    defaultConfig = createStructureAwareExitConfig();
+    service = createStructureAwareExitHarness({
+      config: defaultConfig,
+      logger: mockLogger,
+      withErrorHandler: false,
+    }).service;
   });
 
   // ============================================================================
@@ -51,16 +45,8 @@ describe('StructureAwareExitService', () => {
   describe('detectNearestResistance', () => {
     it('should find nearest swing high for LONG when no other sources available', () => {
       const swingPoints: SwingPoint[] = [
-        {
-          price: 2.05,
-          type: SwingPointType.HIGH,
-          timestamp: Date.now(),
-        },
-        {
-          price: 2.08,
-          type: SwingPointType.HIGH,
-          timestamp: Date.now(),
-        },
+        createStructureAwareSwingPoint(2.05, SwingPointType.HIGH),
+        createStructureAwareSwingPoint(2.08, SwingPointType.HIGH),
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, [], null);
@@ -73,21 +59,11 @@ describe('StructureAwareExitService', () => {
 
     it('should prioritize liquidity zones over swing points', () => {
       const swingPoints: SwingPoint[] = [
-        {
-          price: 2.05,
-          type: SwingPointType.HIGH,
-          timestamp: Date.now(),
-        },
+        createStructureAwareSwingPoint(2.05, SwingPointType.HIGH),
       ];
 
       const liquidityZones: LiquidityZone[] = [
-        {
-          price: 2.039,
-          type: 'RESISTANCE',
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
+        createStructureAwareLiquidityZone(2.039),
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, liquidityZones, null);
@@ -100,13 +76,7 @@ describe('StructureAwareExitService', () => {
 
     it('should filter out weak liquidity zones below minZoneStrength', () => {
       const liquidityZones: LiquidityZone[] = [
-        {
-          price: 2.045,
-          type: 'RESISTANCE',
-          strength: 0.4, // Below minZoneStrength (0.6)
-          touches: 1,
-          lastTouch: Date.now(),
-        },
+        { ...createStructureAwareLiquidityZone(2.045), strength: 0.4, touches: 1 }, // Below minZoneStrength (0.6)
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, null);
@@ -116,20 +86,8 @@ describe('StructureAwareExitService', () => {
 
     it('should find nearest structure among multiple candidates (proximity-based)', () => {
       const liquidityZones: LiquidityZone[] = [
-        {
-          price: 2.08,
-          type: 'RESISTANCE',
-          strength: 0.7,
-          touches: 2,
-          lastTouch: Date.now(),
-        },
-        {
-          price: 2.039,
-          type: 'RESISTANCE',
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
+        { ...createStructureAwareLiquidityZone(2.08), strength: 0.7, touches: 2 },
+        createStructureAwareLiquidityZone(2.039),
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], liquidityZones, null);
@@ -140,16 +98,8 @@ describe('StructureAwareExitService', () => {
 
     it('should detect SHORT support correctly (inverted logic)', () => {
       const swingPoints: SwingPoint[] = [
-        {
-          price: 1.95,
-          type: SwingPointType.LOW,
-          timestamp: Date.now(),
-        },
-        {
-          price: 1.92,
-          type: SwingPointType.LOW,
-          timestamp: Date.now(),
-        },
+        createStructureAwareSwingPoint(1.95, SwingPointType.LOW),
+        createStructureAwareSwingPoint(1.92, SwingPointType.LOW),
       ];
 
       const result = service.detectNearestResistance(2.0, SignalDirection.SHORT, swingPoints, [], null);
@@ -166,13 +116,11 @@ describe('StructureAwareExitService', () => {
     });
 
     it('should handle HVN levels from volume profile', () => {
-      const volumeProfile = {
-        nodes: [
-          { price: 2.045, volume: 1000 },
-          { price: 2.05, volume: 2000 },
-          { price: 2.06, volume: 500 },
-        ],
-      };
+      const volumeProfile = createStructureAwareVolumeProfile([
+        { price: 2.045, volume: 1000 },
+        { price: 2.05, volume: 2000 },
+        { price: 2.06, volume: 500 },
+      ]);
 
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, [], [], volumeProfile);
 
@@ -290,8 +238,14 @@ describe('StructureAwareExitService', () => {
     });
 
     it('should return false when trailing stop disabled', () => {
-      const disabledConfig = { ...defaultConfig, trailingStopAfterTP1: { ...defaultConfig.trailingStopAfterTP1, enabled: false } };
-      const disabledService = new StructureAwareExitService(disabledConfig, mockLogger);
+      const disabledConfig = createStructureAwareExitConfig({
+        trailingStopAfterTP1: { enabled: false },
+      });
+      const disabledService = createStructureAwareExitHarness({
+        config: disabledConfig,
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).service;
 
       const result = disabledService.shouldActivateTrailing();
       expect(result).toBe(false);
@@ -310,21 +264,11 @@ describe('StructureAwareExitService', () => {
   describe('integration scenarios', () => {
     it('should handle complete flow: detect structure → calculate TP2', () => {
       const swingPoints: SwingPoint[] = [
-        {
-          price: 2.05,
-          type: SwingPointType.HIGH,
-          timestamp: Date.now(),
-        },
+        createStructureAwareSwingPoint(2.05, SwingPointType.HIGH),
       ];
 
       const liquidityZones: LiquidityZone[] = [
-        {
-          price: 2.039,
-          type: 'RESISTANCE',
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
+        createStructureAwareLiquidityZone(2.039),
       ];
 
       // Step 1: Detect
@@ -351,13 +295,7 @@ describe('StructureAwareExitService', () => {
       const currentPrice = 2.0177;
 
       const liquidityZones: LiquidityZone[] = [
-        {
-          price: 2.0399,
-          type: 'RESISTANCE',
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
+        createStructureAwareLiquidityZone(2.0399),
       ];
 
       // Detect structure
@@ -380,29 +318,17 @@ describe('StructureAwareExitService', () => {
     it('should work with multiple structure sources (priority test)', () => {
       // Setup: Entry 2.0, all structure types available
       const swingPoints: SwingPoint[] = [
-        {
-          price: 2.08,
-          type: SwingPointType.HIGH,
-          timestamp: Date.now(),
-        },
+        createStructureAwareSwingPoint(2.08, SwingPointType.HIGH),
       ];
 
       const liquidityZones: LiquidityZone[] = [
-        {
-          price: 2.039,
-          type: 'RESISTANCE',
-          strength: 0.75,
-          touches: 3,
-          lastTouch: Date.now(),
-        },
+        createStructureAwareLiquidityZone(2.039),
       ];
 
-      const volumeProfile = {
-        nodes: [
-          { price: 2.045, volume: 1000 },
-          { price: 2.055, volume: 2000 },
-        ],
-      };
+      const volumeProfile = createStructureAwareVolumeProfile([
+        { price: 2.045, volume: 1000 },
+        { price: 2.055, volume: 2000 },
+      ]);
 
       // Should pick liquidity zone (highest priority among structures at similar distance)
       const result = service.detectNearestResistance(2.0, SignalDirection.LONG, swingPoints, liquidityZones, volumeProfile);

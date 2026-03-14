@@ -328,3 +328,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `enhanced-exit` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts` -> PASS (1/1 suite, 25/25 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `structure-aware-exit` helpers for canonical config/logger/ErrorHandler bootstrap plus reusable swing-point, liquidity-zone, and volume-profile fixtures, then aligned both the main and error-handling suites on that harness instead of repeating local nested config construction and service setup; reviewed `services/structure-aware-exit.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `structure-aware-exit` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts packages/core/src/__tests__/services/structure-aware-exit.service.test.ts` -> PASS (2/2 suites, 45/45 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
