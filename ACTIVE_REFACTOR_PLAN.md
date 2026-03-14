@@ -320,3 +320,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `whale-detection` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts` -> PASS (1/1 suite, 16/16 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `whale-wall-tp` helpers for canonical logger/ErrorHandler bootstrap, reusable wall fixtures, and nested config overrides, then aligned the error-handling suite on that harness instead of repeating local service/config/logger setup across validation, integration, and backward-compat blocks; reviewed `services/whale-wall-tp.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `whale-wall-tp` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts` -> PASS (1/1 suite, 22/22 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
