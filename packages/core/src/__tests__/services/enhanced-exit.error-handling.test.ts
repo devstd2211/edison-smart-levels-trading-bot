@@ -12,63 +12,20 @@
  */
 
 import { EnhancedExitService, EnhancedExitConfig } from '../../services/enhanced-exit.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, SignalDirection } from '../../types/legacy';
+import {
+  createEnhancedExitConfig,
+  createEnhancedExitHarness,
+} from '../helpers/enhanced-exit-test.utils';
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: LoggerService;
-  let errorHandler: ErrorHandler;
-
-  const defaultConfig: Partial<EnhancedExitConfig> = {
-    riskRewardGate: {
-      enabled: true,
-      minRR: 1.5,
-      preferredRR: 2.0,
-    },
-    structureBasedTP: {
-      enabled: true,
-      mode: 'LEVEL',
-      offsetPercent: 0.1,
-      fallbackPercent: 2.0,
-      useNextLevelAsTP1: true,
-    },
-    liquidityAwareSL: {
-      enabled: true,
-      extendBeyondLiquidity: true,
-      extensionPercent: 0.2,
-      useSwingPoints: true,
-      swingLookback: 20,
-    },
-    atrBasedTP: {
-      enabled: true,
-      tp1AtrMultiplier: 1.5,
-      tp2AtrMultiplier: 3.0,
-      minTPPercent: 0.5,
-      maxTPPercent: 5.0,
-    },
-    dynamicBreakeven: {
-      enabled: true,
-      activationPercent: 1.0,
-      offsetPercent: 0.1,
-    },
-    adaptiveTrailing: {
-      enabled: true,
-      activationPercent: 1.5,
-      trailingDistancePercent: 0.5,
-      useATRDistance: true,
-      trailingDistanceATR: 0.5,
-    },
-  };
+  let errorHandler: ErrorHandler | undefined;
+  const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as LoggerService;
-
-    errorHandler = new ErrorHandler(mockLogger);
+    ({ logger: mockLogger, errorHandler } = createEnhancedExitHarness());
   });
 
   // ============================================================================
@@ -140,7 +97,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let service: EnhancedExitService;
 
     beforeEach(() => {
-      service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      ({ service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      }));
     });
 
     it('should GRACEFUL_DEGRADE on invalid entryPrice (NaN)', () => {
@@ -171,7 +131,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let service: EnhancedExitService;
 
     beforeEach(() => {
-      service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      ({ service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      }));
     });
 
     it('should GRACEFUL_DEGRADE when SL equals entry price (division by zero)', () => {
@@ -241,7 +204,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should SKIP logger failures in updateConfig', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      });
 
       const newConfig = { ...defaultConfig, atrBasedTP: { ...defaultConfig.atrBasedTP, minTPPercent: 0.3 } };
 
@@ -256,7 +222,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   describe('Integration E2E Scenarios', () => {
     it('should handle complete R:R validation flow with error handling', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      });
 
       // Valid trade
       const validResult = service.validateRiskReward(2.0, 1.9, 2.2);
@@ -269,7 +238,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should work correctly without ErrorHandler (backward compatibility)', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+        withErrorHandler: false,
+      });
 
       const result = service.validateRiskReward(2.0, 1.8, 2.3);
 
@@ -284,7 +257,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   describe('Configuration Updates', () => {
     it('should validate config on update and reject invalid changes', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      });
 
       const originalConfig = service.getConfig();
       const originalMinTP = originalConfig.atrBasedTP.minTPPercent;
@@ -303,7 +279,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should apply valid config updates successfully', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      });
 
       const validUpdate = { atrBasedTP: { ...defaultConfig.atrBasedTP, minTPPercent: 0.3 } };
 
@@ -322,7 +301,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let service: EnhancedExitService;
 
     beforeEach(() => {
-      service = new EnhancedExitService(mockLogger, defaultConfig, errorHandler);
+      ({ service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+      }));
     });
 
     it('should handle R:R validation with very small distances', () => {
@@ -352,7 +334,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         ...defaultConfig,
         adaptiveTrailing: { enabled: true, activationPercent: 0.01, trailingDistancePercent: 0.5, useATRDistance: true, trailingDistanceATR: 0.5 },
       };
-      const service2 = new EnhancedExitService(mockLogger, config, errorHandler);
+      const { service: service2 } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config,
+      });
 
       const result = service2.checkAdaptiveTrailing(2.0, 2.005, SignalDirection.LONG, 1.0);
 
@@ -367,7 +352,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   describe('Backward Compatibility', () => {
     it('should maintain original behavior without ErrorHandler', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+        withErrorHandler: false,
+      });
 
       const result = service.validateRiskReward(2.0, 1.6, 2.4); // R:R = 0.4/0.4 = 1.0, need higher TP
 
@@ -388,7 +377,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should calculate structure-based TP correctly', () => {
-      const service = new EnhancedExitService(mockLogger, defaultConfig);
+      const { service } = createEnhancedExitHarness({
+        logger: mockLogger,
+        config: defaultConfig,
+        withErrorHandler: false,
+      });
 
       const levels = {
         support: [{ price: 1.9, strength: 0.8 }],
