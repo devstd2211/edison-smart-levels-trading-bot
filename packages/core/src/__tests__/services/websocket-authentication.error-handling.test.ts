@@ -7,6 +7,7 @@ import { WebSocketAuthenticationService } from '../../services/websocket-authent
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createWebSocketAuthenticationHarness,
+  createMockWebSocketAuthLogger,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
 
@@ -58,7 +59,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       }));
 
       // Create new service with mocked crypto
-      const newService = new WebSocketAuthenticationService(mockLogger, errorHandler);
+      const newService = createWebSocketAuthenticationHarness({
+        logger: mockLogger,
+        errorHandler,
+      }).service;
 
       // Unmock to restore original behavior
       jest.unmock('crypto');
@@ -84,13 +88,15 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== SKIP: Logging Failures =====
   describe('SKIP: Logging Failures', () => {
     it('should skip logger errors silently in generateAuthPayload', () => {
-      const loggerWithError = {
-        debug: jest.fn().mockImplementation(() => {
+      const loggerWithError = createMockWebSocketAuthLogger();
+      loggerWithError.debug = jest.fn().mockImplementation(() => {
           throw new Error('Logger error');
-        }),
-      };
+        });
 
-      const serviceWithBadLogger = new WebSocketAuthenticationService(loggerWithError, errorHandler);
+      const serviceWithBadLogger = createWebSocketAuthenticationHarness({
+        logger: loggerWithError,
+        errorHandler,
+      }).service;
 
       expect(() => {
         serviceWithBadLogger.generateAuthPayload('valid-key-1234567890', 'valid-secret-1234567890');
@@ -98,13 +104,15 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should skip logger errors silently in validateCredentials', () => {
-      const loggerWithError = {
-        debug: jest.fn().mockImplementation(() => {
+      const loggerWithError = createMockWebSocketAuthLogger();
+      loggerWithError.debug = jest.fn().mockImplementation(() => {
           throw new Error('Logger error');
-        }),
-      };
+        });
 
-      const serviceWithBadLogger = new WebSocketAuthenticationService(loggerWithError, errorHandler);
+      const serviceWithBadLogger = createWebSocketAuthenticationHarness({
+        logger: loggerWithError,
+        errorHandler,
+      }).service;
 
       expect(() => {
         serviceWithBadLogger.validateCredentials('valid-key-1234567890', 'valid-secret-1234567890');
@@ -112,13 +120,15 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should continue operation when logger.warn fails', () => {
-      const loggerWithError = {
-        warn: jest.fn().mockImplementation(() => {
+      const loggerWithError = createMockWebSocketAuthLogger();
+      loggerWithError.warn = jest.fn().mockImplementation(() => {
           throw new Error('Logger error');
-        }),
-      };
+        });
 
-      const serviceWithBadLogger = new WebSocketAuthenticationService(loggerWithError, errorHandler);
+      const serviceWithBadLogger = createWebSocketAuthenticationHarness({
+        logger: loggerWithError,
+        errorHandler,
+      }).service;
 
       const result = serviceWithBadLogger.validateCredentials('invalid', 'invalid');
 
@@ -327,7 +337,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
 
     it('should handle constructor with partial logger', () => {
       const partialLogger: AuthLogger = { info: jest.fn() };
-      const servicePartialLogger = new WebSocketAuthenticationService(partialLogger, errorHandler);
+      const servicePartialLogger = createWebSocketAuthenticationHarness({
+        logger: partialLogger,
+        errorHandler,
+      }).service;
 
       const result = servicePartialLogger.generateAuthPayload('key-1234567890', 'secret-1234567890');
 

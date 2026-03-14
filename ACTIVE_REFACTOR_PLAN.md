@@ -348,3 +348,8 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `volatility-regime` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: aligned the `trade-history` error-handling suite on the existing temp-dir/error-handler harness so fallback and initialization cases now reuse the same service/bootstrap path instead of repeating direct `TradeHistoryService` construction; reviewed `services/trade-history.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Testability batch status on 2026-03-14 follow-up: aligned the `websocket-authentication` error-handling suite further on the shared auth harness so failing-logger and partial-logger scenarios now reuse one service/bootstrap path instead of repeating local `WebSocketAuthenticationService` construction; reviewed `services/websocket-authentication.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `trade-history` + `websocket-authentication` testability follow-up batch:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` -> PASS (2/2 suites, 61/61 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
