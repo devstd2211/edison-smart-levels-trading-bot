@@ -340,3 +340,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `reality-check` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/reality-check.error-handling.test.ts` -> PASS (1/1 suite, 30/30 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `swing-point-detector` helpers for canonical mock logger/ErrorHandler bootstrap plus reusable candle arrays, failing-loggers, swing-point builders, and typed cast helpers, then aligned the error-handling suite on that harness instead of repeating local service construction and fixture factories throughout the file; reviewed `services/swing-point-detector.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `swing-point-detector` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
