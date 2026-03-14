@@ -17,50 +17,25 @@
 import { RiskCalculator, RiskCalculationInput } from '../../services/risk-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RiskCalculationError } from '../../errors/DomainErrors';
-import { SignalDirection, LoggerService } from '../../types/legacy';
+import { SignalDirection } from '../../types/legacy';
+import {
+  createRiskCalculatorHarness,
+  createRiskCalculatorTakeProfitConfigs,
+  RiskCalculatorMockLogger,
+} from '../helpers/risk-calculator-test.utils';
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let calculator: RiskCalculator;
-  type MockLogger = {
-    info: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-    debug: jest.Mock;
-    minLevel: string;
-    logDir: string;
-    logToFile: boolean;
-    logs: unknown[];
-  };
-  let mockLogger: MockLogger;
+  let mockLogger: RiskCalculatorMockLogger;
   let errorHandler: ErrorHandler;
   let defaultInput: RiskCalculationInput;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      minLevel: 'debug',
-      logDir: '.logs',
-      logToFile: false,
-      logs: [],
-    };
-    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
-    calculator = new RiskCalculator(mockLogger as unknown as LoggerService, errorHandler);
-
-    defaultInput = {
-      direction: SignalDirection.LONG,
-      entryPrice: 100,
-      referenceLevel: 95,
-      atrPercent: 1.5,
-      slMultiplier: 1.5,
-      minSlDistancePercent: 1.0,
-      takeProfitConfigs: [
-        { level: 1, percent: 0.5, sizePercent: 50 },
-        { level: 2, percent: 1.0, sizePercent: 50 },
-      ],
-    };
+    const harness = createRiskCalculatorHarness();
+    calculator = harness.calculator;
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    defaultInput = harness.defaultInput;
   });
 
   describe('THROW Strategy - Input Validation', () => {
@@ -177,7 +152,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('continues calculation despite logger failures without ErrorHandler', () => {
-      const calculatorNoHandler = new RiskCalculator(mockLogger as unknown as LoggerService);
+      const calculatorNoHandler = createRiskCalculatorHarness({
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).calculator;
       mockLogger.debug.mockImplementation(() => {
         throw new Error('Logger failure');
       });
@@ -196,7 +174,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
           NaN,
           SignalDirection.LONG,
           1.0,
-          defaultInput.takeProfitConfigs,
+          createRiskCalculatorTakeProfitConfigs(),
         );
       }).toThrow(RiskCalculationError);
     });
@@ -207,7 +185,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
           100,
           SignalDirection.LONG,
           -1.0,
-          defaultInput.takeProfitConfigs,
+          createRiskCalculatorTakeProfitConfigs(),
         );
       }).toThrow(RiskCalculationError);
     });
@@ -228,7 +206,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
         100,
         SignalDirection.LONG,
         1.0,
-        defaultInput.takeProfitConfigs,
+        createRiskCalculatorTakeProfitConfigs(),
       );
 
       expect(result).toBeDefined();
@@ -257,9 +235,11 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
       const input = {
         ...defaultInput,
         takeProfitConfigs: [
-          { level: 1, percent: 0.5, sizePercent: 33 },
-          { level: 2, percent: 1.0, sizePercent: 33 },
-          { level: 3, percent: 1.5, sizePercent: 34 },
+          ...createRiskCalculatorTakeProfitConfigs([
+            { level: 1, percent: 0.5, sizePercent: 33 },
+            { level: 2, percent: 1.0, sizePercent: 33 },
+            { level: 3, percent: 1.5, sizePercent: 34 },
+          ]),
         ],
       };
 
@@ -304,7 +284,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
-      calculator = new RiskCalculator(mockLogger as unknown as LoggerService); // No ErrorHandler
+      calculator = createRiskCalculatorHarness({
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).calculator;
     });
 
     it('still validates input and throws on errors', () => {
@@ -330,7 +313,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
         100,
         SignalDirection.LONG,
         1.0,
-        defaultInput.takeProfitConfigs,
+        createRiskCalculatorTakeProfitConfigs(),
       );
 
       expect(result).toBeDefined();

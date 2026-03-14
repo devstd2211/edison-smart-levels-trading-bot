@@ -332,3 +332,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `structure-aware-exit` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts packages/core/src/__tests__/services/structure-aware-exit.service.test.ts` -> PASS (2/2 suites, 45/45 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `risk-calculator` helpers for canonical mock logger/ErrorHandler bootstrap plus reusable default input and take-profit builders, then aligned the error-handling suite on that harness instead of repeating inline mock logger state and default calculation inputs; reviewed `services/risk-calculator.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `risk-calculator` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts` -> PASS (1/1 suite, 37/37 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
