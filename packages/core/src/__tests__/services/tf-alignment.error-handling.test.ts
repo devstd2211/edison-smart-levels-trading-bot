@@ -93,28 +93,40 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
     test('should throw on invalid enabled flag', () => {
       const config = { ...createTFAlignmentConfig({ minAlignmentScore: 60 }), enabled: 'true' as unknown as boolean };
       expect(() => {
-        new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTFAlignmentHarness({
+          configOverrides: config,
+          logger: mockLogger as unknown as LoggerService,
+        });
       }).toThrow('Config.enabled must be a boolean');
     });
 
     test('should throw on invalid minAlignmentScore (negative)', () => {
       const config = { ...createTFAlignmentConfig({ minAlignmentScore: 60 }), minAlignmentScore: -10 };
       expect(() => {
-        new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTFAlignmentHarness({
+          configOverrides: config,
+          logger: mockLogger as unknown as LoggerService,
+        });
       }).toThrow('Config.minAlignmentScore must be a number between 0 and 100');
     });
 
     test('should throw on invalid minAlignmentScore (> 100)', () => {
       const config = { ...createTFAlignmentConfig({ minAlignmentScore: 60 }), minAlignmentScore: 150 };
       expect(() => {
-        new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTFAlignmentHarness({
+          configOverrides: config,
+          logger: mockLogger as unknown as LoggerService,
+        });
       }).toThrow('Config.minAlignmentScore must be a number between 0 and 100');
     });
 
     test('should throw on invalid minAlignmentScore (NaN)', () => {
       const config = { ...createTFAlignmentConfig({ minAlignmentScore: 60 }), minAlignmentScore: NaN };
       expect(() => {
-        new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTFAlignmentHarness({
+          configOverrides: config,
+          logger: mockLogger as unknown as LoggerService,
+        });
       }).toThrow('Config.minAlignmentScore must be a number between 0 and 100');
     });
 
@@ -124,7 +136,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
         timeframes: { ...createTFAlignmentConfig({ minAlignmentScore: 60 }).timeframes, entry: { weight: -10 } },
       };
       expect(() => {
-        new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTFAlignmentHarness({
+          configOverrides: config,
+          logger: mockLogger as unknown as LoggerService,
+        });
       }).toThrow('Config.timeframes.entry.weight must be a positive number');
     });
 
@@ -133,7 +148,7 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
       const service = new TFAlignmentService(
         null as unknown as AlignmentConfigInput,
         mockLogger as unknown as LoggerService,
-        errorHandler
+        errorHandler,
       );
       const indicators = createTFAlignmentIndicators();
       const result = service.calculateAlignment('LONG', 100, indicators);
@@ -159,7 +174,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should return safe default on calculation error', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const badService = new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+      const badService = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators();
 
       const result = badService.calculateAlignment('SHORT', 100, indicators);
@@ -183,7 +201,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
         }),
       };
       const config = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const service = new TFAlignmentService(config, badLogger as unknown as LoggerService, errorHandler);
+      const service = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: badLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators();
 
       expect(() => {
@@ -224,7 +245,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should return aligned=true when score >= minAlignmentScore', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 50 });
-      const svc = new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+      const svc = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators(100);
       const result = svc.calculateAlignment('LONG', 100, indicators);
 
@@ -234,7 +258,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should return aligned=false when score < minAlignmentScore', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 100 });
-      const svc = new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+      const svc = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       // Create misaligned indicators (price below all EMAs)
       const indicators = {
         entry: { ema20: 105 },
@@ -266,8 +293,11 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const config = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const basicService = new TFAlignmentService(config, mockLogger as unknown as LoggerService);
+      const basicService = createTFAlignmentHarness({
+        configOverrides: createTFAlignmentConfig({ minAlignmentScore: 60 }),
+        logger: mockLogger as unknown as LoggerService,
+        withErrorHandler: false,
+      }).service;
       const indicators = createTFAlignmentIndicators();
 
       expect(() => {
@@ -315,7 +345,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should handle disabled service', () => {
       const config = createTFAlignmentConfig({ enabled: false, minAlignmentScore: 60 });
-      const disabledService = new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+      const disabledService = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators();
 
       const result = disabledService.calculateAlignment('LONG', 100, indicators);
@@ -325,7 +358,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should handle minAlignmentScore = 0', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 0 });
-      const zeroService = new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+      const zeroService = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators();
 
       const result = zeroService.calculateAlignment('LONG', 100, indicators);
@@ -334,7 +370,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should handle minAlignmentScore = 100', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 100 });
-      const maxService = new TFAlignmentService(config, mockLogger as unknown as LoggerService, errorHandler);
+      const maxService = createTFAlignmentHarness({
+        configOverrides: config,
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators();
 
       const result = maxService.calculateAlignment('LONG', 100, indicators);
@@ -357,7 +396,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
     });
 
     test('should handle very high price', () => {
-      const service = new TFAlignmentService(createTFAlignmentConfig({ minAlignmentScore: 60 }), mockLogger as unknown as LoggerService, errorHandler);
+      const service = createTFAlignmentHarness({
+        configOverrides: createTFAlignmentConfig({ minAlignmentScore: 60 }),
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators(1000000);
 
       expect(() => {
@@ -366,7 +408,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
     });
 
     test('should handle very small price', () => {
-      const service = new TFAlignmentService(createTFAlignmentConfig({ minAlignmentScore: 60 }), mockLogger as unknown as LoggerService, errorHandler);
+      const service = createTFAlignmentHarness({
+        configOverrides: createTFAlignmentConfig({ minAlignmentScore: 60 }),
+        logger: mockLogger as unknown as LoggerService,
+      }).service;
       const indicators = createTFAlignmentIndicators(0.00001);
 
       expect(() => {

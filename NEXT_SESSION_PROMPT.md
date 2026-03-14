@@ -29,12 +29,13 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-14)
-- Completed the `trade-history` + `websocket-authentication` testability follow-up batch:
+- Completed the `trade-history` + `websocket-authentication` + `tf-alignment` testability follow-up batch:
   - aligned the `trade-history` error-handling suite on the existing temp-dir/error-handler harness so fallback and initialization cases now reuse the same service/bootstrap path instead of repeating direct `TradeHistoryService` construction.
   - aligned the `websocket-authentication` error-handling suite further on the shared auth harness so failing-logger and partial-logger scenarios now reuse one service/bootstrap path instead of repeating local `WebSocketAuthenticationService` construction.
-  - reviewed `services/trade-history.service.ts` and `services/websocket-authentication.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
+  - aligned the `tf-alignment` error-handling suite further on the existing shared harness so config-validation, threshold-edge, disabled-service, and backward-compat scenarios now reuse helper-driven service/bootstrap paths instead of repeating direct `TFAlignmentService` construction.
+  - reviewed `services/trade-history.service.ts`, `services/websocket-authentication.service.ts`, and `services/tf-alignment.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` -> PASS (2/2 suites, 61/61 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts` -> PASS (3/3 suites, 94/94 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
