@@ -15,89 +15,19 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { SmartOrderPlacementService } from '../../services/smart-order-placement.service';
-import { SmartOrderPlacementConfig, Orderbook } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { Orderbook } from '../../types/legacy';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../types/legacy';
-
-// ============================================================================
-// TEST HELPERS
-// ============================================================================
-
-type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
-const asConfig = (value: unknown): SmartOrderPlacementConfig =>
-  value as SmartOrderPlacementConfig;
-const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
-const asDirection = (value: unknown): 'buy' | 'sell' => value as 'buy' | 'sell';
-
-function createMockLogger(methodToFail?: string): LoggerService {
-  const logger: LoggerLike = {
-    info: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'info') throw new Error('Logger.info failed');
-    }),
-    warn: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'warn') throw new Error('Logger.warn failed');
-    }),
-    debug: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'debug') throw new Error('Logger.debug failed');
-    }),
-    error: jest.fn((_msg: string, _meta?: unknown) => {
-      if (methodToFail === 'error') throw new Error('Logger.error failed');
-    }),
-  };
-  return logger as unknown as LoggerService;
-}
-
-function createValidConfig(): SmartOrderPlacementConfig {
-  return {
-    maxOrderSize: 10.0,
-    maxSlippageBps: 50,
-    minFillProbability: 80,
-    analyzeLevels: 20,
-    enableAdaptive: true,
-    executionTimeHorizon: 60000,
-  };
-}
-
-function createMockOrderbook(): Orderbook {
-  const bids = [];
-  const asks = [];
-
-  for (let i = 0; i < 20; i++) {
-    bids.push({
-      price: 50000 - i * 10,
-      volume: 5 + Math.random() * 10,
-      orderCount: 10 + Math.floor(Math.random() * 20),
-    });
-
-    asks.push({
-      price: 50010 + i * 10,
-      volume: 5 + Math.random() * 10,
-      orderCount: 10 + Math.floor(Math.random() * 20),
-    });
-  }
-
-  return {
-    symbol: 'BTCUSDT',
-    timestamp: Date.now(),
-    bids,
-    asks,
-  };
-}
-
-function createThinOrderbook(): Orderbook {
-  return {
-    symbol: 'BTCUSDT',
-    timestamp: Date.now(),
-    bids: [
-      { price: 50000, volume: 0.5, orderCount: 1 },
-      { price: 49990, volume: 0.3, orderCount: 1 },
-    ],
-    asks: [
-      { price: 50010, volume: 0.5, orderCount: 1 },
-      { price: 50020, volume: 0.3, orderCount: 1 },
-    ],
-  };
-}
+import {
+  asSmartOrderDirection as asDirection,
+  asSmartOrderPlacementConfig as asConfig,
+  asSmartOrderPlacementOrderbook as asOrderbook,
+  createSmartOrderPlacementConfig,
+  createSmartOrderPlacementHarness,
+  createSmartOrderPlacementLogger,
+  createSmartOrderPlacementOrderbook,
+  createThinSmartOrderPlacementOrderbook,
+} from '../helpers/smart-order-placement-test.utils';
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
@@ -105,7 +35,7 @@ function createThinOrderbook(): Orderbook {
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   it('should THROW when config is null', () => {
-    const logger = createMockLogger();
+    const logger = createSmartOrderPlacementLogger();
 
     expect(() => {
       new SmartOrderPlacementService(asConfig(null), undefined, logger);
@@ -113,8 +43,8 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when maxOrderSize is invalid', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createSmartOrderPlacementLogger();
+    const config = createSmartOrderPlacementConfig();
     config.maxOrderSize = -10;
 
     expect(() => {
@@ -123,8 +53,8 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when maxSlippageBps is invalid', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createSmartOrderPlacementLogger();
+    const config = createSmartOrderPlacementConfig();
     config.maxSlippageBps = -1;
 
     expect(() => {
@@ -133,8 +63,8 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when minFillProbability is out of range', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createSmartOrderPlacementLogger();
+    const config = createSmartOrderPlacementConfig();
     config.minFillProbability = 150;
 
     expect(() => {
@@ -143,8 +73,8 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   });
 
   it('should THROW when executionTimeHorizon is invalid', () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
+    const logger = createSmartOrderPlacementLogger();
+    const config = createSmartOrderPlacementConfig();
     config.executionTimeHorizon = 0;
 
     expect(() => {
@@ -159,10 +89,8 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   it('should THROW when order size is invalid', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger);
-    const orderbook = createMockOrderbook();
+    const { service } = createSmartOrderPlacementHarness({ withErrorHandler: false });
+    const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
       service.planOrderExecution(orderbook, -1, 'buy'),
@@ -170,10 +98,8 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when direction is invalid', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger);
-    const orderbook = createMockOrderbook();
+    const { service } = createSmartOrderPlacementHarness({ withErrorHandler: false });
+    const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
       service.planOrderExecution(orderbook, 1.0, asDirection('invalid')),
@@ -181,9 +107,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is null', async () => {
-    const logger = createMockLogger();
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger);
+    const { service } = createSmartOrderPlacementHarness({ withErrorHandler: false });
 
     await expect(
       service.planOrderExecution(asOrderbook(null), 1.0, 'buy'),
@@ -196,19 +120,16 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 // ============================================================================
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
-  let errorHandler: ErrorHandler;
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
+    ({ logger } = createSmartOrderPlacementHarness());
   });
 
   it('should return conservative plan on corrupt orderbook', async () => {
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    const { service } = createSmartOrderPlacementHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.bids.forEach((b) => {
       b.price = NaN;
       b.volume = Infinity;
@@ -230,10 +151,9 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return single order split on calculation failure', async () => {
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    const { service } = createSmartOrderPlacementHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
       a.volume = NaN;
     });
@@ -250,10 +170,9 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return market price level on liquidity search failure', async () => {
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    const { service } = createSmartOrderPlacementHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
       a.price = NaN;
       a.volume = NaN;
@@ -269,10 +188,9 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return conservative fill probability on estimation failure', async () => {
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    const { service } = createSmartOrderPlacementHarness({ logger });
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
       a.volume = Infinity;
     });
@@ -290,8 +208,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle empty orderbook gracefully', async () => {
-    const config = createValidConfig();
-    const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    const { service } = createSmartOrderPlacementHarness({ logger });
 
     const emptyOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -311,10 +228,9 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle disabled adaptive mode', async () => {
-    const config = createValidConfig();
-    config.enableAdaptive = false;
-    const service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
-    const orderbook = createMockOrderbook();
+    const config = createSmartOrderPlacementConfig({ enableAdaptive: false });
+    const { service } = createSmartOrderPlacementHarness({ config, logger });
+    const orderbook = createSmartOrderPlacementOrderbook();
 
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
 
@@ -331,13 +247,13 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    const mockLogger = createMockLogger();
+    const mockLogger = createSmartOrderPlacementLogger();
     errorHandler = new ErrorHandler(mockLogger);
   });
 
   it('should SKIP logger.info failure during construction', () => {
-    const loggerWithFailingInfo = createMockLogger('info');
-    const config = createValidConfig();
+    const loggerWithFailingInfo = createSmartOrderPlacementLogger('info');
+    const config = createSmartOrderPlacementConfig();
 
     expect(() => {
       new SmartOrderPlacementService(config, undefined, loggerWithFailingInfo, errorHandler);
@@ -345,14 +261,14 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   });
 
   it('should SKIP logger.warn failure during planning', async () => {
-    const loggerWithFailingWarn = createMockLogger('warn');
-    const config = createValidConfig();
+    const loggerWithFailingWarn = createSmartOrderPlacementLogger('warn');
+    const config = createSmartOrderPlacementConfig();
     const service = new SmartOrderPlacementService(
       config, undefined, loggerWithFailingWarn,
       errorHandler,
     );
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.volume = NaN));
 
     const result = await service.planOrderExecution(corruptOrderbook, 1.0, 'buy');
@@ -360,14 +276,14 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   });
 
   it('should SKIP logger.error failure during error handling', async () => {
-    const loggerWithFailingError = createMockLogger('error');
-    const config = createValidConfig();
+    const loggerWithFailingError = createSmartOrderPlacementLogger('error');
+    const config = createSmartOrderPlacementConfig();
     const service = new SmartOrderPlacementService(
       config, undefined, loggerWithFailingError,
       errorHandler,
     );
 
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.bids.forEach((b) => {
       b.price = NaN;
       b.volume = NaN;
@@ -384,18 +300,13 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
 describe('SmartOrderPlacementService - Integration (E2E)', () => {
   let service: SmartOrderPlacementService;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-    const config = createValidConfig();
-    service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    ({ service } = createSmartOrderPlacementHarness());
   });
 
   it('should plan single order execution for small size', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
 
     expect(result.totalSize).toBe(1.0);
@@ -406,7 +317,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   });
 
   it('should plan split order execution for large size', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 50.0, 'buy');
 
     expect(result.totalSize).toBe(50.0);
@@ -415,7 +326,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   });
 
   it('should calculate optimal split for large orders', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.calculateOptimalSplit(orderbook, 50.0, 'buy');
 
     expect(result.originalSize).toBe(50.0);
@@ -424,7 +335,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   });
 
   it('should find best liquidity level', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.findBestLiquidityLevel(orderbook, 'buy');
 
     expect(result.price).toBeGreaterThan(0);
@@ -434,7 +345,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   });
 
   it('should estimate fill probability accurately', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const marketPrice = orderbook.asks[0].price;
 
     const result = await service.estimateFillProbability(
@@ -451,7 +362,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   });
 
   it('should handle sell orders correctly', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 1.0, 'sell');
 
     expect(result.direction).toBe('sell');
@@ -459,14 +370,14 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   });
 
   it('should assess risk appropriately', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
 
     expect(['low', 'medium', 'high']).toContain(result.risk);
   });
 
   it('should plan execution with target price', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const targetPrice = 50050;
 
     const result = await service.planOrderExecution(
@@ -486,18 +397,13 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
 
 describe('SmartOrderPlacementService - Edge Cases', () => {
   let service: SmartOrderPlacementService;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
-    const config = createValidConfig();
-    service = new SmartOrderPlacementService(config, undefined, logger, errorHandler);
+    ({ service } = createSmartOrderPlacementHarness());
   });
 
   it('should handle very thin liquidity', async () => {
-    const orderbook = createThinOrderbook();
+    const orderbook = createThinSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
 
     expect(result).toBeDefined();
@@ -505,7 +411,7 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
   });
 
   it('should handle very large orders (exceeds total liquidity)', async () => {
-    const orderbook = createThinOrderbook();
+    const orderbook = createThinSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 100.0, 'buy');
 
     expect(result).toBeDefined();
@@ -513,7 +419,7 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
   });
 
   it('should handle single-sided orderbook', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     orderbook.asks = []; // No asks
 
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
@@ -522,7 +428,7 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
   });
 
   it('should handle zero volume levels', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     orderbook.asks.forEach((a) => (a.volume = 0));
 
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
@@ -531,7 +437,7 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
   });
 
   it('should not split orders below threshold', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.calculateOptimalSplit(orderbook, 5.0, 'buy');
 
     // Size 5.0 is below maxOrderSize (10.0), should not split
@@ -545,16 +451,13 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
 
 describe('SmartOrderPlacementService - Backward Compatibility', () => {
   let service: SmartOrderPlacementService;
-  let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    const config = createValidConfig();
-    service = new SmartOrderPlacementService(config, undefined, logger); // No ErrorHandler
+    ({ service } = createSmartOrderPlacementHarness({ withErrorHandler: false }));
   });
 
   it('should work without ErrorHandler', async () => {
-    const orderbook = createMockOrderbook();
+    const orderbook = createSmartOrderPlacementOrderbook();
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
 
     expect(result).toBeDefined();
@@ -562,7 +465,7 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
   });
 
   it('should handle planning failures gracefully without ErrorHandler', async () => {
-    const corruptOrderbook = createMockOrderbook();
+    const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
       a.price = NaN;
       a.volume = NaN;
@@ -575,8 +478,8 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
   });
 
   it('should handle logger failures without ErrorHandler', async () => {
-    const failingLogger = createMockLogger('info');
-    const config = createValidConfig();
+    const failingLogger = createSmartOrderPlacementLogger('info');
+    const config = createSmartOrderPlacementConfig();
 
     expect(() => {
       new SmartOrderPlacementService(config, undefined, failingLogger);
