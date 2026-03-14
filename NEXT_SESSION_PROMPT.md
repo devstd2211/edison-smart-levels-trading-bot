@@ -29,11 +29,11 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-14)
-- Completed the `swing-point-detector` testability follow-up slice:
-  - added shared helpers for canonical mock logger/ErrorHandler bootstrap plus reusable candle arrays, failing-loggers, swing-point builders, and typed cast helpers, then aligned the error-handling suite on that harness instead of repeating local service construction and fixture factories throughout the file.
-  - reviewed `services/swing-point-detector.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
+- Completed the `volatility-regime` testability follow-up slice:
+  - aligned the error-handling suite on the already-existing shared harness so constructor/bootstrap paths now flow through one helper instead of repeating direct service construction for default, failing-logger, disabled-config, and backward-compat cases.
+  - reviewed `services/volatility-regime.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step

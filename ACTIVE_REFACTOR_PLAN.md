@@ -344,3 +344,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `swing-point-detector` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: aligned the `volatility-regime` error-handling suite on the already-existing shared harness so constructor/bootstrap paths now flow through one helper instead of repeating direct service construction for default, failing-logger, disabled-config, and backward-compat cases; reviewed `services/volatility-regime.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `volatility-regime` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts` -> PASS (1/1 suite, 20/20 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
