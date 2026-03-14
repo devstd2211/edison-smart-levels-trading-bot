@@ -60,3 +60,21 @@ export function createVirtualBalanceHarness(options: {
     statePath: path.join(dataDir, 'virtual-balance.json'),
   };
 }
+
+export function createVirtualBalanceService(options: {
+  baseDeposit?: number;
+  dataDir?: string;
+  logger?: VirtualBalanceLogger;
+  errorHandler?: ErrorHandler;
+} = {}): VirtualBalanceService {
+  const logger = options.logger ?? createVirtualBalanceMockLogger();
+  const dataDir = options.dataDir ?? createVirtualBalanceTempDir();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(asVirtualBalanceLogger(logger));
+
+  return new VirtualBalanceService(
+    asVirtualBalanceLogger(logger),
+    errorHandler,
+    options.baseDeposit ?? 100,
+    dataDir,
+  );
+}

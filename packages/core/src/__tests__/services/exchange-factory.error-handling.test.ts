@@ -16,56 +16,67 @@ import {
   createExchangeFactoryConfig,
   createExchangeFactoryErrorHandler,
   createExchangeFactoryMockLogger,
+  createExchangeFactoryService,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   let mockLogger: ReturnType<typeof createExchangeFactoryMockLogger>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  let createFactory: (
+    config?: ExchangeConfig,
+    errorHandler?: ErrorHandler,
+  ) => ExchangeFactory;
+  let createFactoryWithoutErrorHandler: (
+    config?: ExchangeConfig,
+  ) => ExchangeFactory;
 
   beforeEach(() => {
     mockLogger = createExchangeFactoryMockLogger();
     mockErrorHandler = createExchangeFactoryErrorHandler(
       asExchangeFactoryLogger(mockLogger),
     );
+    createFactory = (config = createExchangeFactoryConfig(), errorHandler = mockErrorHandler) =>
+      createExchangeFactoryService({
+        logger: asExchangeFactoryLogger(mockLogger),
+        config,
+        errorHandler,
+      });
+    createFactoryWithoutErrorHandler = (config = createExchangeFactoryConfig()) =>
+      createExchangeFactoryService({
+        logger: asExchangeFactoryLogger(mockLogger),
+        config,
+      });
   });
 
   describe('THROW Strategy - Configuration Validation', () => {
     it('should throw ExchangeFactoryConfigError on missing exchange name', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName(undefined) }),
-          mockErrorHandler,
         );
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should throw ExchangeFactoryConfigError on missing symbol', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ symbol: asExchangeFactorySymbol(undefined) }),
-          mockErrorHandler,
         );
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should throw ExchangeFactoryConfigError on unsupported exchange', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName('kraken') }),
-          mockErrorHandler,
         );
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should call ErrorHandler.handle with THROW strategy on missing name', () => {
       try {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName(undefined) }),
-          mockErrorHandler,
         );
       } catch {}
 
@@ -80,11 +91,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should accept valid config without throwing', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
-          createExchangeFactoryConfig(),
-          mockErrorHandler,
-        );
+        createFactory();
       }).not.toThrow();
     });
   });
@@ -95,11 +102,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
         throw new Error('Logger failed');
       });
 
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig(),
-        mockErrorHandler,
-      );
+      const factory = createFactory();
 
       expect(() => {
         factory.getExchange();
@@ -107,11 +110,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     });
 
     it('should handle logger failure in reset', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig(),
-        mockErrorHandler,
-      );
+      const factory = createFactory();
 
       expect(() => {
         factory.reset();
@@ -119,11 +118,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
     });
 
     it('should continue despite logger failure in getExchangeName', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig(),
-        mockErrorHandler,
-      );
+      const factory = createFactory();
 
       expect(() => {
         factory.getExchangeName();
@@ -136,17 +131,13 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     it('should create factory without ErrorHandler parameter', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
-          createExchangeFactoryConfig(),
-        );
+        createFactoryWithoutErrorHandler(createExchangeFactoryConfig());
       }).not.toThrow();
     });
 
     it('should still throw validation errors without ErrorHandler', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactoryWithoutErrorHandler(
           createExchangeFactoryConfig({ name: asExchangeFactoryName(undefined) }),
         );
       }).toThrow();
@@ -154,18 +145,14 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should throw ExchangeFactoryConfigError without ErrorHandler', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactoryWithoutErrorHandler(
           createExchangeFactoryConfig({ symbol: asExchangeFactorySymbol(undefined) }),
         );
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should accept valid config and return methods without ErrorHandler', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig(),
-      );
+      const factory = createFactoryWithoutErrorHandler(createExchangeFactoryConfig());
 
       expect(factory.getExchangeName()).toBe('bybit');
       expect(factory.getSymbol()).toBe('BTCUSDT');
@@ -175,41 +162,29 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
   describe('Configuration Methods', () => {
     it('should return exchange name correctly', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
+      const factory = createFactory(
         createExchangeFactoryConfig({ name: 'binance' }),
-        mockErrorHandler,
       );
 
       expect(factory.getExchangeName()).toBe('binance');
     });
 
     it('should return symbol correctly', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
+      const factory = createFactory(
         createExchangeFactoryConfig({ symbol: 'ETHUSDT' }),
-        mockErrorHandler,
       );
 
       expect(factory.getSymbol()).toBe('ETHUSDT');
     });
 
     it('should return null for uninitialized exchange', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig(),
-        mockErrorHandler,
-      );
+      const factory = createFactory();
 
       expect(factory.getExchange()).toBeNull();
     });
 
     it('should reset exchange cache', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig(),
-        mockErrorHandler,
-      );
+      const factory = createFactory();
 
       factory.reset();
       expect(factory.getExchange()).toBeNull();
@@ -219,10 +194,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Config Error Types and Details', () => {
     it('should include exchange name in missing field error context', () => {
       try {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName('unsupported') }),
-          mockErrorHandler,
         );
       } catch {}
 
@@ -234,10 +207,8 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should include supported exchanges list in error', () => {
       try {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName('dydx') }),
-          mockErrorHandler,
         );
       } catch {}
 
@@ -253,40 +224,30 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Edge Cases', () => {
     it('should handle case-insensitive exchange names', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName('BYBIT') }),
-          mockErrorHandler,
         );
       }).not.toThrow();
     });
 
     it('should handle empty symbol as error', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
-          createExchangeFactoryConfig({ symbol: '' }),
-          mockErrorHandler,
-        );
+        createFactory(createExchangeFactoryConfig({ symbol: '' }));
       }).toThrow();
     });
 
     it('should handle null config values', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ name: asExchangeFactoryName(null) }),
-          mockErrorHandler,
         );
       }).toThrow();
     });
 
     it('should handle empty string API credentials gracefully', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({ apiKey: '', apiSecret: '' }),
-          mockErrorHandler,
         );
       }).not.toThrow();
     });
@@ -295,26 +256,22 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Multiple Validation Checks', () => {
     it('should validate all required fields in sequence', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({
             name: asExchangeFactoryName(undefined),
             symbol: asExchangeFactorySymbol(undefined),
           }),
-          mockErrorHandler,
         );
       }).toThrow();
     });
 
     it('should validate symbol after name is valid', () => {
       expect(() => {
-        new ExchangeFactory(
-          asExchangeFactoryLogger(mockLogger),
+        createFactory(
           createExchangeFactoryConfig({
             name: 'bybit',
             symbol: asExchangeFactorySymbol(undefined),
           }),
-          mockErrorHandler,
         );
       }).toThrow();
     });

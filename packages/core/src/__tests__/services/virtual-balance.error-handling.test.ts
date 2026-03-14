@@ -14,6 +14,7 @@ import {
   cleanupVirtualBalanceTempDir,
   createVirtualBalanceHarness,
   createVirtualBalanceMockLogger,
+  createVirtualBalanceService,
   createVirtualBalanceTempDir,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
@@ -48,13 +49,23 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   describe('Scenario 1: Constructor validation (THROW)', () => {
     it('should throw ValidationError for negative base deposit', () => {
       expect(() => {
-        new VirtualBalanceService(asVirtualBalanceLogger(mockLogger), errorHandler, -100, testDataDir);
+        createVirtualBalanceService({
+          logger: mockLogger,
+          errorHandler,
+          baseDeposit: -100,
+          dataDir: testDataDir,
+        });
       }).toThrow(ValidationError);
     });
 
     it('should throw ValidationError for zero deposit', () => {
       expect(() => {
-        new VirtualBalanceService(asVirtualBalanceLogger(mockLogger), errorHandler, -50, testDataDir);
+        createVirtualBalanceService({
+          logger: mockLogger,
+          errorHandler,
+          baseDeposit: -50,
+          dataDir: testDataDir,
+        });
       }).toThrow(ValidationError);
     });
 

@@ -11,10 +11,10 @@
 
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { TradeMetrics } from '../../services/bot-metrics.service';
 import {
   BotMetricsTestLogger,
   createBotMetricsErrorHandler,
+  createBotMetricsService,
   createBotMetricsTrade,
 } from '../helpers/bot-metrics-test.utils';
 
@@ -26,7 +26,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   beforeEach(() => {
     logger = new BotMetricsTestLogger();
     errorHandler = createBotMetricsErrorHandler();
-    metricsService = new BotMetricsService(logger, errorHandler);
+    metricsService = createBotMetricsService({ logger, errorHandler });
     jest.clearAllMocks();
   });
 
@@ -36,20 +36,20 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('Constructor', () => {
     it('should initialize with ErrorHandler', () => {
-      const service = new BotMetricsService(logger, errorHandler);
+      const service = createBotMetricsService({ logger, errorHandler });
       service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(logger.logCalls.length).toBeGreaterThan(0);
     });
 
     it('should initialize without ErrorHandler', () => {
-      const service = new BotMetricsService(logger);
+      const service = createBotMetricsService({ logger });
       expect(service).toBeDefined();
     });
 
     it('should handle logger failure in constructor with RETRY strategy', () => {
       logger.throwOnCall = true;
-      const service = new BotMetricsService(logger, errorHandler);
+      const service = createBotMetricsService({ logger, errorHandler });
       service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(errorHandler.handle).toHaveBeenCalled();
@@ -57,7 +57,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should continue if constructor logger fails without ErrorHandler', () => {
       logger.throwOnCall = true;
-      const service = new BotMetricsService(logger);
+      const service = createBotMetricsService({ logger });
       expect(() => service.getSessionDuration()).not.toThrow();
       expect(service).toBeDefined();
     });
@@ -171,7 +171,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should handle trade recording without ErrorHandler', () => {
-      const serviceNoEH = new BotMetricsService(logger);
+      const serviceNoEH = createBotMetricsService({ logger });
       logger.throwOnCall = true;
       const trade = createBotMetricsTrade({
         entryPrice: 50000,
@@ -286,7 +286,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should handle report generation without ErrorHandler', () => {
       const freshLogger = new BotMetricsTestLogger();
-      const serviceNoEH = new BotMetricsService(freshLogger);
+      const serviceNoEH = createBotMetricsService({ logger: freshLogger });
       freshLogger.throwOnCall = true;
       serviceNoEH.printReport(); // Should not throw
       // Logger should attempt error logging but we don't verify it since error logger also fails

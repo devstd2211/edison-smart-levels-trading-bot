@@ -23,6 +23,26 @@ export const createConfigValidatorErrorHandler = (): ErrorHandler & { handle: je
   return handler as ErrorHandler & { handle: jest.Mock };
 };
 
+export const createConfigValidatorService = ({
+  logger = createConfigValidatorLogger(),
+  errorHandler,
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ConfigValidatorService => new ConfigValidatorService(logger, errorHandler);
+
+export const createConfigValidatorHarness = () => {
+  const logger = createConfigValidatorLogger();
+  const errorHandler = createConfigValidatorErrorHandler();
+  const validator = createConfigValidatorService({ logger, errorHandler });
+
+  return {
+    logger,
+    errorHandler,
+    validator,
+  };
+};
+
 export const createValidConfigValidatorConfig = () => ({
   exchange: {
     symbol: 'BTCUSDT',

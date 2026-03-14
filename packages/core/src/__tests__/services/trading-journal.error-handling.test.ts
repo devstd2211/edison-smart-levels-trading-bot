@@ -34,6 +34,7 @@ import {
   createJournalExitCondition,
   createJournalOpenParams,
   createTradingJournalHarness,
+  createTradingJournalService,
 } from '../helpers/trading-journal-test.utils';
 
 const createEntryCondition = createJournalEntryCondition;
@@ -54,9 +55,23 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let tempDir: string;
+  let createService: (options?: {
+    tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+    baseDeposit?: number;
+    withErrorHandler?: boolean;
+  }) => TradingJournalService;
 
   beforeEach(() => {
     ({ journal, logger, dataDir: tempDir, errorHandler } = createTradingJournalHarness());
+    createService = (options = {}) =>
+      createTradingJournalService({
+        logger,
+        dataDir: tempDir,
+        tradeHistoryConfig: options.tradeHistoryConfig,
+        baseDeposit: options.baseDeposit,
+        errorHandler,
+        withErrorHandler: options.withErrorHandler,
+      });
   });
 
   afterEach(() => {
@@ -74,7 +89,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       fs.writeFileSync(journalPath, '{invalid json}', 'utf-8');
 
       // Act: Create journal service (loads journal in constructor)
-      const svc = new TradingJournalService(logger, tempDir, undefined, undefined, undefined, errorHandler);
+      const svc = createService();
 
       // Assert: Should start with empty journal instead of crashing
       expect(svc.getAllTrades()).toHaveLength(0);
@@ -159,7 +174,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       fs.writeFileSync(journalPath, corruptedData, 'utf-8');
 
       // Act: Create service (triggers load with error handling)
-      const svc = new TradingJournalService(logger, tempDir, undefined, undefined, undefined, errorHandler);
+      const svc = createService();
       svc.getAllTrades(); // Explicitly trigger lazy load/start lifecycle
 
       // Assert: Backup should exist with exact same content
@@ -177,7 +192,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       }
 
       // Act: Create service
-      const svc = new TradingJournalService(logger, tempDir, undefined, undefined, undefined, errorHandler);
+      const svc = createService();
 
       // Assert: Should initialize with empty journal
       expect(svc.getAllTrades()).toHaveLength(0);
@@ -314,14 +329,15 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
 
     it('test-C2: Should skip VirtualBalance update failure', () => {
       // Arrange: Create journal with virtual balance
-      const journalWithBalance = new TradingJournalService(
-        logger,
-        tempDir,
-        { enabled: true, dataDir: tempDir, includeIndicators: false, autoBackup: false },
-        100, // baseDeposit
-        undefined,
-        errorHandler,
-      );
+      const journalWithBalance = createService({
+        tradeHistoryConfig: {
+          enabled: true,
+          dataDir: tempDir,
+          includeIndicators: false,
+          autoBackup: false,
+        },
+        baseDeposit: 100,
+      });
 
       journalWithBalance.recordTradeOpen({
         ...createOpenTrade({
@@ -348,14 +364,15 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
 
     it('test-C3: Should skip TradeHistory append failure', () => {
       // Arrange: Create journal with trade history enabled
-      const journalWithHistory = new TradingJournalService(
-        logger,
-        tempDir,
-        { enabled: true, dataDir: tempDir, includeIndicators: false, autoBackup: false },
-        100,
-        undefined,
-        errorHandler,
-      );
+      const journalWithHistory = createService({
+        tradeHistoryConfig: {
+          enabled: true,
+          dataDir: tempDir,
+          includeIndicators: false,
+          autoBackup: false,
+        },
+        baseDeposit: 100,
+      });
 
       journalWithHistory.recordTradeOpen({
         ...createOpenTrade({
@@ -658,7 +675,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   describe('F. Backward Compatibility', () => {
     it('test-F1: Should work without errorHandler parameter', () => {
       // Arrange: Create journal WITHOUT errorHandler
-      const svcWithoutHandler = new TradingJournalService(logger, tempDir, undefined, undefined, undefined);
+      const svcWithoutHandler = createService({ withErrorHandler: false });
 
       // Act: Record trade
       svcWithoutHandler.recordTradeOpen({

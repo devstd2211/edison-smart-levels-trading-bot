@@ -14,6 +14,7 @@ import {
   createWeightMatrixHarness,
   createWeightMatrixInput,
   createWeightMatrixLogger,
+  createWeightMatrixService,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
@@ -51,21 +52,21 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new WeightMatrixCalculatorService(
-          null as unknown as WeightMatrixConfig,
-          mockLogger,
+        createWeightMatrixService({
+          config: null as unknown as WeightMatrixConfig,
+          logger: mockLogger,
           errorHandler,
-        );
+        });
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
     });
 
     it('should throw on undefined config', () => {
       expect(() => {
-        new WeightMatrixCalculatorService(
-          undefined as unknown as WeightMatrixConfig,
-          mockLogger,
+        createWeightMatrixService({
+          config: undefined as unknown as WeightMatrixConfig,
+          logger: mockLogger,
           errorHandler,
-        );
+        });
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
     });
 
@@ -74,7 +75,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceToEnter = -10;
 
       expect(() => {
-        new WeightMatrixCalculatorService(config, mockLogger, errorHandler);
+        createWeightMatrixService({ config, logger: mockLogger, errorHandler });
       }).toThrow('minConfidenceToEnter must be 0-100');
     });
 
@@ -83,7 +84,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceToEnter = 150;
 
       expect(() => {
-        new WeightMatrixCalculatorService(config, mockLogger, errorHandler);
+        createWeightMatrixService({ config, logger: mockLogger, errorHandler });
       }).toThrow('minConfidenceToEnter must be 0-100');
     });
 
@@ -92,7 +93,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceForReducedSize = -5;
 
       expect(() => {
-        new WeightMatrixCalculatorService(config, mockLogger, errorHandler);
+        createWeightMatrixService({ config, logger: mockLogger, errorHandler });
       }).toThrow('minConfidenceForReducedSize must be 0-100');
     });
 
@@ -101,7 +102,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceForReducedSize = 120;
 
       expect(() => {
-        new WeightMatrixCalculatorService(config, mockLogger, errorHandler);
+        createWeightMatrixService({ config, logger: mockLogger, errorHandler });
       }).toThrow('minConfidenceForReducedSize must be 0-100');
     });
   });
@@ -243,7 +244,11 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        new WeightMatrixCalculatorService(null as unknown as WeightMatrixConfig, mockLogger);
+        createWeightMatrixService({
+          config: null as unknown as WeightMatrixConfig,
+          logger: mockLogger,
+          withErrorHandler: false,
+        });
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
     });
 
@@ -278,11 +283,11 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     it('should recover from invalid config and succeed with valid config', () => {
       // First attempt with invalid config
       expect(() => {
-        new WeightMatrixCalculatorService(
-          { ...createWeightMatrixErrorConfig(), minConfidenceToEnter: 150 },
-          mockLogger,
-          errorHandler
-        );
+        createWeightMatrixService({
+          config: { ...createWeightMatrixErrorConfig(), minConfidenceToEnter: 150 },
+          logger: mockLogger,
+          errorHandler,
+        });
       }).toThrow();
 
       // Second attempt with valid config

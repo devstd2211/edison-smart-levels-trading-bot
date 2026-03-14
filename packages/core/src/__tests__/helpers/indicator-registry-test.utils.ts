@@ -54,6 +54,17 @@ export function createIndicatorRegistryHarness(
   };
 }
 
+export function createIndicatorRegistryService(options: {
+  logger?: IndicatorRegistryMockLogger;
+  errorHandler?: ErrorHandler;
+} = {}): IndicatorRegistry {
+  const logger = options.logger;
+  return new IndicatorRegistry(
+    logger ? asIndicatorRegistryLogger(logger) : undefined,
+    options.errorHandler,
+  );
+}
+
 export function createIndicatorRegistryMetadata(
   name: string,
   enabled = true,

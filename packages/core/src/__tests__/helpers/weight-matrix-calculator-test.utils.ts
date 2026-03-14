@@ -161,11 +161,12 @@ export function createWeightMatrixHarness(options: {
   const logger = options.logger ?? createWeightMatrixLogger();
   const config = options.config ?? createWeightMatrixConfig();
   const errorHandler = new ErrorHandler(logger);
-  const service = new WeightMatrixCalculatorService(
+  const service = createWeightMatrixService({
     config,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -173,6 +174,23 @@ export function createWeightMatrixHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createWeightMatrixService(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const config =
+    'config' in options ? options.config : createWeightMatrixConfig();
+  const logger = options.logger ?? createWeightMatrixLogger();
+
+  return new WeightMatrixCalculatorService(
+    config as WeightMatrixConfig,
+    logger,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }
 
 export function calculateWeightMatrixScore(

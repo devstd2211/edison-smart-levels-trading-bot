@@ -10,6 +10,7 @@ import {
   createTickDeltaAnalyzerConfig,
   createTickDeltaAnalyzerHarness,
   createTickDeltaAnalyzerMockLogger,
+  createTickDeltaAnalyzerService,
   createTickDeltaAnalyzerTick,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
@@ -28,11 +29,11 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new TickDeltaAnalyzerService(
-          null as unknown as TickConfigInput,
-          mockLogger as unknown as LoggerService,
+        createTickDeltaAnalyzerService({
+          config: null as unknown as TickConfigInput,
+          logger: mockLogger as unknown as LoggerService,
           errorHandler,
-        );
+        });
       }).toThrow('TickDeltaAnalyzerConfig cannot be null or undefined');
     });
 
@@ -40,7 +41,11 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       const config = createTickDeltaAnalyzerConfig({ minDeltaRatio: 0 });
 
       expect(() => {
-        new TickDeltaAnalyzerService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTickDeltaAnalyzerService({
+          config,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('minDeltaRatio must be > 0 and finite');
     });
 
@@ -48,7 +53,11 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       const config = createTickDeltaAnalyzerConfig({ detectionWindow: -1000 });
 
       expect(() => {
-        new TickDeltaAnalyzerService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTickDeltaAnalyzerService({
+          config,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('detectionWindow must be > 0');
     });
 
@@ -56,23 +65,27 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       const config = createTickDeltaAnalyzerConfig({ maxConfidence: 0 });
 
       expect(() => {
-        new TickDeltaAnalyzerService(config, mockLogger as unknown as LoggerService, errorHandler);
+        createTickDeltaAnalyzerService({
+          config,
+          logger: mockLogger as unknown as LoggerService,
+          errorHandler,
+        });
       }).toThrow('maxConfidence must be > 0 and finite');
     });
   });
 
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
-      service = new TickDeltaAnalyzerService(
-        createTickDeltaAnalyzerConfig({
+      service = createTickDeltaAnalyzerService({
+        config: createTickDeltaAnalyzerConfig({
           minDeltaRatio: 1.5,
           detectionWindow: 60_000,
           minTickCount: 10,
           maxConfidence: 100,
         }),
-        mockLogger as unknown as LoggerService,
+        logger: mockLogger as unknown as LoggerService,
         errorHandler,
-      );
+      });
     });
 
     it('should throw on null tick', () => {
@@ -174,16 +187,16 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       });
 
       expect(() => {
-        new TickDeltaAnalyzerService(
-          createTickDeltaAnalyzerConfig({
+        createTickDeltaAnalyzerService({
+          config: createTickDeltaAnalyzerConfig({
             minDeltaRatio: 1.5,
             detectionWindow: 60_000,
             minTickCount: 10,
             maxConfidence: 100,
           }),
-          mockLogger as unknown as LoggerService,
+          logger: mockLogger as unknown as LoggerService,
           errorHandler,
-        );
+        });
       }).not.toThrow();
     });
 
@@ -263,23 +276,23 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        new TickDeltaAnalyzerService(
-          null as unknown as TickConfigInput,
-          mockLogger as unknown as LoggerService,
-        );
+        createTickDeltaAnalyzerService({
+          config: null as unknown as TickConfigInput,
+          logger: mockLogger as unknown as LoggerService,
+        });
       }).toThrow('TickDeltaAnalyzerConfig cannot be null or undefined');
     });
 
     it('should throw on null tick without ErrorHandler', () => {
-      service = new TickDeltaAnalyzerService(
-        createTickDeltaAnalyzerConfig({
+      service = createTickDeltaAnalyzerService({
+        config: createTickDeltaAnalyzerConfig({
           minDeltaRatio: 1.5,
           detectionWindow: 60_000,
           minTickCount: 10,
           maxConfidence: 100,
         }),
-        mockLogger as unknown as LoggerService,
-      );
+        logger: mockLogger as unknown as LoggerService,
+      });
 
       expect(() => {
         service.addTick(null as unknown as TickInput);
@@ -361,28 +374,28 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
     it('should recover from invalid config and succeed with valid config', () => {
       expect(() => {
-        new TickDeltaAnalyzerService(
-          createTickDeltaAnalyzerConfig({
+        createTickDeltaAnalyzerService({
+          config: createTickDeltaAnalyzerConfig({
             minDeltaRatio: -1,
             detectionWindow: 60_000,
             minTickCount: 10,
             maxConfidence: 100,
           }),
-          mockLogger as unknown as LoggerService,
+          logger: mockLogger as unknown as LoggerService,
           errorHandler,
-        );
+        });
       }).toThrow();
 
-      const validService = new TickDeltaAnalyzerService(
-        createTickDeltaAnalyzerConfig({
+      const validService = createTickDeltaAnalyzerService({
+        config: createTickDeltaAnalyzerConfig({
           minDeltaRatio: 1.5,
           detectionWindow: 60_000,
           minTickCount: 10,
           maxConfidence: 100,
         }),
-        mockLogger as unknown as LoggerService,
+        logger: mockLogger as unknown as LoggerService,
         errorHandler,
-      );
+      });
 
       expect(() => {
         validService.addTick(createTickDeltaAnalyzerTick());

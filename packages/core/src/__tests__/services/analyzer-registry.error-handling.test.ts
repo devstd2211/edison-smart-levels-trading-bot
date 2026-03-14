@@ -14,16 +14,15 @@
  */
 
 import { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
-import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { StrategyAnalyzerConfig } from '../../types/strategy-config';
 import { IndicatorType } from '../../types/indicator';
 import {
-  asAnalyzerRegistryLogger,
   createAnalyzerRegistryBaseConfig,
   createAnalyzerRegistryHarness,
   createAnalyzerRegistryMockIndicator,
   createAnalyzerRegistryMockLogger,
+  createAnalyzerRegistryService,
   type AnalyzerRegistryMockLogger,
 } from '../helpers/analyzer-registry-test.utils';
 
@@ -224,10 +223,10 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = new AnalyzerRegistryService(
-        asAnalyzerRegistryLogger(failingLogger),
+      const reg = createAnalyzerRegistryService({
+        logger: failingLogger,
         errorHandler,
-      );
+      });
       const indicators = new Map();
       indicators.set(
         IndicatorType.EMA,
@@ -250,10 +249,10 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = new AnalyzerRegistryService(
-        asAnalyzerRegistryLogger(failingLogger),
+      const reg = createAnalyzerRegistryService({
+        logger: failingLogger,
         errorHandler,
-      );
+      });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
@@ -275,10 +274,10 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = new AnalyzerRegistryService(
-        asAnalyzerRegistryLogger(failingLogger),
+      const reg = createAnalyzerRegistryService({
+        logger: failingLogger,
         errorHandler,
-      );
+      });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'EMA_ANALYZER_NEW',
@@ -370,13 +369,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
+      const reg = createAnalyzerRegistryService({ logger });
       expect(reg).toBeDefined();
       expect(reg.getAvailableAnalyzers().length).toBeGreaterThan(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', async () => {
-      const reg = new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
+      const reg = createAnalyzerRegistryService({ logger });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
@@ -394,7 +393,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should support legacy calls to getEnabledAnalyzers without ErrorHandler', async () => {
-      const reg = new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
+      const reg = createAnalyzerRegistryService({ logger });
       const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = [
         { name: 'EMA_ANALYZER_NEW', enabled: true, weight: 1, priority: 5 },

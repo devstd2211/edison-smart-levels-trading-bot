@@ -104,3 +104,42 @@ export const createPerformanceAnalyticsErrorHandler = () =>
     }),
     getLogger: jest.fn(() => createPerformanceAnalyticsLogger()),
   } as unknown as jest.Mocked<ErrorHandler>);
+
+export const createPerformanceAnalyticsService = ({
+  config = createPerformanceAnalyticsConfig(),
+  journal = createPerformanceAnalyticsJournal(),
+  logger = createPerformanceAnalyticsLogger(),
+  errorHandler,
+}: {
+  config?: PerformanceAnalyticsConfig;
+  journal?: PerformanceAnalyticsMockJournal;
+  logger?: PerformanceAnalyticsMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+} = {}): PerformanceAnalytics =>
+  new PerformanceAnalytics(
+    config,
+    asPerformanceAnalyticsJournal(journal),
+    asPerformanceAnalyticsLogger(logger),
+    errorHandler,
+  );
+
+export const createPerformanceAnalyticsHarness = () => {
+  const config = createPerformanceAnalyticsConfig();
+  const logger = createPerformanceAnalyticsLogger();
+  const journal = createPerformanceAnalyticsJournal();
+  const errorHandler = createPerformanceAnalyticsErrorHandler();
+  const service = createPerformanceAnalyticsService({
+    config,
+    journal,
+    logger,
+    errorHandler,
+  });
+
+  return {
+    config,
+    logger,
+    journal,
+    errorHandler,
+    service,
+  };
+};

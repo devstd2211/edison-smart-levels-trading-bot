@@ -80,3 +80,22 @@ export function createTickDeltaAnalyzerHarness(options: {
     errorHandler,
   };
 }
+
+export function createTickDeltaAnalyzerService(options: {
+  config?: TickDeltaAnalyzerConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): TickDeltaAnalyzerService {
+  const config =
+    'config' in options
+      ? options.config
+      : createTickDeltaAnalyzerConfig();
+  const logger =
+    options.logger ?? (createTickDeltaAnalyzerMockLogger() as unknown as LoggerService);
+
+  return new TickDeltaAnalyzerService(
+    config as TickDeltaAnalyzerConfig,
+    logger,
+    options.errorHandler,
+  );
+}

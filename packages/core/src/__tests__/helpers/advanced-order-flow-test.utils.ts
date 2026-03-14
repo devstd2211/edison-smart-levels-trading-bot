@@ -112,12 +112,12 @@ export function createAdvancedOrderFlowHarness(options?: {
   const config = options?.config ?? createAdvancedOrderFlowValidConfig();
   const logger = options?.logger ?? createAdvancedOrderFlowMockLogger();
   const errorHandler = options?.errorHandler ?? new ErrorHandler(logger);
-  const service = new AdvancedOrderFlowService(
+  const service = createAdvancedOrderFlowService({
     config,
-    undefined,
     logger,
-    options?.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options?.withErrorHandler,
+  });
 
   return {
     service,
@@ -125,4 +125,24 @@ export function createAdvancedOrderFlowHarness(options?: {
     errorHandler,
     config,
   };
+}
+
+export function createAdvancedOrderFlowService(options?: {
+  config?: AdvancedOrderFlowConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}) {
+  const config =
+    options && 'config' in options
+      ? options.config
+      : createAdvancedOrderFlowValidConfig();
+  const logger = options?.logger ?? createAdvancedOrderFlowMockLogger();
+
+  return new AdvancedOrderFlowService(
+    config as AdvancedOrderFlowConfig,
+    undefined,
+    logger,
+    options?.withErrorHandler === false ? undefined : options?.errorHandler,
+  );
 }

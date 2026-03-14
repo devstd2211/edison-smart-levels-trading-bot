@@ -111,3 +111,15 @@ export function createExchangeFactoryHarness(options: {
     errorHandler,
   };
 }
+
+export function createExchangeFactoryService(options: {
+  logger?: LoggerService;
+  config?: ExchangeConfig;
+  errorHandler?: ErrorHandler;
+} = {}): ExchangeFactory {
+  return new ExchangeFactory(
+    options.logger ?? asExchangeFactoryLogger(createExchangeFactoryMockLogger()),
+    options.config ?? createExchangeFactoryConfig(),
+    options.errorHandler,
+  );
+}

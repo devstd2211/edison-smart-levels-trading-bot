@@ -45,13 +45,30 @@ export function createAnomalyDetectionServiceHarness(options: {
 } = {}) {
   const logger = options.logger ?? createAnomalyDetectionLogger();
   const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
-  const service = new AnomalyDetectionService(options.config, undefined, logger, errorHandler);
+  const service = createAnomalyDetectionService({
+    config: options.config,
+    logger,
+    errorHandler,
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createAnomalyDetectionService(options: {
+  config?: Partial<AnomalyDetectionConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): AnomalyDetectionService {
+  return new AnomalyDetectionService(
+    options.config,
+    undefined,
+    options.logger ?? createAnomalyDetectionLogger(),
+    options.errorHandler,
+  );
 }
 
 export function seedVolumeHistory(service: AnomalyDetectionService, values: number[]): void {

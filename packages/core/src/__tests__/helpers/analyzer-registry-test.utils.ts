@@ -44,6 +44,17 @@ export function createAnalyzerRegistryHarness(
   };
 }
 
+export function createAnalyzerRegistryService(options: {
+  logger?: AnalyzerRegistryMockLogger;
+  errorHandler?: ErrorHandler;
+} = {}): AnalyzerRegistryService {
+  const logger = options.logger ?? createAnalyzerRegistryMockLogger();
+  return new AnalyzerRegistryService(
+    asAnalyzerRegistryLogger(logger),
+    options.errorHandler,
+  );
+}
+
 export function createAnalyzerRegistryMockIndicator(name: string) {
   return {
     calculate: jest.fn().mockResolvedValue([]),

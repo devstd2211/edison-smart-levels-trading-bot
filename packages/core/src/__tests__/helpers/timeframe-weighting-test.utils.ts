@@ -1,0 +1,97 @@
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { TimeframeWeightingService } from '../../services/timeframe-weighting.service';
+import { MultiTimeframeAnalysis, TradingMode, TrendBias } from '../../types/legacy';
+
+export const createTimeframeWeightingMockLogger = () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  silly: jest.fn(),
+});
+
+export type TimeframeWeightingMockLogger = ReturnType<
+  typeof createTimeframeWeightingMockLogger
+>;
+
+export const asTimeframeWeightingErrorLogger = (
+  value: TimeframeWeightingMockLogger,
+): ConstructorParameters<typeof ErrorHandler>[0] =>
+  value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
+
+export const asTimeframeWeightingLogger = (
+  value: TimeframeWeightingMockLogger,
+): ConstructorParameters<typeof TimeframeWeightingService>[0] =>
+  value as unknown as ConstructorParameters<typeof TimeframeWeightingService>[0];
+
+export const asTimeframeWeightingMultiTF = (
+  value: unknown,
+): Parameters<TimeframeWeightingService['combine']>[0] =>
+  value as Parameters<TimeframeWeightingService['combine']>[0];
+
+export const asTimeframeWeightingMode = (value: unknown): TradingMode =>
+  value as TradingMode;
+
+export const createValidTimeframeWeightingMultiTF =
+  (): MultiTimeframeAnalysis => ({
+    byTimeframe: {
+      '5m': {
+        bias: TrendBias.BULLISH,
+        strength: 0.7,
+        timeframe: '5m',
+        swingHighsCount: 2,
+        swingLowsCount: 1,
+      } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
+      '15m': {
+        bias: TrendBias.BULLISH,
+        strength: 0.8,
+        timeframe: '15m',
+        swingHighsCount: 2,
+        swingLowsCount: 1,
+      } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
+      '1h': {
+        bias: TrendBias.BULLISH,
+        strength: 0.75,
+        timeframe: '1h',
+        swingHighsCount: 2,
+        swingLowsCount: 1,
+      } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
+      '4h': {
+        bias: TrendBias.BULLISH,
+        strength: 0.65,
+        timeframe: '4h',
+        swingHighsCount: 2,
+        swingLowsCount: 1,
+      } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
+    },
+    consensus: {
+      primaryTrend: TrendBias.BULLISH,
+      currentTrend: TrendBias.BULLISH,
+      entryTrend: TrendBias.BULLISH,
+      strength: 0.725,
+      alignment: 'ALIGNED',
+    },
+  });
+
+export const createTimeframeWeightingService = (options: {
+  logger?: TimeframeWeightingMockLogger;
+  errorHandler?: ErrorHandler;
+} = {}): TimeframeWeightingService =>
+  new TimeframeWeightingService(
+    options.logger
+      ? asTimeframeWeightingLogger(options.logger)
+      : undefined,
+    options.errorHandler,
+  );
+
+export const createTimeframeWeightingHarness = () => {
+  const logger = createTimeframeWeightingMockLogger();
+  const errorHandler = new ErrorHandler(asTimeframeWeightingErrorLogger(logger));
+  const service = createTimeframeWeightingService({ logger, errorHandler });
+
+  return {
+    logger,
+    errorHandler,
+    service,
+  };
+};

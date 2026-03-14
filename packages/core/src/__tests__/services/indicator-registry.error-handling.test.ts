@@ -17,12 +17,12 @@ import { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { IndicatorType } from '../../types/indicator';
 import {
-  asIndicatorRegistryLogger,
   asIndicatorRegistryMetadata,
   asIndicatorRegistryType,
   createIndicatorRegistryHarness,
   createIndicatorRegistryMetadata,
   createIndicatorRegistryMockLogger,
+  createIndicatorRegistryService,
   type IndicatorRegistryMockLogger,
 } from '../helpers/indicator-registry-test.utils';
 
@@ -169,10 +169,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = new IndicatorRegistry(
-        asIndicatorRegistryLogger(failingLogger),
+      const reg = createIndicatorRegistryService({
+        logger: failingLogger,
         errorHandler,
-      );
+      });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -193,10 +193,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = new IndicatorRegistry(
-        asIndicatorRegistryLogger(failingLogger),
+      const reg = createIndicatorRegistryService({
+        logger: failingLogger,
         errorHandler,
-      );
+      });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -214,10 +214,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = new IndicatorRegistry(
-        asIndicatorRegistryLogger(failingLogger),
+      const reg = createIndicatorRegistryService({
+        logger: failingLogger,
         errorHandler,
-      );
+      });
       reg.register(
         IndicatorType.EMA,
         createIndicatorRegistryMetadata('EMA'),
@@ -353,13 +353,13 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = new IndicatorRegistry(asIndicatorRegistryLogger(logger));
+      const reg = createIndicatorRegistryService({ logger });
       expect(reg).toBeDefined();
       expect(reg.getCount()).toBe(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const reg = new IndicatorRegistry(asIndicatorRegistryLogger(logger));
+      const reg = createIndicatorRegistryService({ logger });
 
       // Register should work as before
       reg.register(IndicatorType.EMA, {
@@ -379,7 +379,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
     it('should support legacy calls without logger', () => {
       // Should work even without logger
-      const reg = new IndicatorRegistry();
+      const reg = createIndicatorRegistryService();
       expect(reg).toBeDefined();
 
       // Basic operations should work

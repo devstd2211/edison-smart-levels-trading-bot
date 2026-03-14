@@ -99,14 +99,14 @@ export function createTradingJournalHarness(options: {
   const logger = options.logger ?? createTradingJournalLogger();
   const dataDir = options.dataDir ?? createTradingJournalTempDir();
   const errorHandler = new ErrorHandler(logger);
-  const journal = new TradingJournalService(
+  const journal = createTradingJournalService({
     logger,
     dataDir,
-    options.tradeHistoryConfig,
-    options.baseDeposit,
-    undefined,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    tradeHistoryConfig: options.tradeHistoryConfig,
+    baseDeposit: options.baseDeposit,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     journal,
@@ -114,6 +114,27 @@ export function createTradingJournalHarness(options: {
     dataDir,
     errorHandler,
   };
+}
+
+export function createTradingJournalService(options: {
+  logger?: LoggerService;
+  dataDir?: string;
+  tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+  baseDeposit?: number;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createTradingJournalLogger();
+  const dataDir = options.dataDir ?? createTradingJournalTempDir();
+
+  return new TradingJournalService(
+    logger,
+    dataDir,
+    options.tradeHistoryConfig,
+    options.baseDeposit,
+    undefined,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
+  );
 }
 
 export function createJournalOpenParams(overrides: Partial<{

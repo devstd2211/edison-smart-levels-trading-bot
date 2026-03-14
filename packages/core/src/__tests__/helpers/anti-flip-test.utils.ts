@@ -1,5 +1,5 @@
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
-import { AntiFlipConfig } from '../../services/anti-flip.service';
+import { AntiFlipConfig, AntiFlipService } from '../../services/anti-flip.service';
 import { Candle, LoggerService, LogLevel } from '../../types/legacy';
 
 export type AntiFlipLoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
@@ -46,6 +46,34 @@ export const createAntiFlipErrorHandler = (): ErrorHandler & { handle: jest.Mock
   } as HandleResult);
 
   return handler as ErrorHandler & { handle: jest.Mock };
+};
+
+export interface AntiFlipHarness {
+  logger: LoggerService;
+  errorHandler: ErrorHandler & { handle: jest.Mock };
+  createService: (
+    overrides?: Partial<AntiFlipConfig>,
+    options?: { errorHandler?: ErrorHandler },
+  ) => AntiFlipService;
+}
+
+export const createAntiFlipHarness = (): AntiFlipHarness => {
+  const logger = createAntiFlipLogger();
+  const errorHandler = createAntiFlipErrorHandler();
+
+  return {
+    logger,
+    errorHandler,
+    createService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { errorHandler?: ErrorHandler } = {},
+    ) =>
+      new AntiFlipService(
+        logger,
+        createAntiFlipConfig(overrides),
+        options.errorHandler ?? errorHandler,
+      ),
+  };
 };
 
 export const createBullishAntiFlipCandle = (price: number): Candle => ({

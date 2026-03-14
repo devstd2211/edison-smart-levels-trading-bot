@@ -29,6 +29,7 @@ import {
   createAdvancedOrderFlowHarness,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
+  createAdvancedOrderFlowService,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowValidConfig,
 } from '../helpers/advanced-order-flow-test.utils';
@@ -37,20 +38,28 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let createService: (options?: {
+    config?: AdvancedOrderFlowConfig;
+    logger?: LoggerService;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => AdvancedOrderFlowService;
 
   beforeEach(() => {
     ({ logger: mockLogger, errorHandler } = createAdvancedOrderFlowHarness());
+    createService = (options = {}) =>
+      createAdvancedOrderFlowService({
+        config: options.config,
+        logger: options.logger ?? mockLogger,
+        errorHandler: options.errorHandler ?? errorHandler,
+        withErrorHandler: options.withErrorHandler,
+      });
   });
 
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new AdvancedOrderFlowService(
-          asAdvancedOrderFlowConfig(null),
-          undefined,
-          mockLogger,
-          errorHandler,
-        );
+        createService({ config: asAdvancedOrderFlowConfig(null) });
       }).toThrow(/cannot be null or undefined/i);
     });
 
@@ -59,7 +68,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.tickWindowMs = 0;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+        createService({ config });
       }).toThrow(/invalid tickwindowms/i);
     });
 
@@ -68,7 +77,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.tickWindowMs = NaN;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+        createService({ config });
       }).toThrow(/invalid tickwindowms/i);
     });
 
@@ -77,7 +86,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.orderbookLevels = 0;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+        createService({ config });
       }).toThrow(/invalid orderbooklevels/i);
     });
 
@@ -86,7 +95,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.imbalanceThreshold = 1.5;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+        createService({ config });
       }).toThrow(/invalid imbalancethreshold/i);
     });
 
@@ -95,7 +104,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       config.spoofingThreshold = 0;
 
       expect(() => {
-        new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+        createService({ config });
       }).toThrow(/invalid spoofingthreshold/i);
     });
   });
@@ -376,7 +385,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       badConfig.tickWindowMs = -1;
 
       expect(() => {
-        new AdvancedOrderFlowService(badConfig, undefined, mockLogger, errorHandler);
+        createService({ config: badConfig });
       }).toThrow();
 
       ({ service } = createAdvancedOrderFlowHarness({
@@ -503,11 +512,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       service.addTick(tickInWindow);
       service.addTick(tickOutOfWindow);
 
-      const cleanup = new AdvancedOrderFlowService(
-        { ...createAdvancedOrderFlowValidConfig(), tickWindowMs: 5000 },
-        undefined,
-        mockLogger,
-      );
+      const cleanup = createService({
+        config: { ...createAdvancedOrderFlowValidConfig(), tickWindowMs: 5000 },
+        withErrorHandler: false,
+      });
       cleanup.addTick(tickInWindow);
       cleanup.addTick(tickOutOfWindow);
       cleanup.analyze();
@@ -569,7 +577,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const config = createAdvancedOrderFlowValidConfig();
       config.enableSpoofingDetection = false;
 
-      service = new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+      service = createService({ config });
 
       const result = service.getSpoofing();
       expect(result).not.toBeNull();
@@ -580,7 +588,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const config = createAdvancedOrderFlowValidConfig();
       config.enableMomentum = false;
 
-      service = new AdvancedOrderFlowService(config, undefined, mockLogger, errorHandler);
+      service = createService({ config });
 
       const result = service.getMomentum();
       expect(result).not.toBeNull();

@@ -17,7 +17,8 @@ import { ErrorHandler } from '../../errors';
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createAntiFlipConfig,
-  createAntiFlipErrorHandler,
+  type AntiFlipHarness,
+  createAntiFlipHarness,
   createAntiFlipLogger,
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
@@ -30,12 +31,15 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let harness: AntiFlipHarness;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    logger = createAntiFlipLogger();
-    errorHandler = createAntiFlipErrorHandler();
+    harness = createAntiFlipHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
+    service = harness.createService();
   });
 
   afterEach(() => {
@@ -48,11 +52,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
   describe('SKIP Strategy for Logger Failures (5 tests)', () => {
     it('test-8.9.20.1: Should skip high confidence override log failure', () => {
-      service = new AntiFlipService(
-        logger,
-        createAntiFlipConfig({ overrideConfidenceThreshold: 85 }),
-        errorHandler,
-      );
+      service = harness.createService({ overrideConfidenceThreshold: 85 });
 
       // Mock logger to throw on high confidence override
       let callCount = 0;
@@ -80,11 +80,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.2: Should skip RSI reversal log failure', () => {
-      service = new AntiFlipService(
-        logger,
-        createAntiFlipConfig({ strongReversalRsiThreshold: 25 }),
-        errorHandler,
-      );
+      service = harness.createService({ strongReversalRsiThreshold: 25 });
 
       // Mock logger to throw on RSI reversal log
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -108,11 +104,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.3: Should skip candle confirmation log failure', () => {
-      service = new AntiFlipService(
-        logger,
-        createAntiFlipConfig({ requiredConfirmationCandles: 2 }),
-        errorHandler,
-      );
+      service = harness.createService({ requiredConfirmationCandles: 2 });
 
       // Mock logger to throw on candle confirmation
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -142,11 +134,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.4: Should skip anti-flip blocked warning log failure', () => {
-      service = new AntiFlipService(
-        logger,
-        createAntiFlipConfig({ overrideConfidenceThreshold: 85 }),
-        errorHandler,
-      );
+      service = harness.createService({ overrideConfidenceThreshold: 85 });
 
       // Mock logger to throw on warning log
       jest.spyOn(logger, 'warn').mockImplementation(() => {
@@ -170,7 +158,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.5: Should skip signal recorded debug log failure', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock logger to throw on debug log
       jest.spyOn(logger, 'debug').mockImplementation(() => {
@@ -195,7 +183,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
   describe('Integration Scenarios (5 tests)', () => {
     it('test-8.9.20.6: Should handle rapid signal checks with intermittent logger failures', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock logger to fail sometimes
       let infoCallCount = 0;
@@ -226,7 +214,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.7: Should handle all logger methods failing simultaneously', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock all logger methods to throw
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -257,7 +245,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.8: Should handle logger failures during state changes', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock logger
       jest.spyOn(logger, 'debug').mockImplementation(() => {
@@ -276,7 +264,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.9: Should handle mixed logger success/failure patterns', () => {
-      service = new AntiFlipService(logger, {}, errorHandler);
+      service = harness.createService();
 
       let infoCallCount = 0;
       let debugCallCount = 0;
@@ -309,11 +297,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.10: Should maintain anti-flip logic correctness with error handling', () => {
-      service = new AntiFlipService(
-        logger,
-        createAntiFlipConfig({ cooldownCandles: 2, cooldownMs: 100000 }),
-        errorHandler,
-      );
+      service = harness.createService({ cooldownCandles: 2, cooldownMs: 100000 });
 
       // Mock all logger methods to fail
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -389,7 +373,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.13: Should have identical blocking logic with/without ErrorHandler', () => {
-      const service1 = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      const service1 = harness.createService();
       const service2 = new AntiFlipService(logger, createAntiFlipConfig());
 
       // Mock logger to always fail
@@ -418,7 +402,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
   describe('Performance with Error Handling (3 tests)', () => {
     it('test-8.9.20.14: Should maintain performance with ErrorHandler', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock logger to fail
       jest.spyOn(logger, 'debug').mockImplementation(() => {
@@ -442,7 +426,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.15: Should recover from errors without performance degradation', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       let callCount = 0;
       jest.spyOn(logger, 'debug').mockImplementation(() => {
@@ -467,7 +451,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.16: Should efficiently create error context without overhead', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       jest.spyOn(logger, 'info').mockImplementation(() => {
         throw new Error('Logger failed');
@@ -508,7 +492,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
       service = new AntiFlipService(
         mockLoggerWithNullMethods,
-        {},
+        createAntiFlipConfig({}),
         errorHandler,
       );
 
@@ -521,7 +505,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.18: Should handle logger throwing non-Error objects', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock logger to throw non-Error objects
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -544,7 +528,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.19: Should handle ErrorHandler itself throwing', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       // Mock logger to throw
       jest.spyOn(logger, 'debug').mockImplementation(() => {
@@ -567,7 +551,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.20: Should handle concurrent logger failures during rapid operations', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig(), errorHandler);
+      service = harness.createService();
 
       let infoCallCount = 0;
       let warnCallCount = 0;

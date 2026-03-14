@@ -16,6 +16,7 @@ import {
   asCandleAggregatorLogger,
   createAggregatorMockCandle,
   createCandleAggregatorHarness,
+  createCandleAggregatorService,
   createFifteenMinuteAggregatorCandles,
   createFiveMinuteAggregatorCandles,
   createOneHourAggregatorCandles,
@@ -161,7 +162,10 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
           throw new Error('Logger failed');
         }),
       };
-      const badService = new CandleAggregatorService(badLogger as unknown as LoggerService, errorHandler);
+      const badService = createCandleAggregatorService({
+        logger: badLogger as unknown as LoggerService,
+        errorHandler,
+      });
       const candles = [
         createAggregatorMockCandle(1000, 100),
         { ...createAggregatorMockCandle(2000, 100), open: NaN },
@@ -220,7 +224,9 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = new CandleAggregatorService(asCandleAggregatorLogger(mockLogger));
+      const basicService = createCandleAggregatorService({
+        logger: asCandleAggregatorLogger(mockLogger),
+      });
       const candles = [createAggregatorMockCandle(1000, 100)];
 
       expect(() => {
@@ -229,7 +235,9 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = new CandleAggregatorService(asCandleAggregatorLogger(mockLogger));
+      const basicService = createCandleAggregatorService({
+        logger: asCandleAggregatorLogger(mockLogger),
+      });
 
       expect(() => {
         basicService.aggregateCandles(null as unknown as AggregateCandlesInput, 5);
@@ -237,7 +245,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = new CandleAggregatorService(undefined, errorHandler);
+      const basicService = createCandleAggregatorService({ errorHandler });
       const candles = [createAggregatorMockCandle(1000, 100)];
 
       expect(() => {

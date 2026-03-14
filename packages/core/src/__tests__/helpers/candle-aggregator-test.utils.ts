@@ -30,16 +30,23 @@ export function asCandleAggregatorLogger(
 export function createCandleAggregatorHarness() {
   const mockLogger = createCandleAggregatorMockLogger();
   const errorHandler = new ErrorHandler(asCandleAggregatorLogger(mockLogger));
-  const service = new CandleAggregatorService(
-    asCandleAggregatorLogger(mockLogger),
+  const service = createCandleAggregatorService({
+    logger: asCandleAggregatorLogger(mockLogger),
     errorHandler,
-  );
+  });
 
   return {
     service,
     errorHandler,
     mockLogger,
   };
+}
+
+export function createCandleAggregatorService(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): CandleAggregatorService {
+  return new CandleAggregatorService(options.logger, options.errorHandler);
 }
 
 export function createAggregatorMockCandle(timestamp: number, price: number): Candle {

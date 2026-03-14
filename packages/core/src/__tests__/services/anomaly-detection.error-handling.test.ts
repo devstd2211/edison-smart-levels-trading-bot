@@ -19,6 +19,7 @@ import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection';
 import {
   AnomalyDetectionInternals,
   createAnomalyDetectionMockLogger,
+  createAnomalyDetectionService,
   createAnomalyDetectionServiceHarness,
   createAnomalyDetectionTrade,
   seedVolatilityHistory,
@@ -47,38 +48,40 @@ describe('AnomalyDetectionService - Error Handling', () => {
   // ========================================
 
   describe('THROW: Config Validation', () => {
+    const createService = (config?: ConfigInput, customLogger: LoggerService = logger) =>
+      createAnomalyDetectionService({
+        config: config as Partial<AnomalyDetectionConfig> | undefined,
+        logger: customLogger,
+        errorHandler,
+      });
+
     it('should throw when config is not an object', () => {
       expect(() => {
-        new AnomalyDetectionService('invalid' as unknown as ConfigInput, undefined, logger, errorHandler);
+        createService('invalid' as unknown as ConfigInput);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new AnomalyDetectionService(123 as unknown as ConfigInput, undefined, logger, errorHandler);
+        createService(123 as unknown as ConfigInput);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new AnomalyDetectionService([] as unknown as ConfigInput, undefined, logger, errorHandler);
+        createService([] as unknown as ConfigInput);
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        new AnomalyDetectionService(undefined, undefined, logger, errorHandler);
+        createService(undefined);
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
-        new AnomalyDetectionService(
-          { volumeAnomalyThreshold: 3.0 },
-          undefined,
-          logger,
-          errorHandler,
-        );
+        createService({ volumeAnomalyThreshold: 3.0 } as unknown as ConfigInput);
       }).not.toThrow();
     });
   });
@@ -218,7 +221,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       });
 
       expect(() => {
-        new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
+        createAnomalyDetectionService({ logger: badLogger, errorHandler });
       }).not.toThrow();
     });
 
@@ -229,7 +232,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         }),
       });
 
-      const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
+      const testService = createAnomalyDetectionService({ logger: badLogger, errorHandler });
 
       // Force detection to log a warning
       const testInternals = testService as unknown as AnomalyDetectionInternals;
@@ -249,7 +252,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         }),
       });
 
-      const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
+      const testService = createAnomalyDetectionService({ logger: badLogger, errorHandler });
 
       expect(() => {
         testService.clearHistory();

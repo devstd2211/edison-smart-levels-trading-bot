@@ -11,73 +11,52 @@
  */
 
 import { TimeframeWeightingService } from '../../services/timeframe-weighting.service';
-import { MultiTimeframeAnalysis, TradingMode, TrendBias } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-
-const createMockLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  silly: jest.fn(),
-});
-
-type CombineInput = Parameters<TimeframeWeightingService['combine']>[0];
-const asMultiTF = (value: unknown): CombineInput => value as CombineInput;
-const asMode = (value: unknown): TradingMode => value as TradingMode;
-const asErrorLogger = (value: ReturnType<typeof createMockLogger>) =>
-  value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
-const asLogger = (value: ReturnType<typeof createMockLogger>) =>
-  value as unknown as ConstructorParameters<typeof TimeframeWeightingService>[0];
-
-const createValidMultiTF = (): MultiTimeframeAnalysis => ({
-  byTimeframe: {
-    '5m': { bias: TrendBias.BULLISH, strength: 0.7, timeframe: '5m', swingHighsCount: 2, swingLowsCount: 1 } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
-    '15m': { bias: TrendBias.BULLISH, strength: 0.8, timeframe: '15m', swingHighsCount: 2, swingLowsCount: 1 } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
-    '1h': { bias: TrendBias.BULLISH, strength: 0.75, timeframe: '1h', swingHighsCount: 2, swingLowsCount: 1 } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
-    '4h': { bias: TrendBias.BULLISH, strength: 0.65, timeframe: '4h', swingHighsCount: 2, swingLowsCount: 1 } as unknown as MultiTimeframeAnalysis['byTimeframe']['5m'],
-  },
-  consensus: {
-    primaryTrend: TrendBias.BULLISH,
-    currentTrend: TrendBias.BULLISH,
-    entryTrend: TrendBias.BULLISH,
-    strength: 0.725,
-    alignment: 'ALIGNED',
-  },
-});
+import { TradingMode, TrendBias } from '../../types/legacy';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import {
+  asTimeframeWeightingMode,
+  asTimeframeWeightingMultiTF,
+  createTimeframeWeightingHarness,
+  createTimeframeWeightingMockLogger,
+  createTimeframeWeightingService,
+  createValidTimeframeWeightingMultiTF,
+  type TimeframeWeightingMockLogger,
+} from '../helpers/timeframe-weighting-test.utils';
 
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
-  const mockLogger = createMockLogger();
+  let mockLogger: TimeframeWeightingMockLogger;
 
   beforeEach(() => {
-    errorHandler = new ErrorHandler(asErrorLogger(mockLogger));
-    service = new TimeframeWeightingService(asLogger(mockLogger), errorHandler);
+    const harness = createTimeframeWeightingHarness();
+    service = harness.service;
+    errorHandler = harness.errorHandler;
+    mockLogger = harness.logger;
   });
 
   describe('THROW: Input Validation', () => {
     test('should throw on null multiTF', () => {
       expect(() => {
-        service.combine(asMultiTF(null), TradingMode.SWING);
+        service.combine(asTimeframeWeightingMultiTF(null), TradingMode.SWING);
       }).toThrow('MultiTF must be a valid object');
     });
 
     test('should throw on undefined multiTF', () => {
       expect(() => {
-        service.combine(asMultiTF(undefined), TradingMode.SWING);
+        service.combine(asTimeframeWeightingMultiTF(undefined), TradingMode.SWING);
       }).toThrow('MultiTF must be a valid object');
     });
 
     test('should throw on invalid trading mode', () => {
-      const multiTF = createValidMultiTF();
+      const multiTF = createValidTimeframeWeightingMultiTF();
       expect(() => {
-        service.combine(multiTF, asMode('INVALID'));
+        service.combine(multiTF, asTimeframeWeightingMode('INVALID'));
       }).toThrow('Invalid trading mode');
     });
 
     test('should throw on null byTimeframe', () => {
-      const multiTF = { byTimeframe: null } as unknown as CombineInput;
+      const multiTF = { byTimeframe: null } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('MultiTF.byTimeframe must be a valid object');
@@ -92,7 +71,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
           '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
         },
-      } as unknown as CombineInput;
+      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('MultiTF.byTimeframe[5m] is missing');
@@ -106,7 +85,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
           '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
         },
-      } as unknown as CombineInput;
+      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Invalid data for timeframe 5m');
@@ -120,7 +99,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
           '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
         },
-      } as unknown as CombineInput;
+      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Strength for 5m must be between 0 and 1');
@@ -134,7 +113,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
           '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
         },
-      } as unknown as CombineInput;
+      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Strength for 5m must be between 0 and 1');
@@ -148,7 +127,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
           '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
         },
-      } as unknown as CombineInput;
+      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Invalid data for timeframe 5m');
@@ -157,8 +136,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     test('should handle combination calculation gracefully', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result).toBeDefined();
       expect(result.bias).toBeDefined();
@@ -166,8 +145,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should return safe default on calculation error', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.DAY);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.DAY);
 
       expect(result).toBeDefined();
       expect(result.strength).toBeGreaterThanOrEqual(0);
@@ -177,19 +156,15 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails', () => {
-      const badLogger = {
-        info: jest.fn(() => {
-          throw new Error('Logger failed');
-        }),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(() => {
-          throw new Error('Debug failed');
-        }),
-        silly: jest.fn(),
-      };
-      const multiTF = createValidMultiTF();
-      const svc = new TimeframeWeightingService(asLogger(badLogger), errorHandler);
+      const badLogger = createTimeframeWeightingMockLogger();
+      badLogger.info.mockImplementation(() => {
+        throw new Error('Logger failed');
+      });
+      badLogger.debug.mockImplementation(() => {
+        throw new Error('Debug failed');
+      });
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const svc = createTimeframeWeightingService({ logger: badLogger, errorHandler });
 
       expect(() => {
         svc.combine(multiTF, TradingMode.SWING);
@@ -199,8 +174,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('Integration: Weight Application', () => {
     test('should combine SWING trading weights correctly', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result).toBeDefined();
       expect(result.bias).toBe(TrendBias.BULLISH); // All bullish
@@ -208,16 +183,16 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should combine DAY trading weights correctly', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.DAY);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.DAY);
 
       expect(result).toBeDefined();
       expect(result.bias).toBe(TrendBias.BULLISH);
     });
 
     test('should combine SCALP trading weights correctly', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SCALP);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SCALP);
 
       expect(result).toBeDefined();
       expect(result.bias).toBe(TrendBias.BULLISH);
@@ -231,16 +206,16 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '1h': { bias: TrendBias.NEUTRAL, strength: 0.5 },
           '4h': { bias: TrendBias.NEUTRAL, strength: 0.5 },
         },
-      } as unknown as CombineInput;
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       // Result depends on weighting - should be a valid bias
       expect([TrendBias.BULLISH, TrendBias.BEARISH, TrendBias.NEUTRAL]).toContain(result.bias);
     });
 
     test('should include reasoning in result', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.reasoning).toBeDefined();
       expect(typeof result.reasoning).toBe('string');
@@ -249,8 +224,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should calculate weighted strength between 0 and 1', () => {
-      const multiTF = createValidMultiTF();
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const multiTF = createValidTimeframeWeightingMultiTF();
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.strength).toBeGreaterThanOrEqual(0);
       expect(result.strength).toBeLessThanOrEqual(1);
@@ -265,7 +240,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '4h': { bias: TrendBias.NEUTRAL, strength: 0 },
         },
       };
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.bias).toBe(TrendBias.NEUTRAL);
       expect(result.strength).toBe(0);
@@ -274,8 +249,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = new TimeframeWeightingService(asLogger(mockLogger));
-      const multiTF = createValidMultiTF();
+      const basicService = createTimeframeWeightingService({ logger: mockLogger });
+      const multiTF = createValidTimeframeWeightingMultiTF();
 
       expect(() => {
         basicService.combine(multiTF, TradingMode.SWING);
@@ -283,8 +258,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = new TimeframeWeightingService(undefined, errorHandler);
-      const multiTF = createValidMultiTF();
+      const basicService = createTimeframeWeightingService({ errorHandler });
+      const multiTF = createValidTimeframeWeightingMultiTF();
 
       expect(() => {
         basicService.combine(multiTF, TradingMode.SWING);
@@ -292,8 +267,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should work without optional parameters', () => {
-      const basicService = new TimeframeWeightingService();
-      const multiTF = createValidMultiTF();
+      const basicService = createTimeframeWeightingService();
+      const multiTF = createValidTimeframeWeightingMultiTF();
 
       expect(() => {
         basicService.combine(multiTF, TradingMode.SWING);
@@ -301,10 +276,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = new TimeframeWeightingService(asLogger(mockLogger));
+      const basicService = createTimeframeWeightingService({ logger: mockLogger });
 
       expect(() => {
-        basicService.combine(asMultiTF(null), TradingMode.SWING);
+        basicService.combine(asTimeframeWeightingMultiTF(null), TradingMode.SWING);
       }).toThrow();
     });
   });
@@ -319,7 +294,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '4h': { bias: TrendBias.BULLISH, strength: 0.80 },
         },
       };
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.bias).toBe(TrendBias.BULLISH);
       expect(result.strength).toBeGreaterThan(0.8);
@@ -334,7 +309,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '4h': { bias: TrendBias.BEARISH, strength: 0.80 },
         },
       };
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.bias).toBe(TrendBias.BEARISH);
     });
@@ -348,13 +323,13 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
           '4h': { bias: TrendBias.NEUTRAL, strength: 0.5 },
         },
       };
-      const result = service.combine(asMultiTF(multiTF), TradingMode.SWING);
+      const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.bias).toBe(TrendBias.NEUTRAL);
     });
 
     test('should handle conflicting signals across modes', () => {
-      const bullishTF = createValidMultiTF();
+      const bullishTF = createValidTimeframeWeightingMultiTF();
       const result = service.combine(bullishTF, TradingMode.SWING);
 
       // All timeframes are bullish, so result should be bullish
