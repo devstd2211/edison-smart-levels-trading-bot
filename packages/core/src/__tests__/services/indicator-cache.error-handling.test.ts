@@ -21,6 +21,7 @@ import {
   createIndicatorCacheHarness,
   createIndicatorCacheMockLogger,
   createIndicatorCacheMockRepository,
+  createIndicatorCacheService,
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
@@ -160,7 +161,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
       const repo = createIndicatorCacheMockRepository({
         getIndicator: jest.fn().mockReturnValue(75),
       });
-      const cache = new IndicatorCacheService(repo, failingLogger, errorHandler);
+      const cache = createIndicatorCacheService({ repository: repo, logger: failingLogger, errorHandler });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -184,7 +185,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
           throw new Error('Repo error');
         }),
       });
-      const cache = new IndicatorCacheService(repo, failingLogger, errorHandler);
+      const cache = createIndicatorCacheService({ repository: repo, logger: failingLogger, errorHandler });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -199,7 +200,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
         }),
       });
 
-      const cache = new IndicatorCacheService(mockRepo, failingLogger, errorHandler);
+      const cache = createIndicatorCacheService({ repository: mockRepo, logger: failingLogger, errorHandler });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -290,7 +291,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
   describe('Backward Compatibility: Without ErrorHandler/Logger', () => {
     it('should work with only repository', () => {
-      const cache = new IndicatorCacheService(mockRepo);
+      const cache = createIndicatorCacheService({ repository: mockRepo, withErrorHandler: false });
       expect(cache).toBeDefined();
 
       cache.set('EMA-20', 50);
@@ -298,7 +299,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     });
 
     it('should work with repository and logger', () => {
-      const cache = new IndicatorCacheService(mockRepo, logger);
+      const cache = createIndicatorCacheService({ repository: mockRepo, logger, withErrorHandler: false });
       expect(cache).toBeDefined();
 
       mockRepo.getIndicator.mockReturnValue(75);
@@ -307,7 +308,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     });
 
     it('should maintain existing API without ErrorHandler', () => {
-      const cache = new IndicatorCacheService(mockRepo);
+      const cache = createIndicatorCacheService({ repository: mockRepo, withErrorHandler: false });
 
       // All methods should work without ErrorHandler
       cache.set('key1', 50);

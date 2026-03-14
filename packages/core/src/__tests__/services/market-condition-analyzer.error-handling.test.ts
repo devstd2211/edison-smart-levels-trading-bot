@@ -21,6 +21,7 @@ import {
   createMarketConditionHarness,
   createMarketConditionMockLogger,
   createMarketConditionResult,
+  createMarketConditionService,
   createMarketConditionTakeProfit,
   type MarketConditionMockLogger,
 } from '../helpers/market-condition-analyzer-test.utils';
@@ -150,7 +151,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(failingLogger), errorHandler);
+      const service = createMarketConditionService({ logger: failingLogger, errorHandler });
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(true, 75);
 
@@ -167,7 +168,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(failingLogger), errorHandler);
+      const service = createMarketConditionService({ logger: failingLogger, errorHandler });
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const badFlatResult = { isFlat: true, confidence: NaN };
 
@@ -184,7 +185,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
         }),
       });
 
-      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(failingLogger), errorHandler);
+      const service = createMarketConditionService({ logger: failingLogger, errorHandler });
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(false, 80);
 
@@ -273,7 +274,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
-      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
+      const service = createMarketConditionService({ logger, withErrorHandler: false });
       expect(service).toBeDefined();
 
       const takeProfits = [createTP(1, 100, 50, 0.5)];
@@ -284,7 +285,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
+      const service = createMarketConditionService({ logger, withErrorHandler: false });
 
       const takeProfits = [
         createTP(1, 100, 50, 0.5),
@@ -300,7 +301,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should support null flatResult without ErrorHandler', () => {
-      const service = new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
+      const service = createMarketConditionService({ logger, withErrorHandler: false });
 
       const takeProfits = [createTP(1, 100, 50, 0.5)];
 

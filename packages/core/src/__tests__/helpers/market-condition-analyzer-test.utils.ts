@@ -32,16 +32,32 @@ export function createMarketConditionHarness(
 ) {
   const logger = createMarketConditionMockLogger(overrides);
   const errorHandler = new ErrorHandler(asMarketConditionLogger(logger));
-  const service = new MarketConditionAnalyzerService(
-    asMarketConditionLogger(logger),
+  const service = createMarketConditionService({
+    logger,
     errorHandler,
-  );
+  });
 
   return {
     logger,
     errorHandler,
     service,
   };
+}
+
+export function createMarketConditionService(options?: {
+  logger?: MarketConditionMockLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}) {
+  const logger = options?.logger ?? createMarketConditionMockLogger();
+  if (options?.withErrorHandler === false) {
+    return new MarketConditionAnalyzerService(asMarketConditionLogger(logger));
+  }
+
+  return new MarketConditionAnalyzerService(
+    asMarketConditionLogger(logger),
+    options?.errorHandler ?? new ErrorHandler(asMarketConditionLogger(logger)),
+  );
 }
 
 export function createMarketConditionTakeProfit(

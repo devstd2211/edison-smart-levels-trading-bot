@@ -47,18 +47,48 @@ export function createIndicatorCacheMockRepository(
 export function createIndicatorCacheHarness(options?: {
   logger?: LoggerService;
   repository?: IndicatorCacheMockRepository;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 }) {
   const logger = options?.logger ?? createIndicatorCacheMockLogger();
   const repository = options?.repository ?? createIndicatorCacheMockRepository();
-  const errorHandler = new ErrorHandler(logger);
-  const cache = new IndicatorCacheService(repository, logger, errorHandler);
+  const errorHandler =
+    options?.withErrorHandler === false
+      ? undefined
+      : (options?.errorHandler ?? new ErrorHandler(logger));
+  const cache = createIndicatorCacheService({
+    logger,
+    repository,
+    errorHandler,
+    withErrorHandler: options?.withErrorHandler,
+  });
 
   return {
     logger,
     repository,
-    errorHandler,
+    errorHandler: errorHandler ?? new ErrorHandler(logger),
     cache,
   };
+}
+
+export function createIndicatorCacheService(options?: {
+  logger?: LoggerService;
+  repository?: IndicatorCacheMockRepository;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}) {
+  const logger = options?.logger;
+  const repository = options?.repository ?? createIndicatorCacheMockRepository();
+
+  if (options?.withErrorHandler === false) {
+    return new IndicatorCacheService(repository, logger);
+  }
+
+  return new IndicatorCacheService(
+    repository,
+    logger,
+    options?.errorHandler ?? (logger ? new ErrorHandler(logger) : undefined),
+  );
 }
 
 export function asIndicatorCacheKey(value: unknown): string {
