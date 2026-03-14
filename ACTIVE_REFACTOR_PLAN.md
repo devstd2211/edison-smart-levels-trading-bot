@@ -316,3 +316,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `pattern-recognition` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts` -> PASS (1/1 suite, 40/40 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: extended the shared `whale-detection` helpers through the error-handling suite so config/logger/service construction now flows through the same harness already used by adjacent tests instead of repeating local detector bootstrap and backward-compat setup; reviewed `services/whale-detection.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `whale-detection` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts` -> PASS (1/1 suite, 16/16 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

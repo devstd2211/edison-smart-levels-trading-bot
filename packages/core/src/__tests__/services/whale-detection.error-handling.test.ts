@@ -8,13 +8,13 @@
  * - Backward Compatibility: Tests without ErrorHandler still work
  */
 
-import { WhaleDetectionService, WhaleDetectorConfig, WhaleDetectionMode } from '../../services/whale-detection.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { OrderBookAnalysis, SignalDirection } from '../../types/legacy';
+import { WhaleDetectionService, WhaleDetectorConfig } from '../../services/whale-detection.service';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
 import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
+  createWhaleDetectionHarness,
   createWhaleDetectionMockLogger,
 } from '../helpers/whale-detection-test.utils';
 
@@ -44,7 +44,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     type WhaleConfigInput = ConstructorParameters<typeof WhaleDetectionService>[0];
 
     test('should throw on null config', () => {
-      const errorHandler = new ErrorHandler(mockLogger);
+      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
       expect(() => {
         new WhaleDetectionService(
           null as unknown as WhaleConfigInput,
@@ -56,7 +56,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     });
 
     test('should throw on invalid wallBreak minWallSize', () => {
-      const errorHandler = new ErrorHandler(mockLogger);
+      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
       const config = {
         ...createValidConfig(),
         modes: {
@@ -73,7 +73,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     });
 
     test('should throw on invalid maxConfidence (>100)', () => {
-      const errorHandler = new ErrorHandler(mockLogger);
+      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
       const config = {
         ...createValidConfig(),
         modes: {
@@ -90,7 +90,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     });
 
     test('should throw on invalid maxImbalanceHistory', () => {
-      const errorHandler = new ErrorHandler(mockLogger);
+      const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
       const config = { ...createValidConfig(), maxImbalanceHistory: 0 };
       expect(() => {
         new WhaleDetectionService(config, mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
@@ -104,12 +104,14 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
 
   describe('THROW: Input Validation', () => {
     const mockLogger = createMockLogger();
-    const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleDetectionService;
     type WhaleAnalysisInput = Parameters<WhaleDetectionService['detectWhale']>[0];
 
     beforeEach(() => {
-      service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+      ({ detector: service } = createWhaleDetectionHarness({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+      }));
     });
 
     test('should throw on null analysis', () => {
@@ -137,11 +139,13 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
 
   describe('GRACEFUL_DEGRADE: Detection Failures', () => {
     const mockLogger = createMockLogger();
-    const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleDetectionService;
 
     beforeEach(() => {
-      service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+      ({ detector: service } = createWhaleDetectionHarness({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+      }));
     });
 
     test('should handle valid detection', () => {
@@ -212,11 +216,13 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
 
   describe('Integration: Detection Operations', () => {
     const mockLogger = createMockLogger();
-    const errorHandler = new ErrorHandler(mockLogger);
     let service: WhaleDetectionService;
 
     beforeEach(() => {
-      service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService, 'BREAKOUT', errorHandler);
+      ({ detector: service } = createWhaleDetectionHarness({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+      }));
     });
 
     test('should handle multiple sequential detections', () => {
@@ -245,7 +251,11 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     const mockLogger = createMockLogger();
 
     test('should work without ErrorHandler', () => {
-      const service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService);
+      const { detector: service } = createWhaleDetectionHarness({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+        withErrorHandler: false,
+      });
       const result = service.detectWhale(createValidAnalysis(), 50000);
 
       expect(result).toBeDefined();
@@ -253,7 +263,11 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const service = new WhaleDetectionService(createValidConfig(), mockLogger as unknown as LoggerService);
+      const { detector: service } = createWhaleDetectionHarness({
+        config: createValidConfig(),
+        logger: mockLogger as unknown as LoggerService,
+        withErrorHandler: false,
+      });
 
       expect(() => {
         service.detectWhale(createValidAnalysis(), NaN);
