@@ -8,6 +8,7 @@ import {
   EntryCondition,
   ExitCondition,
   ExitType,
+  PositionSide,
   LoggerService,
   LogLevel,
   SignalDirection,
@@ -92,6 +93,8 @@ export function createTradingJournalHarness(options: {
   logger?: LoggerService;
   dataDir?: string;
   withErrorHandler?: boolean;
+  tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+  baseDeposit?: number;
 } = {}) {
   const logger = options.logger ?? createTradingJournalLogger();
   const dataDir = options.dataDir ?? createTradingJournalTempDir();
@@ -99,8 +102,8 @@ export function createTradingJournalHarness(options: {
   const journal = new TradingJournalService(
     logger,
     dataDir,
-    undefined,
-    undefined,
+    options.tradeHistoryConfig,
+    options.baseDeposit,
     undefined,
     options.withErrorHandler === false ? undefined : errorHandler,
   );
@@ -110,5 +113,49 @@ export function createTradingJournalHarness(options: {
     logger,
     dataDir,
     errorHandler,
+  };
+}
+
+export function createJournalOpenParams(overrides: Partial<{
+  id: string;
+  symbol: string;
+  side: PositionSide;
+  entryPrice: number;
+  quantity: number;
+  leverage: number;
+  entryCondition: EntryCondition;
+}> = {}) {
+  return {
+    id: 'TRADE_1',
+    symbol: 'BTCUSDT',
+    side: PositionSide.LONG,
+    entryPrice: 100,
+    quantity: 1,
+    leverage: 1,
+    entryCondition: createJournalEntryCondition(),
+    ...overrides,
+  };
+}
+
+export function createJournalCloseParams(overrides: Partial<{
+  id: string;
+  exitPrice: number;
+  exitCondition: ExitCondition;
+  realizedPnL: number;
+}> = {}) {
+  return {
+    id: 'TRADE_1',
+    exitPrice: 110,
+    exitCondition: createJournalExitCondition(
+      ExitType.TAKE_PROFIT_1,
+      110,
+      10,
+      10,
+      10,
+      [1],
+      false,
+    ),
+    realizedPnL: 10,
+    ...overrides,
   };
 }

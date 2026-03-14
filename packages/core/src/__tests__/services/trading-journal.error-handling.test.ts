@@ -24,29 +24,21 @@ import {
   EntryCondition,
   ExitCondition,
   PositionSide,
-  LogLevel,
-  SignalType,
-  SignalDirection,
-  TakeProfit,
   ExitType,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import {
   cleanupTradingJournalTempDir,
+  createJournalCloseParams,
   createJournalEntryCondition,
   createJournalExitCondition,
+  createJournalOpenParams,
+  createTradingJournalHarness,
 } from '../helpers/trading-journal-test.utils';
 
-/**
- * Mock Logger for testing
- */
-class MockLogger extends LoggerService {
-  constructor() {
-    super(LogLevel.INFO, './logs', false);
-  }
-}
-
 const createEntryCondition = createJournalEntryCondition;
+const createOpenTrade = createJournalOpenParams;
+const createCloseTrade = createJournalCloseParams;
 const createExitCondition = () => createJournalExitCondition(
   ExitType.TAKE_PROFIT_1,
   51000,
@@ -60,20 +52,11 @@ const createExitCondition = () => createJournalExitCondition(
 describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
   let journal: TradingJournalService;
   let errorHandler: ErrorHandler;
-  let logger: MockLogger;
+  let logger: LoggerService;
   let tempDir: string;
 
   beforeEach(() => {
-    logger = new MockLogger();
-    errorHandler = new ErrorHandler(logger);
-    tempDir = path.join(process.cwd(), 'test-journal-' + Date.now());
-
-    // Ensure temp directory exists
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    journal = new TradingJournalService(logger, tempDir, undefined, undefined, undefined, errorHandler);
+    ({ journal, logger, dataDir: tempDir, errorHandler } = createTradingJournalHarness());
   });
 
   afterEach(() => {
@@ -104,21 +87,21 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-A2: Should retry on file write failure (3 attempts)', () => {
       // Arrange: Create journal with a trade
       journal.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Act: Close a trade (triggers save with retry logic)
       journal.recordTradeClose({
-        id: 'trade-1',
-        exitPrice: 51000,
-        exitCondition: createExitCondition(),
-        realizedPnL: 1000,
+        ...createCloseTrade({
+          id: 'trade-1',
+          exitPrice: 51000,
+          exitCondition: createExitCondition(),
+          realizedPnL: 1000,
+        }),
       });
 
       // Assert: Trade should be closed
@@ -148,13 +131,11 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-A4: Should degrade gracefully after max retries', () => {
       // Arrange: Create journal with trade
       journal.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Act: Close trade (should degrade gracefully even if save has issues)
@@ -211,12 +192,10 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-B1: Should throw TradeRecordValidationError on empty trade ID', () => {
       // Arrange: Prepare invalid params
       const params = {
-        id: '',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
+        ...createOpenTrade({
+          id: '',
+          entryPrice: 50000,
+        }),
         entryCondition: createEntryCondition(),
       };
 
@@ -227,25 +206,22 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-B2: Should throw on duplicate trade ID', () => {
       // Arrange: Create first trade
       journal.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Act & Assert: Try to create duplicate
       expect(() =>
         journal.recordTradeOpen({
-          id: 'trade-1',
-          symbol: 'ETHUSDT',
-          side: PositionSide.LONG,
-          entryPrice: 3000,
-          quantity: 1,
-          leverage: 1,
-          entryCondition: createEntryCondition(),
+          ...createOpenTrade({
+            id: 'trade-1',
+            symbol: 'ETHUSDT',
+            entryPrice: 3000,
+            entryCondition: createEntryCondition(),
+          }),
         }),
       ).toThrow(TradeRecordValidationError);
     });
@@ -253,12 +229,10 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-B3: Should throw on missing required fields', () => {
       // This test verifies that validation catches missing fields
       const params = {
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+        }),
         entryCondition: createEntryCondition(),
       };
 
@@ -274,21 +248,21 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-B4: Should validate PnL calculation', () => {
       // Arrange: Create and close a trade
       journal.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Act: Close with valid PnL
       const { rollback } = journal.recordTradeClose({
-        id: 'trade-1',
-        exitPrice: 51000,
-        exitCondition: createExitCondition(),
-        realizedPnL: 1000,
+        ...createCloseTrade({
+          id: 'trade-1',
+          exitPrice: 51000,
+          exitCondition: createExitCondition(),
+          realizedPnL: 1000,
+        }),
       });
 
       // Assert: Trade should be closed with correct PnL
@@ -306,13 +280,11 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     it('test-C1: Should rollback on recordTradeClose failure', () => {
       // Arrange: Create trade
       journal.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Get initial state
@@ -352,21 +324,21 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       );
 
       journalWithBalance.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Act: Close trade (should skip balance update failures gracefully)
       journalWithBalance.recordTradeClose({
-        id: 'trade-1',
-        exitPrice: 51000,
-        exitCondition: createExitCondition(),
-        realizedPnL: 1000,
+        ...createCloseTrade({
+          id: 'trade-1',
+          exitPrice: 51000,
+          exitCondition: createExitCondition(),
+          realizedPnL: 1000,
+        }),
       });
 
       // Assert: Trade should still be closed despite any balance update issues
@@ -386,21 +358,21 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       );
 
       journalWithHistory.recordTradeOpen({
-        id: 'trade-1',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 50000,
-        quantity: 1,
-        leverage: 1,
-        entryCondition: createEntryCondition(),
+        ...createOpenTrade({
+          id: 'trade-1',
+          entryPrice: 50000,
+          entryCondition: createEntryCondition(),
+        }),
       });
 
       // Act: Close trade (CSV append might fail, but should not block)
       journalWithHistory.recordTradeClose({
-        id: 'trade-1',
-        exitPrice: 51000,
-        exitCondition: createExitCondition(),
-        realizedPnL: 1000,
+        ...createCloseTrade({
+          id: 'trade-1',
+          exitPrice: 51000,
+          exitCondition: createExitCondition(),
+          realizedPnL: 1000,
+        }),
       });
 
       // Assert: Trade should be closed in journal despite CSV issues

@@ -17,6 +17,8 @@ import * as path from 'path';
 import {
   cleanupTradingJournalTempDir,
   createJournalExitCondition,
+  createJournalCloseParams,
+  createJournalOpenParams,
   createJournalTakeProfit,
   createTradingJournalHarness,
 } from '../helpers/trading-journal-test.utils';
@@ -27,6 +29,8 @@ import {
 
 const createTakeProfit = createJournalTakeProfit;
 const createExitCondition = createJournalExitCondition;
+const createOpenTrade = createJournalOpenParams;
+const createCloseTrade = createJournalCloseParams;
 
 describe('TradingJournalService', () => {
   let journal: TradingJournalService;
@@ -116,12 +120,13 @@ describe('TradingJournalService', () => {
   describe('recordTradeOpen', () => {
     it('should record new trade opening', () => {
       journal.recordTradeOpen({
-        id: 'TRADE_1',
-        symbol: 'APTUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 10.5,
-        quantity: 100,
-        leverage: 10,
+        ...createOpenTrade({
+          id: 'TRADE_1',
+          symbol: 'APTUSDT',
+          entryPrice: 10.5,
+          quantity: 100,
+          leverage: 10,
+        }),
         entryCondition: {
           signal: {
             type: SignalType.TREND_FOLLOWING,
@@ -148,12 +153,13 @@ describe('TradingJournalService', () => {
     it('should throw error if trade ID is empty', () => {
       expect(() => {
         journal.recordTradeOpen({
-          id: '',
-          symbol: 'APTUSDT',
-          side: PositionSide.LONG,
-          entryPrice: 10.5,
-          quantity: 100,
-          leverage: 10,
+          ...createOpenTrade({
+            id: '',
+            symbol: 'APTUSDT',
+            entryPrice: 10.5,
+            quantity: 100,
+            leverage: 10,
+          }),
           entryCondition: {
             signal: {
               type: SignalType.TREND_FOLLOWING,
@@ -172,12 +178,13 @@ describe('TradingJournalService', () => {
 
     it('should throw error if trade ID already exists', () => {
       journal.recordTradeOpen({
-        id: 'DUPLICATE',
-        symbol: 'APTUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 10.5,
-        quantity: 100,
-        leverage: 10,
+        ...createOpenTrade({
+          id: 'DUPLICATE',
+          symbol: 'APTUSDT',
+          entryPrice: 10.5,
+          quantity: 100,
+          leverage: 10,
+        }),
         entryCondition: {
           signal: {
             type: SignalType.TREND_FOLLOWING,
@@ -194,12 +201,14 @@ describe('TradingJournalService', () => {
 
       expect(() => {
         journal.recordTradeOpen({
-          id: 'DUPLICATE',
-          symbol: 'APTUSDT',
-          side: PositionSide.SHORT,
-          entryPrice: 10.5,
-          quantity: 100,
-          leverage: 10,
+          ...createOpenTrade({
+            id: 'DUPLICATE',
+            symbol: 'APTUSDT',
+            side: PositionSide.SHORT,
+            entryPrice: 10.5,
+            quantity: 100,
+            leverage: 10,
+          }),
           entryCondition: {
             signal: {
               type: SignalType.TREND_FOLLOWING,
@@ -218,12 +227,13 @@ describe('TradingJournalService', () => {
 
     it('should persist trade to file', () => {
       journal.recordTradeOpen({
-        id: 'PERSIST_TEST',
-        symbol: 'APTUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 10.5,
-        quantity: 100,
-        leverage: 10,
+        ...createOpenTrade({
+          id: 'PERSIST_TEST',
+          symbol: 'APTUSDT',
+          entryPrice: 10.5,
+          quantity: 100,
+          leverage: 10,
+        }),
         entryCondition: {
           signal: {
             type: SignalType.TREND_FOLLOWING,
@@ -251,12 +261,13 @@ describe('TradingJournalService', () => {
     beforeEach(() => {
       // Open a trade first
       journal.recordTradeOpen({
-        id: 'CLOSE_TEST',
-        symbol: 'APTUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 10.0,
-        quantity: 100,
-        leverage: 10,
+        ...createOpenTrade({
+          id: 'CLOSE_TEST',
+          symbol: 'APTUSDT',
+          entryPrice: 10.0,
+          quantity: 100,
+          leverage: 10,
+        }),
         entryCondition: {
           signal: {
             type: SignalType.TREND_FOLLOWING,
@@ -274,10 +285,12 @@ describe('TradingJournalService', () => {
 
     it('should record trade closing with profit', () => {
       journal.recordTradeClose({
-        id: 'CLOSE_TEST',
-        exitPrice: 10.5,
-        exitCondition: createExitCondition(ExitType.TAKE_PROFIT_1, 10.5, 5.0, 50.0, 15, [1], false),
-        realizedPnL: 50.0,
+        ...createCloseTrade({
+          id: 'CLOSE_TEST',
+          exitPrice: 10.5,
+          exitCondition: createExitCondition(ExitType.TAKE_PROFIT_1, 10.5, 5.0, 50.0, 15, [1], false),
+          realizedPnL: 50.0,
+        }),
       });
 
       const trade = journal.getTrade('CLOSE_TEST');
@@ -291,10 +304,12 @@ describe('TradingJournalService', () => {
 
     it('should record trade closing with loss (stop loss)', () => {
       journal.recordTradeClose({
-        id: 'CLOSE_TEST',
-        exitPrice: 9.5,
-        exitCondition: createExitCondition(ExitType.STOP_LOSS, 9.5, -5.0, -30.0, 5, [], true),
-        realizedPnL: -30.0,
+        ...createCloseTrade({
+          id: 'CLOSE_TEST',
+          exitPrice: 9.5,
+          exitCondition: createExitCondition(ExitType.STOP_LOSS, 9.5, -5.0, -30.0, 5, [], true),
+          realizedPnL: -30.0,
+        }),
       });
 
       const trade = journal.getTrade('CLOSE_TEST');
@@ -307,20 +322,24 @@ describe('TradingJournalService', () => {
     it('should throw error if trade not found', () => {
       expect(() => {
         journal.recordTradeClose({
-          id: 'NON_EXISTENT',
-          exitPrice: 10.5,
-          exitCondition: createExitCondition(ExitType.TAKE_PROFIT_1, 10.5, 5.0, 50.0, 15, [1], false),
-          realizedPnL: 50.0,
+          ...createCloseTrade({
+            id: 'NON_EXISTENT',
+            exitPrice: 10.5,
+            exitCondition: createExitCondition(ExitType.TAKE_PROFIT_1, 10.5, 5.0, 50.0, 15, [1], false),
+            realizedPnL: 50.0,
+          }),
         });
       }).toThrow('Trade NON_EXISTENT not found');
     });
 
     it('should persist closed trade to file', () => {
       journal.recordTradeClose({
-        id: 'CLOSE_TEST',
-        exitPrice: 10.5,
-        exitCondition: createExitCondition(ExitType.TAKE_PROFIT_1, 10.5, 5.0, 50.0, 15, [1], false),
-        realizedPnL: 50.0,
+        ...createCloseTrade({
+          id: 'CLOSE_TEST',
+          exitPrice: 10.5,
+          exitCondition: createExitCondition(ExitType.TAKE_PROFIT_1, 10.5, 5.0, 50.0, 15, [1], false),
+          realizedPnL: 50.0,
+        }),
       });
 
       // Create new journal instance and verify

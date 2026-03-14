@@ -292,3 +292,11 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-13 for the `analyzer-engine` service-suite testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.service.test.ts` -> PASS (1/1 suite, 28/28 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-13 follow-up: extended the shared `trading-journal` helpers with reusable open/close-trade builders plus the same temp-dir harness path for both suites, then aligned the main and error-handling suites on those helpers instead of repeating large inline trade payloads, ad hoc temp-directory setup, and local logger bootstrapping; reviewed `services/trading-journal.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-13 for the `trading-journal` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` -> PASS (2/2 suites, 49/49 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `anomaly-detection` helpers for canonical logger/ErrorHandler bootstrap, mock-logger variants, reusable trade fixtures, and history-seeding helpers, then aligned the error-handling suite on that harness instead of repeating local service construction and inline trade/logger setup; reviewed `services/anomaly-detection.service.ts` and left production code unchanged because this slice only needed test-harness consolidation.
+- Verification on 2026-03-14 for the `anomaly-detection` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts` -> PASS (1/1 suite, 35/35 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).

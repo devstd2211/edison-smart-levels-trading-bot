@@ -13,38 +13,29 @@
  */
 
 import { AnomalyDetectionService } from '../../services/anomaly-detection.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { LogLevel } from '../../types/legacy';
 import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection';
+import {
+  AnomalyDetectionInternals,
+  createAnomalyDetectionMockLogger,
+  createAnomalyDetectionServiceHarness,
+  createAnomalyDetectionTrade,
+  seedVolatilityHistory,
+  seedVolumeHistory,
+} from '../helpers/anomaly-detection-test.utils';
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
   type ConfigInput = ConstructorParameters<typeof AnomalyDetectionService>[0];
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
-  type AnomalyInternals = {
-    performVolumeAnomalyDetection: (volume: number) => unknown;
-    performVolatilitySpikeDetection: (value: number) => unknown;
-    performWhaleDetection: (trades: Trade[]) => unknown;
-    performManipulationDetection: () => unknown;
-  };
-
-  const createMockTrade = (overrides?: Partial<Trade>): Trade => ({
-    price: 50000,
-    size: 0.1,
-    side: 'BUY',
-    timestamp: Date.now(),
-    ...overrides,
-  });
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-    service = new AnomalyDetectionService(undefined, undefined, logger, errorHandler);
+    ({ service, logger, errorHandler } = createAnomalyDetectionServiceHarness());
   });
 
   afterEach(() => {
@@ -135,7 +126,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   describe('GRACEFUL_DEGRADE: Detection Failures', () => {
     it('should return no anomaly when volume detection throws error', () => {
       // Force error by mocking internal method
-      const internals = service as unknown as AnomalyInternals;
+      const internals = service as unknown as AnomalyDetectionInternals;
       jest.spyOn(internals, 'performVolumeAnomalyDetection').mockImplementation(() => {
         throw new Error('Volume detection failed');
       });
@@ -148,7 +139,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should return no spike when volatility detection throws error', () => {
       // Force error
-      const internals = service as unknown as AnomalyInternals;
+      const internals = service as unknown as AnomalyDetectionInternals;
       jest.spyOn(internals, 'performVolatilitySpikeDetection').mockImplementation(() => {
         throw new Error('Volatility detection failed');
       });
@@ -160,10 +151,10 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should return empty array when whale detection throws error', () => {
-      const trades = [createMockTrade()];
+      const trades = [createAnomalyDetectionTrade()];
 
       // Force error
-      const internals = service as unknown as AnomalyInternals;
+      const internals = service as unknown as AnomalyDetectionInternals;
       jest.spyOn(internals, 'performWhaleDetection').mockImplementation(() => {
         throw new Error('Whale detection failed');
       });
@@ -175,7 +166,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should return no flags when manipulation detection throws error', () => {
       // Force error
-      const internals = service as unknown as AnomalyInternals;
+      const internals = service as unknown as AnomalyDetectionInternals;
       jest.spyOn(internals, 'performManipulationDetection').mockImplementation(() => {
         throw new Error('Manipulation detection failed');
       });
@@ -202,9 +193,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should handle corrupted trade data gracefully', () => {
       const trades: Trade[] = [
-        createMockTrade({ price: NaN }),
-        createMockTrade({ size: Infinity }),
-        createMockTrade({ price: 50000, size: 0.1 }), // Valid one
+        createAnomalyDetectionTrade({ price: NaN }),
+        createAnomalyDetectionTrade({ size: Infinity }),
+        createAnomalyDetectionTrade({ price: 50000, size: 0.1 }), // Valid one
       ];
 
       const alerts = service.detectWhaleActivity(trades);
@@ -220,11 +211,11 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   describe('SKIP: Logging Failures', () => {
     it('should skip logger errors during initialization', () => {
-      const badLogger = {
+      const badLogger = createAnomalyDetectionMockLogger({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-      } as unknown as LoggerService;
+      });
 
       expect(() => {
         new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
@@ -232,19 +223,16 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should skip logger errors during volume detection', () => {
-      const badLogger = {
+      const badLogger = createAnomalyDetectionMockLogger({
         warn: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        debug: jest.fn(),
-        info: jest.fn(),
-        error: jest.fn(),
-      } as unknown as LoggerService;
+      });
 
       const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
 
       // Force detection to log a warning
-      const testInternals = testService as unknown as AnomalyInternals;
+      const testInternals = testService as unknown as AnomalyDetectionInternals;
       jest.spyOn(testInternals, 'performVolumeAnomalyDetection').mockImplementation(() => {
         throw new Error('Detection failed');
       });
@@ -255,14 +243,11 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should skip logger errors during history clearing', () => {
-      const badLogger = {
+      const badLogger = createAnomalyDetectionMockLogger({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        debug: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-      } as unknown as LoggerService;
+      });
 
       const testService = new AnomalyDetectionService(undefined, undefined, badLogger, errorHandler);
 
@@ -280,7 +265,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should detect high volume anomaly', () => {
       // Add normal volumes
       for (let i = 0; i < 25; i++) {
-        service.detectVolumeAnomaly(1000 + Math.random() * 100);
+        seedVolumeHistory(service, [1000 + Math.random() * 100]);
       }
 
       // Add anomalous volume (10x normal)
@@ -295,7 +280,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should NOT detect anomaly with normal volume', () => {
       // Add normal volumes
       for (let i = 0; i < 25; i++) {
-        service.detectVolumeAnomaly(1000 + Math.random() * 50);
+        seedVolumeHistory(service, [1000 + Math.random() * 50]);
       }
 
       // Add another normal volume
@@ -307,7 +292,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should detect volatility spike', () => {
       // Add normal volatility
       for (let i = 0; i < 25; i++) {
-        service.detectVolatilitySpike(1.0 + Math.random() * 0.1);
+        seedVolatilityHistory(service, [1.0 + Math.random() * 0.1]);
       }
 
       // Add spike (5x normal)
@@ -321,7 +306,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should NOT detect spike with normal volatility', () => {
       // Add normal volatility
       for (let i = 0; i < 25; i++) {
-        service.detectVolatilitySpike(1.0 + Math.random() * 0.05);
+        seedVolatilityHistory(service, [1.0 + Math.random() * 0.05]);
       }
 
       // Add another normal value
@@ -335,13 +320,13 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const config: Partial<AnomalyDetectionConfig> = {
         whaleTradeThreshold: 3.0, // Lower threshold (300% vs default 500%)
       };
-      const testService = new AnomalyDetectionService(config, undefined, logger, errorHandler);
+      const { service: testService } = createAnomalyDetectionServiceHarness({ config, logger });
 
       const trades: Trade[] = [
-        createMockTrade({ size: 0.1, price: 50000 }), // $5k
-        createMockTrade({ size: 0.1, price: 50000 }), // $5k
-        createMockTrade({ size: 0.1, price: 50000 }), // $5k
-        createMockTrade({ size: 20.0, price: 50000 }), // $1M (whale!)
+        createAnomalyDetectionTrade({ size: 0.1, price: 50000 }), // $5k
+        createAnomalyDetectionTrade({ size: 0.1, price: 50000 }), // $5k
+        createAnomalyDetectionTrade({ size: 0.1, price: 50000 }), // $5k
+        createAnomalyDetectionTrade({ size: 20.0, price: 50000 }), // $1M (whale!)
       ];
 
       const alerts = testService.detectWhaleActivity(trades);
@@ -356,10 +341,10 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should detect accumulation pattern', () => {
       const trades: Trade[] = [
-        createMockTrade({ side: 'BUY', size: 1.0, price: 50000 }),
-        createMockTrade({ side: 'BUY', size: 1.0, price: 50100 }),
-        createMockTrade({ side: 'BUY', size: 1.0, price: 50200 }),
-        createMockTrade({ side: 'SELL', size: 0.1, price: 50000 }),
+        createAnomalyDetectionTrade({ side: 'BUY', size: 1.0, price: 50000 }),
+        createAnomalyDetectionTrade({ side: 'BUY', size: 1.0, price: 50100 }),
+        createAnomalyDetectionTrade({ side: 'BUY', size: 1.0, price: 50200 }),
+        createAnomalyDetectionTrade({ side: 'SELL', size: 0.1, price: 50000 }),
       ];
 
       const alerts = service.detectWhaleActivity(trades);
@@ -373,10 +358,10 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should detect distribution pattern', () => {
       const trades: Trade[] = [
-        createMockTrade({ side: 'SELL', size: 1.0, price: 50000 }),
-        createMockTrade({ side: 'SELL', size: 1.0, price: 49900 }),
-        createMockTrade({ side: 'SELL', size: 1.0, price: 49800 }),
-        createMockTrade({ side: 'BUY', size: 0.1, price: 50000 }),
+        createAnomalyDetectionTrade({ side: 'SELL', size: 1.0, price: 50000 }),
+        createAnomalyDetectionTrade({ side: 'SELL', size: 1.0, price: 49900 }),
+        createAnomalyDetectionTrade({ side: 'SELL', size: 1.0, price: 49800 }),
+        createAnomalyDetectionTrade({ side: 'BUY', size: 0.1, price: 50000 }),
       ];
 
       const alerts = service.detectWhaleActivity(trades);
@@ -393,7 +378,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const basePrice = 50000;
       const trades: Trade[] = [];
       for (let i = 0; i < 10; i++) {
-        trades.push(createMockTrade({
+        trades.push(createAnomalyDetectionTrade({
           price: basePrice, // All trades at exactly same price
           size: 0.1,
           side: i % 2 === 0 ? 'BUY' : 'SELL',
@@ -414,7 +399,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should update and retrieve volume statistics', () => {
       // Add some volumes
       for (let i = 0; i < 10; i++) {
-        service.detectVolumeAnomaly(1000 + i * 100);
+        seedVolumeHistory(service, [1000 + i * 100]);
       }
 
       const stats = service.getVolumeStats();
@@ -467,8 +452,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     let serviceWithoutEH: AnomalyDetectionService;
 
     beforeEach(() => {
-      const testLogger = new LoggerService(LogLevel.ERROR, './logs', false);
-      serviceWithoutEH = new AnomalyDetectionService(undefined, undefined, testLogger);
+      ({ service: serviceWithoutEH } = createAnomalyDetectionServiceHarness({ withErrorHandler: false }));
     });
 
     afterEach(() => {
@@ -478,7 +462,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should detect volume anomalies without ErrorHandler', () => {
       // Add normal volumes
       for (let i = 0; i < 25; i++) {
-        serviceWithoutEH.detectVolumeAnomaly(1000);
+        seedVolumeHistory(serviceWithoutEH, [1000]);
       }
 
       const result = serviceWithoutEH.detectVolumeAnomaly(10000);
@@ -490,7 +474,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should detect volatility spikes without ErrorHandler', () => {
       // Add normal volatility
       for (let i = 0; i < 25; i++) {
-        serviceWithoutEH.detectVolatilitySpike(1.0);
+        seedVolatilityHistory(serviceWithoutEH, [1.0]);
       }
 
       const result = serviceWithoutEH.detectVolatilitySpike(5.0);
@@ -501,8 +485,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should detect whale activity without ErrorHandler', () => {
       const trades: Trade[] = [
-        createMockTrade({ size: 0.1 }),
-        createMockTrade({ size: 10.0 }), // Whale
+        createAnomalyDetectionTrade({ size: 0.1 }),
+        createAnomalyDetectionTrade({ size: 10.0 }), // Whale
       ];
 
       const alerts = serviceWithoutEH.detectWhaleActivity(trades);
