@@ -13,75 +13,30 @@
  */
 
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { Candle, LogLevel, Pattern, SwingPoint, PatternRecognitionConfig, SwingPointType } from '../../types/legacy';
+import { Candle, Pattern, SwingPoint, PatternRecognitionConfig, SwingPointType } from '../../types/legacy';
+import {
+  asPatternRecognitionCandles as asCandles,
+  asPatternRecognitionConfig as asConfig,
+  asPatternRecognitionInternals as asInternals,
+  asPatternRecognitionPattern as asPattern,
+  asPatternRecognitionSwing as asSwing,
+  createPatternRecognitionCandle as createMockCandle,
+  createPatternRecognitionCandles as createCandleArray,
+  createPatternRecognitionHarness,
+  createPatternRecognitionMockLogger,
+  createPatternRecognitionSwing as createMockSwing,
+} from '../helpers/pattern-recognition-test.utils';
 
 describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
-  const asConfig = (value: unknown): PatternRecognitionConfig => value as PatternRecognitionConfig;
-  const asCandles = (value: unknown): Candle[] => value as Candle[];
-  const asPattern = (value: unknown): Pattern => value as Pattern;
-  const asSwing = (value: unknown): SwingPoint => value as SwingPoint;
   const asLogger = (value: unknown): LoggerService => value as LoggerService;
-  type PatternInternals = {
-    performPatternRecognition: (candles: Candle[]) => Pattern[];
-    performStrengthCalculation: (pattern: Pattern) => number;
-    performFibonacciCalculation: (swing: SwingPoint) => Array<{ level: number; price: number }>;
-    performReliabilityScoring: (pattern: Pattern) => number;
-    performZoneIdentification: () => Array<unknown>;
-    candleHistory: Candle[];
-  };
-  const asInternals = (svc: PatternRecognitionService): PatternInternals =>
-    svc as unknown as PatternInternals;
-
-  const createMockCandle = (
-    open: number,
-    high: number,
-    low: number,
-    close: number,
-    timestamp: number = Date.now(),
-  ): Candle => ({
-    timestamp,
-    open,
-    high,
-    low,
-    close,
-    volume: 1000,
-  });
-
-  const createCandleArray = (count: number): Candle[] => {
-    const candles: Candle[] = [];
-    let price = 50000;
-
-    for (let i = 0; i < count; i++) {
-      const open = price;
-      const close = price + (Math.random() - 0.5) * 100;
-      const high = Math.max(open, close) + Math.random() * 50;
-      const low = Math.min(open, close) - Math.random() * 50;
-
-      candles.push(createMockCandle(open, high, low, close, Date.now() - (count - i) * 60000));
-      price = close;
-    }
-
-    return candles;
-  };
-
-  const createMockSwing = (overrides?: Partial<SwingPoint>): SwingPoint => ({
-      type: SwingPointType.HIGH,
-    price: 51000,
-    timestamp: Date.now(),
-    index: 10,
-    strength: 70,
-    ...overrides,
-  });
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-    service = new PatternRecognitionService(undefined, undefined, logger, errorHandler);
+    ({ service, logger, errorHandler } = createPatternRecognitionHarness());
   });
 
   afterEach(() => {
@@ -304,11 +259,11 @@ describe('PatternRecognitionService - Error Handling', () => {
 
   describe('SKIP: Logging Failures', () => {
     it('should skip logger errors during initialization', () => {
-      const badLogger = {
+      const badLogger = createPatternRecognitionMockLogger({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-      } as unknown as LoggerService;
+      });
 
       expect(() => {
         new PatternRecognitionService(undefined, undefined, badLogger, errorHandler);
@@ -316,14 +271,11 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
 
     it('should skip logger errors during pattern recognition', async () => {
-      const badLogger = {
+      const badLogger = createPatternRecognitionMockLogger({
         warn: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        debug: jest.fn(),
-        info: jest.fn(),
-        error: jest.fn(),
-      } as unknown as LoggerService;
+      });
 
       const testService = new PatternRecognitionService(undefined, undefined, asLogger(badLogger), errorHandler);
 
@@ -340,14 +292,11 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
 
     it('should skip logger errors during candle update', () => {
-      const badLogger = {
+      const badLogger = createPatternRecognitionMockLogger({
         debug: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-      } as unknown as LoggerService;
+      });
 
       const testService = new PatternRecognitionService(undefined, undefined, asLogger(badLogger), errorHandler);
 
@@ -357,14 +306,11 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
 
     it('should skip logger errors during history clearing', () => {
-      const badLogger = {
+      const badLogger = createPatternRecognitionMockLogger({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        debug: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-      } as unknown as LoggerService;
+      });
 
       const testService = new PatternRecognitionService(undefined, undefined, asLogger(badLogger), errorHandler);
 
@@ -645,8 +591,7 @@ describe('PatternRecognitionService - Error Handling', () => {
     let serviceWithoutEH: PatternRecognitionService;
 
     beforeEach(() => {
-      const testLogger = new LoggerService(LogLevel.ERROR, './logs', false);
-      serviceWithoutEH = new PatternRecognitionService(undefined, undefined, testLogger);
+      ({ service: serviceWithoutEH } = createPatternRecognitionHarness({ withErrorHandler: false }));
     });
 
     afterEach(() => {
