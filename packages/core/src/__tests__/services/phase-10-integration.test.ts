@@ -3,127 +3,45 @@
  * Simplified tests that verify Phase 10 services work together correctly
  */
 
-import { ErrorHandler } from '../../errors/ErrorHandler';
-import { AdvancedOrderFlowService } from '../../services/advanced-order-flow.service';
 import { LiquidityHeatmapService } from '../../services/liquidity-heatmap.service';
 import { SmartOrderPlacementService } from '../../services/smart-order-placement.service';
 import { MLSignalValidatorService } from '../../services/ml-signal-validator.service';
-import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { AnomalyDetectionService } from '../../services/anomaly-detection.service';
-import { AdvancedOrderFlowConfig, Tick } from '../../types/advanced-order-flow';
 import { Orderbook } from '../../types/legacy';
-import { LoggerService, Signal, MarketContext, SignalDirection } from '../../types/legacy';
+import { Signal, MarketContext } from '../../types/legacy';
+import {
+  asPhase10Context,
+  asPhase10Signal,
+  asPhase10SignalType,
+  createPhase10Context,
+  createPhase10Harness,
+  createPhase10IntegrationOrderbook,
+  createPhase10Signal,
+  seedPhase10VolumeBaseline,
+} from '../helpers/phase-10-integration-test.utils';
 
 describe('Phase 10 Integration Tests', () => {
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-
-  // Phase 10.1 Services
-  let orderFlowService: AdvancedOrderFlowService;
   let liquidityService: LiquidityHeatmapService;
   let smartOrderService: SmartOrderPlacementService;
 
   // Phase 10.2 Services
   let mlValidatorService: MLSignalValidatorService;
-  let patternService: PatternRecognitionService;
   let anomalyService: AnomalyDetectionService;
-  const asSignalType = (value: unknown): Signal['type'] => value as Signal['type'];
   const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
-  const asSignal = (value: unknown): Signal => value as Signal;
-  const asContext = (value: unknown): MarketContext => value as MarketContext;
 
   beforeEach(() => {
-    logger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as LoggerService;
-
-    errorHandler = new ErrorHandler(logger);
-
-    // Initialize Phase 10.1 services
-    const orderFlowConfig: AdvancedOrderFlowConfig = {
-      tickWindowMs: 5000,
-      orderbookLevels: 10,
-      imbalanceThreshold: 0.65,
-      spoofingThreshold: 3.0,
-      minVolumeUSDT: 1000,
-      maxConfidence: 100,
-      enableSpoofingDetection: true,
-      enableMomentum: true,
-    };
-    orderFlowService = new AdvancedOrderFlowService(orderFlowConfig, undefined, logger, errorHandler);
-
-    liquidityService = new LiquidityHeatmapService(
-      {
-        maxLevels: 50,
-        minStrengthThreshold: 30,
-        clusteringTolerance: 0.1,
-        enableSupportResistance: true,
-        enableSlippageCalc: true,
-        enableExecutionCost: true,
-      },
-      undefined,
-      logger,
-      errorHandler
-    );
-
-    smartOrderService = new SmartOrderPlacementService(
-      {
-        maxOrderSize: 10.0,
-        maxSlippageBps: 50,
-        minFillProbability: 80,
-        analyzeLevels: 20,
-        enableAdaptive: true,
-        executionTimeHorizon: 60000,
-      },
-      undefined,
-      logger,
-      errorHandler
-    );
-
-    // Initialize Phase 10.2 services
-    mlValidatorService = new MLSignalValidatorService(
-      {
-        minHistoricalSamples: 30,
-        timeDecayFactor: 0.95,
-      },
-      undefined,
-      logger,
-      errorHandler
-    );
-
-    patternService = new PatternRecognitionService(
-      {
-        minPatternStrength: 40,
-        minPatternReliability: 50,
-      },
-      undefined,
-      logger,
-      errorHandler
-    );
-
-    anomalyService = new AnomalyDetectionService(
-      {
-        volumeAnomalyThreshold: 2.5,
-        volatilitySpikeThreshold: 2.0,
-        whaleTradeThreshold: 5.0,
-        volumeWindowSize: 50,
-        volatilityWindowSize: 50,
-      },
-      undefined,
-      logger,
-      errorHandler
-    );
+    ({
+      liquidityService,
+      smartOrderService,
+      mlValidatorService,
+      anomalyService,
+    } = createPhase10Harness());
   });
 
   describe('Phase 10.1 Services Integration', () => {
     it('should analyze order flow and generate smart order placement', async () => {
       // 1. Create test orderbook
-      const orderbook: Orderbook = {
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
+      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
         bids: [
           { price: 50000, volume: 10.0 },
           { price: 49990, volume: 8.0 },
@@ -138,7 +56,7 @@ describe('Phase 10 Integration Tests', () => {
           { price: 50040, volume: 8.0 },
           { price: 50050, volume: 4.0 },
         ],
-      };
+      });
 
       // 2. Build liquidity heatmap
       const heatmap = await liquidityService.buildLiquidityHeatmap(orderbook);
@@ -159,9 +77,7 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should calculate slippage and execution cost', async () => {
-      const orderbook: Orderbook = {
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
+      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
         bids: [
           { price: 50000, volume: 15.0 },
           { price: 49990, volume: 20.0 },
@@ -172,7 +88,7 @@ describe('Phase 10 Integration Tests', () => {
           { price: 50020, volume: 18.0 },
           { price: 50030, volume: 8.0 },
         ],
-      };
+      });
 
       // Calculate slippage
       const slippage = await liquidityService.calculateSlippageForSize(orderbook, 10.0, 'buy');
@@ -189,20 +105,18 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should detect support and resistance levels', async () => {
-      const orderbook: Orderbook = {
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
+      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
         bids: [
-          { price: 50000, volume: 25.0 }, // Strong support
+          { price: 50000, volume: 25.0 },
           { price: 49990, volume: 10.0 },
           { price: 49980, volume: 8.0 },
         ],
         asks: [
           { price: 50010, volume: 8.0 },
           { price: 50020, volume: 12.0 },
-          { price: 50030, volume: 22.0 }, // Strong resistance
+          { price: 50030, volume: 22.0 },
         ],
-      };
+      });
 
       const sr = await liquidityService.findSupportResistance(orderbook);
       expect(sr).toBeDefined();
@@ -213,25 +127,8 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Phase 10.2 Services Integration', () => {
     it('should validate signals with ML', async () => {
-      const signal: Signal = {
-        type: asSignalType('delta'),
-        direction: SignalDirection.LONG,
-        confidence: 0.75,
-        timestamp: Date.now(),
-        price: 50000,
-        stopLoss: 49500,
-        takeProfits: [],
-        reason: 'test signal'
-      };
-
-      const context: MarketContext = {
-        currentPrice: 50000,
-        volatility: 0.02,
-        regime: 'trending_up',
-        trendStrength: 0.5,
-        volumeRatio: 1.0,
-        timestamp: Date.now(),
-      };
+      const signal: Signal = createPhase10Signal();
+      const context: MarketContext = createPhase10Context();
 
       const validation = await mlValidatorService.validateSignal(signal, context);
 
@@ -244,9 +141,7 @@ describe('Phase 10 Integration Tests', () => {
 
     it('should detect volume anomalies', () => {
       // Feed normal volume samples to build baseline
-      for (let i = 0; i < 25; i++) {
-        anomalyService.detectVolumeAnomaly(100 + Math.random() * 20);
-      }
+      seedPhase10VolumeBaseline(anomalyService);
 
       // Normal volume - no anomaly
       const normal = anomalyService.detectVolumeAnomaly(110);
@@ -260,18 +155,8 @@ describe('Phase 10 Integration Tests', () => {
 
 
     it('should work without history tracking methods', () => {
-      const signal: Signal = {
-        type: asSignalType('delta'),
-        direction: SignalDirection.LONG,
-        confidence: 0.7,
-        timestamp: Date.now(),
-        price: 50000,
-        stopLoss: 49500,
-        takeProfits: [],
-        reason: 'test signal'
-      };
-
-            // Services should work without recordSignalOutcome or updateVolumeHistory
+      createPhase10Signal({ confidence: 0.7 });
+      // Services should work without recordSignalOutcome or updateVolumeHistory
       expect(true).toBe(true);
     });
   });
@@ -279,9 +164,7 @@ describe('Phase 10 Integration Tests', () => {
   describe('Full Phase 10 Workflow', () => {
     it('should execute complete market analysis', async () => {
       // Step 1: Build orderbook
-      const orderbook: Orderbook = {
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
+      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
         bids: Array.from({ length: 10 }, (_, i) => ({
           price: 50000 - i * 10,
           volume: 5 + Math.random() * 10,
@@ -290,32 +173,15 @@ describe('Phase 10 Integration Tests', () => {
           price: 50010 + i * 10,
           volume: 5 + Math.random() * 10,
         })),
-      };
+      });
 
       // Step 2: Analyze liquidity
       const heatmap = await liquidityService.buildLiquidityHeatmap(orderbook);
       expect(heatmap.zones.length).toBeGreaterThanOrEqual(0);
 
       // Step 3: Generate signal
-      const signal: Signal = {
-        type: asSignalType('delta'),
-        direction: SignalDirection.LONG,
-        confidence: 0.75,
-        timestamp: Date.now(),
-        price: 50000,
-        stopLoss: 49500,
-        takeProfits: [],
-        reason: 'test signal'
-      };
-
-      const context: MarketContext = {
-        currentPrice: 50010,
-        volatility: 0.02,
-        regime: 'trending_up',
-        trendStrength: 0.5,
-        volumeRatio: 1.0,
-        timestamp: Date.now(),
-      };
+      const signal: Signal = createPhase10Signal();
+      const context: MarketContext = createPhase10Context({ currentPrice: 50010 });
 
       // Step 4: Validate signal
       const validation = await mlValidatorService.validateSignal(signal, context);
@@ -334,9 +200,7 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Performance Benchmarks', () => {
     it('should build liquidity heatmap in < 100ms', async () => {
-      const orderbook: Orderbook = {
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
+      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
         bids: Array.from({ length: 50 }, (_, i) => ({
           price: 50000 - i * 10,
           volume: Math.random() * 10,
@@ -345,7 +209,7 @@ describe('Phase 10 Integration Tests', () => {
           price: 50010 + i * 10,
           volume: Math.random() * 10,
         })),
-      };
+      });
 
       const start = Date.now();
       await liquidityService.buildLiquidityHeatmap(orderbook);
@@ -355,25 +219,8 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should validate signal in < 30ms', async () => {
-      const signal: Signal = {
-        type: asSignalType('delta'),
-        direction: SignalDirection.LONG,
-        confidence: 0.75,
-        timestamp: Date.now(),
-        price: 50000,
-        stopLoss: 49500,
-        takeProfits: [],
-        reason: 'test signal'
-      };
-
-      const context: MarketContext = {
-        currentPrice: 50000,
-        volatility: 0.02,
-        regime: 'trending_up',
-        trendStrength: 0.5,
-        volumeRatio: 1.0,
-        timestamp: Date.now(),
-      };
+      const signal: Signal = createPhase10Signal();
+      const context: MarketContext = createPhase10Context();
 
       const start = Date.now();
       await mlValidatorService.validateSignal(signal, context);
@@ -407,7 +254,7 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should handle invalid signal gracefully', async () => {
-      const invalidSignal = asSignal({
+      const invalidSignal = asPhase10Signal({
         type: 'invalid',
         direction: 'wrong',
         confidence: 5.0,
@@ -415,29 +262,12 @@ describe('Phase 10 Integration Tests', () => {
       });
 
       // Service doesn't throw, but returns NaN for invalid inputs
-      const result = await mlValidatorService.validateSignal(invalidSignal, asContext({}));
+      const result = await mlValidatorService.validateSignal(invalidSignal, asPhase10Context({}));
       expect(result.adjustedConfidence).toBeNaN();
 
       // Service should still work after error
-      const validSignal: Signal = {
-        type: asSignalType('delta'),
-        direction: SignalDirection.LONG,
-        confidence: 0.75,
-        timestamp: Date.now(),
-        price: 50000,
-        stopLoss: 49500,
-        takeProfits: [],
-        reason: 'test signal'
-      };
-
-      const context: MarketContext = {
-        currentPrice: 50000,
-        volatility: 0.02,
-        regime: 'trending_up',
-        trendStrength: 0.5,
-        volumeRatio: 1.0,
-        timestamp: Date.now(),
-      };
+      const validSignal: Signal = createPhase10Signal();
+      const context: MarketContext = createPhase10Context();
 
       const validResult = await mlValidatorService.validateSignal(validSignal, context);
       expect(validResult).toBeDefined();
@@ -451,9 +281,7 @@ describe('Phase 10 Integration Tests', () => {
 
       // Run 500 iterations
       for (let i = 0; i < 500; i++) {
-        const orderbook: Orderbook = {
-          symbol: 'BTCUSDT',
-          timestamp: Date.now(),
+        const orderbook: Orderbook = createPhase10IntegrationOrderbook({
           bids: Array.from({ length: 20 }, (_, j) => ({
             price: 50000 - j * 10,
             volume: Math.random() * 10,
@@ -462,7 +290,7 @@ describe('Phase 10 Integration Tests', () => {
             price: 50010 + j * 10,
             volume: Math.random() * 10,
           })),
-        };
+        });
 
         await liquidityService.buildLiquidityHeatmap(orderbook);
       }

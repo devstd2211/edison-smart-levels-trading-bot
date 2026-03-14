@@ -308,3 +308,7 @@ Completed history is intentionally removed from this file and kept in `REFACTOR_
 - Verification on 2026-03-14 for the `smart-order-placement` testability follow-up slice:
   - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS (1/1 suite, 33/33 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+- Testability batch status on 2026-03-14 follow-up: added shared `phase-10-integration` helpers for canonical phase-service bootstrap, reusable phase signal/context builders, shared orderbook fixtures, and anomaly baseline seeding, then aligned the broad integration suite on that harness instead of repeating local logger/service/config construction across the file; reviewed the related phase-10 service set and left production code unchanged because this slice only needed integration-harness consolidation.
+- Verification on 2026-03-14 for the `phase-10-integration` testability follow-up slice:
+  - `npm test -- --runInBand packages/core/src/__tests__/services/phase-10-integration.test.ts` -> PASS (1/1 suite, 12/12 tests).
+  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
