@@ -9,8 +9,8 @@
  * - Backward Compatibility: Tests without ErrorHandler still work
  */
 
-import { CandleAggregatorService } from '../../services/candle-aggregator.service';
-import { LoggerService } from '../../services/logger.service';
+import type { CandleAggregatorService } from '../../services/candle-aggregator.service';
+import type { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asCandleAggregatorLogger,
@@ -226,6 +226,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     test('should work without ErrorHandler provided', () => {
       const basicService = createCandleAggregatorService({
         logger: asCandleAggregatorLogger(mockLogger),
+        withErrorHandler: false,
       });
       const candles = [createAggregatorMockCandle(1000, 100)];
 
@@ -237,6 +238,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     test('should throw on invalid input even without ErrorHandler', () => {
       const basicService = createCandleAggregatorService({
         logger: asCandleAggregatorLogger(mockLogger),
+        withErrorHandler: false,
       });
 
       expect(() => {
@@ -245,7 +247,10 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = createCandleAggregatorService({ errorHandler });
+      const basicService = createCandleAggregatorService({
+        errorHandler,
+        withErrorHandler: false,
+      });
       const candles = [createAggregatorMockCandle(1000, 100)];
 
       expect(() => {

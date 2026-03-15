@@ -19,12 +19,13 @@ import { AnalyzerEngineService, AnalyzerExecutionConfig } from '../../services/a
 import type { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
 import type { IAnalyzer } from '../../types/analyzer';
 import {
-  asAnalyzerEngineLogger,
   createAnalyzerEngineHarness,
   createAnalyzerEngineMockAnalyzer,
   createAnalyzerEngineMockCandles,
+  createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createAnalyzerEngineMockStrategyConfig,
+  createAnalyzerEngineService,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -36,6 +37,10 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
+
+  beforeEach(() => {
+    mockLogger = createAnalyzerEngineMockLogger();
+  });
 
   // ========== BASIC EXECUTION (5 tests) ==========
 
@@ -428,10 +433,10 @@ describe('AnalyzerEngineService', () => {
         }),
       } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(
-        mockFailingRegistry,
-        asAnalyzerEngineLogger(mockLogger),
-      );
+      service = createAnalyzerEngineService(new Map(), {
+        registry: mockFailingRegistry,
+        logger: mockLogger,
+      });
 
       const candles = createAnalyzerEngineMockCandles(50);
       const config = createAnalyzerEngineMockStrategyConfig(['EMA']);
@@ -450,10 +455,10 @@ describe('AnalyzerEngineService', () => {
         }),
       } as unknown as AnalyzerRegistryService;
 
-      service = new AnalyzerEngineService(
-        mockFailingRegistry,
-        asAnalyzerEngineLogger(mockLogger),
-      );
+      service = createAnalyzerEngineService(new Map(), {
+        registry: mockFailingRegistry,
+        logger: mockLogger,
+      });
 
       const candles = createAnalyzerEngineMockCandles(50);
       const config = createAnalyzerEngineMockStrategyConfig(['EMA']);
@@ -479,10 +484,10 @@ describe('AnalyzerEngineService', () => {
       const analyzers = new Map([['BAD', { instance: badAnalyzer, weight: 0.5, priority: 5 }]]);
 
       mockRegistry = createAnalyzerEngineMockRegistry(analyzers);
-      service = new AnalyzerEngineService(
-        mockRegistry,
-        asAnalyzerEngineLogger(mockLogger),
-      );
+      service = createAnalyzerEngineService(analyzers, {
+        registry: mockRegistry,
+        logger: mockLogger,
+      });
 
       const candles = createAnalyzerEngineMockCandles(50);
       const config = createAnalyzerEngineMockStrategyConfig(['BAD']);

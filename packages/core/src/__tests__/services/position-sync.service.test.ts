@@ -3,11 +3,7 @@
  * Tests for position synchronization with exchange
  */
 
-import { PositionSyncService } from '../../services/position-sync.service';
-import { IExchange } from '../../interfaces/IExchange';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { TelegramService } from '../../services/telegram.service';
+import type { PositionSyncService } from '../../services/position-sync.service';
 import { LoggerService, Position, PositionSide, ExitType, BybitOrder } from '../../types/legacy';
 import {
   createMockPositionSyncExchange,
@@ -17,6 +13,7 @@ import {
   createMockPositionCloseRecorder,
   createMockSyncedPosition,
   createPositionSyncHarness,
+  createPositionSyncService,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================
@@ -97,14 +94,14 @@ describe('PositionSyncService', () => {
       mockExitTypeDetector.determineExitTypeFromHistory.mockReturnValue(ExitType.TAKE_PROFIT_1);
 
       const positionExitingService = createMockPositionCloseRecorder();
-      const syncService = new PositionSyncService(
-        mockBybit as unknown as IExchange,
-        mockPositionManager as unknown as PositionLifecycleService,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockTelegram as unknown as TelegramService,
+      const syncService = createPositionSyncService({
+        mockBybit,
+        mockPositionManager,
+        mockExitTypeDetector,
+        mockTelegram,
         logger,
-        positionExitingService as unknown as ConstructorParameters<typeof PositionSyncService>[5],
-      );
+        positionExiting: positionExitingService,
+      });
 
       await syncService.syncClosedPosition(position);
 
@@ -400,14 +397,14 @@ describe('PositionSyncService', () => {
         }),
       };
 
-      const serviceLocal = new PositionSyncService(
-        mockBybit as unknown as IExchange,
-        mockPositionManagerLocal as unknown as PositionLifecycleService,
-        mockExitTypeDetector as unknown as ExitTypeDetectorService,
-        mockTelegram as unknown as TelegramService,
+      const serviceLocal = createPositionSyncService({
+        mockBybit,
+        mockPositionManager: mockPositionManagerLocal,
+        mockExitTypeDetector,
+        mockTelegram,
         logger,
-        { closeFullPosition: jest.fn().mockResolvedValue(undefined) },
-      );
+        positionExiting: createMockPositionCloseRecorder(),
+      });
 
       mockBybit.getOrderHistory.mockResolvedValue([]);
       mockBybit.getCurrentPrice.mockResolvedValue(105);

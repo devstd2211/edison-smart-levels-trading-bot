@@ -8,10 +8,14 @@
  * - Position lifecycle
  */
 
-import { PositionStateMachineService } from '../../services/position-state-machine.service';
+import type { PositionStateMachineService } from '../../services/position-state-machine.service';
 import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
-import { createMockPositionStateMachineLogger } from '../helpers/position-state-machine-test.utils';
+import {
+  createMockPositionStateMachineLogger,
+  createPositionStateMachineHarness,
+  createPositionStateMachineService,
+} from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
   let logger: LoggerService;
@@ -24,7 +28,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -116,7 +120,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -178,7 +182,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -241,7 +245,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -291,7 +295,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -409,7 +413,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -435,7 +439,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = new PositionStateMachineService(logger);
+      ({ service } = createPositionStateMachineHarness({ logger, withErrorHandler: false }));
       await service.initialize();
     });
 
@@ -459,7 +463,10 @@ describe('PositionStateMachineService', () => {
 
   describe('Initialization', () => {
     it('should initialize without errors', async () => {
-      const service = new PositionStateMachineService(logger);
+      const service = createPositionStateMachineService({
+        logger,
+        withErrorHandler: false,
+      });
       await expect(service.initialize()).resolves.not.toThrow();
       expect(service.isInitialized()).toBe(true);
     });

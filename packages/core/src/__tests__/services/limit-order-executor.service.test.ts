@@ -8,11 +8,17 @@ import { LimitOrderExecutorService } from '../../services/limit-order-executor.s
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
 import {
-  LogLevel,
   SignalDirection,
   PositionSide,
   LimitOrderExecutorConfig,
 } from '../../types/legacy';
+import {
+  createLimitOrderExecutorConfig,
+  createLimitOrderExecutorHarness,
+  createLimitOrderExecutorLogger,
+  createLimitOrderExecutorService,
+  createMockLimitOrderBybitService,
+} from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
 // TEST SETUP
@@ -25,32 +31,15 @@ describe('LimitOrderExecutorService', () => {
   let config: LimitOrderExecutorConfig;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-
-    config = {
-      enabled: true,
-      timeoutMs: 5000,
-      slippagePercent: 0.02,
-      fallbackToMarket: true,
-      maxRetries: 1,
-    };
-
-    // Mock BybitService
-    bybitService = {
-      setLeverage: jest.fn().mockResolvedValue(undefined),
-      roundQuantity: jest.fn((qty) => qty.toFixed(0)),
-      roundPrice: jest.fn((price) => price.toFixed(2)),
-      getSymbol: jest.fn().mockReturnValue('APEXUSDT'),
-      getRestClient: jest.fn().mockReturnValue({
-        submitOrder: jest.fn(),
-        getActiveOrders: jest.fn(),
-        getHistoricOrders: jest.fn(),
-        cancelOrder: jest.fn(),
-      }),
-      openPosition: jest.fn(),
-    } as unknown as BybitService;
-
-    service = new LimitOrderExecutorService(config, bybitService, logger);
+    logger = createLimitOrderExecutorLogger();
+    config = createLimitOrderExecutorConfig({ maxRetries: 1 });
+    bybitService = createMockLimitOrderBybitService();
+    service = createLimitOrderExecutorHarness({
+      config,
+      bybitService,
+      logger,
+      withErrorHandler: false,
+    }).service;
   });
 
   // ==========================================================================
@@ -509,11 +498,12 @@ describe('LimitOrderExecutorService', () => {
       (bybitService.openPosition as jest.Mock) = mockOpenPosition;
 
       // Short timeout to test fallback
-      service = new LimitOrderExecutorService(
-        { ...config, timeoutMs: 500 },
+      service = createLimitOrderExecutorService({
+        configOverrides: { ...config, timeoutMs: 500 },
         bybitService,
         logger,
-      );
+        withErrorHandler: false,
+      });
 
       const result = await service.executeEntry(SignalDirection.LONG, 10, 100, 5);
 
@@ -539,11 +529,12 @@ describe('LimitOrderExecutorService', () => {
       });
 
       // Disable limit order execution
-      service = new LimitOrderExecutorService(
-        { ...config, enabled: false },
+      service = createLimitOrderExecutorService({
+        configOverrides: { ...config, enabled: false },
         bybitService,
         logger,
-      );
+        withErrorHandler: false,
+      });
 
       const result = await service.executeEntry(SignalDirection.LONG, 10, 100, 5);
 

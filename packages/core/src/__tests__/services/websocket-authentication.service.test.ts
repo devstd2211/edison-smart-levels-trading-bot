@@ -5,7 +5,10 @@
 
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import crypto from 'crypto';
-import { createWebSocketAuthenticationHarness } from '../helpers/websocket-authentication-test.utils';
+import {
+  createWebSocketAuthenticationHarness,
+  createWebSocketAuthenticationService,
+} from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
 // TESTS
@@ -13,9 +16,16 @@ import { createWebSocketAuthenticationHarness } from '../helpers/websocket-authe
 
 describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
+  let createService: () => WebSocketAuthenticationService;
 
   beforeEach(() => {
-    ({ service } = createWebSocketAuthenticationHarness());
+    const harness = createWebSocketAuthenticationHarness();
+    service = harness.service;
+    createService = () =>
+      createWebSocketAuthenticationService({
+        logger: harness.mockLogger,
+        errorHandler: harness.errorHandler,
+      });
   });
 
   describe('generateAuthPayload', () => {
@@ -152,10 +162,11 @@ describe('WebSocketAuthenticationService', () => {
 
   describe('Integration', () => {
     it('payload should be JSON serializable', () => {
+      const instance = createService();
       const apiKey = 'test-key';
       const apiSecret = 'test-secret';
 
-      const payload = service.generateAuthPayload(apiKey, apiSecret);
+      const payload = instance.generateAuthPayload(apiKey, apiSecret);
 
       expect(() => {
         JSON.stringify(payload);
@@ -163,15 +174,16 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should generate new timestamp for each call', (done) => {
+      const instance = createService();
       const apiKey = 'test-key';
       const apiSecret = 'test-secret';
 
-      const payload1 = service.generateAuthPayload(apiKey, apiSecret);
+      const payload1 = instance.generateAuthPayload(apiKey, apiSecret);
       const expires1 = parseInt(payload1.args[1], 10);
 
       // Wait small amount and generate again
       setTimeout(() => {
-        const payload2 = service.generateAuthPayload(apiKey, apiSecret);
+        const payload2 = instance.generateAuthPayload(apiKey, apiSecret);
         const expires2 = parseInt(payload2.args[1], 10);
 
         // Expires should be at least slightly different (time passed)

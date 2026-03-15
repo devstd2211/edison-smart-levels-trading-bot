@@ -11,17 +11,13 @@
  * Total: 20 tests
  */
 
-import { IndicatorPreCalculationService } from '../../services/indicator-precalculation.service';
-import { CandleProvider } from '../../providers/candle.provider';
-import { LoggerService } from '../../services/logger.service';
+import type { IndicatorPreCalculationService } from '../../services/indicator-precalculation.service';
+import type { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { LogLevel, TimeframeRole } from '../../types/legacy';
-import type { IIndicatorCache, IIndicatorCalculator } from '../../types/legacy';
+import { TimeframeRole } from '../../types/legacy';
 import {
   createIndicatorPrecalculationHarness,
-  createIndicatorPrecalculationMockCache,
-  createIndicatorPrecalculationMockCalculator,
-  createIndicatorPrecalculationMockCandleProvider,
+  createIndicatorPrecalculationService,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
@@ -126,7 +122,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
         debug: jest.fn(),
       };
 
-      const { service: customService } = createIndicatorPrecalculationHarness({
+      const customService = createIndicatorPrecalculationService({
         logger: customLogger as unknown as LoggerService,
         candleProvider: mockCandleProvider,
         cache: mockCache,

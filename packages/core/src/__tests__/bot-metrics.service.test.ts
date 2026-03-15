@@ -14,8 +14,8 @@
 import { BotMetricsService, TradeMetrics } from '../services/bot-metrics.service';
 import { LoggerService } from '../types/legacy';
 import {
+  createBotMetricsHarness,
   createBotMetricsMockLogger,
-  createBotMetricsService,
   createBotMetricsTrade,
 } from './helpers/bot-metrics-test.utils';
 
@@ -25,7 +25,9 @@ describe('BotMetricsService', () => {
 
   beforeEach(() => {
     mockLogger = createBotMetricsMockLogger();
-    metricsService = createBotMetricsService({ logger: mockLogger as LoggerService });
+    metricsService = createBotMetricsHarness({
+      logger: mockLogger as LoggerService,
+    }).service;
   });
 
   describe('initialization', () => {

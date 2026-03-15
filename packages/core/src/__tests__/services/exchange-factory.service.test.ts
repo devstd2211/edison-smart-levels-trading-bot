@@ -6,77 +6,78 @@
 import { BinanceServiceAdapter } from '../../services/binance/binance-service.adapter';
 import { BybitServiceAdapter } from '../../services/bybit/bybit-service.adapter';
 import { ExchangeFactory } from '../../services/exchange-factory.service';
-import type { LoggerService } from '../../types/legacy';
 import {
-  asExchangeFactoryLogger,
+  asExchangeFactoryName,
+  asExchangeFactorySymbol,
   createExchangeFactoryConfig,
-  createExchangeFactoryMockLogger,
+  createExchangeFactoryHarness,
+  createExchangeFactoryService,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let mockLogger: ReturnType<typeof createExchangeFactoryMockLogger>;
+  let createFactory: (overrides?: Partial<Parameters<typeof createExchangeFactoryConfig>[0]>) => ExchangeFactory;
 
   beforeEach(() => {
-    mockLogger = createExchangeFactoryMockLogger();
+    const harness = createExchangeFactoryHarness();
+    createFactory = (overrides = {}) =>
+      createExchangeFactoryService({
+        logger: harness.logger,
+        config: createExchangeFactoryConfig(overrides),
+        errorHandler: harness.errorHandler,
+      });
   });
 
   describe('Factory Initialization', () => {
     it('should initialize factory with valid Bybit config', () => {
-      const config = createExchangeFactoryConfig({
+      const factory = createFactory({
         name: 'bybit',
         symbol: 'XRPUSDT',
         demo: true,
         testnet: false,
       });
 
-      const factory = new ExchangeFactory(asExchangeFactoryLogger(mockLogger), config);
       expect(factory.getExchangeName()).toEqual('bybit');
       expect(factory.getSymbol()).toEqual('XRPUSDT');
     });
 
     it('should initialize factory with valid Binance config', () => {
-      const config = createExchangeFactoryConfig({
+      const factory = createFactory({
         name: 'binance',
         symbol: 'BTCUSDT',
         demo: true,
         testnet: false,
       });
 
-      const factory = new ExchangeFactory(asExchangeFactoryLogger(mockLogger), config);
       expect(factory.getExchangeName()).toEqual('binance');
       expect(factory.getSymbol()).toEqual('BTCUSDT');
     });
 
     it('should reject missing exchange name', () => {
       expect(() => {
-        new ExchangeFactory(asExchangeFactoryLogger(mockLogger), {
-          ...createExchangeFactoryConfig(),
-          name: undefined as unknown as 'bybit' | 'binance',
+        createFactory({
+          name: asExchangeFactoryName(undefined),
         });
       }).toThrow();
     });
 
     it('should reject missing symbol', () => {
       expect(() => {
-        new ExchangeFactory(asExchangeFactoryLogger(mockLogger), {
-          ...createExchangeFactoryConfig(),
-          symbol: undefined as unknown as string,
+        createFactory({
+          symbol: asExchangeFactorySymbol(undefined),
         });
       }).toThrow();
     });
 
     it('should reject unsupported exchange', () => {
       expect(() => {
-        new ExchangeFactory(asExchangeFactoryLogger(mockLogger), {
-          ...createExchangeFactoryConfig(),
-          name: 'kraken' as unknown as 'bybit' | 'binance',
+        createFactory({
+          name: asExchangeFactoryName('kraken'),
         });
       }).toThrow();
     });
 
     it('should accept case-insensitive exchange names in config validation', () => {
-      const factory = new ExchangeFactory(asExchangeFactoryLogger(mockLogger), {
-        ...createExchangeFactoryConfig(),
+      const factory = createFactory({
         name: 'BYBIT' as unknown as 'bybit' | 'binance',
         symbol: 'XRPUSDT',
       });
@@ -86,10 +87,7 @@ describe('ExchangeFactory Service', () => {
 
   describe('Bybit Exchange Creation', () => {
     it('should create Bybit adapter', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT', demo: true }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT', demo: true });
 
       const exchange = await factory.createExchange();
       expect(exchange).toBeDefined();
@@ -97,27 +95,21 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should return BybitServiceAdapter instance', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       const exchange = await factory.createExchange();
       expect(exchange instanceof BybitServiceAdapter).toBe(true);
     });
 
     it('should handle all Bybit config parameters', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({
-          name: 'bybit',
-          symbol: 'ETHUSDT',
-          demo: false,
-          testnet: true,
-          apiKey: 'test-key',
-          apiSecret: 'test-secret',
-        }),
-      );
+      const factory = createFactory({
+        name: 'bybit',
+        symbol: 'ETHUSDT',
+        demo: false,
+        testnet: true,
+        apiKey: 'test-key',
+        apiSecret: 'test-secret',
+      });
 
       const exchange = await factory.createExchange();
       expect(exchange).toBeDefined();
@@ -125,10 +117,7 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should use default values for optional Bybit params', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       const exchange = await factory.createExchange();
       expect(exchange).toBeDefined();
@@ -137,10 +126,7 @@ describe('ExchangeFactory Service', () => {
 
   describe('Binance Exchange Creation', () => {
     it('should create Binance adapter', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'BTCUSDT', demo: true }),
-      );
+      const factory = createFactory({ name: 'binance', symbol: 'BTCUSDT', demo: true });
 
       const exchange = await factory.createExchange();
       expect(exchange).toBeDefined();
@@ -148,27 +134,21 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should return BinanceServiceAdapter instance', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'BTCUSDT' }),
-      );
+      const factory = createFactory({ name: 'binance', symbol: 'BTCUSDT' });
 
       const exchange = await factory.createExchange();
       expect(exchange instanceof BinanceServiceAdapter).toBe(true);
     });
 
     it('should handle all Binance config parameters', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({
-          name: 'binance',
-          symbol: 'ETHUSDT',
-          demo: false,
-          testnet: true,
-          apiKey: 'test-key',
-          apiSecret: 'test-secret',
-        }),
-      );
+      const factory = createFactory({
+        name: 'binance',
+        symbol: 'ETHUSDT',
+        demo: false,
+        testnet: true,
+        apiKey: 'test-key',
+        apiSecret: 'test-secret',
+      });
 
       const exchange = await factory.createExchange();
       expect(exchange).toBeDefined();
@@ -176,10 +156,7 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should use default values for optional Binance params', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'BTCUSDT' }),
-      );
+      const factory = createFactory({ name: 'binance', symbol: 'BTCUSDT' });
 
       const exchange = await factory.createExchange();
       expect(exchange).toBeDefined();
@@ -188,10 +165,7 @@ describe('ExchangeFactory Service', () => {
 
   describe('Exchange Caching', () => {
     it('should return same instance on cached calls', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT', demo: true }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT', demo: true });
 
       const exchange1 = await factory.createExchange();
       const exchange2 = await factory.createExchange();
@@ -200,10 +174,7 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should retrieve cached exchange with getExchange()', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       const exchange = await factory.createExchange();
       const cached = factory.getExchange();
@@ -212,19 +183,13 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should return null when exchange not initialized', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       expect(factory.getExchange()).toBeNull();
     });
 
     it('should clear cache on reset', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       const exchange1 = await factory.createExchange();
       factory.reset();
@@ -238,20 +203,14 @@ describe('ExchangeFactory Service', () => {
 
   describe('Symbol Handling', () => {
     it('should handle trading pairs for Bybit', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT', demo: true }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT', demo: true });
 
       const exchange = await factory.createExchange();
       expect(typeof exchange.getSymbol).toBe('function');
     });
 
     it('should handle trading pairs for Binance', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'BTCUSDT', demo: true }),
-      );
+      const factory = createFactory({ name: 'binance', symbol: 'BTCUSDT', demo: true });
 
       const exchange = await factory.createExchange();
       expect(typeof exchange.getSymbol).toBe('function');
@@ -260,10 +219,7 @@ describe('ExchangeFactory Service', () => {
 
   describe('IExchange Interface Compliance', () => {
     it('should implement full IExchange interface for Bybit', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      const factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       const exchange = await factory.createExchange();
 
@@ -278,10 +234,7 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should implement full IExchange interface for Binance', async () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'BTCUSDT' }),
-      );
+      const factory = createFactory({ name: 'binance', symbol: 'BTCUSDT' });
 
       const exchange = await factory.createExchange();
 
@@ -296,15 +249,8 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should have consistent method signatures across exchanges', async () => {
-      const bybitFactory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
-
-      const binanceFactory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'BTCUSDT' }),
-      );
+      const bybitFactory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
+      const binanceFactory = createFactory({ name: 'binance', symbol: 'BTCUSDT' });
 
       const bybitExchange = await bybitFactory.createExchange();
       const binanceExchange = await binanceFactory.createExchange();
@@ -330,34 +276,21 @@ describe('ExchangeFactory Service', () => {
 
   describe('Multi-Exchange Switching', () => {
     it('should allow switching from Bybit to Binance', async () => {
-      let factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
+      let factory = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
 
       let exchange = await factory.createExchange();
       expect(exchange.name).toEqual('Bybit');
 
       factory.reset();
-      factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'binance', symbol: 'XRPUSDT' }),
-      );
+      factory = createFactory({ name: 'binance', symbol: 'XRPUSDT' });
 
       exchange = await factory.createExchange();
       expect(exchange.name).toEqual('Binance');
     });
 
     it('should maintain separate instances for different symbols', async () => {
-      const bybitXRP = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT' }),
-      );
-
-      const bybitBTC = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'BTCUSDT' }),
-      );
+      const bybitXRP = createFactory({ name: 'bybit', symbol: 'XRPUSDT' });
+      const bybitBTC = createFactory({ name: 'bybit', symbol: 'BTCUSDT' });
 
       const xrpExchange = await bybitXRP.createExchange();
       const btcExchange = await bybitBTC.createExchange();
@@ -368,15 +301,8 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should support demo and testnet modes', async () => {
-      const demoFactory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT', demo: true }),
-      );
-
-      const testnetFactory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({ name: 'bybit', symbol: 'XRPUSDT', testnet: true }),
-      );
+      const demoFactory = createFactory({ name: 'bybit', symbol: 'XRPUSDT', demo: true });
+      const testnetFactory = createFactory({ name: 'bybit', symbol: 'XRPUSDT', testnet: true });
 
       const demoExchange = await demoFactory.createExchange();
       const testnetExchange = await testnetFactory.createExchange();
@@ -386,15 +312,12 @@ describe('ExchangeFactory Service', () => {
     });
 
     it('should support API credentials configuration', () => {
-      const factory = new ExchangeFactory(
-        asExchangeFactoryLogger(mockLogger),
-        createExchangeFactoryConfig({
-          name: 'binance',
-          symbol: 'BTCUSDT',
-          apiKey: 'test-key',
-          apiSecret: 'test-secret',
-        }),
-      );
+      const factory = createFactory({
+        name: 'binance',
+        symbol: 'BTCUSDT',
+        apiKey: 'test-key',
+        apiSecret: 'test-secret',
+      });
 
       expect(factory.getExchangeName()).toEqual('binance');
       expect(factory.getSymbol()).toEqual('BTCUSDT');

@@ -13,9 +13,9 @@
  * Total: 25 tests ✅
  */
 
-import { IndicatorCacheService } from '../../services/indicator-cache.service';
+import type { IndicatorCacheService } from '../../services/indicator-cache.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { LoggerService } from '../../services/logger.service';
+import type { LoggerService } from '../../services/logger.service';
 import {
   asIndicatorCacheKey,
   createIndicatorCacheHarness,

@@ -27,27 +27,24 @@ import {
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_3_LOSSES,
   RISK_MANAGER_LOSS_STREAK_MULTIPLIER_4_LOSSES,
 } from '../../constants';
-
-/**
- * Mock Logger for testing
- */
-class MockLogger extends LoggerService {
-  constructor() {
-    super(LogLevel.INFO, './logs', false);
-  }
-}
+import {
+  createRiskManagerConfig,
+  createRiskManagerHarness,
+  createRiskManagerPosition,
+  createRiskManagerService,
+  createRiskManagerSignal,
+  createRiskManagerTrade,
+  MockRiskManagerLogger,
+} from '../helpers/risk-manager-test.utils';
 
 /**
  * Helper to create default RiskManagerConfig
  */
 function createDefaultConfig(): RiskManagerConfig {
   return {
-    dailyLimits: {
-      maxDailyLossPercent: 5.0,
-      maxDailyProfitPercent: 10.0,
-      emergencyStopOnLimit: true,
-    },
+    ...createRiskManagerConfig(),
     lossStreak: {
+      ...createRiskManagerConfig().lossStreak,
       reductions: {
         after2Losses: RISK_MANAGER_LOSS_STREAK_MULTIPLIER_2_LOSSES,
         after3Losses: RISK_MANAGER_LOSS_STREAK_MULTIPLIER_3_LOSSES,
@@ -55,17 +52,9 @@ function createDefaultConfig(): RiskManagerConfig {
       },
       stopAfterLosses: 5,
     },
-    concurrentRisk: {
-      enabled: true,
-      maxPositions: 3,
-      maxRiskPerPosition: 2.0,
-      maxTotalExposurePercent: 100.0, // Allow up to full account exposure for testing
-    },
     positionSizing: {
-      riskPerTradePercent: 1.0,
-      minPositionSizeUsdt: 5.0,
+      ...createRiskManagerConfig().positionSizing,
       maxPositionSizeUsdt: 100.0,
-      maxLeverageMultiplier: 2.0,
     },
   };
 }
@@ -79,16 +68,14 @@ function createMockSignal(
   price: number = 100,
   type: SignalType = SignalType.LEVEL_BASED
 ): Signal {
-  return {
+  return createRiskManagerSignal({
     direction,
     type,
     confidence,
     price,
     stopLoss: price * 0.98,
     takeProfits: [{ level: 1, percent: 1.0, sizePercent: 100, price: price * 1.01, hit: false }],
-    reason: 'test signal',
-    timestamp: Date.now(),
-  };
+  });
 }
 
 /**
@@ -108,9 +95,8 @@ function createMockPosition(
     updatedAt: Date.now(),
   };
 
-  return {
+  return createRiskManagerPosition({
     id: `position-${Date.now()}`,
-    symbol: 'BTCUSDT',
     side,
     quantity,
     entryPrice,
@@ -125,48 +111,46 @@ function createMockPosition(
     orderId: `order-${Date.now()}`,
     reason: 'test position',
     status: 'OPEN',
-  };
+  });
 }
 
 /**
  * Helper to create mock trade record
  */
 function createMockTradeRecord(realizedPnL: number = 10, quantity: number = 1): TradeRecord {
-  return {
+  return createRiskManagerTrade({
     id: `trade-${Date.now()}`,
-    symbol: 'BTCUSDT',
-    side: PositionSide.LONG,
     quantity,
     entryPrice: 100,
     exitPrice: 100 + realizedPnL / quantity,
     leverage: 1,
     entryCondition: { signal: createMockSignal(), indicators: {} },
-    openedAt: Date.now(),
-    closedAt: Date.now(),
     realizedPnL,
     status: 'CLOSED',
-  };
+  });
 }
 
 describe('RiskManager', () => {
   let riskManager: RiskManager;
-  let mockLogger: MockLogger;
+  let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
 
   beforeEach(() => {
-    mockLogger = new MockLogger();
-    errorHandler = new ErrorHandler(mockLogger);
     defaultConfig = createDefaultConfig();
-    riskManager = new RiskManager(defaultConfig, mockLogger, errorHandler);
-    // Set account balance for accurate daily PnL % calculation in tests
-    // PHASE 4 RULE: Explicit initialization instead of fallback calculations
-    riskManager.setAccountBalance(1000);
+    const harness = createRiskManagerHarness({ config: defaultConfig, balance: 1000 });
+    mockLogger = harness.mockLogger;
+    errorHandler = harness.errorHandler;
+    riskManager = harness.riskManager;
   });
 
   describe('Constructor', () => {
     it('should initialize with valid config', () => {
-      const manager = new RiskManager(defaultConfig, mockLogger, errorHandler);
+      const manager = createRiskManagerService({
+        config: defaultConfig,
+        logger: mockLogger,
+        errorHandler,
+      });
       expect(manager).toBeDefined();
     });
 
@@ -181,7 +165,11 @@ describe('RiskManager', () => {
       customConfig.positionSizing.riskPerTradePercent = 2.0;
       customConfig.dailyLimits.maxDailyLossPercent = 10.0;
 
-      const manager = new RiskManager(customConfig, mockLogger, errorHandler);
+      const manager = createRiskManagerService({
+        config: customConfig,
+        logger: mockLogger,
+        errorHandler,
+      });
       expect(manager).toBeDefined();
     });
   });
@@ -381,7 +369,12 @@ describe('RiskManager', () => {
     it('should check total exposure limit', async () => {
       const config = createDefaultConfig();
       config.concurrentRisk.maxTotalExposurePercent = 10.0; // 100 USDT on 1000
-      const manager = new RiskManager(config, mockLogger, errorHandler);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       // Create positions that total 80% exposure
       const positions = [
@@ -399,7 +392,12 @@ describe('RiskManager', () => {
     it('should disable concurrent risk check if disabled', async () => {
       const config = createDefaultConfig();
       config.concurrentRisk.enabled = false;
-      const manager = new RiskManager(config, mockLogger, errorHandler);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       const positions = [
         createMockPosition(1.0, 100),
@@ -428,8 +426,12 @@ describe('RiskManager', () => {
 
     it('should apply loss streak multiplier', async () => {
       const config = createDefaultConfig();
-      const manager = new RiskManager(config, mockLogger, errorHandler);
-      manager.setAccountBalance(1000);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       // Record 2 consecutive losses
       manager.recordTradeResult(createMockTradeRecord(-10, 1));
@@ -444,8 +446,12 @@ describe('RiskManager', () => {
 
     it('should apply different multiplier for 3 losses', async () => {
       const config = createDefaultConfig();
-      const manager = new RiskManager(config, mockLogger, errorHandler);
-      manager.setAccountBalance(1000);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       // Record 3 consecutive losses
       for (let i = 0; i < 3; i++) {
@@ -463,8 +469,12 @@ describe('RiskManager', () => {
       const config = createDefaultConfig();
       config.positionSizing.minPositionSizeUsdt = 50;
       config.positionSizing.maxPositionSizeUsdt = 200;
-      const manager = new RiskManager(config, mockLogger, errorHandler);
-      manager.setAccountBalance(1000);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       const signal = createMockSignal(SignalDirection.LONG, 1, 100); // Very low confidence
       const result = await manager.canTrade(signal, 1000, []);
@@ -535,8 +545,12 @@ describe('RiskManager', () => {
 
     it('should mark risk as unhealthy when consecutive loss limit exceeded', async () => {
       const config = createDefaultConfig();
-      const manager = new RiskManager(config, mockLogger, errorHandler);
-      manager.setAccountBalance(1000);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       // Record 5 consecutive losses (at limit)
       for (let i = 0; i < 5; i++) {
@@ -565,8 +579,12 @@ describe('RiskManager', () => {
     });
 
     it('should use EXPLICIT constants for multipliers', async () => {
-      const manager = new RiskManager(createDefaultConfig(), mockLogger, errorHandler);
-      manager.setAccountBalance(1000);
+      const manager = createRiskManagerHarness({
+        config: createDefaultConfig(),
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       // Record 2 losses - should use EXPLICIT constant
       manager.recordTradeResult(createMockTradeRecord(-10, 1));
@@ -680,8 +698,12 @@ describe('RiskManager', () => {
     it('should apply ALL risk checks in single canTrade call', async () => {
       const config = createDefaultConfig();
       config.dailyLimits.maxDailyLossPercent = 2.0; // Low limit
-      const manager = new RiskManager(config, mockLogger, errorHandler);
-      manager.setAccountBalance(1000);
+      const manager = createRiskManagerHarness({
+        config,
+        balance: 1000,
+        logger: mockLogger,
+        errorHandler,
+      }).riskManager;
 
       // Get near the daily loss limit
       manager.recordTradeResult(createMockTradeRecord(-18, 1)); // -1.8% on 1000

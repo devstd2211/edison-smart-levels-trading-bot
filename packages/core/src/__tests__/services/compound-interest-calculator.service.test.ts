@@ -1,8 +1,6 @@
 /**
  * Tests for CompoundInterestCalculatorService
  */
-
-import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
 import { LoggerService } from '../../types/legacy';
 import {
   calculateLockedProfit,
@@ -14,17 +12,23 @@ import {
 } from '../../utils/compound-interest.helpers';
 import {
   createCompoundInterestConfig,
+  createCompoundInterestFactory,
   createCompoundInterestHarness,
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
+  let createCalculator: ReturnType<typeof createCompoundInterestFactory>;
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
     ({ logger, mockGetBalance } = createCompoundInterestHarness({ withErrorHandler: false }));
+    createCalculator = createCompoundInterestFactory({
+      logger,
+      getBalance: mockGetBalance,
+    });
   });
 
   // ============================================================================
@@ -33,11 +37,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('initialization', () => {
     it('should initialize with valid config', () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       expect(calculator.isEnabled()).toBe(true);
       expect(calculator.getConfig()).toEqual(defaultConfig);
@@ -47,7 +47,7 @@ describe('CompoundInterestCalculatorService', () => {
       const invalidConfig = { ...defaultConfig, baseDeposit: -100 };
 
       expect(() => {
-        new CompoundInterestCalculatorService(invalidConfig, logger, mockGetBalance);
+        createCalculator({ configOverrides: invalidConfig });
       }).toThrow('Base deposit cannot be negative');
     });
 
@@ -55,7 +55,7 @@ describe('CompoundInterestCalculatorService', () => {
       const invalidConfig = { ...defaultConfig, reinvestmentPercent: 150 };
 
       expect(() => {
-        new CompoundInterestCalculatorService(invalidConfig, logger, mockGetBalance);
+        createCalculator({ configOverrides: invalidConfig });
       }).toThrow('Reinvestment percent must be between 0 and 100');
     });
 
@@ -63,7 +63,7 @@ describe('CompoundInterestCalculatorService', () => {
       const invalidConfig = { ...defaultConfig, minPositionSize: 100, maxPositionSize: 50 };
 
       expect(() => {
-        new CompoundInterestCalculatorService(invalidConfig, logger, mockGetBalance);
+        createCalculator({ configOverrides: invalidConfig });
       }).toThrow('Max position size must be >= min position size');
     });
   });
@@ -74,8 +74,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('calculatePositionSize', () => {
     it('should return min position size when disabled', async () => {
-      const config = { ...defaultConfig, enabled: false };
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { enabled: false } });
 
       mockGetBalance.mockResolvedValue(150); // Has profit
 
@@ -86,11 +85,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should return min position size when no profit', async () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       mockGetBalance.mockResolvedValue(100); // Exactly base deposit
 
@@ -102,11 +97,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should return min position size when at loss', async () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       mockGetBalance.mockResolvedValue(90); // Loss
 
@@ -118,8 +109,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should calculate correct position size with profit', async () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 20 }; // Higher limit
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 20 } });
 
       mockGetBalance.mockResolvedValue(120); // +20 profit
 
@@ -141,8 +131,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should respect max position size limit', async () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 100 }; // Remove risk limit for this test
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 100 } });
 
       mockGetBalance.mockResolvedValue(10000); // Huge profit
 
@@ -153,11 +142,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should respect max risk per trade limit', async () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       // Balance 200, max risk 2% = 4 USDT max position
       // But calculation would give more
@@ -284,11 +269,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('updateConfig', () => {
     it('should update config successfully', () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       calculator.updateConfig({ reinvestmentPercent: 60 }); // 60 + 30 lock = 90% < 100%
 
@@ -296,11 +277,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should throw on invalid update', () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       expect(() => {
         calculator.updateConfig({ maxPositionSize: 5 }); // Less than min
@@ -310,8 +287,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('calculatePositionSizeSync', () => {
     it('should calculate without API call', () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 20 }; // Higher limit
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 20 } });
 
       const result = calculator.calculatePositionSizeSync(120);
 
@@ -322,8 +298,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('estimateFuturePositionSize', () => {
     it('should estimate position after profit', () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 20 }; // Higher limit
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 20 } });
 
       const futureSize = calculator.estimateFuturePositionSize(100, 20);
 
@@ -331,11 +306,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should estimate position after loss', () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       const futureSize = calculator.estimateFuturePositionSize(120, -30);
 
@@ -346,8 +317,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('calculateGrowthMetrics', () => {
     it('should calculate growth metrics', () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 20 }; // Higher limit
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 20 } });
 
       const metrics = calculator.calculateGrowthMetrics(120);
 
@@ -364,8 +334,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('edge cases', () => {
     it('should handle exactly at max position size', async () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 100 }; // Remove risk limit
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 100 } });
 
       // Calculate balance needed for max position
       // Max: 1000, min: 10, need 990 from reinvestment
@@ -383,8 +352,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should handle very small profit', async () => {
-      const config = { ...defaultConfig, maxRiskPerTrade: 20 }; // Higher limit
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({ configOverrides: { maxRiskPerTrade: 20 } });
 
       mockGetBalance.mockResolvedValue(100.01); // 0.01 profit
 
@@ -399,8 +367,9 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should handle 0% reinvestment', async () => {
-      const config = { ...defaultConfig, reinvestmentPercent: 0, maxRiskPerTrade: 20 };
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({
+        configOverrides: { reinvestmentPercent: 0, maxRiskPerTrade: 20 },
+      });
 
       mockGetBalance.mockResolvedValue(150);
 
@@ -411,8 +380,9 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should handle 0% profit lock', async () => {
-      const config = { ...defaultConfig, profitLockPercent: 0, maxRiskPerTrade: 20 };
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({
+        configOverrides: { profitLockPercent: 0, maxRiskPerTrade: 20 },
+      });
 
       mockGetBalance.mockResolvedValue(120);
 
@@ -428,13 +398,13 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should handle 100% reinvestment', async () => {
-      const config = {
-        ...defaultConfig,
-        reinvestmentPercent: 100,
-        profitLockPercent: 0,
-        maxRiskPerTrade: 30,
-      };
-      const calculator = new CompoundInterestCalculatorService(config, logger, mockGetBalance);
+      const calculator = createCalculator({
+        configOverrides: {
+          reinvestmentPercent: 100,
+          profitLockPercent: 0,
+          maxRiskPerTrade: 30,
+        },
+      });
 
       mockGetBalance.mockResolvedValue(120);
 
@@ -455,11 +425,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   describe('error handling', () => {
     it('should handle API error gracefully', async () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       mockGetBalance.mockRejectedValue(new Error('Network error'));
 
@@ -467,11 +433,7 @@ describe('CompoundInterestCalculatorService', () => {
     });
 
     it('should handle negative balance from API', async () => {
-      const calculator = new CompoundInterestCalculatorService(
-        defaultConfig,
-        logger,
-        mockGetBalance,
-      );
+      const calculator = createCalculator();
 
       mockGetBalance.mockResolvedValue(-10);
 

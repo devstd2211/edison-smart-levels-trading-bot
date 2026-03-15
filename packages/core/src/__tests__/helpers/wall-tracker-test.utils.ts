@@ -20,16 +20,19 @@ export function createWallTrackerConfig(
 
 export function createWallTrackerHarness(options: {
   configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
 } = {}) {
-  const logger = createWallTrackerLogger();
+  const logger = options.logger ?? createWallTrackerLogger();
   const config = createWallTrackerConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const service = new WallTrackerService(
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const service = createWallTrackerService({
     config,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
@@ -37,4 +40,22 @@ export function createWallTrackerHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createWallTrackerService(options: {
+  config?: WallTrackingConfig;
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createWallTrackerLogger();
+  const config = options.config ?? createWallTrackerConfig(options.configOverrides);
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+
+  return new WallTrackerService(
+    config,
+    logger,
+    options.withErrorHandler === false ? undefined : errorHandler,
+  );
 }

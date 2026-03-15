@@ -26,6 +26,7 @@ import {
   createLadderTpConfig,
   createLadderTpHarness,
   createLadderTpPosition,
+  createLadderTpService,
 } from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
@@ -136,7 +137,12 @@ describe('LadderTpManagerService', () => {
         maxPartialClosePercent: 90,
       };
 
-      const customService = new LadderTpManagerService(customConfig, bybitService, logger);
+      const customService = createLadderTpService({
+        configOverrides: customConfig,
+        logger,
+        bybitService,
+        withErrorHandler: false,
+      });
 
       const entry = 100;
       const levels = customService.createLadderLevels(entry, SignalDirection.LONG);
@@ -376,7 +382,12 @@ describe('LadderTpManagerService', () => {
         moveToBreakevenAfterTP1: false,
       };
 
-      const disabledService = new LadderTpManagerService(disabledConfig, bybitService, logger);
+      const disabledService = createLadderTpService({
+        configOverrides: disabledConfig,
+        logger,
+        bybitService,
+        withErrorHandler: false,
+      });
 
       const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
 
@@ -461,7 +472,12 @@ describe('LadderTpManagerService', () => {
         trailingAfterTP2: false,
       };
 
-      const disabledService = new LadderTpManagerService(disabledConfig, bybitService, logger);
+      const disabledService = createLadderTpService({
+        configOverrides: disabledConfig,
+        logger,
+        bybitService,
+        withErrorHandler: false,
+      });
 
       const position = createLadderTpPosition(PositionSide.LONG, 1.0, 100);
       const currentPrice = 1.002;

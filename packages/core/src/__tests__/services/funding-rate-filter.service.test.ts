@@ -8,17 +8,29 @@ import {
   createFundingRateData,
   createFundingRateFilterConfig,
   createFundingRateFilterHarness,
+  createFundingRateFilterService,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
+  let createFilter: (overrides?: {
+    config?: FundingRateFilterConfig;
+    configOverrides?: Partial<FundingRateFilterConfig>;
+  }) => FundingRateFilterService;
 
   beforeEach(() => {
     ({ logger, config, mockGetFundingRate } = createFundingRateFilterHarness({
       withErrorHandler: false,
     }));
+    createFilter = (overrides = {}) =>
+      createFundingRateFilterService({
+        logger,
+        getFundingRate: mockGetFundingRate,
+        withErrorHandler: false,
+        ...overrides,
+      });
   });
 
   describe('checkSignal', () => {
@@ -27,7 +39,7 @@ describe('FundingRateFilterService', () => {
         createFundingRateData({ fundingRate: 0.0001 }),
       );
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       expect(result.allowed).toBe(true);
@@ -40,7 +52,7 @@ describe('FundingRateFilterService', () => {
         createFundingRateData({ fundingRate: 0.001 }),
       );
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       expect(result.allowed).toBe(false);
@@ -53,7 +65,7 @@ describe('FundingRateFilterService', () => {
         createFundingRateData({ fundingRate: -0.0001 }),
       );
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.SHORT);
 
       expect(result.allowed).toBe(true);
@@ -65,7 +77,7 @@ describe('FundingRateFilterService', () => {
         createFundingRateData({ fundingRate: -0.001 }),
       );
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.SHORT);
 
       expect(result.allowed).toBe(false);
@@ -78,7 +90,7 @@ describe('FundingRateFilterService', () => {
         createFundingRateData({ fundingRate: 0.01 }),
       );
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.HOLD);
 
       expect(result.allowed).toBe(true);
@@ -87,7 +99,7 @@ describe('FundingRateFilterService', () => {
 
     it('should allow signals when filter is disabled', async () => {
       const disabledConfig = { ...config, enabled: false };
-      const filter = new FundingRateFilterService(disabledConfig, mockGetFundingRate, logger);
+      const filter = createFilter({ config: disabledConfig });
 
       const result = await filter.checkSignal(SignalDirection.LONG);
 
@@ -98,7 +110,7 @@ describe('FundingRateFilterService', () => {
     it('should allow signal on API error (fail-safe)', async () => {
       mockGetFundingRate.mockRejectedValue(new Error('API error'));
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       expect(result.allowed).toBe(true);
@@ -112,7 +124,7 @@ describe('FundingRateFilterService', () => {
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
 
       // First call - should fetch from API
       await filter.checkSignal(SignalDirection.LONG);
@@ -129,7 +141,7 @@ describe('FundingRateFilterService', () => {
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(shortCacheConfig, mockGetFundingRate, logger);
+      const filter = createFilter({ config: shortCacheConfig });
 
       // First call
       await filter.checkSignal(SignalDirection.LONG);
@@ -148,7 +160,7 @@ describe('FundingRateFilterService', () => {
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
 
       // Fetch data
       await filter.checkSignal(SignalDirection.LONG);
@@ -164,7 +176,7 @@ describe('FundingRateFilterService', () => {
     it('should handle zero funding rate', async () => {
       mockGetFundingRate.mockResolvedValue(createFundingRateData({ fundingRate: 0 }));
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
 
       const longResult = await filter.checkSignal(SignalDirection.LONG);
       expect(longResult.allowed).toBe(true);
@@ -178,7 +190,7 @@ describe('FundingRateFilterService', () => {
         createFundingRateData({ fundingRate: 0.0005 }),
       );
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFilter({ config });
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       // Should be allowed (threshold is >, not >=)

@@ -3,7 +3,7 @@
  * Tests gradient scoring system for signal confidence calculation
  */
 
-import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calculator.service';
+import type { WeightMatrixCalculatorService } from '../../services/weight-matrix-calculator.service';
 import {
   WeightMatrixConfig,
   WeightMatrixInput,
@@ -13,6 +13,7 @@ import {
 import {
   createWeightMatrixConfig,
   createWeightMatrixHarness,
+  createWeightMatrixService,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
@@ -32,7 +33,11 @@ describe('WeightMatrixCalculatorService', () => {
   describe('disabled mode', () => {
     it('should return 100% confidence when disabled', () => {
       config.enabled = false;
-      calculator = new WeightMatrixCalculatorService(config, logger);
+      calculator = createWeightMatrixService({
+        config,
+        logger,
+        withErrorHandler: false,
+      });
 
       const input: WeightMatrixInput = {
         rsi: 50,
@@ -126,7 +131,11 @@ describe('WeightMatrixCalculatorService', () => {
 
     it('should skip RSI when disabled', () => {
       config.weights.rsi.enabled = false;
-      calculator = new WeightMatrixCalculatorService(config, logger);
+      calculator = createWeightMatrixService({
+        config,
+        logger,
+        withErrorHandler: false,
+      });
 
       const input: WeightMatrixInput = { rsi: 20 };
       const result = calculator.calculateScore(input, SignalDirection.LONG);

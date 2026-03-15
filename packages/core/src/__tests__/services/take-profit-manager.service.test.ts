@@ -3,25 +3,24 @@
  */
 
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
-import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
+import { LoggerService, PositionSide } from '../../types/legacy';
 import {
-  createTakeProfitManagerConfig,
+  createTakeProfitManagerFactory,
   createTakeProfitManagerHarness,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService', () => {
   let logger: LoggerService;
+  let createManager: ReturnType<typeof createTakeProfitManagerFactory>;
 
   beforeEach(() => {
     ({ logger } = createTakeProfitManagerHarness());
+    createManager = createTakeProfitManagerFactory({ logger });
   });
 
   describe('recordPartialClose', () => {
     it('should record TP1 close correctly', () => {
-      const manager = new TakeProfitManagerService(
-        createTakeProfitManagerConfig(),
-        logger,
-      );
+      const manager = createManager({ withErrorHandler: false });
 
       const close = manager.recordPartialClose(1, 28.4, 1.1676);
 
@@ -32,10 +31,7 @@ describe('TakeProfitManagerService', () => {
     });
 
     it('should record multiple TP levels', () => {
-      const manager = new TakeProfitManagerService(
-        createTakeProfitManagerConfig(),
-        logger,
-      );
+      const manager = createManager({ withErrorHandler: false });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -47,8 +43,8 @@ describe('TakeProfitManagerService', () => {
     });
 
     it('should throw error if exceeding total quantity', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -56,8 +52,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 50, 1.1676);
 
@@ -67,8 +63,8 @@ describe('TakeProfitManagerService', () => {
     });
 
     it('should calculate PnL correctly for LONG position', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.LONG,
@@ -76,8 +72,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 80.0,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       const close = manager.recordPartialClose(1, 4.0, 1.1600);
 
@@ -91,8 +87,8 @@ describe('TakeProfitManagerService', () => {
     });
 
     it('should calculate PnL correctly for SHORT position', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -100,8 +96,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       const close = manager.recordPartialClose(1, 28.4, 1.1676);
 
@@ -114,8 +110,8 @@ describe('TakeProfitManagerService', () => {
 
   describe('getTotalPnL', () => {
     it('should sum PnL across all partial closes', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -123,8 +119,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676); // +1.795 net (10x leverage)
       manager.recordPartialClose(2, 28.4, 1.1617); // +3.471 net (10x leverage)
@@ -138,8 +134,8 @@ describe('TakeProfitManagerService', () => {
     });
 
     it('should return zero for no closes', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -147,8 +143,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       const total = manager.getTotalPnL();
 
@@ -160,8 +156,8 @@ describe('TakeProfitManagerService', () => {
 
   describe('getRemainingQuantity', () => {
     it('should return correct remaining quantity', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -169,8 +165,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       expect(manager.getRemainingQuantity()).toBe(85.2);
 
@@ -187,8 +183,8 @@ describe('TakeProfitManagerService', () => {
 
   describe('isFullyClosed', () => {
     it('should return false when partially closed', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -196,16 +192,16 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       expect(manager.isFullyClosed()).toBe(false);
     });
 
     it('should return true when fully closed', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -213,8 +209,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -226,8 +222,8 @@ describe('TakeProfitManagerService', () => {
 
   describe('getTpLevelsHit', () => {
     it('should return array of TP levels hit', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -235,8 +231,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -247,8 +243,8 @@ describe('TakeProfitManagerService', () => {
 
   describe('calculateFinalPnL', () => {
     it('should calculate total PnL including remaining quantity', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -256,8 +252,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);
@@ -271,8 +267,8 @@ describe('TakeProfitManagerService', () => {
     });
 
     it('should match real Bybit data for TP3 position', () => {
-      const manager = new TakeProfitManagerService(
-        {
+      const manager = createManager({
+        configOverrides: {
           positionId: 'test_123',
           symbol: 'APEXUSDT',
           side: PositionSide.SHORT,
@@ -280,8 +276,8 @@ describe('TakeProfitManagerService', () => {
           totalQuantity: 85.2,
           leverage: 10,
         },
-        logger,
-      );
+        withErrorHandler: false,
+      });
 
       manager.recordPartialClose(1, 28.4, 1.1676);
       manager.recordPartialClose(2, 28.4, 1.1617);

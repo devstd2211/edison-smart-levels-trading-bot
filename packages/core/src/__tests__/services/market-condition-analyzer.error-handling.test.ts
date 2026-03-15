@@ -13,11 +13,10 @@
  * Total: 25 tests ✅
  */
 
-import { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';
+import type { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { TakeProfit } from '../../types/legacy';
 import {
-  asMarketConditionLogger,
   createMarketConditionHarness,
   createMarketConditionMockLogger,
   createMarketConditionResult,
@@ -145,13 +144,11 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('SKIP: Logging Failures with Safe Wrapper', () => {
     it('should skip info logging failures in FLAT market', () => {
-      const failingLogger = createMarketConditionMockLogger({
+      const { service } = createMarketConditionHarness({
         info: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
-
-      const service = createMarketConditionService({ logger: failingLogger, errorHandler });
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(true, 75);
 
@@ -162,13 +159,11 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should skip warn logging failures on error', () => {
-      const failingLogger = createMarketConditionMockLogger({
+      const { service } = createMarketConditionHarness({
         warn: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
-
-      const service = createMarketConditionService({ logger: failingLogger, errorHandler });
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const badFlatResult = { isFlat: true, confidence: NaN };
 
@@ -179,13 +174,11 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should skip logging failures in TRENDING market', () => {
-      const failingLogger = createMarketConditionMockLogger({
+      const { service } = createMarketConditionHarness({
         info: jest.fn().mockImplementation(() => {
           throw new Error('Logger write failed');
         }),
       });
-
-      const service = createMarketConditionService({ logger: failingLogger, errorHandler });
       const takeProfits = [createTP(1, 100, 50, 0.5)];
       const flatResult = createFlatResult(false, 80);
 

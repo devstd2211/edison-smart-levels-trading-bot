@@ -13,7 +13,7 @@
  * Total: 25 tests ✅
  */
 
-import { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-registry.service';
+import type { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-registry.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { IndicatorType } from '../../types/indicator';
 import {
@@ -353,13 +353,13 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = createIndicatorRegistryService({ logger });
+      const reg = createIndicatorRegistryService({ logger, withErrorHandler: false });
       expect(reg).toBeDefined();
       expect(reg.getCount()).toBe(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const reg = createIndicatorRegistryService({ logger });
+      const reg = createIndicatorRegistryService({ logger, withErrorHandler: false });
 
       // Register should work as before
       reg.register(IndicatorType.EMA, {
@@ -379,7 +379,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
     it('should support legacy calls without logger', () => {
       // Should work even without logger
-      const reg = createIndicatorRegistryService();
+      const reg = createIndicatorRegistryService({ withErrorHandler: false });
       expect(reg).toBeDefined();
 
       // Basic operations should work

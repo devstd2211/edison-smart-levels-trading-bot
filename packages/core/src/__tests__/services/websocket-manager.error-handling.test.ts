@@ -12,11 +12,12 @@
  */
 
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { WebSocketManagerService } from '../../services/websocket-manager.service';
+import type { WebSocketManagerService } from '../../services/websocket-manager.service';
 import type { ExchangeConfig, LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 import {
   createMockWebSocketAuthenticationService,
+  createWebSocketManagerService,
   createWebSocketManagerHarness,
   type WebSocketManagerHarness,
 } from '../helpers/websocket-manager-test.utils';
@@ -111,6 +112,12 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
 
       expect(payload).toBeDefined();
       expect(payload.op).toBe('auth');
+
+      const customManager = createWebSocketManagerService({
+        configOverrides: { testnet: true },
+        authService,
+      });
+      expect(customManager).toBeDefined();
     });
 
     it('test-2.2: Should handle authentication timeout', () => {

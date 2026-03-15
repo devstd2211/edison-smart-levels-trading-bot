@@ -14,13 +14,10 @@
  */
 
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
-import { TradingJournalService } from '../../services/trading-journal.service';
 import { LoggerService } from '../../types/legacy';
-import { PerformanceAnalyticsConfig } from '../../types/legacy';
 import {
-  createPerformanceAnalyticsConfig,
-  createPerformanceAnalyticsJournal,
-  createPerformanceAnalyticsLogger,
+  createPerformanceAnalyticsHarness,
+  createPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
 } from '../helpers/performance-analytics-test.utils';
 
@@ -31,19 +28,16 @@ describe('PerformanceAnalytics Service Tests', () => {
   };
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
-  let mockConfig: PerformanceAnalyticsConfig;
 
   beforeEach(() => {
-    mockConfig = createPerformanceAnalyticsConfig();
-    mockJournalService = createPerformanceAnalyticsJournal();
-    mockLogger = createPerformanceAnalyticsLogger() as unknown as jest.Mocked<LoggerService>;
-
-    // Initialize analytics
-    analytics = new PerformanceAnalytics(
-      mockConfig,
-      mockJournalService as unknown as TradingJournalService,
-      mockLogger
-    );
+    const harness = createPerformanceAnalyticsHarness();
+    analytics = createPerformanceAnalyticsService({
+      config: harness.config,
+      journal: harness.journal,
+      logger: harness.logger,
+    });
+    mockJournalService = harness.journal;
+    mockLogger = harness.logger as unknown as jest.Mocked<LoggerService>;
   });
 
   // ========================================================================

@@ -9,11 +9,11 @@
  */
 
 import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbook-manager.service';
-import { LoggerService, LogLevel } from '../../types/legacy';
+import { LoggerService } from '../../types/legacy';
 import {
   createOrderbookDeltaUpdate,
-  createOrderbookLogger,
   createOrderbookManagerHarness,
+  createOrderbookManagerService,
   createOrderbookSnapshotUpdate,
   setOrderbookLastSnapshotTime,
 } from '../helpers/orderbook-manager-test.utils';
@@ -31,8 +31,9 @@ describe('OrderbookManagerService', () => {
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createOrderbookLogger();
-    ({ service: manager } = createOrderbookManagerHarness({ withErrorHandler: false }));
+    const harness = createOrderbookManagerHarness({ withErrorHandler: false });
+    logger = harness.loggerService;
+    manager = harness.service;
   });
 
   describe('Snapshot handling', () => {
@@ -188,7 +189,11 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should ignore delta before snapshot', () => {
-      const freshManager = new OrderbookManagerService('BTCUSDT', logger);
+      const freshManager = createOrderbookManagerService({
+        symbol: 'BTCUSDT',
+        logger,
+        withErrorHandler: false,
+      });
 
       const delta = createOrderbookDeltaUpdate(
         [['100', '10']],

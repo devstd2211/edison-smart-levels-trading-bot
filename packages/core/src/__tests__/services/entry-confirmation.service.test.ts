@@ -1,11 +1,11 @@
 /**
  * Entry Confirmation Manager Tests
  */
-
-import { EntryConfirmationManager } from '../../services/entry-confirmation.service';
+import type { EntryConfirmationManager } from '../../services/entry-confirmation.service';
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEntryConfirmationConfig,
+  createEntryConfirmationManager,
   createEntryConfirmationHarness,
 } from '../helpers/entry-confirmation-test.utils';
 
@@ -496,7 +496,11 @@ describe('EntryConfirmationManager', () => {
         },
       });
 
-      const disabledManager = new EntryConfirmationManager(disabledConfig, logger);
+      const disabledManager = createEntryConfirmationManager({
+        config: disabledConfig,
+        logger,
+        withErrorHandler: false,
+      });
 
       expect(disabledManager.isEnabled(SignalDirection.LONG)).toBe(false);
       expect(disabledManager.isEnabled(SignalDirection.SHORT)).toBe(true);

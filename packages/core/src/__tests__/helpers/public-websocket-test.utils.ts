@@ -88,6 +88,12 @@ export function createMockPublicWebSocketErrorHandler(
   };
 }
 
+export function createPublicWebSocketErrorHandlerService(
+  mockLogger: PublicWebSocketLoggerMock = createMockPublicWebSocketLogger(),
+): ErrorHandler {
+  return createMockPublicWebSocketErrorHandler(mockLogger) as unknown as ErrorHandler;
+}
+
 export function createPublicWebSocketHarness(options: {
   configOverrides?: Partial<ExchangeConfig>;
   symbol?: string;

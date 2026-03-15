@@ -39,29 +39,43 @@ export function asIndicatorRegistryErrorLogger(
 
 export function createIndicatorRegistryHarness(
   overrides: Partial<IndicatorRegistryMockLogger> = {},
+  options: {
+    withErrorHandler?: boolean;
+  } = {},
 ) {
   const logger = createIndicatorRegistryMockLogger(overrides);
-  const errorHandler = new ErrorHandler(asIndicatorRegistryErrorLogger(logger));
-  const registry = new IndicatorRegistry(
-    asIndicatorRegistryLogger(logger),
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createIndicatorRegistryErrorHandler(logger);
+  const registry = createIndicatorRegistryService({
+    logger,
     errorHandler,
-  );
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     logger,
-    errorHandler,
+    errorHandler: errorHandler ?? createIndicatorRegistryErrorHandler(logger),
     registry,
   };
+}
+
+export function createIndicatorRegistryErrorHandler(
+  logger: IndicatorRegistryMockLogger = createIndicatorRegistryMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(asIndicatorRegistryErrorLogger(logger));
 }
 
 export function createIndicatorRegistryService(options: {
   logger?: IndicatorRegistryMockLogger;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): IndicatorRegistry {
   const logger = options.logger;
   return new IndicatorRegistry(
     logger ? asIndicatorRegistryLogger(logger) : undefined,
-    options.errorHandler,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
 

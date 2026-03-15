@@ -41,26 +41,59 @@ export function createMockWebSocketManagerLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
 
+export function createWebSocketManagerErrorHandler(
+  logger: LoggerService = createMockWebSocketManagerLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createWebSocketManagerService(options: {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  orderExecutionDetector?: OrderExecutionDetectorService;
+  authService?: WebSocketAuthenticationService;
+  deduplicationService?: EventDeduplicationService;
+  keepAliveService?: WebSocketKeepAliveService;
+} = {}): WebSocketManagerService {
+  const config = createMockWebSocketManagerConfig(options.configOverrides);
+  const logger = options.logger ?? createMockWebSocketManagerLogger();
+  const errorHandler =
+    options.errorHandler ?? createWebSocketManagerErrorHandler(logger);
+
+  return new WebSocketManagerService(
+    config,
+    options.symbol ?? config.symbol,
+    errorHandler,
+    options.orderExecutionDetector ?? new OrderExecutionDetectorService(logger),
+    options.authService ?? createMockWebSocketAuthenticationService(),
+    options.deduplicationService ?? new EventDeduplicationService(100, 60000, logger),
+    options.keepAliveService ?? new WebSocketKeepAliveService(20000, logger),
+  );
+}
+
 export function createWebSocketManagerHarness(options: {
   configOverrides?: Partial<ExchangeConfig>;
   symbol?: string;
 } = {}): WebSocketManagerHarness {
   const config = createMockWebSocketManagerConfig(options.configOverrides);
   const logger = createMockWebSocketManagerLogger();
-  const errorHandler = new ErrorHandler(logger);
+  const errorHandler = createWebSocketManagerErrorHandler(logger);
   const orderExecutionDetector = new OrderExecutionDetectorService(logger);
   const authService = createMockWebSocketAuthenticationService();
   const deduplicationService = new EventDeduplicationService(100, 60000, logger);
   const keepAliveService = new WebSocketKeepAliveService(20000, logger);
-  const wsManager = new WebSocketManagerService(
-    config,
-    options.symbol ?? config.symbol,
+  const wsManager = createWebSocketManagerService({
+    configOverrides: options.configOverrides,
+    symbol: options.symbol,
+    logger,
     errorHandler,
     orderExecutionDetector,
     authService,
     deduplicationService,
     keepAliveService,
-  );
+  });
 
   return {
     config,

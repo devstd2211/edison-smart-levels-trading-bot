@@ -10,11 +10,12 @@
  * Test cases: 18 tests covering all error handling scenarios
  */
 
-import { PublicWebSocketService } from '../../services/public-websocket.service';
+import type { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { ExchangeConfig, LoggerService } from '../../types/legacy';
 import type { TimeframeProvider } from '../../providers/timeframe.provider';
 import {
+  createPublicWebSocketErrorHandlerService,
   createPublicWebSocketHarness,
   createPublicWebSocketService,
 } from '../helpers/public-websocket-test.utils';
@@ -40,6 +41,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   beforeEach(() => {
     ({
+      service,
       mockLogger,
       loggerService,
       mockTimeframeProvider,
@@ -68,20 +70,12 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         symbol: 'XRPUSDT',
         mockTimeframeProvider,
         loggerService,
-        errorHandlerService,
+        errorHandlerService: createPublicWebSocketErrorHandlerService(mockLogger),
       });
       expect(serviceWithHandler).toBeDefined();
     });
 
     it('should initialize with default connection state', () => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
-
       expect(service.isConnected()).toBe(false);
     });
   });

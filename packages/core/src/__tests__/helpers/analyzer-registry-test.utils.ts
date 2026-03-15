@@ -29,29 +29,45 @@ export function asAnalyzerRegistryLogger(
 
 export function createAnalyzerRegistryHarness(
   overrides: Partial<AnalyzerRegistryMockLogger> = {},
+  options: {
+    withErrorHandler?: boolean;
+  } = {},
 ) {
   const logger = createAnalyzerRegistryMockLogger(overrides);
-  const errorHandler = new ErrorHandler(asAnalyzerRegistryLogger(logger));
-  const registry = new AnalyzerRegistryService(
-    asAnalyzerRegistryLogger(logger),
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : createAnalyzerRegistryErrorHandler(logger);
+  const registry = createAnalyzerRegistryService({
+    logger,
     errorHandler,
-  );
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     logger,
-    errorHandler,
+    errorHandler: errorHandler ?? createAnalyzerRegistryErrorHandler(logger),
     registry,
   };
+}
+
+export function createAnalyzerRegistryErrorHandler(
+  logger: AnalyzerRegistryMockLogger = createAnalyzerRegistryMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(asAnalyzerRegistryLogger(logger));
 }
 
 export function createAnalyzerRegistryService(options: {
   logger?: AnalyzerRegistryMockLogger;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): AnalyzerRegistryService {
   const logger = options.logger ?? createAnalyzerRegistryMockLogger();
   return new AnalyzerRegistryService(
     asAnalyzerRegistryLogger(logger),
-    options.errorHandler,
+    options.withErrorHandler === false
+      ? undefined
+      : options.errorHandler,
   );
 }
 

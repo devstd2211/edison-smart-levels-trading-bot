@@ -70,15 +70,25 @@ export type IndicatorPrecalculationMockCandleProvider = ReturnType<
   typeof createIndicatorPrecalculationMockCandleProvider
 >;
 
-export function createIndicatorPrecalculationHarness(options?: {
+export function createIndicatorPrecalculationLogger(): LoggerService {
+  return new LoggerService(LogLevel.ERROR, './logs', false);
+}
+
+export function createIndicatorPrecalculationErrorHandler(
+  logger: LoggerService = createIndicatorPrecalculationLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createIndicatorPrecalculationService(options?: {
   logger?: LoggerService;
   candleProvider?: IndicatorPrecalculationMockCandleProvider;
   cache?: IndicatorPrecalculationMockCache;
   calculators?: IndicatorPrecalculationMockCalculator[];
+  errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
 }) {
-  const logger = options?.logger ?? new LoggerService(LogLevel.ERROR, './logs', false);
-  const errorHandler = new ErrorHandler(logger);
+  const logger = options?.logger ?? createIndicatorPrecalculationLogger();
   const candleProvider =
     options?.candleProvider ?? createIndicatorPrecalculationMockCandleProvider();
   const cache = options?.cache ?? createIndicatorPrecalculationMockCache();
@@ -88,13 +98,43 @@ export function createIndicatorPrecalculationHarness(options?: {
     createIndicatorPrecalculationMockCalculator('BB'),
   ];
 
-  const service = new IndicatorPreCalculationService(
+  return new IndicatorPreCalculationService(
     candleProvider as unknown as CandleProvider,
     cache as unknown as IIndicatorCache,
     calculators as unknown as IIndicatorCalculator[],
     logger,
-    options?.withErrorHandler === false ? undefined : errorHandler,
+    options?.withErrorHandler === false
+      ? undefined
+      : (options?.errorHandler ?? createIndicatorPrecalculationErrorHandler(logger)),
   );
+}
+
+export function createIndicatorPrecalculationHarness(options?: {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+  withErrorHandler?: boolean;
+}) {
+  const logger = options?.logger ?? createIndicatorPrecalculationLogger();
+  const errorHandler = createIndicatorPrecalculationErrorHandler(logger);
+  const candleProvider =
+    options?.candleProvider ?? createIndicatorPrecalculationMockCandleProvider();
+  const cache = options?.cache ?? createIndicatorPrecalculationMockCache();
+  const calculators = options?.calculators ?? [
+    createIndicatorPrecalculationMockCalculator('RSI'),
+    createIndicatorPrecalculationMockCalculator('EMA'),
+    createIndicatorPrecalculationMockCalculator('BB'),
+  ];
+
+  const service = createIndicatorPrecalculationService({
+    logger,
+    candleProvider,
+    cache,
+    calculators,
+    errorHandler,
+    withErrorHandler: options?.withErrorHandler,
+  });
 
   service.setOnIndicatorsReady(jest.fn().mockResolvedValue(undefined));
 

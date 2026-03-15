@@ -3,12 +3,12 @@
  * Tests POC, VAH, VAL calculation from volume distribution
  */
 
-import { VolumeProfileService } from '../../services/volume-profile.service';
+import type { VolumeProfileService } from '../../services/volume-profile.service';
 import { VolumeProfileConfig, Candle, LoggerService } from '../../types/legacy';
 import {
   createVolumeProfileCandle,
-  createVolumeProfileConfig,
   createVolumeProfileHarness,
+  createVolumeProfileService,
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
@@ -26,8 +26,11 @@ describe('VolumeProfileService', () => {
     });
 
     it('should initialize with disabled config', () => {
-      const disabledConfig = createVolumeProfileConfig({ ...config, enabled: false });
-      const disabledService = new VolumeProfileService(logger, disabledConfig);
+      const disabledService = createVolumeProfileService({
+        configOverrides: { ...config, enabled: false },
+        logger,
+        withErrorHandler: false,
+      });
       expect(disabledService).toBeDefined();
     });
   });
@@ -123,8 +126,11 @@ describe('VolumeProfileService', () => {
         createVolumeProfileCandle(115, 120, 117, 5000), // Recent candle (should dominate)
       ];
 
-      const config2Candles = { ...config, lookbackCandles: 2 };
-      const service2Candles = new VolumeProfileService(logger, config2Candles);
+      const service2Candles = createVolumeProfileService({
+        configOverrides: { ...config, lookbackCandles: 2 },
+        logger,
+        withErrorHandler: false,
+      });
       const result = service2Candles.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -138,8 +144,11 @@ describe('VolumeProfileService', () => {
         createVolumeProfileCandle(105, 110, 107, 1000),
       ];
 
-      const config100Candles = { ...config, lookbackCandles: 100 };
-      const service100Candles = new VolumeProfileService(logger, config100Candles);
+      const service100Candles = createVolumeProfileService({
+        configOverrides: { ...config, lookbackCandles: 100 },
+        logger,
+        withErrorHandler: false,
+      });
       const result = service100Candles.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -195,8 +204,11 @@ describe('VolumeProfileService', () => {
     it('should respect tick size for price levels', () => {
       const candles = [createVolumeProfileCandle(100, 100.1, 100.05, 1000)]; // 0.1 range
 
-      const config01Tick = { ...config, priceTickSize: 0.1 };
-      const service01Tick = new VolumeProfileService(logger, config01Tick);
+      const service01Tick = createVolumeProfileService({
+        configOverrides: { ...config, priceTickSize: 0.1 },
+        logger,
+        withErrorHandler: false,
+      });
       const result = service01Tick.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -207,12 +219,18 @@ describe('VolumeProfileService', () => {
     it('should create more nodes with smaller tick size', () => {
       const candles = [createVolumeProfileCandle(100, 101, 100.5, 1000)]; // 1.0 range
 
-      const config01Tick = { ...config, priceTickSize: 0.1 };
-      const service01Tick = new VolumeProfileService(logger, config01Tick);
+      const service01Tick = createVolumeProfileService({
+        configOverrides: { ...config, priceTickSize: 0.1 },
+        logger,
+        withErrorHandler: false,
+      });
       const result01 = service01Tick.calculate(candles);
 
-      const config001Tick = { ...config, priceTickSize: 0.01 };
-      const service001Tick = new VolumeProfileService(logger, config001Tick);
+      const service001Tick = createVolumeProfileService({
+        configOverrides: { ...config, priceTickSize: 0.01 },
+        logger,
+        withErrorHandler: false,
+      });
       const result001 = service001Tick.calculate(candles);
 
       expect(result01).not.toBeNull();
@@ -258,8 +276,11 @@ describe('VolumeProfileService', () => {
 
   describe('calculate() - disabled mode', () => {
     it('should return null when disabled', () => {
-      const disabledConfig = createVolumeProfileConfig({ ...config, enabled: false });
-      const disabledService = new VolumeProfileService(logger, disabledConfig);
+      const disabledService = createVolumeProfileService({
+        configOverrides: { ...config, enabled: false },
+        logger,
+        withErrorHandler: false,
+      });
 
       const candles = [createVolumeProfileCandle(100, 110, 105, 1000)];
       const result = disabledService.calculate(candles);

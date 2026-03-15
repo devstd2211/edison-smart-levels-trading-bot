@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
+import type { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
 import {
   Position,
   type OrderFilledEvent,
@@ -21,6 +21,7 @@ import {
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createMockWebSocketEventPosition,
+  createWebSocketEventHandler,
   createWebSocketEventHandlerHarness,
   type WebSocketEventHandlerHarness,
 } from '../helpers/websocket-event-handler-test.utils';
@@ -291,6 +292,20 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   });
 
   describe('Integration with Existing Functionality', () => {
+    it('should support explicit handler factory wiring', () => {
+      const explicitHandler = createWebSocketEventHandler({
+        mockPositionManager,
+        mockPositionExitingService,
+        mockBybitService,
+        mockWebSocketManager,
+        mockJournal,
+        mockTelegram,
+        mockLogger,
+      });
+
+      expect(explicitHandler).toBeDefined();
+    });
+
     it('should not break existing handleOrderFilled functionality', async () => {
       const order: OrderFilledEvent = {
         orderId: 'order-456',

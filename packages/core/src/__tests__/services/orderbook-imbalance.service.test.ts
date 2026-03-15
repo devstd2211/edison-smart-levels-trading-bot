@@ -8,6 +8,7 @@ import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceHarness,
+  createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService', () => {
@@ -25,8 +26,12 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should initialize with disabled config', () => {
-      const disabledConfig = { ...config, enabled: false };
-      const disabledService = new OrderbookImbalanceService(disabledConfig, logger);
+      const disabledConfig = createOrderbookImbalanceConfig({ ...config, enabled: false });
+      const disabledService = createOrderbookImbalanceService({
+        config: disabledConfig,
+        logger,
+        withErrorHandler: false,
+      });
       expect(disabledService).toBeDefined();
     });
   });
@@ -191,8 +196,11 @@ describe('OrderbookImbalanceService', () => {
         ],
       };
 
-      const config2Levels = { ...config, levels: 2 };
-      const service2Levels = new OrderbookImbalanceService(config2Levels, logger);
+      const service2Levels = createOrderbookImbalanceService({
+        configOverrides: { ...config, levels: 2 },
+        logger,
+        withErrorHandler: false,
+      });
       const analysis = service2Levels.analyze(orderbook);
 
       // Only top 2 levels: bidVolume=20, askVolume=10
@@ -266,8 +274,11 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - disabled mode', () => {
     it('should return neutral analysis when disabled', () => {
-      const disabledConfig = { ...config, enabled: false };
-      const disabledService = new OrderbookImbalanceService(disabledConfig, logger);
+      const disabledService = createOrderbookImbalanceService({
+        configOverrides: { ...config, enabled: false },
+        logger,
+        withErrorHandler: false,
+      });
 
       const orderbook = {
         bids: [[50000, 100] as [number, number]], // Strong BID imbalance

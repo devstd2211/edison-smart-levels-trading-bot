@@ -95,3 +95,19 @@ export const createBotMetricsService = ({
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
 } = {}): BotMetricsService => new BotMetricsService(logger, errorHandler);
+
+export const createBotMetricsHarness = ({
+  logger = new BotMetricsTestLogger(),
+  errorHandler = createBotMetricsErrorHandler(),
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): {
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  service: BotMetricsService;
+} => ({
+  logger,
+  errorHandler,
+  service: createBotMetricsService({ logger, errorHandler }),
+});

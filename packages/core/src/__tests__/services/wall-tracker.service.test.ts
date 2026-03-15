@@ -4,11 +4,12 @@
  * Tests wall lifetime tracking, spoofing detection, iceberg detection.
  */
 
-import { WallTrackerService } from '../../services/wall-tracker.service';
+import type { WallTrackerService } from '../../services/wall-tracker.service';
 import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
   createWallTrackerConfig,
   createWallTrackerHarness,
+  createWallTrackerService,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('WallTrackerService', () => {
@@ -55,7 +56,11 @@ describe('WallTrackerService', () => {
 
     it('should not detect walls when disabled', () => {
       config = createWallTrackerConfig({ enabled: false });
-      service = new WallTrackerService(config, logger);
+      service = createWallTrackerService({
+        config,
+        logger,
+        withErrorHandler: false,
+      });
 
       service.detectWall(100, 50000, 'BID');
       const walls = service.getActiveWalls();
@@ -223,7 +228,11 @@ describe('WallTrackerService', () => {
 
     it('should limit history size', () => {
       config = createWallTrackerConfig({ trackHistoryCount: 10 });
-      service = new WallTrackerService(config, logger);
+      service = createWallTrackerService({
+        config,
+        logger,
+        withErrorHandler: false,
+      });
 
       // Generate 20 events
       for (let i = 0; i < 20; i++) {

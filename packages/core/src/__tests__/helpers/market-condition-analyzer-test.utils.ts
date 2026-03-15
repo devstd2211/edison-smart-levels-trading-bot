@@ -31,7 +31,7 @@ export function createMarketConditionHarness(
   overrides?: Partial<MarketConditionMockLogger>,
 ) {
   const logger = createMarketConditionMockLogger(overrides);
-  const errorHandler = new ErrorHandler(asMarketConditionLogger(logger));
+  const errorHandler = createMarketConditionErrorHandler(logger);
   const service = createMarketConditionService({
     logger,
     errorHandler,
@@ -42,6 +42,12 @@ export function createMarketConditionHarness(
     errorHandler,
     service,
   };
+}
+
+export function createMarketConditionErrorHandler(
+  logger: MarketConditionMockLogger = createMarketConditionMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(asMarketConditionLogger(logger));
 }
 
 export function createMarketConditionService(options?: {

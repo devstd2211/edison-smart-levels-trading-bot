@@ -8,9 +8,17 @@
 import { Candle, TimeframeRole, LoggerService } from '../../types/legacy';
 import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { IExchange } from '../../interfaces/IExchange';
-import { CandleProvider } from '../../providers/candle.provider';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
+import type { CandleProvider } from '../../providers/candle.provider';
+import {
+  createCandleProviderMockLogger,
+  createCandleProviderService,
+  type CandleProviderMockLogger,
+  type CandleProviderMockExchange,
+  type CandleProviderMockRepository,
+  type CandleProviderMockTimeframeProvider,
+} from '../helpers/candle-provider-test.utils';
 
 /**
  * Mock IExchange for testing
@@ -72,21 +80,26 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let exchange: MockExchange;
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
-  let logger: LoggerService;
+  let logger: CandleProviderMockLogger & LoggerService;
 
   beforeEach(() => {
     exchange = new MockExchange();
     repository = new MarketDataCacheRepository();
     timeframeProvider = new MockTimeframeProvider() as unknown as TimeframeProvider;
-    logger = new LoggerService();
+    logger = createCandleProviderMockLogger();
 
-    provider = new CandleProvider(
-      timeframeProvider,
-      exchange as unknown as IExchange,
+    provider = createCandleProviderService({
+      timeframeProvider:
+        timeframeProvider as unknown as CandleProviderMockTimeframeProvider &
+          TimeframeProvider,
+      exchange:
+        exchange as unknown as CandleProviderMockExchange & IExchange,
       logger,
-      'XRPUSDT',
-      repository,
-    );
+      symbol: 'XRPUSDT',
+      repository:
+        repository as unknown as CandleProviderMockRepository &
+          IMarketDataRepository,
+    });
   });
 
   describe('Initialization', () => {
