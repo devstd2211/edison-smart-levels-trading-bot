@@ -31,17 +31,38 @@ export function createOrderExecutionDetectorExecutionData(
 export function createOrderExecutionDetectorHarness(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;
-} = {}) {
+  errorHandler?: ErrorHandler;
+} = {}): {
+  service: OrderExecutionDetectorService;
+  logger: LoggerService;
+  errorHandler?: ErrorHandler;
+} {
   const logger = options.logger ?? createOrderExecutionDetectorLogger();
-  const errorHandler = new ErrorHandler(logger);
-  const service = new OrderExecutionDetectorService(
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const service = createOrderExecutionDetectorService({
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    withErrorHandler: options.withErrorHandler,
+    errorHandler,
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createOrderExecutionDetectorService(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createOrderExecutionDetectorLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new OrderExecutionDetectorService(logger, errorHandler);
 }

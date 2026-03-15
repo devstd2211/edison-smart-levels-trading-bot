@@ -32,15 +32,19 @@ export function createEntryConfirmationHarness(options: {
   configOverrides?: Partial<EntryConfirmationConfig>;
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 } = {}) {
   const logger = options.logger ?? createEntryConfirmationLogger();
   const config = createEntryConfirmationConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const manager = new EntryConfirmationManager(
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const manager = createEntryConfirmationManager({
     config,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    withErrorHandler: options.withErrorHandler,
+    errorHandler,
+  });
 
   return {
     manager,
@@ -48,6 +52,26 @@ export function createEntryConfirmationHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createEntryConfirmationManager(options: {
+  config?: EntryConfirmationConfig;
+  configOverrides?: Partial<EntryConfirmationConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): EntryConfirmationManager {
+  const logger = options.logger ?? createEntryConfirmationLogger();
+  const config = options.config ?? createEntryConfirmationConfig(options.configOverrides);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new EntryConfirmationManager(
+    config,
+    logger,
+    errorHandler,
+  );
 }
 
 export function createPendingEntryInput(

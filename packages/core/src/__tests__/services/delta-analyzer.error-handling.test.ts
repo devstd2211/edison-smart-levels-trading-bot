@@ -40,13 +40,21 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new DeltaAnalyzerService(null as unknown as DeltaConfig, asDeltaAnalyzerLogger(mockLogger), errorHandler);
+        createDeltaAnalyzerService({
+          config: null as unknown as DeltaConfig,
+          logger: asDeltaAnalyzerLogger(mockLogger),
+          errorHandler,
+        });
       }).toThrow('DeltaConfig cannot be null or undefined');
     });
 
     it('should throw on undefined config', () => {
       expect(() => {
-        new DeltaAnalyzerService(undefined as unknown as DeltaConfig, asDeltaAnalyzerLogger(mockLogger), errorHandler);
+        createDeltaAnalyzerService({
+          config: undefined as unknown as DeltaConfig,
+          logger: asDeltaAnalyzerLogger(mockLogger),
+          errorHandler,
+        });
       }).toThrow('DeltaConfig cannot be null or undefined');
     });
 
@@ -54,7 +62,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
       const config = createDeltaAnalyzerConfig({ minDeltaThreshold: 100, windowSizeMs: 0 });
 
       expect(() => {
-        new DeltaAnalyzerService(config, asDeltaAnalyzerLogger(mockLogger), errorHandler);
+        createDeltaAnalyzerService({
+          config,
+          logger: asDeltaAnalyzerLogger(mockLogger),
+          errorHandler,
+        });
       }).toThrow('windowSizeMs must be > 0');
     });
 
@@ -62,7 +74,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
       const config = createDeltaAnalyzerConfig({ minDeltaThreshold: -50 });
 
       expect(() => {
-        new DeltaAnalyzerService(config, asDeltaAnalyzerLogger(mockLogger), errorHandler);
+        createDeltaAnalyzerService({
+          config,
+          logger: asDeltaAnalyzerLogger(mockLogger),
+          errorHandler,
+        });
       }).toThrow('minDeltaThreshold must be >= 0');
     });
   });
@@ -286,7 +302,10 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        new DeltaAnalyzerService(null as unknown as DeltaConfig, asDeltaAnalyzerLogger(mockLogger));
+        createDeltaAnalyzerService({
+          config: null as unknown as DeltaConfig,
+          logger: asDeltaAnalyzerLogger(mockLogger),
+        });
       }).toThrow('DeltaConfig cannot be null or undefined');
     });
 

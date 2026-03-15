@@ -53,9 +53,29 @@ export interface AntiFlipHarness {
   errorHandler: ErrorHandler & { handle: jest.Mock };
   createService: (
     overrides?: Partial<AntiFlipConfig>,
-    options?: { errorHandler?: ErrorHandler },
+    options?: { errorHandler?: ErrorHandler; logger?: LoggerService; withErrorHandler?: boolean },
   ) => AntiFlipService;
 }
+
+export const createAntiFlipService = (
+  overrides: Partial<AntiFlipConfig> = {},
+  options: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  } = {},
+): AntiFlipService => {
+  const logger = options.logger ?? createAntiFlipLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler;
+
+  return new AntiFlipService(
+    logger,
+    createAntiFlipConfig(overrides),
+    errorHandler,
+  );
+};
 
 export const createAntiFlipHarness = (): AntiFlipHarness => {
   const logger = createAntiFlipLogger();
@@ -66,13 +86,14 @@ export const createAntiFlipHarness = (): AntiFlipHarness => {
     errorHandler,
     createService: (
       overrides: Partial<AntiFlipConfig> = {},
-      options: { errorHandler?: ErrorHandler } = {},
-    ) =>
-      new AntiFlipService(
-        logger,
-        createAntiFlipConfig(overrides),
-        options.errorHandler ?? errorHandler,
-      ),
+      options: { errorHandler?: ErrorHandler; logger?: LoggerService; withErrorHandler?: boolean } = {},
+    ) => createAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
+      errorHandler: options.withErrorHandler === false
+        ? undefined
+        : options.errorHandler ?? errorHandler,
+      withErrorHandler: options.withErrorHandler,
+    }),
   };
 };
 

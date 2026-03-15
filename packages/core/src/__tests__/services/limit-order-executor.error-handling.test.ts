@@ -26,6 +26,12 @@ import {
   MarketOrderFallbackError,
   ExchangeConnectionError,
 } from '../../errors/DomainErrors';
+import {
+  createLimitOrderExecutorConfig,
+  createLimitOrderExecutorLogger,
+  createLimitOrderExecutorService,
+  createMockLimitOrderBybitService,
+} from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
 // TEST SETUP
@@ -39,33 +45,11 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
+    logger = createLimitOrderExecutorLogger();
     errorHandler = new ErrorHandler(logger);
-
-    config = {
-      enabled: true,
-      timeoutMs: 5000,
-      slippagePercent: 0.02,
-      fallbackToMarket: true,
-      maxRetries: 2,
-    };
-
-    // Mock BybitService
-    bybitService = {
-      setLeverage: jest.fn().mockResolvedValue(undefined),
-      roundQuantity: jest.fn((qty) => qty.toFixed(0)),
-      roundPrice: jest.fn((price) => price.toFixed(2)),
-      getSymbol: jest.fn().mockReturnValue('APEXUSDT'),
-      getRestClient: jest.fn().mockReturnValue({
-        submitOrder: jest.fn(),
-        getActiveOrders: jest.fn(),
-        getHistoricOrders: jest.fn(),
-        cancelOrder: jest.fn(),
-      }),
-      openPosition: jest.fn(),
-    } as unknown as BybitService;
-
-    service = new LimitOrderExecutorService(config, bybitService, logger, errorHandler);
+    config = createLimitOrderExecutorConfig();
+    bybitService = createMockLimitOrderBybitService();
+    service = createLimitOrderExecutorService({ config, bybitService, logger, errorHandler });
   });
 
   // ==========================================================================
@@ -659,7 +643,12 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (legacy mode)', async () => {
-      const legacyService = new LimitOrderExecutorService(config, bybitService, logger);
+      const legacyService = createLimitOrderExecutorService({
+        config,
+        bybitService,
+        logger,
+        withErrorHandler: false,
+      });
 
       const mockOrderId = 'legacy-order-123';
       const mockSubmitOrder = jest.fn().mockResolvedValue({
@@ -682,7 +671,12 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
     });
 
     it('should fallback to legacy retry logic without ErrorHandler', async () => {
-      const legacyService = new LimitOrderExecutorService(config, bybitService, logger);
+      const legacyService = createLimitOrderExecutorService({
+        config,
+        bybitService,
+        logger,
+        withErrorHandler: false,
+      });
 
       const mockOrderId = 'legacy-retry-order';
       const mockSubmitOrder = jest

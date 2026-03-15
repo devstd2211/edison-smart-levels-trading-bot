@@ -9,6 +9,7 @@ import { ErrorHandler } from '../../errors';
 import {
   createEntryConfirmationConfig,
   createEntryConfirmationHarness,
+  createEntryConfirmationManager,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -24,7 +25,7 @@ const defaultConfig = createEntryConfirmationConfig();
 describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
 
   beforeEach(() => {
     ({ manager, logger, errorHandler } = createEntryConfirmationHarness());
@@ -282,7 +283,11 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   // TEST 11-13: Backward compatibility
   describe('backward compatibility - optional ErrorHandler', () => {
     it('should work without ErrorHandler parameter', () => {
-      const managerWithoutEH = new EntryConfirmationManager(defaultConfig, logger);
+      const managerWithoutEH = createEntryConfirmationManager({
+        config: defaultConfig,
+        logger,
+        withErrorHandler: false,
+      });
 
       const id = managerWithoutEH.addPending({
         symbol: 'APEXUSDT',
@@ -299,7 +304,11 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should preserve existing behavior with logger failures (no ErrorHandler)', () => {
-      const managerWithoutEH = new EntryConfirmationManager(defaultConfig, logger);
+      const managerWithoutEH = createEntryConfirmationManager({
+        config: defaultConfig,
+        logger,
+        withErrorHandler: false,
+      });
 
       // Mock logger to throw
       const loggerSpy = jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -322,11 +331,11 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should handle undefined ErrorHandler gracefully', () => {
-      const managerWithoutEH = new EntryConfirmationManager(
-        defaultConfig,
+      const managerWithoutEH = createEntryConfirmationManager({
+        config: defaultConfig,
         logger,
-        undefined
-      );
+        withErrorHandler: false,
+      });
 
       const id = managerWithoutEH.addPending({
         symbol: 'APEXUSDT',
@@ -343,6 +352,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   // TEST 14-15: ErrorHandler integration verification
   describe('ErrorHandler integration', () => {
     it('should use ErrorHandler when provided', () => {
+      if (!errorHandler) {
+        throw new Error('Expected ErrorHandler to be defined in this test');
+      }
+
       const handleSpy = jest.spyOn(errorHandler, 'handle');
 
       // Mock logger to throw
@@ -366,7 +379,11 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should skip ErrorHandler when not provided', () => {
-      const managerWithoutEH = new EntryConfirmationManager(defaultConfig, logger);
+      const managerWithoutEH = createEntryConfirmationManager({
+        config: defaultConfig,
+        logger,
+        withErrorHandler: false,
+      });
 
       // Mock logger to throw
       const loggerSpy = jest.spyOn(logger, 'info').mockImplementation(() => {

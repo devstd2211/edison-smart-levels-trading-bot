@@ -20,6 +20,7 @@ import { RiskCalculationError } from '../../errors/DomainErrors';
 import { SignalDirection } from '../../types/legacy';
 import {
   createRiskCalculatorHarness,
+  createRiskCalculatorService,
   createRiskCalculatorTakeProfitConfigs,
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
@@ -152,10 +153,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('continues calculation despite logger failures without ErrorHandler', () => {
-      const calculatorNoHandler = createRiskCalculatorHarness({
+      const calculatorNoHandler = createRiskCalculatorService({
         logger: mockLogger,
         withErrorHandler: false,
-      }).calculator;
+      });
       mockLogger.debug.mockImplementation(() => {
         throw new Error('Logger failure');
       });
@@ -284,10 +285,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
-      calculator = createRiskCalculatorHarness({
+      calculator = createRiskCalculatorService({
         logger: mockLogger,
         withErrorHandler: false,
-      }).calculator;
+      });
     });
 
     it('still validates input and throws on errors', () => {

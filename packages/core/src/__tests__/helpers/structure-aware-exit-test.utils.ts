@@ -18,6 +18,7 @@ type StructureAwareExitHarnessOptions = {
   config?: StructureAwareExitConfig;
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 };
 
 export const createStructureAwareExitMockLogger = (
@@ -69,14 +70,32 @@ export const createStructureAwareExitHarness = (
 } => {
   const logger = options.logger ?? createStructureAwareExitMockLogger();
   const config = options.config ?? createStructureAwareExitConfig();
-  const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
 
   return {
-    service: new StructureAwareExitService(config, logger, errorHandler),
+    service: createStructureAwareExitService({
+      config,
+      logger,
+      errorHandler,
+    }),
     logger,
     errorHandler,
     config,
   };
+};
+
+export const createStructureAwareExitService = (
+  options: StructureAwareExitHarnessOptions = {},
+): StructureAwareExitService => {
+  const logger = options.logger ?? createStructureAwareExitMockLogger();
+  const config = options.config ?? createStructureAwareExitConfig();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new StructureAwareExitService(config, logger, errorHandler);
 };
 
 export const createStructureAwareSwingPoint = (

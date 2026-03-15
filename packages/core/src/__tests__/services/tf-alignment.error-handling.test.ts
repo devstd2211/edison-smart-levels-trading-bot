@@ -18,6 +18,7 @@ import {
   createTFAlignmentHarness,
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
+  createTFAlignmentService,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
@@ -145,11 +146,11 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should handle null config gracefully (optional)', () => {
       // null config is allowed (service becomes disabled-like)
-      const service = new TFAlignmentService(
-        null as unknown as AlignmentConfigInput,
-        mockLogger as unknown as LoggerService,
+      const service = createTFAlignmentService({
+        config: null as unknown as AlignmentConfigInput,
+        logger: mockLogger as unknown as LoggerService,
         errorHandler,
-      );
+      });
       const indicators = createTFAlignmentIndicators();
       const result = service.calculateAlignment('LONG', 100, indicators);
       // Should work without throwing
@@ -307,7 +308,11 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should work without logger', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const basicService = new TFAlignmentService(config, undefined, errorHandler);
+      const basicService = createTFAlignmentService({
+        config,
+        logger: undefined,
+        errorHandler,
+      });
       const indicators = createTFAlignmentIndicators();
 
       expect(() => {
@@ -317,7 +322,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should work without optional parameters', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const basicService = new TFAlignmentService(config);
+      const basicService = createTFAlignmentService({
+        config,
+        withErrorHandler: false,
+      });
       const indicators = createTFAlignmentIndicators();
 
       expect(() => {
@@ -327,7 +335,11 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
 
     test('should throw on invalid input even without ErrorHandler', () => {
       const config = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const basicService = new TFAlignmentService(config, mockLogger as unknown as LoggerService);
+      const basicService = createTFAlignmentService({
+        config,
+        logger: mockLogger as unknown as LoggerService,
+        withErrorHandler: false,
+      });
 
       expect(() => {
         basicService.calculateAlignment('INVALID' as unknown as AlignmentDirection, 100, createTFAlignmentIndicators());
@@ -381,14 +393,22 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
     });
 
     test('should return undefined config if none provided', () => {
-      const service = new TFAlignmentService();
+      const service = createTFAlignmentService({
+        config: undefined,
+        logger: undefined,
+        withErrorHandler: false,
+      });
       const config = service.getConfig();
       expect(config).toBeUndefined();
     });
 
     test('should return copy of config on getConfig()', () => {
       const originalConfig = createTFAlignmentConfig({ minAlignmentScore: 60 });
-      const service = new TFAlignmentService(originalConfig, mockLogger as unknown as LoggerService, errorHandler);
+      const service = createTFAlignmentService({
+        config: originalConfig,
+        logger: mockLogger as unknown as LoggerService,
+        errorHandler,
+      });
       const retrievedConfig = service.getConfig();
 
       expect(retrievedConfig).toEqual(originalConfig);

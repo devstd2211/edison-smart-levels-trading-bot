@@ -25,15 +25,19 @@ export function createOrderbookImbalanceHarness(options: {
   configOverrides?: Partial<OrderbookImbalanceConfig>;
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 } = {}) {
   const logger = options.logger ?? createOrderbookImbalanceLogger();
   const config = createOrderbookImbalanceConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const service = new OrderbookImbalanceService(
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const service = createOrderbookImbalanceService({
     config,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    withErrorHandler: options.withErrorHandler,
+    errorHandler,
+  });
 
   return {
     service,
@@ -41,4 +45,24 @@ export function createOrderbookImbalanceHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createOrderbookImbalanceService(options: {
+  config?: OrderbookImbalanceConfig;
+  configOverrides?: Partial<OrderbookImbalanceConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): OrderbookImbalanceService {
+  const logger = options.logger ?? createOrderbookImbalanceLogger();
+  const config = options.config ?? createOrderbookImbalanceConfig(options.configOverrides);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new OrderbookImbalanceService(
+    config,
+    logger,
+    errorHandler,
+  );
 }

@@ -36,16 +36,34 @@ export function createMockWebSocketAuthErrorLogger(): MockErrorLogger {
 export function createWebSocketAuthenticationHarness(options: {
   logger?: AuthLogger;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): WebSocketAuthenticationHarness {
   const mockLogger = options.logger ?? createMockWebSocketAuthLogger();
   const errorLogger = createMockWebSocketAuthErrorLogger();
-  const errorHandler = options.errorHandler ?? new ErrorHandler(errorLogger);
-  const service = new WebSocketAuthenticationService(mockLogger, errorHandler);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(errorLogger);
+  const service = createWebSocketAuthenticationService({
+    logger: mockLogger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
-    errorHandler,
+    errorHandler: (errorHandler ?? new ErrorHandler(errorLogger)),
     mockLogger,
     errorLogger,
   };
+}
+
+export function createWebSocketAuthenticationService(options: {
+  logger?: AuthLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): WebSocketAuthenticationService {
+  const logger = options.logger;
+  const errorHandler = options.withErrorHandler === false ? undefined : options.errorHandler;
+
+  return new WebSocketAuthenticationService(logger, errorHandler);
 }

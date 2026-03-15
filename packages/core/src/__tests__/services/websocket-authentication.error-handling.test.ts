@@ -7,6 +7,7 @@ import { WebSocketAuthenticationService } from '../../services/websocket-authent
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createWebSocketAuthenticationHarness,
+  createWebSocketAuthenticationService,
   createMockWebSocketAuthLogger,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
@@ -136,7 +137,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should handle missing logger gracefully', () => {
-      const serviceNoLogger = new WebSocketAuthenticationService(undefined, errorHandler);
+      const serviceNoLogger = createWebSocketAuthenticationService({
+        logger: undefined,
+        errorHandler,
+      });
 
       const result = serviceNoLogger.generateAuthPayload('valid-key-1234567890', 'valid-secret-1234567890');
 
@@ -145,7 +149,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should handle missing errorHandler in SKIP operations', () => {
-      const serviceNoHandler = new WebSocketAuthenticationService(mockLogger);
+      const serviceNoHandler = createWebSocketAuthenticationService({
+        logger: mockLogger,
+        withErrorHandler: false,
+      });
 
       expect(() => {
         serviceNoHandler.validateCredentials('short', 'short');
@@ -256,7 +263,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== Backward Compatibility =====
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const serviceNoHandler = new WebSocketAuthenticationService(mockLogger);
+      const serviceNoHandler = createWebSocketAuthenticationService({
+        logger: mockLogger,
+        withErrorHandler: false,
+      });
 
       const result = serviceNoHandler.generateAuthPayload('key-1234567890', 'secret-1234567890');
 
@@ -272,7 +282,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should throw on validation errors even without ErrorHandler', () => {
-      const serviceNoHandler = new WebSocketAuthenticationService();
+      const serviceNoHandler = createWebSocketAuthenticationService({
+        logger: undefined,
+        withErrorHandler: false,
+      });
 
       expect(() => {
         serviceNoHandler.generateAuthPayload(null as unknown as string, 'secret-1234567890');

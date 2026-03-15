@@ -2994,3 +2994,128 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 2/2 suites PASS, 46/46 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 233 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/analyzer-engine-test.utils.ts`:
+    - extended the helper surface with reusable failing-registry, mocked `ErrorHandler`, explicit service factory, and optional harness overrides for canonical logger/registry bootstrap.
+  - `packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts`:
+    - aligned the suite on helper-driven service construction instead of repeating direct `AnalyzerEngineService` and failing-registry setup across analyzer-failure, registry-failure, backward-compatibility, and logging-visibility scenarios.
+  - behavior-preserving production review: reviewed `analyzer-engine.service.ts` while tightening the adjacent tests; no safe production change was required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 233):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts`
+  - Result: 1/1 suite PASS, 16/16 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 234 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/structure-aware-exit-test.utils.ts`:
+    - extended the helper surface with an explicit service factory and optional injected `ErrorHandler` so config-validation and backward-compatibility paths can reuse one canonical bootstrap entry point.
+  - `packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts`:
+    - aligned constructor-validation and no-handler scenarios on the shared service factory instead of repeating direct `StructureAwareExitService` construction.
+  - `packages/core/src/__tests__/helpers/enhanced-exit-test.utils.ts`:
+    - added an explicit service factory and optional injected `ErrorHandler` so config-validation, logging-failure, and no-handler paths can reuse one canonical bootstrap surface.
+  - `packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts`:
+    - aligned constructor-validation, logging-failure, and backward-compatibility scenarios on the shared service factory instead of repeating direct `EnhancedExitService` construction.
+  - `packages/core/src/__tests__/helpers/micro-wall-detector-test.utils.ts`:
+    - added an explicit detector factory that preserves explicit invalid-config coverage, optional injected `ErrorHandler`, and no-handler bootstrap while keeping the existing harness behavior.
+  - `packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts`:
+    - aligned constructor-validation, logging-failure, integration, DI-injection, and backward-compatibility scenarios on the shared detector factory instead of repeating direct `MicroWallDetectorService` construction.
+  - behavior-preserving production review: reviewed `structure-aware-exit.service.ts`, `enhanced-exit.service.ts`, and `micro-wall-detector.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 234):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 81/81 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 235 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/delta-analyzer-test.utils.ts`:
+    - tightened the explicit service factory so it preserves intentionally invalid config inputs while still supporting canonical logger/ErrorHandler bootstrap.
+  - `packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts`:
+    - aligned config-validation and no-handler constructor coverage on the shared service factory instead of repeating direct `DeltaAnalyzerService` construction.
+  - `packages/core/src/__tests__/helpers/order-execution-detector-test.utils.ts`:
+    - added an explicit service factory plus optional injected `ErrorHandler`, then routed the harness through that factory.
+  - `packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts`:
+    - aligned validation, parsing-failure, logging-failure, integration, and backward-compatibility scenarios on the shared service factory instead of repeating direct `OrderExecutionDetectorService` construction.
+  - `packages/core/src/__tests__/helpers/risk-calculator-test.utils.ts`:
+    - added an explicit calculator factory plus optional injected `ErrorHandler`, then routed the harness through that factory.
+  - `packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts`:
+    - aligned the repeated no-handler calculator rebuild paths on the shared service factory instead of rebuilding through ad hoc harness access.
+  - behavior-preserving production review: reviewed `delta-analyzer.service.ts`, `order-execution-detector.service.ts`, and `risk-calculator.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 235):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 78/78 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 236 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/tf-alignment-test.utils.ts`:
+    - added an explicit service factory and routed the harness through it while preserving intentionally invalid config/no-handler constructor paths.
+  - `packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts`:
+    - aligned config-validation, threshold-edge, disabled-service, and backward-compatibility scenarios on the shared service factory instead of repeating direct `TFAlignmentService` construction.
+  - `packages/core/src/__tests__/helpers/websocket-authentication-test.utils.ts`:
+    - added an explicit service factory plus optional no-`ErrorHandler` bootstrap while keeping the existing harness surface intact.
+  - `packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts`:
+    - aligned missing-logger, no-handler, and backward-compatibility scenarios on the shared service factory instead of repeating direct `WebSocketAuthenticationService` construction.
+  - `packages/core/src/__tests__/helpers/orderbook-manager-test.utils.ts`:
+    - added an explicit manager service factory for canonical logger/wall-tracker/`ErrorHandler` wiring and routed the harness through that factory.
+  - `packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts`:
+    - aligned stale-snapshot and backward-compatibility scenarios on the shared service factory instead of repeating direct `OrderbookManagerService` construction.
+  - behavior-preserving production review: reviewed `tf-alignment.service.ts`, `websocket-authentication.service.ts`, and `orderbook-manager.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 236):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 83/83 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 237 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/event-deduplication-test.utils.ts`:
+    - added an explicit service factory plus reusable mockable `ErrorHandler` builder, then routed the helper surface through that factory.
+  - `packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts`:
+    - aligned logger-failure, cleanup, integration, backward-compatibility, and performance scenarios on the shared service factory instead of repeating direct `EventDeduplicationService` construction.
+  - `packages/core/src/__tests__/helpers/funding-rate-filter-test.utils.ts`:
+    - added an explicit filter service factory plus optional no-`ErrorHandler` bootstrap, then routed the harness through that factory.
+  - `packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts`:
+    - aligned retry/cache-fallback, logging-failure, integration, and backward-compatibility scenarios on the shared service factory instead of repeating direct `FundingRateFilterService` construction.
+  - `packages/core/src/__tests__/helpers/orderbook-imbalance-test.utils.ts`:
+    - added an explicit service factory for canonical config/logger/`ErrorHandler` wiring, then routed the harness through that factory.
+  - `packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts`:
+    - aligned validation, graceful-degrade, logging-failure, integration, and backward-compatibility scenarios on the shared service factory instead of repeating direct `OrderbookImbalanceService` construction.
+  - behavior-preserving production review: reviewed `event-deduplication.service.ts`, `funding-rate-filter.service.ts`, and `orderbook-imbalance.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 237):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 60/60 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 238 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/entry-confirmation-test.utils.ts`:
+    - added an explicit manager factory plus optional no-`ErrorHandler` bootstrap, then routed the harness through that factory.
+  - `packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts`:
+    - aligned the backward-compatibility constructor paths on the shared manager factory instead of repeating direct `EntryConfirmationManager` construction.
+  - `packages/core/src/__tests__/helpers/anti-flip-test.utils.ts`:
+    - added an explicit service factory that supports logger overrides and legacy no-handler construction, then routed the harness through that factory.
+  - `packages/core/src/__tests__/services/anti-flip.error-handling.test.ts`:
+    - aligned the backward-compatibility and null-logger constructor paths on the shared service factory instead of repeating direct `AntiFlipService` construction.
+  - `packages/core/src/__tests__/helpers/telegram-test.utils.ts`:
+    - added an explicit service factory plus optional no-`ErrorHandler` bootstrap and routed the harness through that factory.
+  - `packages/core/src/__tests__/services/telegram.error-handling.test.ts`:
+    - aligned backward-compatibility and disabled-service scenarios on the shared service factory instead of repeating direct `TelegramService` construction.
+  - behavior-preserving production review: reviewed `entry-confirmation.service.ts`, `anti-flip.service.ts`, and `telegram.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 238):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/telegram.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 66/66 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 239 (2026-03-15):
+  - `packages/core/src/__tests__/helpers/position-sync-test.utils.ts`:
+    - extended the harness to accept dependency overrides while continuing to route construction through the shared `createPositionSyncService(...)` factory.
+  - `packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts`:
+    - aligned the custom close-recorder, custom-ErrorHandler, and no-handler constructor paths on the shared service factory instead of repeating direct `PositionSyncService` construction.
+  - `packages/core/src/__tests__/helpers/limit-order-executor-test.utils.ts`:
+    - added a dedicated helper with canonical config/logger/mock-bybit/ErrorHandler bootstrap plus an explicit service factory.
+  - `packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts`:
+    - aligned suite bootstrap and legacy-mode constructor paths on the shared service factory instead of repeating direct `LimitOrderExecutorService` construction.
+  - `packages/core/src/__tests__/helpers/data-collector-test.utils.ts`:
+    - added a dedicated helper with canonical config/logger/mock-database/ErrorHandler bootstrap plus an explicit service factory.
+  - `packages/core/src/__tests__/services/data-collector.error-handling.test.ts`:
+    - aligned WebSocket/lifecycle/backward-compatibility constructor paths on the shared service factory instead of repeating direct `DataCollectorService` construction.
+  - behavior-preserving production review: reviewed `position-sync.service.ts`, `limit-order-executor.service.ts`, and `data-collector.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-15, post testability batch 239):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts`
+  - Result: 3/3 suites PASS, 58/58 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

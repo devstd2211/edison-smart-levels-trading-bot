@@ -119,7 +119,7 @@ export function createMockSyncedPosition(
   };
 }
 
-type PositionSyncHarness = {
+export type PositionSyncHarness = {
   service: PositionSyncService;
   mockBybit: ReturnType<typeof createMockPositionSyncExchange>;
   mockPositionManager: ReturnType<typeof createMockPositionSyncManager>;
@@ -144,13 +144,21 @@ export function createPositionSyncService(
   );
 }
 
-export function createPositionSyncHarness(options: { errorHandler?: ErrorHandler } = {}): PositionSyncHarness {
-  const mockBybit = createMockPositionSyncExchange();
-  const mockPositionManager = createMockPositionSyncManager();
-  const mockExitTypeDetector = createMockPositionSyncExitTypeDetector();
-  const mockTelegram = createMockPositionSyncTelegram();
-  const positionExiting = createMockPositionCloseRecorder();
-  const logger = createMockPositionSyncLogger();
+export function createPositionSyncHarness(options: {
+  mockBybit?: ReturnType<typeof createMockPositionSyncExchange>;
+  mockPositionManager?: ReturnType<typeof createMockPositionSyncManager>;
+  mockExitTypeDetector?: ReturnType<typeof createMockPositionSyncExitTypeDetector>;
+  mockTelegram?: ReturnType<typeof createMockPositionSyncTelegram>;
+  positionExiting?: PositionCloseRecorder;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): PositionSyncHarness {
+  const mockBybit = options.mockBybit ?? createMockPositionSyncExchange();
+  const mockPositionManager = options.mockPositionManager ?? createMockPositionSyncManager();
+  const mockExitTypeDetector = options.mockExitTypeDetector ?? createMockPositionSyncExitTypeDetector();
+  const mockTelegram = options.mockTelegram ?? createMockPositionSyncTelegram();
+  const positionExiting = options.positionExiting ?? createMockPositionCloseRecorder();
+  const logger = options.logger ?? createMockPositionSyncLogger();
 
   return {
     service: createPositionSyncService({

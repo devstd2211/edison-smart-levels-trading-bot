@@ -40,15 +40,19 @@ export function createMicroWallDetectorHarness(options: {
   configOverrides?: Partial<MicroWallDetectorConfig>;
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 } = {}) {
   const logger = options.logger ?? createMicroWallDetectorLogger();
   const config = createMicroWallDetectorConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const detector = new MicroWallDetectorService(
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const detector = createMicroWallDetectorService({
     config,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     detector,
@@ -56,4 +60,26 @@ export function createMicroWallDetectorHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createMicroWallDetectorService(options: {
+  config?: MicroWallDetectorConfig;
+  configOverrides?: Partial<MicroWallDetectorConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): MicroWallDetectorService {
+  const logger = options.logger ?? createMicroWallDetectorLogger();
+  const config = Object.prototype.hasOwnProperty.call(options, 'config')
+    ? options.config
+    : createMicroWallDetectorConfig(options.configOverrides);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new MicroWallDetectorService(
+    config as MicroWallDetectorConfig,
+    logger,
+    errorHandler,
+  );
 }

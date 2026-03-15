@@ -68,19 +68,26 @@ export function createOrderbookManagerHarness(options: {
   symbol?: string;
   withWallTracker?: boolean;
   withErrorHandler?: boolean;
+  logger?: LoggerService;
+  wallTracker?: WallTrackerService;
+  errorHandler?: ErrorHandler;
 } = {}) {
   const mockLogger = createOrderbookMockLogger();
-  const loggerService = mockLogger as unknown as LoggerService;
+  const loggerService = options.logger ?? (mockLogger as unknown as LoggerService);
   const mockWallTracker = createOrderbookWallTrackerMock();
-  const errorHandler = new ErrorHandler(loggerService);
-  const service = new OrderbookManagerService(
-    options.symbol ?? 'BTCUSDT',
-    loggerService,
-    options.withWallTracker === false
-      ? undefined
-      : (mockWallTracker as unknown as WallTrackerService),
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+  const wallTracker = options.withWallTracker === false
+    ? undefined
+    : options.wallTracker ?? (mockWallTracker as unknown as WallTrackerService);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(loggerService);
+  const service = createOrderbookManagerService({
+    symbol: options.symbol,
+    logger: loggerService,
+    wallTracker,
+    withErrorHandler: options.withErrorHandler,
+    errorHandler,
+  });
 
   return {
     service,
@@ -89,4 +96,24 @@ export function createOrderbookManagerHarness(options: {
     mockWallTracker,
     errorHandler,
   };
+}
+
+export function createOrderbookManagerService(options: {
+  symbol?: string;
+  logger?: LoggerService;
+  wallTracker?: WallTrackerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): OrderbookManagerService {
+  const logger = options.logger ?? (createOrderbookMockLogger() as unknown as LoggerService);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new OrderbookManagerService(
+    options.symbol ?? 'BTCUSDT',
+    logger,
+    options.wallTracker,
+    errorHandler,
+  );
 }

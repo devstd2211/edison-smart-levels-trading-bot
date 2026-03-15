@@ -15,32 +15,20 @@ import { DataQueue } from '../../services/data-collector/data-queue';
 import { ErrorHandler, RecoveryStrategy, DataCollectionError, DatabaseBatchError, DataCompressionError, DataQueueOverflowError } from '../../errors';
 import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
+import {
+  asWriterDatabase,
+  createDataCollectorService,
+  createMockCollectorDatabase,
+  createMockDataCollectorConfig,
+  createMockDataCollectorLogger,
+} from '../helpers/data-collector-test.utils';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
 // Mock logger
-const createMockLogger = (): Partial<LoggerService> => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-});
-
-// Mock database
-const createMockDatabase = () => ({
-  run: jest.fn().mockResolvedValue({}),
-  exec: jest.fn().mockResolvedValue(undefined),
-  close: jest.fn().mockResolvedValue(undefined),
-  prepare: jest.fn(),
-});
-
-type MockDatabase = ReturnType<typeof createMockDatabase>;
-const asWriterDatabase = (
-  db: MockDatabase,
-): ConstructorParameters<typeof DatabaseWriter>[0] =>
-  db as unknown as ConstructorParameters<typeof DatabaseWriter>[0];
+type MockDatabase = ReturnType<typeof createMockCollectorDatabase>;
 
 // Mock WebSocket
 const createMockWebSocket = () => {
@@ -68,23 +56,6 @@ const createMockWebSocket = () => {
 };
 
 // Mock config
-const createMockConfig = (): DataCollectionConfig => ({
-  enabled: true,
-  symbols: ['BTCUSDT', 'ETHUSDT'],
-  timeframes: ['1', '5', '15'],
-  collectOrderbook: true,
-  collectTradeTicks: true, // Phase 8.9.35
-  orderbookInterval: 5,
-  database: {
-    path: ':memory:',
-    compression: true,
-  },
-  websocket: {
-    maxReconnectAttempts: 5,
-    reconnectDelay: 100,
-  },
-});
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -97,10 +68,10 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let config: DataCollectionConfig;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-    mockDatabase = createMockDatabase();
+    mockLogger = createMockDataCollectorLogger();
+    mockDatabase = createMockCollectorDatabase();
     errorHandler = new ErrorHandler(mockLogger as LoggerService);
-    config = createMockConfig();
+    config = createMockDataCollectorConfig();
   });
 
   afterEach(() => {
@@ -208,18 +179,18 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   describe('Category 2: WebSocket Connection', () => {
     it('should accept ErrorHandler parameter for WebSocket error handling', () => {
       // DataCollectorService should accept optional ErrorHandler
-      service = new DataCollectorService(config, mockLogger as LoggerService, errorHandler);
+      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
       expect(service).toBeDefined();
     });
 
     it('should work without ErrorHandler (backward compatibility)', () => {
       // DataCollectorService should work without ErrorHandler
-      service = new DataCollectorService(config, mockLogger as LoggerService);
+      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, withErrorHandler: false });
       expect(service).toBeDefined();
     });
 
     it('should initialize DatabaseWriter with ErrorHandler', async () => {
-      service = new DataCollectorService(config, mockLogger as LoggerService, errorHandler);
+      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
 
       // Service should have access to errorHandler for delegating error handling
       // DatabaseWriter is initialized with errorHandler during service.initialize()
@@ -234,7 +205,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
   describe('Category 3: Service Lifecycle', () => {
     it('should handle graceful shutdown with potential errors', async () => {
-      service = new DataCollectorService(config, mockLogger as LoggerService, errorHandler);
+      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
 
       // stop() should use GRACEFUL_DEGRADE for errors
       // Never block shutdown due to database or WebSocket errors
@@ -245,7 +216,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     it('should initialize with database errors (THROW on startup)', async () => {
       // initialize() should THROW on database errors (startup blocker)
       const invalidConfig = { ...config, database: { ...config.database, path: '/invalid/path' } };
-      service = new DataCollectorService(invalidConfig, mockLogger as LoggerService, errorHandler);
+      service = createDataCollectorService({ config: invalidConfig, logger: mockLogger as LoggerService, errorHandler });
 
       expect(service).toBeDefined();
     });
@@ -362,7 +333,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   describe('Category 6: Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (legacy mode)', () => {
       // DataCollectorService should accept missing ErrorHandler
-      service = new DataCollectorService(config, mockLogger as LoggerService);
+      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, withErrorHandler: false });
 
       expect(service).toBeDefined();
     });

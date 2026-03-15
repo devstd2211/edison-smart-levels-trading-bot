@@ -50,15 +50,22 @@ export function createTFAlignmentHarness(options: {
   configOverrides?: Partial<TFAlignmentConfig>;
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  config?: TFAlignmentConfig;
+  errorHandler?: ErrorHandler;
 } = {}) {
   const logger = options.logger ?? createTFAlignmentLogger();
-  const config = createTFAlignmentConfig(options.configOverrides);
-  const errorHandler = new ErrorHandler(logger);
-  const service = new TFAlignmentService(
+  const config = Object.prototype.hasOwnProperty.call(options, 'config')
+    ? options.config
+    : createTFAlignmentConfig(options.configOverrides);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const service = createTFAlignmentService({
     config,
     logger,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    withErrorHandler: options.withErrorHandler,
+    errorHandler,
+  });
 
   return {
     service,
@@ -66,4 +73,26 @@ export function createTFAlignmentHarness(options: {
     config,
     errorHandler,
   };
+}
+
+export function createTFAlignmentService(options: {
+  configOverrides?: Partial<TFAlignmentConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  config?: TFAlignmentConfig;
+  errorHandler?: ErrorHandler;
+} = {}): TFAlignmentService {
+  const logger = options.logger ?? createTFAlignmentLogger();
+  const config = Object.prototype.hasOwnProperty.call(options, 'config')
+    ? options.config
+    : createTFAlignmentConfig(options.configOverrides);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new TFAlignmentService(
+    config,
+    logger,
+    errorHandler,
+  );
 }

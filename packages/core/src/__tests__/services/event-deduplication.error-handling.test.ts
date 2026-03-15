@@ -15,6 +15,10 @@
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import {
+  createEventDeduplicationErrorHandler,
+  createEventDeduplicationService,
+} from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
 // MOCKS
@@ -24,14 +28,7 @@ const createMockLogger = (): LoggerService => {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 };
 
-const createMockErrorHandler = (): ErrorHandler => {
-  return new ErrorHandler({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  });
-};
+const createMockErrorHandler = (): ErrorHandler => createEventDeduplicationErrorHandler();
 
 // ============================================================================
 // TESTS
@@ -59,7 +56,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
   describe('SKIP Strategy for Logger Failures (4 tests)', () => {
     it('test-8.9.19.1: Should skip duplicate log when logger throws', () => {
-      service = new EventDeduplicationService(10, 1000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger, errorHandler });
       const timestamp = Date.now();
 
       // Mock logger to throw
@@ -77,7 +74,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.2: Should continue with next event after logger failure', () => {
-      service = new EventDeduplicationService(10, 1000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger, errorHandler });
       const timestamp = Date.now();
 
       // Mock logger to fail once, then work
@@ -100,7 +97,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.3: Should handle logger failures in cleanup', () => {
       // Use larger capacity and longer TTL to avoid timing issues
-      service = new EventDeduplicationService(10, 5000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 5000, logger, errorHandler });
       const timestamp = Date.now() - 2000; // Old timestamp (will expire)
 
       // Add expired events
@@ -122,7 +119,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.4: Should work without ErrorHandler when logger fails', () => {
       // No ErrorHandler provided
-      service = new EventDeduplicationService(10, 1000, logger, undefined);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger, withErrorHandler: false });
       const timestamp = Date.now();
 
       // Mock logger to throw
@@ -146,12 +143,12 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   describe('GRACEFUL_DEGRADE Strategy for Cache Cleanup (5 tests)', () => {
     it('test-8.9.19.5: Should degrade gracefully when Map iteration fails', () => {
       // Use longer TTL (5000ms) to ensure events don't expire during test
-      const corruptedService = new EventDeduplicationService(
-        10,
-        5000,
+      const corruptedService = createEventDeduplicationService({
+        cacheSize: 10,
+        cacheTtlMs: 5000,
         logger,
         errorHandler,
-      );
+      });
 
       // Manually add events to trigger potential cleanup
       const now = Date.now();
@@ -174,7 +171,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.6: Should continue with current cache after cleanup failure', () => {
-      service = new EventDeduplicationService(10, 500, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 500, logger, errorHandler });
       const timestamp1 = Date.now() - 1000;
       const timestamp2 = Date.now();
 
@@ -203,7 +200,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.7: Should handle cleanup with ErrorHandler callbacks', () => {
       const errorHandler2 = createMockErrorHandler();
-      service = new EventDeduplicationService(10, 500, logger, errorHandler2);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 500, logger, errorHandler: errorHandler2 });
 
       // Trigger cleanup multiple times
       for (let i = 0; i < 15; i++) {
@@ -217,7 +214,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.8: Should degrade without ErrorHandler in cleanup', () => {
       // No ErrorHandler
-      service = new EventDeduplicationService(5, 100, logger, undefined);
+      service = createEventDeduplicationService({ cacheSize: 5, cacheTtlMs: 100, logger, withErrorHandler: false });
 
       const timestamp = Date.now();
 
@@ -236,7 +233,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.9: Should handle partial cache cleanup failures', () => {
-      service = new EventDeduplicationService(3, 100, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 3, cacheTtlMs: 100, logger, errorHandler });
       const timestamp = Date.now();
 
       // Add events
@@ -258,7 +255,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
   describe('Integration Scenarios (5 tests)', () => {
     it('test-8.9.19.10: Should handle rapid deduplication with error recovery', () => {
-      service = new EventDeduplicationService(100, 1000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 100, cacheTtlMs: 1000, logger, errorHandler });
 
       // Simulate rapid WebSocket event stream
       const events = [
@@ -279,7 +276,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.11: Should handle cache overflow with error handling', () => {
-      service = new EventDeduplicationService(5, 60000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 5, cacheTtlMs: 60000, logger, errorHandler });
       const timestamp = 1000; // Fixed timestamp for all calls
 
       // Fill cache to trigger cleanup
@@ -295,7 +292,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.12: Should clear cache safely even with ErrorHandler', () => {
-      service = new EventDeduplicationService(10, 1000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger, errorHandler });
       const timestamp = Date.now();
 
       service.isDuplicate('TP', 'order-1', timestamp);
@@ -310,7 +307,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.13: Should handle mixed logger/cleanup failures', () => {
-      service = new EventDeduplicationService(3, 5000, logger, errorHandler); // 5s TTL to prevent expiry
+      service = createEventDeduplicationService({ cacheSize: 3, cacheTtlMs: 5000, logger, errorHandler }); // 5s TTL to prevent expiry
 
       // Mock logger to fail sometimes
       let logCallCount = 0;
@@ -335,16 +332,9 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.14: Should work with optional ErrorHandler parameter', () => {
       // Create service with ErrorHandler
-      const service1 = new EventDeduplicationService(
-        10,
-        1000,
-        logger,
-        errorHandler,
-      );
-      // Create service without ErrorHandler
-      const service2 = new EventDeduplicationService(10, 1000, logger);
-      // Create service without logger or ErrorHandler
-      const service3 = new EventDeduplicationService(10, 1000);
+      const service1 = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger, errorHandler });
+      const service2 = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger });
+      const service3 = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, withErrorHandler: false });
 
       const timestamp = Date.now();
 
@@ -365,7 +355,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
   describe('Backward Compatibility (3 tests)', () => {
     it('test-8.9.19.15: Should work without ErrorHandler (old behavior)', () => {
-      service = new EventDeduplicationService(10, 1000, logger);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger });
       const timestamp = Date.now();
 
       const first = service.isDuplicate('TP', 'order-123', timestamp);
@@ -376,7 +366,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.16: Should work without logger or ErrorHandler', () => {
-      service = new EventDeduplicationService(10, 1000);
+      service = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, withErrorHandler: false });
       const timestamp = Date.now();
 
       const first = service.isDuplicate('TP', 'order-123', timestamp);
@@ -387,13 +377,8 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.17: Should maintain same deduplication logic with ErrorHandler', () => {
-      const service1 = new EventDeduplicationService(
-        10,
-        1000,
-        logger,
-        errorHandler,
-      );
-      const service2 = new EventDeduplicationService(10, 1000, logger);
+      const service1 = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger, errorHandler });
+      const service2 = createEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000, logger });
 
       const timestamp = Date.now();
 
@@ -415,7 +400,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
   describe('Performance with Error Handling (3 tests)', () => {
     it('test-8.9.19.18: Should maintain performance with ErrorHandler', () => {
-      service = new EventDeduplicationService(1000, 60000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 1000, cacheTtlMs: 60000, logger, errorHandler });
 
       const startTime = Date.now();
 
@@ -431,7 +416,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.19: Should handle large cache sizes efficiently', () => {
-      service = new EventDeduplicationService(5000, 60000, logger, errorHandler);
+      service = createEventDeduplicationService({ cacheSize: 5000, cacheTtlMs: 60000, logger, errorHandler });
       const timestamp = 1000; // Fixed timestamp
 
       const startTime = Date.now();
@@ -451,7 +436,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.20: Should handle TTL cleanup efficiently', () => {
-      service = new EventDeduplicationService(100, 50, logger, errorHandler); // 50ms TTL
+      service = createEventDeduplicationService({ cacheSize: 100, cacheTtlMs: 50, logger, errorHandler }); // 50ms TTL
 
       // Add events
       const timestamp1 = Date.now() - 1000;

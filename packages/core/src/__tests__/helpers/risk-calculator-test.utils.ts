@@ -20,6 +20,7 @@ export type RiskCalculatorMockLogger = {
 type RiskCalculatorHarnessOptions = {
   logger?: RiskCalculatorMockLogger;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 };
 
 export const createRiskCalculatorMockLogger = (): RiskCalculatorMockLogger => ({
@@ -66,12 +67,28 @@ export const createRiskCalculatorHarness = (
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
-      : new ErrorHandler(logger as unknown as LoggerService);
+      : options.errorHandler ?? new ErrorHandler(logger as unknown as LoggerService);
 
   return {
-    calculator: new RiskCalculator(logger as unknown as LoggerService, errorHandler),
+    calculator: createRiskCalculatorService({
+      logger,
+      withErrorHandler: options.withErrorHandler,
+      errorHandler,
+    }),
     logger,
     errorHandler,
     defaultInput: createRiskCalculationInput(),
   };
+};
+
+export const createRiskCalculatorService = (
+  options: RiskCalculatorHarnessOptions = {},
+): RiskCalculator => {
+  const logger = options.logger ?? createRiskCalculatorMockLogger();
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : options.errorHandler ?? new ErrorHandler(logger as unknown as LoggerService);
+
+  return new RiskCalculator(logger as unknown as LoggerService, errorHandler);
 };

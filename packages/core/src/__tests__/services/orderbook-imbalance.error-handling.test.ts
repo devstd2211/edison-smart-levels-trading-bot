@@ -36,6 +36,7 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceHarness,
+  createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
@@ -46,7 +47,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   const asLogger = (value: unknown): LoggerService => value as LoggerService;
 
   let logger: LoggerService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
 
   beforeEach(() => {
     ({ logger, errorHandler } = createOrderbookImbalanceHarness());
@@ -64,7 +65,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         levels: 0, // Invalid: < 1
       };
 
-      expect(() => new OrderbookImbalanceService(config, logger, errorHandler)).toThrow(
+      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.levels must be >= 1',
       );
     });
@@ -76,7 +77,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         levels: 10,
       };
 
-      expect(() => new OrderbookImbalanceService(config, logger, errorHandler)).toThrow(
+      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
@@ -88,7 +89,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         levels: 10,
       };
 
-      expect(() => new OrderbookImbalanceService(config, logger, errorHandler)).toThrow(
+      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
@@ -100,7 +101,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         levels: 10,
       };
 
-      expect(() => new OrderbookImbalanceService(config, logger, errorHandler)).toThrow(
+      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.enabled must be boolean',
       );
     });
@@ -113,7 +114,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       expect(() => service.analyze(asOrderbook(null))).toThrow('orderbook is required');
     });
@@ -124,7 +125,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       expect(() => service.analyze(asOrderbook(undefined))).toThrow('orderbook is required');
     });
@@ -135,7 +136,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: 'not-an-array' as unknown as [number, number][],
@@ -151,7 +152,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [[50000, 10] as [number, number]],
@@ -173,7 +174,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [[50000, NaN] as [number, number]],
@@ -196,7 +197,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [[50000, 10] as [number, number]],
@@ -217,7 +218,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [[50000, -Infinity] as [number, number]],
@@ -238,7 +239,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [
@@ -260,7 +261,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [[50000, Number.MAX_VALUE] as [number, number]],
@@ -295,7 +296,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(
-        () => new OrderbookImbalanceService(config, asLogger(failingLogger), errorHandler),
+        () => createOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler }),
       ).not.toThrow();
     });
 
@@ -313,7 +314,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, asLogger(failingLogger), errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler });
 
       const orderbook = {
         bids: [[50000, NaN] as [number, number]],
@@ -333,7 +334,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, asLogger(null), errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger: asLogger(null), errorHandler });
 
       const orderbook = {
         bids: [[50000, 10] as [number, number]],
@@ -356,7 +357,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [
@@ -384,7 +385,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       // First analysis with failure
       const failOrderbook = {
@@ -411,7 +412,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       // Verify config is preserved after error
       expect(service.getConfig()).toEqual(config);
@@ -443,7 +444,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       };
 
       // Constructor without errorHandler
-      const service = new OrderbookImbalanceService(config, logger);
+      const service = createOrderbookImbalanceService({ config, logger, withErrorHandler: false });
 
       const orderbook = {
         bids: [[50000, 100] as [number, number]],
@@ -465,7 +466,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       };
 
       // Should throw even without errorHandler
-      expect(() => new OrderbookImbalanceService(config, logger)).toThrow(
+      expect(() => createOrderbookImbalanceService({ config, logger, withErrorHandler: false })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
@@ -482,7 +483,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, errorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       const orderbook = {
         bids: [
@@ -515,7 +516,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 10,
       };
-      const service = new OrderbookImbalanceService(config, logger, failingErrorHandler);
+      const service = createOrderbookImbalanceService({ config, logger, errorHandler: failingErrorHandler });
 
       const orderbook = {
         bids: [[50000, NaN] as [number, number]],
@@ -533,7 +534,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 1,
       };
-      expect(() => new OrderbookImbalanceService(config1, logger, errorHandler)).not.toThrow();
+      expect(() => createOrderbookImbalanceService({ config: config1, logger, errorHandler })).not.toThrow();
 
       // Test large levels value
       const config2: OrderbookImbalanceConfig = {
@@ -541,7 +542,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 30,
         levels: 1000,
       };
-      expect(() => new OrderbookImbalanceService(config2, logger, errorHandler)).not.toThrow();
+      expect(() => createOrderbookImbalanceService({ config: config2, logger, errorHandler })).not.toThrow();
     });
   });
 });

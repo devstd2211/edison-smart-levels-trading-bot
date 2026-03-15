@@ -13,12 +13,13 @@
  */
 
 import { StructureAwareExitService } from '../../services/structure-aware-exit.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointType } from '../../types/legacy';
 import {
   createStructureAwareExitConfig,
   createStructureAwareExitHarness,
   createStructureAwareExitMockLogger,
+  createStructureAwareExitService,
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
@@ -43,7 +44,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid bufferPercent > 10%', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { bufferPercent: 15 } });
 
-      expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
+      expect(() => createStructureAwareExitService({
+        config: badConfig,
+        logger: mockLogger,
+        errorHandler,
+      })).toThrow(
         /Invalid bufferPercent/,
       );
     });
@@ -51,7 +56,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid minTP2Percent > 50%', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { minTP2Percent: 60 } });
 
-      expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
+      expect(() => createStructureAwareExitService({
+        config: badConfig,
+        logger: mockLogger,
+        errorHandler,
+      })).toThrow(
         /Invalid minTP2Percent/,
       );
     });
@@ -59,7 +68,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid maxTP2Percent > 50%', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { maxTP2Percent: 100 } });
 
-      expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
+      expect(() => createStructureAwareExitService({
+        config: badConfig,
+        logger: mockLogger,
+        errorHandler,
+      })).toThrow(
         /Invalid maxTP2Percent/,
       );
     });
@@ -69,7 +82,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         dynamicTP2: { minTP2Percent: 8.0, maxTP2Percent: 4.0 },
       });
 
-      expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
+      expect(() => createStructureAwareExitService({
+        config: badConfig,
+        logger: mockLogger,
+        errorHandler,
+      })).toThrow(
         /Invalid TP2 range/,
       );
     });
@@ -77,7 +94,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid minZoneStrength outside 0-1', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { minZoneStrength: 1.5 } });
 
-      expect(() => new StructureAwareExitService(badConfig, mockLogger, errorHandler)).toThrow(
+      expect(() => createStructureAwareExitService({
+        config: badConfig,
+        logger: mockLogger,
+        errorHandler,
+      })).toThrow(
         /Invalid minZoneStrength/,
       );
     });
@@ -370,7 +391,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should still validate config even without ErrorHandler', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { bufferPercent: 50 } });
 
-      expect(() => new StructureAwareExitService(badConfig, mockLogger)).toThrow();
+      expect(() => createStructureAwareExitService({
+        config: badConfig,
+        logger: mockLogger,
+        withErrorHandler: false,
+      })).toThrow();
     });
 
     it('should apply constraints in TP2 calculation consistently', () => {

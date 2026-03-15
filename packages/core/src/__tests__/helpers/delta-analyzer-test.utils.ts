@@ -68,12 +68,17 @@ export const createDeltaAnalyzerSignal = (
   ...overrides,
 });
 
-export const createDeltaAnalyzerService = ({
-  config = createDeltaAnalyzerConfig(),
-  logger = createDeltaAnalyzerLogger(),
-  errorHandler,
-}: {
-  config?: DeltaConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-} = {}): DeltaAnalyzerService => new DeltaAnalyzerService(config, logger, errorHandler);
+export const createDeltaAnalyzerService = (
+  options: {
+    config?: DeltaConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  } = {},
+): DeltaAnalyzerService => {
+  const logger = options.logger ?? createDeltaAnalyzerLogger();
+  const config = Object.prototype.hasOwnProperty.call(options, 'config')
+    ? options.config
+    : createDeltaAnalyzerConfig();
+
+  return new DeltaAnalyzerService(config as DeltaConfig, logger, options.errorHandler);
+};

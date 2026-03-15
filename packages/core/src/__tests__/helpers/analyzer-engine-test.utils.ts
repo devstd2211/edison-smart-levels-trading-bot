@@ -5,6 +5,7 @@ import type { AnalyzerRegistryService } from '../../services/analyzer-registry.s
 import type { IAnalyzer } from '../../types/analyzer';
 import { AnalyzerEngineService } from '../../services/analyzer-engine.service';
 import { LoggerService } from '../../services/logger.service';
+import { ErrorHandler, RecoveryStrategy, type ErrorHandlingResult } from '../../errors/ErrorHandler';
 
 export type AnalyzerEngineMockLogger = {
   debug: jest.Mock;
@@ -78,6 +79,14 @@ export function createAnalyzerEngineMockRegistry(
   } as unknown as AnalyzerRegistryService;
 }
 
+export function createAnalyzerEngineFailingRegistry(error: unknown): AnalyzerRegistryService {
+  return {
+    getEnabledAnalyzers: jest.fn(async () => {
+      throw error;
+    }),
+  } as unknown as AnalyzerRegistryService;
+}
+
 export function createAnalyzerEngineMockStrategyConfig(
   analyzerNames: string[],
 ): StrategyConfig {
@@ -113,19 +122,54 @@ export function createAnalyzerEngineMockCandles(count: number): Candle[] {
   }));
 }
 
+export function createAnalyzerEngineMockErrorHandler(): jest.Mocked<ErrorHandler> {
+  return {
+    handle: jest.fn(async (error, options): Promise<ErrorHandlingResult> => ({
+      success: true,
+      recovered: options.strategy !== RecoveryStrategy.SKIP && options.strategy !== RecoveryStrategy.THROW,
+      attempts: 1,
+      message: 'Handled successfully',
+      strategy: options.strategy,
+      error: error as ErrorHandlingResult['error'],
+    })),
+    getLogger: jest.fn(() => createAnalyzerEngineMockLogger() as unknown as LoggerService),
+  } as unknown as jest.Mocked<ErrorHandler>;
+}
+
+type AnalyzerEngineDependencyOverrides = {
+  registry?: AnalyzerRegistryService;
+  logger?: AnalyzerEngineMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+};
+
+export function createAnalyzerEngineService(
+  analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+  overrides: AnalyzerEngineDependencyOverrides = {},
+): AnalyzerEngineService {
+  return new AnalyzerEngineService(
+    overrides.registry ?? createAnalyzerEngineMockRegistry(analyzers),
+    overrides.logger ? asAnalyzerEngineLogger(overrides.logger) : undefined,
+    overrides.errorHandler,
+  );
+}
+
 export function createAnalyzerEngineHarness(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+  overrides: AnalyzerEngineDependencyOverrides = {},
 ) {
-  const logger = createAnalyzerEngineMockLogger();
-  const registry = createAnalyzerEngineMockRegistry(analyzers);
-  const service = new AnalyzerEngineService(
+  const logger = overrides.logger ?? createAnalyzerEngineMockLogger();
+  const registry = overrides.registry ?? createAnalyzerEngineMockRegistry(analyzers);
+  const errorHandler = overrides.errorHandler;
+  const service = createAnalyzerEngineService(analyzers, {
     registry,
-    asAnalyzerEngineLogger(logger),
-  );
+    logger,
+    errorHandler,
+  });
 
   return {
     logger,
     registry,
+    errorHandler,
     service,
   };
 }

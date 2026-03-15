@@ -47,7 +47,11 @@ export function createTelegramHarness() {
   const mockErrorHandler = createMockTelegramErrorHandler();
   const fetchMock = jest.fn();
   global.fetch = fetchMock;
-  const telegramService = new TelegramService(mockConfig, mockLogger, mockErrorHandler);
+  const telegramService = createTelegramService({
+    config: mockConfig,
+    logger: mockLogger,
+    errorHandler: mockErrorHandler,
+  });
 
   return {
     telegramService,
@@ -56,4 +60,19 @@ export function createTelegramHarness() {
     mockErrorHandler,
     fetchMock,
   };
+}
+
+export function createTelegramService(options: {
+  config?: TelegramConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): TelegramService {
+  return new TelegramService(
+    options.config ?? createMockTelegramConfig(),
+    options.logger ?? createMockTelegramLogger(),
+    options.withErrorHandler === false
+      ? undefined
+      : options.errorHandler ?? createMockTelegramErrorHandler(),
+  );
 }

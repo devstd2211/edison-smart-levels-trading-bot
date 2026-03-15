@@ -15,11 +15,11 @@ import {
   MicroWallDetectorConfig,
   OrderBook,
 } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createMicroWallDetectorConfig,
-  createMicroWallDetectorHarness,
   createMicroWallDetectorLogger,
+  createMicroWallDetectorService,
   createMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
 
@@ -73,57 +73,61 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        new MicroWallDetectorService(asConfig(null), logger, errorHandler);
+        createMicroWallDetectorService({
+          config: asConfig(null),
+          logger,
+          errorHandler,
+        });
       }).toThrow('config is required');
     });
 
     it('should throw on invalid minWallSizePercent (0)', () => {
       expect(() => {
-        new MicroWallDetectorService(
-          createConfig({ minWallSizePercent: 0 }),
+        createMicroWallDetectorService({
+          config: createConfig({ minWallSizePercent: 0 }),
           logger,
           errorHandler,
-        );
+        });
       }).toThrow('minWallSizePercent must be 0-100');
     });
 
     it('should throw on invalid minWallSizePercent (>100)', () => {
       expect(() => {
-        new MicroWallDetectorService(
-          createConfig({ minWallSizePercent: 101 }),
+        createMicroWallDetectorService({
+          config: createConfig({ minWallSizePercent: 101 }),
           logger,
           errorHandler,
-        );
+        });
       }).toThrow('minWallSizePercent must be 0-100');
     });
 
     it('should throw on negative breakConfirmationMs', () => {
       expect(() => {
-        new MicroWallDetectorService(
-          createConfig({ breakConfirmationMs: -1 }),
+        createMicroWallDetectorService({
+          config: createConfig({ breakConfirmationMs: -1 }),
           logger,
           errorHandler,
-        );
+        });
       }).toThrow('breakConfirmationMs must be >= 0');
     });
 
     it('should throw on invalid maxConfidence (0)', () => {
       expect(() => {
-        new MicroWallDetectorService(
-          createConfig({ maxConfidence: 0 }),
+        createMicroWallDetectorService({
+          config: createConfig({ maxConfidence: 0 }),
           logger,
           errorHandler,
-        );
+        });
       }).toThrow('maxConfidence must be 1-100');
     });
 
     it('should throw on invalid wallExpiryMs (0)', () => {
       expect(() => {
-        new MicroWallDetectorService(
-          createConfig({ wallExpiryMs: 0 }),
+        createMicroWallDetectorService({
+          config: createConfig({ wallExpiryMs: 0 }),
           logger,
           errorHandler,
-        );
+        });
       }).toThrow('wallExpiryMs must be > 0');
     });
   });
@@ -136,7 +140,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
     });
 
     it('should throw on null orderbook', () => {
@@ -174,7 +178,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
     });
 
     it('should throw on null wall', () => {
@@ -222,7 +226,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
     });
 
     it('should return empty array on NaN bid volume', () => {
@@ -312,7 +316,11 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
       };
 
       expect(() => {
-        new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
+        createMicroWallDetectorService({
+          config: createConfig(),
+          logger: asLogger(badLogger),
+          errorHandler,
+        });
       }).not.toThrow();
     });
 
@@ -326,7 +334,11 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         error: jest.fn(),
       };
 
-      const detector = new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
+      const detector = createMicroWallDetectorService({
+        config: createConfig(),
+        logger: asLogger(badLogger),
+        errorHandler,
+      });
       const orderbook = createOrderBook([[1.0, 500]], [[1.001, 4500]]);
 
       // Should not throw despite logger failure
@@ -345,7 +357,11 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         error: jest.fn(),
       };
 
-      const detector = new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
+      const detector = createMicroWallDetectorService({
+        config: createConfig(),
+        logger: asLogger(badLogger),
+        errorHandler,
+      });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -360,7 +376,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   describe('Integration: E2E Error Handling', () => {
     it('should handle full detection flow with invalid data mixed in', () => {
-      const detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      const detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
 
       // Orderbook with some invalid levels
       const orderbook = createOrderBook(
@@ -383,7 +399,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should handle wall breaking with invalid price', () => {
-      const detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      const detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
 
       const wall = {
         side: 'BID' as const,
@@ -407,7 +423,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should continue operations after graceful degradation', () => {
-      const detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      const detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
 
       // First call with invalid data (gracefully degrades)
       const badOrderbook = createOrderBook(
@@ -430,7 +446,11 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (optional parameter)', () => {
-      const detector = new MicroWallDetectorService(createConfig(), logger);
+      const detector = createMicroWallDetectorService({
+        config: createConfig(),
+        logger,
+        withErrorHandler: false,
+      });
       const orderbook = createOrderBook([[1.0, 500]], [[1.001, 4500]]);
 
       const walls = detector.detectMicroWalls(orderbook);
@@ -439,15 +459,20 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw config validation errors even without ErrorHandler', () => {
       expect(() => {
-        new MicroWallDetectorService(
-          createConfig({ minWallSizePercent: 0 }),
+        createMicroWallDetectorService({
+          config: createConfig({ minWallSizePercent: 0 }),
           logger,
-        );
+          withErrorHandler: false,
+        });
       }).toThrow('minWallSizePercent must be 0-100');
     });
 
     it('should throw input validation errors even without ErrorHandler', () => {
-      const detector = new MicroWallDetectorService(createConfig(), logger);
+      const detector = createMicroWallDetectorService({
+        config: createConfig(),
+        logger,
+        withErrorHandler: false,
+      });
 
       expect(() => {
         detector.detectMicroWalls(asOrderBook(null));
@@ -463,7 +488,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = new MicroWallDetectorService(createConfig(), logger, errorHandler);
+      detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
     });
 
     it('should handle very small prices and quantities', () => {
@@ -506,7 +531,11 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
         error: jest.fn(),
       };
 
-      new MicroWallDetectorService(createConfig(), asLogger(badLogger), errorHandler);
+      createMicroWallDetectorService({
+        config: createConfig(),
+        logger: asLogger(badLogger),
+        errorHandler,
+      });
 
       // ErrorHandler.handle should have been called for logger failure
       expect(handleSpy).toHaveBeenCalled();

@@ -17,6 +17,7 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEnhancedExitConfig,
   createEnhancedExitHarness,
+  createEnhancedExitService,
 } from '../helpers/enhanced-exit-test.utils';
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
@@ -39,7 +40,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         riskRewardGate: { enabled: true, minRR: 15, preferredRR: 2.0 },
       };
 
-      expect(() => new EnhancedExitService(mockLogger, badConfig, errorHandler)).toThrow(
+      expect(() => createEnhancedExitService({
+        logger: mockLogger,
+        config: badConfig,
+        errorHandler,
+      })).toThrow(
         /Invalid riskRewardGate.minRR/,
       );
     });
@@ -50,7 +55,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         structureBasedTP: { enabled: true, mode: 'LEVEL', offsetPercent: 10, fallbackPercent: 2.0, useNextLevelAsTP1: true },
       };
 
-      expect(() => new EnhancedExitService(mockLogger, badConfig, errorHandler)).toThrow(
+      expect(() => createEnhancedExitService({
+        logger: mockLogger,
+        config: badConfig,
+        errorHandler,
+      })).toThrow(
         /Invalid structureBasedTP.offsetPercent/,
       );
     });
@@ -61,7 +70,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         atrBasedTP: { enabled: true, tp1AtrMultiplier: 1.5, tp2AtrMultiplier: 3.0, minTPPercent: 15, maxTPPercent: 5.0 },
       };
 
-      expect(() => new EnhancedExitService(mockLogger, badConfig, errorHandler)).toThrow(
+      expect(() => createEnhancedExitService({
+        logger: mockLogger,
+        config: badConfig,
+        errorHandler,
+      })).toThrow(
         /Invalid atrBasedTP.minTPPercent/,
       );
     });
@@ -72,7 +85,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         dynamicBreakeven: { enabled: true, activationPercent: 15, offsetPercent: 0.1 },
       };
 
-      expect(() => new EnhancedExitService(mockLogger, badConfig, errorHandler)).toThrow(
+      expect(() => createEnhancedExitService({
+        logger: mockLogger,
+        config: badConfig,
+        errorHandler,
+      })).toThrow(
         /Invalid dynamicBreakeven.activationPercent/,
       );
     });
@@ -83,7 +100,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         adaptiveTrailing: { enabled: true, activationPercent: 1.5, trailingDistancePercent: 15, useATRDistance: true, trailingDistanceATR: 0.5 },
       };
 
-      expect(() => new EnhancedExitService(mockLogger, badConfig, errorHandler)).toThrow(
+      expect(() => createEnhancedExitService({
+        logger: mockLogger,
+        config: badConfig,
+        errorHandler,
+      })).toThrow(
         /Invalid adaptiveTrailing.trailingDistancePercent/,
       );
     });
@@ -194,7 +215,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should SKIP logger.debug failures in calculateATRBasedTP', () => {
-      const service = new EnhancedExitService(throwingLogger, defaultConfig, errorHandler);
+      const service = createEnhancedExitService({
+        logger: throwingLogger,
+        config: defaultConfig,
+        errorHandler,
+      });
 
       const result = service.calculateATRBasedTP(2.0, SignalDirection.LONG, 1.5);
 
@@ -373,7 +398,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         atrBasedTP: { enabled: true, tp1AtrMultiplier: 1.5, tp2AtrMultiplier: 3.0, minTPPercent: 50, maxTPPercent: 5.0 },
       };
 
-      expect(() => new EnhancedExitService(mockLogger, badConfig)).toThrow();
+      expect(() => createEnhancedExitService({
+        logger: mockLogger,
+        config: badConfig,
+        withErrorHandler: false,
+      })).toThrow();
     });
 
     it('should calculate structure-based TP correctly', () => {

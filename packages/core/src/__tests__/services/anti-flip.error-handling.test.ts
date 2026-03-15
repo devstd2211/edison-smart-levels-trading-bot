@@ -19,6 +19,7 @@ import {
   createAntiFlipConfig,
   type AntiFlipHarness,
   createAntiFlipHarness,
+  createAntiFlipService,
   createAntiFlipLogger,
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
@@ -337,7 +338,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   describe('Backward Compatibility (3 tests)', () => {
     it('test-8.9.20.11: Should work without ErrorHandler (old behavior)', () => {
       // No ErrorHandler provided
-      service = new AntiFlipService(logger, createAntiFlipConfig());
+      service = createAntiFlipService(createAntiFlipConfig(), { logger, withErrorHandler: false });
 
       // Mock logger to throw
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -355,7 +356,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.12: Should silently skip logger errors without ErrorHandler', () => {
-      service = new AntiFlipService(logger, createAntiFlipConfig());
+      service = createAntiFlipService(createAntiFlipConfig(), { logger, withErrorHandler: false });
 
       jest.spyOn(logger, 'debug').mockImplementation(() => {
         throw new Error('Logger error');
@@ -374,7 +375,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
     it('test-8.9.20.13: Should have identical blocking logic with/without ErrorHandler', () => {
       const service1 = harness.createService();
-      const service2 = new AntiFlipService(logger, createAntiFlipConfig());
+      const service2 = createAntiFlipService(createAntiFlipConfig(), { logger, withErrorHandler: false });
 
       // Mock logger to always fail
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -490,11 +491,10 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       nullableLogger.info = null;
       nullableLogger.warn = null;
 
-      service = new AntiFlipService(
-        mockLoggerWithNullMethods,
-        createAntiFlipConfig({}),
+      service = createAntiFlipService(createAntiFlipConfig({}), {
+        logger: mockLoggerWithNullMethods,
         errorHandler,
-      );
+      });
 
       // Should handle null methods gracefully (throw will be caught)
       service.recordSignal(SignalDirection.LONG, 100);

@@ -58,18 +58,40 @@ export function createEnhancedExitHarness(options: {
   logger?: LoggerService;
   config?: Partial<EnhancedExitConfig>;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 } = {}) {
   const logger = options.logger ?? createEnhancedExitMockLogger();
-  const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
-  const service = new EnhancedExitService(
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const service = createEnhancedExitService({
     logger,
-    options.config ?? createEnhancedExitConfig(),
+    config: options.config,
+    withErrorHandler: options.withErrorHandler,
     errorHandler,
-  );
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createEnhancedExitService(options: {
+  logger?: LoggerService;
+  config?: Partial<EnhancedExitConfig>;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): EnhancedExitService {
+  const logger = options.logger ?? createEnhancedExitMockLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return new EnhancedExitService(
+    logger,
+    options.config ?? createEnhancedExitConfig(),
+    errorHandler,
+  );
 }

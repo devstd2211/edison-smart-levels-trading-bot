@@ -15,13 +15,14 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateData,
   createFundingRateFilterHarness,
+  createFundingRateFilterService,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
 
   beforeEach(() => {
     ({ logger, config, mockGetFundingRate, errorHandler } = createFundingRateFilterHarness());
@@ -42,7 +43,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       // First call succeeds
       mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       expect(result.allowed).toBe(true);
@@ -59,7 +60,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Spy on ErrorHandler to verify RETRY config is correct
       const executeAsyncSpy = jest.spyOn(ErrorHandler, 'executeAsync');
@@ -85,7 +86,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
         nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
       };
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Cache initial value
       mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
@@ -122,7 +123,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
         nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
       };
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // First fetch succeeds (cache it)
       mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
@@ -153,7 +154,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // First call should succeed
       const result1 = await filter.checkSignal(SignalDirection.LONG);
@@ -182,7 +183,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       const debugSpy = jest.spyOn(logger, 'debug');
       const warnSpy = jest.spyOn(logger, 'warn');
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Should work normally (logger not broken, just being spied on)
       const result = await filter.checkSignal(SignalDirection.LONG);
@@ -206,9 +207,13 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       mockGetFundingRate.mockResolvedValue(fundingData);
 
       // Create filter with error handler that SKIPs logger errors
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Spy on errorHandler to verify SKIP strategy is used
+      if (!errorHandler) {
+        throw new Error('Expected ErrorHandler to be defined in this test');
+      }
+
       const handleSpy = jest.spyOn(errorHandler, 'handle').mockResolvedValue({
         success: true,
         recovered: true,
@@ -225,7 +230,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
     });
 
     it('should skip cache clear logging errors', async () => {
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Should not throw despite any logger errors
       await expect(filter.clearCache()).resolves.not.toThrow();
@@ -240,7 +245,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Signal should be blocked despite any logger issues
       const result = await filter.checkSignal(SignalDirection.LONG);
@@ -267,7 +272,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
         nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
       };
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // Cache initial value
       mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
@@ -297,7 +302,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       mockGetFundingRate.mockResolvedValue(fundingData);
 
       // Create filter WITHOUT ErrorHandler
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, withErrorHandler: false });
 
       const result = await filter.checkSignal(SignalDirection.LONG);
       expect(result.allowed).toBe(true);
@@ -317,7 +322,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
         nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
       };
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // First fetch
       mockGetFundingRate.mockResolvedValueOnce(fundingData1);
@@ -356,7 +361,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // First call succeeds
       const result1 = await filter.checkSignal(SignalDirection.LONG);
@@ -388,12 +393,12 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(
+      const filter = createFundingRateFilterService({
         config,
-        mockGetFundingRate,
+        getFundingRate: mockGetFundingRate,
         logger,
-        undefined, // No ErrorHandler
-      );
+        withErrorHandler: false,
+      });
 
       const result = await filter.checkSignal(SignalDirection.LONG);
       expect(result.allowed).toBe(true);
@@ -409,7 +414,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       const result = await filter.checkSignal(SignalDirection.LONG);
 
@@ -426,7 +431,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = new FundingRateFilterService(config, mockGetFundingRate, logger, errorHandler);
+      const filter = createFundingRateFilterService({ config, getFundingRate: mockGetFundingRate, logger, errorHandler });
 
       // First call
       await filter.checkSignal(SignalDirection.LONG);
