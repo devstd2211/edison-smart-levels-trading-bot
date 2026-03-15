@@ -20,6 +20,12 @@ export function createMockPositionSyncLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
 
+export function createPositionSyncErrorHandler(
+  logger: LoggerService = createMockPositionSyncLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
 export function createMockPositionSyncExchange() {
   return {
     getOrderHistory: jest.fn(),

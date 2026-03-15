@@ -38,6 +38,7 @@ import {
   createMockLifecyclePosition,
   createMockLifecycleSignal,
   createPositionLifecycleRepositoryHarness,
+  createPositionLifecycleWithErrorHandlerHarness,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
@@ -407,23 +408,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Test that ErrorHandler is properly injected and used
       const errorHandler = new ErrorHandler(mockLogger);
 
-      // Create service WITH ErrorHandler
-      const serviceWithHandler = new PositionLifecycleService(
-        mockExchange,
-        mockTradingConfig,
-        mockRiskConfig,
-        mockTelegram,
-        mockLogger,
-        mockJournal,
-        mockEntryConfirmationConfig,
-        mockConfig,
-        mockEventBus,
-        undefined,
-        undefined,
-        'TEST_STRATEGY',
-        mockRepository,
-        errorHandler, // Pass ErrorHandler
-      );
+      const serviceWithHandler = createPositionLifecycleWithErrorHandlerHarness(errorHandler).service;
 
       // Verify service was created with ErrorHandler
       expect(serviceWithHandler).toBeDefined();
@@ -439,22 +424,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       });
 
       // Verify ErrorHandler parameter is optional (backward compatibility)
-      const serviceWithoutHandler = new PositionLifecycleService(
-        mockExchange,
-        mockTradingConfig,
-        mockRiskConfig,
-        mockTelegram,
-        mockLogger,
-        mockJournal,
-        mockEntryConfirmationConfig,
-        mockConfig,
-        mockEventBus,
-        undefined,
-        undefined,
-        'TEST_STRATEGY',
-        mockRepository,
-        // no errorHandler - should work with fallback
-      );
+      const serviceWithoutHandler = createPositionLifecycleRepositoryHarness().service;
 
       expect(serviceWithoutHandler).toBeDefined();
     });
@@ -463,22 +433,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Test comprehensive error handling scenario where multiple operations fail
       const errorHandler = new ErrorHandler(mockLogger);
 
-      const serviceWithHandler = new PositionLifecycleService(
-        mockExchange,
-        mockTradingConfig,
-        mockRiskConfig,
-        mockTelegram,
-        mockLogger,
-        mockJournal,
-        mockEntryConfirmationConfig,
-        mockConfig,
-        mockEventBus,
-        undefined,
-        undefined,
-        'TEST_STRATEGY',
-        mockRepository,
-        errorHandler,
-      );
+      const serviceWithHandler = createPositionLifecycleWithErrorHandlerHarness(errorHandler).service;
 
       // Simulate cascading failures:
       // 1. getCurrentPrice fails but recovers

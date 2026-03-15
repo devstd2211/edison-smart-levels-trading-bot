@@ -54,6 +54,29 @@ export function createTakeProfitManagerHarness(options: {
   };
 }
 
+export function createTakeProfitManagerFactory(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return (factoryOptions: {
+    configOverrides?: Partial<{
+      positionId: string;
+      symbol: string;
+      side: PositionSide;
+      entryPrice: number;
+      totalQuantity: number;
+      leverage: number;
+    }>;
+    withErrorHandler?: boolean;
+  } = {}) =>
+    createTakeProfitManagerService({
+      configOverrides: factoryOptions.configOverrides,
+      logger: options.logger,
+      errorHandler: options.errorHandler,
+      withErrorHandler: factoryOptions.withErrorHandler,
+    });
+}
+
 export function createTakeProfitManagerService(options: {
   configOverrides?: Partial<{
     positionId: string;

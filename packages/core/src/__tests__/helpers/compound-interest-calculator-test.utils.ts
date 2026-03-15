@@ -73,3 +73,21 @@ export function createCompoundInterestService(options: {
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
+
+export function createCompoundInterestFactory(options: {
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return (factoryOptions: {
+    configOverrides?: Partial<CompoundInterestConfig>;
+    withErrorHandler?: boolean;
+  } = {}) =>
+    createCompoundInterestService({
+      configOverrides: factoryOptions.configOverrides,
+      logger: options.logger,
+      getBalance: options.getBalance,
+      errorHandler: options.errorHandler,
+      withErrorHandler: factoryOptions.withErrorHandler,
+    });
+}

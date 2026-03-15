@@ -31,6 +31,18 @@ export const createConfigValidatorService = ({
   errorHandler?: ErrorHandler;
 } = {}): ConfigValidatorService => new ConfigValidatorService(logger, errorHandler);
 
+export const createConfigValidatorFactory = ({
+  logger = createConfigValidatorLogger(),
+  errorHandler,
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) => (): ConfigValidatorService =>
+  createConfigValidatorService({
+    logger,
+    errorHandler,
+  });
+
 export const createConfigValidatorHarness = () => {
   const logger = createConfigValidatorLogger();
   const errorHandler = createConfigValidatorErrorHandler();

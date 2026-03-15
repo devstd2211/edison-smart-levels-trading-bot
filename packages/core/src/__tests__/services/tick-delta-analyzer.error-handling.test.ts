@@ -9,7 +9,6 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createTickDeltaAnalyzerConfig,
   createTickDeltaAnalyzerHarness,
-  createTickDeltaAnalyzerMockLogger,
   createTickDeltaAnalyzerService,
   createTickDeltaAnalyzerTick,
 } from '../helpers/tick-delta-analyzer-test.utils';
@@ -17,13 +16,14 @@ import {
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ReturnType<typeof createTickDeltaAnalyzerMockLogger>;
+  let mockLogger: ReturnType<typeof createTickDeltaAnalyzerHarness>['mockLogger'];
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
 
   beforeEach(() => {
-    mockLogger = createTickDeltaAnalyzerMockLogger();
-    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+    const harness = createTickDeltaAnalyzerHarness();
+    mockLogger = harness.mockLogger;
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   describe('THROW: Config Validation', () => {

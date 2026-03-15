@@ -16,6 +16,7 @@ import { EventDeduplicationService } from '../../services/event-deduplication.se
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
+  createEventDeduplicationHarness,
   createEventDeduplicationErrorHandler,
   createEventDeduplicationService,
 } from '../helpers/event-deduplication-test.utils';
@@ -23,10 +24,6 @@ import {
 // ============================================================================
 // MOCKS
 // ============================================================================
-
-const createMockLogger = (): LoggerService => {
-  return new LoggerService(LogLevel.ERROR, './logs', false);
-};
 
 const createMockErrorHandler = (): ErrorHandler => createEventDeduplicationErrorHandler();
 
@@ -40,8 +37,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = createMockErrorHandler();
+    ({ logger, errorHandler } = createEventDeduplicationHarness());
   });
 
   const getProcessedEvents = (

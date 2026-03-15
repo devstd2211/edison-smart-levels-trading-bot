@@ -156,11 +156,14 @@ export function createWeightMatrixInput(): WeightMatrixInput {
 export function createWeightMatrixHarness(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;
+  errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
 } = {}) {
   const logger = options.logger ?? createWeightMatrixLogger();
   const config = options.config ?? createWeightMatrixConfig();
-  const errorHandler = new ErrorHandler(logger);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
   const service = createWeightMatrixService({
     config,
     logger,

@@ -10,10 +10,8 @@ import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
 import {
-  asVirtualBalanceLogger,
   cleanupVirtualBalanceTempDir,
   createVirtualBalanceHarness,
-  createVirtualBalanceMockLogger,
   createVirtualBalanceService,
   createVirtualBalanceTempDir,
   type VirtualBalanceLogger,
@@ -37,8 +35,11 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     testDataDir = createVirtualBalanceTempDir();
     testPath = path.join(testDataDir, 'virtual-balance.json');
     jest.clearAllMocks();
-    mockLogger = createVirtualBalanceMockLogger();
-    errorHandler = new ErrorHandler(asVirtualBalanceLogger(mockLogger));
+    const harness = createVirtualBalanceHarness({
+      dataDir: testDataDir,
+    });
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
@@ -473,8 +474,11 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   beforeEach(() => {
     testDataDir = createVirtualBalanceTempDir('virtual-balance-integration-');
     jest.clearAllMocks();
-    mockLogger = createVirtualBalanceMockLogger();
-    errorHandler = new ErrorHandler(asVirtualBalanceLogger(mockLogger));
+    const harness = createVirtualBalanceHarness({
+      dataDir: testDataDir,
+    });
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

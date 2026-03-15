@@ -29,90 +29,29 @@ import {
   SessionTradeRecord,
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
+import {
+  cleanupSessionStatsTempDir,
+  createSessionStatsConfig,
+  createSessionStatsHarness,
+  createSessionStatsService,
+  createSessionStatsTrade,
+  SessionStatsMockLogger,
+} from '../helpers/session-stats-test.utils';
 
 /**
  * Mock Logger for testing
  */
-class MockLogger extends LoggerService {
-  constructor() {
-    super(LogLevel.INFO, './logs', false);
-  }
-}
+class MockLogger extends SessionStatsMockLogger {}
 
 /**
  * Helper to create a minimal valid config
  */
-function createConfig(): Config {
-  return {
-    symbol: 'BTCUSDT',
-    exchange: 'bybit',
-    tradingMode: 'perpetual',
-    leverage: 2,
-    positionSize: 100,
-    minBalance: 1000,
-    maxDrawdown: 20,
-    riskPercent: 1,
-    stopLossPercent: 1.5,
-    takeProfits: [
-      { level: 1, percent: 0.5, quantity: 0.3 },
-      { level: 2, percent: 1, quantity: 0.4 },
-      { level: 3, percent: 1.5, quantity: 0.3 },
-    ],
-    entryConditions: {
-      enableLevelBased: true,
-      enableOscillator: true,
-      enableBreakout: true,
-    },
-    strategies: [],
-  } as unknown as Config;
-}
+const createConfig = createSessionStatsConfig;
 
 /**
  * Helper to create a minimal valid session trade record
  */
-function createSessionTrade(tradeId: string): SessionTradeRecord {
-  const entryCondition = {
-    signal: {
-      type: SignalType.LEVEL_BASED,
-      direction: SignalDirection.LONG,
-      price: 50000,
-      confidence: 75,
-      stopLoss: 49000,
-      takeProfits: [{ level: 1, percent: 0.5 }],
-      reason: 'test signal',
-      timestamp: Date.now(),
-    },
-    indicators: {
-      entry: {},
-      primary: {},
-      trend1: {},
-    },
-    patterns: {},
-    levels: null,
-    context: {},
-  } as unknown as SessionTradeRecord['entryCondition'];
-
-  return {
-    tradeId,
-    timestamp: new Date().toISOString(),
-    direction: SignalDirection.LONG,
-    entryPrice: 50000,
-    exitPrice: 0,
-    quantity: 1,
-    pnl: 0,
-    pnlPercent: 0,
-    exitType: ExitType.TAKE_PROFIT_1, // Default exit type for test records
-    tpHitLevels: [],
-    holdingTimeMs: 0,
-    entryCondition,
-    stopLoss: {
-      initial: 49000,
-      final: 49000,
-      movedToBreakeven: false,
-      trailingActivated: false,
-    },
-  };
-}
+const createSessionTrade = createSessionStatsTrade;
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
   let stats: SessionStatsService;
@@ -121,23 +60,13 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   let tempDir: string;
 
   beforeEach(() => {
-    logger = new MockLogger();
-    errorHandler = new ErrorHandler(logger);
-    tempDir = path.join(process.cwd(), 'test-session-stats-' + Date.now());
-
-    // Ensure temp directory exists
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    stats = new SessionStatsService(logger, undefined, tempDir, errorHandler);
+    ({ stats, errorHandler, logger, tempDir } = createSessionStatsHarness({
+      logger: new MockLogger(),
+    }));
   });
 
   afterEach(() => {
-    // Clean up temp directory
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
+    cleanupSessionStatsTempDir(tempDir);
   });
 
   // ============================================================================
@@ -151,7 +80,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       fs.writeFileSync(statsPath, '{invalid json}', 'utf-8');
 
       // Act: Create stats service (loads in constructor)
-      const svc = new SessionStatsService(logger, undefined, tempDir, errorHandler);
+      const svc = createSessionStatsService({ logger, tempDir, errorHandler });
 
       // Assert: Should start with empty database instead of crashing
       expect(svc.getAllSessions()).toHaveLength(0);
@@ -168,7 +97,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       fs.writeFileSync(statsPath, corruptedContent, 'utf-8');
 
       // Act: Create stats service
-      const svc = new SessionStatsService(logger, undefined, tempDir, errorHandler);
+      const svc = createSessionStatsService({ logger, tempDir, errorHandler });
       svc.getAllSessions(); // Explicitly trigger lazy load/start lifecycle
 
       // Assert: Backup should contain the corrupted content
@@ -185,7 +114,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       fs.writeFileSync(statsPath, '{bad json}', 'utf-8');
 
       // Act: Create service and start session
-      const svc = new SessionStatsService(logger, undefined, tempDir, errorHandler);
+      const svc = createSessionStatsService({ logger, tempDir, errorHandler });
       const sessionId = svc.startSession(createConfig(), 'BTCUSDT');
 
       // Assert: Session should be created and file should be valid now
@@ -215,7 +144,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const newDir = path.join(tempDir, 'nested', 'dir', 'structure');
 
       // Act: Create session in non-existent directory
-      const svc = new SessionStatsService(logger, undefined, newDir, errorHandler);
+      const svc = createSessionStatsService({ logger, tempDir: newDir, errorHandler });
       svc.startSession(createConfig(), 'BTCUSDT');
 
       // Assert: Directory should be created
@@ -304,7 +233,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
     it('test-B4: Should skip duplicate without ErrorHandler (backward compatibility)', () => {
       // Arrange: Create service WITHOUT ErrorHandler
-      const statsNoHandler = new SessionStatsService(logger, undefined, tempDir);
+      const statsNoHandler = createSessionStatsService({ logger, tempDir });
       statsNoHandler.startSession(createConfig(), 'BTCUSDT');
       const trade1 = createSessionTrade('trade-id');
       statsNoHandler.recordTradeEntry(trade1);
@@ -483,7 +412,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       stats.recordTradeEntry(trade1);
 
       // Simulate crash/restart by creating new service instance
-      const stats2 = new SessionStatsService(logger, undefined, tempDir, errorHandler);
+      const stats2 = createSessionStatsService({ logger, tempDir, errorHandler });
 
       // Act: Resume and continue trading
       const currentSession = stats2.getCurrentSession();
@@ -540,7 +469,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   describe('E. Backward Compatibility - Works Without ErrorHandler', () => {
     it('test-E1: Should work without ErrorHandler parameter', () => {
       // Arrange: Create service without ErrorHandler
-      const statsNoHandler = new SessionStatsService(logger, undefined, tempDir);
+      const statsNoHandler = createSessionStatsService({ logger, tempDir });
 
       // Act: Perform all basic operations
       const sessionId = statsNoHandler.startSession(createConfig(), 'BTCUSDT');
@@ -576,7 +505,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       fs.writeFileSync(statsPath, '{corrupted}', 'utf-8');
 
       // Act: Create service without ErrorHandler
-      const statsNoHandler = new SessionStatsService(logger, undefined, tempDir);
+      const statsNoHandler = createSessionStatsService({ logger, tempDir });
 
       // Assert: Should start with empty database (graceful degradation)
       expect(statsNoHandler.getAllSessions()).toHaveLength(0);

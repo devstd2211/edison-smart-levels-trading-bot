@@ -22,6 +22,14 @@ import {
   SignalRecord,
   MLSignalValidatorConfig,
 } from '../../types/ml-signal-validator';
+import {
+  createMLSignalValidatorContext,
+  createMLSignalValidatorHarness,
+  createMLSignalValidatorLogger,
+  createMLSignalValidatorRecord,
+  createMLSignalValidatorService,
+  createMLSignalValidatorSignal,
+} from '../helpers/ml-signal-validator-test.utils';
 
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
@@ -45,43 +53,12 @@ describe('MLSignalValidatorService - Error Handling', () => {
     svc as unknown as ValidatorInternals;
   const asLogger = (value: unknown): LoggerService => value as LoggerService;
 
-  const createMockSignal = (overrides?: Partial<Signal>): Signal => ({
-    direction: SignalDirection.LONG,
-    type: SignalType.LEVEL_BASED,
-    confidence: 75,
-    price: 50000,
-    stopLoss: 49500,
-    takeProfits: [{ level: 1, percent: 2, sizePercent: 100, price: 51000, hit: false }],
-    reason: 'Test signal',
-    timestamp: Date.now(),
-    ...overrides,
-  });
-
-  const createMockContext = (overrides?: Partial<MarketContext>): MarketContext => ({
-    regime: 'trending_up' as MarketRegime,
-    volatility: 1.0,
-    trendStrength: 0.7,
-    currentPrice: 50000,
-    volumeRatio: 1.2,
-    timestamp: Date.now(),
-    ...overrides,
-  });
-
-  const createMockSignalRecord = (overrides?: Partial<SignalRecord>): SignalRecord => ({
-    signal: createMockSignal(),
-    context: createMockContext(),
-    wasWinner: true,
-    profitLoss: 2.5,
-    actualRR: 3.0,
-    duration: 3600000, // 1 hour
-    timestamp: Date.now(),
-    ...overrides,
-  });
+  const createMockSignal = createMLSignalValidatorSignal;
+  const createMockContext = createMLSignalValidatorContext;
+  const createMockSignalRecord = createMLSignalValidatorRecord;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-    errorHandler = new ErrorHandler(logger);
-    service = new MLSignalValidatorService(undefined, undefined, logger, errorHandler);
+    ({ logger, errorHandler, service } = createMLSignalValidatorHarness());
   });
 
   afterEach(() => {
@@ -95,34 +72,35 @@ describe('MLSignalValidatorService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        new MLSignalValidatorService(asConfig('invalid'), undefined, logger, errorHandler);
+        createMLSignalValidatorService({ config: asConfig('invalid'), logger, errorHandler });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        new MLSignalValidatorService(asConfig(123), undefined, logger, errorHandler);
+        createMLSignalValidatorService({ config: asConfig(123), logger, errorHandler });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        new MLSignalValidatorService(asConfig([]), undefined, logger, errorHandler);
+        createMLSignalValidatorService({ config: asConfig([]), logger, errorHandler });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        new MLSignalValidatorService(undefined, undefined, logger, errorHandler);
+        createMLSignalValidatorService({ logger, errorHandler });
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
-        new MLSignalValidatorService(
-          { minHistoricalSamples: 50 }, undefined, logger,
+        createMLSignalValidatorService({
+          config: { minHistoricalSamples: 50 },
+          logger,
           errorHandler,
-        );
+        });
       }).not.toThrow();
     });
   });
@@ -321,7 +299,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       } as unknown as LoggerService;
 
       expect(() => {
-        new MLSignalValidatorService(undefined, undefined, badLogger, errorHandler);
+        createMLSignalValidatorService({ logger: badLogger, errorHandler });
       }).not.toThrow();
     });
 
@@ -335,7 +313,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = new MLSignalValidatorService(undefined, undefined, asLogger(badLogger), errorHandler);
+      const testService = createMLSignalValidatorService({ logger: asLogger(badLogger), errorHandler });
 
       // Force validation to log a warning
       jest.spyOn(asInternals(testService), 'performValidation').mockImplementation(() => {
@@ -360,7 +338,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = new MLSignalValidatorService(undefined, undefined, asLogger(badLogger), errorHandler);
+      const testService = createMLSignalValidatorService({ logger: asLogger(badLogger), errorHandler });
 
       expect(() => {
         testService.addSignalRecord(createMockSignalRecord());
@@ -377,7 +355,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = new MLSignalValidatorService(undefined, undefined, asLogger(badLogger), errorHandler);
+      const testService = createMLSignalValidatorService({ logger: asLogger(badLogger), errorHandler });
 
       expect(() => {
         testService.clearHistory();
@@ -662,8 +640,9 @@ describe('MLSignalValidatorService - Error Handling', () => {
     let serviceWithoutEH: MLSignalValidatorService;
 
     beforeEach(() => {
-      const testLogger = new LoggerService(LogLevel.ERROR, './logs', false);
-      serviceWithoutEH = new MLSignalValidatorService(undefined, undefined, testLogger);
+      serviceWithoutEH = createMLSignalValidatorService({
+        logger: createMLSignalValidatorLogger(),
+      });
     });
 
     afterEach(() => {

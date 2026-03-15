@@ -7,13 +7,11 @@
 
 import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import { WeightMatrixConfig, WeightMatrixInput, SignalDirection, LoggerService } from '../../types/legacy';
 import {
   createWeightMatrixErrorConfig,
   createWeightMatrixHarness,
   createWeightMatrixInput,
-  createWeightMatrixLogger,
   createWeightMatrixService,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
@@ -31,8 +29,9 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let mockLogger: LoggerService;
 
   beforeEach(() => {
-    mockLogger = createWeightMatrixLogger();
-    errorHandler = new ErrorHandler(mockLogger);
+    const harness = createWeightMatrixHarness();
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   const createService = (

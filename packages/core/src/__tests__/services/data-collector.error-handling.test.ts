@@ -10,17 +10,14 @@
 
 import { DataCollectorService } from '../../services/data-collector.service';
 import { DatabaseWriter } from '../../services/data-collector/database-writer';
-import { PingPongHandler } from '../../services/data-collector/ping-pong.handler';
-import { DataQueue } from '../../services/data-collector/data-queue';
-import { ErrorHandler, RecoveryStrategy, DataCollectionError, DatabaseBatchError, DataCompressionError, DataQueueOverflowError } from '../../errors';
+import { ErrorHandler, DataCollectionError, DatabaseBatchError, DataCompressionError, DataQueueOverflowError } from '../../errors';
 import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   asWriterDatabase,
+  createDataCollectorHarness,
   createDataCollectorService,
   createMockCollectorDatabase,
-  createMockDataCollectorConfig,
-  createMockDataCollectorLogger,
 } from '../helpers/data-collector-test.utils';
 
 // ============================================================================
@@ -30,32 +27,6 @@ import {
 // Mock logger
 type MockDatabase = ReturnType<typeof createMockCollectorDatabase>;
 
-// Mock WebSocket
-const createMockWebSocket = () => {
-  const listeners: { [key: string]: Function[] } = {};
-
-  const ws = {
-    readyState: WebSocket.OPEN,
-    send: jest.fn(),
-    close: jest.fn(),
-    on: jest.fn((event: string, handler: Function) => {
-      if (!listeners[event]) listeners[event] = [];
-      listeners[event].push(handler);
-    }),
-    off: jest.fn(),
-    once: jest.fn(),
-    emit: (event: string, ...args: unknown[]) => {
-      if (listeners[event]) {
-        listeners[event].forEach(handler => handler(...args));
-      }
-    },
-    listeners: listeners,
-  };
-
-  return ws;
-};
-
-// Mock config
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -68,10 +39,11 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let config: DataCollectionConfig;
 
   beforeEach(() => {
-    mockLogger = createMockDataCollectorLogger();
+    const harness = createDataCollectorHarness();
+    mockLogger = harness.logger;
     mockDatabase = createMockCollectorDatabase();
-    errorHandler = new ErrorHandler(mockLogger as LoggerService);
-    config = createMockDataCollectorConfig();
+    errorHandler = harness.errorHandler as ErrorHandler;
+    config = harness.config;
   });
 
   afterEach(() => {

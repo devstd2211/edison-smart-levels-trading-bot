@@ -16,9 +16,9 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { JournalWriteError } from '../../errors/DomainErrors';
 import {
   cleanupTradeHistoryTempDir,
-  createTradeHistoryErrorHandler,
   createTradeHistoryHarness,
   createTradeHistoryRecord,
+  createTradeHistoryService,
   type ExecuteAsyncConfig,
   type FailureError,
   type RetryError,
@@ -40,6 +40,17 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
+  const createService = (options: {
+    withErrorHandler?: boolean;
+    tempDir?: string;
+    errorHandler?: jest.Mocked<ErrorHandler>;
+  } = {}): TradeHistoryService =>
+    createTradeHistoryService({
+      logger,
+      tempDir: options.tempDir ?? tempDir,
+      errorHandler: options.errorHandler ?? errorHandler,
+      withErrorHandler: options.withErrorHandler,
+    });
 
   beforeEach(() => {
     const harness = createTradeHistoryHarness();
@@ -389,11 +400,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       const schemaPath = path.join(tempDir, 'csv-schema.json');
       fs.writeFileSync(schemaPath, 'invalid json', 'utf-8');
 
-      const newService = createTradeHistoryHarness({
-        logger,
-        errorHandler,
-        tempDir,
-      }).service;
+      const newService = createService();
 
       const schema = newService.getCurrentSchema();
       expect(Array.isArray(schema)).toBe(true);
@@ -420,11 +427,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should continue with existing schema on verify failure', () => {
-      const newService = createTradeHistoryHarness({
-        logger,
-        errorHandler,
-        tempDir,
-      }).service;
+      const newService = createService();
 
       const initialSchema = newService.getCurrentSchema();
       expect(initialSchema.length).toBeGreaterThan(0);
@@ -471,11 +474,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
 
       // Should not throw
       expect(() => {
-        createTradeHistoryHarness({
-          logger,
-          errorHandler,
-          tempDir: readOnlyDir,
-        });
+        createService({ tempDir: readOnlyDir });
       }).not.toThrow();
     });
 
@@ -487,11 +486,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
         throw error;
       });
 
-      const newService = createTradeHistoryHarness({
-        logger,
-        errorHandler,
-        tempDir,
-      }).service;
+      const newService = createService();
       const schema = newService.getCurrentSchema();
 
       expect(Array.isArray(schema)).toBe(true);
@@ -504,11 +499,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
 
   describe('Fallback (No ErrorHandler)', () => {
     it('should work without ErrorHandler for appendTrade', async () => {
-      const serviceWithoutEH = createTradeHistoryHarness({
-        logger,
-        tempDir,
-        withErrorHandler: false,
-      }).service;
+      const serviceWithoutEH = createService({ withErrorHandler: false });
       const trade = createTradeRecord();
 
       // Should not throw even without ErrorHandler
@@ -516,11 +507,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should work without ErrorHandler for readAllTrades', async () => {
-      const serviceWithoutEH = createTradeHistoryHarness({
-        logger,
-        tempDir,
-        withErrorHandler: false,
-      }).service;
+      const serviceWithoutEH = createService({ withErrorHandler: false });
       const trade = createTradeRecord();
       await serviceWithoutEH.appendTrade(trade);
 
@@ -530,11 +517,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should work without ErrorHandler for getStatistics', async () => {
-      const serviceWithoutEH = createTradeHistoryHarness({
-        logger,
-        tempDir,
-        withErrorHandler: false,
-      }).service;
+      const serviceWithoutEH = createService({ withErrorHandler: false });
       const trade = createTradeRecord();
       await serviceWithoutEH.appendTrade(trade);
 
@@ -545,11 +528,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     });
 
     it('should work without ErrorHandler for getStatisticsByField', async () => {
-      const serviceWithoutEH = createTradeHistoryHarness({
-        logger,
-        tempDir,
-        withErrorHandler: false,
-      }).service;
+      const serviceWithoutEH = createService({ withErrorHandler: false });
       const trade = createTradeRecord();
       await serviceWithoutEH.appendTrade(trade);
 

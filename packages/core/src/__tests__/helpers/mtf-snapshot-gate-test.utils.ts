@@ -23,6 +23,40 @@ export function createStartedSnapshotGate(
   return gate;
 }
 
+export function createMTFSnapshotGateHarness(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createMockSnapshotLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const trackedGates: MTFSnapshotGate[] = [];
+
+  const createTrackedGate = (
+    gateLogger: LoggerService = logger,
+    gateErrorHandler: ErrorHandler | undefined = errorHandler,
+  ): MTFSnapshotGate => {
+    const gate = createStartedSnapshotGate(gateLogger, gateErrorHandler);
+    trackedGates.push(gate);
+    return gate;
+  };
+
+  return {
+    logger,
+    errorHandler,
+    trackedGates,
+    gate: createTrackedGate(),
+    createTrackedGate,
+    cleanupTrackedGates: () => {
+      while (trackedGates.length > 0) {
+        trackedGates.pop()?.destroy();
+      }
+    },
+  };
+}
+
 export function createSnapshotSignal(overrides: Partial<Signal> = {}): Signal {
   return {
     direction: SignalDirection.LONG,

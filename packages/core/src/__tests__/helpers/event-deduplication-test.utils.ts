@@ -52,7 +52,7 @@ export function createEventDeduplicationService(options: {
 
 export function createEventDeduplicationHarness(): EventDeduplicationHarness {
   const logger = createEventDeduplicationLogger();
-  const errorHandler = createEventDeduplicationErrorHandler();
+  const errorHandler = createEventDeduplicationErrorHandler(logger);
 
   return {
     logger,

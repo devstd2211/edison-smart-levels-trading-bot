@@ -77,6 +77,20 @@ export function createStrategyManagerHarness() {
   };
 }
 
+export function createStrategyManagerFactory(options: {
+  loader?: jest.Mocked<StrategyLoaderService>;
+  merger?: jest.Mocked<StrategyConfigMergerService>;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+} = {}) {
+  return (factoryOptions: { withErrorHandler?: boolean } = {}) =>
+    createStrategyManagerService({
+      loader: options.loader,
+      merger: options.merger,
+      errorHandler: options.errorHandler,
+      withErrorHandler: factoryOptions.withErrorHandler,
+    });
+}
+
 export function createStrategyManagerService(options: {
   loader?: jest.Mocked<StrategyLoaderService>;
   merger?: jest.Mocked<StrategyConfigMergerService>;

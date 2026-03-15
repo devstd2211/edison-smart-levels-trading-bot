@@ -19,7 +19,7 @@ export type TickDeltaAnalyzerHarness = {
   config: TickDeltaAnalyzerConfig;
   logger: LoggerService;
   mockLogger: TickDeltaAnalyzerMockLogger;
-  errorHandler: ErrorHandler;
+  errorHandler?: ErrorHandler;
 };
 
 export function createTickDeltaAnalyzerMockLogger(): TickDeltaAnalyzerMockLogger {
@@ -65,11 +65,17 @@ export function createTickDeltaAnalyzerHarness(options: {
   config?: TickDeltaAnalyzerConfig;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): TickDeltaAnalyzerHarness {
   const config = options.config ?? createTickDeltaAnalyzerConfig();
-  const mockLogger = createTickDeltaAnalyzerMockLogger();
-  const logger = options.logger ?? (mockLogger as unknown as LoggerService);
-  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const defaultMockLogger = createTickDeltaAnalyzerMockLogger();
+  const logger = options.logger ?? (defaultMockLogger as unknown as LoggerService);
+  const mockLogger = options.logger
+    ? (options.logger as unknown as TickDeltaAnalyzerMockLogger)
+    : defaultMockLogger;
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
   const service = new TickDeltaAnalyzerService(config, logger, errorHandler);
 
   return {
@@ -85,6 +91,7 @@ export function createTickDeltaAnalyzerService(options: {
   config?: TickDeltaAnalyzerConfig;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): TickDeltaAnalyzerService {
   const config =
     'config' in options
@@ -96,6 +103,6 @@ export function createTickDeltaAnalyzerService(options: {
   return new TickDeltaAnalyzerService(
     config as TickDeltaAnalyzerConfig,
     logger,
-    options.errorHandler,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }

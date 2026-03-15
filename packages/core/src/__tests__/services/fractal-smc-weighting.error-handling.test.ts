@@ -13,66 +13,31 @@
 import { FractalSmcWeightingService } from '../../services/fractal-smc-weighting.service';
 import { WeightedSignalConfig, ConfidenceLevel } from '../../types/fractal-strategy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-
-const createMockLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  silly: jest.fn(),
-});
-
-const createValidConfig = (): WeightedSignalConfig => ({
-  threshold: 70,
-  highConfidenceThreshold: 90,
-  maxFractalScore: 125,
-  maxSmcScore: 110,
-});
-
-const createValidSetup = () => ({
-  breakout: {
-    confirmedByClose: true,
-    strength: 0.8,
-    volumeRatio: 1.5,
-  },
-  retest: {
-    isSecondTouch: true,
-    touchCount: 2,
-  },
-  reversal: {
-    strongCandleBody: true,
-    confirmationBars: 2,
-    priceActionPattern: 'HAMMER',
-    volumeConfirmed: true,
-    structureAligned: true,
-  },
-});
+import {
+  createFractalSmcWeightingConfig,
+  createFractalSmcWeightingData,
+  createFractalSmcWeightingHarness,
+  createFractalSmcWeightingMockLogger,
+  createFractalSmcWeightingService,
+  createFractalSmcWeightingSetup,
+} from '../helpers/fractal-smc-weighting-test.utils';
 
 type SetupInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[0];
 type DataInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[1];
 const asSetup = (value: unknown): SetupInput => value as SetupInput;
 const asData = (value: unknown): DataInput => value as DataInput;
-const asErrorLogger = (value: ReturnType<typeof createMockLogger>) =>
-  value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
-const asLogger = (value: ReturnType<typeof createMockLogger>) =>
-  value as unknown as ConstructorParameters<typeof FractalSmcWeightingService>[1];
-
-const createValidData = () => ({
-  liquidity: {
-    strongZones: [{ price: 100 }],
-    recentSweep: {
-      detected: true,
-    },
-  },
-});
+const createValidConfig = createFractalSmcWeightingConfig;
+const createValidSetup = createFractalSmcWeightingSetup;
+const createValidData = createFractalSmcWeightingData;
 
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service: FractalSmcWeightingService;
   let errorHandler: ErrorHandler;
-  const mockLogger = createMockLogger();
+  let mockLogger = createFractalSmcWeightingMockLogger();
 
   beforeEach(() => {
-    errorHandler = new ErrorHandler(asErrorLogger(mockLogger));
+    mockLogger = createFractalSmcWeightingMockLogger();
+    ({ errorHandler } = createFractalSmcWeightingHarness({ logger: mockLogger }));
   });
 
   // ============================================================================
@@ -82,28 +47,32 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   describe('THROW: Config Validation', () => {
     test('should throw on null config', () => {
       expect(() => {
-        new FractalSmcWeightingService(null as unknown as WeightedSignalConfig, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({
+          config: null as unknown as WeightedSignalConfig,
+          logger: mockLogger,
+          errorHandler,
+        });
       }).toThrow('Config must be a valid object');
     });
 
     test('should throw on invalid threshold (NaN)', () => {
       const config = { ...createValidConfig(), threshold: NaN };
       expect(() => {
-        new FractalSmcWeightingService(config, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({ config, logger: mockLogger, errorHandler });
       }).toThrow('Config.threshold must be a finite number');
     });
 
     test('should throw on threshold out of range (>220)', () => {
       const config = { ...createValidConfig(), threshold: 250 };
       expect(() => {
-        new FractalSmcWeightingService(config, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({ config, logger: mockLogger, errorHandler });
       }).toThrow('Config.threshold must be between 0 and 220');
     });
 
     test('should throw on invalid highConfidenceThreshold (Infinity)', () => {
       const config = { ...createValidConfig(), highConfidenceThreshold: Infinity };
       expect(() => {
-        new FractalSmcWeightingService(config, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({ config, logger: mockLogger, errorHandler });
       }).toThrow('Config.highConfidenceThreshold must be a finite number');
     });
 
@@ -114,21 +83,21 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
         highConfidenceThreshold: 80,
       };
       expect(() => {
-        new FractalSmcWeightingService(config, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({ config, logger: mockLogger, errorHandler });
       }).toThrow('Config.highConfidenceThreshold must be >= threshold');
     });
 
     test('should throw on maxFractalScore <= 0', () => {
       const config = { ...createValidConfig(), maxFractalScore: 0 };
       expect(() => {
-        new FractalSmcWeightingService(config, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({ config, logger: mockLogger, errorHandler });
       }).toThrow('Config.maxFractalScore must be a positive number');
     });
 
     test('should throw on maxSmcScore <= 0', () => {
       const config = { ...createValidConfig(), maxSmcScore: -10 };
       expect(() => {
-        new FractalSmcWeightingService(config, asLogger(mockLogger), errorHandler);
+        createFractalSmcWeightingService({ config, logger: mockLogger, errorHandler });
       }).toThrow('Config.maxSmcScore must be a positive number');
     });
   });
@@ -139,7 +108,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
 
   describe('THROW: Input Validation', () => {
     beforeEach(() => {
-      service = new FractalSmcWeightingService(createValidConfig(), asLogger(mockLogger), errorHandler);
+      service = createFractalSmcWeightingService({ logger: mockLogger, errorHandler });
     });
 
     test('should throw on null setup', () => {
@@ -184,7 +153,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      service = new FractalSmcWeightingService(createValidConfig(), asLogger(mockLogger), errorHandler);
+      service = createFractalSmcWeightingService({ logger: mockLogger, errorHandler });
     });
 
     test('should handle NaN breakout strength gracefully', () => {
@@ -272,7 +241,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
         debug: jest.fn(),
         silly: jest.fn(),
       };
-      service = new FractalSmcWeightingService(createValidConfig(), asLogger(badLogger), errorHandler);
+      service = createFractalSmcWeightingService({ logger: badLogger, errorHandler });
       const setup = createValidSetup();
       const data = createValidData();
 
@@ -291,7 +260,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
         }),
         silly: jest.fn(),
       };
-      service = new FractalSmcWeightingService(createValidConfig(), asLogger(badLogger), errorHandler);
+      service = createFractalSmcWeightingService({ logger: badLogger, errorHandler });
       const setup = createValidSetup();
       const data = createValidData();
 
@@ -307,7 +276,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
 
   describe('Integration: Weighted Score Calculation', () => {
     beforeEach(() => {
-      service = new FractalSmcWeightingService(createValidConfig(), asLogger(mockLogger), errorHandler);
+      service = createFractalSmcWeightingService({ logger: mockLogger, errorHandler });
     });
 
     test('should calculate HIGH confidence with strong setup', () => {
@@ -354,8 +323,10 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const config = createValidConfig();
-      const basicService = new FractalSmcWeightingService(config, asLogger(mockLogger));
+      const basicService = createFractalSmcWeightingService({
+        logger: mockLogger,
+        errorHandler: undefined,
+      });
       const setup = createValidSetup();
       const data = createValidData();
 
@@ -365,8 +336,10 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const config = createValidConfig();
-      const basicService = new FractalSmcWeightingService(config, asLogger(mockLogger));
+      const basicService = createFractalSmcWeightingService({
+        logger: mockLogger,
+        errorHandler: undefined,
+      });
 
       expect(() => {
         basicService.calculateWeightedScore(asSetup(null), asData(createValidData()));
@@ -374,8 +347,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     });
 
     test('should work without logger', () => {
-      const config = createValidConfig();
-      const basicService = new FractalSmcWeightingService(config, undefined, errorHandler);
+      const basicService = createFractalSmcWeightingService({ logger: undefined, errorHandler });
       const setup = createValidSetup();
       const data = createValidData();
 
@@ -385,8 +357,10 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     });
 
     test('should work without optional parameters', () => {
-      const config = createValidConfig();
-      const basicService = new FractalSmcWeightingService(config);
+      const basicService = createFractalSmcWeightingService({
+        logger: undefined,
+        errorHandler: undefined,
+      });
       const setup = createValidSetup();
       const data = createValidData();
 

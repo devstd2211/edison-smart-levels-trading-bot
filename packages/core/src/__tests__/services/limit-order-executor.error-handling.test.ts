@@ -13,24 +13,17 @@
 import { LimitOrderExecutorService } from '../../services/limit-order-executor.service';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import {
-  LogLevel,
-  SignalDirection,
-  PositionSide,
-  LimitOrderExecutorConfig,
-} from '../../types/legacy';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { SignalDirection, LimitOrderExecutorConfig } from '../../types/legacy';
 import {
   LimitOrderPlacementError,
   LimitOrderFillTimeoutError,
   MarketOrderFallbackError,
-  ExchangeConnectionError,
 } from '../../errors/DomainErrors';
 import {
   createLimitOrderExecutorConfig,
-  createLimitOrderExecutorLogger,
+  createLimitOrderExecutorHarness,
   createLimitOrderExecutorService,
-  createMockLimitOrderBybitService,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -45,11 +38,12 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createLimitOrderExecutorLogger();
-    errorHandler = new ErrorHandler(logger);
-    config = createLimitOrderExecutorConfig();
-    bybitService = createMockLimitOrderBybitService();
-    service = createLimitOrderExecutorService({ config, bybitService, logger, errorHandler });
+    const harness = createLimitOrderExecutorHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    config = harness.config;
+    bybitService = harness.bybitService;
+    service = harness.service;
   });
 
   // ==========================================================================

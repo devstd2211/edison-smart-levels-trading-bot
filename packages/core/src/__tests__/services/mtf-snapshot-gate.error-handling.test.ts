@@ -12,11 +12,11 @@ import { LoggerService } from '../../services/logger.service';
 import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 import {
+  createMTFSnapshotGateHarness,
   createMockSnapshotLogger,
   createSnapshotCandle,
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
-  createStartedSnapshotGate,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
@@ -24,30 +24,27 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   let trackedGates: MTFSnapshotGate[];
-
-  const createTrackedGate = (
-    logger: LoggerService,
-    handler: ErrorHandler | undefined = errorHandler,
-  ): MTFSnapshotGate => {
-    const snapshotGate = createStartedSnapshotGate(logger, handler);
-    trackedGates.push(snapshotGate);
-    return snapshotGate;
-  };
+  let createTrackedGate: (
+    logger?: LoggerService,
+    handler?: ErrorHandler,
+  ) => MTFSnapshotGate;
+  let cleanupTrackedGates: () => void;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    trackedGates = [];
-    mockLogger = createMockSnapshotLogger();
-    errorHandler = new ErrorHandler(mockLogger);
-    gate = createTrackedGate(mockLogger);
+    const harness = createMTFSnapshotGateHarness();
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    trackedGates = harness.trackedGates;
+    createTrackedGate = harness.createTrackedGate;
+    cleanupTrackedGates = harness.cleanupTrackedGates;
+    gate = harness.gate;
   });
 
   afterEach(() => {
-    while (trackedGates.length > 0) {
-      trackedGates.pop()?.destroy();
-    }
+    cleanupTrackedGates();
     jest.useRealTimers();
     ErrorRegistry.clear();
   });

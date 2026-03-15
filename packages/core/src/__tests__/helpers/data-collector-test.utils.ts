@@ -45,6 +45,31 @@ export function createDataCollectorService(options: {
   );
 }
 
+export function createDataCollectorHarness(options: {
+  config?: DataCollectionConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? (createMockDataCollectorLogger() as LoggerService);
+  const config = options.config ?? createMockDataCollectorConfig();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    config,
+    errorHandler,
+    service: createDataCollectorService({
+      config,
+      logger,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+    }),
+  };
+}
+
 export const createMockCollectorDatabase = () => ({
   run: jest.fn().mockResolvedValue({}),
   exec: jest.fn().mockResolvedValue(undefined),

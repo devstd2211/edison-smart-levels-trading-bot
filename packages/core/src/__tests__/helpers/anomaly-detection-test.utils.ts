@@ -62,12 +62,13 @@ export function createAnomalyDetectionService(options: {
   config?: Partial<AnomalyDetectionConfig>;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): AnomalyDetectionService {
   return new AnomalyDetectionService(
     options.config,
     undefined,
     options.logger ?? createAnomalyDetectionLogger(),
-    options.errorHandler,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
 

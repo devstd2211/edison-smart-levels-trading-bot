@@ -52,6 +52,12 @@ export function createAdvancedOrderFlowMockLogger(
   return logger as LoggerService;
 }
 
+export function createAdvancedOrderFlowErrorHandler(
+  logger: LoggerService = createAdvancedOrderFlowMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
 export function createAdvancedOrderFlowValidConfig(): AdvancedOrderFlowConfig {
   return {
     tickWindowMs: 5000,
@@ -111,7 +117,9 @@ export function createAdvancedOrderFlowHarness(options?: {
 }) {
   const config = options?.config ?? createAdvancedOrderFlowValidConfig();
   const logger = options?.logger ?? createAdvancedOrderFlowMockLogger();
-  const errorHandler = options?.errorHandler ?? new ErrorHandler(logger);
+  const errorHandler = options?.withErrorHandler === false
+    ? undefined
+    : options?.errorHandler ?? createAdvancedOrderFlowErrorHandler(logger);
   const service = createAdvancedOrderFlowService({
     config,
     logger,

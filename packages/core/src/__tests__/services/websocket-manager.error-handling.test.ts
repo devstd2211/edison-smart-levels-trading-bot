@@ -13,10 +13,13 @@
 
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
-import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import type { ExchangeConfig, LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
-import { createWebSocketManagerHarness, type WebSocketManagerHarness } from '../helpers/websocket-manager-test.utils';
+import {
+  createMockWebSocketAuthenticationService,
+  createWebSocketManagerHarness,
+  type WebSocketManagerHarness,
+} from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
 // MOCKS
@@ -103,7 +106,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('RETRY Strategy for Authentication (3 tests)', () => {
     it('test-2.1: Should retry authentication on signature error', () => {
       // Verify auth payload generation
-      const authService = new WebSocketAuthenticationService();
+      const authService = createMockWebSocketAuthenticationService();
       const payload = authService.generateAuthPayload('test-key', 'test-secret');
 
       expect(payload).toBeDefined();

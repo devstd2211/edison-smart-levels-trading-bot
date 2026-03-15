@@ -134,3 +134,12 @@ export function createTradeHistoryHarness(options: {
     tempDir,
   };
 }
+
+export function createTradeHistoryService(options: {
+  logger?: TradeHistoryMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+  tempDir?: string;
+  withErrorHandler?: boolean;
+} = {}): TradeHistoryService {
+  return createTradeHistoryHarness(options).service;
+}

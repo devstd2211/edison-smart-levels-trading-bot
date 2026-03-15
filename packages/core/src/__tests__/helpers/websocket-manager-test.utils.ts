@@ -18,6 +18,10 @@ export type WebSocketManagerHarness = {
   wsManager: WebSocketManagerService;
 };
 
+export function createMockWebSocketAuthenticationService(): WebSocketAuthenticationService {
+  return new WebSocketAuthenticationService();
+}
+
 export function createMockWebSocketManagerConfig(
   overrides: Partial<ExchangeConfig> = {},
 ): ExchangeConfig {
@@ -45,7 +49,7 @@ export function createWebSocketManagerHarness(options: {
   const logger = createMockWebSocketManagerLogger();
   const errorHandler = new ErrorHandler(logger);
   const orderExecutionDetector = new OrderExecutionDetectorService(logger);
-  const authService = new WebSocketAuthenticationService();
+  const authService = createMockWebSocketAuthenticationService();
   const deduplicationService = new EventDeduplicationService(100, 60000, logger);
   const keepAliveService = new WebSocketKeepAliveService(20000, logger);
   const wsManager = new WebSocketManagerService(

@@ -26,6 +26,7 @@ import {
   asAdvancedOrderFlowConfig,
   asAdvancedOrderFlowOrderBook,
   asAdvancedOrderFlowTick,
+  createAdvancedOrderFlowErrorHandler,
   createAdvancedOrderFlowHarness,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
@@ -46,7 +47,9 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   }) => AdvancedOrderFlowService;
 
   beforeEach(() => {
-    ({ logger: mockLogger, errorHandler } = createAdvancedOrderFlowHarness());
+    const harness = createAdvancedOrderFlowHarness();
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
     createService = (options = {}) =>
       createAdvancedOrderFlowService({
         config: options.config,
@@ -524,7 +527,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should handle ErrorHandler.handle() throwing', () => {
-      const throwingErrorHandler = new ErrorHandler(mockLogger);
+      const throwingErrorHandler = createAdvancedOrderFlowErrorHandler(mockLogger);
       jest.spyOn(throwingErrorHandler, 'handle').mockImplementation(() => {
         throw new Error('ErrorHandler.handle threw');
       });

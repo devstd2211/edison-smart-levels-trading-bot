@@ -148,6 +148,7 @@ type PositionMonitorDependencies = {
   mockPnLCalculator: ReturnType<typeof createMockPositionMonitorPnlCalculator>;
   mockPositionSync: ReturnType<typeof createMockPositionMonitorSync>;
   logger: LoggerService;
+  errorHandler?: ErrorHandler;
 };
 
 export function createPositionMonitorService(
@@ -174,7 +175,9 @@ export function createPositionMonitorService(
 export function createPositionMonitorHarness(
   options: {
     riskConfig?: RiskManagementConfig;
+    logger?: LoggerService;
     errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
   } = {},
 ): PositionMonitorDependencies {
   const mockBybit = createMockPositionMonitorExchange();
@@ -183,7 +186,10 @@ export function createPositionMonitorHarness(
   const mockExitTypeDetector = createMockPositionMonitorExitTypeDetector();
   const mockPnLCalculator = createMockPositionMonitorPnlCalculator();
   const mockPositionSync = createMockPositionMonitorSync();
-  const logger = createMockPositionMonitorLogger();
+  const logger = options.logger ?? createMockPositionMonitorLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
 
   return {
     monitor: createPositionMonitorService(
@@ -196,7 +202,10 @@ export function createPositionMonitorHarness(
         mockPositionSync,
         logger,
       },
-      options,
+      {
+        riskConfig: options.riskConfig,
+        errorHandler,
+      },
     ),
     mockBybit,
     mockPositionManager,
@@ -205,5 +214,6 @@ export function createPositionMonitorHarness(
     mockPnLCalculator,
     mockPositionSync,
     logger,
+    errorHandler,
   };
 }

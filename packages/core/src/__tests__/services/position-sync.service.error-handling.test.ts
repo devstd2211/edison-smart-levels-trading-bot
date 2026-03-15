@@ -34,6 +34,7 @@ import {
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createMockSyncedPosition,
+  createPositionSyncErrorHandler,
   createPositionSyncService,
   createPositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
@@ -91,7 +92,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    errorHandler = new ErrorHandler(new LoggerService(LogLevel.ERROR, './logs', false));
+    errorHandler = createPositionSyncErrorHandler();
     const harness = createPositionSyncHarness({ errorHandler });
     service = harness.service;
     mockBybit = harness.mockBybit;

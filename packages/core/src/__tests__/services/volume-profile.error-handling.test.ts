@@ -14,7 +14,6 @@ import { ValidationError, ConfigurationError } from '../../errors/DomainErrors';
 import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
 import {
   createVolumeProfileCandles,
-  createVolumeProfileErrorHandler,
   createVolumeProfileHarness,
   createVolumeProfileMockLogger,
   createVolumeProfileService,
@@ -35,8 +34,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
 
   beforeEach(() => {
-    mockLogger = createVolumeProfileMockLogger();
-    errorHandler = createVolumeProfileErrorHandler(mockLogger);
+    const harness = createVolumeProfileHarness();
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler;
   });
 
   const createService = (

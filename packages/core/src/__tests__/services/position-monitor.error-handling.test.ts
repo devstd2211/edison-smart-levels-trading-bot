@@ -23,7 +23,6 @@ import {
 import {
   createMockMonitoredPosition,
   createPositionMonitorHarness,
-  createPositionMonitorService,
   defaultPositionMonitorRiskConfig,
 } from '../helpers/position-monitor-test.utils';
 
@@ -53,27 +52,13 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     const harness = createPositionMonitorHarness({
       riskConfig: defaultPositionMonitorRiskConfig,
     });
+    monitor = harness.monitor;
     mockBybit = harness.mockBybit;
     mockPositionManager = harness.mockPositionManager;
     mockTelegram = harness.mockTelegram;
     mockPositionSync = harness.mockPositionSync;
     logger = harness.logger;
-    errorHandler = new ErrorHandler(logger);
-    monitor = createPositionMonitorService(
-      {
-        mockBybit,
-        mockPositionManager,
-        mockTelegram,
-        mockExitTypeDetector: {} as never,
-        mockPnLCalculator: {} as never,
-        mockPositionSync,
-        logger,
-      },
-      {
-        riskConfig: defaultPositionMonitorRiskConfig,
-        errorHandler,
-      },
-    );
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

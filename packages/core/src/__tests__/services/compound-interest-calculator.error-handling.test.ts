@@ -13,18 +13,26 @@ import { CompoundInterestCalculatorService } from '../../services/compound-inter
 import { LoggerService } from '../../types/legacy';
 import {
   createCompoundInterestConfig,
+  createCompoundInterestFactory,
   createCompoundInterestHarness,
-  createCompoundInterestService,
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
+  let createCalculator: (options?: {
+    configOverrides?: Parameters<typeof createCompoundInterestConfig>[0];
+    withErrorHandler?: boolean;
+  }) => CompoundInterestCalculatorService;
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
     ({ logger, mockGetBalance } = createCompoundInterestHarness({ withErrorHandler: false }));
+    createCalculator = createCompoundInterestFactory({
+      logger,
+      getBalance: mockGetBalance,
+    });
   });
 
   // ============================================================================
@@ -36,10 +44,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       const invalidConfig = { ...defaultConfig, baseDeposit: -100 };
 
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: invalidConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow('Base deposit cannot be negative');
@@ -49,10 +55,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       const invalidConfig = { ...defaultConfig, reinvestmentPercent: 150 };
 
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: invalidConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow('Reinvestment percent must be between 0 and 100');
@@ -62,10 +66,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       const invalidConfig = { ...defaultConfig, minPositionSize: 100, maxPositionSize: 50 };
 
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: invalidConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow('Max position size must be >= min position size');
@@ -75,10 +77,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       const invalidConfig = { ...defaultConfig, reinvestmentPercent: 80, profitLockPercent: 30 };
 
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: invalidConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow('Reinvestment + profit lock percentages cannot exceed 100%');
@@ -88,10 +88,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       const invalidConfig = { ...defaultConfig, maxRiskPerTrade: -5 };
 
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: invalidConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow();
@@ -104,10 +102,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
   describe('GRACEFUL_DEGRADE - Calculation failures', () => {
     it('should handle getBalance rejection with GRACEFUL_DEGRADE', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -118,10 +114,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle NaN balance from API', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -133,10 +127,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle Infinity balance from API', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -149,10 +141,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle negative balance from API', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -171,10 +161,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
   describe('SKIP - Logging failures (Future ErrorHandler integration)', () => {
     it('should complete calculation with working logger', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -187,10 +175,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle debug logging in calculateGrowthMetrics', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -202,10 +188,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
     it('should handle info logging on initialization', () => {
       // Should log initialization details without errors
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -219,10 +203,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
   describe('Integration - Config updates with validation', () => {
     it('should throw on invalid config update', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -233,10 +215,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should allow valid partial config updates', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -247,10 +227,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle multiple config updates safely', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -274,20 +252,16 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       const invalidConfig = { ...defaultConfig, baseDeposit: -10 };
 
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: invalidConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow();
     });
 
     it('should throw calculation errors in calculatePositionSize', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -297,10 +271,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should work normally with valid config and data', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -322,10 +294,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
       // Negative deposit is invalid
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: negConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow('Base deposit cannot be negative');
@@ -336,20 +306,16 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
       // Min > Max is invalid
       expect(() => {
-        createCompoundInterestService({
+        createCalculator({
           configOverrides: mismatchConfig,
-          logger,
-          getBalance: mockGetBalance,
           withErrorHandler: false,
         });
       }).toThrow();
     });
 
     it('should safely handle estimateFuturePositionSize with valid inputs', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -367,10 +333,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle calculateGrowthMetrics with small balance', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -380,10 +344,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle calculateGrowthMetrics with huge balance', () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -401,10 +363,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     it('should handle complete trading cycle with position sizing', async () => {
       // Use higher max risk to allow position growth
       const config = { ...defaultConfig, maxRiskPerTrade: 20 };
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: config,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -425,10 +385,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should handle config update during trading', async () => {
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: defaultConfig,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 
@@ -448,10 +406,8 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     it('should calculate growth metrics across multiple balance levels', () => {
       // Use higher max risk to show growth across levels
       const config = { ...defaultConfig, maxRiskPerTrade: 20 };
-      const calculator = createCompoundInterestService({
+      const calculator = createCalculator({
         configOverrides: config,
-        logger,
-        getBalance: mockGetBalance,
         withErrorHandler: false,
       });
 

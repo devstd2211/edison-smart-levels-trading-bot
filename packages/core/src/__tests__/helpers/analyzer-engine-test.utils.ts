@@ -27,6 +27,12 @@ export function asAnalyzerEngineLogger(logger: AnalyzerEngineMockLogger): Logger
   return logger as unknown as LoggerService;
 }
 
+export function createAnalyzerEngineErrorHandler(
+  logger: AnalyzerEngineMockLogger = createAnalyzerEngineMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(asAnalyzerEngineLogger(logger));
+}
+
 export function createAnalyzerEngineMockAnalyzer(
   name: string,
   direction: 'LONG' | 'SHORT' | 'HOLD' = 'LONG',
@@ -139,7 +145,7 @@ export function createAnalyzerEngineMockErrorHandler(): jest.Mocked<ErrorHandler
 type AnalyzerEngineDependencyOverrides = {
   registry?: AnalyzerRegistryService;
   logger?: AnalyzerEngineMockLogger;
-  errorHandler?: jest.Mocked<ErrorHandler>;
+  errorHandler?: ErrorHandler;
 };
 
 export function createAnalyzerEngineService(

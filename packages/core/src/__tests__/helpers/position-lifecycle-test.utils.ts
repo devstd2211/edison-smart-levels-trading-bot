@@ -322,3 +322,19 @@ export function createPositionLifecycleMemoryHarness(options: {
     signal,
   };
 }
+
+export function createPositionLifecycleWithErrorHandlerHarness(
+  errorHandler: ErrorHandler,
+  options: {
+    positionOverrides?: Partial<Position>;
+    tradingOverrides?: Partial<TradingConfig>;
+    riskOverrides?: Partial<RiskManagementConfig>;
+    entryOverrides?: Partial<EntryConfirmationConfig>;
+    configOverrides?: Partial<Config>;
+  } = {},
+): LifecycleHarness {
+  return createPositionLifecycleRepositoryHarness({
+    ...options,
+    errorHandler,
+  });
+}

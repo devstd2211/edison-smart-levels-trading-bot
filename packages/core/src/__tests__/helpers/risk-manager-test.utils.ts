@@ -113,14 +113,16 @@ export function createRiskManagerTrade(overrides: Partial<TradeRecord> = {}): Tr
 export function createRiskManagerHarness(options: {
   config?: RiskManagerConfig;
   balance?: number;
+  logger?: MockRiskManagerLogger;
+  errorHandler?: ErrorHandler;
 } = {}) {
-  const mockLogger = new MockRiskManagerLogger();
-  const errorHandler = new ErrorHandler(mockLogger);
-  const riskManager = new RiskManager(
-    options.config ?? createRiskManagerConfig(),
-    mockLogger,
+  const mockLogger = options.logger ?? new MockRiskManagerLogger();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(mockLogger);
+  const riskManager = createRiskManagerService({
+    config: options.config,
+    logger: mockLogger,
     errorHandler,
-  );
+  });
   riskManager.setAccountBalance(options.balance ?? 1000);
 
   return {
@@ -128,4 +130,17 @@ export function createRiskManagerHarness(options: {
     mockLogger,
     errorHandler,
   };
+}
+
+export function createRiskManagerService(options: {
+  config?: RiskManagerConfig;
+  logger?: MockRiskManagerLogger;
+  errorHandler?: ErrorHandler;
+} = {}): RiskManager {
+  const logger = options.logger ?? new MockRiskManagerLogger();
+  return new RiskManager(
+    options.config ?? createRiskManagerConfig(),
+    logger,
+    options.errorHandler ?? new ErrorHandler(logger),
+  );
 }

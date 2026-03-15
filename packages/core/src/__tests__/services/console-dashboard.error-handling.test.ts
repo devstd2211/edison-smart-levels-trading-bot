@@ -9,10 +9,9 @@
  */
 
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
-import type { ErrorHandler } from '../../errors/ErrorHandler';
-import type { Position } from '../../types/legacy';
 import {
   createConsoleDashboardErrorHandler,
+  createConsoleDashboardFactory,
   createConsoleDashboardHarness,
   createConsoleDashboardPosition as createValidPosition,
   createConsoleDashboardService,
@@ -21,6 +20,14 @@ import {
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
+  let createDashboard: ReturnType<typeof createConsoleDashboardFactory>;
+
+  beforeEach(() => {
+    createDashboard = createConsoleDashboardFactory({
+      errorHandler: createConsoleDashboardErrorHandler(),
+    });
+  });
+
   // ============================================================================
   // THROW: Config Validation (4 tests)
   // ============================================================================
@@ -28,36 +35,32 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   describe('THROW: Config Validation', () => {
     test('should throw on null config', () => {
       expect(() => {
-        createConsoleDashboardService({
+        createDashboard({
           config: null as unknown as DashboardConfigInput,
-          errorHandler: createConsoleDashboardErrorHandler(),
         });
       }).toThrow('Config must be a valid object');
     });
 
     test('should throw on invalid enabled (not boolean)', () => {
       expect(() => {
-        createConsoleDashboardService({
+        createDashboard({
           config: { enabled: 'yes' as unknown as boolean } as DashboardConfigInput,
-          errorHandler: createConsoleDashboardErrorHandler(),
         });
       }).toThrow('Config.enabled must be a boolean');
     });
 
     test('should throw on negative updateInterval', () => {
       expect(() => {
-        createConsoleDashboardService({
+        createDashboard({
           config: { enabled: true, updateInterval: -100 },
-          errorHandler: createConsoleDashboardErrorHandler(),
         });
       }).toThrow('Config.updateInterval must be non-negative');
     });
 
     test('should throw on invalid theme', () => {
       expect(() => {
-        createConsoleDashboardService({
+        createDashboard({
           config: { enabled: true, theme: 'rainbow' as unknown as 'dark' | 'light' } as DashboardConfigInput,
-          errorHandler: createConsoleDashboardErrorHandler(),
         });
       }).toThrow('Config.theme must be "dark" or "light"');
     });
@@ -68,7 +71,6 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('THROW: Input Validation', () => {
-    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
@@ -113,7 +115,6 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Update Failures', () => {
-    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
@@ -153,9 +154,8 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when updating price', () => {
-      const service = createConsoleDashboardService({
+      const service = createDashboard({
         config: { enabled: false },
-        errorHandler: createConsoleDashboardErrorHandler(),
       });
       expect(() => {
         service.updatePrice(50000);
@@ -163,9 +163,8 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should not throw when recording event', () => {
-      const service = createConsoleDashboardService({
+      const service = createDashboard({
         config: { enabled: false },
-        errorHandler: createConsoleDashboardErrorHandler(),
       });
       expect(() => {
         service.recordEvent('position-open', 'New position opened');
@@ -178,7 +177,6 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('Integration: Data Updates', () => {
-    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
@@ -290,7 +288,6 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('Edge Cases', () => {
-    const errorHandler = createConsoleDashboardErrorHandler();
     let service: ConsoleDashboardService;
 
     beforeEach(() => {

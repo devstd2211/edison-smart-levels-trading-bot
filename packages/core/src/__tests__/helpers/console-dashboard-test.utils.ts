@@ -36,6 +36,20 @@ export function createConsoleDashboardService(options: {
   );
 }
 
+export function createConsoleDashboardFactory(options: {
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return (factoryOptions: {
+    config?: DashboardConfigInput;
+    withErrorHandler?: boolean;
+  } = {}) =>
+    createConsoleDashboardService({
+      config: factoryOptions.config,
+      errorHandler: options.errorHandler,
+      withErrorHandler: factoryOptions.withErrorHandler,
+    });
+}
+
 export function createConsoleDashboardHarness(options: {
   config?: DashboardConfigInput;
   logger?: LoggerService;

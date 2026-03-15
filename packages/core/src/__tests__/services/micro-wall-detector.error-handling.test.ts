@@ -18,7 +18,7 @@ import {
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createMicroWallDetectorConfig,
-  createMicroWallDetectorLogger,
+  createMicroWallDetectorHarness,
   createMicroWallDetectorService,
   createMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
@@ -29,7 +29,6 @@ import {
 
 const createConfig = createMicroWallDetectorConfig;
 const createOrderBook = createMicroWallOrderBook;
-const createMockLogger = createMicroWallDetectorLogger;
 
 // ============================================================================
 // TESTS
@@ -62,8 +61,9 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    errorHandler = new ErrorHandler(logger);
+    const harness = createMicroWallDetectorHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   // ========================================================================

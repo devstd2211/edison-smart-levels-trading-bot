@@ -21,7 +21,7 @@ import {
   createMockStrategyLoader,
   createMockStrategyMainConfig,
   createMockStrategyMerger,
-  createStrategyManagerService,
+  createStrategyManagerFactory,
 } from '../helpers/strategy-manager-test.utils';
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
@@ -43,13 +43,11 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     mockMerger = createMockStrategyMerger();
     mockErrorHandler = createMockStrategyErrorHandler();
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-    createManager = (options = {}) =>
-      createStrategyManagerService({
-        loader: mockLoader,
-        merger: mockMerger,
-        errorHandler: mockErrorHandler,
-        withErrorHandler: options.withErrorHandler,
-      });
+    createManager = createStrategyManagerFactory({
+      loader: mockLoader,
+      merger: mockMerger,
+      errorHandler: mockErrorHandler,
+    });
   });
 
   afterEach(() => {

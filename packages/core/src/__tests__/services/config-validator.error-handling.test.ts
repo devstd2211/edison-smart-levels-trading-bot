@@ -26,6 +26,7 @@ import {
 } from '../../errors/DomainErrors';
 import {
   asConfigValidatorInput,
+  createConfigValidatorFactory,
   createConfigValidatorHarness,
   createConfigValidatorLogger,
   createConfigValidatorService,
@@ -39,11 +40,13 @@ import {
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let logger: ReturnType<typeof createConfigValidatorHarness>['logger'];
   let errorHandler: ErrorHandler;
+  let createValidator: () => ConfigValidatorService;
   const validConfig = createValidConfigValidatorConfig();
 
   beforeEach(() => {
     jest.clearAllMocks();
     ({ logger, errorHandler } = createConfigValidatorHarness());
+    createValidator = createConfigValidatorFactory({ logger, errorHandler });
   });
 
   // ========================================================================
@@ -52,14 +55,14 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('A. Deprecated Key Detection (3 tests)', () => {
     it('test-8.9.31.A1: Should throw ConfigDeprecationError for deprecated contextConfig key', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = { ...validConfig, contextConfig: { someValue: true } };
 
       expect(() => validator.validateAll(config)).toThrow(ConfigDeprecationError);
     });
 
     it('test-8.9.31.A2: Should throw for multiple deprecated keys', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         contextConfig: {},
@@ -71,7 +74,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.A3: Should work without ErrorHandler (backward compat)', () => {
-      const validator = createConfigValidatorService({ logger }); // No ErrorHandler
+      const validator = createConfigValidatorFactory({ logger })(); // No ErrorHandler
 
       expect(() => validator.validateAll(validConfig)).not.toThrow();
     });
@@ -83,21 +86,21 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('B. Required Field Validation (4 tests)', () => {
     it('test-8.9.31.B1: Should throw ConfigValidationError for missing exchange.symbol', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = { ...validConfig, exchange: { ...validConfig.exchange, symbol: '' } };
 
       expect(() => validator.validateAll(config)).toThrow(ConfigValidationError);
     });
 
     it('test-8.9.31.B2: Should treat null as missing field', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = { ...validConfig, exchange: { ...validConfig.exchange, symbol: null } };
 
       expect(() => validator.validateAll(asConfigValidatorInput(config))).toThrow(ConfigValidationError);
     });
 
     it('test-8.9.31.B3: Should throw for missing riskManagement.stopLossPercent', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         riskManagement: { ...validConfig.riskManagement, stopLossPercent: undefined },
@@ -107,7 +110,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.B4: Should collect multiple missing required fields', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         exchange: { symbol: '', apiKey: '', apiSecret: '' },
         riskManagement: { stopLossPercent: undefined, positionSizeUsdt: 0 },
@@ -129,7 +132,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('C. Confidence Format Validation (3 tests)', () => {
     it('test-8.9.31.C1: Should throw ConfigFormatError for confidence > 1', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         thresholds: {
@@ -144,7 +147,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.C2: Should collect multiple confidence format errors', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         thresholds: {
@@ -164,7 +167,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.C3: Should pass with valid 0-1 confidence', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
 
       expect(() => validator.validateAll(validConfig)).not.toThrow();
     });
@@ -176,7 +179,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('D. Range Validation (3 tests)', () => {
     it('test-8.9.31.D1: Should throw ConfigFormatError for stopLoss out of range', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         riskManagement: { ...validConfig.riskManagement, stopLossPercent: 25 }, // > 20%
@@ -186,14 +189,14 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.D2: Should throw ConfigFormatError for leverage out of range', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = { ...validConfig, trading: { leverage: 150 } }; // > 100
 
       expect(() => validator.validateAll(config)).toThrow(ConfigFormatError);
     });
 
     it('test-8.9.31.D3: Should throw for negative stopLossPercent', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         riskManagement: { ...validConfig.riskManagement, stopLossPercent: -1 },
@@ -209,7 +212,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('E. Analyzer Configuration Validation (2 tests)', () => {
     it('test-8.9.31.E1: Should throw ConfigAnalyzerValidationError for missing strategicWeights', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config: Record<string, unknown> = { ...validConfig };
       delete config.strategicWeights;
 
@@ -217,7 +220,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.E2: Should throw for missing analyzer enabled flag', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         strategicWeights: {
@@ -240,7 +243,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('F. Strategy Configuration Validation (2 tests)', () => {
     it('test-8.9.31.F1: Should throw ConfigStrategyValidationError for missing strategies section', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config: Record<string, unknown> = { ...validConfig };
       delete config.strategies;
 
@@ -248,7 +251,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.F2: Should throw for missing blockLongInDowntrend flag', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = {
         ...validConfig,
         strategies: {
@@ -269,7 +272,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('G. ErrorHandler Integration (1 test)', () => {
     it('test-8.9.31.G1: Should call ErrorHandler.handle with THROW strategy on validation error', async () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = { ...validConfig, exchange: { ...validConfig.exchange, symbol: '' } };
 
       try {
@@ -308,13 +311,13 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('I. Additional Coverage (2 tests)', () => {
     it('test-8.9.31.I1: Should handle validateAnalyzerConfig with ErrorHandler', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
 
       expect(() => validator.validateAnalyzerConfig(validConfig)).not.toThrow();
     });
 
     it('test-8.9.31.I2: Should handle validateStrategyConfig with ErrorHandler', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
 
       expect(() => validator.validateStrategyConfig(validConfig)).not.toThrow();
     });
@@ -326,7 +329,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('J. Error Context Verification (1 test)', () => {
     it('test-8.9.31.J1: Should throw ConfigValidationError with proper error type', () => {
-      const validator = createConfigValidatorService({ logger, errorHandler });
+      const validator = createValidator();
       const config = { ...validConfig, exchange: { ...validConfig.exchange, symbol: '' } };
 
       try {

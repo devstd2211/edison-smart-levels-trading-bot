@@ -16,9 +16,8 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
 import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
-  createTakeProfitManagerConfig,
+  createTakeProfitManagerFactory,
   createTakeProfitManagerHarness,
-  createTakeProfitManagerService,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
@@ -38,13 +37,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   beforeEach(() => {
     ({ logger, errorHandler } = createTakeProfitManagerHarness());
-    createManager = (options = {}) =>
-      createTakeProfitManagerService({
-        configOverrides: options.configOverrides,
-        logger,
-        errorHandler,
-        withErrorHandler: options.withErrorHandler,
-      });
+    createManager = createTakeProfitManagerFactory({
+      logger,
+      errorHandler,
+    });
   });
 
   // ============================================================================
