@@ -33,6 +33,13 @@ export function createWebSocketKeepAliveHarness(): WebSocketKeepAliveHarness {
     logger,
     createWebSocket: (readyState?: WebSocket['readyState']) => createMockKeepAliveWebSocket(readyState),
     createService: (interval?: number, customLogger: LoggerService | undefined = logger) =>
-      new WebSocketKeepAliveService(interval, customLogger),
+      createWebSocketKeepAliveService(interval, customLogger),
   };
+}
+
+export function createWebSocketKeepAliveService(
+  interval?: number,
+  logger?: LoggerService,
+): WebSocketKeepAliveService {
+  return new WebSocketKeepAliveService(interval, logger);
 }

@@ -8,6 +8,11 @@ import { LoggerService } from '../../types/legacy';
 export interface PrometheusMetricsHarness {
   logger: LoggerService;
   errorHandler: ErrorHandler;
+  createService: (
+    config?: MetricsConfig,
+    logger?: LoggerService,
+    handler?: ErrorHandler,
+  ) => PrometheusMetricsService;
   createTrackedService: (
     trackedServices: PrometheusMetricsService[],
     config?: MetricsConfig,
@@ -29,17 +34,23 @@ export function createPrometheusMetricsLogger(): LoggerService {
 export function createPrometheusMetricsHarness(): PrometheusMetricsHarness {
   const logger = createPrometheusMetricsLogger();
   const errorHandler = new ErrorHandler(logger);
+  const createService = (
+    config: MetricsConfig = {},
+    serviceLogger: LoggerService | undefined = logger,
+    handler: ErrorHandler | undefined = errorHandler,
+  ): PrometheusMetricsService => new PrometheusMetricsService(config, serviceLogger, handler);
 
   return {
     logger,
     errorHandler,
+    createService,
     createTrackedService(
       trackedServices: PrometheusMetricsService[],
       config: MetricsConfig = {},
       serviceLogger: LoggerService | undefined = logger,
       handler: ErrorHandler | undefined = errorHandler,
     ): PrometheusMetricsService {
-      const metricsService = new PrometheusMetricsService(config, serviceLogger, handler);
+      const metricsService = createService(config, serviceLogger, handler);
       trackedServices.push(metricsService);
       return metricsService;
     },

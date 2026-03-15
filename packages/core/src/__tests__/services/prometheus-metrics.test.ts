@@ -14,8 +14,8 @@
  * Phase: 14.1.1 - Prometheus Metrics
  */
 
-import { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
-import { LoggerService } from '../../types/legacy';
+import type { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
+import type { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createPrometheusMetricsHarness,
@@ -29,20 +29,12 @@ describe('PrometheusMetricsService', () => {
   let trackedServices: PrometheusMetricsService[];
   let harness: PrometheusMetricsHarness;
 
-  const createTrackedMetricsService = (
-    config: ConstructorParameters<typeof PrometheusMetricsService>[0] = {},
-    logger: LoggerService | undefined = mockLogger,
-    handler: ErrorHandler | undefined = errorHandler,
-  ): PrometheusMetricsService => {
-    return harness.createTrackedService(trackedServices, config, logger, handler);
-  };
-
   beforeEach(() => {
     harness = createPrometheusMetricsHarness();
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler;
     trackedServices = [];
-    service = createTrackedMetricsService({}, mockLogger, errorHandler);
+    service = harness.createTrackedService(trackedServices, {}, mockLogger, errorHandler);
   });
 
   afterEach(() => {
@@ -55,17 +47,22 @@ describe('PrometheusMetricsService', () => {
 
   describe('Initialization', () => {
     it('should initialize with default config', () => {
-      const svc = createTrackedMetricsService(undefined, undefined, undefined);
+      const svc = harness.createTrackedService(trackedServices, undefined, undefined, undefined);
       expect(svc).toBeDefined();
     });
 
     it('should initialize with custom prefix', () => {
-      const svc = createTrackedMetricsService({ prefix: 'my_bot_' }, mockLogger, undefined);
+      const svc = harness.createTrackedService(
+        trackedServices,
+        { prefix: 'my_bot_' },
+        mockLogger,
+        undefined,
+      );
       expect(svc).toBeDefined();
     });
 
     it('should initialize with logger', () => {
-      const svc = createTrackedMetricsService({}, mockLogger, undefined);
+      const svc = harness.createTrackedService(trackedServices, {}, mockLogger, undefined);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('initialized'),
         expect.any(Object)
@@ -73,7 +70,8 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = createTrackedMetricsService(
+      const svc = harness.createTrackedService(
+        trackedServices,
         { collectInterval: 1000 },
         mockLogger,
         undefined,
@@ -83,7 +81,8 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with default labels', () => {
-      const svc = createTrackedMetricsService(
+      const svc = harness.createTrackedService(
+        trackedServices,
         {
           defaultLabels: {
             env: 'test',
@@ -347,7 +346,8 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = createTrackedMetricsService(
+      const svc = harness.createTrackedService(
+        trackedServices,
         { collectInterval: 100 },
         mockLogger,
         undefined,
@@ -377,7 +377,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without logger', () => {
-      const svc = createTrackedMetricsService(undefined, undefined, undefined);
+      const svc = harness.createTrackedService(trackedServices, undefined, undefined, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
@@ -386,7 +386,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without errorHandler', () => {
-      const svc = createTrackedMetricsService({}, mockLogger, undefined);
+      const svc = harness.createTrackedService(trackedServices, {}, mockLogger, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
