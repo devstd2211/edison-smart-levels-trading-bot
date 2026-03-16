@@ -4,11 +4,11 @@
  */
 
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
-import { StrategyValidationError } from '../../types/strategy-config';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
 import {
   cleanupStrategyLoaderTempDir,
   createStrategyLoaderHarness,
+  createStrategyLoaderStrategy,
   createStrategyLoaderTempDir,
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
@@ -16,10 +16,11 @@ import {
 describe('StrategyLoaderService', () => {
   let tempDir: string;
   let loader: StrategyLoaderService;
+  let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
 
   beforeEach(async () => {
     tempDir = await createStrategyLoaderTempDir();
-    ({ service: loader } = createStrategyLoaderHarness({ strategiesDir: tempDir }));
+    ({ service: loader, createLoader } = createStrategyLoaderHarness({ strategiesDir: tempDir }));
   });
 
   afterEach(async () => {
@@ -28,8 +29,7 @@ describe('StrategyLoaderService', () => {
 
   describe('loadStrategy', () => {
     it('should load valid strategy file', async () => {
-      const strategy = {
-        version: 1,
+      const strategy = createStrategyLoaderStrategy({
         metadata: {
           name: 'Test Strategy',
           version: '1.0.0',
@@ -38,15 +38,7 @@ describe('StrategyLoaderService', () => {
           lastModified: '2026-01-09T00:00:00Z',
           tags: ['test'],
         },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
-      };
+      });
 
       await writeStrategyLoaderFile(tempDir, 'test-strategy.strategy.json', strategy);
 
@@ -58,7 +50,9 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should throw error for non-existent file', async () => {
-      await expect(loader.loadStrategy('non-existent')).rejects.toThrow(
+      const loaderWithoutHandler = createLoader({ withErrorHandler: false });
+
+      await expect(loaderWithoutHandler.loadStrategy('non-existent')).rejects.toThrow(
         StrategyLoadError,
       );
     });
@@ -75,14 +69,8 @@ describe('StrategyLoaderService', () => {
   describe('validation - version', () => {
     it('should require version field', async () => {
       const strategy = {
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
+        ...createStrategyLoaderStrategy(),
+        version: undefined,
         analyzers: [],
       };
 
@@ -94,18 +82,10 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should reject non-numeric version', async () => {
-      const strategy = {
+      const strategy = createStrategyLoaderStrategy({
         version: 'one',
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
         analyzers: [],
-      };
+      });
 
       await writeStrategyLoaderFile(tempDir, 'string-version.strategy.json', strategy);
 
@@ -117,10 +97,10 @@ describe('StrategyLoaderService', () => {
 
   describe('validation - metadata', () => {
     it('should require metadata', async () => {
-      const strategy = {
-        version: 1,
+      const strategy = createStrategyLoaderStrategy({
+        metadata: undefined,
         analyzers: [],
-      };
+      });
 
       await writeStrategyLoaderFile(tempDir, 'no-metadata.strategy.json', strategy);
 
@@ -130,8 +110,7 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should require metadata.name', async () => {
-      const strategy = {
-        version: 1,
+      const strategy = createStrategyLoaderStrategy({
         metadata: {
           version: '1.0.0',
           description: 'Test',
@@ -139,15 +118,7 @@ describe('StrategyLoaderService', () => {
           lastModified: '2026-01-09T00:00:00Z',
           tags: [],
         },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
-      };
+      });
 
       await writeStrategyLoaderFile(tempDir, 'no-name.strategy.json', strategy);
 
@@ -157,8 +128,7 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should require metadata.tags as array', async () => {
-      const strategy = {
-        version: 1,
+      const strategy = createStrategyLoaderStrategy({
         metadata: {
           name: 'Test',
           version: '1.0.0',
@@ -167,15 +137,7 @@ describe('StrategyLoaderService', () => {
           lastModified: '2026-01-09T00:00:00Z',
           tags: 'test',
         },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
-      };
+      });
 
       await writeStrategyLoaderFile(tempDir, 'bad-tags.strategy.json', strategy);
 
@@ -185,8 +147,7 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should validate backtest results if present', async () => {
-      const strategy = {
-        version: 1,
+      const strategy = createStrategyLoaderStrategy({
         metadata: {
           name: 'Test',
           version: '1.0.0',
@@ -195,21 +156,13 @@ describe('StrategyLoaderService', () => {
           lastModified: '2026-01-09T00:00:00Z',
           tags: [],
           backtest: {
-            winRate: 1.5, // Invalid: > 1
+            winRate: 1.5,
             profitFactor: 2.0,
             trades: 100,
             period: 'test',
           },
         },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
-      };
+      });
 
       await writeStrategyLoaderFile(tempDir, 'bad-backtest.strategy.json', strategy);
 

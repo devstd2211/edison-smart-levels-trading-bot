@@ -16,11 +16,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asTimeframeWeightingMode,
   asTimeframeWeightingMultiTF,
-  createTimeframeWeightingErrorHandler,
   createTimeframeWeightingHarness,
-  createTimeframeWeightingMockLogger,
-  createTimeframeWeightingService,
-  createValidTimeframeWeightingMultiTF,
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
@@ -28,12 +24,16 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
+  let createService: ReturnType<typeof createTimeframeWeightingHarness>['createService'];
+  let createMultiTF: ReturnType<typeof createTimeframeWeightingHarness>['createMultiTF'];
 
   beforeEach(() => {
     const harness = createTimeframeWeightingHarness();
     service = harness.service;
     errorHandler = harness.errorHandler as ErrorHandler;
     mockLogger = harness.logger;
+    createService = harness.createService;
+    createMultiTF = harness.createMultiTF;
   });
 
   describe('THROW: Input Validation', () => {
@@ -50,7 +50,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should throw on invalid trading mode', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       expect(() => {
         service.combine(multiTF, asTimeframeWeightingMode('INVALID'));
       }).toThrow('Invalid trading mode');
@@ -137,7 +137,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     test('should handle combination calculation gracefully', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result).toBeDefined();
@@ -146,7 +146,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should return safe default on calculation error', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.DAY);
 
       expect(result).toBeDefined();
@@ -157,17 +157,17 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails', () => {
-      const badLogger = createTimeframeWeightingMockLogger();
+      const badLogger = createTimeframeWeightingHarness().logger;
       badLogger.info.mockImplementation(() => {
         throw new Error('Logger failed');
       });
       badLogger.debug.mockImplementation(() => {
         throw new Error('Debug failed');
       });
-      const multiTF = createValidTimeframeWeightingMultiTF();
-      const svc = createTimeframeWeightingService({
+      const multiTF = createMultiTF();
+      const svc = createService({
         logger: badLogger,
-        errorHandler: createTimeframeWeightingErrorHandler(badLogger),
+        errorHandler,
       });
 
       expect(() => {
@@ -178,7 +178,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('Integration: Weight Application', () => {
     test('should combine SWING trading weights correctly', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result).toBeDefined();
@@ -187,7 +187,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should combine DAY trading weights correctly', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.DAY);
 
       expect(result).toBeDefined();
@@ -195,7 +195,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should combine SCALP trading weights correctly', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SCALP);
 
       expect(result).toBeDefined();
@@ -218,7 +218,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should include reasoning in result', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.reasoning).toBeDefined();
@@ -228,7 +228,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should calculate weighted strength between 0 and 1', () => {
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
       const result = service.combine(asTimeframeWeightingMultiTF(multiTF), TradingMode.SWING);
 
       expect(result.strength).toBeGreaterThanOrEqual(0);
@@ -257,7 +257,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
         logger: mockLogger,
         withErrorHandler: false,
       }).service;
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
 
       expect(() => {
         basicService.combine(multiTF, TradingMode.SWING);
@@ -265,8 +265,8 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = createTimeframeWeightingService({ errorHandler });
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const basicService = createService({ errorHandler });
+      const multiTF = createMultiTF();
 
       expect(() => {
         basicService.combine(multiTF, TradingMode.SWING);
@@ -275,7 +275,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
     test('should work without optional parameters', () => {
       const basicService = createTimeframeWeightingHarness({ withErrorHandler: false }).service;
-      const multiTF = createValidTimeframeWeightingMultiTF();
+      const multiTF = createMultiTF();
 
       expect(() => {
         basicService.combine(multiTF, TradingMode.SWING);
@@ -339,7 +339,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should handle conflicting signals across modes', () => {
-      const bullishTF = createValidTimeframeWeightingMultiTF();
+      const bullishTF = createMultiTF();
       const result = service.combine(bullishTF, TradingMode.SWING);
 
       // All timeframes are bullish, so result should be bullish

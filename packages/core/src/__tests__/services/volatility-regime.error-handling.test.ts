@@ -14,7 +14,6 @@ import { LoggerService, VolatilityRegime } from '../../types/legacy';
 import {
   createVolatilityRegimeHarness,
   createVolatilityRegimeMockLogger,
-  createVolatilityRegimeService,
 } from '../helpers/volatility-regime-test.utils';
 
 // ============================================================================
@@ -25,10 +24,11 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let createService: ReturnType<typeof createVolatilityRegimeHarness>['createService'];
 
   beforeEach(() => {
     mockLogger = createVolatilityRegimeMockLogger();
-    ({ errorHandler } = createVolatilityRegimeHarness({ logger: mockLogger }));
+    ({ errorHandler, createService } = createVolatilityRegimeHarness({ logger: mockLogger }));
   });
 
   // =========================================================================
@@ -37,7 +37,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
   describe('THROW: Input Validation', () => {
     it('should throw on NaN ATR percent during analyze', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       expect(() => {
         service.analyze(NaN);
@@ -45,7 +45,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should throw on Infinity ATR percent during analyze', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       expect(() => {
         service.analyze(Infinity);
@@ -53,7 +53,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should throw on negative ATR percent during analyze', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       expect(() => {
         service.analyze(-0.5);
@@ -95,7 +95,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
   describe('GRACEFUL_DEGRADE: Analysis Failures', () => {
     it('should analyze valid values correctly', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       const result = service.analyze(0.5);
 
@@ -107,7 +107,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should return correct regime for LOW volatility', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       const result = service.analyze(0.2);
 
@@ -119,7 +119,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should gracefully handle updateConfig with invalid thresholds', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       // This should not throw, just log warning
       service.updateConfig({
@@ -136,7 +136,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should return MEDIUM regime on config merge failure', () => {
-      service = createVolatilityRegimeService({
+      service = createService({
         logger: mockLogger,
         errorHandler,
         config: {
@@ -154,7 +154,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should handle analysis with disabled regime detection', () => {
-      service = createVolatilityRegimeService({
+      service = createService({
         logger: mockLogger,
         errorHandler,
         config: {
@@ -176,7 +176,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   describe('SKIP: Logging Failures', () => {
     it('should skip logger errors during analyze', () => {
       const failingLogger = createVolatilityRegimeMockLogger('debug');
-      service = createVolatilityRegimeService({ logger: failingLogger, errorHandler });
+      service = createService({ logger: failingLogger, errorHandler });
 
       // Should not throw despite logger errors
       const result = service.analyze(0.5);
@@ -186,7 +186,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
     it('should skip logger errors during updateConfig', () => {
       const failingLogger = createVolatilityRegimeMockLogger('info');
-      service = createVolatilityRegimeService({ logger: failingLogger, errorHandler });
+      service = createService({ logger: failingLogger, errorHandler });
 
       // Should not throw despite logger errors
       expect(() => {
@@ -198,7 +198,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
       const failingLogger = createVolatilityRegimeMockLogger('info');
 
       expect(() => {
-        service = createVolatilityRegimeService({ logger: failingLogger, errorHandler });
+        service = createService({ logger: failingLogger, errorHandler });
       }).not.toThrow();
     });
   });
@@ -209,7 +209,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
   describe('Integration: E2E Scenarios', () => {
     it('should analyze valid ATR values correctly', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       const lowResult = service.analyze(0.2);
       expect(lowResult.regime).toBe(VolatilityRegime.LOW);
@@ -222,7 +222,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should track regime changes correctly', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       service.analyze(0.2); // LOW (change from initial MEDIUM → LOW)
       expect(service.getCurrentRegime()).toBe(VolatilityRegime.LOW);
@@ -238,7 +238,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should handle config updates correctly', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       const initialConfig = service.getConfig();
       expect(initialConfig.enabled).toBe(true);
@@ -249,7 +249,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should preserve config on failed update', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger, errorHandler });
+      service = createService({ logger: mockLogger, errorHandler });
 
       const initialConfig = service.getConfig();
       const initialThresholds = { ...initialConfig.thresholds };
@@ -273,7 +273,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (backward compatible)', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger });
+      service = createService({ logger: mockLogger, withErrorHandler: false });
 
       const result = service.analyze(0.75);
 
@@ -282,7 +282,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should throw on validation errors without ErrorHandler', () => {
-      service = createVolatilityRegimeService({ logger: mockLogger });
+      service = createService({ logger: mockLogger, withErrorHandler: false });
 
       expect(() => {
         service.analyze(NaN);
@@ -290,7 +290,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should handle config without ErrorHandler', () => {
-      service = createVolatilityRegimeService({
+      service = createService({
         logger: mockLogger,
         config: {
           enabled: true,
@@ -299,6 +299,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
             highAtrPercent: 1.5,
           },
         },
+        withErrorHandler: false,
       });
 
       expect(service.isEnabled()).toBe(true);

@@ -73,6 +73,11 @@ export const createValidTimeframeWeightingMultiTF =
     },
   });
 
+export const createTimeframeWeightingMultiTF = (overrides: Partial<MultiTimeframeAnalysis> = {}): MultiTimeframeAnalysis => ({
+  ...createValidTimeframeWeightingMultiTF(),
+  ...overrides,
+});
+
 export const createTimeframeWeightingService = (options: {
   logger?: TimeframeWeightingMockLogger;
   errorHandler?: ErrorHandler;
@@ -109,5 +114,17 @@ export const createTimeframeWeightingHarness = (options: {
     logger,
     errorHandler,
     service,
+    createService: (overrides: {
+      logger?: TimeframeWeightingMockLogger;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createTimeframeWeightingService({
+        logger: overrides.logger ?? logger,
+        errorHandler: overrides.errorHandler ?? errorHandler,
+        withErrorHandler: overrides.withErrorHandler,
+      }),
+    createMultiTF: (overrides: Partial<MultiTimeframeAnalysis> = {}) =>
+      createTimeframeWeightingMultiTF(overrides),
   };
 };
