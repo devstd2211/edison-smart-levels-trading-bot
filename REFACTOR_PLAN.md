@@ -218,6 +218,45 @@
 - [x] Tests any cleanup batch 25: performance analytics service suite (`performance-analytics.service.test.ts`)
 - [x] Tests any cleanup batch 26: monitoring server suite (`monitoring-server.test.ts`)
 - [x] Tests any cleanup batch 27: risk calculator error-handling suite (`risk-calculator.error-handling.test.ts`)
+
+---
+
+## Archived Completed History Migrated From ACTIVE (2026-03-16)
+
+### Cleared Active Candidates
+- `handlers/websocket.handler.ts`
+- `handlers/position.handler.ts`
+- `data-collector/database-writer.ts`
+- `console-dashboard.service.ts`
+- `multi-strategy/strategy-orchestrator.service.ts`
+- `event-deduplication.service.ts`
+- `ladder-tp-manager.service.ts`
+- `limit-order-executor.service.ts`
+- `position-state-machine.service.ts`
+- `funding-rate-filter.service.ts`
+- `multi-strategy/strategy-state-manager.service.ts`
+- `ml-signal-validator.service.ts`
+- `lifecycle-manager.service.ts`
+- `graceful-shutdown.service.ts`
+- `event-bus.ts`
+- `pattern-recognition.service.ts`
+- `orderbook-manager.service.ts`
+- `strategy-loader.service.ts`
+- `indicator-precalculation.service.ts`
+
+### Lifecycle/Testability Stream Completed Before ACTIVE Cleanup
+- Started and extended the `createServices()` + explicit lifecycle stream across `bot-factory`, `trading-bot.lifecycle`, `create-services.lifecycle`, `trading-bot.create-services.lifecycle`, `bot-initializer`, `bot-initializer.error-handling`, and `bot-event-emitter`.
+- Extended tracked teardown and shared lifecycle helpers across `monitoring-server`, `prometheus-metrics`, `websocket-keep-alive`, `mtf-snapshot-gate`, `real-time-risk-monitor`, `position-monitor`, `position-sync`, `position-exiting`, `position-lifecycle`, `position-pnl-calculator`, and `position-state-machine`.
+- Continued integration-oriented lifecycle/testability consolidation across `position-exiting.integration`, `phase-10-integration`, `position-lifecycle.repository-integration`, `bybit.repository-integration`, `candle-provider.repository-integration`, `multi-strategy.cache`, `dynamic-position-sizer`, `position-scaling`, `health-check`, `action-queue`, `time-service`, `order-flow-analyzer`, `smart-order-execution`, and `structure-aware-exit`.
+
+### Compact Harness Stream Completed Before ACTIVE Cleanup
+- Refreshed shared harnesses and removed repeated inline bootstrap across `exchange-factory`, `public-websocket`, `risk-calculator`, `session-stats`, `timeframe-weighting`, `strategy-loader`, and `volatility-regime`.
+- Refreshed adjacent constructor-heavy/error-handling suites including `circuit-breaker`, `data-collector`, `graceful-shutdown`, `bybit.error-handling`, `advanced-order-state-machine`, `multi-timeframe-trend`, `liquidity-heatmap`, `fractal-smc-weighting`, `pattern-recognition`, `retest-entry`, `swing-point-detector`, `whale-wall-tp`, `enhanced-exit`, `whale-detection`, and `reality-check`.
+- Refreshed earlier compact helpers/suites in the same stream including `bot-metrics`, `performance-analytics`, `orderbook-imbalance`, `compound-interest-calculator`, `entry-confirmation`, `take-profit-manager`, `volume-profile`, `wall-tracker`, `weight-matrix-calculator`, `websocket-authentication`, `analyzer-engine`, `trading-journal`, `candle-aggregator`, `websocket-manager.error-handling`, `websocket-event-handler.error-handling`, `indicator-cache`, `market-condition-analyzer`, `analyzer-registry`, and `indicator-registry`.
+
+### Verification Archive Note
+- The migrated completed batches were verified incrementally with targeted `npm test -- --runInBand ...` runs and full `npm run build`.
+- Detailed per-batch PASS logs previously kept in `ACTIVE_REFACTOR_PLAN.md` were removed from the active file during cleanup to keep only open work there; commit history preserves the exact migrated wording and sequencing.
 - [x] Tests any cleanup batch 28: config validator service suite (`config-validator.service.test.ts`)
 - [x] Tests any cleanup batch 29: real-time risk monitor service suite (`real-time-risk-monitor.service.test.ts`)
 - [x] Tests any cleanup batch 30: enhanced exit error-handling suite (`enhanced-exit.error-handling.test.ts`)
