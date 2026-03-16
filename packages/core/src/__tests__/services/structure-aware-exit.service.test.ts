@@ -24,13 +24,12 @@ describe('StructureAwareExitService', () => {
   let defaultConfig: StructureAwareExitConfig;
 
   beforeEach(() => {
-    mockLogger = new LoggerService('ERROR', './logs', false);
-    jest.spyOn(mockLogger, 'info').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'debug').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(mockLogger, 'error').mockImplementation(() => undefined);
-
     defaultConfig = createStructureAwareExitConfig();
+    const harness = createStructureAwareExitHarness({
+      config: defaultConfig,
+      withErrorHandler: false,
+    });
+    mockLogger = harness.logger;
     service = createStructureAwareExitHarness({
       config: defaultConfig,
       logger: mockLogger,

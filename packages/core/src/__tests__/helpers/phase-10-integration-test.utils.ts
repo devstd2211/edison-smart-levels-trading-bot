@@ -67,6 +67,30 @@ export function createPhase10IntegrationOrderbook(overrides: Partial<ReturnType<
   };
 }
 
+export function createPhase10OrderbookSide(
+  basePrice: number,
+  levels: number,
+  direction: 'bids' | 'asks',
+  volumeFactory: (index: number) => number,
+  step = 10,
+): Array<{ price: number; volume: number }> {
+  return Array.from({ length: levels }, (_, index) => ({
+    price: direction === 'bids' ? basePrice - index * step : basePrice + index * step,
+    volume: volumeFactory(index),
+  }));
+}
+
+export function createPhase10PerformanceOrderbook(
+  bidBase = 50000,
+  askBase = 50010,
+  levels = 20,
+): ReturnType<typeof createPhase10IntegrationOrderbook> {
+  return createPhase10IntegrationOrderbook({
+    bids: createPhase10OrderbookSide(bidBase, levels, 'bids', () => Math.random() * 10),
+    asks: createPhase10OrderbookSide(askBase, levels, 'asks', () => Math.random() * 10),
+  });
+}
+
 export function createPhase10Harness() {
   const logger = createPhase10Logger();
   const errorHandler = new ErrorHandler(logger);

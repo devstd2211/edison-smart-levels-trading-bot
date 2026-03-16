@@ -19,10 +19,12 @@ import {
 import { StrategyValidationError } from '../../types/strategy-config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import * as path from 'path';
 import {
+  cleanupStrategyLoaderTempDir,
   createStrategyLoaderErrorHandler,
+  createStrategyLoaderHarness,
   createStrategyLoaderService,
+  createStrategyLoaderTempDir,
 } from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
@@ -33,22 +35,12 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let dirReadSpy: jest.SpyInstance;
 
   beforeEach(async () => {
-    // Create temporary test directory
-    testStrategiesDir = path.join(process.cwd(), 'test-strategies-temp');
-    try {
-      await fs.mkdir(testStrategiesDir, { recursive: true });
-    } catch {
-      // Directory might already exist
-    }
-
-    // Mock ErrorHandler
     mockErrorHandler = createStrategyLoaderErrorHandler();
-
-    // Create service with error handler
-    loaderService = createStrategyLoaderService({
+    testStrategiesDir = await createStrategyLoaderTempDir();
+    ({ service: loaderService } = createStrategyLoaderHarness({
       strategiesDir: testStrategiesDir,
       errorHandler: mockErrorHandler,
-    });
+    }));
 
     // Setup spies for file operations
     fileReadSpy = jest.spyOn(fs, 'readFile');
@@ -59,16 +51,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
 
-    // Cleanup test directory
-    try {
-      const files = await fs.readdir(testStrategiesDir);
-      for (const file of files) {
-        await fs.unlink(join(testStrategiesDir, file));
-      }
-      await fs.rmdir(testStrategiesDir);
-    } catch {
-      // Ignore cleanup errors
-    }
+    await cleanupStrategyLoaderTempDir(testStrategiesDir);
   });
 
   // ============================================================================

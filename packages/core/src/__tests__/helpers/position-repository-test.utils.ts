@@ -6,6 +6,23 @@ export function createPositionRepositoryHarness(): IPositionRepository {
   return new PositionMemoryRepository();
 }
 
+export function createSeededPositionRepositoryHarness(options: {
+  currentPosition?: Position | null;
+  history?: Position[];
+} = {}): IPositionRepository {
+  const repository = createPositionRepositoryHarness();
+
+  if (options.currentPosition !== undefined) {
+    repository.setCurrentPosition(options.currentPosition);
+  }
+
+  for (const position of options.history ?? []) {
+    repository.addToHistory(position);
+  }
+
+  return repository;
+}
+
 export function createRepositoryPosition(
   overrides: Partial<Position> = {},
 ): Position {

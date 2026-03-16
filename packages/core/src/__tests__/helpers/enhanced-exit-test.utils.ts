@@ -11,6 +11,29 @@ export function createEnhancedExitMockLogger(): LoggerService {
   } as unknown as LoggerService;
 }
 
+export function createEnhancedExitFailingLogger(): LoggerService {
+  return {
+    info: jest.fn(() => {
+      throw new Error('Logger failed');
+    }),
+    debug: jest.fn(() => {
+      throw new Error('Logger failed');
+    }),
+    warn: jest.fn(() => {
+      throw new Error('Logger failed');
+    }),
+    error: jest.fn(() => {
+      throw new Error('Logger failed');
+    }),
+  } as unknown as LoggerService;
+}
+
+export function createEnhancedExitErrorHandler(
+  logger: LoggerService = createEnhancedExitMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
 export function createEnhancedExitConfig(): Partial<EnhancedExitConfig> {
   return {
     riskRewardGate: {
@@ -63,7 +86,7 @@ export function createEnhancedExitHarness(options: {
   const logger = options.logger ?? createEnhancedExitMockLogger();
   const errorHandler = options.withErrorHandler === false
     ? undefined
-    : options.errorHandler ?? new ErrorHandler(logger);
+    : options.errorHandler ?? createEnhancedExitErrorHandler(logger);
   const service = createEnhancedExitService({
     logger,
     config: options.config,
@@ -87,7 +110,7 @@ export function createEnhancedExitService(options: {
   const logger = options.logger ?? createEnhancedExitMockLogger();
   const errorHandler = options.withErrorHandler === false
     ? undefined
-    : options.errorHandler ?? new ErrorHandler(logger);
+    : options.errorHandler ?? createEnhancedExitErrorHandler(logger);
 
   return new EnhancedExitService(
     logger,

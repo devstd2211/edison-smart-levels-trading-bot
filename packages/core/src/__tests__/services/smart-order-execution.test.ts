@@ -21,58 +21,35 @@ import {
 } from '../../services/smart-order-execution.service';
 import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import {
-  FALLBACK_EXECUTION_REPORT,
-  MAX_ORDER_SPLITS,
-} from '../../constants/phase-13-constants';
-
-const asLogger = (value: { debug: jest.Mock; info: jest.Mock; warn: jest.Mock; error: jest.Mock }): LoggerService =>
-  value as unknown as LoggerService;
-const asErrorLogger = (value: { debug: jest.Mock; info: jest.Mock; warn: jest.Mock; error: jest.Mock }) =>
-  value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
-type SmartOrderInternals = {
-  doExecuteSmartOrder: (order: SmartOrderRequest) => Promise<ExecutionReport>;
-  doCalculateOptimalSplit: (size: number, price: number) => number[];
-  doEstimateMarketImpact: (size: number, side: SmartOrderRequest['side']) => number;
-  shouldAdjustPrice: (impact: number) => boolean;
-  doHandlePartialFills: (report: ExecutionReport) => Promise<void>;
-  doExecuteTWAP: (order: SmartOrderRequest) => Promise<ExecutionReport>;
-  doExecuteVWAP: (order: SmartOrderRequest) => Promise<ExecutionReport>;
-  calculateSlippage: (executedPrice: number, referencePrice: number) => number;
-  roundToDecimals: (value: number, decimals: number) => number;
-  activeOrders: Map<string, ExecutionReport>;
-};
-const asInternals = (service: SmartOrderExecutionService): SmartOrderInternals =>
-  service as unknown as SmartOrderInternals;
+import { MAX_ORDER_SPLITS } from '../../constants/phase-13-constants';
 const asConfig = (value: unknown): SmartOrderConfig => value as SmartOrderConfig;
 const asOrder = (value: unknown): SmartOrderRequest => value as SmartOrderRequest;
+import {
+  asSmartOrderInternals,
+  asSmartOrderLogger,
+  createSmartOrderExecutionConfig,
+  createSmartOrderExecutionHarness,
+  createSmartOrderExecutionLogger,
+  createSmartOrderRequest,
+} from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
   let service: SmartOrderExecutionService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
+  let createService: (options?: {
+    config?: SmartOrderConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => SmartOrderExecutionService;
 
   beforeEach(() => {
-    logger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as LoggerService;
-    errorHandler = new ErrorHandler(asErrorLogger(logger as unknown as { debug: jest.Mock; info: jest.Mock; warn: jest.Mock; error: jest.Mock }));
-
-    mockConfig = {
-      maxSlippagePercent: 0.1,
-      maxOrderSplits: 5,
-      minFillProbability: 0.7,
-      adaptiveExecution: true,
-      executionStrategy: 'adaptive',
-      twapInterval: 30000, // 30 seconds
-      vwapLookback: 20,
-      executionTimeout: 300000, // 5 minutes
-    };
-
-    service = new SmartOrderExecutionService(mockConfig, logger, errorHandler);
+    const harness = createSmartOrderExecutionHarness();
+    service = harness.service;
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
+    mockConfig = harness.config;
+    createService = harness.createService;
   });
 
   // ============================================================================
@@ -222,7 +199,7 @@ describe('SmartOrderExecutionService', () => {
     it('should return failed report when execution throws error', async () => {
       // Mock internal method to throw error
       const spy = jest
-        .spyOn(asInternals(service), 'doExecuteSmartOrder')
+        .spyOn(asSmartOrderInternals(service), 'doExecuteSmartOrder')
         .mockRejectedValue(new Error('Exchange error'));
 
       const order: SmartOrderRequest = {
@@ -245,7 +222,7 @@ describe('SmartOrderExecutionService', () => {
     it('should return single order when calculateOptimalSplit throws', () => {
       // Mock doCalculateOptimalSplit to throw
       const spy = jest
-        .spyOn(asInternals(service), 'doCalculateOptimalSplit')
+        .spyOn(asSmartOrderInternals(service), 'doCalculateOptimalSplit')
         .mockImplementation(() => {
           throw new Error('Split calculation failed');
         });
@@ -264,7 +241,7 @@ describe('SmartOrderExecutionService', () => {
     it('should return 0 impact when estimateMarketImpact throws', () => {
       // Mock doEstimateMarketImpact to throw
       const spy = jest
-        .spyOn(asInternals(service), 'doEstimateMarketImpact')
+        .spyOn(asSmartOrderInternals(service), 'doEstimateMarketImpact')
         .mockImplementation(() => {
           throw new Error('Impact estimation failed');
         });
@@ -293,7 +270,7 @@ describe('SmartOrderExecutionService', () => {
 
       // Now mock internal method to throw AFTER order is created
       const spy = jest
-        .spyOn(asInternals(service), 'shouldAdjustPrice')
+        .spyOn(asSmartOrderInternals(service), 'shouldAdjustPrice')
         .mockImplementation(() => {
           throw new Error('Monitoring logic failed');
         });
@@ -313,7 +290,7 @@ describe('SmartOrderExecutionService', () => {
     it('should return cancel when handlePartialFills throws', async () => {
       // Mock doHandlePartialFills to throw
       const spy = jest
-        .spyOn(asInternals(service), 'doHandlePartialFills')
+        .spyOn(asSmartOrderInternals(service), 'doHandlePartialFills')
         .mockRejectedValue(new Error('Partial fill handling failed'));
 
       const action = await service.handlePartialFills('order_123', 0.5);
@@ -330,7 +307,7 @@ describe('SmartOrderExecutionService', () => {
     it('should fallback to executeSmartOrder when TWAP throws', async () => {
       // Mock doExecuteTWAP to throw
       const spy = jest
-        .spyOn(asInternals(service), 'doExecuteTWAP')
+        .spyOn(asSmartOrderInternals(service), 'doExecuteTWAP')
         .mockRejectedValue(new Error('TWAP failed'));
 
       const order: SmartOrderRequest = {
@@ -355,7 +332,7 @@ describe('SmartOrderExecutionService', () => {
     it('should fallback to executeSmartOrder when VWAP throws', async () => {
       // Mock doExecuteVWAP to throw
       const spy = jest
-        .spyOn(asInternals(service), 'doExecuteVWAP')
+        .spyOn(asSmartOrderInternals(service), 'doExecuteVWAP')
         .mockRejectedValue(new Error('VWAP failed'));
 
       const order: SmartOrderRequest = {
@@ -378,14 +355,10 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should handle division by zero in calculateSlippage gracefully', () => {
-      const service = new SmartOrderExecutionService(
-        mockConfig,
-        logger,
-        errorHandler
-      );
+      const service = createService();
 
       // Access private method via type assertion
-      const slippage = asInternals(service).calculateSlippage(0, 45000);
+      const slippage = asSmartOrderInternals(service).calculateSlippage(0, 45000);
 
       expect(slippage).toBe(0);
     });
@@ -415,7 +388,7 @@ describe('SmartOrderExecutionService', () => {
   describe('SKIP - Logging Failures', () => {
     it('should continue execution when logger.info throws', async () => {
       // Create service WITHOUT ErrorHandler to avoid ErrorHandler using logger
-      const serviceWithoutEH = new SmartOrderExecutionService(mockConfig, logger);
+      const serviceWithoutEH = createService({ errorHandler: undefined });
 
       (logger.info as jest.Mock).mockImplementation(() => {
         throw new Error('Logging failed');
@@ -444,7 +417,7 @@ describe('SmartOrderExecutionService', () => {
 
       // Trigger warning by making calculateOptimalSplit fail
       const spy = jest
-        .spyOn(asInternals(serviceWithoutEH), 'doCalculateOptimalSplit')
+        .spyOn(asSmartOrderInternals(serviceWithoutEH), 'doCalculateOptimalSplit')
         .mockImplementation(() => {
           throw new Error('Split failed');
         });
@@ -459,7 +432,7 @@ describe('SmartOrderExecutionService', () => {
 
     it('should continue execution when logger.error throws', async () => {
       // Create service WITHOUT ErrorHandler
-      const serviceWithoutEH = new SmartOrderExecutionService(mockConfig, logger);
+      const serviceWithoutEH = createService({ errorHandler: undefined });
 
       (logger.error as jest.Mock).mockImplementation(() => {
         throw new Error('Logging failed');
@@ -467,7 +440,7 @@ describe('SmartOrderExecutionService', () => {
 
       // Force error path
       const spy = jest
-        .spyOn(asInternals(serviceWithoutEH), 'doExecuteSmartOrder')
+        .spyOn(asSmartOrderInternals(serviceWithoutEH), 'doExecuteSmartOrder')
         .mockRejectedValue(new Error('Execution error'));
 
       const order: SmartOrderRequest = {
@@ -488,7 +461,7 @@ describe('SmartOrderExecutionService', () => {
 
     it('should handle safeLog protecting against logging failures', async () => {
       // Test that safeLog actually catches errors
-      const loggerThatThrows = {
+      const loggerThatThrows = asSmartOrderLogger(createSmartOrderExecutionLogger({
         debug: jest.fn(),
         info: jest.fn(() => {
           throw new Error('Info failed');
@@ -499,12 +472,12 @@ describe('SmartOrderExecutionService', () => {
         error: jest.fn(() => {
           throw new Error('Error failed');
         }),
-      } as unknown as LoggerService;
+      }));
 
-      const serviceWithThrowingLogger = new SmartOrderExecutionService(
-        mockConfig,
-        loggerThatThrows
-      );
+      const serviceWithThrowingLogger = createService({
+        logger: loggerThatThrows,
+        errorHandler: undefined,
+      });
 
       const order: SmartOrderRequest = {
         symbol: 'BTCUSDT',
@@ -645,7 +618,7 @@ describe('SmartOrderExecutionService', () => {
         reasoning: 'Test',
       };
 
-      asInternals(service).activeOrders.set('order_123', fakeReport1);
+      asSmartOrderInternals(service).activeOrders.set('order_123', fakeReport1);
 
       const action1 = await service.handlePartialFills('order_123', 0.05); // 5% filled
       expect(action1).toBe('cancel'); // Too small
@@ -700,10 +673,7 @@ describe('SmartOrderExecutionService', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     it('should work without ErrorHandler', async () => {
-      const serviceWithoutEH = new SmartOrderExecutionService(
-        mockConfig,
-        logger
-      );
+      const serviceWithoutEH = createService({ errorHandler: undefined });
 
       const order: SmartOrderRequest = {
         symbol: 'BTCUSDT',
@@ -719,7 +689,10 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should work without logger and ErrorHandler', async () => {
-      const serviceMinimal = new SmartOrderExecutionService(mockConfig);
+      const serviceMinimal = createService({
+        logger: undefined,
+        errorHandler: undefined,
+      });
 
       const order: SmartOrderRequest = {
         symbol: 'BTCUSDT',
@@ -735,14 +708,11 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should handle errors gracefully without ErrorHandler', async () => {
-      const serviceWithoutEH = new SmartOrderExecutionService(
-        mockConfig,
-        logger
-      );
+      const serviceWithoutEH = createService({ errorHandler: undefined });
 
       // Mock to throw error
       const spy = jest
-        .spyOn(asInternals(serviceWithoutEH), 'doExecuteSmartOrder')
+        .spyOn(asSmartOrderInternals(serviceWithoutEH), 'doExecuteSmartOrder')
         .mockRejectedValue(new Error('Test error'));
 
       const order: SmartOrderRequest = {
@@ -761,10 +731,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should calculate optimal split without ErrorHandler', () => {
-      const serviceWithoutEH = new SmartOrderExecutionService(
-        mockConfig,
-        logger
-      );
+      const serviceWithoutEH = createService({ errorHandler: undefined });
 
       const splits = serviceWithoutEH.calculateOptimalSplit(10, 45000);
 
@@ -860,7 +827,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('roundToDecimals: should round correctly', () => {
-      const rounded = asInternals(service).roundToDecimals(45000.123456, 2);
+      const rounded = asSmartOrderInternals(service).roundToDecimals(45000.123456, 2);
 
       expect(rounded).toBe(45000.12);
     });

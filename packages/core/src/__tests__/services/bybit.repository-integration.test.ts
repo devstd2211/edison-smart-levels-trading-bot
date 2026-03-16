@@ -15,38 +15,31 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
 import { LoggerService } from '../../services/logger.service';
 import type { ExchangeConfig } from '../../types/legacy';
+import { createBybitRepositoryHarness } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let mockLogger: LoggerService;
   let repository: MarketDataCacheRepository;
   let bybitConfig: ExchangeConfig;
+  let createService: (options?: {
+    config?: ExchangeConfig;
+    logger?: LoggerService;
+    repository?: MarketDataCacheRepository;
+  }) => BybitService;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as LoggerService;
-
-    repository = new MarketDataCacheRepository();
-
-    bybitConfig = {
-      name: 'bybit',
-      symbol: 'XRPUSDT',
-      timeframe: '5',
-      apiKey: 'test-key',
-      apiSecret: 'test-secret',
-      demo: true,
-      testnet: false,
-    };
+    const harness = createBybitRepositoryHarness();
+    mockLogger = harness.logger;
+    repository = harness.repository;
+    bybitConfig = harness.config;
+    createService = harness.createService;
   });
 
   describe('Construction & Initialization', () => {
     it('should construct BybitService with optional repository parameter', () => {
       // ARRANGE
       // ACT
-      const service = new BybitService(bybitConfig, mockLogger, repository);
+      const service = createService();
       // ASSERT
       expect(service).toBeDefined();
     });
@@ -54,14 +47,14 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     it('should construct BybitService without repository (backward compatible)', () => {
       // ARRANGE
       // ACT
-      const service = new BybitService(bybitConfig, mockLogger);
+      const service = createService({ repository: undefined });
       // ASSERT
       expect(service).toBeDefined();
     });
 
     it('should accept optional repository during initialization', async () => {
       // ARRANGE
-      const service = new BybitService(bybitConfig, mockLogger, repository);
+      const service = createService();
       // ACT & ASSERT - should not throw
       expect(service).toBeDefined();
     });
@@ -76,7 +69,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
       ];
       repository.saveCandles('XRPUSDT', '5', mockCandles);
 
-      const service = new BybitService(bybitConfig, mockLogger, repository);
+      const service = createService();
       expect(service).toBeDefined();
 
       // ACT - this would normally call repository cache check
@@ -348,7 +341,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   describe('Backward Compatibility', () => {
     it('should work without repository (repository is optional)', () => {
       // ARRANGE
-      const service = new BybitService(bybitConfig, mockLogger);
+      const service = createService({ repository: undefined });
 
       // ACT & ASSERT
       expect(service).toBeDefined();
@@ -356,7 +349,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
     it('should log when repository is not provided', () => {
       // ARRANGE
-      const service = new BybitService(bybitConfig, mockLogger);
+      const service = createService({ repository: undefined });
 
       // ACT & ASSERT - service should still function without repository
       expect(mockLogger).toBeDefined();

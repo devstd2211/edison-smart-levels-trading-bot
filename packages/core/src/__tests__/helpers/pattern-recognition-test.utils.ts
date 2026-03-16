@@ -52,6 +52,12 @@ export function createPatternRecognitionMockLogger(
   } as unknown as LoggerService;
 }
 
+export function createPatternRecognitionFailingLogger(
+  overrides: Partial<Record<'debug' | 'info' | 'warn' | 'error', LoggerMethod>> = {},
+): LoggerService {
+  return createPatternRecognitionMockLogger(overrides);
+}
+
 export function createPatternRecognitionCandle(
   open: number,
   high: number,

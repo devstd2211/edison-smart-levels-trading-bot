@@ -4,7 +4,6 @@
  */
 
 import { ActionQueueService } from '../../services/action-queue.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   IAction,
   ActionResult,
@@ -21,17 +20,14 @@ import {
   createActionQueueHarness,
   createTestAction,
   createTestHandler,
-  mockActionQueueLogger,
 } from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
-  let errorHandler: ErrorHandler;
 
   beforeEach(() => {
     const harness = createActionQueueHarness();
     service = harness.service;
-    errorHandler = harness.errorHandler;
     jest.clearAllMocks();
   });
 

@@ -23,6 +23,10 @@ type RiskCalculatorHarnessOptions = {
   errorHandler?: ErrorHandler;
 };
 
+export const createRiskCalculatorErrorHandler = (
+  logger: RiskCalculatorMockLogger,
+): ErrorHandler => new ErrorHandler(logger as unknown as LoggerService);
+
 export const createRiskCalculatorMockLogger = (): RiskCalculatorMockLogger => ({
   info: jest.fn(),
   warn: jest.fn(),
@@ -67,7 +71,7 @@ export const createRiskCalculatorHarness = (
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
-      : options.errorHandler ?? new ErrorHandler(logger as unknown as LoggerService);
+      : options.errorHandler ?? createRiskCalculatorErrorHandler(logger);
 
   return {
     calculator: createRiskCalculatorService({
@@ -88,7 +92,7 @@ export const createRiskCalculatorService = (
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
-      : options.errorHandler ?? new ErrorHandler(logger as unknown as LoggerService);
+      : options.errorHandler ?? createRiskCalculatorErrorHandler(logger);
 
   return new RiskCalculator(logger as unknown as LoggerService, errorHandler);
 };

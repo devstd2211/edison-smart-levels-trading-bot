@@ -1,5 +1,9 @@
 import { ErrorHandler, ErrorHandlingResult, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
+import { promises as fs } from 'fs';
+import { mkdtemp, rm } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 type StrategyLoaderHarness = {
   service: StrategyLoaderService;
@@ -48,4 +52,25 @@ export function createStrategyLoaderHarness(options: StrategyLoaderOptions): Str
     service,
     errorHandler,
   };
+}
+
+export async function createStrategyLoaderTempDir(): Promise<string> {
+  return mkdtemp(join(tmpdir(), 'strategy-loader-test-'));
+}
+
+export async function cleanupStrategyLoaderTempDir(strategiesDir: string): Promise<void> {
+  await rm(strategiesDir, { recursive: true, force: true });
+}
+
+export async function writeStrategyLoaderFile(
+  strategiesDir: string,
+  fileName: string,
+  contents: unknown,
+): Promise<string> {
+  const filePath = join(strategiesDir, fileName);
+  await fs.writeFile(
+    filePath,
+    typeof contents === 'string' ? contents : JSON.stringify(contents),
+  );
+  return filePath;
 }

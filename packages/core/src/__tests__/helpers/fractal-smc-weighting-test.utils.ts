@@ -20,6 +20,15 @@ export function createFractalSmcWeightingMockLogger(): FractalSmcWeightingMockLo
   };
 }
 
+export function createFractalSmcWeightingMockLoggerWithFailures(
+  overrides: Partial<FractalSmcWeightingMockLogger> = {},
+): FractalSmcWeightingMockLogger {
+  return {
+    ...createFractalSmcWeightingMockLogger(),
+    ...overrides,
+  };
+}
+
 export function createFractalSmcWeightingConfig(): WeightedSignalConfig {
   return {
     threshold: 70,
@@ -71,6 +80,7 @@ type FractalSmcWeightingServiceOptions = {
   config?: WeightedSignalConfig;
   logger?: FractalSmcWeightingMockLogger;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 };
 
 export function createFractalSmcWeightingService(
@@ -80,7 +90,7 @@ export function createFractalSmcWeightingService(
   return new FractalSmcWeightingService(
     hasConfig ? (options.config as WeightedSignalConfig) : createFractalSmcWeightingConfig(),
     options.logger as unknown as ConstructorParameters<typeof FractalSmcWeightingService>[1],
-    options.errorHandler,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
 
@@ -88,7 +98,10 @@ export function createFractalSmcWeightingHarness(
   options: FractalSmcWeightingServiceOptions = {},
 ) {
   const logger = options.logger ?? createFractalSmcWeightingMockLogger();
-  const errorHandler = options.errorHandler ?? createFractalSmcWeightingErrorHandler(logger);
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : options.errorHandler ?? createFractalSmcWeightingErrorHandler(logger);
 
   return {
     logger,

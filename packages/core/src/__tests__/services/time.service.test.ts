@@ -16,9 +16,7 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { TimeService } from '../../services/time.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { TimeSyncError, TimeSyncTimeoutError } from '../../errors/DomainErrors';
 import { LoggerService } from '../../types/legacy';
-import type { IExchange } from '../../interfaces/IExchange';
 import {
   createTimeServiceHarness,
   type MockTimeExchange,
@@ -361,7 +359,10 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should use auto-created ErrorHandler when not provided', async () => {
-      const service = harness.createService({ errorHandler: undefined });
+      const service = harness.createService({
+        errorHandler: undefined,
+        logger: harness.logger,
+      });
 
       mockExchange.getServerTime.mockResolvedValue(Date.now());
 
@@ -371,7 +372,10 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should maintain backward compatible behavior', async () => {
-      const legacyService = harness.createService({ errorHandler: undefined });
+      const legacyService = harness.createService({
+        errorHandler: undefined,
+        logger: harness.logger,
+      });
 
       mockExchange.getServerTime.mockResolvedValue(Date.now() + 3000);
 

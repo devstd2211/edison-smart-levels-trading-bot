@@ -83,8 +83,18 @@ export const createRealityCheckHarness = (
   const logger = options.withLogger === false ? undefined : options.logger ?? createRealityCheckMockLogger();
 
   return {
-    service: new RealityCheckService(logger),
+    service: createRealityCheckService({ logger, withLogger: options.withLogger }),
     logger,
     errorHandler: logger ? new ErrorHandler(logger) : undefined,
   };
+};
+
+export const createRealityCheckService = (
+  options: RealityCheckHarnessOptions = {},
+): RealityCheckService => {
+  const logger =
+    options.withLogger === false
+      ? undefined
+      : options.logger ?? createRealityCheckMockLogger();
+  return new RealityCheckService(logger);
 };

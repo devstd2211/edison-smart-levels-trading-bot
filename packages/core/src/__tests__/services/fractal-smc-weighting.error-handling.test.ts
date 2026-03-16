@@ -17,6 +17,7 @@ import {
   createFractalSmcWeightingConfig,
   createFractalSmcWeightingData,
   createFractalSmcWeightingHarness,
+  createFractalSmcWeightingMockLoggerWithFailures,
   createFractalSmcWeightingMockLogger,
   createFractalSmcWeightingService,
   createFractalSmcWeightingSetup,
@@ -37,7 +38,8 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
 
   beforeEach(() => {
     mockLogger = createFractalSmcWeightingMockLogger();
-    ({ errorHandler } = createFractalSmcWeightingHarness({ logger: mockLogger }));
+    const harness = createFractalSmcWeightingHarness({ logger: mockLogger });
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   // ============================================================================
@@ -232,15 +234,11 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails on info', () => {
-      const badLogger = {
+      const badLogger = createFractalSmcWeightingMockLoggerWithFailures({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-        silly: jest.fn(),
-      };
+      });
       service = createFractalSmcWeightingService({ logger: badLogger, errorHandler });
       const setup = createValidSetup();
       const data = createValidData();
@@ -251,15 +249,11 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     });
 
     test('should not throw when logger fails on debug', () => {
-      const badLogger = {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
+      const badLogger = createFractalSmcWeightingMockLoggerWithFailures({
         debug: jest.fn(() => {
           throw new Error('Debug failed');
         }),
-        silly: jest.fn(),
-      };
+      });
       service = createFractalSmcWeightingService({ logger: badLogger, errorHandler });
       const setup = createValidSetup();
       const data = createValidData();
@@ -325,7 +319,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     test('should work without ErrorHandler provided', () => {
       const basicService = createFractalSmcWeightingService({
         logger: mockLogger,
-        errorHandler: undefined,
+        withErrorHandler: false,
       });
       const setup = createValidSetup();
       const data = createValidData();
@@ -338,7 +332,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     test('should throw on invalid input even without ErrorHandler', () => {
       const basicService = createFractalSmcWeightingService({
         logger: mockLogger,
-        errorHandler: undefined,
+        withErrorHandler: false,
       });
 
       expect(() => {
@@ -359,7 +353,7 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     test('should work without optional parameters', () => {
       const basicService = createFractalSmcWeightingService({
         logger: undefined,
-        errorHandler: undefined,
+        withErrorHandler: false,
       });
       const setup = createValidSetup();
       const data = createValidData();

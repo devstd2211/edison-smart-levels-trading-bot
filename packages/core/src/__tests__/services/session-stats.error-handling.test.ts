@@ -21,47 +21,30 @@ import {
   SessionRecordValidationError,
 } from '../../errors/DomainErrors';
 import {
-  LogLevel,
-  SignalType,
-  SignalDirection,
   ExitType,
-  Config,
-  SessionTradeRecord,
 } from '../../types/legacy';
-import { LoggerService } from '../../services/logger.service';
 import {
   cleanupSessionStatsTempDir,
   createSessionStatsConfig,
   createSessionStatsHarness,
+  createSessionStatsLogger,
   createSessionStatsService,
   createSessionStatsTrade,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
-/**
- * Mock Logger for testing
- */
-class MockLogger extends SessionStatsMockLogger {}
-
-/**
- * Helper to create a minimal valid config
- */
 const createConfig = createSessionStatsConfig;
-
-/**
- * Helper to create a minimal valid session trade record
- */
 const createSessionTrade = createSessionStatsTrade;
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
   let stats: SessionStatsService;
   let errorHandler: ErrorHandler;
-  let logger: MockLogger;
+  let logger: SessionStatsMockLogger;
   let tempDir: string;
 
   beforeEach(() => {
     ({ stats, errorHandler, logger, tempDir } = createSessionStatsHarness({
-      logger: new MockLogger(),
+      logger: createSessionStatsLogger(),
     }));
   });
 

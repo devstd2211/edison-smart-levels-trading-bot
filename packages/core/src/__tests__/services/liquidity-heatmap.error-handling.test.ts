@@ -94,7 +94,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   it('should THROW when orderbook is null', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(null)),
@@ -102,7 +102,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is undefined', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(undefined)),
@@ -110,7 +110,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid symbol', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.symbol = null as unknown as string;
@@ -121,7 +121,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid timestamp', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.timestamp = NaN;
@@ -132,7 +132,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has missing bids/asks arrays', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.bids = null as unknown as OrderbookLevel[];
@@ -149,7 +149,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   it('should THROW when slippage size is invalid', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -158,7 +158,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when slippage direction is invalid', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -167,7 +167,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when execution cost size is invalid', async () => {
-    const { service } = createLiquidityHeatmapHarness({ withErrorHandler: false });
+    const service = createLiquidityHeatmapService({ withErrorHandler: false });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(

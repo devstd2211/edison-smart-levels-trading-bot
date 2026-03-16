@@ -23,6 +23,7 @@ export const mockActionQueueLogger = {
 export interface ActionQueueHarness {
   service: ActionQueueService;
   errorHandler: ErrorHandler;
+  createService: () => ActionQueueService;
 }
 
 export function createTestSignal(): Signal {
@@ -101,8 +102,11 @@ export function createTestHandler(
 }
 
 export function createActionQueueHarness(): ActionQueueHarness {
+  const createService = (): ActionQueueService => new ActionQueueService();
+
   return {
-    service: new ActionQueueService(),
+    service: createService(),
     errorHandler: new ErrorHandler(mockActionQueueLogger),
+    createService,
   };
 }

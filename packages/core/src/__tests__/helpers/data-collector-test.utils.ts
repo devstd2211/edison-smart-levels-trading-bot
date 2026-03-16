@@ -10,6 +10,12 @@ export const createMockDataCollectorLogger = (): Partial<LoggerService> => ({
   debug: jest.fn(),
 });
 
+export function createDataCollectorErrorHandler(
+  logger: LoggerService = createMockDataCollectorLogger() as LoggerService,
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
 export const createMockDataCollectorConfig = (): DataCollectionConfig => ({
   enabled: true,
   symbols: ['BTCUSDT', 'ETHUSDT'],
@@ -36,7 +42,7 @@ export function createDataCollectorService(options: {
   const logger = options.logger ?? (createMockDataCollectorLogger() as LoggerService);
   const errorHandler = options.withErrorHandler === false
     ? undefined
-    : options.errorHandler ?? new ErrorHandler(logger);
+    : options.errorHandler ?? createDataCollectorErrorHandler(logger);
 
   return new DataCollectorService(
     options.config ?? createMockDataCollectorConfig(),
@@ -55,7 +61,7 @@ export function createDataCollectorHarness(options: {
   const config = options.config ?? createMockDataCollectorConfig();
   const errorHandler = options.withErrorHandler === false
     ? undefined
-    : options.errorHandler ?? new ErrorHandler(logger);
+    : options.errorHandler ?? createDataCollectorErrorHandler(logger);
 
   return {
     logger,
@@ -83,3 +89,23 @@ export const asWriterDatabase = (
   db: MockDatabase,
 ): ConstructorParameters<typeof DatabaseWriter>[0] =>
   db as unknown as ConstructorParameters<typeof DatabaseWriter>[0];
+
+export function createDataCollectorDatabaseWriter(options: {
+  database?: MockDatabase;
+  logger?: LoggerService;
+  compression?: boolean;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): DatabaseWriter {
+  const logger = options.logger ?? (createMockDataCollectorLogger() as LoggerService);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? createDataCollectorErrorHandler(logger);
+
+  return new DatabaseWriter(
+    asWriterDatabase(options.database ?? createMockCollectorDatabase()),
+    logger,
+    options.compression ?? true,
+    errorHandler,
+  );
+}

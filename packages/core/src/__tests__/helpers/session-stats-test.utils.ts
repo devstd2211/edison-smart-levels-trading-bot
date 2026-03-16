@@ -18,6 +18,10 @@ export class SessionStatsMockLogger extends LoggerService {
   }
 }
 
+export function createSessionStatsLogger(): SessionStatsMockLogger {
+  return new SessionStatsMockLogger();
+}
+
 export function createSessionStatsTempDir(): string {
   return path.join(process.cwd(), `test-session-stats-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 }
@@ -113,7 +117,7 @@ export function createSessionStatsService(
   options: SessionStatsHarnessOptions = {},
 ): SessionStatsService {
   return new SessionStatsService(
-    options.logger ?? new SessionStatsMockLogger(),
+    options.logger ?? createSessionStatsLogger(),
     undefined,
     options.tempDir ?? createSessionStatsTempDir(),
     options.errorHandler,
@@ -123,7 +127,7 @@ export function createSessionStatsService(
 export function createSessionStatsHarness(
   options: SessionStatsHarnessOptions = {},
 ) {
-  const logger = options.logger ?? new SessionStatsMockLogger();
+  const logger = options.logger ?? createSessionStatsLogger();
   const tempDir = options.tempDir ?? createSessionStatsTempDir();
   ensureSessionStatsTempDir(tempDir);
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);

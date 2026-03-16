@@ -14,7 +14,7 @@ import { ErrorHandler, DataCollectionError, DatabaseBatchError, DataCompressionE
 import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
-  asWriterDatabase,
+  createDataCollectorDatabaseWriter,
   createDataCollectorHarness,
   createDataCollectorService,
   createMockCollectorDatabase,
@@ -58,12 +58,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     describe('DatabaseWriter RETRY Strategy', () => {
       it('should have ErrorHandler integrated into DatabaseWriter', () => {
         // DatabaseWriter should accept ErrorHandler in constructor
-        const writer = new DatabaseWriter(
-          asWriterDatabase(mockDatabase),
-          mockLogger as LoggerService,
-          true, // compression
-          errorHandler, // ErrorHandler (Phase 8.9.35)
-        );
+        const writer = createDataCollectorDatabaseWriter({
+          database: mockDatabase,
+          logger: mockLogger as LoggerService,
+          compression: true,
+          errorHandler,
+        });
 
         expect(writer).toBeDefined();
       });
@@ -79,12 +79,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
           return Promise.resolve({});
         });
 
-        const writer = new DatabaseWriter(
-          asWriterDatabase(mockDatabase),
-          mockLogger as LoggerService,
-          true,
+        const writer = createDataCollectorDatabaseWriter({
+          database: mockDatabase,
+          logger: mockLogger as LoggerService,
+          compression: true,
           errorHandler,
-        );
+        });
 
         // Simulate batch write (if ErrorHandler integration exists)
         const candles = [
@@ -109,12 +109,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
     describe('DatabaseWriter GRACEFUL_DEGRADE for Compression', () => {
       it('should fallback to uncompressed data on zlib error', async () => {
-        const writer = new DatabaseWriter(
-          asWriterDatabase(mockDatabase),
-          mockLogger as LoggerService,
-          true, // compression enabled
+        const writer = createDataCollectorDatabaseWriter({
+          database: mockDatabase,
+          logger: mockLogger as LoggerService,
+          compression: true,
           errorHandler,
-        );
+        });
 
         // GRACEFUL_DEGRADE should be used when gzip fails
         // The service should continue with uncompressed Buffer.from()
@@ -122,12 +122,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       });
 
       it('should handle orderbook batch write with compression fallback', async () => {
-        const writer = new DatabaseWriter(
-          asWriterDatabase(mockDatabase),
-          mockLogger as LoggerService,
-          true,
+        const writer = createDataCollectorDatabaseWriter({
+          database: mockDatabase,
+          logger: mockLogger as LoggerService,
+          compression: true,
           errorHandler,
-        );
+        });
 
         const orderbooks = [
           {
@@ -312,19 +312,19 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
     it('DatabaseWriter should accept optional ErrorHandler', () => {
       // Should work with or without ErrorHandler
-      const writerWithHandler = new DatabaseWriter(
-        asWriterDatabase(mockDatabase),
-        mockLogger as LoggerService,
-        true,
+      const writerWithHandler = createDataCollectorDatabaseWriter({
+        database: mockDatabase,
+        logger: mockLogger as LoggerService,
+        compression: true,
         errorHandler,
-      );
+      });
 
-      const writerWithoutHandler = new DatabaseWriter(
-        asWriterDatabase(mockDatabase),
-        mockLogger as LoggerService,
-        true,
-        undefined, // No ErrorHandler
-      );
+      const writerWithoutHandler = createDataCollectorDatabaseWriter({
+        database: mockDatabase,
+        logger: mockLogger as LoggerService,
+        compression: true,
+        withErrorHandler: false,
+      });
 
       expect(writerWithHandler).toBeDefined();
       expect(writerWithoutHandler).toBeDefined();

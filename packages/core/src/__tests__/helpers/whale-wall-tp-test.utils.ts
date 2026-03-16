@@ -14,6 +14,15 @@ export function createWhaleWallTPMockLogger() {
   };
 }
 
+export function createWhaleWallTPMockLoggerService(
+  overrides: Partial<WhaleWallTPMockLogger> = {},
+): LoggerService {
+  return {
+    ...createWhaleWallTPMockLogger(),
+    ...overrides,
+  } as unknown as LoggerService;
+}
+
 export function createWhaleWallTPConfig(): Partial<WhaleWallTPConfig> {
   return {
     enabled: true,
@@ -90,7 +99,7 @@ export function createWhaleWallTPHarness(options: {
   config?: Partial<WhaleWallTPConfig>;
   withErrorHandler?: boolean;
 } = {}) {
-  const logger = options.logger ?? (createWhaleWallTPMockLogger() as unknown as LoggerService);
+  const logger = options.logger ?? createWhaleWallTPMockLoggerService();
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
@@ -123,7 +132,7 @@ export function createWhaleWallTPService(options: {
 } = {}) {
   const logger =
     options.logger ??
-    (createWhaleWallTPMockLogger() as unknown as LoggerService);
+    createWhaleWallTPMockLoggerService();
 
   return new WhaleWallTPService(
     logger,

@@ -19,19 +19,44 @@ export function createAdvancedOrderStateMachineMockLogger():
 export function createAdvancedOrderStateMachineHarness(options?: {
   logger?: AdvancedOrderStateMachineMockLogger;
   withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
 }) {
   const logger =
     options?.logger ?? createAdvancedOrderStateMachineMockLogger();
   const loggerService = logger as unknown as LoggerService;
-  const errorHandler = new ErrorHandler(loggerService);
-  const service = new AdvancedOrderStateMachineService(
-    loggerService,
-    options?.withErrorHandler === false ? undefined : errorHandler,
-  );
+  const errorHandler =
+    options?.withErrorHandler === false
+      ? undefined
+      : options?.errorHandler ?? createAdvancedOrderStateMachineErrorHandler(logger);
+  const service = createAdvancedOrderStateMachineService({
+    logger,
+    withErrorHandler: options?.withErrorHandler,
+    errorHandler,
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createAdvancedOrderStateMachineErrorHandler(
+  logger: AdvancedOrderStateMachineMockLogger = createAdvancedOrderStateMachineMockLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger as unknown as LoggerService);
+}
+
+export function createAdvancedOrderStateMachineService(options?: {
+  logger?: AdvancedOrderStateMachineMockLogger;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+}) {
+  const logger =
+    options?.logger ?? createAdvancedOrderStateMachineMockLogger();
+  const loggerService = logger as unknown as LoggerService;
+  return new AdvancedOrderStateMachineService(
+    loggerService,
+    options?.withErrorHandler === false ? undefined : options?.errorHandler,
+  );
 }

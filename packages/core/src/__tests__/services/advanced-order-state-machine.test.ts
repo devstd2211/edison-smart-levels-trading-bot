@@ -23,6 +23,7 @@ import {
   TransitionTrigger,
 } from '../../constants/phase-13-constants';
 import {
+  createAdvancedOrderStateMachineService,
   createAdvancedOrderStateMachineHarness,
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
@@ -33,8 +34,10 @@ describe('AdvancedOrderStateMachineService', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    ({ service, logger: mockLogger, errorHandler } =
-      createAdvancedOrderStateMachineHarness());
+    const harness = createAdvancedOrderStateMachineHarness();
+    service = harness.service;
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
@@ -560,10 +563,10 @@ describe('AdvancedOrderStateMachineService', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
       service.cleanup();
-      ({ service } = createAdvancedOrderStateMachineHarness({
+      service = createAdvancedOrderStateMachineService({
         logger: mockLogger,
         withErrorHandler: false,
-      }));
+      });
     });
 
     it('should work without ErrorHandler - basic transitions', async () => {

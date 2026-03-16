@@ -16,6 +16,8 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEnhancedExitConfig,
+  createEnhancedExitErrorHandler,
+  createEnhancedExitFailingLogger,
   createEnhancedExitHarness,
   createEnhancedExitService,
 } from '../helpers/enhanced-exit-test.utils';
@@ -198,27 +200,14 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let throwingLogger: LoggerService;
 
     beforeEach(() => {
-      throwingLogger = {
-        info: jest.fn(() => {
-          throw new Error('Logger failed');
-        }),
-        debug: jest.fn(() => {
-          throw new Error('Logger failed');
-        }),
-        warn: jest.fn(() => {
-          throw new Error('Logger failed');
-        }),
-        error: jest.fn(() => {
-          throw new Error('Logger failed');
-        }),
-      } as unknown as LoggerService;
+      throwingLogger = createEnhancedExitFailingLogger();
     });
 
     it('should SKIP logger.debug failures in calculateATRBasedTP', () => {
       const service = createEnhancedExitService({
         logger: throwingLogger,
         config: defaultConfig,
-        errorHandler,
+        errorHandler: createEnhancedExitErrorHandler(throwingLogger),
       });
 
       const result = service.calculateATRBasedTP(2.0, SignalDirection.LONG, 1.5);

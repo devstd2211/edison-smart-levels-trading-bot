@@ -19,6 +19,12 @@ export function createCircuitBreakerMockLogger(overrides: Record<string, unknown
   };
 }
 
+export function createCircuitBreakerFailingLogger(
+  overrides: Record<string, unknown> = {},
+): LoggerService {
+  return createCircuitBreakerMockLogger(overrides) as unknown as LoggerService;
+}
+
 export function createCircuitBreakerConfig(
   overrides: Partial<CircuitBreakerConfig> = {},
 ): CircuitBreakerConfig {
@@ -37,7 +43,9 @@ export function createCircuitBreakerHarness(options: {
 } = {}) {
   const logger = options.logger ?? createCircuitBreakerLogger();
   const config = createCircuitBreakerConfig(options.configOverrides);
-  const errorHandler = createCircuitBreakerErrorHandler(logger);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : createCircuitBreakerErrorHandler(logger);
   const service = createCircuitBreakerService({
     configOverrides: options.configOverrides,
     logger,

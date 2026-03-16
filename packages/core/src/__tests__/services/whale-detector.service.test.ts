@@ -10,6 +10,7 @@ import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
   createWhaleDetectionHarness,
+  createWhaleDetectionService,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
@@ -376,7 +377,12 @@ describe('WhaleDetectionService', () => {
         wallExpiryMs: 60000,
         breakExpiryMs: 300000,
       };
-      const disabledDetector = new WhaleDetectionService(disabledConfig, logger, 'BREAKOUT');
+      const disabledDetector = createWhaleDetectionService({
+        config: disabledConfig,
+        logger,
+        strategy: 'BREAKOUT',
+        withErrorHandler: false,
+      });
 
       const analysis = createAnalysis([], 1.6, 'BULLISH');
       const signal = disabledDetector.detectWhale(analysis, 1000);

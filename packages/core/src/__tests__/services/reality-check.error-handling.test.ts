@@ -18,6 +18,7 @@ import {
   createRealityCheckAnalyzerSignal,
   createRealityCheckEvent,
   createRealityCheckHarness,
+  createRealityCheckService,
   createRealityCheckSignal,
 } from '../helpers/reality-check-test.utils';
 
@@ -374,7 +375,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   describe('SKIP - Logging failures (Service without error handling)', () => {
     it('should record events with optional logger', () => {
       const event = createRealityCheckEvent();
-      const serviceWithoutLogger = createRealityCheckHarness({ withLogger: false }).service;
+      const serviceWithoutLogger = createRealityCheckService({ withLogger: false });
 
       // Should not throw even without logger
       expect(() => {
@@ -468,7 +469,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('Backward compatibility - Without ErrorHandler', () => {
     it('should work with optional logger', () => {
-      const serviceWithoutLogger = createRealityCheckHarness({ withLogger: false }).service;
+      const serviceWithoutLogger = createRealityCheckService({ withLogger: false });
       const event = createRealityCheckEvent();
 
       // Should not throw even without logger
@@ -480,7 +481,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should analyze trades without logger', () => {
-      const serviceWithoutLogger = createRealityCheckHarness({ withLogger: false }).service;
+      const serviceWithoutLogger = createRealityCheckService({ withLogger: false });
       const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 

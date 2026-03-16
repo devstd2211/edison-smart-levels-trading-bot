@@ -13,31 +13,23 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
 import { Position, PositionSide, TakeProfit } from '../../types/legacy';
 import {
   createMockPositionExitingLogger,
   createPositionExitingHarness,
+  createRealScenarioTakeProfitManager,
   createRealScenarioPosition,
 } from '../helpers/position-exiting-test.utils';
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   let service: PositionExitingService;
   let mockBybitService: ReturnType<typeof createPositionExitingHarness>['mockBybit'];
   let mockLogger: ReturnType<typeof createPositionExitingHarness>['mockLogger'];
-  let mockTakeProfitManager: TakeProfitManagerService;
+  let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
   beforeEach(() => {
     mockLogger = createMockPositionExitingLogger();
-    mockTakeProfitManager = new TakeProfitManagerService(
-      {
-        positionId: 'XRPUSDT_Buy',
-        symbol: 'XRPUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 1.892, // REAL value from logs
-        totalQuantity: 52.85,
-        leverage: 10,
-      },
-      mockLogger as unknown as ConstructorParameters<typeof TakeProfitManagerService>[1],
+    mockTakeProfitManager = createRealScenarioTakeProfitManager(
+      mockLogger as unknown as Parameters<typeof createRealScenarioTakeProfitManager>[0],
     );
 
     const harness = createPositionExitingHarness({

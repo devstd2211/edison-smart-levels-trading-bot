@@ -18,6 +18,21 @@ type MultiTimeframeTrendOptions = {
   withErrorHandler?: boolean;
 };
 
+export function createMultiTimeframeTrendErrorHandler(
+  logger: LoggerService = createMultiTimeframeTrendLogger(),
+): ErrorHandler {
+  return new ErrorHandler(logger);
+}
+
+export function createMultiTimeframeTrendFailingLogger(
+  overrides: Partial<Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>> = {},
+): LoggerService {
+  return {
+    ...createMultiTimeframeTrendLogger(),
+    ...overrides,
+  } as LoggerService;
+}
+
 export function createMultiTimeframeTrendLogger(): LoggerService {
   return {
     ...createSwingPointDetectorMockLogger(),
@@ -79,7 +94,7 @@ export function createMultiTimeframeTrendService(
   return new MultiTimeframeTrendService(
     logger,
     swingPointDetector,
-    options.errorHandler ?? new ErrorHandler(logger),
+    options.errorHandler ?? createMultiTimeframeTrendErrorHandler(logger),
   );
 }
 
@@ -90,7 +105,7 @@ export function createMultiTimeframeTrendHarness(
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
-      : (options.errorHandler ?? new ErrorHandler(logger));
+      : (options.errorHandler ?? createMultiTimeframeTrendErrorHandler(logger));
   const swingPointDetector =
     options.swingPointDetector ??
     createSwingPointDetectorService({
@@ -100,7 +115,7 @@ export function createMultiTimeframeTrendHarness(
 
   return {
     logger,
-    errorHandler: errorHandler ?? new ErrorHandler(logger),
+    errorHandler,
     swingPointDetector,
     service: createMultiTimeframeTrendService({
       logger,

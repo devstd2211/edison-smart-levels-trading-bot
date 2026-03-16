@@ -16,6 +16,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asTimeframeWeightingMode,
   asTimeframeWeightingMultiTF,
+  createTimeframeWeightingErrorHandler,
   createTimeframeWeightingHarness,
   createTimeframeWeightingMockLogger,
   createTimeframeWeightingService,
@@ -31,7 +32,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   beforeEach(() => {
     const harness = createTimeframeWeightingHarness();
     service = harness.service;
-    errorHandler = harness.errorHandler;
+    errorHandler = harness.errorHandler as ErrorHandler;
     mockLogger = harness.logger;
   });
 
@@ -164,7 +165,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
         throw new Error('Debug failed');
       });
       const multiTF = createValidTimeframeWeightingMultiTF();
-      const svc = createTimeframeWeightingService({ logger: badLogger, errorHandler });
+      const svc = createTimeframeWeightingService({
+        logger: badLogger,
+        errorHandler: createTimeframeWeightingErrorHandler(badLogger),
+      });
 
       expect(() => {
         svc.combine(multiTF, TradingMode.SWING);
@@ -249,7 +253,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = createTimeframeWeightingService({ logger: mockLogger });
+      const basicService = createTimeframeWeightingHarness({
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).service;
       const multiTF = createValidTimeframeWeightingMultiTF();
 
       expect(() => {
@@ -267,7 +274,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should work without optional parameters', () => {
-      const basicService = createTimeframeWeightingService();
+      const basicService = createTimeframeWeightingHarness({ withErrorHandler: false }).service;
       const multiTF = createValidTimeframeWeightingMultiTF();
 
       expect(() => {
@@ -276,7 +283,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = createTimeframeWeightingService({ logger: mockLogger });
+      const basicService = createTimeframeWeightingHarness({
+        logger: mockLogger,
+        withErrorHandler: false,
+      }).service;
 
       expect(() => {
         basicService.combine(asTimeframeWeightingMultiTF(null), TradingMode.SWING);

@@ -6,32 +6,24 @@
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyValidationError } from '../../types/strategy-config';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { mkdtemp, rmdir } from 'fs/promises';
-import { tmpdir } from 'os';
+import {
+  cleanupStrategyLoaderTempDir,
+  createStrategyLoaderHarness,
+  createStrategyLoaderTempDir,
+  writeStrategyLoaderFile,
+} from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService', () => {
   let tempDir: string;
   let loader: StrategyLoaderService;
 
   beforeEach(async () => {
-    // Create temp directory for test strategy files
-    tempDir = await mkdtemp(join(tmpdir(), 'strategy-test-'));
-    loader = new StrategyLoaderService(tempDir);
+    tempDir = await createStrategyLoaderTempDir();
+    ({ service: loader } = createStrategyLoaderHarness({ strategiesDir: tempDir }));
   });
 
   afterEach(async () => {
-    // Cleanup temp directory
-    try {
-      const files = await fs.readdir(tempDir);
-      for (const file of files) {
-        await fs.unlink(join(tempDir, file));
-      }
-      await rmdir(tempDir);
-    } catch (error) {
-      // Ignore cleanup errors
-    }
+    await cleanupStrategyLoaderTempDir(tempDir);
   });
 
   describe('loadStrategy', () => {
@@ -56,8 +48,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'test-strategy.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'test-strategy.strategy.json', strategy);
 
       const loaded = await loader.loadStrategy('test-strategy');
 
@@ -73,8 +64,7 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should throw error for invalid JSON', async () => {
-      const filePath = join(tempDir, 'invalid.strategy.json');
-      await fs.writeFile(filePath, 'not valid json {[');
+      await writeStrategyLoaderFile(tempDir, 'invalid.strategy.json', 'not valid json {[');
 
       await expect(loader.loadStrategy('invalid')).rejects.toThrow(
         StrategyParseError,
@@ -96,8 +86,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       };
 
-      const filePath = join(tempDir, 'no-version.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'no-version.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-version')).rejects.toThrow(
         'version must be a number',
@@ -118,8 +107,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       };
 
-      const filePath = join(tempDir, 'string-version.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'string-version.strategy.json', strategy);
 
       await expect(loader.loadStrategy('string-version')).rejects.toThrow(
         'version must be a number',
@@ -134,8 +122,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       };
 
-      const filePath = join(tempDir, 'no-metadata.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'no-metadata.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-metadata')).rejects.toThrow(
         'metadata is required',
@@ -162,8 +149,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'no-name.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'no-name.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-name')).rejects.toThrow(
         'metadata.name is required',
@@ -191,8 +177,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'bad-tags.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-tags.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-tags')).rejects.toThrow(
         'metadata.tags must be an array',
@@ -226,8 +211,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'bad-backtest.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-backtest.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-backtest')).rejects.toThrow(
         'metadata.backtest.winRate must be a number between 0 and 1',
@@ -250,8 +234,7 @@ describe('StrategyLoaderService', () => {
         analyzers: undefined,
       };
 
-      const filePath = join(tempDir, 'no-analyzers.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'no-analyzers.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-analyzers')).rejects.toThrow(
         'analyzers must be a non-empty array',
@@ -272,8 +255,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       };
 
-      const filePath = join(tempDir, 'empty-analyzers.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'empty-analyzers.strategy.json', strategy);
 
       await expect(loader.loadStrategy('empty-analyzers')).rejects.toThrow(
         'analyzers must be a non-empty array',
@@ -300,8 +282,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'no-analyzer-name.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'no-analyzer-name.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-analyzer-name')).rejects.toThrow(
         'analyzers[0].name must be a string',
@@ -329,8 +310,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'unknown-analyzer.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'unknown-analyzer.strategy.json', strategy);
 
       await expect(loader.loadStrategy('unknown-analyzer')).rejects.toThrow(
         'Unknown analyzer: UNKNOWN_ANALYZER',
@@ -358,8 +338,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'bad-weight.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-weight.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-weight')).rejects.toThrow(
         'analyzers[0].weight must be a number between 0 and 1',
@@ -387,8 +366,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'bad-priority.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-priority.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-priority')).rejects.toThrow(
         'analyzers[0].priority must be a number between 1 and 10',
@@ -422,8 +400,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'duplicate-analyzer.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'duplicate-analyzer.strategy.json', strategy);
 
       await expect(loader.loadStrategy('duplicate-analyzer')).rejects.toThrow(
         'Duplicate analyzer: EMA_ANALYZER_NEW',
@@ -452,8 +429,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      const filePath = join(tempDir, 'bad-confidence.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-confidence.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-confidence')).rejects.toThrow(
         'analyzers[0].minConfidence must be a number between 0 and 100',
@@ -486,8 +462,7 @@ describe('StrategyLoaderService', () => {
         },
       };
 
-      const filePath = join(tempDir, 'bad-indicator.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-indicator.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-indicator')).rejects.toThrow(
         'Unknown indicator override: unknownIndicator',
@@ -518,8 +493,7 @@ describe('StrategyLoaderService', () => {
         },
       };
 
-      const filePath = join(tempDir, 'bad-filter.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'bad-filter.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-filter')).rejects.toThrow(
         'Unknown filter override: unknownFilter',
@@ -584,14 +558,8 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      await fs.writeFile(
-        join(tempDir, 'strat1.strategy.json'),
-        JSON.stringify(strategy1),
-      );
-      await fs.writeFile(
-        join(tempDir, 'strat2.strategy.json'),
-        JSON.stringify(strategy2),
-      );
+      await writeStrategyLoaderFile(tempDir, 'strat1.strategy.json', strategy1);
+      await writeStrategyLoaderFile(tempDir, 'strat2.strategy.json', strategy2);
 
       const loaded = await loader.loadAllStrategies();
 
@@ -633,14 +601,8 @@ describe('StrategyLoaderService', () => {
         // Missing required fields
       };
 
-      await fs.writeFile(
-        join(tempDir, 'valid.strategy.json'),
-        JSON.stringify(validStrategy),
-      );
-      await fs.writeFile(
-        join(tempDir, 'invalid.strategy.json'),
-        JSON.stringify(invalidStrategy),
-      );
+      await writeStrategyLoaderFile(tempDir, 'valid.strategy.json', validStrategy);
+      await writeStrategyLoaderFile(tempDir, 'invalid.strategy.json', invalidStrategy);
 
       const loaded = await loader.loadAllStrategies();
 
@@ -713,8 +675,7 @@ describe('StrategyLoaderService', () => {
         },
       };
 
-      const filePath = join(tempDir, 'level-trading.strategy.json');
-      await fs.writeFile(filePath, JSON.stringify(strategy));
+      await writeStrategyLoaderFile(tempDir, 'level-trading.strategy.json', strategy);
 
       const loaded = await loader.loadStrategy('level-trading');
 

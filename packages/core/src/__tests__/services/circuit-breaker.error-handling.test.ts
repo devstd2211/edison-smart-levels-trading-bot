@@ -8,6 +8,7 @@ import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../..
 import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../types/legacy';
 import {
+  createCircuitBreakerFailingLogger,
   createCircuitBreakerConfig,
   createCircuitBreakerErrorHandler,
   createCircuitBreakerHarness,
@@ -26,10 +27,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     logger = createCircuitBreakerMockLogger();
 
     errorHandler = createCircuitBreakerErrorHandler(logger as LoggerService);
-    ({ service } = createCircuitBreakerHarness({
+    const harness = createCircuitBreakerHarness({
       configOverrides: config,
       logger: logger as LoggerService,
-    }));
+    });
+    service = harness.service;
   });
 
   // =========================================================================
@@ -38,12 +40,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
   describe('SKIP Strategy - Logging Failures', () => {
     it('should skip logger errors in constructor', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('Logger init failed');
         }),
-      };
+      });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -56,12 +57,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should skip logger errors in state transitions (isOpen)', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('State transition log failed');
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,
@@ -84,15 +84,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should skip logger errors in recordSuccess', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('Success log failed');
         }),
         debug: jest.fn().mockImplementationOnce(() => {
           throw new Error('Debug log failed');
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,
@@ -109,12 +108,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should skip logger errors in recordError', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         warn: jest.fn().mockImplementationOnce(() => {
           throw new Error('Error log failed');
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,
@@ -131,12 +129,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should skip logger errors in trip', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         error: jest.fn().mockImplementationOnce(() => {
           throw new Error('Trip log failed');
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,
@@ -154,12 +151,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should skip logger errors in reset', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementationOnce(() => {
           throw new Error('Reset log failed');
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,
@@ -313,15 +309,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should handle logger-only failures without ErrorHandler', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementation(() => {
           throw new Error('Log failed');
         }),
         warn: jest.fn().mockImplementation(() => {
           throw new Error('Log failed');
         }),
-      };
+      });
 
       // Service without ErrorHandler should still work
       const testService = createCircuitBreakerService({
@@ -375,8 +370,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
   describe('Integration Tests', () => {
     it('should handle multiple concurrent failures gracefully', () => {
-      const failingLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const failingLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementation(() => {
           throw new Error('Log failed');
         }),
@@ -386,7 +380,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         error: jest.fn().mockImplementation(() => {
           throw new Error('Log failed');
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,
@@ -406,15 +400,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
     it('should recover from errors and continue functioning', () => {
       let logErrorCount = 0;
-      const intermittentLogger = {
-        ...createCircuitBreakerMockLogger(),
+      const intermittentLogger = createCircuitBreakerFailingLogger({
         info: jest.fn().mockImplementation(() => {
           logErrorCount++;
           if (logErrorCount === 1) {
             throw new Error('Transient log failure');
           }
         }),
-      };
+      });
 
       const testService = createCircuitBreakerService({
         configOverrides: config,

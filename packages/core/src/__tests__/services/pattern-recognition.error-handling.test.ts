@@ -14,7 +14,6 @@
 
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { LoggerService } from '../../services/logger.service';
 import { Candle, Pattern, SwingPoint, PatternRecognitionConfig, SwingPointType } from '../../types/legacy';
 import {
   asPatternRecognitionCandles as asCandles,
@@ -24,6 +23,7 @@ import {
   asPatternRecognitionSwing as asSwing,
   createPatternRecognitionCandle as createMockCandle,
   createPatternRecognitionCandles as createCandleArray,
+  createPatternRecognitionFailingLogger,
   createPatternRecognitionService,
   createPatternRecognitionHarness,
   createPatternRecognitionMockLogger,
@@ -33,8 +33,7 @@ import {
 describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
   let errorHandler: ErrorHandler | undefined;
-  let logger: LoggerService;
-  const asLogger = (value: unknown): LoggerService => value as LoggerService;
+  let logger = createPatternRecognitionMockLogger();
 
   beforeEach(() => {
     ({ service, logger, errorHandler } = createPatternRecognitionHarness());
@@ -261,7 +260,7 @@ describe('PatternRecognitionService - Error Handling', () => {
 
   describe('SKIP: Logging Failures', () => {
     it('should skip logger errors during initialization', () => {
-      const badLogger = createPatternRecognitionMockLogger({
+      const badLogger = createPatternRecognitionFailingLogger({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
@@ -273,14 +272,14 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
 
     it('should skip logger errors during pattern recognition', async () => {
-      const badLogger = createPatternRecognitionMockLogger({
+      const badLogger = createPatternRecognitionFailingLogger({
         warn: jest.fn(() => {
           throw new Error('Logger failed');
         }),
       });
 
       const testService = createPatternRecognitionService({
-        logger: asLogger(badLogger),
+        logger: badLogger,
         errorHandler,
       });
 
@@ -297,14 +296,14 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
 
     it('should skip logger errors during candle update', () => {
-      const badLogger = createPatternRecognitionMockLogger({
+      const badLogger = createPatternRecognitionFailingLogger({
         debug: jest.fn(() => {
           throw new Error('Logger failed');
         }),
       });
 
       const testService = createPatternRecognitionService({
-        logger: asLogger(badLogger),
+        logger: badLogger,
         errorHandler,
       });
 
@@ -314,14 +313,14 @@ describe('PatternRecognitionService - Error Handling', () => {
     });
 
     it('should skip logger errors during history clearing', () => {
-      const badLogger = createPatternRecognitionMockLogger({
+      const badLogger = createPatternRecognitionFailingLogger({
         info: jest.fn(() => {
           throw new Error('Logger failed');
         }),
       });
 
       const testService = createPatternRecognitionService({
-        logger: asLogger(badLogger),
+        logger: badLogger,
         errorHandler,
       });
 

@@ -12,6 +12,8 @@ export interface HealthCheckTestHarness {
   exchange: jest.Mocked<IExchangeService>;
   websocket: jest.Mocked<IWebSocketService>;
   errorHandler: ErrorHandler;
+  createExchange: (overrides?: Partial<jest.Mocked<IExchangeService>>) => jest.Mocked<IExchangeService>;
+  createWebSocket: (overrides?: Partial<jest.Mocked<IWebSocketService>>) => jest.Mocked<IWebSocketService>;
   createService: (options?: {
     exchange?: IExchangeService;
     websocket?: IWebSocketService;
@@ -32,14 +34,22 @@ export function createHealthCheckLogger(): LoggerService {
 
 export function createHealthCheckHarness(): HealthCheckTestHarness {
   const logger = createHealthCheckLogger();
-  const exchange: jest.Mocked<IExchangeService> = {
+  const createExchange = (
+    overrides: Partial<jest.Mocked<IExchangeService>> = {},
+  ): jest.Mocked<IExchangeService> => ({
     testConnection: jest.fn().mockResolvedValue(true),
     getServerTime: jest.fn().mockResolvedValue(Date.now()),
-  };
-  const websocket: jest.Mocked<IWebSocketService> = {
+    ...overrides,
+  });
+  const createWebSocket = (
+    overrides: Partial<jest.Mocked<IWebSocketService>> = {},
+  ): jest.Mocked<IWebSocketService> => ({
     isConnected: jest.fn().mockReturnValue(true),
     getLastMessageTime: jest.fn().mockReturnValue(Date.now()),
-  };
+    ...overrides,
+  });
+  const exchange = createExchange();
+  const websocket = createWebSocket();
   const errorHandler = new ErrorHandler(logger);
 
   return {
@@ -47,6 +57,8 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
     exchange,
     websocket,
     errorHandler,
+    createExchange,
+    createWebSocket,
     createService(options = {}) {
       const exchangeService = Object.prototype.hasOwnProperty.call(options, 'exchange')
         ? options.exchange

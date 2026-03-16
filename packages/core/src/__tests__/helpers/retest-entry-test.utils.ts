@@ -24,6 +24,12 @@ export function createRetestEntryMockLogger(overrides: Record<string, unknown> =
   };
 }
 
+export function createRetestEntryMockLoggerService(
+  overrides: Record<string, unknown> = {},
+): LoggerService {
+  return createRetestEntryMockLogger(overrides) as unknown as LoggerService;
+}
+
 export function createRetestEntryConfig(
   overrides: Partial<RetestConfig> = {},
 ): RetestConfig {
@@ -82,7 +88,8 @@ export function createRetestEntryHarness(options: {
 } = {}) {
   const logger = options.logger ?? createRetestEntryLogger();
   const config = createRetestEntryConfig(options.configOverrides);
-  const errorHandler = createRetestEntryErrorHandler(logger);
+  const errorHandler =
+    options.withErrorHandler === false ? undefined : createRetestEntryErrorHandler(logger);
   const service = createRetestEntryService({
     configOverrides: options.configOverrides,
     logger,

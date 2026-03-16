@@ -4,7 +4,10 @@ import {
   VolatilityRegime,
   VolatilityRegimeConfig,
 } from '../../types/legacy';
-import { createVolatilityRegimeHarness } from '../helpers/volatility-regime-test.utils';
+import {
+  createVolatilityRegimeHarness,
+  createVolatilityRegimeService,
+} from '../helpers/volatility-regime-test.utils';
 
 describe('VolatilityRegimeService', () => {
   let service: VolatilityRegimeService;
@@ -150,7 +153,7 @@ describe('VolatilityRegimeService', () => {
 
   describe('disabled service', () => {
     beforeEach(() => {
-      service = new VolatilityRegimeService(logger, { enabled: false });
+      service = createVolatilityRegimeService({ logger, config: { enabled: false } });
     });
 
     it('should return disabled status', () => {
@@ -182,7 +185,7 @@ describe('VolatilityRegimeService', () => {
         },
       };
 
-      service = new VolatilityRegimeService(logger, customConfig);
+      service = createVolatilityRegimeService({ logger, config: customConfig });
 
       // 0.4% should now be LOW (was MEDIUM with default 0.3%)
       const lowResult = service.analyze(0.4);
@@ -222,7 +225,7 @@ describe('VolatilityRegimeService', () => {
         },
       };
 
-      service = new VolatilityRegimeService(logger, customConfig);
+      service = createVolatilityRegimeService({ logger, config: customConfig });
 
       const lowResult = service.analyze(0.1);
       expect(lowResult.params.maxDistancePercent).toBe(0.2);

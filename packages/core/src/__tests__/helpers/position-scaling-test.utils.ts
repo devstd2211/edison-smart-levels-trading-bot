@@ -68,17 +68,32 @@ export function createPositionScalingHarness(
   errorHandler: ErrorHandler;
   config: ScalingConfig;
   position: PositionState;
+  createService: (options?: {
+    config?: ScalingConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => PositionScalingService;
 } {
   const logger = createPositionScalingLogger() as unknown as LoggerService;
   const errorHandler = new ErrorHandler(logger);
   const config = createPositionScalingConfig(overrides);
+  const createService = (options: {
+    config?: ScalingConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  } = {}): PositionScalingService =>
+    new PositionScalingService(
+      options.config ?? config,
+      Object.prototype.hasOwnProperty.call(options, 'logger') ? options.logger : logger,
+      Object.prototype.hasOwnProperty.call(options, 'errorHandler') ? options.errorHandler : errorHandler,
+    );
 
   return {
-    service: new PositionScalingService(config, logger, errorHandler),
+    service: createService(),
     logger,
     errorHandler,
     config,
     position: createPositionScalingPosition(),
+    createService,
   };
 }
-

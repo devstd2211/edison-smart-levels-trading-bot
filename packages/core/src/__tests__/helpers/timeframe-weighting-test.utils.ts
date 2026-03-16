@@ -76,18 +76,34 @@ export const createValidTimeframeWeightingMultiTF =
 export const createTimeframeWeightingService = (options: {
   logger?: TimeframeWeightingMockLogger;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): TimeframeWeightingService =>
   new TimeframeWeightingService(
     options.logger
       ? asTimeframeWeightingLogger(options.logger)
       : undefined,
-    options.errorHandler,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 
-export const createTimeframeWeightingHarness = () => {
-  const logger = createTimeframeWeightingMockLogger();
-  const errorHandler = new ErrorHandler(asTimeframeWeightingErrorLogger(logger));
-  const service = createTimeframeWeightingService({ logger, errorHandler });
+export const createTimeframeWeightingErrorHandler = (
+  logger: TimeframeWeightingMockLogger,
+): ErrorHandler => new ErrorHandler(asTimeframeWeightingErrorLogger(logger));
+
+export const createTimeframeWeightingHarness = (options: {
+  logger?: TimeframeWeightingMockLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) => {
+  const logger = options.logger ?? createTimeframeWeightingMockLogger();
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : options.errorHandler ?? createTimeframeWeightingErrorHandler(logger);
+  const service = createTimeframeWeightingService({
+    logger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     logger,

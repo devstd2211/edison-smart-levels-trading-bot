@@ -26,6 +26,15 @@ export function createWhaleDetectionMockLogger() {
   };
 }
 
+export function createWhaleDetectionMockLoggerService(
+  overrides: Partial<ReturnType<typeof createWhaleDetectionMockLogger>> = {},
+): LoggerService {
+  return {
+    ...createWhaleDetectionMockLogger(),
+    ...overrides,
+  } as unknown as LoggerService;
+}
+
 export function createWhaleDetectionConfig(): WhaleDetectorConfig {
   return {
     modes: {

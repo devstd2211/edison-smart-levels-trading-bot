@@ -13,43 +13,14 @@
 import { OrderFlowAnalyzerService } from '../../services/order-flow-analyzer.service';
 import {
   LoggerService,
-  LogLevel,
   OrderFlowAnalyzerConfig,
-  OrderBook,
   SignalDirection,
-  AggressiveFlow,
 } from '../../types/legacy';
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-const createMockOrderbook = (
-  bidPrice: number,
-  bidSize: number,
-  askPrice: number,
-  askSize: number,
-): OrderBook => {
-  return {
-    symbol: 'APEXUSDT',
-    bids: [
-      [bidPrice, bidSize],
-      [bidPrice - 0.001, 50],
-      [bidPrice - 0.002, 50],
-    ],
-    asks: [
-      [askPrice, askSize],
-      [askPrice + 0.001, 50],
-      [askPrice + 0.002, 50],
-    ],
-    timestamp: Date.now(),
-    updateId: Date.now(),
-  };
-};
-
-const createMockFlow = (direction: 'BUY' | 'SELL', volumeUSDT: number, timestamp: number = Date.now()): AggressiveFlow => {
-  return { direction, volumeUSDT, timestamp, price: 1.0 };
-};
+import {
+  createMockFlow,
+  createMockOrderbook,
+  createOrderFlowAnalyzerHarness,
+} from '../helpers/order-flow-analyzer-test.utils';
 
 // ============================================================================
 // TEST SUITE
@@ -59,19 +30,17 @@ describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let logger: LoggerService;
   let config: OrderFlowAnalyzerConfig;
+  let createService: (options?: {
+    config?: OrderFlowAnalyzerConfig;
+    logger?: LoggerService;
+  }) => OrderFlowAnalyzerService;
 
   beforeEach(() => {
-    logger = new LoggerService(LogLevel.ERROR, './logs', false);
-
-    // Default config
-    config = {
-      aggressiveBuyThreshold: 3.0, // 3x buy/sell
-      detectionWindow: 3000, // 3 seconds
-      minVolumeUSDT: 5000,
-      maxConfidence: 90,
-    };
-
-    service = new OrderFlowAnalyzerService(config, logger);
+    const harness = createOrderFlowAnalyzerHarness();
+    service = harness.service;
+    logger = harness.logger;
+    config = harness.config;
+    createService = harness.createService;
   });
 
   // ==========================================================================

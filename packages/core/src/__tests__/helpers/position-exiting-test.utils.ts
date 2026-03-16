@@ -1,4 +1,5 @@
 import { PositionExitingService } from '../../services/position-exiting.service';
+import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
 import {
   Config,
   Position,
@@ -235,6 +236,22 @@ export function createRealScenarioPosition(): Position {
     protectionVerifiedOnce: true,
     status: 'OPEN' as const,
   };
+}
+
+export function createRealScenarioTakeProfitManager(
+  logger: ConstructorParameters<typeof TakeProfitManagerService>[1],
+): TakeProfitManagerService {
+  return new TakeProfitManagerService(
+    {
+      positionId: 'XRPUSDT_Buy',
+      symbol: 'XRPUSDT',
+      side: PositionSide.LONG,
+      entryPrice: 1.892,
+      totalQuantity: 52.85,
+      leverage: 10,
+    },
+    logger,
+  );
 }
 
 type PositionExitingHarness = {

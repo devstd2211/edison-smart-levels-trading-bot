@@ -20,6 +20,8 @@ import {
   asMultiTimeframeTrendData as asData,
   createMultiTimeframeTrendCandles as createValidCandles,
   createMultiTimeframeTrendData as createValidMultiTFData,
+  createMultiTimeframeTrendErrorHandler,
+  createMultiTimeframeTrendFailingLogger,
   createMultiTimeframeTrendHarness,
   createMultiTimeframeTrendLogger as createMockLogger,
   createMultiTimeframeTrendService,
@@ -36,7 +38,10 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
   let swingPointDetector: SwingPointDetectorService;
 
   beforeEach(() => {
-    ({ logger, errorHandler, swingPointDetector } = createMultiTimeframeTrendHarness());
+    const harness = createMultiTimeframeTrendHarness();
+    logger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    swingPointDetector = harness.swingPointDetector;
   });
 
   // ==========================================================================
@@ -211,12 +216,16 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
 
   describe('SKIP Strategy - Logging Failures', () => {
     it('should skip debug logging failures and continue analysis', async () => {
-      const brokenLogger = createMockLogger();
-      brokenLogger.debug = jest.fn(() => {
-        throw new Error('Logger failed');
+      const brokenLogger = createMultiTimeframeTrendFailingLogger({
+        debug: jest.fn(() => {
+          throw new Error('Logger failed');
+        }),
       });
-
-      service = createMultiTimeframeTrendService({ logger: brokenLogger, swingPointDetector, errorHandler });
+      service = createMultiTimeframeTrendService({
+        logger: brokenLogger,
+        swingPointDetector,
+        errorHandler: createMultiTimeframeTrendErrorHandler(brokenLogger),
+      });
 
       const data = createValidMultiTFData();
       const result = await service.analyze(data);
@@ -226,12 +235,17 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     });
 
     it('should skip info logging failures', async () => {
-      const brokenLogger = createMockLogger();
-      brokenLogger.info = jest.fn(() => {
-        throw new Error('Logger failed');
+      const brokenLogger = createMultiTimeframeTrendFailingLogger({
+        info: jest.fn(() => {
+          throw new Error('Logger failed');
+        }),
       });
 
-      service = createMultiTimeframeTrendService({ logger: brokenLogger, swingPointDetector, errorHandler });
+      service = createMultiTimeframeTrendService({
+        logger: brokenLogger,
+        swingPointDetector,
+        errorHandler: createMultiTimeframeTrendErrorHandler(brokenLogger),
+      });
 
       const data = createValidMultiTFData();
       const result = await service.analyze(data);
@@ -241,18 +255,23 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     });
 
     it('should continue analysis despite multiple logging errors', async () => {
-      const brokenLogger = createMockLogger();
-      brokenLogger.warn = jest.fn(() => {
-        throw new Error('Logger failed');
-      });
-      brokenLogger.info = jest.fn(() => {
-        throw new Error('Logger failed');
-      });
-      brokenLogger.debug = jest.fn(() => {
-        throw new Error('Logger failed');
+      const brokenLogger = createMultiTimeframeTrendFailingLogger({
+        warn: jest.fn(() => {
+          throw new Error('Logger failed');
+        }),
+        info: jest.fn(() => {
+          throw new Error('Logger failed');
+        }),
+        debug: jest.fn(() => {
+          throw new Error('Logger failed');
+        }),
       });
 
-      service = createMultiTimeframeTrendService({ logger: brokenLogger, swingPointDetector, errorHandler });
+      service = createMultiTimeframeTrendService({
+        logger: brokenLogger,
+        swingPointDetector,
+        errorHandler: createMultiTimeframeTrendErrorHandler(brokenLogger),
+      });
 
       const data = createValidMultiTFData();
       const result = await service.analyze(data);

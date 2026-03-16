@@ -7,27 +7,19 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { StrategyOrchestratorCacheService } from '../../services/multi-strategy/strategy-orchestrator-cache.service';
 import type { LoggerService } from '../../types/legacy';
-
-const createMockLogger = (): LoggerService => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-} as unknown as LoggerService);
-
-const createMockOrchestrator = (strategyId: string) => ({
-  strategyId,
-  process: jest.fn(),
-  cleanup: jest.fn(),
-});
+import {
+  createMockStrategyOrchestrator,
+  createStrategyCacheHarness,
+} from '../helpers/multi-strategy-cache-test.utils';
 
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
 
   beforeEach(() => {
-    logger = createMockLogger();
-    cache = new StrategyOrchestratorCacheService(logger);
+    const harness = createStrategyCacheHarness();
+    logger = harness.logger;
+    cache = harness.cache;
   });
 
   describe('Initialization', () => {
@@ -47,7 +39,7 @@ describe('StrategyOrchestratorCacheService', () => {
 
   describe('Caching Operations', () => {
     it('should cache an orchestrator', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       expect(cache.isCached('strategy-1')).toBe(true);
@@ -55,7 +47,7 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should retrieve cached orchestrator', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       const retrieved = cache.getOrchestrator('strategy-1');
@@ -68,7 +60,7 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should track access count', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       // Access multiple times
@@ -81,7 +73,7 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should update last access time', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       const statsAfterCache = cache.getStats();
@@ -98,7 +90,7 @@ describe('StrategyOrchestratorCacheService', () => {
 
   describe('Cache Removal', () => {
     it('should remove cached orchestrator', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       cache.removeOrchestrator('strategy-1');
@@ -112,9 +104,9 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should clear all cached orchestrators', () => {
-      cache.cacheOrchestrator('strategy-1', createMockOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockOrchestrator('strategy-2'));
-      cache.cacheOrchestrator('strategy-3', createMockOrchestrator('strategy-3'));
+      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
+      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
+      cache.cacheOrchestrator('strategy-3', createMockStrategyOrchestrator('strategy-3'));
 
       expect(cache.getStats().cacheSize).toBe(3);
 
@@ -130,13 +122,13 @@ describe('StrategyOrchestratorCacheService', () => {
       cache.setMaxCacheSize(2);
 
       // Cache 2 orchestrators
-      cache.cacheOrchestrator('strategy-1', createMockOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockOrchestrator('strategy-2'));
+      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
+      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
 
       expect(cache.getStats().cacheSize).toBe(2);
 
       // Add 3rd orchestrator - should evict one (LRU)
-      cache.cacheOrchestrator('strategy-3', createMockOrchestrator('strategy-3'));
+      cache.cacheOrchestrator('strategy-3', createMockStrategyOrchestrator('strategy-3'));
 
       // Cache size should remain at max (2)
       expect(cache.getStats().cacheSize).toBe(2);
@@ -159,8 +151,8 @@ describe('StrategyOrchestratorCacheService', () => {
 
   describe('Statistics', () => {
     it('should provide cache statistics', () => {
-      const orch1 = createMockOrchestrator('strategy-1');
-      const orch2 = createMockOrchestrator('strategy-2');
+      const orch1 = createMockStrategyOrchestrator('strategy-1');
+      const orch2 = createMockStrategyOrchestrator('strategy-2');
 
       cache.cacheOrchestrator('strategy-1', orch1);
       cache.cacheOrchestrator('strategy-2', orch2);
@@ -176,9 +168,9 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should list all cached strategies', () => {
-      cache.cacheOrchestrator('strategy-1', createMockOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockOrchestrator('strategy-2'));
-      cache.cacheOrchestrator('strategy-3', createMockOrchestrator('strategy-3'));
+      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
+      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
+      cache.cacheOrchestrator('strategy-3', createMockStrategyOrchestrator('strategy-3'));
 
       const cached = cache.getCachedStrategies();
 
@@ -191,9 +183,9 @@ describe('StrategyOrchestratorCacheService', () => {
 
   describe('Multiple Strategies', () => {
     it('should isolate orchestrators for different strategies', () => {
-      const orch1 = createMockOrchestrator('strategy-1');
-      const orch2 = createMockOrchestrator('strategy-2');
-      const orch3 = createMockOrchestrator('strategy-3');
+      const orch1 = createMockStrategyOrchestrator('strategy-1');
+      const orch2 = createMockStrategyOrchestrator('strategy-2');
+      const orch3 = createMockStrategyOrchestrator('strategy-3');
 
       cache.cacheOrchestrator('strategy-1', orch1);
       cache.cacheOrchestrator('strategy-2', orch2);
@@ -205,8 +197,8 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should handle concurrent access to different strategies', () => {
-      cache.cacheOrchestrator('strategy-1', createMockOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockOrchestrator('strategy-2'));
+      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
+      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
 
       const orch1 = cache.getOrchestrator('strategy-1');
       const orch2 = cache.getOrchestrator('strategy-2');
@@ -217,8 +209,8 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should support strategy switching', () => {
-      const orch1 = createMockOrchestrator('strategy-1');
-      const orch2 = createMockOrchestrator('strategy-2');
+      const orch1 = createMockStrategyOrchestrator('strategy-1');
+      const orch2 = createMockStrategyOrchestrator('strategy-2');
 
       cache.cacheOrchestrator('strategy-1', orch1);
       cache.cacheOrchestrator('strategy-2', orch2);
@@ -238,7 +230,7 @@ describe('StrategyOrchestratorCacheService', () => {
 
   describe('Logging', () => {
     it('should log cache hits', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       cache.getOrchestrator('strategy-1');
@@ -247,21 +239,21 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should log cache operations', () => {
-      cache.cacheOrchestrator('strategy-1', createMockOrchestrator('strategy-1'));
+      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
 
       expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Cached orchestrator'));
     });
 
     it('should log LRU eviction with warning', () => {
       cache.setMaxCacheSize(2);
-      cache.cacheOrchestrator('strategy-1', createMockOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockOrchestrator('strategy-2'));
+      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
+      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
 
       // Access strategy-1 to make it more recent
       cache.getOrchestrator('strategy-1');
 
       // Add strategy-3, which should trigger LRU eviction of strategy-2
-      cache.cacheOrchestrator('strategy-3', createMockOrchestrator('strategy-3'));
+      cache.cacheOrchestrator('strategy-3', createMockStrategyOrchestrator('strategy-3'));
 
       expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Evicting LRU')
@@ -272,11 +264,11 @@ describe('StrategyOrchestratorCacheService', () => {
   describe('Performance', () => {
     it('should handle large number of strategies', () => {
       const strategyCount = 100;
-      const orchestrators: Array<ReturnType<typeof createMockOrchestrator>> = [];
+      const orchestrators: Array<ReturnType<typeof createMockStrategyOrchestrator>> = [];
 
       // Cache 100 strategies (with LRU eviction to max 10)
       for (let i = 0; i < strategyCount; i++) {
-        const orch = createMockOrchestrator(`strategy-${i}`);
+        const orch = createMockStrategyOrchestrator(`strategy-${i}`);
         orchestrators.push(orch);
         cache.cacheOrchestrator(`strategy-${i}`, orch);
       }
@@ -286,7 +278,7 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should retrieve cached orchestrator quickly', () => {
-      const orchestrator = createMockOrchestrator('strategy-1');
+      const orchestrator = createMockStrategyOrchestrator('strategy-1');
       cache.cacheOrchestrator('strategy-1', orchestrator);
 
       const startTime = performance.now();

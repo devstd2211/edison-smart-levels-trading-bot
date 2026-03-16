@@ -10,7 +10,6 @@
 
 import { WhaleWallTPService } from '../../services/whale-wall-tp.service';
 import { SignalDirection } from '../../types/legacy';
-import { LoggerService } from '../../services/logger.service';
 import type { TakeProfit } from '../../types/legacy';
 import {
   createWhaleWallTPConfig as createValidConfig,
@@ -19,6 +18,7 @@ import {
   createWhaleWallTPErrorHandler,
   createWhaleWallTPHarness,
   createWhaleWallTPMockLogger as createMockLogger,
+  createWhaleWallTPMockLoggerService,
   createWhaleWallTPService,
   createWhaleWallTPWalls as createValidWalls,
 } from '../helpers/whale-wall-tp-test.utils';
@@ -35,7 +35,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
       const errorHandler = createWhaleWallTPErrorHandler(mockLogger);
       expect(() => {
         createWhaleWallTPService({
-          logger: mockLogger as unknown as LoggerService,
+          logger: createWhaleWallTPMockLoggerService(mockLogger),
           config: { minWallPercent: 150 },
           errorHandler,
         });
@@ -46,7 +46,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
       const errorHandler = createWhaleWallTPErrorHandler(mockLogger);
       expect(() => {
         createWhaleWallTPService({
-          logger: mockLogger as unknown as LoggerService,
+          logger: createWhaleWallTPMockLoggerService(mockLogger),
           config: { maxDistancePercent: -1 },
           errorHandler,
         });
@@ -57,7 +57,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
       const errorHandler = createWhaleWallTPErrorHandler(mockLogger);
       expect(() => {
         createWhaleWallTPService({
-          logger: mockLogger as unknown as LoggerService,
+          logger: createWhaleWallTPMockLoggerService(mockLogger),
           config: createConfigWithTPTargeting({ alignmentThresholdPercent: 150 }),
           errorHandler,
         });
@@ -68,7 +68,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
       const errorHandler = createWhaleWallTPErrorHandler(mockLogger);
       expect(() => {
         createWhaleWallTPService({
-          logger: mockLogger as unknown as LoggerService,
+          logger: createWhaleWallTPMockLoggerService(mockLogger),
           config: createConfigWithQualityValidation({ minStrength: 1.5 }),
           errorHandler,
         });
@@ -79,7 +79,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
       const errorHandler = createWhaleWallTPErrorHandler(mockLogger);
       expect(() => {
         createWhaleWallTPService({
-          logger: mockLogger as unknown as LoggerService,
+          logger: createWhaleWallTPMockLoggerService(mockLogger),
           config: createConfigWithQualityValidation({ icebergBoostFactor: 0 }),
           errorHandler,
         });
@@ -98,7 +98,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     beforeEach(() => {
       ({ service } = createWhaleWallTPHarness({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       }));
     });
@@ -145,7 +145,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     beforeEach(() => {
       ({ service } = createWhaleWallTPHarness({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       }));
     });
@@ -172,7 +172,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should handle config disabled gracefully', () => {
       const disabledService = createWhaleWallTPService({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: { ...createValidConfig(), enabled: false },
         errorHandler,
       });
@@ -188,20 +188,14 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when debug logs fail', () => {
-      const mockLogger = {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
+      const logger = createWhaleWallTPMockLoggerService({
         debug: jest.fn(() => {
           throw new Error('Debug failed');
         }),
-        silly: jest.fn(),
-      };
-      const errorHandler = createWhaleWallTPErrorHandler(
-        mockLogger as unknown as LoggerService,
-      );
+      });
+      const errorHandler = createWhaleWallTPErrorHandler(logger);
       const service = createWhaleWallTPService({
-        logger: mockLogger as unknown as LoggerService,
+        logger,
         config: createValidConfig(),
         errorHandler,
       });
@@ -212,20 +206,14 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     });
 
     test('should not throw when info logs fail', () => {
-      const mockLogger = {
+      const logger = createWhaleWallTPMockLoggerService({
         info: jest.fn(() => {
           throw new Error('Info failed');
         }),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-        silly: jest.fn(),
-      };
-      const errorHandler = createWhaleWallTPErrorHandler(
-        mockLogger as unknown as LoggerService,
-      );
+      });
+      const errorHandler = createWhaleWallTPErrorHandler(logger);
       const service = createWhaleWallTPService({
-        logger: mockLogger as unknown as LoggerService,
+        logger,
         config: createValidConfig(),
         errorHandler,
       });
@@ -246,7 +234,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     beforeEach(() => {
       ({ service } = createWhaleWallTPHarness({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       }));
     });
@@ -286,7 +274,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should work without ErrorHandler', () => {
       const { service } = createWhaleWallTPHarness({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
         withErrorHandler: false,
       });
@@ -296,7 +284,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should throw on invalid input even without ErrorHandler', () => {
       const { service } = createWhaleWallTPHarness({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
         withErrorHandler: false,
       });
@@ -317,14 +305,14 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     beforeEach(() => {
       ({ service } = createWhaleWallTPHarness({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       }));
     });
 
     test('should handle zero minWallPercent', () => {
       const zeroService = createWhaleWallTPService({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: { ...createValidConfig(), minWallPercent: 0 },
         errorHandler,
       });
@@ -334,7 +322,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should handle high minStrength value', () => {
       const highStrengthService = createWhaleWallTPService({
-        logger: mockLogger as unknown as LoggerService,
+        logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createConfigWithQualityValidation({ minStrength: 1.0 }),
         errorHandler,
       });

@@ -7,99 +7,31 @@
 
 import { Candle, TimeframeRole, LoggerService } from '../../types/legacy';
 import { IMarketDataRepository } from '../../repositories/IRepositories';
-import { IExchange } from '../../interfaces/IExchange';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
-import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
 import type { CandleProvider } from '../../providers/candle.provider';
 import {
   createCandleProviderMockLogger,
-  createCandleProviderService,
   type CandleProviderMockLogger,
-  type CandleProviderMockExchange,
-  type CandleProviderMockRepository,
-  type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
-
-/**
- * Mock IExchange for testing
- */
-class MockExchange {
-  private callCount = 0;
-
-  async getCandles(params: { symbol: string; timeframe: string; limit?: number }): Promise<Candle[]> {
-    this.callCount++;
-    const { symbol, timeframe, limit = 100 } = params;
-
-    // Simulate API fetch with realistic candles
-    const candles: Candle[] = [];
-    const now = Date.now();
-    for (let i = 0; i < limit; i++) {
-      candles.push({
-        timestamp: now - (i * 60000), // 1 minute candles
-        open: 100 + i * 0.1,
-        high: 102 + i * 0.1,
-        low: 99 + i * 0.1,
-        close: 101 + i * 0.1,
-        volume: 1000 + i,
-      });
-    }
-    return candles.reverse();
-  }
-
-  getCallCount(): number {
-    return this.callCount;
-  }
-
-  resetCallCount(): void {
-    this.callCount = 0;
-  }
-}
-
-/**
- * Mock TimeframeProvider for testing
- */
-class MockTimeframeProvider {
-  getAllTimeframes(): Map<TimeframeRole, { interval: string; candleLimit: number }> {
-    return new Map([
-      ['PRIMARY' as TimeframeRole, { interval: '1', candleLimit: 100 }],
-      ['ENTRY' as TimeframeRole, { interval: '5', candleLimit: 100 }],
-      ['HTF1' as TimeframeRole, { interval: '1h', candleLimit: 50 }],
-      ['HTF2' as TimeframeRole, { interval: '4h', candleLimit: 50 }],
-    ]);
-  }
-
-  getTimeframe(role: TimeframeRole): { interval: string; candleLimit: number } {
-    const tf = this.getAllTimeframes().get(role);
-    if (!tf) throw new Error(`Timeframe ${role} not found`);
-    return tf;
-  }
-}
+import {
+  createCandleProviderRepositoryIntegrationHarness,
+  IntegrationMockExchange,
+} from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
   let provider: CandleProvider;
-  let exchange: MockExchange;
+  let exchange: IntegrationMockExchange;
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
   let logger: CandleProviderMockLogger & LoggerService;
 
   beforeEach(() => {
-    exchange = new MockExchange();
-    repository = new MarketDataCacheRepository();
-    timeframeProvider = new MockTimeframeProvider() as unknown as TimeframeProvider;
-    logger = createCandleProviderMockLogger();
-
-    provider = createCandleProviderService({
-      timeframeProvider:
-        timeframeProvider as unknown as CandleProviderMockTimeframeProvider &
-          TimeframeProvider,
-      exchange:
-        exchange as unknown as CandleProviderMockExchange & IExchange,
-      logger,
-      symbol: 'XRPUSDT',
-      repository:
-        repository as unknown as CandleProviderMockRepository &
-          IMarketDataRepository,
-    });
+    const harness = createCandleProviderRepositoryIntegrationHarness();
+    provider = harness.provider;
+    exchange = harness.exchange;
+    repository = harness.repository;
+    timeframeProvider = harness.timeframeProvider;
+    logger = harness.logger;
   });
 
   describe('Initialization', () => {

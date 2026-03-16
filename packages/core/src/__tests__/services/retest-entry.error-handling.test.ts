@@ -45,7 +45,7 @@ import {
   createRetestEntryErrorHandler,
   createRetestEntryHarness,
   createRetestEntryLogger,
-  createRetestEntryMockLogger,
+  createRetestEntryMockLoggerService,
   createRetestEntryService,
   createRetestEntrySignal,
 } from '../helpers/retest-entry-test.utils';
@@ -54,7 +54,6 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   const asCandles = (value: unknown): Candle[] => value as Candle[];
   const asSignal = (value: unknown): Signal => value as Signal;
   const asRetestConfig = (value: unknown): RetestConfig => value as RetestConfig;
-  const asLogger = (value: unknown): LoggerService => value as LoggerService;
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -239,19 +238,18 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   describe('SKIP - Logging Failures', () => {
     it('should continue despite logger failures in detectImpulse', () => {
-      const failingLogger = {
-        ...createRetestEntryMockLogger(),
+      const failingLogger = createRetestEntryMockLoggerService({
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
         debug: jest.fn(() => {
           throw new Error('Logger debug failed');
         }),
-      };
+      });
 
       const service = createRetestEntryService({
         configOverrides: mockConfig,
-        logger: asLogger(failingLogger),
+        logger: failingLogger,
         errorHandler,
       });
 
@@ -262,16 +260,15 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should continue despite logger failures in createRetestZone', () => {
-      const failingLogger = {
-        ...createRetestEntryMockLogger(),
+      const failingLogger = createRetestEntryMockLoggerService({
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-      };
+      });
 
       const service = createRetestEntryService({
         configOverrides: mockConfig,
-        logger: asLogger(failingLogger),
+        logger: failingLogger,
         errorHandler,
       });
 
@@ -282,19 +279,18 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should continue despite logger failures in checkRetest', () => {
-      const failingLogger = {
-        ...createRetestEntryMockLogger(),
+      const failingLogger = createRetestEntryMockLoggerService({
         debug: jest.fn(() => {
           throw new Error('Logger debug failed');
         }),
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-      };
+      });
 
       const service = createRetestEntryService({
         configOverrides: mockConfig,
-        logger: asLogger(failingLogger),
+        logger: failingLogger,
         errorHandler,
       });
       service.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600);

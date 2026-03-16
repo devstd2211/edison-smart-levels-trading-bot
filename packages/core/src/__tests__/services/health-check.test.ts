@@ -255,13 +255,11 @@ describe('HealthCheckService', () => {
     });
 
     it('should report overall status as degraded if any component degraded', async () => {
-      const degradedWs = {
-        isConnected: jest.fn().mockReturnValue(false),
-        getLastMessageTime: jest.fn().mockReturnValue(0),
-      };
-
       const svc = harness.createService({
-        websocket: degradedWs,
+        websocket: harness.createWebSocket({
+          isConnected: jest.fn().mockReturnValue(false),
+          getLastMessageTime: jest.fn().mockReturnValue(0),
+        }),
       });
 
       const health = await svc.checkHealth();
@@ -270,13 +268,11 @@ describe('HealthCheckService', () => {
     });
 
     it('should report overall status as unhealthy if any component down', async () => {
-      const downExchange = {
-        testConnection: jest.fn().mockRejectedValue(new Error('API down')),
-        getServerTime: jest.fn().mockResolvedValue(Date.now()),
-      };
-
       const svc = harness.createService({
-        exchange: downExchange,
+        exchange: harness.createExchange({
+          testConnection: jest.fn().mockRejectedValue(new Error('API down')),
+          getServerTime: jest.fn().mockResolvedValue(Date.now()),
+        }),
       });
 
       const health = await svc.checkHealth();
@@ -313,19 +309,9 @@ describe('HealthCheckService', () => {
     });
 
     it('should return boolean for readiness probe', async () => {
-      // Create service with all healthy components and high thresholds
-      const healthyExchange = {
-        testConnection: jest.fn().mockResolvedValue(true),
-        getServerTime: jest.fn().mockResolvedValue(Date.now()),
-      };
-      const healthyWs = {
-        isConnected: jest.fn().mockReturnValue(true),
-        getLastMessageTime: jest.fn().mockReturnValue(Date.now()),
-      };
-
       const healthySvc = harness.createService({
-        exchange: healthyExchange,
-        websocket: healthyWs,
+        exchange: harness.createExchange(),
+        websocket: harness.createWebSocket(),
         config: {
           thresholds: {
             memoryUsagePercent: 95,
@@ -339,13 +325,11 @@ describe('HealthCheckService', () => {
     });
 
     it('should return false for readiness probe when degraded', async () => {
-      const degradedWs = {
-        isConnected: jest.fn().mockReturnValue(false),
-        getLastMessageTime: jest.fn().mockReturnValue(0),
-      };
-
       const degradedSvc = harness.createService({
-        websocket: degradedWs,
+        websocket: harness.createWebSocket({
+          isConnected: jest.fn().mockReturnValue(false),
+          getLastMessageTime: jest.fn().mockReturnValue(0),
+        }),
       });
 
       const isReady = await degradedSvc.isReady();

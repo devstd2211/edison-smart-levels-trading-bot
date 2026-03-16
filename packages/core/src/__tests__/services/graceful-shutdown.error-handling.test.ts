@@ -20,8 +20,8 @@ import { IExchange } from '../../interfaces/IExchange';
 import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/legacy';
 import * as fs from 'fs';
 import {
+  createGracefulShutdownHarness,
   createGracefulShutdownManager,
-  createGracefulShutdownMocks,
   createMockShutdownPosition,
   defaultGracefulShutdownConfig,
   setupGracefulShutdownFsMocks,
@@ -48,20 +48,23 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
+  let gracefulShutdownHarness: ReturnType<typeof createGracefulShutdownHarness>;
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    const mocks = createGracefulShutdownMocks(createMockShutdownPosition({ reason: 'error-handling-test' }));
-    mockPositionLifecycleService =
-      mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
-    mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
-    mockExchange = mocks.exchange as unknown as jest.Mocked<IExchange>;
-    mockLogger = mocks.logger as unknown as jest.Mocked<LoggerService>;
-    mockEventBus = mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
     setupGracefulShutdownFsMocks({ exists: true });
-    shutdownManager = createGracefulShutdownManager(mocks);
+    gracefulShutdownHarness = createGracefulShutdownHarness({
+      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
+    });
+    mockPositionLifecycleService =
+      gracefulShutdownHarness.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
+    mockActionQueue = gracefulShutdownHarness.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
+    mockExchange = gracefulShutdownHarness.mocks.exchange as unknown as jest.Mocked<IExchange>;
+    mockLogger = gracefulShutdownHarness.mocks.logger as unknown as jest.Mocked<LoggerService>;
+    mockEventBus = gracefulShutdownHarness.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
+    shutdownManager = gracefulShutdownHarness.manager;
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {
@@ -268,16 +271,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
       (fs.mkdirSync as jest.Mock).mockImplementationOnce(() => {});
 
-      const newManager = createGracefulShutdownManager(
-        {
-          positionLifecycleService: mockPositionLifecycleService,
-          actionQueue: mockActionQueue,
-          exchange: mockExchange,
-          logger: mockLogger,
-          eventBus: mockEventBus,
-        },
-        { stateDirectory: './test-new-dir' },
-      );
+      const newManager = gracefulShutdownHarness.createManager({ stateDirectory: './test-new-dir' });
 
       newManager.registerShutdownHandlers();
 
@@ -293,16 +287,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         throw new Error('EACCES: permission denied');
       });
 
-      const newManager = createGracefulShutdownManager(
-        {
-          positionLifecycleService: mockPositionLifecycleService,
-          actionQueue: mockActionQueue,
-          exchange: mockExchange,
-          logger: mockLogger,
-          eventBus: mockEventBus,
-        },
-        { stateDirectory: './test-permission-denied' },
-      );
+      const newManager = gracefulShutdownHarness.createManager({ stateDirectory: './test-permission-denied' });
 
       newManager.registerShutdownHandlers();
 
@@ -320,16 +305,10 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let constructorFailed = false;
       try {
-        const newManager = createGracefulShutdownManager(
-          {
-            positionLifecycleService: mockPositionLifecycleService,
-            actionQueue: mockActionQueue,
-            exchange: mockExchange,
-            logger: mockLogger,
-            eventBus: mockEventBus,
-          },
-          { config: mockConfig, stateDirectory: './test-fs-error' },
-        );
+        const newManager = gracefulShutdownHarness.createManager({
+          config: mockConfig,
+          stateDirectory: './test-fs-error',
+        });
         newManager.registerShutdownHandlers();
       } catch (error) {
         constructorFailed = true;

@@ -25,7 +25,6 @@ import {
   createSwingPoint,
   createSwingPointDetectorCandleArray,
   createSwingPointDetectorFailingLogger,
-  createSwingPointDetectorHarness,
   createSwingPointDetectorService,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
@@ -55,7 +54,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
   describe('A. detectSwingPoints() Errors - GRACEFUL_DEGRADE (5 tests)', () => {
     it('test-A1: Return empty arrays for null candles input', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       const result = service.detectSwingPoints(asSwingPointDetectorCandles(null));
 
@@ -71,7 +70,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-A2: Return empty arrays for insufficient candles', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(3); // Need at least 5
 
       const result = service.detectSwingPoints(candles);
@@ -87,7 +86,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-A3: Skip candles with NaN prices', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(7);
       // Inject NaN in middle candles
       candles[3].high = NaN;
@@ -105,7 +104,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-A4: Skip candles with Infinity prices', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(7);
       // Inject Infinity in middle candles
       candles[3].high = Infinity;
@@ -123,7 +122,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-A5: Return empty arrays on algorithm exception', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       // Create candles that will cause unexpected error
       const candles = createSwingPointDetectorCandleArray(5) as Candle[];
       // Modify to cause error in comparison logic
@@ -154,7 +153,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
   describe('B. Logging Failures - SKIP Strategy (3 tests)', () => {
     it('test-B1: Skip logger.debug() failures during detection', () => {
       mockLogger = createSwingPointDetectorFailingLogger('debug');
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(5);
 
       // Should not throw despite logger.debug failing
@@ -173,7 +172,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
     it('test-B2: Skip logger.warn() failures', () => {
       mockLogger = createSwingPointDetectorFailingLogger('warn');
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(5);
       // Inject invalid candle to trigger logger.warn
       candles[2].high = NaN;
@@ -190,7 +189,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
       mockErrorHandler = createSwingPointDetectorMockErrorHandler();
 
       // Should not throw during construction despite logger.info failing
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       expect(service).toBeDefined();
       expect(mockErrorHandler.handle).toHaveBeenCalledWith(
@@ -208,7 +207,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
   describe('C. Pattern Detection Errors - GRACEFUL_DEGRADE (4 tests)', () => {
     it('test-C1: Return false for isHigherHigherLow with NaN prices', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(7);
       const { highs, lows } = service.detectSwingPoints(candles);
 
@@ -226,7 +225,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-C2: Return false for isLowerHigherLow with invalid data', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(7);
       const { highs, lows } = service.detectSwingPoints(candles);
 
@@ -241,7 +240,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-C3: Return neutral strength (0.3) on calculation error', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       // Test with empty arrays to verify safe default behavior
       const result = service.calculateStrengthFromSwingPoints('BULLISH', [], []);
@@ -251,7 +250,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
       // Test with invalid input (non-array)
       mockErrorHandler = createSwingPointDetectorMockErrorHandler();
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       const resultInvalid = service.calculateStrengthFromSwingPoints(
         'NEUTRAL',
@@ -264,7 +263,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-C4: Handle empty swing point arrays gracefully', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       const bullishResult = service.calculateStrengthFromSwingPoints('BULLISH', [], []);
       const bearishResult = service.calculateStrengthFromSwingPoints('BEARISH', [], []);
@@ -282,7 +281,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
   describe('D. Integration & E2E (4 tests)', () => {
     it('test-D1: Full detection workflow with mixed valid/invalid candles', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
       const candles = createSwingPointDetectorCandleArray(10);
 
       // Mix in some invalid candles
@@ -299,7 +298,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-D2: Pattern detection after failed swing point detection', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       // Run detection with insufficient data to force graceful degrade
       const result = service.detectSwingPoints(createSwingPointDetectorCandleArray(2));
@@ -313,7 +312,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-D3: Cascading failures (detection → pattern → strength)', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       // Start with invalid input
       const detectionResult = service.detectSwingPoints(asSwingPointDetectorCandles(null));
@@ -336,7 +335,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-D4: High-frequency detection with intermittent errors', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       // Run multiple detections with varying data quality
       let validResults = 0;
@@ -364,7 +363,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
   describe('E. Backward Compatibility (2 tests)', () => {
     it('test-E1: Works without ErrorHandler parameter', () => {
       // Constructor without ErrorHandler (optional parameter)
-      service = createSwingPointDetectorHarness({ logger: mockLogger, withErrorHandler: false }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, withErrorHandler: false });
 
       const candles = createSwingPointDetectorCandleArray(7);
       const result = service.detectSwingPoints(candles);
@@ -393,7 +392,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
 
   describe('F. Strength Calculation Edge Cases (2 bonus tests)', () => {
     it('test-F1: Correctly calculate strength for different point counts', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       const emptyStrength = service.calculateStrengthFromSwingPoints('BULLISH', [], []);
       const weakStrength = service.calculateStrengthFromSwingPoints(
@@ -423,7 +422,7 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     });
 
     it('test-F2: Handle NEUTRAL bias correctly in strength calculation', () => {
-      service = createSwingPointDetectorHarness({ logger: mockLogger, errorHandler: mockErrorHandler }).service;
+      service = createSwingPointDetectorService({ logger: mockLogger, errorHandler: mockErrorHandler });
 
       const neutralStrength = service.calculateStrengthFromSwingPoints(
         'NEUTRAL',

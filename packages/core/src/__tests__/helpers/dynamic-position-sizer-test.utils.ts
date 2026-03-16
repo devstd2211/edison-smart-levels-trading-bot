@@ -53,16 +53,31 @@ export function createDynamicPositionSizerHarness(
   logger: LoggerService;
   errorHandler: ErrorHandler;
   config: SizingConfig;
+  createService: (options?: {
+    config?: SizingConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => DynamicPositionSizerService;
 } {
   const logger = createDynamicPositionSizerLogger() as unknown as LoggerService;
   const errorHandler = new ErrorHandler(logger);
   const config = createDynamicPositionSizerConfig(overrides);
+  const createService = (options: {
+    config?: SizingConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  } = {}): DynamicPositionSizerService =>
+    new DynamicPositionSizerService(
+      options.config ?? config,
+      Object.prototype.hasOwnProperty.call(options, 'logger') ? options.logger : logger,
+      Object.prototype.hasOwnProperty.call(options, 'errorHandler') ? options.errorHandler : errorHandler,
+    );
 
   return {
-    service: new DynamicPositionSizerService(config, logger, errorHandler),
+    service: createService(),
     logger,
     errorHandler,
     config,
+    createService,
   };
 }
-

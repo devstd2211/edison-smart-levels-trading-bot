@@ -46,15 +46,27 @@ export function createVolatilityRegimeHarness(options: {
 } = {}) {
   const logger = options.logger ?? createVolatilityRegimeLogger();
   const errorHandler = new ErrorHandler(logger);
-  const service = new VolatilityRegimeService(
+  const service = createVolatilityRegimeService({
     logger,
-    options.config,
-    options.withErrorHandler === false ? undefined : errorHandler,
-  );
+    config: options.config,
+    errorHandler: options.withErrorHandler === false ? undefined : errorHandler,
+  });
 
   return {
     service,
     logger,
     errorHandler,
   };
+}
+
+export function createVolatilityRegimeService(options: {
+  logger?: LoggerService;
+  config?: Partial<VolatilityRegimeConfig>;
+  errorHandler?: ErrorHandler;
+} = {}): VolatilityRegimeService {
+  return new VolatilityRegimeService(
+    options.logger ?? createVolatilityRegimeLogger(),
+    options.config,
+    options.errorHandler,
+  );
 }

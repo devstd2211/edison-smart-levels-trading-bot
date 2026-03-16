@@ -14,7 +14,9 @@ export interface TimeServiceHarness {
   createService: (options?: {
     syncIntervalMs?: number;
     maxSyncFailures?: number;
+    logger?: LoggerService;
     errorHandler?: ErrorHandler;
+    exchange?: MockTimeExchange;
     attachExchange?: boolean;
   }) => TimeService;
 }
@@ -40,15 +42,24 @@ export function createTimeServiceHarness(): TimeServiceHarness {
     exchange,
     errorHandler,
     createService(options = {}): TimeService {
+      const serviceLogger = Object.prototype.hasOwnProperty.call(options, 'logger')
+        ? options.logger
+        : logger;
+      const serviceErrorHandler = Object.prototype.hasOwnProperty.call(options, 'errorHandler')
+        ? options.errorHandler
+        : errorHandler;
+      const serviceExchange = Object.prototype.hasOwnProperty.call(options, 'exchange')
+        ? options.exchange
+        : exchange;
       const service = new TimeService(
-        logger,
+        serviceLogger ?? logger,
         options.syncIntervalMs ?? 1000,
         options.maxSyncFailures ?? 3,
-        options.errorHandler ?? errorHandler,
+        serviceErrorHandler,
       );
 
       if (options.attachExchange !== false) {
-        service.setBybitService(exchange as unknown as IExchange);
+        service.setBybitService((serviceExchange ?? exchange) as unknown as IExchange);
       }
 
       return service;

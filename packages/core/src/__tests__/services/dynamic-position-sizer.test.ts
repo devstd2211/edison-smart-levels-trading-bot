@@ -38,6 +38,11 @@ describe('DynamicPositionSizerService', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
+  let createService: (options?: {
+    config?: SizingConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => DynamicPositionSizerService;
 
   beforeEach(() => {
     const harness = createDynamicPositionSizerHarness();
@@ -45,6 +50,7 @@ describe('DynamicPositionSizerService', () => {
     logger = harness.logger;
     errorHandler = harness.errorHandler;
     mockConfig = harness.config;
+    createService = harness.createService;
   });
 
   // ============================================================================
@@ -60,51 +66,31 @@ describe('DynamicPositionSizerService', () => {
 
     it('should throw when baseRiskPercent is negative', () => {
       expect(() => {
-        new DynamicPositionSizerService(
-          { ...mockConfig, baseRiskPercent: -1 },
-          logger,
-          errorHandler
-        );
+        createService({ config: { ...mockConfig, baseRiskPercent: -1 } });
       }).toThrow('baseRiskPercent must be >= 0');
     });
 
     it('should throw when maxRiskPercent is negative', () => {
       expect(() => {
-        new DynamicPositionSizerService(
-          { ...mockConfig, maxRiskPercent: -1 },
-          logger,
-          errorHandler
-        );
+        createService({ config: { ...mockConfig, maxRiskPercent: -1 } });
       }).toThrow('maxRiskPercent must be >= 0');
     });
 
     it('should throw when baseRiskPercent > maxRiskPercent', () => {
       expect(() => {
-        new DynamicPositionSizerService(
-          { ...mockConfig, baseRiskPercent: 5, maxRiskPercent: 3 },
-          logger,
-          errorHandler
-        );
+        createService({ config: { ...mockConfig, baseRiskPercent: 5, maxRiskPercent: 3 } });
       }).toThrow('baseRiskPercent cannot exceed maxRiskPercent');
     });
 
     it('should throw when minPositionSize is negative', () => {
       expect(() => {
-        new DynamicPositionSizerService(
-          { ...mockConfig, minPositionSize: -10 },
-          logger,
-          errorHandler
-        );
+        createService({ config: { ...mockConfig, minPositionSize: -10 } });
       }).toThrow('minPositionSize must be >= 0');
     });
 
     it('should throw when minPositionSize > maxPositionSize', () => {
       expect(() => {
-        new DynamicPositionSizerService(
-          { ...mockConfig, minPositionSize: 2000, maxPositionSize: 1000 },
-          logger,
-          errorHandler
-        );
+        createService({ config: { ...mockConfig, minPositionSize: 2000, maxPositionSize: 1000 } });
       }).toThrow('minPositionSize cannot exceed maxPositionSize');
     });
   });
@@ -217,11 +203,7 @@ describe('DynamicPositionSizerService', () => {
 
     it('should handle calculation errors gracefully', async () => {
       // Force error by mocking internal method to throw
-      const brokenService = new DynamicPositionSizerService(
-        mockConfig,
-        logger,
-        errorHandler
-      );
+      const brokenService = createService();
 
       // Inject error into calculateKellySize via extreme inputs
       const result = await brokenService.calculateOptimalSize(
@@ -257,11 +239,7 @@ describe('DynamicPositionSizerService', () => {
         maxPositionSize: Number.MAX_VALUE,
       };
 
-      const hugeService = new DynamicPositionSizerService(
-        hugeConfig,
-        logger,
-        errorHandler
-      );
+      const hugeService = createService({ config: hugeConfig });
 
       const result = await hugeService.calculateOptimalSize(
         105,
@@ -291,11 +269,10 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should not throw when logging fails in calculateOptimalSize', async () => {
-      const brokenService = new DynamicPositionSizerService(
-        mockConfig,
-        brokenLogger,
-        new ErrorHandler(brokenLogger)
-      );
+      const brokenService = createService({
+        logger: brokenLogger,
+        errorHandler: new ErrorHandler(brokenLogger),
+      });
 
       const result = await brokenService.calculateOptimalSize(
         105,
@@ -309,11 +286,10 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should not throw when logging fails in adjustForVolatility', () => {
-      const brokenService = new DynamicPositionSizerService(
-        mockConfig,
-        brokenLogger,
-        new ErrorHandler(brokenLogger)
-      );
+      const brokenService = createService({
+        logger: brokenLogger,
+        errorHandler: new ErrorHandler(brokenLogger),
+      });
 
       // Should not throw despite logger errors
       expect(() => {
@@ -322,11 +298,10 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should not throw when logging fails in adjustForAccountRisk', () => {
-      const brokenService = new DynamicPositionSizerService(
-        mockConfig,
-        brokenLogger,
-        new ErrorHandler(brokenLogger)
-      );
+      const brokenService = createService({
+        logger: brokenLogger,
+        errorHandler: new ErrorHandler(brokenLogger),
+      });
 
       const largeSize = 10000; // Triggers risk limit log
 
@@ -336,11 +311,10 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should not throw when logging fails in calculateMaxPosition', () => {
-      const brokenService = new DynamicPositionSizerService(
-        mockConfig,
-        brokenLogger,
-        new ErrorHandler(brokenLogger)
-      );
+      const brokenService = createService({
+        logger: brokenLogger,
+        errorHandler: new ErrorHandler(brokenLogger),
+      });
 
       expect(() => {
         brokenService.calculateMaxPosition(5.0, 10000);
@@ -465,7 +439,7 @@ describe('DynamicPositionSizerService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without errorHandler', async () => {
-      const serviceNoEH = new DynamicPositionSizerService(mockConfig, logger);
+      const serviceNoEH = createService({ errorHandler: undefined });
 
       const result = await serviceNoEH.calculateOptimalSize(
         105,
@@ -478,11 +452,10 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should work without logger', async () => {
-      const serviceNoLoggerService = new DynamicPositionSizerService(
-        mockConfig,
-        undefined,
-        errorHandler
-      );
+      const serviceNoLoggerService = createService({
+        logger: undefined,
+        errorHandler,
+      });
 
       const result = await serviceNoLoggerService.calculateOptimalSize(
         105,

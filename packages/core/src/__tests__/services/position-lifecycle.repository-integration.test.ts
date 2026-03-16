@@ -11,6 +11,7 @@ import {
   createPositionRepositoryHarness,
   createRepositoryPosition,
   createRepositoryPositions,
+  createSeededPositionRepositoryHarness,
 } from '../helpers/position-repository-test.utils';
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
@@ -40,8 +41,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
     it('should retrieve current position from repository', () => {
       const position: Position = createRepositoryPosition();
-
-      repository.setCurrentPosition(position);
+      repository = createSeededPositionRepositoryHarness({
+        currentPosition: position,
+      });
 
       const current = repository.getCurrentPosition();
       expect(current).toEqual(position);
@@ -70,8 +72,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
         status: 'CLOSED',
         unrealizedPnL: 100,
       });
-
-      repository.addToHistory(position1);
+      repository = createSeededPositionRepositoryHarness({
+        history: [position1],
+      });
       const history = repository.getHistory();
 
       expect(history).toHaveLength(1);
@@ -107,8 +110,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
     it('should clear history', () => {
       const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-
-      repository.addToHistory(position);
+      repository = createSeededPositionRepositoryHarness({
+        history: [position],
+      });
       expect(repository.getHistory()).toHaveLength(1);
 
       repository.clearHistory();
@@ -119,8 +123,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   describe('Position Queries', () => {
     it('should find position by ID', () => {
       const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-
-      repository.addToHistory(position);
+      repository = createSeededPositionRepositoryHarness({
+        history: [position],
+      });
 
       const found = repository.findPosition('BTCUSDT_Buy');
       expect(found).not.toBeNull();
@@ -137,12 +142,13 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
         id: 'BTCUSDT_Buy_1',
         status: 'CLOSED',
       });
-
-      repository.addToHistory(position1);
-      repository.setCurrentPosition({
-        ...position1,
-        id: 'BTCUSDT_Buy_2',
-        status: 'OPEN',
+      repository = createSeededPositionRepositoryHarness({
+        currentPosition: {
+          ...position1,
+          id: 'BTCUSDT_Buy_2',
+          status: 'OPEN',
+        },
+        history: [position1],
       });
 
       const all = repository.getAllPositions();
@@ -153,9 +159,10 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   describe('Repository Maintenance', () => {
     it('should get repository size', () => {
       const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-
-      repository.addToHistory(position);
-      repository.setCurrentPosition(position);
+      repository = createSeededPositionRepositoryHarness({
+        currentPosition: position,
+        history: [position],
+      });
 
       const size = repository.getSize();
       expect(size).toBeGreaterThan(0);
@@ -163,9 +170,10 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
     it('should clear all repository data', () => {
       const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-
-      repository.addToHistory(position);
-      repository.setCurrentPosition(position);
+      repository = createSeededPositionRepositoryHarness({
+        currentPosition: position,
+        history: [position],
+      });
 
       repository.clear();
 
@@ -178,8 +186,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   describe('Position Updates', () => {
     it('should update position fields', () => {
       const position: Position = createRepositoryPosition();
-
-      repository.setCurrentPosition(position);
+      repository = createSeededPositionRepositoryHarness({
+        currentPosition: position,
+      });
 
       // Update position
       const updated = { ...position, unrealizedPnL: 500, quantity: 0.05 };

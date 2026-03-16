@@ -16,6 +16,8 @@ import {
   createPhase10Context,
   createPhase10Harness,
   createPhase10IntegrationOrderbook,
+  createPhase10OrderbookSide,
+  createPhase10PerformanceOrderbook,
   createPhase10Signal,
   seedPhase10VolumeBaseline,
 } from '../helpers/phase-10-integration-test.utils';
@@ -165,14 +167,8 @@ describe('Phase 10 Integration Tests', () => {
     it('should execute complete market analysis', async () => {
       // Step 1: Build orderbook
       const orderbook: Orderbook = createPhase10IntegrationOrderbook({
-        bids: Array.from({ length: 10 }, (_, i) => ({
-          price: 50000 - i * 10,
-          volume: 5 + Math.random() * 10,
-        })),
-        asks: Array.from({ length: 10 }, (_, i) => ({
-          price: 50010 + i * 10,
-          volume: 5 + Math.random() * 10,
-        })),
+        bids: createPhase10OrderbookSide(50000, 10, 'bids', () => 5 + Math.random() * 10),
+        asks: createPhase10OrderbookSide(50010, 10, 'asks', () => 5 + Math.random() * 10),
       });
 
       // Step 2: Analyze liquidity
@@ -200,16 +196,7 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Performance Benchmarks', () => {
     it('should build liquidity heatmap in < 100ms', async () => {
-      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
-        bids: Array.from({ length: 50 }, (_, i) => ({
-          price: 50000 - i * 10,
-          volume: Math.random() * 10,
-        })),
-        asks: Array.from({ length: 50 }, (_, i) => ({
-          price: 50010 + i * 10,
-          volume: Math.random() * 10,
-        })),
-      });
+      const orderbook: Orderbook = createPhase10PerformanceOrderbook(50000, 50010, 50);
 
       const start = Date.now();
       await liquidityService.buildLiquidityHeatmap(orderbook);
@@ -281,16 +268,7 @@ describe('Phase 10 Integration Tests', () => {
 
       // Run 500 iterations
       for (let i = 0; i < 500; i++) {
-        const orderbook: Orderbook = createPhase10IntegrationOrderbook({
-          bids: Array.from({ length: 20 }, (_, j) => ({
-            price: 50000 - j * 10,
-            volume: Math.random() * 10,
-          })),
-          asks: Array.from({ length: 20 }, (_, j) => ({
-            price: 50010 + j * 10,
-            volume: Math.random() * 10,
-          })),
-        });
+        const orderbook: Orderbook = createPhase10PerformanceOrderbook(50000, 50010, 20);
 
         await liquidityService.buildLiquidityHeatmap(orderbook);
       }
