@@ -14,6 +14,9 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { ExchangeAPIError, OrderTimeoutError } from '../../errors/DomainErrors';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
+import {
+  createBybitErrorHandlingHarness,
+} from '../helpers/bybit-test.utils';
 
 /**
  * Helper: Create a retryable error for testing
@@ -28,26 +31,10 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockConfig: ExchangeConfig;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockConfig = {
-      name: 'bybit',
-      apiKey: 'test-key',
-      apiSecret: 'test-secret',
-      symbol: 'BTCUSDT',
-      timeframe: '1m',
-      testnet: true,
-      demo: false,
-    } as unknown as ExchangeConfig;
-
-    mockRestClient = {
-      getServerTime: jest.fn(),
-    };
+    const harness = createBybitErrorHandlingHarness();
+    mockLogger = harness.logger as unknown as jest.Mocked<LoggerService>;
+    mockConfig = harness.config;
+    mockRestClient = harness.restClient as unknown as { getServerTime: jest.Mock };
   });
 
   describe('[RETRY Strategy] initialize()', () => {

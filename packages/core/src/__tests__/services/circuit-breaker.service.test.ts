@@ -8,8 +8,6 @@ import {
   createCircuitBreakerHarness,
 } from '../helpers/circuit-breaker-test.utils';
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -20,7 +18,8 @@ describe('CircuitBreakerService', () => {
 
   beforeEach(() => {
     defaultConfig = createCircuitBreakerConfig();
-    ({ service } = createCircuitBreakerHarness({ configOverrides: defaultConfig }));
+    const harness = createCircuitBreakerHarness({ configOverrides: defaultConfig });
+    service = harness.service;
   });
 
   // TEST 1-2: Initial state
@@ -97,6 +96,8 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should move to HALF_OPEN after cooldown', async () => {
+      jest.useFakeTimers();
+
       // Trip circuit
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
@@ -105,25 +106,28 @@ describe('CircuitBreakerService', () => {
       expect(service.getState()).toBe(CircuitState.OPEN);
 
       // Wait for cooldown
-      await sleep(5100); // Wait 5.1 seconds
+      jest.advanceTimersByTime(5100);
 
       // Check if can recover
       service.isOpen(); // Calling this triggers state transition
 
       expect(service.getState()).toBe(CircuitState.HALF_OPEN);
-    }, 10000); // 10 second timeout for this test
+      jest.useRealTimers();
+    });
   });
 
   // TEST 9-10: Recovery and reset
   describe('recovery and reset', () => {
     it('should close circuit after successful call in HALF_OPEN', async () => {
+      jest.useFakeTimers();
+
       // Trip circuit
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
       }
 
       // Wait for cooldown
-      await sleep(5100);
+      jest.advanceTimersByTime(5100);
 
       // Trigger HALF_OPEN
       service.isOpen();
@@ -133,7 +137,8 @@ describe('CircuitBreakerService', () => {
       service.recordSuccess();
       expect(service.getState()).toBe(CircuitState.CLOSED);
       expect(service.isOpen()).toBe(false);
-    }, 10000);
+      jest.useRealTimers();
+    });
 
     it('should manually reset circuit', () => {
       // Trip circuit

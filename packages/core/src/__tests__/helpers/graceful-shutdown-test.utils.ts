@@ -19,6 +19,15 @@ export interface GracefulShutdownMocks {
   eventBus: jest.Mocked<BotEventBus>;
 }
 
+export interface GracefulShutdownHarness {
+  mocks: GracefulShutdownMocks;
+  manager: GracefulShutdownManager;
+  createManager: (options?: {
+    config?: GracefulShutdownConfig;
+    stateDirectory?: string;
+  }) => GracefulShutdownManager;
+}
+
 export const defaultGracefulShutdownConfig: GracefulShutdownConfig = {
   enabled: true,
   timeoutMs: 30000,
@@ -128,4 +137,26 @@ export function createGracefulShutdownManager(
     mocks.eventBus,
     options.stateDirectory ?? './test-shutdown-state',
   );
+}
+
+export function createGracefulShutdownHarness(options: {
+  position?: Position | null;
+  config?: GracefulShutdownConfig;
+  stateDirectory?: string;
+} = {}): GracefulShutdownHarness {
+  const mocks = createGracefulShutdownMocks(options.position);
+  const createManager = (managerOptions: {
+    config?: GracefulShutdownConfig;
+    stateDirectory?: string;
+  } = {}) =>
+    createGracefulShutdownManager(mocks, {
+      config: managerOptions.config ?? options.config,
+      stateDirectory: managerOptions.stateDirectory ?? options.stateDirectory,
+    });
+
+  return {
+    mocks,
+    manager: createManager(),
+    createManager,
+  };
 }
