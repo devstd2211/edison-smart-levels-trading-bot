@@ -12,12 +12,9 @@
 
 import type { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import type { ExchangeConfig, LoggerService } from '../../types/legacy';
-import type { TimeframeProvider } from '../../providers/timeframe.provider';
 import {
   createPublicWebSocketErrorHandlerService,
   createPublicWebSocketHarness,
-  createPublicWebSocketService,
 } from '../helpers/public-websocket-test.utils';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
@@ -34,20 +31,16 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     classify: jest.Mock;
     getLogger: jest.Mock;
   };
-  let mockTimeframeProvider: TimeframeProvider;
-  let mockConfig: ExchangeConfig;
-  let loggerService: LoggerService;
   let errorHandlerService: ErrorHandler;
+  let createService: ReturnType<typeof createPublicWebSocketHarness>['createService'];
 
   beforeEach(() => {
     ({
       service,
       mockLogger,
-      loggerService,
-      mockTimeframeProvider,
-      mockConfig,
       errorHandler,
       errorHandlerService,
+      createService,
     } = createPublicWebSocketHarness());
   });
 
@@ -57,19 +50,14 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Constructor & ErrorHandler Integration', () => {
     it('should accept optional ErrorHandler parameter for backward compatibility', () => {
-      const serviceWithoutHandler = createPublicWebSocketService({
-        mockConfig,
+      const serviceWithoutHandler = createService({
+        withErrorHandler: false,
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
       });
       expect(serviceWithoutHandler).toBeDefined();
 
-      const serviceWithHandler = createPublicWebSocketService({
-        mockConfig,
+      const serviceWithHandler = createService({
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
         errorHandlerService: createPublicWebSocketErrorHandlerService(mockLogger),
       });
       expect(serviceWithHandler).toBeDefined();
@@ -86,13 +74,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Message Parsing & GRACEFUL_DEGRADE Strategy', () => {
     beforeEach(() => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
     });
 
     it('should handle invalid JSON messages with GRACEFUL_DEGRADE', () => {
@@ -145,13 +127,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Event Emission & Connectivity', () => {
     beforeEach(() => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
     });
 
     it('should emit candleClosed events for valid kline data', (done) => {
@@ -190,13 +166,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Reconnection Logic', () => {
     beforeEach(() => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
     });
 
     it('should emit disconnected event when connection is lost', (done) => {
@@ -228,13 +198,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Error Handling Strategies', () => {
     beforeEach(() => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
     });
 
     it('should use GRACEFUL_DEGRADE for data validation errors', () => {
@@ -264,11 +228,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
         lookbackCandles: 100,
       };
 
-      const serviceWithBtc = createPublicWebSocketService({
-        mockConfig,
+      const serviceWithBtc = createService({
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
         errorHandlerService,
         btcConfirmation: btcConfig,
       });
@@ -277,11 +238,8 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should handle BTC candle store assignment', () => {
-      const serviceWithBtc = createPublicWebSocketService({
-        mockConfig,
+      const serviceWithBtc = createService({
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
         errorHandlerService,
         btcConfirmation: { enabled: true, symbol: 'BTCUSDT' },
       });
@@ -299,13 +257,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('E2E Recovery Scenarios', () => {
     beforeEach(() => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
     });
 
     it('should maintain service state after disconnect', () => {
@@ -326,11 +278,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should support ErrorHandler-less fallback mode', () => {
-      const serviceNoHandler = createPublicWebSocketService({
-        mockConfig,
+      const serviceNoHandler = createService({
+        withErrorHandler: false,
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
       });
 
       expect(serviceNoHandler).toBeDefined();
@@ -344,13 +294,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Error Classification', () => {
     beforeEach(() => {
-      service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
     });
 
     it('should handle connection-related errors', () => {
@@ -385,11 +329,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (legacy mode)', () => {
-      const serviceNoHandler = createPublicWebSocketService({
-        mockConfig,
+      const serviceNoHandler = createService({
+        withErrorHandler: false,
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
       });
 
       expect(serviceNoHandler).toBeDefined();
@@ -397,11 +339,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should provide all public methods without ErrorHandler', () => {
-      service = createPublicWebSocketService({
-        mockConfig,
+      service = createService({
+        withErrorHandler: false,
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
       });
 
       expect(typeof service.connect).toBe('function');
@@ -411,11 +351,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should disconnect cleanly regardless of ErrorHandler presence', () => {
-      service = createPublicWebSocketService({
-        mockConfig,
+      service = createService({
+        withErrorHandler: false,
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
       });
 
       service.disconnect();
@@ -431,35 +369,21 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Integration with service composition', () => {
     it('should accept ErrorHandler injected from services builder', () => {
-      const service = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      const service = createService({ symbol: 'XRPUSDT', errorHandlerService });
 
       expect(service).toBeDefined();
     });
 
     it('should work with optional ErrorHandler parameter in builder flow', () => {
       // Simulate services creation without ErrorHandler (backward compat)
-      const service1 = createPublicWebSocketService({
-        mockConfig,
+      const service1 = createService({
+        withErrorHandler: false,
         symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
       });
       expect(service1).toBeDefined();
 
       // With ErrorHandler (normal flow)
-      const service2 = createPublicWebSocketService({
-        mockConfig,
-        symbol: 'XRPUSDT',
-        mockTimeframeProvider,
-        loggerService,
-        errorHandlerService,
-      });
+      const service2 = createService({ symbol: 'XRPUSDT', errorHandlerService });
       expect(service2).toBeDefined();
     });
   });

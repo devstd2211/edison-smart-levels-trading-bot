@@ -29,6 +29,8 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let mockLogger: RiskCalculatorMockLogger;
   let errorHandler: ErrorHandler;
   let defaultInput: RiskCalculationInput;
+  let createInput: ReturnType<typeof createRiskCalculatorHarness>['createInput'];
+  let createCalculator: ReturnType<typeof createRiskCalculatorHarness>['createCalculator'];
 
   beforeEach(() => {
     const harness = createRiskCalculatorHarness();
@@ -36,53 +38,55 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
     defaultInput = harness.defaultInput;
+    createInput = harness.createInput;
+    createCalculator = harness.createCalculator;
   });
 
   describe('THROW Strategy - Input Validation', () => {
     it('throws on invalid entryPrice (NaN)', () => {
-      const input = { ...defaultInput, entryPrice: NaN };
+      const input = createInput({ entryPrice: NaN });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on invalid entryPrice (Infinity)', () => {
-      const input = { ...defaultInput, entryPrice: Infinity };
+      const input = createInput({ entryPrice: Infinity });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on negative entryPrice', () => {
-      const input = { ...defaultInput, entryPrice: -100 };
+      const input = createInput({ entryPrice: -100 });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on zero entryPrice', () => {
-      const input = { ...defaultInput, entryPrice: 0 };
+      const input = createInput({ entryPrice: 0 });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on invalid referenceLevel (NaN)', () => {
-      const input = { ...defaultInput, referenceLevel: NaN };
+      const input = createInput({ referenceLevel: NaN });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on invalid slMultiplier (negative)', () => {
-      const input = { ...defaultInput, slMultiplier: -1 };
+      const input = createInput({ slMultiplier: -1 });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on empty takeProfitConfigs', () => {
-      const input = { ...defaultInput, takeProfitConfigs: [] };
+      const input = createInput({ takeProfitConfigs: [] });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on invalid minSlDistancePercent (negative)', () => {
-      const input = { ...defaultInput, minSlDistancePercent: -0.5 };
+      const input = createInput({ minSlDistancePercent: -0.5 });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
   });
 
   describe('GRACEFUL_DEGRADE Strategy - Missing/Invalid ATR', () => {
     it('uses fallback ATR on NaN atrPercent', () => {
-      const input = { ...defaultInput, atrPercent: NaN };
+      const input = createInput({ atrPercent: NaN });
       const result = calculator.calculate(input);
 
       // Should calculate with fallback ATR (1.5%)
@@ -92,7 +96,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('uses fallback ATR on zero atrPercent', () => {
-      const input = { ...defaultInput, atrPercent: 0 };
+      const input = createInput({ atrPercent: 0 });
       const result = calculator.calculate(input);
 
       // Should calculate with fallback ATR
@@ -101,7 +105,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('uses fallback ATR on negative atrPercent', () => {
-      const input = { ...defaultInput, atrPercent: -1.5 };
+      const input = createInput({ atrPercent: -1.5 });
       const result = calculator.calculate(input);
 
       // Should calculate with fallback ATR
@@ -110,7 +114,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('uses fallback ATR on Infinity atrPercent', () => {
-      const input = { ...defaultInput, atrPercent: Infinity };
+      const input = createInput({ atrPercent: Infinity });
       const result = calculator.calculate(input);
 
       // Should calculate with fallback ATR
@@ -119,7 +123,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('calculates valid SL even with fallback ATR', () => {
-      const input = { ...defaultInput, atrPercent: NaN };
+      const input = createInput({ atrPercent: NaN });
       const result = calculator.calculate(input);
 
       // Verify calculation correctness with fallback
@@ -152,10 +156,11 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('continues calculation despite logger failures without ErrorHandler', () => {
-      const calculatorNoHandler = createRiskCalculatorHarness({
+      const calculatorNoHandler = createCalculator({
         logger: mockLogger,
         withErrorHandler: false,
-      }).calculator;
+        errorHandler: undefined,
+      });
       mockLogger.debug.mockImplementation(() => {
         throw new Error('Logger failure');
       });
@@ -219,7 +224,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   describe('Integration Scenarios', () => {
     it('handles SHORT position with valid inputs', () => {
       const input = {
-        ...defaultInput,
+        ...createInput(),
         direction: SignalDirection.SHORT,
         referenceLevel: 105,
       };
@@ -233,7 +238,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
     it('handles multiple TP levels correctly', () => {
       const input = {
-        ...defaultInput,
+        ...createInput(),
         takeProfitConfigs: [
           ...createRiskCalculatorTakeProfitConfigs([
             { level: 1, percent: 0.5, sizePercent: 33 },
@@ -252,7 +257,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
     it('respects minSlDistancePercent constraint', () => {
       const input = {
-        ...defaultInput,
+        ...createInput(),
         atrPercent: 0.1, // Very small ATR
         slMultiplier: 0.1, // Very small multiplier
         minSlDistancePercent: 2.0, // Enforced minimum
@@ -266,7 +271,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
     it('handles cascading failures gracefully', () => {
       const input = {
-        ...defaultInput,
+        ...createInput(),
         atrPercent: NaN, // Invalid ATR (will use fallback)
       };
 
@@ -291,7 +296,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('still validates input and throws on errors', () => {
-      const input = { ...defaultInput, entryPrice: NaN };
+      const input = createInput({ entryPrice: NaN });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
@@ -302,7 +307,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
     it('throws on ATR validation without ErrorHandler', () => {
       // Without handler, ATR validation throws instead of GRACEFUL_DEGRADE
-      const input = { ...defaultInput, atrPercent: NaN };
+      const input = createInput({ atrPercent: NaN });
       // This should proceed (uses local fallback, not handler)
       const result = calculator.calculate(input);
       expect(result).toBeDefined();
@@ -323,7 +328,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('Error Context & Information', () => {
     it('includes validation context in error message', () => {
-      const input = { ...defaultInput, entryPrice: NaN };
+      const input = createInput({ entryPrice: NaN });
       try {
         calculator.calculate(input);
         fail('Should throw');
@@ -337,7 +342,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('preserves error context for debugging', () => {
-      const input = { ...defaultInput, entryPrice: -50 };
+      const input = createInput({ entryPrice: -50 });
       try {
         calculator.calculate(input);
         fail('Should throw');
@@ -350,7 +355,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('Edge Cases & Extreme Values', () => {
     it('handles very small entry prices', () => {
-      const input = { ...defaultInput, entryPrice: 0.0001 };
+      const input = createInput({ entryPrice: 0.0001 });
       const result = calculator.calculate(input);
 
       expect(result).toBeDefined();
@@ -359,7 +364,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
     it('handles very large entry prices', () => {
       const input = {
-        ...defaultInput,
+        ...createInput(),
         entryPrice: 1000000,
         referenceLevel: 999000, // Reasonable reference level for LONG
       };
@@ -371,7 +376,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('handles very large slMultiplier', () => {
-      const input = { ...defaultInput, slMultiplier: 100 };
+      const input = createInput({ slMultiplier: 100 });
       const result = calculator.calculate(input);
 
       expect(result).toBeDefined();
@@ -380,7 +385,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
     it('handles decimal precision correctly', () => {
       const input = {
-        ...defaultInput,
+        ...createInput(),
         entryPrice: 0.123456789,
         atrPercent: 0.123456789,
       };
@@ -412,7 +417,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     it('no memory leaks on repeated error cases', () => {
       for (let i = 0; i < 50; i++) {
         try {
-          calculator.calculate({ ...defaultInput, entryPrice: NaN });
+          calculator.calculate(createInput({ entryPrice: NaN }));
         } catch {
           // Expected
         }

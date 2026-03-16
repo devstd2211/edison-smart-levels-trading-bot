@@ -107,6 +107,42 @@ export function createSessionStatsTrade(tradeId: string): SessionTradeRecord {
   };
 }
 
+export function getSessionStatsFilePath(tempDir: string): string {
+  return path.join(tempDir, 'session-stats.json');
+}
+
+export function getSessionStatsCorruptedBackupPath(tempDir: string): string {
+  return `${getSessionStatsFilePath(tempDir)}.corrupted`;
+}
+
+export function createSessionStatsExitUpdate(
+  overrides: Partial<
+    Pick<
+      SessionTradeRecord,
+      'exitPrice' | 'pnl' | 'pnlPercent' | 'exitType' | 'tpHitLevels' | 'holdingTimeMs' | 'stopLoss'
+    >
+  > = {},
+): Pick<
+  SessionTradeRecord,
+  'exitPrice' | 'pnl' | 'pnlPercent' | 'exitType' | 'tpHitLevels' | 'holdingTimeMs' | 'stopLoss'
+> {
+  return {
+    exitPrice: 51000,
+    pnl: 1000,
+    pnlPercent: 2,
+    exitType: ExitType.TAKE_PROFIT_1,
+    tpHitLevels: [1],
+    holdingTimeMs: 60000,
+    stopLoss: {
+      initial: 49000,
+      final: 49000,
+      movedToBreakeven: false,
+      trailingActivated: false,
+    },
+    ...overrides,
+  };
+}
+
 type SessionStatsHarnessOptions = {
   logger?: SessionStatsMockLogger;
   tempDir?: string;

@@ -25,6 +25,11 @@ export type PublicWebSocketHarness = {
   mockConfig: ExchangeConfig;
   errorHandler: PublicWebSocketErrorHandlerMock;
   errorHandlerService: ErrorHandler;
+  createService: (
+    overrides?: Partial<
+      Omit<PublicWebSocketServiceOptions, 'mockConfig' | 'mockTimeframeProvider' | 'loggerService'>
+    > & { withErrorHandler?: boolean },
+  ) => PublicWebSocketService;
 };
 
 export type PublicWebSocketServiceOptions = {
@@ -128,6 +133,18 @@ export function createPublicWebSocketHarness(options: {
     mockConfig,
     errorHandler,
     errorHandlerService,
+    createService: (overrides = {}) =>
+      createPublicWebSocketService({
+        mockConfig,
+        mockTimeframeProvider,
+        loggerService,
+        errorHandlerService:
+          overrides.withErrorHandler === false
+            ? undefined
+            : overrides.errorHandlerService ?? errorHandlerService,
+        symbol: overrides.symbol,
+        btcConfirmation: overrides.btcConfirmation,
+      }),
   };
 }
 

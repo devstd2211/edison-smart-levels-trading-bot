@@ -66,6 +66,8 @@ export const createRiskCalculatorHarness = (
   logger: RiskCalculatorMockLogger;
   errorHandler?: ErrorHandler;
   defaultInput: RiskCalculationInput;
+  createInput: (overrides?: Partial<RiskCalculationInput>) => RiskCalculationInput;
+  createCalculator: (overrides?: RiskCalculatorHarnessOptions) => RiskCalculator;
 } => {
   const logger = options.logger ?? createRiskCalculatorMockLogger();
   const errorHandler =
@@ -82,6 +84,13 @@ export const createRiskCalculatorHarness = (
     logger,
     errorHandler,
     defaultInput: createRiskCalculationInput(),
+    createInput: (overrides = {}) => createRiskCalculationInput(overrides),
+    createCalculator: (overrides = {}) =>
+      createRiskCalculatorService({
+        logger: overrides.logger ?? logger,
+        withErrorHandler: overrides.withErrorHandler,
+        errorHandler: overrides.errorHandler ?? errorHandler,
+      }),
   };
 };
 

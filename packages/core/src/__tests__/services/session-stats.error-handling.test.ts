@@ -16,20 +16,20 @@ import * as path from 'path';
 import { SessionStatsService } from '../../services/session-stats.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  SessionStatsReadError,
-  SessionStatsWriteError,
   SessionRecordValidationError,
 } from '../../errors/DomainErrors';
 import {
-  ExitType,
 } from '../../types/legacy';
 import {
   cleanupSessionStatsTempDir,
   createSessionStatsConfig,
+  createSessionStatsExitUpdate,
   createSessionStatsHarness,
   createSessionStatsLogger,
   createSessionStatsService,
   createSessionStatsTrade,
+  getSessionStatsCorruptedBackupPath,
+  getSessionStatsFilePath,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
@@ -59,7 +59,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   describe('A. File I/O Errors - GRACEFUL_DEGRADE & RETRY', () => {
     it('test-A1: Should degrade gracefully on corrupted JSON', () => {
       // Arrange: Create corrupted JSON file
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       fs.writeFileSync(statsPath, '{invalid json}', 'utf-8');
 
       // Act: Create stats service (loads in constructor)
@@ -69,13 +69,13 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       expect(svc.getAllSessions()).toHaveLength(0);
 
       // Verify backup was created
-      const backupPath = statsPath + '.corrupted';
+      const backupPath = getSessionStatsCorruptedBackupPath(tempDir);
       expect(fs.existsSync(backupPath)).toBe(true);
     });
 
     it('test-A2: Should create backup of corrupted file', () => {
       // Arrange: Create corrupted JSON file with specific content
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       const corruptedContent = '{ "sessions": [invalid] }';
       fs.writeFileSync(statsPath, corruptedContent, 'utf-8');
 
@@ -84,7 +84,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       svc.getAllSessions(); // Explicitly trigger lazy load/start lifecycle
 
       // Assert: Backup should contain the corrupted content
-      const backupPath = statsPath + '.corrupted';
+      const backupPath = getSessionStatsCorruptedBackupPath(tempDir);
       expect(fs.existsSync(backupPath)).toBe(true);
 
       const backupContent = fs.readFileSync(backupPath, 'utf-8');
@@ -93,7 +93,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
     it('test-A3: Should start session and save after recovery', () => {
       // Arrange: Create corrupted file
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       fs.writeFileSync(statsPath, '{bad json}', 'utf-8');
 
       // Act: Create service and start session
@@ -116,7 +116,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       stats.recordTradeEntry(trade);
 
       // Assert: File should be saved
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       expect(fs.existsSync(statsPath)).toBe(true);
       const content = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
       expect(content.sessions[0].trades).toHaveLength(1);
@@ -132,7 +132,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
       // Assert: Directory should be created
       expect(fs.existsSync(newDir)).toBe(true);
-      const statsPath = path.join(newDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(newDir);
       expect(fs.existsSync(statsPath)).toBe(true);
     });
 
@@ -151,7 +151,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       expect(session?.trades).toHaveLength(100);
 
       // Verify file is valid
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       const content = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
       expect(content.sessions[0].trades).toHaveLength(100);
     });
@@ -247,7 +247,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       }
 
       // Assert: All trades should be saved
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       const content = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
       expect(content.sessions[0].trades).toHaveLength(5);
     });
@@ -261,7 +261,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const sessionId2 = stats.startSession(createConfig(), 'ETHUSDT');
 
       // Assert: Both sessions should be saved
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       const content = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
       expect(content.sessions).toHaveLength(2);
       expect(content.sessions[0].sessionId).toBe(sessionId1);
@@ -278,7 +278,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       stats.endSession();
 
       // Assert: Session should have endTime
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       const content = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
       expect(content.sessions[0].endTime).not.toBeNull();
     });
@@ -288,20 +288,10 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       stats.startSession(createConfig(), 'BTCUSDT');
 
       // Act: Update non-existent trade (should log warning, not crash)
-      const result = stats.updateTradeExit('non-existent-trade', {
-        exitPrice: 51000,
-        pnl: 1000,
-        pnlPercent: 2,
-        exitType: ExitType.TAKE_PROFIT_1,
-        tpHitLevels: [1],
-        holdingTimeMs: 60000,
-        stopLoss: {
-          initial: 49000,
-          final: 49000,
-          movedToBreakeven: false,
-          trailingActivated: false,
-        },
-      });
+      const result = stats.updateTradeExit(
+        'non-existent-trade',
+        createSessionStatsExitUpdate(),
+      );
 
       // Assert: Should return gracefully (SKIP strategy)
       expect(result).toBeUndefined(); // Method doesn't return, just logs
@@ -322,20 +312,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const trade1 = createSessionTrade('trade-1');
       stats.recordTradeEntry(trade1);
 
-      stats.updateTradeExit('trade-1', {
-        exitPrice: 51000,
-        pnl: 1000,
-        pnlPercent: 2,
-        exitType: ExitType.TAKE_PROFIT_1,
-        tpHitLevels: [1],
-        holdingTimeMs: 60000,
-        stopLoss: {
-          initial: 49000,
-          final: 49000,
-          movedToBreakeven: false,
-          trailingActivated: false,
-        },
-      });
+      stats.updateTradeExit('trade-1', createSessionStatsExitUpdate());
 
       const trade2 = createSessionTrade('trade-2');
       stats.recordTradeEntry(trade2);
@@ -343,7 +320,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       stats.endSession();
 
       // Assert: Session should be fully persisted
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       const content = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
       expect(content.sessions).toHaveLength(1);
       expect(content.sessions[0].trades).toHaveLength(2);
@@ -361,20 +338,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
         // Simulate some exit updates (some may fail due to missing trades)
         if (i % 2 === 0) {
-          stats.updateTradeExit(`trade-${i}`, {
-            exitPrice: 51000,
-            pnl: 1000,
-            pnlPercent: 2,
-            exitType: ExitType.TAKE_PROFIT_1,
-            tpHitLevels: [1],
-            holdingTimeMs: 60000,
-            stopLoss: {
-              initial: 49000,
-              final: 49000,
-              movedToBreakeven: false,
-              trailingActivated: false,
-            },
-          });
+          stats.updateTradeExit(`trade-${i}`, createSessionStatsExitUpdate());
         }
       }
 
@@ -459,20 +423,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const trade = createSessionTrade('trade-1');
       statsNoHandler.recordTradeEntry(trade);
 
-      statsNoHandler.updateTradeExit('trade-1', {
-        exitPrice: 51000,
-        pnl: 1000,
-        pnlPercent: 2,
-        exitType: ExitType.TAKE_PROFIT_1,
-        tpHitLevels: [1],
-        holdingTimeMs: 60000,
-        stopLoss: {
-          initial: 49000,
-          final: 49000,
-          movedToBreakeven: false,
-          trailingActivated: false,
-        },
-      });
+      statsNoHandler.updateTradeExit('trade-1', createSessionStatsExitUpdate());
 
       statsNoHandler.endSession();
 
@@ -484,7 +435,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
     it('test-E2: Should gracefully handle file errors without ErrorHandler', () => {
       // Arrange: Create corrupted file
-      const statsPath = path.join(tempDir, 'session-stats.json');
+      const statsPath = getSessionStatsFilePath(tempDir);
       fs.writeFileSync(statsPath, '{corrupted}', 'utf-8');
 
       // Act: Create service without ErrorHandler
@@ -494,7 +445,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       expect(statsNoHandler.getAllSessions()).toHaveLength(0);
 
       // Verify backup was still created
-      const backupPath = statsPath + '.corrupted';
+      const backupPath = getSessionStatsCorruptedBackupPath(tempDir);
       expect(fs.existsSync(backupPath)).toBe(true);
     });
   });

@@ -10,17 +10,14 @@ import { ExchangeFactory } from '../../services/exchange-factory.service';
 import type { ExchangeConfig } from '../../services/exchange-factory.service';
 import { ExchangeFactoryConfigError } from '../../errors/DomainErrors';
 import {
-  asExchangeFactoryLogger,
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createExchangeFactoryConfig,
-  createExchangeFactoryErrorHandler,
-  createExchangeFactoryMockLogger,
-  createExchangeFactoryService,
+  createExchangeFactoryTestContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ReturnType<typeof createExchangeFactoryMockLogger>;
+  let mockLogger: ReturnType<typeof createExchangeFactoryTestContext>['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createFactory: (
     config?: ExchangeConfig,
@@ -31,21 +28,11 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   ) => ExchangeFactory;
 
   beforeEach(() => {
-    mockLogger = createExchangeFactoryMockLogger();
-    mockErrorHandler = createExchangeFactoryErrorHandler(
-      asExchangeFactoryLogger(mockLogger),
-    );
-    createFactory = (config = createExchangeFactoryConfig(), errorHandler = mockErrorHandler) =>
-      createExchangeFactoryService({
-        logger: asExchangeFactoryLogger(mockLogger),
-        config,
-        errorHandler,
-      });
-    createFactoryWithoutErrorHandler = (config = createExchangeFactoryConfig()) =>
-      createExchangeFactoryService({
-        logger: asExchangeFactoryLogger(mockLogger),
-        config,
-      });
+    const context = createExchangeFactoryTestContext();
+    mockLogger = context.mockLogger;
+    mockErrorHandler = context.errorHandler;
+    createFactory = context.createFactory;
+    createFactoryWithoutErrorHandler = context.createFactoryWithoutErrorHandler;
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

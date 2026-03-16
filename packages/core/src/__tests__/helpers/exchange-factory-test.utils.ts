@@ -123,3 +123,31 @@ export function createExchangeFactoryService(options: {
     options.errorHandler,
   );
 }
+
+export function createExchangeFactoryTestContext() {
+  const mockLogger = createExchangeFactoryMockLogger();
+  const logger = asExchangeFactoryLogger(mockLogger);
+  const errorHandler = createExchangeFactoryErrorHandler(logger);
+
+  return {
+    mockLogger,
+    logger,
+    errorHandler,
+    createFactory: (
+      config: ExchangeConfig = createExchangeFactoryConfig(),
+      overrideErrorHandler: ErrorHandler = errorHandler,
+    ) =>
+      createExchangeFactoryService({
+        logger,
+        config,
+        errorHandler: overrideErrorHandler,
+      }),
+    createFactoryWithoutErrorHandler: (
+      config: ExchangeConfig = createExchangeFactoryConfig(),
+    ) =>
+      createExchangeFactoryService({
+        logger,
+        config,
+      }),
+  };
+}
