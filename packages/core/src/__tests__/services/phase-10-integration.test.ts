@@ -19,6 +19,7 @@ import {
   createPhase10OrderbookSide,
   createPhase10PerformanceOrderbook,
   createPhase10Signal,
+  createPhase10WorkflowFixtures,
   seedPhase10VolumeBaseline,
 } from '../helpers/phase-10-integration-test.utils';
 
@@ -129,8 +130,7 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Phase 10.2 Services Integration', () => {
     it('should validate signals with ML', async () => {
-      const signal: Signal = createPhase10Signal();
-      const context: MarketContext = createPhase10Context();
+      const { signal, context } = createPhase10WorkflowFixtures();
 
       const validation = await mlValidatorService.validateSignal(signal, context);
 
@@ -176,8 +176,9 @@ describe('Phase 10 Integration Tests', () => {
       expect(heatmap.zones.length).toBeGreaterThanOrEqual(0);
 
       // Step 3: Generate signal
-      const signal: Signal = createPhase10Signal();
-      const context: MarketContext = createPhase10Context({ currentPrice: 50010 });
+      const { signal, context } = createPhase10WorkflowFixtures({
+        context: { currentPrice: 50010 },
+      });
 
       // Step 4: Validate signal
       const validation = await mlValidatorService.validateSignal(signal, context);
@@ -206,8 +207,7 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should validate signal in < 30ms', async () => {
-      const signal: Signal = createPhase10Signal();
-      const context: MarketContext = createPhase10Context();
+      const { signal, context } = createPhase10WorkflowFixtures();
 
       const start = Date.now();
       await mlValidatorService.validateSignal(signal, context);
@@ -253,8 +253,7 @@ describe('Phase 10 Integration Tests', () => {
       expect(result.adjustedConfidence).toBeNaN();
 
       // Service should still work after error
-      const validSignal: Signal = createPhase10Signal();
-      const context: MarketContext = createPhase10Context();
+      const { signal: validSignal, context } = createPhase10WorkflowFixtures();
 
       const validResult = await mlValidatorService.validateSignal(validSignal, context);
       expect(validResult).toBeDefined();

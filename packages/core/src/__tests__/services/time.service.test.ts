@@ -246,9 +246,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
   describe('Time Conversion Methods', () => {
     beforeEach(async () => {
-      const serverTime = Date.now() + 1000;
-      mockExchange.getServerTime.mockResolvedValue(serverTime);
-      await timeService.syncWithExchange();
+      timeService = await harness.createSyncedService();
     });
 
     it('should convert local time to server time', () => {
@@ -290,19 +288,13 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
   describe('Sync Status & Monitoring', () => {
     it('should report recent sync within sync interval', async () => {
-      const serverTime = Date.now();
-      mockExchange.getServerTime.mockResolvedValue(serverTime);
-
-      await timeService.syncWithExchange();
+      timeService = await harness.createSyncedService({ serverTime: Date.now() });
 
       expect(timeService.isSyncRecent()).toBe(true);
     });
 
     it('should report stale sync after interval expires', async () => {
-      const serverTime = Date.now();
-      mockExchange.getServerTime.mockResolvedValue(serverTime);
-
-      await timeService.syncWithExchange();
+      timeService = await harness.createSyncedService({ serverTime: Date.now() });
 
       // Wait for sync interval to pass (simulated via mocking)
       jest.useFakeTimers();
@@ -314,10 +306,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should provide sync info with next sync time', async () => {
-      const serverTime = Date.now();
-      mockExchange.getServerTime.mockResolvedValue(serverTime);
-
-      await timeService.syncWithExchange();
+      timeService = await harness.createSyncedService({ serverTime: Date.now() });
 
       const syncInfo = timeService.getSyncInfo();
       expect(syncInfo.nextSyncIn).toBeLessThanOrEqual(1000);

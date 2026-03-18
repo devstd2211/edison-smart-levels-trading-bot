@@ -65,6 +65,8 @@ export function createSmartOrderExecutionHarness(
   logger: LoggerService;
   errorHandler: ErrorHandler;
   config: SmartOrderConfig;
+  order: SmartOrderRequest;
+  createNoHandlerService: () => SmartOrderExecutionService;
   createService: (options?: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
@@ -74,6 +76,7 @@ export function createSmartOrderExecutionHarness(
   const logger = asSmartOrderLogger(createSmartOrderExecutionLogger());
   const errorHandler = new ErrorHandler(logger);
   const config = createSmartOrderExecutionConfig(overrides);
+  const order = createSmartOrderRequest();
   const createService = (options: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
@@ -90,6 +93,8 @@ export function createSmartOrderExecutionHarness(
     logger,
     errorHandler,
     config,
+    order,
+    createNoHandlerService: () => createService({ errorHandler: undefined }),
     createService,
   };
 }

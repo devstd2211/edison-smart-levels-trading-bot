@@ -41,9 +41,12 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   let errorHandler: ErrorHandler;
   let logger: SessionStatsMockLogger;
   let tempDir: string;
+  let createService: (
+    overrides?: { errorHandler?: ErrorHandler; autoStart?: boolean }
+  ) => SessionStatsService;
 
   beforeEach(() => {
-    ({ stats, errorHandler, logger, tempDir } = createSessionStatsHarness({
+    ({ stats, errorHandler, logger, tempDir, createService } = createSessionStatsHarness({
       logger: createSessionStatsLogger(),
     }));
   });
@@ -62,8 +65,8 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const statsPath = getSessionStatsFilePath(tempDir);
       fs.writeFileSync(statsPath, '{invalid json}', 'utf-8');
 
-      // Act: Create stats service (loads in constructor)
-      const svc = createSessionStatsService({ logger, tempDir, errorHandler });
+      // Act: Create stats service and explicitly start load lifecycle
+      const svc = createService({ autoStart: true });
 
       // Assert: Should start with empty database instead of crashing
       expect(svc.getAllSessions()).toHaveLength(0);
@@ -79,9 +82,8 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const corruptedContent = '{ "sessions": [invalid] }';
       fs.writeFileSync(statsPath, corruptedContent, 'utf-8');
 
-      // Act: Create stats service
-      const svc = createSessionStatsService({ logger, tempDir, errorHandler });
-      svc.getAllSessions(); // Explicitly trigger lazy load/start lifecycle
+      // Act: Create stats service and explicitly start load lifecycle
+      const svc = createService({ autoStart: true });
 
       // Assert: Backup should contain the corrupted content
       const backupPath = getSessionStatsCorruptedBackupPath(tempDir);
@@ -97,7 +99,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       fs.writeFileSync(statsPath, '{bad json}', 'utf-8');
 
       // Act: Create service and start session
-      const svc = createSessionStatsService({ logger, tempDir, errorHandler });
+      const svc = createService();
       const sessionId = svc.startSession(createConfig(), 'BTCUSDT');
 
       // Assert: Session should be created and file should be valid now
@@ -127,7 +129,12 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       const newDir = path.join(tempDir, 'nested', 'dir', 'structure');
 
       // Act: Create session in non-existent directory
-      const svc = createSessionStatsService({ logger, tempDir: newDir, errorHandler });
+      const svc = createSessionStatsService({
+        logger,
+        tempDir: newDir,
+        errorHandler,
+        autoStart: true,
+      });
       svc.startSession(createConfig(), 'BTCUSDT');
 
       // Assert: Directory should be created
@@ -216,7 +223,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
 
     it('test-B4: Should skip duplicate without ErrorHandler (backward compatibility)', () => {
       // Arrange: Create service WITHOUT ErrorHandler
-      const statsNoHandler = createSessionStatsService({ logger, tempDir });
+      const statsNoHandler = createService({ errorHandler: undefined });
       statsNoHandler.startSession(createConfig(), 'BTCUSDT');
       const trade1 = createSessionTrade('trade-id');
       statsNoHandler.recordTradeEntry(trade1);
@@ -359,7 +366,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       stats.recordTradeEntry(trade1);
 
       // Simulate crash/restart by creating new service instance
-      const stats2 = createSessionStatsService({ logger, tempDir, errorHandler });
+      const stats2 = createService({ autoStart: true });
 
       // Act: Resume and continue trading
       const currentSession = stats2.getCurrentSession();
@@ -416,7 +423,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   describe('E. Backward Compatibility - Works Without ErrorHandler', () => {
     it('test-E1: Should work without ErrorHandler parameter', () => {
       // Arrange: Create service without ErrorHandler
-      const statsNoHandler = createSessionStatsService({ logger, tempDir });
+      const statsNoHandler = createService({ errorHandler: undefined });
 
       // Act: Perform all basic operations
       const sessionId = statsNoHandler.startSession(createConfig(), 'BTCUSDT');
@@ -439,7 +446,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
       fs.writeFileSync(statsPath, '{corrupted}', 'utf-8');
 
       // Act: Create service without ErrorHandler
-      const statsNoHandler = createSessionStatsService({ logger, tempDir });
+      const statsNoHandler = createService({ errorHandler: undefined, autoStart: true });
 
       // Assert: Should start with empty database (graceful degradation)
       expect(statsNoHandler.getAllSessions()).toHaveLength(0);

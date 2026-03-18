@@ -23,6 +23,18 @@ export function createSeededPositionRepositoryHarness(options: {
   return repository;
 }
 
+export function createSeededCurrentPositionRepository(
+  currentPosition: Position | null,
+): IPositionRepository {
+  return createSeededPositionRepositoryHarness({ currentPosition });
+}
+
+export function createSeededHistoryRepository(
+  history: Position[],
+): IPositionRepository {
+  return createSeededPositionRepositoryHarness({ history });
+}
+
 export function createRepositoryPosition(
   overrides: Partial<Position> = {},
 ): Position {

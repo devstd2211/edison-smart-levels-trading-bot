@@ -37,6 +37,8 @@ describe('SmartOrderExecutionService', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
+  let baseOrder: SmartOrderRequest;
+  let createNoHandlerService: ReturnType<typeof createSmartOrderExecutionHarness>['createNoHandlerService'];
   let createService: (options?: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
@@ -49,6 +51,8 @@ describe('SmartOrderExecutionService', () => {
     logger = harness.logger;
     errorHandler = harness.errorHandler;
     mockConfig = harness.config;
+    baseOrder = harness.order;
+    createNoHandlerService = harness.createNoHandlerService;
     createService = harness.createService;
   });
 
@@ -202,12 +206,7 @@ describe('SmartOrderExecutionService', () => {
         .spyOn(asSmartOrderInternals(service), 'doExecuteSmartOrder')
         .mockRejectedValue(new Error('Exchange error'));
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await service.executeSmartOrder(order);
 
@@ -259,12 +258,7 @@ describe('SmartOrderExecutionService', () => {
 
     it('should return current state when monitorAndAdjust throws', async () => {
       // Execute order first to ensure it's in activeOrders
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await service.executeSmartOrder(order);
 
@@ -310,12 +304,7 @@ describe('SmartOrderExecutionService', () => {
         .spyOn(asSmartOrderInternals(service), 'doExecuteTWAP')
         .mockRejectedValue(new Error('TWAP failed'));
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await service.executeTWAP(order);
 
@@ -335,12 +324,7 @@ describe('SmartOrderExecutionService', () => {
         .spyOn(asSmartOrderInternals(service), 'doExecuteVWAP')
         .mockRejectedValue(new Error('VWAP failed'));
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await service.executeVWAP(order);
 
@@ -388,18 +372,13 @@ describe('SmartOrderExecutionService', () => {
   describe('SKIP - Logging Failures', () => {
     it('should continue execution when logger.info throws', async () => {
       // Create service WITHOUT ErrorHandler to avoid ErrorHandler using logger
-      const serviceWithoutEH = createService({ errorHandler: undefined });
+      const serviceWithoutEH = createNoHandlerService();
 
       (logger.info as jest.Mock).mockImplementation(() => {
         throw new Error('Logging failed');
       });
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await serviceWithoutEH.executeSmartOrder(order);
 
@@ -409,7 +388,7 @@ describe('SmartOrderExecutionService', () => {
 
     it('should continue execution when logger.warn throws', async () => {
       // Create service WITHOUT ErrorHandler
-      const serviceWithoutEH = new SmartOrderExecutionService(mockConfig, logger);
+      const serviceWithoutEH = createNoHandlerService();
 
       (logger.warn as jest.Mock).mockImplementation(() => {
         throw new Error('Logging failed');
@@ -432,7 +411,7 @@ describe('SmartOrderExecutionService', () => {
 
     it('should continue execution when logger.error throws', async () => {
       // Create service WITHOUT ErrorHandler
-      const serviceWithoutEH = createService({ errorHandler: undefined });
+      const serviceWithoutEH = createNoHandlerService();
 
       (logger.error as jest.Mock).mockImplementation(() => {
         throw new Error('Logging failed');
@@ -443,12 +422,7 @@ describe('SmartOrderExecutionService', () => {
         .spyOn(asSmartOrderInternals(serviceWithoutEH), 'doExecuteSmartOrder')
         .mockRejectedValue(new Error('Execution error'));
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await serviceWithoutEH.executeSmartOrder(order);
 
@@ -479,12 +453,7 @@ describe('SmartOrderExecutionService', () => {
         errorHandler: undefined,
       });
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       // Should not throw despite logger throwing
       const report = await serviceWithThrowingLogger.executeSmartOrder(order);
@@ -673,14 +642,9 @@ describe('SmartOrderExecutionService', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     it('should work without ErrorHandler', async () => {
-      const serviceWithoutEH = createService({ errorHandler: undefined });
+      const serviceWithoutEH = createNoHandlerService();
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order: SmartOrderRequest = { ...baseOrder };
 
       const report = await serviceWithoutEH.executeSmartOrder(order);
 
@@ -708,7 +672,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should handle errors gracefully without ErrorHandler', async () => {
-      const serviceWithoutEH = createService({ errorHandler: undefined });
+      const serviceWithoutEH = createNoHandlerService();
 
       // Mock to throw error
       const spy = jest

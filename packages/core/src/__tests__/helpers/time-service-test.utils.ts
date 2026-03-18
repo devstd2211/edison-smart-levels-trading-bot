@@ -19,6 +19,15 @@ export interface TimeServiceHarness {
     exchange?: MockTimeExchange;
     attachExchange?: boolean;
   }) => TimeService;
+  createSyncedService: (options?: {
+    serverTime?: number;
+    syncIntervalMs?: number;
+    maxSyncFailures?: number;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    exchange?: MockTimeExchange;
+    attachExchange?: boolean;
+  }) => Promise<TimeService>;
 }
 
 export function createTimeServiceLogger(): LoggerService {
@@ -62,6 +71,23 @@ export function createTimeServiceHarness(): TimeServiceHarness {
         service.setBybitService((serviceExchange ?? exchange) as unknown as IExchange);
       }
 
+      return service;
+    },
+    async createSyncedService(options = {}): Promise<TimeService> {
+      const service = this.createService(options);
+      const exchange =
+        (Object.prototype.hasOwnProperty.call(options, 'exchange')
+          ? options.exchange
+          : this.exchange) ?? this.exchange;
+
+      if (options.attachExchange === false) {
+        return service;
+      }
+
+      exchange.getServerTime.mockResolvedValue(
+        options.serverTime ?? Date.now() + 1000,
+      );
+      await service.syncWithExchange();
       return service;
     },
   };

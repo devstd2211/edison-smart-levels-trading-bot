@@ -82,11 +82,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report exchange as degraded when service not available', async () => {
-      const svc = harness.createService({
-        exchange: undefined,
-        websocket: undefined,
-        errorHandler: undefined,
-      });
+      const svc = harness.createUnavailableService();
 
       const health = await svc.checkExchange();
 
@@ -142,11 +138,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report WebSocket as degraded when service not available', async () => {
-      const svc = harness.createService({
-        exchange: undefined,
-        websocket: undefined,
-        errorHandler: undefined,
-      });
+      const svc = harness.createUnavailableService();
 
       const health = await svc.checkWebSocket();
 
@@ -174,11 +166,9 @@ describe('HealthCheckService', () => {
       const svc = harness.createService({
         exchange: undefined,
         websocket: undefined,
-        config: {
-          thresholds: {
-            memoryUsagePercent: 1,
-          },
-        },
+        config: harness.createThresholdConfig({
+          memoryUsagePercent: 1,
+        }),
         errorHandler: undefined,
       });
 
@@ -192,11 +182,9 @@ describe('HealthCheckService', () => {
       const svc = harness.createService({
         exchange: undefined,
         websocket: undefined,
-        config: {
-          thresholds: {
-            cpuUsagePercent: 1,
-          },
-        },
+        config: harness.createThresholdConfig({
+          cpuUsagePercent: 1,
+        }),
         errorHandler: undefined,
       });
 
@@ -312,12 +300,10 @@ describe('HealthCheckService', () => {
       const healthySvc = harness.createService({
         exchange: harness.createExchange(),
         websocket: harness.createWebSocket(),
-        config: {
-          thresholds: {
-            memoryUsagePercent: 95,
-            cpuUsagePercent: 95,
-          },
-        },
+        config: harness.createThresholdConfig({
+          memoryUsagePercent: 95,
+          cpuUsagePercent: 95,
+        }),
       });
 
       const isReady = await healthySvc.isReady();

@@ -16,6 +16,7 @@ import {
   BotMetricsTestLogger,
   createBotMetricsService,
   createBotMetricsTrade,
+  seedBotMetricsService,
 } from '../helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
@@ -245,23 +246,28 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('printReport with ErrorHandler (GRACEFUL_DEGRADE)', () => {
     beforeEach(() => {
-      // Add some trades for report
-      metricsService.recordTrade(createBotMetricsTrade({
-        entryPrice: 50000,
-        exitPrice: 50500,
-        pnl: 500,
-        pnlPercent: 1,
-        duration: 3600000,
-      }));
-      metricsService.recordTrade(createBotMetricsTrade({
-        id: 'trade-2',
-        entryPrice: 50000,
-        exitPrice: 49800,
-        pnl: -200,
-        pnlPercent: -0.4,
-        duration: 3600000,
-      }));
-      metricsService.recordEvent('TEST_EVENT', 100, true);
+      seedBotMetricsService(metricsService, {
+        trades: [
+          {
+            entryPrice: 50000,
+            exitPrice: 50500,
+            pnl: 500,
+            pnlPercent: 1,
+            duration: 3600000,
+          },
+          {
+            id: 'trade-2',
+            entryPrice: 50000,
+            exitPrice: 49800,
+            pnl: -200,
+            pnlPercent: -0.4,
+            duration: 3600000,
+          },
+        ],
+        events: [
+          { name: 'TEST_EVENT', duration: 100, success: true },
+        ],
+      });
     });
 
     it('should successfully print report', () => {
@@ -370,14 +376,20 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('reset with ErrorHandler', () => {
     beforeEach(() => {
-      metricsService.recordTrade(createBotMetricsTrade({
-        entryPrice: 50000,
-        exitPrice: 51000,
-        pnl: 1000,
-        pnlPercent: 2,
-        duration: 3600000,
-      }));
-      metricsService.recordEvent('TEST', 50, true);
+      seedBotMetricsService(metricsService, {
+        trades: [
+          {
+            entryPrice: 50000,
+            exitPrice: 51000,
+            pnl: 1000,
+            pnlPercent: 2,
+            duration: 3600000,
+          },
+        ],
+        events: [
+          { name: 'TEST', duration: 50, success: true },
+        ],
+      });
     });
 
     it('should successfully reset all metrics', () => {

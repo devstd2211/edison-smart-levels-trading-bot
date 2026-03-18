@@ -147,17 +147,24 @@ type SessionStatsHarnessOptions = {
   logger?: SessionStatsMockLogger;
   tempDir?: string;
   errorHandler?: ErrorHandler;
+  autoStart?: boolean;
 };
 
 export function createSessionStatsService(
   options: SessionStatsHarnessOptions = {},
 ): SessionStatsService {
-  return new SessionStatsService(
+  const service = new SessionStatsService(
     options.logger ?? createSessionStatsLogger(),
     undefined,
     options.tempDir ?? createSessionStatsTempDir(),
     options.errorHandler,
   );
+
+  if (options.autoStart === true) {
+    service.start();
+  }
+
+  return service;
 }
 
 export function createSessionStatsHarness(
@@ -167,15 +174,22 @@ export function createSessionStatsHarness(
   const tempDir = options.tempDir ?? createSessionStatsTempDir();
   ensureSessionStatsTempDir(tempDir);
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const createService = (
+    overrides: Omit<SessionStatsHarnessOptions, 'logger' | 'tempDir'> = {},
+  ): SessionStatsService =>
+    createSessionStatsService({
+      logger,
+      tempDir,
+      errorHandler,
+      autoStart: overrides.autoStart,
+      ...overrides,
+    });
 
   return {
     logger,
     tempDir,
     errorHandler,
-    stats: createSessionStatsService({
-      logger,
-      tempDir,
-      errorHandler,
-    }),
+    createService,
+    stats: createService({ autoStart: options.autoStart ?? true }),
   };
 }

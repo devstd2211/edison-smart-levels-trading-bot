@@ -24,6 +24,8 @@ export interface ActionQueueHarness {
   service: ActionQueueService;
   errorHandler: ErrorHandler;
   createService: () => ActionQueueService;
+  createAction: typeof createTestAction;
+  createHandler: typeof createTestHandler;
 }
 
 export function createTestSignal(): Signal {
@@ -108,5 +110,7 @@ export function createActionQueueHarness(): ActionQueueHarness {
     service: createService(),
     errorHandler: new ErrorHandler(mockActionQueueLogger),
     createService,
+    createAction: createTestAction,
+    createHandler: createTestHandler,
   };
 }

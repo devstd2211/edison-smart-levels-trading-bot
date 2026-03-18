@@ -68,6 +68,8 @@ export function createPositionScalingHarness(
   errorHandler: ErrorHandler;
   config: ScalingConfig;
   position: PositionState;
+  createBrokenService: () => PositionScalingService;
+  createNoHandlerService: () => PositionScalingService;
   createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
@@ -77,6 +79,7 @@ export function createPositionScalingHarness(
   const logger = createPositionScalingLogger() as unknown as LoggerService;
   const errorHandler = new ErrorHandler(logger);
   const config = createPositionScalingConfig(overrides);
+  const position = createPositionScalingPosition();
   const createService = (options: {
     config?: ScalingConfig;
     logger?: LoggerService;
@@ -93,7 +96,15 @@ export function createPositionScalingHarness(
     logger,
     errorHandler,
     config,
-    position: createPositionScalingPosition(),
+    position,
+    createBrokenService: () => {
+      const brokenLogger = createPositionScalingBrokenLogger() as unknown as LoggerService;
+      return createService({
+        logger: brokenLogger,
+        errorHandler: new ErrorHandler(brokenLogger),
+      });
+    },
+    createNoHandlerService: () => createService({ errorHandler: undefined }),
     createService,
   };
 }

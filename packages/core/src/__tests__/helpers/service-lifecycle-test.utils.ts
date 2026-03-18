@@ -103,3 +103,34 @@ export function createMockLifecycleTelegram(): NonNullable<BotFactoryOptions['te
     notifyBotStopped: jest.fn().mockResolvedValue(undefined),
   } as unknown as NonNullable<BotFactoryOptions['telegram']>;
 }
+
+export function createTrackedLifecycleHarness(
+  trackedServices: TrackedServiceState[],
+  overrides: {
+    config?: Config;
+    exchange?: IExchange;
+    telegram?: NonNullable<BotFactoryOptions['telegram']>;
+    options?: BotFactoryOptions;
+  } = {},
+): {
+  config: Config;
+  exchange: IExchange;
+  telegram: NonNullable<BotFactoryOptions['telegram']>;
+  services: IBotServicesAdapterSource;
+} {
+  const config = overrides.config ?? createMinimalLifecycleConfig();
+  const exchange = overrides.exchange ?? createMockLifecycleExchange();
+  const telegram = overrides.telegram ?? createMockLifecycleTelegram();
+  const services = createTrackedServices(trackedServices, config, {
+    bybitService: exchange,
+    telegram,
+    ...overrides.options,
+  });
+
+  return {
+    config,
+    exchange,
+    telegram,
+    services,
+  };
+}

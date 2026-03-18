@@ -8,51 +8,14 @@
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
+import { createBotFactoryTestConfig } from '../helpers/bot-factory-test.utils';
 import {
+  createTrackedLifecycleHarness,
   createTrackedServices,
   shutdownTrackedServices,
   trackCreatedServices,
   type TrackedServiceState,
 } from '../helpers/service-lifecycle-test.utils';
-
-/**
- * Get minimal config for testing
- */
-function getMinimalConfig(): Config {
-  return {
-    exchange: {
-      name: 'bybit',
-      symbol: 'XRPUSDT',
-      apiKey: 'test-key',
-      apiSecret: 'test-secret',
-      demo: true,
-    },
-    trading: { leverage: 10, marginType: 'CROSS' },
-    riskManagement: {
-      stopLossPercent: 2,
-      takeProfits: [0.5, 1, 1.5],
-      positionSizeUsdt: 100,
-    },
-    logging: { level: 'info', logDir: './logs' },
-    telegram: { enabled: false },
-    timeframes: {
-      entry: { interval: '1', candleLimit: 1000, enabled: true },
-      primary: { interval: '5', candleLimit: 500, enabled: true },
-    },
-    dataSubscriptions: { candles: { enabled: true } },
-    system: { timeSyncIntervalMs: 60000, timeSyncMaxFailures: 3 },
-    indicators: { rsiPeriod: 14, slowEmaPeriod: 50 },
-    // Required by BotServices builder
-    entryConfig: {
-      divergenceDetector: false,
-    },
-    strategy: {
-      priceAction: false,
-    },
-    strategies: {},
-    analyzers: [],
-  } as unknown as Config;
-}
 
 describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
@@ -61,7 +24,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
-    config = getMinimalConfig();
+    config = createBotFactoryTestConfig();
     trackedServices = [];
   });
 
@@ -172,7 +135,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T10: createServices with empty options creates normal services', () => {
-      const services = createTrackedServices(trackedServices, config);
+      const services = createTrackedLifecycleHarness(trackedServices, { config }).services;
 
       expect(services).toBeDefined();
       expect(services.logger).toBeDefined();

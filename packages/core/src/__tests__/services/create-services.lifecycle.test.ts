@@ -1,8 +1,7 @@
 import { BotInitializer } from '../../services/bot-initializer';
 import type { IBotInitializerServices } from '../../interfaces';
 import {
-  createMinimalLifecycleConfig,
-  createMockLifecycleExchange,
+  createTrackedLifecycleHarness,
   createTrackedServices,
   shutdownTrackedServices,
   type TrackedServiceState,
@@ -20,13 +19,12 @@ describe('createServices lifecycle orchestration', () => {
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
-    const config = createMinimalLifecycleConfig();
-    const mockExchange = createMockLifecycleExchange();
-
-    const services = createTrackedServices(trackedServices, config, {
-      bybitService: mockExchange,
-    });
-    const initializer = new BotInitializer(services as unknown as IBotInitializerServices, config);
+    const harness = createTrackedLifecycleHarness(trackedServices);
+    const services = harness.services;
+    const initializer = new BotInitializer(
+      services as unknown as IBotInitializerServices,
+      harness.config,
+    );
 
     const bybit = services.marketDataServices.bybitService;
     const wsManager = services.marketDataServices.webSocketManager;

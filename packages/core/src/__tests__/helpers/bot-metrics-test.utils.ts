@@ -111,3 +111,29 @@ export const createBotMetricsHarness = ({
   errorHandler,
   service: createBotMetricsService({ logger, errorHandler }),
 });
+
+export const seedBotMetricsService = (
+  service: BotMetricsService,
+  options: {
+    trades?: Partial<TradeMetrics>[];
+    events?: Array<{
+      name: string;
+      duration: number;
+      success: boolean;
+      errorMessage?: string;
+    }>;
+  } = {},
+): BotMetricsService => {
+  options.trades?.forEach((trade, index) => {
+    service.recordTrade(createBotMetricsTrade({
+      id: trade.id ?? `seed-trade-${index + 1}`,
+      ...trade,
+    }));
+  });
+
+  options.events?.forEach((event) => {
+    service.recordEvent(event.name, event.duration, event.success, event.errorMessage);
+  });
+
+  return service;
+};

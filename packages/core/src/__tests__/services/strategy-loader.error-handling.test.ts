@@ -21,9 +21,12 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import {
   cleanupStrategyLoaderTempDir,
+  createStrategyLoaderAnalyzer,
   createStrategyLoaderErrorHandler,
   createStrategyLoaderHarness,
+  createStrategyLoaderMetadata,
   createStrategyLoaderService,
+  createStrategyLoaderStrategy,
   createStrategyLoaderTempDir,
 } from '../helpers/strategy-loader-test.utils';
 
@@ -33,11 +36,12 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let testStrategiesDir: string;
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
+  let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
 
   beforeEach(async () => {
     mockErrorHandler = createStrategyLoaderErrorHandler();
     testStrategiesDir = await createStrategyLoaderTempDir();
-    ({ service: loaderService } = createStrategyLoaderHarness({
+    ({ service: loaderService, createLoader } = createStrategyLoaderHarness({
       strategiesDir: testStrategiesDir,
       errorHandler: mockErrorHandler,
     }));
@@ -130,11 +134,10 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
 
   describe('C: Validation Errors', () => {
     test('C1: Missing required field throws validation error', async () => {
-      const invalidConfig = {
-        version: 1,
+      const invalidConfig = createStrategyLoaderStrategy({
         metadata: {},
         // Missing analyzers
-      };
+      });
       fileReadSpy.mockResolvedValue(JSON.stringify(invalidConfig));
 
       const promise = loaderService.loadStrategy('invalid-schema');
@@ -143,25 +146,16 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     });
 
     test('C2: Invalid analyzer config triggers validation error', async () => {
-      const config = {
-        version: 1,
-        metadata: {
+      const config = createStrategyLoaderStrategy({
+        metadata: createStrategyLoaderMetadata({
           name: 'test',
           version: '1.0',
           description: 'test',
           createdAt: '2024-01-01',
           lastModified: '2024-01-01',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'UNKNOWN_ANALYZER',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
-      };
+        }),
+        analyzers: [createStrategyLoaderAnalyzer({ name: 'UNKNOWN_ANALYZER' })],
+      });
       fileReadSpy.mockResolvedValue(JSON.stringify(config));
 
       const promise = loaderService.loadStrategy('bad-analyzer');
@@ -170,11 +164,10 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     });
 
     test('C3: Invalid metadata throws validation error', async () => {
-      const config = {
-        version: 1,
-        metadata: null, // Invalid metadata
+      const config = createStrategyLoaderStrategy({
+        metadata: null,
         analyzers: [],
-      };
+      });
       fileReadSpy.mockResolvedValue(JSON.stringify(config));
 
       const promise = loaderService.loadStrategy('invalid-metadata');
@@ -189,25 +182,17 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
 
   describe('D: Valid Strategy Loading', () => {
     test('D1: Valid strategy loads successfully', async () => {
-      const validConfig = {
-        version: 1,
-        metadata: {
+      const validConfig = createStrategyLoaderStrategy({
+        metadata: createStrategyLoaderMetadata({
           name: 'test-strategy',
           version: '1.0',
           description: 'test',
           createdAt: '2024-01-01',
           lastModified: '2024-01-01',
           tags: ['test'],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 1.0,
-            priority: 1,
-          },
-        ],
-      };
+        }),
+        analyzers: [createStrategyLoaderAnalyzer({ weight: 1.0 })],
+      });
       fileReadSpy.mockResolvedValue(JSON.stringify(validConfig));
 
       const result = await loaderService.loadStrategy('valid');
@@ -217,25 +202,17 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
     });
 
     test('D2: Multiple valid strategies load correctly', async () => {
-      const validConfig = {
-        version: 1,
-        metadata: {
+      const validConfig = createStrategyLoaderStrategy({
+        metadata: createStrategyLoaderMetadata({
           name: 'test-strategy',
           version: '1.0',
           description: 'test',
           createdAt: '2024-01-01',
           lastModified: '2024-01-01',
           tags: ['test'],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 1.0,
-            priority: 1,
-          },
-        ],
-      };
+        }),
+        analyzers: [createStrategyLoaderAnalyzer({ weight: 1.0 })],
+      });
 
       fileReadSpy.mockResolvedValue(JSON.stringify(validConfig));
 
@@ -253,25 +230,17 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
 
   describe('E: Load All Strategies - Partial Failures with SKIP', () => {
     test('E1: Individual strategy failures are skipped', async () => {
-      const validConfig = {
-        version: 1,
-        metadata: {
+      const validConfig = createStrategyLoaderStrategy({
+        metadata: createStrategyLoaderMetadata({
           name: 'valid',
           version: '1.0',
           description: 'test',
           createdAt: '2024-01-01',
           lastModified: '2024-01-01',
           tags: ['test'],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 1.0,
-            priority: 1,
-          },
-        ],
-      };
+        }),
+        analyzers: [createStrategyLoaderAnalyzer({ weight: 1.0 })],
+      });
 
       dirReadSpy.mockResolvedValue(['valid.strategy.json', 'invalid.strategy.json']);
 
@@ -354,32 +323,21 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   describe('G: Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
       // Create service without error handler
-      loaderService = createStrategyLoaderService({
-        strategiesDir: testStrategiesDir,
-        withErrorHandler: false,
-      });
+      loaderService = createLoader({ withErrorHandler: false });
     });
 
     test('G1: Service works without ErrorHandler injected', async () => {
-      const validConfig = {
-        version: 1,
-        metadata: {
+      const validConfig = createStrategyLoaderStrategy({
+        metadata: createStrategyLoaderMetadata({
           name: 'test',
           version: '1.0',
           description: 'test',
           createdAt: '2024-01-01',
           lastModified: '2024-01-01',
           tags: ['test'],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 1.0,
-            priority: 1,
-          },
-        ],
-      };
+        }),
+        analyzers: [createStrategyLoaderAnalyzer({ weight: 1.0 })],
+      });
       fileReadSpy.mockResolvedValue(JSON.stringify(validConfig));
 
       const result = await loaderService.loadStrategy('no-handler');
@@ -402,25 +360,17 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
 
   describe('H: E2E Recovery Scenarios', () => {
     test('H1: Multiple mixed errors in loadAllStrategies', async () => {
-      const validConfig = {
-        version: 1,
-        metadata: {
+      const validConfig = createStrategyLoaderStrategy({
+        metadata: createStrategyLoaderMetadata({
           name: 'valid',
           version: '1.0',
           description: 'test',
           createdAt: '2024-01-01',
           lastModified: '2024-01-01',
           tags: ['test'],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 1.0,
-            priority: 1,
-          },
-        ],
-      };
+        }),
+        analyzers: [createStrategyLoaderAnalyzer({ weight: 1.0 })],
+      });
 
       dirReadSpy.mockResolvedValue([
         'valid.strategy.json',

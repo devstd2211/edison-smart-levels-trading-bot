@@ -8,6 +8,8 @@ import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors
 import {
   cleanupStrategyLoaderTempDir,
   createStrategyLoaderHarness,
+  createStrategyLoaderAnalyzer,
+  createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
   createStrategyLoaderTempDir,
   writeStrategyLoaderFile,
@@ -30,14 +32,7 @@ describe('StrategyLoaderService', () => {
   describe('loadStrategy', () => {
     it('should load valid strategy file', async () => {
       const strategy = createStrategyLoaderStrategy({
-        metadata: {
-          name: 'Test Strategy',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: ['test'],
-        },
+        metadata: createStrategyLoaderMetadata({ tags: ['test'] }),
       });
 
       await writeStrategyLoaderFile(tempDir, 'test-strategy.strategy.json', strategy);
@@ -111,13 +106,7 @@ describe('StrategyLoaderService', () => {
 
     it('should require metadata.name', async () => {
       const strategy = createStrategyLoaderStrategy({
-        metadata: {
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
+        metadata: createStrategyLoaderMetadata({ name: undefined }),
       });
 
       await writeStrategyLoaderFile(tempDir, 'no-name.strategy.json', strategy);
@@ -129,14 +118,10 @@ describe('StrategyLoaderService', () => {
 
     it('should require metadata.tags as array', async () => {
       const strategy = createStrategyLoaderStrategy({
-        metadata: {
+        metadata: createStrategyLoaderMetadata({
           name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
           tags: 'test',
-        },
+        }),
       });
 
       await writeStrategyLoaderFile(tempDir, 'bad-tags.strategy.json', strategy);
@@ -148,20 +133,15 @@ describe('StrategyLoaderService', () => {
 
     it('should validate backtest results if present', async () => {
       const strategy = createStrategyLoaderStrategy({
-        metadata: {
+        metadata: createStrategyLoaderMetadata({
           name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
           backtest: {
             winRate: 1.5,
             profitFactor: 2.0,
             trades: 100,
             period: 'test',
           },
-        },
+        }),
       });
 
       await writeStrategyLoaderFile(tempDir, 'bad-backtest.strategy.json', strategy);
@@ -176,14 +156,7 @@ describe('StrategyLoaderService', () => {
     it('should require analyzers array', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
         analyzers: undefined,
       };
 
@@ -197,14 +170,7 @@ describe('StrategyLoaderService', () => {
     it('should reject empty analyzers array', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
         analyzers: [],
       };
 
@@ -218,14 +184,7 @@ describe('StrategyLoaderService', () => {
     it('should require analyzer.name', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
         analyzers: [
           {
             enabled: true,
@@ -245,22 +204,8 @@ describe('StrategyLoaderService', () => {
     it('should reject unknown analyzer', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'UNKNOWN_ANALYZER',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
+        analyzers: [createStrategyLoaderAnalyzer({ name: 'UNKNOWN_ANALYZER' })],
       };
 
       await writeStrategyLoaderFile(tempDir, 'unknown-analyzer.strategy.json', strategy);
@@ -273,22 +218,8 @@ describe('StrategyLoaderService', () => {
     it('should require analyzer.weight between 0 and 1', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 1.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
+        analyzers: [createStrategyLoaderAnalyzer({ weight: 1.5 })],
       };
 
       await writeStrategyLoaderFile(tempDir, 'bad-weight.strategy.json', strategy);
@@ -301,22 +232,8 @@ describe('StrategyLoaderService', () => {
     it('should require analyzer.priority between 1 and 10', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 11,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
+        analyzers: [createStrategyLoaderAnalyzer({ priority: 11 })],
       };
 
       await writeStrategyLoaderFile(tempDir, 'bad-priority.strategy.json', strategy);
@@ -329,27 +246,10 @@ describe('StrategyLoaderService', () => {
     it('should detect duplicate analyzers', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
         analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 2,
-          },
+          createStrategyLoaderAnalyzer(),
+          createStrategyLoaderAnalyzer({ priority: 2 }),
         ],
       };
 
@@ -363,23 +263,8 @@ describe('StrategyLoaderService', () => {
     it('should validate confidence thresholds', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-            minConfidence: 150, // Invalid
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
+        analyzers: [createStrategyLoaderAnalyzer({ minConfidence: 150 })],
       };
 
       await writeStrategyLoaderFile(tempDir, 'bad-confidence.strategy.json', strategy);
@@ -394,22 +279,8 @@ describe('StrategyLoaderService', () => {
     it('should reject unknown indicator override', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
+        analyzers: [createStrategyLoaderAnalyzer()],
         indicators: {
           unknownIndicator: {},
         },
@@ -425,22 +296,8 @@ describe('StrategyLoaderService', () => {
     it('should reject unknown filter override', async () => {
       const strategy = {
         version: 1,
-        metadata: {
-          name: 'Test',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Test' }),
+        analyzers: [createStrategyLoaderAnalyzer()],
         filters: {
           unknownFilter: {},
         },
@@ -473,42 +330,14 @@ describe('StrategyLoaderService', () => {
     it('should load all valid strategies from directory', async () => {
       const strategy1 = {
         version: 1,
-        metadata: {
-          name: 'Strategy 1',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Strategy 1' }),
+        analyzers: [createStrategyLoaderAnalyzer()],
       };
 
       const strategy2 = {
         version: 1,
-        metadata: {
-          name: 'Strategy 2',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'RSI_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Strategy 2' }),
+        analyzers: [createStrategyLoaderAnalyzer({ name: 'RSI_ANALYZER_NEW' })],
       };
 
       await writeStrategyLoaderFile(tempDir, 'strat1.strategy.json', strategy1);
@@ -531,22 +360,8 @@ describe('StrategyLoaderService', () => {
     it('should skip invalid strategy files', async () => {
       const validStrategy = {
         version: 1,
-        metadata: {
-          name: 'Valid',
-          version: '1.0.0',
-          description: 'Test',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
-          tags: [],
-        },
-        analyzers: [
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
-            weight: 0.5,
-            priority: 1,
-          },
-        ],
+        metadata: createStrategyLoaderMetadata({ name: 'Valid' }),
+        analyzers: [createStrategyLoaderAnalyzer()],
       };
 
       const invalidStrategy = {
@@ -570,12 +385,9 @@ describe('StrategyLoaderService', () => {
     it('should load and validate complete level-trading strategy', async () => {
       const strategy = {
         version: 1,
-        metadata: {
+        metadata: createStrategyLoaderMetadata({
           name: 'Level Trading Strategy',
-          version: '1.0.0',
           description: 'Trade support/resistance levels',
-          createdAt: '2026-01-09T00:00:00Z',
-          lastModified: '2026-01-09T00:00:00Z',
           tags: ['level-trading'],
           backtest: {
             winRate: 0.58,
@@ -583,36 +395,30 @@ describe('StrategyLoaderService', () => {
             trades: 150,
             period: '2024-01-01 to 2024-12-31',
           },
-        },
+        }),
         analyzers: [
-          {
+          createStrategyLoaderAnalyzer({
             name: 'LEVEL_ANALYZER_NEW',
-            enabled: true,
             weight: 0.35,
-            priority: 1,
             minConfidence: 50,
-          },
-          {
-            name: 'EMA_ANALYZER_NEW',
-            enabled: true,
+          }),
+          createStrategyLoaderAnalyzer({
             weight: 0.30,
             priority: 2,
             minConfidence: 40,
-          },
-          {
+          }),
+          createStrategyLoaderAnalyzer({
             name: 'TREND_DETECTOR_ANALYZER_NEW',
-            enabled: true,
             weight: 0.20,
             priority: 3,
             minConfidence: 45,
-          },
-          {
+          }),
+          createStrategyLoaderAnalyzer({
             name: 'RSI_ANALYZER_NEW',
-            enabled: true,
             weight: 0.15,
             priority: 4,
             minConfidence: 35,
-          },
+          }),
         ],
         indicators: {
           ema: {

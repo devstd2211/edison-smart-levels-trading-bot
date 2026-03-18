@@ -82,25 +82,37 @@ export async function writeStrategyLoaderFile(
   return filePath;
 }
 
+export function createStrategyLoaderMetadata(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    name: 'Test Strategy',
+    version: '1.0.0',
+    description: 'Test',
+    createdAt: '2026-01-09T00:00:00Z',
+    lastModified: '2026-01-09T00:00:00Z',
+    tags: [],
+    ...overrides,
+  };
+}
+
+export function createStrategyLoaderAnalyzer(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    name: 'EMA_ANALYZER_NEW',
+    enabled: true,
+    weight: 0.5,
+    priority: 1,
+    ...overrides,
+  };
+}
+
 export function createStrategyLoaderStrategy(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     version: 1,
-    metadata: {
-      name: 'Test Strategy',
-      version: '1.0.0',
-      description: 'Test',
-      createdAt: '2026-01-09T00:00:00Z',
-      lastModified: '2026-01-09T00:00:00Z',
-      tags: [],
-    },
-    analyzers: [
-      {
-        name: 'EMA_ANALYZER_NEW',
-        enabled: true,
-        weight: 0.5,
-        priority: 1,
-      },
-    ],
+    metadata: createStrategyLoaderMetadata(),
+    analyzers: [createStrategyLoaderAnalyzer()],
     ...overrides,
   };
 }

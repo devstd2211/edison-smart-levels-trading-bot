@@ -14,6 +14,8 @@ export interface HealthCheckTestHarness {
   errorHandler: ErrorHandler;
   createExchange: (overrides?: Partial<jest.Mocked<IExchangeService>>) => jest.Mocked<IExchangeService>;
   createWebSocket: (overrides?: Partial<jest.Mocked<IWebSocketService>>) => jest.Mocked<IWebSocketService>;
+  createUnavailableService: () => HealthCheckService;
+  createThresholdConfig: (thresholds: NonNullable<HealthCheckConfig['thresholds']>) => HealthCheckConfig;
   createService: (options?: {
     exchange?: IExchangeService;
     websocket?: IWebSocketService;
@@ -51,6 +53,11 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
   const exchange = createExchange();
   const websocket = createWebSocket();
   const errorHandler = new ErrorHandler(logger);
+  const createThresholdConfig = (
+    thresholds: NonNullable<HealthCheckConfig['thresholds']>,
+  ): HealthCheckConfig => ({
+    thresholds,
+  });
 
   return {
     logger,
@@ -59,6 +66,14 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
     errorHandler,
     createExchange,
     createWebSocket,
+    createUnavailableService() {
+      return this.createService({
+        exchange: undefined,
+        websocket: undefined,
+        errorHandler: undefined,
+      });
+    },
+    createThresholdConfig,
     createService(options = {}) {
       const exchangeService = Object.prototype.hasOwnProperty.call(options, 'exchange')
         ? options.exchange

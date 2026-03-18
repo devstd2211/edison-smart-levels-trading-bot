@@ -254,6 +254,42 @@ export function createRealScenarioTakeProfitManager(
   );
 }
 
+export function createRealScenarioPositionExitingHarness(
+  loggerOverrides: Partial<ReturnType<typeof createMockPositionExitingLogger>> = {},
+) {
+  const mockLogger = createMockPositionExitingLogger();
+  const mergedLogger = {
+    ...mockLogger,
+    ...loggerOverrides,
+  };
+  const takeProfitManager = createRealScenarioTakeProfitManager(
+    mergedLogger as unknown as Parameters<typeof createRealScenarioTakeProfitManager>[0],
+  );
+
+  return createPositionExitingHarness({
+    takeProfitManager,
+    positionManager: {
+      getTakeProfitManager: jest.fn().mockReturnValue(takeProfitManager),
+    },
+    tradingConfig: { positionSizeUsdt: 100 },
+    riskConfig: {
+      takeProfits: [
+        { level: 1, percent: 0.5, sizePercent: 33 },
+        { level: 2, percent: 1.0, sizePercent: 33 },
+        { level: 3, percent: 1.5, sizePercent: 34 },
+      ],
+      stopLossPercent: 1,
+      minStopLossPercent: 0.5,
+      trailingStopPercent: 1,
+    },
+    fullConfig: {
+      exchange: { symbol: 'XRPUSDT' } as never,
+      entryConfig: {} as never,
+    },
+    loggerOverrides: mergedLogger,
+  });
+}
+
 type PositionExitingHarness = {
   service: PositionExitingService;
   mockLogger: ReturnType<typeof createMockPositionExitingLogger>;

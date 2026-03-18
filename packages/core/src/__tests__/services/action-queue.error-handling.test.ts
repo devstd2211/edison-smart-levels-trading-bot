@@ -4,40 +4,31 @@
  */
 
 import { ActionQueueService } from '../../services/action-queue.service';
-import {
-  IAction,
-  ActionResult,
-  IActionHandler,
-  AnyAction,
-  ActionType,
-  OpenPositionAction,
-  ClosePositionAction,
-  Signal,
-  SignalDirection,
-  SignalType,
-} from '../../types/legacy';
+import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createActionQueueHarness,
-  createTestAction,
-  createTestHandler,
 } from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
+  let createAction: ReturnType<typeof createActionQueueHarness>['createAction'];
+  let createHandler: ReturnType<typeof createActionQueueHarness>['createHandler'];
 
   beforeEach(() => {
     const harness = createActionQueueHarness();
     service = harness.service;
+    createAction = harness.createAction;
+    createHandler = harness.createHandler;
     jest.clearAllMocks();
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========
   describe('Scenario 1: Handler throws error with RETRY', () => {
     it('should handle handler throw errors and report them', async () => {
-      const action = createTestAction('test-1', ActionType.OPEN_POSITION);
+      const action = createAction('test-1', ActionType.OPEN_POSITION);
       let attemptCount = 0;
 
-      const handler = createTestHandler('RetryHandler', ActionType.OPEN_POSITION, async (a) => {
+      const handler = createHandler('RetryHandler', ActionType.OPEN_POSITION, async () => {
         attemptCount++;
         throw new Error('Transient network error');
       });
@@ -54,9 +45,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should exhaust max retries and fail gracefully', async () => {
-      const action = createTestAction('test-2', ActionType.CLOSE_POSITION, 2);
+      const action = createAction('test-2', ActionType.CLOSE_POSITION, 2);
 
-      const handler = createTestHandler('FailHandler', ActionType.CLOSE_POSITION, async () => {
+      const handler = createHandler('FailHandler', ActionType.CLOSE_POSITION, async () => {
         throw new Error('Permanent API error');
       });
 
@@ -73,9 +64,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should track retry attempts in metadata', async () => {
-      const action = createTestAction('test-3', ActionType.OPEN_POSITION);
+      const action = createAction('test-3', ActionType.OPEN_POSITION);
 
-      const handler = createTestHandler('MetadataHandler', ActionType.OPEN_POSITION, async () => {
+      const handler = createHandler('MetadataHandler', ActionType.OPEN_POSITION, async () => {
         throw new Error('Always fail');
       });
 
@@ -94,9 +85,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 2: No Handler Found (SKIP) ==========
   describe('Scenario 2: No handler found (SKIP + log)', () => {
     it('should skip action when no handler can handle it', async () => {
-      const action = createTestAction('test-4', ActionType.OPEN_POSITION);
+      const action = createAction('test-4', ActionType.OPEN_POSITION);
 
-      const handler = createTestHandler('TypeSpecificHandler', ActionType.CLOSE_POSITION);
+      const handler = createHandler('TypeSpecificHandler', ActionType.CLOSE_POSITION);
 
       await service.enqueue(action);
       const results = await service.process([handler]);
@@ -108,9 +99,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should handle action with logger errors using ErrorHandler', async () => {
-      const action = createTestAction('test-5', ActionType.OPEN_POSITION);
+      const action = createAction('test-5', ActionType.OPEN_POSITION);
 
-      const handler = createTestHandler('LoggingHandler', ActionType.OPEN_POSITION, async (a) => {
+      const handler = createHandler('LoggingHandler', ActionType.OPEN_POSITION, async (a) => {
         // Simulate logging error (non-blocking)
         try {
           throw new Error('Logger failure');
@@ -135,7 +126,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 3: Handler canHandle Throws ==========
   describe('Scenario 3: Handler.canHandle throws error', () => {
     it('should handle handler canHandle exception gracefully', async () => {
-      const action = createTestAction('test-6', ActionType.OPEN_POSITION);
+      const action = createAction('test-6', ActionType.OPEN_POSITION);
 
       const faultyHandler: IActionHandler = {
         name: 'FaultyHandler',
@@ -149,7 +140,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
         }),
       };
 
-      const workingHandler = createTestHandler('WorkingHandler', ActionType.OPEN_POSITION);
+      const workingHandler = createHandler('WorkingHandler', ActionType.OPEN_POSITION);
 
       await service.enqueue(action);
 
@@ -162,10 +153,10 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 4: Concurrent Processing Race ==========
   describe('Scenario 4: Concurrent processing prevention', () => {
     it('should prevent concurrent process() calls', async () => {
-      const action1 = createTestAction('test-7a');
-      const action2 = createTestAction('test-7b');
+      const action1 = createAction('test-7a');
+      const action2 = createAction('test-7b');
 
-      const slowHandler = createTestHandler('SlowHandler', null, async (a) => {
+      const slowHandler = createHandler('SlowHandler', null, async (a) => {
         await new Promise(resolve => setTimeout(resolve, 50));
         return {
           success: true,
@@ -204,9 +195,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 5: waitEmpty Timeout ==========
   describe('Scenario 5: waitEmpty timeout handling', () => {
     it('should successfully wait when queue becomes empty quickly', async () => {
-      const action = createTestAction('test-8');
+      const action = createAction('test-8');
 
-      const quickHandler = createTestHandler('QuickHandler');
+      const quickHandler = createHandler('QuickHandler');
 
       await service.enqueue(action);
 
@@ -220,9 +211,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should throw when queue does not empty within timeout with long-running process', async () => {
-      const action = createTestAction('test-9', ActionType.OPEN_POSITION, 1);
+      const action = createAction('test-9', ActionType.OPEN_POSITION, 1);
 
-      const slowHandler = createTestHandler('SlowHandler', ActionType.OPEN_POSITION, async () => {
+      const slowHandler = createHandler('SlowHandler', ActionType.OPEN_POSITION, async () => {
         // Simulate slow external process
         await new Promise(resolve => setTimeout(resolve, 500));
         throw new Error('Timeout');
@@ -244,11 +235,11 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 6: Queue Overflow ==========
   describe('Scenario 6: Queue overflow handling', () => {
     it('should handle large queue without memory issues', async () => {
-      const handler = createTestHandler('BulkHandler');
+      const handler = createHandler('BulkHandler');
 
       // Enqueue 1000 actions
       for (let i = 0; i < 1000; i++) {
-        const action = createTestAction(`action-${i}`);
+        const action = createAction(`action-${i}`);
         await service.enqueue(action);
       }
 
@@ -262,7 +253,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should handle mixed success/failure in bulk', async () => {
-      const handler = createTestHandler('MixedHandler', null, async (a) => {
+      const handler = createHandler('MixedHandler', null, async (a) => {
         if (a.metadata?.shouldFail) {
           return {
             success: false,
@@ -280,7 +271,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
 
       // Enqueue mixed success/fail with no retries
       for (let i = 0; i < 100; i++) {
-        const action = createTestAction(`action-${i}`, ActionType.OPEN_POSITION, 0); // maxRetries = 0
+        const action = createAction(`action-${i}`, ActionType.OPEN_POSITION, 0); // maxRetries = 0
         action.metadata.shouldFail = i % 2 === 0;
         await service.enqueue(action);
       }
@@ -336,13 +327,13 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   describe('Scenario 8: Integration - cascading failures', () => {
     it('should recover from cascading handler failures', async () => {
       const actions = [
-        createTestAction('action-1', ActionType.OPEN_POSITION, 2),
-        createTestAction('action-2', ActionType.CLOSE_POSITION, 2),
-        createTestAction('action-3', ActionType.OPEN_POSITION, 2),
+        createAction('action-1', ActionType.OPEN_POSITION, 2),
+        createAction('action-2', ActionType.CLOSE_POSITION, 2),
+        createAction('action-3', ActionType.OPEN_POSITION, 2),
       ];
 
       let attempt = 0;
-      const flakeyHandler = createTestHandler('FlakeyHandler', null, async (a) => {
+      const flakeyHandler = createHandler('FlakeyHandler', null, async (a) => {
         attempt++;
         if (attempt <= 2) {
           throw new Error('Flaky network');
@@ -368,14 +359,14 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should track metrics across failures and retries', async () => {
-      const handler = createTestHandler('RandomHandler', null, async (a) => ({
+      const handler = createHandler('RandomHandler', null, async (a) => ({
         success: Math.random() > 0.5,
         actionId: a.id,
         timestamp: Date.now(),
       }));
 
       for (let i = 0; i < 10; i++) {
-        const action = createTestAction(`action-${i}`);
+        const action = createAction(`action-${i}`);
         await service.enqueue(action);
       }
 
@@ -393,14 +384,14 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 9: Multiple Handlers ==========
   describe('Scenario 9: Multiple handlers with fallback', () => {
     it('should try handlers in order until one succeeds', async () => {
-      const action = createTestAction('test-multi', ActionType.OPEN_POSITION);
+      const action = createAction('test-multi', ActionType.OPEN_POSITION);
 
-      const handler1 = createTestHandler('Handler1', ActionType.CLOSE_POSITION);
-      const handler2 = createTestHandler('Handler2', ActionType.CLOSE_POSITION);
-      const handler3 = createTestHandler('Handler3', ActionType.OPEN_POSITION);
+      const handler1 = createHandler('Handler1', ActionType.CLOSE_POSITION);
+      const handler2 = createHandler('Handler2', ActionType.CLOSE_POSITION);
+      const handler3 = createHandler('Handler3', ActionType.OPEN_POSITION);
 
       let handler3Called = false;
-      const modifiedHandler3 = createTestHandler('Handler3', ActionType.OPEN_POSITION, async (a) => {
+      const modifiedHandler3 = createHandler('Handler3', ActionType.OPEN_POSITION, async (a) => {
         handler3Called = true;
         return {
           success: true,
@@ -421,8 +412,8 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 10: Results Storage ==========
   describe('Scenario 10: Results storage and retrieval', () => {
     it('should store and retrieve action results', async () => {
-      const handler = createTestHandler('ResultHandler');
-      const action = createTestAction('test-results');
+      const handler = createHandler('ResultHandler');
+      const action = createAction('test-results');
 
       await service.enqueue(action);
       await service.process([handler]);
@@ -434,10 +425,10 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should return all results', async () => {
-      const handler = createTestHandler('BulkResultHandler');
+      const handler = createHandler('BulkResultHandler');
 
       for (let i = 0; i < 5; i++) {
-        const action = createTestAction(`action-${i}`);
+        const action = createAction(`action-${i}`);
         await service.enqueue(action);
       }
 
@@ -450,10 +441,10 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 11: Metrics Reset ==========
   describe('Scenario 11: Metrics reset', () => {
     it('should reset all metrics', async () => {
-      const handler = createTestHandler('MetricHandler');
+      const handler = createHandler('MetricHandler');
 
       for (let i = 0; i < 5; i++) {
-        const action = createTestAction(`action-${i}`);
+        const action = createAction(`action-${i}`);
         await service.enqueue(action);
       }
 
@@ -474,7 +465,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   describe('Scenario 12: Clear queue', () => {
     it('should clear all pending actions', async () => {
       for (let i = 0; i < 10; i++) {
-        const action = createTestAction(`action-${i}`);
+        const action = createAction(`action-${i}`);
         await service.enqueue(action);
       }
 
@@ -488,9 +479,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   describe('Scenario 13: Batch enqueue operations', () => {
     it('should enqueue multiple actions at once', async () => {
       const actions = [
-        createTestAction('batch-1'),
-        createTestAction('batch-2'),
-        createTestAction('batch-3'),
+        createAction('batch-1'),
+        createAction('batch-2'),
+        createAction('batch-3'),
       ];
 
       await service.enqueueBatch(actions);
@@ -500,12 +491,12 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
 
     it('should process batch correctly', async () => {
       const actions = [
-        createTestAction('batch-a'),
-        createTestAction('batch-b'),
-        createTestAction('batch-c'),
+        createAction('batch-a'),
+        createAction('batch-b'),
+        createAction('batch-c'),
       ];
 
-      const handler = createTestHandler('BatchHandler');
+      const handler = createHandler('BatchHandler');
       await service.enqueueBatch(actions);
       const results = await service.process([handler]);
 
@@ -518,7 +509,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 14: Peek and Dequeue ==========
   describe('Scenario 14: Peek and dequeue operations', () => {
     it('should peek without removing action', async () => {
-      const action = createTestAction('peek-test');
+      const action = createAction('peek-test');
       await service.enqueue(action);
 
       const peeked = service.peek();
@@ -527,7 +518,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should dequeue and remove action', async () => {
-      const action = createTestAction('dequeue-test');
+      const action = createAction('dequeue-test');
       await service.enqueue(action);
 
       const dequeued = service.dequeue();

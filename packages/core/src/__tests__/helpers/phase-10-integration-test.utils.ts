@@ -91,6 +91,18 @@ export function createPhase10PerformanceOrderbook(
   });
 }
 
+export function createPhase10WorkflowFixtures(options: {
+  orderbook?: Partial<ReturnType<typeof createPhase10IntegrationOrderbook>>;
+  signal?: Partial<Signal>;
+  context?: Partial<MarketContext>;
+} = {}) {
+  return {
+    orderbook: createPhase10IntegrationOrderbook(options.orderbook),
+    signal: createPhase10Signal(options.signal),
+    context: createPhase10Context(options.context),
+  };
+}
+
 export function createPhase10Harness() {
   const logger = createPhase10Logger();
   const errorHandler = new ErrorHandler(logger);

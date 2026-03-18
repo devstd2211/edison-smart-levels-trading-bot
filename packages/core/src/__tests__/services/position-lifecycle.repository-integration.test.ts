@@ -11,6 +11,8 @@ import {
   createPositionRepositoryHarness,
   createRepositoryPosition,
   createRepositoryPositions,
+  createSeededCurrentPositionRepository,
+  createSeededHistoryRepository,
   createSeededPositionRepositoryHarness,
 } from '../helpers/position-repository-test.utils';
 
@@ -41,9 +43,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
     it('should retrieve current position from repository', () => {
       const position: Position = createRepositoryPosition();
-      repository = createSeededPositionRepositoryHarness({
-        currentPosition: position,
-      });
+      repository = createSeededCurrentPositionRepository(position);
 
       const current = repository.getCurrentPosition();
       expect(current).toEqual(position);
@@ -72,9 +72,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
         status: 'CLOSED',
         unrealizedPnL: 100,
       });
-      repository = createSeededPositionRepositoryHarness({
-        history: [position1],
-      });
+      repository = createSeededHistoryRepository([position1]);
       const history = repository.getHistory();
 
       expect(history).toHaveLength(1);
@@ -110,9 +108,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
     it('should clear history', () => {
       const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-      repository = createSeededPositionRepositoryHarness({
-        history: [position],
-      });
+      repository = createSeededHistoryRepository([position]);
       expect(repository.getHistory()).toHaveLength(1);
 
       repository.clearHistory();
@@ -123,9 +119,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   describe('Position Queries', () => {
     it('should find position by ID', () => {
       const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-      repository = createSeededPositionRepositoryHarness({
-        history: [position],
-      });
+      repository = createSeededHistoryRepository([position]);
 
       const found = repository.findPosition('BTCUSDT_Buy');
       expect(found).not.toBeNull();
@@ -186,9 +180,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   describe('Position Updates', () => {
     it('should update position fields', () => {
       const position: Position = createRepositoryPosition();
-      repository = createSeededPositionRepositoryHarness({
-        currentPosition: position,
-      });
+      repository = createSeededCurrentPositionRepository(position);
 
       // Update position
       const updated = { ...position, unrealizedPnL: 500, quantity: 0.05 };

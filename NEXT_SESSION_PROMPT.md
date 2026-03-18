@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-16)
-- Completed the `timeframe-weighting.error-handling` + `strategy-loader` + `volatility-regime.error-handling` testability follow-up batch:
-  - extended the shared `timeframe-weighting` harness with canonical `createService(...)` and `createMultiTF(...)` builders so the suite reuses one bootstrap path for valid fixture creation and no-handler variants, extended the `strategy-loader` helper with reusable loader and baseline strategy builders so the main suite can express metadata/version validation variants as focused overrides instead of repeating the same full JSON shape, and extended the `volatility-regime` harness with a local `createService(...)` builder so validation, config-update, and backward-compatibility scenarios no longer rebuild the same constructor wiring inline.
-  - reviewed `services/timeframe-weighting.service.ts`, `services/strategy-loader.service.ts`, and `services/volatility-regime.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
+## Last Completed (2026-03-18)
+- Completed another three-step lifecycle/testability batch:
+  - added `packages/core/src/__tests__/helpers/bot-factory-test.utils.ts` with canonical factory config + config-path mutation builders, routed both `bot-factory.service.test.ts` and `bot-factory.error-handling.test.ts` through that helper, and extended the existing `bot-metrics` helper with seeded fixture setup so report/reset sections stop rebuilding the same trades/events inline.
+  - reviewed `services/bot-factory.service.ts` and `services/bot-metrics.service.ts`; kept production code unchanged because the batch only needed test-harness consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.test.ts packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts` -> PASS (3/3 suites, 71/71 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts` -> PASS (3/3 suites, 88/88 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
 - Prefer the next compact untouched suite with repeated inline bootstrap or lifecycle setup beyond the now-refreshed `circuit-breaker.error-handling`, `data-collector.error-handling`, `graceful-shutdown.error-handling`, `circuit-breaker.service`, `graceful-shutdown.service`, `bybit.error-handling`, `advanced-order-state-machine`, `multi-timeframe-trend`, `liquidity-heatmap`, `fractal-smc-weighting`, `pattern-recognition`, `retest-entry`, `swing-point-detector`, `whale-wall-tp`, `enhanced-exit`, `whale-detection`, `reality-check`, `volatility-regime`, `timeframe-weighting`, `risk-calculator`, `strategy-loader`, `session-stats`, `phase-10-integration`, `position-lifecycle.repository-integration`, `bybit.repository-integration`, `multi-strategy.cache`, `position-exiting.integration`, `order-flow-analyzer`, `smart-order-execution`, `structure-aware-exit`, `health-check`, `action-queue`, `time-service`, `dynamic-position-sizer`, and `position-scaling`.
-- Likely next candidates: another compact main/error-handling pair adjacent to the refreshed helpers such as `session-stats`/`strategy-loader` neighbors, or a remaining lifecycle-heavy integration slice with repeated started-service setup.
+- Likely next candidates: remaining bot/lifecycle-adjacent suites that still build broad service state inline, or another constructor-heavy error-handling suite adjacent to the refreshed `bot-factory` / `bot-initializer` / `bot-metrics` helpers.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

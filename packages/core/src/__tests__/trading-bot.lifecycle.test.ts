@@ -1,7 +1,11 @@
 import { TradingBot } from '../bot';
 import { createTradingBotServiceBundle } from '../services/bot-services-adapter';
 import { BotInitializer } from '../services/bot-initializer';
-import { createTrackedServices, shutdownTrackedServices, type TrackedServiceState } from './helpers/service-lifecycle-test.utils';
+import {
+  createTrackedLifecycleHarness,
+  shutdownTrackedServices,
+  type TrackedServiceState,
+} from './helpers/service-lifecycle-test.utils';
 import { WebSocketEventHandlerManager } from '../services/websocket-event-handler-manager';
 import type { BotFactoryOptions } from '../services/bot-factory.service';
 import type { Config } from '../types/legacy';
@@ -78,16 +82,17 @@ describe('TradingBot lifecycle delegation', () => {
     const config = createConfig();
     const exchange = createMockExchange();
     const telegram = createMockTelegram();
-    const serviceState = createTrackedServices(trackedServices, config, {
-      bybitService: exchange,
+    const harness = createTrackedLifecycleHarness(trackedServices, {
+      config,
+      exchange,
       telegram,
     });
 
     return {
-      bot: new TradingBot(createTradingBotServiceBundle(serviceState), config),
-      config,
-      exchange,
-      telegram,
+      bot: new TradingBot(createTradingBotServiceBundle(harness.services), harness.config),
+      config: harness.config,
+      exchange: harness.exchange,
+      telegram: harness.telegram,
     };
   };
 

@@ -17,6 +17,7 @@ import { Position, PositionSide, TakeProfit } from '../../types/legacy';
 import {
   createMockPositionExitingLogger,
   createPositionExitingHarness,
+  createRealScenarioPositionExitingHarness,
   createRealScenarioTakeProfitManager,
   createRealScenarioPosition,
 } from '../helpers/position-exiting-test.utils';
@@ -27,36 +28,14 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
   beforeEach(() => {
-    mockLogger = createMockPositionExitingLogger();
-    mockTakeProfitManager = createRealScenarioTakeProfitManager(
-      mockLogger as unknown as Parameters<typeof createRealScenarioTakeProfitManager>[0],
+    const harness = createRealScenarioPositionExitingHarness(
+      createMockPositionExitingLogger(),
     );
-
-    const harness = createPositionExitingHarness({
-      takeProfitManager: mockTakeProfitManager,
-      positionManager: {
-        getTakeProfitManager: jest.fn().mockReturnValue(mockTakeProfitManager),
-      },
-      tradingConfig: { positionSizeUsdt: 100 },
-      riskConfig: {
-        takeProfits: [
-          { level: 1, percent: 0.5, sizePercent: 33 },
-          { level: 2, percent: 1.0, sizePercent: 33 },
-          { level: 3, percent: 1.5, sizePercent: 34 },
-        ],
-        stopLossPercent: 1,
-        minStopLossPercent: 0.5,
-        trailingStopPercent: 1,
-      },
-      fullConfig: {
-        exchange: { symbol: 'XRPUSDT' } as never,
-        entryConfig: {} as never,
-      },
-      loggerOverrides: mockLogger,
-    });
     service = harness.service;
     mockLogger = harness.mockLogger;
     mockBybitService = harness.mockBybit;
+    mockTakeProfitManager =
+      harness.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {

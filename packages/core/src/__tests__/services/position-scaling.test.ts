@@ -25,7 +25,6 @@ import {
   MIN_POSITION_SIZE_FOR_SCALING,
 } from '../../constants/phase-11-constants';
 import {
-  createPositionScalingBrokenLogger,
   createPositionScalingHarness,
   createPositionScalingPosition,
 } from '../helpers/position-scaling-test.utils';
@@ -36,6 +35,8 @@ describe('PositionScalingService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
+  let createBrokenService: ReturnType<typeof createPositionScalingHarness>['createBrokenService'];
+  let createNoHandlerService: ReturnType<typeof createPositionScalingHarness>['createNoHandlerService'];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
@@ -51,6 +52,8 @@ describe('PositionScalingService', () => {
     errorHandler = harness.errorHandler;
     mockConfig = harness.config;
     mockPosition = harness.position;
+    createBrokenService = harness.createBrokenService;
+    createNoHandlerService = harness.createNoHandlerService;
     createService = harness.createService;
   });
 
@@ -230,17 +233,8 @@ describe('PositionScalingService', () => {
   // ============================================================================
 
   describe('SKIP - Logging Failures', () => {
-    let brokenLogger: LoggerService;
-
-    beforeEach(() => {
-      brokenLogger = createPositionScalingBrokenLogger() as unknown as LoggerService;
-    });
-
     it('should not throw when logging fails in shouldScale', async () => {
-      const brokenService = createService({
-        logger: brokenLogger,
-        errorHandler: new ErrorHandler(brokenLogger),
-      });
+      const brokenService = createBrokenService();
 
       // Use extreme values to trigger error path (which uses logging)
       const extremePosition = {
@@ -254,10 +248,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should not throw when logging fails in scaleIntoWinner', async () => {
-      const brokenService = createService({
-        logger: brokenLogger,
-        errorHandler: new ErrorHandler(brokenLogger),
-      });
+      const brokenService = createBrokenService();
 
       const extremePosition = {
         ...mockPosition,
@@ -270,10 +261,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should not throw when logging fails in reduceRiskOnProfit', async () => {
-      const brokenService = createService({
-        logger: brokenLogger,
-        errorHandler: new ErrorHandler(brokenLogger),
-      });
+      const brokenService = createBrokenService();
 
       const extremePosition = {
         ...mockPosition,
@@ -286,10 +274,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should not throw when logging fails in calculateScaleSize', () => {
-      const brokenService = createService({
-        logger: brokenLogger,
-        errorHandler: new ErrorHandler(brokenLogger),
-      });
+      const brokenService = createBrokenService();
 
       // Force error by using invalid position (will trigger SKIP logging)
       expect(() => {
@@ -379,7 +364,7 @@ describe('PositionScalingService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without errorHandler', async () => {
-      const serviceNoEH = createService({ errorHandler: undefined });
+      const serviceNoEH = createNoHandlerService();
 
       const result = await serviceNoEH.shouldScale(mockPosition);
 

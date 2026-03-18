@@ -1,10 +1,7 @@
 import { TradingBot } from '../bot';
 import { createTradingBotServiceBundle } from '../services/bot-services-adapter';
 import {
-  createMinimalLifecycleConfig,
-  createMockLifecycleExchange,
-  createMockLifecycleTelegram,
-  createTrackedServices,
+  createTrackedLifecycleHarness,
   shutdownTrackedServices,
   type TrackedServiceState,
 } from './helpers/service-lifecycle-test.utils';
@@ -21,15 +18,9 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
   });
 
   test('services are idle before start and explicitly stopped via bot.stop()', async () => {
-    const config = createMinimalLifecycleConfig();
-    const mockExchange = createMockLifecycleExchange();
-    const mockTelegram = createMockLifecycleTelegram();
-
-    const serviceState = createTrackedServices(trackedServices, config, {
-      bybitService: mockExchange,
-      telegram: mockTelegram,
-    });
-    const bot = new TradingBot(createTradingBotServiceBundle(serviceState), config);
+    const harness = createTrackedLifecycleHarness(trackedServices);
+    const serviceState = harness.services;
+    const bot = new TradingBot(createTradingBotServiceBundle(serviceState), harness.config);
 
     const wsManager = serviceState.marketDataServices.webSocketManager;
     const publicWs = serviceState.marketDataServices.publicWebSocket;
@@ -45,7 +36,7 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
     const monitorStartSpy = jest.spyOn(positionMonitor, 'start').mockImplementation(() => undefined);
     const monitorStopSpy = jest.spyOn(positionMonitor, 'stop').mockImplementation(() => undefined);
 
-    expect(mockExchange.initialize).not.toHaveBeenCalled();
+    expect(harness.exchange.initialize).not.toHaveBeenCalled();
     expect(syncSpy).not.toHaveBeenCalled();
     expect(wsStartSpy).not.toHaveBeenCalled();
     expect(publicStartSpy).not.toHaveBeenCalled();
@@ -55,12 +46,12 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
     try {
       await bot.start();
       expect(bot.isRunning).toBe(true);
-      expect(mockExchange.initialize).toHaveBeenCalledTimes(1);
+      expect(harness.exchange.initialize).toHaveBeenCalledTimes(1);
       expect(syncSpy).toHaveBeenCalled();
       expect(wsStartSpy).toHaveBeenCalledTimes(1);
       expect(publicStartSpy).toHaveBeenCalledTimes(1);
       expect(monitorStartSpy).toHaveBeenCalledTimes(1);
-      expect(mockTelegram.notifyBotStarted).toHaveBeenCalledTimes(1);
+      expect(harness.telegram.notifyBotStarted).toHaveBeenCalledTimes(1);
     } finally {
       await bot.stop();
     }
@@ -69,6 +60,6 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
     expect(wsStopSpy).toHaveBeenCalledTimes(1);
     expect(publicStopSpy).toHaveBeenCalledTimes(1);
     expect(monitorStopSpy).toHaveBeenCalledTimes(1);
-    expect(mockTelegram.notifyBotStopped).toHaveBeenCalledTimes(1);
+    expect(harness.telegram.notifyBotStopped).toHaveBeenCalledTimes(1);
   });
 });

@@ -53,6 +53,8 @@ export function createDynamicPositionSizerHarness(
   logger: LoggerService;
   errorHandler: ErrorHandler;
   config: SizingConfig;
+  createBrokenService: () => DynamicPositionSizerService;
+  createNoHandlerService: () => DynamicPositionSizerService;
   createService: (options?: {
     config?: SizingConfig;
     logger?: LoggerService;
@@ -78,6 +80,14 @@ export function createDynamicPositionSizerHarness(
     logger,
     errorHandler,
     config,
+    createBrokenService: () => {
+      const brokenLogger = createDynamicPositionSizerBrokenLogger() as unknown as LoggerService;
+      return createService({
+        logger: brokenLogger,
+        errorHandler: new ErrorHandler(brokenLogger),
+      });
+    },
+    createNoHandlerService: () => createService({ errorHandler: undefined }),
     createService,
   };
 }
