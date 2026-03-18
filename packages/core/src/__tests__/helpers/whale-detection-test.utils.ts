@@ -64,6 +64,54 @@ export function createWhaleDetectionConfig(): WhaleDetectorConfig {
   };
 }
 
+export function createWhaleDetectionConfigWithImbalanceSpike(
+  override: Partial<WhaleDetectorConfig['modes']['imbalanceSpike']>,
+): WhaleDetectorConfig {
+  const config = createWhaleDetectionConfig();
+  return {
+    ...config,
+    modes: {
+      ...config.modes,
+      imbalanceSpike: {
+        ...config.modes.imbalanceSpike,
+        ...override,
+      },
+    },
+  };
+}
+
+export function createWhaleDetectionConfigWithWallBreak(
+  override: Partial<WhaleDetectorConfig['modes']['wallBreak']>,
+): WhaleDetectorConfig {
+  const config = createWhaleDetectionConfig();
+  return {
+    ...config,
+    modes: {
+      ...config.modes,
+      wallBreak: {
+        ...config.modes.wallBreak,
+        ...override,
+      },
+    },
+  };
+}
+
+export function createWhaleDetectionWall(
+  side: 'BID' | 'ASK',
+  price: number,
+  percentOfTotal: number,
+  distance: number,
+  quantity = 5000,
+): OrderBookWall {
+  return {
+    side,
+    price,
+    quantity,
+    percentOfTotal,
+    distance,
+  };
+}
+
 export function createWhaleDetectionAnalysis(
   walls: OrderBookWall[] = [],
   ratio: number = 1,

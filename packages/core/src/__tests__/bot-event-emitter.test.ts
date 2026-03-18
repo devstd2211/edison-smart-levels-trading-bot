@@ -1,53 +1,15 @@
 import { BotEventEmitter } from '../bot-event-emitter';
 import { BotEventBus } from '../services/event-bus';
 import { LoggerService } from '../types/legacy';
-import type { Position, StopLossConfig, TakeProfit } from '../types/legacy';
 import { PositionSide } from '../types/legacy';
-
-/**
- * Mock LoggerService for tests
- */
-const createMockLogger = (): Partial<LoggerService> => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-
-const createStopLoss = (price: number): StopLossConfig => ({
-  price,
-  initialPrice: price,
-  isBreakeven: false,
-  isTrailing: false,
-  updatedAt: Date.now(),
-});
-
-const createTakeProfits = (prices: number[]): TakeProfit[] =>
-  prices.map((price, index) => ({
-    level: index + 1,
-    price,
-    percent: 1,
-    sizePercent: 100 / prices.length,
-    hit: false,
-  }));
-
-const createPosition = (overrides: Partial<Position> = {}): Position => ({
-  id: 'test-pos',
-  symbol: 'BTCUSDT',
-  side: PositionSide.LONG,
-  quantity: 1,
-  entryPrice: 50000,
-  leverage: 10,
-  marginUsed: 5000,
-  stopLoss: createStopLoss(49000),
-  takeProfits: createTakeProfits([51000, 52000]),
-  openedAt: Date.now(),
-  unrealizedPnL: 0,
-  orderId: 'order-1',
-  reason: 'TEST',
-  status: 'OPEN',
-  ...overrides,
-});
+import {
+  createBotEventEmitterMockLogger,
+  createBotEventEmitterPosition,
+  createBotEventEmitterSignal,
+  createBotEventEmitterStopLoss,
+  createBotEventEmitterTakeProfits,
+  createStartedBotEventEmitterHarness,
+} from './helpers/bot-event-emitter-test.utils';
 
 /**
  * BotEventEmitter Tests
@@ -68,11 +30,11 @@ describe('BotEventEmitter', () => {
   };
 
   beforeEach(() => {
-    mockLogger = createMockLogger() as LoggerService;
-    eventBus = new BotEventBus(mockLogger);
-    emitter = new BotEventEmitter(eventBus, mockLogger);
+    const harness = createStartedBotEventEmitterHarness();
+    mockLogger = harness.logger;
+    eventBus = harness.eventBus;
+    emitter = harness.emitter;
     secondaryEmitters = [];
-    emitter.start();
   });
 
   afterEach(() => {
@@ -91,12 +53,7 @@ describe('BotEventEmitter', () => {
   describe('event bridging - signal events', () => {
     it('should bridge signal events from BotEventBus', (done) => {
       const testSignal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
+        ...createBotEventEmitterSignal(),
       };
 
       emitter.on('signal', (signal) => {
@@ -109,14 +66,11 @@ describe('BotEventEmitter', () => {
     });
 
     it('should support multiple signal listeners', (done) => {
-      const testSignal = {
+      const testSignal = createBotEventEmitterSignal({
         type: 'SHORT_ENTRY',
-        direction: 'SELL' as const,
-        confidence: 0.80,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+        direction: 'SELL',
+        confidence: 0.8,
+      });
 
       const callCount = 0;
       const handler1 = jest.fn();
@@ -139,14 +93,7 @@ describe('BotEventEmitter', () => {
       emitter.on('signal', handler);
       emitter.off('signal', handler);
 
-      const testSignal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const testSignal = createBotEventEmitterSignal();
 
       eventBus.emit('signal', testSignal);
 
@@ -159,10 +106,10 @@ describe('BotEventEmitter', () => {
 
   describe('event bridging - position opened', () => {
     it('should bridge position-opened events', (done) => {
-      const testPosition = createPosition({
+      const testPosition = createBotEventEmitterPosition({
         id: 'test-pos-1',
         symbol: 'BTCUSDT',
-        takeProfits: createTakeProfits([51000, 52000]),
+        takeProfits: createBotEventEmitterTakeProfits([51000, 52000]),
       });
 
       emitter.on('position-opened', (position) => {
@@ -174,14 +121,14 @@ describe('BotEventEmitter', () => {
     });
 
     it('should support multiple position-opened listeners', (done) => {
-      const testPosition = createPosition({
+      const testPosition = createBotEventEmitterPosition({
         id: 'test-pos-2',
         symbol: 'ETHUSDT',
         side: PositionSide.SHORT,
         entryPrice: 3000,
         quantity: 10,
-        takeProfits: createTakeProfits([2900]),
-        stopLoss: createStopLoss(3090),
+        takeProfits: createBotEventEmitterTakeProfits([2900]),
+        stopLoss: createBotEventEmitterStopLoss(3090),
       });
 
       const handler1 = jest.fn();
@@ -202,7 +149,7 @@ describe('BotEventEmitter', () => {
 
   describe('event bridging - position closed', () => {
     it('should bridge position-closed events', (done) => {
-      const testResult = createPosition({
+      const testResult = createBotEventEmitterPosition({
         id: 'test-pos-1',
         symbol: 'BTCUSDT',
         status: 'CLOSED',
@@ -217,7 +164,7 @@ describe('BotEventEmitter', () => {
     });
 
     it('should support multiple position-closed listeners', (done) => {
-      const testResult = createPosition({
+      const testResult = createBotEventEmitterPosition({
         id: 'test-pos-2',
         symbol: 'ETHUSDT',
         side: PositionSide.SHORT,
@@ -320,14 +267,7 @@ describe('BotEventEmitter', () => {
 
   describe('convenience methods - onSignal', () => {
     it('should provide onSignal() method', (done) => {
-      const testSignal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const testSignal = createBotEventEmitterSignal();
 
       const handler = jest.fn();
       emitter.onSignal(handler);
@@ -346,14 +286,7 @@ describe('BotEventEmitter', () => {
 
       expect(typeof unsubscribe).toBe('function');
 
-      const testSignal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const testSignal = createBotEventEmitterSignal();
 
       eventBus.emit('signal', testSignal);
 
@@ -373,8 +306,8 @@ describe('BotEventEmitter', () => {
 
   describe('convenience methods - onPositionOpened', () => {
     it('should provide onPositionOpened() method', (done) => {
-      const testPosition = createPosition({
-        takeProfits: createTakeProfits([51000]),
+      const testPosition = createBotEventEmitterPosition({
+        takeProfits: createBotEventEmitterTakeProfits([51000]),
       });
 
       const handler = jest.fn();
@@ -394,8 +327,8 @@ describe('BotEventEmitter', () => {
 
       expect(typeof unsubscribe).toBe('function');
 
-      const testPosition = createPosition({
-        takeProfits: createTakeProfits([51000]),
+      const testPosition = createBotEventEmitterPosition({
+        takeProfits: createBotEventEmitterTakeProfits([51000]),
       });
 
       eventBus.emit('position-opened', testPosition);
@@ -416,7 +349,7 @@ describe('BotEventEmitter', () => {
 
   describe('convenience methods - onPositionClosed', () => {
     it('should provide onPositionClosed() method', (done) => {
-      const testResult = createPosition({
+      const testResult = createBotEventEmitterPosition({
         status: 'CLOSED',
       });
 
@@ -437,7 +370,7 @@ describe('BotEventEmitter', () => {
 
       expect(typeof unsubscribe).toBe('function');
 
-      const testResult = createPosition({
+      const testResult = createBotEventEmitterPosition({
         status: 'CLOSED',
       });
 
@@ -578,14 +511,7 @@ describe('BotEventEmitter', () => {
       emitter.on('signal', handler1);
       emitter2.on('signal', handler2);
 
-      const signal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const signal = createBotEventEmitterSignal();
 
       eventBus.emit('signal', signal);
 
@@ -605,14 +531,7 @@ describe('BotEventEmitter', () => {
       emitter.on('signal', handler1);
       emitter2.on('signal', handler2);
 
-      const signal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const signal = createBotEventEmitterSignal();
 
       emitter.off('signal', handler1);
       eventBus.emit('signal', signal);
@@ -653,13 +572,9 @@ describe('BotEventEmitter', () => {
       const handler = jest.fn();
       emitter.on('signal', handler);
 
-      const signals = Array.from({ length: 10 }, (_, i) => ({
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
+      const signals = Array.from({ length: 10 }, (_, i) => createBotEventEmitterSignal({
         source: `TEST${i}`,
         timestamp: Date.now() + i,
-        indicators: [],
       }));
 
       signals.forEach((signal) => {
@@ -676,14 +591,7 @@ describe('BotEventEmitter', () => {
       const handler = jest.fn();
       emitter.once('signal', handler);
 
-      const signal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const signal = createBotEventEmitterSignal();
 
       eventBus.emit('signal', signal);
       eventBus.emit('signal', signal);
@@ -714,19 +622,12 @@ describe('BotEventEmitter', () => {
 
       emitter.removeAllListeners('signal');
 
-      const signal = {
-        type: 'LONG_ENTRY',
-        direction: 'BUY' as const,
-        confidence: 0.75,
-        source: 'TEST',
-        timestamp: Date.now(),
-        indicators: [],
-      };
+      const signal = createBotEventEmitterSignal();
 
       eventBus.emit('signal', signal);
 
-      const position = createPosition({
-        takeProfits: createTakeProfits([51000]),
+      const position = createBotEventEmitterPosition({
+        takeProfits: createBotEventEmitterTakeProfits([51000]),
       });
 
       eventBus.emit('position-opened', position);

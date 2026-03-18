@@ -20,6 +20,7 @@ import {
   createWhaleWallTPMockLogger as createMockLogger,
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPService,
+  createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
 } from '../helpers/whale-wall-tp-test.utils';
 
@@ -255,10 +256,10 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
 
     test('should apply TP adjustments to array', () => {
       const result = service.adjustTPSL(createValidWalls(), 50000, SignalDirection.LONG, 51000, 49000);
-      const takeProfits = [
-        { price: 51000, percent: 2, level: 1, sizePercent: 30, hit: false },
-        { price: 52000, percent: 3, level: 2, sizePercent: 40, hit: false },
-      ] as TakeProfit[];
+      const takeProfits = createWhaleWallTPTakeProfits([51000, 52000], [30, 40]).map((tp, index) => ({
+        ...tp,
+        percent: index === 0 ? 2 : 3,
+      })) as TakeProfit[];
 
       const adjusted = service.applyTPAdjustment(takeProfits, result, 50000, SignalDirection.LONG);
       expect(Array.isArray(adjusted)).toBe(true);

@@ -17,6 +17,7 @@ import {
   createBotMetricsHarness,
   createBotMetricsMockLogger,
   createBotMetricsTrade,
+  seedBotMetricsService,
 } from './helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService', () => {
@@ -221,13 +222,13 @@ describe('BotMetricsService', () => {
     });
 
     it('should calculate win rate correctly', () => {
-      const trades = [
-        { id: '1', direction: 'LONG' as const, entryPrice: 100, exitPrice: 105, quantity: 1, pnl: 5, pnlPercent: 5, duration: 60000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '2', direction: 'LONG' as const, entryPrice: 100, exitPrice: 105, quantity: 1, pnl: 5, pnlPercent: 5, duration: 60000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '3', direction: 'LONG' as const, entryPrice: 100, exitPrice: 95, quantity: 1, pnl: -5, pnlPercent: -5, duration: 60000, exitType: 'STOP_LOSS', timestamp: Date.now() },
-      ];
-
-      trades.forEach(t => metricsService.recordTrade(t));
+      seedBotMetricsService(metricsService, {
+        trades: [
+          { id: '1' },
+          { id: '2' },
+          { id: '3', exitPrice: 95, pnl: -5, pnlPercent: -5, exitType: 'STOP_LOSS' },
+        ],
+      });
 
       const perf = metricsService.getPerformanceMetrics();
       expect(perf.totalTrades).toBe(3);
@@ -237,25 +238,25 @@ describe('BotMetricsService', () => {
     });
 
     it('should calculate profit factor correctly', () => {
-      const trades = [
-        { id: '1', direction: 'LONG' as const, entryPrice: 100, exitPrice: 110, quantity: 1, pnl: 10, pnlPercent: 10, duration: 60000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '2', direction: 'LONG' as const, entryPrice: 100, exitPrice: 95, quantity: 1, pnl: -5, pnlPercent: -5, duration: 60000, exitType: 'STOP_LOSS', timestamp: Date.now() },
-      ];
-
-      trades.forEach(t => metricsService.recordTrade(t));
+      seedBotMetricsService(metricsService, {
+        trades: [
+          { id: '1', exitPrice: 110, pnl: 10, pnlPercent: 10 },
+          { id: '2', exitPrice: 95, pnl: -5, pnlPercent: -5, exitType: 'STOP_LOSS' },
+        ],
+      });
 
       const perf = metricsService.getPerformanceMetrics();
       expect(perf.profitFactor).toBeCloseTo(2, 1); // 10 / 5
     });
 
     it('should calculate average win and loss correctly', () => {
-      const trades = [
-        { id: '1', direction: 'LONG' as const, entryPrice: 100, exitPrice: 120, quantity: 1, pnl: 20, pnlPercent: 20, duration: 60000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '2', direction: 'LONG' as const, entryPrice: 100, exitPrice: 110, quantity: 1, pnl: 10, pnlPercent: 10, duration: 60000, exitType: 'TAKE_PROFIT_2', timestamp: Date.now() },
-        { id: '3', direction: 'LONG' as const, entryPrice: 100, exitPrice: 95, quantity: 1, pnl: -5, pnlPercent: -5, duration: 60000, exitType: 'STOP_LOSS', timestamp: Date.now() },
-      ];
-
-      trades.forEach(t => metricsService.recordTrade(t));
+      seedBotMetricsService(metricsService, {
+        trades: [
+          { id: '1', exitPrice: 120, pnl: 20, pnlPercent: 20 },
+          { id: '2', exitPrice: 110, pnl: 10, pnlPercent: 10, exitType: 'TAKE_PROFIT_2' },
+          { id: '3', exitPrice: 95, pnl: -5, pnlPercent: -5, exitType: 'STOP_LOSS' },
+        ],
+      });
 
       const perf = metricsService.getPerformanceMetrics();
       expect(perf.avgWin).toBe(15); // (20 + 10) / 2
@@ -288,13 +289,13 @@ describe('BotMetricsService', () => {
     });
 
     it('should calculate average duration correctly', () => {
-      const trades = [
-        { id: '1', direction: 'LONG' as const, entryPrice: 100, exitPrice: 105, quantity: 1, pnl: 5, pnlPercent: 5, duration: 60000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '2', direction: 'LONG' as const, entryPrice: 100, exitPrice: 105, quantity: 1, pnl: 5, pnlPercent: 5, duration: 120000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '3', direction: 'LONG' as const, entryPrice: 100, exitPrice: 105, quantity: 1, pnl: 5, pnlPercent: 5, duration: 180000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-      ];
-
-      trades.forEach(t => metricsService.recordTrade(t));
+      seedBotMetricsService(metricsService, {
+        trades: [
+          { id: '1', duration: 60000 },
+          { id: '2', duration: 120000 },
+          { id: '3', duration: 180000 },
+        ],
+      });
 
       const perf = metricsService.getPerformanceMetrics();
       expect(perf.avgDuration).toBe(120000); // (60000 + 120000 + 180000) / 3
@@ -340,13 +341,15 @@ describe('BotMetricsService', () => {
 
   describe('printReport', () => {
     it('should log performance report', () => {
-      const trades = [
-        { id: '1', direction: 'LONG' as const, entryPrice: 100, exitPrice: 110, quantity: 1, pnl: 10, pnlPercent: 10, duration: 60000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: '2', direction: 'LONG' as const, entryPrice: 100, exitPrice: 95, quantity: 1, pnl: -5, pnlPercent: -5, duration: 60000, exitType: 'STOP_LOSS', timestamp: Date.now() },
-      ];
-
-      trades.forEach(t => metricsService.recordTrade(t));
-      metricsService.recordEvent('positionUpdate', 50, true);
+      seedBotMetricsService(metricsService, {
+        trades: [
+          { id: '1', exitPrice: 110, pnl: 10, pnlPercent: 10 },
+          { id: '2', exitPrice: 95, pnl: -5, pnlPercent: -5, exitType: 'STOP_LOSS' },
+        ],
+        events: [
+          { name: 'positionUpdate', duration: 50, success: true },
+        ],
+      });
 
       metricsService.printReport();
 
@@ -431,14 +434,14 @@ describe('BotMetricsService', () => {
 
   describe('integration scenarios', () => {
     it('should track a complete trading session with multiple trades', () => {
-      const trades = [
-        { id: 'trade-1', direction: 'LONG' as const, entryPrice: 100, exitPrice: 102, quantity: 10, pnl: 20, pnlPercent: 2, duration: 5000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: 'trade-2', direction: 'SHORT' as const, entryPrice: 100, exitPrice: 99, quantity: 10, pnl: 10, pnlPercent: 1, duration: 3000, exitType: 'TAKE_PROFIT_1', timestamp: Date.now() },
-        { id: 'trade-3', direction: 'LONG' as const, entryPrice: 100, exitPrice: 98, quantity: 10, pnl: -20, pnlPercent: -2, duration: 4000, exitType: 'STOP_LOSS', timestamp: Date.now() },
-        { id: 'trade-4', direction: 'SHORT' as const, entryPrice: 100, exitPrice: 101, quantity: 10, pnl: -10, pnlPercent: -1, duration: 2000, exitType: 'STOP_LOSS', timestamp: Date.now() },
-      ];
-
-      trades.forEach(t => metricsService.recordTrade(t));
+      seedBotMetricsService(metricsService, {
+        trades: [
+          { id: 'trade-1', exitPrice: 102, quantity: 10, pnl: 20, pnlPercent: 2, duration: 5000 },
+          { id: 'trade-2', direction: 'SHORT', exitPrice: 99, quantity: 10, pnl: 10, pnlPercent: 1, duration: 3000 },
+          { id: 'trade-3', exitPrice: 98, quantity: 10, pnl: -20, pnlPercent: -2, duration: 4000, exitType: 'STOP_LOSS' },
+          { id: 'trade-4', direction: 'SHORT', exitPrice: 101, quantity: 10, pnl: -10, pnlPercent: -1, duration: 2000, exitType: 'STOP_LOSS' },
+        ],
+      });
 
       const perf = metricsService.getPerformanceMetrics();
 

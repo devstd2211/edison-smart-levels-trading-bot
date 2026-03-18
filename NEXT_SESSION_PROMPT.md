@@ -30,14 +30,14 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-03-18)
 - Completed another three-step lifecycle/testability batch:
-  - added `packages/core/src/__tests__/helpers/bot-factory-test.utils.ts` with canonical factory config + config-path mutation builders, routed both `bot-factory.service.test.ts` and `bot-factory.error-handling.test.ts` through that helper, and extended the existing `bot-metrics` helper with seeded fixture setup so report/reset sections stop rebuilding the same trades/events inline.
-  - reviewed `services/bot-factory.service.ts` and `services/bot-metrics.service.ts`; kept production code unchanged because the batch only needed test-harness consolidation.
+  - extended `packages/core/src/__tests__/helpers/whale-detection-test.utils.ts` with canonical wall and config-override builders, routed `whale-detection.error-handling.test.ts` through those config builders instead of local inline variants, and replaced repeated raw wall/config fixtures in `whale-detector.service.test.ts` with the shared helpers.
+  - reviewed `services/whale-detection.service.ts`; kept production code unchanged because the batch only needed test-harness consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts` -> PASS (3/3 suites, 88/88 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/whale-detector.service.test.ts` -> PASS (2/2 suites, 37/37 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
 - Prefer the next compact untouched suite with repeated inline bootstrap or lifecycle setup beyond the now-refreshed `circuit-breaker.error-handling`, `data-collector.error-handling`, `graceful-shutdown.error-handling`, `circuit-breaker.service`, `graceful-shutdown.service`, `bybit.error-handling`, `advanced-order-state-machine`, `multi-timeframe-trend`, `liquidity-heatmap`, `fractal-smc-weighting`, `pattern-recognition`, `retest-entry`, `swing-point-detector`, `whale-wall-tp`, `enhanced-exit`, `whale-detection`, `reality-check`, `volatility-regime`, `timeframe-weighting`, `risk-calculator`, `strategy-loader`, `session-stats`, `phase-10-integration`, `position-lifecycle.repository-integration`, `bybit.repository-integration`, `multi-strategy.cache`, `position-exiting.integration`, `order-flow-analyzer`, `smart-order-execution`, `structure-aware-exit`, `health-check`, `action-queue`, `time-service`, `dynamic-position-sizer`, and `position-scaling`.
-- Likely next candidates: remaining bot/lifecycle-adjacent suites that still build broad service state inline, or another constructor-heavy error-handling suite adjacent to the refreshed `bot-factory` / `bot-initializer` / `bot-metrics` helpers.
+- Likely next candidates: remaining constructor-heavy suites that still own local logger/config/fixture builders inline, especially adjacent main/error-handling pairs around the refreshed `whale-*` helpers or another lifecycle-adjacent slice still building broad state locally.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

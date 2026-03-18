@@ -12,6 +12,8 @@ import { WhaleDetectionService, WhaleDetectorConfig } from '../../services/whale
 import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
+  createWhaleDetectionConfigWithImbalanceSpike,
+  createWhaleDetectionConfigWithWallBreak,
   createWhaleDetectionErrorHandler,
   createWhaleDetectionHarness,
   createWhaleDetectionMockLogger,
@@ -21,19 +23,8 @@ import {
 
 const createMockLogger = createWhaleDetectionMockLogger;
 const createValidAnalysis = () => createWhaleDetectionAnalysis([], 1.2, 'BULLISH');
-const createValidConfig = (): WhaleDetectorConfig => {
-  const config = createWhaleDetectionConfig();
-  return {
-    ...config,
-    modes: {
-      ...config.modes,
-      imbalanceSpike: {
-        ...config.modes.imbalanceSpike,
-        minRatioChange: 1.5,
-      },
-    },
-  };
-};
+const createValidConfig = (): WhaleDetectorConfig =>
+  createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   // ============================================================================
@@ -60,16 +51,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     test('should throw on invalid wallBreak minWallSize', () => {
       const logger = createWhaleDetectionMockLoggerService(mockLogger);
       const errorHandler = createWhaleDetectionErrorHandler(logger);
-      const config = {
-        ...createValidConfig(),
-        modes: {
-          ...createValidConfig().modes,
-          wallBreak: {
-            ...createValidConfig().modes.wallBreak,
-            minWallSize: -10,
-          },
-        },
-      };
+      const config = createWhaleDetectionConfigWithWallBreak({ minWallSize: -10 });
       expect(() => {
         createWhaleDetectionService({
           config,
@@ -82,16 +64,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     test('should throw on invalid maxConfidence (>100)', () => {
       const logger = createWhaleDetectionMockLoggerService(mockLogger);
       const errorHandler = createWhaleDetectionErrorHandler(logger);
-      const config = {
-        ...createValidConfig(),
-        modes: {
-          ...createValidConfig().modes,
-          wallBreak: {
-            ...createValidConfig().modes.wallBreak,
-            maxConfidence: 150,
-          },
-        },
-      };
+      const config = createWhaleDetectionConfigWithWallBreak({ maxConfidence: 150 });
       expect(() => {
         createWhaleDetectionService({
           config,

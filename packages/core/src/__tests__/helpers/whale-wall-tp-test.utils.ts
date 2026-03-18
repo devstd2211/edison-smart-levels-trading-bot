@@ -77,21 +77,44 @@ export function createWhaleWallTPConfigWithQuality(
 
 export function createWhaleWallTPWalls(): OrderBookWall[] {
   return [
-    {
-      side: 'ASK',
-      price: 50500,
-      quantity: 10,
-      percentOfTotal: 15,
-      distance: 1.0,
-    },
-    {
-      side: 'BID',
-      price: 49500,
-      quantity: 8,
-      percentOfTotal: 12,
-      distance: -1.0,
-    },
+    createWhaleWallTPWall('ASK', 50500, 15, 1.0, 10),
+    createWhaleWallTPWall('BID', 49500, 12, -1.0, 8),
   ];
+}
+
+export function createWhaleWallTPWall(
+  side: 'BID' | 'ASK',
+  price: number,
+  percentOfTotal: number,
+  distance: number,
+  quantity = 1000,
+): OrderBookWall {
+  return {
+    side,
+    price,
+    quantity,
+    percentOfTotal,
+    distance,
+  };
+}
+
+export function createWhaleWallTPTakeProfits(
+  prices: number[],
+  sizePercents?: number[],
+): Array<{
+  level: number;
+  percent: number;
+  sizePercent: number;
+  price: number;
+  hit: boolean;
+}> {
+  return prices.map((price, index) => ({
+    level: index + 1,
+    percent: 0,
+    sizePercent: sizePercents?.[index] ?? 100 / prices.length,
+    price,
+    hit: false,
+  }));
 }
 
 export function createWhaleWallTPHarness(options: {

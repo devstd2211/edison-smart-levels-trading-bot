@@ -9,8 +9,10 @@ import { OrderBookAnalysis, OrderBookWall, LoggerService, LogLevel, SignalDirect
 import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
+  createWhaleDetectionConfigWithWallBreak,
   createWhaleDetectionHarness,
   createWhaleDetectionService,
+  createWhaleDetectionWall,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
@@ -44,13 +46,7 @@ describe('WhaleDetectionService', () => {
 
   describe('WALL_BREAK Detection', () => {
     it('should detect BID wall break and signal LONG', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 20, // 20% > minWallSize (15%)
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 20, 0.5);
 
       // Track the wall first
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
@@ -70,13 +66,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should detect ASK wall break and signal SHORT', () => {
-      const askWall: OrderBookWall = {
-        side: 'ASK',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 20, // 20% > minWallSize (15%)
-        distance: 0.5,
-      };
+      const askWall: OrderBookWall = createWhaleDetectionWall('ASK', 1000, 20, 0.5);
 
       // Track the wall first
       detector.detectWhale(createAnalysis([askWall], 1.0, 'NEUTRAL'), 995);
@@ -96,13 +86,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should NOT detect wall break if wall too small', () => {
-      const smallWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 100,
-        percentOfTotal: 5, // 5% < minWallSize (15%)
-        distance: 0.5,
-      };
+      const smallWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 5, 0.5, 100);
 
       detector.detectWhale(createAnalysis([smallWall], 1.0, 'NEUTRAL'), 1005);
       jest.advanceTimersByTime(3500);
@@ -114,13 +98,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should NOT detect wall break if not confirmed (< 3s)', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 20,
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 20, 0.5);
 
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
 
@@ -192,13 +170,7 @@ describe('WhaleDetectionService', () => {
 
   describe('WALL_DISAPPEARANCE Trend-Aware Logic', () => {
     it('should use default logic in NEUTRAL market (BID disappears → SHORT)', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25, // 25% > minWallSize (20%)
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
@@ -223,13 +195,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should INVERT signal in BEARISH market (BID disappears → LONG instead of SHORT)', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25,
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
@@ -249,13 +215,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should INVERT signal in BULLISH market (ASK disappears → SHORT instead of LONG)', () => {
-      const askWall: OrderBookWall = {
-        side: 'ASK',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25,
-        distance: 0.5,
-      };
+      const askWall: OrderBookWall = createWhaleDetectionWall('ASK', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([askWall], 1.0, 'NEUTRAL'), 995);
@@ -275,13 +235,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should BLOCK signal going against strong trend (BID disappears in BULLISH)', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25,
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
@@ -296,13 +250,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should BLOCK signal going against strong trend (ASK disappears in BEARISH)', () => {
-      const askWall: OrderBookWall = {
-        side: 'ASK',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25,
-        distance: 0.5,
-      };
+      const askWall: OrderBookWall = createWhaleDetectionWall('ASK', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([askWall], 1.0, 'NEUTRAL'), 995);
@@ -317,13 +265,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should use default logic in MODERATE trend (momentum 0.3-0.5)', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25,
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
@@ -341,13 +283,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should use default logic when BTC data NOT available', () => {
-      const bidWall: OrderBookWall = {
-        side: 'BID',
-        price: 1000,
-        quantity: 5000,
-        percentOfTotal: 25,
-        distance: 0.5,
-      };
+      const bidWall: OrderBookWall = createWhaleDetectionWall('BID', 1000, 25, 0.5);
 
       // Track the wall
       detector.detectWhale(createAnalysis([bidWall], 1.0, 'NEUTRAL'), 1005);
@@ -367,15 +303,15 @@ describe('WhaleDetectionService', () => {
 
   describe('Configuration', () => {
     it('should respect disabled modes', () => {
+      const baseConfig = createWhaleDetectionConfig();
       const disabledConfig: WhaleDetectorConfig = {
+        ...createWhaleDetectionConfigWithWallBreak({ enabled: false }),
         modes: {
-          wallBreak: { enabled: false, minWallSize: 15, breakConfirmationMs: 3000, maxConfidence: 85 },
-          wallDisappearance: { enabled: false, minWallSize: 20, minWallDuration: 60000, wallGoneThresholdMs: 15000, maxConfidence: 80 },
-          imbalanceSpike: { enabled: false, minRatioChange: 0.5, detectionWindow: 10000, maxConfidence: 90 },
+          ...baseConfig.modes,
+          wallBreak: { ...baseConfig.modes.wallBreak, enabled: false },
+          wallDisappearance: { ...baseConfig.modes.wallDisappearance, enabled: false },
+          imbalanceSpike: { ...baseConfig.modes.imbalanceSpike, enabled: false },
         },
-        maxImbalanceHistory: 20,
-        wallExpiryMs: 60000,
-        breakExpiryMs: 300000,
       };
       const disabledDetector = createWhaleDetectionService({
         config: disabledConfig,
