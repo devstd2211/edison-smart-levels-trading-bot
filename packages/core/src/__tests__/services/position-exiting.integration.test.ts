@@ -15,16 +15,20 @@
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { Position, PositionSide, TakeProfit } from '../../types/legacy';
 import {
+  createBreakevenInspection,
   createMockPositionExitingLogger,
-  createPositionExitingHarness,
+  createRealScenarioPartialClose,
   createRealScenarioPositionExitingHarness,
   createRealScenarioTakeProfitManager,
   createRealScenarioPosition,
+  createWebSocketBugScenario,
+  createWebSocketUpdateSequence,
+  parseWebSocketEntryPrice,
 } from '../helpers/position-exiting-test.utils';
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   let service: PositionExitingService;
-  let mockBybitService: ReturnType<typeof createPositionExitingHarness>['mockBybit'];
-  let mockLogger: ReturnType<typeof createPositionExitingHarness>['mockLogger'];
+  let mockBybitService: ReturnType<typeof createRealScenarioPositionExitingHarness>['mockBybit'];
+  let mockLogger: ReturnType<typeof createRealScenarioPositionExitingHarness>['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
   beforeEach(() => {
@@ -41,14 +45,12 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   describe('Real scenario: TP1 close + recordPartialClose', () => {
     it('Should correctly record TP1 partial close with valid entryPrice', () => {
       // This tests that TakeProfitManager works correctly with valid data
-      const tpLevel = 1;
-      const partialQuantity = (52.85 * 33) / 100; // 17.4405
-      const tp1ExitPrice = 1.9203;
+      const { tpLevel, partialQuantity, exitPrice } = createRealScenarioPartialClose();
 
       const partialClose = mockTakeProfitManager.recordPartialClose(
         tpLevel,
         partialQuantity,
-        tp1ExitPrice,
+        exitPrice,
       );
 
       console.log(`
@@ -71,14 +73,12 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       // Simulate corruption
       (mockTakeProfitManager as unknown as { config: { entryPrice: number } }).config.entryPrice = NaN;
 
-      const tpLevel = 1;
-      const partialQuantity = (52.85 * 33) / 100;
-      const tp1ExitPrice = 1.9203;
+      const { tpLevel, partialQuantity, exitPrice } = createRealScenarioPartialClose();
 
       const partialClose = mockTakeProfitManager.recordPartialClose(
         tpLevel,
         partialQuantity,
-        tp1ExitPrice,
+        exitPrice,
       );
 
       console.log(`
@@ -126,33 +126,44 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       };
 
       // Check what breakeven calculation would give
-      const offsetPercent = 0.3;
-      const offset = (position.entryPrice * offsetPercent) / 10000;
-      const breakevenPrice = position.entryPrice + offset;
+      const { offset, breakevenPrice } = createBreakevenInspection({
+        entryPrice: position.entryPrice,
+        offsetPercent: 0.3,
+      });
 
       console.log(`
         BREAKEVEN CALCULATION:
         - Position entryPrice: ${position.entryPrice}
         - Is NaN? ${isNaN(position.entryPrice)}
         - Calculated Breakeven: ${breakevenPrice}
-        - Is Breakeven NaN? ${isNaN(breakevenPrice)}
+        - Is Breakeven NaN? ${breakevenPrice !== undefined ? isNaN(breakevenPrice) : 'undefined'}
       `);
+
+      if (offset === undefined || breakevenPrice === undefined) {
+        throw new Error('Expected numeric breakeven values for valid integration scenario');
+      }
 
       expect(isNaN(breakevenPrice)).toBe(false);
 
       // Now what if entryPrice becomes NaN between recordPartialClose and handleTP1Hit?
       position.entryPrice = NaN;
 
-      const offset2 = (position.entryPrice * offsetPercent) / 10000;
-      const breakevenPrice2 = position.entryPrice + offset2;
+      const { breakevenPrice: breakevenPrice2 } = createBreakevenInspection({
+        entryPrice: position.entryPrice,
+        offsetPercent: 0.3,
+      });
 
       console.log(`
         AFTER CORRUPTION:
         - Position entryPrice: ${position.entryPrice}
         - Is NaN? ${isNaN(position.entryPrice)}
         - Calculated Breakeven: ${breakevenPrice2}
-        - Is Breakeven NaN? ${isNaN(breakevenPrice2)}
+        - Is Breakeven NaN? ${breakevenPrice2 !== undefined ? isNaN(breakevenPrice2) : 'undefined'}
       `);
+
+      if (breakevenPrice2 === undefined) {
+        throw new Error('Expected NaN breakeven value for corrupted integration scenario');
+      }
 
       expect(isNaN(breakevenPrice2)).toBe(true);
     });
@@ -167,10 +178,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       // - '' ?? avgPrice = '' (empty string is truthy!)
       // - parseFloat('') = NaN
 
-      const posData = {
-        entryPrice: '', // Empty from WebSocket
-        avgPrice: '1.9203',
-      };
+      const posData = createWebSocketBugScenario();
 
       // OLD BUGGY CODE
       const oldBuggyCode = parseFloat(posData.entryPrice ?? posData.avgPrice ?? '0');
@@ -192,25 +200,8 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       // Checks for EMPTY strings before parsing
       // Validates non-NaN result
 
-      const posData = {
-        entryPrice: '', // Empty
-        avgPrice: '1.9203', // Valid
-      };
-
-      // NEW FIXED CODE (simulation)
-      const parseEntryPrice = (): number => {
-        if (posData.entryPrice && posData.entryPrice.trim()) {
-          const price = parseFloat(posData.entryPrice);
-          if (!isNaN(price)) return price;
-        }
-        if (posData.avgPrice && posData.avgPrice.trim()) {
-          const price = parseFloat(posData.avgPrice);
-          if (!isNaN(price)) return price;
-        }
-        return 0;
-      };
-
-      const newFixedCode = parseEntryPrice();
+      const posData = createWebSocketBugScenario();
+      const newFixedCode = parseWebSocketEntryPrice(posData.entryPrice, posData.avgPrice);
 
       console.log(`
         NEW FIXED CODE:
@@ -227,26 +218,9 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
 
     it('VERIFIED: Sequence of WebSocket updates', () => {
       // Simulates actual WebSocket update sequence
-      const positions = [
-        { entryPrice: '1.892', avgPrice: '1.892', label: 'Position Open' },
-        { entryPrice: '', avgPrice: '1.9203', label: 'After TP1 Close (BUG)' },
-      ];
-
-      const parseEntryPrice = (entryPrice: string, avgPrice: string): number => {
-        if (entryPrice && entryPrice.trim()) {
-          const price = parseFloat(entryPrice);
-          if (!isNaN(price)) return price;
-        }
-        if (avgPrice && avgPrice.trim()) {
-          const price = parseFloat(avgPrice);
-          if (!isNaN(price)) return price;
-        }
-        return 0;
-      };
-
-      const results = positions.map(p => ({
+      const results = createWebSocketUpdateSequence().map(p => ({
         ...p,
-        parsed: parseEntryPrice(p.entryPrice, p.avgPrice),
+        parsed: parseWebSocketEntryPrice(p.entryPrice, p.avgPrice),
       }));
 
       console.log(`

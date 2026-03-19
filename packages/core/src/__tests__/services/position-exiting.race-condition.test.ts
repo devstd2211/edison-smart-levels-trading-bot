@@ -11,9 +11,8 @@
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { Position, ExitType } from '../../types/legacy';
 import {
-  createMockPositionExitingTradingConfig,
-  createPositionExitingHarness,
   createMockRacePosition,
+  createRaceConditionPositionExitingHarness,
 } from '../helpers/position-exiting-test.utils';
 
 // ============================================================================
@@ -47,34 +46,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   let mockSessionStats: { updateTradeExit: jest.Mock };
 
   beforeEach(() => {
-    const harness = createPositionExitingHarness({
-      tradingConfig: createMockPositionExitingTradingConfig({
-        tradingFeeRate: 0.0006,
-      }),
-      riskConfig: {
-        maxRiskPercent: 2,
-        maxPositionSize: 1000,
-      } as never,
-      fullConfig: {} as never,
-      exchangeOverrides: {
-        closePosition: jest.fn().mockResolvedValue({}),
-        cancelAllConditionalOrders: jest.fn().mockResolvedValue({}),
-        getCurrentPrice: jest.fn().mockResolvedValue(1.871),
-      },
-      telegramOverrides: {
-        sendAlert: jest.fn().mockResolvedValue(undefined),
-        notifyPositionClosed: jest.fn().mockResolvedValue(undefined),
-      },
-      journalOverrides: {
-        recordPositionClose: jest.fn().mockReturnValue({
-          rollback: jest.fn(),
-        }),
-        getTrade: jest.fn().mockReturnValue(null),
-      },
-      sessionStatsOverrides: {
-        updateTradeExit: jest.fn().mockResolvedValue({}),
-      },
-    });
+    const harness = createRaceConditionPositionExitingHarness();
 
     positionExitingService = harness.service;
     mockLogger = harness.mockLogger;

@@ -1,7 +1,7 @@
 import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
-import type { ExchangeConfig } from '../../types/legacy';
+import type { Candle, ExchangeConfig } from '../../types/legacy';
 
 export function createBybitRepositoryLogger(): LoggerService {
   return {
@@ -59,4 +59,44 @@ export function createBybitRepositoryHarness(
     config,
     createService,
   };
+}
+
+export function createRepositoryCandle(
+  timestamp: number,
+  overrides: Partial<Candle> = {},
+): Candle {
+  return {
+    timestamp,
+    open: 1.0,
+    high: 1.1,
+    low: 0.9,
+    close: 1.05,
+    volume: 100,
+    ...overrides,
+  };
+}
+
+export function createRepositoryCandles(
+  entries: Array<{ timestamp: number; overrides?: Partial<Candle> }>,
+): Candle[] {
+  return entries.map(({ timestamp, overrides }) => createRepositoryCandle(timestamp, overrides));
+}
+
+export function seedRepositoryCandles(
+  repository: MarketDataCacheRepository,
+  symbol: string,
+  timeframe: string,
+  candles: Candle[],
+): Candle[] {
+  repository.saveCandles(symbol, timeframe, candles);
+  return candles;
+}
+
+export function createSequentialRepositoryCandles(
+  count: number,
+  buildOverrides: (index: number) => Partial<Candle> = () => ({}),
+): Candle[] {
+  return Array.from({ length: count }, (_, index) =>
+    createRepositoryCandle((index + 1) * 1000, buildOverrides(index)),
+  );
 }

@@ -95,6 +95,31 @@ export function createMockLifecyclePosition(overrides: Partial<Position> = {}): 
   };
 }
 
+export function createLifecycleSafetyPosition(overrides: Partial<Position> = {}): Position {
+  return createMockLifecyclePosition({
+    id: 'BTCUSDT_Buy',
+    symbol: 'BTCUSDT',
+    quantity: 1,
+    entryPrice: 45000,
+    marginUsed: 4500,
+    unrealizedPnL: 500,
+    openedAt: Date.now() - 3600000,
+    orderId: 'order-123',
+    reason: 'Test entry',
+    takeProfits: [
+      { level: 1, percent: 0.5, sizePercent: 50, price: 45225, hit: false },
+    ],
+    stopLoss: {
+      price: 44000,
+      initialPrice: 44000,
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    },
+    ...overrides,
+  });
+}
+
 export function createMockLifecycleSignal(overrides: Partial<Signal> = {}): Signal {
   return {
     direction: SignalDirection.LONG,
@@ -110,6 +135,23 @@ export function createMockLifecycleSignal(overrides: Partial<Signal> = {}): Sign
     type: 'technical',
     ...overrides,
   } as unknown as Signal;
+}
+
+export function cloneLifecyclePosition(position: Position): Position {
+  return JSON.parse(JSON.stringify(position)) as Position;
+}
+
+export function createLifecycleRestorePosition(
+  overrides: Partial<Position> = {},
+): Position {
+  return createMockLifecyclePosition({
+    id: 'BTC_BUY_RESTORE',
+    reason: 'RESTORE',
+    openedAt: Date.now() - 60000,
+    journalId: undefined,
+    unrealizedPnL: 0,
+    ...overrides,
+  });
 }
 
 export function createMockLifecycleExchange(position: Position) {

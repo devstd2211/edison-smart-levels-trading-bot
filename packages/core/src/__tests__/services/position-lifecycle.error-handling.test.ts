@@ -22,7 +22,6 @@ import {
   RiskManagementConfig,
   EntryConfirmationConfig,
   Config,
-  PositionSide,
   ExitType,
 } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
@@ -35,6 +34,8 @@ import {
 import { BotEventBus } from '../../services/event-bus';
 import { IPositionRepository } from '../../repositories/IRepositories';
 import {
+  cloneLifecyclePosition,
+  createLifecycleRestorePosition,
   createMockLifecyclePosition,
   createMockLifecycleSignal,
   createPositionLifecycleRepositoryHarness,
@@ -56,6 +57,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
+  const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
     const harness = createPositionLifecycleRepositoryHarness();
@@ -188,13 +190,13 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
 
     it('test-8.7.8: Should preserve existing position on sync error', () => {
       // Set up existing position - need fresh object
-      const existingPosition = JSON.parse(JSON.stringify(mockPosition)) as Position;
+      const existingPosition = clonePosition(mockPosition);
       mockRepository.getCurrentPosition.mockReturnValue(existingPosition);
 
       // First sync to establish current position
       service.syncWithWebSocket(existingPosition);
 
-      const wsPosition: Position = JSON.parse(JSON.stringify(mockPosition)) as Position;
+      const wsPosition: Position = clonePosition(mockPosition);
       wsPosition.quantity = 0.5;
       wsPosition.unrealizedPnL = 500;
 
@@ -210,23 +212,11 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Test graceful degradation when journal is unavailable
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
 
-      const wsPosition: Position = {
-        id: 'BTC_BUY_RESTORE',
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        entryPrice: 40000,
-        quantity: 0.25,
-        leverage: 10,
-        marginUsed: 100,
+      const wsPosition: Position = createLifecycleRestorePosition({
         orderId: 'ORDER2',
-        reason: 'RESTORE',
-        status: 'OPEN',
-        openedAt: Date.now() - 60000,
         stopLoss: mockPosition.stopLoss,
         takeProfits: mockPosition.takeProfits,
-        unrealizedPnL: 0,
-        journalId: undefined,
-      };
+      });
 
       service.syncWithWebSocket(wsPosition);
 
@@ -338,7 +328,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
 
     it('test-8.7.17: Should maintain state through sync failures', () => {
       // Set up existing position
-      const existingPosition = JSON.parse(JSON.stringify(mockPosition)) as Position;
+      const existingPosition = clonePosition(mockPosition);
       mockRepository.getCurrentPosition.mockReturnValue(existingPosition);
 
       // First sync to set currentPosition
@@ -347,7 +337,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Journal lookup now returns undefined (GRACEFUL_DEGRADE)
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
 
-      const wsPosition: Position = JSON.parse(JSON.stringify(existingPosition)) as Position;
+      const wsPosition: Position = clonePosition(existingPosition);
       wsPosition.unrealizedPnL = 1000;
 
       service.syncWithWebSocket(wsPosition);

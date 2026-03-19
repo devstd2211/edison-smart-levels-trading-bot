@@ -74,3 +74,36 @@ export function createRepositoryPositions(
     createRepositoryPosition(buildOverrides(index)),
   );
 }
+
+export function createClosedRepositoryPosition(
+  overrides: Partial<Position> = {},
+): Position {
+  return createRepositoryPosition({
+    status: 'CLOSED',
+    ...overrides,
+  });
+}
+
+export function createSeededClosedHistoryRepository(
+  overrides: Partial<Position>[] = [{}],
+): IPositionRepository {
+  return createSeededHistoryRepository(
+    overrides.map((positionOverrides) => createClosedRepositoryPosition(positionOverrides)),
+  );
+}
+
+export function createSeededCurrentAndHistoryRepository(options: {
+  currentPosition?: Partial<Position>;
+  history?: Partial<Position>[];
+} = {}): IPositionRepository {
+  const history = (options.history ?? []).map((positionOverrides) =>
+    createClosedRepositoryPosition(positionOverrides),
+  );
+
+  return createSeededPositionRepositoryHarness({
+    currentPosition: options.currentPosition
+      ? createRepositoryPosition(options.currentPosition)
+      : undefined,
+    history,
+  });
+}

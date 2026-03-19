@@ -11,14 +11,16 @@ import { Orderbook } from '../../types/legacy';
 import { Signal, MarketContext } from '../../types/legacy';
 import {
   asPhase10Context,
-  asPhase10Signal,
-  asPhase10SignalType,
-  createPhase10Context,
   createPhase10Harness,
+  createPhase10BalancedOrderbook,
   createPhase10IntegrationOrderbook,
+  createPhase10InvalidOrderbook,
+  createPhase10InvalidSignal,
   createPhase10OrderbookSide,
   createPhase10PerformanceOrderbook,
-  createPhase10Signal,
+  createPhase10SlippageOrderbook,
+  createPhase10SupportResistanceOrderbook,
+  createPhase10ValidRecoveryOrderbook,
   createPhase10WorkflowFixtures,
   seedPhase10VolumeBaseline,
 } from '../helpers/phase-10-integration-test.utils';
@@ -44,22 +46,7 @@ describe('Phase 10 Integration Tests', () => {
   describe('Phase 10.1 Services Integration', () => {
     it('should analyze order flow and generate smart order placement', async () => {
       // 1. Create test orderbook
-      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
-        bids: [
-          { price: 50000, volume: 10.0 },
-          { price: 49990, volume: 8.0 },
-          { price: 49980, volume: 12.0 },
-          { price: 49970, volume: 5.0 },
-          { price: 49960, volume: 7.0 },
-        ],
-        asks: [
-          { price: 50010, volume: 9.0 },
-          { price: 50020, volume: 11.0 },
-          { price: 50030, volume: 6.0 },
-          { price: 50040, volume: 8.0 },
-          { price: 50050, volume: 4.0 },
-        ],
-      });
+      const orderbook: Orderbook = createPhase10BalancedOrderbook();
 
       // 2. Build liquidity heatmap
       const heatmap = await liquidityService.buildLiquidityHeatmap(orderbook);
@@ -80,18 +67,7 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should calculate slippage and execution cost', async () => {
-      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
-        bids: [
-          { price: 50000, volume: 15.0 },
-          { price: 49990, volume: 20.0 },
-          { price: 49980, volume: 10.0 },
-        ],
-        asks: [
-          { price: 50010, volume: 12.0 },
-          { price: 50020, volume: 18.0 },
-          { price: 50030, volume: 8.0 },
-        ],
-      });
+      const orderbook: Orderbook = createPhase10SlippageOrderbook();
 
       // Calculate slippage
       const slippage = await liquidityService.calculateSlippageForSize(orderbook, 10.0, 'buy');
@@ -108,18 +84,7 @@ describe('Phase 10 Integration Tests', () => {
     });
 
     it('should detect support and resistance levels', async () => {
-      const orderbook: Orderbook = createPhase10IntegrationOrderbook({
-        bids: [
-          { price: 50000, volume: 25.0 },
-          { price: 49990, volume: 10.0 },
-          { price: 49980, volume: 8.0 },
-        ],
-        asks: [
-          { price: 50010, volume: 8.0 },
-          { price: 50020, volume: 12.0 },
-          { price: 50030, volume: 22.0 },
-        ],
-      });
+      const orderbook: Orderbook = createPhase10SupportResistanceOrderbook();
 
       const sr = await liquidityService.findSupportResistance(orderbook);
       expect(sr).toBeDefined();
@@ -157,7 +122,7 @@ describe('Phase 10 Integration Tests', () => {
 
 
     it('should work without history tracking methods', () => {
-      createPhase10Signal({ confidence: 0.7 });
+      createPhase10WorkflowFixtures({ signal: { confidence: 0.7 } });
       // Services should work without recordSignalOutcome or updateVolumeHistory
       expect(true).toBe(true);
     });
@@ -219,34 +184,19 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Error Resilience', () => {
     it('should handle invalid orderbook gracefully', async () => {
-      const invalidOrderbook = asOrderbook({
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
-        bids: null,
-        asks: [],
-      });
+      const invalidOrderbook = asOrderbook(createPhase10InvalidOrderbook());
 
       await expect(liquidityService.buildLiquidityHeatmap(invalidOrderbook)).rejects.toThrow();
 
       // Service should still work after error
-      const validOrderbook: Orderbook = {
-        symbol: 'BTCUSDT',
-        timestamp: Date.now(),
-        bids: [{ price: 50000, volume: 10 }],
-        asks: [{ price: 50010, volume: 10 }],
-      };
+      const validOrderbook: Orderbook = createPhase10ValidRecoveryOrderbook();
 
       const result = await liquidityService.buildLiquidityHeatmap(validOrderbook);
       expect(result).toBeDefined();
     });
 
     it('should handle invalid signal gracefully', async () => {
-      const invalidSignal = asPhase10Signal({
-        type: 'invalid',
-        direction: 'wrong',
-        confidence: 5.0,
-        timestamp: NaN,
-      });
+      const invalidSignal = createPhase10InvalidSignal();
 
       // Service doesn't throw, but returns NaN for invalid inputs
       const result = await mlValidatorService.validateSignal(invalidSignal, asPhase10Context({}));

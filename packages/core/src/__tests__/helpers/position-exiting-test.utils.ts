@@ -2,6 +2,9 @@ import { PositionExitingService } from '../../services/position-exiting.service'
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
 import {
   Config,
+  ExitAction,
+  ExitActionDTO,
+  ExitType,
   Position,
   PositionSide,
   RiskManagementConfig,
@@ -177,6 +180,29 @@ export function createMockExitedPosition(overrides: Partial<Position> = {}): Pos
   };
 }
 
+export function createMockExitAction(overrides: Partial<ExitActionDTO> = {}): ExitActionDTO {
+  return {
+    action: ExitAction.CLOSE_ALL,
+    ...overrides,
+  } as ExitActionDTO;
+}
+
+export function createPositionExitRequest(overrides: {
+  position?: Partial<Position>;
+  action?: Partial<ExitActionDTO>;
+  exitPrice?: number;
+  exitReason?: string;
+  exitType?: ExitType;
+} = {}) {
+  return {
+    position: createMockExitedPosition(overrides.position),
+    action: createMockExitAction(overrides.action),
+    exitPrice: overrides.exitPrice ?? 105,
+    exitReason: overrides.exitReason ?? 'TP1_HIT',
+    exitType: overrides.exitType ?? ExitType.TAKE_PROFIT_1,
+  };
+}
+
 export function createMockRacePosition(overrides: Partial<Position> = {}): Position {
   return createMockExitedPosition({
     id: 'XRPUSDT_Buy',
@@ -238,6 +264,146 @@ export function createRealScenarioPosition(): Position {
   };
 }
 
+export function createFunctionalPositionExitingHarness() {
+  return createPositionExitingHarness({
+    withTakeProfitManager: false,
+    riskConfig: {
+      takeProfits: [
+        { level: 1, percent: 1.5, sizePercent: 33 },
+        { level: 2, percent: 3, sizePercent: 33 },
+        { level: 3, percent: 5, sizePercent: 34 },
+      ],
+      stopLossPercent: 1,
+      minStopLossPercent: 0.5,
+      trailingStopPercent: 1,
+    },
+    fullConfig: {
+      exchange: { symbol: 'XRPUSDT' } as never,
+    },
+  });
+}
+
+export function createBreakevenInspection(overrides: {
+  entryPrice?: number;
+  offsetPercent?: number;
+} = {}) {
+  const entryPrice =
+    Object.prototype.hasOwnProperty.call(overrides, 'entryPrice')
+      ? overrides.entryPrice
+      : createRealScenarioPosition().entryPrice;
+  const offsetPercent =
+    Object.prototype.hasOwnProperty.call(overrides, 'offsetPercent')
+      ? overrides.offsetPercent
+      : createMockPositionExitingRiskConfig().breakevenOffsetPercent;
+  const offset =
+    entryPrice === undefined || offsetPercent === undefined
+      ? undefined
+      : (entryPrice * offsetPercent) / 10000;
+
+  return {
+    entryPrice,
+    offsetPercent,
+    offset,
+    breakevenPrice:
+      entryPrice === undefined || offset === undefined
+        ? undefined
+        : entryPrice + offset,
+  };
+}
+
+export function createWebSocketEntryPriceScenario(overrides: {
+  entryPrice?: number;
+  avgPrice?: number;
+  quantity?: number;
+} = {}) {
+  return {
+    symbol: 'XRPUSDT',
+    side: 'Buy',
+    qty: overrides.quantity ?? 35.41,
+    entryPrice: overrides.entryPrice ?? 0,
+    avgPrice: overrides.avgPrice ?? 1.9203,
+  };
+}
+
+export function parseWebSocketEntryPrice(entryPrice: string, avgPrice: string): number {
+  if (entryPrice && entryPrice.trim()) {
+    const parsedEntryPrice = parseFloat(entryPrice);
+    if (!isNaN(parsedEntryPrice)) {
+      return parsedEntryPrice;
+    }
+  }
+
+  if (avgPrice && avgPrice.trim()) {
+    const parsedAvgPrice = parseFloat(avgPrice);
+    if (!isNaN(parsedAvgPrice)) {
+      return parsedAvgPrice;
+    }
+  }
+
+  return 0;
+}
+
+export function createWebSocketBugScenario() {
+  return {
+    entryPrice: '',
+    avgPrice: '1.9203',
+  };
+}
+
+export function createWebSocketUpdateSequence() {
+  return [
+    { entryPrice: '1.892', avgPrice: '1.892', label: 'Position Open' },
+    { entryPrice: '', avgPrice: '1.9203', label: 'After TP1 Close (BUG)' },
+  ];
+}
+
+export function createRealScenarioPartialClose(overrides: {
+  tpLevel?: number;
+  quantity?: number;
+  exitPrice?: number;
+} = {}) {
+  return {
+    tpLevel: overrides.tpLevel ?? 1,
+    partialQuantity: overrides.quantity ?? (52.85 * 33) / 100,
+    exitPrice: overrides.exitPrice ?? 1.9203,
+  };
+}
+
+export function createTransactionalCloseHarness() {
+  const rollback = jest.fn();
+  const mockJournal = {
+    recordTradeClose: jest.fn((_trade: unknown) => ({
+      rollback,
+    })),
+  };
+  const mockStats = {
+    updateTradeExit: jest.fn((_trade: unknown) => undefined),
+  };
+  const mockLogger = {
+    error: jest.fn(),
+    info: jest.fn(),
+  };
+
+  return {
+    mockJournal,
+    mockStats,
+    mockLogger,
+    rollback,
+  };
+}
+
+export function createBalanceTrackingHarness(initialBalance = 1000) {
+  let currentBalance = initialBalance;
+
+  return {
+    initialBalance,
+    getCurrentBalance: jest.fn(() => currentBalance),
+    updateBalance: jest.fn((amount: number) => {
+      currentBalance += amount;
+    }),
+  };
+}
+
 export function createRealScenarioTakeProfitManager(
   logger: ConstructorParameters<typeof TakeProfitManagerService>[1],
 ): TakeProfitManagerService {
@@ -287,6 +453,37 @@ export function createRealScenarioPositionExitingHarness(
       entryConfig: {} as never,
     },
     loggerOverrides: mergedLogger,
+  });
+}
+
+export function createRaceConditionPositionExitingHarness() {
+  return createPositionExitingHarness({
+    tradingConfig: createMockPositionExitingTradingConfig({
+      tradingFeeRate: 0.0006,
+    }),
+    riskConfig: {
+      maxRiskPercent: 2,
+      maxPositionSize: 1000,
+    } as never,
+    fullConfig: {} as never,
+    exchangeOverrides: {
+      closePosition: jest.fn().mockResolvedValue({}),
+      cancelAllConditionalOrders: jest.fn().mockResolvedValue({}),
+      getCurrentPrice: jest.fn().mockResolvedValue(1.871),
+    },
+    telegramOverrides: {
+      sendAlert: jest.fn().mockResolvedValue(undefined),
+      notifyPositionClosed: jest.fn().mockResolvedValue(undefined),
+    },
+    journalOverrides: {
+      recordPositionClose: jest.fn().mockReturnValue({
+        rollback: jest.fn(),
+      }),
+      getTrade: jest.fn().mockReturnValue(null),
+    },
+    sessionStatsOverrides: {
+      updateTradeExit: jest.fn().mockResolvedValue({}),
+    },
   });
 }
 

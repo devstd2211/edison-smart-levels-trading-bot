@@ -5,19 +5,15 @@
  * Ensures journal stays consistent even if session stats fails
  */
 
+import {
+  createBalanceTrackingHarness,
+  createTransactionalCloseHarness,
+} from '../helpers/position-exiting-test.utils';
+
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   // T1: Normal flow - journal and stats both succeed
   it('T1: Normal flow - journal and stats both succeed', () => {
-    // Simplified test: journal and stats updates succeed
-    const mockJournal = {
-      recordTradeClose: jest.fn((_trade: unknown) => ({
-        rollback: jest.fn(),
-      })),
-    };
-
-    const mockStats = {
-      updateTradeExit: jest.fn((_trade: unknown) => undefined),
-    };
+    const { mockJournal, mockStats } = createTransactionalCloseHarness();
 
     // Simulate successful journal record with rollback capability
     const result = mockJournal.recordTradeClose({
@@ -38,18 +34,10 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
   // T2: Session stats fails - journal rolls back
   it('T2: Session stats fails - journal rolls back', () => {
-    const rollbackFn = jest.fn();
-    const mockJournal = {
-      recordTradeClose: jest.fn((_trade: unknown) => ({
-        rollback: rollbackFn,
-      })),
-    };
-
-    const mockStats = {
-      updateTradeExit: jest.fn((_trade: unknown) => {
-        throw new Error('Database connection lost');
-      }),
-    };
+    const { mockJournal, mockStats, rollback } = createTransactionalCloseHarness();
+    mockStats.updateTradeExit.mockImplementation((_trade: unknown) => {
+      throw new Error('Database connection lost');
+    });
 
     const journalResult = mockJournal.recordTradeClose({
       id: 'trade-123',
@@ -61,26 +49,16 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
     // Session stats fails
     try {
       mockStats.updateTradeExit({});
-      // Trigger rollback
-      journalResult.rollback();
     } catch (error) {
       journalResult.rollback();
     }
 
-    expect(rollbackFn).toHaveBeenCalled();
+    expect(rollback).toHaveBeenCalled();
   });
 
   // T3: Virtual balance restored on rollback
   it('T3: Virtual balance restored on rollback', () => {
-    const balanceBefore = 1000;
-    let currentBalance = balanceBefore;
-
-    const mockBalance = {
-      getCurrentBalance: jest.fn(() => currentBalance),
-      updateBalance: jest.fn((amount: number) => {
-        currentBalance += amount;
-      }),
-    };
+    const mockBalance = createBalanceTrackingHarness();
 
     // Simulate balance update
     mockBalance.updateBalance(100);
@@ -88,7 +66,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
     // Simulate rollback restoring balance
     mockBalance.updateBalance(-100);
-    expect(mockBalance.getCurrentBalance()).toBe(balanceBefore);
+    expect(mockBalance.getCurrentBalance()).toBe(mockBalance.initialBalance);
   });
 
   // T4: Multiple rollback attempts (idempotent)
@@ -117,10 +95,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
   // T6: Rollback logs errors for debugging
   it('T6: Rollback operation logs errors for debugging', () => {
-    const mockLogger = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
+    const { mockLogger } = createTransactionalCloseHarness();
 
     const rollbackFn = () => {
       mockLogger.info('✅ Journal rollback complete');

@@ -16,7 +16,7 @@ import { TelegramService } from '../../services/telegram.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { IExchange } from '../../interfaces/IExchange';
 import {
-  createMockLifecyclePosition,
+  createLifecycleSafetyPosition,
   createPositionLifecycleMemoryHarness,
 } from '../helpers/position-lifecycle-test.utils';
 
@@ -37,30 +37,13 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockEventBus: BotEventBus;
   let mockTelegram: TelegramService;
   let mockJournal: TradingJournalService;
+  const createSafetyPosition = (): Position => createLifecycleSafetyPosition();
 
   beforeEach(() => {
     jest.clearAllMocks();
     const harness = createPositionLifecycleMemoryHarness({
       positionOverrides: {
-        id: 'BTCUSDT_Buy',
-        symbol: 'BTCUSDT',
-        quantity: 1,
-        entryPrice: 45000,
-        marginUsed: 4500,
-        unrealizedPnL: 500,
-        openedAt: Date.now() - 3600000,
-        orderId: 'order-123',
-        reason: 'Test entry',
-        takeProfits: [
-          { level: 1, percent: 0.5, sizePercent: 50, price: 45225, hit: false },
-        ],
-        stopLoss: {
-          price: 44000,
-          initialPrice: 44000,
-          isBreakeven: false,
-          isTrailing: false,
-          updatedAt: Date.now(),
-        },
+        ...createSafetyPosition(),
       },
       tradingOverrides: {
         positionSize: 100,
@@ -72,27 +55,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     mockEventBus = harness.mockEventBus;
     mockTelegram = harness.mockTelegram;
     mockJournal = harness.mockJournal;
-    position = createMockLifecyclePosition({
-      id: 'BTCUSDT_Buy',
-      symbol: 'BTCUSDT',
-      quantity: 1,
-      entryPrice: 45000,
-      marginUsed: 4500,
-      unrealizedPnL: 500,
-      openedAt: Date.now() - 3600000,
-      orderId: 'order-123',
-      reason: 'Test entry',
-      takeProfits: [
-        { level: 1, percent: 0.5, sizePercent: 50, price: 45225, hit: false },
-      ],
-      stopLoss: {
-        price: 44000,
-        initialPrice: 44000,
-        isBreakeven: false,
-        isTrailing: false,
-        updatedAt: Date.now(),
-      },
-    });
+    position = createSafetyPosition();
   });
 
   // =========================================================================
@@ -210,7 +173,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       const snapshot = service.getPositionSnapshot();
 
       // Simulate WebSocket update
-      const updated = createMockLifecyclePosition();
+      const updated = createSafetyPosition();
       updated.unrealizedPnL = 9000; // Large change
       setCurrentPosition(updated);
 

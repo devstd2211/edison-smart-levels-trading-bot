@@ -9,6 +9,8 @@ import { StrategyOrchestratorCacheService } from '../../services/multi-strategy/
 import type { LoggerService } from '../../types/legacy';
 import {
   createMockStrategyOrchestrator,
+  createMockStrategyOrchestrators,
+  seedStrategyCache,
   createStrategyCacheHarness,
 } from '../helpers/multi-strategy-cache-test.utils';
 
@@ -104,9 +106,7 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should clear all cached orchestrators', () => {
-      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
-      cache.cacheOrchestrator('strategy-3', createMockStrategyOrchestrator('strategy-3'));
+      seedStrategyCache(cache, ['strategy-1', 'strategy-2', 'strategy-3']);
 
       expect(cache.getStats().cacheSize).toBe(3);
 
@@ -168,9 +168,7 @@ describe('StrategyOrchestratorCacheService', () => {
     });
 
     it('should list all cached strategies', () => {
-      cache.cacheOrchestrator('strategy-1', createMockStrategyOrchestrator('strategy-1'));
-      cache.cacheOrchestrator('strategy-2', createMockStrategyOrchestrator('strategy-2'));
-      cache.cacheOrchestrator('strategy-3', createMockStrategyOrchestrator('strategy-3'));
+      seedStrategyCache(cache, ['strategy-1', 'strategy-2', 'strategy-3']);
 
       const cached = cache.getCachedStrategies();
 
@@ -264,14 +262,12 @@ describe('StrategyOrchestratorCacheService', () => {
   describe('Performance', () => {
     it('should handle large number of strategies', () => {
       const strategyCount = 100;
-      const orchestrators: Array<ReturnType<typeof createMockStrategyOrchestrator>> = [];
+      const orchestrators = createMockStrategyOrchestrators(strategyCount);
 
       // Cache 100 strategies (with LRU eviction to max 10)
-      for (let i = 0; i < strategyCount; i++) {
-        const orch = createMockStrategyOrchestrator(`strategy-${i}`);
-        orchestrators.push(orch);
-        cache.cacheOrchestrator(`strategy-${i}`, orch);
-      }
+      orchestrators.forEach((orch, index) => {
+        cache.cacheOrchestrator(`strategy-${index + 1}`, orch);
+      });
 
       // Should only have max 10 cached (LRU evicted the rest)
       expect(cache.getStats().cacheSize).toBeLessThanOrEqual(10);

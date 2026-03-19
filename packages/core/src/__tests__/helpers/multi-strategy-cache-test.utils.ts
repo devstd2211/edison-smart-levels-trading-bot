@@ -18,6 +18,25 @@ export function createMockStrategyOrchestrator(strategyId: string) {
   };
 }
 
+export function createMockStrategyOrchestrators(count: number) {
+  return Array.from({ length: count }, (_, index) =>
+    createMockStrategyOrchestrator(`strategy-${index + 1}`),
+  );
+}
+
+export function seedStrategyCache(
+  cache: StrategyOrchestratorCacheService,
+  strategyIds: string[],
+) {
+  const seeded = strategyIds.map((strategyId) => {
+    const orchestrator = createMockStrategyOrchestrator(strategyId);
+    cache.cacheOrchestrator(strategyId, orchestrator);
+    return { strategyId, orchestrator };
+  });
+
+  return seeded;
+}
+
 export function createStrategyCacheHarness(): {
   cache: StrategyOrchestratorCacheService;
   logger: LoggerService;

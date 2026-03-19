@@ -64,6 +64,48 @@ export class IntegrationMockTimeframeProvider {
   }
 }
 
+export function createIntegrationClosedCandle(overrides: Partial<Candle> = {}): Candle {
+  return {
+    timestamp: Date.now(),
+    open: 100,
+    high: 102,
+    low: 99,
+    close: 101,
+    volume: 5000,
+    ...overrides,
+  };
+}
+
+export function createIntegrationRapidCandles(
+  count: number,
+  startTimestamp = Date.now(),
+): Candle[] {
+  return Array.from({ length: count }, (_, index) => createIntegrationClosedCandle({
+    timestamp: startTimestamp + index * 1000,
+    open: 100 + index,
+    high: 102 + index,
+    low: 99 + index,
+    close: 101 + index,
+    volume: 1000 + index,
+  }));
+}
+
+type IntegrationRepositoryRole = 'PRIMARY' | 'ENTRY' | 'HTF1' | 'HTF2';
+
+export function getRepositoryCandlesByRole(
+  repository: IMarketDataRepository,
+  role: IntegrationRepositoryRole,
+): Candle[] {
+  const timeframeMap: Record<IntegrationRepositoryRole, string> = {
+    PRIMARY: '1',
+    ENTRY: '5',
+    HTF1: '1h',
+    HTF2: '4h',
+  };
+
+  return repository.getCandles('XRPUSDT', timeframeMap[role]);
+}
+
 export function createCandleProviderRepositoryIntegrationHarness(): {
   provider: CandleProvider;
   exchange: IntegrationMockExchange;

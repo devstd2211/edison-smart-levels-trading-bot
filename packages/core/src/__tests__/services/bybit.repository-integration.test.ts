@@ -15,7 +15,12 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
 import { LoggerService } from '../../services/logger.service';
 import type { ExchangeConfig } from '../../types/legacy';
-import { createBybitRepositoryHarness } from '../helpers/bybit-repository-integration-test.utils';
+import {
+  createBybitRepositoryHarness,
+  createRepositoryCandles,
+  createSequentialRepositoryCandles,
+  seedRepositoryCandles,
+} from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let mockLogger: LoggerService;
@@ -63,11 +68,10 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   describe('Cache Hit Detection', () => {
     it('should return cached candles when repository has data', async () => {
       // ARRANGE
-      const mockCandles = [
-        { timestamp: 1000, open: 0.5, high: 0.6, low: 0.4, close: 0.55, volume: 100 },
-        { timestamp: 2000, open: 0.55, high: 0.65, low: 0.45, close: 0.6, volume: 150 },
-      ];
-      repository.saveCandles('XRPUSDT', '5', mockCandles);
+      seedRepositoryCandles(repository, 'XRPUSDT', '5', createRepositoryCandles([
+        { timestamp: 1000, overrides: { open: 0.5, high: 0.6, low: 0.4, close: 0.55 } },
+        { timestamp: 2000, overrides: { open: 0.55, high: 0.65, low: 0.45, close: 0.6, volume: 150 } },
+      ]));
 
       const service = createService();
       expect(service).toBeDefined();
@@ -84,12 +88,12 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
     it('should return candles from repository when request matches cached timeframe', async () => {
       // ARRANGE
-      const candles = [
-        { timestamp: 1000, open: 1.0, high: 1.1, low: 0.9, close: 1.05, volume: 200 },
-        { timestamp: 2000, open: 1.05, high: 1.15, low: 0.95, close: 1.1, volume: 250 },
-        { timestamp: 3000, open: 1.1, high: 1.2, low: 1.0, close: 1.15, volume: 300 },
-      ];
-      repository.saveCandles('XRPUSDT', '1', candles);
+      const candles = createRepositoryCandles([
+        { timestamp: 1000, overrides: { volume: 200 } },
+        { timestamp: 2000, overrides: { open: 1.05, high: 1.15, low: 0.95, close: 1.1, volume: 250 } },
+        { timestamp: 3000, overrides: { open: 1.1, high: 1.2, low: 1.0, close: 1.15, volume: 300 } },
+      ]);
+      seedRepositoryCandles(repository, 'XRPUSDT', '1', candles);
 
       // ACT
       const retrieved = repository.getCandles('XRPUSDT', '1', 100);
@@ -112,15 +116,8 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
     it('should respect limit parameter when returning cached candles', () => {
       // ARRANGE
-      const manyCandles = Array.from({ length: 50 }, (_, i) => ({
-        timestamp: (i + 1) * 1000,
-        open: 1.0,
-        high: 1.1,
-        low: 0.9,
-        close: 1.05,
-        volume: 100,
-      }));
-      repository.saveCandles('XRPUSDT', '5', manyCandles);
+      const manyCandles = createSequentialRepositoryCandles(50);
+      seedRepositoryCandles(repository, 'XRPUSDT', '5', manyCandles);
 
       // ACT
       const limited = repository.getCandles('XRPUSDT', '5', 10);
@@ -133,13 +130,13 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   describe('Cache Storage After API Fetch', () => {
     it('should store fetched candles in repository after successful API call', () => {
       // ARRANGE
-      const newCandles = [
-        { timestamp: 5000, open: 2.0, high: 2.1, low: 1.9, close: 2.05, volume: 400 },
-        { timestamp: 6000, open: 2.05, high: 2.15, low: 1.95, close: 2.1, volume: 450 },
-      ];
+      const newCandles = createRepositoryCandles([
+        { timestamp: 5000, overrides: { open: 2.0, high: 2.1, low: 1.9, close: 2.05, volume: 400 } },
+        { timestamp: 6000, overrides: { open: 2.05, high: 2.15, low: 1.95, close: 2.1, volume: 450 } },
+      ]);
 
       // ACT
-      repository.saveCandles('XRPUSDT', '5', newCandles);
+      seedRepositoryCandles(repository, 'XRPUSDT', '5', newCandles);
 
       // ASSERT - verify candles are stored
       const stored = repository.getCandles('XRPUSDT', '5', 100);
@@ -149,13 +146,14 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
     it('should replace old candles with new ones when saving to same symbol/timeframe', () => {
       // ARRANGE
-      const oldCandles = [{ timestamp: 1000, open: 1.0, high: 1.1, low: 0.9, close: 1.05, volume: 100 }];
-      repository.saveCandles('XRPUSDT', '5', oldCandles);
+      seedRepositoryCandles(repository, 'XRPUSDT', '5', createRepositoryCandles([
+        { timestamp: 1000 },
+      ]));
 
-      const newCandles = [
-        { timestamp: 2000, open: 2.0, high: 2.1, low: 1.9, close: 2.05, volume: 200 },
-        { timestamp: 3000, open: 3.0, high: 3.1, low: 2.9, close: 3.05, volume: 300 },
-      ];
+      const newCandles = createRepositoryCandles([
+        { timestamp: 2000, overrides: { open: 2.0, high: 2.1, low: 1.9, close: 2.05, volume: 200 } },
+        { timestamp: 3000, overrides: { open: 3.0, high: 3.1, low: 2.9, close: 3.05, volume: 300 } },
+      ]);
 
       // ACT
       repository.saveCandles('XRPUSDT', '5', newCandles);
@@ -169,12 +167,14 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
     it('should allow multiple timeframes for same symbol', () => {
       // ARRANGE
-      const candles1h = [{ timestamp: 1000, open: 1.0, high: 1.1, low: 0.9, close: 1.05, volume: 100 }];
-      const candles5m = [{ timestamp: 2000, open: 2.0, high: 2.1, low: 1.9, close: 2.05, volume: 200 }];
+      const candles1h = createRepositoryCandles([{ timestamp: 1000 }]);
+      const candles5m = createRepositoryCandles([
+        { timestamp: 2000, overrides: { open: 2.0, high: 2.1, low: 1.9, close: 2.05, volume: 200 } },
+      ]);
 
       // ACT
-      repository.saveCandles('XRPUSDT', '1', candles1h);
-      repository.saveCandles('XRPUSDT', '5', candles5m);
+      seedRepositoryCandles(repository, 'XRPUSDT', '1', candles1h);
+      seedRepositoryCandles(repository, 'XRPUSDT', '5', candles5m);
 
       // ASSERT
       const stored1h = repository.getCandles('XRPUSDT', '1', 100);

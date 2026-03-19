@@ -67,6 +67,55 @@ export function createPhase10IntegrationOrderbook(overrides: Partial<ReturnType<
   };
 }
 
+export function createPhase10BalancedOrderbook(): ReturnType<typeof createPhase10IntegrationOrderbook> {
+  return createPhase10IntegrationOrderbook({
+    bids: [
+      { price: 50000, volume: 10.0 },
+      { price: 49990, volume: 8.0 },
+      { price: 49980, volume: 12.0 },
+      { price: 49970, volume: 5.0 },
+      { price: 49960, volume: 7.0 },
+    ],
+    asks: [
+      { price: 50010, volume: 9.0 },
+      { price: 50020, volume: 11.0 },
+      { price: 50030, volume: 6.0 },
+      { price: 50040, volume: 8.0 },
+      { price: 50050, volume: 4.0 },
+    ],
+  });
+}
+
+export function createPhase10SlippageOrderbook(): ReturnType<typeof createPhase10IntegrationOrderbook> {
+  return createPhase10IntegrationOrderbook({
+    bids: [
+      { price: 50000, volume: 15.0 },
+      { price: 49990, volume: 20.0 },
+      { price: 49980, volume: 10.0 },
+    ],
+    asks: [
+      { price: 50010, volume: 12.0 },
+      { price: 50020, volume: 18.0 },
+      { price: 50030, volume: 8.0 },
+    ],
+  });
+}
+
+export function createPhase10SupportResistanceOrderbook(): ReturnType<typeof createPhase10IntegrationOrderbook> {
+  return createPhase10IntegrationOrderbook({
+    bids: [
+      { price: 50000, volume: 25.0 },
+      { price: 49990, volume: 10.0 },
+      { price: 49980, volume: 8.0 },
+    ],
+    asks: [
+      { price: 50010, volume: 8.0 },
+      { price: 50020, volume: 12.0 },
+      { price: 50030, volume: 22.0 },
+    ],
+  });
+}
+
 export function createPhase10OrderbookSide(
   basePrice: number,
   levels: number,
@@ -101,6 +150,32 @@ export function createPhase10WorkflowFixtures(options: {
     signal: createPhase10Signal(options.signal),
     context: createPhase10Context(options.context),
   };
+}
+
+export function createPhase10InvalidOrderbook() {
+  return {
+    symbol: 'BTCUSDT',
+    timestamp: Date.now(),
+    bids: null,
+    asks: [],
+  };
+}
+
+export function createPhase10ValidRecoveryOrderbook(): ReturnType<typeof createPhase10IntegrationOrderbook> {
+  return createPhase10IntegrationOrderbook({
+    symbol: 'BTCUSDT',
+    bids: [{ price: 50000, volume: 10 }],
+    asks: [{ price: 50010, volume: 10 }],
+  });
+}
+
+export function createPhase10InvalidSignal(): Signal {
+  return createPhase10Signal({
+    type: 'invalid' as never,
+    direction: 'wrong' as never,
+    confidence: 5.0,
+    timestamp: NaN,
+  });
 }
 
 export function createPhase10Harness() {

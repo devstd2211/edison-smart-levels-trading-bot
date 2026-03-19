@@ -10,11 +10,10 @@ import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import type { CandleProvider } from '../../providers/candle.provider';
 import {
-  createCandleProviderMockLogger,
-  type CandleProviderMockLogger,
-} from '../helpers/candle-provider-test.utils';
-import {
   createCandleProviderRepositoryIntegrationHarness,
+  createIntegrationClosedCandle,
+  createIntegrationRapidCandles,
+  getRepositoryCandlesByRole,
   IntegrationMockExchange,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
@@ -23,7 +22,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let exchange: IntegrationMockExchange;
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
-  let logger: CandleProviderMockLogger & LoggerService;
+  let logger: LoggerService;
 
   beforeEach(() => {
     const harness = createCandleProviderRepositoryIntegrationHarness();
@@ -43,10 +42,10 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
       await provider.initialize();
 
       // Verify candles were loaded into repository for all timeframes
-      const primary = repository.getCandles('XRPUSDT', '1');
-      const entry = repository.getCandles('XRPUSDT', '5');
-      const htf1 = repository.getCandles('XRPUSDT', '1h');
-      const htf2 = repository.getCandles('XRPUSDT', '4h');
+      const primary = getRepositoryCandlesByRole(repository, 'PRIMARY');
+      const entry = getRepositoryCandlesByRole(repository, 'ENTRY');
+      const htf1 = getRepositoryCandlesByRole(repository, 'HTF1');
+      const htf2 = getRepositoryCandlesByRole(repository, 'HTF2');
 
       expect(primary.length).toBeGreaterThan(0);
       expect(entry.length).toBeGreaterThan(0);
@@ -58,12 +57,12 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
       await provider.initializeTimeframe('PRIMARY' as TimeframeRole);
 
       // PRIMARY should have candles
-      const primary = repository.getCandles('XRPUSDT', '1');
+      const primary = getRepositoryCandlesByRole(repository, 'PRIMARY');
       expect(primary.length).toBeGreaterThan(0);
 
       // Other timeframes should be empty
-      const entry = repository.getCandles('XRPUSDT', '5');
-      const htf1 = repository.getCandles('XRPUSDT', '1h');
+      const entry = getRepositoryCandlesByRole(repository, 'ENTRY');
+      const htf1 = getRepositoryCandlesByRole(repository, 'HTF1');
       expect(entry.length).toBe(0);
       expect(htf1.length).toBe(0);
     });
@@ -123,14 +122,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     });
 
     it('should update repository when candle closes via onCandleClosed()', async () => {
-      const newCandle: Candle = {
-        timestamp: Date.now(),
-        open: 100,
-        high: 102,
-        low: 99,
-        close: 101,
-        volume: 5000,
-      };
+      const newCandle: Candle = createIntegrationClosedCandle();
 
       provider.onCandleClosed('PRIMARY' as TimeframeRole, newCandle);
 
@@ -141,16 +133,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     });
 
     it('should handle rapid candle updates', () => {
-      const now = Date.now();
-      for (let i = 0; i < 10; i++) {
-        const candle: Candle = {
-          timestamp: now + (i * 1000),
-          open: 100 + i,
-          high: 102 + i,
-          low: 99 + i,
-          close: 101 + i,
-          volume: 1000 + i,
-        };
+      for (const candle of createIntegrationRapidCandles(10)) {
         provider.onCandleClosed('PRIMARY' as TimeframeRole, candle);
       }
 
@@ -231,9 +214,9 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     });
 
     it('should store candles for multiple timeframes separately', () => {
-      const primary = repository.getCandles('XRPUSDT', '1');
-      const entry = repository.getCandles('XRPUSDT', '5');
-      const htf1 = repository.getCandles('XRPUSDT', '1h');
+      const primary = getRepositoryCandlesByRole(repository, 'PRIMARY');
+      const entry = getRepositoryCandlesByRole(repository, 'ENTRY');
+      const htf1 = getRepositoryCandlesByRole(repository, 'HTF1');
 
       expect(primary.length).toBeGreaterThan(0);
       expect(entry.length).toBeGreaterThan(0);

@@ -8,9 +8,12 @@
 import { IPositionRepository } from '../../repositories/IRepositories';
 import { Position } from '../../types/legacy';
 import {
+  createClosedRepositoryPosition,
   createPositionRepositoryHarness,
   createRepositoryPosition,
   createRepositoryPositions,
+  createSeededClosedHistoryRepository,
+  createSeededCurrentAndHistoryRepository,
   createSeededCurrentPositionRepository,
   createSeededHistoryRepository,
   createSeededPositionRepositoryHarness,
@@ -67,12 +70,16 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position History', () => {
     it('should add positions to history', () => {
-      const position1: Position = createRepositoryPosition({
+      const position1: Position = createClosedRepositoryPosition({
         id: 'BTCUSDT_Buy_1',
-        status: 'CLOSED',
         unrealizedPnL: 100,
       });
-      repository = createSeededHistoryRepository([position1]);
+      repository = createSeededClosedHistoryRepository([
+        {
+          id: 'BTCUSDT_Buy_1',
+          unrealizedPnL: 100,
+        },
+      ]);
       const history = repository.getHistory();
 
       expect(history).toHaveLength(1);
@@ -107,8 +114,8 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should clear history', () => {
-      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-      repository = createSeededHistoryRepository([position]);
+      const position: Position = createClosedRepositoryPosition();
+      repository = createSeededClosedHistoryRepository();
       expect(repository.getHistory()).toHaveLength(1);
 
       repository.clearHistory();
@@ -118,8 +125,8 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position Queries', () => {
     it('should find position by ID', () => {
-      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-      repository = createSeededHistoryRepository([position]);
+      const position: Position = createClosedRepositoryPosition();
+      repository = createSeededClosedHistoryRepository();
 
       const found = repository.findPosition('BTCUSDT_Buy');
       expect(found).not.toBeNull();
@@ -132,17 +139,15 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should get all positions', () => {
-      const position1: Position = createRepositoryPosition({
+      const position1: Position = createClosedRepositoryPosition({
         id: 'BTCUSDT_Buy_1',
-        status: 'CLOSED',
       });
-      repository = createSeededPositionRepositoryHarness({
+      repository = createSeededCurrentAndHistoryRepository({
         currentPosition: {
-          ...position1,
           id: 'BTCUSDT_Buy_2',
           status: 'OPEN',
         },
-        history: [position1],
+        history: [{ id: 'BTCUSDT_Buy_1' }],
       });
 
       const all = repository.getAllPositions();
@@ -152,10 +157,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Repository Maintenance', () => {
     it('should get repository size', () => {
-      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-      repository = createSeededPositionRepositoryHarness({
-        currentPosition: position,
-        history: [position],
+      repository = createSeededCurrentAndHistoryRepository({
+        currentPosition: { status: 'OPEN' },
+        history: [{ status: 'CLOSED' }],
       });
 
       const size = repository.getSize();
@@ -163,10 +167,9 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should clear all repository data', () => {
-      const position: Position = createRepositoryPosition({ status: 'CLOSED' });
-      repository = createSeededPositionRepositoryHarness({
-        currentPosition: position,
-        history: [position],
+      repository = createSeededCurrentAndHistoryRepository({
+        currentPosition: { status: 'OPEN' },
+        history: [{ status: 'CLOSED' }],
       });
 
       repository.clear();
