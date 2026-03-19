@@ -26,6 +26,7 @@ import {
   asLiquidityDirection as asDirection,
   asLiquidityHeatmapConfig as asConfig,
   asLiquidityHeatmapOrderbook as asOrderbook,
+  createCorruptLiquidityHeatmapOrderbook,
   createDeepLiquidityHeatmapOrderbook,
   createLiquidityHeatmapConfig,
   createLiquidityHeatmapErrorHandler,
@@ -36,6 +37,13 @@ import {
   createThinLiquidityHeatmapOrderbook,
 } from '../helpers/liquidity-heatmap-test.utils';
 
+const createHeatmapService = (options: {
+  config?: LiquidityHeatmapConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) => createLiquidityHeatmapService(options);
+
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
@@ -45,7 +53,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     const logger = createLiquidityHeatmapLogger();
 
     expect(() => {
-      createLiquidityHeatmapService({ config: asConfig(null), logger });
+      createHeatmapService({ config: asConfig(null), logger });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
@@ -53,7 +61,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     const logger = createLiquidityHeatmapLogger();
 
     expect(() => {
-      createLiquidityHeatmapService({ config: asConfig(undefined), logger });
+      createHeatmapService({ config: asConfig(undefined), logger });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
@@ -63,7 +71,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     config.maxLevels = -10;
 
     expect(() => {
-      createLiquidityHeatmapService({ config, logger });
+      createHeatmapService({ config, logger });
     }).toThrow('Invalid maxLevels');
   });
 
@@ -73,7 +81,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     config.minStrengthThreshold = 150; // > 100
 
     expect(() => {
-      createLiquidityHeatmapService({ config, logger });
+      createHeatmapService({ config, logger });
     }).toThrow('Invalid minStrengthThreshold');
   });
 
@@ -83,7 +91,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
     config.clusteringTolerance = -0.5;
 
     expect(() => {
-      createLiquidityHeatmapService({ config, logger });
+      createHeatmapService({ config, logger });
     }).toThrow('Invalid clusteringTolerance');
   });
 });
@@ -94,7 +102,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   it('should THROW when orderbook is null', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(null)),
@@ -102,7 +110,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is undefined', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(undefined)),
@@ -110,7 +118,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid symbol', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.symbol = null as unknown as string;
@@ -121,7 +129,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid timestamp', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.timestamp = NaN;
@@ -132,7 +140,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has missing bids/asks arrays', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.bids = null as unknown as OrderbookLevel[];
@@ -149,7 +157,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   it('should THROW when slippage size is invalid', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -158,7 +166,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when slippage direction is invalid', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -167,7 +175,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when execution cost size is invalid', async () => {
-    const service = createLiquidityHeatmapService({ withErrorHandler: false });
+    const service = createHeatmapService({ withErrorHandler: false });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -305,12 +313,9 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   it('should survive when all calculations fail', async () => {
     const { service } = createLiquidityHeatmapHarness({ logger });
 
-    const corruptOrderbook: Orderbook = {
-      symbol: 'BTCUSDT',
-      timestamp: Date.now(), // Valid timestamp to pass validation
-      bids: [{ price: NaN, volume: NaN }],
-      asks: [{ price: Infinity, volume: -1 }],
-    };
+    const corruptOrderbook: Orderbook = createCorruptLiquidityHeatmapOrderbook({
+      askVolume: -1,
+    });
 
     // All methods should return safe defaults
     const heatmap = await service.buildLiquidityHeatmap(corruptOrderbook);
@@ -339,7 +344,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
     // Should not throw despite logger.info failure
     expect(() => {
-      createLiquidityHeatmapService({
+      createHeatmapService({
         config,
         logger: loggerWithFailingInfo,
         errorHandler,
@@ -350,7 +355,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   it('should SKIP logger.warn failure during calculations', async () => {
     const loggerWithFailingWarn = createLiquidityHeatmapLogger('warn');
     const config = createLiquidityHeatmapConfig();
-    const service = createLiquidityHeatmapService({
+    const service = createHeatmapService({
       config,
       logger: loggerWithFailingWarn,
       errorHandler,
@@ -367,7 +372,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   it('should SKIP logger.error failure during error handling', async () => {
     const loggerWithFailingError = createLiquidityHeatmapLogger('error');
     const config = createLiquidityHeatmapConfig();
-    const service = createLiquidityHeatmapService({
+    const service = createHeatmapService({
       config,
       logger: loggerWithFailingError,
       errorHandler,
@@ -606,7 +611,7 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
     const config = createLiquidityHeatmapConfig();
 
     expect(() => {
-      createLiquidityHeatmapService({
+      createHeatmapService({
         config,
         logger: failingLogger,
         withErrorHandler: false,

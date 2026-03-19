@@ -24,16 +24,6 @@ import {
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const TIMEFRAMES = ['5m', '15m', '1h', '4h'] as const;
-
-// ============================================================================
-// SERVICE
-// ============================================================================
-
 export class MultiTimeframeTrendService {
   constructor(
     private readonly logger: LoggerService,
@@ -580,37 +570,6 @@ export class MultiTimeframeTrendService {
   ): Candle[] {
     const value = this.asRecord(multiTFData)?.[key];
     return Array.isArray(value) ? (value as Candle[]) : [];
-  }
-
-  /**
-   * Get empty analysis (fallback for invalid input)
-   *
-   * @returns Empty multi-timeframe analysis
-   */
-  private getEmptyAnalysis(): MultiTimeframeAnalysis {
-    const emptyTF: TimeframeAnalysis = {
-      timeframe: '',
-      bias: TrendBias.NEUTRAL,
-      strength: 0.3,
-      swingHighsCount: 0,
-      swingLowsCount: 0,
-    };
-
-    return {
-      byTimeframe: {
-        '5m': { ...emptyTF, timeframe: '5m' },
-        '15m': { ...emptyTF, timeframe: '15m' },
-        '1h': { ...emptyTF, timeframe: '1h' },
-        '4h': { ...emptyTF, timeframe: '4h' },
-      },
-      consensus: {
-        primaryTrend: TrendBias.NEUTRAL,
-        currentTrend: TrendBias.NEUTRAL,
-        entryTrend: TrendBias.NEUTRAL,
-        strength: 0.3,
-        alignment: 'MIXED',
-      },
-    };
   }
 
   private asRecord(value: unknown): Record<string, unknown> | null {

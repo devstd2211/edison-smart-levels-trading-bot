@@ -61,6 +61,20 @@ export function createMultiTimeframeTrendCandles(count = 10): Candle[] {
   }));
 }
 
+export function createMultiTimeframeTrendInvalidCandle(
+  overrides: Partial<Candle> = {},
+): Candle {
+  return {
+    timestamp: 1_000_000,
+    open: NaN,
+    high: NaN,
+    low: NaN,
+    close: NaN,
+    volume: 1000,
+    ...overrides,
+  };
+}
+
 export function createMultiTimeframeTrendData(): MultiTimeframeData {
   const candles5m = createMultiTimeframeTrendCandles(10);
   const candles15m = createMultiTimeframeTrendCandles(10);
@@ -112,17 +126,21 @@ export function createMultiTimeframeTrendHarness(
       logger,
       withErrorHandler: false,
     });
+  const createService = (serviceOptions: MultiTimeframeTrendOptions = {}) =>
+    createMultiTimeframeTrendService({
+      logger,
+      swingPointDetector,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
 
   return {
     logger,
     errorHandler,
     swingPointDetector,
-    service: createMultiTimeframeTrendService({
-      logger,
-      swingPointDetector,
-      errorHandler,
-      withErrorHandler: options.withErrorHandler,
-    }),
+    service: createService(),
+    createService,
   };
 }
 

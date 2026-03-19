@@ -81,6 +81,20 @@ export function createRetestEntryCandles(): Candle[] {
   ];
 }
 
+export function createRetestEntryInvalidCandle(
+  overrides: Partial<Candle> = {},
+): Candle {
+  return {
+    timestamp: Date.now(),
+    open: NaN,
+    high: NaN,
+    low: NaN,
+    close: NaN,
+    volume: NaN,
+    ...overrides,
+  };
+}
+
 export function createRetestEntryHarness(options: {
   configOverrides?: Partial<RetestConfig>;
   logger?: LoggerService;
@@ -96,12 +110,28 @@ export function createRetestEntryHarness(options: {
     errorHandler,
     withErrorHandler: options.withErrorHandler,
   });
+  const createService = (
+    serviceOptions: {
+      configOverrides?: Partial<RetestConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {},
+  ) =>
+    createRetestEntryService({
+      configOverrides: options.configOverrides,
+      logger,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
 
   return {
     service,
     logger,
     config,
     errorHandler,
+    createService,
   };
 }
 

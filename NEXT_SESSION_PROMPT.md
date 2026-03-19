@@ -28,16 +28,18 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-18)
-- Completed another three-step lifecycle/testability batch:
-  - extended `packages/core/src/__tests__/helpers/whale-detection-test.utils.ts` with canonical wall and config-override builders, routed `whale-detection.error-handling.test.ts` through those config builders instead of local inline variants, and replaced repeated raw wall/config fixtures in `whale-detector.service.test.ts` with the shared helpers.
-  - reviewed `services/whale-detection.service.ts`; kept production code unchanged because the batch only needed test-harness consolidation.
+## Last Completed (2026-03-19)
+- Completed a three-iteration lifecycle/testability batch:
+  - extended `packages/core/src/__tests__/helpers/candle-aggregator-test.utils.ts`, `packages/core/src/__tests__/helpers/limit-order-executor-test.utils.ts`, and `packages/core/src/__tests__/helpers/market-condition-analyzer-test.utils.ts` with harness-backed `createService(...)` paths plus canonical invalid candle / take-profit / market-condition-result builders, then routed the related suites through those builders instead of repeated direct service construction and malformed local fixtures.
+  - reviewed `services/candle-aggregator.service.ts`, `services/limit-order-executor.service.ts`, and `services/market-condition-analyzer.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/whale-detector.service.test.ts` -> PASS (2/2 suites, 37/37 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts` -> PASS (1/1 suite, 30/30 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts` -> PASS (1/1 suite, 22/22 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts` -> PASS (1/1 suite, 25/25 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next compact untouched suite with repeated inline bootstrap or lifecycle setup beyond the now-refreshed `circuit-breaker.error-handling`, `data-collector.error-handling`, `graceful-shutdown.error-handling`, `circuit-breaker.service`, `graceful-shutdown.service`, `bybit.error-handling`, `advanced-order-state-machine`, `multi-timeframe-trend`, `liquidity-heatmap`, `fractal-smc-weighting`, `pattern-recognition`, `retest-entry`, `swing-point-detector`, `whale-wall-tp`, `enhanced-exit`, `whale-detection`, `reality-check`, `volatility-regime`, `timeframe-weighting`, `risk-calculator`, `strategy-loader`, `session-stats`, `phase-10-integration`, `position-lifecycle.repository-integration`, `bybit.repository-integration`, `multi-strategy.cache`, `position-exiting.integration`, `order-flow-analyzer`, `smart-order-execution`, `structure-aware-exit`, `health-check`, `action-queue`, `time-service`, `dynamic-position-sizer`, and `position-scaling`.
-- Likely next candidates: remaining constructor-heavy suites that still own local logger/config/fixture builders inline, especially adjacent main/error-handling pairs around the refreshed `whale-*` helpers or another lifecycle-adjacent slice still building broad state locally.
+- Prefer the next compact untouched suite with repeated inline bootstrap or lifecycle setup beyond the now-refreshed `circuit-breaker.error-handling`, `data-collector.error-handling`, `graceful-shutdown.error-handling`, `circuit-breaker.service`, `graceful-shutdown.service`, `bybit.error-handling`, `advanced-order-state-machine`, `multi-timeframe-trend`, `liquidity-heatmap`, `fractal-smc-weighting`, `pattern-recognition`, `retest-entry`, `swing-point-detector`, `whale-wall-tp`, `enhanced-exit`, `whale-detection`, `reality-check`, `volatility-regime`, `timeframe-weighting`, `risk-calculator`, `strategy-loader`, `session-stats`, `phase-10-integration`, `position-lifecycle.repository-integration`, `bybit.repository-integration`, `multi-strategy.cache`, `position-exiting.integration`, `order-flow-analyzer`, `smart-order-execution`, `structure-aware-exit`, `health-check`, `action-queue`, `time-service`, `dynamic-position-sizer`, `position-scaling`, `candle-aggregator`, `limit-order-executor`, and `market-condition-analyzer`.
+- Likely next candidates: adjacent untouched suites that still rebuild service/bootstrap state inline despite existing helpers, especially `ml-feature-extractor.error-handling`, `delta-analyzer.error-handling`, or `micro-wall-detector.error-handling`.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

@@ -78,6 +78,16 @@ export const createTimeframeWeightingMultiTF = (overrides: Partial<MultiTimefram
   ...overrides,
 });
 
+export const createInvalidTimeframeWeightingMultiTF = (
+  overrides: Partial<MultiTimeframeAnalysis['byTimeframe']> = {},
+): Parameters<TimeframeWeightingService['combine']>[0] =>
+  asTimeframeWeightingMultiTF({
+    byTimeframe: {
+      ...createValidTimeframeWeightingMultiTF().byTimeframe,
+      ...overrides,
+    },
+  });
+
 export const createTimeframeWeightingService = (options: {
   logger?: TimeframeWeightingMockLogger;
   errorHandler?: ErrorHandler;

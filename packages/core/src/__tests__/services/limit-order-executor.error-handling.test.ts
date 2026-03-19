@@ -23,7 +23,6 @@ import {
 import {
   createLimitOrderExecutorConfig,
   createLimitOrderExecutorHarness,
-  createLimitOrderExecutorService,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -36,6 +35,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
+  let createService: ReturnType<typeof createLimitOrderExecutorHarness>['createService'];
 
   beforeEach(() => {
     const harness = createLimitOrderExecutorHarness();
@@ -44,6 +44,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
     config = harness.config;
     bybitService = harness.bybitService;
     service = harness.service;
+    createService = harness.createService;
   });
 
   // ==========================================================================
@@ -637,7 +638,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (legacy mode)', async () => {
-      const legacyService = createLimitOrderExecutorService({
+      const legacyService = createService({
         config,
         bybitService,
         logger,
@@ -665,7 +666,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
     });
 
     it('should fallback to legacy retry logic without ErrorHandler', async () => {
-      const legacyService = createLimitOrderExecutorService({
+      const legacyService = createService({
         config,
         bybitService,
         logger,

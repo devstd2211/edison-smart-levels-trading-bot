@@ -20,6 +20,7 @@ import { RiskCalculationError } from '../../errors/DomainErrors';
 import { SignalDirection } from '../../types/legacy';
 import {
   createRiskCalculatorHarness,
+  createRiskCalculatorInvalidInput,
   createRiskCalculatorTakeProfitConfigs,
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
@@ -44,22 +45,22 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('THROW Strategy - Input Validation', () => {
     it('throws on invalid entryPrice (NaN)', () => {
-      const input = createInput({ entryPrice: NaN });
+      const input = createRiskCalculatorInvalidInput();
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on invalid entryPrice (Infinity)', () => {
-      const input = createInput({ entryPrice: Infinity });
+      const input = createRiskCalculatorInvalidInput({ entryPrice: Infinity });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on negative entryPrice', () => {
-      const input = createInput({ entryPrice: -100 });
+      const input = createRiskCalculatorInvalidInput({ entryPrice: -100 });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
     it('throws on zero entryPrice', () => {
-      const input = createInput({ entryPrice: 0 });
+      const input = createRiskCalculatorInvalidInput({ entryPrice: 0 });
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
@@ -296,7 +297,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('still validates input and throws on errors', () => {
-      const input = createInput({ entryPrice: NaN });
+      const input = createRiskCalculatorInvalidInput();
       expect(() => calculator.calculate(input)).toThrow(RiskCalculationError);
     });
 
@@ -342,7 +343,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     });
 
     it('preserves error context for debugging', () => {
-      const input = createInput({ entryPrice: -50 });
+      const input = createRiskCalculatorInvalidInput({ entryPrice: -50 });
       try {
         calculator.calculate(input);
         fail('Should throw');
@@ -417,7 +418,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
     it('no memory leaks on repeated error cases', () => {
       for (let i = 0; i < 50; i++) {
         try {
-          calculator.calculate(createInput({ entryPrice: NaN }));
+          calculator.calculate(createRiskCalculatorInvalidInput());
         } catch {
           // Expected
         }

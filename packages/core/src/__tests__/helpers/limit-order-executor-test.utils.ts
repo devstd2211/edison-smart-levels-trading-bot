@@ -77,18 +77,29 @@ export function createLimitOrderExecutorHarness(options: {
   const errorHandler = options.withErrorHandler === false
     ? undefined
     : options.errorHandler ?? new ErrorHandler(logger);
+  const createService = (serviceOptions: {
+    config?: LimitOrderExecutorConfig;
+    configOverrides?: Partial<LimitOrderExecutorConfig>;
+    bybitService?: BybitService;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  } = {}) =>
+    createLimitOrderExecutorService({
+      config,
+      bybitService,
+      logger,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
 
   return {
     logger,
     config,
     bybitService,
     errorHandler,
-    service: createLimitOrderExecutorService({
-      config,
-      bybitService,
-      logger,
-      errorHandler,
-      withErrorHandler: options.withErrorHandler,
-    }),
+    service: createService(),
+    createService,
   };
 }

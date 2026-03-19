@@ -70,6 +70,17 @@ export function createFractalSmcWeightingData(): StrategyMarketData {
   } as StrategyMarketData;
 }
 
+export function createFractalSmcWeightingInvalidSetup() {
+  return {
+    ...createFractalSmcWeightingSetup(),
+    breakout: {
+      confirmedByClose: true,
+      strength: NaN,
+      volumeRatio: Infinity,
+    },
+  };
+}
+
 export function createFractalSmcWeightingErrorHandler(
   logger: FractalSmcWeightingMockLogger = createFractalSmcWeightingMockLogger(),
 ): ErrorHandler {
@@ -102,14 +113,20 @@ export function createFractalSmcWeightingHarness(
     options.withErrorHandler === false
       ? undefined
       : options.errorHandler ?? createFractalSmcWeightingErrorHandler(logger);
+  const createService = (
+    serviceOptions: FractalSmcWeightingServiceOptions = {},
+  ) =>
+    createFractalSmcWeightingService({
+      logger,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
 
   return {
     logger,
     errorHandler,
-    service: createFractalSmcWeightingService({
-      ...options,
-      logger,
-      errorHandler,
-    }),
+    service: createService(options),
+    createService,
   };
 }

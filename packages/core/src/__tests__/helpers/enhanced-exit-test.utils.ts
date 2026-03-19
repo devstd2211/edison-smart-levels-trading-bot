@@ -77,6 +77,19 @@ export function createEnhancedExitConfig(): Partial<EnhancedExitConfig> {
   };
 }
 
+export function createEnhancedExitInvalidRiskRewardInput(overrides: {
+  entryPrice?: number;
+  stopLoss?: number;
+  takeProfit?: number;
+} = {}) {
+  return {
+    entryPrice: 2.0,
+    stopLoss: 1.9,
+    takeProfit: 2.1,
+    ...overrides,
+  };
+}
+
 export function createEnhancedExitHarness(options: {
   logger?: LoggerService;
   config?: Partial<EnhancedExitConfig>;
@@ -93,11 +106,27 @@ export function createEnhancedExitHarness(options: {
     withErrorHandler: options.withErrorHandler,
     errorHandler,
   });
+  const createService = (
+    serviceOptions: {
+      logger?: LoggerService;
+      config?: Partial<EnhancedExitConfig>;
+      withErrorHandler?: boolean;
+      errorHandler?: ErrorHandler;
+    } = {},
+  ) =>
+    createEnhancedExitService({
+      logger,
+      config: options.config,
+      withErrorHandler: options.withErrorHandler,
+      errorHandler,
+      ...serviceOptions,
+    });
 
   return {
     service,
     logger,
     errorHandler,
+    createService,
   };
 }
 

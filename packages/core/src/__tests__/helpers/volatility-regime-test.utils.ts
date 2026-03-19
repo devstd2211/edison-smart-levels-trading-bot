@@ -84,3 +84,15 @@ export function createVolatilityRegimeService(options: {
     options.errorHandler,
   );
 }
+
+export function createInvalidVolatilityRegimeThresholds(overrides: {
+  lowAtrPercent?: number;
+  highAtrPercent?: number;
+} = {}): Partial<VolatilityRegimeConfig> {
+  return {
+    thresholds: {
+      lowAtrPercent: overrides.lowAtrPercent ?? NaN,
+      highAtrPercent: overrides.highAtrPercent ?? 1.5,
+    },
+  };
+}

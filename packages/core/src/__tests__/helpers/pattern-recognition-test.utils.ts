@@ -94,6 +94,20 @@ export function createPatternRecognitionCandles(count: number): Candle[] {
   return candles;
 }
 
+export function createPatternRecognitionInvalidCandle(
+  overrides: Partial<Candle> = {},
+): Candle {
+  return {
+    timestamp: Date.now(),
+    open: 50000,
+    high: NaN,
+    low: 49900,
+    close: 50010,
+    volume: 1000,
+    ...overrides,
+  };
+}
+
 export function createPatternRecognitionSwing(overrides: Partial<SwingPoint> = {}): SwingPoint {
   return {
     type: SwingPointType.HIGH,
@@ -121,11 +135,27 @@ export function createPatternRecognitionHarness(options: {
     errorHandler,
     withErrorHandler: options.withErrorHandler,
   });
+  const createService = (
+    serviceOptions: {
+      config?: Partial<PatternRecognitionConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {},
+  ) =>
+    createPatternRecognitionService({
+      config: options.config,
+      logger,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
 
   return {
     service,
     logger,
     errorHandler,
+    createService,
   };
 }
 

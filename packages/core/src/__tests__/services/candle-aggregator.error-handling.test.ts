@@ -16,9 +16,9 @@ import {
   asCandleAggregatorLogger,
   createAggregatorMockCandle,
   createCandleAggregatorHarness,
-  createCandleAggregatorService,
   createFifteenMinuteAggregatorCandles,
   createFiveMinuteAggregatorCandles,
+  createInvalidAggregatorCandle,
   createOneHourAggregatorCandles,
   type CandleAggregatorMockLogger,
 } from '../helpers/candle-aggregator-test.utils';
@@ -27,11 +27,12 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
+  let createService: ReturnType<typeof createCandleAggregatorHarness>['createService'];
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
   beforeEach(() => {
-    ({ service, errorHandler, mockLogger } = createCandleAggregatorHarness());
+    ({ service, errorHandler, mockLogger, createService } = createCandleAggregatorHarness());
   });
 
   describe('THROW: Input Validation', () => {
@@ -109,7 +110,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     test('should handle NaN in open price gracefully', () => {
       const candles = [
         createAggregatorMockCandle(1000, 100),
-        { ...createAggregatorMockCandle(2000, 100), open: NaN },
+        createInvalidAggregatorCandle({ timestamp: 2000 }),
       ];
       const result = service.aggregateCandles(candles, 5);
       expect(result).toEqual([]); // Empty on graceful degrade
@@ -118,7 +119,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     test('should handle NaN in high price gracefully', () => {
       const candles = [
         createAggregatorMockCandle(1000, 100),
-        { ...createAggregatorMockCandle(2000, 100), high: NaN },
+        createInvalidAggregatorCandle({ timestamp: 2000, open: 100, high: NaN }),
       ];
       const result = service.aggregateCandles(candles, 5);
       expect(result).toEqual([]); // Empty on graceful degrade
@@ -127,7 +128,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     test('should handle Infinity in volume gracefully', () => {
       const candles = [
         createAggregatorMockCandle(1000, 100),
-        { ...createAggregatorMockCandle(2000, 100), volume: Infinity },
+        createInvalidAggregatorCandle({ timestamp: 2000, open: 100, volume: Infinity }),
       ];
       const result = service.aggregateCandles(candles, 5);
       expect(result).toEqual([]); // Empty on graceful degrade
@@ -162,13 +163,13 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
           throw new Error('Logger failed');
         }),
       };
-      const badService = createCandleAggregatorService({
+      const badService = createService({
         logger: badLogger as unknown as LoggerService,
         errorHandler,
       });
       const candles = [
         createAggregatorMockCandle(1000, 100),
-        { ...createAggregatorMockCandle(2000, 100), open: NaN },
+        createInvalidAggregatorCandle({ timestamp: 2000 }),
       ];
 
       // Should not throw despite logger failure
@@ -224,7 +225,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = createCandleAggregatorService({
+      const basicService = createService({
         logger: asCandleAggregatorLogger(mockLogger),
         withErrorHandler: false,
       });
@@ -236,7 +237,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = createCandleAggregatorService({
+      const basicService = createService({
         logger: asCandleAggregatorLogger(mockLogger),
         withErrorHandler: false,
       });
@@ -247,7 +248,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = createCandleAggregatorService({
+      const basicService = createService({
         errorHandler,
         withErrorHandler: false,
       });

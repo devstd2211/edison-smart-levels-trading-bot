@@ -19,16 +19,22 @@ import {
   createEnhancedExitErrorHandler,
   createEnhancedExitFailingLogger,
   createEnhancedExitHarness,
-  createEnhancedExitService,
+  createEnhancedExitInvalidRiskRewardInput,
 } from '../helpers/enhanced-exit-test.utils';
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
+  let createService: (options?: {
+    logger?: LoggerService;
+    config?: Partial<EnhancedExitConfig>;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => EnhancedExitService;
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
-    ({ logger: mockLogger, errorHandler } = createEnhancedExitHarness());
+    ({ logger: mockLogger, errorHandler, createService } = createEnhancedExitHarness());
   });
 
   // ============================================================================
@@ -42,10 +48,8 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         riskRewardGate: { enabled: true, minRR: 15, preferredRR: 2.0 },
       };
 
-      expect(() => createEnhancedExitService({
-        logger: mockLogger,
+      expect(() => createService({
         config: badConfig,
-        errorHandler,
       })).toThrow(
         /Invalid riskRewardGate.minRR/,
       );
@@ -57,10 +61,8 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         structureBasedTP: { enabled: true, mode: 'LEVEL', offsetPercent: 10, fallbackPercent: 2.0, useNextLevelAsTP1: true },
       };
 
-      expect(() => createEnhancedExitService({
-        logger: mockLogger,
+      expect(() => createService({
         config: badConfig,
-        errorHandler,
       })).toThrow(
         /Invalid structureBasedTP.offsetPercent/,
       );
@@ -72,10 +74,8 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         atrBasedTP: { enabled: true, tp1AtrMultiplier: 1.5, tp2AtrMultiplier: 3.0, minTPPercent: 15, maxTPPercent: 5.0 },
       };
 
-      expect(() => createEnhancedExitService({
-        logger: mockLogger,
+      expect(() => createService({
         config: badConfig,
-        errorHandler,
       })).toThrow(
         /Invalid atrBasedTP.minTPPercent/,
       );
@@ -87,10 +87,8 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         dynamicBreakeven: { enabled: true, activationPercent: 15, offsetPercent: 0.1 },
       };
 
-      expect(() => createEnhancedExitService({
-        logger: mockLogger,
+      expect(() => createService({
         config: badConfig,
-        errorHandler,
       })).toThrow(
         /Invalid dynamicBreakeven.activationPercent/,
       );
@@ -102,10 +100,8 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         adaptiveTrailing: { enabled: true, activationPercent: 1.5, trailingDistancePercent: 15, useATRDistance: true, trailingDistanceATR: 0.5 },
       };
 
-      expect(() => createEnhancedExitService({
-        logger: mockLogger,
+      expect(() => createService({
         config: badConfig,
-        errorHandler,
       })).toThrow(
         /Invalid adaptiveTrailing.trailingDistancePercent/,
       );
@@ -127,20 +123,29 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should GRACEFUL_DEGRADE on invalid entryPrice (NaN)', () => {
-      const result = service.validateRiskReward(NaN, 1.9, 2.1);
+      const { entryPrice, stopLoss, takeProfit } = createEnhancedExitInvalidRiskRewardInput({
+        entryPrice: NaN,
+      });
+      const result = service.validateRiskReward(entryPrice, stopLoss, takeProfit);
 
       expect(result.valid).toBe(false);
       expect(result.recommendation).toContain('Invalid');
     });
 
     it('should GRACEFUL_DEGRADE on invalid stopLoss (Infinity)', () => {
-      const result = service.validateRiskReward(2.0, Infinity, 2.1);
+      const { entryPrice, stopLoss, takeProfit } = createEnhancedExitInvalidRiskRewardInput({
+        stopLoss: Infinity,
+      });
+      const result = service.validateRiskReward(entryPrice, stopLoss, takeProfit);
 
       expect(result.valid).toBe(false);
     });
 
     it('should GRACEFUL_DEGRADE on negative entryPrice', () => {
-      const result = service.validateRiskReward(-2.0, 1.9, 2.1);
+      const { entryPrice, stopLoss, takeProfit } = createEnhancedExitInvalidRiskRewardInput({
+        entryPrice: -2.0,
+      });
+      const result = service.validateRiskReward(entryPrice, stopLoss, takeProfit);
 
       expect(result.valid).toBe(false);
     });
@@ -204,7 +209,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should SKIP logger.debug failures in calculateATRBasedTP', () => {
-      const service = createEnhancedExitService({
+      const service = createService({
         logger: throwingLogger,
         config: defaultConfig,
         errorHandler: createEnhancedExitErrorHandler(throwingLogger),
@@ -387,8 +392,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         atrBasedTP: { enabled: true, tp1AtrMultiplier: 1.5, tp2AtrMultiplier: 3.0, minTPPercent: 50, maxTPPercent: 5.0 },
       };
 
-      expect(() => createEnhancedExitService({
-        logger: mockLogger,
+      expect(() => createService({
         config: badConfig,
         withErrorHandler: false,
       })).toThrow();

@@ -59,6 +59,14 @@ export const createRiskCalculationInput = (
   ...overrides,
 });
 
+export const createRiskCalculatorInvalidInput = (
+  overrides: Partial<RiskCalculationInput> = {},
+): RiskCalculationInput =>
+  createRiskCalculationInput({
+    entryPrice: NaN,
+    ...overrides,
+  });
+
 export const createRiskCalculatorHarness = (
   options: RiskCalculatorHarnessOptions = {},
 ): {

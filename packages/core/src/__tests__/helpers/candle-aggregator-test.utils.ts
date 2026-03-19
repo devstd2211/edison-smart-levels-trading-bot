@@ -30,15 +30,23 @@ export function asCandleAggregatorLogger(
 export function createCandleAggregatorHarness() {
   const mockLogger = createCandleAggregatorMockLogger();
   const errorHandler = createCandleAggregatorErrorHandler(mockLogger);
-  const service = createCandleAggregatorService({
-    logger: asCandleAggregatorLogger(mockLogger),
-    errorHandler,
-  });
+  const createService = (options: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  } = {}) =>
+    createCandleAggregatorService({
+      logger: asCandleAggregatorLogger(mockLogger),
+      errorHandler,
+      ...options,
+    });
+  const service = createService();
 
   return {
     service,
     errorHandler,
     mockLogger,
+    createService,
   };
 }
 
@@ -67,6 +75,16 @@ export function createAggregatorMockCandle(timestamp: number, price: number): Ca
     low: price - 1,
     close: price,
     volume: 1000,
+  };
+}
+
+export function createInvalidAggregatorCandle(
+  overrides: Partial<Candle> = {},
+): Candle {
+  return {
+    ...createAggregatorMockCandle(1000, 100),
+    open: NaN,
+    ...overrides,
   };
 }
 

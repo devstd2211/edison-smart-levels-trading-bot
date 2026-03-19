@@ -13,6 +13,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, VolatilityRegime } from '../../types/legacy';
 import {
   createVolatilityRegimeHarness,
+  createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
 } from '../helpers/volatility-regime-test.utils';
 
@@ -64,12 +65,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
       expect(() => {
         createVolatilityRegimeHarness({
           logger: mockLogger,
-          config: {
-            thresholds: {
-              lowAtrPercent: NaN,
-              highAtrPercent: 1.5,
-            },
-          },
+          config: createInvalidVolatilityRegimeThresholds(),
         });
       }).toThrow();
     });
@@ -78,12 +74,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
       expect(() => {
         createVolatilityRegimeHarness({
           logger: mockLogger,
-          config: {
-            thresholds: {
-              lowAtrPercent: -0.3,
-              highAtrPercent: 1.5,
-            },
-          },
+          config: createInvalidVolatilityRegimeThresholds({ lowAtrPercent: -0.3 }),
         });
       }).toThrow();
     });

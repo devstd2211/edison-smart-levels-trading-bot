@@ -126,6 +126,30 @@ export function createDeepLiquidityHeatmapOrderbook(): Orderbook {
   };
 }
 
+export function createCorruptLiquidityHeatmapOrderbook(overrides: {
+  bidPrice?: number;
+  bidVolume?: number;
+  askPrice?: number;
+  askVolume?: number;
+} = {}): Orderbook {
+  return {
+    symbol: 'BTCUSDT',
+    timestamp: Date.now(),
+    bids: [
+      {
+        price: overrides.bidPrice ?? NaN,
+        volume: overrides.bidVolume ?? NaN,
+      },
+    ],
+    asks: [
+      {
+        price: overrides.askPrice ?? Infinity,
+        volume: overrides.askVolume ?? Infinity,
+      },
+    ],
+  };
+}
+
 export function createLiquidityHeatmapHarness(options: {
   config?: LiquidityHeatmapConfig;
   logger?: LoggerService;
@@ -143,12 +167,28 @@ export function createLiquidityHeatmapHarness(options: {
     errorHandler,
     withErrorHandler: options.withErrorHandler,
   });
+  const createService = (
+    serviceOptions: {
+      config?: LiquidityHeatmapConfig;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {},
+  ) =>
+    createLiquidityHeatmapService({
+      config,
+      logger,
+      errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
 
   return {
     service,
     logger,
     errorHandler,
     config,
+    createService,
   };
 }
 

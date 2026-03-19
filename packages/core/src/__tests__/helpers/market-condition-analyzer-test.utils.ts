@@ -32,15 +32,22 @@ export function createMarketConditionHarness(
 ) {
   const logger = createMarketConditionMockLogger(overrides);
   const errorHandler = createMarketConditionErrorHandler(logger);
-  const service = createMarketConditionService({
+  const createService = (options?: {
+    logger?: MarketConditionMockLogger;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => createMarketConditionService({
     logger,
     errorHandler,
+    ...options,
   });
+  const service = createService();
 
   return {
     logger,
     errorHandler,
     service,
+    createService,
   };
 }
 
@@ -81,6 +88,16 @@ export function createMarketConditionTakeProfit(
   };
 }
 
+export function createInvalidMarketConditionTakeProfit(
+  overrides: Partial<TakeProfit> = {},
+): TakeProfit {
+  return {
+    ...createMarketConditionTakeProfit(1, 100, 50, 0.5),
+    price: NaN,
+    ...overrides,
+  };
+}
+
 export function createMarketConditionResult(
   isFlat: boolean,
   confidence: number,
@@ -88,5 +105,15 @@ export function createMarketConditionResult(
   return {
     isFlat,
     confidence,
+  };
+}
+
+export function createInvalidMarketConditionResult(
+  overrides: Partial<{ isFlat: boolean; confidence: number }> = {},
+): { isFlat: boolean; confidence: number } {
+  return {
+    isFlat: true,
+    confidence: NaN,
+    ...overrides,
   };
 }

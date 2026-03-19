@@ -18,8 +18,8 @@ import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointTyp
 import {
   createStructureAwareExitConfig,
   createStructureAwareExitHarness,
+  createInvalidStructureAwareLevel,
   createStructureAwareExitMockLogger,
-  createStructureAwareExitService,
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
@@ -29,11 +29,16 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let defaultConfig: StructureAwareExitConfig;
+  let createService: ReturnType<typeof createStructureAwareExitHarness>['createService'];
 
   beforeEach(() => {
-    mockLogger = createStructureAwareExitMockLogger();
-    errorHandler = new ErrorHandler(mockLogger);
-    defaultConfig = createStructureAwareExitConfig();
+    const harness = createStructureAwareExitHarness({
+      logger: createStructureAwareExitMockLogger(),
+    });
+    mockLogger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    defaultConfig = harness.config;
+    createService = harness.createService;
   });
 
   // ============================================================================
@@ -44,10 +49,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid bufferPercent > 10%', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { bufferPercent: 15 } });
 
-      expect(() => createStructureAwareExitService({
+      expect(() => createService({
         config: badConfig,
-        logger: mockLogger,
-        errorHandler,
       })).toThrow(
         /Invalid bufferPercent/,
       );
@@ -56,10 +59,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid minTP2Percent > 50%', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { minTP2Percent: 60 } });
 
-      expect(() => createStructureAwareExitService({
+      expect(() => createService({
         config: badConfig,
-        logger: mockLogger,
-        errorHandler,
       })).toThrow(
         /Invalid minTP2Percent/,
       );
@@ -68,10 +69,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid maxTP2Percent > 50%', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { maxTP2Percent: 100 } });
 
-      expect(() => createStructureAwareExitService({
+      expect(() => createService({
         config: badConfig,
-        logger: mockLogger,
-        errorHandler,
       })).toThrow(
         /Invalid maxTP2Percent/,
       );
@@ -82,10 +81,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         dynamicTP2: { minTP2Percent: 8.0, maxTP2Percent: 4.0 },
       });
 
-      expect(() => createStructureAwareExitService({
+      expect(() => createService({
         config: badConfig,
-        logger: mockLogger,
-        errorHandler,
       })).toThrow(
         /Invalid TP2 range/,
       );
@@ -94,10 +91,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should THROW on invalid minZoneStrength outside 0-1', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { minZoneStrength: 1.5 } });
 
-      expect(() => createStructureAwareExitService({
+      expect(() => createService({
         config: badConfig,
-        logger: mockLogger,
-        errorHandler,
       })).toThrow(
         /Invalid minZoneStrength/,
       );
@@ -146,7 +141,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should THROW on invalid structureLevel price', () => {
-      const badStructure = { price: NaN, type: 'SWING_POINT' as const, strength: 0.8 };
+      const badStructure = createInvalidStructureAwareLevel();
 
       const result = service.calculateDynamicTP2(2.0, SignalDirection.LONG, badStructure);
 
@@ -225,7 +220,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should GRACEFUL_DEGRADE when calculation produces NaN', () => {
-      const badStructure = { price: 2.0, type: 'SWING_POINT' as const, strength: NaN };
+      const badStructure = createInvalidStructureAwareLevel({ price: 2.0, strength: NaN });
 
       const result = service.calculateDynamicTP2(2.0, SignalDirection.LONG, badStructure);
 
@@ -236,7 +231,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should GRACEFUL_DEGRADE when calculation produces Infinity', () => {
-      const badStructure = { price: Infinity, type: 'SWING_POINT' as const, strength: 0.8 };
+      const badStructure = createInvalidStructureAwareLevel({ price: Infinity });
 
       const result = service.calculateDynamicTP2(2.0, SignalDirection.LONG, badStructure);
 
@@ -247,7 +242,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should GRACEFUL_DEGRADE for SHORT position calculation errors', () => {
-      const badStructure = { price: Infinity, type: 'SWING_POINT' as const, strength: 0.8 };
+      const badStructure = createInvalidStructureAwareLevel({ price: Infinity });
 
       const result = service.calculateDynamicTP2(2.0, SignalDirection.SHORT, badStructure);
 
@@ -391,9 +386,8 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     it('should still validate config even without ErrorHandler', () => {
       const badConfig = createStructureAwareExitConfig({ dynamicTP2: { bufferPercent: 50 } });
 
-      expect(() => createStructureAwareExitService({
+      expect(() => createService({
         config: badConfig,
-        logger: mockLogger,
         withErrorHandler: false,
       })).toThrow();
     });

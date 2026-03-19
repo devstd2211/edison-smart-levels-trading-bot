@@ -17,6 +17,7 @@ import {
   asTimeframeWeightingMode,
   asTimeframeWeightingMultiTF,
   createTimeframeWeightingHarness,
+  createInvalidTimeframeWeightingMultiTF,
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
@@ -66,69 +67,45 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('THROW: Timeframe Data Validation', () => {
     test('should throw when 5m timeframe is missing', () => {
-      const multiTF = {
-        byTimeframe: {
-          '15m': { bias: TrendBias.BULLISH, strength: 0.8 },
-          '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
-          '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
-        },
-      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
+      const multiTF = createInvalidTimeframeWeightingMultiTF({
+        '5m': undefined as unknown as Parameters<TimeframeWeightingService['combine']>[0]['byTimeframe']['5m'],
+      });
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('MultiTF.byTimeframe[5m] is missing');
     });
 
     test('should throw on NaN strength value', () => {
-      const multiTF = {
-        byTimeframe: {
-          '5m': { bias: TrendBias.BULLISH, strength: NaN },
-          '15m': { bias: TrendBias.BULLISH, strength: 0.8 },
-          '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
-          '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
-        },
-      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
+      const multiTF = createInvalidTimeframeWeightingMultiTF({
+        '5m': { bias: TrendBias.BULLISH, strength: NaN } as unknown as Parameters<TimeframeWeightingService['combine']>[0]['byTimeframe']['5m'],
+      });
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Invalid data for timeframe 5m');
     });
 
     test('should throw on negative strength', () => {
-      const multiTF = {
-        byTimeframe: {
-          '5m': { bias: TrendBias.BULLISH, strength: -0.1 },
-          '15m': { bias: TrendBias.BULLISH, strength: 0.8 },
-          '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
-          '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
-        },
-      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
+      const multiTF = createInvalidTimeframeWeightingMultiTF({
+        '5m': { bias: TrendBias.BULLISH, strength: -0.1 } as unknown as Parameters<TimeframeWeightingService['combine']>[0]['byTimeframe']['5m'],
+      });
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Strength for 5m must be between 0 and 1');
     });
 
     test('should throw on strength > 1', () => {
-      const multiTF = {
-        byTimeframe: {
-          '5m': { bias: TrendBias.BULLISH, strength: 1.5 },
-          '15m': { bias: TrendBias.BULLISH, strength: 0.8 },
-          '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
-          '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
-        },
-      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
+      const multiTF = createInvalidTimeframeWeightingMultiTF({
+        '5m': { bias: TrendBias.BULLISH, strength: 1.5 } as unknown as Parameters<TimeframeWeightingService['combine']>[0]['byTimeframe']['5m'],
+      });
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Strength for 5m must be between 0 and 1');
     });
 
     test('should throw on missing bias', () => {
-      const multiTF = {
-        byTimeframe: {
-          '5m': { bias: undefined, strength: 0.7 },
-          '15m': { bias: TrendBias.BULLISH, strength: 0.8 },
-          '1h': { bias: TrendBias.BULLISH, strength: 0.75 },
-          '4h': { bias: TrendBias.BULLISH, strength: 0.65 },
-        },
-      } as unknown as Parameters<TimeframeWeightingService['combine']>[0];
+      const multiTF = createInvalidTimeframeWeightingMultiTF({
+        '5m': { bias: undefined, strength: 0.7 } as unknown as Parameters<TimeframeWeightingService['combine']>[0]['byTimeframe']['5m'],
+      });
       expect(() => {
         service.combine(multiTF, TradingMode.SWING);
       }).toThrow('Invalid data for timeframe 5m');

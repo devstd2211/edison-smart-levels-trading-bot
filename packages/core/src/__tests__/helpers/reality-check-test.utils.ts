@@ -73,19 +73,41 @@ export const createRealityCheckAnalyzerSignal = (
   ...override,
 });
 
+export const createRealityCheckPriceScenario = (overrides: {
+  entryPrice?: number;
+  highestPrice?: number;
+  lowestPrice?: number;
+  closingPrice?: number;
+} = {}) => ({
+  entryPrice: 100,
+  highestPrice: 99,
+  lowestPrice: 98.8,
+  closingPrice: 98.8,
+  ...overrides,
+});
+
 export const createRealityCheckHarness = (
   options: RealityCheckHarnessOptions = {},
 ): {
   service: RealityCheckService;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  createService: (serviceOptions?: RealityCheckHarnessOptions) => RealityCheckService;
 } => {
   const logger = options.withLogger === false ? undefined : options.logger ?? createRealityCheckMockLogger();
+  const createService = (
+    serviceOptions: RealityCheckHarnessOptions = {},
+  ) => createRealityCheckService({
+    logger,
+    withLogger: options.withLogger,
+    ...serviceOptions,
+  });
 
   return {
-    service: createRealityCheckService({ logger, withLogger: options.withLogger }),
+    service: createService(),
     logger,
     errorHandler: logger ? new ErrorHandler(logger) : undefined,
+    createService,
   };
 };
 

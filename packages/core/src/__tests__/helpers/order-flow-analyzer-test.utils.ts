@@ -60,6 +60,14 @@ export function createMockFlow(
   return { direction, volumeUSDT, timestamp, price: 1.0 };
 }
 
+export function createOrderFlowUpdateSeries(
+  updates: Array<[bidPrice: number, bidSize: number, askPrice: number, askSize: number]>,
+): OrderBook[] {
+  return updates.map(([bidPrice, bidSize, askPrice, askSize]) =>
+    createMockOrderbook(bidPrice, bidSize, askPrice, askSize),
+  );
+}
+
 export function createOrderFlowAnalyzerHarness(
   overrides: Partial<OrderFlowAnalyzerConfig> = {},
 ): {

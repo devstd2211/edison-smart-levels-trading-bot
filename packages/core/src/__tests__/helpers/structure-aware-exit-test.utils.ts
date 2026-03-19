@@ -67,22 +67,30 @@ export const createStructureAwareExitHarness = (
   logger: LoggerService;
   errorHandler?: ErrorHandler;
   config: StructureAwareExitConfig;
+  createService: (serviceOptions?: StructureAwareExitHarnessOptions) => StructureAwareExitService;
 } => {
   const logger = options.logger ?? createStructureAwareExitMockLogger();
   const config = options.config ?? createStructureAwareExitConfig();
   const errorHandler = options.withErrorHandler === false
     ? undefined
     : options.errorHandler ?? new ErrorHandler(logger);
-
-  return {
-    service: createStructureAwareExitService({
+  const createService = (
+    serviceOptions: StructureAwareExitHarnessOptions = {},
+  ) =>
+    createStructureAwareExitService({
       config,
       logger,
       errorHandler,
-    }),
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
+
+  return {
+    service: createService(),
     logger,
     errorHandler,
     config,
+    createService,
   };
 };
 
@@ -134,3 +142,13 @@ export const createStructureAwareFallbackResult = (
   direction === SignalDirection.LONG
     ? entryPrice * (1 + percent / 100)
     : entryPrice * (1 - percent / 100);
+
+export const createInvalidStructureAwareLevel = (overrides: {
+  price?: number;
+  type?: 'SWING_POINT' | 'LIQUIDITY_ZONE' | 'VOLUME_HVN';
+  strength?: number;
+} = {}) => ({
+  price: overrides.price ?? NaN,
+  type: overrides.type ?? 'SWING_POINT',
+  strength: overrides.strength ?? 0.8,
+});

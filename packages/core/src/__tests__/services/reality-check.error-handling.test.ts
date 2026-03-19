@@ -18,7 +18,7 @@ import {
   createRealityCheckAnalyzerSignal,
   createRealityCheckEvent,
   createRealityCheckHarness,
-  createRealityCheckService,
+  createRealityCheckPriceScenario,
   createRealityCheckSignal,
 } from '../helpers/reality-check-test.utils';
 
@@ -26,12 +26,17 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let createService: (options?: {
+    logger?: LoggerService;
+    withLogger?: boolean;
+  }) => RealityCheckService;
 
   beforeEach(() => {
     const harness = createRealityCheckHarness();
     logger = harness.logger as LoggerService;
     errorHandler = harness.errorHandler as ErrorHandler;
     service = harness.service;
+    createService = harness.createService;
   });
 
   // ============================================================================
@@ -94,15 +99,23 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       // NaN prices might cause calculation issues
+      const { entryPrice, highestPrice, lowestPrice, closingPrice } =
+        createRealityCheckPriceScenario({
+          entryPrice: NaN,
+          highestPrice: 101,
+          lowestPrice: 98,
+          closingPrice: 98.5,
+        });
+
       const result = service.analyzeClosedTrade(
         'BTCUSDT',
         'trade-1',
         signal,
         signingAnalyzers,
-        NaN, // Invalid entry price
-        101,
-        98,
-        98.5,
+        entryPrice,
+        highestPrice,
+        lowestPrice,
+        closingPrice,
         'SL_HIT',
         'UPTREND',
         'DOWNTREND',
@@ -118,15 +131,23 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
       const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 
+      const { entryPrice, highestPrice, lowestPrice, closingPrice } =
+        createRealityCheckPriceScenario({
+          entryPrice: Infinity,
+          highestPrice: 101,
+          lowestPrice: 98,
+          closingPrice: 98.5,
+        });
+
       const result = service.analyzeClosedTrade(
         'BTCUSDT',
         'trade-1',
         signal,
         signingAnalyzers,
-        Infinity, // Invalid entry price
-        101,
-        98,
-        98.5,
+        entryPrice,
+        highestPrice,
+        lowestPrice,
+        closingPrice,
         'SL_HIT',
         'UPTREND',
         'DOWNTREND',
@@ -143,15 +164,23 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
       const signingAnalyzers: AnalyzerSignal[] = [];
 
       // Negative prices don't make sense in trading
+      const { entryPrice, highestPrice, lowestPrice, closingPrice } =
+        createRealityCheckPriceScenario({
+          entryPrice: -100,
+          highestPrice: 101,
+          lowestPrice: 98,
+          closingPrice: 98.5,
+        });
+
       const result = service.analyzeClosedTrade(
         'BTCUSDT',
         'trade-1',
         signal,
         signingAnalyzers,
-        -100, // Invalid negative price
-        101,
-        98,
-        98.5,
+        entryPrice,
+        highestPrice,
+        lowestPrice,
+        closingPrice,
         'SL_HIT',
         'UPTREND',
         'DOWNTREND',
@@ -375,7 +404,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   describe('SKIP - Logging failures (Service without error handling)', () => {
     it('should record events with optional logger', () => {
       const event = createRealityCheckEvent();
-      const serviceWithoutLogger = createRealityCheckService({ withLogger: false });
+      const serviceWithoutLogger = createService({ withLogger: false });
 
       // Should not throw even without logger
       expect(() => {
@@ -469,7 +498,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   describe('Backward compatibility - Without ErrorHandler', () => {
     it('should work with optional logger', () => {
-      const serviceWithoutLogger = createRealityCheckService({ withLogger: false });
+      const serviceWithoutLogger = createService({ withLogger: false });
       const event = createRealityCheckEvent();
 
       // Should not throw even without logger
@@ -481,7 +510,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     });
 
     it('should analyze trades without logger', () => {
-      const serviceWithoutLogger = createRealityCheckService({ withLogger: false });
+      const serviceWithoutLogger = createService({ withLogger: false });
       const signal = createRealityCheckSignal();
       const signingAnalyzers: AnalyzerSignal[] = [];
 

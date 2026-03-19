@@ -14,7 +14,7 @@
 
 import { PatternRecognitionService } from '../../services/pattern-recognition.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { Candle, Pattern, SwingPoint, PatternRecognitionConfig, SwingPointType } from '../../types/legacy';
+import { Candle, LoggerService, Pattern, SwingPoint, PatternRecognitionConfig, SwingPointType } from '../../types/legacy';
 import {
   asPatternRecognitionCandles as asCandles,
   asPatternRecognitionConfig as asConfig,
@@ -24,8 +24,8 @@ import {
   createPatternRecognitionCandle as createMockCandle,
   createPatternRecognitionCandles as createCandleArray,
   createPatternRecognitionFailingLogger,
-  createPatternRecognitionService,
   createPatternRecognitionHarness,
+  createPatternRecognitionInvalidCandle,
   createPatternRecognitionMockLogger,
   createPatternRecognitionSwing as createMockSwing,
 } from '../helpers/pattern-recognition-test.utils';
@@ -34,9 +34,15 @@ describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
   let errorHandler: ErrorHandler | undefined;
   let logger = createPatternRecognitionMockLogger();
+  let createService: (options?: {
+    config?: Partial<PatternRecognitionConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => PatternRecognitionService;
 
   beforeEach(() => {
-    ({ service, logger, errorHandler } = createPatternRecognitionHarness());
+    ({ service, logger, errorHandler, createService } = createPatternRecognitionHarness());
   });
 
   afterEach(() => {
@@ -50,35 +56,31 @@ describe('PatternRecognitionService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        createPatternRecognitionService({ config: asConfig('invalid'), logger, errorHandler });
+        createService({ config: asConfig('invalid') });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        createPatternRecognitionService({ config: asConfig(123), logger, errorHandler });
+        createService({ config: asConfig(123) });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        createPatternRecognitionService({ config: asConfig([]), logger, errorHandler });
+        createService({ config: asConfig([]) });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        createPatternRecognitionService({ config: undefined, logger, errorHandler });
+        createService({ config: undefined });
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
-        createPatternRecognitionService({
-          config: { minCandlesRequired: 20 },
-          logger,
-          errorHandler,
-        });
+        createService({ config: { minCandlesRequired: 20 } });
       }).not.toThrow();
     });
   });
@@ -244,8 +246,8 @@ describe('PatternRecognitionService - Error Handling', () => {
     it('should handle corrupted candle data gracefully', async () => {
       const candles = createCandleArray(15);
       // Corrupt some candles
-      candles[5].high = NaN;
-      candles[8].low = Infinity;
+      candles[5] = createPatternRecognitionInvalidCandle();
+      candles[8] = createPatternRecognitionInvalidCandle({ low: Infinity });
 
       const patterns = await service.recognizePattern(candles);
 
@@ -267,7 +269,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       });
 
       expect(() => {
-        createPatternRecognitionService({ logger: badLogger, errorHandler });
+        createService({ logger: badLogger });
       }).not.toThrow();
     });
 
@@ -278,10 +280,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         }),
       });
 
-      const testService = createPatternRecognitionService({
-        logger: badLogger,
-        errorHandler,
-      });
+      const testService = createService({ logger: badLogger });
 
       // Force pattern recognition to log a warning
       jest.spyOn(asInternals(testService), 'performPatternRecognition').mockImplementation(() => {
@@ -302,10 +301,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         }),
       });
 
-      const testService = createPatternRecognitionService({
-        logger: badLogger,
-        errorHandler,
-      });
+      const testService = createService({ logger: badLogger });
 
       expect(() => {
         testService.updateCandles(createCandleArray(10));
@@ -319,10 +315,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         }),
       });
 
-      const testService = createPatternRecognitionService({
-        logger: badLogger,
-        errorHandler,
-      });
+      const testService = createService({ logger: badLogger });
 
       expect(() => {
         testService.clearHistory();
@@ -340,7 +333,7 @@ describe('PatternRecognitionService - Error Handling', () => {
       const config: Partial<PatternRecognitionConfig> = {
         minPatternReliability: 40, // Doji has 45 reliability
       };
-      const testService = createPatternRecognitionService({ config, logger, errorHandler });
+      const testService = createService({ config });
 
       const candles = createCandleArray(15);
 
@@ -520,7 +513,7 @@ describe('PatternRecognitionService - Error Handling', () => {
         minPatternReliability: 0,
       };
 
-      const testService = createPatternRecognitionService({ config, logger, errorHandler });
+      const testService = createService({ config });
 
       const candles = createCandleArray(15);
       // Add various patterns

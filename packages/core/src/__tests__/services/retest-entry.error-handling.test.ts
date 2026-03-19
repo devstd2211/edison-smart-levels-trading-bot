@@ -46,7 +46,7 @@ import {
   createRetestEntryHarness,
   createRetestEntryLogger,
   createRetestEntryMockLoggerService,
-  createRetestEntryService,
+  createRetestEntryInvalidCandle,
   createRetestEntrySignal,
 } from '../helpers/retest-entry-test.utils';
 
@@ -60,13 +60,21 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   let mockConfig: RetestConfig;
   let mockSignal: Signal;
   let mockCandles: Candle[];
+  let createService: (options?: {
+    configOverrides?: Partial<RetestConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => RetestEntryService;
 
   beforeEach(() => {
-    logger = createRetestEntryLogger();
-    errorHandler = createRetestEntryErrorHandler(logger);
-    mockConfig = createRetestEntryConfig();
+    const harness = createRetestEntryHarness({ logger: createRetestEntryLogger() });
+    logger = harness.logger;
+    errorHandler = harness.errorHandler as ErrorHandler;
+    mockConfig = harness.config;
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
+    createService = harness.createService;
   });
 
   // ============================================================================
@@ -77,7 +85,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on minImpulsePercent <= 0', () => {
       const badConfig = { ...mockConfig, minImpulsePercent: 0 };
 
-      expect(() => createRetestEntryService({ configOverrides: badConfig, logger, errorHandler })).toThrow(
+      expect(() => createService({ configOverrides: badConfig })).toThrow(
         'minImpulsePercent must be between 0 and 100',
       );
     });
@@ -85,7 +93,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on minImpulsePercent > 100', () => {
       const badConfig = { ...mockConfig, minImpulsePercent: 150 };
 
-      expect(() => createRetestEntryService({ configOverrides: badConfig, logger, errorHandler })).toThrow(
+      expect(() => createService({ configOverrides: badConfig })).toThrow(
         'minImpulsePercent must be between 0 and 100',
       );
     });
@@ -93,7 +101,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on invalid Fibonacci levels', () => {
       const badConfig = { ...mockConfig, retestZoneFibStart: 70, retestZoneFibEnd: 50 }; // Start > End
 
-      expect(() => createRetestEntryService({ configOverrides: badConfig, logger, errorHandler })).toThrow(
+      expect(() => createService({ configOverrides: badConfig })).toThrow(
         'retestZoneFibStart must be < retestZoneFibEnd',
       );
     });
@@ -101,7 +109,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on invalid maxRetestWaitMs', () => {
       const badConfig = { ...mockConfig, maxRetestWaitMs: -1000 };
 
-      expect(() => createRetestEntryService({ configOverrides: badConfig, logger, errorHandler })).toThrow(
+      expect(() => createService({ configOverrides: badConfig })).toThrow(
         'maxRetestWaitMs must be > 0',
       );
     });
@@ -109,7 +117,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw on invalid volumeMultiplier', () => {
       const badConfig = { ...mockConfig, volumeMultiplier: 0 };
 
-      expect(() => createRetestEntryService({ configOverrides: badConfig, logger, errorHandler })).toThrow(
+      expect(() => createService({ configOverrides: badConfig })).toThrow(
         'volumeMultiplier must be > 0',
       );
     });
@@ -121,7 +129,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   describe('THROW - Input Validation', () => {
     it('should throw on null candles array in detectImpulse', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.detectImpulse('BTCUSDT', 1.1575, asCandles(null))).toThrow(
         'candles must be an array',
@@ -129,7 +137,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should throw on invalid currentPrice in detectImpulse', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.detectImpulse('BTCUSDT', NaN, mockCandles)).toThrow(
         'currentPrice must be a positive number',
@@ -137,7 +145,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should throw on null signal in createRetestZone', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.createRetestZone('BTCUSDT', asSignal(null), 1.1500, 1.1600)).toThrow(
         'signal is required',
@@ -145,7 +153,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should throw on invalid impulseStart in createRetestZone', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.createRetestZone('BTCUSDT', mockSignal, -1.1500, 1.1600)).toThrow(
         'impulseStart must be a positive number',
@@ -153,7 +161,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should throw on invalid impulseEnd in createRetestZone', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.createRetestZone('BTCUSDT', mockSignal, 1.1500, Infinity)).toThrow(
         'impulseEnd must be a positive number',
@@ -167,10 +175,10 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   describe('GRACEFUL_DEGRADE - Calculation Failures', () => {
     it('should return no impulse on invalid start price', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       const badCandles = [
-        { timestamp: Date.now() - 5000, open: NaN, high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 },
+        createRetestEntryInvalidCandle({ high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 }),
         ...mockCandles.slice(1),
       ];
 
@@ -181,7 +189,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should return no impulse on zero currentPrice', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // Zero price should throw (THROW strategy)
       expect(() => service.detectImpulse('BTCUSDT', 0, mockCandles)).toThrow(
@@ -190,7 +198,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should create minimal zone on calculation failure', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // This might trigger calculation failure due to invalid impulseEnd
       const zone = service.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1500); // Zero impulseRange
@@ -200,11 +208,11 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should recover after calculation failure on subsequent calls', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // First call with invalid candles data
       const badCandles = [
-        { timestamp: Date.now() - 5000, open: NaN, high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 },
+        createRetestEntryInvalidCandle({ high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 }),
         ...mockCandles.slice(1),
       ];
       const result1 = service.detectImpulse('BTCUSDT', 1.1575, badCandles);
@@ -216,14 +224,14 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should handle multiple NaN values gracefully', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       const badCandles: Candle[] = [
-        { timestamp: Date.now() - 5000, open: NaN, high: NaN, low: NaN, close: NaN, volume: NaN },
-        { timestamp: Date.now() - 4000, open: NaN, high: NaN, low: NaN, close: NaN, volume: NaN },
-        { timestamp: Date.now() - 3000, open: NaN, high: NaN, low: NaN, close: NaN, volume: NaN },
-        { timestamp: Date.now() - 2000, open: NaN, high: NaN, low: NaN, close: NaN, volume: NaN },
-        { timestamp: Date.now() - 1000, open: NaN, high: NaN, low: NaN, close: NaN, volume: NaN },
+        createRetestEntryInvalidCandle(),
+        createRetestEntryInvalidCandle(),
+        createRetestEntryInvalidCandle(),
+        createRetestEntryInvalidCandle(),
+        createRetestEntryInvalidCandle(),
       ];
 
       const result = service.detectImpulse('BTCUSDT', 1.1575, badCandles);
@@ -247,7 +255,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         }),
       });
 
-      const service = createRetestEntryService({
+      const service = createService({
         configOverrides: mockConfig,
         logger: failingLogger,
         errorHandler,
@@ -266,7 +274,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         }),
       });
 
-      const service = createRetestEntryService({
+      const service = createService({
         configOverrides: mockConfig,
         logger: failingLogger,
         errorHandler,
@@ -288,7 +296,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         }),
       });
 
-      const service = createRetestEntryService({
+      const service = createService({
         configOverrides: mockConfig,
         logger: failingLogger,
         errorHandler,
@@ -308,7 +316,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   describe('Integration - Cascading Failures', () => {
     it('should handle full retest flow with error handling', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // Step 1: Detect impulse
       const impulseResult = service.detectImpulse('BTCUSDT', 1.1575, mockCandles);
@@ -326,7 +334,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should maintain state consistency across errors', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // Create zone
       service.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600);
@@ -342,7 +350,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     });
 
     it('should handle multiple zones with individual error handling', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // Create multiple zones
       service.createRetestZone('BTCUSDT', mockSignal, 1.1500, 1.1600);
@@ -382,7 +390,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
     it('should throw config validation errors even without ErrorHandler', () => {
       const badConfig = { ...mockConfig, minImpulsePercent: 150 };
 
-      expect(() => createRetestEntryService({ configOverrides: badConfig, logger, withErrorHandler: false })).toThrow(
+      expect(() => createService({ configOverrides: badConfig, withErrorHandler: false })).toThrow(
         'minImpulsePercent must be between 0 and 100',
       );
     });
@@ -400,7 +408,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
         }),
       } as unknown as ErrorHandler;
 
-      const service = createRetestEntryService({
+      const service = createService({
         configOverrides: mockConfig,
         logger,
         errorHandler: failingErrorHandler,
@@ -408,7 +416,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
       // Should not throw even if ErrorHandler fails
       const badCandles = [
-        { timestamp: Date.now() - 5000, open: NaN, high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 },
+        createRetestEntryInvalidCandle({ high: 1.1510, low: 1.1490, close: 1.1505, volume: 1000 }),
         ...mockCandles.slice(1),
       ];
 
@@ -424,12 +432,12 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
       ];
 
       for (const badConfig of testConfigs) {
-        expect(() => createRetestEntryService({ configOverrides: badConfig, logger, errorHandler })).toThrow();
+        expect(() => createService({ configOverrides: badConfig })).toThrow();
       }
     });
 
     it('should handle empty zones cleanup', () => {
-      const service = createRetestEntryService({ configOverrides: mockConfig, logger, errorHandler });
+      const service = createService();
 
       // Should not throw on empty cleanup
       expect(() => service.cleanExpiredZones()).not.toThrow();

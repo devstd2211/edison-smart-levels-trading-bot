@@ -42,6 +42,15 @@ export const createSwingPointDetectorCandleArray = (count: number): Candle[] => 
   return candles;
 };
 
+export const createSwingPointDetectorInvalidCandle = (
+  overrides: Partial<Candle> = {},
+): Candle =>
+  createSwingPointDetectorMockCandle({
+    high: NaN,
+    low: 95,
+    ...overrides,
+  });
+
 export const createSwingPointDetectorMockLogger = (): LoggerService =>
   ({
     info: jest.fn(),
@@ -80,22 +89,29 @@ export const createSwingPointDetectorHarness = (
   service: SwingPointDetectorService;
   logger: LoggerService;
   errorHandler?: ErrorHandler;
+  createService: (serviceOptions?: SwingPointDetectorHarnessOptions) => SwingPointDetectorService;
 } => {
   const logger = options.logger ?? createSwingPointDetectorMockLogger();
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
       : options.errorHandler ?? createSwingPointDetectorMockErrorHandler();
-
-  return {
-    service: createSwingPointDetectorService({
+  const createService = (
+    serviceOptions: SwingPointDetectorHarnessOptions = {},
+  ): SwingPointDetectorService =>
+    createSwingPointDetectorService({
       logger,
       lookbackPeriod: options.lookbackPeriod,
       errorHandler,
       withErrorHandler: options.withErrorHandler,
-    }),
+      ...serviceOptions,
+    });
+
+  return {
+    service: createService(),
     logger,
     errorHandler,
+    createService,
   };
 };
 
