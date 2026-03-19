@@ -150,6 +150,28 @@ export function createPositionSyncService(
   );
 }
 
+export function createPositionSyncServiceWithHarness(
+  dependencies: Omit<PositionSyncHarness, 'service'>,
+): PositionSyncService {
+  return createPositionSyncService(dependencies);
+}
+
+export function createMockSyncedPositions(
+  positions: Array<{
+    side?: PositionSide;
+    openedAt?: number;
+    overrides?: Partial<Position>;
+  }>,
+): Position[] {
+  return positions.map((position) =>
+    createMockSyncedPosition(
+      position.side,
+      position.openedAt,
+      position.overrides,
+    ),
+  );
+}
+
 export function createPositionSyncHarness(options: {
   mockBybit?: ReturnType<typeof createMockPositionSyncExchange>;
   mockPositionManager?: ReturnType<typeof createMockPositionSyncManager>;

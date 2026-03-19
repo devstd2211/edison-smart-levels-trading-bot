@@ -14,7 +14,8 @@ import {
 import {
   createMockMonitoredPosition,
   createPositionMonitorHarness,
-  createPositionMonitorService,
+  createPositionMonitorRiskConfig,
+  createPositionMonitorServiceWithHarness,
   defaultPositionMonitorRiskConfig,
 } from '../helpers/position-monitor-test.utils';
 
@@ -52,7 +53,7 @@ describe('PositionMonitorService', () => {
   let logger: LoggerService;
   const rebuildMonitor = (config: RiskManagementConfig): void => {
     monitor.stop();
-    monitor = createPositionMonitorService(
+    monitor = createPositionMonitorServiceWithHarness(
       {
         mockBybit,
         mockPositionManager,
@@ -338,7 +339,7 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultPositionMonitorRiskConfig,
+        ...createPositionMonitorRiskConfig(),
         positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
@@ -370,7 +371,7 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.505); // +0.33% PnL (> 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultPositionMonitorRiskConfig,
+        ...createPositionMonitorRiskConfig(),
         positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
@@ -395,7 +396,7 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultPositionMonitorRiskConfig,
+        ...createPositionMonitorRiskConfig(),
         positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,
@@ -420,7 +421,7 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL
 
       const config: RiskManagementConfig = {
-        ...defaultPositionMonitorRiskConfig,
+        ...createPositionMonitorRiskConfig(),
         positionSizeUsdt: 10,
         timeBasedExitEnabled: false, // DISABLED
       };
@@ -443,7 +444,7 @@ describe('PositionMonitorService', () => {
       mockBybit.getCurrentPrice.mockResolvedValue(1.499); // +0.067% PnL (< 0.2% threshold)
 
       const config: RiskManagementConfig = {
-        ...defaultPositionMonitorRiskConfig,
+        ...createPositionMonitorRiskConfig(),
         positionSizeUsdt: 10,
         timeBasedExitEnabled: true,
         timeBasedExitMinutes: 30,

@@ -172,8 +172,8 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
             },
           },
         );
-        if (syncResult.success && syncResult.value) {
-          exchangePosition = syncResult.value;
+        if (syncResult.success) {
+          exchangePosition = syncResult.value ?? null;
         } else {
           // Graceful degrade: use cached position
           exchangePosition = currentPosition;

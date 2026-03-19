@@ -4,6 +4,7 @@ import { promises as fsPromises } from 'fs';
 import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../services/logger.service';
 import { PositionStateMachineService } from '../../services/position-state-machine.service';
+import { PositionState } from '../../types/enums';
 
 export function createMockPositionStateMachineLogger(): LoggerService {
   return {
@@ -57,6 +58,41 @@ export function createPositionStateMachineService(options: {
     logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createPositionStateMachineServiceWithHarness(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  return createPositionStateMachineService(options);
+}
+
+export async function createInitializedPositionStateMachineHarness(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}) {
+  const harness = createPositionStateMachineHarness(options);
+  await harness.service.initialize();
+  return harness;
+}
+
+export function createPositionStateTransitionInput(
+  overrides: Partial<{
+    symbol: string;
+    positionId: string;
+    targetState: PositionState;
+    reason: string;
+    metadata: Record<string, unknown>;
+  }> = {},
+) {
+  return {
+    symbol: 'BTCUSDT',
+    positionId: `pos-${Date.now()}`,
+    targetState: PositionState.TP1_HIT,
+    reason: 'Test transition',
+    ...overrides,
+  };
 }
 
 export function createPositionStateMachineHarness(options: {

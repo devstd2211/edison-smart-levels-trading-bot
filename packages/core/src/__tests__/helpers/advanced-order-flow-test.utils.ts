@@ -71,6 +71,15 @@ export function createAdvancedOrderFlowValidConfig(): AdvancedOrderFlowConfig {
   };
 }
 
+export function createAdvancedOrderFlowConfig(
+  overrides: Partial<AdvancedOrderFlowConfig> = {},
+): AdvancedOrderFlowConfig {
+  return {
+    ...createAdvancedOrderFlowValidConfig(),
+    ...overrides,
+  };
+}
+
 export function createAdvancedOrderFlowTick(
   side: 'BUY' | 'SELL',
   price = 50000,
@@ -78,6 +87,47 @@ export function createAdvancedOrderFlowTick(
   timestamp = Date.now(),
 ): Tick {
   return { timestamp, price, size, side };
+}
+
+export function createAdvancedOrderFlowTickSequence(
+  entries: Array<{
+    side: 'BUY' | 'SELL';
+    price?: number;
+    size?: number;
+    timestamp?: number;
+  }>,
+): Tick[] {
+  return entries.map((entry) =>
+    createAdvancedOrderFlowTick(
+      entry.side,
+      entry.price,
+      entry.size,
+      entry.timestamp,
+    ),
+  );
+}
+
+export function addAdvancedOrderFlowTicks(
+  service: AdvancedOrderFlowService,
+  entries: Array<{
+    side: 'BUY' | 'SELL';
+    price?: number;
+    size?: number;
+    timestamp?: number;
+  }>,
+): void {
+  createAdvancedOrderFlowTickSequence(entries).forEach((tick) => {
+    service.addTick(tick);
+  });
+}
+
+export function createAdvancedOrderFlowOrderbookWithOverrides(
+  overrides: Partial<OrderBook> = {},
+): OrderBook {
+  return {
+    ...createAdvancedOrderFlowOrderbook(),
+    ...overrides,
+  };
 }
 
 export function createAdvancedOrderFlowOrderbook(): OrderBook {
@@ -153,4 +203,13 @@ export function createAdvancedOrderFlowService(options?: {
     logger,
     options?.withErrorHandler === false ? undefined : options?.errorHandler,
   );
+}
+
+export function createAdvancedOrderFlowServiceWithHarness(options?: {
+  config?: AdvancedOrderFlowConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}) {
+  return createAdvancedOrderFlowService(options);
 }

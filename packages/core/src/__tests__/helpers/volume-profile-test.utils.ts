@@ -84,6 +84,50 @@ export function createVolumeProfileCandles(count: number = 10): Candle[] {
   return candles;
 }
 
+export function createVolumeProfileCandlesFromSpecs(
+  specs: Array<{
+    low: number;
+    high: number;
+    close: number;
+    volume: number;
+    timestamp?: number;
+  }>,
+): Candle[] {
+  return specs.map((spec) =>
+    createVolumeProfileCandle(
+      spec.low,
+      spec.high,
+      spec.close,
+      spec.volume,
+      spec.timestamp,
+    ),
+  );
+}
+
+export function createInvalidVolumeProfileCandle(
+  overrides: Partial<Candle> = {},
+): Candle {
+  return {
+    timestamp: 1000,
+    open: 100,
+    high: 100.5,
+    low: 99.5,
+    close: 100,
+    volume: 1000,
+    ...overrides,
+  };
+}
+
+export function createVolumeProfileServiceWithHarness(options: {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  config?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  return createVolumeProfileService(options);
+}
+
 export function createVolumeProfileHarness(options: {
   configOverrides?: Partial<VolumeProfileConfig>;
   logger?: LoggerService;

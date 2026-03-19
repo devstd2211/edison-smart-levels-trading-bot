@@ -6,7 +6,10 @@
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
 import { LoggerService } from '../../types/legacy';
 import {
+  createEventDeduplicationEvent,
+  createEventDeduplicationEvents,
   createEventDeduplicationHarness,
+  createEventDeduplicationServiceWithHarness,
   type EventDeduplicationHarness,
 } from '../helpers/event-deduplication-test.utils';
 
@@ -24,13 +27,22 @@ describe('EventDeduplicationService', () => {
     logger = harness.logger;
   });
 
+  const createService = (cacheSize = 100, cacheTtlMs = 60000) =>
+    createEventDeduplicationServiceWithHarness({
+      cacheSize,
+      cacheTtlMs,
+      logger,
+      errorHandler: harness.errorHandler,
+    });
+
   describe('isDuplicate', () => {
     beforeEach(() => {
-      service = harness.createService(10, 1000, logger); // Small cache for testing
+      service = createService(10, 1000);
     });
 
     it('should return false for first occurrence of event', () => {
-      const result = service.isDuplicate('TP', 'order-123', Date.now());
+      const event = createEventDeduplicationEvent();
+      const result = service.isDuplicate(event.type, event.id, event.time);
       expect(result).toBe(false);
     });
 
@@ -45,16 +57,15 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should treat different event types separately', () => {
-      const timestamp = Date.now();
-      const orderId = 'order-123';
+      const event = createEventDeduplicationEvent();
 
-      const tp = service.isDuplicate('TP', orderId, timestamp);
+      const tp = service.isDuplicate('TP', event.id, event.time);
       expect(tp).toBe(false);
 
-      const sl = service.isDuplicate('SL', orderId, timestamp);
+      const sl = service.isDuplicate('SL', event.id, event.time);
       expect(sl).toBe(false); // Different event type
 
-      const tpAgain = service.isDuplicate('TP', orderId, timestamp);
+      const tpAgain = service.isDuplicate('TP', event.id, event.time);
       expect(tpAgain).toBe(true); // Same TP is duplicate
     });
 
@@ -119,28 +130,32 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should clear all cached events', () => {
-      const timestamp = Date.now();
+      const events = createEventDeduplicationEvents([
+        { type: 'TP', id: 'order-1' },
+        { type: 'SL', id: 'order-2' },
+        { type: 'TRAILING', id: 'order-3' },
+      ]);
 
-      service.isDuplicate('TP', 'order-1', timestamp);
-      service.isDuplicate('SL', 'order-2', timestamp);
-      service.isDuplicate('TRAILING', 'order-3', timestamp);
+      events.forEach((event) => {
+        service.isDuplicate(event.type, event.id, event.time);
+      });
 
       // Before clear - all should be duplicates
-      expect(service.isDuplicate('TP', 'order-1', timestamp)).toBe(true);
+      expect(service.isDuplicate(events[0].type, events[0].id, events[0].time)).toBe(true);
 
       // Clear cache
       service.clear();
 
       // After clear - all should be new
-      expect(service.isDuplicate('TP', 'order-1', timestamp)).toBe(false);
-      expect(service.isDuplicate('SL', 'order-2', timestamp)).toBe(false);
-      expect(service.isDuplicate('TRAILING', 'order-3', timestamp)).toBe(false);
+      events.forEach((event) => {
+        expect(service.isDuplicate(event.type, event.id, event.time)).toBe(false);
+      });
     });
   });
 
   describe('Cache Management', () => {
     it('should use default cache size (100)', () => {
-      const service1 = harness.createService(100, 60000, logger);
+      const service1 = createService();
       const timestamp = 1000; // Use fixed timestamp
 
       // Add 100 events with different timestamps
@@ -154,7 +169,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should use custom cache size', () => {
-      service = harness.createService(50, 60000, logger);
+      service = createService(50, 60000);
       const timestamp = 1000;
 
       // Add 50 events with different timestamps
@@ -167,7 +182,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should use custom TTL', () => {
-      service = harness.createService(100, 500, logger); // 500ms TTL
+      service = createService(100, 500); // 500ms TTL
       const timestamp = Date.now();
 
       service.isDuplicate('TP', 'order-123', timestamp);
@@ -192,17 +207,17 @@ describe('EventDeduplicationService', () => {
 
   describe('Integration Scenarios', () => {
     beforeEach(() => {
-      service = harness.createService(100, 60000, logger);
+      service = createService();
     });
 
     it('should handle real WebSocket event stream', () => {
-      const events = [
+      const events = createEventDeduplicationEvents([
         { type: 'TP', id: 'exec-1', time: 1000 },
         { type: 'TP', id: 'exec-2', time: 1000 }, // Different execution
         { type: 'TP', id: 'exec-1', time: 1000 }, // Duplicate
         { type: 'SL', id: 'exec-3', time: 1000 },
         { type: 'TP', id: 'exec-1', time: 1000 }, // Duplicate again
-      ];
+      ]);
 
       const results = events.map(e => ({
         ...e,
@@ -248,7 +263,7 @@ describe('EventDeduplicationService', () => {
 
   describe('Performance', () => {
     it('should handle rapid duplicate checks efficiently', () => {
-      service = harness.createService(1000, 60000, logger);
+      service = createService(1000, 60000);
 
       const startTime = Date.now();
 
@@ -264,7 +279,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should handle large timestamps efficiently', () => {
-      service = harness.createService(100, 60000, logger);
+      service = createService();
 
       const timestamps = Array.from({ length: 100 }, (_, i) => Date.now() + i * 1000);
 

@@ -29,17 +29,17 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-19)
-- Completed a three-iteration lifecycle/testability batch:
-  - extended `packages/core/src/__tests__/helpers/orderbook-manager-test.utils.ts`, `packages/core/src/__tests__/helpers/orderbook-imbalance-test.utils.ts`, and `packages/core/src/__tests__/helpers/wall-tracker-test.utils.ts` with shared snapshot/delta fixtures, canonical imbalance orderbook builders, and reusable wall-sequence detection helpers, then routed the related suites through those helpers instead of repeated inline orderbook and wall setup.
-  - reviewed `services/orderbook-manager.service.ts`, `services/orderbook-imbalance.service.ts`, and `services/wall-tracker.service.ts`; kept production code unchanged because this batch only needed test-harness consolidation.
+- Completed another three-iteration helper-consolidation batch for adjacent constructor-heavy suites:
+  - extended `packages/core/src/__tests__/helpers/position-state-machine-test.utils.ts`, `packages/core/src/__tests__/helpers/position-sync-test.utils.ts`, and `packages/core/src/__tests__/helpers/position-pnl-calculator-test.utils.ts` with unified service creation paths plus reusable transition-input, synced-position, and pnl-position builders, then routed the related suites through those helpers instead of repeated inline constructor/bootstrap and duplicated position fixture setup.
+  - reviewed `services/position-state-machine.service.ts`, `services/position-sync.service.ts`, and `services/position-pnl-calculator.service.ts`; left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-manager.service.test.ts` -> PASS (1/1 suite, 15/15 tests).
-  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts` -> PASS (1/1 suite, 16/16 tests).
-  - `npm test -- --runInBand packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts` -> PASS (1/1 suite, 23/23 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-state-machine.service.test.ts` -> PASS (1/1 suite, 21/21 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-sync.service.test.ts` -> PASS (1/1 suite, 28/28 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-pnl-calculator.service.test.ts` -> PASS (1/1 suite, 34/34 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
 - Prefer the next compact untouched suite with repeated inline bootstrap or lifecycle setup beyond the now-refreshed `circuit-breaker.error-handling`, `data-collector.error-handling`, `graceful-shutdown.error-handling`, `circuit-breaker.service`, `graceful-shutdown.service`, `bybit.error-handling`, `advanced-order-state-machine`, `multi-timeframe-trend`, `liquidity-heatmap`, `fractal-smc-weighting`, `pattern-recognition`, `retest-entry`, `swing-point-detector`, `whale-wall-tp`, `enhanced-exit`, `whale-detection`, `reality-check`, `volatility-regime`, `timeframe-weighting`, `risk-calculator`, `strategy-loader`, `session-stats`, `phase-10-integration`, `position-lifecycle.repository-integration`, `bybit.repository-integration`, `multi-strategy.cache`, `position-exiting.integration`, `order-flow-analyzer`, `smart-order-execution`, `structure-aware-exit`, `health-check`, `action-queue`, `time-service`, `dynamic-position-sizer`, `position-scaling`, `candle-aggregator`, `limit-order-executor`, `market-condition-analyzer`, `ml-feature-extractor`, `delta-analyzer`, `micro-wall-detector`, `tick-delta-analyzer`, `anomaly-detection`, `analyzer-engine`, `analyzer-registry`, `order-execution-detector`, `exit-type-detector`, `ladder-exit-detector`, and `analyzer-registration-fixes`.
-- Likely next candidates: adjacent untouched suites that still rebuild service/bootstrap state inline despite existing helpers, especially `wall-tracker.service`, `volume-profile.error-handling`, or the next nearby constructor-heavy orderflow/market-structure suite.
+- Likely next candidates: another nearby untouched position/lifecycle-focused slice that still rebuilds service/bootstrap state inline, especially `position-exiting.service`, `position-lifecycle.service`, `position-manager.service`, or a similar adjacent constructor-heavy suite.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

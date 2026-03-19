@@ -67,3 +67,21 @@ export function createWebSocketAuthenticationService(options: {
 
   return new WebSocketAuthenticationService(logger, errorHandler);
 }
+
+export function createWebSocketAuthenticationServiceWithHarness(options: {
+  logger?: AuthLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): WebSocketAuthenticationService {
+  return createWebSocketAuthenticationService(options);
+}
+
+export function createWebSocketAuthCredentials(overrides: {
+  apiKey?: string;
+  apiSecret?: string;
+} = {}): { apiKey: string; apiSecret: string } {
+  return {
+    apiKey: overrides.apiKey ?? 'test-key',
+    apiSecret: overrides.apiSecret ?? 'test-secret',
+  };
+}

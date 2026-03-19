@@ -9,14 +9,15 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolumeProfileService } from '../../services/volume-profile.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { ValidationError, ConfigurationError } from '../../errors/DomainErrors';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
 import {
   createVolumeProfileCandles,
+  createVolumeProfileCandlesFromSpecs,
   createVolumeProfileHarness,
+  createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
-  createVolumeProfileService,
+  createVolumeProfileServiceWithHarness,
 } from '../helpers/volume-profile-test.utils';
 
 // ============================================================================
@@ -44,11 +45,12 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     logger: LoggerService = mockLogger,
     withErrorHandler: boolean = true,
   ): VolumeProfileService =>
-    createVolumeProfileHarness({
+    createVolumeProfileServiceWithHarness({
       configOverrides,
       logger,
+      errorHandler,
       withErrorHandler,
-    }).service;
+    });
 
   // =========================================================================
   // THROW VALIDATION TESTS
@@ -82,16 +84,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on candles with NaN values', () => {
       service = createService();
 
-      const badCandles: Candle[] = [
-        {
-          timestamp: 1000,
-          open: 100,
-          high: NaN,
-          low: 99.5,
-          close: 100,
-          volume: 1000,
-        },
-      ];
+      const badCandles: Candle[] = [createInvalidVolumeProfileCandle({ high: NaN })];
 
       expect(() => {
         service.calculate(badCandles);
@@ -101,16 +94,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on candles with Infinity values', () => {
       service = createService();
 
-      const badCandles: Candle[] = [
-        {
-          timestamp: 1000,
-          open: 100,
-          high: Infinity,
-          low: 99.5,
-          close: 100,
-          volume: 1000,
-        },
-      ];
+      const badCandles: Candle[] = [createInvalidVolumeProfileCandle({ high: Infinity })];
 
       expect(() => {
         service.calculate(badCandles);
@@ -120,16 +104,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on negative volume in candles', () => {
       service = createService();
 
-      const badCandles: Candle[] = [
-        {
-          timestamp: 1000,
-          open: 100,
-          high: 100.5,
-          low: 99.5,
-          close: 100,
-          volume: -1000,
-        },
-      ];
+      const badCandles: Candle[] = [createInvalidVolumeProfileCandle({ volume: -1000 })];
 
       expect(() => {
         service.calculate(badCandles);
@@ -138,7 +113,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid priceTickSize in constructor', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           configOverrides: {
             priceTickSize: NaN,
           },
@@ -150,7 +125,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on negative priceTickSize in constructor', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           configOverrides: {
             priceTickSize: -0.5,
           },
@@ -162,7 +137,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on zero priceTickSize in constructor', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           configOverrides: {
             priceTickSize: 0,
           },
@@ -174,7 +149,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid lookbackCandles in constructor', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           configOverrides: {
             lookbackCandles: NaN,
           },
@@ -186,7 +161,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid valueAreaPercent in constructor', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           configOverrides: {
             valueAreaPercent: 150,
           },
@@ -198,7 +173,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on zero valueAreaPercent in constructor', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           configOverrides: {
             valueAreaPercent: 0,
           },
@@ -425,7 +400,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should preserve config on invalid update', () => {
-      service = createVolumeProfileService({ logger: mockLogger, errorHandler });
+      service = createVolumeProfileServiceWithHarness({ logger: mockLogger, errorHandler });
 
       const initialConfig = service.getConfig();
 
@@ -495,16 +470,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on invalid candles without ErrorHandler', () => {
       service = createService(undefined, mockLogger, false);
 
-      const badCandles: Candle[] = [
-        {
-          timestamp: 1000,
-          open: 100,
-          high: 100.5,
-          low: NaN,
-          close: 100,
-          volume: 1000,
-        },
-      ];
+      const badCandles: Candle[] = [createInvalidVolumeProfileCandle({ low: NaN })];
 
       expect(() => {
         service.calculate(badCandles);
@@ -512,7 +478,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle config with partial overrides without ErrorHandler', () => {
-      service = createVolumeProfileService({
+      service = createVolumeProfileServiceWithHarness({
         config: {
           lookbackCandles: 100,
           valueAreaPercent: 68,
@@ -529,7 +495,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid constructor config without ErrorHandler', () => {
       expect(() => {
-        createVolumeProfileService({
+        createVolumeProfileServiceWithHarness({
           config: {
             priceTickSize: 0,
           },
@@ -540,7 +506,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should check isEnabled() correctly without ErrorHandler', () => {
-      service = createVolumeProfileService({
+      service = createVolumeProfileServiceWithHarness({
         config: {
           enabled: false,
         },
@@ -560,16 +526,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should handle candles with very small price range', () => {
       service = createService();
 
-      const candles = [
-        {
-          timestamp: 1000,
-          open: 100.0001,
-          high: 100.0002,
-          low: 100.0000,
-          close: 100.0001,
-          volume: 1000,
-        },
-      ];
+      const candles = createVolumeProfileCandlesFromSpecs([
+        { low: 100.0, high: 100.0002, close: 100.0001, volume: 1000, timestamp: 1000 },
+      ]);
 
       const result = service.calculate(candles);
       expect(result).toBeDefined();
@@ -578,23 +537,16 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should handle candles with very large volume', () => {
       service = createService();
 
-      const candles = [
-        {
-          timestamp: 1000,
-          open: 100,
-          high: 100.5,
-          low: 99.5,
-          close: 100,
-          volume: 1e15, // Very large number
-        },
-      ];
+      const candles = createVolumeProfileCandlesFromSpecs([
+        { low: 99.5, high: 100.5, close: 100, volume: 1e15, timestamp: 1000 },
+      ]);
 
       const result = service.calculate(candles);
       expect(result).toBeDefined();
     });
 
     it('should handle different tick sizes', () => {
-      service = createVolumeProfileService({
+      service = createVolumeProfileServiceWithHarness({
         configOverrides: {
           priceTickSize: 0.25,
         },
@@ -608,7 +560,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle different value area percentages', () => {
-      service = createVolumeProfileService({
+      service = createVolumeProfileServiceWithHarness({
         configOverrides: {
           valueAreaPercent: 50,
         },
@@ -622,7 +574,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate correctly with edge case value area percent (1%)', () => {
-      service = createVolumeProfileService({
+      service = createVolumeProfileServiceWithHarness({
         configOverrides: {
           valueAreaPercent: 1,
         },
@@ -637,7 +589,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate correctly with edge case value area percent (99%)', () => {
-      service = createVolumeProfileService({
+      service = createVolumeProfileServiceWithHarness({
         configOverrides: {
           valueAreaPercent: 99,
         },

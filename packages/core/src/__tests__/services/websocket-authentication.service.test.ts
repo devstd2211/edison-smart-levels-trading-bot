@@ -6,8 +6,9 @@
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import crypto from 'crypto';
 import {
+  createWebSocketAuthCredentials,
   createWebSocketAuthenticationHarness,
-  createWebSocketAuthenticationService,
+  createWebSocketAuthenticationServiceWithHarness,
 } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
@@ -22,7 +23,7 @@ describe('WebSocketAuthenticationService', () => {
     const harness = createWebSocketAuthenticationHarness();
     service = harness.service;
     createService = () =>
-      createWebSocketAuthenticationService({
+      createWebSocketAuthenticationServiceWithHarness({
         logger: harness.mockLogger,
         errorHandler: harness.errorHandler,
       });
@@ -30,8 +31,10 @@ describe('WebSocketAuthenticationService', () => {
 
   describe('generateAuthPayload', () => {
     it('should generate valid auth payload structure', () => {
-      const apiKey = 'test-api-key';
-      const apiSecret = 'test-api-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'test-api-key',
+        apiSecret: 'test-api-secret',
+      });
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
 
@@ -43,8 +46,10 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should return apiKey as first argument', () => {
-      const apiKey = 'my-api-key-12345';
-      const apiSecret = 'my-api-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'my-api-key-12345',
+        apiSecret: 'my-api-secret',
+      });
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
 
@@ -52,8 +57,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should return expires timestamp as string', () => {
-      const apiKey = 'test-key';
-      const apiSecret = 'test-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
       const expiresStr = payload.args[1];
@@ -64,8 +68,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should set expires to approximately 5 seconds in future', () => {
-      const apiKey = 'test-key';
-      const apiSecret = 'test-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
       const beforeTime = Date.now();
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
@@ -80,8 +83,10 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should generate valid HMAC-SHA256 signature', () => {
-      const apiKey = 'test-api-key';
-      const apiSecret = 'test-api-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'test-api-key',
+        apiSecret: 'test-api-secret',
+      });
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
       const signature = payload.args[2];
@@ -100,7 +105,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should generate different signatures for different secrets', () => {
-      const apiKey = 'test-key';
+      const { apiKey } = createWebSocketAuthCredentials();
 
       const payload1 = service.generateAuthPayload(apiKey, 'secret1');
       const payload2 = service.generateAuthPayload(apiKey, 'secret2');
@@ -113,7 +118,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should generate different signatures for different keys', () => {
-      const secret = 'test-secret';
+      const { apiSecret: secret } = createWebSocketAuthCredentials();
 
       const payload1 = service.generateAuthPayload('key1', secret);
       const payload2 = service.generateAuthPayload('key2', secret);
@@ -132,8 +137,10 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should handle special characters in credentials', () => {
-      const apiKey = 'key-with-!@#$%^&*()_special';
-      const apiSecret = 'secret-with-!@#$%^&*()_special';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'key-with-!@#$%^&*()_special',
+        apiSecret: 'secret-with-!@#$%^&*()_special',
+      });
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
 
@@ -143,8 +150,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should be reproducible with same credentials and expires', () => {
-      const apiKey = 'test-key';
-      const apiSecret = 'test-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
 
       // Get first payload
       const payload1 = service.generateAuthPayload(apiKey, apiSecret);
@@ -163,8 +169,7 @@ describe('WebSocketAuthenticationService', () => {
   describe('Integration', () => {
     it('payload should be JSON serializable', () => {
       const instance = createService();
-      const apiKey = 'test-key';
-      const apiSecret = 'test-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
 
       const payload = instance.generateAuthPayload(apiKey, apiSecret);
 
@@ -175,8 +180,7 @@ describe('WebSocketAuthenticationService', () => {
 
     it('should generate new timestamp for each call', (done) => {
       const instance = createService();
-      const apiKey = 'test-key';
-      const apiSecret = 'test-secret';
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
 
       const payload1 = instance.generateAuthPayload(apiKey, apiSecret);
       const expires1 = parseInt(payload1.args[1], 10);

@@ -39,6 +39,26 @@ export function createExchangeFactoryConfig(
   };
 }
 
+export function createBybitExchangeFactoryConfig(
+  overrides: Partial<ExchangeConfig> = {},
+): ExchangeConfig {
+  return createExchangeFactoryConfig({
+    name: 'bybit',
+    symbol: 'XRPUSDT',
+    ...overrides,
+  });
+}
+
+export function createBinanceExchangeFactoryConfig(
+  overrides: Partial<ExchangeConfig> = {},
+): ExchangeConfig {
+  return createExchangeFactoryConfig({
+    name: 'binance',
+    symbol: 'BTCUSDT',
+    ...overrides,
+  });
+}
+
 export function createExchangeFactoryErrorHandler(
   logger: LoggerService = asExchangeFactoryLogger(createExchangeFactoryMockLogger()),
 ): jest.Mocked<ErrorHandler> {
@@ -122,6 +142,19 @@ export function createExchangeFactoryService(options: {
     options.config ?? createExchangeFactoryConfig(),
     options.errorHandler,
   );
+}
+
+export function createExchangeFactoryServiceWithHarness(options: {
+  logger?: LoggerService;
+  config?: ExchangeConfig;
+  configOverrides?: Partial<ExchangeConfig>;
+  errorHandler?: ErrorHandler;
+} = {}): ExchangeFactory {
+  return createExchangeFactoryService({
+    logger: options.logger,
+    config: options.config ?? createExchangeFactoryConfig(options.configOverrides),
+    errorHandler: options.errorHandler,
+  });
 }
 
 export function createExchangeFactoryTestContext() {

@@ -12,8 +12,9 @@ import {
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createMockSyncedPosition,
+  createMockSyncedPositions,
   createPositionSyncHarness,
-  createPositionSyncService,
+  createPositionSyncServiceWithHarness,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================
@@ -94,7 +95,7 @@ describe('PositionSyncService', () => {
       mockExitTypeDetector.determineExitTypeFromHistory.mockReturnValue(ExitType.TAKE_PROFIT_1);
 
       const positionExitingService = createMockPositionCloseRecorder();
-      const syncService = createPositionSyncService({
+      const syncService = createPositionSyncServiceWithHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -385,8 +386,10 @@ describe('PositionSyncService', () => {
     });
 
     it('should handle multiple positions correctly (each synced independently)', async () => {
-      const position1 = createMockPosition(PositionSide.LONG);
-      const position2 = createMockPosition(PositionSide.SHORT);
+      const [position1, position2] = createMockSyncedPositions([
+        { side: PositionSide.LONG },
+        { side: PositionSide.SHORT },
+      ]);
 
       // Track calls manually for better control
       const clearPositionCalls: Position[] = [];
@@ -397,7 +400,7 @@ describe('PositionSyncService', () => {
         }),
       };
 
-      const serviceLocal = createPositionSyncService({
+      const serviceLocal = createPositionSyncServiceWithHarness({
         mockBybit,
         mockPositionManager: mockPositionManagerLocal,
         mockExitTypeDetector,

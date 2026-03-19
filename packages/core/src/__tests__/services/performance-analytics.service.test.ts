@@ -17,8 +17,9 @@ import { PerformanceAnalytics } from '../../services/performance-analytics.servi
 import { LoggerService } from '../../types/legacy';
 import {
   createPerformanceAnalyticsHarness,
-  createPerformanceAnalyticsService,
+  createPerformanceAnalyticsServiceWithHarness,
   createPerformanceAnalyticsTrade,
+  createPerformanceAnalyticsTrades,
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
@@ -31,7 +32,7 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   beforeEach(() => {
     const harness = createPerformanceAnalyticsHarness();
-    analytics = createPerformanceAnalyticsService({
+    analytics = createPerformanceAnalyticsServiceWithHarness({
       config: harness.config,
       journal: harness.journal,
       logger: harness.logger,
@@ -46,11 +47,11 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   describe('Win Rate Calculation', () => {
     it('should calculate 100% win rate with all profitable trades', () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 100, pnlPercent: 1 }),
-        createPerformanceAnalyticsTrade({ pnl: 200, pnlPercent: 2 }),
-        createPerformanceAnalyticsTrade({ pnl: 150, pnlPercent: 1.5 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 100, pnlPercent: 1 },
+        { pnl: 200, pnlPercent: 2 },
+        { pnl: 150, pnlPercent: 1.5 },
+      ]);
 
       const winRate = analytics.calculateWinRate(trades);
 
@@ -58,11 +59,11 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should calculate 0% win rate with all losing trades', () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: -100, pnlPercent: -1 }),
-        createPerformanceAnalyticsTrade({ pnl: -200, pnlPercent: -2 }),
-        createPerformanceAnalyticsTrade({ pnl: -150, pnlPercent: -1.5 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: -100, pnlPercent: -1 },
+        { pnl: -200, pnlPercent: -2 },
+        { pnl: -150, pnlPercent: -1.5 },
+      ]);
 
       const winRate = analytics.calculateWinRate(trades);
 
@@ -70,10 +71,10 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should calculate 50% win rate with mixed trades', () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 100, pnlPercent: 1 }),
-        createPerformanceAnalyticsTrade({ pnl: -100, pnlPercent: -1 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 100, pnlPercent: 1 },
+        { pnl: -100, pnlPercent: -1 },
+      ]);
 
       const winRate = analytics.calculateWinRate(trades);
 
@@ -93,11 +94,11 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   describe('Profit Factor Analysis', () => {
     it('should calculate profit factor > 1 for profitable trades', () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 500 }),
-        createPerformanceAnalyticsTrade({ pnl: 300 }),
-        createPerformanceAnalyticsTrade({ pnl: -200 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 500 },
+        { pnl: 300 },
+        { pnl: -200 },
+      ]);
 
       const profitFactor = analytics.calculateProfitFactor(trades);
 
@@ -108,10 +109,7 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should return 100 when all trades are profitable', () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 100 }),
-        createPerformanceAnalyticsTrade({ pnl: 200 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([{ pnl: 100 }, { pnl: 200 }]);
 
       const profitFactor = analytics.calculateProfitFactor(trades);
 
@@ -119,10 +117,7 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should return 0 when all trades are losses', () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: -100 }),
-        createPerformanceAnalyticsTrade({ pnl: -200 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([{ pnl: -100 }, { pnl: -200 }]);
 
       const profitFactor = analytics.calculateProfitFactor(trades);
 
@@ -142,11 +137,11 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   describe('Sharpe & Sortino Ratios', () => {
     it('should calculate Sharpe ratio > 0 for consistent profits', async () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 100 }),
-        createPerformanceAnalyticsTrade({ pnl: 120 }),
-        createPerformanceAnalyticsTrade({ pnl: 110 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 100 },
+        { pnl: 120 },
+        { pnl: 110 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('ALL');
@@ -155,11 +150,11 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should calculate Sortino ratio > Sharpe for mixed performance', async () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 500 }),
-        createPerformanceAnalyticsTrade({ pnl: -100 }),
-        createPerformanceAnalyticsTrade({ pnl: 300 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 500 },
+        { pnl: -100 },
+        { pnl: 300 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('ALL');
@@ -185,11 +180,11 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   describe('Maximum Drawdown Analysis', () => {
     it('should calculate max drawdown as 0 for consistently profitable trades', async () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 100 }),
-        createPerformanceAnalyticsTrade({ pnl: 200 }),
-        createPerformanceAnalyticsTrade({ pnl: 150 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 100 },
+        { pnl: 200 },
+        { pnl: 150 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('ALL');
@@ -198,10 +193,7 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should detect max drawdown when peak followed by loss', async () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 1000 }),
-        createPerformanceAnalyticsTrade({ pnl: -600 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([{ pnl: 1000 }, { pnl: -600 }]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('ALL');
@@ -211,11 +203,11 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
 
     it('should handle continuous drawdown correctly', async () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ pnl: 500 }),
-        createPerformanceAnalyticsTrade({ pnl: -200 }),
-        createPerformanceAnalyticsTrade({ pnl: -150 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { pnl: 500 },
+        { pnl: -200 },
+        { pnl: -150 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('ALL');
@@ -230,10 +222,10 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   describe('Period-Based Metrics', () => {
     it('should return all trades for ALL period', async () => {
-      const trades = [
-        createPerformanceAnalyticsTrade({ openedAt: Date.now() - 86400000 * 40 }),
-        createPerformanceAnalyticsTrade({ openedAt: Date.now() - 100 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { openedAt: Date.now() - 86400000 * 40 },
+        { openedAt: Date.now() - 100 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('ALL');
@@ -246,16 +238,16 @@ describe('PerformanceAnalytics Service Tests', () => {
       today.setUTCHours(0, 0, 0, 0);
       const todayTimestamp = today.getTime();
 
-      const trades = [
-        createPerformanceAnalyticsTrade({
+      const trades = createPerformanceAnalyticsTrades([
+        {
           openedAt: todayTimestamp + 3600000, // Today
           entryTime: todayTimestamp + 3600000,
-        }),
-        createPerformanceAnalyticsTrade({
+        },
+        {
           openedAt: todayTimestamp - 86400000, // Yesterday
           entryTime: todayTimestamp - 86400000,
-        }),
-      ];
+        },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('TODAY');
@@ -265,10 +257,10 @@ describe('PerformanceAnalytics Service Tests', () => {
 
     it('should filter trades for WEEK period', async () => {
       const now = Date.now();
-      const trades = [
-        createPerformanceAnalyticsTrade({ openedAt: now - 86400000 * 5 }),
-        createPerformanceAnalyticsTrade({ openedAt: now - 86400000 * 15 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { openedAt: now - 86400000 * 5 },
+        { openedAt: now - 86400000 * 15 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('WEEK');
@@ -278,10 +270,10 @@ describe('PerformanceAnalytics Service Tests', () => {
 
     it('should filter trades for MONTH period', async () => {
       const now = Date.now();
-      const trades = [
-        createPerformanceAnalyticsTrade({ openedAt: now - 86400000 * 20 }),
-        createPerformanceAnalyticsTrade({ openedAt: now - 86400000 * 50 }),
-      ];
+      const trades = createPerformanceAnalyticsTrades([
+        { openedAt: now - 86400000 * 20 },
+        { openedAt: now - 86400000 * 50 },
+      ]);
       mockJournalService.getAllTrades.mockReturnValue(trades);
 
       const stats = await analytics.getMetrics('MONTH');

@@ -6,9 +6,8 @@ import { FundingRateFilterService, FundingRateData } from '../../services/fundin
 import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
 import {
   createFundingRateData,
-  createFundingRateFilterConfig,
   createFundingRateFilterHarness,
-  createFundingRateFilterService,
+  createFundingRateFilterServiceWithHarness,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
@@ -25,7 +24,7 @@ describe('FundingRateFilterService', () => {
       withErrorHandler: false,
     }));
     createFilter = (overrides = {}) =>
-      createFundingRateFilterService({
+      createFundingRateFilterServiceWithHarness({
         logger,
         getFundingRate: mockGetFundingRate,
         withErrorHandler: false,
@@ -98,8 +97,7 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should allow signals when filter is disabled', async () => {
-      const disabledConfig = { ...config, enabled: false };
-      const filter = createFilter({ config: disabledConfig });
+      const filter = createFilter({ config: { ...config, enabled: false } });
 
       const result = await filter.checkSignal(SignalDirection.LONG);
 
@@ -136,12 +134,11 @@ describe('FundingRateFilterService', () => {
     });
 
     it('should refetch after cache expires', async () => {
-      const shortCacheConfig = { ...config, cacheTimeMs: 100 }; // 100ms cache
       const fundingData: FundingRateData = createFundingRateData();
 
       mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = createFilter({ config: shortCacheConfig });
+      const filter = createFilter({ config: { ...config, cacheTimeMs: 100 } });
 
       // First call
       await filter.checkSignal(SignalDirection.LONG);

@@ -47,6 +47,11 @@ export const createPerformanceAnalyticsTrade = (
   ...overrides,
 });
 
+export const createPerformanceAnalyticsTrades = (
+  trades: Array<Partial<PerformanceAnalyticsTrade>>,
+): PerformanceAnalyticsTrade[] =>
+  trades.map((trade) => createPerformanceAnalyticsTrade(trade));
+
 export const createPerformanceAnalyticsLogger = () => ({
   debug: jest.fn(),
   info: jest.fn(),
@@ -122,6 +127,24 @@ export const createPerformanceAnalyticsService = ({
     asPerformanceAnalyticsLogger(logger),
     errorHandler,
   );
+
+export const createPerformanceAnalyticsServiceWithHarness = ({
+  config,
+  journal,
+  logger,
+  errorHandler,
+}: {
+  config?: PerformanceAnalyticsConfig;
+  journal?: PerformanceAnalyticsMockJournal;
+  logger?: PerformanceAnalyticsMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+} = {}): PerformanceAnalytics =>
+  createPerformanceAnalyticsService({
+    config,
+    journal,
+    logger,
+    errorHandler,
+  });
 
 export const createPerformanceAnalyticsHarness = () => {
   const config = createPerformanceAnalyticsConfig();

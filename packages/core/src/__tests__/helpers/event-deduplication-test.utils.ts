@@ -50,6 +50,37 @@ export function createEventDeduplicationService(options: {
   );
 }
 
+export function createEventDeduplicationServiceWithHarness(options: {
+  cacheSize?: number;
+  cacheTtlMs?: number;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): EventDeduplicationService {
+  return createEventDeduplicationService(options);
+}
+
+export function createEventDeduplicationEvent(
+  overrides: Partial<{
+    type: string;
+    id: string;
+    time: number;
+  }> = {},
+): { type: string; id: string; time: number } {
+  return {
+    type: 'TP',
+    id: 'order-123',
+    time: Date.now(),
+    ...overrides,
+  };
+}
+
+export function createEventDeduplicationEvents(
+  events: Array<Partial<{ type: string; id: string; time: number }>>,
+): Array<{ type: string; id: string; time: number }> {
+  return events.map((event) => createEventDeduplicationEvent(event));
+}
+
 export function createEventDeduplicationHarness(): EventDeduplicationHarness {
   const logger = createEventDeduplicationLogger();
   const errorHandler = createEventDeduplicationErrorHandler(logger);

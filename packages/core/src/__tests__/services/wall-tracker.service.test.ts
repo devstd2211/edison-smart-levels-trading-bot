@@ -9,7 +9,8 @@ import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
   createWallTrackerConfig,
   createWallTrackerHarness,
-  createWallTrackerService,
+  createWallTrackerServiceWithHarness,
+  detectWallTrackerWalls,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('WallTrackerService', () => {
@@ -20,6 +21,13 @@ describe('WallTrackerService', () => {
   beforeEach(() => {
     ({ service, logger, config } = createWallTrackerHarness({ withErrorHandler: false }));
   });
+
+  const createService = (configOverrides?: Partial<WallTrackingConfig>) =>
+    createWallTrackerServiceWithHarness({
+      config: configOverrides ? createWallTrackerConfig(configOverrides) : config,
+      logger,
+      withErrorHandler: false,
+    });
 
   describe('detectWall', () => {
     it('should detect new wall', () => {
@@ -46,9 +54,11 @@ describe('WallTrackerService', () => {
     });
 
     it('should track multiple walls', () => {
-      service.detectWall(100, 50000, 'BID');
-      service.detectWall(101, 40000, 'ASK');
-      service.detectWall(102, 30000, 'BID');
+      detectWallTrackerWalls(service, [
+        { price: 100, size: 50000, side: 'BID' },
+        { price: 101, size: 40000, side: 'ASK' },
+        { price: 102, size: 30000, side: 'BID' },
+      ]);
 
       const walls = service.getActiveWalls();
       expect(walls.length).toBe(3);
@@ -56,11 +66,7 @@ describe('WallTrackerService', () => {
 
     it('should not detect walls when disabled', () => {
       config = createWallTrackerConfig({ enabled: false });
-      service = createWallTrackerService({
-        config,
-        logger,
-        withErrorHandler: false,
-      });
+      service = createService({ enabled: false });
 
       service.detectWall(100, 50000, 'BID');
       const walls = service.getActiveWalls();
@@ -123,19 +129,15 @@ describe('WallTrackerService', () => {
       const price = 100;
 
       // Initial wall
-      service.detectWall(price, 50000, 'BID');
-
-      // Refill 1
-      service.detectWall(price, 40000, 'BID'); // Size decreased
-      service.detectWall(price, 50000, 'BID'); // Refilled
-
-      // Refill 2
-      service.detectWall(price, 30000, 'BID');
-      service.detectWall(price, 50000, 'BID');
-
-      // Refill 3
-      service.detectWall(price, 20000, 'BID');
-      service.detectWall(price, 50000, 'BID');
+      detectWallTrackerWalls(service, [
+        { price, size: 50000, side: 'BID' },
+        { price, size: 40000, side: 'BID' },
+        { price, size: 50000, side: 'BID' },
+        { price, size: 30000, side: 'BID' },
+        { price, size: 50000, side: 'BID' },
+        { price, size: 20000, side: 'BID' },
+        { price, size: 50000, side: 'BID' },
+      ]);
 
       const walls = service.getActiveWalls();
       expect(walls.length).toBe(1);
@@ -145,9 +147,11 @@ describe('WallTrackerService', () => {
     it('should not detect iceberg with <3 refills', () => {
       const price = 100;
 
-      service.detectWall(price, 50000, 'BID');
-      service.detectWall(price, 40000, 'BID');
-      service.detectWall(price, 50000, 'BID'); // Only 1 refill
+      detectWallTrackerWalls(service, [
+        { price, size: 50000, side: 'BID' },
+        { price, size: 40000, side: 'BID' },
+        { price, size: 50000, side: 'BID' },
+      ]);
 
       const walls = service.getActiveWalls();
       expect(walls[0].isIceberg).toBe(false);
@@ -156,9 +160,11 @@ describe('WallTrackerService', () => {
 
   describe('multiple walls tracking', () => {
     it('should track multiple walls at different prices', () => {
-      service.detectWall(100, 50000, 'BID');
-      service.detectWall(100.3, 40000, 'BID'); // Close to first wall
-      service.detectWall(100.4, 30000, 'BID'); // Close to first wall
+      detectWallTrackerWalls(service, [
+        { price: 100, size: 50000, side: 'BID' },
+        { price: 100.3, size: 40000, side: 'BID' },
+        { price: 100.4, size: 30000, side: 'BID' },
+      ]);
 
       const walls = service.getActiveWalls();
       expect(walls.length).toBe(3);
@@ -166,18 +172,22 @@ describe('WallTrackerService', () => {
     });
 
     it('should track walls far apart', () => {
-      service.detectWall(100, 50000, 'BID');
-      service.detectWall(102, 40000, 'BID'); // 2% away
+      detectWallTrackerWalls(service, [
+        { price: 100, size: 50000, side: 'BID' },
+        { price: 102, size: 40000, side: 'BID' },
+      ]);
 
       const bidWalls = service.getActiveWalls().filter(w => w.side === 'BID');
       expect(bidWalls.length).toBe(2);
     });
 
     it('should separate BID and ASK walls', () => {
-      service.detectWall(100, 50000, 'BID');
-      service.detectWall(100.2, 40000, 'BID');
-      service.detectWall(101, 30000, 'ASK');
-      service.detectWall(101.2, 20000, 'ASK');
+      detectWallTrackerWalls(service, [
+        { price: 100, size: 50000, side: 'BID' },
+        { price: 100.2, size: 40000, side: 'BID' },
+        { price: 101, size: 30000, side: 'ASK' },
+        { price: 101.2, size: 20000, side: 'ASK' },
+      ]);
 
       const walls = service.getActiveWalls();
       const bidWalls = walls.filter(w => w.side === 'BID');
@@ -200,9 +210,11 @@ describe('WallTrackerService', () => {
     });
 
     it('should handle refills after absorption', () => {
-      service.detectWall(100, 50000, 'BID');
-      service.detectWall(100, 30000, 'BID'); // 20000 absorbed
-      service.detectWall(100, 50000, 'BID'); // Refilled
+      detectWallTrackerWalls(service, [
+        { price: 100, size: 50000, side: 'BID' },
+        { price: 100, size: 30000, side: 'BID' },
+        { price: 100, size: 50000, side: 'BID' },
+      ]);
 
       const walls = service.getActiveWalls();
       expect(walls[0].absorbedVolume).toBeGreaterThan(0);
@@ -212,8 +224,10 @@ describe('WallTrackerService', () => {
 
   describe('wall history', () => {
     it('should track wall events in history', () => {
-      service.detectWall(100, 50000, 'BID');
-      service.detectWall(100, 60000, 'BID'); // Updated
+      detectWallTrackerWalls(service, [
+        { price: 100, size: 50000, side: 'BID' },
+        { price: 100, size: 60000, side: 'BID' },
+      ]);
       service.removeWall(100, 'BID');
 
       const history = service.getHistory();
@@ -228,11 +242,7 @@ describe('WallTrackerService', () => {
 
     it('should limit history size', () => {
       config = createWallTrackerConfig({ trackHistoryCount: 10 });
-      service = createWallTrackerService({
-        config,
-        logger,
-        withErrorHandler: false,
-      });
+      service = createService({ trackHistoryCount: 10 });
 
       // Generate 20 events
       for (let i = 0; i < 20; i++) {

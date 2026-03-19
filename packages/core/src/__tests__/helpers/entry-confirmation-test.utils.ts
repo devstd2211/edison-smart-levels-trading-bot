@@ -92,3 +92,43 @@ export function createPendingEntryInput(
     ...overrides,
   };
 }
+
+export function createLongPendingEntryInput(
+  overrides: Partial<{
+    symbol: string;
+    keyLevel: number;
+    detectedAt: number;
+    signalData: Record<string, unknown>;
+  }> = {},
+) {
+  return createPendingEntryInput({
+    direction: SignalDirection.LONG,
+    ...overrides,
+  });
+}
+
+export function createShortPendingEntryInput(
+  overrides: Partial<{
+    symbol: string;
+    keyLevel: number;
+    detectedAt: number;
+    signalData: Record<string, unknown>;
+  }> = {},
+) {
+  return createPendingEntryInput({
+    symbol: 'BTCUSDT',
+    direction: SignalDirection.SHORT,
+    keyLevel: 50000,
+    ...overrides,
+  });
+}
+
+export function createEntryConfirmationManagerWithHarness(options: {
+  config?: EntryConfirmationConfig;
+  configOverrides?: Partial<EntryConfirmationConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): EntryConfirmationManager {
+  return createEntryConfirmationManager(options);
+}

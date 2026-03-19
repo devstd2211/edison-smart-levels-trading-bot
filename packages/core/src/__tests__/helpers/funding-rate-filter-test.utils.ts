@@ -36,6 +36,17 @@ export function createFundingRateData(
   };
 }
 
+export function createFundingRateFilterServiceWithHarness(options: {
+  config?: FundingRateFilterConfig;
+  configOverrides?: Partial<FundingRateFilterConfig>;
+  logger?: LoggerService;
+  getFundingRate?: jest.Mock<Promise<FundingRateData>>;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): FundingRateFilterService {
+  return createFundingRateFilterService(options);
+}
+
 export function createFundingRateFilterHarness(options: {
   configOverrides?: Partial<FundingRateFilterConfig>;
   logger?: LoggerService;

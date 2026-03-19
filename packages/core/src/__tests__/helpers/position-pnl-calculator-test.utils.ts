@@ -73,6 +73,29 @@ export function createPositionPnLCalculatorService(options: {
   );
 }
 
+export function createPositionPnLCalculatorServiceWithHarness(options: {
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  return createPositionPnLCalculatorService(options);
+}
+
+export function createMockPnlPositions(
+  positions: Array<{
+    side?: PositionSide;
+    entryPrice?: number;
+    overrides?: Partial<Position>;
+  }>,
+): Position[] {
+  return positions.map((position) =>
+    createMockPnlPosition(
+      position.side,
+      position.entryPrice,
+      position.overrides,
+    ),
+  );
+}
+
 export function createPositionPnLCalculatorHarness(options: {
   withErrorHandler?: boolean;
 } = {}) {

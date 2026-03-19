@@ -6,7 +6,11 @@
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { Position, PositionSide } from '../../types/legacy';
 import { PERCENT_MULTIPLIER } from '../../constants';
-import { createMockPnlPosition } from '../helpers/position-pnl-calculator-test.utils';
+import {
+  createMockPnlPosition,
+  createMockPnlPositions,
+  createPositionPnLCalculatorServiceWithHarness,
+} from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
 // MOCKS
@@ -25,7 +29,7 @@ describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
 
   beforeEach(() => {
-    service = new PositionPnLCalculatorService();
+    service = createPositionPnLCalculatorServiceWithHarness({ withErrorHandler: false });
   });
 
   // ==========================================================================
@@ -219,15 +223,13 @@ describe('PositionPnLCalculatorService', () => {
     it('should be symmetric for LONG and SHORT (opposite results)', () => {
       const entryPrice = 100;
       const currentPrice = 110;
+      const [longPosition, shortPosition] = createMockPnlPositions([
+        { side: PositionSide.LONG, entryPrice },
+        { side: PositionSide.SHORT, entryPrice },
+      ]);
 
-      const longPnl = service.calculatePnL(
-        createMockPosition(PositionSide.LONG, entryPrice),
-        currentPrice,
-      );
-      const shortPnl = service.calculatePnL(
-        createMockPosition(PositionSide.SHORT, entryPrice),
-        currentPrice,
-      );
+      const longPnl = service.calculatePnL(longPosition, currentPrice);
+      const shortPnl = service.calculatePnL(shortPosition, currentPrice);
 
       expect(longPnl).toBeCloseTo(-shortPnl, 10);
     });

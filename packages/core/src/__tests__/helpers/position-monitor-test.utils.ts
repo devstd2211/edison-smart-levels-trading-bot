@@ -172,6 +172,25 @@ export function createPositionMonitorService(
   );
 }
 
+export function createPositionMonitorServiceWithHarness(
+  dependencies: Omit<PositionMonitorDependencies, 'monitor'>,
+  options: {
+    riskConfig?: RiskManagementConfig;
+    errorHandler?: ErrorHandler;
+  } = {},
+): PositionMonitorService {
+  return createPositionMonitorService(dependencies, options);
+}
+
+export function createPositionMonitorRiskConfig(
+  overrides: Partial<RiskManagementConfig> = {},
+): RiskManagementConfig {
+  return {
+    ...defaultPositionMonitorRiskConfig,
+    ...overrides,
+  };
+}
+
 export function createPositionMonitorHarness(
   options: {
     riskConfig?: RiskManagementConfig;

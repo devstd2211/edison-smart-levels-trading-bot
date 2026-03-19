@@ -23,16 +23,19 @@ import type {
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../types/legacy';
 import {
+  addAdvancedOrderFlowTicks,
   asAdvancedOrderFlowConfig,
   asAdvancedOrderFlowOrderBook,
   asAdvancedOrderFlowTick,
+  createAdvancedOrderFlowConfig,
   createAdvancedOrderFlowErrorHandler,
   createAdvancedOrderFlowHarness,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
-  createAdvancedOrderFlowService,
+  createAdvancedOrderFlowOrderbookWithOverrides,
+  createAdvancedOrderFlowServiceWithHarness,
   createAdvancedOrderFlowTick,
-  createAdvancedOrderFlowValidConfig,
+  createAdvancedOrderFlowTickSequence,
 } from '../helpers/advanced-order-flow-test.utils';
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
@@ -51,7 +54,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
     createService = (options = {}) =>
-      createAdvancedOrderFlowService({
+      createAdvancedOrderFlowServiceWithHarness({
         config: options.config,
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler ?? errorHandler,
@@ -67,8 +70,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw on invalid tickWindowMs (<= 0)', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.tickWindowMs = 0;
+      const config = createAdvancedOrderFlowConfig({ tickWindowMs: 0 });
 
       expect(() => {
         createService({ config });
@@ -76,8 +78,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw on NaN tickWindowMs', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.tickWindowMs = NaN;
+      const config = createAdvancedOrderFlowConfig({ tickWindowMs: NaN });
 
       expect(() => {
         createService({ config });
@@ -85,8 +86,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw on invalid orderbookLevels (< 1)', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.orderbookLevels = 0;
+      const config = createAdvancedOrderFlowConfig({ orderbookLevels: 0 });
 
       expect(() => {
         createService({ config });
@@ -94,8 +94,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw on invalid imbalanceThreshold (outside 0-1)', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.imbalanceThreshold = 1.5;
+      const config = createAdvancedOrderFlowConfig({ imbalanceThreshold: 1.5 });
 
       expect(() => {
         createService({ config });
@@ -103,8 +102,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw on invalid spoofingThreshold (<= 0)', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.spoofingThreshold = 0;
+      const config = createAdvancedOrderFlowConfig({ spoofingThreshold: 0 });
 
       expect(() => {
         createService({ config });
@@ -211,8 +209,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should handle extreme volume values', () => {
-      service.addTick(createAdvancedOrderFlowTick('BUY', 50000, 1000000));
-      service.addTick(createAdvancedOrderFlowTick('SELL', 50010, 1000000));
+      addAdvancedOrderFlowTicks(service, [
+        { side: 'BUY', price: 50000, size: 1000000 },
+        { side: 'SELL', price: 50010, size: 1000000 },
+      ]);
 
       const result = service.analyze();
       expect(Number.isFinite(result.imbalance)).toBe(true);
@@ -232,8 +232,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should return neutral analysis on all errors', () => {
-      service.addTick(createAdvancedOrderFlowTick('BUY'));
-      service.addTick(createAdvancedOrderFlowTick('SELL'));
+      addAdvancedOrderFlowTicks(service, [
+        { side: 'BUY' },
+        { side: 'SELL' },
+      ]);
 
       const result = service.analyze();
       expect(result).not.toBeNull();
@@ -303,9 +305,11 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should analyze complete order flow workflow', () => {
-      service.addTick(createAdvancedOrderFlowTick('BUY', 50000, 1.0));
-      service.addTick(createAdvancedOrderFlowTick('BUY', 50005, 0.5));
-      service.addTick(createAdvancedOrderFlowTick('SELL', 50010, 0.3));
+      addAdvancedOrderFlowTicks(service, [
+        { side: 'BUY', price: 50000, size: 1.0 },
+        { side: 'BUY', price: 50005, size: 0.5 },
+        { side: 'SELL', price: 50010, size: 0.3 },
+      ]);
 
       service.processOrderbook(createAdvancedOrderFlowOrderbook());
 
@@ -317,12 +321,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should detect accumulation pattern (buy heavy)', () => {
-      for (let i = 0; i < 8; i++) {
-        service.addTick(createAdvancedOrderFlowTick('BUY', 50000, 1.0));
-      }
-      for (let i = 0; i < 2; i++) {
-        service.addTick(createAdvancedOrderFlowTick('SELL', 50010, 1.0));
-      }
+      addAdvancedOrderFlowTicks(service, [
+        ...Array.from({ length: 8 }, () => ({ side: 'BUY' as const, price: 50000, size: 1.0 })),
+        ...Array.from({ length: 2 }, () => ({ side: 'SELL' as const, price: 50010, size: 1.0 })),
+      ]);
 
       const pattern = service.getPattern();
       expect(pattern?.buyPressure).toBeGreaterThan(50);
@@ -330,12 +332,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should detect distribution pattern (sell heavy)', () => {
-      for (let i = 0; i < 2; i++) {
-        service.addTick(createAdvancedOrderFlowTick('BUY', 50000, 1.0));
-      }
-      for (let i = 0; i < 8; i++) {
-        service.addTick(createAdvancedOrderFlowTick('SELL', 50010, 1.0));
-      }
+      addAdvancedOrderFlowTicks(service, [
+        ...Array.from({ length: 2 }, () => ({ side: 'BUY' as const, price: 50000, size: 1.0 })),
+        ...Array.from({ length: 8 }, () => ({ side: 'SELL' as const, price: 50010, size: 1.0 })),
+      ]);
 
       const pattern = service.getPattern();
       expect(pattern?.sellPressure).toBeGreaterThan(50);
@@ -343,7 +343,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should detect spoofing signal on sudden orderbook change', () => {
-      service.processOrderbook({
+      service.processOrderbook(createAdvancedOrderFlowOrderbookWithOverrides({
         bids: [
           [50000, 1.0],
           [49990, 1.0],
@@ -352,9 +352,9 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
           [50010, 1.0],
           [50020, 1.0],
         ],
-      });
+      }));
 
-      service.processOrderbook({
+      service.processOrderbook(createAdvancedOrderFlowOrderbookWithOverrides({
         bids: [
           [50000, 10.0],
           [49990, 1.0],
@@ -363,7 +363,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
           [50010, 1.0],
           [50020, 1.0],
         ],
-      });
+      }));
 
       const spoofing = service.getSpoofing();
       expect(spoofing).toBeDefined();
@@ -371,12 +371,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should calculate momentum correctly', () => {
-      for (let i = 0; i < 7; i++) {
-        service.addTick(createAdvancedOrderFlowTick('BUY', 50000, 1.0));
-      }
-      for (let i = 0; i < 3; i++) {
-        service.addTick(createAdvancedOrderFlowTick('SELL', 50010, 1.0));
-      }
+      addAdvancedOrderFlowTicks(service, [
+        ...Array.from({ length: 7 }, () => ({ side: 'BUY' as const, price: 50000, size: 1.0 })),
+        ...Array.from({ length: 3 }, () => ({ side: 'SELL' as const, price: 50010, size: 1.0 })),
+      ]);
 
       const momentum = service.getMomentum();
       expect(momentum?.value).toBeGreaterThan(0);
@@ -384,8 +382,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should handle cascading failures gracefully', () => {
-      const badConfig = createAdvancedOrderFlowValidConfig();
-      badConfig.tickWindowMs = -1;
+      const badConfig = createAdvancedOrderFlowConfig({ tickWindowMs: -1 });
 
       expect(() => {
         createService({ config: badConfig });
@@ -504,19 +501,16 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
     it('should handle time window boundaries', () => {
       const now = Date.now();
-      const tickInWindow = createAdvancedOrderFlowTick('BUY', 50000, 1.0, now);
-      const tickOutOfWindow = createAdvancedOrderFlowTick(
-        'BUY',
-        50000,
-        1.0,
-        now - 10000,
-      );
+      const [tickInWindow, tickOutOfWindow] = createAdvancedOrderFlowTickSequence([
+        { side: 'BUY', price: 50000, size: 1.0, timestamp: now },
+        { side: 'BUY', price: 50000, size: 1.0, timestamp: now - 10000 },
+      ]);
 
       service.addTick(tickInWindow);
       service.addTick(tickOutOfWindow);
 
       const cleanup = createService({
-        config: { ...createAdvancedOrderFlowValidConfig(), tickWindowMs: 5000 },
+        config: createAdvancedOrderFlowConfig({ tickWindowMs: 5000 }),
         withErrorHandler: false,
       });
       cleanup.addTick(tickInWindow);
@@ -577,8 +571,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should respect feature flags (disable spoofing)', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.enableSpoofingDetection = false;
+      const config = createAdvancedOrderFlowConfig({ enableSpoofingDetection: false });
 
       service = createService({ config });
 
@@ -588,8 +581,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should respect feature flags (disable momentum)', () => {
-      const config = createAdvancedOrderFlowValidConfig();
-      config.enableMomentum = false;
+      const config = createAdvancedOrderFlowConfig({ enableMomentum: false });
 
       service = createService({ config });
 

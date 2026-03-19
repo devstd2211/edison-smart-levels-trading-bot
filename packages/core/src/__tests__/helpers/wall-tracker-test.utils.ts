@@ -53,6 +53,16 @@ export function detectWallTrackerWalls(
   });
 }
 
+export function createWallTrackerServiceWithHarness(options: {
+  config?: WallTrackingConfig;
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  return createWallTrackerService(options);
+}
+
 export function createWallTrackerHarness(options: {
   configOverrides?: Partial<WallTrackingConfig>;
   logger?: LoggerService;
