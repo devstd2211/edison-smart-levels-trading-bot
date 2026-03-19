@@ -28,6 +28,34 @@ export function createOrderExecutionDetectorExecutionData(
   };
 }
 
+export function createOrderExecutionDetectorExecutionBatch(
+  overridesList: Array<Partial<OrderExecutionData>>,
+): OrderExecutionData[] {
+  return overridesList.map((overrides, index) =>
+    createOrderExecutionDetectorExecutionData({
+      orderId: overrides.orderId ?? `test-order-${index + 1}`,
+      ...overrides,
+    }),
+  );
+}
+
+export function createOrderExecutionDetectorFailingLogger(
+  failures: Partial<Record<'debug' | 'info', string>> = {},
+): LoggerService {
+  return {
+    debug: jest.fn(() => {
+      if (failures.debug) {
+        throw new Error(failures.debug);
+      }
+    }),
+    info: jest.fn(() => {
+      if (failures.info) {
+        throw new Error(failures.info);
+      }
+    }),
+  } as unknown as LoggerService;
+}
+
 export function createOrderExecutionDetectorHarness(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

@@ -25,6 +25,7 @@ import {
   asLadderExitPrice,
   asLadderExitTakeProfits,
   createLadderExitHarness,
+  createLadderExitOrderHistory,
   createLadderExitOrder,
   createLadderExitPosition,
   createLadderExitService,
@@ -259,9 +260,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.08', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.08', orderType: 'Limit', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);
@@ -305,9 +306,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '99.8', 'Market', 'StopLoss', true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '99.8', orderType: 'Market', stopOrderType: 'StopLoss', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);
@@ -319,9 +320,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.12', 'Market', 'TrailingStop', true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.12', orderType: 'Market', stopOrderType: 'TrailingStop', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);
@@ -333,9 +334,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService();
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.25', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.25', orderType: 'Limit', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);
@@ -353,11 +354,11 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.08', 'Limit', undefined, true),
-        createLadderExitOrder('APEXUSDT', '100.15', 'Limit', undefined, true),
-        createLadderExitOrder('APEXUSDT', '100.25', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.08', orderType: 'Limit', reduceOnly: true },
+        { price: '100.15', orderType: 'Limit', reduceOnly: true },
+        { price: '100.25', orderType: 'Limit', reduceOnly: true },
+      ]);
 
       const result = await service.isCompleteLadderExecuted(
         position,
@@ -371,10 +372,10 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.08', 'Limit', undefined, true),
-        createLadderExitOrder('APEXUSDT', '100.15', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.08', orderType: 'Limit', reduceOnly: true },
+        { price: '100.15', orderType: 'Limit', reduceOnly: true },
+      ]);
 
       const result = await service.isCompleteLadderExecuted(
         position,
@@ -389,9 +390,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const position = createLadderExitPosition(PositionSide.LONG, 100);
       position.takeProfits = position.takeProfits?.slice(0, 2); // Only 2 TP levels
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.08', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.08', orderType: 'Limit', reduceOnly: true },
+      ]);
 
       const result = await service.isCompleteLadderExecuted(
         position,
@@ -405,11 +406,11 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.08', 'Limit', undefined, true),
-        createLadderExitOrder('APEXUSDT', '100.15', 'Limit', undefined, true),
-        createLadderExitOrder('APEXUSDT', '100.25', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.08', orderType: 'Limit', reduceOnly: true },
+        { price: '100.15', orderType: 'Limit', reduceOnly: true },
+        { price: '100.25', orderType: 'Limit', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.isCompleteLadderExecuted(position);
@@ -481,9 +482,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
       // Order with unparseable price
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', 'invalid_price', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: 'invalid_price', orderType: 'Limit', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);
@@ -508,9 +509,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       const service = createService({ errorHandler });
       const position = createLadderExitPosition(PositionSide.LONG, 100);
 
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.12', 'Market', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.12', orderType: 'Market', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);
@@ -537,9 +538,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
       expect(tpLevel).toBe(1);
 
       // Step 3: Analyze full execution
-      const mockOrders = [
-        createLadderExitOrder('APEXUSDT', '100.08', 'Limit', undefined, true),
-      ];
+      const mockOrders = createLadderExitOrderHistory([
+        { price: '100.08', orderType: 'Limit', reduceOnly: true },
+      ]);
       bybitService.getOrderHistory.mockResolvedValueOnce(mockOrders);
 
       const result = await service.analyzeExitExecution(position);

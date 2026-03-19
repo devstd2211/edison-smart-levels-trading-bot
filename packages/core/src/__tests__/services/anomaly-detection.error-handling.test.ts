@@ -22,6 +22,7 @@ import {
   createAnomalyDetectionService,
   createAnomalyDetectionServiceHarness,
   createAnomalyDetectionTrade,
+  seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
 } from '../helpers/anomaly-detection-test.utils';
@@ -266,10 +267,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   describe('Integration: E2E Scenarios', () => {
     it('should detect high volume anomaly', () => {
-      // Add normal volumes
-      for (let i = 0; i < 25; i++) {
-        seedVolumeHistory(service, [1000 + Math.random() * 100]);
-      }
+      seedAnomalyDetectionHistory(service, {
+        volumeValues: Array.from({ length: 25 }, () => 1000 + Math.random() * 100),
+      });
 
       // Add anomalous volume (10x normal)
       const result = service.detectVolumeAnomaly(10000);
@@ -281,10 +281,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should NOT detect anomaly with normal volume', () => {
-      // Add normal volumes
-      for (let i = 0; i < 25; i++) {
-        seedVolumeHistory(service, [1000 + Math.random() * 50]);
-      }
+      seedAnomalyDetectionHistory(service, {
+        volumeValues: Array.from({ length: 25 }, () => 1000 + Math.random() * 50),
+      });
 
       // Add another normal volume
       const result = service.detectVolumeAnomaly(1020);
@@ -293,10 +292,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should detect volatility spike', () => {
-      // Add normal volatility
-      for (let i = 0; i < 25; i++) {
-        seedVolatilityHistory(service, [1.0 + Math.random() * 0.1]);
-      }
+      seedAnomalyDetectionHistory(service, {
+        volatilityValues: Array.from({ length: 25 }, () => 1.0 + Math.random() * 0.1),
+      });
 
       // Add spike (5x normal)
       const result = service.detectVolatilitySpike(5.0);
@@ -307,10 +305,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should NOT detect spike with normal volatility', () => {
-      // Add normal volatility
-      for (let i = 0; i < 25; i++) {
-        seedVolatilityHistory(service, [1.0 + Math.random() * 0.05]);
-      }
+      seedAnomalyDetectionHistory(service, {
+        volatilityValues: Array.from({ length: 25 }, () => 1.0 + Math.random() * 0.05),
+      });
 
       // Add another normal value
       const result = service.detectVolatilitySpike(1.02);

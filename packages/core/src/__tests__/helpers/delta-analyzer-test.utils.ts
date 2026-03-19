@@ -30,6 +30,13 @@ export type DeltaAnalyzerMockLogger = ReturnType<typeof createDeltaAnalyzerMockL
 export const asDeltaAnalyzerLogger = (logger: DeltaAnalyzerMockLogger): LoggerService =>
   logger as unknown as LoggerService;
 
+export type DeltaAnalyzerHarness = {
+  service: DeltaAnalyzerService;
+  logger: DeltaAnalyzerMockLogger;
+  errorHandler: ErrorHandler;
+  config: DeltaConfig;
+};
+
 export const createDeltaAnalyzerErrorHandler = (
   logger: LoggerService = asDeltaAnalyzerLogger(createDeltaAnalyzerMockLogger()),
 ): ErrorHandler => new ErrorHandler(logger);
@@ -52,6 +59,17 @@ export const createDeltaAnalyzerTick = (
   side: 'BUY',
   ...overrides,
 });
+
+export const createDeltaAnalyzerTickBatch = (
+  count: number,
+  overrides: Partial<DeltaTick> = {},
+): DeltaTick[] =>
+  Array.from({ length: count }, (_, index) =>
+    createDeltaAnalyzerTick({
+      timestamp: (overrides.timestamp ?? Date.now()) + index,
+      ...overrides,
+    }),
+  );
 
 export const createDeltaAnalyzerSignal = (
   direction: SignalDirection = SignalDirection.LONG,
@@ -81,4 +99,29 @@ export const createDeltaAnalyzerService = (
     : createDeltaAnalyzerConfig();
 
   return new DeltaAnalyzerService(config as DeltaConfig, logger, options.errorHandler);
+};
+
+export const createDeltaAnalyzerHarness = (
+  options: {
+    config?: DeltaConfig;
+    configOverrides?: Partial<DeltaConfig>;
+    logger?: DeltaAnalyzerMockLogger;
+    errorHandler?: ErrorHandler;
+  } = {},
+): DeltaAnalyzerHarness => {
+  const logger = options.logger ?? createDeltaAnalyzerMockLogger();
+  const config = options.config ?? createDeltaAnalyzerConfig(options.configOverrides);
+  const errorHandler = options.errorHandler ?? createDeltaAnalyzerErrorHandler(asDeltaAnalyzerLogger(logger));
+  const service = createDeltaAnalyzerService({
+    config,
+    logger: asDeltaAnalyzerLogger(logger),
+    errorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    errorHandler,
+    config,
+  };
 };

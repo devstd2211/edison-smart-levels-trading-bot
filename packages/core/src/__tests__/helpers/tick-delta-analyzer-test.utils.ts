@@ -49,6 +49,18 @@ export function createTickDeltaAnalyzerConfig(
   };
 }
 
+export function createTickDeltaAnalyzerMomentumConfig(
+  overrides: Partial<TickDeltaAnalyzerConfig> = {},
+): TickDeltaAnalyzerConfig {
+  return createTickDeltaAnalyzerConfig({
+    minDeltaRatio: 1.5,
+    detectionWindow: 60_000,
+    minTickCount: 10,
+    maxConfidence: 100,
+    ...overrides,
+  });
+}
+
 export function createTickDeltaAnalyzerTick(
   overrides: Partial<Tick> = {},
 ): Tick {
@@ -59,6 +71,20 @@ export function createTickDeltaAnalyzerTick(
     timestamp: Date.now(),
     ...overrides,
   };
+}
+
+export function createTickDeltaAnalyzerTickBatch(
+  count: number,
+  overrides: Partial<Tick> = {},
+): Tick[] {
+  const baseTimestamp = overrides.timestamp ?? Date.now();
+
+  return Array.from({ length: count }, (_, index) =>
+    createTickDeltaAnalyzerTick({
+      timestamp: baseTimestamp + index,
+      ...overrides,
+    }),
+  );
 }
 
 export function createTickDeltaAnalyzerHarness(options: {

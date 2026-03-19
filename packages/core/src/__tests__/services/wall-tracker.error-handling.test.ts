@@ -13,13 +13,13 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { WallTrackerService } from '../../services/wall-tracker.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { WallTrackingError } from '../../errors/DomainErrors';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WallTrackingConfig, LoggerService } from '../../types/legacy';
 import {
+  createWallTrackerWall,
   createWallTrackerConfig,
   createWallTrackerHarness,
-  createWallTrackerLogger,
+  detectWallTrackerWalls,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
@@ -111,13 +111,13 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.5: Should handle wall with NaN in complex scenario', () => {
       // Arrange
-      const validPrice = 40000;
-      const validSize = 1000;
+      const bidWall = createWallTrackerWall();
+      const askWall = createWallTrackerWall({ price: 40100, side: 'ASK' });
 
       // Act
-      service.detectWall(validPrice, validSize, 'BID');
-      service.detectWall(NaN, validSize, 'ASK'); // Should SKIP
-      service.detectWall(40100, validSize, 'ASK');
+      service.detectWall(bidWall.price, bidWall.size, bidWall.side);
+      service.detectWall(NaN, bidWall.size, 'ASK'); // Should SKIP
+      service.detectWall(askWall.price, askWall.size, askWall.side);
 
       // Assert - only valid walls tracked
       const walls = service.getActiveWalls();
@@ -318,9 +318,11 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
       const validSize = 1000;
 
       // Create walls at similar prices (within 0.5% threshold)
-      service.detectWall(basePrice, validSize, 'BID');
-      service.detectWall(basePrice + 1, validSize, 'BID'); // Very close price
-      service.detectWall(basePrice + 2, validSize, 'BID');
+      detectWallTrackerWalls(service, [
+        { price: basePrice, size: validSize, side: 'BID' },
+        { price: basePrice + 1, size: validSize, side: 'BID' },
+        { price: basePrice + 2, size: validSize, side: 'BID' },
+      ]);
 
       // Act
       const clusters = service.detectClusters();
@@ -336,10 +338,12 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
       const askPrice = 40100;
       const validSize = 1000;
 
-      service.detectWall(bidPrice, validSize, 'BID');
-      service.detectWall(bidPrice + 1, validSize, 'BID');
-      service.detectWall(askPrice, validSize, 'ASK');
-      service.detectWall(askPrice + 1, validSize, 'ASK');
+      detectWallTrackerWalls(service, [
+        { price: bidPrice, size: validSize, side: 'BID' },
+        { price: bidPrice + 1, size: validSize, side: 'BID' },
+        { price: askPrice, size: validSize, side: 'ASK' },
+        { price: askPrice + 1, size: validSize, side: 'ASK' },
+      ]);
 
       // Act
       const clusters = service.detectClusters();
@@ -427,8 +431,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
       const validSize = 1000;
 
       // Create walls
-      serviceWithoutErrorHandler.detectWall(basePrice, validSize, 'BID');
-      serviceWithoutErrorHandler.detectWall(basePrice + 1, validSize, 'BID');
+      detectWallTrackerWalls(serviceWithoutErrorHandler, [
+        { price: basePrice, size: validSize, side: 'BID' },
+        { price: basePrice + 1, size: validSize, side: 'BID' },
+      ]);
 
       // Act
       const clusters = serviceWithoutErrorHandler.detectClusters();
@@ -447,10 +453,13 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
       const validSize = 1000;
 
       // Act - simulate rapid orderbook updates
-      for (let i = 0; i < 10; i++) {
-        service.detectWall(basePrice + i, validSize, 'BID');
-        service.detectWall(basePrice + i + 0.5, validSize * (i + 1), 'BID');
-      }
+      detectWallTrackerWalls(
+        service,
+        Array.from({ length: 10 }, (_, i) => ([
+          { price: basePrice + i, size: validSize, side: 'BID' as const },
+          { price: basePrice + i + 0.5, size: validSize * (i + 1), side: 'BID' as const },
+        ])).flat(),
+      );
 
       // Assert
       const walls = service.getActiveWalls();

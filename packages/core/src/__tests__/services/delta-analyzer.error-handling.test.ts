@@ -11,8 +11,7 @@ import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types/leg
 import {
   asDeltaAnalyzerLogger,
   createDeltaAnalyzerConfig,
-  createDeltaAnalyzerErrorHandler,
-  createDeltaAnalyzerMockLogger,
+  createDeltaAnalyzerHarness,
   createDeltaAnalyzerService,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
@@ -29,8 +28,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let mockLogger: DeltaAnalyzerMockLogger;
 
   beforeEach(() => {
-    mockLogger = createDeltaAnalyzerMockLogger();
-    errorHandler = createDeltaAnalyzerErrorHandler();
+    ({ logger: mockLogger, errorHandler } = createDeltaAnalyzerHarness());
   });
 
   // ==========================================================================
@@ -89,11 +87,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
-      service = createDeltaAnalyzerService({
-        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
-        logger: asDeltaAnalyzerLogger(mockLogger),
+      ({ service } = createDeltaAnalyzerHarness({
+        logger: mockLogger,
         errorHandler,
-      });
+        configOverrides: { minDeltaThreshold: 100 },
+      }));
     });
 
     it('should throw on null tick', () => {
@@ -136,11 +134,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Signal Validation', () => {
     beforeEach(() => {
-      service = createDeltaAnalyzerService({
-        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
-        logger: asDeltaAnalyzerLogger(mockLogger),
+      ({ service } = createDeltaAnalyzerHarness({
+        logger: mockLogger,
         errorHandler,
-      });
+        configOverrides: { minDeltaThreshold: 100 },
+      }));
     });
 
     it('should throw on null signal', () => {
@@ -165,11 +163,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      service = createDeltaAnalyzerService({
-        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
-        logger: asDeltaAnalyzerLogger(mockLogger),
+      ({ service } = createDeltaAnalyzerHarness({
+        logger: mockLogger,
         errorHandler,
-      });
+        configOverrides: { minDeltaThreshold: 100 },
+      }));
     });
 
     it('should throw on Infinity quantity (validation prevents accumulation)', () => {
@@ -208,11 +206,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('SKIP: Logger Errors', () => {
     beforeEach(() => {
-      service = createDeltaAnalyzerService({
-        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
-        logger: asDeltaAnalyzerLogger(mockLogger),
+      ({ service } = createDeltaAnalyzerHarness({
+        logger: mockLogger,
         errorHandler,
-      });
+        configOverrides: { minDeltaThreshold: 100 },
+      }));
     });
 
     it('should skip logger errors during initialization', () => {
@@ -249,11 +247,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('Integration: Complex Scenarios', () => {
     beforeEach(() => {
-      service = createDeltaAnalyzerService({
-        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
-        logger: asDeltaAnalyzerLogger(mockLogger),
+      ({ service } = createDeltaAnalyzerHarness({
+        logger: mockLogger,
         errorHandler,
-      });
+        configOverrides: { minDeltaThreshold: 100 },
+      }));
     });
 
     it('should handle multiple ticks and analyze correctly', () => {
@@ -327,11 +325,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      service = createDeltaAnalyzerService({
-        config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
-        logger: asDeltaAnalyzerLogger(mockLogger),
+      ({ service } = createDeltaAnalyzerHarness({
+        logger: mockLogger,
         errorHandler,
-      });
+        configOverrides: { minDeltaThreshold: 100 },
+      }));
     });
 
     it('should handle zero quantity ticks', () => {

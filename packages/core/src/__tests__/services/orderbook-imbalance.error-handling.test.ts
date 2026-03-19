@@ -35,7 +35,9 @@ import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createOrderbookImbalanceConfig,
+  createOrderbookImbalanceFailingLogger,
   createOrderbookImbalanceHarness,
+  createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -59,11 +61,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('THROW - Config Validation', () => {
     it('should throw on invalid levels (< 1)', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 0, // Invalid: < 1
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
+        levels: 0,
+      });
 
       expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.levels must be >= 1',
@@ -71,11 +71,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should throw on negative minImbalancePercent', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: -10, // Invalid: negative
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
+        minImbalancePercent: -10,
+      });
 
       expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
@@ -83,11 +81,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should throw on minImbalancePercent > 100', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 150, // Invalid: > 100
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
+        minImbalancePercent: 150,
+      });
 
       expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
@@ -109,55 +105,37 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('THROW - Input Validation', () => {
     it('should throw on null orderbook', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       expect(() => service.analyze(asOrderbook(null))).toThrow('orderbook is required');
     });
 
     it('should throw on undefined orderbook', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       expect(() => service.analyze(asOrderbook(undefined))).toThrow('orderbook is required');
     });
 
     it('should throw on non-array bids', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
+      const orderbook = createOrderbookImbalanceOrderbook({
         bids: 'not-an-array' as unknown as [number, number][],
-        asks: [[50010, 10] as [number, number]],
-      };
+      });
 
       expect(() => service.analyze(orderbook)).toThrow('bids and asks must be arrays');
     });
 
     it('should throw on non-array asks', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
-        bids: [[50000, 10] as [number, number]],
+      const orderbook = createOrderbookImbalanceOrderbook({
         asks: 'not-an-array' as unknown as [number, number][],
-      };
+      });
 
       expect(() => service.analyze(orderbook)).toThrow('bids and asks must be arrays');
     });
@@ -169,17 +147,12 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('GRACEFUL_DEGRADE - Calculation Failures', () => {
     it('should return neutral analysis on NaN bid quantity', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
-        bids: [[50000, NaN] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, NaN]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -192,17 +165,12 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should return neutral analysis on Infinity ask quantity', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
-        bids: [[50000, 10] as [number, number]],
-        asks: [[50010, Infinity] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        asks: [[50010, Infinity]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -213,17 +181,12 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should return neutral analysis on negative infinity', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
-        bids: [[50000, -Infinity] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, -Infinity]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -234,20 +197,15 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should handle mixed valid and invalid quantities', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
+      const orderbook = createOrderbookImbalanceOrderbook({
         bids: [
-          [50000, 10] as [number, number],
-          [49990, NaN] as [number, number], // Invalid
+          [50000, 10],
+          [49990, NaN],
         ],
-        asks: [[50010, 10] as [number, number]],
-      };
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -256,17 +214,13 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should handle calculation overflow gracefully', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
-        bids: [[50000, Number.MAX_VALUE] as [number, number]],
-        asks: [[50010, Number.MAX_VALUE] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, Number.MAX_VALUE]],
+        asks: [[50010, Number.MAX_VALUE]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -281,18 +235,13 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('SKIP - Logging Failures', () => {
     it('should continue despite logger.info failure in constructor', () => {
-      const failingLogger = {
-        ...logger,
+      const failingLogger = createOrderbookImbalanceFailingLogger(logger, {
         info: jest.fn(() => {
           throw new Error('Logger info failed');
         }),
-      };
+      });
 
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(
@@ -301,25 +250,19 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should continue despite logger.warn failure in analyze()', () => {
-      const failingLogger = {
-        ...logger,
+      const failingLogger = createOrderbookImbalanceFailingLogger(logger, {
         warn: jest.fn(() => {
           throw new Error('Logger warn failed');
         }),
         debug: jest.fn(),
-      };
+      });
 
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler });
 
-      const orderbook = {
-        bids: [[50000, NaN] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, NaN]],
+      });
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(() => service.analyze(orderbook)).not.toThrow();
@@ -329,17 +272,10 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should handle null logger gracefully', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger: asLogger(null), errorHandler });
 
-      const orderbook = {
-        bids: [[50000, 10] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook();
 
       // Should not throw even with null logger
       expect(() => service.analyze(orderbook)).not.toThrow();
@@ -352,24 +288,20 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Integration - Cascading Failures', () => {
     it('should handle multiple invalid quantities gracefully', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
+      const orderbook = createOrderbookImbalanceOrderbook({
         bids: [
-          [50000, 10] as [number, number],
-          [49990, NaN] as [number, number],
-          [49980, Infinity] as [number, number],
+          [50000, 10],
+          [49990, NaN],
+          [49980, Infinity],
         ],
         asks: [
-          [50010, 5] as [number, number],
-          [50020, -Infinity] as [number, number],
+          [50010, 5],
+          [50020, -Infinity],
         ],
-      };
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -380,26 +312,20 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should recover after calculation failure', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       // First analysis with failure
-      const failOrderbook = {
-        bids: [[50000, NaN] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const failOrderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, NaN]],
+      });
       const analysis1 = service.analyze(failOrderbook);
       expect(analysis1.direction).toBe('NEUTRAL');
 
       // Second analysis should work fine (recovery)
-      const successOrderbook = {
-        bids: [[50000, 100] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const successOrderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 100]],
+      });
       const analysis2 = service.analyze(successOrderbook);
       expect(analysis2.direction).toBe('BID');
       expect(analysis2.bidVolume).toBe(100);
@@ -407,11 +333,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should handle service state consistency across failures', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
       // Verify config is preserved after error
@@ -419,10 +341,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       expect(service.isEnabled()).toBe(true);
 
       // Error should not affect service state
-      const failOrderbook = {
-        bids: [[50000, NaN] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const failOrderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, NaN]],
+      });
       service.analyze(failOrderbook);
 
       // Config should still be the same
@@ -437,19 +358,14 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (optional DI)', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
 
       // Constructor without errorHandler
       const service = createOrderbookImbalanceService({ config, logger, withErrorHandler: false });
 
-      const orderbook = {
-        bids: [[50000, 100] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 100]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -459,11 +375,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should throw config validation errors even without ErrorHandler', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 150, // Invalid
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
+        minImbalancePercent: 150,
+      });
 
       // Should throw even without errorHandler
       expect(() => createOrderbookImbalanceService({ config, logger, withErrorHandler: false })).toThrow(
@@ -478,23 +392,19 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Edge Cases', () => {
     it('should handle all-NaN orderbook', () => {
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler });
 
-      const orderbook = {
+      const orderbook = createOrderbookImbalanceOrderbook({
         bids: [
-          [50000, NaN] as [number, number],
-          [49990, NaN] as [number, number],
+          [50000, NaN],
+          [49990, NaN],
         ],
         asks: [
-          [50010, NaN] as [number, number],
-          [50020, NaN] as [number, number],
+          [50010, NaN],
+          [50020, NaN],
         ],
-      };
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -511,17 +421,12 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         executeAsync: jest.fn(),
       } as unknown as ErrorHandler;
 
-      const config: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
-        levels: 10,
-      };
+      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler: failingErrorHandler });
 
-      const orderbook = {
-        bids: [[50000, NaN] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, NaN]],
+      });
 
       // Should not throw even if ErrorHandler.handle throws
       expect(() => service.analyze(orderbook)).not.toThrow();
@@ -529,19 +434,15 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
     it('should validate level parameter boundaries', () => {
       // Test level = 1 (minimum valid)
-      const config1: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
+      const config1: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
         levels: 1,
-      };
+      });
       expect(() => createOrderbookImbalanceService({ config: config1, logger, errorHandler })).not.toThrow();
 
       // Test large levels value
-      const config2: OrderbookImbalanceConfig = {
-        enabled: true,
-        minImbalancePercent: 30,
+      const config2: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
         levels: 1000,
-      };
+      });
       expect(() => createOrderbookImbalanceService({ config: config2, logger, errorHandler })).not.toThrow();
     });
   });

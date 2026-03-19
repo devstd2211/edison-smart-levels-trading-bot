@@ -20,6 +20,8 @@ import {
   createMicroWallDetectorConfig,
   createMicroWallDetectorHarness,
   createMicroWallDetectorService,
+  createMicroWall,
+  createMicroWallFailingLogger,
   createMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
 
@@ -188,30 +190,14 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should throw on NaN currentPrice', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: false,
-      };
+      const wall = createMicroWall();
       expect(() => {
         detector.isWallBroken(wall, NaN);
       }).toThrow('currentPrice must be a finite number');
     });
 
     it('should throw on Infinity currentPrice', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: false,
-      };
+      const wall = createMicroWall();
       expect(() => {
         detector.isWallBroken(wall, Infinity);
       }).toThrow('currentPrice must be a finite number');
@@ -267,15 +253,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should return safe default (0) on confidence calculation failure', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: Infinity, // Invalid
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: false,
-      };
+      const wall = createMicroWall({ percentOfTotal: Infinity });
 
       // Should throw on THROW validation (invalid numeric values)
       expect(() => {
@@ -284,15 +262,12 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should handle wall with NaN percentOfTotal in confidence calculation', () => {
-      const wall = {
-        side: 'ASK' as const,
+      const wall = createMicroWall({
+        side: 'ASK',
         price: 1.001,
         size: 1000,
-        percentOfTotal: NaN, // Invalid
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: false,
-      };
+        percentOfTotal: NaN,
+      });
 
       expect(() => {
         detector.calculateWallConfidence(wall);
@@ -306,14 +281,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   describe('SKIP: Logging Failures (safeLog)', () => {
     it('should not throw on logger.info failure', () => {
-      const badLogger = {
-        info: jest.fn(() => {
-          throw new Error('Logger error');
-        }),
-        debug: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-      };
+      const badLogger = createMicroWallFailingLogger({ info: 'Logger error' });
 
       expect(() => {
         createMicroWallDetectorService({
@@ -325,14 +293,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should not throw on logger.debug failure during detection', () => {
-      const badLogger = {
-        info: jest.fn(),
-        debug: jest.fn(() => {
-          throw new Error('Logger error');
-        }),
-        warn: jest.fn(),
-        error: jest.fn(),
-      };
+      const badLogger = createMicroWallFailingLogger({ debug: 'Logger error' });
 
       const detector = createMicroWallDetectorService({
         config: createConfig(),
@@ -348,14 +309,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should not throw on logger failure during cleanup', () => {
-      const badLogger = {
-        info: jest.fn(),
-        debug: jest.fn(() => {
-          throw new Error('Logger error');
-        }),
-        warn: jest.fn(),
-        error: jest.fn(),
-      };
+      const badLogger = createMicroWallFailingLogger({ debug: 'Logger error' });
 
       const detector = createMicroWallDetectorService({
         config: createConfig(),
@@ -401,15 +355,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     it('should handle wall breaking with invalid price', () => {
       const detector = createMicroWallDetectorService({ config: createConfig(), logger, errorHandler });
 
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 2000,
-        broken: false,
-      };
+      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
 
       // Valid price should work
       expect(() => {
@@ -522,14 +468,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     it('should accept and use ErrorHandler from constructor', () => {
       const handleSpy = jest.spyOn(errorHandler, 'handle');
 
-      const badLogger = {
-        info: jest.fn(() => {
-          throw new Error('Logger error');
-        }),
-        debug: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-      };
+      const badLogger = createMicroWallFailingLogger({ info: 'Logger error' });
 
       createMicroWallDetectorService({
         config: createConfig(),

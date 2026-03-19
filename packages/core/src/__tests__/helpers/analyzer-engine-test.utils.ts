@@ -77,6 +77,53 @@ export function createAnalyzerEngineMockAnalyzer(
   };
 }
 
+export function createAnalyzerEngineAnalyzerEntry(
+  name: string,
+  direction: 'LONG' | 'SHORT' | 'HOLD' = 'LONG',
+  options: {
+    isReady?: boolean;
+    throwError?: unknown;
+    minCandlesRequired?: number;
+    weight?: number;
+    priority?: number;
+    delayMs?: number;
+  } = {},
+): [string, { instance: IAnalyzer; weight: number; priority: number }] {
+  const analyzer = createAnalyzerEngineMockAnalyzer(name, direction, options);
+
+  return [
+    name,
+    {
+      instance: analyzer,
+      weight: options.weight ?? 0.5,
+      priority: options.priority ?? 5,
+    },
+  ];
+}
+
+export function createAnalyzerEngineAnalyzers(
+  entries: Array<
+  | [string, { instance: IAnalyzer; weight: number; priority: number }]
+  | {
+    name: string;
+    direction?: 'LONG' | 'SHORT' | 'HOLD';
+    throwError?: unknown;
+    isReady?: boolean;
+    minCandlesRequired?: number;
+    weight?: number;
+    priority?: number;
+  }
+  >,
+): Map<string, { instance: IAnalyzer; weight: number; priority: number }> {
+  return new Map(
+    entries.map((entry) =>
+      Array.isArray(entry)
+        ? entry
+        : createAnalyzerEngineAnalyzerEntry(entry.name, entry.direction, entry),
+    ),
+  );
+}
+
 export function createAnalyzerEngineMockRegistry(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
 ): AnalyzerRegistryService {

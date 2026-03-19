@@ -8,6 +8,7 @@ import { LoggerService, ExitType, PositionSide, Position, BybitOrder } from '../
 import {
   createExitTypeDetectorHarness,
   createExitTypeDetectorOrder,
+  createExitTypeDetectorOrderHistory,
   createExitTypeDetectorPosition,
   takeProfitExitTypes,
 } from '../helpers/exit-type-detector-test.utils';
@@ -139,18 +140,18 @@ describe('ExitTypeDetectorService', () => {
     it('should use most recent filled order', () => {
       const position = createMockPosition();
       const now = Date.now();
-      const orderHistory: BybitOrder[] = [
-        createMockOrder({
+      const orderHistory: BybitOrder[] = createExitTypeDetectorOrderHistory([
+        {
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
           updatedTime: now,
-        }),
-        createMockOrder({
+        },
+        {
           orderStatus: 'Filled',
           stopOrderType: 'TrailingStop',
           updatedTime: now - 1000, // Older
-        }),
-      ];
+        },
+      ]);
 
       const exitType = service.determineExitTypeFromHistory(orderHistory, position);
 
@@ -159,20 +160,20 @@ describe('ExitTypeDetectorService', () => {
 
     it('should filter by symbol', () => {
       const position = createMockPosition();
-      const orderHistory: BybitOrder[] = [
-        createMockOrder({
+      const orderHistory: BybitOrder[] = createExitTypeDetectorOrderHistory([
+        {
           symbol: 'OTHERUSDT', // Different symbol
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
           updatedTime: Date.now(),
-        }),
-        createMockOrder({
+        },
+        {
           symbol: 'APEXUSDT',
           orderStatus: 'Filled',
           stopOrderType: 'TrailingStop',
           updatedTime: Date.now() - 1000,
-        }),
-      ];
+        },
+      ]);
 
       const exitType = service.determineExitTypeFromHistory(orderHistory, position);
 
@@ -348,22 +349,20 @@ describe('ExitTypeDetectorService', () => {
     it('should handle multiple exit orders in history', () => {
       const position = createMockPosition();
       const now = Date.now();
-      const orderHistory: BybitOrder[] = [
-        // Recent exit (SL)
-        createMockOrder({
+      const orderHistory: BybitOrder[] = createExitTypeDetectorOrderHistory([
+        {
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
           updatedTime: now,
-        }),
-        // Earlier exit (TP1)
-        createMockOrder({
+        },
+        {
           orderStatus: 'Filled',
           orderType: 'Limit',
           reduceOnly: true,
           price: '101.0',
           updatedTime: now - 100000,
-        }),
-      ];
+        },
+      ]);
 
       const exitType = service.determineExitTypeFromHistory(orderHistory, position);
 

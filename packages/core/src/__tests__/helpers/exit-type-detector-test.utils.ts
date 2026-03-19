@@ -72,6 +72,15 @@ export function createExitTypeDetectorPosition(
   };
 }
 
+export function createExitTypeDetectorScenarioPosition(
+  overrides: Partial<Position> = {},
+): Position {
+  return {
+    ...createExitTypeDetectorPosition(overrides.side ?? PositionSide.LONG),
+    ...overrides,
+  };
+}
+
 export function createExitTypeDetectorOrder(
   overrides?: Partial<BybitOrder>,
 ): BybitOrder {
@@ -89,6 +98,17 @@ export function createExitTypeDetectorOrder(
     updatedTime: Date.now(),
     ...overrides,
   } as BybitOrder;
+}
+
+export function createExitTypeDetectorOrderHistory(
+  overridesList: Array<Partial<BybitOrder>>,
+): BybitOrder[] {
+  return overridesList.map((overrides, index) =>
+    createExitTypeDetectorOrder({
+      orderId: overrides.orderId ?? `order-${index + 1}`,
+      ...overrides,
+    }),
+  );
 }
 
 export const asExitTypeDetectorPosition = (value: unknown): Position => value as Position;

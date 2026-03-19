@@ -18,6 +18,41 @@ export function createWallTrackerConfig(
   };
 }
 
+export function createWallTrackerWall(options: {
+  price?: number;
+  size?: number;
+  side?: 'BID' | 'ASK';
+} = {}): { price: number; size: number; side: 'BID' | 'ASK' } {
+  return {
+    price: options.price ?? 40000,
+    size: options.size ?? 1000,
+    side: options.side ?? 'BID',
+  };
+}
+
+export function createWallTrackerWallSequence(
+  entries: Array<{
+    price?: number;
+    size?: number;
+    side?: 'BID' | 'ASK';
+  }>,
+): Array<{ price: number; size: number; side: 'BID' | 'ASK' }> {
+  return entries.map((entry) => createWallTrackerWall(entry));
+}
+
+export function detectWallTrackerWalls(
+  service: WallTrackerService,
+  entries: Array<{
+    price?: number;
+    size?: number;
+    side?: 'BID' | 'ASK';
+  }>,
+): void {
+  createWallTrackerWallSequence(entries).forEach((wall) => {
+    service.detectWall(wall.price, wall.size, wall.side);
+  });
+}
+
 export function createWallTrackerHarness(options: {
   configOverrides?: Partial<WallTrackingConfig>;
   logger?: LoggerService;

@@ -2,9 +2,10 @@ import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
 import { DeltaConfig, LoggerService, Signal, SignalDirection } from '../../types/legacy';
 import {
   createDeltaAnalyzerConfig,
-  createDeltaAnalyzerLogger,
+  createDeltaAnalyzerHarness,
   createDeltaAnalyzerService,
   createDeltaAnalyzerSignal,
+  createDeltaAnalyzerTickBatch,
   createDeltaAnalyzerTick,
 } from '../helpers/delta-analyzer-test.utils';
 
@@ -14,9 +15,10 @@ describe('DeltaAnalyzerService', () => {
   let config: DeltaConfig;
 
   beforeEach(() => {
-    logger = createDeltaAnalyzerLogger();
-    config = createDeltaAnalyzerConfig();
-    service = createDeltaAnalyzerService({ config, logger });
+    const harness = createDeltaAnalyzerHarness();
+    service = harness.service;
+    logger = harness.logger as unknown as LoggerService;
+    config = harness.config;
   });
 
   describe('initialization', () => {
@@ -328,8 +330,14 @@ describe('DeltaAnalyzerService', () => {
     it('should handle all BUY ticks', () => {
       const now = Date.now();
 
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 1000 }));
+      createDeltaAnalyzerTickBatch(2, { side: 'BUY', timestamp: now }).forEach((tick, index) => {
+        service.addTick({
+          ...tick,
+          quantity: index === 0 ? 500 : 1000,
+          price: index === 0 ? tick.price : 50010,
+          timestamp: now + index * 1000,
+        });
+      });
 
       const analysis = service.analyze();
       expect(analysis.buyVolume).toBe(1500);
@@ -342,8 +350,14 @@ describe('DeltaAnalyzerService', () => {
     it('should handle all SELL ticks', () => {
       const now = Date.now();
 
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 800, side: 'SELL' }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 49990, quantity: 700, side: 'SELL' }));
+      createDeltaAnalyzerTickBatch(2, { side: 'SELL', timestamp: now }).forEach((tick, index) => {
+        service.addTick({
+          ...tick,
+          quantity: index === 0 ? 800 : 700,
+          price: index === 0 ? tick.price : 49990,
+          timestamp: now + index * 1000,
+        });
+      });
 
       const analysis = service.analyze();
       expect(analysis.buyVolume).toBe(0);

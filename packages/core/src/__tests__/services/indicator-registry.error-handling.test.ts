@@ -22,6 +22,7 @@ import {
   createIndicatorRegistryHarness,
   createIndicatorRegistryMetadata,
   createIndicatorRegistryMockLogger,
+  createIndicatorRegistryRegistrations,
   createIndicatorRegistryService,
   type IndicatorRegistryMockLogger,
 } from '../helpers/indicator-registry-test.utils';
@@ -111,8 +112,12 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
   describe('GRACEFUL_DEGRADE: Unregistered Indicators & Query Failures', () => {
     beforeEach(() => {
-      registry.register(IndicatorType.EMA, createIndicatorRegistryMetadata('EMA'));
-      registry.register(IndicatorType.RSI, createIndicatorRegistryMetadata('RSI'));
+      createIndicatorRegistryRegistrations([
+        { type: IndicatorType.EMA, name: 'EMA' },
+        { type: IndicatorType.RSI, name: 'RSI' },
+      ]).forEach((metadata) => {
+        registry.register(metadata.type, metadata);
+      });
     });
 
     it('should return null for unregistered indicator metadata', () => {
@@ -239,34 +244,25 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
   describe('Integration: End-to-End Scenarios', () => {
     it('should register multiple indicators and retrieve them', () => {
-      const indicators = [
-        {
-          type: IndicatorType.EMA,
-          metadata: createIndicatorRegistryMetadata('EMA'),
-        },
-        {
-          type: IndicatorType.RSI,
-          metadata: createIndicatorRegistryMetadata('RSI'),
-        },
-        {
-          type: IndicatorType.ATR,
-          metadata: createIndicatorRegistryMetadata('ATR'),
-        },
-      ];
+      const indicators = createIndicatorRegistryRegistrations([
+        { type: IndicatorType.EMA, name: 'EMA' },
+        { type: IndicatorType.RSI, name: 'RSI' },
+        { type: IndicatorType.ATR, name: 'ATR' },
+      ]);
 
       // Register all
-      indicators.forEach(ind => {
-        registry.register(ind.type, { ...ind.metadata, type: ind.type });
+      indicators.forEach((metadata) => {
+        registry.register(metadata.type, metadata);
       });
 
       // Verify all are registered
       expect(registry.getCount()).toBe(3);
 
       // Verify all can be retrieved
-      indicators.forEach(ind => {
-        const metadata = registry.getMetadata(ind.type);
+      indicators.forEach((indicator) => {
+        const metadata = registry.getMetadata(indicator.type);
         expect(metadata).not.toBeNull();
-        expect(metadata?.type).toBe(ind.type);
+        expect(metadata?.type).toBe(indicator.type);
       });
     });
 

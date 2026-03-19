@@ -6,6 +6,7 @@
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
 import { LoggerService, OrderExecutionData } from '../../types/legacy';
 import {
+  createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
   createOrderExecutionDetectorHarness,
 } from '../helpers/order-execution-detector-test.utils';
@@ -92,16 +93,15 @@ describe('OrderExecutionDetectorService', () => {
     it('should increment TP counter on consecutive TP hits', () => {
       expect(service.getTpCounter()).toBe(0);
 
-      const tp1 = createMockExecutionData({ orderId: 'tp1' });
-      service.detectExecution(tp1);
-      expect(service.getTpCounter()).toBe(1);
+      createOrderExecutionDetectorExecutionBatch([
+        { orderId: 'tp1' },
+        { orderId: 'tp2' },
+        { orderId: 'tp3' },
+      ]).forEach((execution, index) => {
+        service.detectExecution(execution);
+        expect(service.getTpCounter()).toBe(index + 1);
+      });
 
-      const tp2 = createMockExecutionData({ orderId: 'tp2' });
-      service.detectExecution(tp2);
-      expect(service.getTpCounter()).toBe(2);
-
-      const tp3 = createMockExecutionData({ orderId: 'tp3' });
-      service.detectExecution(tp3);
       expect(service.getTpCounter()).toBe(3);
     });
 
@@ -199,17 +199,15 @@ describe('OrderExecutionDetectorService', () => {
     });
 
     it('should track tpLevel in result', () => {
-      const tp1 = createMockExecutionData({ orderId: 'tp1' });
-      const result1 = service.detectExecution(tp1);
-      expect(result1.tpLevel).toBe(1);
+      const results = createOrderExecutionDetectorExecutionBatch([
+        { orderId: 'tp1' },
+        { orderId: 'tp2' },
+        { orderId: 'tp3' },
+      ]).map((execution) => service.detectExecution(execution));
 
-      const tp2 = createMockExecutionData({ orderId: 'tp2' });
-      const result2 = service.detectExecution(tp2);
-      expect(result2.tpLevel).toBe(2);
-
-      const tp3 = createMockExecutionData({ orderId: 'tp3' });
-      const result3 = service.detectExecution(tp3);
-      expect(result3.tpLevel).toBe(3);
+      expect(results[0].tpLevel).toBe(1);
+      expect(results[1].tpLevel).toBe(2);
+      expect(results[2].tpLevel).toBe(3);
     });
   });
 

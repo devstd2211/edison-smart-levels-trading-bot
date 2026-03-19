@@ -9,6 +9,7 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createTickDeltaAnalyzerConfig,
   createTickDeltaAnalyzerHarness,
+  createTickDeltaAnalyzerMomentumConfig,
   createTickDeltaAnalyzerService,
   createTickDeltaAnalyzerTick,
 } from '../helpers/tick-delta-analyzer-test.utils';
@@ -19,6 +20,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let mockLogger: ReturnType<typeof createTickDeltaAnalyzerHarness>['mockLogger'];
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
+  const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
 
   beforeEach(() => {
     const harness = createTickDeltaAnalyzerHarness();
@@ -77,12 +79,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
       service = createTickDeltaAnalyzerService({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       });
@@ -122,12 +119,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
       ({ service } = createTickDeltaAnalyzerHarness({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       }));
@@ -170,12 +162,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('SKIP: Logger Errors', () => {
     beforeEach(() => {
       ({ service } = createTickDeltaAnalyzerHarness({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       }));
@@ -188,12 +175,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
       expect(() => {
         createTickDeltaAnalyzerService({
-          config: createTickDeltaAnalyzerConfig({
-            minDeltaRatio: 1.5,
-            detectionWindow: 60_000,
-            minTickCount: 10,
-            maxConfidence: 100,
-          }),
+          config: createMomentumConfig(),
           logger: mockLogger as unknown as LoggerService,
           errorHandler,
         });
@@ -223,12 +205,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('Integration: Complex Scenarios', () => {
     beforeEach(() => {
       ({ service } = createTickDeltaAnalyzerHarness({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       }));
@@ -285,12 +262,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
 
     it('should throw on null tick without ErrorHandler', () => {
       service = createTickDeltaAnalyzerService({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
       });
 
@@ -303,12 +275,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('Edge Cases', () => {
     beforeEach(() => {
       ({ service } = createTickDeltaAnalyzerHarness({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       }));
@@ -361,12 +328,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   describe('E2E: Error Recovery Scenarios', () => {
     beforeEach(() => {
       ({ service } = createTickDeltaAnalyzerHarness({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       }));
@@ -387,12 +349,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
       }).toThrow();
 
       const validService = createTickDeltaAnalyzerService({
-        config: createTickDeltaAnalyzerConfig({
-          minDeltaRatio: 1.5,
-          detectionWindow: 60_000,
-          minTickCount: 10,
-          maxConfidence: 100,
-        }),
+        config: createMomentumConfig(),
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
       });

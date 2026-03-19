@@ -53,6 +53,30 @@ export function createOrderbookDeltaUpdate(
   };
 }
 
+export function createOrderbookSnapshotFixture(options: {
+  bids?: Array<[string, string]>;
+  asks?: Array<[string, string]>;
+  updateId?: number;
+} = {}): OrderbookUpdate {
+  return createOrderbookSnapshotUpdate(
+    options.bids ?? [['45000', '1.0']],
+    options.asks ?? [['45100', '1.0']],
+    options.updateId,
+  );
+}
+
+export function createOrderbookDeltaFixture(options: {
+  bids?: Array<[string, string]>;
+  asks?: Array<[string, string]>;
+  updateId?: number;
+} = {}): OrderbookUpdate {
+  return createOrderbookDeltaUpdate(
+    options.bids ?? [['45001', '2.0']],
+    options.asks ?? [],
+    options.updateId ?? 2,
+  );
+}
+
 type OrderbookManagerInternals = {
   lastSnapshotTime: number;
 };

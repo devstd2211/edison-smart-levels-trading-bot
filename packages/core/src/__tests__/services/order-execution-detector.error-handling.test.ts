@@ -32,9 +32,10 @@ import { OrderExecutionDetectorService } from '../../services/order-execution-de
 import { LoggerService, OrderExecutionData } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
+  createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
+  createOrderExecutionDetectorFailingLogger,
   createOrderExecutionDetectorHarness,
-  createOrderExecutionDetectorLogger,
   createOrderExecutionDetectorService,
 } from '../helpers/order-execution-detector-test.utils';
 
@@ -183,14 +184,10 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   describe('SKIP - Logging Failures', () => {
     it('should continue despite logger failures in detectExecution', () => {
-      const failingLogger = {
-        debug: jest.fn(() => {
-          throw new Error('Logger debug failed');
-        }),
-        info: jest.fn(() => {
-          throw new Error('Logger info failed');
-        }),
-      };
+      const failingLogger = createOrderExecutionDetectorFailingLogger({
+        debug: 'Logger debug failed',
+        info: 'Logger info failed',
+      });
 
       const service = createOrderExecutionDetectorService({
         logger: asLogger(failingLogger),
@@ -206,11 +203,9 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should continue despite logger failure in resetTpCounter', () => {
-      const failingLogger = {
-        debug: jest.fn(() => {
-          throw new Error('Logger debug failed');
-        }),
-      };
+      const failingLogger = createOrderExecutionDetectorFailingLogger({
+        debug: 'Logger debug failed',
+      });
 
       const service = createOrderExecutionDetectorService({
         logger: asLogger(failingLogger),
@@ -223,11 +218,9 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should continue despite logger failure in resetLastCloseReason', () => {
-      const failingLogger = {
-        debug: jest.fn(() => {
-          throw new Error('Logger debug failed');
-        }),
-      };
+      const failingLogger = createOrderExecutionDetectorFailingLogger({
+        debug: 'Logger debug failed',
+      });
 
       const service = createOrderExecutionDetectorService({
         logger: asLogger(failingLogger),
@@ -248,21 +241,22 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     it('should handle full execution sequence with parsing errors', () => {
       const service = createOrderExecutionDetectorService({ logger, errorHandler });
 
-      // TP1 with valid data
-      const tp1Data = createMockExecutionData({
-        orderId: 'tp1',
-        closedSize: '10',
-      });
+      const [tp1Data, tp2Data] = createOrderExecutionDetectorExecutionBatch([
+        {
+          orderId: 'tp1',
+          closedSize: '10',
+        },
+        {
+          orderId: 'tp2',
+          closedSize: 'invalid',
+        },
+      ]);
+
       const tp1Result = service.detectExecution(tp1Data);
       expect(tp1Result.type).toBe('TAKE_PROFIT');
       expect(tp1Result.tpLevel).toBe(1);
       expect(service.getTpCounter()).toBe(1);
 
-      // TP2 with invalid closedSize (should still be detected as TP due to detection logic)
-      const tp2Data = createMockExecutionData({
-        orderId: 'tp2',
-        closedSize: 'invalid', // Will parse to 0
-      });
       const tp2Result = service.detectExecution(tp2Data);
       expect(tp2Result.type).toBe('ENTRY'); // closedSize = 0 = entry
       expect(service.getTpCounter()).toBe(0); // Reset on entry

@@ -123,6 +123,25 @@ export const createLadderExitOrder = (
   isLiquidation: false,
 });
 
+export const createLadderExitOrderHistory = (
+  orders: Array<{
+    symbol?: string;
+    price: string;
+    orderType?: string;
+    stopOrderType?: string;
+    reduceOnly?: boolean;
+  }>,
+): BybitOrder[] =>
+  orders.map((order) =>
+    createLadderExitOrder(
+      order.symbol ?? 'APEXUSDT',
+      order.price,
+      order.orderType,
+      order.stopOrderType,
+      order.reduceOnly,
+    ),
+  );
+
 export const asLadderExitPosition = (value: unknown): Position => value as Position;
 export const asLadderExitPrice = (value: unknown): number => value as number;
 export const asLadderExitTakeProfits = (

@@ -36,12 +36,49 @@ type CandleSequenceOptions = {
   volumeStep?: number;
 };
 
+type UniformCandleSequenceOptions = {
+  baseTimestamp?: number;
+  intervalMs?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+  volume?: number;
+};
+
 export function createMLFeatureExtractorLogger(): LoggerService {
   return {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
+  } as unknown as LoggerService;
+}
+
+export function createMLFeatureFailingLogger(
+  failures: Partial<Record<'info' | 'warn' | 'error' | 'debug', string>> = {},
+): LoggerService {
+  return {
+    info: jest.fn(() => {
+      if (failures.info) {
+        throw new Error(failures.info);
+      }
+    }),
+    warn: jest.fn(() => {
+      if (failures.warn) {
+        throw new Error(failures.warn);
+      }
+    }),
+    error: jest.fn(() => {
+      if (failures.error) {
+        throw new Error(failures.error);
+      }
+    }),
+    debug: jest.fn(() => {
+      if (failures.debug) {
+        throw new Error(failures.debug);
+      }
+    }),
   } as unknown as LoggerService;
 }
 
@@ -124,4 +161,28 @@ export function createMLFeatureCandleSequence(
   }
 
   return candles;
+}
+
+export function createMLFeatureUniformCandleSequence(
+  count: number,
+  options: UniformCandleSequenceOptions = {},
+): Candle[] {
+  const baseTimestamp = options.baseTimestamp ?? 1_700_000_000_000;
+  const intervalMs = options.intervalMs ?? 60_000;
+  const open = options.open ?? 100;
+  const high = options.high ?? 102;
+  const low = options.low ?? 99;
+  const close = options.close ?? 101;
+  const volume = options.volume ?? 1_000;
+
+  return Array.from({ length: count }, (_, index) =>
+    createMLFeatureCandle(close, {
+      timestamp: baseTimestamp + index * intervalMs,
+      open,
+      high,
+      low,
+      close,
+      volume,
+    }),
+  );
 }

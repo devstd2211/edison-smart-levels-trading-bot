@@ -14,9 +14,11 @@ import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../services/logger.service';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 import {
+  createOrderbookDeltaFixture,
   createOrderbookMockLogger,
   createOrderbookManagerHarness,
   createOrderbookManagerService,
+  createOrderbookSnapshotFixture,
 } from '../helpers/orderbook-manager-test.utils';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
@@ -46,13 +48,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Basic Orderbook Operations', () => {
     it('should initialize on first snapshot', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
 
       service.processUpdate(snapshot);
 
@@ -64,23 +60,11 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
     it('should apply delta updates after snapshot', () => {
       // Snapshot first
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
       service.processUpdate(snapshot);
 
       // Delta update
-      const delta: OrderbookUpdate = {
-        type: 'delta',
-        bids: [['45001', '2.0']],
-        asks: [],
-        updateId: 2,
-        timestamp: Date.now(),
-      };
+      const delta: OrderbookUpdate = createOrderbookDeltaFixture();
       service.processUpdate(delta);
 
       const result = service.getSnapshot();
@@ -88,13 +72,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should skip delta before snapshot', () => {
-      const delta: OrderbookUpdate = {
-        type: 'delta',
+      const delta: OrderbookUpdate = createOrderbookDeltaFixture({
         bids: [['45000', '1.0']],
-        asks: [],
         updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(delta);
       expect(service.isReady()).toBe(false);
@@ -111,13 +92,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         throw new Error('WallTracker error');
       });
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       // Should not throw despite wall tracker error
       service.processUpdate(snapshot);
@@ -134,23 +111,15 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       });
 
       // Initialize first
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
       service.processUpdate(snapshot);
 
       // Remove level (size 0)
-      const delta: OrderbookUpdate = {
-        type: 'delta',
+      const delta: OrderbookUpdate = createOrderbookDeltaFixture({
         bids: [['45000', '0']],
-        asks: [],
-        updateId: 2,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(delta);
 
@@ -163,16 +132,13 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         throw new Error('WallTracker error');
       });
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [
           ['45000', '1.0'], // Will fail wall tracker
           ['44999', '2.0'], // Should still process
         ],
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(snapshot);
 
@@ -184,17 +150,14 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Error Handling - NaN Validation', () => {
     it('should SKIP level with NaN price', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [
           ['45000', '1.0'], // Valid
           ['invalid', '2.0'], // Invalid - NaN price
           ['44999', '3.0'], // Valid
         ],
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(snapshot);
 
@@ -208,13 +171,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should SKIP level with NaN size', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [['45000', '1.0'], ['44999', 'invalid']],
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(snapshot);
 
@@ -224,8 +184,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle mix of valid and invalid levels', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [
           ['45000', '1.0'], // Valid
           ['invalid', '2.0'], // Invalid price
@@ -234,9 +193,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
           ['44997', '5.0'], // Valid
         ],
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(snapshot);
 
@@ -249,13 +206,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     it('should GRACEFUL_DEGRADE for stale snapshot with ErrorHandler', () => {
       jest.useFakeTimers();
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
       service.processUpdate(snapshot);
 
       // Advance time past threshold (60 seconds)
@@ -306,16 +257,12 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Memory Management', () => {
     it('should track orderbook stats correctly', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [
           ['45000', '1.0'],
           ['44999', '2.0'],
         ],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(snapshot);
 
@@ -326,13 +273,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should reset orderbook correctly', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
 
       service.processUpdate(snapshot);
       expect(service.isReady()).toBe(true);
@@ -357,13 +298,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         withErrorHandler: false,
       });
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
 
       legacyService.processUpdate(snapshot);
 
@@ -380,13 +315,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         errorHandler,
       });
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
 
       serviceNoWall.processUpdate(snapshot);
 
@@ -402,13 +331,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         withErrorHandler: false,
       });
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       minimalService.processUpdate(snapshot);
 
@@ -424,23 +349,15 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
   describe('Integration Scenarios', () => {
     it('should handle snapshot replacement', () => {
       // First snapshot
-      const snapshot1: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot1: OrderbookUpdate = createOrderbookSnapshotFixture();
       service.processUpdate(snapshot1);
 
       // Second snapshot replaces data
-      const snapshot2: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot2: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [['46000', '2.0']],
         asks: [['46100', '2.0']],
         updateId: 2,
-        timestamp: Date.now(),
-      };
+      });
       service.processUpdate(snapshot2);
 
       const result = service.getSnapshot();
@@ -449,30 +366,16 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle rapid snapshot/delta sequence', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
-        bids: [['45000', '1.0']],
-        asks: [['45100', '1.0']],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
       service.processUpdate(snapshot);
 
       const deltas: OrderbookUpdate[] = [
-        {
-          type: 'delta',
-          bids: [['45001', '2.0']],
-          asks: [],
-          updateId: 2,
-          timestamp: Date.now(),
-        },
-        {
-          type: 'delta',
+        createOrderbookDeltaFixture(),
+        createOrderbookDeltaFixture({
           bids: [],
           asks: [['45101', '2.0']],
           updateId: 3,
-          timestamp: Date.now(),
-        },
+        }),
       ];
 
       deltas.forEach((d) => service.processUpdate(d));
@@ -484,8 +387,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should preserve best levels with proper sorting', () => {
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
         bids: [
           ['45002', '1.0'],
           ['45000', '2.0'],
@@ -496,9 +398,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
           ['45100', '2.0'],
           ['45101', '3.0'],
         ],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
+      });
 
       service.processUpdate(snapshot);
 

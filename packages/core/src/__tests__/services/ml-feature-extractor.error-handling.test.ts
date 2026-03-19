@@ -8,8 +8,8 @@ import { Candle, LoggerService } from '../../types/legacy';
 import {
   createMLFeatureCandle,
   createMLFeatureCandleSequence,
+  createMLFeatureFailingLogger,
   createMLFeatureExtractorHarness,
-  createMLFeatureExtractorLogger,
   createMLFeatureExtractorService,
 } from '../helpers/ml-feature-extractor-test.utils';
 
@@ -140,12 +140,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails on info', () => {
-      const badLogger = {
-        ...createMLFeatureExtractorLogger(),
-        info: jest.fn(() => {
-          throw new Error('Logger failed');
-        }),
-      } as unknown as LoggerService;
+      const badLogger = createMLFeatureFailingLogger({ info: 'Logger failed' }) as LoggerService;
       const badService = createMLFeatureExtractorService({ logger: badLogger, errorHandler });
       const candles = createMLFeatureCandleSequence(10);
 
@@ -155,12 +150,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should not throw when logger fails on error', () => {
-      const badLogger = {
-        ...createMLFeatureExtractorLogger(),
-        error: jest.fn(() => {
-          throw new Error('Logger error failed');
-        }),
-      } as unknown as LoggerService;
+      const badLogger = createMLFeatureFailingLogger({ error: 'Logger error failed' }) as LoggerService;
       const badService = createMLFeatureExtractorService({ logger: badLogger, errorHandler });
       const candles = createMLFeatureCandleSequence(10);
 

@@ -8,6 +8,7 @@ import {
   createMLFeatureCandle,
   createMLFeatureCandleSequence,
   createMLFeatureExtractorHarness,
+  createMLFeatureUniformCandleSequence,
 } from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
@@ -168,18 +169,15 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should detect bullish close position', () => {
-      const candles: Candle[] = [];
-
-      for (let i = 0; i < 20; i++) {
-        candles.push({
-          timestamp: 1_700_300_000_000 + i * 1_000,
-          open: 100.5,
-          high: 102,
-          low: 100,
-          close: 101.5,
-          volume: 1_000,
-        });
-      }
+      const candles: Candle[] = createMLFeatureUniformCandleSequence(20, {
+        baseTimestamp: 1_700_300_000_000,
+        intervalMs: 1_000,
+        open: 100.5,
+        high: 102,
+        low: 100,
+        close: 101.5,
+        volume: 1_000,
+      });
 
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 
@@ -187,18 +185,15 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should detect bearish close position', () => {
-      const candles: Candle[] = [];
-
-      for (let i = 0; i < 20; i++) {
-        candles.push({
-          timestamp: 1_700_400_000_000 + i * 1_000,
-          open: 101.5,
-          high: 102,
-          low: 100,
-          close: 100.5,
-          volume: 1_000,
-        });
-      }
+      const candles: Candle[] = createMLFeatureUniformCandleSequence(20, {
+        baseTimestamp: 1_700_400_000_000,
+        intervalMs: 1_000,
+        open: 101.5,
+        high: 102,
+        low: 100,
+        close: 100.5,
+        volume: 1_000,
+      });
 
       const features = service.extractFeatures(candles, 'TEST', 'WIN');
 

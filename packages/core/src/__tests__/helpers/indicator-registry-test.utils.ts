@@ -92,6 +92,22 @@ export function createIndicatorRegistryMetadata(
   };
 }
 
+export function createIndicatorRegistryRegistrations(
+  entries: Array<{
+    type: IndicatorType;
+    name: string;
+    enabled?: boolean;
+  }>,
+): IIndicatorMetadata[] {
+  return entries.map((entry) =>
+    createIndicatorRegistryMetadata(
+      entry.name,
+      entry.enabled ?? true,
+      entry.type,
+    ),
+  );
+}
+
 export function asIndicatorRegistryType(value: unknown): IndicatorType {
   return value as IndicatorType;
 }

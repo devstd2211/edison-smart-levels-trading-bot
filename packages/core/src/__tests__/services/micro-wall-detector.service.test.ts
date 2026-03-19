@@ -6,12 +6,11 @@ import { MicroWallDetectorService } from '../../services/micro-wall-detector.ser
 import {
   LoggerService,
   SignalDirection,
-  MicroWallDetectorConfig,
-  OrderBook,
 } from '../../types/legacy';
 import {
-  createMicroWallDetectorConfig,
   createMicroWallDetectorHarness,
+  createMicroWall,
+  createMicroWallDetectionOrderBook,
   createMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
 
@@ -20,7 +19,6 @@ import {
 // ============================================================================
 
 const createOrderBook = createMicroWallOrderBook;
-const createConfig = createMicroWallDetectorConfig;
 
 // ============================================================================
 // TESTS
@@ -29,7 +27,7 @@ const createConfig = createMicroWallDetectorConfig;
 describe('MicroWallDetectorService', () => {
   let detector: MicroWallDetectorService;
   let logger: LoggerService;
-  let config: MicroWallDetectorConfig;
+  let config: ReturnType<typeof createMicroWallDetectorHarness>['config'];
 
   beforeEach(() => {
     ({ detector, logger, config } = createMicroWallDetectorHarness({ withErrorHandler: false }));
@@ -37,19 +35,13 @@ describe('MicroWallDetectorService', () => {
 
   describe('detectMicroWalls', () => {
     it('should detect micro wall on BID side (5% size)', () => {
-      // Orderbook: Large bid at 1.0000 (5% of total volume)
-      const orderbook = createOrderBook(
-        [
-          [1.0, 500], // 500 USDT (5% if total is 10,000 USDT)
-          [0.999, 100],
-          [0.998, 100],
-        ],
-        [
-          [1.001, 4650], // Remaining volume on ask side
+      const orderbook = createMicroWallDetectionOrderBook({
+        askLevels: [
+          [1.001, 4650],
           [1.002, 100],
           [1.003, 100],
         ],
-      );
+      });
 
       const walls = detector.detectMicroWalls(orderbook);
 
@@ -62,19 +54,18 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should detect micro wall on ASK side (10% size)', () => {
-      // Orderbook: Large ask at 1.001 (10% of total volume)
-      const orderbook = createOrderBook(
-        [
-          [1.0, 4500], // Remaining volume on bid side
+      const orderbook = createMicroWallDetectionOrderBook({
+        bidLevels: [
+          [1.0, 4500],
           [0.999, 100],
           [0.998, 100],
         ],
-        [
-          [1.001, 1000], // 1001 USDT (10% if total is ~10,000 USDT)
+        askLevels: [
+          [1.001, 1000],
           [1.002, 100],
           [1.003, 100],
         ],
-      );
+      });
 
       const walls = detector.detectMicroWalls(orderbook);
 
@@ -145,15 +136,7 @@ describe('MicroWallDetectorService', () => {
 
   describe('calculateWallConfidence', () => {
     it('should calculate confidence based on size and distance', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: false,
-      };
+      const wall = createMicroWall();
 
       const confidence = detector.calculateWallConfidence(wall);
 
@@ -162,15 +145,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should give higher confidence for larger walls', () => {
-      const smallWall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5, // 5% wall
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: false,
-      };
+      const smallWall = createMicroWall();
 
       const largeWall = {
         ...smallWall,
@@ -184,15 +159,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should give higher confidence for closer walls', () => {
-      const farWall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 1.0, // 1% away
-        timestamp: Date.now(),
-        broken: false,
-      };
+      const farWall = createMicroWall({ distance: 1.0 });
 
       const closeWall = {
         ...farWall,
@@ -206,15 +173,11 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should not exceed maxConfidence', () => {
-      const massiveWall = {
-        side: 'BID' as const,
-        price: 1.0,
+      const massiveWall = createMicroWall({
         size: 10000,
-        percentOfTotal: 50, // 50% of orderbook
-        distance: 0.01, // Very close
-        timestamp: Date.now(),
-        broken: false,
-      };
+        percentOfTotal: 50,
+        distance: 0.01,
+      });
 
       const confidence = detector.calculateWallConfidence(massiveWall);
 
@@ -224,15 +187,7 @@ describe('MicroWallDetectorService', () => {
 
   describe('isWallBroken', () => {
     it('should detect BID wall break (price moved DOWN)', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 2000, // Wall detected 2 seconds ago
-        broken: false,
-      };
+      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
 
       const currentPrice = 0.999; // Price moved DOWN through BID wall
 
@@ -243,15 +198,11 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should detect ASK wall break (price moved UP)', () => {
-      const wall = {
-        side: 'ASK' as const,
+      const wall = createMicroWall({
+        side: 'ASK',
         price: 1.001,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 2000, // Wall detected 2 seconds ago
-        broken: false,
-      };
+        timestamp: Date.now() - 2000,
+      });
 
       const currentPrice = 1.002; // Price moved UP through ASK wall
 
@@ -262,15 +213,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should wait for confirmation period before confirming break', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 500, // Wall detected only 500ms ago (< 1000ms confirmation)
-        broken: false,
-      };
+      const wall = createMicroWall({ timestamp: Date.now() - 500 });
 
       const currentPrice = 0.999; // Price moved DOWN
 
@@ -282,13 +225,10 @@ describe('MicroWallDetectorService', () => {
 
     it('should return true if wall already broken', () => {
       const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 5000,
-        broken: true, // Already broken
+        ...createMicroWall({
+          timestamp: Date.now() - 5000,
+          broken: true,
+        }),
         brokenAt: Date.now() - 1000,
       };
 
@@ -300,15 +240,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should NOT detect break if price did not cross wall (BID)', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 2000,
-        broken: false,
-      };
+      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
 
       const currentPrice = 1.001; // Price ABOVE BID wall (not broken)
 
@@ -319,15 +251,11 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should NOT detect break if price did not cross wall (ASK)', () => {
-      const wall = {
-        side: 'ASK' as const,
+      const wall = createMicroWall({
+        side: 'ASK',
         price: 1.001,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
         timestamp: Date.now() - 2000,
-        broken: false,
-      };
+      });
 
       const currentPrice = 1.0; // Price BELOW ASK wall (not broken)
 
@@ -384,13 +312,11 @@ describe('MicroWallDetectorService', () => {
   describe('getSignalDirection', () => {
     it('should return LONG for broken ASK wall', () => {
       const wall = {
-        side: 'ASK' as const,
-        price: 1.001,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: true,
+        ...createMicroWall({
+          side: 'ASK',
+          price: 1.001,
+          broken: true,
+        }),
         brokenAt: Date.now(),
       };
 
@@ -401,13 +327,7 @@ describe('MicroWallDetectorService', () => {
 
     it('should return SHORT for broken BID wall', () => {
       const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now(),
-        broken: true,
+        ...createMicroWall({ broken: true }),
         brokenAt: Date.now(),
       };
 
@@ -419,15 +339,7 @@ describe('MicroWallDetectorService', () => {
 
   describe('wasRecentlyBroken', () => {
     it('should return true for recently broken wall', () => {
-      const wall = {
-        side: 'BID' as const,
-        price: 1.0,
-        size: 500,
-        percentOfTotal: 5,
-        distance: 0.1,
-        timestamp: Date.now() - 2000,
-        broken: false,
-      };
+      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
 
       // Break the wall
       detector.isWallBroken(wall, 0.999);

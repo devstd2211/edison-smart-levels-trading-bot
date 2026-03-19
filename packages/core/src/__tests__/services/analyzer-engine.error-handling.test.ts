@@ -18,6 +18,8 @@ import type { IAnalyzer } from '../../types/analyzer';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
 import {
+  createAnalyzerEngineAnalyzers,
+  createAnalyzerEngineAnalyzerEntry,
   asAnalyzerEngineLogger,
   createAnalyzerEngineFailingRegistry,
   createAnalyzerEngineHarness,
@@ -78,15 +80,10 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
 
   describe('A: Individual Analyzer Failures - SKIP Strategy', () => {
     test('A1: Single analyzer failure does not block other analyzers', async () => {
-      const analyzer1 = createMockAnalyzer('EMA', 'LONG');
-      const analyzer2 = createMockAnalyzer('RSI', 'SHORT', {
-        throwError: new Error('RSI calculation failed'),
-      });
-      const analyzer3 = createMockAnalyzer('ATR', 'LONG');
-      const analyzers = new Map([
-        ['EMA', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
-        ['ATR', { instance: analyzer3, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'EMA', direction: 'LONG' },
+        { name: 'RSI', direction: 'SHORT', throwError: new Error('RSI calculation failed') },
+        { name: 'ATR', direction: 'LONG' },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -108,13 +105,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     });
 
     test('A2: ErrorHandler.handle called with SKIP strategy for analyzer failures', async () => {
-      const analyzer1 = createMockAnalyzer('EMA', 'LONG');
-      const analyzer2 = createMockAnalyzer('RSI', 'SHORT', {
-        throwError: new Error('RSI calculation failed'),
-      });
-      const analyzers = new Map([
-        ['EMA', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'EMA', direction: 'LONG' },
+        { name: 'RSI', direction: 'SHORT', throwError: new Error('RSI calculation failed') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -136,15 +129,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     });
 
     test('A3: All analyzers failing still returns empty signals with error tracking', async () => {
-      const analyzer1 = createMockAnalyzer('EMA', 'LONG', {
-        throwError: new Error('EMA failed'),
-      });
-      const analyzer2 = createMockAnalyzer('RSI', 'SHORT', {
-        throwError: new Error('RSI failed'),
-      });
-      const analyzers = new Map([
-        ['EMA', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'EMA', direction: 'LONG', throwError: new Error('EMA failed') },
+        { name: 'RSI', direction: 'SHORT', throwError: new Error('RSI failed') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -345,13 +332,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     });
 
     test('C2: Lenient mode continues on analyzer failure', async () => {
-      const analyzer1 = createMockAnalyzer('EMA', 'LONG');
-      const analyzer2 = createMockAnalyzer('RSI', 'SHORT', {
-        throwError: new Error('RSI failed'),
-      });
-      const analyzers = new Map([
-        ['EMA', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'EMA', direction: 'LONG' },
+        { name: 'RSI', direction: 'SHORT', throwError: new Error('RSI failed') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -403,17 +386,10 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
 
   describe('D: Parallel vs Sequential with Errors', () => {
     test('D1: Parallel execution handles multiple concurrent failures gracefully', async () => {
-      const analyzer1 = createMockAnalyzer('ANALYZER1', 'LONG', {
-        throwError: new Error('Failed'),
-      });
-      const analyzer2 = createMockAnalyzer('ANALYZER2', 'SHORT', {
-        throwError: new Error('Failed'),
-      });
-      const analyzer3 = createMockAnalyzer('ANALYZER3', 'LONG');
-      const analyzers = new Map([
-        ['ANALYZER1', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['ANALYZER2', { instance: analyzer2, weight: 0.5, priority: 5 }],
-        ['ANALYZER3', { instance: analyzer3, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'ANALYZER1', direction: 'LONG', throwError: new Error('Failed') },
+        { name: 'ANALYZER2', direction: 'SHORT', throwError: new Error('Failed') },
+        { name: 'ANALYZER3', direction: 'LONG' },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -499,15 +475,9 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     });
 
     test('E2: Error information preserved in result.errors for analysis', async () => {
-      const analyzer1 = createMockAnalyzer('EMA', 'LONG', {
-        throwError: new Error('Specific EMA error message'),
-      });
-      const analyzer2 = createMockAnalyzer('RSI', 'SHORT', {
-        throwError: new Error('Specific RSI error message'),
-      });
-      const analyzers = new Map([
-        ['EMA', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'EMA', direction: 'LONG', throwError: new Error('Specific EMA error message') },
+        { name: 'RSI', direction: 'SHORT', throwError: new Error('Specific RSI error message') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);

@@ -22,6 +22,8 @@ import {
   asExitTypeDetectorPosition,
   createExitTypeDetectorHarness,
   createExitTypeDetectorMockLogger,
+  createExitTypeDetectorOrderHistory,
+  createExitTypeDetectorScenarioPosition,
 } from '../helpers/exit-type-detector-test.utils';
 
 const asPosition = asExitTypeDetectorPosition;
@@ -100,7 +102,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Error Handling with ErrorHandler', () => {
     it('should handle empty order history gracefully (SKIP fallback)', () => {
-      const position = asExitTypeDetectorPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
@@ -112,7 +114,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle NaN price in TP level identification (SKIP)', () => {
-      const position = asPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [
@@ -126,7 +128,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle empty takeProfits array (SKIP)', () => {
-      const position = asPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [],
@@ -160,7 +162,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
         withErrorHandler: false,
       }).service;
 
-      const position = asExitTypeDetectorPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
@@ -176,7 +178,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
         withErrorHandler: false,
       }).service;
 
-      const position = asExitTypeDetectorPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
@@ -193,36 +195,36 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Integration Scenarios', () => {
     it('should handle multiple orders and use most recent', () => {
-      const position = asExitTypeDetectorPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
       });
 
-      const orders: BybitOrder[] = [
-        asExitTypeDetectorOrder({
+      const orders: BybitOrder[] = createExitTypeDetectorOrderHistory([
+        {
           symbol: 'BTCUSDT',
           orderStatus: 'Filled',
           stopOrderType: 'StopLoss',
           price: '44000',
           updatedTime: Date.now() - 10000,
-        }),
-        asExitTypeDetectorOrder({
+        },
+        {
           symbol: 'BTCUSDT',
           orderStatus: 'Filled',
           orderType: 'Market',
           reduceOnly: true,
           price: '45500',
           updatedTime: Date.now(),
-        }),
-      ];
+        },
+      ]);
 
       const result = service.determineExitTypeFromHistory(orders, position);
       expect(result).toBe(ExitType.MANUAL); // Uses recent order
     });
 
     it('should identify correct TP level among multiple TPs', () => {
-      const position = asExitTypeDetectorPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [
@@ -243,29 +245,29 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should filter orders by symbol correctly', () => {
-      const position = asExitTypeDetectorPosition({
+      const position = createExitTypeDetectorScenarioPosition({
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
       });
 
-      const orders: BybitOrder[] = [
-        asExitTypeDetectorOrder({
+      const orders: BybitOrder[] = createExitTypeDetectorOrderHistory([
+        {
           symbol: 'ETHUSDT',
           orderStatus: 'Filled',
           orderType: 'Market',
           reduceOnly: true,
           price: '2000',
           updatedTime: Date.now(),
-        }),
-        asExitTypeDetectorOrder({
+        },
+        {
           symbol: 'BTCUSDT',
           orderStatus: 'Filled',
           stopOrderType: 'StopLoss',
           price: '44000',
           updatedTime: Date.now() - 1000,
-        }),
-      ];
+        },
+      ]);
 
       const result = service.determineExitTypeFromHistory(orders, position);
       expect(result).toBe(ExitType.STOP_LOSS); // Uses BTCUSDT order, not ETHUSDT

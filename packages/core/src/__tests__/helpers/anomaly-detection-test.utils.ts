@@ -83,3 +83,19 @@ export function seedVolatilityHistory(service: AnomalyDetectionService, values: 
     service.detectVolatilitySpike(value);
   });
 }
+
+export function seedAnomalyDetectionHistory(
+  service: AnomalyDetectionService,
+  options: {
+    volumeValues?: number[];
+    volatilityValues?: number[];
+  } = {},
+): void {
+  if (options.volumeValues) {
+    seedVolumeHistory(service, options.volumeValues);
+  }
+
+  if (options.volatilityValues) {
+    seedVolatilityHistory(service, options.volatilityValues);
+  }
+}

@@ -21,6 +21,26 @@ export function createOrderbookImbalanceConfig(
   };
 }
 
+export function createOrderbookImbalanceOrderbook(options: {
+  bids?: [number, number][];
+  asks?: [number, number][];
+} = {}): { bids: [number, number][]; asks: [number, number][] } {
+  return {
+    bids: options.bids ?? [[50000, 10]],
+    asks: options.asks ?? [[50010, 10]],
+  };
+}
+
+export function createOrderbookImbalanceFailingLogger(
+  logger: LoggerService,
+  overrides: Partial<Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>>,
+): LoggerService {
+  return {
+    ...logger,
+    ...overrides,
+  } as LoggerService;
+}
+
 export function createOrderbookImbalanceHarness(options: {
   configOverrides?: Partial<OrderbookImbalanceConfig>;
   logger?: LoggerService;

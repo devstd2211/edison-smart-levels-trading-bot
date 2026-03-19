@@ -26,6 +26,7 @@ import {
 import { ErrorRegistry } from '../../errors/ErrorRegistry';
 import { TradingError } from '../../errors/BaseError';
 import {
+  createAnalyzerEngineAnalyzers,
   asAnalyzerEngineLogger,
   createAnalyzerEngineErrorHandler,
   createAnalyzerEngineFailingRegistry,
@@ -242,18 +243,10 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
     });
 
     test('F4: Multiple callbacks in cascading failure scenario', async () => {
-      const analyzer1 = createMockAnalyzer('A1', 'LONG', {
-        throwError: new Error('Error 1'),
-      });
-      const analyzer2 = createMockAnalyzer('A2', 'SHORT', {
-        throwError: new Error('Error 2'),
-      });
-      const analyzer3 = createMockAnalyzer('A3', 'LONG');
-
-      const analyzers = new Map([
-        ['A1', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['A2', { instance: analyzer2, weight: 0.5, priority: 5 }],
-        ['A3', { instance: analyzer3, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'A1', direction: 'LONG', throwError: new Error('Error 1') },
+        { name: 'A2', direction: 'SHORT', throwError: new Error('Error 2') },
+        { name: 'A3', direction: 'LONG' },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -279,18 +272,10 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
 
   describe('G: ErrorRegistry Integration', () => {
     test('G1: Analyzer errors recorded in ErrorRegistry', async () => {
-      const analyzer1 = createMockAnalyzer('SUCCESS', 'LONG');
-      const analyzer2 = createMockAnalyzer('FAIL1', 'SHORT', {
-        throwError: new Error('Error 1'),
-      });
-      const analyzer3 = createMockAnalyzer('FAIL2', 'LONG', {
-        throwError: new Error('Error 2'),
-      });
-
-      const analyzers = new Map([
-        ['SUCCESS', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['FAIL1', { instance: analyzer2, weight: 0.5, priority: 5 }],
-        ['FAIL2', { instance: analyzer3, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'SUCCESS', direction: 'LONG' },
+        { name: 'FAIL1', direction: 'SHORT', throwError: new Error('Error 1') },
+        { name: 'FAIL2', direction: 'LONG', throwError: new Error('Error 2') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -319,9 +304,9 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
         throwError: new Error('RSI error'),
       });
 
-      const analyzers = new Map([
-        ['EMA', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'EMA', direction: 'LONG' },
+        { name: 'RSI', direction: 'SHORT', throwError: new Error('RSI error') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
@@ -493,9 +478,9 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
       const analyzer1 = createMockAnalyzer('A', 'LONG', { delayMs: 10 });
       const analyzer2 = createMockAnalyzer('B', 'SHORT', { throwError: new Error('B failed') });
 
-      const analyzers = new Map([
-        ['A', { instance: analyzer1, weight: 0.5, priority: 5 }],
-        ['B', { instance: analyzer2, weight: 0.5, priority: 5 }],
+      const analyzers = createAnalyzerEngineAnalyzers([
+        { name: 'A', direction: 'LONG' },
+        { name: 'B', direction: 'SHORT', throwError: new Error('B failed') },
       ]);
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);

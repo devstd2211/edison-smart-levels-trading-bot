@@ -8,6 +8,7 @@ import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceHarness,
+  createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -38,17 +39,10 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - BID imbalance (buying pressure)', () => {
     it('should detect BID direction when bid volume > ask volume', () => {
-      const orderbook = {
-        bids: [
-          [50000, 10] as [number, number], // Total bid volume: 35
-          [49990, 15] as [number, number],
-          [49980, 10] as [number, number],
-        ],
-        asks: [
-          [50010, 3] as [number, number], // Total ask volume: 8
-          [50020, 5] as [number, number],
-        ],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 10], [49990, 15], [49980, 10]],
+        asks: [[50010, 3], [50020, 5]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -63,10 +57,9 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should calculate correct strength for strong BID imbalance', () => {
-      const orderbook = {
-        bids: [[50000, 100] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 100]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -79,16 +72,10 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - ASK imbalance (selling pressure)', () => {
     it('should detect ASK direction when ask volume > bid volume', () => {
-      const orderbook = {
-        bids: [
-          [50000, 5] as [number, number], // Total bid volume: 10
-          [49990, 5] as [number, number],
-        ],
-        asks: [
-          [50010, 20] as [number, number], // Total ask volume: 50
-          [50020, 30] as [number, number],
-        ],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 5], [49990, 5]],
+        asks: [[50010, 20], [50020, 30]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -103,10 +90,10 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should calculate correct strength for strong ASK imbalance', () => {
-      const orderbook = {
-        bids: [[50000, 5] as [number, number]],
-        asks: [[50010, 45] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 5]],
+        asks: [[50010, 45]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -119,10 +106,7 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - NEUTRAL (balanced)', () => {
     it('should detect NEUTRAL when volumes are balanced', () => {
-      const orderbook = {
-        bids: [[50000, 10] as [number, number]],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook();
 
       const analysis = service.analyze(orderbook);
 
@@ -134,10 +118,10 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should detect NEUTRAL when imbalance below threshold', () => {
-      const orderbook = {
-        bids: [[50000, 55] as [number, number]], // 55%
-        asks: [[50010, 45] as [number, number]], // 45%
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 55]],
+        asks: [[50010, 45]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -151,10 +135,10 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - threshold boundary', () => {
     it('should detect BID when imbalance exactly at threshold', () => {
-      const orderbook = {
-        bids: [[50000, 65] as [number, number]],
-        asks: [[50010, 35] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 65]],
+        asks: [[50010, 35]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -166,10 +150,10 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should detect NEUTRAL when imbalance just below threshold', () => {
-      const orderbook = {
-        bids: [[50000, 64] as [number, number]],
-        asks: [[50010, 36] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 64]],
+        asks: [[50010, 36]],
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -183,18 +167,10 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - levels parameter', () => {
     it('should analyze only top N levels', () => {
-      const orderbook = {
-        bids: [
-          [50000, 10] as [number, number], // Level 1
-          [49990, 10] as [number, number], // Level 2
-          [49980, 10] as [number, number], // Level 3 (beyond config.levels=2)
-        ],
-        asks: [
-          [50010, 5] as [number, number], // Level 1
-          [50020, 5] as [number, number], // Level 2
-          [50030, 5] as [number, number], // Level 3 (beyond config.levels=2)
-        ],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 10], [49990, 10], [49980, 10]],
+        asks: [[50010, 5], [50020, 5], [50030, 5]],
+      });
 
       const service2Levels = createOrderbookImbalanceService({
         configOverrides: { ...config, levels: 2 },
@@ -211,10 +187,7 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - edge cases', () => {
     it('should handle empty orderbook', () => {
-      const orderbook = {
-        bids: [],
-        asks: [],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({ bids: [], asks: [] });
 
       const analysis = service.analyze(orderbook);
 
@@ -226,10 +199,7 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should handle orderbook with only bids', () => {
-      const orderbook = {
-        bids: [[50000, 10] as [number, number]],
-        asks: [],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({ asks: [] });
 
       const analysis = service.analyze(orderbook);
 
@@ -243,10 +213,7 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should handle orderbook with only asks', () => {
-      const orderbook = {
-        bids: [],
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({ bids: [] });
 
       const analysis = service.analyze(orderbook);
 
@@ -260,10 +227,10 @@ describe('OrderbookImbalanceService', () => {
     });
 
     it('should cap strength at 100', () => {
-      const orderbook = {
-        bids: [[50000, 1000] as [number, number]],
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 1000]],
         asks: [],
-      };
+      });
 
       const analysis = service.analyze(orderbook);
 
@@ -280,10 +247,9 @@ describe('OrderbookImbalanceService', () => {
         withErrorHandler: false,
       });
 
-      const orderbook = {
-        bids: [[50000, 100] as [number, number]], // Strong BID imbalance
-        asks: [[50010, 10] as [number, number]],
-      };
+      const orderbook = createOrderbookImbalanceOrderbook({
+        bids: [[50000, 100]],
+      });
 
       const analysis = disabledService.analyze(orderbook);
 

@@ -1,6 +1,8 @@
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
 import type { LoggerService } from '../../services/logger.service';
+import type { StrategyAnalyzerConfig } from '../../types/strategy-config';
+import { IndicatorType } from '../../types/indicator';
 
 export type AnalyzerRegistryMockLogger = {
   debug: jest.Mock;
@@ -79,6 +81,32 @@ export function createAnalyzerRegistryMockIndicator(name: string) {
     getType: jest.fn().mockReturnValue(name),
     getMinCandlesRequired: jest.fn().mockReturnValue(14),
   };
+}
+
+export function createAnalyzerRegistryAnalyzerConfig(
+  overrides: Partial<StrategyAnalyzerConfig> = {},
+): StrategyAnalyzerConfig {
+  return {
+    name: 'EMA_ANALYZER_NEW',
+    enabled: true,
+    weight: 1,
+    priority: 5,
+    ...overrides,
+  };
+}
+
+export function createAnalyzerRegistryAnalyzerConfigs(
+  overridesList: Array<Partial<StrategyAnalyzerConfig>>,
+): StrategyAnalyzerConfig[] {
+  return overridesList.map((overrides) => createAnalyzerRegistryAnalyzerConfig(overrides));
+}
+
+export function createAnalyzerRegistryIndicatorMap(
+  names: string[],
+): Map<IndicatorType, ReturnType<typeof createAnalyzerRegistryMockIndicator>> {
+  return new Map(
+    names.map((name) => [name as unknown as IndicatorType, createAnalyzerRegistryMockIndicator(name)]),
+  );
 }
 
 export function createAnalyzerRegistryBaseConfig() {
