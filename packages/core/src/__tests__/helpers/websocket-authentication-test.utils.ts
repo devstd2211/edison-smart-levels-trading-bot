@@ -13,6 +13,11 @@ export type WebSocketAuthenticationHarness = {
   errorHandler: ErrorHandler;
   mockLogger: AuthLogger;
   errorLogger: MockErrorLogger;
+  createService: (options?: {
+    logger?: AuthLogger;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => WebSocketAuthenticationService;
 };
 
 export function createMockWebSocketAuthLogger(): AuthLogger {
@@ -54,6 +59,12 @@ export function createWebSocketAuthenticationHarness(options: {
     errorHandler: (errorHandler ?? new ErrorHandler(errorLogger)),
     mockLogger,
     errorLogger,
+    createService: (serviceOptions = {}) =>
+      createWebSocketAuthenticationService({
+        logger: serviceOptions.logger ?? mockLogger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler,
+      }),
   };
 }
 
@@ -84,4 +95,44 @@ export function createWebSocketAuthCredentials(overrides: {
     apiKey: overrides.apiKey ?? 'test-key',
     apiSecret: overrides.apiSecret ?? 'test-secret',
   };
+}
+
+export function createShortWebSocketAuthCredentials(): {
+  apiKey: string;
+  apiSecret: string;
+} {
+  return createWebSocketAuthCredentials({
+    apiKey: 'short',
+    apiSecret: 'short',
+  });
+}
+
+export function createLongWebSocketAuthCredentials(): {
+  apiKey: string;
+  apiSecret: string;
+} {
+  return createWebSocketAuthCredentials({
+    apiKey: 'a'.repeat(1000),
+    apiSecret: 'b'.repeat(1000),
+  });
+}
+
+export function createSpecialWebSocketAuthCredentials(): {
+  apiKey: string;
+  apiSecret: string;
+} {
+  return createWebSocketAuthCredentials({
+    apiKey: 'key-!@#$%^&*()_+-=[]{}|;:,.<>?',
+    apiSecret: 'secret-!@#$%^&*()_+-=[]{}|;:,.<>?',
+  });
+}
+
+export function createUnicodeWebSocketAuthCredentials(): {
+  apiKey: string;
+  apiSecret: string;
+} {
+  return createWebSocketAuthCredentials({
+    apiKey: 'key-aeoeue-russkiy-arabic',
+    apiSecret: 'secret-chinese-hindi-thai',
+  });
 }

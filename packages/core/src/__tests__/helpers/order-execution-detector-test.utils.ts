@@ -39,6 +39,15 @@ export function createOrderExecutionDetectorExecutionBatch(
   );
 }
 
+export function runOrderExecutionDetectorSequence(
+  service: OrderExecutionDetectorService,
+  overridesList: Array<Partial<OrderExecutionData>>,
+) {
+  return createOrderExecutionDetectorExecutionBatch(overridesList).map((execution) =>
+    service.detectExecution(execution),
+  );
+}
+
 export function createOrderExecutionDetectorFailingLogger(
   failures: Partial<Record<'debug' | 'info', string>> = {},
 ): LoggerService {
@@ -64,6 +73,11 @@ export function createOrderExecutionDetectorHarness(options: {
   service: OrderExecutionDetectorService;
   logger: LoggerService;
   errorHandler?: ErrorHandler;
+  createService: (serviceOptions?: {
+    logger?: LoggerService;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => OrderExecutionDetectorService;
 } {
   const logger = options.logger ?? createOrderExecutionDetectorLogger();
   const errorHandler = options.withErrorHandler === false
@@ -79,6 +93,12 @@ export function createOrderExecutionDetectorHarness(options: {
     service,
     logger,
     errorHandler,
+    createService: (serviceOptions = {}) =>
+      createOrderExecutionDetectorService({
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: serviceOptions.withErrorHandler,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
   };
 }
 

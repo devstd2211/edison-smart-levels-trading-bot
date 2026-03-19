@@ -4,11 +4,12 @@
  */
 
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { LoggerService, OrderExecutionData } from '../../types/legacy';
+import { LoggerService } from '../../types/legacy';
 import {
   createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
   createOrderExecutionDetectorHarness,
+  runOrderExecutionDetectorSequence,
 } from '../helpers/order-execution-detector-test.utils';
 
 // ============================================================================
@@ -24,9 +25,10 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 describe('OrderExecutionDetectorService', () => {
   let service: OrderExecutionDetectorService;
   let logger: LoggerService;
+  let createService: ReturnType<typeof createOrderExecutionDetectorHarness>['createService'];
 
   beforeEach(() => {
-    ({ service, logger } = createOrderExecutionDetectorHarness({ withErrorHandler: false }));
+    ({ service, logger, createService } = createOrderExecutionDetectorHarness({ withErrorHandler: false }));
   });
 
   describe('detectExecution', () => {
@@ -199,11 +201,11 @@ describe('OrderExecutionDetectorService', () => {
     });
 
     it('should track tpLevel in result', () => {
-      const results = createOrderExecutionDetectorExecutionBatch([
+      const results = runOrderExecutionDetectorSequence(service, [
         { orderId: 'tp1' },
         { orderId: 'tp2' },
         { orderId: 'tp3' },
-      ]).map((execution) => service.detectExecution(execution));
+      ]);
 
       expect(results[0].tpLevel).toBe(1);
       expect(results[1].tpLevel).toBe(2);
@@ -245,6 +247,10 @@ describe('OrderExecutionDetectorService', () => {
   });
 
   describe('Edge Cases', () => {
+    beforeEach(() => {
+      service = createService({ withErrorHandler: false });
+    });
+
     it('should handle null/undefined fields gracefully', () => {
       const execData = createMockExecutionData({
         orderId: undefined,

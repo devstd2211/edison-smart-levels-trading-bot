@@ -8,7 +8,11 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createWebSocketAuthenticationHarness,
   createWebSocketAuthenticationService,
+  createLongWebSocketAuthCredentials,
+  createShortWebSocketAuthCredentials,
   createMockWebSocketAuthLogger,
+  createSpecialWebSocketAuthCredentials,
+  createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
 
@@ -16,9 +20,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;
+  let createService: ReturnType<typeof createWebSocketAuthenticationHarness>['createService'];
 
   beforeEach(() => {
-    ({ service, errorHandler, mockLogger } = createWebSocketAuthenticationHarness());
+    ({ service, errorHandler, mockLogger, createService } = createWebSocketAuthenticationHarness());
   });
 
   // ===== THROW: Input Validation =====
@@ -60,10 +65,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       }));
 
       // Create new service with mocked crypto
-      const newService = createWebSocketAuthenticationHarness({
+      const newService = createService({
         logger: mockLogger,
         errorHandler,
-      }).service;
+      });
 
       // Unmock to restore original behavior
       jest.unmock('crypto');
@@ -94,10 +99,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
           throw new Error('Logger error');
         });
 
-      const serviceWithBadLogger = createWebSocketAuthenticationHarness({
+      const serviceWithBadLogger = createService({
         logger: loggerWithError,
         errorHandler,
-      }).service;
+      });
 
       expect(() => {
         serviceWithBadLogger.generateAuthPayload('valid-key-1234567890', 'valid-secret-1234567890');
@@ -110,10 +115,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
           throw new Error('Logger error');
         });
 
-      const serviceWithBadLogger = createWebSocketAuthenticationHarness({
+      const serviceWithBadLogger = createService({
         logger: loggerWithError,
         errorHandler,
-      }).service;
+      });
 
       expect(() => {
         serviceWithBadLogger.validateCredentials('valid-key-1234567890', 'valid-secret-1234567890');
@@ -126,10 +131,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
           throw new Error('Logger error');
         });
 
-      const serviceWithBadLogger = createWebSocketAuthenticationHarness({
+      const serviceWithBadLogger = createService({
         logger: loggerWithError,
         errorHandler,
-      }).service;
+      });
 
       const result = serviceWithBadLogger.validateCredentials('invalid', 'invalid');
 
@@ -226,7 +231,8 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should reject credentials that are too short', () => {
-      const result = service.validateCredentials('short', 'short');
+      const { apiKey, apiSecret } = createShortWebSocketAuthCredentials();
+      const result = service.validateCredentials(apiKey, apiSecret);
 
       expect(result).toBe(false);
     });
@@ -305,23 +311,21 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== Edge Cases =====
   describe('Edge Cases', () => {
     it('should handle very long credentials', () => {
-      const longKey = 'a'.repeat(1000);
-      const longSecret = 'b'.repeat(1000);
+      const { apiKey, apiSecret } = createLongWebSocketAuthCredentials();
 
-      const result = service.generateAuthPayload(longKey, longSecret);
+      const result = service.generateAuthPayload(apiKey, apiSecret);
 
       expect(result.op).toBe('auth');
-      expect(result.args[0]).toBe(longKey);
+      expect(result.args[0]).toBe(apiKey);
     });
 
     it('should handle credentials with special characters', () => {
-      const specialKey = 'key-!@#$%^&*()_+-=[]{}|;:,.<>?';
-      const specialSecret = 'secret-!@#$%^&*()_+-=[]{}|;:,.<>?';
+      const { apiKey, apiSecret } = createSpecialWebSocketAuthCredentials();
 
-      const result = service.generateAuthPayload(specialKey, specialSecret);
+      const result = service.generateAuthPayload(apiKey, apiSecret);
 
       expect(result.op).toBe('auth');
-      expect(result.args[0]).toBe(specialKey);
+      expect(result.args[0]).toBe(apiKey);
     });
 
     it('should handle credentials with unicode characters', () => {

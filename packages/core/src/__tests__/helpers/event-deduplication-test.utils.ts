@@ -5,6 +5,13 @@ import { LoggerService, LogLevel } from '../../types/legacy';
 export interface EventDeduplicationHarness {
   logger: LoggerService;
   errorHandler: ErrorHandler;
+  createServiceWithDefaults: (options?: {
+    cacheSize?: number;
+    cacheTtlMs?: number;
+    logger?: LoggerService;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => EventDeduplicationService;
   createService: (
     cacheSize?: number,
     cacheTtlMs?: number,
@@ -81,6 +88,19 @@ export function createEventDeduplicationEvents(
   return events.map((event) => createEventDeduplicationEvent(event));
 }
 
+export function getEventDeduplicationProcessedEvents(
+  target: EventDeduplicationService,
+): Map<string, number> {
+  return (target as unknown as { processedEvents: Map<string, number> }).processedEvents;
+}
+
+export function runEventDeduplicationChecks(
+  service: EventDeduplicationService,
+  events: Array<{ type: string; id: string; time: number }>,
+): boolean[] {
+  return events.map((event) => service.isDuplicate(event.type, event.id, event.time));
+}
+
 export function createEventDeduplicationHarness(): EventDeduplicationHarness {
   const logger = createEventDeduplicationLogger();
   const errorHandler = createEventDeduplicationErrorHandler(logger);
@@ -88,6 +108,14 @@ export function createEventDeduplicationHarness(): EventDeduplicationHarness {
   return {
     logger,
     errorHandler,
+    createServiceWithDefaults: (options = {}) =>
+      createEventDeduplicationService({
+        cacheSize: options.cacheSize,
+        cacheTtlMs: options.cacheTtlMs,
+        logger: options.logger ?? logger,
+        withErrorHandler: options.withErrorHandler,
+        errorHandler: options.errorHandler ?? errorHandler,
+      }),
     createService: (
       cacheSize: number = 100,
       cacheTtlMs: number = 60000,

@@ -9,7 +9,7 @@ import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createEventDeduplicationHarness,
-  createEventDeduplicationServiceWithHarness,
+  runEventDeduplicationChecks,
   type EventDeduplicationHarness,
 } from '../helpers/event-deduplication-test.utils';
 
@@ -28,7 +28,7 @@ describe('EventDeduplicationService', () => {
   });
 
   const createService = (cacheSize = 100, cacheTtlMs = 60000) =>
-    createEventDeduplicationServiceWithHarness({
+    harness.createServiceWithDefaults({
       cacheSize,
       cacheTtlMs,
       logger,
@@ -219,16 +219,13 @@ describe('EventDeduplicationService', () => {
         { type: 'TP', id: 'exec-1', time: 1000 }, // Duplicate again
       ]);
 
-      const results = events.map(e => ({
-        ...e,
-        isDuplicate: service.isDuplicate(e.type, e.id, e.time),
-      }));
+      const results = runEventDeduplicationChecks(service, events);
 
-      expect(results[0].isDuplicate).toBe(false); // New TP
-      expect(results[1].isDuplicate).toBe(false); // New TP
-      expect(results[2].isDuplicate).toBe(true); // Duplicate TP
-      expect(results[3].isDuplicate).toBe(false); // New SL
-      expect(results[4].isDuplicate).toBe(true); // Duplicate TP
+      expect(results[0]).toBe(false); // New TP
+      expect(results[1]).toBe(false); // New TP
+      expect(results[2]).toBe(true); // Duplicate TP
+      expect(results[3]).toBe(false); // New SL
+      expect(results[4]).toBe(true); // Duplicate TP
     });
 
     it('should handle mixed event types', () => {

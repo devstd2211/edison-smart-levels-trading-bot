@@ -7,6 +7,7 @@ import { TelegramService } from '../../services/telegram.service';
 import { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { LoggerService, Position, PositionSide } from '../../types/legacy';
+import type { TakeProfitFilledEvent } from '../../types/legacy';
 
 export type WebSocketEventHandlerHarness = {
   handler: WebSocketEventHandler;
@@ -48,6 +49,43 @@ export function createMockWebSocketEventPosition(
     },
     ...overrides,
   };
+}
+
+export function createMockTakeProfitFilledEvent(
+  overrides: Partial<TakeProfitFilledEvent> = {},
+): TakeProfitFilledEvent {
+  return {
+    orderId: 'tp-order-1',
+    avgPrice: 46000,
+    cumExecQty: 0.05,
+    ...overrides,
+  };
+}
+
+export function configureWebSocketCloseScenario(
+  harness: Pick<
+    WebSocketEventHandlerHarness,
+    'mockBybitService' | 'mockPositionManager' | 'mockWebSocketManager' | 'mockJournal'
+  >,
+  options: {
+    position?: Position;
+    currentPrice?: number | Error;
+    lastCloseReason?: 'SL' | 'TP' | 'TRAILING' | null;
+    existingTrade?: unknown;
+  } = {},
+): Position {
+  const position = options.position ?? createMockWebSocketEventPosition();
+  harness.mockPositionManager.getCurrentPosition.mockReturnValue(position);
+  harness.mockWebSocketManager.getLastCloseReason.mockReturnValue(options.lastCloseReason ?? 'TP');
+  harness.mockJournal.getTrade.mockReturnValue(options.existingTrade as never);
+
+  if (options.currentPrice instanceof Error) {
+    harness.mockBybitService.getCurrentPrice.mockRejectedValue(options.currentPrice);
+  } else {
+    harness.mockBybitService.getCurrentPrice.mockResolvedValue(options.currentPrice ?? 46000);
+  }
+
+  return position;
 }
 
 function asPositionLifecycleService(

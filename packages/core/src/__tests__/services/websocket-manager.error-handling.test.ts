@@ -13,30 +13,15 @@
 
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import type { WebSocketManagerService } from '../../services/websocket-manager.service';
-import type { ExchangeConfig, LoggerService } from '../../types/legacy';
-import { ErrorHandler } from '../../errors';
+import type { LoggerService } from '../../types/legacy';
 import {
+  createWebSocketManagerBackoffDelays,
   createMockWebSocketAuthenticationService,
   createWebSocketManagerService,
   createWebSocketManagerHarness,
+  getWebSocketManagerInternals,
   type WebSocketManagerHarness,
 } from '../helpers/websocket-manager-test.utils';
-
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-type WebSocketManagerInternalState = {
-  errorHandler: ErrorHandler;
-  reconnectAttempts: number;
-  isConnecting: boolean;
-  shouldReconnect: boolean;
-  isDuplicateEvent: (eventType: string, eventId: string, timestamp: number) => boolean;
-};
-
-const getWsManagerInternals = (manager: WebSocketManagerService): WebSocketManagerInternalState => (
-  manager as unknown as WebSocketManagerInternalState
-);
 
 // ============================================================================
 // TESTS
@@ -45,14 +30,13 @@ const getWsManagerInternals = (manager: WebSocketManagerService): WebSocketManag
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   let harness: WebSocketManagerHarness;
   let wsManager: WebSocketManagerService;
-  let config: ExchangeConfig;
   let logger: LoggerService;
 
   beforeEach(() => {
     harness = createWebSocketManagerHarness({
       configOverrides: { testnet: true },
     });
-    ({ wsManager, config, logger } = harness);
+    ({ wsManager, logger } = harness);
   });
 
   afterEach(async () => {
@@ -66,7 +50,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('RETRY Strategy for Connection (3 tests)', () => {
     it('test-1.1: Should retry connection on network error', async () => {
       // Test that connection retry logic handles network errors gracefully
-      const errorHandler = getWsManagerInternals(wsManager).errorHandler;
+      const errorHandler = getWebSocketManagerInternals(wsManager).errorHandler;
 
       // Verify errorHandler exists and has RETRY capability
       expect(errorHandler).toBeDefined();
@@ -74,16 +58,11 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
     });
 
     it('test-1.2: Should calculate exponential backoff correctly', () => {
-      // Test exponential backoff calculation for retries
-      const baseDelay = 500;
-      const multiplier = 2;
-      const maxDelay = 5000;
-
-      const delays: number[] = [];
-      for (let i = 0; i < 3; i++) {
-        const delay = Math.min(baseDelay * Math.pow(multiplier, i), maxDelay);
-        delays.push(delay);
-      }
+      const delays = createWebSocketManagerBackoffDelays({
+        attempts: 3,
+        baseDelay: 500,
+        maxDelay: 5000,
+      });
 
       // Should be: 500, 1000, 2000
       expect(delays[0]).toBe(500);
@@ -127,15 +106,11 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
     });
 
     it('test-2.3: Should retry auth with exponential backoff (200ms → 400ms → 800ms)', () => {
-      const baseDelay = 200;
-      const multiplier = 2;
-      const maxDelay = 2000;
-
-      const delays: number[] = [];
-      for (let i = 0; i < 3; i++) {
-        const delay = Math.min(baseDelay * Math.pow(multiplier, i), maxDelay);
-        delays.push(delay);
-      }
+      const delays = createWebSocketManagerBackoffDelays({
+        attempts: 3,
+        baseDelay: 200,
+        maxDelay: 2000,
+      });
 
       expect(delays[0]).toBe(200);
       expect(delays[1]).toBe(400);
@@ -245,18 +220,18 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
     });
 
     it('test-6.2: Should track reconnect attempts', () => {
-      const reconnectAttempts = getWsManagerInternals(wsManager).reconnectAttempts;
+      const reconnectAttempts = getWebSocketManagerInternals(wsManager).reconnectAttempts;
       expect(typeof reconnectAttempts).toBe('number');
     });
 
     it('test-6.3: Should reset reconnect counter on successful connection', () => {
       // Verify counter reset logic
-      getWsManagerInternals(wsManager).reconnectAttempts = 5;
-      expect(getWsManagerInternals(wsManager).reconnectAttempts).toBe(5);
+      getWebSocketManagerInternals(wsManager).reconnectAttempts = 5;
+      expect(getWebSocketManagerInternals(wsManager).reconnectAttempts).toBe(5);
 
       // After successful connection, should reset
-      getWsManagerInternals(wsManager).reconnectAttempts = 0;
-      expect(getWsManagerInternals(wsManager).reconnectAttempts).toBe(0);
+      getWebSocketManagerInternals(wsManager).reconnectAttempts = 0;
+      expect(getWebSocketManagerInternals(wsManager).reconnectAttempts).toBe(0);
     });
   });
 
@@ -266,15 +241,15 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
 
   describe('Connection State Management (3 tests)', () => {
     it('test-7.1: Should not attempt duplicate connections', () => {
-      const isConnecting = getWsManagerInternals(wsManager).isConnecting;
+      const isConnecting = getWebSocketManagerInternals(wsManager).isConnecting;
       expect(typeof isConnecting).toBe('boolean');
     });
 
     it('test-7.2: Should respect shouldReconnect flag', async () => {
-      getWsManagerInternals(wsManager).shouldReconnect = false;
+      getWebSocketManagerInternals(wsManager).shouldReconnect = false;
       await wsManager.disconnect();
 
-      const shouldReconnect = getWsManagerInternals(wsManager).shouldReconnect;
+      const shouldReconnect = getWebSocketManagerInternals(wsManager).shouldReconnect;
       expect(shouldReconnect).toBe(false);
     });
 
@@ -292,13 +267,17 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('Integration Scenarios (2 tests)', () => {
     it('test-8.1: Should maintain deduplication during retry/recovery', () => {
       // Verify deduplication service still works during recovery
-      const isDuplicate = getWsManagerInternals(wsManager).isDuplicateEvent('TP', 'order-1', Date.now());
+      const isDuplicate = getWebSocketManagerInternals(wsManager).isDuplicateEvent(
+        'TP',
+        'order-1',
+        Date.now(),
+      );
       expect(typeof isDuplicate).toBe('boolean');
     });
 
     it('test-8.2: Should handle strategy switching during operation', () => {
       // Verify ErrorHandler can switch strategies as needed
-      const errorHandler = getWsManagerInternals(wsManager).errorHandler;
+      const errorHandler = getWebSocketManagerInternals(wsManager).errorHandler;
       expect(errorHandler).toBeDefined();
     });
   });

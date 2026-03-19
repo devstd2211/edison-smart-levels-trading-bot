@@ -36,7 +36,7 @@ import {
   createOrderExecutionDetectorExecutionData,
   createOrderExecutionDetectorFailingLogger,
   createOrderExecutionDetectorHarness,
-  createOrderExecutionDetectorService,
+  runOrderExecutionDetectorSequence,
 } from '../helpers/order-execution-detector-test.utils';
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
@@ -47,11 +47,13 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let createService: ReturnType<typeof createOrderExecutionDetectorHarness>['createService'];
 
   beforeEach(() => {
     const harness = createOrderExecutionDetectorHarness();
     logger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
+    createService = harness.createService;
   });
 
   const createMockExecutionData = createOrderExecutionDetectorExecutionData;
@@ -62,19 +64,19 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   describe('THROW - Input Validation', () => {
     it('should throw on null execData', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       expect(() => service.detectExecution(asExecData(null))).toThrow('execData is required');
     });
 
     it('should throw on undefined execData', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       expect(() => service.detectExecution(asExecData(undefined))).toThrow('execData is required');
     });
 
     it('should handle missing optional fields gracefully', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       const execData = {
         // Only required-like fields
@@ -97,7 +99,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   describe('GRACEFUL_DEGRADE - Parsing Failures', () => {
     it('should handle NaN closedSize and return 0', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       const execData = createMockExecutionData({
         closedSize: 'invalid-number',
@@ -112,7 +114,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should handle Infinity execPrice and return 0', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       // Create a very large string that would overflow
       const execData = createMockExecutionData({
@@ -126,7 +128,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should handle null/undefined numeric fields', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       const execData = createMockExecutionData({
         closedSize: undefined,
@@ -141,7 +143,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should handle empty string numeric fields', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       const execData = createMockExecutionData({
         closedSize: '',
@@ -156,7 +158,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should recover after parsing failure on subsequent calls', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       // First call with invalid data
       const failData = createMockExecutionData({
@@ -189,7 +191,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         info: 'Logger info failed',
       });
 
-      const service = createOrderExecutionDetectorService({
+      const service = createService({
         logger: asLogger(failingLogger),
         errorHandler,
       });
@@ -207,7 +209,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         debug: 'Logger debug failed',
       });
 
-      const service = createOrderExecutionDetectorService({
+      const service = createService({
         logger: asLogger(failingLogger),
         errorHandler,
       });
@@ -222,7 +224,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         debug: 'Logger debug failed',
       });
 
-      const service = createOrderExecutionDetectorService({
+      const service = createService({
         logger: asLogger(failingLogger),
         errorHandler,
       });
@@ -239,7 +241,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   describe('Integration - Cascading Failures', () => {
     it('should handle full execution sequence with parsing errors', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       const [tp1Data, tp2Data] = createOrderExecutionDetectorExecutionBatch([
         {
@@ -251,7 +253,6 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
           closedSize: 'invalid',
         },
       ]);
-
       const tp1Result = service.detectExecution(tp1Data);
       expect(tp1Result.type).toBe('TAKE_PROFIT');
       expect(tp1Result.tpLevel).toBe(1);
@@ -263,7 +264,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should maintain state across error scenarios', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       // Set up initial state
       const tp1 = createMockExecutionData({ orderId: 'tp1' });
@@ -300,7 +301,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         }),
       } as unknown as ErrorHandler;
 
-      const service = createOrderExecutionDetectorService({
+      const service = createService({
         logger,
         errorHandler: failingErrorHandler,
       });
@@ -321,7 +322,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (optional DI)', () => {
       // Constructor without errorHandler
-      const service = createOrderExecutionDetectorService({
+      const service = createService({
         logger,
         withErrorHandler: false,
       });
@@ -336,7 +337,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should still throw on THROW validation without ErrorHandler', () => {
-      const service = createOrderExecutionDetectorService({
+      const service = createService({
         logger,
         withErrorHandler: false,
       });
@@ -352,7 +353,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   describe('Edge Cases', () => {
     it('should handle multiple consecutive TPs with some invalid data', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       // Valid TP1
       service.detectExecution(createMockExecutionData({ orderId: 'tp1' }));
@@ -371,7 +372,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should validate TP detection with boundary closedSize values', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       // closedSize = 0.0001 (still > 0, should be TP)
       const tpData = createMockExecutionData({
@@ -392,7 +393,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     });
 
     it('should track all execution types with error handling', () => {
-      const service = createOrderExecutionDetectorService({ logger, errorHandler });
+      const service = createService({ logger, errorHandler });
 
       // Test all execution types
       const types = [

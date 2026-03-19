@@ -20,7 +20,9 @@ import {
 } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
+  configureWebSocketCloseScenario,
   createMockWebSocketEventPosition,
+  createMockTakeProfitFilledEvent,
   createWebSocketEventHandler,
   createWebSocketEventHandlerHarness,
   type WebSocketEventHandlerHarness,
@@ -86,12 +88,10 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('[FALLBACK] getCurrentPriceWithFallback() - Price Retrieval (3 tests)', () => {
     it('test-8.6.5: Should use fallback when getCurrentPrice throws error', async () => {
-      mockBybitService.getCurrentPrice.mockRejectedValue(new Error('API error'));
-
-      const position = createMockWebSocketEventPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
-      mockJournal.getTrade.mockReturnValue(undefined);
+      const position = configureWebSocketCloseScenario(
+        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
+        { currentPrice: new Error('API error') },
+      );
 
       // Trigger _handlePositionClosedInternal through handlePositionClosed
       await handler.handlePositionClosed();
@@ -103,12 +103,10 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.6: Should use fallback when getCurrentPrice returns NaN', async () => {
-      mockBybitService.getCurrentPrice.mockResolvedValue(NaN);
-
-      const position = createMockWebSocketEventPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
-      mockJournal.getTrade.mockReturnValue(undefined);
+      const position = configureWebSocketCloseScenario(
+        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
+        { currentPrice: NaN },
+      );
 
       await handler.handlePositionClosed();
 
@@ -118,12 +116,10 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.7: Should use valid price when getCurrentPrice succeeds', async () => {
-      mockBybitService.getCurrentPrice.mockResolvedValue(46000);
-
-      const position = createMockWebSocketEventPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockWebSocketManager.getLastCloseReason.mockReturnValue('TP');
-      mockJournal.getTrade.mockReturnValue(undefined);
+      configureWebSocketCloseScenario(
+        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
+        { currentPrice: 46000 },
+      );
 
       await handler.handlePositionClosed();
 
@@ -142,11 +138,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.9: Should skip when TP event missing orderId', async () => {
-      const event: TakeProfitFilledEvent = {
-        orderId: '',
-        avgPrice: 46000,
-        cumExecQty: 0.05,
-      };
+      const event = createMockTakeProfitFilledEvent({ orderId: '' });
 
       await handler.handleTakeProfitFilled(event);
 
@@ -155,11 +147,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.10: Should skip when TP event has NaN avgPrice', async () => {
-      const event: TakeProfitFilledEvent = {
-        orderId: 'tp-order-1',
-        avgPrice: NaN,
-        cumExecQty: 0.05,
-      };
+      const event = createMockTakeProfitFilledEvent({ avgPrice: NaN });
 
       await handler.handleTakeProfitFilled(event);
 
@@ -170,12 +158,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     it('test-8.6.11: Should process when TP event is valid', async () => {
       const position = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(position);
-
-      const event: TakeProfitFilledEvent = {
-        orderId: 'tp-order-1',
-        avgPrice: 46000,
-        cumExecQty: 0.05,
-      };
+      const event = createMockTakeProfitFilledEvent();
 
       await handler.handleTakeProfitFilled(event);
 
@@ -256,7 +239,10 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
     it('test-8.6.18: Should handle cascading failures gracefully', async () => {
       // Setup cascading failures
-      mockBybitService.getCurrentPrice.mockRejectedValue(new Error('API down'));
+      configureWebSocketCloseScenario(
+        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
+        { currentPrice: new Error('API down') },
+      );
 
       // Invalid position update
       const invalidPosition = createMockWebSocketEventPosition({ symbol: '' });
@@ -264,11 +250,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       expect(ErrorHandler.handle).toHaveBeenCalled();
 
       // Invalid TP event
-      const invalidEvent: TakeProfitFilledEvent = {
+      const invalidEvent = createMockTakeProfitFilledEvent({
         orderId: '',
         avgPrice: NaN,
         cumExecQty: 0,
-      };
+      });
       await handler.handleTakeProfitFilled(invalidEvent);
       expect(ErrorHandler.handle).toHaveBeenCalledTimes(2);
 
@@ -276,11 +262,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       const validPosition = createMockWebSocketEventPosition();
       mockPositionManager.getCurrentPosition.mockReturnValue(validPosition);
 
-      const validEvent: TakeProfitFilledEvent = {
-        orderId: 'tp-order-1',
-        avgPrice: 46000,
-        cumExecQty: 0.05,
-      };
+      const validEvent = createMockTakeProfitFilledEvent();
       await handler.handleTakeProfitFilled(validEvent);
 
       // Should process valid event despite previous failures

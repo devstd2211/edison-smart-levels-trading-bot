@@ -43,3 +43,34 @@ export function createWebSocketKeepAliveService(
 ): WebSocketKeepAliveService {
   return new WebSocketKeepAliveService(interval, logger);
 }
+
+export function setMockWebSocketReadyState(
+  websocket: MockWebSocket,
+  readyState: WebSocket['readyState'],
+): void {
+  Object.defineProperty(websocket, 'readyState', {
+    value: readyState,
+    writable: true,
+    configurable: true,
+  });
+}
+
+export function startWebSocketKeepAlive(
+  harness: WebSocketKeepAliveHarness,
+  options: {
+    interval?: number;
+    logger?: LoggerService;
+    websocket?: MockWebSocket;
+  } = {},
+): { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number } {
+  const websocket = options.websocket ?? harness.createWebSocket();
+  const interval = options.interval ?? 20000;
+  const service = harness.createService(interval, options.logger);
+  service.start(websocket as WebSocket);
+
+  return { service, websocket, interval };
+}
+
+export function advanceKeepAliveIntervals(interval: number, ticks: number = 1): void {
+  jest.advanceTimersByTime(interval * ticks);
+}

@@ -99,6 +99,26 @@ export function createPublicWebSocketErrorHandlerService(
   return createMockPublicWebSocketErrorHandler(mockLogger) as unknown as ErrorHandler;
 }
 
+export function createPublicWebSocketBtcConfirmationConfig(overrides: {
+  enabled?: boolean;
+  timeframe?: string;
+  symbol?: string;
+  lookbackCandles?: number;
+} = {}): {
+  enabled?: boolean;
+  timeframe?: string;
+  symbol?: string;
+  lookbackCandles?: number;
+} {
+  return {
+    enabled: true,
+    symbol: 'BTCUSDT',
+    timeframe: '1',
+    lookbackCandles: 100,
+    ...overrides,
+  };
+}
+
 export function createPublicWebSocketHarness(options: {
   configOverrides?: Partial<ExchangeConfig>;
   symbol?: string;
@@ -159,4 +179,29 @@ export function createPublicWebSocketService(
     options.errorHandlerService,
     options.btcConfirmation,
   );
+}
+
+export function createStandardPublicWebSocketService(
+  harness: Pick<
+    PublicWebSocketHarness,
+    'createService' | 'errorHandlerService'
+  >,
+  overrides: {
+    symbol?: string;
+    withErrorHandler?: boolean;
+    btcConfirmation?: {
+      enabled?: boolean;
+      timeframe?: string;
+      symbol?: string;
+      lookbackCandles?: number;
+    };
+  } = {},
+): PublicWebSocketService {
+  return harness.createService({
+    symbol: overrides.symbol ?? 'XRPUSDT',
+    withErrorHandler: overrides.withErrorHandler,
+    errorHandlerService:
+      overrides.withErrorHandler === false ? undefined : harness.errorHandlerService,
+    btcConfirmation: overrides.btcConfirmation,
+  });
 }

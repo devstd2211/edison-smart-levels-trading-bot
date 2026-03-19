@@ -19,6 +19,8 @@ import {
   createEventDeduplicationHarness,
   createEventDeduplicationErrorHandler,
   createEventDeduplicationService,
+  getEventDeduplicationProcessedEvents,
+  runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
@@ -39,12 +41,6 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   beforeEach(() => {
     ({ logger, errorHandler } = createEventDeduplicationHarness());
   });
-
-  const getProcessedEvents = (
-    target: EventDeduplicationService
-  ): Map<string, number> => {
-    return (target as unknown as { processedEvents: Map<string, number> }).processedEvents;
-  };
 
   // ========================================================================
   // SKIP Strategy Tests (4 tests)
@@ -149,7 +145,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
       // Manually add events to trigger potential cleanup
       const now = Date.now();
       for (let i = 0; i < 11; i++) {
-        getProcessedEvents(corruptedService).set(`key-${i}`, now);
+        getEventDeduplicationProcessedEvents(corruptedService).set(`key-${i}`, now);
       }
 
       // Call isDuplicate to test deduplication
@@ -261,9 +257,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
         { type: 'TP', id: 'exec-1', time: 1000 }, // Duplicate again
       ];
 
-      const results = events.map(e =>
-        service.isDuplicate(e.type, e.id, e.time),
-      );
+      const results = runEventDeduplicationChecks(service, events);
 
       expect(results[0]).toBe(false); // New
       expect(results[1]).toBe(true); // Duplicate

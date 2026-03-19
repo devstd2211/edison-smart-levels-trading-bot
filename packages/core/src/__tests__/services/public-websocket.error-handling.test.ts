@@ -13,8 +13,10 @@
 import type { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
+  createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
   createPublicWebSocketHarness,
+  createStandardPublicWebSocketService,
 } from '../helpers/public-websocket-test.utils';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
@@ -74,7 +76,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Message Parsing & GRACEFUL_DEGRADE Strategy', () => {
     beforeEach(() => {
-      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      service = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
     });
 
     it('should handle invalid JSON messages with GRACEFUL_DEGRADE', () => {
@@ -127,7 +132,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Event Emission & Connectivity', () => {
     beforeEach(() => {
-      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      service = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
     });
 
     it('should emit candleClosed events for valid kline data', (done) => {
@@ -166,7 +174,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Reconnection Logic', () => {
     beforeEach(() => {
-      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      service = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
     });
 
     it('should emit disconnected event when connection is lost', (done) => {
@@ -198,7 +209,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Error Handling Strategies', () => {
     beforeEach(() => {
-      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      service = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
     });
 
     it('should use GRACEFUL_DEGRADE for data validation errors', () => {
@@ -221,28 +235,23 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('BTC Confirmation Feature', () => {
     it('should accept BTC confirmation config', () => {
-      const btcConfig = {
-        enabled: true,
-        symbol: 'BTCUSDT',
-        timeframe: '1',
-        lookbackCandles: 100,
-      };
-
-      const serviceWithBtc = createService({
-        symbol: 'XRPUSDT',
-        errorHandlerService,
-        btcConfirmation: btcConfig,
-      });
+      const serviceWithBtc = createStandardPublicWebSocketService(
+        { createService, errorHandlerService },
+        { btcConfirmation: createPublicWebSocketBtcConfirmationConfig() },
+      );
 
       expect(serviceWithBtc).toBeDefined();
     });
 
     it('should handle BTC candle store assignment', () => {
-      const serviceWithBtc = createService({
-        symbol: 'XRPUSDT',
-        errorHandlerService,
-        btcConfirmation: { enabled: true, symbol: 'BTCUSDT' },
-      });
+      const serviceWithBtc = createStandardPublicWebSocketService(
+        { createService, errorHandlerService },
+        {
+          btcConfirmation: createPublicWebSocketBtcConfirmationConfig({
+            lookbackCandles: undefined,
+          }),
+        },
+      );
 
       const btcStore = { btcCandles1m: [] };
       serviceWithBtc.setBtcCandlesStore(btcStore);
@@ -257,7 +266,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('E2E Recovery Scenarios', () => {
     beforeEach(() => {
-      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      service = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
     });
 
     it('should maintain service state after disconnect', () => {
@@ -294,7 +306,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Error Classification', () => {
     beforeEach(() => {
-      service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      service = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
     });
 
     it('should handle connection-related errors', () => {
@@ -383,7 +398,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       expect(service1).toBeDefined();
 
       // With ErrorHandler (normal flow)
-      const service2 = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      const service2 = createStandardPublicWebSocketService({
+        createService,
+        errorHandlerService,
+      });
       expect(service2).toBeDefined();
     });
   });

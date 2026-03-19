@@ -7,8 +7,8 @@ import { WebSocketAuthenticationService } from '../../services/websocket-authent
 import crypto from 'crypto';
 import {
   createWebSocketAuthCredentials,
+  createSpecialWebSocketAuthCredentials,
   createWebSocketAuthenticationHarness,
-  createWebSocketAuthenticationServiceWithHarness,
 } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
@@ -22,11 +22,7 @@ describe('WebSocketAuthenticationService', () => {
   beforeEach(() => {
     const harness = createWebSocketAuthenticationHarness();
     service = harness.service;
-    createService = () =>
-      createWebSocketAuthenticationServiceWithHarness({
-        logger: harness.mockLogger,
-        errorHandler: harness.errorHandler,
-      });
+    createService = () => harness.createService();
   });
 
   describe('generateAuthPayload', () => {
@@ -137,10 +133,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     it('should handle special characters in credentials', () => {
-      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
-        apiKey: 'key-with-!@#$%^&*()_special',
-        apiSecret: 'secret-with-!@#$%^&*()_special',
-      });
+      const { apiKey, apiSecret } = createSpecialWebSocketAuthCredentials();
 
       const payload = service.generateAuthPayload(apiKey, apiSecret);
 

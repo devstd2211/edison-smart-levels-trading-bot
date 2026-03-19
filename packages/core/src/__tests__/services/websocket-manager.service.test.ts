@@ -5,29 +5,11 @@
  */
 
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
-import type { ExchangeConfig } from '../../types/legacy';
-import { createWebSocketManagerHarness, type WebSocketManagerHarness } from '../helpers/websocket-manager-test.utils';
-
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const getIsDuplicateEvent = (
-  manager: WebSocketManagerService,
-): ((eventType: string, eventId: string, timestamp: number) => boolean) => {
-  return (eventType: string, eventId: string, timestamp: number): boolean => {
-    const method = (manager as unknown as Record<string, unknown>).isDuplicateEvent;
-    if (typeof method !== 'function') {
-      throw new Error('isDuplicateEvent private method is not available');
-    }
-    return (method as (eventType: string, eventId: string, timestamp: number) => boolean).call(
-      manager,
-      eventType,
-      eventId,
-      timestamp,
-    );
-  };
-};
+import {
+  createWebSocketManagerHarness,
+  getWebSocketManagerDuplicateEventChecker,
+  type WebSocketManagerHarness,
+} from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
 // TESTS
@@ -36,11 +18,10 @@ const getIsDuplicateEvent = (
 describe('WebSocketManagerService', () => {
   let harness: WebSocketManagerHarness;
   let wsManager: WebSocketManagerService;
-  let config: ExchangeConfig;
 
   beforeEach(() => {
     harness = createWebSocketManagerHarness();
-    ({ wsManager, config } = harness);
+    ({ wsManager } = harness);
   });
 
   afterEach(async () => {
@@ -53,7 +34,7 @@ describe('WebSocketManagerService', () => {
 
   describe('Event Deduplication (Session #60)', () => {
     it('should ignore duplicate TP events with same orderId', () => {
-      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
+      const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(wsManager);
 
       const eventType = 'TP';
       const orderId = 'tp1-order-123';
@@ -73,7 +54,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should process non-duplicate events', () => {
-      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
+      const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(wsManager);
 
       const eventType = 'TP';
       const timestamp = Date.now();
@@ -94,7 +75,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should cleanup old events from cache', () => {
-      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
+      const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(wsManager);
 
       // Fill cache with events
       for (let i = 0; i < 110; i++) {
@@ -114,7 +95,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should handle different event types independently', () => {
-      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
+      const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(wsManager);
 
       const orderId = 'same-order-123';
       const timestamp = Date.now();
@@ -135,7 +116,7 @@ describe('WebSocketManagerService', () => {
     });
 
     it('should handle different timestamps for same orderId as separate events', () => {
-      const isDuplicateEvent = getIsDuplicateEvent(wsManager);
+      const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(wsManager);
 
       const eventType = 'TP';
       const orderId = 'order-123';

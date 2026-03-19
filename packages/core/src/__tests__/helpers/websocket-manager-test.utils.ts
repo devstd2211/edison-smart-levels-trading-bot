@@ -18,6 +18,14 @@ export type WebSocketManagerHarness = {
   wsManager: WebSocketManagerService;
 };
 
+export type WebSocketManagerInternalState = {
+  errorHandler: ErrorHandler;
+  reconnectAttempts: number;
+  isConnecting: boolean;
+  shouldReconnect: boolean;
+  isDuplicateEvent: (eventType: string, eventId: string, timestamp: number) => boolean;
+};
+
 export function createMockWebSocketAuthenticationService(): WebSocketAuthenticationService {
   return new WebSocketAuthenticationService();
 }
@@ -105,4 +113,35 @@ export function createWebSocketManagerHarness(options: {
     keepAliveService,
     wsManager,
   };
+}
+
+export function getWebSocketManagerInternals(
+  manager: WebSocketManagerService,
+): WebSocketManagerInternalState {
+  return manager as unknown as WebSocketManagerInternalState;
+}
+
+export function getWebSocketManagerDuplicateEventChecker(
+  manager: WebSocketManagerService,
+): (eventType: string, eventId: string, timestamp: number) => boolean {
+  return (eventType: string, eventId: string, timestamp: number): boolean =>
+    getWebSocketManagerInternals(manager).isDuplicateEvent.call(
+      manager,
+      eventType,
+      eventId,
+      timestamp,
+    );
+}
+
+export function createWebSocketManagerBackoffDelays(options: {
+  attempts: number;
+  baseDelay: number;
+  multiplier?: number;
+  maxDelay: number;
+}): number[] {
+  const { attempts, baseDelay, maxDelay, multiplier = 2 } = options;
+
+  return Array.from({ length: attempts }, (_, index) =>
+    Math.min(baseDelay * Math.pow(multiplier, index), maxDelay),
+  );
 }
