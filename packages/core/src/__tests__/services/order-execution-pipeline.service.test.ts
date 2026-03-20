@@ -13,80 +13,37 @@
  */
 
 import { OrderExecutionPipeline } from '../../services/order-execution-pipeline.service';
-import { LoggerService } from '../../types/legacy';
-import { IExchange } from '../../interfaces';
 import {
   OrderExecutionConfig,
-  OrderRequest,
   OrderStatus,
 } from '../../types/legacy';
-
-type PlaceOrderResponse = {
-  orderId: string;
-  price?: number;
-  filledQuantity?: number;
-} | null;
-
-type MockExchangeService = {
-  placeOrder: jest.Mock<Promise<PlaceOrderResponse>, [unknown]>;
-  getOrderStatus: jest.Mock<Promise<string>, [string]>;
-};
+import {
+  createOrderExecutionPipelineConfig,
+  createOrderExecutionPipelineHarness,
+  createOrderExecutionPipelineOrder,
+  createOrderExecutionPipelineSuccessResponse,
+  type OrderExecutionPipelineMockExchange,
+  type OrderExecutionPipelineMockLogger,
+} from '../helpers/order-execution-pipeline-test.utils';
 
 describe('OrderExecutionPipeline', () => {
   let pipeline: OrderExecutionPipeline;
-  let mockBybitService: MockExchangeService;
-  let mockLogger: jest.Mocked<LoggerService>;
-  const config: OrderExecutionConfig = {
-    enabled: true,
-    maxRetries: 3,
-    retryDelayMs: 100,
-    timeoutMs: 30000, // 30 seconds
-    verifyBeforeRetry: true,
-    slippagePercent: 0.5,
-  };
-
-  const createMockOrder = (): OrderRequest => ({
-    symbol: 'BTCUSDT',
-    side: 'BUY',
-    orderType: 'LIMIT',
-    quantity: 0.01,
-    price: 45000,
-    timeInForce: 'GTC',
-    clientOrderId: `client-${Date.now()}`,
-    timestamp: Date.now(),
-  });
+  let mockBybitService: OrderExecutionPipelineMockExchange;
+  let mockLogger: OrderExecutionPipelineMockLogger;
+  let config: OrderExecutionConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-      log: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockBybitService = {
-      placeOrder: jest.fn(),
-      getOrderStatus: jest.fn(),
-    };
-
-    pipeline = new OrderExecutionPipeline(
-      config,
-      mockBybitService as unknown as IExchange,
-      mockLogger
-    );
+    ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } =
+      createOrderExecutionPipelineHarness());
   });
 
   describe('Order Placement', () => {
     it('should successfully place order on first attempt', async () => {
-      const order = createMockOrder();
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      const order = createOrderExecutionPipelineOrder();
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       const result = await pipeline.placeOrder(order);
@@ -98,14 +55,12 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should generate order ID if not provided', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       delete order.orderId;
 
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-auto-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order, { orderId: 'order-auto-123' }),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       await pipeline.placeOrder(order);
@@ -114,7 +69,7 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should retry on failure with exponential backoff', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       // ErrorHandler requires retryable errors - use regular errors for this legacy test
       let attemptCount = 0;
       mockBybitService.placeOrder
@@ -140,7 +95,7 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should fail after max retries exceeded', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       // Non-retryable error fails immediately
       mockBybitService.placeOrder.mockRejectedValue(
         new Error('Non-retryable error')
@@ -155,7 +110,7 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should handle invalid order result', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       mockBybitService.placeOrder.mockResolvedValue(null); // Invalid result
 
       const result = await pipeline.placeOrder(order);
@@ -165,11 +120,11 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should use custom config if provided', async () => {
-      const order = createMockOrder();
-      const customConfig: OrderExecutionConfig = {
+      const order = createOrderExecutionPipelineOrder();
+      const customConfig: OrderExecutionConfig = createOrderExecutionPipelineConfig({
         ...config,
         maxRetries: 1,
-      };
+      });
 
       mockBybitService.placeOrder.mockRejectedValue(new Error('Error'));
 
@@ -333,12 +288,10 @@ describe('OrderExecutionPipeline', () => {
 
   describe('Metrics Tracking', () => {
     it('should track successful order metrics', async () => {
-      const order = createMockOrder();
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      const order = createOrderExecutionPipelineOrder();
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       await pipeline.placeOrder(order);
@@ -350,7 +303,7 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should track failed order metrics', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       mockBybitService.placeOrder.mockRejectedValue(new Error('Error'));
 
       await pipeline.placeOrder(order);
@@ -362,14 +315,10 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should calculate average execution time', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       mockBybitService.placeOrder.mockImplementation(
         () => new Promise((resolve) => {
-          setTimeout(() => resolve({
-            orderId: 'order-123',
-            price: order.price,
-            filledQuantity: order.quantity,
-          }), 10); // Ensure at least 10ms execution time
+          setTimeout(() => resolve(createOrderExecutionPipelineSuccessResponse(order)), 10);
         })
       );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
@@ -382,13 +331,11 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should calculate average retries', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       // With ErrorHandler, non-retryable errors don't retry
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       await pipeline.placeOrder(order);
@@ -400,14 +347,12 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should track slippage in metrics', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       const actualPrice = order.price + 50; // 0.11% slippage
 
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: actualPrice,
-        filledQuantity: order.quantity,
-      });
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order, { price: actualPrice }),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       await pipeline.placeOrder(order);
@@ -417,12 +362,10 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should reset metrics', async () => {
-      const order = createMockOrder();
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      const order = createOrderExecutionPipelineOrder();
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       await pipeline.placeOrder(order);
@@ -447,12 +390,10 @@ describe('OrderExecutionPipeline', () => {
 
   describe('Integration - Full Order Lifecycle', () => {
     it('should complete full order placement with success', async () => {
-      const order = createMockOrder();
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      const order = createOrderExecutionPipelineOrder();
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       const result = await pipeline.placeOrder(order);
@@ -465,12 +406,10 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should track metrics through multiple orders', async () => {
-      const order = createMockOrder();
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: order.price,
-        filledQuantity: order.quantity,
-      });
+      const order = createOrderExecutionPipelineOrder();
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       // Place 3 orders
@@ -484,14 +423,12 @@ describe('OrderExecutionPipeline', () => {
     });
 
     it('should warn on excessive slippage', async () => {
-      const order = createMockOrder();
+      const order = createOrderExecutionPipelineOrder();
       const excessiveSlippagePrice = order.price + 500; // > 1% slippage
 
-      mockBybitService.placeOrder.mockResolvedValue({
-        orderId: 'order-123',
-        price: excessiveSlippagePrice,
-        filledQuantity: order.quantity,
-      });
+      mockBybitService.placeOrder.mockResolvedValue(
+        createOrderExecutionPipelineSuccessResponse(order, { price: excessiveSlippagePrice }),
+      );
       mockBybitService.getOrderStatus.mockResolvedValue('Filled');
 
       await pipeline.placeOrder(order);

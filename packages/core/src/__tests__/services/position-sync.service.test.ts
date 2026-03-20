@@ -11,19 +11,14 @@ import {
   createMockPositionSyncManager,
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
-  createMockSyncedPosition,
   createMockSyncedPositions,
+  createPositionSyncPosition,
   createPositionSyncHarness,
   createPositionSyncServiceWithHarness,
+  createPositionSyncStopLossOrder,
 } from '../helpers/position-sync-test.utils';
 
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const createMockPosition = (side: PositionSide = PositionSide.LONG, openedAt?: number): Position => ({
-  ...createMockSyncedPosition(side, openedAt || Date.now()),
-});
+const createMockPosition = createPositionSyncPosition;
 
 // ============================================================================
 // TESTS
@@ -221,12 +216,7 @@ describe('PositionSyncService', () => {
       const exchangePosition = { ...position };
       mockBybit.getPosition.mockResolvedValue(exchangePosition);
       mockBybit.getActiveOrders.mockResolvedValue([
-        {
-          orderId: 'sl-order',
-          side: 'Sell',
-          orderType: 'Stop',
-          stopOrderType: 'Stop',
-        } as unknown as BybitOrder,
+        createPositionSyncStopLossOrder() as unknown as BybitOrder,
       ]);
 
       await service.deepSyncCheck(position);
@@ -331,12 +321,7 @@ describe('PositionSyncService', () => {
       const position = createMockPosition(PositionSide.LONG, Date.now() - 300000); // 5 minutes
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getActiveOrders.mockResolvedValue([
-        {
-          orderId: 'sl-order',
-          side: 'Sell',
-          orderType: 'Stop',
-          stopOrderType: 'Stop',
-        } as unknown as BybitOrder,
+        createPositionSyncStopLossOrder() as unknown as BybitOrder,
       ]);
 
       const logSpy = jest.spyOn(logger, 'debug');

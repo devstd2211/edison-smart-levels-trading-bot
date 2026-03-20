@@ -15,9 +15,11 @@ import { LoggerService } from '../../services/logger.service';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 import {
   createOrderbookDeltaFixture,
+  createOrderbookLegacyService,
   createOrderbookMockLogger,
   createOrderbookManagerHarness,
   createOrderbookManagerService,
+  createOrderbookServiceWithoutWallTracker,
   createOrderbookSnapshotFixture,
 } from '../helpers/orderbook-manager-test.utils';
 
@@ -226,11 +228,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       jest.useFakeTimers();
 
       // Service without error handler
-      const legacyService = createOrderbookManagerService({
+      const legacyService = createOrderbookLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: mockWallTracker as unknown as WallTrackerService,
-        withErrorHandler: false,
       });
 
       const snapshot: OrderbookUpdate = {
@@ -291,11 +292,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const legacyService = createOrderbookManagerService({
+      const legacyService = createOrderbookLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: mockWallTracker as unknown as WallTrackerService,
-        withErrorHandler: false,
       });
 
       const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
@@ -308,10 +308,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without WallTracker', () => {
-      const serviceNoWall = createOrderbookManagerService({
+      const serviceNoWall = createOrderbookServiceWithoutWallTracker({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
-        wallTracker: undefined,
         errorHandler,
       });
 
@@ -324,11 +323,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without either ErrorHandler or WallTracker', () => {
-      const minimalService = createOrderbookManagerService({
+      const minimalService = createOrderbookLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: undefined,
-        withErrorHandler: false,
       });
 
       const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({

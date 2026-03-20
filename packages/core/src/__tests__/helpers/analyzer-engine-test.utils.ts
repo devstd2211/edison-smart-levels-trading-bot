@@ -77,6 +77,19 @@ export function createAnalyzerEngineMockAnalyzer(
   };
 }
 
+export function createAnalyzerEngineInvalidSignalAnalyzer(name: string): IAnalyzer {
+  return {
+    getType: jest.fn(() => name),
+    analyze: jest.fn(() => ({ direction: undefined } as unknown as AnalyzerSignal)),
+    isReady: jest.fn(() => true),
+    getMinCandlesRequired: jest.fn(() => 20),
+    isEnabled: jest.fn(() => true),
+    getWeight: jest.fn(() => 0.5),
+    getPriority: jest.fn(() => 5),
+    getMaxConfidence: jest.fn(() => 1.0),
+  };
+}
+
 export function createAnalyzerEngineAnalyzerEntry(
   name: string,
   direction: 'LONG' | 'SHORT' | 'HOLD' = 'LONG',

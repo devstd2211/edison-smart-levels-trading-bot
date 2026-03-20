@@ -23,48 +23,13 @@ import {
 } from '../../types/legacy';
 import { Position, TakeProfit, StopLossConfig } from '../../types/legacy';
 import {
-  createMockRiskMonitorPosition,
+  createRiskMonitorDetailedPosition,
   createRealTimeRiskMonitorHarness,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
 // MOCKS & FIXTURES
 // ============================================================================
-
-const createMockPosition = (overrides: Partial<Position> = {}): Position =>
-  createMockRiskMonitorPosition({
-    id: 'POS-123',
-    quantity: 1.0,
-    marginUsed: 4500,
-    unrealizedPnL: 0,
-    openedAt: Date.now() - 3600000,
-    orderId: 'ORDER-123',
-    reason: 'Test entry',
-    takeProfits: [
-      {
-        level: 1,
-        percent: 0.5,
-        sizePercent: 50,
-        price: 46350,
-        hit: false,
-      },
-      {
-        level: 2,
-        percent: 1.0,
-        sizePercent: 50,
-        price: 47700,
-        hit: false,
-      },
-    ],
-    stopLoss: {
-      price: 44100,
-      initialPrice: 44100,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-    },
-    ...overrides,
-  });
 
 describe('RealTimeRiskMonitor Service Tests', () => {
   let monitor: RealTimeRiskMonitor;
@@ -91,7 +56,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   describe('calculatePositionHealth - Overall Score', () => {
     it('should calculate health score for profitable position', async () => {
       // For profit: entry=45000, current=46000 means $1000 profit
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 1000,
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -109,7 +74,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should calculate health score for losing position', async () => {
       // For loss: entry=45000, current=43000 means $2000 loss (4.4%)
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -2000,
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -132,7 +97,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should return safe default if position ID mismatch', async () => {
-      const position = createMockPosition({ id: 'POS-111' });
+      const position = createRiskMonitorDetailedPosition({ id: 'POS-111' });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       const score = await monitor.calculatePositionHealth('POS-999', 45000);
@@ -148,7 +113,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   describe('Health Score Components', () => {
     it('should calculate time at risk score (newly opened)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         openedAt: Date.now() - 600000, // 10 minutes ago
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -160,7 +125,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should calculate time at risk score (old position)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         openedAt: Date.now() - 14400000, // 4 hours ago (max)
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -172,7 +137,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should calculate drawdown score (profitable)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 1000, // $1000 profit
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -184,7 +149,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should calculate drawdown score (5% loss)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -2250, // 5% loss on 45k entry
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -196,7 +161,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should calculate profitability score', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 1350, // 3% profit on 45k entry
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -208,7 +173,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should provide default high scores for liquidity and volatility', async () => {
-      const position = createMockPosition();
+      const position = createRiskMonitorDetailedPosition();
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       const score = await monitor.calculatePositionHealth(position.id, 45000);
@@ -224,7 +189,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   describe('Danger Level Detection', () => {
     it('should detect SAFE status (score >= 70)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 1000, // Profitable
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -235,7 +200,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should detect WARNING status (30 <= score < 70)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -9000, // 20% loss - trigger WARNING
         openedAt: Date.now() - 7200000, // 2 hours old (moderate time risk)
       });
@@ -248,7 +213,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should detect CRITICAL status (score < 30)', async () => {
       // To get truly CRITICAL (score <30), need very severe loss + old position
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -30000, // 66% loss (very severe)
         openedAt: Date.now() - 14400000, // 4 hours old (maximum time risk)
       });
@@ -261,7 +226,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should check position danger level', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 900, // 2% profit
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -278,7 +243,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   describe('Risk Alert Triggering', () => {
     it('should trigger EXCESSIVE_DRAWDOWN alert on >5% loss', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -13500, // 30% loss (triggers drawdown + health alerts)
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -291,7 +256,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should trigger EXCESSIVE_DRAWDOWN alert on >5% loss', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -2700, // 6% loss (exceeds 5% threshold)
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -304,7 +269,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should not trigger alert when position is healthy', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 1000,
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -323,7 +288,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should not trigger alert if position ID mismatch', async () => {
-      const position = createMockPosition({ id: 'POS-111' });
+      const position = createRiskMonitorDetailedPosition({ id: 'POS-111' });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       const alert = await monitor.shouldTriggerAlert('POS-999', 45000);
@@ -338,7 +303,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   describe('Position Monitoring', () => {
     it('should generate health report for single position', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 1000,
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -366,7 +331,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should emit HEALTH_SCORE_UPDATED event', async () => {
-      const position = createMockPosition();
+      const position = createRiskMonitorDetailedPosition();
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       await monitor.monitorAllPositions(45000);
@@ -383,7 +348,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should emit RISK_ALERT_TRIGGERED event when alert occurs', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -13500, // 30% loss triggers EXCESSIVE_DRAWDOWN alert
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -398,7 +363,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should warn when current price not provided', async () => {
-      const position = createMockPosition();
+      const position = createRiskMonitorDetailedPosition();
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       await monitor.monitorAllPositions(); // No currentPrice
@@ -415,7 +380,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   describe('Cache Management', () => {
     it('should cache health score for 1 minute', async () => {
-      const position = createMockPosition();
+      const position = createRiskMonitorDetailedPosition();
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       // First call - calculates
@@ -428,7 +393,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should return cached health score with getLatestHealthScore', async () => {
-      const position = createMockPosition();
+      const position = createRiskMonitorDetailedPosition();
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       await monitor.calculatePositionHealth(position.id, 45000);
@@ -440,7 +405,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should clear health score cache', async () => {
-      const position = createMockPosition();
+      const position = createRiskMonitorDetailedPosition();
       mockPositionService.getCurrentPosition.mockReturnValue(position);
 
       // Populate cache
@@ -471,7 +436,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   describe('Short Position (SELL) Handling', () => {
     it('should calculate health score for short position (profitable)', async () => {
       // For short: entry=45000, current=44000 means $1000 profit
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         side: PositionSide.SHORT,
         unrealizedPnL: 1000,
       });
@@ -484,7 +449,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should calculate health score for short position (loss)', async () => {
       // For short: entry=45000, current=46000 means $1000 loss (2.2%)
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         side: PositionSide.SHORT,
         unrealizedPnL: -1000, // 2.2% loss
       });
@@ -504,7 +469,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   describe('Edge Cases & Boundaries', () => {
     it('should handle zero quantity position', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         quantity: 0,
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -514,7 +479,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should handle extremely old position (> 4 hours)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         openedAt: Date.now() - 86400000, // 24 hours ago
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -525,7 +490,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should handle massive profit (100%)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 45000, // 100% profit on 45k
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -540,7 +505,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should handle massive loss (50%)', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: -22500, // 50% loss on 45k
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);
@@ -554,7 +519,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should handle break-even position', async () => {
-      const position = createMockPosition({
+      const position = createRiskMonitorDetailedPosition({
         unrealizedPnL: 0,
       });
       mockPositionService.getCurrentPosition.mockReturnValue(position);

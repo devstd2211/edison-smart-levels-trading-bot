@@ -3,6 +3,7 @@ import { PositionLifecycleService } from '../../services/position-lifecycle.serv
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 import type {
   LoggerService,
+  LiveTradingEventType,
   Position,
   RiskMonitoringConfig,
 } from '../../types/legacy';
@@ -66,6 +67,44 @@ export function createMockRiskMonitorPosition(
     },
     ...overrides,
   };
+}
+
+export function createRiskMonitorDetailedPosition(
+  overrides: Partial<Position> = {},
+): Position {
+  return createMockRiskMonitorPosition({
+    id: 'POS-123',
+    quantity: 1.0,
+    marginUsed: 4500,
+    unrealizedPnL: 0,
+    openedAt: Date.now() - 3600000,
+    orderId: 'ORDER-123',
+    reason: 'Test entry',
+    takeProfits: [
+      {
+        level: 1,
+        percent: 0.5,
+        sizePercent: 50,
+        price: 46350,
+        hit: false,
+      },
+      {
+        level: 2,
+        percent: 1.0,
+        sizePercent: 50,
+        price: 47700,
+        hit: false,
+      },
+    ],
+    stopLoss: {
+      price: 44100,
+      initialPrice: 44100,
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+    },
+    ...overrides,
+  });
 }
 
 export function createMockRiskMonitorPositionService(): MockRiskMonitorPositionService {
@@ -133,5 +172,16 @@ export function createRealTimeRiskMonitorHarness(): {
     mockPositionService,
     mockLogger,
     mockEventBus,
+  };
+}
+
+export function createRealTimeRiskMonitorPublishFailure(
+  eventType: LiveTradingEventType,
+  message: string = 'Event bus failure',
+): (event: unknown) => void {
+  return (event: unknown) => {
+    if ((event as { type?: LiveTradingEventType }).type === eventType) {
+      throw new Error(message);
+    }
   };
 }

@@ -33,9 +33,12 @@ import {
   createMockPositionSyncManager,
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
-  createMockSyncedPosition,
   createPositionSyncErrorHandler,
+  createPositionSyncOldPosition,
+  createPositionSyncPosition,
   createPositionSyncService,
+  createPositionSyncStopLossOrder,
+  createPositionSyncTakeProfitOrder,
   createPositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
@@ -43,39 +46,9 @@ import {
 // MOCKS & HELPERS
 // ============================================================================
 
-const createMockPosition = (side: PositionSide = PositionSide.LONG, openedAt?: number): Position => ({
-  ...createMockSyncedPosition(side, openedAt || Date.now()),
-});
-
-const createStopLossOrder = (side: string = 'Sell'): BybitOrder => ({
-  orderId: 'sl-order-123',
-  symbol: 'APEXUSDT',
-  side,
-  orderType: 'Market',
-  qty: '10',
-  price: '99',
-  status: 'Active',
-  createdTime: Date.now(),
-  updatedTime: Date.now(),
-  reduceOnly: true,
-  triggerPrice: '99',
-  triggerBy: 'LastPrice',
-});
-
-const createTakeProfitOrder = (side: string = 'Sell', level: number = 1): BybitOrder => ({
-  orderId: `tp${level}-order`,
-  symbol: 'APEXUSDT',
-  side,
-  orderType: 'Market',
-  qty: '3.33',
-  price: `${101 + level}`,
-  status: 'Active',
-  createdTime: Date.now(),
-  updatedTime: Date.now(),
-  reduceOnly: true,
-  triggerPrice: `${101 + level}`,
-  triggerBy: 'LastPrice',
-});
+const createMockPosition = createPositionSyncPosition;
+const createStopLossOrder = createPositionSyncStopLossOrder;
+const createTakeProfitOrder = createPositionSyncTakeProfitOrder;
 
 // ============================================================================
 // TESTS
@@ -258,7 +231,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   // ============================================================================
 
   describe('deepSyncCheck - Error Handling', () => {
-    const createOldPosition = () => createMockPosition(PositionSide.LONG, Date.now() - 3 * 60 * 1000); // 3 minutes old
+    const createOldPosition = () => createPositionSyncOldPosition(); // 3 minutes old
 
     it('should RETRY getPosition on network timeout (2 attempts)', async () => {
       const position = createOldPosition();

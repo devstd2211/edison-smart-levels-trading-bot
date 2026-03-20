@@ -12,8 +12,8 @@ import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbo
 import { LoggerService } from '../../types/legacy';
 import {
   createOrderbookDeltaFixture,
+  createOrderbookLegacyService,
   createOrderbookManagerHarness,
-  createOrderbookManagerService,
   createOrderbookSnapshotFixture,
   setOrderbookLastSnapshotTime,
 } from '../helpers/orderbook-manager-test.utils';
@@ -182,10 +182,9 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should ignore delta before snapshot', () => {
-      const freshManager = createOrderbookManagerService({
+      const freshManager = createOrderbookLegacyService({
         symbol: 'BTCUSDT',
         logger,
-        withErrorHandler: false,
       });
 
       const delta = createOrderbookDeltaFixture({

@@ -44,6 +44,31 @@ export function createIndicatorCacheMockRepository(
   } as IndicatorCacheMockRepository;
 }
 
+export function createIndicatorCacheFailingLogger(
+  level: keyof IndicatorCacheMockLogger,
+  message: string = 'Logger write failed',
+): LoggerService {
+  return createIndicatorCacheMockLogger({
+    [level]: jest.fn().mockImplementation(() => {
+      throw new Error(message);
+    }),
+  } as Partial<IndicatorCacheMockLogger>);
+}
+
+export function createIndicatorCacheFailingRepository(
+  method: keyof Pick<
+    IndicatorCacheMockRepository,
+    'getIndicator' | 'cacheIndicator' | 'clearExpiredIndicators' | 'getStats' | 'clear'
+  >,
+  message: string,
+): IndicatorCacheMockRepository {
+  return createIndicatorCacheMockRepository({
+    [method]: jest.fn().mockImplementation(() => {
+      throw new Error(message);
+    }),
+  } as Partial<IndicatorCacheMockRepository>);
+}
+
 export function createIndicatorCacheHarness(options?: {
   logger?: LoggerService;
   repository?: IndicatorCacheMockRepository;

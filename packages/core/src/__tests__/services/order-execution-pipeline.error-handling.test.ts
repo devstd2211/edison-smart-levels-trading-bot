@@ -13,8 +13,12 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { ExchangeAPIError } from '../../errors/DomainErrors';
-import { OrderRequest, OrderStatus, OrderExecutionConfig } from '../../types/legacy';
-import { LoggerService } from '../../types/legacy';
+import {
+  createOrderExecutionPipelineHarness,
+  createOrderExecutionPipelineMockExchange,
+  type OrderExecutionPipelineMockExchange,
+  type OrderExecutionPipelineMockLogger,
+} from '../helpers/order-execution-pipeline-test.utils';
 
 /**
  * Helper: Create a retryable error for testing
@@ -24,24 +28,16 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
-  let mockLogger: jest.Mocked<LoggerService>;
-  let mockBybitService: {
-    placeOrder: jest.MockedFunction<(params: unknown) => Promise<{ orderId: string; price?: number; filledQuantity?: number }>>;
-    getOrderStatus: jest.MockedFunction<(params: unknown) => Promise<unknown>>;
-  };
+  let mockLogger: OrderExecutionPipelineMockLogger;
+  let mockBybitService: OrderExecutionPipelineMockExchange;
 
   beforeEach(() => {
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    } as unknown as jest.Mocked<LoggerService>;
-
-    mockBybitService = {
-      placeOrder: jest.fn(async () => ({ orderId: 'ORD-DEFAULT' })),
-      getOrderStatus: jest.fn(async () => ({})),
-    };
+    ({ logger: mockLogger, exchange: mockBybitService } = createOrderExecutionPipelineHarness({
+      exchange: createOrderExecutionPipelineMockExchange({
+        placeOrder: jest.fn(async (_params: unknown) => ({ orderId: 'ORD-DEFAULT' })),
+        getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
+      }),
+    }));
   });
 
   describe('[RETRY Strategy] placeOrder()', () => {

@@ -141,3 +141,25 @@ export function createOrderbookManagerService(options: {
     errorHandler,
   );
 }
+
+export function createOrderbookLegacyService(options: {
+  symbol?: string;
+  logger?: LoggerService;
+  wallTracker?: WallTrackerService;
+} = {}): OrderbookManagerService {
+  return createOrderbookManagerService({
+    ...options,
+    withErrorHandler: false,
+  });
+}
+
+export function createOrderbookServiceWithoutWallTracker(options: {
+  symbol?: string;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): OrderbookManagerService {
+  return createOrderbookManagerService({
+    ...options,
+    wallTracker: undefined,
+  });
+}

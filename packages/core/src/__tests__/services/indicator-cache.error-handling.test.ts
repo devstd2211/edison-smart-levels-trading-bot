@@ -18,9 +18,9 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../services/logger.service';
 import {
   asIndicatorCacheKey,
+  createIndicatorCacheFailingLogger,
+  createIndicatorCacheFailingRepository,
   createIndicatorCacheHarness,
-  createIndicatorCacheMockLogger,
-  createIndicatorCacheMockRepository,
   createIndicatorCacheService,
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
@@ -152,15 +152,14 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
   describe('SKIP: Logging Failures with Safe Wrapper', () => {
     it('should skip debug logging failures in get()', () => {
-      const failingLogger = createIndicatorCacheMockLogger({
-        debug: jest.fn().mockImplementation(() => {
-          throw new Error('Logger write failed');
-        }),
-      });
+      const failingLogger = createIndicatorCacheFailingLogger('debug');
 
-      const repo = createIndicatorCacheMockRepository({
-        getIndicator: jest.fn().mockReturnValue(75),
-      });
+      const repo = createIndicatorCacheHarness({
+        repository: {
+          ...createIndicatorCacheFailingRepository('clear', 'unused'),
+          getIndicator: jest.fn().mockReturnValue(75),
+        } as IndicatorCacheMockRepository,
+      }).repository;
       const cache = createIndicatorCacheService({ repository: repo, logger: failingLogger, errorHandler });
 
       // Should not throw despite logger failure
@@ -174,17 +173,12 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     });
 
     it('should skip warn logging failures in set()', () => {
-      const failingLogger = createIndicatorCacheMockLogger({
-        warn: jest.fn().mockImplementation(() => {
-          throw new Error('Logger write failed');
-        }),
-      });
+      const failingLogger = createIndicatorCacheFailingLogger('warn');
 
-      const repo = createIndicatorCacheMockRepository({
-        cacheIndicator: jest.fn().mockImplementation(() => {
-          throw new Error('Repo error');
-        }),
-      });
+      const repo = createIndicatorCacheFailingRepository(
+        'cacheIndicator',
+        'Repo error',
+      );
       const cache = createIndicatorCacheService({ repository: repo, logger: failingLogger, errorHandler });
 
       // Should not throw despite logger failure
@@ -194,11 +188,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     });
 
     it('should skip logging failures in resetMetrics()', () => {
-      const failingLogger = createIndicatorCacheMockLogger({
-        debug: jest.fn().mockImplementation(() => {
-          throw new Error('Logger write failed');
-        }),
-      });
+      const failingLogger = createIndicatorCacheFailingLogger('debug');
 
       const cache = createIndicatorCacheService({ repository: mockRepo, logger: failingLogger, errorHandler });
 

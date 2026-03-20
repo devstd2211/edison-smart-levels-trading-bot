@@ -125,6 +125,55 @@ export function createMockSyncedPosition(
   };
 }
 
+export function createPositionSyncPosition(
+  side: PositionSide = PositionSide.LONG,
+  openedAt: number = Date.now(),
+  overrides: Partial<Position> = {},
+): Position {
+  return createMockSyncedPosition(side, openedAt, overrides);
+}
+
+export function createPositionSyncOldPosition(
+  side: PositionSide = PositionSide.LONG,
+  overrides: Partial<Position> = {},
+): Position {
+  return createPositionSyncPosition(side, Date.now() - 3 * 60 * 1000, overrides);
+}
+
+export function createPositionSyncStopLossOrder(side: string = 'Sell') {
+  return {
+    orderId: 'sl-order-123',
+    symbol: 'APEXUSDT',
+    side,
+    orderType: 'Market',
+    qty: '10',
+    price: '99',
+    status: 'Active',
+    createdTime: Date.now(),
+    updatedTime: Date.now(),
+    reduceOnly: true,
+    triggerPrice: '99',
+    triggerBy: 'LastPrice',
+  };
+}
+
+export function createPositionSyncTakeProfitOrder(side: string = 'Sell', level: number = 1) {
+  return {
+    orderId: `tp${level}-order`,
+    symbol: 'APEXUSDT',
+    side,
+    orderType: 'Market',
+    qty: '3.33',
+    price: `${101 + level}`,
+    status: 'Active',
+    createdTime: Date.now(),
+    updatedTime: Date.now(),
+    reduceOnly: true,
+    triggerPrice: `${101 + level}`,
+    triggerBy: 'LastPrice',
+  };
+}
+
 export type PositionSyncHarness = {
   service: PositionSyncService;
   mockBybit: ReturnType<typeof createMockPositionSyncExchange>;

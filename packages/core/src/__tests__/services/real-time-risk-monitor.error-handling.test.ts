@@ -15,6 +15,7 @@ import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.servi
 import { DangerLevel, LiveTradingEventType, Position } from '../../types/legacy';
 import {
   createMockRiskMonitorPosition,
+  createRealTimeRiskMonitorPublishFailure,
   createRealTimeRiskMonitorHarness,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
@@ -190,11 +191,9 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const position = createMockPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
-      mockEventBus.publishSync.mockImplementation((event: unknown) => {
-        if ((event as { type?: LiveTradingEventType }).type === LiveTradingEventType.HEALTH_SCORE_UPDATED) {
-          throw new Error('Event bus failure');
-        }
-      });
+      mockEventBus.publishSync.mockImplementation(
+        createRealTimeRiskMonitorPublishFailure(LiveTradingEventType.HEALTH_SCORE_UPDATED),
+      );
 
       const report = await monitor.monitorAllPositions(46000);
       expect(report).toBeDefined();
@@ -209,11 +208,9 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
 
       // Create alert condition with critical health score
-      mockEventBus.publishSync.mockImplementation((event: unknown) => {
-        if ((event as { type?: LiveTradingEventType }).type === LiveTradingEventType.RISK_ALERT_TRIGGERED) {
-          throw new Error('Event bus failure');
-        }
-      });
+      mockEventBus.publishSync.mockImplementation(
+        createRealTimeRiskMonitorPublishFailure(LiveTradingEventType.RISK_ALERT_TRIGGERED),
+      );
 
       const report = await monitor.monitorAllPositions(44000); // Low price triggers alert
       expect(report).toBeDefined();
