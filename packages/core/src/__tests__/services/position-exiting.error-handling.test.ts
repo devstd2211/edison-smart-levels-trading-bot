@@ -17,6 +17,7 @@ import type { IExchange } from '../../interfaces/IExchange';
 import { LoggerService, TelegramService, TradingJournalService, SessionStatsService } from '../../services';
 import {
   createAtomicCloseGuard,
+  calculatePositionExitingRetryDelays,
   createMockPositionExitingConfig,
   createMockPositionExitingExchange,
   createMockPositionExitingJournal,
@@ -29,6 +30,7 @@ import {
   createPositionExitingRetryConfig,
   createTransactionalTradeCloseRequest,
   executeRetrySequence,
+  handlePositionExitingError,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
@@ -82,20 +84,10 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
 
     it('test-1.2: Should calculate exponential backoff correctly', () => {
-      const retryConfig = createPositionExitingRetryConfig({
+      const delays = calculatePositionExitingRetryDelays({
         initialDelayMs: 500,
         maxDelayMs: 5000,
       });
-
-      // Test exponential backoff calculation
-      const delays: number[] = [];
-      for (let attempt = 1; attempt <= retryConfig.maxAttempts; attempt++) {
-        const delayMs = Math.min(
-          retryConfig.initialDelayMs * Math.pow(retryConfig.backoffMultiplier, attempt - 1),
-          retryConfig.maxDelayMs
-        );
-        delays.push(delayMs);
-      }
 
       expect(delays[0]).toBe(500); // First attempt
       expect(delays[1]).toBe(1000); // Second: 500 * 2
@@ -123,13 +115,11 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
     it('test-1.4: Should classify retryable errors with ErrorHandler', async () => {
       const timeoutError = new Error('API timeout after 30s');
-      const retryConfig = createPositionExitingRetryConfig();
-
-      const handled = await ErrorHandler.handle(timeoutError, {
+      const handled = await handlePositionExitingError(timeoutError, {
         strategy: RecoveryStrategy.RETRY,
         logger: mockLogger,
         context: 'PositionExitingService.closePosition',
-        retryConfig,
+        retryConfig: {},
       });
 
       expect(handled.strategy).toBe(RecoveryStrategy.RETRY);
@@ -156,13 +146,11 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     it('test-1.6: Should use onRetry callback during retries', async () => {
       const onRetry = jest.fn();
       const retryConfig = createPositionExitingRetryConfig();
+      const delays = calculatePositionExitingRetryDelays();
 
       // Simulate retry attempts with callback
       for (let attempt = 2; attempt <= retryConfig.maxAttempts; attempt++) {
-        const delayMs = Math.min(
-          retryConfig.initialDelayMs * Math.pow(retryConfig.backoffMultiplier, attempt - 1),
-          retryConfig.maxDelayMs
-        );
+        const delayMs = delays[attempt - 1];
         onRetry(attempt, new Error('Test error'), delayMs);
       }
 
@@ -220,7 +208,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     it('test-2.3: Should classify journal error as FALLBACK recoverable', async () => {
       const journalError = new Error('Database connection failed');
 
-      const handled = await ErrorHandler.handle(journalError, {
+      const handled = await handlePositionExitingError(journalError, {
         strategy: RecoveryStrategy.FALLBACK,
         logger: mockLogger,
         context: 'PositionExitingService.journal',
@@ -238,7 +226,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       try {
         throw journalError;
       } catch (error) {
-        const handled = await ErrorHandler.handle(error, {
+        const handled = await handlePositionExitingError(error, {
           strategy: RecoveryStrategy.FALLBACK,
           logger: mockLogger,
           context: 'PositionExitingService.recordPositionClose',
@@ -278,7 +266,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     it('test-3.2: Should log warning on skipped notification', async () => {
       const notificationError = new Error('Telegram connection timeout');
 
-      const handled = await ErrorHandler.handle(notificationError, {
+      const handled = await handlePositionExitingError(notificationError, {
         strategy: RecoveryStrategy.SKIP,
         logger: mockLogger,
         context: 'PositionExitingService.notification',

@@ -14,6 +14,7 @@ import {
   createRaceConditionCloseRequest,
   createRaceConditionPositionExitingHarness,
   executeConcurrentRaceConditionCloses,
+  executeNilRaceConditionClose,
   executeRaceConditionClose,
 } from '../helpers/position-exiting-test.utils';
 
@@ -56,12 +57,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
 
   describe('P3.1: Idempotent close operations', () => {
     test('P3.1.1: closeFullPosition handles null position gracefully', async () => {
-      const result = await positionExitingService.closeFullPosition(
-        null,
-        1.871,
-        'Test close',
-        ExitType.STOP_LOSS,
-      );
+      const result = await executeNilRaceConditionClose(positionExitingService, null);
 
       expect(result).toBe(false);
 
@@ -75,12 +71,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.1.2: closeFullPosition handles undefined position gracefully', async () => {
-      const result = await positionExitingService.closeFullPosition(
-        undefined,
-        1.871,
-        'Test close',
-        ExitType.STOP_LOSS,
-      );
+      const result = await executeNilRaceConditionClose(positionExitingService, undefined);
 
       expect(result).toBe(false);
       expect(mockBybitService.closePosition).not.toHaveBeenCalled();
@@ -180,12 +171,9 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.2.3: Null position handled gracefully without crashing', async () => {
-      const result = await positionExitingService.closeFullPosition(
-        null,
-        1.871,
-        'Null close',
-        ExitType.STOP_LOSS,
-      );
+      const result = await executeNilRaceConditionClose(positionExitingService, null, {
+        exitReason: 'Null close',
+      });
       expect(result).toBe(false);
       expect(mockBybitService.closePosition).not.toHaveBeenCalled();
     });
@@ -321,12 +309,9 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     test('P3.5.2: Close with null position - warns gracefully without crashing', async () => {
       mockLogger.warn.mockClear();
 
-      const result = await positionExitingService.closeFullPosition(
-        null,
-        1.871,
-        'Null position close',
-        ExitType.STOP_LOSS,
-      );
+      const result = await executeNilRaceConditionClose(positionExitingService, null, {
+        exitReason: 'Null position close',
+      });
 
       expect(result).toBe(false);
 

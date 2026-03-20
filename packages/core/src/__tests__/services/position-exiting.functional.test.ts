@@ -18,6 +18,7 @@ import {
   createBreakevenInspection,
   createEntryPriceLifecycleSnapshot,
   createEntryPriceState,
+  createEntryPriceTransitionState,
   createFunctionalPositionExitingHarness,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
@@ -198,20 +199,16 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     it('Should validate TP1 close does NOT corrupt entryPrice', async () => {
       const position = createRealScenarioPosition();
       const initialEntryPrice = position.entryPrice;
-      const testState: { entryPriceBefore: number; entryPriceAfter?: number; entryPriceValid?: boolean } = {
-        entryPriceBefore: position.entryPrice,
-        entryPriceValid: !isNaN(position.entryPrice),
-      };
 
       mockBybitService.closePosition.mockResolvedValue(true);
       position.quantity = position.quantity * (1 - position.takeProfits[0].sizePercent / 100);
-      testState.entryPriceAfter = position.entryPrice;
+      const testState = createEntryPriceTransitionState(initialEntryPrice, position.entryPrice);
 
       console.log(`
         ENTRY PRICE CORRUPTION TEST:
         - Before: ${testState.entryPriceBefore}
         - After: ${testState.entryPriceAfter}
-        - Same? ${testState.entryPriceBefore === testState.entryPriceAfter}
+        - Same? ${testState.isSame}
       `);
 
       expect(testState.entryPriceAfter).toBe(initialEntryPrice);

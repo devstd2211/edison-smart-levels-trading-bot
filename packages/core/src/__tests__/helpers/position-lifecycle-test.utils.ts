@@ -236,6 +236,14 @@ export function createMockLifecycleRepository(position: Position) {
   } as unknown as jest.Mocked<IPositionRepository>;
 }
 
+export function attachLifecycleRepositoryPosition(
+  mockRepository: jest.Mocked<IPositionRepository>,
+  position: Position,
+): Position {
+  mockRepository.getCurrentPosition.mockReturnValue(position);
+  return position;
+}
+
 type LifecycleHarness = {
   service: PositionLifecycleService;
   mockExchange: jest.Mocked<IExchange>;
@@ -411,6 +419,19 @@ export function createPositionLifecycleSafetyHarness(options: {
   };
 }
 
+export function createLifecycleUpdatedSafetyPosition(
+  overrides: Partial<Position> = {},
+): Position {
+  return createLifecycleSafetyPosition(overrides);
+}
+
+export function collectLifecycleSnapshots(
+  service: PositionLifecycleService,
+  count: number,
+): Array<Promise<Position | null>> {
+  return Array.from({ length: count }, () => Promise.resolve(service.getPositionSnapshot()));
+}
+
 export function findLifecycleLogCall(mockFn: jest.Mock, expectedFragment: string) {
   return mockFn.mock.calls.find((call: unknown[]) =>
     typeof call[0] === 'string' && call[0].includes(expectedFragment),
@@ -431,4 +452,24 @@ export function createPositionLifecycleWithErrorHandlerHarness(
     ...options,
     errorHandler,
   });
+}
+
+export function syncLifecycleWebSocketPosition(
+  service: PositionLifecycleService,
+  basePosition: Position,
+  overrides: Partial<Position> = {},
+): Position {
+  const wsPosition = createLifecycleWebSocketPosition(basePosition, overrides);
+  service.syncWithWebSocket(wsPosition);
+  return wsPosition;
+}
+
+export function seedLifecycleSyncedPosition(options: {
+  service: PositionLifecycleService;
+  mockRepository: jest.Mocked<IPositionRepository>;
+  position: Position;
+}): Position {
+  attachLifecycleRepositoryPosition(options.mockRepository, options.position);
+  options.service.syncWithWebSocket(options.position);
+  return options.position;
 }

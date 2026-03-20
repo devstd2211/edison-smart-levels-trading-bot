@@ -10,6 +10,7 @@ import {
   createBalanceTrackingHarness,
   createTransactionalTradeCloseRequest,
   createTransactionalCloseHarness,
+  createThrowingTradeCloseRecorder,
   executeTransactionalCloseFlow,
 } from '../helpers/position-exiting-test.utils';
 
@@ -89,11 +90,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   // T7: Journal failure prevents position close
   it('T7: Journal failure prevents position close', () => {
     const tradeCloseRequest = createTransactionalTradeCloseRequest();
-    const mockJournal = {
-      recordTradeClose: jest.fn((_trade: unknown) => {
-        throw new Error('Journal file I/O failed');
-      }),
-    };
+    const mockJournal = createThrowingTradeCloseRecorder();
 
     expect(() => {
       mockJournal.recordTradeClose(tradeCloseRequest);

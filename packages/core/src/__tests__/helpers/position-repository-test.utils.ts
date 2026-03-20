@@ -29,6 +29,14 @@ export function createSeededCurrentPositionRepository(
   return createSeededPositionRepositoryHarness({ currentPosition });
 }
 
+export function seedRepositoryCurrentPosition(
+  repository: IPositionRepository,
+  currentPosition: Position | null,
+): IPositionRepository {
+  repository.setCurrentPosition(currentPosition);
+  return repository;
+}
+
 export function createSeededHistoryRepository(
   history: Position[],
 ): IPositionRepository {
@@ -144,4 +152,14 @@ export function createSeededRepositoryQueryHarness(options: {
     },
     history: options.history ?? [{ id: 'BTCUSDT_Buy_1' }],
   });
+}
+
+export function updateRepositoryCurrentPosition(
+  repository: IPositionRepository,
+  basePosition: Position,
+  overrides: Partial<Position>,
+): Position {
+  const updatedPosition = { ...basePosition, ...overrides };
+  repository.setCurrentPosition(updatedPosition);
+  return updatedPosition;
 }

@@ -35,6 +35,7 @@ import {
   createMockTakeProfitManager,
   createPositionExitingHarness,
   createPositionExitingService,
+  executePositionExitActionDirect,
   executePositionExitSequence,
   executePositionExitRequest,
 } from '../helpers/position-exiting-test.utils';
@@ -131,16 +132,12 @@ describe('PositionExitingService', () => {
 
     it('should return false for unknown action', async () => {
       const position = createMockExitedPosition();
-      const action = createMockExitAction({
-        action: 'UNKNOWN_ACTION' as unknown as ExitActionDTO['action'],
-      });
-
-      const result = await service.executeExitAction(
+      const result = await executePositionExitActionDirect(
+        service,
         position,
-        action,
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
+        {
+          action: 'UNKNOWN_ACTION' as unknown as ExitActionDTO['action'],
+        },
       );
 
       expect(result).toBe(false);
@@ -149,14 +146,10 @@ describe('PositionExitingService', () => {
 
     it('should skip action if position already closed', async () => {
       const position = createMockExitedPosition({ status: 'CLOSED' });
-      const action = createMockExitAction({ action: ExitAction.CLOSE_PERCENT, percent: 50 });
-
-      const result = await service.executeExitAction(
+      const result = await executePositionExitActionDirect(
+        service,
         position,
-        action,
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
+        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
       );
 
       expect(result).toBe(false);
@@ -164,15 +157,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should handle null position gracefully', async () => {
-      const action = createMockExitAction();
-
-      const result = await service.executeExitAction(
-        null as unknown as Position,
-        action,
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const result = await executePositionExitActionDirect(service, null, {});
 
       expect(result).toBe(false);
       expect(mockLogger.error).toHaveBeenCalled();
@@ -684,12 +669,11 @@ describe('PositionExitingService', () => {
         stopLoss: { ...createMockPosition().stopLoss, price: 105 },
       });
 
-      const result = await service.executeExitAction(
+      const result = await executePositionExitActionDirect(
+        service,
         position,
         { action: ExitAction.CLOSE_ALL },
-        95, // Price went down (profitable for SHORT)
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
+        { exitPrice: 95 }, // Price went down (profitable for SHORT)
       );
 
       expect(result).toBe(true);
@@ -704,12 +688,10 @@ describe('PositionExitingService', () => {
     it('should handle very small position sizes', async () => {
       const position = createMockPosition({ quantity: 0.001 });
 
-      const result = await service.executeExitAction(
+      const result = await executePositionExitActionDirect(
+        service,
         position,
         { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
       );
 
       expect(result).toBe(true);
@@ -719,12 +701,15 @@ describe('PositionExitingService', () => {
     it('should handle large price movements without errors', async () => {
       const position = createMockPosition({ entryPrice: 100 });
 
-      const result = await service.executeExitAction(
+      const result = await executePositionExitActionDirect(
+        service,
         position,
         { action: ExitAction.CLOSE_ALL },
-        200, // 100% gain
-        'TP3_HIT',
-        ExitType.TAKE_PROFIT_3,
+        {
+          exitPrice: 200, // 100% gain
+          exitReason: 'TP3_HIT',
+          exitType: ExitType.TAKE_PROFIT_3,
+        },
       );
 
       expect(result).toBe(true);
@@ -733,12 +718,15 @@ describe('PositionExitingService', () => {
     it('should handle negative price differences gracefully', async () => {
       const position = createMockPosition({ entryPrice: 100 });
 
-      const result = await service.executeExitAction(
+      const result = await executePositionExitActionDirect(
+        service,
         position,
         { action: ExitAction.CLOSE_ALL },
-        50, // 50% loss
-        'SL_HIT',
-        ExitType.STOP_LOSS,
+        {
+          exitPrice: 50, // 50% loss
+          exitReason: 'SL_HIT',
+          exitType: ExitType.STOP_LOSS,
+        },
       );
 
       expect(result).toBe(true);

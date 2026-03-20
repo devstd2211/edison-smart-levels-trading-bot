@@ -98,6 +98,28 @@ export function attachScenarioPosition(
   );
 }
 
+export function attachScenarioExchangePosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager' | 'mockBybit'>,
+  options: {
+    side: PositionSide;
+    entryPrice: number;
+    stopLossPrice: number;
+    takeProfits?: Array<{ level: number; price: number; hit?: boolean }>;
+    openedAt?: number;
+  },
+): Position {
+  return attachExchangePosition(
+    harness,
+    createPositionMonitorScenarioPosition(
+      options.side,
+      options.entryPrice,
+      options.stopLossPrice,
+      options.takeProfits ?? [],
+      options.openedAt,
+    ),
+  );
+}
+
 export function createMockPositionMonitorExchange() {
   return {
     getPosition: jest.fn(),
@@ -296,6 +318,15 @@ export function attachCurrentPosition(
   return position;
 }
 
+export function attachExchangePosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager' | 'mockBybit'>,
+  position: Position = createMockMonitoredPosition(),
+): Position {
+  attachCurrentPosition(harness, position);
+  harness.mockBybit.getPosition.mockResolvedValueOnce(position);
+  return position;
+}
+
 export function attachProtectedPosition(
   harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>,
   overrides: Partial<Position> = {},
@@ -307,6 +338,25 @@ export function attachProtectedPosition(
       ...overrides,
     }),
   );
+}
+
+export function attachUnprotectedPosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager' | 'mockBybit'>,
+  overrides: Partial<Position> = {},
+): Position {
+  const position = attachExchangePosition(
+    harness,
+    createMockMonitoredPosition(undefined, undefined, undefined, undefined, undefined, overrides),
+  );
+  harness.mockBybit.verifyProtectionSet.mockResolvedValueOnce(
+    createProtectionVerificationResult({
+      verified: false,
+      hasStopLoss: false,
+      hasTakeProfit: false,
+      activeOrders: 0,
+    }),
+  );
+  return position;
 }
 
 export function createProtectionVerificationResult(overrides: {
@@ -332,6 +382,18 @@ export async function runPositionMonitorCycle(
 ): Promise<void> {
   monitor.start();
   await jest.advanceTimersByTimeAsync(delayMs);
+}
+
+export async function runPositionMonitorCycles(
+  monitor: PositionMonitorService,
+  cycleCount: number,
+  delayMs: number = POSITION_MONITOR_INTERVAL_MS,
+): Promise<void> {
+  monitor.start();
+
+  for (let cycleIndex = 0; cycleIndex < cycleCount; cycleIndex++) {
+    await jest.advanceTimersByTimeAsync(delayMs);
+  }
 }
 
 export async function runPositionMonitorDeepSyncCycle(

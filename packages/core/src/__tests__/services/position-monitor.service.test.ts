@@ -12,7 +12,9 @@ import {
 } from '../../types/legacy';
 import {
   attachCurrentPosition,
+  attachExchangePosition,
   attachScenarioPosition,
+  attachScenarioExchangePosition,
   createPositionMonitorHarness,
   createPositionMonitorRiskConfig,
   createPositionMonitorScenarioPosition,
@@ -20,6 +22,7 @@ import {
   createTimeBasedExitRiskConfig,
   defaultPositionMonitorRiskConfig,
   runPositionMonitorCycle,
+  runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
@@ -140,12 +143,11 @@ describe('PositionMonitorService', () => {
 
   describe('stop loss detection', () => {
     it('should emit stopLossHit event when LONG SL is hit', async () => {
-      const position = attachScenarioPosition(positionHarness, {
+      const position = attachScenarioExchangePosition({ ...positionHarness, mockBybit }, {
         side: PositionSide.LONG,
         entryPrice: 1.5,
         stopLossPrice: 1.48,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.47); // Below SL
 
       const slHitSpy = jest.fn();
@@ -162,12 +164,11 @@ describe('PositionMonitorService', () => {
     });
 
     it('should emit stopLossHit event when SHORT SL is hit', async () => {
-      const position = attachScenarioPosition(positionHarness, {
+      const position = attachScenarioExchangePosition({ ...positionHarness, mockBybit }, {
         side: PositionSide.SHORT,
         entryPrice: 1.5,
         stopLossPrice: 1.52,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.53); // Above SL
 
       const slHitSpy = jest.fn();
@@ -184,12 +185,11 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit stopLossHit when LONG price above SL', async () => {
-      const position = attachScenarioPosition(positionHarness, {
+      attachScenarioExchangePosition({ ...positionHarness, mockBybit }, {
         side: PositionSide.LONG,
         entryPrice: 1.5,
         stopLossPrice: 1.48,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.51); // Above SL
 
       const slHitSpy = jest.fn();
@@ -201,12 +201,11 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit stopLossHit when SHORT price below SL', async () => {
-      const position = attachScenarioPosition(positionHarness, {
+      attachScenarioExchangePosition({ ...positionHarness, mockBybit }, {
         side: PositionSide.SHORT,
         entryPrice: 1.5,
         stopLossPrice: 1.52,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.49); // Below SL
 
       const slHitSpy = jest.fn();
@@ -228,19 +227,19 @@ describe('PositionMonitorService', () => {
     // These tests verify that Position Monitor no longer emits TP events
 
     it('should NOT emit takeProfitHit event (handled by WebSocket)', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [
-        { level: 1, price: 1.52 },
-        { level: 2, price: 1.54 },
-      ]);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachExchangePosition(
+        { ...positionHarness, mockBybit },
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [
+          { level: 1, price: 1.52 },
+          { level: 2, price: 1.54 },
+        ]),
+      );
       mockBybit.getCurrentPrice.mockResolvedValue(1.525); // Above TP1
 
       const tpHitSpy = jest.fn();
       monitor.on('takeProfitHit', tpHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // TP detection is now handled by WebSocket, not Position Monitor
       expect(tpHitSpy).not.toHaveBeenCalled();
@@ -249,75 +248,75 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit takeProfitHit for SHORT (handled by WebSocket)', async () => {
-      const position = createMockPosition(PositionSide.SHORT, 1.5, 1.52, [
-        { level: 1, price: 1.48 },
-        { level: 2, price: 1.46 },
-      ]);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachExchangePosition(
+        { ...positionHarness, mockBybit },
+        createMockPosition(PositionSide.SHORT, 1.5, 1.52, [
+          { level: 1, price: 1.48 },
+          { level: 2, price: 1.46 },
+        ]),
+      );
       mockBybit.getCurrentPrice.mockResolvedValue(1.475); // Below TP1
 
       const tpHitSpy = jest.fn();
       monitor.on('takeProfitHit', tpHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // TP detection is now handled by WebSocket, not Position Monitor
       expect(tpHitSpy).not.toHaveBeenCalled();
     });
 
     it('should NOT emit multiple takeProfitHit events (handled by WebSocket)', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [
-        { level: 1, price: 1.52 },
-        { level: 2, price: 1.54 },
-        { level: 3, price: 1.56 },
-      ]);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachExchangePosition(
+        { ...positionHarness, mockBybit },
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [
+          { level: 1, price: 1.52 },
+          { level: 2, price: 1.54 },
+          { level: 3, price: 1.56 },
+        ]),
+      );
       mockBybit.getCurrentPrice.mockResolvedValue(1.55); // Above TP1 and TP2
 
       const tpHitSpy = jest.fn();
       monitor.on('takeProfitHit', tpHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // TP detection is now handled by WebSocket, not Position Monitor
       expect(tpHitSpy).not.toHaveBeenCalled();
     });
 
     it('should NOT emit takeProfitHit for already hit TPs', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [
-        { level: 1, price: 1.52, hit: true }, // Already hit
-        { level: 2, price: 1.54 },
-      ]);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachExchangePosition(
+        { ...positionHarness, mockBybit },
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [
+          { level: 1, price: 1.52, hit: true }, // Already hit
+          { level: 2, price: 1.54 },
+        ]),
+      );
       mockBybit.getCurrentPrice.mockResolvedValue(1.525); // Above TP1
 
       const tpHitSpy = jest.fn();
       monitor.on('takeProfitHit', tpHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(tpHitSpy).not.toHaveBeenCalled(); // Already hit, no event
     });
 
     it('should NOT emit takeProfitHit when LONG price below TP', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [
-        { level: 1, price: 1.52 },
-      ]);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachExchangePosition(
+        { ...positionHarness, mockBybit },
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [
+          { level: 1, price: 1.52 },
+        ]),
+      );
       mockBybit.getCurrentPrice.mockResolvedValue(1.51); // Below TP1
 
       const tpHitSpy = jest.fn();
       monitor.on('takeProfitHit', tpHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(tpHitSpy).not.toHaveBeenCalled();
     });
@@ -535,11 +534,10 @@ describe('PositionMonitorService', () => {
       const errorSpy = jest.fn();
       monitor.on('error', errorSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000); // First call - error
+      await runPositionMonitorCycles(monitor, 1); // First call - error
       expect(errorSpy).toHaveBeenCalledTimes(1);
 
-      await jest.advanceTimersByTimeAsync(10000); // Second call - success
+      await runPositionMonitorCycles(monitor, 1); // Second call - success
       expect(callCount).toBe(2); // Monitoring continues
     });
   });
@@ -552,20 +550,18 @@ describe('PositionMonitorService', () => {
     it('should call monitorPosition every 10 seconds', async () => {
       mockPositionManager.getCurrentPosition.mockReturnValue(null);
 
-      monitor.start();
-
       // Now we have 2 intervals: monitorInterval (10s) + deepSyncInterval (30s)
       // Both call getCurrentPosition(), so count increases
 
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycles(monitor, 1);
       // After 10s: monitorPosition called 1x
       expect(mockPositionManager.getCurrentPosition.mock.calls.length).toBeGreaterThanOrEqual(1);
 
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycles(monitor, 1);
       // After 20s: monitorPosition called 2x
       expect(mockPositionManager.getCurrentPosition.mock.calls.length).toBeGreaterThanOrEqual(2);
 
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycles(monitor, 1);
       // After 30s: monitorPosition 3x + deepSyncCheck 1x = 4 total
       expect(mockPositionManager.getCurrentPosition.mock.calls.length).toBeGreaterThanOrEqual(3);
     });
@@ -573,8 +569,7 @@ describe('PositionMonitorService', () => {
     it('should NOT call monitorPosition after stop', async () => {
       mockPositionManager.getCurrentPosition.mockReturnValue(null);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycles(monitor, 1);
       expect(mockPositionManager.getCurrentPosition).toHaveBeenCalledTimes(1);
 
       monitor.stop();

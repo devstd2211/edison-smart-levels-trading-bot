@@ -17,6 +17,8 @@ import {
   createSeededCurrentPositionRepository,
   createSeededRepositoryQueryHarness,
   seedRepositoryHistory,
+  seedRepositoryCurrentPosition,
+  updateRepositoryCurrentPosition,
 } from '../helpers/position-repository-test.utils';
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
@@ -32,7 +34,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
         takeProfits: createRepositoryTakeProfits(),
       });
 
-      repository.setCurrentPosition(position);
+      seedRepositoryCurrentPosition(repository, position);
       const stored = repository.getCurrentPosition();
 
       expect(stored).not.toBeNull();
@@ -56,10 +58,10 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     it('should clear position from repository', () => {
       const position: Position = createRepositoryPosition();
 
-      repository.setCurrentPosition(position);
+      seedRepositoryCurrentPosition(repository, position);
       expect(repository.getCurrentPosition()).not.toBeNull();
 
-      repository.setCurrentPosition(null);
+      seedRepositoryCurrentPosition(repository, null);
       expect(repository.getCurrentPosition()).toBeNull();
     });
   });
@@ -168,8 +170,10 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
       repository = createSeededCurrentPositionRepository(position);
 
       // Update position
-      const updated = { ...position, unrealizedPnL: 500, quantity: 0.05 };
-      repository.setCurrentPosition(updated);
+      updateRepositoryCurrentPosition(repository, position, {
+        unrealizedPnL: 500,
+        quantity: 0.05,
+      });
 
       const current = repository.getCurrentPosition();
       expect(current?.unrealizedPnL).toBe(500);

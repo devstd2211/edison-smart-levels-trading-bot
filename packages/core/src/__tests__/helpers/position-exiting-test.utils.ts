@@ -1,5 +1,7 @@
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
+import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import { LoggerService } from '../../services';
 import {
   Config,
   ExitAction,
@@ -232,6 +234,24 @@ export function createPositionExitingRetryConfig(overrides: {
   };
 }
 
+export function calculatePositionExitingRetryDelays(
+  options: Parameters<typeof createPositionExitingRetryConfig>[0] = {},
+): number[] {
+  const retryConfig = createPositionExitingRetryConfig(options);
+  const delays: number[] = [];
+
+  for (let attempt = 1; attempt <= retryConfig.maxAttempts; attempt++) {
+    delays.push(
+      Math.min(
+        retryConfig.initialDelayMs * Math.pow(retryConfig.backoffMultiplier, attempt - 1),
+        retryConfig.maxDelayMs,
+      ),
+    );
+  }
+
+  return delays;
+}
+
 export function createTransactionalTradeCloseRequest(overrides: {
   id?: string;
   exitPrice?: number;
@@ -243,6 +263,14 @@ export function createTransactionalTradeCloseRequest(overrides: {
     exitPrice: overrides.exitPrice ?? 51000,
     realizedPnL: overrides.realizedPnL ?? 1000,
     exitCondition: overrides.exitCondition ?? {},
+  };
+}
+
+export function createThrowingTradeCloseRecorder(message = 'Journal file I/O failed') {
+  return {
+    recordTradeClose: jest.fn((_trade: unknown) => {
+      throw new Error(message);
+    }),
   };
 }
 
@@ -300,6 +328,25 @@ export async function executePositionExitRequest(
   };
 }
 
+export async function executePositionExitActionDirect(
+  service: Pick<PositionExitingService, 'executeExitAction'>,
+  position: Position | null | undefined,
+  action: Partial<ExitActionDTO> = {},
+  overrides: {
+    exitPrice?: number;
+    exitReason?: string;
+    exitType?: ExitType;
+  } = {},
+) {
+  return await service.executeExitAction(
+    position as Position,
+    createMockExitAction(action),
+    overrides.exitPrice ?? 105,
+    overrides.exitReason ?? 'TP1_HIT',
+    overrides.exitType ?? ExitType.TAKE_PROFIT_1,
+  );
+}
+
 export async function executePositionExitSequence(
   service: Pick<PositionExitingService, 'executeExitAction'>,
   steps: Array<{
@@ -328,6 +375,27 @@ export async function executePositionExitSequence(
     position,
     results,
   };
+}
+
+export async function handlePositionExitingError(
+  error: unknown,
+  options: {
+    strategy: RecoveryStrategy;
+    logger: LoggerService | ReturnType<typeof createMockPositionExitingLogger>;
+    context: string;
+    retryConfig?: Parameters<typeof createPositionExitingRetryConfig>[0];
+    onRecover?: (strategy: RecoveryStrategy, attempt: number) => void;
+  },
+) {
+  return await ErrorHandler.handle(error, {
+    strategy: options.strategy,
+    logger: options.logger,
+    context: options.context,
+    retryConfig: options.retryConfig
+      ? createPositionExitingRetryConfig(options.retryConfig)
+      : undefined,
+    onRecover: options.onRecover,
+  });
 }
 
 export function createMockRacePosition(overrides: Partial<Position> = {}): Position {
@@ -465,6 +533,23 @@ export async function executeRaceConditionClose(
   };
 }
 
+export async function executeNilRaceConditionClose(
+  service: Pick<PositionExitingService, 'closeFullPosition'>,
+  position: null | undefined,
+  overrides: {
+    exitPrice?: number;
+    exitReason?: string;
+    exitType?: ExitType;
+  } = {},
+) {
+  return await service.closeFullPosition(
+    position,
+    overrides.exitPrice ?? 1.871,
+    overrides.exitReason ?? 'Test close',
+    overrides.exitType ?? ExitType.STOP_LOSS,
+  );
+}
+
 export async function executeConcurrentRaceConditionCloses(
   service: Pick<PositionExitingService, 'closeFullPosition'>,
   reasons: string[],
@@ -579,6 +664,15 @@ export function createEntryPriceState(position: Pick<Position, 'entryPrice'>) {
   return {
     entryPrice: position.entryPrice,
     isValid: !isNaN(position.entryPrice),
+  };
+}
+
+export function createEntryPriceTransitionState(before: number, after: number) {
+  return {
+    entryPriceBefore: before,
+    entryPriceAfter: after,
+    entryPriceValid: !isNaN(before),
+    isSame: before === after,
   };
 }
 

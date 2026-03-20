@@ -16,7 +16,9 @@ import { TelegramService } from '../../services/telegram.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { IExchange } from '../../interfaces/IExchange';
 import {
+  collectLifecycleSnapshots,
   createLifecycleSafetyPosition,
+  createLifecycleUpdatedSafetyPosition,
   createPositionLifecycleSafetyHarness,
   findLifecycleLogCall,
 } from '../helpers/position-lifecycle-test.utils';
@@ -160,8 +162,9 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       const snapshot = service.getPositionSnapshot();
 
       // Simulate WebSocket update
-      const updated = createLifecycleSafetyPosition();
-      updated.unrealizedPnL = 9000; // Large change
+      const updated = createLifecycleUpdatedSafetyPosition({
+        unrealizedPnL: 9000,
+      });
       setCurrentPosition(updated);
 
       // Snapshot should still have original PnL
@@ -226,11 +229,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       setCurrentPosition(position);
 
       // Multiple concurrent snapshot reads
-      const promises = [
-        Promise.resolve(service.getPositionSnapshot()),
-        Promise.resolve(service.getPositionSnapshot()),
-        Promise.resolve(service.getPositionSnapshot()),
-      ];
+      const promises = collectLifecycleSnapshots(service, 3);
 
       const snapshots = await Promise.all(promises);
 

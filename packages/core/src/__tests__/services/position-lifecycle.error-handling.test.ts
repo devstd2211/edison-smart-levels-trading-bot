@@ -34,6 +34,7 @@ import {
 import { BotEventBus } from '../../services/event-bus';
 import { IPositionRepository } from '../../repositories/IRepositories';
 import {
+  attachLifecycleRepositoryPosition,
   cloneLifecyclePosition,
   createLifecycleRestorePosition,
   createMockLifecyclePosition,
@@ -41,6 +42,8 @@ import {
   createLifecycleWebSocketPosition,
   createPositionLifecycleRepositoryHarness,
   createPositionLifecycleWithErrorHandlerHarness,
+  seedLifecycleSyncedPosition,
+  syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
@@ -127,7 +130,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
 
     it('test-8.7.4: Should retry cancelAllConditionalOrders in clearPosition', async () => {
       // First set up a position
-      mockRepository.getCurrentPosition.mockReturnValue(mockPosition);
+      attachLifecycleRepositoryPosition(mockRepository, mockPosition);
 
       // Simulate timeout on first cancel attempt, success on second
       let cancelAttempts = 0;
@@ -191,17 +194,16 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     it('test-8.7.8: Should preserve existing position on sync error', () => {
       // Set up existing position - need fresh object
       const existingPosition = clonePosition(mockPosition);
-      mockRepository.getCurrentPosition.mockReturnValue(existingPosition);
+      seedLifecycleSyncedPosition({
+        service,
+        mockRepository,
+        position: existingPosition,
+      });
 
-      // First sync to establish current position
-      service.syncWithWebSocket(existingPosition);
-
-      const wsPosition = createLifecycleWebSocketPosition(mockPosition, {
+      syncLifecycleWebSocketPosition(service, mockPosition, {
         quantity: 0.5,
         unrealizedPnL: 500,
       });
-
-      service.syncWithWebSocket(wsPosition);
 
       const currentPos = service.getCurrentPosition();
       expect(currentPos).toBeDefined();
@@ -268,7 +270,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     });
 
     it('test-8.7.13: Should skip order cancellation if already failed during RETRY', async () => {
-      mockRepository.getCurrentPosition.mockReturnValue(mockPosition);
+      attachLifecycleRepositoryPosition(mockRepository, mockPosition);
 
       // Simulate order cancellation failure
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('Cancel failed'));
@@ -298,7 +300,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
 
     it('test-8.7.15: Should handle position state correctly', () => {
       // Test that position state is maintained properly
-      mockRepository.getCurrentPosition.mockReturnValue(mockPosition);
+      attachLifecycleRepositoryPosition(mockRepository, mockPosition);
 
       const currentPos = service.getCurrentPosition();
       expect(currentPos).toBeDefined();
@@ -329,19 +331,18 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     it('test-8.7.17: Should maintain state through sync failures', () => {
       // Set up existing position
       const existingPosition = clonePosition(mockPosition);
-      mockRepository.getCurrentPosition.mockReturnValue(existingPosition);
-
-      // First sync to set currentPosition
-      service.syncWithWebSocket(existingPosition);
+      seedLifecycleSyncedPosition({
+        service,
+        mockRepository,
+        position: existingPosition,
+      });
 
       // Journal lookup now returns undefined (GRACEFUL_DEGRADE)
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
 
-      const wsPosition = createLifecycleWebSocketPosition(existingPosition, {
+      syncLifecycleWebSocketPosition(service, existingPosition, {
         unrealizedPnL: 1000,
       });
-
-      service.syncWithWebSocket(wsPosition);
 
       // Position state should be updated
       const currentPos = service.getCurrentPosition();
@@ -349,7 +350,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     });
 
     it('test-8.7.18: Should clear position if order cancel fails during exit', async () => {
-      mockRepository.getCurrentPosition.mockReturnValue(mockPosition);
+      attachLifecycleRepositoryPosition(mockRepository, mockPosition);
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('Cancel failed'));
 
       // Clear should complete despite cancel failure
@@ -366,7 +367,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
 
   describe('Integration with Phase 9 (2 tests)', () => {
     it('test-8.7.19: Should preserve closePositionWithAtomicLock during error handling', async () => {
-      mockRepository.getCurrentPosition.mockReturnValue(mockPosition);
+      attachLifecycleRepositoryPosition(mockRepository, mockPosition);
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('Timeout'));
 
       // Close with atomic lock should handle error gracefully
@@ -377,7 +378,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     });
 
     it('test-8.7.20: Should maintain getPositionSnapshot consistency', () => {
-      mockRepository.getCurrentPosition.mockReturnValue(mockPosition);
+      attachLifecycleRepositoryPosition(mockRepository, mockPosition);
 
       const snapshot = service.getPositionSnapshot();
 
