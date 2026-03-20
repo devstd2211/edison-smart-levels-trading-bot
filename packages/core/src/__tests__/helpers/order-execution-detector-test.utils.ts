@@ -102,6 +102,26 @@ export function createOrderExecutionDetectorHarness(options: {
   };
 }
 
+export function createOrderExecutionDetectorScenarioHarness(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+  executionOverrides?: Partial<OrderExecutionData>;
+  executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
+} = {}) {
+  const harness = createOrderExecutionDetectorHarness(options);
+  const execution = createOrderExecutionDetectorExecutionData(options.executionOverrides);
+  const executionBatch = createOrderExecutionDetectorExecutionBatch(
+    options.executionBatchOverrides ?? [options.executionOverrides ?? {}],
+  );
+
+  return {
+    ...harness,
+    execution,
+    executionBatch,
+  };
+}
+
 export function createOrderExecutionDetectorService(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

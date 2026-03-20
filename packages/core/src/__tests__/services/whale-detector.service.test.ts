@@ -11,6 +11,7 @@ import {
   createWhaleDetectionConfig,
   createWhaleDetectionConfigWithWallBreak,
   createWhaleDetectionHarness,
+  createWhaleDetectionScenarioHarness,
   createWhaleDetectionService,
   createWhaleDetectionWall,
 } from '../helpers/whale-detection-test.utils';
@@ -21,6 +22,13 @@ describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
   let logger: LoggerService;
   let config: WhaleDetectorConfig;
+  let createScenario: (options?: {
+    strategy?: 'BREAKOUT' | 'FOLLOW';
+    withErrorHandler?: boolean;
+    walls?: OrderBookWall[];
+    ratio?: number;
+    direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  }) => ReturnType<typeof createWhaleDetectionScenarioHarness>;
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
@@ -28,6 +36,16 @@ describe('WhaleDetectionService', () => {
       strategy: 'BREAKOUT',
       withErrorHandler: false,
     }));
+    createScenario = (options = {}) =>
+      createWhaleDetectionScenarioHarness({
+        logger,
+        config,
+        strategy: options.strategy ?? 'BREAKOUT',
+        withErrorHandler: options.withErrorHandler ?? false,
+        walls: options.walls,
+        ratio: options.ratio,
+        direction: options.direction,
+      });
   });
 
   afterEach(() => {
@@ -371,7 +389,7 @@ describe('WhaleDetectionService', () => {
 
   describe('No Detection Scenarios', () => {
     it('should return no signal when no whale activity', () => {
-      const analysis = createAnalysis([], 1.0, 'NEUTRAL');
+      const { analysis } = createScenario({ ratio: 1.0, direction: 'NEUTRAL' });
       const signal = detector.detectWhale(analysis, 1000);
 
       expect(signal.detected).toBe(false);
@@ -381,7 +399,7 @@ describe('WhaleDetectionService', () => {
     });
 
     it('should return no signal with empty orderbook', () => {
-      const analysis = createAnalysis([], 1.0, 'NEUTRAL');
+      const { analysis } = createScenario({ ratio: 1.0, direction: 'NEUTRAL' });
       const signal = detector.detectWhale(analysis, 1000);
 
       expect(signal.detected).toBe(false);

@@ -8,12 +8,12 @@ import { LoggerService, ExitType, PositionSide, Position, BybitOrder } from '../
 import {
   createExitTypeDetectorHarness,
   createExitTypeDetectorOrder,
-  createExitTypeDetectorOrderHistory,
-  createExitTypeDetectorPosition,
+  createExitTypeDetectorScenarioHarness,
+  createExitTypeDetectorTakeProfits,
+  createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
 } from '../helpers/exit-type-detector-test.utils';
 
-const createMockPosition = createExitTypeDetectorPosition;
 const createMockOrder = createExitTypeDetectorOrder;
 
 // ============================================================================
@@ -27,9 +27,18 @@ const createMockOrder = createExitTypeDetectorOrder;
 describe('ExitTypeDetectorService', () => {
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
+  let createScenario: (options?: {
+    withErrorHandler?: boolean;
+    positionOverrides?: Partial<Position>;
+  }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
 
   beforeEach(() => {
     ({ service, logger } = createExitTypeDetectorHarness({ withErrorHandler: false }));
+    createScenario = (options = {}) =>
+      createExitTypeDetectorScenarioHarness({
+        withErrorHandler: false,
+        ...options,
+      });
   });
 
   // ==========================================================================
@@ -38,7 +47,7 @@ describe('ExitTypeDetectorService', () => {
 
   describe('determineExitTypeFromHistory', () => {
     it('should detect STOP_LOSS from stopOrderType "StopLoss"', () => {
-      const position = createExitTypeDetectorPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createExitTypeDetectorOrder({
           orderStatus: 'Filled',
@@ -53,7 +62,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect STOP_LOSS from stopOrderType "Stop"', () => {
-      const position = createExitTypeDetectorPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createExitTypeDetectorOrder({
           orderStatus: 'Filled',
@@ -68,7 +77,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect TRAILING_STOP from stopOrderType "TrailingStop"', () => {
-      const position = createExitTypeDetectorPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createExitTypeDetectorOrder({
           orderStatus: 'Filled',
@@ -83,7 +92,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect TAKE_PROFIT from Limit order with reduceOnly', () => {
-      const position = createExitTypeDetectorPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createExitTypeDetectorOrder({
           orderType: 'Limit',
@@ -100,7 +109,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should detect MANUAL close from Market order with reduceOnly', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderType: 'Market',
@@ -116,7 +125,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should return MANUAL when no filled orders found', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderStatus: 'Pending', // Not filled
@@ -129,7 +138,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should return MANUAL for empty order history', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [];
 
       const exitType = service.determineExitTypeFromHistory(orderHistory, position);
@@ -138,18 +147,15 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should use most recent filled order', () => {
-      const position = createMockPosition();
-      const now = Date.now();
-      const orderHistory: BybitOrder[] = createExitTypeDetectorOrderHistory([
+      const { position } = createScenario();
+      const orderHistory: BybitOrder[] = createExitTypeDetectorTimedOrderHistory([
         {
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
-          updatedTime: now,
         },
         {
           orderStatus: 'Filled',
           stopOrderType: 'TrailingStop',
-          updatedTime: now - 1000, // Older
         },
       ]);
 
@@ -159,19 +165,17 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should filter by symbol', () => {
-      const position = createMockPosition();
-      const orderHistory: BybitOrder[] = createExitTypeDetectorOrderHistory([
+      const { position } = createScenario();
+      const orderHistory: BybitOrder[] = createExitTypeDetectorTimedOrderHistory([
         {
           symbol: 'OTHERUSDT', // Different symbol
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
-          updatedTime: Date.now(),
         },
         {
           symbol: 'APEXUSDT',
           orderStatus: 'Filled',
           stopOrderType: 'TrailingStop',
-          updatedTime: Date.now() - 1000,
         },
       ]);
 
@@ -187,7 +191,7 @@ describe('ExitTypeDetectorService', () => {
 
   describe('identifyTPLevel', () => {
     it('should identify TP1 when price closest to first level', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(101.05, position); // Close to TP1 (101)
 
@@ -195,7 +199,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should identify TP2 when price closest to second level', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(102.05, position); // Close to TP2 (102)
 
@@ -203,7 +207,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should identify TP3 when price closest to third level', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(103.05, position); // Close to TP3 (103)
 
@@ -211,7 +215,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should return 1 when no TP levels defined', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       position.takeProfits = [];
 
       const level = service.identifyTPLevel(150, position);
@@ -220,7 +224,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle exact match to TP level', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(102, position); // Exact match to TP2
 
@@ -228,7 +232,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should find closest level when price between TPs', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(101.5, position); // Between TP1 and TP2
 
@@ -237,7 +241,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle price above all TP levels', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(200, position);
 
@@ -246,7 +250,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle price below all TP levels', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       const level = service.identifyTPLevel(50, position);
 
@@ -255,10 +259,9 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle single TP level', () => {
-      const position = createMockPosition();
-      position.takeProfits = [
-        { level: 1, price: 105, percent: 5, sizePercent: 100, orderId: 'tp1-only', hit: false },
-      ];
+      const { position } = createScenario({
+        positionOverrides: { takeProfits: createExitTypeDetectorTakeProfits([105]) },
+      });
 
       const level = service.identifyTPLevel(105.5, position);
 
@@ -266,7 +269,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should use 1-based indexing', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
 
       // Test all 3 levels to ensure 1-based
       expect(service.identifyTPLevel(101, position)).toBe(1);
@@ -281,7 +284,7 @@ describe('ExitTypeDetectorService', () => {
 
   describe('integration scenarios', () => {
     it('should determine TP1 exit correctly', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderType: 'Limit',
@@ -298,7 +301,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should determine TP2 exit correctly', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderType: 'Limit',
@@ -315,7 +318,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should determine TP3 exit correctly', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderType: 'Limit',
@@ -332,7 +335,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle SHORT position exit correctly', () => {
-      const position = createMockPosition(PositionSide.SHORT);
+      const { position } = createScenario({ positionOverrides: { side: PositionSide.SHORT } });
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderStatus: 'Filled',
@@ -347,22 +350,19 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle multiple exit orders in history', () => {
-      const position = createMockPosition();
-      const now = Date.now();
-      const orderHistory: BybitOrder[] = createExitTypeDetectorOrderHistory([
+      const { position } = createScenario();
+      const orderHistory: BybitOrder[] = createExitTypeDetectorTimedOrderHistory([
         {
           orderStatus: 'Filled',
           stopOrderType: 'Stop',
-          updatedTime: now,
         },
         {
           orderStatus: 'Filled',
           orderType: 'Limit',
           reduceOnly: true,
           price: '101.0',
-          updatedTime: now - 100000,
         },
-      ]);
+      ], { stepMs: 100000 });
 
       const exitType = service.determineExitTypeFromHistory(orderHistory, position);
 
@@ -377,7 +377,7 @@ describe('ExitTypeDetectorService', () => {
 
   describe('edge cases', () => {
     it('should handle order with missing updatedTime', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderStatus: 'Filled',
@@ -392,7 +392,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle order with undefined stopOrderType', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderStatus: 'Filled',
@@ -409,7 +409,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle numeric price string parsing', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderType: 'Limit',
@@ -427,16 +427,13 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should handle large TP level arrays', () => {
-      const position = createMockPosition();
-      // Add 10 TP levels
-      position.takeProfits = Array.from({ length: 10 }, (_, i) => ({
-        level: i + 1,
-        price: 101 + i,
-        percent: (i + 1) * 1,
-        sizePercent: 10,
-        orderId: `tp${i + 1}-order`,
-        hit: false,
-      }));
+      const { position } = createScenario({
+        positionOverrides: {
+          takeProfits: createExitTypeDetectorTakeProfits(
+            Array.from({ length: 10 }, (_, i) => 101 + i),
+          ),
+        },
+      });
 
       const level = service.identifyTPLevel(107.1, position);
 
@@ -444,7 +441,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     it('should be case-sensitive for stopOrderType comparison', () => {
-      const position = createMockPosition();
+      const { position } = createScenario();
       const orderHistory: BybitOrder[] = [
         createMockOrder({
           orderStatus: 'Filled',

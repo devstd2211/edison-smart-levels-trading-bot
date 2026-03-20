@@ -9,7 +9,6 @@
  */
 
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { ErrorHandler } from '../../errors';
 import {
   ExitType,
   PositionSide,
@@ -22,8 +21,9 @@ import {
   asExitTypeDetectorPosition,
   createExitTypeDetectorHarness,
   createExitTypeDetectorMockLogger,
-  createExitTypeDetectorOrderHistory,
-  createExitTypeDetectorScenarioPosition,
+  createExitTypeDetectorScenarioHarness,
+  createExitTypeDetectorTakeProfits,
+  createExitTypeDetectorTimedOrderHistory,
 } from '../helpers/exit-type-detector-test.utils';
 
 const asPosition = asExitTypeDetectorPosition;
@@ -31,12 +31,20 @@ const asOrder = asExitTypeDetectorOrder;
 
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: ExitTypeDetectorService;
-  let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let createScenario: (options?: {
+    withErrorHandler?: boolean;
+    positionOverrides?: Partial<Position>;
+  }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
 
   beforeEach(() => {
     mockLogger = createExitTypeDetectorMockLogger();
-    ({ service, errorHandler } = createExitTypeDetectorHarness({ logger: mockLogger }));
+    ({ service } = createExitTypeDetectorHarness({ logger: mockLogger }));
+    createScenario = (options = {}) =>
+      createExitTypeDetectorScenarioHarness({
+        logger: mockLogger,
+        ...options,
+      });
     jest.clearAllMocks();
   });
 
@@ -102,10 +110,12 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Error Handling with ErrorHandler', () => {
     it('should handle empty order history gracefully (SKIP fallback)', () => {
-      const position = createExitTypeDetectorScenarioPosition({
+      const { position } = createScenario({
+        positionOverrides: {
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
+        },
       });
 
       const result = service.determineExitTypeFromHistory([], position);
@@ -114,13 +124,12 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle NaN price in TP level identification (SKIP)', () => {
-      const position = createExitTypeDetectorScenarioPosition({
+      const { position } = createScenario({
+        positionOverrides: {
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
-        takeProfits: [
-          { level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false },
-          { level: 2, price: 47000, percent: 1, sizePercent: 30, hit: false },
-        ],
+          takeProfits: createExitTypeDetectorTakeProfits([46000, 47000]),
+        },
       });
 
       const result = service.identifyTPLevel(NaN, position);
@@ -128,10 +137,12 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle empty takeProfits array (SKIP)', () => {
-      const position = createExitTypeDetectorScenarioPosition({
+      const { position } = createScenario({
+        positionOverrides: {
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
         takeProfits: [],
+        },
       });
 
       const result = service.identifyTPLevel(46000, position);
@@ -157,15 +168,13 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Backward Compatibility (without ErrorHandler)', () => {
     it('should work without ErrorHandler in constructor', () => {
-      const legacyService = createExitTypeDetectorHarness({
-        logger: mockLogger,
+      const { service: legacyService, position } = createScenario({
         withErrorHandler: false,
-      }).service;
-
-      const position = createExitTypeDetectorScenarioPosition({
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
+        positionOverrides: {
+          symbol: 'BTCUSDT',
+          side: PositionSide.LONG,
+          takeProfits: createExitTypeDetectorTakeProfits([46000]),
+        },
       });
 
       const result = legacyService.determineExitTypeFromHistory([], position);
@@ -173,15 +182,13 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle NaN without ErrorHandler', () => {
-      const legacyService = createExitTypeDetectorHarness({
-        logger: mockLogger,
+      const { service: legacyService, position } = createScenario({
         withErrorHandler: false,
-      }).service;
-
-      const position = createExitTypeDetectorScenarioPosition({
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
+        positionOverrides: {
+          symbol: 'BTCUSDT',
+          side: PositionSide.LONG,
+          takeProfits: createExitTypeDetectorTakeProfits([46000]),
+        },
       });
 
       const result = legacyService.identifyTPLevel(NaN, position);
@@ -195,19 +202,20 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Integration Scenarios', () => {
     it('should handle multiple orders and use most recent', () => {
-      const position = createExitTypeDetectorScenarioPosition({
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
+      const { position } = createScenario({
+        positionOverrides: {
+          symbol: 'BTCUSDT',
+          side: PositionSide.LONG,
+          takeProfits: createExitTypeDetectorTakeProfits([46000]),
+        },
       });
 
-      const orders: BybitOrder[] = createExitTypeDetectorOrderHistory([
+      const orders: BybitOrder[] = createExitTypeDetectorTimedOrderHistory([
         {
           symbol: 'BTCUSDT',
           orderStatus: 'Filled',
           stopOrderType: 'StopLoss',
           price: '44000',
-          updatedTime: Date.now() - 10000,
         },
         {
           symbol: 'BTCUSDT',
@@ -215,23 +223,20 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
           orderType: 'Market',
           reduceOnly: true,
           price: '45500',
-          updatedTime: Date.now(),
         },
-      ]);
+      ], { stepMs: -10000 });
 
       const result = service.determineExitTypeFromHistory(orders, position);
       expect(result).toBe(ExitType.MANUAL); // Uses recent order
     });
 
     it('should identify correct TP level among multiple TPs', () => {
-      const position = createExitTypeDetectorScenarioPosition({
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        takeProfits: [
-          { level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false },
-          { level: 2, price: 47000, percent: 1, sizePercent: 30, hit: false },
-          { level: 3, price: 48000, percent: 1.5, sizePercent: 20, hit: false },
-        ],
+      const { position } = createScenario({
+        positionOverrides: {
+          symbol: 'BTCUSDT',
+          side: PositionSide.LONG,
+          takeProfits: createExitTypeDetectorTakeProfits([46000, 47000, 48000]),
+        },
       });
 
       // TP2 closest
@@ -245,29 +250,29 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should filter orders by symbol correctly', () => {
-      const position = createExitTypeDetectorScenarioPosition({
-        symbol: 'BTCUSDT',
-        side: PositionSide.LONG,
-        takeProfits: [{ level: 1, price: 46000, percent: 0.5, sizePercent: 50, hit: false }],
+      const { position } = createScenario({
+        positionOverrides: {
+          symbol: 'BTCUSDT',
+          side: PositionSide.LONG,
+          takeProfits: createExitTypeDetectorTakeProfits([46000]),
+        },
       });
 
-      const orders: BybitOrder[] = createExitTypeDetectorOrderHistory([
+      const orders: BybitOrder[] = createExitTypeDetectorTimedOrderHistory([
         {
           symbol: 'ETHUSDT',
           orderStatus: 'Filled',
           orderType: 'Market',
           reduceOnly: true,
           price: '2000',
-          updatedTime: Date.now(),
         },
         {
           symbol: 'BTCUSDT',
           orderStatus: 'Filled',
           stopOrderType: 'StopLoss',
           price: '44000',
-          updatedTime: Date.now() - 1000,
         },
-      ]);
+        ], { stepMs: 1000 });
 
       const result = service.determineExitTypeFromHistory(orders, position);
       expect(result).toBe(ExitType.STOP_LOSS); // Uses BTCUSDT order, not ETHUSDT

@@ -25,6 +25,7 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createAnalyzerEngineMockStrategyConfig,
+  createAnalyzerEngineScenarioHarness,
   createAnalyzerEngineService,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
@@ -37,9 +38,22 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
+  let createScenario: (
+    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    options?: {
+      analyzerNames?: string[];
+      candleCount?: number;
+    },
+  ) => ReturnType<typeof createAnalyzerEngineScenarioHarness>;
 
   beforeEach(() => {
     mockLogger = createAnalyzerEngineMockLogger();
+    createScenario = (analyzers, options = {}) =>
+      createAnalyzerEngineScenarioHarness(analyzers, {
+        logger: mockLogger,
+        analyzerNames: options.analyzerNames,
+        candleCount: options.candleCount,
+      });
   });
 
   // ========== BASIC EXECUTION (5 tests) ==========
@@ -53,13 +67,10 @@ describe('AnalyzerEngineService', () => {
         ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
       ]);
 
-      ({ registry: mockRegistry, service, logger: mockLogger } =
-        createAnalyzerEngineHarness(analyzers));
+      const scenario = createScenario(analyzers, { analyzerNames: ['EMA', 'RSI'] });
+      ({ registry: mockRegistry, service } = scenario);
 
-      const candles = createAnalyzerEngineMockCandles(50);
-      const config = createAnalyzerEngineMockStrategyConfig(['EMA', 'RSI']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.signals).toHaveLength(2);
       expect(result.analyzersExecuted).toBe(2);
@@ -75,14 +86,15 @@ describe('AnalyzerEngineService', () => {
         ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
       ]);
 
-      ({ registry: mockRegistry, service, logger: mockLogger } =
-        createAnalyzerEngineHarness(analyzers));
-
-      const candles = createAnalyzerEngineMockCandles(50);
-      const config = createAnalyzerEngineMockStrategyConfig(['EMA', 'RSI']);
+      const scenario = createScenario(analyzers, { analyzerNames: ['EMA', 'RSI'] });
+      ({ registry: mockRegistry, service } = scenario);
       const executionConfig: AnalyzerExecutionConfig = { executionMode: 'sequential' };
 
-      const result = await service.executeAnalyzers(candles, config, executionConfig);
+      const result = await service.executeAnalyzers(
+        scenario.candles,
+        scenario.config,
+        executionConfig,
+      );
 
       expect(result.signals).toHaveLength(2);
       expect(result.executionMode).toBe('sequential');
@@ -98,13 +110,10 @@ describe('AnalyzerEngineService', () => {
         ['ATR', { instance: analyzer3, weight: 0.5, priority: 5 }],
       ]);
 
-      ({ registry: mockRegistry, service, logger: mockLogger } =
-        createAnalyzerEngineHarness(analyzers));
+      const scenario = createScenario(analyzers, { analyzerNames: ['EMA', 'RSI', 'ATR'] });
+      ({ registry: mockRegistry, service } = scenario);
 
-      const candles = createAnalyzerEngineMockCandles(50);
-      const config = createAnalyzerEngineMockStrategyConfig(['EMA', 'RSI', 'ATR']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.signals).toHaveLength(3);
       expect(result.signals.map((s) => s.direction)).toEqual(['LONG', 'SHORT', 'HOLD']);
@@ -114,13 +123,10 @@ describe('AnalyzerEngineService', () => {
       const analyzer = createAnalyzerEngineMockAnalyzer('EMA');
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
-      ({ registry: mockRegistry, service, logger: mockLogger } =
-        createAnalyzerEngineHarness(analyzers));
+      const scenario = createScenario(analyzers, { analyzerNames: ['EMA'] });
+      ({ registry: mockRegistry, service } = scenario);
 
-      const candles = createAnalyzerEngineMockCandles(50);
-      const config = createAnalyzerEngineMockStrategyConfig(['EMA']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.executionTimeMs).toBeGreaterThanOrEqual(0);
       expect(result.timestamp).toBeGreaterThan(0);
@@ -128,13 +134,10 @@ describe('AnalyzerEngineService', () => {
 
     it('should return empty result when no analyzers enabled', async () => {
       const analyzers = new Map();
-      ({ registry: mockRegistry, service, logger: mockLogger } =
-        createAnalyzerEngineHarness(analyzers));
+      const scenario = createScenario(analyzers, { analyzerNames: [] });
+      ({ registry: mockRegistry, service } = scenario);
 
-      const candles = createAnalyzerEngineMockCandles(50);
-      const config = createAnalyzerEngineMockStrategyConfig([]);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.signals).toHaveLength(0);
       expect(result.analyzersExecuted).toBe(0);

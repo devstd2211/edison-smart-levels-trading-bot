@@ -121,3 +121,25 @@ export function createAnalyzerRegistryBaseConfig() {
     },
   };
 }
+
+export function createAnalyzerRegistryScenarioHarness(options: {
+  analyzerConfigOverrides?: Partial<StrategyAnalyzerConfig>;
+  analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
+  indicatorNames?: string[];
+} = {}) {
+  const config = createAnalyzerRegistryBaseConfig();
+  const analyzerConfig = createAnalyzerRegistryAnalyzerConfig(
+    options.analyzerConfigOverrides,
+  );
+  const analyzerConfigs = options.analyzerConfigsOverrides
+    ? createAnalyzerRegistryAnalyzerConfigs(options.analyzerConfigsOverrides)
+    : [analyzerConfig];
+  const indicators = createAnalyzerRegistryIndicatorMap(options.indicatorNames ?? ['EMA']);
+
+  return {
+    config,
+    analyzerConfig,
+    analyzerConfigs,
+    indicators,
+  };
+}

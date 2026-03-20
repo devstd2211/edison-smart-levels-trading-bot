@@ -40,6 +40,20 @@ export function createExitTypeDetectorHarness(options: {
   };
 }
 
+export function createExitTypeDetectorScenarioHarness(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  positionOverrides?: Partial<Position>;
+} = {}) {
+  const harness = createExitTypeDetectorHarness(options);
+  const position = createExitTypeDetectorScenarioPosition(options.positionOverrides);
+
+  return {
+    ...harness,
+    position,
+  };
+}
+
 export function createExitTypeDetectorPosition(
   side: PositionSide = PositionSide.LONG,
 ): Position {
@@ -109,6 +123,48 @@ export function createExitTypeDetectorOrderHistory(
       ...overrides,
     }),
   );
+}
+
+export function createExitTypeDetectorTimestampSequence(
+  count: number,
+  start: number = Date.now(),
+  stepMs: number = 1000,
+): number[] {
+  return Array.from({ length: count }, (_, index) => start - index * stepMs);
+}
+
+export function createExitTypeDetectorTimedOrderHistory(
+  overridesList: Array<Partial<BybitOrder>>,
+  options: {
+    start?: number;
+    stepMs?: number;
+  } = {},
+): BybitOrder[] {
+  const timestamps = createExitTypeDetectorTimestampSequence(
+    overridesList.length,
+    options.start,
+    options.stepMs,
+  );
+
+  return createExitTypeDetectorOrderHistory(
+    overridesList.map((overrides, index) => ({
+      updatedTime: overrides.updatedTime ?? timestamps[index],
+      ...overrides,
+    })),
+  );
+}
+
+export function createExitTypeDetectorTakeProfits(
+  prices: number[],
+): Position['takeProfits'] {
+  return prices.map((price, index) => ({
+    level: index + 1,
+    price,
+    percent: index + 1,
+    sizePercent: Number((100 / prices.length).toFixed(2)),
+    orderId: `tp${index + 1}-order`,
+    hit: false,
+  }));
 }
 
 export const asExitTypeDetectorPosition = (value: unknown): Position => value as Position;

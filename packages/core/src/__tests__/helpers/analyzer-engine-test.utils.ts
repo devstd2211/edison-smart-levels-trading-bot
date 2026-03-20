@@ -195,6 +195,11 @@ type AnalyzerEngineDependencyOverrides = {
   errorHandler?: ErrorHandler;
 };
 
+type AnalyzerEngineScenarioOptions = AnalyzerEngineDependencyOverrides & {
+  analyzerNames?: string[];
+  candleCount?: number;
+};
+
 export function createAnalyzerEngineService(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
   overrides: AnalyzerEngineDependencyOverrides = {},
@@ -224,5 +229,21 @@ export function createAnalyzerEngineHarness(
     registry,
     errorHandler,
     service,
+  };
+}
+
+export function createAnalyzerEngineScenarioHarness(
+  analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+  options: AnalyzerEngineScenarioOptions = {},
+) {
+  const harness = createAnalyzerEngineHarness(analyzers, options);
+  const analyzerNames = options.analyzerNames ?? Array.from(analyzers.keys());
+  const candles = createAnalyzerEngineMockCandles(options.candleCount ?? 50);
+  const config = createAnalyzerEngineMockStrategyConfig(analyzerNames);
+
+  return {
+    ...harness,
+    candles,
+    config,
   };
 }

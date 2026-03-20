@@ -17,27 +17,15 @@
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SignalDirection, SwingPointType } from '../../types/legacy';
-import { createAnalyzerRegistrationFixesConfig } from '../helpers/analyzer-registration-fixes-test.utils';
+import { createAnalyzerRegistrationFixesHarness } from '../helpers/analyzer-registration-fixes-test.utils';
 
 describe('Analyzer Registration Service - All Fixes', () => {
-  let mockLogger: {
-    debug: jest.Mock;
-    info: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-  };
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
   beforeEach(() => {
-    mockLogger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    };
-
+    const harness = createAnalyzerRegistrationFixesHarness();
     mockConfig = {
-      analyzerStrategic: createAnalyzerRegistrationFixesConfig().analyzerStrategic,
+      analyzerStrategic: harness.analyzerStrategic,
     };
   });
 

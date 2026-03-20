@@ -15,6 +15,18 @@ export type MockLadderExitBybitService = {
   closePosition: jest.Mock;
 };
 
+type LadderExitHarnessOptions = {
+  logger?: LoggerService;
+  bybitService?: MockLadderExitBybitService;
+  withErrorHandler?: boolean;
+};
+
+type LadderExitScenarioOptions = LadderExitHarnessOptions & {
+  side?: PositionSide;
+  entryPrice?: number;
+  quantity?: number;
+};
+
 export const createLadderExitLogger = (): LoggerService =>
   new LoggerService(LogLevel.ERROR, './logs', false);
 
@@ -42,17 +54,35 @@ export const createLadderExitService = (options: {
   );
 };
 
-export const createLadderExitHarness = () => {
-  const logger = createLadderExitLogger();
-  const bybitService = createLadderExitBybitService();
+export const createLadderExitHarness = (options: LadderExitHarnessOptions = {}) => {
+  const logger = options.logger ?? createLadderExitLogger();
+  const bybitService = options.bybitService ?? createLadderExitBybitService();
   const errorHandler = createLadderExitErrorHandler(logger);
-  const service = createLadderExitService({ logger, bybitService, errorHandler });
+  const service = createLadderExitService({
+    logger,
+    bybitService,
+    errorHandler: options.withErrorHandler === false ? undefined : errorHandler,
+  });
 
   return {
     logger,
     bybitService,
     errorHandler,
     service,
+  };
+};
+
+export const createLadderExitScenarioHarness = (options: LadderExitScenarioOptions = {}) => {
+  const harness = createLadderExitHarness(options);
+  const position = createLadderExitPosition(
+    options.side ?? PositionSide.LONG,
+    options.entryPrice ?? 100,
+    options.quantity,
+  );
+
+  return {
+    ...harness,
+    position,
   };
 };
 
@@ -141,6 +171,32 @@ export const createLadderExitOrderHistory = (
       order.reduceOnly,
     ),
   );
+
+export const createLadderExitTpOrderHistory = (
+  prices: string[],
+): BybitOrder[] =>
+  createLadderExitOrderHistory(
+    prices.map((price) => ({
+      price,
+      orderType: 'Limit',
+      reduceOnly: true,
+    })),
+  );
+
+export const queueLadderExitOrderHistory = (
+  bybitService: MockLadderExitBybitService,
+  orders: Array<{
+    symbol?: string;
+    price: string;
+    orderType?: string;
+    stopOrderType?: string;
+    reduceOnly?: boolean;
+  }>,
+): BybitOrder[] => {
+  const orderHistory = createLadderExitOrderHistory(orders);
+  bybitService.getOrderHistory.mockResolvedValueOnce(orderHistory);
+  return orderHistory;
+};
 
 export const asLadderExitPosition = (value: unknown): Position => value as Position;
 export const asLadderExitPrice = (value: unknown): number => value as number;

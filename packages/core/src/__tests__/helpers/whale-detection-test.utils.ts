@@ -166,6 +166,28 @@ export function createWhaleDetectionHarness(options: {
   };
 }
 
+export function createWhaleDetectionScenarioHarness(options: {
+  logger?: LoggerService;
+  config?: WhaleDetectorConfig;
+  strategy?: 'BREAKOUT' | 'FOLLOW';
+  withErrorHandler?: boolean;
+  walls?: OrderBookWall[];
+  ratio?: number;
+  direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+} = {}) {
+  const harness = createWhaleDetectionHarness(options);
+  const analysis = createWhaleDetectionAnalysis(
+    options.walls,
+    options.ratio,
+    options.direction,
+  );
+
+  return {
+    ...harness,
+    analysis,
+  };
+}
+
 export function createWhaleDetectionErrorHandler(
   logger: LoggerService = createWhaleDetectionLogger(),
 ): ErrorHandler {

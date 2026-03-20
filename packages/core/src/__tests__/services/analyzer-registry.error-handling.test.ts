@@ -25,6 +25,7 @@ import {
   createAnalyzerRegistryIndicatorMap,
   createAnalyzerRegistryMockIndicator,
   createAnalyzerRegistryMockLogger,
+  createAnalyzerRegistryScenarioHarness,
   createAnalyzerRegistryService,
   type AnalyzerRegistryMockLogger,
 } from '../helpers/analyzer-registry-test.utils';
@@ -33,9 +34,15 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
+  let createScenario: (options?: {
+    analyzerConfigOverrides?: Partial<StrategyAnalyzerConfig>;
+    analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
+    indicatorNames?: string[];
+  }) => ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
 
   beforeEach(() => {
     ({ logger, errorHandler, registry } = createAnalyzerRegistryHarness());
+    createScenario = (options = {}) => createAnalyzerRegistryScenarioHarness(options);
   });
 
   // ============================================================================
@@ -44,9 +51,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('THROW: Analyzer Validation', () => {
     it('should THROW on unknown analyzer name', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig({
-        name: 'UNKNOWN_ANALYZER_NEW',
+      const { config, analyzerConfig } = createScenario({
+        analyzerConfigOverrides: { name: 'UNKNOWN_ANALYZER_NEW' },
       });
 
       // Should warn about unknown analyzer
@@ -76,9 +82,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should validate analyzer exists before attempting load', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig({
-        name: 'INVALID_ANALYZER',
+      const { config, analyzerConfig } = createScenario({
+        analyzerConfigOverrides: { name: 'INVALID_ANALYZER' },
       });
 
       // Should warn about unknown analyzer
@@ -90,9 +95,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should list all available analyzers when unknown analyzer requested', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig({
-        name: 'UNKNOWN',
+      const { config, analyzerConfig } = createScenario({
+        analyzerConfigOverrides: { name: 'UNKNOWN' },
       });
 
       await registry.getAnalyzerInstance(config, analyzerConfig);
@@ -120,8 +124,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('GRACEFUL_DEGRADE: Load Failures & Recovery', () => {
     it('should return null when analyzer fails to load', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig();
+      const { config, analyzerConfig } = createScenario();
 
       // Since analyzer files don't exist, loading will fail
       const result = await registry.getAnalyzerInstance(config, analyzerConfig);
@@ -132,12 +135,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should continue loading other analyzers on partial failure', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const configs: StrategyAnalyzerConfig[] = createAnalyzerRegistryAnalyzerConfigs([
-        { name: 'EMA_ANALYZER_NEW' },
-        { name: 'UNKNOWN_ANALYZER' },
-        { name: 'RSI_ANALYZER_NEW' },
-      ]);
+      const { config, analyzerConfigs: configs } = createScenario({
+        analyzerConfigsOverrides: [
+          { name: 'EMA_ANALYZER_NEW' },
+          { name: 'UNKNOWN_ANALYZER' },
+          { name: 'RSI_ANALYZER_NEW' },
+        ],
+      });
 
       const result = await registry.getEnabledAnalyzers(configs, config);
 
@@ -152,8 +156,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should cache loaded analyzers to avoid reloading on GRACEFUL_DEGRADE', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig();
+      const { config, analyzerConfig } = createScenario();
 
       // First call
       await registry.getAnalyzerInstance(config, analyzerConfig);
@@ -169,12 +172,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should handle concurrent analyzer loading with GRACEFUL_DEGRADE', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const configs: StrategyAnalyzerConfig[] = createAnalyzerRegistryAnalyzerConfigs([
-        { name: 'EMA_ANALYZER_NEW' },
-        { name: 'ATR_ANALYZER_NEW' },
-        { name: 'VOLUME_ANALYZER_NEW' },
-      ]);
+      const { config, analyzerConfigs: configs } = createScenario({
+        analyzerConfigsOverrides: [
+          { name: 'EMA_ANALYZER_NEW' },
+          { name: 'ATR_ANALYZER_NEW' },
+          { name: 'VOLUME_ANALYZER_NEW' },
+        ],
+      });
 
       // Load concurrently
       const promises = configs.map(cfg =>
@@ -211,7 +215,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         logger: failingLogger,
         errorHandler,
       });
-      const indicators = createAnalyzerRegistryIndicatorMap(['EMA']);
+      const { indicators } = createScenario();
 
       // Should not throw even though logger.debug fails
       expect(() => {
@@ -279,12 +283,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   describe('Integration: End-to-End Scenarios', () => {
     it('should load all enabled analyzers from strategy config', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const configs: StrategyAnalyzerConfig[] = createAnalyzerRegistryAnalyzerConfigs([
-        { name: 'EMA_ANALYZER_NEW', weight: 1.5, priority: 5 },
-        { name: 'RSI_ANALYZER_NEW', weight: 1.0, priority: 4 },
-        { name: 'UNKNOWN_ANALYZER', weight: 0.5, priority: 3 },
-      ]);
+      const { config, analyzerConfigs: configs } = createScenario({
+        analyzerConfigsOverrides: [
+          { name: 'EMA_ANALYZER_NEW', weight: 1.5, priority: 5 },
+          { name: 'RSI_ANALYZER_NEW', weight: 1.0, priority: 4 },
+          { name: 'UNKNOWN_ANALYZER', weight: 0.5, priority: 3 },
+        ],
+      });
 
       const result = await registry.getEnabledAnalyzers(configs, config);
 
@@ -295,11 +300,12 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should handle disabled analyzers by skipping them', async () => {
-      const config = createAnalyzerRegistryBaseConfig();
-      const configs: StrategyAnalyzerConfig[] = createAnalyzerRegistryAnalyzerConfigs([
-        { name: 'EMA_ANALYZER_NEW' },
-        { name: 'RSI_ANALYZER_NEW', enabled: false, priority: 4 },
-      ]);
+      const { config, analyzerConfigs: configs } = createScenario({
+        analyzerConfigsOverrides: [
+          { name: 'EMA_ANALYZER_NEW' },
+          { name: 'RSI_ANALYZER_NEW', enabled: false, priority: 4 },
+        ],
+      });
 
       const result = await registry.getEnabledAnalyzers(configs, config);
 
@@ -308,7 +314,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should set and retrieve indicators for analyzer injection', () => {
-      const indicators = createAnalyzerRegistryIndicatorMap(['EMA', 'RSI', 'ATR']);
+      const { indicators } = createScenario({ indicatorNames: ['EMA', 'RSI', 'ATR'] });
 
       registry.setIndicators(indicators);
 

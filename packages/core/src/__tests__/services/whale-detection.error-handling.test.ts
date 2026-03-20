@@ -18,6 +18,7 @@ import {
   createWhaleDetectionHarness,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
+  createWhaleDetectionScenarioHarness,
   createWhaleDetectionService,
 } from '../helpers/whale-detection-test.utils';
 
@@ -27,6 +28,25 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
+  let createScenario: (options?: {
+    config?: WhaleDetectorConfig;
+    logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
+    withErrorHandler?: boolean;
+    ratio?: number;
+    direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  }) => ReturnType<typeof createWhaleDetectionScenarioHarness>;
+
+  beforeEach(() => {
+    createScenario = (options = {}) =>
+      createWhaleDetectionScenarioHarness({
+        config: options.config ?? createValidConfig(),
+        logger: options.logger,
+        withErrorHandler: options.withErrorHandler,
+        ratio: options.ratio,
+        direction: options.direction,
+      });
+  });
+
   // ============================================================================
   // THROW: Config Validation (4 tests)
   // ============================================================================
@@ -98,8 +118,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     type WhaleAnalysisInput = Parameters<WhaleDetectionService['detectWhale']>[0];
 
     beforeEach(() => {
-      ({ detector: service } = createWhaleDetectionHarness({
-        config: createValidConfig(),
+      ({ detector: service } = createScenario({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
       }));
     });
@@ -132,8 +151,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     let service: WhaleDetectionService;
 
     beforeEach(() => {
-      ({ detector: service } = createWhaleDetectionHarness({
-        config: createValidConfig(),
+      ({ detector: service } = createScenario({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
       }));
     });
@@ -209,8 +227,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     let service: WhaleDetectionService;
 
     beforeEach(() => {
-      ({ detector: service } = createWhaleDetectionHarness({
-        config: createValidConfig(),
+      ({ detector: service } = createScenario({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
       }));
     });
@@ -241,8 +258,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     const mockLogger = createMockLogger();
 
     test('should work without ErrorHandler', () => {
-      const { detector: service } = createWhaleDetectionHarness({
-        config: createValidConfig(),
+      const { detector: service } = createScenario({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
         withErrorHandler: false,
       });
@@ -253,8 +269,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const { detector: service } = createWhaleDetectionHarness({
-        config: createValidConfig(),
+      const { detector: service } = createScenario({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
         withErrorHandler: false,
       });

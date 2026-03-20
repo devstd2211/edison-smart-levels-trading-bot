@@ -9,8 +9,15 @@ import {
   createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
   createOrderExecutionDetectorHarness,
+  createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
 } from '../helpers/order-execution-detector-test.utils';
+
+type OrderExecutionDetectorScenarioOptions = {
+  withErrorHandler?: boolean;
+  executionOverrides?: Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>;
+  executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
+};
 
 // ============================================================================
 // MOCKS
@@ -25,10 +32,18 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 describe('OrderExecutionDetectorService', () => {
   let service: OrderExecutionDetectorService;
   let logger: LoggerService;
-  let createService: ReturnType<typeof createOrderExecutionDetectorHarness>['createService'];
+  let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
+    ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
   beforeEach(() => {
-    ({ service, logger, createService } = createOrderExecutionDetectorHarness({ withErrorHandler: false }));
+    ({ service, logger } = createOrderExecutionDetectorHarness({ withErrorHandler: false }));
+    createScenario = (options = {}) =>
+      createOrderExecutionDetectorScenarioHarness({
+        logger,
+        withErrorHandler: options.withErrorHandler,
+        executionOverrides: options.executionOverrides,
+        executionBatchOverrides: options.executionBatchOverrides,
+      });
   });
 
   describe('detectExecution', () => {
@@ -248,7 +263,7 @@ describe('OrderExecutionDetectorService', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      service = createService({ withErrorHandler: false });
+      ({ service } = createScenario({ withErrorHandler: false }));
     });
 
     it('should handle null/undefined fields gracefully', () => {

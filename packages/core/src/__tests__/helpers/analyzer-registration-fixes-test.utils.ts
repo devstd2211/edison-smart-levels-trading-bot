@@ -84,3 +84,20 @@ export function createAnalyzerRegistrationFixesConfig() {
     },
   };
 }
+
+export function createAnalyzerRegistrationFixesHarness() {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
+  const config = createAnalyzerRegistrationFixesConfig();
+
+  return {
+    logger,
+    config,
+    analyzerStrategic: config.analyzerStrategic,
+  };
+}

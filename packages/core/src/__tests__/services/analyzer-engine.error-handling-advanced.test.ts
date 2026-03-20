@@ -35,6 +35,7 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createAnalyzerEngineMockStrategyConfig,
+  createAnalyzerEngineScenarioHarness,
   createAnalyzerEngineService,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
@@ -151,10 +152,28 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: ReturnType<typeof createMockLogger>;
+  let createScenario: (
+    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    options?: {
+      registry?: AnalyzerRegistryService;
+      logger?: AnalyzerEngineMockLogger;
+      errorHandler?: ErrorHandler;
+      analyzerNames?: string[];
+      candleCount?: number;
+    },
+  ) => ReturnType<typeof createAnalyzerEngineScenarioHarness>;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     // ErrorRegistry state is shared across tests - that's by design
+    createScenario = (analyzers, options = {}) =>
+      createAnalyzerEngineScenarioHarness(analyzers, {
+        logger: options.logger ?? mockLogger,
+        errorHandler: options.errorHandler,
+        registry: options.registry,
+        analyzerNames: options.analyzerNames,
+        candleCount: options.candleCount,
+      });
   });
 
   // ========== SECTION F: ErrorHandler Callbacks (4 tests) ==========
@@ -172,17 +191,15 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
       mockRegistry = createMockAnalyzerRegistry(analyzers);
 
       const { handler } = createErrorHandlerWithCallbacks();
-      service = createAnalyzerEngineService(analyzers, {
+      const scenario = createScenario(analyzers, {
         registry: mockRegistry,
-        logger: mockLogger,
         errorHandler: handler,
+        analyzerNames: ['TEST'],
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['TEST']);
+      service = scenario.service;
 
       // Execute service (will handle errors internally)
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       // Verify result has correct execution state
       expect(result.analyzersExecuted).toBeGreaterThanOrEqual(0);
@@ -198,16 +215,14 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
       mockRegistry = createMockAnalyzerRegistry(analyzers);
 
       const { handler } = createErrorHandlerWithCallbacks();
-      service = createAnalyzerEngineService(analyzers, {
+      const scenario = createScenario(analyzers, {
         registry: mockRegistry,
-        logger: mockLogger,
         errorHandler: handler,
+        analyzerNames: ['EMA'],
       });
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       // Should execute successfully without errors
       expect(result.signals).toHaveLength(1);
@@ -225,16 +240,14 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
       mockRegistry = createMockAnalyzerRegistry(analyzers);
 
       const { handler } = createErrorHandlerWithCallbacks();
-      service = createAnalyzerEngineService(analyzers, {
+      const scenario = createScenario(analyzers, {
         registry: mockRegistry,
-        logger: mockLogger,
         errorHandler: handler,
+        analyzerNames: ['FAIL'],
       });
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['FAIL']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       // Should handle failure gracefully
       expect(result.signals).toHaveLength(0);
@@ -251,16 +264,14 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
 
       mockRegistry = createMockAnalyzerRegistry(analyzers);
       const { handler } = createErrorHandlerWithCallbacks();
-      service = createAnalyzerEngineService(analyzers, {
+      const scenario = createScenario(analyzers, {
         registry: mockRegistry,
-        logger: mockLogger,
         errorHandler: handler,
+        analyzerNames: ['A1', 'A2', 'A3'],
       });
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['A1', 'A2', 'A3']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       // Should handle cascading failures
       expect(result.analyzersFailed).toBe(2);
