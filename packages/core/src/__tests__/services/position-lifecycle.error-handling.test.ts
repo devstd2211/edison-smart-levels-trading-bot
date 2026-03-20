@@ -38,6 +38,7 @@ import {
   createLifecycleRestorePosition,
   createMockLifecyclePosition,
   createMockLifecycleSignal,
+  createLifecycleWebSocketPosition,
   createPositionLifecycleRepositoryHarness,
   createPositionLifecycleWithErrorHandlerHarness,
 } from '../helpers/position-lifecycle-test.utils';
@@ -172,10 +173,9 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Simulate journal failure (no open trade found)
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
 
-      const wsPosition: Position = {
-        ...mockPosition,
+      const wsPosition = createLifecycleWebSocketPosition(mockPosition, {
         journalId: undefined, // Will be set from journal
-      };
+      });
 
       service.syncWithWebSocket(wsPosition);
 
@@ -196,9 +196,10 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // First sync to establish current position
       service.syncWithWebSocket(existingPosition);
 
-      const wsPosition: Position = clonePosition(mockPosition);
-      wsPosition.quantity = 0.5;
-      wsPosition.unrealizedPnL = 500;
+      const wsPosition = createLifecycleWebSocketPosition(mockPosition, {
+        quantity: 0.5,
+        unrealizedPnL: 500,
+      });
 
       service.syncWithWebSocket(wsPosition);
 
@@ -229,10 +230,9 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     it('test-8.7.10: Should log warnings in degraded mode', () => {
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
 
-      const wsPosition: Position = {
-        ...mockPosition,
+      const wsPosition = createLifecycleWebSocketPosition(mockPosition, {
         journalId: undefined,
-      };
+      });
 
       service.syncWithWebSocket(wsPosition);
 
@@ -337,8 +337,9 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Journal lookup now returns undefined (GRACEFUL_DEGRADE)
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
 
-      const wsPosition: Position = clonePosition(existingPosition);
-      wsPosition.unrealizedPnL = 1000;
+      const wsPosition = createLifecycleWebSocketPosition(existingPosition, {
+        unrealizedPnL: 1000,
+      });
 
       service.syncWithWebSocket(wsPosition);
 

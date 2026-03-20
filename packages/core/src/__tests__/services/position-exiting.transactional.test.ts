@@ -6,53 +6,33 @@
  */
 
 import {
+  createCloseStatusGuard,
   createBalanceTrackingHarness,
+  createTransactionalTradeCloseRequest,
   createTransactionalCloseHarness,
+  executeTransactionalCloseFlow,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   // T1: Normal flow - journal and stats both succeed
   it('T1: Normal flow - journal and stats both succeed', () => {
-    const { mockJournal, mockStats } = createTransactionalCloseHarness();
+    const { mockJournal, mockStats, journalResult } = executeTransactionalCloseFlow();
 
-    // Simulate successful journal record with rollback capability
-    const result = mockJournal.recordTradeClose({
-      id: 'trade-123',
-      exitPrice: 51000,
-      realizedPnL: 1000,
-      exitCondition: {},
-    });
-
-    // Both services succeed
-    mockStats.updateTradeExit({});
-
-    expect(result).toBeDefined();
-    expect(result.rollback).toBeDefined();
+    expect(journalResult).toBeDefined();
+    expect(journalResult.rollback).toBeDefined();
     expect(mockJournal.recordTradeClose).toHaveBeenCalled();
     expect(mockStats.updateTradeExit).toHaveBeenCalled();
   });
 
   // T2: Session stats fails - journal rolls back
   it('T2: Session stats fails - journal rolls back', () => {
-    const { mockJournal, mockStats, rollback } = createTransactionalCloseHarness();
-    mockStats.updateTradeExit.mockImplementation((_trade: unknown) => {
-      throw new Error('Database connection lost');
+    const { rollback, statsError } = executeTransactionalCloseFlow({
+      statsImplementation: (_trade: unknown) => {
+        throw new Error('Database connection lost');
+      },
     });
 
-    const journalResult = mockJournal.recordTradeClose({
-      id: 'trade-123',
-      exitPrice: 51000,
-      realizedPnL: 1000,
-      exitCondition: {},
-    });
-
-    // Session stats fails
-    try {
-      mockStats.updateTradeExit({});
-    } catch (error) {
-      journalResult.rollback();
-    }
-
+    expect(statsError).toBeDefined();
     expect(rollback).toHaveBeenCalled();
   });
 
@@ -108,6 +88,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
 
   // T7: Journal failure prevents position close
   it('T7: Journal failure prevents position close', () => {
+    const tradeCloseRequest = createTransactionalTradeCloseRequest();
     const mockJournal = {
       recordTradeClose: jest.fn((_trade: unknown) => {
         throw new Error('Journal file I/O failed');
@@ -115,31 +96,19 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
     };
 
     expect(() => {
-      mockJournal.recordTradeClose({
-        id: 'trade-123',
-        exitPrice: 51000,
-        realizedPnL: 1000,
-        exitCondition: {},
-      });
+      mockJournal.recordTradeClose(tradeCloseRequest);
     }).toThrow('Journal file I/O failed');
   });
 
   // T8: Concurrent close attempts handled safely
   it('T8: Concurrent close attempts handled safely', () => {
-    let positionStatus = 'OPEN';
+    const closeGuard = createCloseStatusGuard();
 
-    const closePosition = () => {
-      if (positionStatus === 'CLOSED') {
-        return false; // Already closed
-      }
-      positionStatus = 'CLOSED';
-      return true;
-    };
-
-    const result1 = closePosition();
-    const result2 = closePosition();
+    const result1 = closeGuard.closePosition();
+    const result2 = closeGuard.closePosition();
 
     expect(result1).toBe(true); // First succeeds
     expect(result2).toBe(false); // Second is rejected
+    expect(closeGuard.getStatus()).toBe('CLOSED');
   });
 });

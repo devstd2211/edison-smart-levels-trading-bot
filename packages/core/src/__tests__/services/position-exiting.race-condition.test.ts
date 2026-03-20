@@ -11,17 +11,11 @@
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { Position, ExitType } from '../../types/legacy';
 import {
-  createMockRacePosition,
+  createRaceConditionCloseRequest,
   createRaceConditionPositionExitingHarness,
+  executeConcurrentRaceConditionCloses,
+  executeRaceConditionClose,
 } from '../helpers/position-exiting-test.utils';
-
-// ============================================================================
-// TEST HELPERS
-// ============================================================================
-
-function createMockPosition(): Position {
-  return createMockRacePosition();
-}
 
 // ============================================================================
 // TEST SUITE
@@ -93,15 +87,10 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.1.3: closeFullPosition idempotent - already CLOSED status', async () => {
-      const position = createMockPosition();
-      position.status = 'CLOSED';
-
-      const result = await positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'Second close attempt',
-        ExitType.STOP_LOSS,
-      );
+      const { result } = await executeRaceConditionClose(positionExitingService, {
+        position: { status: 'CLOSED' },
+        exitReason: 'Second close attempt',
+      });
 
       expect(result).toBe(false);
       expect(mockBybitService.closePosition).not.toHaveBeenCalled();
@@ -114,25 +103,16 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.1.4: Multiple idempotent close calls return gracefully', async () => {
-      const position = createMockPosition();
+      const { position, result } = await executeRaceConditionClose(positionExitingService, {
+        exitReason: 'First close',
+      });
 
       // First close succeeds
-      const result1 = await positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'First close',
-        ExitType.STOP_LOSS,
-      );
-      expect(result1).toBe(true);
+      expect(result).toBe(true);
       expect(position.status).toBe('CLOSED');
 
       // Second close on same position (already marked CLOSED) returns false
-      const result2 = await positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'Second close',
-        ExitType.STOP_LOSS,
-      );
+      const result2 = await positionExitingService.closeFullPosition(position, 1.871, 'Second close', ExitType.STOP_LOSS);
       expect(result2).toBe(false);
 
       // Exchange closePosition should only be called once
@@ -146,7 +126,6 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
 
   describe('P3.2: Atomic lock prevents concurrent closes', () => {
     test('P3.2.1: Concurrent closeFullPosition calls are idempotent', async () => {
-      const position = createMockPosition();
       let exchangeCloseCount = 0;
 
       mockBybitService.closePosition.mockImplementation(async () => {
@@ -154,14 +133,10 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
         await new Promise(resolve => setTimeout(resolve, 10));
       });
 
-      // First call sets status to CLOSED
-      const result1 = await positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'Close 1',
-        ExitType.STOP_LOSS,
-      );
-      expect(result1).toBe(true);
+      const { position, result } = await executeRaceConditionClose(positionExitingService, {
+        exitReason: 'Close 1',
+      });
+      expect(result).toBe(true);
       expect(position.status).toBe('CLOSED');
 
       // Second call on same position sees CLOSED status
@@ -178,17 +153,17 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.2.2: Status prevents race condition from multiple sources', async () => {
-      const position = createMockPosition();
+      const { position, exitPrice, exitType } = createRaceConditionCloseRequest();
       expect(position.status).toBe('OPEN');
 
-      // Simulate WebSocket close
-      const websocketResult = await positionExitingService.closeFullPosition(
+      const result = await positionExitingService.closeFullPosition(
         position,
-        1.871,
+        exitPrice,
         'WebSocket close',
-        ExitType.STOP_LOSS,
+        exitType,
       );
-      expect(websocketResult).toBe(true);
+
+      expect(result).toBe(true);
       expect(position.status).toBe('CLOSED');
 
       // Simulate timeout close attempt (concurrent)
@@ -222,7 +197,6 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
 
   describe('P3.3: Multiple concurrent close attempts on same position', () => {
     test('P3.3.1: Multiple concurrent closeFullPosition calls - first succeeds, others return false', async () => {
-      const position = createMockPosition();
       let exchangeCloseCount = 0;
 
       mockBybitService.closePosition.mockImplementation(async () => {
@@ -230,29 +204,10 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
         await new Promise(resolve => setTimeout(resolve, 10));
       });
 
-      // Simulate three concurrent close attempts (WebSocket + 2 timeouts)
-      const result1 = positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'WebSocket close',
-        ExitType.STOP_LOSS,
+      const { position, results: [r1, r2, r3] } = await executeConcurrentRaceConditionCloses(
+        positionExitingService,
+        ['WebSocket close', 'Timeout close 1', 'Timeout close 2'],
       );
-
-      const result2 = positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'Timeout close 1',
-        ExitType.STOP_LOSS,
-      );
-
-      const result3 = positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'Timeout close 2',
-        ExitType.STOP_LOSS,
-      );
-
-      const [r1, r2, r3] = await Promise.all([result1, result2, result3]);
 
       // First close succeeds
       expect(r1).toBe(true);
@@ -268,15 +223,11 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.3.2: Rapid concurrent closes - only first succeeds, prevents duplicate journal records', async () => {
-      const position = createMockPosition();
-      expect(position.status).toBe('OPEN');
-
-      // Simulate 3 rapid concurrent close attempts
-      const results = await Promise.all([
-        positionExitingService.closeFullPosition(position, 1.871, 'Close 1', ExitType.STOP_LOSS),
-        positionExitingService.closeFullPosition(position, 1.871, 'Close 2', ExitType.STOP_LOSS),
-        positionExitingService.closeFullPosition(position, 1.871, 'Close 3', ExitType.STOP_LOSS),
-      ]);
+      const { position, results } = await executeConcurrentRaceConditionCloses(
+        positionExitingService,
+        ['Close 1', 'Close 2', 'Close 3'],
+      );
+      expect(position.status).toBe('CLOSED');
 
       // Only first succeeds (true), rest return false
       expect(results[0]).toBe(true);
@@ -300,17 +251,17 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
 
   describe('P3.4: Status transitions protect against double-close', () => {
     test('P3.4.1: Status set to CLOSED prevents re-entry', async () => {
-      const position = createMockPosition();
+      const { position, exitPrice, exitType } = createRaceConditionCloseRequest();
       expect(position.status).toBe('OPEN');
 
-      // First call sets status to CLOSED
-      const result1 = await positionExitingService.closeFullPosition(
+      const result = await positionExitingService.closeFullPosition(
         position,
-        1.871,
+        exitPrice,
         'First close',
-        ExitType.STOP_LOSS,
+        exitType,
       );
-      expect(result1).toBe(true);
+
+      expect(result).toBe(true);
       expect(position.status).toBe('CLOSED');
 
       // Second call sees CLOSED status and returns early
@@ -327,7 +278,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.4.2: Error rolls back status if journal fails', async () => {
-      const position = createMockPosition();
+      const { position, exitPrice, exitType } = createRaceConditionCloseRequest();
       mockJournal.recordPositionClose.mockImplementationOnce(() => {
         throw new Error('Journal failed');
       });
@@ -335,9 +286,9 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       try {
         await positionExitingService.closeFullPosition(
           position,
-          1.871,
+          exitPrice,
           'Test close',
-          ExitType.STOP_LOSS,
+          exitType,
         );
       } catch {
         // Ignore
@@ -356,15 +307,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
 
   describe('P3.5: Error messages never say "Position not found"', () => {
     test('P3.5.1: Concurrent closes on same position - no "Position not found" error', async () => {
-      const position = createMockPosition();
-
-      // Trigger concurrent closes via exiting service
-      const promises = [
-        positionExitingService.closeFullPosition(position, 1.871, 'Close 1', ExitType.STOP_LOSS),
-        positionExitingService.closeFullPosition(position, 1.871, 'Close 2', ExitType.STOP_LOSS),
-      ];
-
-      await Promise.all(promises);
+      await executeConcurrentRaceConditionCloses(positionExitingService, ['Close 1', 'Close 2']);
 
       // Check error logs - should NOT contain "Position not found" error
       const errorCalls = mockLogger.error.mock.calls;
@@ -398,14 +341,9 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     });
 
     test('P3.5.3: All log messages are informative (no generic errors)', async () => {
-      const position = createMockPosition();
-
-      await positionExitingService.closeFullPosition(
-        position,
-        1.871,
-        'Test close',
-        ExitType.STOP_LOSS,
-      );
+      const { position } = await executeRaceConditionClose(positionExitingService, {
+        exitReason: 'Test close',
+      });
 
       // Second close on already-closed position
       await positionExitingService.closeFullPosition(

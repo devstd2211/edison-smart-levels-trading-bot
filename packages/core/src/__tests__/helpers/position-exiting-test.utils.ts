@@ -180,6 +180,21 @@ export function createMockExitedPosition(overrides: Partial<Position> = {}): Pos
   };
 }
 
+export function createMockExitedPositionWithStopLoss(
+  positionOverrides: Partial<Position> = {},
+  stopLossOverrides: Partial<Position['stopLoss']> = {},
+): Position {
+  const position = createMockExitedPosition(positionOverrides);
+
+  return {
+    ...position,
+    stopLoss: {
+      ...position.stopLoss,
+      ...stopLossOverrides,
+    },
+  };
+}
+
 export function createMockExitAction(overrides: Partial<ExitActionDTO> = {}): ExitActionDTO {
   return {
     action: ExitAction.CLOSE_ALL,
@@ -200,6 +215,118 @@ export function createPositionExitRequest(overrides: {
     exitPrice: overrides.exitPrice ?? 105,
     exitReason: overrides.exitReason ?? 'TP1_HIT',
     exitType: overrides.exitType ?? ExitType.TAKE_PROFIT_1,
+  };
+}
+
+export function createPositionExitingRetryConfig(overrides: {
+  maxAttempts?: number;
+  initialDelayMs?: number;
+  backoffMultiplier?: number;
+  maxDelayMs?: number;
+} = {}) {
+  return {
+    maxAttempts: overrides.maxAttempts ?? 3,
+    initialDelayMs: overrides.initialDelayMs ?? 100,
+    backoffMultiplier: overrides.backoffMultiplier ?? 2,
+    maxDelayMs: overrides.maxDelayMs ?? 1000,
+  };
+}
+
+export function createTransactionalTradeCloseRequest(overrides: {
+  id?: string;
+  exitPrice?: number;
+  realizedPnL?: number;
+  exitCondition?: Record<string, unknown>;
+} = {}) {
+  return {
+    id: overrides.id ?? 'trade-123',
+    exitPrice: overrides.exitPrice ?? 51000,
+    realizedPnL: overrides.realizedPnL ?? 1000,
+    exitCondition: overrides.exitCondition ?? {},
+  };
+}
+
+export async function executeRetrySequence(
+  operation: (attempt: number) => Promise<unknown>,
+  options: Parameters<typeof createPositionExitingRetryConfig>[0] = {},
+) {
+  const retryConfig = createPositionExitingRetryConfig(options);
+  let finalAttempt = 0;
+
+  for (let attempt = 1; attempt <= retryConfig.maxAttempts; attempt++) {
+    try {
+      await operation(attempt);
+      finalAttempt = attempt;
+      break;
+    } catch (error) {
+      if (attempt < retryConfig.maxAttempts) {
+        const delayMs = Math.min(
+          retryConfig.initialDelayMs * Math.pow(retryConfig.backoffMultiplier, attempt - 1),
+          retryConfig.maxDelayMs,
+        );
+        await new Promise((resolve) => setTimeout(resolve, Math.min(delayMs, 50)));
+      }
+    }
+  }
+
+  return {
+    retryConfig,
+    finalAttempt,
+  };
+}
+
+export async function executePositionExitRequest(
+  service: Pick<PositionExitingService, 'executeExitAction'>,
+  overrides: {
+    position?: Partial<Position>;
+    action?: Partial<ExitActionDTO>;
+    exitPrice?: number;
+    exitReason?: string;
+    exitType?: ExitType;
+  } = {},
+) {
+  const request = createPositionExitRequest(overrides);
+  const result = await service.executeExitAction(
+    request.position,
+    request.action,
+    request.exitPrice,
+    request.exitReason,
+    request.exitType,
+  );
+
+  return {
+    ...request,
+    result,
+  };
+}
+
+export async function executePositionExitSequence(
+  service: Pick<PositionExitingService, 'executeExitAction'>,
+  steps: Array<{
+    action: Partial<ExitActionDTO>;
+    exitPrice?: number;
+    exitReason?: string;
+    exitType?: ExitType;
+  }>,
+  positionOverrides: Partial<Position> = {},
+) {
+  const position = createMockExitedPosition(positionOverrides);
+  const results: boolean[] = [];
+
+  for (const step of steps) {
+    const result = await service.executeExitAction(
+      position,
+      createMockExitAction(step.action),
+      step.exitPrice ?? 105,
+      step.exitReason ?? 'TP1_HIT',
+      step.exitType ?? ExitType.TAKE_PROFIT_1,
+    );
+    results.push(result);
+  }
+
+  return {
+    position,
+    results,
   };
 }
 
@@ -230,6 +357,143 @@ export function createMockRacePosition(overrides: Partial<Position> = {}): Posit
     },
     ...overrides,
   });
+}
+
+export function createPositionExitingErrorHandlingHarness() {
+  const mockTradingConfig = createMockPositionExitingTradingConfig();
+  const mockRiskConfig = createMockPositionExitingRiskConfig({
+    trailingStopActivationLevel: 2,
+  });
+  const mockConfig = createMockPositionExitingConfig(
+    { exchange: { name: 'bybit', testnet: true } as never },
+    mockTradingConfig,
+    mockRiskConfig,
+  );
+  const mockPosition = createMockExitedPosition({
+    id: 'POS1',
+    symbol: 'BTCUSDT',
+    entryPrice: 40000,
+    quantity: 0.1,
+    leverage: 10,
+    status: 'OPEN',
+    openedAt: Date.now() - 60000,
+    journalId: 'JOURNAL1',
+    marginUsed: 400,
+    orderId: 'ORDER1',
+    reason: 'ENTRY_SIGNAL',
+    stopLoss: {
+      price: 39000,
+      initialPrice: 39000,
+      isBreakeven: false,
+      isTrailing: false,
+      updatedAt: Date.now(),
+      orderId: undefined,
+    },
+    takeProfits: [
+      { level: 1, price: 41000, percent: 0.5, sizePercent: 50, hit: false },
+      { level: 2, price: 42000, percent: 1, sizePercent: 30, hit: false },
+      { level: 3, price: 43000, percent: 1.5, sizePercent: 20, hit: false },
+    ],
+    unrealizedPnL: 1000,
+  });
+
+  return {
+    mockTradingConfig,
+    mockRiskConfig,
+    mockConfig,
+    mockPosition,
+  };
+}
+
+export function createAtomicCloseGuard() {
+  const closeLock = new Map<string, Promise<void>>();
+
+  return {
+    closeLock,
+    simulateAtomicClose: async (positionId: string, delayMs = 50): Promise<boolean> => {
+      if (closeLock.has(positionId)) {
+        return false;
+      }
+
+      const closePromise = new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+      closeLock.set(positionId, closePromise);
+
+      try {
+        await closePromise;
+        return true;
+      } finally {
+        closeLock.delete(positionId);
+      }
+    },
+  };
+}
+
+export function createRaceConditionCloseRequest(overrides: {
+  position?: Partial<Position>;
+  exitPrice?: number;
+  exitReason?: string;
+  exitType?: ExitType;
+} = {}) {
+  return {
+    position: createMockRacePosition(overrides.position),
+    exitPrice: overrides.exitPrice ?? 1.871,
+    exitReason: overrides.exitReason ?? 'Test close',
+    exitType: overrides.exitType ?? ExitType.STOP_LOSS,
+  };
+}
+
+export async function executeRaceConditionClose(
+  service: Pick<PositionExitingService, 'closeFullPosition'>,
+  overrides: {
+    position?: Partial<Position>;
+    exitPrice?: number;
+    exitReason?: string;
+    exitType?: ExitType;
+  } = {},
+) {
+  const request = createRaceConditionCloseRequest(overrides);
+  const result = await service.closeFullPosition(
+    request.position,
+    request.exitPrice,
+    request.exitReason,
+    request.exitType,
+  );
+
+  return {
+    ...request,
+    result,
+  };
+}
+
+export async function executeConcurrentRaceConditionCloses(
+  service: Pick<PositionExitingService, 'closeFullPosition'>,
+  reasons: string[],
+  overrides: {
+    position?: Partial<Position>;
+    exitPrice?: number;
+    exitType?: ExitType;
+  } = {},
+) {
+  const request = createRaceConditionCloseRequest({
+    position: overrides.position,
+    exitPrice: overrides.exitPrice,
+    exitType: overrides.exitType,
+  });
+  const operations = reasons.map((reason) =>
+    service.closeFullPosition(
+      request.position,
+      request.exitPrice,
+      reason,
+      request.exitType,
+    ),
+  );
+  const results = await Promise.all(operations);
+
+  return {
+    ...request,
+    reasons,
+    results,
+  };
 }
 
 export function createRealScenarioPosition(): Position {
@@ -311,6 +575,13 @@ export function createBreakevenInspection(overrides: {
   };
 }
 
+export function createEntryPriceState(position: Pick<Position, 'entryPrice'>) {
+  return {
+    entryPrice: position.entryPrice,
+    isValid: !isNaN(position.entryPrice),
+  };
+}
+
 export function createWebSocketEntryPriceScenario(overrides: {
   entryPrice?: number;
   avgPrice?: number;
@@ -357,6 +628,15 @@ export function createWebSocketUpdateSequence() {
   ];
 }
 
+export function analyzeWebSocketEntryPriceUpdates(
+  sequence = createWebSocketUpdateSequence(),
+) {
+  return sequence.map((update) => ({
+    ...update,
+    parsed: parseWebSocketEntryPrice(update.entryPrice, update.avgPrice),
+  }));
+}
+
 export function createRealScenarioPartialClose(overrides: {
   tpLevel?: number;
   quantity?: number;
@@ -366,6 +646,23 @@ export function createRealScenarioPartialClose(overrides: {
     tpLevel: overrides.tpLevel ?? 1,
     partialQuantity: overrides.quantity ?? (52.85 * 33) / 100,
     exitPrice: overrides.exitPrice ?? 1.9203,
+  };
+}
+
+export function createEntryPriceLifecycleSnapshot(position: Position) {
+  const tp1Level = position.takeProfits[0];
+  const initialEntryPrice = position.entryPrice;
+  const partialCloseQty = (position.quantity * tp1Level.sizePercent) / 100;
+  const remainingQuantity = position.quantity - partialCloseQty;
+  const corruptedEntryPrice =
+    (initialEntryPrice * position.quantity - tp1Level.price * partialCloseQty) / remainingQuantity;
+
+  return {
+    initialEntryPrice,
+    tp1Level,
+    partialCloseQty,
+    remainingQuantity,
+    corruptedEntryPrice,
   };
 }
 
@@ -392,6 +689,34 @@ export function createTransactionalCloseHarness() {
   };
 }
 
+export function executeTransactionalCloseFlow(options: {
+  tradeCloseOverrides?: Parameters<typeof createTransactionalTradeCloseRequest>[0];
+  statsImplementation?: (trade: unknown) => undefined;
+} = {}) {
+  const harness = createTransactionalCloseHarness();
+  if (options.statsImplementation) {
+    harness.mockStats.updateTradeExit.mockImplementation(options.statsImplementation);
+  }
+
+  const tradeCloseRequest = createTransactionalTradeCloseRequest(options.tradeCloseOverrides);
+  const journalResult = harness.mockJournal.recordTradeClose(tradeCloseRequest);
+
+  let statsError: unknown;
+  try {
+    harness.mockStats.updateTradeExit({});
+  } catch (error) {
+    statsError = error;
+    journalResult.rollback();
+  }
+
+  return {
+    ...harness,
+    tradeCloseRequest,
+    journalResult,
+    statsError,
+  };
+}
+
 export function createBalanceTrackingHarness(initialBalance = 1000) {
   let currentBalance = initialBalance;
 
@@ -401,6 +726,21 @@ export function createBalanceTrackingHarness(initialBalance = 1000) {
     updateBalance: jest.fn((amount: number) => {
       currentBalance += amount;
     }),
+  };
+}
+
+export function createCloseStatusGuard(initialStatus: 'OPEN' | 'CLOSED' = 'OPEN') {
+  let positionStatus = initialStatus;
+
+  return {
+    getStatus: () => positionStatus,
+    closePosition: () => {
+      if (positionStatus === 'CLOSED') {
+        return false;
+      }
+      positionStatus = 'CLOSED';
+      return true;
+    },
   };
 }
 

@@ -13,8 +13,11 @@
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { Position } from '../../types/legacy';
 import {
+  analyzeWebSocketEntryPriceUpdates,
   createMockPositionExitingRiskConfig,
   createBreakevenInspection,
+  createEntryPriceLifecycleSnapshot,
+  createEntryPriceState,
   createFunctionalPositionExitingHarness,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
@@ -59,14 +62,15 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     it('Should detect when entryPrice becomes NaN', () => {
       const position = createRealScenarioPosition();
       position.entryPrice = NaN;
+      const entryState = createEntryPriceState(position);
       const { offsetPercent, offset, breakevenPrice } = createBreakevenInspection({
         entryPrice: position.entryPrice,
       });
 
       console.log(`
         CORRUPTED ENTRY PRICE:
-        - Entry Price: ${position.entryPrice}
-        - Is NaN: ${isNaN(position.entryPrice)}
+        - Entry Price: ${entryState.entryPrice}
+        - Is NaN: ${!entryState.isValid}
         - Calculated Offset: ${offset}
         - Calculated Breakeven: ${breakevenPrice}
       `);
@@ -75,7 +79,7 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         throw new Error('Expected NaN numeric output for corrupted entry price');
       }
 
-      expect(isNaN(position.entryPrice)).toBe(true);
+      expect(entryState.isValid).toBe(false);
       expect(isNaN(offset)).toBe(true);
       expect(isNaN(breakevenPrice)).toBe(true);
     });
@@ -156,10 +160,13 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
 
     it('Should trace entryPrice through partial close lifecycle', () => {
       const position = createRealScenarioPosition();
-      const initialEntryPrice = position.entryPrice;
-      const tp1Level = position.takeProfits[0];
-      const tp1Price = tp1Level.price;
-      const partialCloseQty = (position.quantity * tp1Level.sizePercent) / 100;
+      const {
+        initialEntryPrice,
+        tp1Level,
+        partialCloseQty,
+        remainingQuantity,
+        corruptedEntryPrice,
+      } = createEntryPriceLifecycleSnapshot(position);
 
       console.log(`
         PARTIAL CLOSE LIFECYCLE:
@@ -170,18 +177,14 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         - Close Qty (TP${tp1Level.level}): ${partialCloseQty}
 
         STEP 2: Execute Close on Exchange
-        - Close at price: ${tp1Price}
+        - Close at price: ${tp1Level.price}
 
         STEP 3: Update Position State
-        - New Qty: ${position.quantity - partialCloseQty}
+        - New Qty: ${remainingQuantity}
         - Entry Price Should Still Be: ${initialEntryPrice}
       `);
 
       expect(position.entryPrice).toBe(initialEntryPrice);
-
-      const corruptedEntryPrice =
-        (initialEntryPrice * position.quantity - tp1Price * partialCloseQty)
-        / (position.quantity - partialCloseQty);
 
       console.log(`
         POTENTIAL CORRUPTION SOURCE:
@@ -240,6 +243,7 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     it('Should identify which service method corrupts entryPrice', () => {
       const position = createRealScenarioPosition();
       const wsPosition = createWebSocketEntryPriceScenario();
+      const entryState = createEntryPriceState(position);
 
       console.log(`
         WEBSOCKET DATA:
@@ -249,7 +253,7 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         BUG LOCATION HYPOTHESIS:
         - If updatePositionState() does: position.entryPrice = wsPosition.avgPrice
         - Then: position.entryPrice = 1.9203 (WRONG!)
-        - Instead of: position.entryPrice = 1.892 (original)
+        - Instead of: position.entryPrice = ${entryState.entryPrice} (original)
       `);
 
       expect(wsPosition.entryPrice).toBe(0);

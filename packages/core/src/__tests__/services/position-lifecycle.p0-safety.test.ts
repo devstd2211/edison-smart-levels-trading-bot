@@ -17,45 +17,33 @@ import { TradingJournalService } from '../../services/trading-journal.service';
 import { IExchange } from '../../interfaces/IExchange';
 import {
   createLifecycleSafetyPosition,
-  createPositionLifecycleMemoryHarness,
+  createPositionLifecycleSafetyHarness,
+  findLifecycleLogCall,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
   let service: PositionLifecycleService;
   let position: Position;
-  type InternalPositionLifecycleState = {
-    currentPosition: Position | null;
-    positionClosing: Set<string>;
-  };
-  const internals = (): InternalPositionLifecycleState =>
-    service as unknown as InternalPositionLifecycleState;
-  const setCurrentPosition = (value: Position | null): void => {
-    internals().currentPosition = value;
-  };
+  let internals: ReturnType<typeof createPositionLifecycleSafetyHarness>['internals'];
+  let setCurrentPosition: ReturnType<typeof createPositionLifecycleSafetyHarness>['setCurrentPosition'];
   let mockExchange: IExchange;
   let mockLogger: LoggerService;
   let mockEventBus: BotEventBus;
   let mockTelegram: TelegramService;
   let mockJournal: TradingJournalService;
-  const createSafetyPosition = (): Position => createLifecycleSafetyPosition();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    const harness = createPositionLifecycleMemoryHarness({
-      positionOverrides: {
-        ...createSafetyPosition(),
-      },
-      tradingOverrides: {
-        positionSize: 100,
-      } as never,
-    });
+    const harness = createPositionLifecycleSafetyHarness();
     service = harness.service;
     mockExchange = harness.mockExchange;
     mockLogger = harness.mockLogger;
     mockEventBus = harness.mockEventBus;
     mockTelegram = harness.mockTelegram;
     mockJournal = harness.mockJournal;
-    position = createSafetyPosition();
+    internals = harness.internals;
+    setCurrentPosition = harness.setCurrentPosition;
+    position = harness.position;
   });
 
   // =========================================================================
@@ -71,10 +59,9 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
 
       // Position should be cleared after closing
       expect(internals().currentPosition).toBeNull();
-      // Check that the message contains the expected text (ignoring second arg object)
-      const infoCall = (mockLogger.info as jest.Mock).mock.calls.find((call: unknown[]) =>
-        typeof call[0] === 'string'
-        && call[0].includes('[P0.1 + P3] Position closed successfully')
+      const infoCall = findLifecycleLogCall(
+        mockLogger.info as jest.Mock,
+        '[P0.1 + P3] Position closed successfully',
       );
       expect(infoCall).toBeDefined();
     });
@@ -92,9 +79,9 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       expect(internals().currentPosition).toBeNull();
 
       // Both should complete - second should warn about already closing
-      const warnCall = (mockLogger.warn as jest.Mock).mock.calls.find((call: unknown[]) =>
-        typeof call[0] === 'string'
-        && call[0].includes('[P0.1 + P3] Position already closing')
+      const warnCall = findLifecycleLogCall(
+        mockLogger.warn as jest.Mock,
+        '[P0.1 + P3] Position already closing',
       );
       expect(warnCall).toBeDefined();
     });
@@ -129,9 +116,9 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
 
       await service.closePositionWithAtomicLock('Stale position');
 
-      const infoCall = (mockLogger.info as jest.Mock).mock.calls.find((call: unknown[]) =>
-        typeof call[0] === 'string'
-        && call[0].includes('[P0.1 + P3] Position already closed or not found')
+      const infoCall = findLifecycleLogCall(
+        mockLogger.info as jest.Mock,
+        '[P0.1 + P3] Position already closed or not found',
       );
       expect(infoCall).toBeDefined();
       expect(mockExchange.closePosition).not.toHaveBeenCalled();
@@ -173,7 +160,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       const snapshot = service.getPositionSnapshot();
 
       // Simulate WebSocket update
-      const updated = createSafetyPosition();
+      const updated = createLifecycleSafetyPosition();
       updated.unrealizedPnL = 9000; // Large change
       setCurrentPosition(updated);
 

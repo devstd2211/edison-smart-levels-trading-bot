@@ -66,6 +66,21 @@ export function createRepositoryPosition(
   };
 }
 
+export function createRepositoryTakeProfits(
+  overrides: Array<Partial<Position['takeProfits'][number]>> = [],
+) {
+  const defaults = [
+    { level: 1, price: 50500, percent: 30, sizePercent: 30, hit: false, orderId: undefined },
+    { level: 2, price: 51000, percent: 30, sizePercent: 30, hit: false, orderId: undefined },
+    { level: 3, price: 51500, percent: 40, sizePercent: 40, hit: false, orderId: undefined },
+  ];
+
+  return defaults.map((takeProfit, index) => ({
+    ...takeProfit,
+    ...(overrides[index] ?? {}),
+  }));
+}
+
 export function createRepositoryPositions(
   count: number,
   buildOverrides: (index: number) => Partial<Position> = () => ({}),
@@ -73,6 +88,15 @@ export function createRepositoryPositions(
   return Array.from({ length: count }, (_, index) =>
     createRepositoryPosition(buildOverrides(index)),
   );
+}
+
+export function seedRepositoryHistory(
+  repository: IPositionRepository,
+  count: number,
+  buildOverrides: (index: number) => Partial<Position> = () => ({}),
+): IPositionRepository {
+  createRepositoryPositions(count, buildOverrides).forEach((position) => repository.addToHistory(position));
+  return repository;
 }
 
 export function createClosedRepositoryPosition(
@@ -105,5 +129,19 @@ export function createSeededCurrentAndHistoryRepository(options: {
       ? createRepositoryPosition(options.currentPosition)
       : undefined,
     history,
+  });
+}
+
+export function createSeededRepositoryQueryHarness(options: {
+  currentPosition?: Partial<Position>;
+  history?: Partial<Position>[];
+} = {}): IPositionRepository {
+  return createSeededCurrentAndHistoryRepository({
+    currentPosition: {
+      id: 'BTCUSDT_Buy_2',
+      status: 'OPEN',
+      ...options.currentPosition,
+    },
+    history: options.history ?? [{ id: 'BTCUSDT_Buy_1' }],
   });
 }

@@ -16,7 +16,7 @@ import { Position, ExitType, PositionSide, TradingConfig, RiskManagementConfig, 
 import type { IExchange } from '../../interfaces/IExchange';
 import { LoggerService, TelegramService, TradingJournalService, SessionStatsService } from '../../services';
 import {
-  createMockExitedPosition,
+  createAtomicCloseGuard,
   createMockPositionExitingConfig,
   createMockPositionExitingExchange,
   createMockPositionExitingJournal,
@@ -25,6 +25,10 @@ import {
   createMockPositionExitingSessionStats,
   createMockPositionExitingTelegram,
   createMockPositionExitingTradingConfig,
+  createPositionExitingErrorHandlingHarness,
+  createPositionExitingRetryConfig,
+  createTransactionalTradeCloseRequest,
+  executeRetrySequence,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
@@ -34,47 +38,17 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockJournal: jest.Mocked<TradingJournalService>;
   let mockSessionStats: jest.Mocked<SessionStatsService>;
 
-  const mockTradingConfig: TradingConfig = createMockPositionExitingTradingConfig();
-
-  const mockRiskConfig: RiskManagementConfig = createMockPositionExitingRiskConfig({
-    trailingStopActivationLevel: 2,
-  });
-
-  const mockConfig: Config = createMockPositionExitingConfig(
-    { exchange: { name: 'bybit', testnet: true } as never },
-    mockTradingConfig,
-    mockRiskConfig,
-  );
-
-  const mockPosition: Position = createMockExitedPosition({
-    id: 'POS1',
-    symbol: 'BTCUSDT',
-    entryPrice: 40000,
-    quantity: 0.1,
-    leverage: 10,
-    status: 'OPEN',
-    openedAt: Date.now() - 60000,
-    journalId: 'JOURNAL1',
-    marginUsed: 400,
-    orderId: 'ORDER1',
-    reason: 'ENTRY_SIGNAL',
-    stopLoss: {
-      price: 39000,
-      initialPrice: 39000,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: Date.now(),
-      orderId: undefined,
-    },
-    takeProfits: [
-      { level: 1, price: 41000, percent: 0.5, sizePercent: 50, hit: false },
-      { level: 2, price: 42000, percent: 1, sizePercent: 30, hit: false },
-      { level: 3, price: 43000, percent: 1.5, sizePercent: 20, hit: false },
-    ],
-    unrealizedPnL: 1000,
-  });
+  let mockTradingConfig: TradingConfig;
+  let mockRiskConfig: RiskManagementConfig;
+  let mockConfig: Config;
+  let mockPosition: Position;
 
   beforeEach(() => {
+    const harness = createPositionExitingErrorHandlingHarness();
+    mockTradingConfig = harness.mockTradingConfig;
+    mockRiskConfig = harness.mockRiskConfig;
+    mockConfig = harness.mockConfig;
+    mockPosition = harness.mockPosition;
     mockExchange = {
       ...createMockPositionExitingExchange(),
       getCandles: jest.fn(),
@@ -99,42 +73,19 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
         return Promise.resolve();
       });
 
-      // Create a test scenario that triggers retry logic
-      let finalAttempt = 0;
-      const retryConfig = {
-        maxAttempts: 3,
-        initialDelayMs: 100,
-        backoffMultiplier: 2,
-        maxDelayMs: 1000,
-      };
-
-      for (let attempt = 1; attempt <= retryConfig.maxAttempts; attempt++) {
-        try {
-          await mockExchange.closePosition({ positionId: 'POS1', percentage: 100 });
-          finalAttempt = attempt;
-          break;
-        } catch (error) {
-          if (attempt < retryConfig.maxAttempts) {
-            const delayMs = Math.min(
-              retryConfig.initialDelayMs * Math.pow(retryConfig.backoffMultiplier, attempt - 1),
-              retryConfig.maxDelayMs
-            );
-            await new Promise(resolve => setTimeout(resolve, Math.min(delayMs, 50))); // Reduced for test
-          }
-        }
-      }
+      const { finalAttempt } = await executeRetrySequence(
+        () => mockExchange.closePosition({ positionId: 'POS1', percentage: 100 }),
+      );
 
       expect(finalAttempt).toBe(2); // Should succeed on second attempt
       expect(mockExchange.closePosition).toHaveBeenCalledTimes(2);
     });
 
     it('test-1.2: Should calculate exponential backoff correctly', () => {
-      const retryConfig = {
-        maxAttempts: 3,
+      const retryConfig = createPositionExitingRetryConfig({
         initialDelayMs: 500,
-        backoffMultiplier: 2,
         maxDelayMs: 5000,
-      };
+      });
 
       // Test exponential backoff calculation
       const delays: number[] = [];
@@ -172,17 +123,13 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
     it('test-1.4: Should classify retryable errors with ErrorHandler', async () => {
       const timeoutError = new Error('API timeout after 30s');
+      const retryConfig = createPositionExitingRetryConfig();
 
       const handled = await ErrorHandler.handle(timeoutError, {
         strategy: RecoveryStrategy.RETRY,
         logger: mockLogger,
         context: 'PositionExitingService.closePosition',
-        retryConfig: {
-          maxAttempts: 3,
-          initialDelayMs: 100,
-          backoffMultiplier: 2,
-          maxDelayMs: 1000,
-        },
+        retryConfig,
       });
 
       expect(handled.strategy).toBe(RecoveryStrategy.RETRY);
@@ -208,12 +155,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
     it('test-1.6: Should use onRetry callback during retries', async () => {
       const onRetry = jest.fn();
-      const retryConfig = {
-        maxAttempts: 3,
-        initialDelayMs: 100,
-        backoffMultiplier: 2,
-        maxDelayMs: 1000,
-      };
+      const retryConfig = createPositionExitingRetryConfig();
 
       // Simulate retry attempts with callback
       for (let attempt = 2; attempt <= retryConfig.maxAttempts; attempt++) {
@@ -238,14 +180,15 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       mockJournal.recordTradeClose.mockImplementation(() => {
         throw new Error('Journal write failed');
       });
+      const tradeCloseRequest = createTransactionalTradeCloseRequest({
+        id: 'JOURNAL1',
+        exitPrice: 41000,
+      });
 
       try {
-        await mockJournal.recordTradeClose({
-          id: 'JOURNAL1',
-          exitPrice: 41000,
-          realizedPnL: 1000,
-          exitCondition: {} as unknown as Parameters<TradingJournalService['recordTradeClose']>[0]['exitCondition'],
-        });
+        await mockJournal.recordTradeClose(
+          tradeCloseRequest as unknown as Parameters<TradingJournalService['recordTradeClose']>[0],
+        );
       } catch (error) {
         // Expected - now handle with FALLBACK
         const handled = await ErrorHandler.handle(error, {
@@ -368,26 +311,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
   describe('Atomic Lock Pattern (4 tests)', () => {
     it('test-4.1: Should prevent concurrent close on same position', async () => {
-      // Simulate atomic lock
-      const closeLock = new Map<string, Promise<void>>();
-
-      const simulateAtomicClose = async (positionId: string): Promise<boolean> => {
-        // Check if already closing
-        if (closeLock.has(positionId)) {
-          return false; // Already closing
-        }
-
-        // Create promise for this close operation
-        const closePromise = new Promise<void>(resolve => setTimeout(resolve, 50));
-        closeLock.set(positionId, closePromise);
-
-        try {
-          await closePromise;
-          return true;
-        } finally {
-          closeLock.delete(positionId);
-        }
-      };
+      const { simulateAtomicClose } = createAtomicCloseGuard();
 
       // First attempt should succeed
       const attempt1 = await simulateAtomicClose('POS1');
@@ -405,7 +329,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
 
     it('test-4.2: Should cleanup lock after successful close', async () => {
-      const closeLock = new Map<string, Promise<void>>();
+      const { closeLock } = createAtomicCloseGuard();
       const positionId = 'POS1';
 
       closeLock.set(positionId, Promise.resolve());
@@ -416,7 +340,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
 
     it('test-4.3: Should cleanup lock on error', async () => {
-      const closeLock = new Map<string, Promise<void>>();
+      const { closeLock } = createAtomicCloseGuard();
       const positionId = 'POS1';
 
       const closePromise = new Promise<void>((resolve, reject) => {
@@ -437,7 +361,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     });
 
     it('test-4.4: Should wait for first close when concurrent attempt made', async () => {
-      const closeLock = new Map<string, Promise<void>>();
+      const { closeLock } = createAtomicCloseGuard();
       let firstCloseCompleted = false;
 
       const firstClosePromise = new Promise<void>(resolve => {
@@ -528,11 +452,11 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
 
       try {
         await mockJournal.recordTradeClose({
-          id: 'JOURNAL1',
-          exitPrice: 41000,
-          realizedPnL: 1000,
-          exitCondition: {} as unknown as Parameters<TradingJournalService['recordTradeClose']>[0]['exitCondition'],
-        });
+          ...createTransactionalTradeCloseRequest({
+            id: 'JOURNAL1',
+            exitPrice: 41000,
+          }),
+        } as unknown as Parameters<TradingJournalService['recordTradeClose']>[0]);
       } catch (error: unknown) {
         const handled = await ErrorHandler.handle(error, {
           strategy: RecoveryStrategy.FALLBACK,

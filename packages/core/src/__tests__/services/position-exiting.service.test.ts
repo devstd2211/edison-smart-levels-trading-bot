@@ -16,7 +16,6 @@ import { ExitActionDTO } from '../../types/legacy';
 import {
   Position,
   PositionSide,
-  TakeProfit,
   ExitType,
   ExitAction,
   RiskManagementConfig,
@@ -26,6 +25,7 @@ import {
 import {
   createMockExitAction,
   createMockExitedPosition,
+  createMockExitedPositionWithStopLoss,
   createMockPositionExitingExchange,
   createMockPositionExitingJournal,
   createMockPositionExitingLogger,
@@ -34,8 +34,9 @@ import {
   createMockPositionExitingTelegram,
   createMockTakeProfitManager,
   createPositionExitingHarness,
-  createPositionExitRequest,
   createPositionExitingService,
+  executePositionExitSequence,
+  executePositionExitRequest,
 } from '../helpers/position-exiting-test.utils';
 
 const createMockPosition = (overrides?: Partial<Position>): Position =>
@@ -75,17 +76,9 @@ describe('PositionExitingService', () => {
 
   describe('executeExitAction()', () => {
     it('should route CLOSE_PERCENT action to closePartialPosition', async () => {
-      const { position, action, exitPrice, exitReason, exitType } = createPositionExitRequest({
+      const { position, result } = await executePositionExitRequest(service, {
         action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
       });
-
-      const result = await service.executeExitAction(
-        position,
-        action,
-        exitPrice,
-        exitReason,
-        exitType,
-      );
 
       expect(result).toBe(true);
       expect(mockBybit.closePosition).toHaveBeenCalledWith(
@@ -97,15 +90,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should route CLOSE_ALL action to closeFullPosition', async () => {
-      const { position, action, exitPrice, exitReason, exitType } = createPositionExitRequest();
-
-      const result = await service.executeExitAction(
-        position,
-        action,
-        exitPrice,
-        exitReason,
-        exitType,
-      );
+      const { position, result } = await executePositionExitRequest(service);
 
       expect(result).toBe(true);
       expect(mockBybit.closePosition).toHaveBeenCalledWith(
@@ -118,17 +103,9 @@ describe('PositionExitingService', () => {
     });
 
     it('should route UPDATE_SL action to updateStopLoss', async () => {
-      const { position, action, exitPrice, exitReason, exitType } = createPositionExitRequest({
+      const { position, result } = await executePositionExitRequest(service, {
         action: { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
       });
-
-      const result = await service.executeExitAction(
-        position,
-        action,
-        exitPrice,
-        exitReason,
-        exitType,
-      );
 
       expect(result).toBe(true);
       expect(mockBybit.updateStopLoss).toHaveBeenCalledWith(
@@ -141,27 +118,19 @@ describe('PositionExitingService', () => {
     });
 
     it('should route ACTIVATE_TRAILING action to activateTrailingStop', async () => {
-      const { position, action, exitPrice, exitReason, exitType } = createPositionExitRequest({
+      const { position, result } = await executePositionExitRequest(service, {
         action: { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
         exitPrice: 110,
         exitReason: 'TP2_HIT',
         exitType: ExitType.TAKE_PROFIT_2,
       });
 
-      const result = await service.executeExitAction(
-        position,
-        action,
-        exitPrice,
-        exitReason,
-        exitType,
-      );
-
       expect(result).toBe(true);
       expect(position.stopLoss.isTrailing).toBe(true);
     });
 
     it('should return false for unknown action', async () => {
-      const position = createMockPosition();
+      const position = createMockExitedPosition();
       const action = createMockExitAction({
         action: 'UNKNOWN_ACTION' as unknown as ExitActionDTO['action'],
       });
@@ -179,7 +148,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should skip action if position already closed', async () => {
-      const position = createMockPosition({ status: 'CLOSED' });
+      const position = createMockExitedPosition({ status: 'CLOSED' });
       const action = createMockExitAction({ action: ExitAction.CLOSE_PERCENT, percent: 50 });
 
       const result = await service.executeExitAction(
@@ -212,15 +181,9 @@ describe('PositionExitingService', () => {
 
   describe('closePartialPosition()', () => {
     it('should close correct percentage and update quantity', async () => {
-      const position = createMockPosition();
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { position, result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
+      });
 
       expect(result).toBe(true);
       expect(mockBybit.closePosition).toHaveBeenCalledWith(
@@ -233,15 +196,9 @@ describe('PositionExitingService', () => {
     });
 
     it('should close 25% correctly', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 25 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { position } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 25 },
+      });
 
       expect(mockBybit.closePosition).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -253,67 +210,47 @@ describe('PositionExitingService', () => {
     });
 
     it('should record partial close in TakeProfitManager', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
+      });
 
       // Closing 50% of 10 = 5 quantity. Price 105 matches TP1 (level=1).
       expect(mockTakeProfitManager.recordPartialClose).toHaveBeenCalledWith(1, 5, 105);
     });
 
     it('should send Telegram alert on partial close', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
+      });
 
       expect(mockTelegram.sendAlert).toHaveBeenCalled();
     });
 
     it('should calculate PnL correctly for LONG partial close', async () => {
-      const position = createMockPosition({
-        side: PositionSide.LONG,
-        quantity: 10,
-        entryPrice: 100,
+      const { result } = await executePositionExitRequest(service, {
+        position: {
+          side: PositionSide.LONG,
+          quantity: 10,
+          entryPrice: 100,
+        },
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
+        exitPrice: 110,
       });
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        110, // +10 price
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       // Price diff = 10, quantity = 5, leverage = 10
       // pnlGross = 10 * 5 * 10 = 500
+      expect(result).toBe(true);
       expect(mockTelegram.sendAlert).toHaveBeenCalled();
       const callArg = mockTelegram.sendAlert.mock.calls[0][0];
       expect(callArg).toContain('Partial Close');
     });
 
     it('should handle exchange error gracefully', async () => {
-      const position = createMockPosition();
       mockBybit.closePosition.mockRejectedValueOnce(new Error('Exchange error'));
 
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
+      });
 
       expect(result).toBe(false);
       expect(mockLogger.error).toHaveBeenCalled();
@@ -322,15 +259,7 @@ describe('PositionExitingService', () => {
 
   describe('closeFullPosition()', () => {
     it('should close entire position', async () => {
-      const position = createMockPosition();
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { position, result } = await executePositionExitRequest(service);
 
       expect(result).toBe(true);
       expect(mockBybit.closePosition).toHaveBeenCalledWith(
@@ -343,57 +272,34 @@ describe('PositionExitingService', () => {
     });
 
     it('should mark position as CLOSED before async operations', async () => {
-      const position = createMockPosition({ status: 'OPEN' });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { position, result } = await executePositionExitRequest(service, {
+        position: { status: 'OPEN' },
+      });
 
       expect(position.status).toBe('CLOSED');
+      expect(result).toBe(true);
     });
 
     it('should cancel conditional orders after close', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockBybit.cancelAllConditionalOrders).toHaveBeenCalled();
     });
 
     it('should record in journal with full details', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalled();
     });
 
     it('should update session stats', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { position } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockSessionStats.updateTradeExit).toHaveBeenCalledWith(
         position.journalId,
@@ -405,15 +311,9 @@ describe('PositionExitingService', () => {
     });
 
     it('should send exit notification', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockTelegram.sendAlert).toHaveBeenCalled();
       const callArg = mockTelegram.sendAlert.mock.calls[0][0];
@@ -421,15 +321,12 @@ describe('PositionExitingService', () => {
     });
 
     it('should use TakeProfitManager PnL if available', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        115,
-        'TP3_HIT',
-        ExitType.TAKE_PROFIT_3,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+        exitPrice: 115,
+        exitReason: 'TP3_HIT',
+        exitType: ExitType.TAKE_PROFIT_3,
+      });
 
       expect(mockTakeProfitManager.calculateFinalPnL).toHaveBeenCalled();
       expect(mockTakeProfitManager.getTpLevelsHit).toHaveBeenCalled();
@@ -449,61 +346,40 @@ describe('PositionExitingService', () => {
         fullConfig,
       });
 
-      const position = createMockPosition();
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(result).toBe(true);
       expect(mockJournal.recordTradeClose).toHaveBeenCalled();
     });
 
     it('should handle close of already closed position gracefully', async () => {
-      const position = createMockPosition({ status: 'CLOSED' });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        position: { status: 'CLOSED' },
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(result).toBe(false);
       expect(mockBybit.closePosition).not.toHaveBeenCalled();
     });
 
     it('should handle cancellation failure gracefully', async () => {
-      const position = createMockPosition();
       mockBybit.cancelAllConditionalOrders.mockRejectedValueOnce(new Error('Cancel failed'));
 
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(result).toBe(true); // Should still succeed
       expect(mockLogger.warn).toHaveBeenCalled();
     });
 
     it('should skip session stats update without journalId', async () => {
-      const position = createMockPosition({ journalId: undefined });
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        position: { journalId: undefined },
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockSessionStats.updateTradeExit).not.toHaveBeenCalled();
     });
@@ -511,18 +387,13 @@ describe('PositionExitingService', () => {
 
   describe('updateStopLoss()', () => {
     it('should update SL to higher price for LONG position', async () => {
-      const position = createMockPosition({
-        side: PositionSide.LONG,
-        stopLoss: { ...createMockPosition().stopLoss, price: 95 },
+      const { position, result } = await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss(
+          { side: PositionSide.LONG },
+          { price: 95 },
+        ),
+        action: { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
       });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       expect(result).toBe(true);
       expect(mockBybit.updateStopLoss).toHaveBeenCalledWith(
@@ -535,18 +406,14 @@ describe('PositionExitingService', () => {
     });
 
     it('should update SL to lower price for SHORT position', async () => {
-      const position = createMockPosition({
-        side: PositionSide.SHORT,
-        stopLoss: { ...createMockPosition().stopLoss, price: 105 },
+      const { position, result } = await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss(
+          { side: PositionSide.SHORT },
+          { price: 105 },
+        ),
+        action: { action: ExitAction.UPDATE_SL, newStopLoss: 99 },
+        exitPrice: 95,
       });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 99 },
-        95,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       expect(result).toBe(true);
       expect(mockBybit.updateStopLoss).toHaveBeenCalledWith(
@@ -559,36 +426,27 @@ describe('PositionExitingService', () => {
     });
 
     it('should reject unfavorable SL update for LONG (lower price)', async () => {
-      const position = createMockPosition({
-        side: PositionSide.LONG,
-        stopLoss: { ...createMockPosition().stopLoss, price: 95 },
+      const { result } = await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss(
+          { side: PositionSide.LONG },
+          { price: 95 },
+        ),
+        action: { action: ExitAction.UPDATE_SL, newStopLoss: 90 },
       });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 90 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       expect(result).toBe(false);
       expect(mockBybit.updateStopLoss).not.toHaveBeenCalled();
     });
 
     it('should reject unfavorable SL update for SHORT (higher price)', async () => {
-      const position = createMockPosition({
-        side: PositionSide.SHORT,
-        stopLoss: { ...createMockPosition().stopLoss, price: 105 },
+      const { result } = await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss(
+          { side: PositionSide.SHORT },
+          { price: 105 },
+        ),
+        action: { action: ExitAction.UPDATE_SL, newStopLoss: 110 },
+        exitPrice: 95,
       });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 110 },
-        95,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       expect(result).toBe(false);
       expect(mockBybit.updateStopLoss).not.toHaveBeenCalled();
@@ -600,28 +458,20 @@ describe('PositionExitingService', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      await service.executeExitAction(
+      await executePositionExitRequest(service, {
         position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+        action: { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
+      });
 
       expect(position.stopLoss.updatedAt).toBeGreaterThan(beforeTime);
     });
 
     it('should handle exchange error gracefully', async () => {
-      const position = createMockPosition();
       mockBybit.updateStopLoss.mockRejectedValueOnce(new Error('Exchange error'));
 
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
+      });
 
       expect(result).toBe(false);
       expect(mockLogger.error).toHaveBeenCalled();
@@ -630,18 +480,16 @@ describe('PositionExitingService', () => {
 
   describe('activateTrailingStop()', () => {
     it('should activate trailing stop for LONG position', async () => {
-      const position = createMockPosition({
-        side: PositionSide.LONG,
-        stopLoss: { ...createMockPosition().stopLoss, isTrailing: false },
+      const { position, result } = await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss(
+          { side: PositionSide.LONG },
+          { isTrailing: false },
+        ),
+        action: { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
+        exitPrice: 110,
+        exitReason: 'TP2_HIT',
+        exitType: ExitType.TAKE_PROFIT_2,
       });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
-        110,
-        'TP2_HIT',
-        ExitType.TAKE_PROFIT_2,
-      );
 
       expect(result).toBe(true);
       expect(position.stopLoss.isTrailing).toBe(true);
@@ -649,18 +497,16 @@ describe('PositionExitingService', () => {
     });
 
     it('should activate trailing stop for SHORT position', async () => {
-      const position = createMockPosition({
-        side: PositionSide.SHORT,
-        stopLoss: { ...createMockPosition().stopLoss, isTrailing: false },
+      const { position, result } = await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss(
+          { side: PositionSide.SHORT },
+          { isTrailing: false },
+        ),
+        action: { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
+        exitPrice: 90,
+        exitReason: 'TP2_HIT',
+        exitType: ExitType.TAKE_PROFIT_2,
       });
-
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
-        90,
-        'TP2_HIT',
-        ExitType.TAKE_PROFIT_2,
-      );
 
       expect(result).toBe(true);
       expect(position.stopLoss.isTrailing).toBe(true);
@@ -673,28 +519,26 @@ describe('PositionExitingService', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      await service.executeExitAction(
+      await executePositionExitRequest(service, {
         position,
-        { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
-        110,
-        'TP2_HIT',
-        ExitType.TAKE_PROFIT_2,
-      );
+        action: { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
+        exitPrice: 110,
+        exitReason: 'TP2_HIT',
+        exitType: ExitType.TAKE_PROFIT_2,
+      });
 
       expect(position.stopLoss.updatedAt).toBeGreaterThan(beforeTime);
     });
 
     it('should handle exchange error gracefully', async () => {
-      const position = createMockPosition();
       mockBybit.updateStopLoss.mockRejectedValueOnce(new Error('Exchange error'));
 
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
-        110,
-        'TP2_HIT',
-        ExitType.TAKE_PROFIT_2,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
+        exitPrice: 110,
+        exitReason: 'TP2_HIT',
+        exitType: ExitType.TAKE_PROFIT_2,
+      });
 
       expect(result).toBe(false);
       expect(mockLogger.error).toHaveBeenCalled();
@@ -703,29 +547,18 @@ describe('PositionExitingService', () => {
 
   describe('recordPositionCloseInJournal()', () => {
     it('should skip recording without journalId', async () => {
-      const position = createMockPosition({ journalId: undefined });
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      await executePositionExitRequest(service, {
+        position: { journalId: undefined },
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockJournal.recordTradeClose).not.toHaveBeenCalled();
     });
 
     it('should record with complete exit details', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { position } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -741,17 +574,12 @@ describe('PositionExitingService', () => {
     });
 
     it('should calculate holding time in minutes and hours', async () => {
-      const position = createMockPosition({
-        openedAt: Date.now() - 3600000, // 1 hour ago
+      await executePositionExitRequest(service, {
+        position: {
+          openedAt: Date.now() - 3600000, // 1 hour ago
+        },
+        action: { action: ExitAction.CLOSE_ALL },
       });
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -765,15 +593,12 @@ describe('PositionExitingService', () => {
     });
 
     it('should mark stoppedOut true for STOP_LOSS exits', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        94,
-        'SL_HIT',
-        ExitType.STOP_LOSS,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+        exitPrice: 94,
+        exitReason: 'SL_HIT',
+        exitType: ExitType.STOP_LOSS,
+      });
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -785,17 +610,10 @@ describe('PositionExitingService', () => {
     });
 
     it('should record breakeven SL movement', async () => {
-      const position = createMockPosition({
-        stopLoss: { ...createMockPosition().stopLoss, isBreakeven: true },
+      await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss({}, { isBreakeven: true }),
+        action: { action: ExitAction.CLOSE_ALL },
       });
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -807,17 +625,13 @@ describe('PositionExitingService', () => {
     });
 
     it('should record trailing stop activation', async () => {
-      const position = createMockPosition({
-        stopLoss: { ...createMockPosition().stopLoss, isTrailing: true },
+      await executePositionExitRequest(service, {
+        position: createMockExitedPositionWithStopLoss({}, { isTrailing: true }),
+        action: { action: ExitAction.CLOSE_ALL },
+        exitPrice: 115,
+        exitReason: 'TP3_HIT',
+        exitType: ExitType.TAKE_PROFIT_3,
       });
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        115,
-        'TP3_HIT',
-        ExitType.TAKE_PROFIT_3,
-      );
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -829,15 +643,12 @@ describe('PositionExitingService', () => {
     });
 
     it('should track TP levels hit', async () => {
-      const position = createMockPosition();
-
-      await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        115,
-        'TP3_HIT',
-        ExitType.TAKE_PROFIT_3,
-      );
+      await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+        exitPrice: 115,
+        exitReason: 'TP3_HIT',
+        exitType: ExitType.TAKE_PROFIT_3,
+      });
 
       expect(mockJournal.recordTradeClose).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -850,16 +661,11 @@ describe('PositionExitingService', () => {
     });
 
     it('should handle journal recording error gracefully', async () => {
-      const position = createMockPosition();
       mockJournal.recordTradeClose.mockRejectedValueOnce(new Error('Journal error'));
 
-      const result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
+      const { result } = await executePositionExitRequest(service, {
+        action: { action: ExitAction.CLOSE_ALL },
+      });
 
       expect(result).toBe(true); // Close still succeeds
       // With Phase 8 ErrorHandler integration using FALLBACK strategy,
@@ -940,38 +746,24 @@ describe('PositionExitingService', () => {
     });
 
     it('should handle sequential exit actions', async () => {
-      const position = createMockPosition();
-
-      // First: Close 50%
-      let result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_PERCENT, percent: 50 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
+      const { position, results } = await executePositionExitSequence(
+        service,
+        [
+          { action: { action: ExitAction.CLOSE_PERCENT, percent: 50 } },
+          { action: { action: ExitAction.UPDATE_SL, newStopLoss: 101 } },
+          {
+            action: { action: ExitAction.CLOSE_ALL },
+            exitPrice: 110,
+            exitReason: 'TP2_HIT',
+            exitType: ExitType.TAKE_PROFIT_2,
+          },
+        ],
       );
-      expect(result).toBe(true);
+
+      expect(results[0]).toBe(true);
       expect(position.quantity).toBe(5);
-
-      // Then: Update SL
-      result = await service.executeExitAction(
-        position,
-        { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
-        105,
-        'TP1_HIT',
-        ExitType.TAKE_PROFIT_1,
-      );
-      expect(result).toBe(true);
-
-      // Finally: Close remaining
-      result = await service.executeExitAction(
-        position,
-        { action: ExitAction.CLOSE_ALL },
-        110,
-        'TP2_HIT',
-        ExitType.TAKE_PROFIT_2,
-      );
-      expect(result).toBe(true);
+      expect(results[1]).toBe(true);
+      expect(results[2]).toBe(true);
       expect(position.status).toBe('CLOSED');
     });
   });

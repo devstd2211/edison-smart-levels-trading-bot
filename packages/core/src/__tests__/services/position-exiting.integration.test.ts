@@ -13,16 +13,17 @@
  */
 
 import { PositionExitingService } from '../../services/position-exiting.service';
-import { Position, PositionSide, TakeProfit } from '../../types/legacy';
+import { Position, TakeProfit } from '../../types/legacy';
 import {
+  analyzeWebSocketEntryPriceUpdates,
   createBreakevenInspection,
+  createEntryPriceState,
   createMockPositionExitingLogger,
   createRealScenarioPartialClose,
   createRealScenarioPositionExitingHarness,
   createRealScenarioTakeProfitManager,
   createRealScenarioPosition,
   createWebSocketBugScenario,
-  createWebSocketUpdateSequence,
   parseWebSocketEntryPrice,
 } from '../helpers/position-exiting-test.utils';
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
@@ -72,6 +73,9 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
     it('CRITICAL: What happens if TakeProfitManager entryPrice becomes NaN?', () => {
       // Simulate corruption
       (mockTakeProfitManager as unknown as { config: { entryPrice: number } }).config.entryPrice = NaN;
+      const entryState = createEntryPriceState(
+        (mockTakeProfitManager as unknown as { config: { entryPrice: number } }).config,
+      );
 
       const { tpLevel, partialQuantity, exitPrice } = createRealScenarioPartialClose();
 
@@ -83,9 +87,9 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
 
       console.log(`
         CORRUPTED ENTRY PRICE:
-        - config.entryPrice: ${(mockTakeProfitManager as unknown as { config: { entryPrice: number } }).config.entryPrice}
+        - config.entryPrice: ${entryState.entryPrice}
         - Recorded pnlNet: ${partialClose.pnlNet}
-        - Is NaN? ${isNaN(partialClose.pnlNet)}
+        - Is NaN? ${!entryState.isValid}
       `);
 
       // This is the BUG!
@@ -126,6 +130,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       };
 
       // Check what breakeven calculation would give
+      const entryState = createEntryPriceState(position);
       const { offset, breakevenPrice } = createBreakevenInspection({
         entryPrice: position.entryPrice,
         offsetPercent: 0.3,
@@ -133,8 +138,8 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
 
       console.log(`
         BREAKEVEN CALCULATION:
-        - Position entryPrice: ${position.entryPrice}
-        - Is NaN? ${isNaN(position.entryPrice)}
+        - Position entryPrice: ${entryState.entryPrice}
+        - Is NaN? ${!entryState.isValid}
         - Calculated Breakeven: ${breakevenPrice}
         - Is Breakeven NaN? ${breakevenPrice !== undefined ? isNaN(breakevenPrice) : 'undefined'}
       `);
@@ -218,10 +223,7 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
 
     it('VERIFIED: Sequence of WebSocket updates', () => {
       // Simulates actual WebSocket update sequence
-      const results = createWebSocketUpdateSequence().map(p => ({
-        ...p,
-        parsed: parseWebSocketEntryPrice(p.entryPrice, p.avgPrice),
-      }));
+      const results = analyzeWebSocketEntryPriceUpdates();
 
       console.log(`
         WEBSOCKET UPDATE SEQUENCE:

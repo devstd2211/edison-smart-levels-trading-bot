@@ -11,12 +11,12 @@ import {
   createClosedRepositoryPosition,
   createPositionRepositoryHarness,
   createRepositoryPosition,
-  createRepositoryPositions,
+  createRepositoryTakeProfits,
   createSeededClosedHistoryRepository,
   createSeededCurrentAndHistoryRepository,
   createSeededCurrentPositionRepository,
-  createSeededHistoryRepository,
-  createSeededPositionRepositoryHarness,
+  createSeededRepositoryQueryHarness,
+  seedRepositoryHistory,
 } from '../helpers/position-repository-test.utils';
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
@@ -29,11 +29,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   describe('Basic Position Operations', () => {
     it('should store position in repository', () => {
       const position: Position = createRepositoryPosition({
-        takeProfits: [
-          { level: 1, price: 50500, percent: 30, sizePercent: 30, hit: false, orderId: undefined },
-          { level: 2, price: 51000, percent: 30, sizePercent: 30, hit: false, orderId: undefined },
-          { level: 3, price: 51500, percent: 40, sizePercent: 40, hit: false, orderId: undefined },
-        ],
+        takeProfits: createRepositoryTakeProfits(),
       });
 
       repository.setCurrentPosition(position);
@@ -70,10 +66,6 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position History', () => {
     it('should add positions to history', () => {
-      const position1: Position = createClosedRepositoryPosition({
-        id: 'BTCUSDT_Buy_1',
-        unrealizedPnL: 100,
-      });
       repository = createSeededClosedHistoryRepository([
         {
           id: 'BTCUSDT_Buy_1',
@@ -87,13 +79,13 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should maintain history limit (max 100)', () => {
-      createRepositoryPositions(150, (i) => ({
+      seedRepositoryHistory(repository, 150, (i) => ({
           id: `BTCUSDT_Buy_${i}`,
           journalId: `trade-${i}`,
           entryPrice: 50000 + i,
           orderId: `order-${i}`,
           status: 'CLOSED',
-        })).forEach((position) => repository.addToHistory(position));
+        }));
 
       const history = repository.getHistory();
 
@@ -102,12 +94,12 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should get limited history', () => {
-      createRepositoryPositions(50, (i) => ({
+      seedRepositoryHistory(repository, 50, (i) => ({
           id: `BTCUSDT_Buy_${i}`,
           journalId: `trade-${i}`,
           orderId: `order-${i}`,
           status: 'CLOSED',
-        })).forEach((position) => repository.addToHistory(position));
+        }));
 
       const limited = repository.getHistory(10);
       expect(limited).toHaveLength(10);
@@ -125,7 +117,6 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position Queries', () => {
     it('should find position by ID', () => {
-      const position: Position = createClosedRepositoryPosition();
       repository = createSeededClosedHistoryRepository();
 
       const found = repository.findPosition('BTCUSDT_Buy');
@@ -139,16 +130,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should get all positions', () => {
-      const position1: Position = createClosedRepositoryPosition({
-        id: 'BTCUSDT_Buy_1',
-      });
-      repository = createSeededCurrentAndHistoryRepository({
-        currentPosition: {
-          id: 'BTCUSDT_Buy_2',
-          status: 'OPEN',
-        },
-        history: [{ id: 'BTCUSDT_Buy_1' }],
-      });
+      repository = createSeededRepositoryQueryHarness();
 
       const all = repository.getAllPositions();
       expect(all.length).toBeGreaterThanOrEqual(2);
@@ -195,14 +177,13 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should handle concurrent position updates', () => {
-      const positions: Position[] = createRepositoryPositions(5, (i) => ({
+      seedRepositoryHistory(repository, 5, (i) => ({
           id: `BTCUSDT_Buy_${i}`,
           journalId: `trade-${i}`,
           quantity: 0.1 + i * 0.01,
           unrealizedPnL: i * 100,
           orderId: `order-${i}`,
         }));
-      positions.forEach((position) => repository.addToHistory(position));
 
       const all = repository.getAllPositions();
       expect(all.length).toBeGreaterThanOrEqual(5);

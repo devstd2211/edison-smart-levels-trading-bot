@@ -141,6 +141,16 @@ export function cloneLifecyclePosition(position: Position): Position {
   return JSON.parse(JSON.stringify(position)) as Position;
 }
 
+export function createLifecycleWebSocketPosition(
+  basePosition: Position,
+  overrides: Partial<Position> = {},
+): Position {
+  return {
+    ...cloneLifecyclePosition(basePosition),
+    ...overrides,
+  };
+}
+
 export function createLifecycleRestorePosition(
   overrides: Partial<Position> = {},
 ): Position {
@@ -240,6 +250,11 @@ type LifecycleHarness = {
   fullConfig: Config;
   position: Position;
   signal: Signal;
+};
+
+type InternalPositionLifecycleState = {
+  currentPosition: Position | null;
+  positionClosing: Map<string, Promise<void>>;
 };
 
 export function createPositionLifecycleService(
@@ -363,6 +378,43 @@ export function createPositionLifecycleMemoryHarness(options: {
     position,
     signal,
   };
+}
+
+export function createPositionLifecycleSafetyHarness(options: {
+  positionOverrides?: Partial<Position>;
+  tradingOverrides?: Partial<TradingConfig>;
+  riskOverrides?: Partial<RiskManagementConfig>;
+  entryOverrides?: Partial<EntryConfirmationConfig>;
+  configOverrides?: Partial<Config>;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const position = createLifecycleSafetyPosition(options.positionOverrides);
+  const harness = createPositionLifecycleMemoryHarness({
+    ...options,
+    positionOverrides: position,
+    tradingOverrides: {
+      positionSize: 100,
+      ...options.tradingOverrides,
+    } as never,
+  });
+  const internals = (): InternalPositionLifecycleState =>
+    harness.service as unknown as InternalPositionLifecycleState;
+  const setCurrentPosition = (value: Position | null): void => {
+    internals().currentPosition = value;
+  };
+
+  return {
+    ...harness,
+    position,
+    internals,
+    setCurrentPosition,
+  };
+}
+
+export function findLifecycleLogCall(mockFn: jest.Mock, expectedFragment: string) {
+  return mockFn.mock.calls.find((call: unknown[]) =>
+    typeof call[0] === 'string' && call[0].includes(expectedFragment),
+  );
 }
 
 export function createPositionLifecycleWithErrorHandlerHarness(
