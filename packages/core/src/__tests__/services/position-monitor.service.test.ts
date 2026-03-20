@@ -6,37 +6,23 @@
 
 import { PositionMonitorService } from '../../services/position-monitor.service';
 import {
-  Position,
   PositionSide,
   RiskManagementConfig,
   LoggerService,
 } from '../../types/legacy';
 import {
-  createMockMonitoredPosition,
+  attachCurrentPosition,
   createPositionMonitorHarness,
   createPositionMonitorRiskConfig,
+  createPositionMonitorScenarioPosition,
   createPositionMonitorServiceWithHarness,
+  createTimeBasedExitRiskConfig,
   defaultPositionMonitorRiskConfig,
+  runPositionMonitorCycle,
+  runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const createMockPosition = (
-  side: PositionSide,
-  entryPrice: number,
-  stopLossPrice: number,
-  takeProfits: Array<{ level: number; price: number; hit?: boolean }>,
-  openedAt: number = Date.now(),
-): Position =>
-  createMockMonitoredPosition(side, entryPrice, stopLossPrice, takeProfits, openedAt, {
-    id: 'test-position-123',
-    symbol: 'APEXUSDT',
-    quantity: 100,
-    marginUsed: 10,
-    orderId: 'entry-order-123',
-  });
+const createMockPosition = createPositionMonitorScenarioPosition;
 
 // ============================================================================
 // TESTS
@@ -51,6 +37,7 @@ describe('PositionMonitorService', () => {
   let mockPnLCalculator: ReturnType<typeof createPositionMonitorHarness>['mockPnLCalculator'];
   let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
   let logger: LoggerService;
+  let positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
   const rebuildMonitor = (config: RiskManagementConfig): void => {
     monitor.stop();
     monitor = createPositionMonitorServiceWithHarness(
@@ -84,6 +71,7 @@ describe('PositionMonitorService', () => {
     mockPnLCalculator = harness.mockPnLCalculator;
     mockPositionSync = harness.mockPositionSync;
     logger = harness.logger;
+    positionHarness = { mockPositionManager };
   });
 
   afterEach(() => {
@@ -151,16 +139,17 @@ describe('PositionMonitorService', () => {
 
   describe('stop loss detection', () => {
     it('should emit stopLossHit event when LONG SL is hit', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createPositionMonitorScenarioPosition(PositionSide.LONG, 1.5, 1.48, []),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.47); // Below SL
 
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(slHitSpy).toHaveBeenCalledTimes(1);
       expect(slHitSpy).toHaveBeenCalledWith({
@@ -171,16 +160,17 @@ describe('PositionMonitorService', () => {
     });
 
     it('should emit stopLossHit event when SHORT SL is hit', async () => {
-      const position = createMockPosition(PositionSide.SHORT, 1.5, 1.52, []);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createPositionMonitorScenarioPosition(PositionSide.SHORT, 1.5, 1.52, []),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.53); // Above SL
 
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(slHitSpy).toHaveBeenCalledTimes(1);
       expect(slHitSpy).toHaveBeenCalledWith({
@@ -191,31 +181,33 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit stopLossHit when LONG price above SL', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createPositionMonitorScenarioPosition(PositionSide.LONG, 1.5, 1.48, []),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.51); // Above SL
 
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(slHitSpy).not.toHaveBeenCalled();
     });
 
     it('should NOT emit stopLossHit when SHORT price below SL', async () => {
-      const position = createMockPosition(PositionSide.SHORT, 1.5, 1.52, []);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createPositionMonitorScenarioPosition(PositionSide.SHORT, 1.5, 1.52, []),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.49); // Below SL
 
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(slHitSpy).not.toHaveBeenCalled();
     });
@@ -333,25 +325,19 @@ describe('PositionMonitorService', () => {
   describe('time-based exit', () => {
     it('should emit timeBasedExit when position open too long with low PnL', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
-      const config: RiskManagementConfig = {
-        ...createPositionMonitorRiskConfig(),
-        positionSizeUsdt: 10,
-        timeBasedExitEnabled: true,
-        timeBasedExitMinutes: 30,
-        timeBasedExitMinPnl: 0.2,
-      };
-      rebuildMonitor(config);
+      rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(exitSpy).toHaveBeenCalledTimes(1);
       expect(exitSpy).toHaveBeenCalledWith({
@@ -365,98 +351,76 @@ describe('PositionMonitorService', () => {
 
     it('should NOT emit timeBasedExit when position has sufficient PnL', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.505); // +0.33% PnL (> 0.2% threshold)
 
-      const config: RiskManagementConfig = {
-        ...createPositionMonitorRiskConfig(),
-        positionSizeUsdt: 10,
-        timeBasedExitEnabled: true,
-        timeBasedExitMinutes: 30,
-        timeBasedExitMinPnl: 0.2,
-      };
-      rebuildMonitor(config);
+      rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(exitSpy).not.toHaveBeenCalled();
     });
 
     it('should NOT emit timeBasedExit when position not open long enough', async () => {
       const openedAt = Date.now() - 25 * 60 * 1000; // 25 minutes ago (< 30 threshold)
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
-      const config: RiskManagementConfig = {
-        ...createPositionMonitorRiskConfig(),
-        positionSizeUsdt: 10,
-        timeBasedExitEnabled: true,
-        timeBasedExitMinutes: 30,
-        timeBasedExitMinPnl: 0.2,
-      };
-      rebuildMonitor(config);
+      rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(exitSpy).not.toHaveBeenCalled();
     });
 
     it('should NOT emit timeBasedExit when feature disabled', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL
 
-      const config: RiskManagementConfig = {
-        ...createPositionMonitorRiskConfig(),
-        positionSizeUsdt: 10,
-        timeBasedExitEnabled: false, // DISABLED
-      };
-      rebuildMonitor(config);
+      rebuildMonitor(createPositionMonitorRiskConfig({ positionSizeUsdt: 10, timeBasedExitEnabled: false }));
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(exitSpy).not.toHaveBeenCalled();
     });
 
     it('should calculate correct PnL for SHORT position', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = createMockPosition(PositionSide.SHORT, 1.5, 1.52, [], openedAt);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.SHORT, 1.5, 1.52, [], openedAt),
+      );
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.499); // +0.067% PnL (< 0.2% threshold)
 
-      const config: RiskManagementConfig = {
-        ...createPositionMonitorRiskConfig(),
-        positionSizeUsdt: 10,
-        timeBasedExitEnabled: true,
-        timeBasedExitMinutes: 30,
-        timeBasedExitMinPnl: 0.2,
-      };
-      rebuildMonitor(config);
+      rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(exitSpy).toHaveBeenCalledTimes(1);
     });
@@ -468,24 +432,26 @@ describe('PositionMonitorService', () => {
 
   describe('position closed externally', () => {
     it('should sync closed position when exchange position is null', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, []),
+      );
       mockBybit.getPosition.mockResolvedValue(null); // Position doesn't exist on exchange
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should delegate to PositionSyncService.syncClosedPosition
       expect(mockPositionSync.syncClosedPosition).toHaveBeenCalledWith(position);
     });
 
     it('should sync closed position when exchange position quantity is zero', async () => {
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(
+        positionHarness,
+        createMockPosition(PositionSide.LONG, 1.5, 1.48, []),
+      );
       mockBybit.getPosition.mockResolvedValue({ ...position, quantity: 0 });
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should delegate to PositionSyncService.syncClosedPosition
       expect(mockPositionSync.syncClosedPosition).toHaveBeenCalledWith(position);
@@ -494,11 +460,10 @@ describe('PositionMonitorService', () => {
     it('should NOT check price when position closed externally', async () => {
       const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
       position.status = 'CLOSED'; // Already closed
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(positionHarness, position);
       mockBybit.getPosition.mockResolvedValue(null); // Closed
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Note: After Session #59, getCurrentPrice may be called before status check
       // This test validates that position closed externally is handled correctly
@@ -515,8 +480,7 @@ describe('PositionMonitorService', () => {
     it('should do nothing when no position exists', async () => {
       mockPositionManager.getCurrentPosition.mockReturnValue(null);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(mockBybit.getPosition).not.toHaveBeenCalled();
       expect(mockBybit.getCurrentPrice).not.toHaveBeenCalled();
@@ -537,8 +501,7 @@ describe('PositionMonitorService', () => {
       const errorSpy = jest.fn();
       monitor.on('error', errorSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(errorSpy).toHaveBeenCalledWith(testError);
@@ -614,14 +577,13 @@ describe('PositionMonitorService', () => {
     it('should NOT emit positionClosedExternally if status is CLOSED', async () => {
       const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, []);
       position.status = 'CLOSED'; // Already closed
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(positionHarness, position);
       mockBybit.getPosition.mockResolvedValue(null); // Position doesn't exist on exchange
 
       const closedSpy = jest.fn();
       monitor.on('positionClosedExternally', closedSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should NOT emit event or call clearPosition (already closed)
       expect(closedSpy).not.toHaveBeenCalled();
@@ -632,12 +594,11 @@ describe('PositionMonitorService', () => {
       const openedAt = Date.now() - 150000; // 2.5 minutes ago (> 2min threshold)
       const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
       position.status = 'OPEN';
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(positionHarness, position);
       mockBybit.getPosition.mockResolvedValue(position); // Position exists
       mockBybit.getCurrentPrice.mockResolvedValue(1.5);  // Current price
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(30000); // Advance 30s to trigger deepSyncCheck
+      await runPositionMonitorDeepSyncCycle(monitor);
 
       // Should delegate to PositionSyncService.deepSyncCheck
       expect(mockPositionSync.deepSyncCheck).toHaveBeenCalledWith(position);

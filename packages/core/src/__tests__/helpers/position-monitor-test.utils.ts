@@ -60,6 +60,22 @@ export function createMockMonitoredPosition(
   };
 }
 
+export function createPositionMonitorScenarioPosition(
+  side: PositionSide,
+  entryPrice: number,
+  stopLossPrice: number,
+  takeProfits: Array<{ level: number; price: number; hit?: boolean }>,
+  openedAt: number = Date.now(),
+): Position {
+  return createMockMonitoredPosition(side, entryPrice, stopLossPrice, takeProfits, openedAt, {
+    id: 'test-position-123',
+    symbol: 'APEXUSDT',
+    quantity: 100,
+    marginUsed: 10,
+    orderId: 'entry-order-123',
+  });
+}
+
 export function createMockPositionMonitorExchange() {
   return {
     getPosition: jest.fn(),
@@ -190,6 +206,18 @@ export function createPositionMonitorRiskConfig(
     ...defaultPositionMonitorRiskConfig,
     ...overrides,
   };
+}
+
+export function createTimeBasedExitRiskConfig(
+  overrides: Partial<RiskManagementConfig> = {},
+): RiskManagementConfig {
+  return createPositionMonitorRiskConfig({
+    positionSizeUsdt: 10,
+    timeBasedExitEnabled: true,
+    timeBasedExitMinutes: 30,
+    timeBasedExitMinPnl: 0.2,
+    ...overrides,
+  });
 }
 
 export function createPositionMonitorHarness(
