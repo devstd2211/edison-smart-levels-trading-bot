@@ -25,6 +25,15 @@ export interface HealthCheckTestHarness {
   createThrowingWebSocketService: () => HealthCheckService;
   createHealthyProbeService: () => HealthCheckService;
   createThresholdConfig: (thresholds: NonNullable<HealthCheckConfig['thresholds']>) => HealthCheckConfig;
+  configureExchangeHealth: (options?: {
+    connected?: boolean;
+    serverTimeOffsetMs?: number;
+    throwOnConnection?: Error;
+  }) => jest.Mocked<IExchangeService>;
+  configureWebSocketHealth: (options?: {
+    connected?: boolean;
+    messageAgeMs?: number;
+  }) => jest.Mocked<IWebSocketService>;
   createService: (options?: {
     exchange?: IExchangeService;
     websocket?: IWebSocketService;
@@ -67,6 +76,27 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
   ): HealthCheckConfig => ({
     thresholds,
   });
+  const configureExchangeHealth = (
+    options: {
+      connected?: boolean;
+      serverTimeOffsetMs?: number;
+      throwOnConnection?: Error;
+    } = {},
+  ): jest.Mocked<IExchangeService> => createExchange({
+    testConnection: options.throwOnConnection
+      ? jest.fn().mockRejectedValue(options.throwOnConnection)
+      : jest.fn().mockResolvedValue(options.connected ?? true),
+    getServerTime: jest.fn().mockResolvedValue(Date.now() + (options.serverTimeOffsetMs ?? 0)),
+  });
+  const configureWebSocketHealth = (
+    options: {
+      connected?: boolean;
+      messageAgeMs?: number;
+    } = {},
+  ): jest.Mocked<IWebSocketService> => createWebSocket({
+    isConnected: jest.fn().mockReturnValue(options.connected ?? true),
+    getLastMessageTime: jest.fn().mockReturnValue(Date.now() - (options.messageAgeMs ?? 0)),
+  });
 
   return {
     logger,
@@ -75,6 +105,8 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
     errorHandler,
     createExchange,
     createWebSocket,
+    configureExchangeHealth,
+    configureWebSocketHealth,
     createUnavailableService() {
       return this.createService({
         exchange: undefined,
@@ -104,39 +136,38 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
     },
     createDisconnectedWebSocketService() {
       return this.createService({
-        websocket: createWebSocket({
-          isConnected: jest.fn().mockReturnValue(false),
-          getLastMessageTime: jest.fn().mockReturnValue(0),
+        websocket: configureWebSocketHealth({
+          connected: false,
+          messageAgeMs: Date.now(),
         }),
       });
     },
     createStaleWebSocketService(ageMs = 120000) {
       return this.createService({
-        websocket: createWebSocket({
-          isConnected: jest.fn().mockReturnValue(true),
-          getLastMessageTime: jest.fn().mockReturnValue(Date.now() - ageMs),
+        websocket: configureWebSocketHealth({
+          connected: true,
+          messageAgeMs: ageMs,
         }),
       });
     },
     createFailingExchangeService() {
       return this.createService({
-        exchange: createExchange({
-          testConnection: jest.fn().mockRejectedValue(new Error('API down')),
-          getServerTime: jest.fn().mockResolvedValue(Date.now()),
+        exchange: configureExchangeHealth({
+          throwOnConnection: new Error('API down'),
         }),
       });
     },
     createDisconnectedExchangeService() {
       return this.createService({
-        exchange: createExchange({
-          testConnection: jest.fn().mockResolvedValue(false),
+        exchange: configureExchangeHealth({
+          connected: false,
         }),
       });
     },
     createOutOfSyncExchangeService(offsetMs = 10000) {
       return this.createService({
-        exchange: createExchange({
-          getServerTime: jest.fn().mockResolvedValue(Date.now() + offsetMs),
+        exchange: configureExchangeHealth({
+          serverTimeOffsetMs: offsetMs,
         }),
       });
     },
@@ -151,8 +182,8 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
     },
     createHealthyProbeService() {
       return this.createService({
-        exchange: createExchange(),
-        websocket: createWebSocket(),
+        exchange: configureExchangeHealth(),
+        websocket: configureWebSocketHealth(),
         config: createThresholdConfig({
           memoryUsagePercent: 95,
           cpuUsagePercent: 95,

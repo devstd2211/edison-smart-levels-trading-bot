@@ -31,6 +31,51 @@ export function createOrderbookImbalanceOrderbook(options: {
   };
 }
 
+export function createOrderbookImbalanceLevels(options: {
+  startPrice: number;
+  quantities: number[];
+  direction?: 'asc' | 'desc';
+  priceStep?: number;
+}): [number, number][] {
+  const {
+    startPrice,
+    quantities,
+    direction = 'desc',
+    priceStep = 10,
+  } = options;
+
+  return quantities.map((quantity, index) => {
+    const price = direction === 'desc'
+      ? startPrice - (index * priceStep)
+      : startPrice + (index * priceStep);
+    return [price, quantity];
+  });
+}
+
+export function createOrderbookImbalanceScenario(options: {
+  bidQuantities?: number[];
+  askQuantities?: number[];
+  bidStartPrice?: number;
+  askStartPrice?: number;
+} = {}): { bids: [number, number][]; asks: [number, number][] } {
+  return createOrderbookImbalanceOrderbook({
+    bids: options.bidQuantities
+      ? createOrderbookImbalanceLevels({
+        startPrice: options.bidStartPrice ?? 50000,
+        quantities: options.bidQuantities,
+        direction: 'desc',
+      })
+      : undefined,
+    asks: options.askQuantities
+      ? createOrderbookImbalanceLevels({
+        startPrice: options.askStartPrice ?? 50010,
+        quantities: options.askQuantities,
+        direction: 'asc',
+      })
+      : undefined,
+  });
+}
+
 export function createOrderbookImbalanceFailingLogger(
   logger: LoggerService,
   overrides: Partial<Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>>,

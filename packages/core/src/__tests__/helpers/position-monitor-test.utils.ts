@@ -76,6 +76,28 @@ export function createPositionMonitorScenarioPosition(
   });
 }
 
+export function attachScenarioPosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>,
+  options: {
+    side: PositionSide;
+    entryPrice: number;
+    stopLossPrice: number;
+    takeProfits?: Array<{ level: number; price: number; hit?: boolean }>;
+    openedAt?: number;
+  },
+): Position {
+  return attachCurrentPosition(
+    harness,
+    createPositionMonitorScenarioPosition(
+      options.side,
+      options.entryPrice,
+      options.stopLossPrice,
+      options.takeProfits ?? [],
+      options.openedAt,
+    ),
+  );
+}
+
 export function createMockPositionMonitorExchange() {
   return {
     getPosition: jest.fn(),
@@ -272,6 +294,36 @@ export function attachCurrentPosition(
 ): Position {
   harness.mockPositionManager.getCurrentPosition.mockReturnValue(position);
   return position;
+}
+
+export function attachProtectedPosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>,
+  overrides: Partial<Position> = {},
+): Position {
+  return attachCurrentPosition(
+    harness,
+    createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
+      protectionVerifiedOnce: true,
+      ...overrides,
+    }),
+  );
+}
+
+export function createProtectionVerificationResult(overrides: {
+  verified?: boolean;
+  hasStopLoss?: boolean;
+  hasTakeProfit?: boolean;
+  hasTrailingStop?: boolean;
+  activeOrders?: number;
+} = {}) {
+  return {
+    verified: true,
+    hasStopLoss: true,
+    hasTakeProfit: true,
+    hasTrailingStop: false,
+    activeOrders: 3,
+    ...overrides,
+  };
 }
 
 export async function runPositionMonitorCycle(

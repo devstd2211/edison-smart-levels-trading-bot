@@ -15,12 +15,13 @@ import { LoggerService } from '../../services/logger.service';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 import {
   createOrderbookDeltaFixture,
+  createOrderbookLevels,
   createOrderbookLegacyService,
   createOrderbookMockLogger,
   createOrderbookManagerHarness,
-  createOrderbookManagerService,
   createOrderbookServiceWithoutWallTracker,
   createOrderbookSnapshotFixture,
+  initializeOrderbookManager,
 } from '../helpers/orderbook-manager-test.utils';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
@@ -61,9 +62,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should apply delta updates after snapshot', () => {
-      // Snapshot first
-      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
-      service.processUpdate(snapshot);
+      initializeOrderbookManager(service);
 
       // Delta update
       const delta: OrderbookUpdate = createOrderbookDeltaFixture();
@@ -112,11 +111,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         throw new Error('WallTracker error');
       });
 
-      // Initialize first
-      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
+      initializeOrderbookManager(service, {
         asks: [],
       });
-      service.processUpdate(snapshot);
 
       // Remove level (size 0)
       const delta: OrderbookUpdate = createOrderbookDeltaFixture({
@@ -208,8 +205,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     it('should GRACEFUL_DEGRADE for stale snapshot with ErrorHandler', () => {
       jest.useFakeTimers();
 
-      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
-      service.processUpdate(snapshot);
+      initializeOrderbookManager(service);
 
       // Advance time past threshold (60 seconds)
       jest.advanceTimersByTime(61000);
@@ -234,14 +230,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
         wallTracker: mockWallTracker as unknown as WallTrackerService,
       });
 
-      const snapshot: OrderbookUpdate = {
-        type: 'snapshot',
+      initializeOrderbookManager(legacyService, {
         bids: [['45000', '1.0']],
         asks: [],
-        updateId: 1,
-        timestamp: Date.now(),
-      };
-      legacyService.processUpdate(snapshot);
+      });
 
       jest.advanceTimersByTime(61000);
 
@@ -258,14 +250,12 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Memory Management', () => {
     it('should track orderbook stats correctly', () => {
-      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
+      initializeOrderbookManager(service, {
         bids: [
           ['45000', '1.0'],
           ['44999', '2.0'],
         ],
       });
-
-      service.processUpdate(snapshot);
 
       const stats = service.getStats();
       expect(stats.bidsCount).toBe(2);
@@ -274,9 +264,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should reset orderbook correctly', () => {
-      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
-
-      service.processUpdate(snapshot);
+      initializeOrderbookManager(service);
       expect(service.isReady()).toBe(true);
 
       service.reset();
@@ -346,9 +334,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Integration Scenarios', () => {
     it('should handle snapshot replacement', () => {
-      // First snapshot
-      const snapshot1: OrderbookUpdate = createOrderbookSnapshotFixture();
-      service.processUpdate(snapshot1);
+      initializeOrderbookManager(service);
 
       // Second snapshot replaces data
       const snapshot2: OrderbookUpdate = createOrderbookSnapshotFixture({
@@ -364,8 +350,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle rapid snapshot/delta sequence', () => {
-      const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
-      service.processUpdate(snapshot);
+      initializeOrderbookManager(service);
 
       const deltas: OrderbookUpdate[] = [
         createOrderbookDeltaFixture(),
@@ -385,17 +370,11 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should preserve best levels with proper sorting', () => {
+      const descendingBids = createOrderbookLevels({ start: 45002, count: 3, direction: 'desc' });
+      const ascendingAsks = createOrderbookLevels({ start: 45100, count: 3, direction: 'asc' });
       const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture({
-        bids: [
-          ['45002', '1.0'],
-          ['45000', '2.0'],
-          ['45001', '3.0'],
-        ],
-        asks: [
-          ['45102', '1.0'],
-          ['45100', '2.0'],
-          ['45101', '3.0'],
-        ],
+        bids: [descendingBids[2], descendingBids[0], descendingBids[1]],
+        asks: [ascendingAsks[2], ascendingAsks[0], ascendingAsks[1]],
       });
 
       service.processUpdate(snapshot);

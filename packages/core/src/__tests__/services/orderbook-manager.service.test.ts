@@ -8,13 +8,15 @@
  * - Stale data detection
  */
 
-import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbook-manager.service';
+import { OrderbookManagerService } from '../../services/orderbook-manager.service';
 import { LoggerService } from '../../types/legacy';
 import {
   createOrderbookDeltaFixture,
+  createOrderbookLevels,
   createOrderbookLegacyService,
   createOrderbookManagerHarness,
   createOrderbookSnapshotFixture,
+  initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
 } from '../helpers/orderbook-manager-test.utils';
 
@@ -96,12 +98,10 @@ describe('OrderbookManagerService', () => {
 
   describe('Delta handling', () => {
     beforeEach(() => {
-      // Initialize with snapshot
-      const snapshot = createOrderbookSnapshotFixture({
+      initializeOrderbookManager(manager, {
         bids: [['100', '10'], ['99', '5'], ['98', '3']],
         asks: [['101', '8'], ['102', '12'], ['103', '6']],
       });
-      manager.processUpdate(snapshot);
     });
 
     it('should update existing level', () => {
@@ -231,17 +231,20 @@ describe('OrderbookManagerService', () => {
 
   describe('Memory leak protection', () => {
     it('should trim orderbook if too large', () => {
-      // Create snapshot with 150 levels (exceeds MAX_ORDERBOOK_LEVELS = 100)
-      const largeBids: Array<[string, string]> = [];
-      const largeAsks: Array<[string, string]> = [];
-
-      for (let i = 0; i < 150; i++) {
-        largeBids.push([`${100 - i}`, '10']);
-        largeAsks.push([`${101 + i}`, '10']);
-      }
-
-      const snapshot = createOrderbookSnapshotFixture({ bids: largeBids, asks: largeAsks });
-      manager.processUpdate(snapshot);
+      initializeOrderbookManager(manager, {
+        bids: createOrderbookLevels({
+          start: 100,
+          count: 150,
+          direction: 'desc',
+          size: '10',
+        }),
+        asks: createOrderbookLevels({
+          start: 101,
+          count: 150,
+          direction: 'asc',
+          size: '10',
+        }),
+      });
 
       const result = manager.getSnapshot();
 
@@ -256,13 +259,11 @@ describe('OrderbookManagerService', () => {
   });
 
   describe('Stale data detection', () => {
-    it('should return null if snapshot is stale', async () => {
-      const snapshot = createOrderbookSnapshotFixture({
+    it('should return null if snapshot is stale', () => {
+      initializeOrderbookManager(manager, {
         bids: [['100', '10']],
         asks: [['101', '8']],
       });
-
-      manager.processUpdate(snapshot);
 
       // Manually set lastSnapshotTime to 2 minutes ago
       setOrderbookLastSnapshotTime(manager, Date.now() - 120000);
@@ -272,12 +273,10 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should return snapshot if fresh', () => {
-      const snapshot = createOrderbookSnapshotFixture({
+      initializeOrderbookManager(manager, {
         bids: [['100', '10']],
         asks: [['101', '8']],
       });
-
-      manager.processUpdate(snapshot);
 
       const result = manager.getSnapshot();
       expect(result).not.toBeNull();
@@ -286,12 +285,10 @@ describe('OrderbookManagerService', () => {
 
   describe('Reset', () => {
     it('should reset orderbook state', () => {
-      const snapshot = createOrderbookSnapshotFixture({
+      initializeOrderbookManager(manager, {
         bids: [['100', '10']],
         asks: [['101', '8']],
       });
-
-      manager.processUpdate(snapshot);
       expect(manager.isReady()).toBe(true);
 
       manager.reset();
@@ -308,12 +305,10 @@ describe('OrderbookManagerService', () => {
 
   describe('Statistics', () => {
     it('should return correct statistics', () => {
-      const snapshot = createOrderbookSnapshotFixture({
+      initializeOrderbookManager(manager, {
         bids: [['100', '10'], ['99', '5']],
         asks: [['101', '8'], ['102', '12'], ['103', '6']],
       });
-
-      manager.processUpdate(snapshot);
 
       const stats = manager.getStats();
       expect(stats.bidsCount).toBe(2);

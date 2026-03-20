@@ -69,6 +69,15 @@ export function createMockRiskMonitorPosition(
   };
 }
 
+export function attachMockRiskMonitorPosition(
+  harness: Pick<ReturnType<typeof createRealTimeRiskMonitorHarness>, 'mockPositionService'>,
+  overrides: Partial<Position> = {},
+): Position {
+  const position = createMockRiskMonitorPosition(overrides);
+  harness.mockPositionService.getCurrentPosition.mockReturnValue(position);
+  return position;
+}
+
 export function createRiskMonitorDetailedPosition(
   overrides: Partial<Position> = {},
 ): Position {
@@ -105,6 +114,15 @@ export function createRiskMonitorDetailedPosition(
     },
     ...overrides,
   });
+}
+
+export function attachRiskMonitorCurrentPosition(
+  harness: Pick<ReturnType<typeof createRealTimeRiskMonitorHarness>, 'mockPositionService'>,
+  overrides: Partial<Position> = {},
+): Position {
+  const position = createRiskMonitorDetailedPosition(overrides);
+  harness.mockPositionService.getCurrentPosition.mockReturnValue(position);
+  return position;
 }
 
 export function createMockRiskMonitorPositionService(): MockRiskMonitorPositionService {
@@ -194,6 +212,24 @@ export async function seedRiskMonitorHealthScore(
   harness.mockPositionService.getCurrentPosition.mockReturnValue(position);
   await harness.monitor.calculatePositionHealth(position.id, currentPrice);
   return position;
+}
+
+export async function seedRiskMonitorHealthScores(
+  harness: ReturnType<typeof createRealTimeRiskMonitorHarness>,
+  entries: Array<{
+    position: Position;
+    currentPrice: number;
+  }>,
+): Promise<Position[]> {
+  const seeded: Position[] = [];
+
+  for (const entry of entries) {
+    harness.mockPositionService.getCurrentPosition.mockReturnValueOnce(entry.position);
+    await harness.monitor.calculatePositionHealth(entry.position.id, entry.currentPrice);
+    seeded.push(entry.position);
+  }
+
+  return seeded;
 }
 
 export function invalidateRiskMonitorPosition(

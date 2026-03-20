@@ -5,6 +5,7 @@ import { PositionLifecycleService } from '../../services/position-lifecycle.serv
 import { PositionSyncService } from '../../services/position-sync.service';
 import { TelegramService } from '../../services/telegram.service';
 import {
+  BybitOrder,
   ExitType,
   LogLevel,
   LoggerService,
@@ -138,6 +139,66 @@ export function createPositionSyncOldPosition(
   overrides: Partial<Position> = {},
 ): Position {
   return createPositionSyncPosition(side, Date.now() - 3 * 60 * 1000, overrides);
+}
+
+export function createPositionSyncProtectedOrders(
+  options: {
+    stopLossSide?: string;
+    takeProfitSide?: string;
+    takeProfitLevels?: number[];
+  } = {},
+) {
+  const stopLossOrder = createPositionSyncStopLossOrder(options.stopLossSide);
+  const takeProfitOrders = (options.takeProfitLevels ?? [1]).map((level) =>
+    createPositionSyncTakeProfitOrder(options.takeProfitSide, level),
+  );
+
+  return [stopLossOrder, ...takeProfitOrders];
+}
+
+export function prepareClosedPositionSync(
+  harness: Pick<PositionSyncHarness, 'mockBybit'>,
+  options: {
+    orderHistory?: BybitOrder[];
+    currentPrice?: number;
+  } = {},
+): {
+  orderHistory: BybitOrder[];
+  currentPrice: number;
+} {
+  const orderHistory = options.orderHistory ?? [];
+  const currentPrice = options.currentPrice ?? 105;
+
+  harness.mockBybit.getOrderHistory.mockResolvedValue(orderHistory);
+  harness.mockBybit.getCurrentPrice.mockResolvedValue(currentPrice);
+
+  return {
+    orderHistory,
+    currentPrice,
+  };
+}
+
+export function prepareDeepSyncProtectionScenario(
+  harness: Pick<PositionSyncHarness, 'mockBybit'>,
+  position: Position,
+  options: {
+    activeOrders?: BybitOrder[];
+    exchangePosition?: Position | null;
+  } = {},
+): {
+  exchangePosition: Position | null;
+  activeOrders: BybitOrder[];
+} {
+  const exchangePosition = options.exchangePosition ?? position;
+  const activeOrders = options.activeOrders ?? [];
+
+  harness.mockBybit.getPosition.mockResolvedValue(exchangePosition);
+  harness.mockBybit.getActiveOrders.mockResolvedValue(activeOrders);
+
+  return {
+    exchangePosition,
+    activeOrders,
+  };
 }
 
 export function createPositionSyncStopLossOrder(side: string = 'Sell') {

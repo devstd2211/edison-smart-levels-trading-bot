@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-20)
-- Completed a `position-monitor.service` helper-consolidation follow-up:
-  - extended `packages/core/src/__tests__/helpers/position-monitor-test.utils.ts` with a canonical scenario-position builder and a shared time-based-exit risk-config builder.
-  - routed `packages/core/src/__tests__/services/position-monitor.service.test.ts` through those helpers plus the existing shared monitor/deep-sync cycle runners instead of local position bootstrap, repeated time-exit config literals, and repeated single-cycle timer advancement.
-  - reviewed `services/position-monitor.service.ts`; left production code unchanged after review.
+- Completed another three-iteration position-sync/state-machine helper-consolidation batch:
+  - extended `packages/core/src/__tests__/helpers/position-sync-test.utils.ts` with canonical closed-sync and deep-sync protection scenario builders, and extended `packages/core/src/__tests__/helpers/position-state-machine-test.utils.ts` with a shared single-transition helper hardened to preserve default transition fields.
+  - routed `packages/core/src/__tests__/services/position-sync.service.test.ts`, `packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts`, and `packages/core/src/__tests__/services/position-state-machine.service.test.ts` through those helpers instead of repeated order-history/current-price bootstrap, repeated protected-order arrays, and repeated direct transition payload construction.
+  - reviewed `services/position-sync.service.ts` and `services/position-state-machine.service.ts`; left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts` -> PASS (2/2 suites, 46/46 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/__tests__/services/position-state-machine.service.test.ts` -> PASS (3/3 suites, 68/68 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next compact untouched or only partially-normalized suite adjacent to the refreshed monitor/orderbook area, especially `orderbook-manager.service` or another neighboring suite that still rebuilds baseline scenario inputs and one-cycle timer/bootstrap inline.
+- Prefer the next compact untouched or only partially-normalized suite adjacent to the refreshed sync/state area, especially `position-lifecycle`, `position-exiting`, or another neighboring suite that still rebuilds baseline scenario inputs and service-state variants inline.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

@@ -38,6 +38,7 @@ import {
   createOrderbookImbalanceFailingLogger,
   createOrderbookImbalanceHarness,
   createOrderbookImbalanceOrderbook,
+  createOrderbookImbalanceScenario,
   createOrderbookImbalanceServiceFactory,
   createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
@@ -151,8 +152,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should return neutral analysis on NaN bid quantity', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, NaN]],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [NaN],
       });
 
       const analysis = service.analyze(orderbook);
@@ -168,8 +169,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should return neutral analysis on Infinity ask quantity', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        asks: [[50010, Infinity]],
+      const orderbook = createOrderbookImbalanceScenario({
+        askQuantities: [Infinity],
       });
 
       const analysis = service.analyze(orderbook);
@@ -183,8 +184,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should return neutral analysis on negative infinity', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, -Infinity]],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [-Infinity],
       });
 
       const analysis = service.analyze(orderbook);
@@ -198,11 +199,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should handle mixed valid and invalid quantities', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [
-          [50000, 10],
-          [49990, NaN],
-        ],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [10, NaN],
       });
 
       const analysis = service.analyze(orderbook);
@@ -214,9 +212,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should handle calculation overflow gracefully', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, Number.MAX_VALUE]],
-        asks: [[50010, Number.MAX_VALUE]],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [Number.MAX_VALUE],
+        askQuantities: [Number.MAX_VALUE],
       });
 
       const analysis = service.analyze(orderbook);
@@ -257,8 +255,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler });
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, NaN]],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [NaN],
       });
 
       // Should not throw despite logger failure (SKIP strategy)
@@ -272,7 +270,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger: asLogger(null), errorHandler });
 
-      const orderbook = createOrderbookImbalanceOrderbook();
+      const orderbook = createOrderbookImbalanceScenario();
 
       // Should not throw even with null logger
       expect(() => service.analyze(orderbook)).not.toThrow();
@@ -287,16 +285,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should handle multiple invalid quantities gracefully', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [
-          [50000, 10],
-          [49990, NaN],
-          [49980, Infinity],
-        ],
-        asks: [
-          [50010, 5],
-          [50020, -Infinity],
-        ],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [10, NaN, Infinity],
+        askQuantities: [5, -Infinity],
       });
 
       const analysis = service.analyze(orderbook);
@@ -311,15 +302,15 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const service = createService();
 
       // First analysis with failure
-      const failOrderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, NaN]],
+      const failOrderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [NaN],
       });
       const analysis1 = service.analyze(failOrderbook);
       expect(analysis1.direction).toBe('NEUTRAL');
 
       // Second analysis should work fine (recovery)
-      const successOrderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, 100]],
+      const successOrderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [100],
       });
       const analysis2 = service.analyze(successOrderbook);
       expect(analysis2.direction).toBe('BID');
@@ -336,8 +327,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       expect(service.isEnabled()).toBe(true);
 
       // Error should not affect service state
-      const failOrderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, NaN]],
+      const failOrderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [NaN],
       });
       service.analyze(failOrderbook);
 
@@ -358,8 +349,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         withErrorHandler: false,
       }).createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, 100]],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [100],
       });
 
       const analysis = service.analyze(orderbook);
@@ -389,15 +380,9 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should handle all-NaN orderbook', () => {
       const service = createService();
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [
-          [50000, NaN],
-          [49990, NaN],
-        ],
-        asks: [
-          [50010, NaN],
-          [50020, NaN],
-        ],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [NaN, NaN],
+        askQuantities: [NaN, NaN],
       });
 
       const analysis = service.analyze(orderbook);
@@ -418,8 +403,8 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
       const service = createOrderbookImbalanceService({ config, logger, errorHandler: failingErrorHandler });
 
-      const orderbook = createOrderbookImbalanceOrderbook({
-        bids: [[50000, NaN]],
+      const orderbook = createOrderbookImbalanceScenario({
+        bidQuantities: [NaN],
       });
 
       // Should not throw even if ErrorHandler.handle throws

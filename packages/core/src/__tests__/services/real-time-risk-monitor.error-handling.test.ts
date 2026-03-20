@@ -12,18 +12,15 @@
 
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
-import { DangerLevel, LiveTradingEventType, Position } from '../../types/legacy';
+import { DangerLevel, LiveTradingEventType } from '../../types/legacy';
 import {
-  createMockRiskMonitorPosition,
+  attachMockRiskMonitorPosition,
   createRealTimeRiskMonitorPublishFailure,
   createRealTimeRiskMonitorHarness,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
 } from '../helpers/real-time-risk-monitor-test.utils';
-
-const createMockPosition = (overrides: Partial<Position> = {}): Position =>
-  createMockRiskMonitorPosition(overrides);
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
@@ -47,8 +44,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {
     it('test-8.5.1: Should return cached health score when position not found', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      const position = attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        {},
+      );
 
       // First call to populate cache
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
@@ -77,8 +76,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.3: Should handle position ID mismatch gracefully', async () => {
-      const position = createMockPosition({ id: 'pos-456' });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { id: 'pos-456' },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
@@ -102,8 +103,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Price Validation (4 tests)', () => {
     it('test-8.5.5: Should use fallback price when currentPrice is NaN', async () => {
-      const position = createMockPosition({ entryPrice: 45000 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { entryPrice: 45000 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', NaN);
       expect(healthScore).toBeDefined();
@@ -114,8 +117,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.6: Should use fallback price when currentPrice is zero', async () => {
-      const position = createMockPosition({ entryPrice: 45000 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { entryPrice: 45000 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 0);
       expect(healthScore).toBeDefined();
@@ -126,8 +131,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.7: Should use fallback price when currentPrice is negative', async () => {
-      const position = createMockPosition({ entryPrice: 45000 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { entryPrice: 45000 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', -100);
       expect(healthScore).toBeDefined();
@@ -138,8 +145,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.8: Should calculate correctly with valid currentPrice', async () => {
-      const position = createMockPosition({ entryPrice: 45000 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { entryPrice: 45000 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore).toBeDefined();
@@ -150,8 +159,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('[GRACEFUL_DEGRADE] PnL Calculation - Zero Division (3 tests)', () => {
     it('test-8.5.9: Should return safe default when quantity is zero', async () => {
-      const position = createMockPosition({ quantity: 0, entryPrice: 45000 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { quantity: 0, entryPrice: 45000 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
@@ -162,8 +173,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.10: Should return safe default when entryPrice is zero', async () => {
-      const position = createMockPosition({ quantity: 0.1, entryPrice: 0 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { quantity: 0.1, entryPrice: 0 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
@@ -174,8 +187,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.11: Should return safe default when both quantity and entryPrice are zero', async () => {
-      const position = createMockPosition({ quantity: 0, entryPrice: 0 });
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { quantity: 0, entryPrice: 0 },
+      );
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
@@ -188,8 +203,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('[SKIP] monitorAllPositions() - Event Publishing (2 tests)', () => {
     it('test-8.5.12: Should skip HEALTH_SCORE_UPDATED event on publish failure', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
 
       mockEventBus.publishSync.mockImplementation(
         createRealTimeRiskMonitorPublishFailure(LiveTradingEventType.HEALTH_SCORE_UPDATED),
@@ -204,8 +218,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.13: Should skip RISK_ALERT_TRIGGERED event on publish failure', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
 
       // Create alert condition with critical health score
       mockEventBus.publishSync.mockImplementation(
@@ -221,8 +234,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('End-to-End Error Recovery Scenarios (2 tests)', () => {
     it('test-8.5.14: Should continue monitoring when position validation fails', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
 
       // First, populate cache
       const firstScore = await monitor.calculatePositionHealth('pos-123', 46000);
@@ -238,8 +250,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('test-8.5.15: Should handle cascading failures gracefully', async () => {
-      const position = createMockPosition({ quantity: 0, entryPrice: 0 }); // Zero division
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition(
+        { mockPositionService: mockPositionLifecycleService },
+        { quantity: 0, entryPrice: 0 },
+      );
 
       // Make event bus fail too
       mockEventBus.publishSync.mockImplementation(() => {
@@ -255,8 +269,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('Integration with Existing Functionality', () => {
     it('should not break existing getLatestHealthScore functionality', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      const position = attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
 
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       const cached = monitor.getLatestHealthScore('pos-123');
@@ -266,8 +279,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('should not break existing checkPositionDanger functionality', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
 
       const danger = await monitor.checkPositionDanger('pos-123', 46000);
       expect(danger).toBeDefined();
@@ -275,8 +287,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
     });
 
     it('should not break existing shouldTriggerAlert functionality', async () => {
-      const position = createMockPosition();
-      mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
+      attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
 
       const alert = await monitor.shouldTriggerAlert('pos-123', 46000);
       expect(alert).toBeNull(); // No alert for normal conditions

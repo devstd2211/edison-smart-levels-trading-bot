@@ -4,7 +4,7 @@
  */
 
 import type { PositionSyncService } from '../../services/position-sync.service';
-import { LoggerService, Position, PositionSide, ExitType, BybitOrder } from '../../types/legacy';
+import { LoggerService, Position, PositionSide, ExitType } from '../../types/legacy';
 import {
   createMockPositionSyncExchange,
   createMockPositionSyncExitTypeDetector,
@@ -12,10 +12,12 @@ import {
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createMockSyncedPositions,
+  createPositionSyncProtectedOrders,
   createPositionSyncPosition,
   createPositionSyncHarness,
+  prepareClosedPositionSync,
+  prepareDeepSyncProtectionScenario,
   createPositionSyncServiceWithHarness,
-  createPositionSyncStopLossOrder,
 } from '../helpers/position-sync-test.utils';
 
 const createMockPosition = createPositionSyncPosition;
@@ -50,8 +52,7 @@ describe('PositionSyncService', () => {
   describe('syncClosedPosition', () => {
     it('should fetch order history to determine exit type', async () => {
       const position = createMockPosition();
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      prepareClosedPositionSync({ mockBybit });
 
       await service.syncClosedPosition(position);
 
@@ -60,9 +61,7 @@ describe('PositionSyncService', () => {
 
     it('should determine exit type from order history', async () => {
       const position = createMockPosition();
-      const orderHistory: BybitOrder[] = [];
-      mockBybit.getOrderHistory.mockResolvedValue(orderHistory);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      const { orderHistory } = prepareClosedPositionSync({ mockBybit });
 
       await service.syncClosedPosition(position);
 
@@ -74,8 +73,7 @@ describe('PositionSyncService', () => {
 
     it('should get current price for PnL calculation', async () => {
       const position = createMockPosition();
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      prepareClosedPositionSync({ mockBybit });
 
       await service.syncClosedPosition(position);
 
@@ -84,9 +82,7 @@ describe('PositionSyncService', () => {
 
     it('should call closeFullPosition with correct parameters', async () => {
       const position = createMockPosition();
-      const currentPrice = 105;
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(currentPrice);
+      const { currentPrice } = prepareClosedPositionSync({ mockBybit });
       mockExitTypeDetector.determineExitTypeFromHistory.mockReturnValue(ExitType.TAKE_PROFIT_1);
 
       const positionExitingService = createMockPositionCloseRecorder();
@@ -111,8 +107,7 @@ describe('PositionSyncService', () => {
 
     it('should send telegram alert with exit type', async () => {
       const position = createMockPosition();
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      prepareClosedPositionSync({ mockBybit });
       mockExitTypeDetector.determineExitTypeFromHistory.mockReturnValue(ExitType.STOP_LOSS);
 
       await service.syncClosedPosition(position);
@@ -127,8 +122,7 @@ describe('PositionSyncService', () => {
 
     it('should clear position after successful sync', async () => {
       const position = createMockPosition();
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      prepareClosedPositionSync({ mockBybit });
 
       await service.syncClosedPosition(position);
 
@@ -147,8 +141,7 @@ describe('PositionSyncService', () => {
 
     it('should handle different exit types', async () => {
       const position = createMockPosition();
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      prepareClosedPositionSync({ mockBybit });
 
       const exitTypes = [
         ExitType.STOP_LOSS,
@@ -160,8 +153,7 @@ describe('PositionSyncService', () => {
 
       for (const exitType of exitTypes) {
         jest.clearAllMocks();
-        mockBybit.getOrderHistory.mockResolvedValue([]);
-        mockBybit.getCurrentPrice.mockResolvedValue(105);
+        prepareClosedPositionSync({ mockBybit });
         mockExitTypeDetector.determineExitTypeFromHistory.mockReturnValue(exitType);
 
         await service.syncClosedPosition(position);
@@ -213,11 +205,14 @@ describe('PositionSyncService', () => {
 
     it('should verify position exists on exchange', async () => {
       const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      const exchangePosition = { ...position };
-      mockBybit.getPosition.mockResolvedValue(exchangePosition);
-      mockBybit.getActiveOrders.mockResolvedValue([
-        createPositionSyncStopLossOrder() as unknown as BybitOrder,
-      ]);
+      prepareDeepSyncProtectionScenario(
+        { mockBybit },
+        position,
+        {
+          exchangePosition: { ...position },
+          activeOrders: createPositionSyncProtectedOrders(),
+        },
+      );
 
       await service.deepSyncCheck(position);
 
@@ -226,8 +221,7 @@ describe('PositionSyncService', () => {
 
     it('should get active orders to check SL/TP', async () => {
       const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders.mockResolvedValue([]);
+      prepareDeepSyncProtectionScenario({ mockBybit }, position);
 
       await service.deepSyncCheck(position);
 
@@ -319,10 +313,11 @@ describe('PositionSyncService', () => {
 
     it('should log position age', async () => {
       const position = createMockPosition(PositionSide.LONG, Date.now() - 300000); // 5 minutes
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders.mockResolvedValue([
-        createPositionSyncStopLossOrder() as unknown as BybitOrder,
-      ]);
+      prepareDeepSyncProtectionScenario(
+        { mockBybit },
+        position,
+        { activeOrders: createPositionSyncProtectedOrders() },
+      );
 
       const logSpy = jest.spyOn(logger, 'debug');
       await service.deepSyncCheck(position);
@@ -343,8 +338,7 @@ describe('PositionSyncService', () => {
   describe('integration scenarios', () => {
     it('should handle complete sync workflow', async () => {
       const position = createMockPosition();
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(105);
+      prepareClosedPositionSync({ mockBybit });
 
       await service.syncClosedPosition(position);
 

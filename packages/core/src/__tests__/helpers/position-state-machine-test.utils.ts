@@ -100,7 +100,11 @@ export function createPositionStateTransitionInput(
     positionId: `pos-${Date.now()}`,
     targetState: PositionState.TP1_HIT,
     reason: 'Test transition',
-    ...overrides,
+    ...(overrides.symbol !== undefined ? { symbol: overrides.symbol } : {}),
+    ...(overrides.positionId !== undefined ? { positionId: overrides.positionId } : {}),
+    ...(overrides.targetState !== undefined ? { targetState: overrides.targetState } : {}),
+    ...(overrides.reason !== undefined ? { reason: overrides.reason } : {}),
+    ...(overrides.metadata !== undefined ? { metadata: overrides.metadata } : {}),
   };
 }
 
@@ -129,6 +133,27 @@ export function transitionPositionStateSequence(
         reason: `${options.reasonPrefix ?? 'Transition'} ${index + 1}`,
       }),
     ),
+  );
+}
+
+export function transitionPositionState(
+  service: PositionStateMachineService,
+  options: {
+    symbol?: string;
+    positionId?: string;
+    targetState: PositionState;
+    reason?: string;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  return service.transitionState(
+    createPositionStateTransitionInput({
+      symbol: options.symbol,
+      positionId: options.positionId,
+      targetState: options.targetState,
+      reason: options.reason,
+      metadata: options.metadata,
+    }),
   );
 }
 

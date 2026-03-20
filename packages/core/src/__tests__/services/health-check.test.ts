@@ -13,7 +13,7 @@
  * Phase: 14.1.2 - Health Checks
  */
 
-import { HealthCheckService, IExchangeService, IWebSocketService } from '../../services/health-check.service';
+import { HealthCheckService } from '../../services/health-check.service';
 import {
   createHealthCheckHarness,
   type HealthCheckTestHarness,
@@ -21,14 +21,10 @@ import {
 
 describe('HealthCheckService', () => {
   let service: HealthCheckService;
-  let mockExchange: jest.Mocked<IExchangeService>;
-  let mockWebSocket: jest.Mocked<IWebSocketService>;
   let harness: HealthCheckTestHarness;
 
   beforeEach(() => {
     harness = createHealthCheckHarness();
-    mockExchange = harness.exchange;
-    mockWebSocket = harness.websocket;
     service = harness.createService();
   });
 
@@ -60,8 +56,10 @@ describe('HealthCheckService', () => {
     });
 
     it('should report exchange as degraded when connection fails with error', async () => {
-      mockExchange.testConnection = jest.fn().mockImplementation(() => {
-        throw new Error('API error');
+      service = harness.createService({
+        exchange: harness.configureExchangeHealth({
+          throwOnConnection: new Error('API error'),
+        }),
       });
 
       const health = await service.checkExchange();
@@ -86,8 +84,12 @@ describe('HealthCheckService', () => {
 
   describe('WebSocket Health', () => {
     it('should report WebSocket as healthy when connected with recent messages', async () => {
-      mockWebSocket.isConnected = jest.fn().mockReturnValue(true);
-      mockWebSocket.getLastMessageTime = jest.fn().mockReturnValue(Date.now() - 1000); // 1 second ago
+      service = harness.createService({
+        websocket: harness.configureWebSocketHealth({
+          connected: true,
+          messageAgeMs: 1000,
+        }),
+      });
 
       const health = await service.checkWebSocket();
 
@@ -104,7 +106,12 @@ describe('HealthCheckService', () => {
     });
 
     it('should report WebSocket as degraded when disconnected', async () => {
-      mockWebSocket.isConnected = jest.fn().mockReturnValue(false);
+      service = harness.createService({
+        websocket: harness.configureWebSocketHealth({
+          connected: false,
+          messageAgeMs: Date.now(),
+        }),
+      });
 
       const health = await service.checkWebSocket();
 

@@ -4,6 +4,7 @@ import {
   createRealTimeRiskMonitorHarness,
   invalidateRiskMonitorPosition,
   seedRiskMonitorHealthScore,
+  seedRiskMonitorHealthScores,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -55,10 +56,13 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
       },
     });
 
-    mockPositionService.getCurrentPosition.mockReturnValueOnce(firstPosition);
-    await monitor.calculatePositionHealth(firstPosition.id, 46000);
-    mockPositionService.getCurrentPosition.mockReturnValueOnce(secondPosition);
-    await monitor.calculatePositionHealth(secondPosition.id, 3100);
+    await seedRiskMonitorHealthScores(
+      { monitor, mockPositionService, mockLogger, mockEventBus },
+      [
+        { position: firstPosition, currentPrice: 46000 },
+        { position: secondPosition, currentPrice: 3100 },
+      ],
+    );
 
     invalidateRiskMonitorPosition(
       { monitor, mockPositionService, mockLogger, mockEventBus },

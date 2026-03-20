@@ -77,6 +77,29 @@ export function createOrderbookDeltaFixture(options: {
   );
 }
 
+export function createOrderbookLevels(options: {
+  start: number;
+  count: number;
+  step?: number;
+  size?: string;
+  direction?: 'asc' | 'desc';
+}): Array<[string, string]> {
+  const {
+    start,
+    count,
+    step = 1,
+    size = '1.0',
+    direction = 'asc',
+  } = options;
+
+  return Array.from({ length: count }, (_, index) => {
+    const price = direction === 'desc'
+      ? start - (index * step)
+      : start + (index * step);
+    return [`${price}`, size];
+  });
+}
+
 type OrderbookManagerInternals = {
   lastSnapshotTime: number;
 };
@@ -86,6 +109,19 @@ export function setOrderbookLastSnapshotTime(
   timestamp: number,
 ): void {
   (manager as unknown as OrderbookManagerInternals).lastSnapshotTime = timestamp;
+}
+
+export function initializeOrderbookManager(
+  service: OrderbookManagerService,
+  snapshotOptions: {
+    bids?: Array<[string, string]>;
+    asks?: Array<[string, string]>;
+    updateId?: number;
+  } = {},
+): OrderbookUpdate {
+  const snapshot = createOrderbookSnapshotFixture(snapshotOptions);
+  service.processUpdate(snapshot);
+  return snapshot;
 }
 
 export function createOrderbookManagerHarness(options: {

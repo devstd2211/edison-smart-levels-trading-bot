@@ -12,6 +12,7 @@ import {
 } from '../../types/legacy';
 import {
   attachCurrentPosition,
+  attachScenarioPosition,
   createPositionMonitorHarness,
   createPositionMonitorRiskConfig,
   createPositionMonitorScenarioPosition,
@@ -139,10 +140,11 @@ describe('PositionMonitorService', () => {
 
   describe('stop loss detection', () => {
     it('should emit stopLossHit event when LONG SL is hit', async () => {
-      const position = attachCurrentPosition(
-        positionHarness,
-        createPositionMonitorScenarioPosition(PositionSide.LONG, 1.5, 1.48, []),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.LONG,
+        entryPrice: 1.5,
+        stopLossPrice: 1.48,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.47); // Below SL
 
@@ -160,10 +162,11 @@ describe('PositionMonitorService', () => {
     });
 
     it('should emit stopLossHit event when SHORT SL is hit', async () => {
-      const position = attachCurrentPosition(
-        positionHarness,
-        createPositionMonitorScenarioPosition(PositionSide.SHORT, 1.5, 1.52, []),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.SHORT,
+        entryPrice: 1.5,
+        stopLossPrice: 1.52,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.53); // Above SL
 
@@ -181,10 +184,11 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit stopLossHit when LONG price above SL', async () => {
-      const position = attachCurrentPosition(
-        positionHarness,
-        createPositionMonitorScenarioPosition(PositionSide.LONG, 1.5, 1.48, []),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.LONG,
+        entryPrice: 1.5,
+        stopLossPrice: 1.48,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.51); // Above SL
 
@@ -197,10 +201,11 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit stopLossHit when SHORT price below SL', async () => {
-      const position = attachCurrentPosition(
-        positionHarness,
-        createPositionMonitorScenarioPosition(PositionSide.SHORT, 1.5, 1.52, []),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.SHORT,
+        entryPrice: 1.5,
+        stopLossPrice: 1.52,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.49); // Below SL
 
@@ -325,10 +330,12 @@ describe('PositionMonitorService', () => {
   describe('time-based exit', () => {
     it('should emit timeBasedExit when position open too long with low PnL', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachCurrentPosition(
-        positionHarness,
-        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.LONG,
+        entryPrice: 1.5,
+        stopLossPrice: 1.48,
+        openedAt,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
@@ -351,10 +358,12 @@ describe('PositionMonitorService', () => {
 
     it('should NOT emit timeBasedExit when position has sufficient PnL', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachCurrentPosition(
-        positionHarness,
-        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.LONG,
+        entryPrice: 1.5,
+        stopLossPrice: 1.48,
+        openedAt,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.505); // +0.33% PnL (> 0.2% threshold)
 
@@ -370,10 +379,12 @@ describe('PositionMonitorService', () => {
 
     it('should NOT emit timeBasedExit when position not open long enough', async () => {
       const openedAt = Date.now() - 25 * 60 * 1000; // 25 minutes ago (< 30 threshold)
-      const position = attachCurrentPosition(
-        positionHarness,
-        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.LONG,
+        entryPrice: 1.5,
+        stopLossPrice: 1.48,
+        openedAt,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
@@ -389,10 +400,12 @@ describe('PositionMonitorService', () => {
 
     it('should NOT emit timeBasedExit when feature disabled', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachCurrentPosition(
-        positionHarness,
-        createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.LONG,
+        entryPrice: 1.5,
+        stopLossPrice: 1.48,
+        openedAt,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL
 
@@ -408,10 +421,12 @@ describe('PositionMonitorService', () => {
 
     it('should calculate correct PnL for SHORT position', async () => {
       const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachCurrentPosition(
-        positionHarness,
-        createMockPosition(PositionSide.SHORT, 1.5, 1.52, [], openedAt),
-      );
+      const position = attachScenarioPosition(positionHarness, {
+        side: PositionSide.SHORT,
+        entryPrice: 1.5,
+        stopLossPrice: 1.52,
+        openedAt,
+      });
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(1.499); // +0.067% PnL (< 0.2% threshold)
 

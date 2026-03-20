@@ -12,9 +12,10 @@ import {
   PositionExchangeSyncError,
   PositionPriceFetchError,
 } from '../../errors/DomainErrors';
-import { PositionSide } from '../../types/legacy';
 import {
   attachCurrentPosition,
+  attachProtectedPosition,
+  createProtectionVerificationResult,
   createMockMonitoredPosition,
   createPositionMonitorHarness,
   defaultPositionMonitorRiskConfig,
@@ -59,12 +60,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('GRACEFUL_DEGRADE: Position exchange sync', () => {
     it('should continue monitoring when getPosition API fails', async () => {
-      attachCurrentPosition(
-        positionHarness,
-        createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
-          protectionVerifiedOnce: true,
-        }),
-      );
+      attachProtectedPosition(positionHarness);
 
       // getPosition throws error
       mockBybit.getPosition.mockRejectedValueOnce(new Error('API timeout'));
@@ -84,12 +80,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     });
 
     it('should use cached position when exchange sync fails', async () => {
-      attachCurrentPosition(
-        positionHarness,
-        createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
-          protectionVerifiedOnce: true,
-        }),
-      );
+      attachProtectedPosition(positionHarness);
 
       // getPosition fails
       mockBybit.getPosition.mockRejectedValueOnce(
@@ -192,13 +183,14 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // Protection check fails
-      mockBybit.verifyProtectionSet.mockResolvedValueOnce({
-        verified: false,
-        hasStopLoss: false,
-        hasTakeProfit: false,
-        hasTrailingStop: false,
-        activeOrders: 0,
-      });
+      mockBybit.verifyProtectionSet.mockResolvedValueOnce(
+        createProtectionVerificationResult({
+          verified: false,
+          hasStopLoss: false,
+          hasTakeProfit: false,
+          activeOrders: 0,
+        }),
+      );
 
       // closePosition succeeds
       mockBybit.closePosition.mockResolvedValueOnce(undefined);
@@ -224,13 +216,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       mockBybit.getCurrentPrice.mockResolvedValueOnce(50100);
 
       // Protection verification succeeds
-      mockBybit.verifyProtectionSet.mockResolvedValueOnce({
-        verified: true,
-        hasStopLoss: true,
-        hasTakeProfit: true,
-        hasTrailingStop: false,
-        activeOrders: 3,
-      });
+      mockBybit.verifyProtectionSet.mockResolvedValueOnce(createProtectionVerificationResult());
 
       await runPositionMonitorCycle(monitor);
 
@@ -291,12 +277,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('Error classification and logging', () => {
     it('should degrade gracefully on getPosition error with logging', async () => {
-      attachCurrentPosition(
-        positionHarness,
-        createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
-          protectionVerifiedOnce: true,
-        }),
-      );
+      attachProtectedPosition(positionHarness);
 
       // getPosition throws generic error
       mockBybit.getPosition.mockRejectedValueOnce(
@@ -346,13 +327,14 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // Protection verification fails
-      mockBybit.verifyProtectionSet.mockResolvedValueOnce({
-        verified: false,
-        hasStopLoss: false,
-        hasTakeProfit: false,
-        hasTrailingStop: false,
-        activeOrders: 0,
-      });
+      mockBybit.verifyProtectionSet.mockResolvedValueOnce(
+        createProtectionVerificationResult({
+          verified: false,
+          hasStopLoss: false,
+          hasTakeProfit: false,
+          activeOrders: 0,
+        }),
+      );
 
       // closePosition succeeds
       mockBybit.closePosition.mockResolvedValueOnce(undefined);
@@ -373,13 +355,14 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // Protection verification fails
-      mockBybit.verifyProtectionSet.mockResolvedValueOnce({
-        verified: false,
-        hasStopLoss: false,
-        hasTakeProfit: false,
-        hasTrailingStop: false,
-        activeOrders: 0,
-      });
+      mockBybit.verifyProtectionSet.mockResolvedValueOnce(
+        createProtectionVerificationResult({
+          verified: false,
+          hasStopLoss: false,
+          hasTakeProfit: false,
+          activeOrders: 0,
+        }),
+      );
 
       // closePosition fails
       mockBybit.closePosition.mockRejectedValueOnce(

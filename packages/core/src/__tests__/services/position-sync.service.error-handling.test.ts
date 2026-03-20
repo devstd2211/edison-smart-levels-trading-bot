@@ -5,26 +5,17 @@
  */
 
 import { PositionSyncService } from '../../services/position-sync.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { IExchange } from '../../interfaces/IExchange';
-import { PositionLifecycleService } from '../../services/position-lifecycle.service';
-import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
-import { TelegramService } from '../../services/telegram.service';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   LoggerService,
-  LogLevel,
   Position,
   PositionSide,
-  ExitType,
   BybitOrder,
 } from '../../types/legacy';
 import {
   ExchangeConnectionError,
   ExchangeRateLimitError,
   ExchangeAPIError,
-  PositionExchangeSyncError,
-  PositionProtectionError,
-  PositionPriceFetchError,
   TelegramNetworkError,
 } from '../../errors/DomainErrors';
 import {
@@ -35,11 +26,11 @@ import {
   createMockPositionCloseRecorder,
   createPositionSyncErrorHandler,
   createPositionSyncOldPosition,
+  createPositionSyncProtectedOrders,
   createPositionSyncPosition,
   createPositionSyncService,
-  createPositionSyncStopLossOrder,
-  createPositionSyncTakeProfitOrder,
   createPositionSyncHarness,
+  prepareClosedPositionSync,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================
@@ -47,9 +38,6 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
-const createStopLossOrder = createPositionSyncStopLossOrder;
-const createTakeProfitOrder = createPositionSyncTakeProfitOrder;
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -132,8 +120,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         statusCode: 500,
       });
 
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(101);
+      prepareClosedPositionSync({ mockBybit }, { currentPrice: 101 });
 
       const mockPositionExiting = createMockPositionCloseRecorder();
       mockPositionExiting.closeFullPosition.mockRejectedValue(closeError);
@@ -163,8 +150,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         reason: 'Network timeout',
       });
 
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(101);
+      prepareClosedPositionSync({ mockBybit }, { currentPrice: 101 });
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
       mockTelegram.sendAlert.mockRejectedValue(telegramError);
 
@@ -181,7 +167,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         exchangeName: 'Bybit',
       });
 
-      mockBybit.getOrderHistory.mockResolvedValue([]);
+      prepareClosedPositionSync({ mockBybit });
       mockBybit.getCurrentPrice
         .mockRejectedValueOnce(priceError)
         .mockRejectedValueOnce(priceError)
@@ -245,9 +231,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         .mockRejectedValueOnce(networkError)
         .mockResolvedValueOnce(position)
         .mockResolvedValueOnce(position);
-      mockBybit.getActiveOrders.mockResolvedValue([
-        createStopLossOrder(),
-      ]);
+      mockBybit.getActiveOrders.mockResolvedValue(
+        createPositionSyncProtectedOrders({ takeProfitLevels: [] }),
+      );
 
       await service.deepSyncCheck(position);
 
@@ -264,7 +250,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getActiveOrders
         .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce([createStopLossOrder()]);
+        .mockResolvedValueOnce(createPositionSyncProtectedOrders({ takeProfitLevels: [] }));
 
       const startTime = Date.now();
       await service.deepSyncCheck(position);
@@ -302,10 +288,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       };
 
       mockBybit.getPosition.mockResolvedValue(exchangePos as unknown as Position);
-      mockBybit.getActiveOrders.mockResolvedValue([
-        createStopLossOrder(),
-        createTakeProfitOrder(),
-      ]);
+      mockBybit.getActiveOrders.mockResolvedValue(createPositionSyncProtectedOrders());
 
       // Mock sync to throw error
       const syncError = new Error('Sync failed');
@@ -443,10 +426,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       });
       mockBybit.getActiveOrders
         .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce([
-          createStopLossOrder(),
-          createTakeProfitOrder(),
-        ]);
+        .mockResolvedValueOnce(createPositionSyncProtectedOrders());
 
       await service.deepSyncCheck(position);
 
@@ -461,9 +441,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       const exchangePos = position;
 
       mockBybit.getPosition.mockResolvedValue(exchangePos);
-      mockBybit.getActiveOrders.mockResolvedValue([
-        createStopLossOrder(),
-      ]);
+      mockBybit.getActiveOrders.mockResolvedValue(
+        createPositionSyncProtectedOrders({ takeProfitLevels: [] }),
+      );
 
       // Create service with custom ErrorHandler
       const customErrorHandler = new ErrorHandler(logger);
@@ -496,8 +476,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
     it('should work without ErrorHandler parameter (creates one internally)', async () => {
       const position = createMockPosition();
 
-      mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice.mockResolvedValue(101);
+      prepareClosedPositionSync({ mockBybit }, { currentPrice: 101 });
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
       mockTelegram.sendAlert.mockResolvedValue(undefined);
 
