@@ -30,6 +30,8 @@ import {
   createSmartOrderExecutionConfig,
   createSmartOrderExecutionHarness,
   createSmartOrderExecutionLogger,
+  createMinimalSmartOrder,
+  createSmartOrderScenario,
   createSmartOrderRequest,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
@@ -469,12 +471,7 @@ describe('SmartOrderExecutionService', () => {
 
   describe('Integration - E2E Scenarios', () => {
     it('should execute small order without splitting', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 0.1,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder({ size: 0.1 });
 
       const report = await service.executeSmartOrder(order);
 
@@ -486,13 +483,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should execute large order with splitting', async () => {
-      // Use larger order that will definitely trigger splitting
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1000, // Much larger order
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder({ size: 1000 });
 
       const report = await service.executeSmartOrder(order);
 
@@ -504,12 +495,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should execute TWAP with time-distributed slices', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 10,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder({ size: 10 });
 
       const report = await service.executeTWAP(order);
 
@@ -521,12 +507,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should execute VWAP with volume-weighted slices', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Sell',
-        size: 10,
-        price: 45000,
-      };
+      const order = createSmartOrderScenario({ side: 'Sell', size: 10 });
 
       const report = await service.executeVWAP(order);
 
@@ -539,12 +520,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should track order state and allow monitoring', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder();
 
       const report = await service.executeSmartOrder(order);
 
@@ -600,12 +576,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should calculate slippage correctly for Buy orders', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder();
 
       const report = await service.executeSmartOrder(order);
 
@@ -614,19 +585,8 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should calculate market impact for different order sizes', async () => {
-      const smallOrder: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 0.1,
-        price: 45000,
-      };
-
-      const largeOrder: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 100,
-        price: 45000,
-      };
+      const smallOrder = createMinimalSmartOrder({ size: 0.1 });
+      const largeOrder = createMinimalSmartOrder({ size: 100 });
 
       const smallReport = await service.executeSmartOrder(smallOrder);
       const largeReport = await service.executeSmartOrder(largeOrder);
@@ -657,13 +617,7 @@ describe('SmartOrderExecutionService', () => {
         logger: undefined,
         errorHandler: undefined,
       });
-
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder();
 
       const report = await serviceMinimal.executeSmartOrder(order);
 
@@ -679,12 +633,7 @@ describe('SmartOrderExecutionService', () => {
         .spyOn(asSmartOrderInternals(serviceWithoutEH), 'doExecuteSmartOrder')
         .mockRejectedValue(new Error('Test error'));
 
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder();
 
       const report = await serviceWithoutEH.executeSmartOrder(order);
 
@@ -746,23 +695,17 @@ describe('SmartOrderExecutionService', () => {
 
     it('getActiveOrderCount: should track order count correctly', async () => {
       expect(service.getActiveOrderCount()).toBe(0);
-
-      const order1: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order1 = createMinimalSmartOrder();
 
       await service.executeSmartOrder(order1);
       expect(service.getActiveOrderCount()).toBe(1);
 
-      const order2: SmartOrderRequest = {
+      const order2 = createSmartOrderScenario({
         symbol: 'ETHUSDT',
         side: 'Sell',
         size: 10,
         price: 3000,
-      };
+      });
 
       await service.executeSmartOrder(order2);
       expect(service.getActiveOrderCount()).toBe(2);
@@ -772,12 +715,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('cleanupOrder: should only cleanup terminal states', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const order = createMinimalSmartOrder();
 
       const report = await service.executeSmartOrder(order);
 

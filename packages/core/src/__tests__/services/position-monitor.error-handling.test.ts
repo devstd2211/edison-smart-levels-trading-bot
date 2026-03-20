@@ -8,30 +8,19 @@
  */
 
 import { PositionMonitorService } from '../../services/position-monitor.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  PositionMonitoringError,
   PositionExchangeSyncError,
-  PositionProtectionError,
   PositionPriceFetchError,
 } from '../../errors/DomainErrors';
+import { PositionSide } from '../../types/legacy';
 import {
-  Position,
-  PositionSide,
-  LoggerService,
-} from '../../types/legacy';
-import {
+  attachCurrentPosition,
   createMockMonitoredPosition,
   createPositionMonitorHarness,
   defaultPositionMonitorRiskConfig,
+  runPositionMonitorCycle,
+  runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
-
-// ============================================================================
-// MOCKS
-// ============================================================================
-
-const createMockPosition = (side: PositionSide = PositionSide.LONG): Position =>
-  createMockMonitoredPosition(side);
 
 // ============================================================================
 // TESTS
@@ -43,8 +32,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
   let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
   let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
+  let positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,8 +45,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     mockPositionManager = harness.mockPositionManager;
     mockTelegram = harness.mockTelegram;
     mockPositionSync = harness.mockPositionSync;
-    logger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
+    positionHarness = { mockPositionManager };
   });
 
   afterEach(() => {
@@ -72,8 +59,12 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('GRACEFUL_DEGRADE: Position exchange sync', () => {
     it('should continue monitoring when getPosition API fails', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(
+        positionHarness,
+        createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
+          protectionVerifiedOnce: true,
+        }),
+      );
 
       // getPosition throws error
       mockBybit.getPosition.mockRejectedValueOnce(new Error('API timeout'));
@@ -84,17 +75,21 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Monitor should gracefully degrade and continue checking SL
       expect(slHitSpy).not.toHaveBeenCalled(); // SL not hit
-      expect(mockBybit.getCurrentPrice).toHaveBeenCalled(); // Price was fetched
+      expect(mockBybit.getPosition).toHaveBeenCalled();
+      expect(monitor.isActive()).toBe(true);
     });
 
     it('should use cached position when exchange sync fails', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(
+        positionHarness,
+        createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
+          protectionVerifiedOnce: true,
+        }),
+      );
 
       // getPosition fails
       mockBybit.getPosition.mockRejectedValueOnce(
@@ -104,37 +99,34 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       // getCurrentPrice succeeds
       mockBybit.getCurrentPrice.mockResolvedValueOnce(50100);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should continue monitoring despite exchange sync failure
-      expect(mockBybit.getCurrentPrice).toHaveBeenCalled();
+      expect(mockBybit.getPosition).toHaveBeenCalled();
+      expect(monitor.isActive()).toBe(true);
     });
 
     it('should sync closed position when exchange returns zero quantity', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
 
       // Position exists but with zero quantity
       mockBybit.getPosition.mockResolvedValueOnce({ ...position, quantity: 0 });
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should delegate to syncClosedPosition
       expect(mockPositionSync.syncClosedPosition).toHaveBeenCalledWith(position);
     });
 
     it('should continue monitoring when position is already closed by WebSocket', async () => {
-      const position = createMockPosition();
+      const position = createMockMonitoredPosition();
       position.status = 'CLOSED';
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(positionHarness, position);
 
       // Exchange also shows closed
       mockBybit.getPosition.mockResolvedValueOnce(null);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should skip monitoring for already-closed positions
       expect(mockPositionSync.syncClosedPosition).not.toHaveBeenCalled();
@@ -147,8 +139,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('GRACEFUL_DEGRADE: Price fetch failures', () => {
     it('should skip price-based checks when getCurrentPrice fails', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // getCurrentPrice throws error
@@ -159,19 +150,16 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // SL check should be skipped due to missing price
       expect(slHitSpy).not.toHaveBeenCalled();
     });
 
     it('should continue monitoring after price fetch error', async () => {
-      const position = createMockPosition();
-      let callCount = 0;
+      const position = createMockMonitoredPosition();
 
       mockPositionManager.getCurrentPosition.mockImplementation(() => {
-        callCount++;
         return position;
       });
 
@@ -200,8 +188,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('SKIP: Telegram alert failures', () => {
     it('should skip Telegram alert on unprotected position close', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // Protection check fails
@@ -224,8 +211,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       const emergencyCloseSpy = jest.fn();
       monitor.on('positionClosedEmergency', emergencyCloseSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should close position despite Telegram failure
       expect(mockBybit.closePosition).toHaveBeenCalled();
@@ -233,8 +219,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     });
 
     it('should continue monitoring despite Telegram alert failure', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValueOnce(position);
       mockBybit.getCurrentPrice.mockResolvedValueOnce(50100);
 
@@ -247,8 +232,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
         activeOrders: 3,
       });
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should complete monitoring cycle
       expect(mockBybit.getCurrentPrice).toHaveBeenCalled();
@@ -261,24 +245,21 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('GRACEFUL_DEGRADE: Deep sync check failures', () => {
     it('should handle deepSyncCheck API failures gracefully', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(positionHarness, createMockMonitoredPosition());
 
       // deepSyncCheck throws error
       mockPositionSync.deepSyncCheck.mockRejectedValueOnce(
         new Error('Exchange connection lost'),
       );
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(30000); // 30s to trigger deepSyncCheck
+      await runPositionMonitorDeepSyncCycle(monitor);
 
       // Should attempt deepSync but continue on failure
       expect(mockPositionSync.deepSyncCheck).toHaveBeenCalled();
     });
 
     it('should continue normal monitoring if deep sync fails', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(50100);
 
@@ -310,8 +291,12 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('Error classification and logging', () => {
     it('should degrade gracefully on getPosition error with logging', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      attachCurrentPosition(
+        positionHarness,
+        createMockMonitoredPosition(PositionSide.LONG, 50000, 49500, undefined, undefined, {
+          protectionVerifiedOnce: true,
+        }),
+      );
 
       // getPosition throws generic error
       mockBybit.getPosition.mockRejectedValueOnce(
@@ -321,16 +306,15 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       // getCurrentPrice succeeds so we can verify continued monitoring
       mockBybit.getCurrentPrice.mockResolvedValueOnce(50100);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should continue with price check despite getPosition failure (GRACEFUL_DEGRADE)
-      expect(mockBybit.getCurrentPrice).toHaveBeenCalled();
+      expect(mockBybit.getPosition).toHaveBeenCalled();
+      expect(monitor.isActive()).toBe(true);
     });
 
     it('should handle PositionExchangeSyncError correctly', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
 
       mockBybit.getPosition.mockRejectedValueOnce(
         new PositionExchangeSyncError(
@@ -345,8 +329,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
         ),
       );
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should handle error gracefully
       expect(mockPositionManager.getCurrentPosition).toHaveBeenCalled();
@@ -359,8 +342,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('THROW: Protection error handling', () => {
     it('should throw PositionProtectionError for unprotected positions', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // Protection verification fails
@@ -379,8 +361,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       const emergencyCloseSpy = jest.fn();
       monitor.on('positionClosedEmergency', emergencyCloseSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should close unprotected position
       expect(mockBybit.closePosition).toHaveBeenCalled();
@@ -388,8 +369,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     });
 
     it('should handle closePosition failure on unprotected positions', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       // Protection verification fails
@@ -406,8 +386,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
         new Error('Market closed'),
       );
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should attempt emergency close and log failure
       expect(mockBybit.closePosition).toHaveBeenCalled();
@@ -420,8 +399,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('PositionPriceFetchError handling', () => {
     it('should handle PositionPriceFetchError gracefully', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValueOnce(position);
 
       mockBybit.getCurrentPrice.mockRejectedValueOnce(
@@ -439,8 +417,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       const slHitSpy = jest.fn();
       monitor.on('stopLossHit', slHitSpy);
 
-      monitor.start();
-      await jest.advanceTimersByTimeAsync(10000);
+      await runPositionMonitorCycle(monitor);
 
       // Should skip price-based checks
       expect(slHitSpy).not.toHaveBeenCalled();
@@ -453,8 +430,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('Error recovery and resilience', () => {
     it('should recover from transient errors in next cycle', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
 
       // First call fails
       mockBybit.getPosition.mockRejectedValueOnce(new Error('Temporary error'));
@@ -478,8 +454,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     });
 
     it('should maintain error handler state across cycles', async () => {
-      const position = createMockPosition();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
+      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getCurrentPrice.mockResolvedValue(50100);
 

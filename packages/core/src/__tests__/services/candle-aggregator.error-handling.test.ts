@@ -14,7 +14,9 @@ import type { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asCandleAggregatorLogger,
+  createAggregatorCandlesWithVolumes,
   createAggregatorMockCandle,
+  createBasicAggregatorService,
   createCandleAggregatorHarness,
   createFifteenMinuteAggregatorCandles,
   createFiveMinuteAggregatorCandles,
@@ -163,7 +165,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
           throw new Error('Logger failed');
         }),
       };
-      const badService = createService({
+      const badService = createBasicAggregatorService(createService, {
         logger: badLogger as unknown as LoggerService,
         errorHandler,
       });
@@ -225,7 +227,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = createService({
+      const basicService = createBasicAggregatorService(createService, {
         logger: asCandleAggregatorLogger(mockLogger),
         withErrorHandler: false,
       });
@@ -237,7 +239,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = createService({
+      const basicService = createBasicAggregatorService(createService, {
         logger: asCandleAggregatorLogger(mockLogger),
         withErrorHandler: false,
       });
@@ -248,7 +250,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = createService({
+      const basicService = createBasicAggregatorService(createService, {
         errorHandler,
         withErrorHandler: false,
       });
@@ -278,11 +280,11 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should handle volume accumulation', () => {
-      const candles = [
-        { ...createAggregatorMockCandle(1000, 100), volume: 1000 },
-        { ...createAggregatorMockCandle(2000, 101), volume: 2000 },
-        { ...createAggregatorMockCandle(3000, 102), volume: 3000 },
-      ];
+      const candles = createAggregatorCandlesWithVolumes([
+        { timestamp: 1000, price: 100, volume: 1000 },
+        { timestamp: 2000, price: 101, volume: 2000 },
+        { timestamp: 3000, price: 102, volume: 3000 },
+      ]);
       const result = service.aggregateCandles(candles, 5);
 
       expect(result.length).toBeGreaterThan(0);

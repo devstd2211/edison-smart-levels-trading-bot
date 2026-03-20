@@ -16,30 +16,24 @@ import { promises as fsPromises } from 'fs';
 import { PositionStateMachineService } from '../../services/position-state-machine.service';
 import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler } from '../../errors';
 import type { StateTransitionResult } from '../../types/position-state-machine';
 import {
-  createPositionStateMachineErrorHandler,
-  createPositionStateMachineService,
+  createInitializedPositionStateMachineHarness,
+  createPositionStateMachineHarness,
   createMockPositionStateMachineLogger,
-  createTestStateMachinePaths,
   ensureParentDir,
   removeStateMachineArtifacts,
+  waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: LoggerService;
-  let errorHandler: ErrorHandler;
   let testDataDir: string;
   let service: PositionStateMachineService;
 
   beforeEach(() => {
     logger = createMockPositionStateMachineLogger();
-
-    errorHandler = createPositionStateMachineErrorHandler(logger);
-
-    // Use temporary test directory
-    testDataDir = path.join(process.cwd(), 'data', 'test-state-machine');
+    ({ testDataDir } = createPositionStateMachineHarness({ logger }));
   });
 
   afterEach(async () => {
@@ -52,7 +46,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('File I/O Errors', () => {
     it('should initialize successfully with ErrorHandler', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Should not throw when ErrorHandler is provided
       await expect(service.initialize()).resolves.not.toThrow();
@@ -64,10 +58,10 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle corrupted history file gracefully', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create corrupted history file
-      const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
       await ensureParentDir(historyFilePath);
       await fsPromises.writeFile(historyFilePath, 'INVALID JSON { corrupted');
 
@@ -79,10 +73,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should create backup file after successful state load', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-
-      // Initialize service
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Transition state to ensure persistence
       service.transitionState({
@@ -93,17 +84,17 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       });
 
       // Wait for async persistence
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await waitForStateMachinePersistence();
 
       // Verify service initialized
       expect(service.isInitialized()).toBe(true);
     });
 
     it('should log warning when backup is also corrupted', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create main state file with invalid JSON
-      const { stateFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
       await ensureParentDir(stateFilePath);
 
       // Both main and backup are corrupted
@@ -126,11 +117,9 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should RETRY on state persistence disk full error', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       let retryCount = 0;
-      const originalAppend = fsPromises.appendFile;
       jest.spyOn(fsPromises, 'appendFile').mockImplementation(async (...args) => {
         retryCount++;
         if (retryCount <= 1) {
@@ -142,15 +131,6 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
         return undefined;
       });
 
-      const testState = {
-        symbol: 'BTCUSDT',
-        positionId: 'pos-disk-test',
-        currentState: PositionState.OPEN,
-        createdAt: Date.now(),
-        stateChangedAt: Date.now(),
-        reason: 'Test disk full',
-      };
-
       // Trigger state transition which persists
       const result = service.transitionState({
         symbol: 'BTCUSDT',
@@ -160,7 +140,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       });
 
       // Give async operations time to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await waitForStateMachinePersistence(100);
 
       expect(result.allowed).toBe(true);
       expect(retryCount).toBeGreaterThan(1); // Verify retry occurred
@@ -175,10 +155,19 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('State Persistence & Recovery', () => {
     it('should create backup file after successful state load', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-
-      // Initialize creates backup
-      await service.initialize();
+      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
+      await ensureParentDir(stateFilePath);
+      await fsPromises.writeFile(
+        stateFilePath,
+        JSON.stringify({
+          symbol: 'BTCUSDT',
+          positionId: 'pos-seeded-backup',
+          currentState: PositionState.OPEN,
+          createdAt: Date.now(),
+          stateChangedAt: Date.now(),
+        }),
+      );
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Transition state
       service.transitionState({
@@ -189,18 +178,18 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       });
 
       // Wait for async persistence
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await waitForStateMachinePersistence();
 
       // Backup should exist
-      const backupPath = path.join(process.cwd(), 'data', 'position-states.jsonl.backup');
+      const backupPath = path.join(testDataDir, 'position-states.jsonl.backup');
       expect(fs.existsSync(backupPath)).toBe(true);
     });
 
     it('should handle mixed valid and invalid state lines gracefully', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create state file with mixed valid/invalid lines
-      const { stateFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
       await ensureParentDir(stateFilePath);
 
       const validState = {
@@ -229,10 +218,10 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log statistics about loaded states', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create state file with multiple states
-      const stateFilePath = path.join(process.cwd(), 'data', 'position-states.jsonl');
+      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
       if (!fs.existsSync(path.dirname(stateFilePath))) {
         await fsPromises.mkdir(path.dirname(stateFilePath), { recursive: true });
       }
@@ -264,10 +253,10 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transition History Recovery', () => {
     it('should skip corrupted history entries and continue loading', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create history file with mixed valid/invalid entries
-      const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
       await ensureParentDir(historyFilePath);
 
       const validEntry = {
@@ -301,10 +290,10 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should limit history entries per position for memory efficiency', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
+      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create history file with many entries for one position
-      const { historyFilePath } = createTestStateMachinePaths(path.join(process.cwd(), 'data'));
+      const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
       await ensureParentDir(historyFilePath);
 
       const entries = Array.from({ length: 1500 }, (_, i) => ({
@@ -339,8 +328,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transactional Integrity', () => {
     it('should maintain consistency between cache and disk during transitions', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       const posId = `pos-tx-test-${Date.now()}`;
       const result = service.transitionState({
@@ -358,15 +346,14 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       expect(cachedState).toBe(PositionState.TP1_HIT);
 
       // Wait for async disk persistence
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await waitForStateMachinePersistence();
 
       // Verify state is persisted and consistent
       expect(result.currentState).toBe(PositionState.TP1_HIT);
     });
 
     it('should handle exit mode updates with persistence', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       // Create position
       service.transitionState({
@@ -391,8 +378,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should validate state transitions before persistence', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       const posId = `pos-invalid-tx-${Date.now()}`;
 
@@ -415,8 +401,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('E2E Lifecycle Scenarios', () => {
     it('should maintain full position lifecycle with error recovery', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       const posId = 'pos-e2e-full';
 
@@ -459,7 +444,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       });
       expect(result4.allowed).toBe(true);
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await waitForStateMachinePersistence();
 
       // Verify final state
       const finalState = service.getFullState('BTCUSDT', posId);
@@ -469,8 +454,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle multiple positions concurrently without interference', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       const timestamp = Date.now();
       // Create multiple positions with valid state transitions
@@ -508,7 +492,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
         }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await waitForStateMachinePersistence();
 
       // Verify all positions have correct states from transition results
       results.forEach((result, index) => {
@@ -525,8 +509,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should provide accurate statistics after state transitions', async () => {
-      service = createPositionStateMachineService({ logger, errorHandler });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
       const timestamp = Date.now();
       // Create positions in different states
@@ -595,8 +578,11 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (optional DI)', async () => {
       // Create service without ErrorHandler
-      service = createPositionStateMachineService({ logger, withErrorHandler: false });
-      await service.initialize();
+      ({ service } = await createInitializedPositionStateMachineHarness({
+        logger,
+        withErrorHandler: false,
+        baseDir: testDataDir,
+      }));
 
       const result = service.transitionState({
         symbol: 'BTCUSDT',
@@ -610,12 +596,15 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle missing files gracefully without ErrorHandler', async () => {
-      service = createPositionStateMachineService({ logger, withErrorHandler: false });
+      ({ service } = createPositionStateMachineHarness({
+        logger,
+        withErrorHandler: false,
+        baseDir: testDataDir,
+      }));
 
       // Clean up any existing data files first
       try {
-        const dataDir = path.join(process.cwd(), 'data');
-        const stateFile = path.join(dataDir, 'position-states.jsonl');
+        const stateFile = path.join(testDataDir, 'position-states.jsonl');
         if (fs.existsSync(stateFile)) {
           await fsPromises.rm(stateFile, { force: true });
         }

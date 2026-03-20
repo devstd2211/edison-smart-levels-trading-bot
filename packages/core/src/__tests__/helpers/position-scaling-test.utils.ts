@@ -60,6 +60,19 @@ export function createPositionScalingPosition(
   };
 }
 
+export function createPositionScalingScenario(
+  overrides: Partial<PositionState> = {},
+): PositionState {
+  return createPositionScalingPosition(overrides);
+}
+
+export async function evaluatePositionScaleDecision(
+  service: PositionScalingService,
+  overrides: Partial<PositionState> = {},
+) {
+  return service.shouldScale(createPositionScalingScenario(overrides));
+}
+
 export function createPositionScalingHarness(
   overrides: Partial<ScalingConfig> = {},
 ): {

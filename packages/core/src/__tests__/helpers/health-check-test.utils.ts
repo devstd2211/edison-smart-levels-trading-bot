@@ -15,6 +15,11 @@ export interface HealthCheckTestHarness {
   createExchange: (overrides?: Partial<jest.Mocked<IExchangeService>>) => jest.Mocked<IExchangeService>;
   createWebSocket: (overrides?: Partial<jest.Mocked<IWebSocketService>>) => jest.Mocked<IWebSocketService>;
   createUnavailableService: () => HealthCheckService;
+  createMemoryConstrainedService: (memoryUsagePercent: number) => HealthCheckService;
+  createCpuConstrainedService: (cpuUsagePercent: number) => HealthCheckService;
+  createDisconnectedWebSocketService: () => HealthCheckService;
+  createFailingExchangeService: () => HealthCheckService;
+  createHealthyProbeService: () => HealthCheckService;
   createThresholdConfig: (thresholds: NonNullable<HealthCheckConfig['thresholds']>) => HealthCheckConfig;
   createService: (options?: {
     exchange?: IExchangeService;
@@ -71,6 +76,52 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
         exchange: undefined,
         websocket: undefined,
         errorHandler: undefined,
+      });
+    },
+    createMemoryConstrainedService(memoryUsagePercent: number) {
+      return this.createService({
+        exchange: undefined,
+        websocket: undefined,
+        config: createThresholdConfig({
+          memoryUsagePercent,
+        }),
+        errorHandler: undefined,
+      });
+    },
+    createCpuConstrainedService(cpuUsagePercent: number) {
+      return this.createService({
+        exchange: undefined,
+        websocket: undefined,
+        config: createThresholdConfig({
+          cpuUsagePercent,
+        }),
+        errorHandler: undefined,
+      });
+    },
+    createDisconnectedWebSocketService() {
+      return this.createService({
+        websocket: createWebSocket({
+          isConnected: jest.fn().mockReturnValue(false),
+          getLastMessageTime: jest.fn().mockReturnValue(0),
+        }),
+      });
+    },
+    createFailingExchangeService() {
+      return this.createService({
+        exchange: createExchange({
+          testConnection: jest.fn().mockRejectedValue(new Error('API down')),
+          getServerTime: jest.fn().mockResolvedValue(Date.now()),
+        }),
+      });
+    },
+    createHealthyProbeService() {
+      return this.createService({
+        exchange: createExchange(),
+        websocket: createWebSocket(),
+        config: createThresholdConfig({
+          memoryUsagePercent: 95,
+          cpuUsagePercent: 95,
+        }),
       });
     },
     createThresholdConfig,

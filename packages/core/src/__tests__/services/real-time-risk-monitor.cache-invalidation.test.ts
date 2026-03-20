@@ -2,6 +2,8 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 import {
   createMockRiskMonitorPosition,
   createRealTimeRiskMonitorHarness,
+  invalidateRiskMonitorPosition,
+  seedRiskMonitorHealthScore,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -29,13 +31,11 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   it('CI1: position-closed event clears health score cache', async () => {
-    const position = createMockRiskMonitorPosition();
-    mockPositionService.getCurrentPosition.mockReturnValue(position);
-
-    await monitor.calculatePositionHealth(position.id, 46000);
+    const harness = { monitor, mockPositionService, mockLogger, mockEventBus };
+    const position = await seedRiskMonitorHealthScore(harness);
     expect(monitor.getLatestHealthScore(position.id)).toBeDefined();
 
-    mockEventBus.emitPositionClosed({ positionId: position.id });
+    invalidateRiskMonitorPosition(harness, { positionId: position.id });
 
     expect(monitor.getLatestHealthScore(position.id)).toBeUndefined();
   });
@@ -55,14 +55,15 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
       },
     });
 
-    mockPositionService.getCurrentPosition
-      .mockReturnValueOnce(firstPosition)
-      .mockReturnValueOnce(secondPosition);
-
+    mockPositionService.getCurrentPosition.mockReturnValueOnce(firstPosition);
     await monitor.calculatePositionHealth(firstPosition.id, 46000);
+    mockPositionService.getCurrentPosition.mockReturnValueOnce(secondPosition);
     await monitor.calculatePositionHealth(secondPosition.id, 3100);
 
-    mockEventBus.emitPositionClosed({ positionId: firstPosition.id });
+    invalidateRiskMonitorPosition(
+      { monitor, mockPositionService, mockLogger, mockEventBus },
+      { positionId: firstPosition.id },
+    );
 
     expect(monitor.getLatestHealthScore(firstPosition.id)).toBeUndefined();
     expect(monitor.getLatestHealthScore(secondPosition.id)).toBeDefined();
@@ -85,7 +86,10 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
     await monitor.monitorAllPositions(46000);
     expect(monitor.getStatistics().generatedAlerts).toBeGreaterThanOrEqual(0);
 
-    mockEventBus.emitPositionClosed({ closedPosition: position });
+    invalidateRiskMonitorPosition(
+      { monitor, mockPositionService, mockLogger, mockEventBus },
+      { closedPosition: position },
+    );
 
     const statistics = monitor.getStatistics();
     expect(statistics.cachedScores).toBe(0);
@@ -93,13 +97,11 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   it('CI5: Multiple close events are idempotent', async () => {
-    const position = createMockRiskMonitorPosition();
-    mockPositionService.getCurrentPosition.mockReturnValue(position);
+    const harness = { monitor, mockPositionService, mockLogger, mockEventBus };
+    const position = await seedRiskMonitorHealthScore(harness);
 
-    await monitor.calculatePositionHealth(position.id, 46000);
-
-    mockEventBus.emitPositionClosed({ positionId: position.id });
-    mockEventBus.emitPositionClosed({ positionId: position.id });
+    invalidateRiskMonitorPosition(harness, { positionId: position.id });
+    invalidateRiskMonitorPosition(harness, { positionId: position.id });
 
     expect(monitor.getLatestHealthScore(position.id)).toBeUndefined();
     expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -109,11 +111,9 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   it('CI6: Cache invalidation logged for debugging', async () => {
-    const position = createMockRiskMonitorPosition();
-    mockPositionService.getCurrentPosition.mockReturnValue(position);
-
-    await monitor.calculatePositionHealth(position.id, 46000);
-    mockEventBus.emitPositionClosed({ position: position });
+    const harness = { monitor, mockPositionService, mockLogger, mockEventBus };
+    const position = await seedRiskMonitorHealthScore(harness);
+    invalidateRiskMonitorPosition(harness, { position });
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       expect.stringContaining('invalidated'),

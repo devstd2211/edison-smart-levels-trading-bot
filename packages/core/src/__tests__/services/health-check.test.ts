@@ -14,8 +14,6 @@
  */
 
 import { HealthCheckService, IExchangeService, IWebSocketService } from '../../services/health-check.service';
-import { LoggerService } from '../../types/legacy';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createHealthCheckHarness,
   type HealthCheckTestHarness,
@@ -23,18 +21,14 @@ import {
 
 describe('HealthCheckService', () => {
   let service: HealthCheckService;
-  let mockLogger: LoggerService;
   let mockExchange: jest.Mocked<IExchangeService>;
   let mockWebSocket: jest.Mocked<IWebSocketService>;
-  let errorHandler: ErrorHandler;
   let harness: HealthCheckTestHarness;
 
   beforeEach(() => {
     harness = createHealthCheckHarness();
-    mockLogger = harness.logger;
     mockExchange = harness.exchange;
     mockWebSocket = harness.websocket;
-    errorHandler = harness.errorHandler;
     service = harness.createService();
   });
 
@@ -163,14 +157,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report system as degraded when memory usage high', async () => {
-      const svc = harness.createService({
-        exchange: undefined,
-        websocket: undefined,
-        config: harness.createThresholdConfig({
-          memoryUsagePercent: 1,
-        }),
-        errorHandler: undefined,
-      });
+      const svc = harness.createMemoryConstrainedService(1);
 
       const health = await svc.checkSystem();
 
@@ -179,14 +166,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report system as degraded when CPU usage high', async () => {
-      const svc = harness.createService({
-        exchange: undefined,
-        websocket: undefined,
-        config: harness.createThresholdConfig({
-          cpuUsagePercent: 1,
-        }),
-        errorHandler: undefined,
-      });
+      const svc = harness.createCpuConstrainedService(1);
 
       const health = await svc.checkSystem();
 
@@ -243,12 +223,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report overall status as degraded if any component degraded', async () => {
-      const svc = harness.createService({
-        websocket: harness.createWebSocket({
-          isConnected: jest.fn().mockReturnValue(false),
-          getLastMessageTime: jest.fn().mockReturnValue(0),
-        }),
-      });
+      const svc = harness.createDisconnectedWebSocketService();
 
       const health = await svc.checkHealth();
 
@@ -256,12 +231,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report overall status as unhealthy if any component down', async () => {
-      const svc = harness.createService({
-        exchange: harness.createExchange({
-          testConnection: jest.fn().mockRejectedValue(new Error('API down')),
-          getServerTime: jest.fn().mockResolvedValue(Date.now()),
-        }),
-      });
+      const svc = harness.createFailingExchangeService();
 
       const health = await svc.checkHealth();
 
@@ -297,26 +267,14 @@ describe('HealthCheckService', () => {
     });
 
     it('should return boolean for readiness probe', async () => {
-      const healthySvc = harness.createService({
-        exchange: harness.createExchange(),
-        websocket: harness.createWebSocket(),
-        config: harness.createThresholdConfig({
-          memoryUsagePercent: 95,
-          cpuUsagePercent: 95,
-        }),
-      });
+      const healthySvc = harness.createHealthyProbeService();
 
       const isReady = await healthySvc.isReady();
       expect(typeof isReady).toBe('boolean');
     });
 
     it('should return false for readiness probe when degraded', async () => {
-      const degradedSvc = harness.createService({
-        websocket: harness.createWebSocket({
-          isConnected: jest.fn().mockReturnValue(false),
-          getLastMessageTime: jest.fn().mockReturnValue(0),
-        }),
-      });
+      const degradedSvc = harness.createDisconnectedWebSocketService();
 
       const isReady = await degradedSvc.isReady();
       expect(isReady).toBe(false);

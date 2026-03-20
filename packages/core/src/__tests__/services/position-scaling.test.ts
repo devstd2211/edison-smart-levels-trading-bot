@@ -26,7 +26,9 @@ import {
 } from '../../constants/phase-11-constants';
 import {
   createPositionScalingHarness,
+  createPositionScalingScenario,
   createPositionScalingPosition,
+  evaluatePositionScaleDecision,
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
@@ -191,24 +193,18 @@ describe('PositionScalingService', () => {
     });
 
     it('should handle negative profit (loss) gracefully', async () => {
-      const losingPosition = {
-        ...mockPosition,
-        currentPrice: 95, // Below entry
-      };
-
-      const result = await service.shouldScale(losingPosition);
+      const result = await evaluatePositionScaleDecision(service, {
+        currentPrice: 95,
+      });
 
       expect(result.action).toBe('hold');
       expect(result.reasoning).toContain('below threshold');
     });
 
     it('should handle position at exact profit target', async () => {
-      const targetPosition = {
-        ...mockPosition,
-        currentPrice: 110, // At profit target
-      };
-
-      const result = await service.shouldScale(targetPosition);
+      const result = await evaluatePositionScaleDecision(service, {
+        currentPrice: 110,
+      });
 
       // Should still scale (100% profit >= 50% threshold)
       expect(result.action).toBe('add');
@@ -216,12 +212,9 @@ describe('PositionScalingService', () => {
     });
 
     it('should handle very small position size', async () => {
-      const tinyPosition = {
-        ...mockPosition,
-        size: 1, // Below MIN_POSITION_SIZE_FOR_SCALING
-      };
-
-      const result = await service.shouldScale(tinyPosition);
+      const result = await evaluatePositionScaleDecision(service, {
+        size: 1,
+      });
 
       expect(result.action).toBe('hold');
       expect(result.reasoning).toContain('too small');
@@ -298,12 +291,9 @@ describe('PositionScalingService', () => {
     });
 
     it('should not scale at 30% profit (below threshold)', async () => {
-      const lowProfitPosition = {
-        ...mockPosition,
-        currentPrice: 103, // Only 30% to target
-      };
-
-      const result = await service.shouldScale(lowProfitPosition);
+      const result = await evaluatePositionScaleDecision(service, {
+        currentPrice: 103,
+      });
 
       expect(result.action).toBe('hold');
       expect(result.size).toBe(0);
@@ -311,12 +301,9 @@ describe('PositionScalingService', () => {
     });
 
     it('should hold when max scales reached', async () => {
-      const maxScaledPosition = {
-        ...mockPosition,
-        scaleCount: 3, // At max
-      };
-
-      const result = await service.shouldScale(maxScaledPosition);
+      const result = await evaluatePositionScaleDecision(service, {
+        scaleCount: 3,
+      });
 
       expect(result.action).toBe('hold');
       expect(result.size).toBe(0);
@@ -400,12 +387,9 @@ describe('PositionScalingService', () => {
 
   describe('Edge Cases', () => {
     it('should handle position at exact breakeven', async () => {
-      const breakevenPosition = {
-        ...mockPosition,
-        currentPrice: mockPosition.entryPrice, // Exactly at entry
-      };
-
-      const result = await service.shouldScale(breakevenPosition);
+      const result = await evaluatePositionScaleDecision(service, {
+        currentPrice: mockPosition.entryPrice,
+      });
 
       expect(result.action).toBe('hold');
       expect(result.reasoning).toContain('below threshold');
@@ -451,7 +435,7 @@ describe('PositionScalingService', () => {
 
   describe('Short Position Scaling', () => {
     it('should scale short position correctly', async () => {
-      const shortPosition: PositionState = createPositionScalingPosition({
+      const shortPosition: PositionState = createPositionScalingScenario({
         currentPrice: 95,
         stopLoss: 105,
         profitTarget: 90,
@@ -466,7 +450,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should move SL to breakeven for short position', async () => {
-      const shortPosition: PositionState = createPositionScalingPosition({
+      const shortPosition: PositionState = createPositionScalingScenario({
         currentPrice: 95,
         stopLoss: 105,
         profitTarget: 90,

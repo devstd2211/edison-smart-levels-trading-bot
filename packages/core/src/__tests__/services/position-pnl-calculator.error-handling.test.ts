@@ -7,12 +7,11 @@
 
 import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { Position, PositionSide, type LoggerService } from '../../types/legacy';
+import { Position, PositionSide } from '../../types/legacy';
 import {
   createPositionPnLCalculatorHarness,
   createPositionPnLCalculatorService,
   createMockPnlErrorHandler,
-  createMockPnlLogger,
   createMockPnlPosition,
 } from '../helpers/position-pnl-calculator-test.utils';
 
@@ -20,14 +19,7 @@ import {
 // FIXTURES
 // ============================================================================
 
-const createMockPosition = (
-  side: PositionSide = PositionSide.LONG,
-  entryPrice: number = 100,
-): Position => createMockPnlPosition(side, entryPrice);
-
 const asPosition = (value: unknown): Position => value as Position;
-
-const createMockErrorHandler = () => createMockPnlErrorHandler();
 
 // ============================================================================
 // TESTS
@@ -38,7 +30,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    errorHandler = createMockErrorHandler();
+    errorHandler = createMockPnlErrorHandler();
     service = createPositionPnLCalculatorService({ errorHandler });
   });
 
@@ -64,7 +56,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on NaN current price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       const currentPrice = NaN;
 
       expect(() => {
@@ -73,7 +65,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on Infinity current price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       const currentPrice = Infinity;
 
       expect(() => {
@@ -82,7 +74,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on negative Infinity current price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       const currentPrice = -Infinity;
 
       expect(() => {
@@ -97,7 +89,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   describe('THROW: Entry Price Validation', () => {
     it('should throw on NaN entry price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = NaN;
       const currentPrice = 100;
 
@@ -107,7 +99,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on Infinity entry price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = Infinity;
       const currentPrice = 100;
 
@@ -117,7 +109,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on zero entry price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = 0;
       const currentPrice = 100;
 
@@ -127,7 +119,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on negative entry price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = -100;
       const currentPrice = 100;
 
@@ -137,7 +129,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on negative Infinity entry price', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = -Infinity;
       const currentPrice = 100;
 
@@ -153,7 +145,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   describe('THROW: Position Side Validation', () => {
     it('should throw on null position side', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.side = null as unknown as PositionSide;
       const currentPrice = 100;
 
@@ -163,7 +155,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on invalid position side string', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.side = 'MIDDLE' as unknown as PositionSide;
       const currentPrice = 100;
 
@@ -173,7 +165,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should throw on undefined position side', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.side = undefined as unknown as PositionSide;
       const currentPrice = 100;
 
@@ -189,7 +181,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     it('should return 0 P&L on calculation error (LONG)', () => {
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createMockPnlPosition(PositionSide.LONG, 100);
       const currentPrice = 110;
 
       // Spy on calculation to simulate failure
@@ -213,7 +205,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should return 0 P&L on calculation error (SHORT)', () => {
-      const position = createMockPosition(PositionSide.SHORT, 100);
+      const position = createMockPnlPosition(PositionSide.SHORT, 100);
       const currentPrice = 90;
 
       const result = service.calculatePnL(position, currentPrice);
@@ -222,7 +214,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should handle extreme price values gracefully', () => {
-      const position = createMockPosition(PositionSide.LONG, 1e-300);
+      const position = createMockPnlPosition(PositionSide.LONG, 1e-300);
       const currentPrice = 1e-300 * 2; // Very small but valid
 
       const result = service.calculatePnL(position, currentPrice);
@@ -253,7 +245,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should still throw on invalid currentPrice without ErrorHandler', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
 
       expect(() => {
         serviceWithoutHandler.calculatePnL(position, NaN);
@@ -261,7 +253,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should still throw on invalid entryPrice without ErrorHandler', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = 0;
 
       expect(() => {
@@ -282,14 +274,14 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
       }).toThrow();
 
       // Second attempt with valid data should work
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       const result = service.calculatePnL(position, 110);
 
       expect(result).toBeCloseTo(10, 2);
     });
 
     it('should handle multiple validation errors in sequence', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
 
       // Multiple validation errors
       expect(() => service.calculatePnL(null as unknown as Position, 100)).toThrow();
@@ -306,7 +298,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should handle boundary values correctly after validation', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
 
       // Boundary: entryPrice is smallest positive number
       position.entryPrice = Number.MIN_VALUE;
@@ -316,7 +308,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should maintain consistency across multiple calculations', () => {
-      const position = createMockPosition(PositionSide.LONG, 100);
+      const position = createMockPnlPosition(PositionSide.LONG, 100);
       const prices = [90, 100, 110, 120];
 
       const results = prices.map(price => service.calculatePnL(position, price));
@@ -334,7 +326,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   describe('Edge Cases: Error Propagation', () => {
     it('should handle position with very small entry price', () => {
-      const position = createMockPosition(PositionSide.LONG, 0.00001);
+      const position = createMockPnlPosition(PositionSide.LONG, 0.00001);
       const currentPrice = 0.00002; // 100% gain
 
       const result = service.calculatePnL(position, currentPrice);
@@ -343,7 +335,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should handle position with very large entry price', () => {
-      const position = createMockPosition(PositionSide.LONG, 1000000);
+      const position = createMockPnlPosition(PositionSide.LONG, 1000000);
       const currentPrice = 1100000; // 10% gain
 
       const result = service.calculatePnL(position, currentPrice);
@@ -352,7 +344,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should validate before attempting calculation', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = NaN;
 
       expect(() => {
@@ -381,7 +373,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   describe('ErrorHandler: Integration with Service', () => {
     it('should propagate THROW on validation failure with ErrorHandler', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       position.entryPrice = NaN;
 
       expect(() => {
@@ -390,7 +382,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     });
 
     it('should calculate successfully with valid inputs', () => {
-      const position = createMockPosition();
+      const position = createMockPnlPosition();
       const result = service.calculatePnL(position, 110);
 
       expect(result).toBeCloseTo(10, 2);

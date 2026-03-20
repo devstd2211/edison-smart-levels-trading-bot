@@ -28,6 +28,13 @@ export interface TimeServiceHarness {
     exchange?: MockTimeExchange;
     attachExchange?: boolean;
   }) => Promise<TimeService>;
+  createServiceWithoutExchange: (options?: {
+    syncIntervalMs?: number;
+    maxSyncFailures?: number;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => TimeService;
+  createFailingSyncService: (message?: string) => TimeService;
 }
 
 export function createTimeServiceLogger(): LoggerService {
@@ -88,6 +95,17 @@ export function createTimeServiceHarness(): TimeServiceHarness {
         options.serverTime ?? Date.now() + 1000,
       );
       await service.syncWithExchange();
+      return service;
+    },
+    createServiceWithoutExchange(options = {}): TimeService {
+      return this.createService({
+        ...options,
+        attachExchange: false,
+      });
+    },
+    createFailingSyncService(message = 'API error'): TimeService {
+      const service = this.createService();
+      this.exchange.getServerTime.mockRejectedValue(new Error(message));
       return service;
     },
   };

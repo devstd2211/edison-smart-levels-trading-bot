@@ -58,6 +58,24 @@ export function createSmartOrderRequest(
   };
 }
 
+export function createSmartOrderScenario(
+  overrides: Partial<SmartOrderRequest> = {},
+): SmartOrderRequest {
+  return createSmartOrderRequest(overrides);
+}
+
+export function createMinimalSmartOrder(
+  overrides: Partial<SmartOrderRequest> = {},
+): SmartOrderRequest {
+  return createSmartOrderRequest({
+    symbol: 'BTCUSDT',
+    side: 'Buy',
+    size: 1.0,
+    price: 45000,
+    ...overrides,
+  });
+}
+
 export function createSmartOrderExecutionHarness(
   overrides: Partial<SmartOrderConfig> = {},
 ): {

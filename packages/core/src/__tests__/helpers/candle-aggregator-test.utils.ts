@@ -88,6 +88,28 @@ export function createInvalidAggregatorCandle(
   };
 }
 
+export function createAggregatorCandlesWithVolumes(
+  specs: Array<{ timestamp: number; price: number; volume: number; high?: number; low?: number }>,
+): Candle[] {
+  return specs.map((spec) => ({
+    ...createAggregatorMockCandle(spec.timestamp, spec.price),
+    volume: spec.volume,
+    high: spec.high ?? spec.price + 1,
+    low: spec.low ?? spec.price - 1,
+  }));
+}
+
+export function createBasicAggregatorService(
+  createService: ReturnType<typeof createCandleAggregatorHarness>['createService'],
+  options: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  } = {},
+) {
+  return createService(options);
+}
+
 export function createFiveMinuteAggregatorCandles(): Candle[] {
   const candles: Candle[] = [];
   let timestamp = 1000;

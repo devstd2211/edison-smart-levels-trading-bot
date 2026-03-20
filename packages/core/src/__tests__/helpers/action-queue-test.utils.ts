@@ -26,6 +26,11 @@ export interface ActionQueueHarness {
   createService: () => ActionQueueService;
   createAction: typeof createTestAction;
   createHandler: typeof createTestHandler;
+  enqueueActions: (actions: IAction[]) => Promise<void>;
+  createActionBatch: (
+    ids: string[],
+    options?: { type?: ActionType; maxRetries?: number },
+  ) => IAction[];
 }
 
 export function createTestSignal(): Signal {
@@ -105,12 +110,25 @@ export function createTestHandler(
 
 export function createActionQueueHarness(): ActionQueueHarness {
   const createService = (): ActionQueueService => new ActionQueueService();
+  const service = createService();
+  const enqueueActions = async (actions: IAction[]): Promise<void> => {
+    await service.enqueueBatch(actions);
+  };
+  const createActionBatch = (
+    ids: string[],
+    options: { type?: ActionType; maxRetries?: number } = {},
+  ): IAction[] =>
+    ids.map((id) =>
+      createTestAction(id, options.type, options.maxRetries),
+    );
 
   return {
-    service: createService(),
+    service,
     errorHandler: new ErrorHandler(mockActionQueueLogger),
     createService,
     createAction: createTestAction,
     createHandler: createTestHandler,
+    enqueueActions,
+    createActionBatch,
   };
 }

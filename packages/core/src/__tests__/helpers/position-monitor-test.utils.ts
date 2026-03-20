@@ -1,4 +1,5 @@
 import { IExchange } from '../../interfaces/IExchange';
+import { POSITION_MONITOR_INTERVAL_MS } from '../../constants/technical.constants';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
@@ -235,4 +236,28 @@ export function createPositionMonitorHarness(
     logger,
     errorHandler,
   };
+}
+
+export function attachCurrentPosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>,
+  position: Position = createMockMonitoredPosition(),
+): Position {
+  harness.mockPositionManager.getCurrentPosition.mockReturnValue(position);
+  return position;
+}
+
+export async function runPositionMonitorCycle(
+  monitor: PositionMonitorService,
+  delayMs: number = POSITION_MONITOR_INTERVAL_MS,
+): Promise<void> {
+  monitor.start();
+  await jest.advanceTimersByTimeAsync(delayMs);
+}
+
+export async function runPositionMonitorDeepSyncCycle(
+  monitor: PositionMonitorService,
+  delayMs: number = 30000,
+): Promise<void> {
+  monitor.start();
+  await jest.advanceTimersByTimeAsync(delayMs);
 }

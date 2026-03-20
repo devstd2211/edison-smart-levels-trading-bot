@@ -117,7 +117,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
   describe('SKIP Strategy - Logging Safe', () => {
     it('should handle service gracefully after sync failure', async () => {
-      mockExchange.getServerTime.mockRejectedValue(new Error('API error'));
+      timeService = harness.createFailingSyncService();
 
       await timeService.syncWithExchange();
 
@@ -130,7 +130,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should log warnings appropriately on failure', async () => {
-      mockExchange.getServerTime.mockRejectedValue(new Error('API error'));
+      timeService = harness.createFailingSyncService();
 
       await timeService.syncWithExchange();
 
@@ -226,7 +226,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
 
   describe('Bybit Service Not Set', () => {
     it('should handle missing bybit service gracefully', async () => {
-      timeService = harness.createService({ attachExchange: false });
+      timeService = harness.createServiceWithoutExchange();
 
       await timeService.syncWithExchange();
 
@@ -235,7 +235,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     });
 
     it('should use default offset (0) when service not set', async () => {
-      timeService = harness.createService({ attachExchange: false });
+      timeService = harness.createServiceWithoutExchange();
 
       await timeService.syncWithExchange();
 

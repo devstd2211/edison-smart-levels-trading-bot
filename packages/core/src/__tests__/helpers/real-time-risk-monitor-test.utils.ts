@@ -185,3 +185,20 @@ export function createRealTimeRiskMonitorPublishFailure(
     }
   };
 }
+
+export async function seedRiskMonitorHealthScore(
+  harness: ReturnType<typeof createRealTimeRiskMonitorHarness>,
+  position: Position = createMockRiskMonitorPosition(),
+  currentPrice: number = 46000,
+): Promise<Position> {
+  harness.mockPositionService.getCurrentPosition.mockReturnValue(position);
+  await harness.monitor.calculatePositionHealth(position.id, currentPrice);
+  return position;
+}
+
+export function invalidateRiskMonitorPosition(
+  harness: ReturnType<typeof createRealTimeRiskMonitorHarness>,
+  payload: PositionClosedEventPayload,
+): void {
+  harness.mockEventBus.emitPositionClosed(payload);
+}

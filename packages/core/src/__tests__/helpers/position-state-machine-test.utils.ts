@@ -51,13 +51,21 @@ export function createPositionStateMachineService(options: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
+  baseDir?: string;
 } = {}) {
   const logger = options.logger ?? createMockPositionStateMachineLogger();
-
-  return new PositionStateMachineService(
+  const service = new PositionStateMachineService(
     logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+
+  if (options.baseDir) {
+    const paths = createTestStateMachinePaths(options.baseDir);
+    (service as unknown as { stateFilePath: string }).stateFilePath = paths.stateFilePath;
+    (service as unknown as { historyFilePath: string }).historyFilePath = paths.historyFilePath;
+  }
+
+  return service;
 }
 
 export function createPositionStateMachineServiceWithHarness(options: {
@@ -71,6 +79,7 @@ export function createPositionStateMachineServiceWithHarness(options: {
 export async function createInitializedPositionStateMachineHarness(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  baseDir?: string;
 } = {}) {
   const harness = createPositionStateMachineHarness(options);
   await harness.service.initialize();
@@ -98,21 +107,33 @@ export function createPositionStateTransitionInput(
 export function createPositionStateMachineHarness(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;
+  baseDir?: string;
 } = {}) {
   const logger = options.logger ?? createMockPositionStateMachineLogger();
   const errorHandler =
     options.withErrorHandler === false
       ? undefined
       : createPositionStateMachineErrorHandler(logger);
+  const testDataDir =
+    options.baseDir ??
+    path.join(process.cwd(), 'data', `test-state-machine-${Date.now()}-${Math.random().toString(16).slice(2)}`);
   const service = createPositionStateMachineService({
     logger,
     errorHandler,
     withErrorHandler: options.withErrorHandler,
+    baseDir: testDataDir,
   });
+  const paths = createTestStateMachinePaths(testDataDir);
 
   return {
     service,
     logger,
     errorHandler,
+    testDataDir,
+    paths,
   };
+}
+
+export async function waitForStateMachinePersistence(delayMs = 50): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, delayMs));
 }

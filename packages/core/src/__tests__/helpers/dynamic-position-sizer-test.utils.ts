@@ -46,6 +46,53 @@ export function createDynamicPositionSizerConfig(
   };
 }
 
+export function createDynamicSizingInputs(
+  overrides: Partial<{
+    entryPrice: number;
+    stopLoss: number;
+    accountBalance: number;
+    confidence: number;
+    currentATR?: number;
+    averageATR?: number;
+    riskRewardRatio?: number;
+  }> = {},
+) {
+  return {
+    entryPrice: 105,
+    stopLoss: 100,
+    accountBalance: 10000,
+    confidence: 0.7,
+    currentATR: undefined,
+    averageATR: undefined,
+    riskRewardRatio: undefined,
+    ...overrides,
+  };
+}
+
+export async function calculateDynamicSizeScenario(
+  service: DynamicPositionSizerService,
+  overrides: Partial<{
+    entryPrice: number;
+    stopLoss: number;
+    accountBalance: number;
+    confidence: number;
+    currentATR?: number;
+    averageATR?: number;
+    riskRewardRatio?: number;
+  }> = {},
+) {
+  const input = createDynamicSizingInputs(overrides);
+  return service.calculateOptimalSize(
+    input.entryPrice,
+    input.stopLoss,
+    input.accountBalance,
+    input.confidence,
+    input.currentATR,
+    input.averageATR,
+    input.riskRewardRatio,
+  );
+}
+
 export function createDynamicPositionSizerHarness(
   overrides: Partial<SizingConfig> = {},
 ): {

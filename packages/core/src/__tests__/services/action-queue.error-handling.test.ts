@@ -13,12 +13,16 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
   let createAction: ReturnType<typeof createActionQueueHarness>['createAction'];
   let createHandler: ReturnType<typeof createActionQueueHarness>['createHandler'];
+  let enqueueActions: ReturnType<typeof createActionQueueHarness>['enqueueActions'];
+  let createActionBatch: ReturnType<typeof createActionQueueHarness>['createActionBatch'];
 
   beforeEach(() => {
     const harness = createActionQueueHarness();
     service = harness.service;
     createAction = harness.createAction;
     createHandler = harness.createHandler;
+    enqueueActions = harness.enqueueActions;
+    createActionBatch = harness.createActionBatch;
     jest.clearAllMocks();
   });
 
@@ -236,12 +240,10 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   describe('Scenario 6: Queue overflow handling', () => {
     it('should handle large queue without memory issues', async () => {
       const handler = createHandler('BulkHandler');
-
-      // Enqueue 1000 actions
-      for (let i = 0; i < 1000; i++) {
-        const action = createAction(`action-${i}`);
-        await service.enqueue(action);
-      }
+      const actions = createActionBatch(
+        Array.from({ length: 1000 }, (_, i) => `action-${i}`),
+      );
+      await enqueueActions(actions);
 
       expect(service.size()).toBe(1000);
 
@@ -268,13 +270,14 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
           timestamp: Date.now(),
         };
       });
-
-      // Enqueue mixed success/fail with no retries
-      for (let i = 0; i < 100; i++) {
-        const action = createAction(`action-${i}`, ActionType.OPEN_POSITION, 0); // maxRetries = 0
+      const actions = createActionBatch(
+        Array.from({ length: 100 }, (_, i) => `action-${i}`),
+        { type: ActionType.OPEN_POSITION, maxRetries: 0 },
+      );
+      actions.forEach((action, i) => {
         action.metadata.shouldFail = i % 2 === 0;
-        await service.enqueue(action);
-      }
+      });
+      await enqueueActions(actions);
 
       const results = await service.process([handler]);
       // Each action processed once (no retries)
@@ -345,9 +348,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
         };
       });
 
-      for (const action of actions) {
-        await service.enqueue(action);
-      }
+      await enqueueActions(actions);
 
       // Single process() call will process all with retries
       const results = await service.process([flakeyHandler]);
@@ -364,11 +365,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
         actionId: a.id,
         timestamp: Date.now(),
       }));
-
-      for (let i = 0; i < 10; i++) {
-        const action = createAction(`action-${i}`);
-        await service.enqueue(action);
-      }
+      await enqueueActions(
+        createActionBatch(Array.from({ length: 10 }, (_, i) => `action-${i}`)),
+      );
 
       const initialMetrics = service.getMetrics();
       expect(initialMetrics.totalEnqueued).toBe(10);
@@ -426,11 +425,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
 
     it('should return all results', async () => {
       const handler = createHandler('BulkResultHandler');
-
-      for (let i = 0; i < 5; i++) {
-        const action = createAction(`action-${i}`);
-        await service.enqueue(action);
-      }
+      await enqueueActions(
+        createActionBatch(Array.from({ length: 5 }, (_, i) => `action-${i}`)),
+      );
 
       await service.process([handler]);
       const allResults = service.getAllResults();
@@ -442,11 +439,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   describe('Scenario 11: Metrics reset', () => {
     it('should reset all metrics', async () => {
       const handler = createHandler('MetricHandler');
-
-      for (let i = 0; i < 5; i++) {
-        const action = createAction(`action-${i}`);
-        await service.enqueue(action);
-      }
+      await enqueueActions(
+        createActionBatch(Array.from({ length: 5 }, (_, i) => `action-${i}`)),
+      );
 
       await service.process([handler]);
       let metrics = service.getMetrics();
@@ -464,10 +459,9 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 12: Clear Queue ==========
   describe('Scenario 12: Clear queue', () => {
     it('should clear all pending actions', async () => {
-      for (let i = 0; i < 10; i++) {
-        const action = createAction(`action-${i}`);
-        await service.enqueue(action);
-      }
+      await enqueueActions(
+        createActionBatch(Array.from({ length: 10 }, (_, i) => `action-${i}`)),
+      );
 
       expect(service.size()).toBe(10);
       service.clear();
@@ -478,11 +472,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   // ========== SCENARIO 13: Batch Enqueue ==========
   describe('Scenario 13: Batch enqueue operations', () => {
     it('should enqueue multiple actions at once', async () => {
-      const actions = [
-        createAction('batch-1'),
-        createAction('batch-2'),
-        createAction('batch-3'),
-      ];
+      const actions = createActionBatch(['batch-1', 'batch-2', 'batch-3']);
 
       await service.enqueueBatch(actions);
       expect(service.size()).toBe(3);
@@ -490,11 +480,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
     });
 
     it('should process batch correctly', async () => {
-      const actions = [
-        createAction('batch-a'),
-        createAction('batch-b'),
-        createAction('batch-c'),
-      ];
+      const actions = createActionBatch(['batch-a', 'batch-b', 'batch-c']);
 
       const handler = createHandler('BatchHandler');
       await service.enqueueBatch(actions);

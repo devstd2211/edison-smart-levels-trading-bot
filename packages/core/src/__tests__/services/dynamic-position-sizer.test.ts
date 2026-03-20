@@ -20,11 +20,10 @@ import {
 import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  MIN_POSITION_SIZE_USD,
   FALLBACK_POSITION_SIZE,
-  MIN_CONFIDENCE_THRESHOLD,
 } from '../../constants/phase-11-constants';
 import {
+  calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createDynamicPositionSizerHarness,
 } from '../helpers/dynamic-position-sizer-test.utils';
@@ -146,24 +145,18 @@ describe('DynamicPositionSizerService', () => {
 
   describe('GRACEFUL_DEGRADE - Calculation Failures', () => {
     it('should return fallback when account balance too low', async () => {
-      const result = await service.calculateOptimalSize(
-        105, // entry
-        100, // stop
-        5, // balance below MIN_ACCOUNT_BALANCE (10)
-        0.7
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        accountBalance: 5,
+      });
 
       expect(result.adjustedSize).toBe(FALLBACK_POSITION_SIZE);
       expect(result.recommendation).toBe('reduce');
     });
 
     it('should return fallback when confidence below threshold', async () => {
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.3 // Below MIN_CONFIDENCE_THRESHOLD (0.5)
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        confidence: 0.3,
+      });
 
       expect(result.adjustedSize).toBe(FALLBACK_POSITION_SIZE);
       expect(result.confidence).toBe(0.3);
@@ -313,14 +306,11 @@ describe('DynamicPositionSizerService', () => {
 
   describe('Integration - E2E Scenarios', () => {
     it('should reduce size for low confidence signal (50%)', async () => {
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.5, // Minimum confidence
-        1.0,
-        1.0
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        confidence: 0.5,
+        currentATR: 1.0,
+        averageATR: 1.0,
+      });
 
       expect(result.confidence).toBe(0.5);
       expect(result.recommendation).toBe('reduce');
@@ -329,14 +319,11 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should maintain size for medium confidence signal (70%)', async () => {
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.7, // Medium confidence
-        1.0,
-        1.0
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        confidence: 0.7,
+        currentATR: 1.0,
+        averageATR: 1.0,
+      });
 
       expect(result.confidence).toBe(0.7);
       expect(result.recommendation).toBe('maintain');
@@ -344,14 +331,11 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should increase size for high confidence signal (90%)', async () => {
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.9, // High confidence
-        1.0,
-        1.0
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        confidence: 0.9,
+        currentATR: 1.0,
+        averageATR: 1.0,
+      });
 
       expect(result.confidence).toBe(0.9);
       expect(result.recommendation).toBe('increase');
@@ -363,28 +347,20 @@ describe('DynamicPositionSizerService', () => {
     });
 
     it('should reduce size in high volatility market', async () => {
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.7,
-        2.0, // Current ATR is 2x average
-        1.0
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        currentATR: 2.0,
+        averageATR: 1.0,
+      });
 
       expect(result.volatilityAdjustment).toBeLessThan(1.0);
       expect(result.adjustedSize).toBeLessThan(result.baseSize);
     });
 
     it('should increase size in low volatility market', async () => {
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.7,
-        0.5, // Current ATR is 0.5x average
-        1.0
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        currentATR: 0.5,
+        averageATR: 1.0,
+      });
 
       expect(result.volatilityAdjustment).toBeGreaterThan(1.0);
       // Size may still be capped by risk limits
@@ -425,13 +401,7 @@ describe('DynamicPositionSizerService', () => {
   describe('Backward Compatibility', () => {
     it('should work without errorHandler', async () => {
       const serviceNoEH = createNoHandlerService();
-
-      const result = await serviceNoEH.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.7
-      );
+      const result = await calculateDynamicSizeScenario(serviceNoEH);
 
       expect(result.adjustedSize).toBeGreaterThan(0);
     });
@@ -441,13 +411,7 @@ describe('DynamicPositionSizerService', () => {
         logger: undefined,
         errorHandler,
       });
-
-      const result = await serviceNoLoggerService.calculateOptimalSize(
-        105,
-        100,
-        10000,
-        0.7
-      );
+      const result = await calculateDynamicSizeScenario(serviceNoLoggerService);
 
       expect(result.adjustedSize).toBeGreaterThan(0);
     });
@@ -488,12 +452,9 @@ describe('DynamicPositionSizerService', () => {
   describe('Edge Cases', () => {
     it('should handle zero account balance (after THROW validation passes)', async () => {
       // Balance of 0 is allowed by validation (>= 0) but fails business logic
-      const result = await service.calculateOptimalSize(
-        105,
-        100,
-        0, // Zero balance
-        0.7
-      );
+      const result = await calculateDynamicSizeScenario(service, {
+        accountBalance: 0,
+      });
 
       // Should return fallback
       expect(result.adjustedSize).toBe(FALLBACK_POSITION_SIZE);
