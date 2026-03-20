@@ -71,6 +71,36 @@ export const createDeltaAnalyzerTickBatch = (
     }),
   );
 
+export const createDeltaAnalyzerVolumePair = (
+  buyQuantity: number,
+  sellQuantity: number,
+  baseTimestamp: number = Date.now(),
+  overrides: {
+    buyPrice?: number;
+    sellPrice?: number;
+  } = {},
+): DeltaTick[] => [
+  createDeltaAnalyzerTick({
+    timestamp: baseTimestamp,
+    quantity: buyQuantity,
+    price: overrides.buyPrice ?? 50000,
+    side: 'BUY',
+  }),
+  createDeltaAnalyzerTick({
+    timestamp: baseTimestamp + 1000,
+    quantity: sellQuantity,
+    price: overrides.sellPrice ?? 50010,
+    side: 'SELL',
+  }),
+];
+
+export const seedDeltaAnalyzerTicks = (
+  service: DeltaAnalyzerService,
+  ticks: DeltaTick[],
+): void => {
+  ticks.forEach((tick) => service.addTick(tick));
+};
+
 export const createDeltaAnalyzerSignal = (
   direction: SignalDirection = SignalDirection.LONG,
   overrides: Partial<Signal> = {},

@@ -27,12 +27,12 @@ const asOrder = (value: unknown): SmartOrderRequest => value as SmartOrderReques
 import {
   asSmartOrderInternals,
   asSmartOrderLogger,
-  createSmartOrderExecutionConfig,
+  createSmartOrderExecutionReport,
   createSmartOrderExecutionHarness,
   createSmartOrderExecutionLogger,
   createMinimalSmartOrder,
   createSmartOrderScenario,
-  createSmartOrderRequest,
+  createSmartOrderRequestSeries,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
   let service: SmartOrderExecutionService;
@@ -132,12 +132,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should throw when symbol is missing', async () => {
-      const order: SmartOrderRequest = {
-        symbol: '',
-        side: 'Buy',
-        size: 1.0,
-        price: 45000,
-      };
+      const [order] = createSmartOrderRequestSeries([{ symbol: '' }]);
 
       await expect(service.executeSmartOrder(order)).rejects.toThrow(
         'symbol is required'
@@ -145,12 +140,9 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should throw when side is invalid', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Invalid' as unknown as SmartOrderRequest['side'],
-        size: 1.0,
-        price: 45000,
-      };
+      const [order] = createSmartOrderRequestSeries([
+        { side: 'Invalid' as unknown as SmartOrderRequest['side'] },
+      ]);
 
       await expect(service.executeSmartOrder(order)).rejects.toThrow(
         'valid side is required'
@@ -158,12 +150,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should throw when size is negative', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: -1.0,
-        price: 45000,
-      };
+      const [order] = createSmartOrderRequestSeries([{ size: -1.0 }]);
 
       await expect(service.executeSmartOrder(order)).rejects.toThrow(
         'size must be > 0'
@@ -171,12 +158,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should throw when size is NaN', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: NaN,
-        price: 45000,
-      };
+      const [order] = createSmartOrderRequestSeries([{ size: NaN }]);
 
       await expect(service.executeSmartOrder(order)).rejects.toThrow(
         'size must be > 0'
@@ -184,12 +166,7 @@ describe('SmartOrderExecutionService', () => {
     });
 
     it('should throw when price is zero or negative', async () => {
-      const order: SmartOrderRequest = {
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        size: 1.0,
-        price: 0,
-      };
+      const [order] = createSmartOrderRequestSeries([{ price: 0 }]);
 
       await expect(service.executeSmartOrder(order)).rejects.toThrow(
         'price must be > 0'
@@ -544,24 +521,7 @@ describe('SmartOrderExecutionService', () => {
 
     it('should handle partial fills correctly', async () => {
       // Create fake orders and add to active tracking
-      const fakeReport1: ExecutionReport = {
-        orderId: 'order_123',
-        status: 'executing',
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        requestedSize: 1.0,
-        filledSize: 0,
-        remainingSize: 1.0,
-        requestedPrice: 45000,
-        averageFillPrice: 0,
-        slippage: 0,
-        executionTime: 0,
-        numberOfSplits: 1,
-        marketImpact: 0,
-        subOrders: [],
-        adjustments: [],
-        reasoning: 'Test',
-      };
+      const fakeReport1: ExecutionReport = createSmartOrderExecutionReport();
 
       asSmartOrderInternals(service).activeOrders.set('order_123', fakeReport1);
 

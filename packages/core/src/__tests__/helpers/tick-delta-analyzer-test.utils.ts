@@ -87,6 +87,41 @@ export function createTickDeltaAnalyzerTickBatch(
   );
 }
 
+export function createTickDeltaAnalyzerDirectionalTicks(
+  buyCount: number,
+  sellCount: number,
+  overrides: {
+    timestamp?: number;
+    buySize?: number;
+    sellSize?: number;
+    buyPrice?: number;
+    sellPrice?: number;
+  } = {},
+): Tick[] {
+  const baseTimestamp = overrides.timestamp ?? Date.now();
+  const buyTicks = createTickDeltaAnalyzerTickBatch(buyCount, {
+    timestamp: baseTimestamp,
+    side: 'BUY',
+    size: overrides.buySize ?? 100,
+    price: overrides.buyPrice ?? 1.0,
+  });
+  const sellTicks = createTickDeltaAnalyzerTickBatch(sellCount, {
+    timestamp: baseTimestamp + buyCount,
+    side: 'SELL',
+    size: overrides.sellSize ?? 100,
+    price: overrides.sellPrice ?? overrides.buyPrice ?? 1.0,
+  });
+
+  return [...buyTicks, ...sellTicks];
+}
+
+export function seedTickDeltaAnalyzerHistory(
+  service: TickDeltaAnalyzerService,
+  ticks: Tick[],
+): void {
+  ticks.forEach((tick) => service.addTick(tick));
+}
+
 export function createTickDeltaAnalyzerHarness(options: {
   config?: TickDeltaAnalyzerConfig;
   logger?: LoggerService;

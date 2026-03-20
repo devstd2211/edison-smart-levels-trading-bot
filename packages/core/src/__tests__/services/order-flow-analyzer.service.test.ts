@@ -19,7 +19,9 @@ import {
   createMockFlow,
   createMockOrderbook,
   createOrderFlowAnalyzerHarness,
+  createOrderFlowSeries,
   createOrderFlowUpdateSeries,
+  seedOrderFlowHistory,
 } from '../helpers/order-flow-analyzer-test.utils';
 
 describe('OrderFlowAnalyzerService', () => {
@@ -104,10 +106,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should calculate ratio with more aggressive buys', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 6000, now));
-      history.push(createMockFlow('BUY', 4000, now));
-      history.push(createMockFlow('SELL', 2000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([6000, 4000], [2000], now));
 
       const ratio = service.calculateFlowRatio();
       expect(ratio).toBeCloseTo(5.0, 1);
@@ -115,10 +114,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should calculate ratio with more aggressive sells', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 2000, now));
-      history.push(createMockFlow('SELL', 6000, now));
-      history.push(createMockFlow('SELL', 4000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([2000], [6000, 4000], now));
 
       const ratio = service.calculateFlowRatio();
       expect(ratio).toBeCloseTo(0.2, 1);
@@ -126,9 +122,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should return max ratio (999) with only buy flow', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 3000, now));
-      history.push(createMockFlow('BUY', 2000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([3000, 2000], [], now));
 
       const ratio = service.calculateFlowRatio();
       expect(ratio).toBe(999);
@@ -136,9 +130,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should return min ratio (0.001) with only sell flow', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('SELL', 3000, now));
-      history.push(createMockFlow('SELL', 2000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([], [3000, 2000], now));
 
       const ratio = service.calculateFlowRatio();
       expect(ratio).toBe(0.001);
@@ -146,10 +138,10 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should only count flow within time window', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 10000, now - 5000));
-      history.push(createMockFlow('BUY', 3000, now));
-      history.push(createMockFlow('SELL', 1000, now));
+      seedOrderFlowHistory(service, [
+        createMockFlow('BUY', 10000, now - 5000),
+        ...createOrderFlowSeries([3000], [1000], now),
+      ]);
 
       const ratio = service.calculateFlowRatio();
       expect(ratio).toBeCloseTo(3.0, 1);
@@ -159,9 +151,7 @@ describe('OrderFlowAnalyzerService', () => {
   describe('detectFlowImbalance', () => {
     it('should detect BUY imbalance (3x ratio)', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 9000, now));
-      history.push(createMockFlow('SELL', 3000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([9000], [3000], now));
 
       const imbalance = service.detectFlowImbalance();
 
@@ -174,9 +164,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should detect SELL imbalance (inverse 3x ratio)', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 2000, now));
-      history.push(createMockFlow('SELL', 6000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([2000], [6000], now));
 
       const imbalance = service.detectFlowImbalance();
 
@@ -187,9 +175,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should NOT detect imbalance if ratio too weak (2x < 3x)', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 6000, now));
-      history.push(createMockFlow('SELL', 3000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([6000], [3000], now));
 
       const imbalance = service.detectFlowImbalance();
       expect(imbalance).toBeNull();
@@ -197,9 +183,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should NOT detect imbalance if volume too low', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 3000, now));
-      history.push(createMockFlow('SELL', 1000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([3000], [1000], now));
 
       const imbalance = service.detectFlowImbalance();
       expect(imbalance).toBeNull();
@@ -207,9 +191,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should calculate correct confidence', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 12000, now));
-      history.push(createMockFlow('SELL', 3000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([12000], [3000], now));
 
       const imbalance = service.detectFlowImbalance();
 
@@ -220,9 +202,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should cap confidence at maxConfidence', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 100000, now));
-      history.push(createMockFlow('SELL', 5000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([100000], [5000], now));
 
       const imbalance = service.detectFlowImbalance();
 
@@ -237,8 +217,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should return null with only old flow (outside window)', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 10000, now - 5000));
+      seedOrderFlowHistory(service, [createMockFlow('BUY', 10000, now - 5000)]);
 
       const imbalance = service.detectFlowImbalance();
       expect(imbalance).toBeNull();
@@ -248,9 +227,10 @@ describe('OrderFlowAnalyzerService', () => {
   describe('cleanupOldFlow', () => {
     it('should remove flow older than 2x detection window', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 1000, now - 7000));
-      history.push(createMockFlow('BUY', 2000, now));
+      seedOrderFlowHistory(service, [
+        createMockFlow('BUY', 1000, now - 7000),
+        createMockFlow('BUY', 2000, now),
+      ]);
 
       service.cleanupOldFlow();
 
@@ -261,9 +241,10 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should keep flow within 2x detection window', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 1000, now - 5000));
-      history.push(createMockFlow('BUY', 2000, now));
+      seedOrderFlowHistory(service, [
+        createMockFlow('BUY', 1000, now - 5000),
+        createMockFlow('BUY', 2000, now),
+      ]);
 
       service.cleanupOldFlow();
 
@@ -283,8 +264,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should clear history', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 1000, now));
+      seedOrderFlowHistory(service, [createMockFlow('BUY', 1000, now)]);
 
       service.clearHistory();
 
@@ -294,9 +274,7 @@ describe('OrderFlowAnalyzerService', () => {
 
     it('should handle balanced flow (1:1 ratio)', () => {
       const now = Date.now();
-      const history = service.getFlowHistory();
-      history.push(createMockFlow('BUY', 5000, now));
-      history.push(createMockFlow('SELL', 5000, now));
+      seedOrderFlowHistory(service, createOrderFlowSeries([5000], [5000], now));
 
       const imbalance = service.detectFlowImbalance();
       expect(imbalance).toBeNull();

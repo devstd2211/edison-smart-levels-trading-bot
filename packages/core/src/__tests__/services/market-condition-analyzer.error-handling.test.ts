@@ -22,6 +22,8 @@ import {
   createInvalidMarketConditionTakeProfit,
   createMarketConditionResult,
   createMarketConditionTakeProfit,
+  createMarketConditionTakeProfitSeries,
+  createSequentialMarketConditionTakeProfits,
   type MarketConditionMockLogger,
 } from '../helpers/market-condition-analyzer-test.utils';
 
@@ -121,7 +123,10 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should return original TPs on processing error', () => {
-      const takeProfits = [createTP(1, 100, 50, 0.5), createTP(2, 110, 30, 1.0)];
+      const takeProfits = createMarketConditionTakeProfitSeries([
+        { level: 1, price: 100, sizePercent: 50, percent: 0.5 },
+        { level: 2, price: 110, sizePercent: 30, percent: 1.0 },
+      ]);
       const flatResult = createFlatResult(true, 75);
 
       const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
@@ -196,11 +201,11 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
 
   describe('Integration: End-to-End Scenarios', () => {
     it('should adjust TPs for FLAT market (single TP)', () => {
-      const takeProfits = [
-        createTP(1, 100, 50, 0.5),
-        createTP(2, 110, 30, 1.0),
-        createTP(3, 120, 20, 1.5),
-      ];
+      const takeProfits = createMarketConditionTakeProfitSeries([
+        { level: 1, price: 100, sizePercent: 50, percent: 0.5 },
+        { level: 2, price: 110, sizePercent: 30, percent: 1.0 },
+        { level: 3, price: 120, sizePercent: 20, percent: 1.5 },
+      ]);
       const flatResult = createFlatResult(true, 85);
 
       const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
@@ -215,11 +220,11 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should keep multi-TP for TRENDING market', () => {
-      const takeProfits = [
-        createTP(1, 100, 50, 0.5),
-        createTP(2, 110, 30, 1.0),
-        createTP(3, 120, 20, 1.5),
-      ];
+      const takeProfits = createMarketConditionTakeProfitSeries([
+        { level: 1, price: 100, sizePercent: 50, percent: 0.5 },
+        { level: 2, price: 110, sizePercent: 30, percent: 1.0 },
+        { level: 3, price: 120, sizePercent: 20, percent: 1.5 },
+      ]);
       const flatResult = createFlatResult(false, 90);
 
       const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
@@ -281,10 +286,10 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     it('should maintain existing behavior when ErrorHandler not provided', () => {
       const service = createService({ logger, withErrorHandler: false });
 
-      const takeProfits = [
-        createTP(1, 100, 50, 0.5),
-        createTP(2, 110, 30, 1.0),
-      ];
+      const takeProfits = createMarketConditionTakeProfitSeries([
+        { level: 1, price: 100, sizePercent: 50, percent: 0.5 },
+        { level: 2, price: 110, sizePercent: 30, percent: 1.0 },
+      ]);
       const flatResult = createFlatResult(true, 80);
 
       const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
@@ -328,9 +333,12 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should handle many TPs in array', () => {
-      const takeProfits = Array.from({ length: 20 }, (_, i) =>
-        createTP(i + 1, 100 + i * 10, 5, 0.1 * (i + 1))
-      );
+      const takeProfits = createSequentialMarketConditionTakeProfits(20, {
+        startPrice: 100,
+        priceStep: 10,
+        sizePercent: 5,
+        percentStep: 0.1,
+      });
       const flatResult = createFlatResult(true, 75);
 
       const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
@@ -339,10 +347,10 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should handle boundary sizePercent values', () => {
-      const takeProfits = [
-        createTP(1, 100, 0, 0.5), // 0% size
-        createTP(2, 110, 100, 1.0), // 100% size
-      ];
+      const takeProfits = createMarketConditionTakeProfitSeries([
+        { level: 1, price: 100, sizePercent: 0, percent: 0.5 },
+        { level: 2, price: 110, sizePercent: 100, percent: 1.0 },
+      ]);
       const flatResult = createFlatResult(false, 80);
 
       const result = service.adjustTakeProfitsForMarketCondition(takeProfits, flatResult);
@@ -353,10 +361,10 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
     });
 
     it('should handle repeated consecutive adjustments', () => {
-      const takeProfits = [
-        createTP(1, 100, 50, 0.5),
-        createTP(2, 110, 30, 1.0),
-      ];
+      const takeProfits = createMarketConditionTakeProfitSeries([
+        { level: 1, price: 100, sizePercent: 50, percent: 0.5 },
+        { level: 2, price: 110, sizePercent: 30, percent: 1.0 },
+      ]);
 
       // First adjustment: FLAT
       let flatResult = createFlatResult(true, 75);

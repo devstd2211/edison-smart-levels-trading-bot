@@ -7,6 +7,19 @@ import {
   LogLevel,
 } from '../../types/legacy';
 
+export type MockLimitOrderRestClient = {
+  submitOrder: jest.Mock;
+  getActiveOrders: jest.Mock;
+  getHistoricOrders: jest.Mock;
+  cancelOrder: jest.Mock;
+};
+
+export type LimitOrderStatusRecord = {
+  orderId: string;
+  orderStatus: string;
+  avgPrice?: string;
+};
+
 export function createLimitOrderExecutorLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -38,6 +51,38 @@ export function createMockLimitOrderBybitService(): BybitService {
     }),
     openPosition: jest.fn(),
   } as unknown as BybitService;
+}
+
+export function createMockLimitOrderRestClient(
+  overrides: Partial<MockLimitOrderRestClient> = {},
+): MockLimitOrderRestClient {
+  return {
+    submitOrder: jest.fn(),
+    getActiveOrders: jest.fn(),
+    getHistoricOrders: jest.fn(),
+    cancelOrder: jest.fn(),
+    ...overrides,
+  };
+}
+
+export function attachLimitOrderRestClient(
+  bybitService: BybitService,
+  overrides: Partial<MockLimitOrderRestClient> = {},
+): MockLimitOrderRestClient {
+  const restClient = createMockLimitOrderRestClient(overrides);
+  (bybitService.getRestClient as jest.Mock).mockReturnValue(restClient);
+  return restClient;
+}
+
+export function createLimitOrderStatusRecord(
+  overrides: Partial<LimitOrderStatusRecord> = {},
+): LimitOrderStatusRecord {
+  return {
+    orderId: 'order-123',
+    orderStatus: 'Filled',
+    avgPrice: '99.98',
+    ...overrides,
+  };
 }
 
 export function createLimitOrderExecutorService(options: {

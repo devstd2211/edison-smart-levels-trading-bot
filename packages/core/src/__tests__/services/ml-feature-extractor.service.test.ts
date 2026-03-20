@@ -5,10 +5,11 @@
 import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.service';
 import { Candle } from '../../types/legacy';
 import {
-  createMLFeatureCandle,
   createMLFeatureCandleSequence,
   createMLFeatureExtractorHarness,
+  createMLFeatureFlatCandleSequence,
   createMLFeatureUniformCandleSequence,
+  createMLFeatureVolumeImbalanceSequence,
 } from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
@@ -219,14 +220,12 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should handle candles with identical prices', () => {
-      const candles = Array.from({ length: 20 }, (_, index) =>
-        createMLFeatureCandle(100, {
-          timestamp: 1_700_500_000_000 + index * 60_000,
-          high: 100,
-          low: 100,
-          volume: 1_000,
-        }),
-      );
+      const candles = createMLFeatureFlatCandleSequence({
+        count: 20,
+        price: 100,
+        baseTimestamp: 1_700_500_000_000,
+        volume: 1_000,
+      });
 
       const features = service.extractFeatures(candles, 'FLAT', 'WIN');
 
@@ -236,19 +235,14 @@ describe('MLFeatureExtractorService', () => {
     });
 
     it('should calculate volume imbalance correctly', () => {
-      const candles: Candle[] = [];
-
-      for (let i = 0; i < 20; i++) {
-        const volume = i < 18 ? 1_000 : 5_000;
-        candles.push(
-          createMLFeatureCandle(100 + i, {
-            timestamp: 1_700_600_000_000 + i * 60_000,
-            high: 101 + i,
-            low: 99 + i,
-            volume,
-          }),
-        );
-      }
+      const candles: Candle[] = createMLFeatureVolumeImbalanceSequence({
+        count: 20,
+        baseTimestamp: 1_700_600_000_000,
+        basePrice: 100,
+        normalVolume: 1_000,
+        spikeVolume: 5_000,
+        spikeFromIndex: 18,
+      });
 
       const features = service.extractFeatures(candles, 'VOLUME', 'WIN');
 

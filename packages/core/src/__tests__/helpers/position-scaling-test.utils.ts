@@ -66,6 +66,28 @@ export function createPositionScalingScenario(
   return createPositionScalingPosition(overrides);
 }
 
+export function createPositionScalingExtremes(
+  overrides: Partial<PositionState> = {},
+): PositionState {
+  return createPositionScalingPosition({
+    currentPrice: Number.MAX_VALUE,
+    profitTarget: 1,
+    ...overrides,
+  });
+}
+
+export function createPositionScalingSequence(
+  scaleCounts: number[],
+  overrides: Partial<PositionState> = {},
+): PositionState[] {
+  return scaleCounts.map((scaleCount) =>
+    createPositionScalingPosition({
+      scaleCount,
+      ...overrides,
+    }),
+  );
+}
+
 export async function evaluatePositionScaleDecision(
   service: PositionScalingService,
   overrides: Partial<PositionState> = {},

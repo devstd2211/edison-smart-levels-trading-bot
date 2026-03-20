@@ -13,11 +13,13 @@ import {
   LimitOrderExecutorConfig,
 } from '../../types/legacy';
 import {
+  attachLimitOrderRestClient,
+  createLimitOrderStatusRecord,
   createLimitOrderExecutorConfig,
   createLimitOrderExecutorHarness,
   createLimitOrderExecutorLogger,
-  createLimitOrderExecutorService,
   createMockLimitOrderBybitService,
+  MockLimitOrderRestClient,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -29,17 +31,22 @@ describe('LimitOrderExecutorService', () => {
   let bybitService: BybitService;
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
+  let restClient: MockLimitOrderRestClient;
+  let createService: ReturnType<typeof createLimitOrderExecutorHarness>['createService'];
 
   beforeEach(() => {
     logger = createLimitOrderExecutorLogger();
     config = createLimitOrderExecutorConfig({ maxRetries: 1 });
     bybitService = createMockLimitOrderBybitService();
-    service = createLimitOrderExecutorHarness({
+    const harness = createLimitOrderExecutorHarness({
       config,
       bybitService,
       logger,
       withErrorHandler: false,
-    }).service;
+    });
+    service = harness.service;
+    createService = harness.createService;
+    restClient = attachLimitOrderRestClient(bybitService);
   });
 
   // ==========================================================================
@@ -103,13 +110,9 @@ describe('LimitOrderExecutorService', () => {
   describe('placeLimitOrder', () => {
     it('should place limit order successfully (LONG)', async () => {
       const mockOrderId = 'order-123';
-      const mockSubmitOrder = jest.fn().mockResolvedValue({
+      restClient.submitOrder.mockResolvedValue({
         retCode: 0,
         result: { orderId: mockOrderId },
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
       });
 
       const result = await service.placeLimitOrder(
@@ -122,7 +125,7 @@ describe('LimitOrderExecutorService', () => {
       expect(result.orderId).toBe(mockOrderId);
       expect(result.filled).toBe(false);
       expect(result.feePaid).toBe(0);
-      expect(mockSubmitOrder).toHaveBeenCalledWith(
+      expect(restClient.submitOrder).toHaveBeenCalledWith(
         expect.objectContaining({
           category: 'linear',
           symbol: 'APEXUSDT',
@@ -137,13 +140,9 @@ describe('LimitOrderExecutorService', () => {
 
     it('should place limit order successfully (SHORT)', async () => {
       const mockOrderId = 'order-456';
-      const mockSubmitOrder = jest.fn().mockResolvedValue({
+      restClient.submitOrder.mockResolvedValue({
         retCode: 0,
         result: { orderId: mockOrderId },
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
       });
 
       const result = await service.placeLimitOrder(
@@ -154,7 +153,7 @@ describe('LimitOrderExecutorService', () => {
       );
 
       expect(result.orderId).toBe(mockOrderId);
-      expect(mockSubmitOrder).toHaveBeenCalledWith(
+      expect(restClient.submitOrder).toHaveBeenCalledWith(
         expect.objectContaining({
           side: 'Sell',
         }),
@@ -163,17 +162,12 @@ describe('LimitOrderExecutorService', () => {
 
     it('should retry on failure and succeed on second attempt', async () => {
       const mockOrderId = 'order-retry-success';
-      const mockSubmitOrder = jest
-        .fn()
+      restClient.submitOrder
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({
           retCode: 0,
           result: { orderId: mockOrderId },
         });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
-      });
 
       const result = await service.placeLimitOrder(
         SignalDirection.LONG,
@@ -183,39 +177,31 @@ describe('LimitOrderExecutorService', () => {
       );
 
       expect(result.orderId).toBe(mockOrderId);
-      expect(mockSubmitOrder).toHaveBeenCalledTimes(2); // First failed, second succeeded
+      expect(restClient.submitOrder).toHaveBeenCalledTimes(2); // First failed, second succeeded
     });
 
     it('should throw error after max retries exceeded', async () => {
-      const mockSubmitOrder = jest.fn().mockRejectedValue(new Error('Persistent error'));
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
-      });
+      restClient.submitOrder.mockRejectedValue(new Error('Persistent error'));
 
       await expect(
         service.placeLimitOrder(SignalDirection.LONG, 10, 99.98, 5),
       ).rejects.toThrow('Failed to place limit order after');
 
       // maxRetries = 1, so total attempts = 2
-      expect(mockSubmitOrder).toHaveBeenCalledTimes(2);
+      expect(restClient.submitOrder).toHaveBeenCalledTimes(2);
     });
 
     it('should throw error if API returns error code', async () => {
-      const mockSubmitOrder = jest.fn().mockResolvedValue({
+      restClient.submitOrder.mockResolvedValue({
         retCode: 10001,
         retMsg: 'Insufficient balance',
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
       });
 
       await expect(
         service.placeLimitOrder(SignalDirection.LONG, 10, 99.98, 5),
       ).rejects.toThrow(); // Will throw LimitOrderPlacementError
 
-      expect(mockSubmitOrder).toHaveBeenCalled();
+      expect(restClient.submitOrder).toHaveBeenCalled();
     });
   });
 
@@ -225,80 +211,50 @@ describe('LimitOrderExecutorService', () => {
 
   describe('waitForFill', () => {
     it('should return true when order is filled', async () => {
-      const mockGetActiveOrders = jest.fn().mockResolvedValue({
+      restClient.getActiveOrders.mockResolvedValue({
         retCode: 0,
         result: { list: [] }, // Empty = not active anymore
       });
 
-      const mockGetHistoricOrders = jest.fn().mockResolvedValue({
+      restClient.getHistoricOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [
-            {
-              orderId: 'order-123',
-              orderStatus: 'Filled',
-              avgPrice: '99.98',
-            },
-          ],
+          list: [createLimitOrderStatusRecord()],
         },
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        getActiveOrders: mockGetActiveOrders,
-        getHistoricOrders: mockGetHistoricOrders,
       });
 
       const filled = await service.waitForFill('order-123', 5000);
 
       expect(filled).toBe(true);
-      expect(mockGetActiveOrders).toHaveBeenCalled();
-      expect(mockGetHistoricOrders).toHaveBeenCalled();
+      expect(restClient.getActiveOrders).toHaveBeenCalled();
+      expect(restClient.getHistoricOrders).toHaveBeenCalled();
     });
 
     it('should throw LimitOrderFillTimeoutError on timeout (order still active)', async () => {
-      const mockGetActiveOrders = jest.fn().mockResolvedValue({
+      restClient.getActiveOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [
-            {
-              orderId: 'order-123',
-              orderStatus: 'New',
-            },
-          ],
+          list: [createLimitOrderStatusRecord({ orderStatus: 'New' })],
         }, // Still active
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        getActiveOrders: mockGetActiveOrders,
       });
 
       // Short timeout to avoid test delay
       await expect(service.waitForFill('order-123', 500)).rejects.toThrow();
 
-      expect(mockGetActiveOrders).toHaveBeenCalled();
+      expect(restClient.getActiveOrders).toHaveBeenCalled();
     });
 
     it('should return false if order was cancelled', async () => {
-      const mockGetActiveOrders = jest.fn().mockResolvedValue({
+      restClient.getActiveOrders.mockResolvedValue({
         retCode: 0,
         result: { list: [] },
       });
 
-      const mockGetHistoricOrders = jest.fn().mockResolvedValue({
+      restClient.getHistoricOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [
-            {
-              orderId: 'order-123',
-              orderStatus: 'Cancelled',
-            },
-          ],
+          list: [createLimitOrderStatusRecord({ orderStatus: 'Cancelled' })],
         },
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        getActiveOrders: mockGetActiveOrders,
-        getHistoricOrders: mockGetHistoricOrders,
       });
 
       const filled = await service.waitForFill('order-123', 5000);
@@ -313,18 +269,14 @@ describe('LimitOrderExecutorService', () => {
 
   describe('cancelOrder', () => {
     it('should cancel order successfully', async () => {
-      const mockCancelOrder = jest.fn().mockResolvedValue({
+      restClient.cancelOrder.mockResolvedValue({
         retCode: 0,
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        cancelOrder: mockCancelOrder,
       });
 
       const result = await service.cancelOrder('order-123');
 
       expect(result).toBe(true);
-      expect(mockCancelOrder).toHaveBeenCalledWith({
+      expect(restClient.cancelOrder).toHaveBeenCalledWith({
         category: 'linear',
         symbol: 'APEXUSDT',
         orderId: 'order-123',
@@ -332,13 +284,9 @@ describe('LimitOrderExecutorService', () => {
     });
 
     it('should handle "order not exists" gracefully', async () => {
-      const mockCancelOrder = jest.fn().mockResolvedValue({
+      restClient.cancelOrder.mockResolvedValue({
         retCode: 110001,
         retMsg: 'order not exists or too late to cancel',
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        cancelOrder: mockCancelOrder,
       });
 
       const result = await service.cancelOrder('order-123');
@@ -347,11 +295,7 @@ describe('LimitOrderExecutorService', () => {
     });
 
     it('should return false on error', async () => {
-      const mockCancelOrder = jest.fn().mockRejectedValue(new Error('Network error'));
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        cancelOrder: mockCancelOrder,
-      });
+      restClient.cancelOrder.mockRejectedValue(new Error('Network error'));
 
       const result = await service.cancelOrder('order-123');
 
@@ -368,22 +312,14 @@ describe('LimitOrderExecutorService', () => {
       const mockOrderId = 'market-order-123';
       const mockOpenPosition = jest.fn().mockResolvedValue(mockOrderId);
 
-      const mockGetHistoricOrders = jest.fn().mockResolvedValue({
+      restClient.getHistoricOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [
-            {
-              orderId: mockOrderId,
-              avgPrice: '99.95',
-            },
-          ],
+          list: [createLimitOrderStatusRecord({ orderId: mockOrderId, avgPrice: '99.95' })],
         },
       });
 
       (bybitService.openPosition as jest.Mock) = mockOpenPosition;
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        getHistoricOrders: mockGetHistoricOrders,
-      });
 
       const result = await service.fallbackToMarket(SignalDirection.LONG, 10, 5);
 
@@ -417,33 +353,21 @@ describe('LimitOrderExecutorService', () => {
     it('should execute limit order and wait for fill (success path)', async () => {
       const mockOrderId = 'limit-success';
 
-      const mockSubmitOrder = jest.fn().mockResolvedValue({
+      restClient.submitOrder.mockResolvedValue({
         retCode: 0,
         result: { orderId: mockOrderId },
       });
 
-      const mockGetActiveOrders = jest.fn().mockResolvedValue({
+      restClient.getActiveOrders.mockResolvedValue({
         retCode: 0,
         result: { list: [] },
       });
 
-      const mockGetHistoricOrders = jest.fn().mockResolvedValue({
+      restClient.getHistoricOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [
-            {
-              orderId: mockOrderId,
-              orderStatus: 'Filled',
-              avgPrice: '99.98',
-            },
-          ],
+          list: [createLimitOrderStatusRecord({ orderId: mockOrderId })],
         },
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
-        getActiveOrders: mockGetActiveOrders,
-        getHistoricOrders: mockGetHistoricOrders,
       });
 
       const result = await service.executeEntry(
@@ -464,51 +388,38 @@ describe('LimitOrderExecutorService', () => {
       const mockLimitOrderId = 'limit-timeout';
       const mockMarketOrderId = 'market-fallback';
 
-      const mockSubmitOrder = jest.fn().mockResolvedValue({
+      restClient.submitOrder.mockResolvedValue({
         retCode: 0,
         result: { orderId: mockLimitOrderId },
       });
 
       // Order stays active (not filled)
-      const mockGetActiveOrders = jest.fn().mockResolvedValue({
+      restClient.getActiveOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [{ orderId: mockLimitOrderId, orderStatus: 'New' }],
+          list: [createLimitOrderStatusRecord({ orderId: mockLimitOrderId, orderStatus: 'New' })],
         },
       });
-
-      const mockCancelOrder = jest.fn().mockResolvedValue({ retCode: 0 });
 
       const mockOpenPosition = jest.fn().mockResolvedValue(mockMarketOrderId);
 
-      const mockGetHistoricOrders = jest.fn().mockResolvedValue({
+      restClient.cancelOrder.mockResolvedValue({ retCode: 0 });
+      restClient.getHistoricOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [{ orderId: mockMarketOrderId, avgPrice: '99.95' }],
+          list: [createLimitOrderStatusRecord({ orderId: mockMarketOrderId, avgPrice: '99.95' })],
         },
-      });
-
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        submitOrder: mockSubmitOrder,
-        getActiveOrders: mockGetActiveOrders,
-        cancelOrder: mockCancelOrder,
-        getHistoricOrders: mockGetHistoricOrders,
       });
 
       (bybitService.openPosition as jest.Mock) = mockOpenPosition;
 
       // Short timeout to test fallback
-      service = createLimitOrderExecutorService({
-        configOverrides: { ...config, timeoutMs: 500 },
-        bybitService,
-        logger,
-        withErrorHandler: false,
-      });
+      service = createService({ config: { ...config, timeoutMs: 500 } });
 
       const result = await service.executeEntry(SignalDirection.LONG, 10, 100, 5);
 
       expect(result.orderId).toBe(mockMarketOrderId);
-      expect(mockCancelOrder).toHaveBeenCalled();
+      expect(restClient.cancelOrder).toHaveBeenCalled();
       expect(mockOpenPosition).toHaveBeenCalled();
     });
 
@@ -516,25 +427,17 @@ describe('LimitOrderExecutorService', () => {
       const mockMarketOrderId = 'market-direct';
       const mockOpenPosition = jest.fn().mockResolvedValue(mockMarketOrderId);
 
-      const mockGetHistoricOrders = jest.fn().mockResolvedValue({
+      restClient.getHistoricOrders.mockResolvedValue({
         retCode: 0,
         result: {
-          list: [{ orderId: mockMarketOrderId, avgPrice: '100.00' }],
+          list: [createLimitOrderStatusRecord({ orderId: mockMarketOrderId, avgPrice: '100.00' })],
         },
       });
 
       (bybitService.openPosition as jest.Mock) = mockOpenPosition;
-      (bybitService.getRestClient as jest.Mock).mockReturnValue({
-        getHistoricOrders: mockGetHistoricOrders,
-      });
 
       // Disable limit order execution
-      service = createLimitOrderExecutorService({
-        configOverrides: { ...config, enabled: false },
-        bybitService,
-        logger,
-        withErrorHandler: false,
-      });
+      service = createService({ config: { ...config, enabled: false } });
 
       const result = await service.executeEntry(SignalDirection.LONG, 10, 100, 5);
 

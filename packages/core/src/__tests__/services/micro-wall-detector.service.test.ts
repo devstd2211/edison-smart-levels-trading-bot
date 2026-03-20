@@ -8,17 +8,13 @@ import {
   SignalDirection,
 } from '../../types/legacy';
 import {
+  createAgedMicroWall,
+  createBrokenMicroWall,
   createMicroWallDetectorHarness,
   createMicroWall,
   createMicroWallDetectionOrderBook,
-  createMicroWallOrderBook,
+  createTrackedMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
-
-// ============================================================================
-// TEST HELPERS
-// ============================================================================
-
-const createOrderBook = createMicroWallOrderBook;
 
 // ============================================================================
 // TESTS
@@ -80,18 +76,18 @@ describe('MicroWallDetectorService', () => {
     it('should ignore walls below threshold (4% size)', () => {
       // Orderbook: Small bid at 1.0 (only 4% of total)
       // Total = 10000 USDT → 4% = 400 USDT
-      const orderbook = createOrderBook(
-        [
+      const orderbook = createMicroWallDetectionOrderBook({
+        bidLevels: [
           [1.0, 400], // 400 USDT (target 4%)
           [0.999, 100],
           [0.998, 100],
         ],
-        [
+        askLevels: [
           [1.001, 9000], // Large ask to make total = 10000 USDT
           [1.002, 200],
           [1.003, 200],
         ],
-      );
+      });
 
       const walls = detector.detectMicroWalls(orderbook);
 
@@ -100,7 +96,10 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should handle empty orderbook', () => {
-      const orderbook = createOrderBook([], []);
+      const orderbook = createMicroWallDetectionOrderBook({
+        bidLevels: [],
+        askLevels: [],
+      });
 
       const walls = detector.detectMicroWalls(orderbook);
 
@@ -108,10 +107,10 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should handle orderbook with zero volume', () => {
-      const orderbook = createOrderBook(
-        [[1.0, 0]],
-        [[1.001, 0]],
-      );
+      const orderbook = createMicroWallDetectionOrderBook({
+        bidLevels: [[1.0, 0]],
+        askLevels: [[1.001, 0]],
+      });
 
       const walls = detector.detectMicroWalls(orderbook);
 
@@ -121,10 +120,7 @@ describe('MicroWallDetectorService', () => {
     it('should calculate correct distance from current price', () => {
       // Current price: (1.0 + 1.001) / 2 = 1.0005
       // BID at 1.0: distance = (1.0005 - 1.0) / 1.0005 * 100 = ~0.05%
-      const orderbook = createOrderBook(
-        [[1.0, 500]],
-        [[1.001, 4500]],
-      );
+      const orderbook = createTrackedMicroWallOrderBook();
 
       const walls = detector.detectMicroWalls(orderbook);
 
@@ -187,7 +183,7 @@ describe('MicroWallDetectorService', () => {
 
   describe('isWallBroken', () => {
     it('should detect BID wall break (price moved DOWN)', () => {
-      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
+      const wall = createAgedMicroWall();
 
       const currentPrice = 0.999; // Price moved DOWN through BID wall
 
@@ -224,13 +220,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should return true if wall already broken', () => {
-      const wall = {
-        ...createMicroWall({
-          timestamp: Date.now() - 5000,
-          broken: true,
-        }),
-        brokenAt: Date.now() - 1000,
-      };
+      const wall = createBrokenMicroWall({ timestamp: Date.now() - 5000 });
 
       const currentPrice = 0.999;
 
@@ -240,7 +230,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should NOT detect break if price did not cross wall (BID)', () => {
-      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
+      const wall = createAgedMicroWall();
 
       const currentPrice = 1.001; // Price ABOVE BID wall (not broken)
 
@@ -269,10 +259,7 @@ describe('MicroWallDetectorService', () => {
   describe('cleanupExpiredWalls', () => {
     it('should remove expired walls from tracking', () => {
       // Detect walls
-      const orderbook = createOrderBook(
-        [[1.0, 500]],
-        [[1.001, 4500]],
-      );
+      const orderbook = createTrackedMicroWallOrderBook();
 
       detector.detectMicroWalls(orderbook);
       expect(detector.getTrackedWalls().length).toBeGreaterThan(0);
@@ -293,10 +280,7 @@ describe('MicroWallDetectorService', () => {
 
     it('should keep recent walls', () => {
       // Detect walls
-      const orderbook = createOrderBook(
-        [[1.0, 500]],
-        [[1.001, 4500]],
-      );
+      const orderbook = createTrackedMicroWallOrderBook();
 
       detector.detectMicroWalls(orderbook);
       const initialCount = detector.getTrackedWalls().length;
@@ -311,14 +295,10 @@ describe('MicroWallDetectorService', () => {
 
   describe('getSignalDirection', () => {
     it('should return LONG for broken ASK wall', () => {
-      const wall = {
-        ...createMicroWall({
-          side: 'ASK',
-          price: 1.001,
-          broken: true,
-        }),
-        brokenAt: Date.now(),
-      };
+      const wall = createBrokenMicroWall({
+        side: 'ASK',
+        price: 1.001,
+      }, 0);
 
       const direction = detector.getSignalDirection(wall);
 
@@ -326,10 +306,7 @@ describe('MicroWallDetectorService', () => {
     });
 
     it('should return SHORT for broken BID wall', () => {
-      const wall = {
-        ...createMicroWall({ broken: true }),
-        brokenAt: Date.now(),
-      };
+      const wall = createBrokenMicroWall({}, 0);
 
       const direction = detector.getSignalDirection(wall);
 
@@ -339,7 +316,7 @@ describe('MicroWallDetectorService', () => {
 
   describe('wasRecentlyBroken', () => {
     it('should return true for recently broken wall', () => {
-      const wall = createMicroWall({ timestamp: Date.now() - 2000 });
+      const wall = createAgedMicroWall();
 
       // Break the wall
       detector.isWallBroken(wall, 0.999);
@@ -360,10 +337,7 @@ describe('MicroWallDetectorService', () => {
   describe('reset', () => {
     it('should clear all tracked and broken walls', () => {
       // Detect walls
-      const orderbook = createOrderBook(
-        [[1.0, 500]],
-        [[1.001, 4500]],
-      );
+      const orderbook = createTrackedMicroWallOrderBook();
 
       detector.detectMicroWalls(orderbook);
       expect(detector.getTrackedWalls().length).toBeGreaterThan(0);
@@ -380,10 +354,7 @@ describe('MicroWallDetectorService', () => {
   describe('integration: full detection flow', () => {
     it('should detect → track → break → signal flow', () => {
       // 1. Detect micro wall
-      const orderbook = createOrderBook(
-        [[1.0, 500]], // BID wall
-        [[1.001, 4500]],
-      );
+      const orderbook = createTrackedMicroWallOrderBook();
 
       const walls = detector.detectMicroWalls(orderbook);
       expect(walls.length).toBeGreaterThan(0);

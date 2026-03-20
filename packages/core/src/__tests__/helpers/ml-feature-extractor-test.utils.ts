@@ -46,6 +46,24 @@ type UniformCandleSequenceOptions = {
   volume?: number;
 };
 
+type FlatCandleSequenceOptions = {
+  count?: number;
+  price?: number;
+  baseTimestamp?: number;
+  intervalMs?: number;
+  volume?: number;
+};
+
+type VolumeImbalanceSequenceOptions = {
+  count?: number;
+  baseTimestamp?: number;
+  intervalMs?: number;
+  basePrice?: number;
+  normalVolume?: number;
+  spikeVolume?: number;
+  spikeFromIndex?: number;
+};
+
 export function createMLFeatureExtractorLogger(): LoggerService {
   return {
     info: jest.fn(),
@@ -183,6 +201,46 @@ export function createMLFeatureUniformCandleSequence(
       low,
       close,
       volume,
+    }),
+  );
+}
+
+export function createMLFeatureFlatCandleSequence(
+  options: FlatCandleSequenceOptions = {},
+): Candle[] {
+  const count = options.count ?? 20;
+  const price = options.price ?? 100;
+  const baseTimestamp = options.baseTimestamp ?? 1_700_000_000_000;
+  const intervalMs = options.intervalMs ?? 60_000;
+  const volume = options.volume ?? 1_000;
+
+  return Array.from({ length: count }, (_, index) =>
+    createMLFeatureCandle(price, {
+      timestamp: baseTimestamp + index * intervalMs,
+      high: price,
+      low: price,
+      volume,
+    }),
+  );
+}
+
+export function createMLFeatureVolumeImbalanceSequence(
+  options: VolumeImbalanceSequenceOptions = {},
+): Candle[] {
+  const count = options.count ?? 20;
+  const baseTimestamp = options.baseTimestamp ?? 1_700_000_000_000;
+  const intervalMs = options.intervalMs ?? 60_000;
+  const basePrice = options.basePrice ?? 100;
+  const normalVolume = options.normalVolume ?? 1_000;
+  const spikeVolume = options.spikeVolume ?? 5_000;
+  const spikeFromIndex = options.spikeFromIndex ?? count - 2;
+
+  return Array.from({ length: count }, (_, index) =>
+    createMLFeatureCandle(basePrice + index, {
+      timestamp: baseTimestamp + index * intervalMs,
+      high: basePrice + index + 1,
+      low: basePrice + index - 1,
+      volume: index >= spikeFromIndex ? spikeVolume : normalVolume,
     }),
   );
 }

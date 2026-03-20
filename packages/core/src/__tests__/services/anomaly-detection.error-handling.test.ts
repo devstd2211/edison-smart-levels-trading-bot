@@ -22,6 +22,8 @@ import {
   createAnomalyDetectionService,
   createAnomalyDetectionServiceHarness,
   createAnomalyDetectionTrade,
+  createAnomalyDetectionTradeSeries,
+  createAnomalyDetectionValueSeries,
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
@@ -268,7 +270,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   describe('Integration: E2E Scenarios', () => {
     it('should detect high volume anomaly', () => {
       seedAnomalyDetectionHistory(service, {
-        volumeValues: Array.from({ length: 25 }, () => 1000 + Math.random() * 100),
+        volumeValues: createAnomalyDetectionValueSeries(25, 1000, 4),
       });
 
       // Add anomalous volume (10x normal)
@@ -282,7 +284,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should NOT detect anomaly with normal volume', () => {
       seedAnomalyDetectionHistory(service, {
-        volumeValues: Array.from({ length: 25 }, () => 1000 + Math.random() * 50),
+        volumeValues: createAnomalyDetectionValueSeries(25, 1000, 2),
       });
 
       // Add another normal volume
@@ -293,7 +295,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should detect volatility spike', () => {
       seedAnomalyDetectionHistory(service, {
-        volatilityValues: Array.from({ length: 25 }, () => 1.0 + Math.random() * 0.1),
+        volatilityValues: createAnomalyDetectionValueSeries(25, 1.0, 0.002),
       });
 
       // Add spike (5x normal)
@@ -306,7 +308,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
     it('should NOT detect spike with normal volatility', () => {
       seedAnomalyDetectionHistory(service, {
-        volatilityValues: Array.from({ length: 25 }, () => 1.0 + Math.random() * 0.05),
+        volatilityValues: createAnomalyDetectionValueSeries(25, 1.0, 0.001),
       });
 
       // Add another normal value
@@ -322,12 +324,12 @@ describe('AnomalyDetectionService - Error Handling', () => {
       };
       const { service: testService } = createAnomalyDetectionServiceHarness({ config, logger });
 
-      const trades: Trade[] = [
-        createAnomalyDetectionTrade({ size: 0.1, price: 50000 }), // $5k
-        createAnomalyDetectionTrade({ size: 0.1, price: 50000 }), // $5k
-        createAnomalyDetectionTrade({ size: 0.1, price: 50000 }), // $5k
-        createAnomalyDetectionTrade({ size: 20.0, price: 50000 }), // $1M (whale!)
-      ];
+      const trades: Trade[] = createAnomalyDetectionTradeSeries([
+        { size: 0.1, price: 50000 },
+        { size: 0.1, price: 50000 },
+        { size: 0.1, price: 50000 },
+        { size: 20.0, price: 50000 },
+      ]);
 
       const alerts = testService.detectWhaleActivity(trades);
 
@@ -340,12 +342,12 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should detect accumulation pattern', () => {
-      const trades: Trade[] = [
-        createAnomalyDetectionTrade({ side: 'BUY', size: 1.0, price: 50000 }),
-        createAnomalyDetectionTrade({ side: 'BUY', size: 1.0, price: 50100 }),
-        createAnomalyDetectionTrade({ side: 'BUY', size: 1.0, price: 50200 }),
-        createAnomalyDetectionTrade({ side: 'SELL', size: 0.1, price: 50000 }),
-      ];
+      const trades: Trade[] = createAnomalyDetectionTradeSeries([
+        { side: 'BUY', size: 1.0, price: 50000 },
+        { side: 'BUY', size: 1.0, price: 50100 },
+        { side: 'BUY', size: 1.0, price: 50200 },
+        { side: 'SELL', size: 0.1, price: 50000 },
+      ]);
 
       const alerts = service.detectWhaleActivity(trades);
 
@@ -357,12 +359,12 @@ describe('AnomalyDetectionService - Error Handling', () => {
     });
 
     it('should detect distribution pattern', () => {
-      const trades: Trade[] = [
-        createAnomalyDetectionTrade({ side: 'SELL', size: 1.0, price: 50000 }),
-        createAnomalyDetectionTrade({ side: 'SELL', size: 1.0, price: 49900 }),
-        createAnomalyDetectionTrade({ side: 'SELL', size: 1.0, price: 49800 }),
-        createAnomalyDetectionTrade({ side: 'BUY', size: 0.1, price: 50000 }),
-      ];
+      const trades: Trade[] = createAnomalyDetectionTradeSeries([
+        { side: 'SELL', size: 1.0, price: 50000 },
+        { side: 'SELL', size: 1.0, price: 49900 },
+        { side: 'SELL', size: 1.0, price: 49800 },
+        { side: 'BUY', size: 0.1, price: 50000 },
+      ]);
 
       const alerts = service.detectWhaleActivity(trades);
 
@@ -376,14 +378,13 @@ describe('AnomalyDetectionService - Error Handling', () => {
     it('should analyze manipulation patterns without crashing', () => {
       // Create trades that might indicate wash trading (all at same price)
       const basePrice = 50000;
-      const trades: Trade[] = [];
-      for (let i = 0; i < 10; i++) {
-        trades.push(createAnomalyDetectionTrade({
-          price: basePrice, // All trades at exactly same price
+      const trades: Trade[] = createAnomalyDetectionTradeSeries(
+        Array.from({ length: 10 }, (_, index) => ({
+          price: basePrice,
           size: 0.1,
-          side: i % 2 === 0 ? 'BUY' : 'SELL',
-        }));
-      }
+          side: index % 2 === 0 ? 'BUY' : 'SELL',
+        })),
+      );
 
       service.detectWhaleActivity(trades);
       const flags = service.flagPossibleManipulation();

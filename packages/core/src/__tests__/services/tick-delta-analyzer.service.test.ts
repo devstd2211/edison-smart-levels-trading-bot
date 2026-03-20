@@ -6,9 +6,10 @@ import { TickDeltaAnalyzerService } from '../../services/tick-delta-analyzer.ser
 import { SignalDirection } from '../../types/legacy';
 import {
   createTickDeltaAnalyzerConfig,
+  createTickDeltaAnalyzerDirectionalTicks,
   createTickDeltaAnalyzerHarness,
-  createTickDeltaAnalyzerTickBatch,
   createTickDeltaAnalyzerTick,
+  seedTickDeltaAnalyzerHistory,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 describe('TickDeltaAnalyzerService', () => {
@@ -40,13 +41,11 @@ describe('TickDeltaAnalyzerService', () => {
     });
 
     it('should maintain multiple ticks', () => {
-      const tick1 = createTickDeltaAnalyzerTick();
-      const tick2 = createTickDeltaAnalyzerTick({ side: 'SELL', size: 50, timestamp: 1_700_000_000_001 });
-      const tick3 = createTickDeltaAnalyzerTick({ size: 75, timestamp: 1_700_000_000_002 });
-
-      service.addTick(tick1);
-      service.addTick(tick2);
-      service.addTick(tick3);
+      seedTickDeltaAnalyzerHistory(service, [
+        createTickDeltaAnalyzerTick(),
+        createTickDeltaAnalyzerTick({ side: 'SELL', size: 50, timestamp: 1_700_000_000_001 }),
+        createTickDeltaAnalyzerTick({ size: 75, timestamp: 1_700_000_000_002 }),
+      ]);
 
       expect(service.getTickHistory()).toHaveLength(3);
     });
@@ -63,18 +62,14 @@ describe('TickDeltaAnalyzerService', () => {
   describe('calculateDeltaRatio', () => {
     it('should calculate delta ratio with more buys (buy > sell)', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(40, { timestamp: now }).forEach((tick) => service.addTick(tick));
-      createTickDeltaAnalyzerTickBatch(15, { side: 'SELL', timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(40, 15, { timestamp: now }));
 
       expect(service.calculateDeltaRatio(5_000, now)).toBeCloseTo(2.67, 1);
     });
 
     it('should calculate delta ratio with more sells (sell > buy)', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(10, { timestamp: now }).forEach((tick) => service.addTick(tick));
-      createTickDeltaAnalyzerTickBatch(35, { side: 'SELL', timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(10, 35, { timestamp: now }));
 
       expect(service.calculateDeltaRatio(5_000, now)).toBeCloseTo(0.29, 1);
     });
@@ -85,32 +80,24 @@ describe('TickDeltaAnalyzerService', () => {
 
     it('should return max ratio (10) with only buy ticks', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(20, { timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(20, 0, { timestamp: now }));
 
       expect(service.calculateDeltaRatio(5_000, now)).toBe(10);
     });
 
     it('should return min ratio (0.1) with only sell ticks', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(20, { side: 'SELL', timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(0, 20, { timestamp: now }));
 
       expect(service.calculateDeltaRatio(5_000, now)).toBe(0.1);
     });
 
     it('should only count ticks within window', () => {
       const now = 1_700_000_100_000;
-
-      for (let i = 0; i < 30; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ timestamp: now - 10_000 }));
-      }
-      for (let i = 0; i < 10; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ timestamp: now }));
-      }
-      for (let i = 0; i < 5; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ side: 'SELL', timestamp: now }));
-      }
+      seedTickDeltaAnalyzerHistory(service, [
+        ...createTickDeltaAnalyzerDirectionalTicks(30, 0, { timestamp: now - 10_000 }),
+        ...createTickDeltaAnalyzerDirectionalTicks(10, 5, { timestamp: now }),
+      ]);
 
       expect(service.calculateDeltaRatio(5_000, now)).toBeCloseTo(2.0, 1);
     });
@@ -119,9 +106,7 @@ describe('TickDeltaAnalyzerService', () => {
   describe('detectMomentumSpike', () => {
     it('should detect BUY momentum spike (2x ratio)', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(40, { timestamp: now }).forEach((tick) => service.addTick(tick));
-      createTickDeltaAnalyzerTickBatch(15, { side: 'SELL', timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(40, 15, { timestamp: now }));
 
       const spike = service.detectMomentumSpike(now);
 
@@ -134,9 +119,7 @@ describe('TickDeltaAnalyzerService', () => {
 
     it('should detect SELL momentum spike (inverse 2x ratio)', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(10, { timestamp: now }).forEach((tick) => service.addTick(tick));
-      createTickDeltaAnalyzerTickBatch(35, { side: 'SELL', timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(10, 35, { timestamp: now }));
 
       const spike = service.detectMomentumSpike(now);
 
@@ -148,48 +131,36 @@ describe('TickDeltaAnalyzerService', () => {
 
     it('should NOT detect spike if ratio too weak (1.5x < 2.0x)', () => {
       const now = 1_700_000_100_000;
-
-      createTickDeltaAnalyzerTickBatch(30, { timestamp: now }).forEach((tick) => service.addTick(tick));
-      createTickDeltaAnalyzerTickBatch(20, { side: 'SELL', timestamp: now }).forEach((tick) => service.addTick(tick));
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(30, 20, { timestamp: now }));
 
       expect(service.detectMomentumSpike(now)).toBeNull();
     });
 
     it('should NOT detect spike if tick count too low', () => {
       const now = 1_700_000_100_000;
-
-      for (let i = 0; i < 10; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ timestamp: now }));
-      }
-      for (let i = 0; i < 5; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ side: 'SELL', timestamp: now }));
-      }
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(10, 5, { timestamp: now }));
 
       expect(service.detectMomentumSpike(now)).toBeNull();
     });
 
     it('should NOT detect spike if volume too low', () => {
       const now = 1_700_000_100_000;
-
-      for (let i = 0; i < 20; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ timestamp: now, size: 5 }));
-      }
-      for (let i = 0; i < 10; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ side: 'SELL', timestamp: now, size: 5 }));
-      }
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(20, 10, {
+        timestamp: now,
+        buySize: 5,
+        sellSize: 5,
+      }));
 
       expect(service.detectMomentumSpike(now)).toBeNull();
     });
 
     it('should calculate correct volumeUSDT', () => {
       const now = 1_700_000_100_000;
-
-      for (let i = 0; i < 30; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ timestamp: now, price: 2.0 }));
-      }
-      for (let i = 0; i < 10; i++) {
-        service.addTick(createTickDeltaAnalyzerTick({ side: 'SELL', timestamp: now, price: 2.0 }));
-      }
+      seedTickDeltaAnalyzerHistory(service, createTickDeltaAnalyzerDirectionalTicks(30, 10, {
+        timestamp: now,
+        buyPrice: 2.0,
+        sellPrice: 2.0,
+      }));
 
       const spike = service.detectMomentumSpike(now);
 
@@ -200,13 +171,7 @@ describe('TickDeltaAnalyzerService', () => {
     it('should cap confidence at maxConfidence', () => {
       const { service: cappedService, config } = createTickDeltaAnalyzerHarness();
       const now = 1_700_000_100_000;
-
-      for (let i = 0; i < 200; i++) {
-        cappedService.addTick(createTickDeltaAnalyzerTick({ timestamp: now }));
-      }
-      for (let i = 0; i < 10; i++) {
-        cappedService.addTick(createTickDeltaAnalyzerTick({ side: 'SELL', timestamp: now }));
-      }
+      seedTickDeltaAnalyzerHistory(cappedService, createTickDeltaAnalyzerDirectionalTicks(200, 10, { timestamp: now }));
 
       const spike = cappedService.detectMomentumSpike(now);
 
@@ -222,12 +187,10 @@ describe('TickDeltaAnalyzerService', () => {
       Date.now = jest.fn(() => now);
 
       try {
-        for (let i = 0; i < 20; i++) {
-          service.addTick(createTickDeltaAnalyzerTick({ timestamp: now - 11_000 }));
-        }
-        for (let i = 0; i < 10; i++) {
-          service.addTick(createTickDeltaAnalyzerTick({ timestamp: now }));
-        }
+        seedTickDeltaAnalyzerHistory(service, [
+          ...createTickDeltaAnalyzerDirectionalTicks(20, 0, { timestamp: now - 11_000 }),
+          ...createTickDeltaAnalyzerDirectionalTicks(10, 0, { timestamp: now }),
+        ]);
 
         service.cleanupOldTicks();
 
@@ -243,12 +206,10 @@ describe('TickDeltaAnalyzerService', () => {
       Date.now = jest.fn(() => now);
 
       try {
-        for (let i = 0; i < 15; i++) {
-          service.addTick(createTickDeltaAnalyzerTick({ timestamp: now - 8_000 }));
-        }
-        for (let i = 0; i < 10; i++) {
-          service.addTick(createTickDeltaAnalyzerTick({ timestamp: now }));
-        }
+        seedTickDeltaAnalyzerHistory(service, [
+          ...createTickDeltaAnalyzerDirectionalTicks(15, 0, { timestamp: now - 8_000 }),
+          ...createTickDeltaAnalyzerDirectionalTicks(10, 0, { timestamp: now }),
+        ]);
 
         service.cleanupOldTicks();
 

@@ -26,8 +26,9 @@ import {
 } from '../../constants/phase-11-constants';
 import {
   createPositionScalingHarness,
+  createPositionScalingExtremes,
   createPositionScalingScenario,
-  createPositionScalingPosition,
+  createPositionScalingSequence,
   evaluatePositionScaleDecision,
 } from '../helpers/position-scaling-test.utils';
 
@@ -145,12 +146,7 @@ describe('PositionScalingService', () => {
 
   describe('GRACEFUL_DEGRADE - Calculation Failures', () => {
     it('should return hold action when shouldScale calculation fails', async () => {
-      // Use extreme values to trigger calculation errors in try-catch
-      const brokenPosition = {
-        ...mockPosition,
-        currentPrice: Number.MAX_VALUE, // Will cause overflow
-        profitTarget: 1,
-      };
+      const brokenPosition = createPositionScalingExtremes();
 
       const result = await service.shouldScale(brokenPosition);
 
@@ -160,11 +156,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should return hold action when scaleIntoWinner calculation fails', async () => {
-      const brokenPosition = {
-        ...mockPosition,
-        currentPrice: Number.MAX_VALUE,
-        profitTarget: 1,
-      };
+      const brokenPosition = createPositionScalingExtremes();
 
       const result = await service.scaleIntoWinner(brokenPosition, Number.MAX_VALUE);
 
@@ -173,11 +165,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should return hold action when reduceRiskOnProfit calculation fails', async () => {
-      const brokenPosition = {
-        ...mockPosition,
-        currentPrice: Number.MAX_VALUE,
-        profitTarget: 1,
-      };
+      const brokenPosition = createPositionScalingExtremes();
 
       const result = await service.reduceRiskOnProfit(brokenPosition);
 
@@ -229,11 +217,7 @@ describe('PositionScalingService', () => {
     it('should not throw when logging fails in shouldScale', async () => {
       const brokenService = createBrokenService();
 
-      // Use extreme values to trigger error path (which uses logging)
-      const extremePosition = {
-        ...mockPosition,
-        currentPrice: Number.MAX_VALUE,
-      };
+      const extremePosition = createPositionScalingExtremes({ profitTarget: mockPosition.profitTarget });
 
       await expect(
         brokenService.shouldScale(extremePosition)
@@ -243,10 +227,7 @@ describe('PositionScalingService', () => {
     it('should not throw when logging fails in scaleIntoWinner', async () => {
       const brokenService = createBrokenService();
 
-      const extremePosition = {
-        ...mockPosition,
-        currentPrice: Number.MAX_VALUE,
-      };
+      const extremePosition = createPositionScalingExtremes({ profitTarget: mockPosition.profitTarget });
 
       await expect(
         brokenService.scaleIntoWinner(extremePosition, Number.MAX_VALUE)
@@ -256,10 +237,7 @@ describe('PositionScalingService', () => {
     it('should not throw when logging fails in reduceRiskOnProfit', async () => {
       const brokenService = createBrokenService();
 
-      const extremePosition = {
-        ...mockPosition,
-        currentPrice: Number.MAX_VALUE,
-      };
+      const extremePosition = createPositionScalingExtremes({ profitTarget: mockPosition.profitTarget });
 
       await expect(
         brokenService.reduceRiskOnProfit(extremePosition)
@@ -402,14 +380,14 @@ describe('PositionScalingService', () => {
 
   describe('Helper Methods - calculateScaleSize', () => {
     it('should calculate scale size with reduction factor', () => {
-      const scale1 = service.calculateScaleSize(mockPosition);
+      const [position1, position2, position3] = createPositionScalingSequence([0, 1, 2]);
+
+      const scale1 = service.calculateScaleSize(position1);
       expect(scale1).toBeCloseTo(50, 1); // 100 * 0.5^1
 
-      const position2 = { ...mockPosition, scaleCount: 1 };
       const scale2 = service.calculateScaleSize(position2);
       expect(scale2).toBeCloseTo(25, 1); // 100 * 0.5^2
 
-      const position3 = { ...mockPosition, scaleCount: 2 };
       const scale3 = service.calculateScaleSize(position3);
       expect(scale3).toBeCloseTo(12.5, 1); // 100 * 0.5^3
     });

@@ -81,6 +81,13 @@ export function createMicroWallDetectionOrderBook(options: {
   );
 }
 
+export function createTrackedMicroWallOrderBook(): OrderBook {
+  return createMicroWallOrderBook(
+    [[1.0, 500]],
+    [[1.001, 4500]],
+  );
+}
+
 export function createMicroWall(overrides: Partial<{
   side: 'BID' | 'ASK';
   price: number;
@@ -99,6 +106,29 @@ export function createMicroWall(overrides: Partial<{
     timestamp: Date.now(),
     broken: false,
     ...overrides,
+  };
+}
+
+export function createAgedMicroWall(
+  overrides: Partial<Parameters<typeof createMicroWall>[0]> = {},
+  ageMs: number = 2_000,
+) {
+  return createMicroWall({
+    timestamp: Date.now() - ageMs,
+    ...overrides,
+  });
+}
+
+export function createBrokenMicroWall(
+  overrides: Partial<Parameters<typeof createMicroWall>[0]> = {},
+  brokenAgeMs: number = 1_000,
+) {
+  return {
+    ...createMicroWall({
+      broken: true,
+      ...overrides,
+    }),
+    brokenAt: Date.now() - brokenAgeMs,
   };
 }
 

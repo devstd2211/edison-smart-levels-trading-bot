@@ -38,6 +38,25 @@ export function createAnomalyDetectionTrade(overrides: Partial<Trade> = {}): Tra
   };
 }
 
+export function createAnomalyDetectionTradeSeries(
+  entries: Array<Partial<Trade>>,
+): Trade[] {
+  return entries.map((entry, index) =>
+    createAnomalyDetectionTrade({
+      timestamp: entry.timestamp ?? 1_700_000_000_000 + index,
+      ...entry,
+    }),
+  );
+}
+
+export function createAnomalyDetectionValueSeries(
+  count: number,
+  base: number,
+  step: number = 0,
+): number[] {
+  return Array.from({ length: count }, (_, index) => base + index * step);
+}
+
 export function createAnomalyDetectionServiceHarness(options: {
   config?: Partial<AnomalyDetectionConfig>;
   logger?: LoggerService;

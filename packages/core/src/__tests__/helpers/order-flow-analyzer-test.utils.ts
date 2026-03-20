@@ -60,6 +60,26 @@ export function createMockFlow(
   return { direction, volumeUSDT, timestamp, price: 1.0 };
 }
 
+export function createOrderFlowSeries(
+  buys: number[],
+  sells: number[],
+  timestamp: number = Date.now(),
+): AggressiveFlow[] {
+  return [
+    ...buys.map((volumeUSDT, index) => createMockFlow('BUY', volumeUSDT, timestamp + index)),
+    ...sells.map((volumeUSDT, index) => createMockFlow('SELL', volumeUSDT, timestamp + buys.length + index)),
+  ];
+}
+
+export function seedOrderFlowHistory(
+  service: OrderFlowAnalyzerService,
+  flow: AggressiveFlow[],
+): AggressiveFlow[] {
+  const history = service.getFlowHistory();
+  history.push(...flow);
+  return history;
+}
+
 export function createOrderFlowUpdateSeries(
   updates: Array<[bidPrice: number, bidSize: number, askPrice: number, askSize: number]>,
 ): OrderBook[] {

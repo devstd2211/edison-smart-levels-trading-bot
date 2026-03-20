@@ -7,6 +7,8 @@ import {
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTickBatch,
   createDeltaAnalyzerTick,
+  createDeltaAnalyzerVolumePair,
+  seedDeltaAnalyzerTicks,
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
@@ -59,12 +61,11 @@ describe('DeltaAnalyzerService', () => {
 
     it('should aggregate multiple ticks', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, price: 50000 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 150 }));
-      service.addTick(
+      seedDeltaAnalyzerTicks(service, [
+        createDeltaAnalyzerTick({ timestamp: now, price: 50000 }),
+        createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 150 }),
         createDeltaAnalyzerTick({ timestamp: now + 2000, price: 50005, quantity: 80, side: 'SELL' }),
-      );
+      ]);
 
       const analysis = service.analyze();
       expect(analysis.buyVolume).toBe(250); // 100 + 150
@@ -127,9 +128,7 @@ describe('DeltaAnalyzerService', () => {
   describe('delta calculation', () => {
     it('should calculate positive delta (bullish)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 800, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1500, 800, now));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(700); // 1500 - 800
@@ -138,9 +137,9 @@ describe('DeltaAnalyzerService', () => {
 
     it('should calculate negative delta (bearish)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 49990, quantity: 1200, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(500, 1200, now, {
+        sellPrice: 49990,
+      }));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(-700); // 500 - 1200
@@ -149,9 +148,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should calculate zero delta (balanced)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1000 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, quantity: 1000, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1000, 1000, now));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(0);
@@ -162,9 +159,7 @@ describe('DeltaAnalyzerService', () => {
   describe('trend determination', () => {
     it('should detect BULLISH trend (delta > threshold)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 2500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(2500, 500, now));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(2000); // > threshold (1000)
@@ -173,9 +168,9 @@ describe('DeltaAnalyzerService', () => {
 
     it('should detect BEARISH trend (delta < -threshold)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 400 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 49990, quantity: 2000, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(400, 2000, now, {
+        sellPrice: 49990,
+      }));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(-1600); // < -threshold (-1000)
@@ -184,9 +179,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should detect NEUTRAL trend (|delta| < threshold)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 600 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, quantity: 200, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(600, 200, now));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(400); // < threshold (1000)
@@ -195,9 +188,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should detect BULLISH on exactly threshold boundary', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1500, 500, now));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(1000); // Exactly threshold
@@ -206,9 +197,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should detect NEUTRAL just below threshold', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1499 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1499, 500, now));
 
       const analysis = service.analyze();
       expect(analysis.delta).toBe(999); // Just below threshold
@@ -219,9 +208,7 @@ describe('DeltaAnalyzerService', () => {
   describe('strength calculation', () => {
     it('should calculate strength as absolute delta percent', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1500, 500, now));
 
       const analysis = service.analyze();
       expect(analysis.deltaPercent).toBeCloseTo(50, 0); // (1000 / 2000) * 100
@@ -241,9 +228,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should handle zero strength (no delta)', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1000 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, quantity: 1000, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1000, 1000, now));
 
       const analysis = service.analyze();
       expect(analysis.strength).toBe(0);
@@ -255,9 +240,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should confirm LONG signal with BULLISH delta', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 2500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(2500, 500, now));
 
       const signal = mockSignal(SignalDirection.LONG);
       const confirms = service.confirmSignal(signal);
@@ -267,9 +250,9 @@ describe('DeltaAnalyzerService', () => {
 
     it('should confirm SHORT signal with BEARISH delta', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 400 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 49990, quantity: 2000, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(400, 2000, now, {
+        sellPrice: 49990,
+      }));
 
       const signal = mockSignal(SignalDirection.SHORT);
       const confirms = service.confirmSignal(signal);
@@ -279,9 +262,9 @@ describe('DeltaAnalyzerService', () => {
 
     it('should NOT confirm LONG signal with BEARISH delta', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 400 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 49990, quantity: 2000, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(400, 2000, now, {
+        sellPrice: 49990,
+      }));
 
       const signal = mockSignal(SignalDirection.LONG);
       const confirms = service.confirmSignal(signal);
@@ -291,9 +274,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should NOT confirm SHORT signal with BULLISH delta', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 2500 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(2500, 500, now));
 
       const signal = mockSignal(SignalDirection.SHORT);
       const confirms = service.confirmSignal(signal);
@@ -303,9 +284,7 @@ describe('DeltaAnalyzerService', () => {
 
     it('should NOT confirm when delta is NEUTRAL', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 600 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, quantity: 200, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(600, 200, now));
 
       const longSignal = mockSignal(SignalDirection.LONG);
       const shortSignal = mockSignal(SignalDirection.SHORT);
@@ -371,9 +350,7 @@ describe('DeltaAnalyzerService', () => {
   describe('reset', () => {
     it('should clear all ticks', () => {
       const now = Date.now();
-
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now, quantity: 1000 }));
-      service.addTick(createDeltaAnalyzerTick({ timestamp: now + 1000, price: 50010, quantity: 500, side: 'SELL' }));
+      seedDeltaAnalyzerTicks(service, createDeltaAnalyzerVolumePair(1000, 500, now));
 
       expect(service.getTickCount()).toBe(2);
 

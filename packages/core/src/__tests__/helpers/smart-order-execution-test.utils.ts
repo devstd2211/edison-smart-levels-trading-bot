@@ -76,6 +76,12 @@ export function createMinimalSmartOrder(
   });
 }
 
+export function createSmartOrderRequestSeries(
+  entries: Array<Partial<SmartOrderRequest>>,
+): SmartOrderRequest[] {
+  return entries.map((entry) => createSmartOrderRequest(entry));
+}
+
 export function createSmartOrderExecutionHarness(
   overrides: Partial<SmartOrderConfig> = {},
 ): {
@@ -129,6 +135,30 @@ export type SmartOrderInternals = {
   roundToDecimals: (value: number, decimals: number) => number;
   activeOrders: Map<string, ExecutionReport>;
 };
+
+export function createSmartOrderExecutionReport(
+  overrides: Partial<ExecutionReport> = {},
+): ExecutionReport {
+  return {
+    orderId: 'order_123',
+    status: 'executing',
+    symbol: 'BTCUSDT',
+    side: 'Buy',
+    requestedSize: 1.0,
+    filledSize: 0,
+    remainingSize: 1.0,
+    requestedPrice: 45000,
+    averageFillPrice: 0,
+    slippage: 0,
+    executionTime: 0,
+    numberOfSplits: 1,
+    marketImpact: 0,
+    subOrders: [],
+    adjustments: [],
+    reasoning: 'Test',
+    ...overrides,
+  };
+}
 
 export function asSmartOrderInternals(
   service: SmartOrderExecutionService,
