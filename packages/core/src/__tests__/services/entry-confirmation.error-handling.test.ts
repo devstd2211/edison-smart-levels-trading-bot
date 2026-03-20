@@ -8,8 +8,12 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 import {
   createEntryConfirmationConfig,
+  createEntryConfirmationFactory,
   createEntryConfirmationHarness,
   createEntryConfirmationManager,
+  createLongPendingEntryInput,
+  createPendingEntryInput,
+  createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -26,9 +30,14 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
+  let createManager: ReturnType<typeof createEntryConfirmationFactory>['createManager'];
 
   beforeEach(() => {
     ({ manager, logger, errorHandler } = createEntryConfirmationHarness());
+    ({ createManager } = createEntryConfirmationFactory({
+      logger,
+      errorHandler,
+    }));
   });
 
   // TEST 1-3: Logger failure SKIP strategy
@@ -41,13 +50,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
 
       // Should not throw - SKIP strategy for non-critical logging
       expect(() => {
-        manager.addPending({
-          symbol: 'APEXUSDT',
-          direction: SignalDirection.LONG,
-          keyLevel: 1.5000,
-          detectedAt: Date.now(),
+        manager.addPending(createLongPendingEntryInput({
+          keyLevel: 1.5,
           signalData: { type: 'LEVEL_BASED' },
-        });
+        }));
       }).not.toThrow();
 
       // Entry should still be added despite logger failure
@@ -56,13 +62,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should SKIP logger failure when checking confirmation (confirmed)', () => {
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
+      const id = manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         signalData: { type: 'LEVEL_BASED' },
-      });
+      }));
 
       // Mock logger.info to throw
       const loggerSpy = jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -79,13 +82,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should SKIP logger failure when checking confirmation (rejected)', () => {
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
+      const id = manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         signalData: { type: 'LEVEL_BASED' },
-      });
+      }));
 
       // Mock logger.info to throw
       const loggerSpy = jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -100,13 +100,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should SKIP logger failure when cancelling entry', () => {
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
+      const id = manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         signalData: { type: 'LEVEL_BASED' },
-      });
+      }));
 
       // Mock logger.info to throw
       const loggerSpy = jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -127,13 +124,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       const startTime = 1000000;
       Date.now = jest.fn(() => startTime);
 
-      manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
+      manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         detectedAt: startTime,
-        signalData: {},
-      });
+      }));
 
       expect(manager.getPendingCount()).toBe(1);
 
@@ -164,13 +158,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       });
 
       // Add pending entry
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
+      const id = manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         signalData: { type: 'LEVEL_BASED' },
-      });
+      }));
 
       expect(manager.getPendingCount()).toBe(1);
 
@@ -192,11 +183,11 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       const ids = [];
       for (let i = 0; i < 5; i++) {
         const id = manager.addPending({
-          symbol: `SYM${i}USDT`,
-          direction: i % 2 === 0 ? SignalDirection.LONG : SignalDirection.SHORT,
-          keyLevel: 100 + i,
-          detectedAt: Date.now(),
-          signalData: {},
+          ...createPendingEntryInput({
+            symbol: `SYM${i}USDT`,
+            direction: i % 2 === 0 ? SignalDirection.LONG : SignalDirection.SHORT,
+            keyLevel: 100 + i,
+          }),
         });
         ids.push(id);
       }
@@ -225,13 +216,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       });
 
       // Operations should all succeed despite mixed logger behavior
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
-        signalData: {},
-      });
+      const id = manager.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
 
       expect(manager.getPendingCount()).toBe(1);
 
@@ -251,21 +236,9 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       });
 
       // All operations should complete without throwing
-      const id1 = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
-        signalData: {},
-      });
+      const id1 = manager.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
 
-      const id2 = manager.addPending({
-        symbol: 'BTCUSDT',
-        direction: SignalDirection.SHORT,
-        keyLevel: 50000,
-        detectedAt: Date.now(),
-        signalData: {},
-      });
+      const id2 = manager.addPending(createShortPendingEntryInput());
 
       manager.checkConfirmation(id1, 1.5010);
       manager.checkConfirmation(id2, 49900);
@@ -283,19 +256,15 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   // TEST 11-13: Backward compatibility
   describe('backward compatibility - optional ErrorHandler', () => {
     it('should work without ErrorHandler parameter', () => {
-      const managerWithoutEH = createEntryConfirmationManager({
+      const managerWithoutEH = createManager({
         config: defaultConfig,
-        logger,
         withErrorHandler: false,
       });
 
-      const id = managerWithoutEH.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
+      const id = managerWithoutEH.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         signalData: { type: 'LEVEL_BASED' },
-      });
+      }));
 
       expect(managerWithoutEH.getPendingCount()).toBe(1);
 
@@ -304,9 +273,8 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should preserve existing behavior with logger failures (no ErrorHandler)', () => {
-      const managerWithoutEH = createEntryConfirmationManager({
+      const managerWithoutEH = createManager({
         config: defaultConfig,
-        logger,
         withErrorHandler: false,
       });
 
@@ -316,13 +284,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       });
 
       // With error handling, logger failures are caught and skipped
-      const id = managerWithoutEH.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
-        signalData: {},
-      });
+      const id = managerWithoutEH.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
 
       // Entry should still be added
       expect(managerWithoutEH.getPendingCount()).toBe(1);
@@ -331,19 +293,12 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should handle undefined ErrorHandler gracefully', () => {
-      const managerWithoutEH = createEntryConfirmationManager({
+      const managerWithoutEH = createManager({
         config: defaultConfig,
-        logger,
         withErrorHandler: false,
       });
 
-      const id = managerWithoutEH.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
-        signalData: {},
-      });
+      const id = managerWithoutEH.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
 
       expect(managerWithoutEH.getPendingCount()).toBe(1);
     });
@@ -379,9 +334,8 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should skip ErrorHandler when not provided', () => {
-      const managerWithoutEH = createEntryConfirmationManager({
+      const managerWithoutEH = createManager({
         config: defaultConfig,
-        logger,
         withErrorHandler: false,
       });
 
@@ -392,13 +346,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
 
       // Should not throw even without ErrorHandler
       expect(() => {
-        managerWithoutEH.addPending({
-          symbol: 'APEXUSDT',
-          direction: SignalDirection.LONG,
-          keyLevel: 1.5000,
-          detectedAt: Date.now(),
-          signalData: {},
-        });
+        managerWithoutEH.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
       }).not.toThrow();
 
       loggerSpy.mockRestore();
@@ -412,13 +360,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       const startTime = 1000000;
       Date.now = jest.fn(() => startTime);
 
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
+      const id = manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         detectedAt: startTime,
-        signalData: {},
-      });
+      }));
 
       // Move time forward
       Date.now = jest.fn(() => startTime + 121000);
@@ -445,13 +390,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
 
       // Should still not throw
       expect(() => {
-        manager.addPending({
-          symbol: 'APEXUSDT',
-          direction: SignalDirection.LONG,
-          keyLevel: 1.5000,
-          detectedAt: Date.now(),
-          signalData: {},
-        });
+        manager.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
       }).not.toThrow();
 
       expect(manager.getPendingCount()).toBe(1);
@@ -464,13 +403,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
       });
 
       // Operations with minimal context
-      const id = manager.addPending({
-        symbol: 'APEXUSDT',
-        direction: SignalDirection.LONG,
-        keyLevel: 1.5000,
-        detectedAt: Date.now(),
+      const id = manager.addPending(createLongPendingEntryInput({
+        keyLevel: 1.5,
         signalData: null as unknown as Record<string, unknown>,
-      });
+      }));
 
       expect(manager.getPendingCount()).toBe(1);
 

@@ -12,27 +12,22 @@
 import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
 import { LoggerService } from '../../types/legacy';
 import {
+  createCompoundInterestBoundFactory,
   createCompoundInterestConfig,
-  createCompoundInterestFactory,
-  createCompoundInterestHarness,
+  createCompoundInterestInvalidConfig,
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
-  let createCalculator: (options?: {
-    configOverrides?: Parameters<typeof createCompoundInterestConfig>[0];
-    withErrorHandler?: boolean;
-  }) => CompoundInterestCalculatorService;
+  let createCalculator: ReturnType<typeof createCompoundInterestBoundFactory>['createCalculator'];
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    ({ logger, mockGetBalance } = createCompoundInterestHarness({ withErrorHandler: false }));
-    createCalculator = createCompoundInterestFactory({
-      logger,
-      getBalance: mockGetBalance,
-    });
+    ({ logger, mockGetBalance, createCalculator } = createCompoundInterestBoundFactory({
+      withErrorHandler: false,
+    }));
   });
 
   // ============================================================================
@@ -41,7 +36,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
   describe('THROW - Config validation', () => {
     it('should THROW on negative base deposit', () => {
-      const invalidConfig = { ...defaultConfig, baseDeposit: -100 };
+      const invalidConfig = createCompoundInterestInvalidConfig({ baseDeposit: -100 });
 
       expect(() => {
         createCalculator({
@@ -52,7 +47,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should THROW on reinvestment percent > 100%', () => {
-      const invalidConfig = { ...defaultConfig, reinvestmentPercent: 150 };
+      const invalidConfig = createCompoundInterestInvalidConfig({ reinvestmentPercent: 150 });
 
       expect(() => {
         createCalculator({
@@ -63,7 +58,10 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should THROW on max position size < min position size', () => {
-      const invalidConfig = { ...defaultConfig, minPositionSize: 100, maxPositionSize: 50 };
+      const invalidConfig = createCompoundInterestInvalidConfig({
+        minPositionSize: 100,
+        maxPositionSize: 50,
+      });
 
       expect(() => {
         createCalculator({
@@ -74,7 +72,10 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should THROW on reinvestment + lock > 100%', () => {
-      const invalidConfig = { ...defaultConfig, reinvestmentPercent: 80, profitLockPercent: 30 };
+      const invalidConfig = createCompoundInterestInvalidConfig({
+        reinvestmentPercent: 80,
+        profitLockPercent: 30,
+      });
 
       expect(() => {
         createCalculator({
@@ -85,7 +86,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
     });
 
     it('should THROW on invalid max risk percent', () => {
-      const invalidConfig = { ...defaultConfig, maxRiskPerTrade: -5 };
+      const invalidConfig = createCompoundInterestInvalidConfig({ maxRiskPerTrade: -5 });
 
       expect(() => {
         createCalculator({

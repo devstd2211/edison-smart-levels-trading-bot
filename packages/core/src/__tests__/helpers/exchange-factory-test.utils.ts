@@ -184,3 +184,41 @@ export function createExchangeFactoryTestContext() {
       }),
   };
 }
+
+export function createExchangeFactoryBoundCreators(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const mockLogger = createExchangeFactoryMockLogger();
+  const logger = options.logger ?? asExchangeFactoryLogger(mockLogger);
+  const errorHandler = options.errorHandler ?? createExchangeFactoryErrorHandler(logger);
+
+  return {
+    mockLogger,
+    logger,
+    errorHandler,
+    createFactory: (overrides: Partial<ExchangeConfig> = {}) =>
+      createExchangeFactoryService({
+        logger,
+        config: createExchangeFactoryConfig(overrides),
+        errorHandler,
+      }),
+    createBybitFactory: (overrides: Partial<ExchangeConfig> = {}) =>
+      createExchangeFactoryService({
+        logger,
+        config: createBybitExchangeFactoryConfig(overrides),
+        errorHandler,
+      }),
+    createBinanceFactory: (overrides: Partial<ExchangeConfig> = {}) =>
+      createExchangeFactoryService({
+        logger,
+        config: createBinanceExchangeFactoryConfig(overrides),
+        errorHandler,
+      }),
+    createFactoryWithoutErrorHandler: (overrides: Partial<ExchangeConfig> = {}) =>
+      createExchangeFactoryService({
+        logger,
+        config: createExchangeFactoryConfig(overrides),
+      }),
+  };
+}

@@ -128,6 +128,98 @@ export const createValidConfigValidatorConfig = () => ({
   },
 });
 
+export type ConfigValidatorTestConfig = ReturnType<typeof createValidConfigValidatorConfig>;
+
+type ExchangeOverrides = Omit<Partial<ConfigValidatorTestConfig['exchange']>, 'symbol'> & {
+  symbol?: ConfigValidatorTestConfig['exchange']['symbol'] | null;
+};
+
+export const createConfigValidatorConfig = ({
+  exchange,
+  riskManagement,
+  trading,
+  thresholdsDefaultsConfidence,
+  strategiesLevelBased,
+  technicalIndicators,
+}: {
+  exchange?: ExchangeOverrides;
+  riskManagement?: Partial<ConfigValidatorTestConfig['riskManagement']>;
+  trading?: Partial<ConfigValidatorTestConfig['trading']>;
+  thresholdsDefaultsConfidence?: Partial<
+    ConfigValidatorTestConfig['thresholds']['defaults']['confidence']
+  >;
+  strategiesLevelBased?: Partial<ConfigValidatorTestConfig['strategies']['levelBased']>;
+  technicalIndicators?: Partial<
+    {
+      [TKey in keyof ConfigValidatorTestConfig['strategicWeights']['technicalIndicators']]:
+        Partial<ConfigValidatorTestConfig['strategicWeights']['technicalIndicators'][TKey]>;
+    }
+  >;
+} = {}): ConfigValidatorTestConfig => {
+  const base = createValidConfigValidatorConfig();
+
+  return {
+    ...base,
+    exchange: {
+      ...base.exchange,
+      ...exchange,
+    } as ConfigValidatorTestConfig['exchange'],
+    riskManagement: {
+      ...base.riskManagement,
+      ...riskManagement,
+    },
+    trading: {
+      ...base.trading,
+      ...trading,
+    },
+    thresholds: {
+      ...base.thresholds,
+      defaults: {
+        ...base.thresholds.defaults,
+        confidence: {
+          ...base.thresholds.defaults.confidence,
+          ...thresholdsDefaultsConfidence,
+        },
+      },
+    },
+    strategies: {
+      ...base.strategies,
+      levelBased: {
+        ...base.strategies.levelBased,
+        ...strategiesLevelBased,
+      },
+    },
+    strategicWeights: {
+      ...base.strategicWeights,
+      technicalIndicators: {
+        rsi: {
+          ...base.strategicWeights.technicalIndicators.rsi,
+          ...technicalIndicators?.rsi,
+        },
+        ema: {
+          ...base.strategicWeights.technicalIndicators.ema,
+          ...technicalIndicators?.ema,
+        },
+        atr: {
+          ...base.strategicWeights.technicalIndicators.atr,
+          ...technicalIndicators?.atr,
+        },
+      },
+    },
+  };
+};
+
+export const omitConfigValidatorSection = <
+  TKey extends keyof ConfigValidatorTestConfig,
+>(
+  config: ConfigValidatorTestConfig,
+  key: TKey,
+): Omit<ConfigValidatorTestConfig, TKey> => {
+  const next = { ...config };
+  delete next[key];
+  return next;
+};
+
 export const asConfigValidatorInput = (
   value: unknown,
 ): Parameters<ConfigValidatorService['validateAll']>[0] =>

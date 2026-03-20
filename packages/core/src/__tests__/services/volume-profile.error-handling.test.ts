@@ -14,7 +14,9 @@ import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
 import {
   createVolumeProfileCandles,
   createVolumeProfileCandlesFromSpecs,
+  createVolumeProfileBoundFactory,
   createVolumeProfileHarness,
+  createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
   createVolumeProfileServiceWithHarness,
@@ -33,24 +35,17 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
+  let createService: ReturnType<typeof createVolumeProfileBoundFactory>['createService'];
 
   beforeEach(() => {
     const harness = createVolumeProfileHarness();
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler;
-  });
-
-  const createService = (
-    configOverrides?: Partial<VolumeProfileConfig>,
-    logger: LoggerService = mockLogger,
-    withErrorHandler: boolean = true,
-  ): VolumeProfileService =>
-    createVolumeProfileServiceWithHarness({
-      configOverrides,
-      logger,
+    ({ createService } = createVolumeProfileBoundFactory({
+      logger: mockLogger,
       errorHandler,
-      withErrorHandler,
-    });
+    }));
+  });
 
   // =========================================================================
   // THROW VALIDATION TESTS
@@ -114,9 +109,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on invalid priceTickSize in constructor', () => {
       expect(() => {
         createVolumeProfileServiceWithHarness({
-          configOverrides: {
-            priceTickSize: NaN,
-          },
+          configOverrides: createVolumeProfileInvalidConfig({ priceTickSize: NaN }),
           logger: mockLogger,
           errorHandler,
         });
@@ -126,9 +119,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on negative priceTickSize in constructor', () => {
       expect(() => {
         createVolumeProfileServiceWithHarness({
-          configOverrides: {
-            priceTickSize: -0.5,
-          },
+          configOverrides: createVolumeProfileInvalidConfig({ priceTickSize: -0.5 }),
           logger: mockLogger,
           errorHandler,
         });
@@ -138,9 +129,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on zero priceTickSize in constructor', () => {
       expect(() => {
         createVolumeProfileServiceWithHarness({
-          configOverrides: {
-            priceTickSize: 0,
-          },
+          configOverrides: createVolumeProfileInvalidConfig({ priceTickSize: 0 }),
           logger: mockLogger,
           errorHandler,
         });
@@ -150,9 +139,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on invalid lookbackCandles in constructor', () => {
       expect(() => {
         createVolumeProfileServiceWithHarness({
-          configOverrides: {
-            lookbackCandles: NaN,
-          },
+          configOverrides: createVolumeProfileInvalidConfig({ lookbackCandles: NaN }),
           logger: mockLogger,
           errorHandler,
         });
@@ -162,9 +149,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on invalid valueAreaPercent in constructor', () => {
       expect(() => {
         createVolumeProfileServiceWithHarness({
-          configOverrides: {
-            valueAreaPercent: 150,
-          },
+          configOverrides: createVolumeProfileInvalidConfig({ valueAreaPercent: 150 }),
           logger: mockLogger,
           errorHandler,
         });
@@ -174,9 +159,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     it('should throw on zero valueAreaPercent in constructor', () => {
       expect(() => {
         createVolumeProfileServiceWithHarness({
-          configOverrides: {
-            valueAreaPercent: 0,
-          },
+          configOverrides: createVolumeProfileInvalidConfig({ valueAreaPercent: 0 }),
           logger: mockLogger,
           errorHandler,
         });

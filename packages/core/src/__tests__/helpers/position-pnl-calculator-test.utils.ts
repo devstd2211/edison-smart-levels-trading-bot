@@ -111,3 +111,35 @@ export function createPositionPnLCalculatorHarness(options: {
     errorHandler,
   };
 }
+
+export function createPositionPnLFactory(options: {
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const errorHandler =
+    options.withErrorHandler === false
+      ? undefined
+      : (options.errorHandler ?? createMockPnlErrorHandler());
+
+  return {
+    errorHandler,
+    createService: (factoryOptions: {
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createPositionPnLCalculatorService({
+        errorHandler:
+          factoryOptions.withErrorHandler === false
+            ? undefined
+            : (factoryOptions.errorHandler ?? errorHandler),
+        withErrorHandler:
+          factoryOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+    createPosition: (
+      side: PositionSide = PositionSide.LONG,
+      entryPrice = 100,
+      overrides: Partial<Position> = {},
+    ) => createMockPnlPosition(side, entryPrice, overrides),
+    createPositions: createMockPnlPositions,
+  };
+}

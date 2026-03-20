@@ -16,8 +16,10 @@ import type { PerformanceAnalyticsConfig } from '../../types/legacy';
 import {
   asPerformanceAnalyticsPeriod,
   asPerformanceAnalyticsTrades,
+  createPerformanceAnalyticsFactory,
   createPerformanceAnalyticsHarness,
   createPerformanceAnalyticsService,
+  createPerformanceAnalyticsTradeSeries,
 } from '../helpers/performance-analytics-test.utils';
 
 // ============================================================================
@@ -30,7 +32,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let mockJournal: ReturnType<typeof createPerformanceAnalyticsHarness>['journal'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
-  let createService: (options?: { errorHandler?: jest.Mocked<ErrorHandler> }) => PerformanceAnalytics;
+  let createService: ReturnType<typeof createPerformanceAnalyticsFactory>['createService'];
 
   beforeEach(() => {
     const harness = createPerformanceAnalyticsHarness();
@@ -38,13 +40,12 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
     mockLogger = harness.logger;
     mockJournal = harness.journal;
     mockErrorHandler = harness.errorHandler;
-    createService = (options = {}) =>
-      createPerformanceAnalyticsService({
-        config: mockConfig,
-        journal: mockJournal,
-        logger: mockLogger,
-        errorHandler: options.errorHandler,
-      });
+    ({ createService } = createPerformanceAnalyticsFactory({
+      config: mockConfig,
+      journal: mockJournal,
+      logger: mockLogger,
+      errorHandler: mockErrorHandler,
+    }));
   });
 
   // ==================== THROW Strategy - Input Validation ====================
@@ -120,7 +121,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should return 0 on Sharpe ratio calculation with zero variance', async () => {
       // Create trades with zero variance (all same PnL)
-      const trades = [{ pnl: 10 }, { pnl: 10 }, { pnl: 10 }];
+      const trades = createPerformanceAnalyticsTradeSeries([10, 10, 10]);
       mockJournal.getAllTrades.mockReturnValue(trades);
 
       const metrics = await service.getMetrics('ALL');
@@ -131,7 +132,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should return 0 on Sortino ratio calculation with zero downside variance', async () => {
       // Create trades with no downside (all positive PnL)
-      const trades = [{ pnl: 10 }, { pnl: 15 }, { pnl: 20 }];
+      const trades = createPerformanceAnalyticsTradeSeries([10, 15, 20]);
       mockJournal.getAllTrades.mockReturnValue(trades);
 
       const metrics = await service.getMetrics('ALL');
@@ -141,7 +142,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
     });
 
     it('should return 0 on Max Drawdown calculation failure', async () => {
-      const trades = [{ pnl: 10 }, { pnl: 5 }];
+      const trades = createPerformanceAnalyticsTradeSeries([10, 5]);
       mockJournal.getAllTrades.mockReturnValue(trades);
 
       const metrics = await service.getMetrics('ALL');
@@ -152,7 +153,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should return 0 on Profit Factor division by zero', async () => {
       // All losing trades
-      const trades = [{ pnl: -10 }, { pnl: -5 }];
+      const trades = createPerformanceAnalyticsTradeSeries([-10, -5]);
 
       const result = service.calculateProfitFactor(trades);
 
@@ -162,7 +163,10 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should return 0 on Average Hold Time calculation with missing timestamps', async () => {
       // Trades with no timestamps
-      const trades = [{ pnl: 10 }, { pnl: -5 }];
+      const trades = [
+        { pnl: 10 },
+        { pnl: -5 },
+      ];
 
       const result = service.calculateAverageHoldTime(trades);
 
@@ -328,7 +332,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
     });
 
     it('should work without ErrorHandler parameter', () => {
-      const trades = [{ pnl: 10 }, { pnl: -5 }, { pnl: 15 }];
+      const trades = createPerformanceAnalyticsTradeSeries([10, -5, 15]);
 
       // Should work normally
       const winRate = service.calculateWinRate(trades, 3);
@@ -343,7 +347,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should handle calculations gracefully without ErrorHandler', () => {
       // Zero variance trades
-      const trades = [{ pnl: 10 }, { pnl: 10 }, { pnl: 10 }];
+      const trades = createPerformanceAnalyticsTradeSeries([10, 10, 10]);
       mockJournal.getAllTrades.mockReturnValue(trades);
 
       // Should not throw
@@ -405,11 +409,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
         if (callCount === 1) {
           throw new Error('Transient failure');
         }
-        return [
-          { pnl: 10 },
-          { pnl: 5 },
-          { pnl: -3 },
-        ];
+        return createPerformanceAnalyticsTradeSeries([10, 5, -3]);
       });
 
       // First call fails
@@ -423,7 +423,10 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should handle all period enum values', async () => {
       mockJournal.getAllTrades.mockReturnValue([
-        { pnl: 10, openedAt: Date.now() - 1000 },
+        ...createPerformanceAnalyticsTradeSeries([10]).map((trade) => ({
+          ...trade,
+          openedAt: Date.now() - 1000,
+        })),
       ]);
 
       // Should work with all valid periods
@@ -474,10 +477,10 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
     it('should correctly calculate metrics with mixed positive/negative trades', async () => {
       const trades = [
-        { pnl: 100, pnlPercent: 5 },
-        { pnl: -50, pnlPercent: -2.5 },
-        { pnl: 75, pnlPercent: 3.75 },
-        { pnl: -25, pnlPercent: -1.25 },
+        ...createPerformanceAnalyticsTradeSeries([100, -50, 75, -25]).map((trade) => ({
+          ...trade,
+          pnlPercent: trade.pnl / 20,
+        })),
       ];
       mockJournal.getAllTrades.mockReturnValue(trades);
 

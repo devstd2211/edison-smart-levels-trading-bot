@@ -18,7 +18,11 @@ export interface HealthCheckTestHarness {
   createMemoryConstrainedService: (memoryUsagePercent: number) => HealthCheckService;
   createCpuConstrainedService: (cpuUsagePercent: number) => HealthCheckService;
   createDisconnectedWebSocketService: () => HealthCheckService;
+  createStaleWebSocketService: (ageMs?: number) => HealthCheckService;
   createFailingExchangeService: () => HealthCheckService;
+  createDisconnectedExchangeService: () => HealthCheckService;
+  createOutOfSyncExchangeService: (offsetMs?: number) => HealthCheckService;
+  createThrowingWebSocketService: () => HealthCheckService;
   createHealthyProbeService: () => HealthCheckService;
   createThresholdConfig: (thresholds: NonNullable<HealthCheckConfig['thresholds']>) => HealthCheckConfig;
   createService: (options?: {
@@ -106,11 +110,42 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
         }),
       });
     },
+    createStaleWebSocketService(ageMs = 120000) {
+      return this.createService({
+        websocket: createWebSocket({
+          isConnected: jest.fn().mockReturnValue(true),
+          getLastMessageTime: jest.fn().mockReturnValue(Date.now() - ageMs),
+        }),
+      });
+    },
     createFailingExchangeService() {
       return this.createService({
         exchange: createExchange({
           testConnection: jest.fn().mockRejectedValue(new Error('API down')),
           getServerTime: jest.fn().mockResolvedValue(Date.now()),
+        }),
+      });
+    },
+    createDisconnectedExchangeService() {
+      return this.createService({
+        exchange: createExchange({
+          testConnection: jest.fn().mockResolvedValue(false),
+        }),
+      });
+    },
+    createOutOfSyncExchangeService(offsetMs = 10000) {
+      return this.createService({
+        exchange: createExchange({
+          getServerTime: jest.fn().mockResolvedValue(Date.now() + offsetMs),
+        }),
+      });
+    },
+    createThrowingWebSocketService() {
+      return this.createService({
+        websocket: createWebSocket({
+          isConnected: jest.fn().mockImplementation(() => {
+            throw new Error('WebSocket error');
+          }),
         }),
       });
     },

@@ -14,9 +14,11 @@ import { LoggerService } from '../../services/logger.service';
 import {
   createInitializedPositionStateMachineHarness,
   createMockPositionStateMachineLogger,
+  createPositionStateMachinePositionId,
   createPositionStateMachineService,
   createPositionStateMachineServiceWithHarness,
   createPositionStateTransitionInput,
+  transitionPositionStateSequence,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
@@ -37,7 +39,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should allow OPEN -> TP1_HIT transition', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
       const result = service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,
         positionId: posId,
@@ -49,7 +51,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should allow OPEN -> CLOSED transition', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
       const result = service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.CLOSED,
         positionId: posId,
@@ -61,53 +63,29 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should allow TP1_HIT -> TP2_HIT transition', () => {
-      const posId = `pos-${Date.now()}`;
-
-      service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP1_HIT,
+      const posId = createPositionStateMachinePositionId();
+      const [, result] = transitionPositionStateSequence(service, {
         positionId: posId,
-        reason: 'TP1 hit',
-      }));
-
-      const result = service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP2_HIT,
-        positionId: posId,
-        reason: 'TP2 hit',
-      }));
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT],
+        reasonPrefix: 'TP hit',
+      });
 
       expect(result.allowed).toBe(true);
       expect(result.currentState).toBe(PositionState.TP2_HIT);
     });
 
     it('should allow full lifecycle: OPEN -> TP1_HIT -> TP2_HIT -> TP3_HIT -> CLOSED', () => {
-      const posId = `pos-${Date.now()}`;
-
-      // OPEN -> TP1_HIT
-      let result = service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP1_HIT,
+      const posId = createPositionStateMachinePositionId();
+      const transitionResults = transitionPositionStateSequence(service, {
         positionId: posId,
-        reason: 'TP1 hit',
-      }));
-      expect(result.allowed).toBe(true);
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT, PositionState.TP3_HIT],
+        reasonPrefix: 'TP hit',
+      });
+      transitionResults.forEach((result) => {
+        expect(result.allowed).toBe(true);
+      });
 
-      // TP1_HIT -> TP2_HIT
-      result = service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP2_HIT,
-        positionId: posId,
-        reason: 'TP2 hit',
-      }));
-      expect(result.allowed).toBe(true);
-
-      // TP2_HIT -> TP3_HIT
-      result = service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP3_HIT,
-        positionId: posId,
-        reason: 'TP3 hit',
-      }));
-      expect(result.allowed).toBe(true);
-
-      // TP3_HIT -> CLOSED
-      result = service.closePosition('BTCUSDT', posId, 'SL hit');
+      const result = service.closePosition('BTCUSDT', posId, 'SL hit');
       expect(result.allowed).toBe(true);
       expect(result.currentState).toBe(PositionState.CLOSED);
     });
@@ -124,13 +102,12 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should prevent backward transitions', () => {
-      const posId = `pos-${Date.now()}`;
-
-      service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP2_HIT,
+      const posId = createPositionStateMachinePositionId();
+      transitionPositionStateSequence(service, {
         positionId: posId,
-        reason: 'Invalid',
-      }));
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT],
+        reasonPrefix: 'Invalid',
+      });
 
       const result = service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.OPEN,
@@ -142,7 +119,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should prevent skipping TP levels', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       const result = service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP2_HIT,
@@ -154,7 +131,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should prevent transitions from CLOSED', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.CLOSED,
@@ -183,7 +160,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should track pre-BE mode', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,
@@ -206,19 +183,12 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should track trailing mode', () => {
-      const posId = `pos-${Date.now()}`;
-
-      service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP1_HIT,
+      const posId = createPositionStateMachinePositionId();
+      transitionPositionStateSequence(service, {
         positionId: posId,
-        reason: 'TP1 hit',
-      }));
-
-      service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP2_HIT,
-        positionId: posId,
-        reason: 'TP2 hit',
-      }));
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT],
+        reasonPrefix: 'TP hit',
+      });
 
       service.updateExitMode('BTCUSDT', posId, {
         trailingMode: {
@@ -245,7 +215,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should get current state', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,
@@ -258,7 +228,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should get full state with metadata', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,
@@ -295,13 +265,12 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should close position', () => {
-      const posId = `pos-${Date.now()}`;
-
-      service.transitionState(createPositionStateTransitionInput({
-        targetState: PositionState.TP2_HIT,
+      const posId = createPositionStateMachinePositionId();
+      transitionPositionStateSequence(service, {
         positionId: posId,
-        reason: 'TP2 hit',
-      }));
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT],
+        reasonPrefix: 'TP hit',
+      });
 
       const result = service.closePosition('BTCUSDT', posId, 'SL hit');
       expect(result.allowed).toBe(true);
@@ -309,7 +278,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should set closedAt on close', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,
@@ -325,7 +294,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should track closure reason (SL_HIT)', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState({
         symbol: 'BTCUSDT',
@@ -347,7 +316,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should track closure reason (TRAILING_STOP)', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState({
         symbol: 'BTCUSDT',
@@ -369,8 +338,8 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should track multiple positions', () => {
-      const pos1 = `pos-1-${Date.now()}`;
-      const pos2 = `pos-2-${Date.now()}`;
+      const pos1 = createPositionStateMachinePositionId('pos-1');
+      const pos2 = createPositionStateMachinePositionId('pos-2');
 
       service.transitionState(createPositionStateTransitionInput({
         positionId: pos1,
@@ -410,7 +379,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should return statistics', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,
@@ -437,7 +406,7 @@ describe('PositionStateMachineService', () => {
     });
 
     it('should clear position state', () => {
-      const posId = `pos-${Date.now()}`;
+      const posId = createPositionStateMachinePositionId();
 
       service.transitionState(createPositionStateTransitionInput({
         targetState: PositionState.TP1_HIT,

@@ -99,3 +99,45 @@ export function createTakeProfitManagerService(options: {
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
+
+export function createTakeProfitManagerCloseSequence(
+  prices: number[],
+  quantity = 28.4,
+) {
+  return prices.map((exitPrice, index) => ({
+    level: index + 1,
+    quantity,
+    exitPrice,
+  }));
+}
+
+export function createTakeProfitManagerBoundFactory(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createTakeProfitManagerLogger();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    errorHandler,
+    createManager: (factoryOptions: {
+      configOverrides?: Partial<{
+        positionId: string;
+        symbol: string;
+        side: PositionSide;
+        entryPrice: number;
+        totalQuantity: number;
+        leverage: number;
+      }>;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createTakeProfitManagerService({
+        configOverrides: factoryOptions.configOverrides,
+        logger,
+        errorHandler,
+        withErrorHandler: factoryOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+  };
+}

@@ -38,6 +38,7 @@ import {
   createOrderbookImbalanceFailingLogger,
   createOrderbookImbalanceHarness,
   createOrderbookImbalanceOrderbook,
+  createOrderbookImbalanceServiceFactory,
   createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -50,9 +51,14 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
+  let createService: ReturnType<typeof createOrderbookImbalanceServiceFactory>['createService'];
 
   beforeEach(() => {
     ({ logger, errorHandler } = createOrderbookImbalanceHarness());
+    ({ createService } = createOrderbookImbalanceServiceFactory({
+      logger,
+      errorHandler,
+    }));
   });
 
   // ============================================================================
@@ -105,22 +111,19 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('THROW - Input Validation', () => {
     it('should throw on null orderbook', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.analyze(asOrderbook(null))).toThrow('orderbook is required');
     });
 
     it('should throw on undefined orderbook', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       expect(() => service.analyze(asOrderbook(undefined))).toThrow('orderbook is required');
     });
 
     it('should throw on non-array bids', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: 'not-an-array' as unknown as [number, number][],
@@ -130,8 +133,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should throw on non-array asks', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         asks: 'not-an-array' as unknown as [number, number][],
@@ -147,8 +149,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('GRACEFUL_DEGRADE - Calculation Failures', () => {
     it('should return neutral analysis on NaN bid quantity', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [[50000, NaN]],
@@ -165,8 +166,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should return neutral analysis on Infinity ask quantity', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         asks: [[50010, Infinity]],
@@ -181,8 +181,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should return neutral analysis on negative infinity', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [[50000, -Infinity]],
@@ -197,8 +196,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should handle mixed valid and invalid quantities', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [
@@ -214,8 +212,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should handle calculation overflow gracefully', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [[50000, Number.MAX_VALUE]],
@@ -288,8 +285,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Integration - Cascading Failures', () => {
     it('should handle multiple invalid quantities gracefully', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [
@@ -312,8 +308,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     });
 
     it('should recover after calculation failure', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       // First analysis with failure
       const failOrderbook = createOrderbookImbalanceOrderbook({
@@ -334,7 +329,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
     it('should handle service state consistency across failures', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService(config);
 
       // Verify config is preserved after error
       expect(service.getConfig()).toEqual(config);
@@ -358,10 +353,10 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (optional DI)', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-
-      // Constructor without errorHandler
-      const service = createOrderbookImbalanceService({ config, logger, withErrorHandler: false });
+      const service = createOrderbookImbalanceServiceFactory({
+        logger,
+        withErrorHandler: false,
+      }).createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [[50000, 100]],
@@ -392,8 +387,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Edge Cases', () => {
     it('should handle all-NaN orderbook', () => {
-      const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler });
+      const service = createService();
 
       const orderbook = createOrderbookImbalanceOrderbook({
         bids: [

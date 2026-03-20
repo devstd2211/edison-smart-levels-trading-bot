@@ -52,6 +52,20 @@ export const createPerformanceAnalyticsTrades = (
 ): PerformanceAnalyticsTrade[] =>
   trades.map((trade) => createPerformanceAnalyticsTrade(trade));
 
+export const createPerformanceAnalyticsTradeSeries = (
+  pnls: number[],
+): PerformanceAnalyticsTrade[] =>
+  pnls.map((pnl, index) =>
+    createPerformanceAnalyticsTrade({
+      tradeId: `trade-${index + 1}`,
+      pnl,
+      pnlPercent: pnl / 100,
+      entryTime: Date.now() - (index + 1) * 3600000,
+      exitTime: Date.now() - index * 1800000,
+      openedAt: Date.now() - (index + 1) * 3600000,
+    }),
+  );
+
 export const createPerformanceAnalyticsLogger = () => ({
   debug: jest.fn(),
   info: jest.fn(),
@@ -166,3 +180,29 @@ export const createPerformanceAnalyticsHarness = () => {
     service,
   };
 };
+
+export const createPerformanceAnalyticsFactory = ({
+  config = createPerformanceAnalyticsConfig(),
+  journal = createPerformanceAnalyticsJournal(),
+  logger = createPerformanceAnalyticsLogger(),
+  errorHandler = createPerformanceAnalyticsErrorHandler(),
+}: {
+  config?: PerformanceAnalyticsConfig;
+  journal?: PerformanceAnalyticsMockJournal;
+  logger?: PerformanceAnalyticsMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+} = {}) => ({
+  config,
+  journal,
+  logger,
+  errorHandler,
+  createService: (overrides: {
+    errorHandler?: jest.Mocked<ErrorHandler>;
+  } = {}) =>
+    createPerformanceAnalyticsService({
+      config,
+      journal,
+      logger,
+      errorHandler: overrides.errorHandler,
+    }),
+});

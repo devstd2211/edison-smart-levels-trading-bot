@@ -91,3 +91,46 @@ export function createCompoundInterestFactory(options: {
       withErrorHandler: factoryOptions.withErrorHandler,
     });
 }
+
+export function createCompoundInterestInvalidConfig(
+  overrides: Partial<CompoundInterestConfig>,
+): CompoundInterestConfig {
+  return {
+    ...createCompoundInterestConfig(),
+    ...overrides,
+  };
+}
+
+export function createCompoundInterestBoundFactory(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createCompoundInterestLogger();
+  const mockGetBalance = options.getBalance ?? jest.fn();
+  const errorHandler = options.errorHandler ?? createCompoundInterestErrorHandler(logger);
+  const defaultConfig = createCompoundInterestConfig(options.configOverrides);
+
+  return {
+    logger,
+    mockGetBalance,
+    errorHandler,
+    defaultConfig,
+    createCalculator: (factoryOptions: {
+      configOverrides?: Partial<CompoundInterestConfig>;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createCompoundInterestService({
+        configOverrides: {
+          ...options.configOverrides,
+          ...factoryOptions.configOverrides,
+        },
+        logger,
+        getBalance: mockGetBalance,
+        errorHandler,
+        withErrorHandler: factoryOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+  };
+}

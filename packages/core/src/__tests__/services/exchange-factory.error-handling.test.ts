@@ -12,25 +12,24 @@ import { ExchangeFactoryConfigError } from '../../errors/DomainErrors';
 import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
+  createExchangeFactoryBoundCreators,
   createExchangeFactoryConfig,
-  createExchangeFactoryTestContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ReturnType<typeof createExchangeFactoryTestContext>['mockLogger'];
+  let mockLogger: ReturnType<typeof createExchangeFactoryBoundCreators>['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createFactory: (
-    config?: ExchangeConfig,
-    errorHandler?: ErrorHandler,
+    overrides?: Partial<ExchangeConfig>,
   ) => ExchangeFactory;
   let createFactoryWithoutErrorHandler: (
-    config?: ExchangeConfig,
+    overrides?: Partial<ExchangeConfig>,
   ) => ExchangeFactory;
 
   beforeEach(() => {
-    const context = createExchangeFactoryTestContext();
+    const context = createExchangeFactoryBoundCreators();
     mockLogger = context.mockLogger;
-    mockErrorHandler = context.errorHandler;
+    mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
     createFactory = context.createFactory;
     createFactoryWithoutErrorHandler = context.createFactoryWithoutErrorHandler;
   });
@@ -38,33 +37,25 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('THROW Strategy - Configuration Validation', () => {
     it('should throw ExchangeFactoryConfigError on missing exchange name', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName(undefined) }),
-        );
+        createFactory({ name: asExchangeFactoryName(undefined) });
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should throw ExchangeFactoryConfigError on missing symbol', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({ symbol: asExchangeFactorySymbol(undefined) }),
-        );
+        createFactory({ symbol: asExchangeFactorySymbol(undefined) });
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should throw ExchangeFactoryConfigError on unsupported exchange', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName('kraken') }),
-        );
+        createFactory({ name: asExchangeFactoryName('kraken') });
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should call ErrorHandler.handle with THROW strategy on missing name', () => {
       try {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName(undefined) }),
-        );
+        createFactory({ name: asExchangeFactoryName(undefined) });
       } catch {}
 
       expect(mockErrorHandler.handle).toHaveBeenCalledWith(
@@ -118,28 +109,24 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     it('should create factory without ErrorHandler parameter', () => {
       expect(() => {
-        createFactoryWithoutErrorHandler(createExchangeFactoryConfig());
+        createFactoryWithoutErrorHandler();
       }).not.toThrow();
     });
 
     it('should still throw validation errors without ErrorHandler', () => {
       expect(() => {
-        createFactoryWithoutErrorHandler(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName(undefined) }),
-        );
+        createFactoryWithoutErrorHandler({ name: asExchangeFactoryName(undefined) });
       }).toThrow();
     });
 
     it('should throw ExchangeFactoryConfigError without ErrorHandler', () => {
       expect(() => {
-        createFactoryWithoutErrorHandler(
-          createExchangeFactoryConfig({ symbol: asExchangeFactorySymbol(undefined) }),
-        );
+        createFactoryWithoutErrorHandler({ symbol: asExchangeFactorySymbol(undefined) });
       }).toThrow(ExchangeFactoryConfigError);
     });
 
     it('should accept valid config and return methods without ErrorHandler', () => {
-      const factory = createFactoryWithoutErrorHandler(createExchangeFactoryConfig());
+      const factory = createFactoryWithoutErrorHandler();
 
       expect(factory.getExchangeName()).toBe('bybit');
       expect(factory.getSymbol()).toBe('BTCUSDT');
@@ -149,17 +136,13 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
   describe('Configuration Methods', () => {
     it('should return exchange name correctly', () => {
-      const factory = createFactory(
-        createExchangeFactoryConfig({ name: 'binance' }),
-      );
+      const factory = createFactory({ name: 'binance' });
 
       expect(factory.getExchangeName()).toBe('binance');
     });
 
     it('should return symbol correctly', () => {
-      const factory = createFactory(
-        createExchangeFactoryConfig({ symbol: 'ETHUSDT' }),
-      );
+      const factory = createFactory({ symbol: 'ETHUSDT' });
 
       expect(factory.getSymbol()).toBe('ETHUSDT');
     });
@@ -181,9 +164,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Config Error Types and Details', () => {
     it('should include exchange name in missing field error context', () => {
       try {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName('unsupported') }),
-        );
+        createFactory({ name: asExchangeFactoryName('unsupported') });
       } catch {}
 
       const callArgs = mockErrorHandler.handle.mock.calls[0];
@@ -194,9 +175,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
     it('should include supported exchanges list in error', () => {
       try {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName('dydx') }),
-        );
+        createFactory({ name: asExchangeFactoryName('dydx') });
       } catch {}
 
       const callArgs = mockErrorHandler.handle.mock.calls[0];
@@ -211,31 +190,25 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Edge Cases', () => {
     it('should handle case-insensitive exchange names', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName('BYBIT') }),
-        );
+        createFactory({ name: asExchangeFactoryName('BYBIT') });
       }).not.toThrow();
     });
 
     it('should handle empty symbol as error', () => {
       expect(() => {
-        createFactory(createExchangeFactoryConfig({ symbol: '' }));
+        createFactory({ symbol: '' });
       }).toThrow();
     });
 
     it('should handle null config values', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({ name: asExchangeFactoryName(null) }),
-        );
+        createFactory({ name: asExchangeFactoryName(null) });
       }).toThrow();
     });
 
     it('should handle empty string API credentials gracefully', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({ apiKey: '', apiSecret: '' }),
-        );
+        createFactory({ apiKey: '', apiSecret: '' });
       }).not.toThrow();
     });
   });
@@ -243,23 +216,19 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   describe('Multiple Validation Checks', () => {
     it('should validate all required fields in sequence', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({
-            name: asExchangeFactoryName(undefined),
-            symbol: asExchangeFactorySymbol(undefined),
-          }),
-        );
+        createFactory({
+          name: asExchangeFactoryName(undefined),
+          symbol: asExchangeFactorySymbol(undefined),
+        });
       }).toThrow();
     });
 
     it('should validate symbol after name is valid', () => {
       expect(() => {
-        createFactory(
-          createExchangeFactoryConfig({
-            name: 'bybit',
-            symbol: asExchangeFactorySymbol(undefined),
-          }),
-        );
+        createFactory({
+          name: 'bybit',
+          symbol: asExchangeFactorySymbol(undefined),
+        });
       }).toThrow();
     });
   });

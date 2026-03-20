@@ -176,3 +176,40 @@ export function createVolumeProfileService(options: {
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
+
+export function createVolumeProfileInvalidConfig(
+  overrides: Partial<VolumeProfileConfig>,
+): Partial<VolumeProfileConfig> {
+  return {
+    ...overrides,
+  };
+}
+
+export function createVolumeProfileBoundFactory(options: {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createVolumeProfileLogger();
+  const errorHandler = options.errorHandler ?? createVolumeProfileErrorHandler(logger);
+
+  return {
+    logger,
+    errorHandler,
+    createService: (
+      configOverrides?: Partial<VolumeProfileConfig>,
+      serviceLogger: LoggerService = logger,
+      withErrorHandler: boolean = options.withErrorHandler ?? true,
+    ) =>
+      createVolumeProfileServiceWithHarness({
+        configOverrides: {
+          ...options.configOverrides,
+          ...configOverrides,
+        },
+        logger: serviceLogger,
+        errorHandler,
+        withErrorHandler,
+      }),
+  };
+}

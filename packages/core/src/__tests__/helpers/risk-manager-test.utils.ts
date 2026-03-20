@@ -144,3 +144,29 @@ export function createRiskManagerService(options: {
     options.errorHandler ?? new ErrorHandler(logger),
   );
 }
+
+export function createRiskManagerFactory(options: {
+  config?: RiskManagerConfig;
+  balance?: number;
+  logger?: MockRiskManagerLogger;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const config = options.config ?? createRiskManagerConfig();
+  const logger = options.logger ?? new MockRiskManagerLogger();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    config,
+    logger,
+    errorHandler,
+    createRiskManager: () => {
+      const riskManager = createRiskManagerService({
+        config,
+        logger,
+        errorHandler,
+      });
+      riskManager.setAccountBalance(options.balance ?? 1000);
+      return riskManager;
+    },
+  };
+}

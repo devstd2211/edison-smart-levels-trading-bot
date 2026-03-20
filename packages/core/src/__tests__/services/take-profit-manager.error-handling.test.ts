@@ -16,6 +16,8 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
 import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
+  createTakeProfitManagerBoundFactory,
+  createTakeProfitManagerCloseSequence,
   createTakeProfitManagerFactory,
   createTakeProfitManagerHarness,
 } from '../helpers/take-profit-manager-test.utils';
@@ -37,10 +39,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
 
   beforeEach(() => {
     ({ logger, errorHandler } = createTakeProfitManagerHarness());
-    createManager = createTakeProfitManagerFactory({
+    createManager = createTakeProfitManagerBoundFactory({
       logger,
       errorHandler,
-    });
+    }).createManager;
   });
 
   // ============================================================================
@@ -118,9 +120,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
       });
 
       // Record 3 TP levels
-      const close1 = manager.recordPartialClose(1, 28.4, 1.1676);
-      const close2 = manager.recordPartialClose(2, 28.4, 1.1617);
-      const close3 = manager.recordPartialClose(3, 28.4, 1.1363);
+      const [tp1, tp2, tp3] = createTakeProfitManagerCloseSequence([1.1676, 1.1617, 1.1363]);
+      const close1 = manager.recordPartialClose(tp1.level, tp1.quantity, tp1.exitPrice);
+      const close2 = manager.recordPartialClose(tp2.level, tp2.quantity, tp2.exitPrice);
+      const close3 = manager.recordPartialClose(tp3.level, tp3.quantity, tp3.exitPrice);
 
       // All should be recorded
       expect(manager.getPartialCloses()).toHaveLength(3);
@@ -137,9 +140,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
       });
 
       // Record partial closes
-      manager.recordPartialClose(1, 28.4, 1.1676);
-      manager.recordPartialClose(2, 28.4, 1.1617);
-      manager.recordPartialClose(3, 28.4, 1.1363);
+      createTakeProfitManagerCloseSequence([1.1676, 1.1617, 1.1363]).forEach((close) => {
+        manager.recordPartialClose(close.level, close.quantity, close.exitPrice);
+      });
 
       const total = manager.getTotalPnL();
 
@@ -184,9 +187,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
       });
 
       // Record 3 closes despite logger errors
-      const close1 = manager.recordPartialClose(1, 28.4, 1.1676);
-      const close2 = manager.recordPartialClose(2, 28.4, 1.1617);
-      const close3 = manager.recordPartialClose(3, 28.4, 1.1363);
+      const [tp1, tp2, tp3] = createTakeProfitManagerCloseSequence([1.1676, 1.1617, 1.1363]);
+      const close1 = manager.recordPartialClose(tp1.level, tp1.quantity, tp1.exitPrice);
+      const close2 = manager.recordPartialClose(tp2.level, tp2.quantity, tp2.exitPrice);
+      const close3 = manager.recordPartialClose(tp3.level, tp3.quantity, tp3.exitPrice);
 
       // All closes should be recorded
       expect(manager.getPartialCloses()).toHaveLength(3);
@@ -229,8 +233,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
         configOverrides: { positionId: 'test_final_001' },
       });
 
-      manager.recordPartialClose(1, 28.4, 1.1676);
-      manager.recordPartialClose(2, 28.4, 1.1617);
+      createTakeProfitManagerCloseSequence([1.1676, 1.1617]).forEach((close) => {
+        manager.recordPartialClose(close.level, close.quantity, close.exitPrice);
+      });
 
       // Calculate final PnL with ErrorHandler
       const finalPnL = manager.calculateFinalPnL(1.1500);
@@ -299,9 +304,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
       });
 
       // Execute TP sequence
-      const tp1 = manager.recordPartialClose(1, 28.4, 1.1676);
-      const tp2 = manager.recordPartialClose(2, 28.4, 1.1617); // Logger fails, but close recorded
-      const tp3 = manager.recordPartialClose(3, 28.4, 1.1363);
+      const [close1, close2, close3] = createTakeProfitManagerCloseSequence([1.1676, 1.1617, 1.1363]);
+      const tp1 = manager.recordPartialClose(close1.level, close1.quantity, close1.exitPrice);
+      const tp2 = manager.recordPartialClose(close2.level, close2.quantity, close2.exitPrice);
+      const tp3 = manager.recordPartialClose(close3.level, close3.quantity, close3.exitPrice);
 
       // Verify all closes recorded despite logger failure
       expect(manager.isFullyClosed()).toBe(true);
@@ -316,9 +322,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
         configOverrides: { positionId: 'test_integration_002' },
       });
 
-      manager.recordPartialClose(1, 28.4, 1.1676);
-      manager.recordPartialClose(2, 28.4, 1.1617);
-      manager.recordPartialClose(3, 28.4, 1.1363);
+      createTakeProfitManagerCloseSequence([1.1676, 1.1617, 1.1363]).forEach((close) => {
+        manager.recordPartialClose(close.level, close.quantity, close.exitPrice);
+      });
 
       const total = manager.getTotalPnL();
       const remaining = manager.getRemainingQuantity();
@@ -333,9 +339,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
         configOverrides: { positionId: 'test_integration_003' },
       });
 
-      manager.recordPartialClose(1, 28.4, 1.1676);
-      manager.recordPartialClose(2, 28.4, 1.1617);
-      manager.recordPartialClose(3, 28.4, 1.1363);
+      createTakeProfitManagerCloseSequence([1.1676, 1.1617, 1.1363]).forEach((close) => {
+        manager.recordPartialClose(close.level, close.quantity, close.exitPrice);
+      });
 
       const tpLevels = manager.getTpLevelsHit();
       expect(tpLevels).toEqual([1, 2, 3]);

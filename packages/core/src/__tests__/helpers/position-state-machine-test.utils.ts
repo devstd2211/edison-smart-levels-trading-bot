@@ -104,6 +104,34 @@ export function createPositionStateTransitionInput(
   };
 }
 
+export function createPositionStateMachinePositionId(prefix = 'pos'): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+export function transitionPositionStateSequence(
+  service: PositionStateMachineService,
+  options: {
+    symbol?: string;
+    positionId?: string;
+    states: PositionState[];
+    reasonPrefix?: string;
+  },
+) {
+  const symbol = options.symbol ?? 'BTCUSDT';
+  const positionId = options.positionId ?? createPositionStateMachinePositionId();
+
+  return options.states.map((targetState, index) =>
+    service.transitionState(
+      createPositionStateTransitionInput({
+        symbol,
+        positionId,
+        targetState,
+        reason: `${options.reasonPrefix ?? 'Transition'} ${index + 1}`,
+      }),
+    ),
+  );
+}
+
 export function createPositionStateMachineHarness(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

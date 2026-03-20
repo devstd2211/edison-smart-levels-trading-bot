@@ -16,6 +16,7 @@ import {
 import type { TradeRecord } from '../../types/legacy';
 import {
   MockRiskManagerLogger,
+  createRiskManagerFactory,
   createRiskManagerConfig,
   createRiskManagerHarness,
   createRiskManagerPosition,
@@ -28,9 +29,14 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
+  let createRiskManager: ReturnType<typeof createRiskManagerFactory>['createRiskManager'];
 
   beforeEach(() => {
     ({ riskManager, mockLogger, errorHandler } = createRiskManagerHarness());
+    ({ createRiskManager } = createRiskManagerFactory({
+      logger: mockLogger,
+      errorHandler,
+    }));
   });
 
   // ========================================================================
@@ -73,8 +79,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
 
   describe('B. Account Balance Errors - GRACEFUL_DEGRADE Strategy', () => {
     it('should degrade gracefully on zero account balance', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
       const signal = createRiskManagerSignal();
       const result = await rm.canTrade(signal, 0, []);
       expect(result.allowed).toBe(false);
@@ -82,8 +87,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should degrade gracefully on negative account balance', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
       const signal = createRiskManagerSignal();
       const result = await rm.canTrade(signal, -500, []);
       expect(result.allowed).toBe(false);
@@ -91,8 +95,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should allow trade with valid account balance', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
       const signal = createRiskManagerSignal();
       const result = await rm.canTrade(signal, 1000, []);
       expect(result.allowed).toBe(true);
@@ -208,8 +211,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
 
   describe('F. Integration Tests', () => {
     it('should handle complete trade workflow', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
 
       const signal = createRiskManagerSignal();
       const decision = await rm.canTrade(signal, 1000, []);
@@ -224,8 +226,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should recover from error and continue trading', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
 
       const goodSignal = createRiskManagerSignal();
       const badSignal = createRiskManagerSignal({ price: -100 });
@@ -240,8 +241,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should maintain state during cascading failures', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
 
       // Trade 1: Loss
       const lossTrade = createRiskManagerTrade({ realizedPnL: -50 });
@@ -264,8 +264,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should enforce daily loss limit', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
 
       const signal = createRiskManagerSignal();
 
@@ -280,8 +279,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should apply loss streak multipliers', async () => {
-      const rm = createRiskManagerService({ logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager();
 
       const signal = createRiskManagerSignal();
 

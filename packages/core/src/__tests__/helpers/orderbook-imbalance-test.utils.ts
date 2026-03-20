@@ -67,6 +67,31 @@ export function createOrderbookImbalanceHarness(options: {
   };
 }
 
+export function createOrderbookImbalanceServiceFactory(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createOrderbookImbalanceLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    errorHandler,
+    createService: (configOrOverrides?: OrderbookImbalanceConfig | Partial<OrderbookImbalanceConfig>) =>
+      createOrderbookImbalanceService({
+        logger,
+        errorHandler,
+        withErrorHandler: options.withErrorHandler,
+        ...(configOrOverrides && 'enabled' in configOrOverrides && 'levels' in configOrOverrides && 'minImbalancePercent' in configOrOverrides
+          ? { config: configOrOverrides as OrderbookImbalanceConfig }
+          : { configOverrides: configOrOverrides as Partial<OrderbookImbalanceConfig> | undefined }),
+      }),
+  };
+}
+
 export function createOrderbookImbalanceService(options: {
   config?: OrderbookImbalanceConfig;
   configOverrides?: Partial<OrderbookImbalanceConfig>;

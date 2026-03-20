@@ -132,3 +132,36 @@ export function createEntryConfirmationManagerWithHarness(options: {
 } = {}): EntryConfirmationManager {
   return createEntryConfirmationManager(options);
 }
+
+export function createEntryConfirmationFactory(options: {
+  config?: EntryConfirmationConfig;
+  configOverrides?: Partial<EntryConfirmationConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createEntryConfirmationLogger();
+  const config = options.config ?? createEntryConfirmationConfig(options.configOverrides);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    config,
+    errorHandler,
+    createManager: (overrides: {
+      config?: EntryConfirmationConfig;
+      configOverrides?: Partial<EntryConfirmationConfig>;
+      withErrorHandler?: boolean;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createEntryConfirmationManager({
+        config: overrides.config,
+        configOverrides: overrides.configOverrides,
+        logger,
+        withErrorHandler: overrides.withErrorHandler ?? options.withErrorHandler,
+        errorHandler: overrides.errorHandler ?? errorHandler,
+      }),
+  };
+}

@@ -46,19 +46,14 @@ describe('HealthCheckService', () => {
     });
 
     it('should report exchange as degraded when connection fails', async () => {
-      mockExchange.testConnection = jest.fn().mockResolvedValue(false);
-
-      const health = await service.checkExchange();
+      const health = await harness.createDisconnectedExchangeService().checkExchange();
 
       expect(health.status).toBe('degraded');
       expect(health.checks?.connection).toBe(false);
     });
 
     it('should report exchange as degraded when server time is out of sync', async () => {
-      // Server time 10 seconds in the future
-      mockExchange.getServerTime = jest.fn().mockResolvedValue(Date.now() + 10000);
-
-      const health = await service.checkExchange();
+      const health = await harness.createOutOfSyncExchangeService().checkExchange();
 
       expect(health.status).toBe('degraded');
       expect(health.checks?.serverTime).toBe(false);
@@ -102,10 +97,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report WebSocket as degraded when no recent messages', async () => {
-      mockWebSocket.isConnected = jest.fn().mockReturnValue(true);
-      mockWebSocket.getLastMessageTime = jest.fn().mockReturnValue(Date.now() - 120000); // 2 minutes ago
-
-      const health = await service.checkWebSocket();
+      const health = await harness.createStaleWebSocketService().checkWebSocket();
 
       expect(health.status).toBe('degraded');
       expect(health.checks?.recentMessages).toBe(false);
@@ -121,11 +113,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report WebSocket as down on error', async () => {
-      mockWebSocket.isConnected = jest.fn().mockImplementation(() => {
-        throw new Error('WebSocket error');
-      });
-
-      const health = await service.checkWebSocket();
+      const health = await harness.createThrowingWebSocketService().checkWebSocket();
 
       expect(health.status).toBe('down');
       expect(health.checks?.error).toBe(true);

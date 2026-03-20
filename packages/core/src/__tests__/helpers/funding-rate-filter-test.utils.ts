@@ -36,6 +36,56 @@ export function createFundingRateData(
   };
 }
 
+export function createFundingRateDataSeries(
+  fundingRates: number[],
+  startTime = Date.now(),
+): FundingRateData[] {
+  return fundingRates.map((fundingRate, index) =>
+    createFundingRateData({
+      fundingRate,
+      timestamp: startTime + index * 1000,
+      nextFundingTime: startTime + (8 * 60 * 60 * 1000) + index * 1000,
+    }),
+  );
+}
+
+export function createFundingRateFilterFactory(options: {
+  config?: FundingRateFilterConfig;
+  configOverrides?: Partial<FundingRateFilterConfig>;
+  logger?: LoggerService;
+  getFundingRate?: jest.Mock<Promise<FundingRateData>>;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createFundingRateFilterLogger();
+  const config = options.config ?? createFundingRateFilterConfig(options.configOverrides);
+  const mockGetFundingRate = options.getFundingRate ?? jest.fn<Promise<FundingRateData>, []>();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    config,
+    mockGetFundingRate,
+    errorHandler,
+    createFilter: (overrides: {
+      config?: FundingRateFilterConfig;
+      configOverrides?: Partial<FundingRateFilterConfig>;
+      withErrorHandler?: boolean;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createFundingRateFilterService({
+        logger,
+        getFundingRate: mockGetFundingRate,
+        config: overrides.config,
+        configOverrides: overrides.configOverrides,
+        withErrorHandler: overrides.withErrorHandler ?? options.withErrorHandler,
+        errorHandler: overrides.errorHandler ?? errorHandler,
+      }),
+  };
+}
+
 export function createFundingRateFilterServiceWithHarness(options: {
   config?: FundingRateFilterConfig;
   configOverrides?: Partial<FundingRateFilterConfig>;
