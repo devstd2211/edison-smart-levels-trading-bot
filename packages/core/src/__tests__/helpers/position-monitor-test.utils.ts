@@ -76,6 +76,10 @@ export function createPositionMonitorScenarioPosition(
   });
 }
 
+export function createPositionMonitorOpenedAtMinutesAgo(minutes: number): number {
+  return Date.now() - minutes * 60 * 1000;
+}
+
 export function attachScenarioPosition(
   harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>,
   options: {
@@ -324,6 +328,36 @@ export function attachExchangePosition(
 ): Position {
   attachCurrentPosition(harness, position);
   harness.mockBybit.getPosition.mockResolvedValueOnce(position);
+  return position;
+}
+
+export function attachPersistentExchangePosition(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager' | 'mockBybit'>,
+  position: Position = createMockMonitoredPosition(),
+): Position {
+  attachCurrentPosition(harness, position);
+  harness.mockBybit.getPosition.mockResolvedValue(position);
+  return position;
+}
+
+export function attachTimeBasedExitScenario(
+  harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager' | 'mockBybit'>,
+  options: {
+    side: PositionSide;
+    entryPrice: number;
+    stopLossPrice: number;
+    openedMinutesAgo: number;
+    currentPrice: number;
+  },
+): Position {
+  const position = attachScenarioPosition(harness, {
+    side: options.side,
+    entryPrice: options.entryPrice,
+    stopLossPrice: options.stopLossPrice,
+    openedAt: createPositionMonitorOpenedAtMinutesAgo(options.openedMinutesAgo),
+  });
+  harness.mockBybit.getPosition.mockResolvedValue(position);
+  harness.mockBybit.getCurrentPrice.mockResolvedValue(options.currentPrice);
   return position;
 }
 

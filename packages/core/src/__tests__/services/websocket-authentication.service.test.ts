@@ -22,7 +22,7 @@ describe('WebSocketAuthenticationService', () => {
   beforeEach(() => {
     const harness = createWebSocketAuthenticationHarness();
     service = harness.service;
-    createService = () => harness.createService();
+    createService = harness.createStandardService;
   });
 
   describe('generateAuthPayload', () => {

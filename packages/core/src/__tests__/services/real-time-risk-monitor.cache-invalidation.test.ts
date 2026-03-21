@@ -1,7 +1,7 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import {
+  createStartedRealTimeRiskMonitorHarness,
   createMockRiskMonitorPosition,
-  createRealTimeRiskMonitorHarness,
   invalidateRiskMonitorPosition,
   seedRiskMonitorHealthScore,
   seedRiskMonitorHealthScores,
@@ -20,7 +20,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const harness = createRealTimeRiskMonitorHarness();
+    const harness = createStartedRealTimeRiskMonitorHarness();
     monitor = harness.monitor;
     mockPositionService = harness.mockPositionService;
     mockLogger = harness.mockLogger;
@@ -74,8 +74,6 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   it('CI3: Event without position ID logged as warning', () => {
-    monitor.start();
-
     mockEventBus.emitPositionClosed({ position: null } as never);
 
     expect(mockLogger.warn).toHaveBeenCalledWith(

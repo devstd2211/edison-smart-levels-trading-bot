@@ -13,6 +13,7 @@ export type WebSocketAuthenticationHarness = {
   errorHandler: ErrorHandler;
   mockLogger: AuthLogger;
   errorLogger: MockErrorLogger;
+  createStandardService: () => WebSocketAuthenticationService;
   createService: (options?: {
     logger?: AuthLogger;
     errorHandler?: ErrorHandler;
@@ -59,6 +60,11 @@ export function createWebSocketAuthenticationHarness(options: {
     errorHandler: (errorHandler ?? new ErrorHandler(errorLogger)),
     mockLogger,
     errorLogger,
+    createStandardService: () =>
+      createWebSocketAuthenticationService({
+        logger: mockLogger,
+        errorHandler,
+      }),
     createService: (serviceOptions = {}) =>
       createWebSocketAuthenticationService({
         logger: serviceOptions.logger ?? mockLogger,
@@ -92,8 +98,8 @@ export function createWebSocketAuthCredentials(overrides: {
   apiSecret?: string;
 } = {}): { apiKey: string; apiSecret: string } {
   return {
-    apiKey: overrides.apiKey ?? 'test-key',
-    apiSecret: overrides.apiSecret ?? 'test-secret',
+    apiKey: overrides.apiKey ?? 'test-key-1234567890',
+    apiSecret: overrides.apiSecret ?? 'test-secret-1234567890',
   };
 }
 

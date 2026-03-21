@@ -29,15 +29,18 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-21)
-- Completed another three-iteration websocket-manager helper consolidation batch for `websocket-manager.service` and `websocket-manager.error-handling`:
-  - extended `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts` with a shared testnet harness and compact internal-state accessors for error-handler and reconnect state.
-  - routed both suites through those helpers instead of repeated testnet bootstrap overrides and repeated direct `getWebSocketManagerInternals(...)` access.
-  - reviewed `services/websocket-manager.service.ts`; left production code unchanged after review.
+- Completed a three-slice websocket helper-consolidation batch:
+  - extended `packages/core/src/__tests__/helpers/websocket-authentication-test.utils.ts` with a shared standard-service path and canonical valid credentials defaults, then routed `websocket-authentication.service.test.ts` through those helpers instead of ad-hoc `harness.createService()` and short inline auth fixtures.
+  - routed `packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` through the shared credentials builders instead of repeated inline key/secret literals and repeated local valid-credential bootstrap.
+  - extended `packages/core/src/__tests__/helpers/public-websocket-test.utils.ts` with a shared standard-service path and routed `public-websocket.error-handling.test.ts` through it instead of repeated `createStandardPublicWebSocketService(...)` blocks.
+  - reviewed `services/websocket-authentication.service.ts` and `services/public-websocket.service.ts`; left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts` -> PASS (2/2 suites, 31/31 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-authentication.service.test.ts` -> PASS (1/1 suite, 12/12 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` -> PASS (1/1 suite, 31/31 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts` -> PASS (1/1 suite, 24/24 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent partially-normalized lifecycle/stateful slice outside the now-refreshed `bot-factory` / `bot-initializer` / `graceful-shutdown` / `websocket-manager` cluster, especially a neighboring helper-backed suite that still rebuilds constructor inputs, signal/lifecycle spy packs, or saved-state fixtures inline.
+- Prefer the next adjacent partially-normalized lifecycle/stateful slice around neighboring websocket/observability suites such as `websocket-authentication` follow-ups, `event-deduplication`, `orderbook-manager`, or other helper-light bootstrap near the refreshed public-websocket cluster.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

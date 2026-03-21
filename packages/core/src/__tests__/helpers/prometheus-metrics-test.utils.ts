@@ -19,6 +19,12 @@ export interface PrometheusMetricsHarness {
     logger?: LoggerService,
     handler?: ErrorHandler,
   ) => PrometheusMetricsService;
+  createStartedTrackedService: (
+    trackedServices: PrometheusMetricsService[],
+    config?: MetricsConfig,
+    logger?: LoggerService,
+    handler?: ErrorHandler,
+  ) => PrometheusMetricsService;
   stopTrackedServices: (trackedServices: PrometheusMetricsService[]) => void;
 }
 
@@ -51,6 +57,17 @@ export function createPrometheusMetricsHarness(): PrometheusMetricsHarness {
       handler: ErrorHandler | undefined = errorHandler,
     ): PrometheusMetricsService {
       const metricsService = createService(config, serviceLogger, handler);
+      trackedServices.push(metricsService);
+      return metricsService;
+    },
+    createStartedTrackedService(
+      trackedServices: PrometheusMetricsService[],
+      config: MetricsConfig = {},
+      serviceLogger: LoggerService | undefined = logger,
+      handler: ErrorHandler | undefined = errorHandler,
+    ): PrometheusMetricsService {
+      const metricsService = createService(config, serviceLogger, handler);
+      metricsService.start();
       trackedServices.push(metricsService);
       return metricsService;
     },

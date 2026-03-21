@@ -70,13 +70,12 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = harness.createTrackedService(
+      const svc = harness.createStartedTrackedService(
         trackedServices,
         { collectInterval: 1000 },
         mockLogger,
         undefined,
       );
-      svc.start();
       expect(svc).toBeDefined();
     });
 
@@ -346,15 +345,13 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = harness.createTrackedService(
+      const svc = harness.createStartedTrackedService(
         trackedServices,
         { collectInterval: 100 },
         mockLogger,
         undefined,
       );
 
-      // Should start collection
-      svc.start();
       expect(svc).toBeDefined();
 
       // Stop collection

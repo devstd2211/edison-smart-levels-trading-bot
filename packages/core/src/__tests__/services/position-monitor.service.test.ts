@@ -13,9 +13,10 @@ import {
 import {
   attachCurrentPosition,
   attachExchangePosition,
-  attachScenarioPosition,
   attachScenarioExchangePosition,
+  attachTimeBasedExitScenario,
   createPositionMonitorHarness,
+  createPositionMonitorOpenedAtMinutesAgo,
   createPositionMonitorRiskConfig,
   createPositionMonitorScenarioPosition,
   createPositionMonitorServiceWithHarness,
@@ -328,15 +329,13 @@ describe('PositionMonitorService', () => {
 
   describe('time-based exit', () => {
     it('should emit timeBasedExit when position open too long with low PnL', async () => {
-      const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachScenarioPosition(positionHarness, {
+      const position = attachTimeBasedExitScenario({ ...positionHarness, mockBybit }, {
         side: PositionSide.LONG,
         entryPrice: 1.5,
         stopLossPrice: 1.48,
-        openedAt,
+        openedMinutesAgo: 35,
+        currentPrice: 1.501,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
       rebuildMonitor(createTimeBasedExitRiskConfig());
 
@@ -356,15 +355,13 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit timeBasedExit when position has sufficient PnL', async () => {
-      const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachScenarioPosition(positionHarness, {
+      attachTimeBasedExitScenario({ ...positionHarness, mockBybit }, {
         side: PositionSide.LONG,
         entryPrice: 1.5,
         stopLossPrice: 1.48,
-        openedAt,
+        openedMinutesAgo: 35,
+        currentPrice: 1.505,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getCurrentPrice.mockResolvedValue(1.505); // +0.33% PnL (> 0.2% threshold)
 
       rebuildMonitor(createTimeBasedExitRiskConfig());
 
@@ -377,15 +374,13 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit timeBasedExit when position not open long enough', async () => {
-      const openedAt = Date.now() - 25 * 60 * 1000; // 25 minutes ago (< 30 threshold)
-      const position = attachScenarioPosition(positionHarness, {
+      attachTimeBasedExitScenario({ ...positionHarness, mockBybit }, {
         side: PositionSide.LONG,
         entryPrice: 1.5,
         stopLossPrice: 1.48,
-        openedAt,
+        openedMinutesAgo: 25,
+        currentPrice: 1.501,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL (< 0.2% threshold)
 
       rebuildMonitor(createTimeBasedExitRiskConfig());
 
@@ -398,15 +393,13 @@ describe('PositionMonitorService', () => {
     });
 
     it('should NOT emit timeBasedExit when feature disabled', async () => {
-      const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachScenarioPosition(positionHarness, {
+      attachTimeBasedExitScenario({ ...positionHarness, mockBybit }, {
         side: PositionSide.LONG,
         entryPrice: 1.5,
         stopLossPrice: 1.48,
-        openedAt,
+        openedMinutesAgo: 35,
+        currentPrice: 1.501,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getCurrentPrice.mockResolvedValue(1.501); // +0.067% PnL
 
       rebuildMonitor(createPositionMonitorRiskConfig({ positionSizeUsdt: 10, timeBasedExitEnabled: false }));
 
@@ -419,15 +412,13 @@ describe('PositionMonitorService', () => {
     });
 
     it('should calculate correct PnL for SHORT position', async () => {
-      const openedAt = Date.now() - 35 * 60 * 1000; // 35 minutes ago
-      const position = attachScenarioPosition(positionHarness, {
+      attachTimeBasedExitScenario({ ...positionHarness, mockBybit }, {
         side: PositionSide.SHORT,
         entryPrice: 1.5,
         stopLossPrice: 1.52,
-        openedAt,
+        openedMinutesAgo: 35,
+        currentPrice: 1.499,
       });
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getCurrentPrice.mockResolvedValue(1.499); // +0.067% PnL (< 0.2% threshold)
 
       rebuildMonitor(createTimeBasedExitRiskConfig());
 
@@ -601,8 +592,13 @@ describe('PositionMonitorService', () => {
     });
 
     it('should call deepSyncCheck for positions > 2 minutes old', async () => {
-      const openedAt = Date.now() - 150000; // 2.5 minutes ago (> 2min threshold)
-      const position = createMockPosition(PositionSide.LONG, 1.5, 1.48, [], openedAt);
+      const position = createMockPosition(
+        PositionSide.LONG,
+        1.5,
+        1.48,
+        [],
+        createPositionMonitorOpenedAtMinutesAgo(2.5),
+      );
       position.status = 'OPEN';
       attachCurrentPosition(positionHarness, position);
       mockBybit.getPosition.mockResolvedValue(position); // Position exists

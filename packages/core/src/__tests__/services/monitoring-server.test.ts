@@ -52,11 +52,9 @@ describe('MonitoringServer', () => {
 
   describe('GET /metrics', () => {
     it('should return Prometheus metrics in text format', async () => {
-      server = harness.createServer({ port: 9091 }, trackedServers);
+      server = await harness.startServer({ port: 9091 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/metrics')
         .expect(200);
 
@@ -66,14 +64,12 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when metrics service not available', async () => {
-      server = harness.createServer(
+      server = await harness.startServer(
         { port: 9092, metricsService: undefined, healthService: mockHealthService },
         trackedServers,
       );
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/metrics')
         .expect(503);
 
@@ -83,11 +79,9 @@ describe('MonitoringServer', () => {
     it('should return 500 on metrics retrieval error', async () => {
       mockMetricsService.getMetrics = jest.fn().mockRejectedValue(new Error('Metrics error'));
 
-      server = harness.createServer({ port: 9093 }, trackedServers);
+      server = await harness.startServer({ port: 9093 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/metrics')
         .expect(500);
 
@@ -101,11 +95,9 @@ describe('MonitoringServer', () => {
 
   describe('GET /health', () => {
     it('should return health status as JSON with 200 when healthy', async () => {
-      server = harness.createServer({ port: 9094 }, trackedServers);
+      server = await harness.startServer({ port: 9094 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/health')
         .expect(200);
 
@@ -116,23 +108,13 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when system is degraded', async () => {
-      mockHealthService.checkHealth = jest.fn().mockResolvedValue({
-        status: 'degraded',
-        timestamp: Date.now(),
-        uptime: 100,
-        components: {
-          exchange: { status: 'degraded', lastCheck: Date.now() },
-          websocket: { status: 'up', lastCheck: Date.now() },
-          system: { status: 'up', lastCheck: Date.now() },
-          trading: { status: 'up', lastCheck: Date.now() },
-        },
-      });
+      mockHealthService.checkHealth = jest
+        .fn()
+        .mockResolvedValue(harness.createDegradedHealthStatus());
 
-      server = harness.createServer({ port: 9095 }, trackedServers);
+      server = await harness.startServer({ port: 9095 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/health')
         .expect(503);
 
@@ -140,14 +122,12 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when health service not available', async () => {
-      server = harness.createServer(
+      server = await harness.startServer(
         { port: 9096, metricsService: mockMetricsService, healthService: undefined },
         trackedServers,
       );
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/health')
         .expect(503);
 
@@ -161,11 +141,9 @@ describe('MonitoringServer', () => {
 
   describe('Kubernetes Probes', () => {
     it('should return liveness status at /health/live', async () => {
-      server = harness.createServer({ port: 9097 }, trackedServers);
+      server = await harness.startServer({ port: 9097 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/health/live')
         .expect(200);
 
@@ -174,11 +152,9 @@ describe('MonitoringServer', () => {
     });
 
     it('should return readiness status at /health/ready', async () => {
-      server = harness.createServer({ port: 9098 }, trackedServers);
+      server = await harness.startServer({ port: 9098 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/health/ready')
         .expect(200);
 
@@ -197,19 +173,14 @@ describe('MonitoringServer', () => {
 
       expect(server.isRunning()).toBe(false);
 
-      await server.start();
-      expect(server.isRunning()).toBe(true);
-
-      await server.stop();
+      await harness.startAndStopServer({ port: 9099 }, trackedServers);
       expect(server.isRunning()).toBe(false);
     });
 
     it('should return 404 for unknown routes', async () => {
-      server = harness.createServer({ port: 9100 }, trackedServers);
+      server = await harness.startServer({ port: 9100 }, trackedServers);
 
-      await server.start();
-
-      const response = await request(`http://localhost:${server.getPort()}`)
+      const response = await request(harness.getBaseUrl(server))
         .get('/unknown')
         .expect(404);
 

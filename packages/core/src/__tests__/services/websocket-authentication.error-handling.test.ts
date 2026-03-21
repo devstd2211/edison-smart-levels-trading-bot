@@ -8,6 +8,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createWebSocketAuthenticationHarness,
   createWebSocketAuthenticationService,
+  createWebSocketAuthCredentials,
   createLongWebSocketAuthCredentials,
   createShortWebSocketAuthCredentials,
   createMockWebSocketAuthLogger,
@@ -74,16 +75,21 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       jest.unmock('crypto');
 
       // Service should still work with valid credentials
-      const result = newService.generateAuthPayload('test-key-1234567890', 'test-secret-1234567890');
+      const { apiKey, apiSecret } = createLongWebSocketAuthCredentials();
+      const result = newService.generateAuthPayload(apiKey, apiSecret);
 
       expect(result.op).toBe('auth');
       expect(result.args).toHaveLength(3);
-      expect(result.args[0]).toBe('test-key-1234567890');
+      expect(result.args[0]).toBe(apiKey);
     });
 
     it('should continue with empty signature on crypto failure', () => {
       // Valid credentials should generate payload even if signature fails internally
-      const result = service.generateAuthPayload('valid-key-1234567890', 'valid-secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'valid-key-1234567890',
+        apiSecret: 'valid-secret-1234567890',
+      });
+      const result = service.generateAuthPayload(apiKey, apiSecret);
 
       expect(result.op).toBe('auth');
       expect(result.args).toHaveLength(3);
@@ -105,7 +111,11 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       });
 
       expect(() => {
-        serviceWithBadLogger.generateAuthPayload('valid-key-1234567890', 'valid-secret-1234567890');
+        const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+          apiKey: 'valid-key-1234567890',
+          apiSecret: 'valid-secret-1234567890',
+        });
+        serviceWithBadLogger.generateAuthPayload(apiKey, apiSecret);
       }).not.toThrow();
     });
 
@@ -121,7 +131,11 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       });
 
       expect(() => {
-        serviceWithBadLogger.validateCredentials('valid-key-1234567890', 'valid-secret-1234567890');
+        const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+          apiKey: 'valid-key-1234567890',
+          apiSecret: 'valid-secret-1234567890',
+        });
+        serviceWithBadLogger.validateCredentials(apiKey, apiSecret);
       }).not.toThrow();
     });
 
@@ -147,7 +161,11 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
         errorHandler,
       });
 
-      const result = serviceNoLogger.generateAuthPayload('valid-key-1234567890', 'valid-secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'valid-key-1234567890',
+        apiSecret: 'valid-secret-1234567890',
+      });
+      const result = serviceNoLogger.generateAuthPayload(apiKey, apiSecret);
 
       expect(result).toBeDefined();
       expect(result.op).toBe('auth');
@@ -168,23 +186,28 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== Integration Tests =====
   describe('Integration: Auth Payload Generation', () => {
     it('should generate valid auth payload with valid credentials', () => {
-      const result = service.generateAuthPayload('test-api-key-1234567890', 'test-secret-key-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'test-api-key-1234567890',
+        apiSecret: 'test-secret-key-1234567890',
+      });
+      const result = service.generateAuthPayload(apiKey, apiSecret);
 
       expect(result.op).toBe('auth');
       expect(result.args).toHaveLength(3);
       expect(typeof result.args[0]).toBe('string');
       expect(typeof result.args[1]).toBe('string');
       expect(typeof result.args[2]).toBe('string');
-      expect(result.args[0]).toBe('test-api-key-1234567890');
+      expect(result.args[0]).toBe(apiKey);
       expect(result.args[2].length).toBeGreaterThan(0); // Signature should be non-empty
     });
 
     it('should generate unique signatures for different calls', (done) => {
-      const payload1 = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const payload1 = service.generateAuthPayload(apiKey, apiSecret);
 
       // Wait a few milliseconds to ensure different timestamp
       setTimeout(() => {
-        const payload2 = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
+        const payload2 = service.generateAuthPayload(apiKey, apiSecret);
 
         // Signatures should be different due to different timestamps
         expect(payload1.args[1]).not.toEqual(payload2.args[1]);
@@ -193,14 +216,16 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should use correct HMAC-SHA256 algorithm', () => {
-      const result = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const result = service.generateAuthPayload(apiKey, apiSecret);
 
       // Signature should be a valid hex string (64 chars for SHA256)
       expect(result.args[2]).toMatch(/^[a-f0-9]{64}$/);
     });
 
     it('should include correct expiration format', () => {
-      const result = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const result = service.generateAuthPayload(apiKey, apiSecret);
 
       const expires = parseInt(result.args[1], 10);
       const now = Date.now();
@@ -213,8 +238,9 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should generate consistent structure across multiple calls', () => {
-      const result1 = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
-      const result2 = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const result1 = service.generateAuthPayload(apiKey, apiSecret);
+      const result2 = service.generateAuthPayload(apiKey, apiSecret);
 
       expect(result1.op).toBe(result2.op);
       expect(result1.args.length).toBe(result2.args.length);
@@ -225,7 +251,11 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== Credential Validation =====
   describe('Integration: Credential Validation', () => {
     it('should validate valid credentials', () => {
-      const result = service.validateCredentials('valid-key-1234567890', 'valid-secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'valid-key-1234567890',
+        apiSecret: 'valid-secret-1234567890',
+      });
+      const result = service.validateCredentials(apiKey, apiSecret);
 
       expect(result).toBe(true);
     });
@@ -238,30 +268,43 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should reject null apiKey in validateCredentials', () => {
-      const result = service.validateCredentials(null as unknown as string, 'valid-secret-1234567890');
+      const { apiSecret } = createWebSocketAuthCredentials({
+        apiSecret: 'valid-secret-1234567890',
+      });
+      const result = service.validateCredentials(null as unknown as string, apiSecret);
 
       expect(result).toBe(false);
     });
 
     it('should reject null apiSecret in validateCredentials', () => {
-      const result = service.validateCredentials('valid-key-1234567890', null as unknown as string);
+      const { apiKey } = createWebSocketAuthCredentials({
+        apiKey: 'valid-key-1234567890',
+      });
+      const result = service.validateCredentials(apiKey, null as unknown as string);
 
       expect(result).toBe(false);
     });
 
     it('should reject empty strings in validateCredentials', () => {
-      const result = service.validateCredentials('', 'valid-secret-1234567890');
+      const { apiSecret } = createWebSocketAuthCredentials({
+        apiSecret: 'valid-secret-1234567890',
+      });
+      const result = service.validateCredentials('', apiSecret);
 
       expect(result).toBe(false);
     });
 
     it('should validate credentials early during initialization', () => {
-      const isValid = service.validateCredentials('my-api-key-1234567890', 'my-secret-key-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials({
+        apiKey: 'my-api-key-1234567890',
+        apiSecret: 'my-secret-key-1234567890',
+      });
+      const isValid = service.validateCredentials(apiKey, apiSecret);
 
       expect(isValid).toBe(true);
 
       // Should then be able to generate payload
-      const payload = service.generateAuthPayload('my-api-key-1234567890', 'my-secret-key-1234567890');
+      const payload = service.generateAuthPayload(apiKey, apiSecret);
       expect(payload).toBeDefined();
     });
   });
@@ -274,7 +317,8 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
         withErrorHandler: false,
       });
 
-      const result = serviceNoHandler.generateAuthPayload('key-1234567890', 'secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const result = serviceNoHandler.generateAuthPayload(apiKey, apiSecret);
 
       expect(result).toBeDefined();
       expect(result.op).toBe('auth');
@@ -294,7 +338,8 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       });
 
       expect(() => {
-        serviceNoHandler.generateAuthPayload(null as unknown as string, 'secret-1234567890');
+        const { apiSecret } = createWebSocketAuthCredentials();
+        serviceNoHandler.generateAuthPayload(null as unknown as string, apiSecret);
       }).toThrow();
     });
 
@@ -339,8 +384,9 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should always provide valid expires timestamp', () => {
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
       for (let i = 0; i < 5; i++) {
-        const result = service.generateAuthPayload('key-1234567890', 'secret-1234567890');
+        const result = service.generateAuthPayload(apiKey, apiSecret);
         const expires = parseInt(result.args[1], 10);
         const now = Date.now();
 
@@ -359,7 +405,8 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
         errorHandler,
       }).service;
 
-      const result = servicePartialLogger.generateAuthPayload('key-1234567890', 'secret-1234567890');
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const result = servicePartialLogger.generateAuthPayload(apiKey, apiSecret);
 
       expect(result).toBeDefined();
     });

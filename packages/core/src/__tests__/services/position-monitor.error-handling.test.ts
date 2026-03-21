@@ -15,6 +15,7 @@ import {
 import {
   attachExchangePosition,
   attachCurrentPosition,
+  attachPersistentExchangePosition,
   attachProtectedPosition,
   attachUnprotectedPosition,
   createProtectionVerificationResult,
@@ -150,8 +151,10 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     });
 
     it('should continue monitoring after price fetch error', async () => {
-      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
-      mockBybit.getPosition.mockResolvedValue(position);
+      const position = attachPersistentExchangePosition(
+        { ...positionHarness, mockBybit },
+        createMockMonitoredPosition(),
+      );
 
       // First call fails, second succeeds
       mockBybit.getCurrentPrice
@@ -162,8 +165,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       expect(mockPositionManager.getCurrentPosition).toHaveBeenCalled();
 
       jest.clearAllMocks();
-      mockPositionManager.getCurrentPosition.mockReturnValue(position);
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachPersistentExchangePosition({ ...positionHarness, mockBybit }, position);
 
       await runPositionMonitorCycles(monitor, 1); // Second cycle - should continue
       expect(mockPositionManager.getCurrentPosition).toHaveBeenCalled();
@@ -230,8 +232,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     });
 
     it('should continue normal monitoring if deep sync fails', async () => {
-      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
-      mockBybit.getPosition.mockResolvedValue(position);
+      attachPersistentExchangePosition({ ...positionHarness, mockBybit }, createMockMonitoredPosition());
       mockBybit.getCurrentPrice.mockResolvedValue(50100);
 
       // deepSyncCheck fails
@@ -376,7 +377,8 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   describe('Error recovery and resilience', () => {
     it('should recover from transient errors in next cycle', async () => {
-      const position = attachCurrentPosition(positionHarness, createMockMonitoredPosition());
+      const position = createMockMonitoredPosition();
+      attachCurrentPosition(positionHarness, position);
 
       // First call fails
       mockBybit.getPosition.mockRejectedValueOnce(new Error('Temporary error'));

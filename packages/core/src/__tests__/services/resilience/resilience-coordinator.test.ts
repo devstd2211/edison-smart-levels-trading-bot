@@ -1,5 +1,3 @@
-import { LoggerService } from '../../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../../errors/ErrorHandler';
 import { ResilienceCoordinator, ResilienceOptions } from '../../../services/resilience/resilience-coordinator.service';
 import { CircuitBreakerService, CircuitState } from '../../../services/resilience/circuit-breaker.service';
 import { RateLimiterService } from '../../../services/resilience/rate-limiter.service';
@@ -15,86 +13,17 @@ describe('ResilienceCoordinator', () => {
   let retryPolicy: RetryPolicyService;
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
   let harness: ResilienceTestHarness;
 
   beforeEach(() => {
     harness = createResilienceTestHarness();
-    logger = new LoggerService('ERROR', './logs', false);
-    jest.spyOn(logger, 'debug').mockImplementation(() => undefined);
-    jest.spyOn(logger, 'info').mockImplementation(() => undefined);
-    jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
-
-    // Create error handler
-    errorHandler = new ErrorHandler(logger);
-
-    // Create all resilience services
-    circuitBreaker = new CircuitBreakerService(
-      {
-        failureThreshold: 3,
-        failureRateThreshold: 0.5,
-        successThreshold: 2,
-        timeout: 1000,
-        volumeThreshold: 5
-      },
-      logger,
-      errorHandler
-    );
-
-    rateLimiter = harness.trackLifecycle(new RateLimiterService(
-      {
-        maxRequests: 5,
-        windowMs: 1000,
-        burstSize: 10,
-        queueSize: 20,
-        adaptiveEnabled: true
-      },
-      logger,
-      errorHandler
-    ));
-
-    retryPolicy = harness.trackLifecycle(new RetryPolicyService(
-      {
-        maxAttempts: 3,
-        baseDelayMs: 50,
-        maxDelayMs: 500,
-        exponentialBase: 2,
-        jitterEnabled: false,
-        retryBudgetPercent: 0.1 // 10%
-      },
-      logger,
-      errorHandler
-    ));
-
-    bulkhead = harness.trackLifecycle(new BulkheadService(
-      {
-        maxConcurrent: 5,
-        queueSize: 10,
-        timeoutMs: 1000,
-        rejectPolicy: 'QUEUE'
-      },
-      logger,
-      errorHandler
-    ));
-
-    metrics = harness.trackLifecycle(new PrometheusMetricsService(
-      { enabled: true },
-      logger,
-      errorHandler
-    ));
-
-    // Create coordinator
-    coordinator = new ResilienceCoordinator(
-      circuitBreaker,
-      rateLimiter,
-      retryPolicy,
-      bulkhead,
-      metrics,
-      logger,
-      errorHandler
-    );
+    const stack = harness.createCoordinatorStack();
+    circuitBreaker = stack.circuitBreaker;
+    rateLimiter = stack.rateLimiter;
+    retryPolicy = stack.retryPolicy;
+    bulkhead = stack.bulkhead;
+    metrics = stack.metrics;
+    coordinator = stack.coordinator;
   });
 
   afterEach(() => {

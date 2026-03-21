@@ -24,8 +24,11 @@ import {
 import { Position, TakeProfit, StopLossConfig } from '../../types/legacy';
 import {
   attachRiskMonitorCurrentPosition,
+  createRiskMonitorOpenedAtHoursAgo,
+  createRiskMonitorOpenedAtMinutesAgo,
   createRiskMonitorDetailedPosition,
   createRealTimeRiskMonitorHarness,
+  seedRiskMonitorCachedHealthScore,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
@@ -113,7 +116,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   describe('Health Score Components', () => {
     it('should calculate time at risk score (newly opened)', async () => {
       const position = attachRiskMonitorCurrentPosition(riskHarness, {
-        openedAt: Date.now() - 600000, // 10 minutes ago
+        openedAt: createRiskMonitorOpenedAtMinutesAgo(10),
       });
 
       const score = await monitor.calculatePositionHealth(position.id, 45000);
@@ -124,7 +127,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should calculate time at risk score (old position)', async () => {
       const position = attachRiskMonitorCurrentPosition(riskHarness, {
-        openedAt: Date.now() - 14400000, // 4 hours ago (max)
+        openedAt: createRiskMonitorOpenedAtHoursAgo(4),
       });
 
       const score = await monitor.calculatePositionHealth(position.id, 45000);
@@ -194,7 +197,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     it('should detect WARNING status (30 <= score < 70)', async () => {
       const position = attachRiskMonitorCurrentPosition(riskHarness, {
         unrealizedPnL: -9000, // 20% loss - trigger WARNING
-        openedAt: Date.now() - 7200000, // 2 hours old (moderate time risk)
+        openedAt: createRiskMonitorOpenedAtHoursAgo(2),
       });
 
       const score = await monitor.calculatePositionHealth(position.id, 36000);
@@ -206,7 +209,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
       // To get truly CRITICAL (score <30), need very severe loss + old position
       const position = attachRiskMonitorCurrentPosition(riskHarness, {
         unrealizedPnL: -30000, // 66% loss (very severe)
-        openedAt: Date.now() - 14400000, // 4 hours old (maximum time risk)
+        openedAt: createRiskMonitorOpenedAtHoursAgo(4),
       });
 
       const score = await monitor.calculatePositionHealth(position.id, 15000);
@@ -373,22 +376,23 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     });
 
     it('should return cached health score with getLatestHealthScore', async () => {
-      const position = attachRiskMonitorCurrentPosition(riskHarness);
-
-      await monitor.calculatePositionHealth(position.id, 45000);
-
-      const cached = monitor.getLatestHealthScore(position.id);
+      const { position, cachedScore: cached } = await seedRiskMonitorCachedHealthScore(
+        riskHarness,
+        {},
+        45000,
+      );
 
       expect(cached).toBeDefined();
       expect(cached?.positionId).toBe('POS-123');
     });
 
     it('should clear health score cache', async () => {
-      const position = attachRiskMonitorCurrentPosition(riskHarness);
-
-      // Populate cache
-      await monitor.calculatePositionHealth(position.id, 45000);
-      let cached = monitor.getLatestHealthScore(position.id);
+      const { position, cachedScore: initialCachedScore } = await seedRiskMonitorCachedHealthScore(
+        riskHarness,
+        {},
+        45000,
+      );
+      let cached = initialCachedScore;
       expect(cached).toBeDefined();
 
       // Clear cache
@@ -455,7 +459,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should handle extremely old position (> 4 hours)', async () => {
       const position = attachRiskMonitorCurrentPosition(riskHarness, {
-        openedAt: Date.now() - 86400000, // 24 hours ago
+        openedAt: createRiskMonitorOpenedAtHoursAgo(24),
       });
 
       const score = await monitor.calculatePositionHealth(position.id, 45000);

@@ -9,6 +9,7 @@ export interface MonitoringServerHarness {
   metricsService: jest.Mocked<PrometheusMetricsService>;
   healthService: jest.Mocked<HealthCheckService>;
   errorHandler: ErrorHandler;
+  createDegradedHealthStatus: () => Awaited<ReturnType<HealthCheckService['checkHealth']>>;
   createServer: (
     options: {
       port: number;
@@ -17,6 +18,23 @@ export interface MonitoringServerHarness {
     },
     trackedServers: MonitoringServer[],
   ) => MonitoringServer;
+  startServer: (
+    options: {
+      port: number;
+      metricsService?: PrometheusMetricsService;
+      healthService?: HealthCheckService;
+    },
+    trackedServers: MonitoringServer[],
+  ) => Promise<MonitoringServer>;
+  startAndStopServer: (
+    options: {
+      port: number;
+      metricsService?: PrometheusMetricsService;
+      healthService?: HealthCheckService;
+    },
+    trackedServers: MonitoringServer[],
+  ) => Promise<MonitoringServer>;
+  getBaseUrl: (server: MonitoringServer) => string;
   stopTrackedServers: (trackedServers: MonitoringServer[]) => Promise<void>;
 }
 
@@ -60,6 +78,19 @@ export function createMonitoringServerHarness(): MonitoringServerHarness {
     metricsService,
     healthService,
     errorHandler,
+    createDegradedHealthStatus() {
+      return {
+        status: 'degraded',
+        timestamp: Date.now(),
+        uptime: 100,
+        components: {
+          exchange: { status: 'degraded', lastCheck: Date.now() },
+          websocket: { status: 'up', lastCheck: Date.now() },
+          system: { status: 'up', lastCheck: Date.now() },
+          trading: { status: 'up', lastCheck: Date.now() },
+        },
+      };
+    },
     createServer(options, trackedServers) {
       const metrics =
         Object.prototype.hasOwnProperty.call(options, 'metricsService')
@@ -79,6 +110,19 @@ export function createMonitoringServerHarness(): MonitoringServerHarness {
       );
       trackedServers.push(server);
       return server;
+    },
+    async startServer(options, trackedServers) {
+      const server = this.createServer(options, trackedServers);
+      await server.start();
+      return server;
+    },
+    async startAndStopServer(options, trackedServers) {
+      const server = await this.startServer(options, trackedServers);
+      await server.stop();
+      return server;
+    },
+    getBaseUrl(server) {
+      return `http://localhost:${server.getPort()}`;
     },
     async stopTrackedServers(trackedServers) {
       while (trackedServers.length > 0) {

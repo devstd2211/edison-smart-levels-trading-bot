@@ -34,6 +34,13 @@ export type MockRiskMonitorEventBus = {
   emitPositionClosed: (payload: PositionClosedEventPayload) => void;
 };
 
+export interface RealTimeRiskMonitorHarness {
+  monitor: RealTimeRiskMonitor;
+  mockPositionService: MockRiskMonitorPositionService;
+  mockLogger: MockRiskMonitorLogger;
+  mockEventBus: MockRiskMonitorEventBus;
+}
+
 export const mockRiskMonitorConfig: RiskMonitoringConfig = {
   enabled: true,
   checkIntervalCandles: 5,
@@ -193,6 +200,12 @@ export function createRealTimeRiskMonitorHarness(): {
   };
 }
 
+export function createStartedRealTimeRiskMonitorHarness(): RealTimeRiskMonitorHarness {
+  const harness = createRealTimeRiskMonitorHarness();
+  harness.monitor.start();
+  return harness;
+}
+
 export function createRealTimeRiskMonitorPublishFailure(
   eventType: LiveTradingEventType,
   message: string = 'Event bus failure',
@@ -205,7 +218,7 @@ export function createRealTimeRiskMonitorPublishFailure(
 }
 
 export async function seedRiskMonitorHealthScore(
-  harness: ReturnType<typeof createRealTimeRiskMonitorHarness>,
+  harness: RealTimeRiskMonitorHarness,
   position: Position = createMockRiskMonitorPosition(),
   currentPrice: number = 46000,
 ): Promise<Position> {
@@ -215,7 +228,7 @@ export async function seedRiskMonitorHealthScore(
 }
 
 export async function seedRiskMonitorHealthScores(
-  harness: ReturnType<typeof createRealTimeRiskMonitorHarness>,
+  harness: RealTimeRiskMonitorHarness,
   entries: Array<{
     position: Position;
     currentPrice: number;
@@ -233,8 +246,49 @@ export async function seedRiskMonitorHealthScores(
 }
 
 export function invalidateRiskMonitorPosition(
-  harness: ReturnType<typeof createRealTimeRiskMonitorHarness>,
+  harness: RealTimeRiskMonitorHarness,
   payload: PositionClosedEventPayload,
 ): void {
   harness.mockEventBus.emitPositionClosed(payload);
+}
+
+export function createRiskMonitorOpenedAtMinutesAgo(minutes: number): number {
+  return Date.now() - minutes * 60 * 1000;
+}
+
+export function createRiskMonitorOpenedAtHoursAgo(hours: number): number {
+  return createRiskMonitorOpenedAtMinutesAgo(hours * 60);
+}
+
+export async function seedRiskMonitorCachedHealthScore(
+  harness: RealTimeRiskMonitorHarness,
+  overrides: Partial<Position> = {},
+  currentPrice: number = 46000,
+): Promise<{ position: Position; cachedScore: ReturnType<RealTimeRiskMonitor['getLatestHealthScore']> }> {
+  const position = attachRiskMonitorCurrentPosition(harness, overrides);
+  await harness.monitor.calculatePositionHealth(position.id, currentPrice);
+  return {
+    position,
+    cachedScore: harness.monitor.getLatestHealthScore(position.id),
+  };
+}
+
+export async function seedRiskMonitorCachedFallbackScore(
+  harness: RealTimeRiskMonitorHarness,
+  overrides: Partial<Position> = {},
+  currentPrice: number = 46000,
+): Promise<{
+  position: Position;
+  initialScore: Awaited<ReturnType<RealTimeRiskMonitor['calculatePositionHealth']>>;
+  fallbackScore: Awaited<ReturnType<RealTimeRiskMonitor['calculatePositionHealth']>>;
+}> {
+  const position = attachMockRiskMonitorPosition(harness, overrides);
+  const initialScore = await harness.monitor.calculatePositionHealth(position.id, currentPrice);
+  harness.mockPositionService.getCurrentPosition.mockReturnValue(null);
+  const fallbackScore = await harness.monitor.calculatePositionHealth(position.id, currentPrice);
+  return {
+    position,
+    initialScore,
+    fallbackScore,
+  };
 }

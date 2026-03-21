@@ -17,6 +17,8 @@ import {
   attachMockRiskMonitorPosition,
   createRealTimeRiskMonitorPublishFailure,
   createRealTimeRiskMonitorHarness,
+  seedRiskMonitorCachedFallbackScore,
+  seedRiskMonitorCachedHealthScore,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -234,10 +236,11 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('End-to-End Error Recovery Scenarios (2 tests)', () => {
     it('test-8.5.14: Should continue monitoring when position validation fails', async () => {
-      attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
-
-      // First, populate cache
-      const firstScore = await monitor.calculatePositionHealth('pos-123', 46000);
+      const { cachedScore: firstScore } = await seedRiskMonitorCachedHealthScore(
+        { monitor, mockPositionService: mockPositionLifecycleService, mockLogger, mockEventBus },
+        {},
+        46000,
+      );
       expect(firstScore).toBeDefined();
 
       // Then, simulate position not found but we have cache
@@ -269,13 +272,14 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   describe('Integration with Existing Functionality', () => {
     it('should not break existing getLatestHealthScore functionality', async () => {
-      const position = attachMockRiskMonitorPosition({ mockPositionService: mockPositionLifecycleService });
-
-      const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
-      const cached = monitor.getLatestHealthScore('pos-123');
+      const { position, cachedScore: cached } = await seedRiskMonitorCachedHealthScore(
+        { monitor, mockPositionService: mockPositionLifecycleService, mockLogger, mockEventBus },
+        {},
+        46000,
+      );
 
       expect(cached).toBeDefined();
-      expect(cached?.positionId).toBe('pos-123');
+      expect(cached?.positionId).toBe(position.id);
     });
 
     it('should not break existing checkPositionDanger functionality', async () => {

@@ -9,14 +9,22 @@ import {
   CircuitBreakerOpenError,
   type CircuitBreakerConfig,
 } from '../../../services/resilience/circuit-breaker.service';
-import { ErrorHandler, RecoveryStrategy } from '../../../errors/ErrorHandler';
+import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
+import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
 
 describe('CircuitBreakerService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
+  let harness: ResilienceTestHarness;
+  let createService: (
+    config?: Partial<CircuitBreakerConfig>,
+    serviceLogger?: LoggerService,
+    handler?: ErrorHandler,
+  ) => CircuitBreakerService;
 
   beforeEach(() => {
+    harness = createResilienceTestHarness();
     logger = {
       info: jest.fn(),
       warn: jest.fn(),
@@ -25,6 +33,11 @@ describe('CircuitBreakerService', () => {
     };
 
     errorHandler = new ErrorHandler(logger as LoggerService);
+    createService = (
+      config = {},
+      serviceLogger = logger as LoggerService,
+      handler = errorHandler,
+    ) => harness.createCircuitBreakerService(config, { logger: serviceLogger, errorHandler: handler });
   });
 
   // ============================================================================
@@ -78,7 +91,7 @@ describe('CircuitBreakerService', () => {
         failureThreshold: 3,
         volumeThreshold: 3,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Service unavailable');
@@ -104,7 +117,7 @@ describe('CircuitBreakerService', () => {
         failureRateThreshold: 0.5, // 50% failure rate
         volumeThreshold: 10,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Service error');
@@ -133,7 +146,7 @@ describe('CircuitBreakerService', () => {
         volumeThreshold: 2,
         timeout: 100, // 100ms timeout
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -167,7 +180,7 @@ describe('CircuitBreakerService', () => {
         volumeThreshold: 2,
         timeout: 100,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -201,7 +214,7 @@ describe('CircuitBreakerService', () => {
         volumeThreshold: 2,
         timeout: 100,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -245,7 +258,7 @@ describe('CircuitBreakerService', () => {
         failureThreshold: 5,
         volumeThreshold: 10, // Need 10 requests before evaluating
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -268,7 +281,7 @@ describe('CircuitBreakerService', () => {
         failureThreshold: 10,
         volumeThreshold: 10,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -299,7 +312,7 @@ describe('CircuitBreakerService', () => {
         failureRateThreshold: 0.8, // 80% failure rate
         volumeThreshold: 10,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -329,7 +342,7 @@ describe('CircuitBreakerService', () => {
         volumeThreshold: 2,
         timeout: 100,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -366,7 +379,7 @@ describe('CircuitBreakerService', () => {
         volumeThreshold: 2,
         timeout: 500, // 500ms timeout
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -410,7 +423,7 @@ describe('CircuitBreakerService', () => {
         failureThreshold: 2,
         volumeThreshold: 2,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -438,7 +451,7 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should force circuit to OPEN', () => {
-      const service = new CircuitBreakerService({}, logger as LoggerService, errorHandler);
+      const service = createService();
 
       expect(service.getState('test')).toBe(CircuitState.CLOSED);
 
@@ -451,7 +464,7 @@ describe('CircuitBreakerService', () => {
         failureThreshold: 2,
         volumeThreshold: 2,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       const failingOperation = async () => {
         throw new Error('Fail');
@@ -483,7 +496,7 @@ describe('CircuitBreakerService', () => {
         failureThreshold: 3,
         volumeThreshold: 3,
       };
-      const service = new CircuitBreakerService(config, logger as LoggerService, errorHandler);
+      const service = createService(config);
 
       let callCount = 0;
       const unreliableService = async () => {
@@ -513,10 +526,10 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should track multiple independent circuits', async () => {
-      const service = new CircuitBreakerService({
+      const service = createService({
         failureThreshold: 2,
         volumeThreshold: 2,
-      }, logger as LoggerService, errorHandler);
+      });
 
       const fail = async () => {
         throw new Error('Fail');
@@ -542,10 +555,10 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should provide detailed circuit statistics', async () => {
-      const service = new CircuitBreakerService({
+      const service = createService({
         failureThreshold: 5,
         volumeThreshold: 10,
-      }, logger as LoggerService, errorHandler);
+      });
 
       const fail = async () => {
         throw new Error('Fail');
@@ -575,7 +588,7 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should clear all circuits', async () => {
-      const service = new CircuitBreakerService({}, logger as LoggerService, errorHandler);
+      const service = createService();
 
       const success = async () => 'success';
       await service.execute(success, 'circuit1');
@@ -595,7 +608,7 @@ describe('CircuitBreakerService', () => {
 
   describe('Edge Cases', () => {
     it('should throw on invalid operation input', async () => {
-      const service = new CircuitBreakerService({}, logger as LoggerService, errorHandler);
+      const service = createService();
 
       await expect(service.execute(null as unknown as () => Promise<unknown>, 'test'))
         .rejects.toThrow('Operation must be a function');
@@ -605,7 +618,7 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should throw on invalid circuit name', async () => {
-      const service = new CircuitBreakerService({}, logger as LoggerService, errorHandler);
+      const service = createService();
 
       const operation = async () => 'success';
 
@@ -631,7 +644,7 @@ describe('CircuitBreakerService', () => {
       };
 
       // Should not throw despite logging errors
-      const service = new CircuitBreakerService({}, faultyLogger as unknown as LoggerService, errorHandler);
+      const service = createService({}, faultyLogger as unknown as LoggerService);
       const operation = async () => 'success';
 
       await expect(service.execute(operation, 'test')).resolves.toBe('success');
