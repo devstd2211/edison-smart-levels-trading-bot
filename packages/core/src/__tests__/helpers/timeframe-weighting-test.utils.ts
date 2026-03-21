@@ -114,26 +114,31 @@ export const createTimeframeWeightingHarness = (options: {
     options.withErrorHandler === false
       ? undefined
       : options.errorHandler ?? createTimeframeWeightingErrorHandler(logger);
-  const service = createTimeframeWeightingService({
-    logger,
-    errorHandler,
-    withErrorHandler: options.withErrorHandler,
-  });
+  const createStandardService = (overrides: {
+    logger?: TimeframeWeightingMockLogger;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  } = {}) =>
+    createTimeframeWeightingService({
+      logger: overrides.logger ?? logger,
+      errorHandler: overrides.errorHandler ?? errorHandler,
+      withErrorHandler: overrides.withErrorHandler ?? options.withErrorHandler,
+    });
+
+  const createLegacyService = (overrides: {
+    logger?: TimeframeWeightingMockLogger;
+  } = {}) =>
+    createTimeframeWeightingService({
+      logger: overrides.logger ?? logger,
+      withErrorHandler: false,
+    });
 
   return {
     logger,
     errorHandler,
-    service,
-    createService: (overrides: {
-      logger?: TimeframeWeightingMockLogger;
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    } = {}) =>
-      createTimeframeWeightingService({
-        logger: overrides.logger ?? logger,
-        errorHandler: overrides.errorHandler ?? errorHandler,
-        withErrorHandler: overrides.withErrorHandler,
-      }),
+    service: createStandardService(),
+    createStandardService,
+    createLegacyService,
     createMultiTF: (overrides: Partial<MultiTimeframeAnalysis> = {}) =>
       createTimeframeWeightingMultiTF(overrides),
   };

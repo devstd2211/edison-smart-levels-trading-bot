@@ -49,54 +49,6 @@ export function createFundingRateDataSeries(
   );
 }
 
-export function createFundingRateFilterFactory(options: {
-  config?: FundingRateFilterConfig;
-  configOverrides?: Partial<FundingRateFilterConfig>;
-  logger?: LoggerService;
-  getFundingRate?: jest.Mock<Promise<FundingRateData>>;
-  withErrorHandler?: boolean;
-  errorHandler?: ErrorHandler;
-} = {}) {
-  const logger = options.logger ?? createFundingRateFilterLogger();
-  const config = options.config ?? createFundingRateFilterConfig(options.configOverrides);
-  const mockGetFundingRate = options.getFundingRate ?? jest.fn<Promise<FundingRateData>, []>();
-  const errorHandler = options.withErrorHandler === false
-    ? undefined
-    : options.errorHandler ?? new ErrorHandler(logger);
-
-  return {
-    logger,
-    config,
-    mockGetFundingRate,
-    errorHandler,
-    createFilter: (overrides: {
-      config?: FundingRateFilterConfig;
-      configOverrides?: Partial<FundingRateFilterConfig>;
-      withErrorHandler?: boolean;
-      errorHandler?: ErrorHandler;
-    } = {}) =>
-      createFundingRateFilterService({
-        logger,
-        getFundingRate: mockGetFundingRate,
-        config: overrides.config,
-        configOverrides: overrides.configOverrides,
-        withErrorHandler: overrides.withErrorHandler ?? options.withErrorHandler,
-        errorHandler: overrides.errorHandler ?? errorHandler,
-      }),
-  };
-}
-
-export function createFundingRateFilterServiceWithHarness(options: {
-  config?: FundingRateFilterConfig;
-  configOverrides?: Partial<FundingRateFilterConfig>;
-  logger?: LoggerService;
-  getFundingRate?: jest.Mock<Promise<FundingRateData>>;
-  withErrorHandler?: boolean;
-  errorHandler?: ErrorHandler;
-} = {}): FundingRateFilterService {
-  return createFundingRateFilterService(options);
-}
-
 export function createFundingRateFilterHarness(options: {
   configOverrides?: Partial<FundingRateFilterConfig>;
   logger?: LoggerService;
@@ -124,6 +76,35 @@ export function createFundingRateFilterHarness(options: {
     config,
     mockGetFundingRate,
     errorHandler,
+    createStandardFilter: (overrides: {
+      config?: FundingRateFilterConfig;
+      configOverrides?: Partial<FundingRateFilterConfig>;
+      logger?: LoggerService;
+      getFundingRate?: jest.Mock<Promise<FundingRateData>>;
+      withErrorHandler?: boolean;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createFundingRateFilterService({
+        config: overrides.config,
+        configOverrides: overrides.config ? undefined : overrides.configOverrides,
+        logger: overrides.logger ?? logger,
+        getFundingRate: overrides.getFundingRate ?? mockGetFundingRate,
+        withErrorHandler: overrides.withErrorHandler ?? options.withErrorHandler,
+        errorHandler: overrides.errorHandler ?? errorHandler,
+      }),
+    createLegacyFilter: (overrides: {
+      config?: FundingRateFilterConfig;
+      configOverrides?: Partial<FundingRateFilterConfig>;
+      logger?: LoggerService;
+      getFundingRate?: jest.Mock<Promise<FundingRateData>>;
+    } = {}) =>
+      createFundingRateFilterService({
+        config: overrides.config,
+        configOverrides: overrides.config ? undefined : overrides.configOverrides,
+        logger: overrides.logger ?? logger,
+        getFundingRate: overrides.getFundingRate ?? mockGetFundingRate,
+        withErrorHandler: false,
+      }),
   };
 }
 

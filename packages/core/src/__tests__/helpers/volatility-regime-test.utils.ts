@@ -56,6 +56,28 @@ export function createVolatilityRegimeHarness(options: {
     service,
     logger,
     errorHandler,
+    createStandardService: (overrides: {
+      logger?: LoggerService;
+      config?: Partial<VolatilityRegimeConfig>;
+      withErrorHandler?: boolean;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createVolatilityRegimeService({
+        logger: overrides.logger ?? logger,
+        config: overrides.config ?? options.config,
+        errorHandler:
+          overrides.withErrorHandler === false
+            ? undefined
+            : overrides.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (overrides: {
+      logger?: LoggerService;
+      config?: Partial<VolatilityRegimeConfig>;
+    } = {}) =>
+      createVolatilityRegimeService({
+        logger: overrides.logger ?? logger,
+        config: overrides.config ?? options.config,
+      }),
     createService: (overrides: {
       logger?: LoggerService;
       config?: Partial<VolatilityRegimeConfig>;

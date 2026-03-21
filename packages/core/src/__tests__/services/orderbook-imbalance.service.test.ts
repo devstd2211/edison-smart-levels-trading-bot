@@ -9,16 +9,18 @@ import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceHarness,
   createOrderbookImbalanceScenario,
-  createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
+  let createService: ReturnType<typeof createOrderbookImbalanceHarness>['createLegacyService'];
 
   beforeEach(() => {
-    ({ service, logger, config } = createOrderbookImbalanceHarness({ withErrorHandler: false }));
+    const harness = createOrderbookImbalanceHarness({ withErrorHandler: false });
+    ({ service, logger, config } = harness);
+    createService = harness.createLegacyService;
   });
 
   describe('initialization', () => {
@@ -28,10 +30,9 @@ describe('OrderbookImbalanceService', () => {
 
     it('should initialize with disabled config', () => {
       const disabledConfig = createOrderbookImbalanceConfig({ ...config, enabled: false });
-      const disabledService = createOrderbookImbalanceService({
+      const disabledService = createService({
         config: disabledConfig,
         logger,
-        withErrorHandler: false,
       });
       expect(disabledService).toBeDefined();
     });
@@ -172,10 +173,9 @@ describe('OrderbookImbalanceService', () => {
         askQuantities: [5, 5, 5],
       });
 
-      const service2Levels = createOrderbookImbalanceService({
+      const service2Levels = createService({
         configOverrides: { ...config, levels: 2 },
         logger,
-        withErrorHandler: false,
       });
       const analysis = service2Levels.analyze(orderbook);
 
@@ -244,10 +244,9 @@ describe('OrderbookImbalanceService', () => {
 
   describe('analyze() - disabled mode', () => {
     it('should return neutral analysis when disabled', () => {
-      const disabledService = createOrderbookImbalanceService({
+      const disabledService = createService({
         configOverrides: { ...config, enabled: false },
         logger,
-        withErrorHandler: false,
       });
 
       const orderbook = createOrderbookImbalanceScenario({

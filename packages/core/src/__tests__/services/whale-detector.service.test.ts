@@ -11,8 +11,6 @@ import {
   createWhaleDetectionConfig,
   createWhaleDetectionConfigWithWallBreak,
   createWhaleDetectionHarness,
-  createWhaleDetectionScenarioHarness,
-  createWhaleDetectionService,
   createWhaleDetectionWall,
 } from '../helpers/whale-detection-test.utils';
 
@@ -22,22 +20,25 @@ describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
   let logger: LoggerService;
   let config: WhaleDetectorConfig;
+  let createService: ReturnType<typeof createWhaleDetectionHarness>['createLegacyService'];
   let createScenario: (options?: {
     strategy?: 'BREAKOUT' | 'FOLLOW';
     withErrorHandler?: boolean;
     walls?: OrderBookWall[];
     ratio?: number;
     direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  }) => ReturnType<typeof createWhaleDetectionScenarioHarness>;
+  }) => ReturnType<ReturnType<typeof createWhaleDetectionHarness>['createScenario']>;
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    ({ detector, logger, config } = createWhaleDetectionHarness({
+    const harness = createWhaleDetectionHarness({
       strategy: 'BREAKOUT',
       withErrorHandler: false,
-    }));
+    });
+    ({ detector, logger, config } = harness);
+    createService = harness.createLegacyService;
     createScenario = (options = {}) =>
-      createWhaleDetectionScenarioHarness({
+      harness.createScenario({
         logger,
         config,
         strategy: options.strategy ?? 'BREAKOUT',
@@ -331,11 +332,10 @@ describe('WhaleDetectionService', () => {
           imbalanceSpike: { ...baseConfig.modes.imbalanceSpike, enabled: false },
         },
       };
-      const disabledDetector = createWhaleDetectionService({
+      const disabledDetector = createService({
         config: disabledConfig,
         logger,
         strategy: 'BREAKOUT',
-        withErrorHandler: false,
       });
 
       const analysis = createAnalysis([], 1.6, 'BULLISH');

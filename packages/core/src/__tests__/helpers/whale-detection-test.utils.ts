@@ -163,6 +163,50 @@ export function createWhaleDetectionHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardService: (serviceOptions: {
+      logger?: LoggerService;
+      config?: WhaleDetectorConfig;
+      strategy?: 'BREAKOUT' | 'FOLLOW';
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createWhaleDetectionService({
+        logger: serviceOptions.logger ?? logger,
+        config: serviceOptions.config ?? config,
+        strategy: serviceOptions.strategy ?? options.strategy,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      logger?: LoggerService;
+      config?: WhaleDetectorConfig;
+      strategy?: 'BREAKOUT' | 'FOLLOW';
+    } = {}) =>
+      createWhaleDetectionService({
+        logger: serviceOptions.logger ?? logger,
+        config: serviceOptions.config ?? config,
+        strategy: serviceOptions.strategy ?? options.strategy,
+        withErrorHandler: false,
+      }),
+    createScenario: (scenarioOptions: {
+      logger?: LoggerService;
+      config?: WhaleDetectorConfig;
+      strategy?: 'BREAKOUT' | 'FOLLOW';
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+      walls?: OrderBookWall[];
+      ratio?: number;
+      direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+    } = {}) =>
+      createWhaleDetectionScenarioHarness({
+        logger: scenarioOptions.logger ?? logger,
+        config: scenarioOptions.config ?? config,
+        strategy: scenarioOptions.strategy ?? options.strategy,
+        withErrorHandler: scenarioOptions.withErrorHandler ?? options.withErrorHandler,
+        walls: scenarioOptions.walls,
+        ratio: scenarioOptions.ratio,
+        direction: scenarioOptions.direction,
+      }),
   };
 }
 

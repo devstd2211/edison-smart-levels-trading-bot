@@ -14,11 +14,9 @@ import {
   createWhaleDetectionConfig,
   createWhaleDetectionConfigWithImbalanceSpike,
   createWhaleDetectionConfigWithWallBreak,
-  createWhaleDetectionErrorHandler,
   createWhaleDetectionHarness,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
-  createWhaleDetectionScenarioHarness,
   createWhaleDetectionService,
 } from '../helpers/whale-detection-test.utils';
 
@@ -28,17 +26,22 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
+  let createService: ReturnType<typeof createWhaleDetectionHarness>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createWhaleDetectionHarness>['createLegacyService'];
   let createScenario: (options?: {
     config?: WhaleDetectorConfig;
     logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
     withErrorHandler?: boolean;
     ratio?: number;
     direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  }) => ReturnType<typeof createWhaleDetectionScenarioHarness>;
+  }) => ReturnType<ReturnType<typeof createWhaleDetectionHarness>['createScenario']>;
 
   beforeEach(() => {
+    const harness = createWhaleDetectionHarness();
+    createService = harness.createStandardService;
+    createLegacyService = harness.createLegacyService;
     createScenario = (options = {}) =>
-      createWhaleDetectionScenarioHarness({
+      harness.createScenario({
         config: options.config ?? createValidConfig(),
         logger: options.logger,
         withErrorHandler: options.withErrorHandler,
@@ -56,53 +59,44 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     type WhaleConfigInput = ConstructorParameters<typeof WhaleDetectionService>[0];
 
     test('should throw on null config', () => {
-      const errorHandler = createWhaleDetectionErrorHandler(
-        createWhaleDetectionMockLoggerService(mockLogger),
-      );
+      const logger = createWhaleDetectionMockLoggerService(mockLogger);
       expect(() => {
         createWhaleDetectionService({
           config: null as unknown as WhaleConfigInput,
-          logger: createWhaleDetectionMockLoggerService(mockLogger),
-          errorHandler,
+          logger,
         });
       }).toThrow('Config must be a valid object');
     });
 
     test('should throw on invalid wallBreak minWallSize', () => {
       const logger = createWhaleDetectionMockLoggerService(mockLogger);
-      const errorHandler = createWhaleDetectionErrorHandler(logger);
       const config = createWhaleDetectionConfigWithWallBreak({ minWallSize: -10 });
       expect(() => {
-        createWhaleDetectionService({
+        createService({
           config,
           logger,
-          errorHandler,
         });
       }).toThrow('wallBreak.minWallSize must be non-negative number');
     });
 
     test('should throw on invalid maxConfidence (>100)', () => {
       const logger = createWhaleDetectionMockLoggerService(mockLogger);
-      const errorHandler = createWhaleDetectionErrorHandler(logger);
       const config = createWhaleDetectionConfigWithWallBreak({ maxConfidence: 150 });
       expect(() => {
-        createWhaleDetectionService({
+        createService({
           config,
           logger,
-          errorHandler,
         });
       }).toThrow('wallBreak.maxConfidence must be between 0 and 100');
     });
 
     test('should throw on invalid maxImbalanceHistory', () => {
       const logger = createWhaleDetectionMockLoggerService(mockLogger);
-      const errorHandler = createWhaleDetectionErrorHandler(logger);
       const config = { ...createValidConfig(), maxImbalanceHistory: 0 };
       expect(() => {
-        createWhaleDetectionService({
+        createService({
           config,
           logger,
-          errorHandler,
         });
       }).toThrow('maxImbalanceHistory must be positive number');
     });
@@ -187,11 +181,9 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
           throw new Error('Logger failed');
         }),
       });
-      const errorHandler = createWhaleDetectionErrorHandler(logger);
-      const service = createWhaleDetectionService({
+      const service = createService({
         config: createValidConfig(),
         logger,
-        errorHandler,
       });
 
       expect(() => {
@@ -205,11 +197,9 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
           throw new Error('Debug failed');
         }),
       });
-      const errorHandler = createWhaleDetectionErrorHandler(logger);
-      const service = createWhaleDetectionService({
+      const service = createService({
         config: createValidConfig(),
         logger,
-        errorHandler,
       });
 
       expect(() => {
@@ -258,9 +248,9 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     const mockLogger = createMockLogger();
 
     test('should work without ErrorHandler', () => {
-      const { detector: service } = createScenario({
+      const service = createLegacyService({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
-        withErrorHandler: false,
+        config: createValidConfig(),
       });
       const result = service.detectWhale(createValidAnalysis(), 50000);
 
@@ -269,9 +259,9 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const { detector: service } = createScenario({
+      const service = createLegacyService({
         logger: createWhaleDetectionMockLoggerService(mockLogger),
-        withErrorHandler: false,
+        config: createValidConfig(),
       });
 
       expect(() => {

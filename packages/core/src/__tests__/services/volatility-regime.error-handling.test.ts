@@ -25,11 +25,13 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let createService: ReturnType<typeof createVolatilityRegimeHarness>['createService'];
+  let createService: ReturnType<typeof createVolatilityRegimeHarness>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createVolatilityRegimeHarness>['createLegacyService'];
 
   beforeEach(() => {
     mockLogger = createVolatilityRegimeMockLogger();
-    ({ errorHandler, createService } = createVolatilityRegimeHarness({ logger: mockLogger }));
+    ({ errorHandler, createStandardService: createService, createLegacyService } =
+      createVolatilityRegimeHarness({ logger: mockLogger }));
   });
 
   // =========================================================================
@@ -264,7 +266,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (backward compatible)', () => {
-      service = createService({ logger: mockLogger, withErrorHandler: false });
+      service = createLegacyService({ logger: mockLogger });
 
       const result = service.analyze(0.75);
 
@@ -273,7 +275,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should throw on validation errors without ErrorHandler', () => {
-      service = createService({ logger: mockLogger, withErrorHandler: false });
+      service = createLegacyService({ logger: mockLogger });
 
       expect(() => {
         service.analyze(NaN);
@@ -281,7 +283,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
     });
 
     it('should handle config without ErrorHandler', () => {
-      service = createService({
+      service = createLegacyService({
         logger: mockLogger,
         config: {
           enabled: true,
@@ -290,7 +292,6 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
             highAtrPercent: 1.5,
           },
         },
-        withErrorHandler: false,
       });
 
       expect(service.isEnabled()).toBe(true);

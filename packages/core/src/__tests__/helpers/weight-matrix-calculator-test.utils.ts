@@ -176,6 +176,27 @@ export function createWeightMatrixHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardService: (serviceOptions: {
+      config?: WeightMatrixConfig;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createWeightMatrixService({
+        config: serviceOptions.config ?? config,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      config?: WeightMatrixConfig;
+      logger?: LoggerService;
+    } = {}) =>
+      createWeightMatrixService({
+        config: serviceOptions.config ?? config,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
   };
 }
 

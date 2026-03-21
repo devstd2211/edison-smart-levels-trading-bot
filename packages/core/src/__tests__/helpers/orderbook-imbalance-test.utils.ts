@@ -109,6 +109,35 @@ export function createOrderbookImbalanceHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardService: (serviceOptions: {
+      config?: OrderbookImbalanceConfig;
+      configOverrides?: Partial<OrderbookImbalanceConfig>;
+      logger?: LoggerService;
+      withErrorHandler?: boolean;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createOrderbookImbalanceService({
+        config: serviceOptions.config,
+        configOverrides: serviceOptions.config
+          ? undefined
+          : serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      config?: OrderbookImbalanceConfig;
+      configOverrides?: Partial<OrderbookImbalanceConfig>;
+      logger?: LoggerService;
+    } = {}) =>
+      createOrderbookImbalanceService({
+        config: serviceOptions.config,
+        configOverrides: serviceOptions.config
+          ? undefined
+          : serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
   };
 }
 

@@ -39,7 +39,6 @@ import {
   createOrderbookImbalanceHarness,
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
-  createOrderbookImbalanceServiceFactory,
   createOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -52,14 +51,14 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: ReturnType<typeof createOrderbookImbalanceServiceFactory>['createService'];
+  let createService: ReturnType<typeof createOrderbookImbalanceHarness>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createOrderbookImbalanceHarness>['createLegacyService'];
 
   beforeEach(() => {
-    ({ logger, errorHandler } = createOrderbookImbalanceHarness());
-    ({ createService } = createOrderbookImbalanceServiceFactory({
-      logger,
-      errorHandler,
-    }));
+    const harness = createOrderbookImbalanceHarness();
+    ({ logger, errorHandler } = harness);
+    createService = harness.createStandardService;
+    createLegacyService = harness.createLegacyService;
   });
 
   // ============================================================================
@@ -320,7 +319,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
     it('should handle service state consistency across failures', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createService(config);
+      const service = createService({ config });
 
       // Verify config is preserved after error
       expect(service.getConfig()).toEqual(config);
@@ -344,10 +343,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (optional DI)', () => {
-      const service = createOrderbookImbalanceServiceFactory({
-        logger,
-        withErrorHandler: false,
-      }).createService();
+      const service = createLegacyService({ logger });
 
       const orderbook = createOrderbookImbalanceScenario({
         bidQuantities: [100],

@@ -13,10 +13,13 @@ import {
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
+  let createService: ReturnType<typeof createTFAlignmentHarness>['createLegacyService'];
 
   beforeEach(() => {
     config = createTFAlignmentConfig();
-    ({ service } = createTFAlignmentHarness({ configOverrides: config }));
+    const harness = createTFAlignmentHarness({ configOverrides: config, withErrorHandler: false });
+    ({ service } = harness);
+    createService = harness.createLegacyService;
   });
 
   describe('calculateAlignment - LONG', () => {
@@ -141,8 +144,8 @@ describe('TFAlignmentService', () => {
         enabled: false,
       };
 
-      const { service: disabledService } = createTFAlignmentHarness({
-        configOverrides: disabledConfig,
+      const disabledService = createService({
+        config: disabledConfig,
       });
 
       const result = disabledService.calculateAlignment('LONG', 100, {
@@ -186,8 +189,8 @@ describe('TFAlignmentService', () => {
         minAlignmentScore: 50, // Lower threshold
       };
 
-      const { service: customService } = createTFAlignmentHarness({
-        configOverrides: customConfig,
+      const customService = createService({
+        config: customConfig,
       });
 
       const result = customService.calculateAlignment('LONG', 100, {

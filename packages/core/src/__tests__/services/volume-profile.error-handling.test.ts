@@ -9,12 +9,10 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolumeProfileService } from '../../services/volume-profile.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
 import {
   createVolumeProfileCandles,
   createVolumeProfileCandlesFromSpecs,
-  createVolumeProfileBoundFactory,
   createVolumeProfileHarness,
   createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
@@ -32,19 +30,28 @@ import {
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let service: VolumeProfileService;
-  let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
-  let createService: ReturnType<typeof createVolumeProfileBoundFactory>['createService'];
+  let createService: (
+    configOverrides?: Partial<VolumeProfileConfig>,
+    logger?: LoggerService,
+    withErrorHandler?: boolean,
+  ) => VolumeProfileService;
+  let createLegacyService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
   beforeEach(() => {
     const harness = createVolumeProfileHarness();
     mockLogger = harness.logger;
-    errorHandler = harness.errorHandler;
-    ({ createService } = createVolumeProfileBoundFactory({
-      logger: mockLogger,
-      errorHandler,
-    }));
+    createService = (configOverrides, logger = mockLogger, withErrorHandler = true) =>
+      harness.createStandardService({
+        configOverrides,
+        logger,
+        withErrorHandler,
+      });
+    createLegacyService = (configOverrides) =>
+      harness.createLegacyService({
+        configOverrides,
+      });
   });
 
   // =========================================================================
@@ -108,61 +115,37 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid priceTickSize in constructor', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          configOverrides: createVolumeProfileInvalidConfig({ priceTickSize: NaN }),
-          logger: mockLogger,
-          errorHandler,
-        });
+        createService(createVolumeProfileInvalidConfig({ priceTickSize: NaN }));
       }).toThrow();
     });
 
     it('should throw on negative priceTickSize in constructor', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          configOverrides: createVolumeProfileInvalidConfig({ priceTickSize: -0.5 }),
-          logger: mockLogger,
-          errorHandler,
-        });
+        createService(createVolumeProfileInvalidConfig({ priceTickSize: -0.5 }));
       }).toThrow();
     });
 
     it('should throw on zero priceTickSize in constructor', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          configOverrides: createVolumeProfileInvalidConfig({ priceTickSize: 0 }),
-          logger: mockLogger,
-          errorHandler,
-        });
+        createService(createVolumeProfileInvalidConfig({ priceTickSize: 0 }));
       }).toThrow();
     });
 
     it('should throw on invalid lookbackCandles in constructor', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          configOverrides: createVolumeProfileInvalidConfig({ lookbackCandles: NaN }),
-          logger: mockLogger,
-          errorHandler,
-        });
+        createService(createVolumeProfileInvalidConfig({ lookbackCandles: NaN }));
       }).toThrow();
     });
 
     it('should throw on invalid valueAreaPercent in constructor', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          configOverrides: createVolumeProfileInvalidConfig({ valueAreaPercent: 150 }),
-          logger: mockLogger,
-          errorHandler,
-        });
+        createService(createVolumeProfileInvalidConfig({ valueAreaPercent: 150 }));
       }).toThrow();
     });
 
     it('should throw on zero valueAreaPercent in constructor', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          configOverrides: createVolumeProfileInvalidConfig({ valueAreaPercent: 0 }),
-          logger: mockLogger,
-          errorHandler,
-        });
+        createService(createVolumeProfileInvalidConfig({ valueAreaPercent: 0 }));
       }).toThrow();
     });
   });
@@ -383,7 +366,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should preserve config on invalid update', () => {
-      service = createVolumeProfileServiceWithHarness({ logger: mockLogger, errorHandler });
+      service = createService();
 
       const initialConfig = service.getConfig();
 
@@ -433,7 +416,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (backward compatible)', () => {
-      service = createService(undefined, mockLogger, false);
+      service = createLegacyService();
       const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
@@ -443,7 +426,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw validation errors without ErrorHandler', () => {
-      service = createService(undefined, mockLogger, false);
+      service = createLegacyService();
 
       expect(() => {
         service.calculate([]);
@@ -451,7 +434,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on invalid candles without ErrorHandler', () => {
-      service = createService(undefined, mockLogger, false);
+      service = createLegacyService();
 
       const badCandles: Candle[] = [createInvalidVolumeProfileCandle({ low: NaN })];
 
@@ -478,23 +461,15 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid constructor config without ErrorHandler', () => {
       expect(() => {
-        createVolumeProfileServiceWithHarness({
-          config: {
-            priceTickSize: 0,
-          },
-          logger: mockLogger,
-          withErrorHandler: false,
+        createLegacyService({
+          priceTickSize: 0,
         });
       }).toThrow();
     });
 
     it('should check isEnabled() correctly without ErrorHandler', () => {
-      service = createVolumeProfileServiceWithHarness({
-        config: {
-          enabled: false,
-        },
-        logger: mockLogger,
-        withErrorHandler: false,
+      service = createLegacyService({
+        enabled: false,
       });
 
       expect(service.isEnabled()).toBe(false);
@@ -529,13 +504,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle different tick sizes', () => {
-      service = createVolumeProfileServiceWithHarness({
-        configOverrides: {
-          priceTickSize: 0.25,
-        },
-        logger: mockLogger,
-        errorHandler,
-      });
+      service = createService({ priceTickSize: 0.25 });
       const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
@@ -543,13 +512,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle different value area percentages', () => {
-      service = createVolumeProfileServiceWithHarness({
-        configOverrides: {
-          valueAreaPercent: 50,
-        },
-        logger: mockLogger,
-        errorHandler,
-      });
+      service = createService({ valueAreaPercent: 50 });
       const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
@@ -557,13 +520,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate correctly with edge case value area percent (1%)', () => {
-      service = createVolumeProfileServiceWithHarness({
-        configOverrides: {
-          valueAreaPercent: 1,
-        },
-        logger: mockLogger,
-        errorHandler,
-      });
+      service = createService({ valueAreaPercent: 1 });
       const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
@@ -572,13 +529,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should calculate correctly with edge case value area percent (99%)', () => {
-      service = createVolumeProfileServiceWithHarness({
-        configOverrides: {
-          valueAreaPercent: 99,
-        },
-        logger: mockLogger,
-        errorHandler,
-      });
+      service = createService({ valueAreaPercent: 99 });
       const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);

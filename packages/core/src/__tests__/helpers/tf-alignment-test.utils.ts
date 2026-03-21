@@ -72,6 +72,49 @@ export function createTFAlignmentHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardService: (serviceOptions: {
+      configOverrides?: Partial<TFAlignmentConfig>;
+      logger?: LoggerService;
+      withErrorHandler?: boolean;
+      config?: TFAlignmentConfig;
+      errorHandler?: ErrorHandler;
+    } = {}) => {
+      const baseOptions = {
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      };
+
+      return Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? createTFAlignmentService({
+          ...baseOptions,
+          config: serviceOptions.config,
+        })
+        : createTFAlignmentService({
+          ...baseOptions,
+          configOverrides: serviceOptions.configOverrides,
+        });
+    },
+    createLegacyService: (serviceOptions: {
+      configOverrides?: Partial<TFAlignmentConfig>;
+      logger?: LoggerService;
+      config?: TFAlignmentConfig;
+    } = {}) => {
+      const baseOptions = {
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      };
+
+      return Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? createTFAlignmentService({
+          ...baseOptions,
+          config: serviceOptions.config,
+        })
+        : createTFAlignmentService({
+          ...baseOptions,
+          configOverrides: serviceOptions.configOverrides,
+        });
+    },
   };
 }
 

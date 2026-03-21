@@ -7,7 +7,6 @@ import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../t
 import {
   createFundingRateData,
   createFundingRateFilterHarness,
-  createFundingRateFilterServiceWithHarness,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
@@ -20,16 +19,10 @@ describe('FundingRateFilterService', () => {
   }) => FundingRateFilterService;
 
   beforeEach(() => {
-    ({ logger, config, mockGetFundingRate } = createFundingRateFilterHarness({
+    const harness = createFundingRateFilterHarness({
       withErrorHandler: false,
-    }));
-    createFilter = (overrides = {}) =>
-      createFundingRateFilterServiceWithHarness({
-        logger,
-        getFundingRate: mockGetFundingRate,
-        withErrorHandler: false,
-        ...overrides,
-      });
+    });
+    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = harness);
   });
 
   describe('checkSignal', () => {

@@ -13,17 +13,18 @@ import {
 import {
   createWeightMatrixConfig,
   createWeightMatrixHarness,
-  createWeightMatrixService,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
+  let createService: ReturnType<typeof createWeightMatrixHarness>['createLegacyService'];
 
   beforeEach(() => {
-    ({ service: calculator, logger } = createWeightMatrixHarness({ withErrorHandler: false }));
-    config = createWeightMatrixConfig();
+    const harness = createWeightMatrixHarness({ withErrorHandler: false });
+    ({ service: calculator, logger, config } = harness);
+    createService = harness.createLegacyService;
   });
 
   // ========================================================================
@@ -33,10 +34,9 @@ describe('WeightMatrixCalculatorService', () => {
   describe('disabled mode', () => {
     it('should return 100% confidence when disabled', () => {
       config.enabled = false;
-      calculator = createWeightMatrixService({
+      calculator = createService({
         config,
         logger,
-        withErrorHandler: false,
       });
 
       const input: WeightMatrixInput = {
@@ -131,10 +131,9 @@ describe('WeightMatrixCalculatorService', () => {
 
     it('should skip RSI when disabled', () => {
       config.weights.rsi.enabled = false;
-      calculator = createWeightMatrixService({
+      calculator = createService({
         config,
         logger,
-        withErrorHandler: false,
       });
 
       const input: WeightMatrixInput = { rsi: 20 };

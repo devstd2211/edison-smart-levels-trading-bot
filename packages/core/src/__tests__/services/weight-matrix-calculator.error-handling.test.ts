@@ -27,22 +27,24 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let service: WeightMatrixCalculatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
 
   beforeEach(() => {
     const harness = createWeightMatrixHarness();
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
+    createService = (config = createWeightMatrixErrorConfig()) =>
+      harness.createStandardService({
+        config,
+        logger: mockLogger,
+      });
+    createLegacyService = (config = createWeightMatrixErrorConfig()) =>
+      harness.createLegacyService({
+        config,
+        logger: mockLogger,
+      });
   });
-
-  const createService = (
-    config: WeightMatrixConfig = createWeightMatrixErrorConfig(),
-    withErrorHandler: boolean = true,
-  ): WeightMatrixCalculatorService =>
-    createWeightMatrixHarness({
-      config,
-      logger: mockLogger,
-      withErrorHandler,
-    }).service;
 
   // ==========================================================================
   // GROUP 1: THROW Config Validation Tests (6 tests)
@@ -252,7 +254,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should throw on null input without ErrorHandler', () => {
-      service = createService(createWeightMatrixErrorConfig(), false);
+      service = createLegacyService(createWeightMatrixErrorConfig());
 
       expect(() => {
         service.calculateScore(null as unknown as WeightMatrixInput, SignalDirection.LONG);
@@ -260,7 +262,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     });
 
     it('should calculate score correctly without ErrorHandler', () => {
-      service = createService(createWeightMatrixErrorConfig(), false);
+      service = createLegacyService(createWeightMatrixErrorConfig());
       const input = createWeightMatrixInput();
 
       const result = service.calculateScore(input, SignalDirection.LONG);
