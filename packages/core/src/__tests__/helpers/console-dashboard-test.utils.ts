@@ -36,6 +36,29 @@ export function createConsoleDashboardService(options: {
   );
 }
 
+export function createStandardConsoleDashboardService(
+  options: {
+    config?: DashboardConfigInput;
+    errorHandler?: ErrorHandler;
+  } = {},
+): ConsoleDashboardService {
+  return createConsoleDashboardService({
+    config: options.config,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyConsoleDashboardService(
+  options: {
+    config?: DashboardConfigInput;
+  } = {},
+): ConsoleDashboardService {
+  return createConsoleDashboardService({
+    config: options.config,
+    withErrorHandler: false,
+  });
+}
+
 export function createConsoleDashboardFactory(options: {
   errorHandler?: ErrorHandler;
 } = {}) {
@@ -47,6 +70,16 @@ export function createConsoleDashboardFactory(options: {
       config: factoryOptions.config,
       errorHandler: options.errorHandler,
       withErrorHandler: factoryOptions.withErrorHandler,
+    });
+}
+
+export function createStandardConsoleDashboardFactory(options: {
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return (factoryOptions: { config?: DashboardConfigInput } = {}) =>
+    createStandardConsoleDashboardService({
+      config: factoryOptions.config,
+      errorHandler: options.errorHandler,
     });
 }
 
@@ -70,6 +103,42 @@ export function createConsoleDashboardHarness(options: {
     service,
     logger,
     errorHandler,
+  };
+}
+
+export function createStandardConsoleDashboardHarness(options: {
+  config?: DashboardConfigInput;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createConsoleDashboardMockLogger();
+  const errorHandler =
+    options.errorHandler ?? createConsoleDashboardErrorHandler(logger);
+  const service = createStandardConsoleDashboardService({
+    config: options.config,
+    errorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    errorHandler,
+  };
+}
+
+export function createLegacyConsoleDashboardHarness(options: {
+  config?: DashboardConfigInput;
+  logger?: LoggerService;
+} = {}) {
+  const logger = options.logger ?? createConsoleDashboardMockLogger();
+  const service = createLegacyConsoleDashboardService({
+    config: options.config,
+  });
+
+  return {
+    service,
+    logger,
+    errorHandler: undefined,
   };
 }
 

@@ -7,7 +7,7 @@ import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.se
 import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
-  createOrderbookImbalanceHarness,
+  createLegacyOrderbookImbalanceHarness,
   createOrderbookImbalanceScenario,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -15,10 +15,10 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  let createService: ReturnType<typeof createOrderbookImbalanceHarness>['createLegacyService'];
+  let createService: ReturnType<typeof createLegacyOrderbookImbalanceHarness>['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createOrderbookImbalanceHarness({ withErrorHandler: false });
+    const harness = createLegacyOrderbookImbalanceHarness();
     ({ service, logger, config } = harness);
     createService = harness.createLegacyService;
   });

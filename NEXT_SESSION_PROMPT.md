@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-21)
-- Completed a three-step monitoring helper-consolidation batch:
-  - extended `packages/core/src/__tests__/helpers/health-check-test.utils.ts` with a shared standard service path and routed the direct service bootstrap points in `packages/core/src/__tests__/services/health-check.test.ts` through it instead of repeated raw harness `createService(...)` calls.
-  - extended `packages/core/src/__tests__/helpers/monitoring-server-test.utils.ts` with shared standard and started server factory paths and routed `packages/core/src/__tests__/services/monitoring-server.test.ts` through them instead of repeated direct harness `createServer(...)` / `startServer(...)` calls.
-  - extended `packages/core/src/__tests__/helpers/prometheus-metrics-test.utils.ts` with shared standard and started tracked-service factory paths and routed `packages/core/src/__tests__/services/prometheus-metrics.test.ts` through them instead of repeated direct harness `createTrackedService(...)` / `createStartedTrackedService(...)` calls; reviewed `packages/core/src/services/health-check.service.ts`, `packages/core/src/services/monitoring-server.service.ts`, and `packages/core/src/services/prometheus-metrics.service.ts` and left production code unchanged after review.
+- Completed a three-step helper-consolidation batch:
+  - extended `packages/core/src/__tests__/helpers/orderbook-imbalance-test.utils.ts` with explicit shared standard and legacy service and harness paths and routed `packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts` plus `packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts` through them instead of generic harness bootstrap and direct `withErrorHandler: false` branches.
+  - extended `packages/core/src/__tests__/helpers/strategy-circuit-breaker-test.utils.ts` with explicit shared standard and legacy service and harness paths and routed `packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts` through them instead of mixed direct bootstrap.
+  - reviewed `packages/core/src/services/orderbook-imbalance.service.ts` and `packages/core/src/services/multi-strategy/strategy-circuit-breaker.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/health-check.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts` -> PASS (3/3 suites, 68/68 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts` -> PASS (3/3 suites, 60/60 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent partially-normalized monitoring/service slice next to the refreshed `health-check` / `monitoring-server` / `prometheus-metrics` area, such as `console-dashboard.error-handling`, `logger.service.error-handling`, or another nearby suite that still mixes local bootstrap with shared helpers.
+- Prefer the next adjacent partially-normalized helper-backed service slice next to the refreshed `orderbook-imbalance` / `strategy-circuit-breaker` area, such as `config-validator.service`, another nearby constructor-heavy suite with a generic harness still carrying both standard and legacy paths, or a helper-backed suite that still mixes shared setup with direct `withErrorHandler: false` creation.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

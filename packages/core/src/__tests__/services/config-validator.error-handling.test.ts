@@ -27,10 +27,11 @@ import {
 import {
   asConfigValidatorInput,
   createConfigValidatorConfig,
-  createConfigValidatorFactory,
-  createConfigValidatorHarness,
+  createLegacyConfigValidatorFactory,
   createConfigValidatorLogger,
-  createConfigValidatorService,
+  createStandardConfigValidatorFactory,
+  createStandardConfigValidatorHarness,
+  createStandardConfigValidatorService,
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
@@ -39,15 +40,15 @@ import {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ReturnType<typeof createConfigValidatorHarness>['logger'];
+  let logger: ReturnType<typeof createStandardConfigValidatorHarness>['logger'];
   let errorHandler: ErrorHandler;
   let createValidator: () => ConfigValidatorService;
   const validConfig = createConfigValidatorConfig();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ({ logger, errorHandler } = createConfigValidatorHarness());
-    createValidator = createConfigValidatorFactory({ logger, errorHandler });
+    ({ logger, errorHandler } = createStandardConfigValidatorHarness());
+    createValidator = createStandardConfigValidatorFactory({ logger, errorHandler });
   });
 
   // ========================================================================
@@ -75,7 +76,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.A3: Should work without ErrorHandler (backward compat)', () => {
-      const validator = createConfigValidatorFactory({ logger })(); // No ErrorHandler
+      const validator = createLegacyConfigValidatorFactory({ logger })();
 
       expect(() => validator.validateAll(validConfig)).not.toThrow();
     });
@@ -279,7 +280,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         throw new Error('Logger write failed');
       });
 
-      const validator = createConfigValidatorService({ logger: mockLogger, errorHandler });
+      const validator = createStandardConfigValidatorService({ logger: mockLogger, errorHandler });
 
       // Should not throw despite logger error
       expect(() => validator.validateAll(validConfig)).not.toThrow();

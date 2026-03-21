@@ -31,6 +31,27 @@ export const createConfigValidatorService = ({
   errorHandler?: ErrorHandler;
 } = {}): ConfigValidatorService => new ConfigValidatorService(logger, errorHandler);
 
+export const createStandardConfigValidatorService = ({
+  logger = createConfigValidatorLogger(),
+  errorHandler,
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ConfigValidatorService =>
+  createConfigValidatorService({
+    logger,
+    errorHandler,
+  });
+
+export const createLegacyConfigValidatorService = ({
+  logger = createConfigValidatorLogger(),
+}: {
+  logger?: LoggerService;
+} = {}): ConfigValidatorService =>
+  createConfigValidatorService({
+    logger,
+  });
+
 export const createConfigValidatorFactory = ({
   logger = createConfigValidatorLogger(),
   errorHandler,
@@ -43,6 +64,27 @@ export const createConfigValidatorFactory = ({
     errorHandler,
   });
 
+export const createStandardConfigValidatorFactory = ({
+  logger = createConfigValidatorLogger(),
+  errorHandler,
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) => (): ConfigValidatorService =>
+  createStandardConfigValidatorService({
+    logger,
+    errorHandler,
+  });
+
+export const createLegacyConfigValidatorFactory = ({
+  logger = createConfigValidatorLogger(),
+}: {
+  logger?: LoggerService;
+} = {}) => (): ConfigValidatorService =>
+  createLegacyConfigValidatorService({
+    logger,
+  });
+
 export const createConfigValidatorHarness = () => {
   const logger = createConfigValidatorLogger();
   const errorHandler = createConfigValidatorErrorHandler();
@@ -51,6 +93,29 @@ export const createConfigValidatorHarness = () => {
   return {
     logger,
     errorHandler,
+    validator,
+  };
+};
+
+export const createStandardConfigValidatorHarness = () => {
+  const logger = createConfigValidatorLogger();
+  const errorHandler = createConfigValidatorErrorHandler();
+  const validator = createStandardConfigValidatorService({ logger, errorHandler });
+
+  return {
+    logger,
+    errorHandler,
+    validator,
+  };
+};
+
+export const createLegacyConfigValidatorHarness = () => {
+  const logger = createConfigValidatorLogger();
+  const validator = createLegacyConfigValidatorService({ logger });
+
+  return {
+    logger,
+    errorHandler: undefined,
     validator,
   };
 };

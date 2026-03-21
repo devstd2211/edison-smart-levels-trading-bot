@@ -12,17 +12,17 @@ import {
 } from '../../types/legacy';
 import {
   createWeightMatrixConfig,
-  createWeightMatrixHarness,
+  createLegacyWeightMatrixHarness,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
-  let createService: ReturnType<typeof createWeightMatrixHarness>['createLegacyService'];
+  let createService: ReturnType<typeof createLegacyWeightMatrixHarness>['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createWeightMatrixHarness({ withErrorHandler: false });
+    const harness = createLegacyWeightMatrixHarness();
     ({ service: calculator, logger, config } = harness);
     createService = harness.createLegacyService;
   });

@@ -14,10 +14,12 @@ import { ErrorHandler, DataCollectionError, DatabaseBatchError, DataCompressionE
 import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
-  createDataCollectorDatabaseWriter,
-  createDataCollectorHarness,
-  createDataCollectorService,
+  createLegacyDataCollectorDatabaseWriter,
+  createLegacyDataCollectorService,
   createMockCollectorDatabase,
+  createStandardDataCollectorDatabaseWriter,
+  createStandardDataCollectorHarness,
+  createStandardDataCollectorService,
 } from '../helpers/data-collector-test.utils';
 
 // ============================================================================
@@ -39,7 +41,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let config: DataCollectionConfig;
 
   beforeEach(() => {
-    const harness = createDataCollectorHarness();
+    const harness = createStandardDataCollectorHarness();
     mockLogger = harness.logger;
     mockDatabase = createMockCollectorDatabase();
     errorHandler = harness.errorHandler as ErrorHandler;
@@ -58,7 +60,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     describe('DatabaseWriter RETRY Strategy', () => {
       it('should have ErrorHandler integrated into DatabaseWriter', () => {
         // DatabaseWriter should accept ErrorHandler in constructor
-        const writer = createDataCollectorDatabaseWriter({
+        const writer = createStandardDataCollectorDatabaseWriter({
           database: mockDatabase,
           logger: mockLogger as LoggerService,
           compression: true,
@@ -79,7 +81,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
           return Promise.resolve({});
         });
 
-        const writer = createDataCollectorDatabaseWriter({
+        const writer = createStandardDataCollectorDatabaseWriter({
           database: mockDatabase,
           logger: mockLogger as LoggerService,
           compression: true,
@@ -109,7 +111,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
     describe('DatabaseWriter GRACEFUL_DEGRADE for Compression', () => {
       it('should fallback to uncompressed data on zlib error', async () => {
-        const writer = createDataCollectorDatabaseWriter({
+        const writer = createStandardDataCollectorDatabaseWriter({
           database: mockDatabase,
           logger: mockLogger as LoggerService,
           compression: true,
@@ -122,7 +124,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       });
 
       it('should handle orderbook batch write with compression fallback', async () => {
-        const writer = createDataCollectorDatabaseWriter({
+        const writer = createStandardDataCollectorDatabaseWriter({
           database: mockDatabase,
           logger: mockLogger as LoggerService,
           compression: true,
@@ -151,18 +153,18 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   describe('Category 2: WebSocket Connection', () => {
     it('should accept ErrorHandler parameter for WebSocket error handling', () => {
       // DataCollectorService should accept optional ErrorHandler
-      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
+      service = createStandardDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
       expect(service).toBeDefined();
     });
 
     it('should work without ErrorHandler (backward compatibility)', () => {
       // DataCollectorService should work without ErrorHandler
-      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, withErrorHandler: false });
+      service = createLegacyDataCollectorService({ config, logger: mockLogger as LoggerService });
       expect(service).toBeDefined();
     });
 
     it('should initialize DatabaseWriter with ErrorHandler', async () => {
-      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
+      service = createStandardDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
 
       // Service should have access to errorHandler for delegating error handling
       // DatabaseWriter is initialized with errorHandler during service.initialize()
@@ -177,7 +179,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
   describe('Category 3: Service Lifecycle', () => {
     it('should handle graceful shutdown with potential errors', async () => {
-      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
+      service = createStandardDataCollectorService({ config, logger: mockLogger as LoggerService, errorHandler });
 
       // stop() should use GRACEFUL_DEGRADE for errors
       // Never block shutdown due to database or WebSocket errors
@@ -188,7 +190,11 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     it('should initialize with database errors (THROW on startup)', async () => {
       // initialize() should THROW on database errors (startup blocker)
       const invalidConfig = { ...config, database: { ...config.database, path: '/invalid/path' } };
-      service = createDataCollectorService({ config: invalidConfig, logger: mockLogger as LoggerService, errorHandler });
+      service = createStandardDataCollectorService({
+        config: invalidConfig,
+        logger: mockLogger as LoggerService,
+        errorHandler,
+      });
 
       expect(service).toBeDefined();
     });
@@ -305,25 +311,24 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   describe('Category 6: Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (legacy mode)', () => {
       // DataCollectorService should accept missing ErrorHandler
-      service = createDataCollectorService({ config, logger: mockLogger as LoggerService, withErrorHandler: false });
+      service = createLegacyDataCollectorService({ config, logger: mockLogger as LoggerService });
 
       expect(service).toBeDefined();
     });
 
     it('DatabaseWriter should accept optional ErrorHandler', () => {
       // Should work with or without ErrorHandler
-      const writerWithHandler = createDataCollectorDatabaseWriter({
+      const writerWithHandler = createStandardDataCollectorDatabaseWriter({
         database: mockDatabase,
         logger: mockLogger as LoggerService,
         compression: true,
         errorHandler,
       });
 
-      const writerWithoutHandler = createDataCollectorDatabaseWriter({
+      const writerWithoutHandler = createLegacyDataCollectorDatabaseWriter({
         database: mockDatabase,
         logger: mockLogger as LoggerService,
         compression: true,
-        withErrorHandler: false,
       });
 
       expect(writerWithHandler).toBeDefined();

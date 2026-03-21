@@ -11,19 +11,19 @@
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
 import {
   createConsoleDashboardErrorHandler,
-  createConsoleDashboardFactory,
-  createConsoleDashboardHarness,
+  createLegacyConsoleDashboardService,
   createConsoleDashboardPosition as createValidPosition,
-  createConsoleDashboardService,
+  createStandardConsoleDashboardFactory,
+  createStandardConsoleDashboardHarness,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ReturnType<typeof createConsoleDashboardFactory>;
+  let createDashboard: ReturnType<typeof createStandardConsoleDashboardFactory>;
 
   beforeEach(() => {
-    createDashboard = createConsoleDashboardFactory({
+    createDashboard = createStandardConsoleDashboardFactory({
       errorHandler: createConsoleDashboardErrorHandler(),
     });
   });
@@ -74,7 +74,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createConsoleDashboardHarness({
+      ({ service } = createStandardConsoleDashboardHarness({
         config: { enabled: false },
       }));
     });
@@ -118,7 +118,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createConsoleDashboardHarness({
+      ({ service } = createStandardConsoleDashboardHarness({
         config: { enabled: false },
       }));
     });
@@ -180,7 +180,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createConsoleDashboardHarness({
+      ({ service } = createStandardConsoleDashboardHarness({
         config: { enabled: false },
       }));
     });
@@ -221,17 +221,15 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should create service without ErrorHandler', () => {
-      const service = createConsoleDashboardService({
+      const service = createLegacyConsoleDashboardService({
         config: { enabled: false },
-        withErrorHandler: false,
       });
       expect(service).toBeDefined();
     });
 
     test('should handle price update', () => {
-      const service = createConsoleDashboardService({
+      const service = createLegacyConsoleDashboardService({
         config: { enabled: false },
-        withErrorHandler: false,
       });
       expect(() => {
         service.updatePrice(50000);
@@ -239,9 +237,8 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should throw on invalid price even without ErrorHandler', () => {
-      const service = createConsoleDashboardService({
+      const service = createLegacyConsoleDashboardService({
         config: { enabled: false },
-        withErrorHandler: false,
       });
       expect(() => {
         service.updatePrice(NaN);
@@ -249,9 +246,8 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should handle destroy gracefully', () => {
-      const service = createConsoleDashboardService({
+      const service = createLegacyConsoleDashboardService({
         config: { enabled: false },
-        withErrorHandler: false,
       });
       expect(() => {
         service.destroy();
@@ -259,9 +255,8 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should handle multiple sequential updates', () => {
-      const service = createConsoleDashboardService({
+      const service = createLegacyConsoleDashboardService({
         config: { enabled: false },
-        withErrorHandler: false,
       });
       expect(() => {
         service.updatePrice(50000);
@@ -272,9 +267,8 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should maintain event history (max 50)', () => {
-      const service = createConsoleDashboardService({
+      const service = createLegacyConsoleDashboardService({
         config: { enabled: false },
-        withErrorHandler: false,
       });
       for (let i = 0; i < 60; i++) {
         service.recordEvent('test', `Event ${i}`);
@@ -291,7 +285,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createConsoleDashboardHarness({
+      ({ service } = createStandardConsoleDashboardHarness({
         config: { enabled: false },
       }));
     });

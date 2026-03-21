@@ -77,6 +77,29 @@ export const createAntiFlipService = (
   );
 };
 
+export const createStandardAntiFlipService = (
+  overrides: Partial<AntiFlipConfig> = {},
+  options: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  } = {},
+): AntiFlipService =>
+  createAntiFlipService(overrides, {
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+
+export const createLegacyAntiFlipService = (
+  overrides: Partial<AntiFlipConfig> = {},
+  options: {
+    logger?: LoggerService;
+  } = {},
+): AntiFlipService =>
+  createAntiFlipService(overrides, {
+    logger: options.logger,
+    withErrorHandler: false,
+  });
+
 export const createAntiFlipHarness = (): AntiFlipHarness => {
   const logger = createAntiFlipLogger();
   const errorHandler = createAntiFlipErrorHandler();
@@ -93,6 +116,38 @@ export const createAntiFlipHarness = (): AntiFlipHarness => {
         ? undefined
         : options.errorHandler ?? errorHandler,
       withErrorHandler: options.withErrorHandler,
+    }),
+  };
+};
+
+export const createStandardAntiFlipHarness = () => {
+  const logger = createAntiFlipLogger();
+  const errorHandler = createAntiFlipErrorHandler();
+
+  return {
+    logger,
+    errorHandler,
+    createService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { errorHandler?: ErrorHandler; logger?: LoggerService } = {},
+    ) => createStandardAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
+      errorHandler: options.errorHandler ?? errorHandler,
+    }),
+  };
+};
+
+export const createLegacyAntiFlipHarness = () => {
+  const logger = createAntiFlipLogger();
+
+  return {
+    logger,
+    errorHandler: undefined,
+    createService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { logger?: LoggerService } = {},
+    ) => createLegacyAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
     }),
   };
 };

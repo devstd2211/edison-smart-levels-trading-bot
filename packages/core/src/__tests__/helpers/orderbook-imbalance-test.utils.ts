@@ -141,6 +141,73 @@ export function createOrderbookImbalanceHarness(options: {
   };
 }
 
+export function createStandardOrderbookImbalanceHarness(options: {
+  configOverrides?: Partial<OrderbookImbalanceConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createOrderbookImbalanceLogger();
+  const config = createOrderbookImbalanceConfig(options.configOverrides);
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const service = createStandardOrderbookImbalanceService({
+    configOverrides: options.configOverrides,
+    logger,
+    errorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler,
+    createStandardService: (serviceOptions: {
+      config?: OrderbookImbalanceConfig;
+      configOverrides?: Partial<OrderbookImbalanceConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createStandardOrderbookImbalanceService({
+        config: serviceOptions.config,
+        configOverrides: serviceOptions.config
+          ? undefined
+          : serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+  };
+}
+
+export function createLegacyOrderbookImbalanceHarness(options: {
+  configOverrides?: Partial<OrderbookImbalanceConfig>;
+  logger?: LoggerService;
+} = {}) {
+  const logger = options.logger ?? createOrderbookImbalanceLogger();
+  const config = createOrderbookImbalanceConfig(options.configOverrides);
+  const service = createLegacyOrderbookImbalanceService({
+    configOverrides: options.configOverrides,
+    logger,
+  });
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler: undefined,
+    createLegacyService: (serviceOptions: {
+      config?: OrderbookImbalanceConfig;
+      configOverrides?: Partial<OrderbookImbalanceConfig>;
+      logger?: LoggerService;
+    } = {}) =>
+      createLegacyOrderbookImbalanceService({
+        config: serviceOptions.config,
+        configOverrides: serviceOptions.config
+          ? undefined
+          : serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+      }),
+  };
+}
+
 export function createOrderbookImbalanceServiceFactory(options: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
@@ -184,4 +251,26 @@ export function createOrderbookImbalanceService(options: {
     logger,
     errorHandler,
   );
+}
+
+export function createStandardOrderbookImbalanceService(options: {
+  config?: OrderbookImbalanceConfig;
+  configOverrides?: Partial<OrderbookImbalanceConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createOrderbookImbalanceService(options);
+}
+
+export function createLegacyOrderbookImbalanceService(options: {
+  config?: OrderbookImbalanceConfig;
+  configOverrides?: Partial<OrderbookImbalanceConfig>;
+  logger?: LoggerService;
+} = {}) {
+  return createOrderbookImbalanceService({
+    config: options.config,
+    configOverrides: options.config ? undefined : options.configOverrides,
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }

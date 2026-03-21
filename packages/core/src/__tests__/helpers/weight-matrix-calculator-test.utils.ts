@@ -200,6 +200,65 @@ export function createWeightMatrixHarness(options: {
   };
 }
 
+export function createStandardWeightMatrixHarness(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createWeightMatrixLogger();
+  const config = options.config ?? createWeightMatrixConfig();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const service = createStandardWeightMatrixService({
+    config,
+    logger,
+    errorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler,
+    createStandardService: (serviceOptions: {
+      config?: WeightMatrixConfig;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createStandardWeightMatrixService({
+        config: serviceOptions.config ?? config,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+  };
+}
+
+export function createLegacyWeightMatrixHarness(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+} = {}) {
+  const logger = options.logger ?? createWeightMatrixLogger();
+  const config = options.config ?? createWeightMatrixConfig();
+  const service = createLegacyWeightMatrixService({
+    config,
+    logger,
+  });
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler: undefined,
+    createLegacyService: (serviceOptions: {
+      config?: WeightMatrixConfig;
+      logger?: LoggerService;
+    } = {}) =>
+      createLegacyWeightMatrixService({
+        config: serviceOptions.config ?? config,
+        logger: serviceOptions.logger ?? logger,
+      }),
+  };
+}
+
 export function createWeightMatrixService(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;
@@ -215,6 +274,25 @@ export function createWeightMatrixService(options: {
     logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createStandardWeightMatrixService(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createWeightMatrixService(options);
+}
+
+export function createLegacyWeightMatrixService(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+} = {}) {
+  return createWeightMatrixService({
+    config: options.config,
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }
 
 export function calculateWeightMatrixScore(

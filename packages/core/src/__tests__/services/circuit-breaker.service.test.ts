@@ -5,7 +5,7 @@
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
 import {
   createCircuitBreakerConfig,
-  createCircuitBreakerHarness,
+  createStandardCircuitBreakerHarness,
 } from '../helpers/circuit-breaker-test.utils';
 
 // ============================================================================
@@ -18,7 +18,7 @@ describe('CircuitBreakerService', () => {
 
   beforeEach(() => {
     defaultConfig = createCircuitBreakerConfig();
-    const harness = createCircuitBreakerHarness({ configOverrides: defaultConfig });
+    const harness = createStandardCircuitBreakerHarness({ configOverrides: defaultConfig });
     service = harness.service;
   });
 

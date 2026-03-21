@@ -11,9 +11,10 @@ import {
   createCircuitBreakerFailingLogger,
   createCircuitBreakerConfig,
   createCircuitBreakerErrorHandler,
-  createCircuitBreakerHarness,
+  createLegacyCircuitBreakerService,
   createCircuitBreakerMockLogger,
-  createCircuitBreakerService,
+  createStandardCircuitBreakerHarness,
+  createStandardCircuitBreakerService,
 } from '../helpers/circuit-breaker-test.utils';
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
@@ -27,9 +28,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     logger = createCircuitBreakerMockLogger();
 
     errorHandler = createCircuitBreakerErrorHandler(logger as LoggerService);
-    const harness = createCircuitBreakerHarness({
+    const harness = createStandardCircuitBreakerHarness({
       configOverrides: config,
       logger: logger as LoggerService,
+      errorHandler,
     });
     service = harness.service;
   });
@@ -48,7 +50,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
       // Should not throw despite logger failure
       expect(() => {
-        createCircuitBreakerService({
+        createStandardCircuitBreakerService({
           configOverrides: config,
           logger: failingLogger as unknown as LoggerService,
           errorHandler,
@@ -63,7 +65,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
         errorHandler,
@@ -93,7 +95,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
         errorHandler,
@@ -114,7 +116,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
         errorHandler,
@@ -135,7 +137,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
         errorHandler,
@@ -157,7 +159,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
         errorHandler,
@@ -180,7 +182,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
   describe('GRACEFUL_DEGRADE Strategy - State/Data Operations', () => {
     it('should handle error history push failures gracefully', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
         errorHandler,
@@ -209,7 +211,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should return partial stats on getStats failure', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
         errorHandler,
@@ -234,7 +236,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should return error history when available', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
         errorHandler,
@@ -249,7 +251,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should correctly determine recovery eligibility', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
         errorHandler,
@@ -268,7 +270,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should continue circuit operation through multiple errors', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
         errorHandler,
@@ -294,10 +296,9 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createLegacyCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
-        withErrorHandler: false,
       });
 
       // Should function normally
@@ -319,10 +320,9 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       });
 
       // Service without ErrorHandler should still work
-      const testService = createCircuitBreakerService({
+      const testService = createLegacyCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        withErrorHandler: false,
       });
 
       // Should handle error despite failing logger (degraded mode)
@@ -332,7 +332,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     });
 
     it('should maintain state machine integrity with ErrorHandler', () => {
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: logger as LoggerService,
         errorHandler,
@@ -382,7 +382,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
         errorHandler,
@@ -409,7 +409,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createCircuitBreakerService({
+      const testService = createStandardCircuitBreakerService({
         configOverrides: config,
         logger: intermittentLogger as unknown as LoggerService,
         errorHandler,

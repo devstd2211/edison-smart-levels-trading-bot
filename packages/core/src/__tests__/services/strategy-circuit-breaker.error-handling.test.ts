@@ -10,8 +10,10 @@ import { CircuitBreakerStatus } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 import {
   createStrategyCircuitBreakerErrorHandler,
+  createLegacyStrategyCircuitBreakerService,
   createStrategyCircuitBreakerMockLogger,
-  createStrategyCircuitBreakerService,
+  createStandardStrategyCircuitBreakerService,
+  createStandardStrategyCircuitBreakerHarness,
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
@@ -23,13 +25,13 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    logger = createStrategyCircuitBreakerMockLogger();
-    errorHandler = createStrategyCircuitBreakerErrorHandler(logger as LoggerService);
-    service = createStrategyCircuitBreakerService({
-      logger: logger as LoggerService,
+    const harness = createStandardStrategyCircuitBreakerHarness({
+      logger: createStrategyCircuitBreakerMockLogger(),
       config: {},
-      errorHandler,
     });
+    logger = harness.logger;
+    errorHandler = harness.errorHandler;
+    service = harness.service;
   });
 
   // =========================================================================
@@ -44,7 +46,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: asLoggerService(failingLogger),
         config: {},
         errorHandler,
@@ -63,7 +65,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: asLoggerService(failingLogger),
         config: {},
         errorHandler,
@@ -83,7 +85,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: asLoggerService(failingLogger),
         config: {},
         errorHandler,
@@ -107,7 +109,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: asLoggerService(failingLogger),
         config: {},
         errorHandler,
@@ -138,7 +140,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: asLoggerService(failingLogger),
         config: {},
         errorHandler,
@@ -162,7 +164,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
 
   describe('GRACEFUL_DEGRADE Strategy - State/Data Operations', () => {
     it('should handle error storage failures gracefully', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -180,7 +182,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should track and return accurate metrics for multiple strategies', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -199,7 +201,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should continue state transitions through multiple operations', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -218,7 +220,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should create and manage breakers for multiple strategies', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -239,7 +241,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should allow config management for strategies', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -257,7 +259,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should support event listeners for state changes', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -282,9 +284,8 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createLegacyStrategyCircuitBreakerService({
         logger: logger as LoggerService,
-        withErrorHandler: false,
       });
 
       expect(() => {
@@ -298,7 +299,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should work without logger parameter', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: undefined,
         config: {},
         errorHandler,
@@ -312,7 +313,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should track state changes through multiple operations', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -337,7 +338,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should isolate failures between strategies with ErrorHandler', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -385,7 +386,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         }),
       };
 
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: asLoggerService(failingLogger),
         config: {},
         errorHandler,
@@ -408,7 +409,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should recover multiple strategies independently', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -431,7 +432,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should track metrics correctly despite error handling', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -448,7 +449,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should track state through multiple operations', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,
@@ -468,7 +469,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
     });
 
     it('should maintain service-wide statistics correctly', () => {
-      const testService = createStrategyCircuitBreakerService({
+      const testService = createStandardStrategyCircuitBreakerService({
         logger: logger as LoggerService,
         config: {},
         errorHandler,

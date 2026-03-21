@@ -54,3 +54,42 @@ export function createTestLoggerService(
     options.errorHandler,
   );
 }
+
+type LoggerFactoryOptions = {
+  minLevel?: LogLevel | string;
+  logDir?: string;
+  logToFile?: boolean;
+};
+
+export function createStandardLoggerService(
+  options: LoggerServiceOptions = {},
+): LoggerService {
+  return createTestLoggerService(options);
+}
+
+export function createLegacyLoggerService(
+  options: LoggerFactoryOptions = {},
+): LoggerService {
+  return createTestLoggerService({
+    minLevel: options.minLevel,
+    logDir: options.logDir,
+    logToFile: options.logToFile,
+  });
+}
+
+export function createStandardLoggerFactory(
+  options: { errorHandler?: ErrorHandler } = {},
+) {
+  return (factoryOptions: LoggerFactoryOptions = {}) =>
+    createStandardLoggerService({
+      minLevel: factoryOptions.minLevel,
+      logDir: factoryOptions.logDir,
+      logToFile: factoryOptions.logToFile,
+      errorHandler: options.errorHandler,
+    });
+}
+
+export function createLegacyLoggerFactory() {
+  return (factoryOptions: LoggerFactoryOptions = {}) =>
+    createLegacyLoggerService(factoryOptions);
+}

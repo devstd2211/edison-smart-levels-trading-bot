@@ -74,6 +74,33 @@ export function createCompoundInterestService(options: {
   );
 }
 
+export function createStandardCompoundInterestService(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createCompoundInterestService({
+    configOverrides: options.configOverrides,
+    logger: options.logger,
+    getBalance: options.getBalance,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyCompoundInterestService(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+} = {}) {
+  return createCompoundInterestService({
+    configOverrides: options.configOverrides,
+    logger: options.logger,
+    getBalance: options.getBalance,
+    withErrorHandler: false,
+  });
+}
+
 export function createCompoundInterestFactory(options: {
   logger?: LoggerService;
   getBalance?: jest.Mock;
@@ -92,12 +119,101 @@ export function createCompoundInterestFactory(options: {
     });
 }
 
+export function createStandardCompoundInterestFactory(options: {
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return (factoryOptions: {
+    configOverrides?: Partial<CompoundInterestConfig>;
+  } = {}) =>
+    createStandardCompoundInterestService({
+      configOverrides: factoryOptions.configOverrides,
+      logger: options.logger,
+      getBalance: options.getBalance,
+      errorHandler: options.errorHandler,
+    });
+}
+
+export function createLegacyCompoundInterestFactory(options: {
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+} = {}) {
+  return (factoryOptions: {
+    configOverrides?: Partial<CompoundInterestConfig>;
+  } = {}) =>
+    createLegacyCompoundInterestService({
+      configOverrides: factoryOptions.configOverrides,
+      logger: options.logger,
+      getBalance: options.getBalance,
+    });
+}
+
 export function createCompoundInterestInvalidConfig(
   overrides: Partial<CompoundInterestConfig>,
 ): CompoundInterestConfig {
   return {
     ...createCompoundInterestConfig(),
     ...overrides,
+  };
+}
+
+export function createStandardCompoundInterestBoundFactory(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createCompoundInterestLogger();
+  const mockGetBalance = options.getBalance ?? jest.fn();
+  const errorHandler = options.errorHandler ?? createCompoundInterestErrorHandler(logger);
+  const defaultConfig = createCompoundInterestConfig(options.configOverrides);
+
+  return {
+    logger,
+    mockGetBalance,
+    errorHandler,
+    defaultConfig,
+    createCalculator: (factoryOptions: {
+      configOverrides?: Partial<CompoundInterestConfig>;
+    } = {}) =>
+      createStandardCompoundInterestService({
+        configOverrides: {
+          ...options.configOverrides,
+          ...factoryOptions.configOverrides,
+        },
+        logger,
+        getBalance: mockGetBalance,
+        errorHandler,
+      }),
+  };
+}
+
+export function createLegacyCompoundInterestBoundFactory(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+} = {}) {
+  const logger = options.logger ?? createCompoundInterestLogger();
+  const mockGetBalance = options.getBalance ?? jest.fn();
+  const defaultConfig = createCompoundInterestConfig(options.configOverrides);
+
+  return {
+    logger,
+    mockGetBalance,
+    errorHandler: undefined,
+    defaultConfig,
+    createCalculator: (factoryOptions: {
+      configOverrides?: Partial<CompoundInterestConfig>;
+    } = {}) =>
+      createLegacyCompoundInterestService({
+        configOverrides: {
+          ...options.configOverrides,
+          ...factoryOptions.configOverrides,
+        },
+        logger,
+        getBalance: mockGetBalance,
+      }),
   };
 }
 

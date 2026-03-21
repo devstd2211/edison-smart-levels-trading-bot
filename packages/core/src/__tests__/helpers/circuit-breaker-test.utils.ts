@@ -61,6 +61,47 @@ export function createCircuitBreakerHarness(options: {
   };
 }
 
+export function createStandardCircuitBreakerHarness(options: {
+  configOverrides?: Partial<CircuitBreakerConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createCircuitBreakerLogger();
+  const config = createCircuitBreakerConfig(options.configOverrides);
+  const errorHandler = options.errorHandler ?? createCircuitBreakerErrorHandler(logger);
+  const service = createStandardCircuitBreakerService({
+    configOverrides: options.configOverrides,
+    logger,
+    errorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler,
+  };
+}
+
+export function createLegacyCircuitBreakerHarness(options: {
+  configOverrides?: Partial<CircuitBreakerConfig>;
+  logger?: LoggerService;
+} = {}) {
+  const logger = options.logger ?? createCircuitBreakerLogger();
+  const config = createCircuitBreakerConfig(options.configOverrides);
+  const service = createLegacyCircuitBreakerService({
+    configOverrides: options.configOverrides,
+    logger,
+  });
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler: undefined,
+  };
+}
+
 export function createCircuitBreakerErrorHandler(
   logger: LoggerService = createCircuitBreakerLogger(),
 ): ErrorHandler {
@@ -81,4 +122,27 @@ export function createCircuitBreakerService(options: {
     logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createStandardCircuitBreakerService(options: {
+  configOverrides?: Partial<CircuitBreakerConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createCircuitBreakerService({
+    configOverrides: options.configOverrides,
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyCircuitBreakerService(options: {
+  configOverrides?: Partial<CircuitBreakerConfig>;
+  logger?: LoggerService;
+} = {}) {
+  return createCircuitBreakerService({
+    configOverrides: options.configOverrides,
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }

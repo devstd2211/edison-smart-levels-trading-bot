@@ -56,3 +56,59 @@ export function createStrategyCircuitBreakerHarness(options: {
     errorHandler,
   };
 }
+
+export function createStandardStrategyCircuitBreakerService(options: {
+  logger?: LoggerService;
+  config?: Record<string, unknown>;
+  errorHandler?: ErrorHandler;
+} = {}): StrategyCircuitBreakerService {
+  return createStrategyCircuitBreakerService(options);
+}
+
+export function createLegacyStrategyCircuitBreakerService(options: {
+  logger?: LoggerService;
+  config?: Record<string, unknown>;
+} = {}): StrategyCircuitBreakerService {
+  return createStrategyCircuitBreakerService({
+    logger: options.logger,
+    config: options.config,
+    withErrorHandler: false,
+  });
+}
+
+export function createStandardStrategyCircuitBreakerHarness(options: {
+  logger?: LoggerService;
+  config?: Record<string, unknown>;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createStrategyCircuitBreakerMockLogger();
+  const errorHandler = options.errorHandler ?? createStrategyCircuitBreakerErrorHandler(logger);
+  const service = createStandardStrategyCircuitBreakerService({
+    logger,
+    config: options.config,
+    errorHandler,
+  });
+
+  return {
+    service,
+    logger,
+    errorHandler,
+  };
+}
+
+export function createLegacyStrategyCircuitBreakerHarness(options: {
+  logger?: LoggerService;
+  config?: Record<string, unknown>;
+} = {}) {
+  const logger = options.logger ?? createStrategyCircuitBreakerMockLogger();
+  const service = createLegacyStrategyCircuitBreakerService({
+    logger,
+    config: options.config,
+  });
+
+  return {
+    service,
+    logger,
+    errorHandler: undefined,
+  };
+}

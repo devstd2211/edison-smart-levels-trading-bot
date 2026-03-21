@@ -51,6 +51,29 @@ export function createDataCollectorService(options: {
   );
 }
 
+export function createStandardDataCollectorService(options: {
+  config?: DataCollectionConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): DataCollectorService {
+  return createDataCollectorService({
+    config: options.config,
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyDataCollectorService(options: {
+  config?: DataCollectionConfig;
+  logger?: LoggerService;
+} = {}): DataCollectorService {
+  return createDataCollectorService({
+    config: options.config,
+    logger: options.logger,
+    withErrorHandler: false,
+  });
+}
+
 export function createDataCollectorHarness(options: {
   config?: DataCollectionConfig;
   logger?: LoggerService;
@@ -72,6 +95,45 @@ export function createDataCollectorHarness(options: {
       logger,
       errorHandler,
       withErrorHandler: options.withErrorHandler,
+    }),
+  };
+}
+
+export function createStandardDataCollectorHarness(options: {
+  config?: DataCollectionConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? (createMockDataCollectorLogger() as LoggerService);
+  const config = options.config ?? createMockDataCollectorConfig();
+  const errorHandler = options.errorHandler ?? createDataCollectorErrorHandler(logger);
+
+  return {
+    logger,
+    config,
+    errorHandler,
+    service: createStandardDataCollectorService({
+      config,
+      logger,
+      errorHandler,
+    }),
+  };
+}
+
+export function createLegacyDataCollectorHarness(options: {
+  config?: DataCollectionConfig;
+  logger?: LoggerService;
+} = {}) {
+  const logger = options.logger ?? (createMockDataCollectorLogger() as LoggerService);
+  const config = options.config ?? createMockDataCollectorConfig();
+
+  return {
+    logger,
+    config,
+    errorHandler: undefined,
+    service: createLegacyDataCollectorService({
+      config,
+      logger,
     }),
   };
 }
@@ -108,4 +170,31 @@ export function createDataCollectorDatabaseWriter(options: {
     options.compression ?? true,
     errorHandler,
   );
+}
+
+export function createStandardDataCollectorDatabaseWriter(options: {
+  database?: MockDatabase;
+  logger?: LoggerService;
+  compression?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): DatabaseWriter {
+  return createDataCollectorDatabaseWriter({
+    database: options.database,
+    logger: options.logger,
+    compression: options.compression,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyDataCollectorDatabaseWriter(options: {
+  database?: MockDatabase;
+  logger?: LoggerService;
+  compression?: boolean;
+} = {}): DatabaseWriter {
+  return createDataCollectorDatabaseWriter({
+    database: options.database,
+    logger: options.logger,
+    compression: options.compression,
+    withErrorHandler: false,
+  });
 }

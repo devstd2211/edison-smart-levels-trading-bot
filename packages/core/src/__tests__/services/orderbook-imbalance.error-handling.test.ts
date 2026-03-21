@@ -36,10 +36,11 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceFailingLogger,
-  createOrderbookImbalanceHarness,
+  createLegacyOrderbookImbalanceHarness,
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
-  createOrderbookImbalanceService,
+  createStandardOrderbookImbalanceHarness,
+  createStandardOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
@@ -51,14 +52,17 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: ReturnType<typeof createOrderbookImbalanceHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createOrderbookImbalanceHarness>['createLegacyService'];
+  let createService: ReturnType<typeof createStandardOrderbookImbalanceHarness>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createLegacyOrderbookImbalanceHarness>['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createOrderbookImbalanceHarness();
-    ({ logger, errorHandler } = harness);
-    createService = harness.createStandardService;
-    createLegacyService = harness.createLegacyService;
+    const standardHarness = createStandardOrderbookImbalanceHarness();
+    const legacyHarness = createLegacyOrderbookImbalanceHarness({
+      logger: standardHarness.logger,
+    });
+    ({ logger, errorHandler } = standardHarness);
+    createService = standardHarness.createStandardService;
+    createLegacyService = legacyHarness.createLegacyService;
   });
 
   // ============================================================================
@@ -71,7 +75,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         levels: 0,
       });
 
-      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
+      expect(() => createStandardOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.levels must be >= 1',
       );
     });
@@ -81,7 +85,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: -10,
       });
 
-      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
+      expect(() => createStandardOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
@@ -91,7 +95,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         minImbalancePercent: 150,
       });
 
-      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
+      expect(() => createStandardOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
@@ -103,7 +107,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
         levels: 10,
       };
 
-      expect(() => createOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
+      expect(() => createStandardOrderbookImbalanceService({ config, logger, errorHandler })).toThrow(
         'config.enabled must be boolean',
       );
     });
@@ -239,7 +243,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(
-        () => createOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler }),
+        () => createStandardOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler }),
       ).not.toThrow();
     });
 
@@ -252,7 +256,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       });
 
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler });
+      const service = createStandardOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler });
 
       const orderbook = createOrderbookImbalanceScenario({
         bidQuantities: [NaN],
@@ -267,7 +271,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
     it('should handle null logger gracefully', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger: asLogger(null), errorHandler });
+      const service = createStandardOrderbookImbalanceService({ config, logger: asLogger(null), errorHandler });
 
       const orderbook = createOrderbookImbalanceScenario();
 
@@ -362,7 +366,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       });
 
       // Should throw even without errorHandler
-      expect(() => createOrderbookImbalanceService({ config, logger, withErrorHandler: false })).toThrow(
+      expect(() => createLegacyOrderbookImbalanceHarness({ logger }).createLegacyService({ config })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
@@ -397,7 +401,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       } as unknown as ErrorHandler;
 
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createOrderbookImbalanceService({ config, logger, errorHandler: failingErrorHandler });
+      const service = createStandardOrderbookImbalanceService({ config, logger, errorHandler: failingErrorHandler });
 
       const orderbook = createOrderbookImbalanceScenario({
         bidQuantities: [NaN],
@@ -412,13 +416,13 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const config1: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
         levels: 1,
       });
-      expect(() => createOrderbookImbalanceService({ config: config1, logger, errorHandler })).not.toThrow();
+      expect(() => createStandardOrderbookImbalanceService({ config: config1, logger, errorHandler })).not.toThrow();
 
       // Test large levels value
       const config2: OrderbookImbalanceConfig = createOrderbookImbalanceConfig({
         levels: 1000,
       });
-      expect(() => createOrderbookImbalanceService({ config: config2, logger, errorHandler })).not.toThrow();
+      expect(() => createStandardOrderbookImbalanceService({ config: config2, logger, errorHandler })).not.toThrow();
     });
   });
 });

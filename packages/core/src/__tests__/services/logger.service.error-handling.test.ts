@@ -15,17 +15,18 @@
  */
 
 import { LoggerService } from '../../services/logger.service';
-import { ErrorHandler, RecoveryStrategy, ErrorLogger } from '../../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LogLevel } from '../../types/legacy';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import * as fs from 'fs/promises';
-import { mkdirSync, existsSync, rmSync } from 'fs';
+import { mkdirSync, rmSync } from 'fs';
 import {
   cleanupLoggerTestDir,
   createLoggerErrorHandler,
+  createLegacyLoggerFactory,
+  createLegacyLoggerService,
+  createStandardLoggerFactory,
+  createStandardLoggerService,
   createLoggerTestDir,
-  createTestLoggerService,
   ensureLoggerTestDir,
 } from '../helpers/logger-test.utils';
 
@@ -35,11 +36,15 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
   let testLogDir: string;
   let errorHandler: ErrorHandler;
+  let createLogger: ReturnType<typeof createStandardLoggerFactory>;
+  let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
 
   beforeEach(() => {
     // Create unique temp directory for tests
     testLogDir = createLoggerTestDir();
     errorHandler = createLoggerErrorHandler();
+    createLogger = createStandardLoggerFactory({ errorHandler });
+    createLegacyLogger = createLegacyLoggerFactory();
   });
 
   afterEach(async () => {
@@ -73,21 +78,21 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     });
 
     it('should succeed with valid logLevel and logDir', () => {
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
       expect(logger).toBeInstanceOf(LoggerService);
     });
 
     it('should accept uppercase string log levels for config compatibility', () => {
-      const logger = createTestLoggerService({ minLevel: 'DEBUG', logDir: testLogDir, logToFile: false });
+      const logger = createLogger({ minLevel: 'DEBUG', logDir: testLogDir, logToFile: false });
       expect(logger).toBeInstanceOf(LoggerService);
 
-      const logger2 = createTestLoggerService({ minLevel: 'INFO', logDir: testLogDir, logToFile: false });
+      const logger2 = createLogger({ minLevel: 'INFO', logDir: testLogDir, logToFile: false });
       expect(logger2).toBeInstanceOf(LoggerService);
 
-      const logger3 = createTestLoggerService({ minLevel: 'WARN', logDir: testLogDir, logToFile: false });
+      const logger3 = createLogger({ minLevel: 'WARN', logDir: testLogDir, logToFile: false });
       expect(logger3).toBeInstanceOf(LoggerService);
 
-      const logger4 = createTestLoggerService({ minLevel: 'ERROR', logDir: testLogDir, logToFile: false });
+      const logger4 = createLogger({ minLevel: 'ERROR', logDir: testLogDir, logToFile: false });
       expect(logger4).toBeInstanceOf(LoggerService);
     });
 
@@ -119,7 +124,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       const readOnlyDir = '/proc/test-readonly';
 
       // This should not throw, logger should still work with console only
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
       expect(() => {
         logger.info('Test message');
       }).not.toThrow();
@@ -128,7 +133,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     it('should continue logging when permissions deny directory creation', () => {
       // Create a logger with a valid directory first
       ensureLoggerTestDir(testLogDir);
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Logger should still be functional
       expect(() => {
@@ -144,7 +149,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   describe('GRACEFUL_DEGRADE: File Operation Failures', () => {
     it('should degrade gracefully on file write failures', async () => {
       ensureLoggerTestDir(testLogDir);
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Simulate write failure by making directory read-only (Unix only)
       if (process.platform !== 'win32') {
@@ -168,10 +173,10 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should degrade gracefully on log cleanup failures', async () => {
       ensureLoggerTestDir(testLogDir);
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Create a mock file that will fail on deletion
-      const testFile = join(testLogDir, '2000-01-01.log');
+      const testFile = logger.getLogFilePath()!.replace(/trading-bot-\d{4}-\d{2}-\d{2}\.log$/, '2000-01-01.log');
       mkdirSync(testFile, { recursive: true });
 
       // Cleanup attempt should not throw
@@ -189,7 +194,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should continue batch processing on individual file write failures', async () => {
       ensureLoggerTestDir(testLogDir);
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Log multiple messages - queue should process batch even with individual failures
       logger.info('Message 1');
@@ -206,7 +211,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should handle queue overflow gracefully', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Generate large number of logs to stress queue
       for (let i = 0; i < 100; i++) {
@@ -225,7 +230,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   // ========== SKIP: CONSOLE OUTPUT FAILURES ==========
   describe('SKIP: Console Output Failures', () => {
     it('should skip console.log failures without propagating', () => {
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
 
       // Mock console methods to throw
       const originalLog = console.log;
@@ -243,7 +248,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     });
 
     it('should skip console.error failures for internal logger errors', () => {
-      const logger = createTestLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
 
       const originalError = console.error;
       console.error = jest.fn(() => {
@@ -258,7 +263,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     });
 
     it('should skip console formatting errors', () => {
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, false);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
 
       // Even with complex context that might cause formatting issues
       expect(() => {
@@ -277,7 +282,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     it('should maintain logging functionality when file system is degraded', async () => {
       // Create logger with valid initial directory (DEBUG level to capture all)
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.DEBUG, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.DEBUG, logDir: testLogDir, logToFile: true });
 
       // Log multiple levels
       logger.debug('Debug message');
@@ -296,7 +301,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should filter logs by level correctly during recovery', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.WARN, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.WARN, logDir: testLogDir, logToFile: true });
 
       // DEBUG and INFO should be filtered out
       logger.debug('Debug (filtered)');
@@ -315,7 +320,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should handle context logging during errors', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       const context = {
         tradeId: '12345',
@@ -332,7 +337,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should allow console output control', () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Should not throw
       expect(() => {
@@ -356,13 +361,13 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     });
 
     it('should still work with valid parameters without ErrorHandler', () => {
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, false);
+      const logger = createLegacyLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
       expect(logger).toBeInstanceOf(LoggerService);
     });
 
     it('should still perform file operations without ErrorHandler', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLegacyLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       logger.info('Test message');
 
@@ -372,7 +377,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should still filter by log level without ErrorHandler', () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.WARN, testLogDir, true);
+      const logger = createLegacyLogger({ minLevel: LogLevel.WARN, logDir: testLogDir, logToFile: true });
 
       logger.debug('Debug');
       logger.info('Info');
@@ -389,7 +394,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   describe('Edge Cases: Queue Management & Batch Processing', () => {
     it('should handle concurrent queue operations', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       // Simulate concurrent logging from multiple sources
       const promises = [];
@@ -411,7 +416,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should handle very long log messages', () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       const longMessage = 'x'.repeat(10000);
 
@@ -425,7 +430,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should handle special characters in context', () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       const context = {
         unicode: '🚀 🎉 中文 العربية',
@@ -443,7 +448,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should handle getLogFilePath correctly', () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true);
+      const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       const filePath = logger.getLogFilePath();
       expect(filePath).toBeTruthy();
@@ -451,7 +456,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     });
 
     it('should return null log file path when logToFile=false', () => {
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, false);
+      const logger = createLegacyLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
 
       const filePath = logger.getLogFilePath();
       expect(filePath).toBeNull();
@@ -463,7 +468,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     it('should use ErrorHandler for graceful degradation during constructor', async () => {
       const result = await errorHandler.executeAsync(
         async () => {
-          return new LoggerService(LogLevel.INFO, testLogDir, false);
+          return createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
         },
         { strategy: RecoveryStrategy.GRACEFUL_DEGRADE }
       );
@@ -473,8 +478,8 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should provide fallback when primary logger fails', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const primaryLogger = new LoggerService(LogLevel.INFO, testLogDir, true);
-      const fallbackLogger = new LoggerService(LogLevel.DEBUG, testLogDir, false);
+      const primaryLogger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
+      const fallbackLogger = createLegacyLogger({ minLevel: LogLevel.DEBUG, logDir: testLogDir, logToFile: false });
 
       expect(primaryLogger).toBeInstanceOf(LoggerService);
       expect(fallbackLogger).toBeInstanceOf(LoggerService);
@@ -482,7 +487,12 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should track ErrorHandler integration during logging', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = new LoggerService(LogLevel.INFO, testLogDir, true, errorHandler);
+      const logger = createStandardLoggerService({
+        minLevel: LogLevel.INFO,
+        logDir: testLogDir,
+        logToFile: true,
+        errorHandler,
+      });
 
       await errorHandler.executeAsync(
         async () => {
