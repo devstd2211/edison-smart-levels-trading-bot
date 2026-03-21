@@ -115,6 +115,19 @@ export function createWebSocketManagerHarness(options: {
   };
 }
 
+export function createTestnetWebSocketManagerHarness(options: {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+} = {}): WebSocketManagerHarness {
+  return createWebSocketManagerHarness({
+    ...options,
+    configOverrides: {
+      testnet: true,
+      ...options.configOverrides,
+    },
+  });
+}
+
 export function getWebSocketManagerInternals(
   manager: WebSocketManagerService,
 ): WebSocketManagerInternalState {
@@ -131,6 +144,44 @@ export function getWebSocketManagerDuplicateEventChecker(
       eventId,
       timestamp,
     );
+}
+
+export function getWebSocketManagerErrorHandler(
+  manager: WebSocketManagerService,
+): ErrorHandler {
+  return getWebSocketManagerInternals(manager).errorHandler;
+}
+
+export function getWebSocketManagerReconnectAttempts(
+  manager: WebSocketManagerService,
+): number {
+  return getWebSocketManagerInternals(manager).reconnectAttempts;
+}
+
+export function setWebSocketManagerReconnectAttempts(
+  manager: WebSocketManagerService,
+  attempts: number,
+): void {
+  getWebSocketManagerInternals(manager).reconnectAttempts = attempts;
+}
+
+export function getWebSocketManagerIsConnecting(
+  manager: WebSocketManagerService,
+): boolean {
+  return getWebSocketManagerInternals(manager).isConnecting;
+}
+
+export function getWebSocketManagerShouldReconnect(
+  manager: WebSocketManagerService,
+): boolean {
+  return getWebSocketManagerInternals(manager).shouldReconnect;
+}
+
+export function setWebSocketManagerShouldReconnect(
+  manager: WebSocketManagerService,
+  shouldReconnect: boolean,
+): void {
+  getWebSocketManagerInternals(manager).shouldReconnect = shouldReconnect;
 }
 
 export function createWebSocketManagerBackoffDelays(options: {

@@ -8,7 +8,10 @@
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
-import { createBotFactoryTestConfig } from '../helpers/bot-factory-test.utils';
+import {
+  createBotFactoryTestConfig,
+  createTrackedBotFactoryServices,
+} from '../helpers/bot-factory-test.utils';
 import {
   createTrackedLifecycleHarness,
   createTrackedServices,
@@ -135,7 +138,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T10: createServices with empty options creates normal services', () => {
-      const services = createTrackedLifecycleHarness(trackedServices, { config }).services;
+      const services = createTrackedBotFactoryServices(trackedServices, config);
 
       expect(services).toBeDefined();
       expect(services.logger).toBeDefined();

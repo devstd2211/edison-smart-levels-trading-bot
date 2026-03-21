@@ -1,5 +1,8 @@
 import type { Config } from '../../types/legacy';
+import { BotFactory } from '../../services/bot-factory.service';
 import { createMinimalLifecycleConfig } from './service-lifecycle-test.utils';
+import type { TrackedServiceState } from './service-lifecycle-test.utils';
+import { trackCreatedServices } from './service-lifecycle-test.utils';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -19,6 +22,25 @@ export function createBotFactoryTestConfig(): Config {
   const config = createMinimalLifecycleConfig();
   config.dataSubscriptions = { candles: { enabled: true } } as Config['dataSubscriptions'];
   return config;
+}
+
+export function createTrackedBotFactoryServices(
+  trackedServices: TrackedServiceState[],
+  config: Config,
+) {
+  return trackCreatedServices(trackedServices, config, BotFactory.createForTesting(config));
+}
+
+export function createTrackedSafeBotFactoryServices(
+  trackedServices: TrackedServiceState[],
+  config: Config,
+) {
+  const result = BotFactory.createSafe(config);
+  if (!result.success) {
+    throw result.error;
+  }
+
+  return trackCreatedServices(trackedServices, config, result.services);
 }
 
 export function deleteBotFactoryConfigPath(config: Config, dottedPath: string): void {

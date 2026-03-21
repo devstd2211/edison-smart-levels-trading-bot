@@ -1,4 +1,6 @@
 import { BotInitializer } from '../../services/bot-initializer';
+import { TradingBot } from '../../bot';
+import { createTradingBotServiceBundle } from '../../services/bot-services-adapter';
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type { IBotInitializerServices, IBotServicesAdapterSource } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
@@ -132,5 +134,89 @@ export function createTrackedLifecycleHarness(
     exchange,
     telegram,
     services,
+  };
+}
+
+export function createTrackedTradingBotHarness(
+  trackedServices: TrackedServiceState[],
+  overrides: Parameters<typeof createTrackedLifecycleHarness>[1] = {},
+): {
+  bot: TradingBot;
+  config: Config;
+  exchange: IExchange;
+  telegram: NonNullable<BotFactoryOptions['telegram']>;
+  services: IBotServicesAdapterSource;
+} {
+  const harness = createTrackedLifecycleHarness(trackedServices, overrides);
+
+  return {
+    bot: new TradingBot(createTradingBotServiceBundle(harness.services), harness.config),
+    config: harness.config,
+    exchange: harness.exchange,
+    telegram: harness.telegram,
+    services: harness.services,
+  };
+}
+
+export function createTrackedInitializerHarness(
+  trackedServices: TrackedServiceState[],
+  overrides: Parameters<typeof createTrackedLifecycleHarness>[1] = {},
+): {
+  initializer: BotInitializer;
+  config: Config;
+  exchange: IExchange;
+  telegram: NonNullable<BotFactoryOptions['telegram']>;
+  services: IBotServicesAdapterSource;
+} {
+  const harness = createTrackedLifecycleHarness(trackedServices, overrides);
+
+  return {
+    initializer: new BotInitializer(
+      harness.services as unknown as IBotInitializerServices,
+      harness.config,
+    ),
+    config: harness.config,
+    exchange: harness.exchange,
+    telegram: harness.telegram,
+    services: harness.services,
+  };
+}
+
+export function spyOnTrackedServiceLifecycle(services: IBotServicesAdapterSource): {
+  bybitInitSpy: jest.SpyInstance;
+  bybitOpenPositionsSpy: jest.SpyInstance;
+  syncSpy: jest.SpyInstance;
+  sessionStartSpy: jest.SpyInstance;
+  sessionEndSpy: jest.SpyInstance;
+  wsStartSpy: jest.SpyInstance;
+  wsStopSpy: jest.SpyInstance;
+  publicStartSpy: jest.SpyInstance;
+  publicStopSpy: jest.SpyInstance;
+  monitorStartSpy: jest.SpyInstance;
+  monitorStopSpy: jest.SpyInstance;
+} {
+  const bybit = services.marketDataServices.bybitService;
+  const wsManager = services.marketDataServices.webSocketManager;
+  const publicWs = services.marketDataServices.publicWebSocket;
+  const positionMonitor = services.executionServices.positionMonitor;
+
+  return {
+    bybitInitSpy: jest.spyOn(bybit, 'initialize'),
+    bybitOpenPositionsSpy: jest.spyOn(bybit, 'getOpenPositions'),
+    syncSpy: jest
+      .spyOn(services.coreServices.timeService, 'syncWithExchange')
+      .mockResolvedValue(undefined),
+    sessionStartSpy: jest
+      .spyOn(services.sessionStats, 'startSession')
+      .mockReturnValue('session-test'),
+    sessionEndSpy: jest
+      .spyOn(services.sessionStats, 'endSession')
+      .mockImplementation(() => undefined),
+    wsStartSpy: jest.spyOn(wsManager, 'start').mockResolvedValue(undefined),
+    wsStopSpy: jest.spyOn(wsManager, 'stop').mockResolvedValue(undefined),
+    publicStartSpy: jest.spyOn(publicWs, 'start').mockImplementation(() => undefined),
+    publicStopSpy: jest.spyOn(publicWs, 'stop').mockImplementation(() => undefined),
+    monitorStartSpy: jest.spyOn(positionMonitor, 'start').mockImplementation(() => undefined),
+    monitorStopSpy: jest.spyOn(positionMonitor, 'stop').mockImplementation(() => undefined),
   };
 }

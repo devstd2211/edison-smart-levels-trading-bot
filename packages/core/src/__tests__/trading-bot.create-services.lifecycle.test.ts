@@ -1,7 +1,5 @@
-import { TradingBot } from '../bot';
-import { createTradingBotServiceBundle } from '../services/bot-services-adapter';
 import {
-  createTrackedLifecycleHarness,
+  createTrackedTradingBotHarness,
   shutdownTrackedServices,
   type TrackedServiceState,
 } from './helpers/service-lifecycle-test.utils';
@@ -18,9 +16,9 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
   });
 
   test('services are idle before start and explicitly stopped via bot.stop()', async () => {
-    const harness = createTrackedLifecycleHarness(trackedServices);
+    const harness = createTrackedTradingBotHarness(trackedServices);
     const serviceState = harness.services;
-    const bot = new TradingBot(createTradingBotServiceBundle(serviceState), harness.config);
+    const bot = harness.bot;
 
     const wsManager = serviceState.marketDataServices.webSocketManager;
     const publicWs = serviceState.marketDataServices.publicWebSocket;

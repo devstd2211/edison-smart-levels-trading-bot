@@ -20,10 +20,11 @@ import { IExchange } from '../../interfaces/IExchange';
 import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/legacy';
 import * as fs from 'fs';
 import {
+  createGracefulShutdownSavedState,
   createGracefulShutdownHarness,
-  createGracefulShutdownManager,
   createMockShutdownPosition,
   defaultGracefulShutdownConfig,
+  getGracefulShutdownInternals,
   setupGracefulShutdownFsMocks,
 } from '../helpers/graceful-shutdown-test.utils';
 
@@ -72,7 +73,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       mockExchange.cancelAllOrders.mockResolvedValueOnce(undefined);
       mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
-      await shutdownManager['cancelAllPendingOrders']();
+      await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).toHaveBeenCalledWith('BTCUSDT');
       expect(mockExchange.cancelAllConditionalOrders).toHaveBeenCalled();
@@ -96,7 +97,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       });
       mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
-      const result = await shutdownManager['cancelAllPendingOrders']();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       // The retry behavior depends on whether the error is classified as retryable.
       // At minimum, conditional orders should succeed (result >= 1)
@@ -114,7 +115,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('Network error'));
       mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
-      const result = await shutdownManager['cancelAllPendingOrders']();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       // Result should still be 1 (conditional orders succeeded)
       expect(result).toBe(1);
@@ -137,7 +138,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       });
       mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
-      await shutdownManager['cancelAllPendingOrders']();
+      await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       // Verify the operation was attempted and at least one call succeeded
       expect(mockExchange.cancelAllOrders).toHaveBeenCalled();
@@ -152,7 +153,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('Persistent API error'));
       mockExchange.cancelAllConditionalOrders.mockResolvedValueOnce(undefined);
 
-      const result = await shutdownManager['cancelAllPendingOrders']();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       // Should continue shutdown without throwing
       expect(result).toBe(1); // Only conditional orders counted as success
@@ -168,7 +169,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let errorThrown = false;
       try {
-        await shutdownManager['cancelAllPendingOrders']();
+        await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
       } catch (error) {
         errorThrown = true;
       }
@@ -321,20 +322,24 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   describe('[FALLBACK Strategy] recoverState() (3 tests)', () => {
     it('test-4.1: Should recover state successfully from valid file', async () => {
       (fs.existsSync as jest.Mock).mockReturnValueOnce(true);
-      const validState = JSON.stringify({
-        snapshotTime: Date.now(),
-        positions: [
-          {
-            positionId: 'pos-123',
-            symbol: 'BTCUSDT',
-            direction: 'LONG',
-            quantity: 0.1,
-            entryPrice: 45000,
-          },
-        ],
-        sessionMetrics: { totalTrades: 5, totalPnL: 1000, startTime: Date.now() },
-        riskMetrics: { dailyPnL: 1000, consecutiveLosses: 0, totalExposure: 4500 },
-      });
+      const validState = JSON.stringify(
+        createGracefulShutdownSavedState({
+          positions: [
+            {
+              positionId: 'pos-123',
+              symbol: 'BTCUSDT',
+              direction: 'LONG',
+              quantity: 0.1,
+              entryPrice: 45000,
+              entryTime: Date.now(),
+              state: 'OPEN',
+              persistedAt: Date.now(),
+            },
+          ],
+          sessionMetrics: { totalTrades: 5, totalPnL: 1000, startTime: Date.now() },
+          riskMetrics: { dailyPnL: 1000, consecutiveLosses: 0, totalExposure: 4500 },
+        }),
+      );
       (fs.readFileSync as jest.Mock).mockReturnValueOnce(validState);
 
       const result = await shutdownManager.recoverState();
@@ -390,7 +395,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let errorThrown = false;
       try {
-        await shutdownManager['cancelAllPendingOrders']();
+        await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
       } catch (error) {
         errorThrown = true;
       }
@@ -421,7 +426,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       let recoverFailed = false;
 
       try {
-        await shutdownManager['cancelAllPendingOrders']();
+        await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
       } catch (e) {
         cancelFailed = true;
       }
@@ -458,7 +463,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       // Run shutdown sequence
       try {
-        await shutdownManager['cancelAllPendingOrders']();
+        await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
         await shutdownManager.persistState();
       } catch (error) {
         // Expected to not throw
@@ -498,7 +503,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       });
       mockExchange.cancelAllConditionalOrders.mockResolvedValue(undefined);
 
-      const result1 = await shutdownManager['cancelAllPendingOrders']();
+      const result1 = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
       const countAfterFirst = callCount;
 
       jest.clearAllMocks();
@@ -508,7 +513,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       });
       mockExchange.cancelAllConditionalOrders.mockResolvedValue(undefined);
 
-      const result2 = await shutdownManager['cancelAllPendingOrders']();
+      const result2 = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
       const countAfterSecond = callCount;
 
       // Both calls should have same retry count and result

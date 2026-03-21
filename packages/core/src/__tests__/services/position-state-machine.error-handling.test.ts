@@ -18,11 +18,21 @@ import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
 import type { StateTransitionResult } from '../../types/position-state-machine';
 import {
-  createInitializedPositionStateMachineHarness,
+  applyPositionStateSequence,
+  closePositionState,
+  createPositionStateMachineHistoryEntry,
+  createInitializedPositionStateMachineService,
+  createPositionStateMachinePersistedState,
   createPositionStateMachineHarness,
   createMockPositionStateMachineLogger,
   ensureParentDir,
+  getPositionStateSnapshot,
+  getStateMachineStateFilePath,
   removeStateMachineArtifacts,
+  seedStateMachineHistoryFile,
+  seedStateMachineStatesFile,
+  transitionPositionState,
+  transitionPositionStateSequence,
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 
@@ -73,7 +83,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should create backup file after successful state load', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       // Transition state to ensure persistence
       service.transitionState({
@@ -117,7 +127,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should RETRY on state persistence disk full error', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       let retryCount = 0;
       jest.spyOn(fsPromises, 'appendFile').mockImplementation(async (...args) => {
@@ -155,23 +165,13 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('State Persistence & Recovery', () => {
     it('should create backup file after successful state load', async () => {
-      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
-      await ensureParentDir(stateFilePath);
-      await fsPromises.writeFile(
-        stateFilePath,
-        JSON.stringify({
-          symbol: 'BTCUSDT',
-          positionId: 'pos-seeded-backup',
-          currentState: PositionState.OPEN,
-          createdAt: Date.now(),
-          stateChangedAt: Date.now(),
-        }),
-      );
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      await seedStateMachineStatesFile(testDataDir, [
+        createPositionStateMachinePersistedState({ positionId: 'pos-seeded-backup' }),
+      ]);
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       // Transition state
-      service.transitionState({
-        symbol: 'BTCUSDT',
+      transitionPositionState(service, {
         positionId: 'pos-backup-test',
         targetState: PositionState.TP1_HIT,
         reason: 'Test backup creation',
@@ -181,32 +181,25 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       await waitForStateMachinePersistence();
 
       // Backup should exist
-      const backupPath = path.join(testDataDir, 'position-states.jsonl.backup');
+      const backupPath = `${getStateMachineStateFilePath(testDataDir)}.backup`;
       expect(fs.existsSync(backupPath)).toBe(true);
     });
 
     it('should handle mixed valid and invalid state lines gracefully', async () => {
       ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
-      // Create state file with mixed valid/invalid lines
-      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
-      await ensureParentDir(stateFilePath);
-
-      const validState = {
-        symbol: 'BTCUSDT',
-        positionId: 'pos-valid',
-        currentState: PositionState.OPEN,
-        createdAt: Date.now(),
-        stateChangedAt: Date.now(),
-      };
-
-      const mixedContent = [
-        JSON.stringify(validState),
-        'INVALID LINE',
-        JSON.stringify({ ...validState, positionId: 'pos-valid-2' }),
-      ].join('\n');
-
-      await fsPromises.writeFile(stateFilePath, mixedContent);
+      const validState = createPositionStateMachinePersistedState({ positionId: 'pos-valid' });
+      const stateFilePath = await seedStateMachineStatesFile(testDataDir, [
+        validState,
+        createPositionStateMachinePersistedState({ positionId: 'pos-valid-2' }),
+      ]);
+      await fsPromises.writeFile(
+        stateFilePath,
+        [JSON.stringify(validState), 'INVALID LINE', JSON.stringify({
+          ...validState,
+          positionId: 'pos-valid-2',
+        })].join('\n'),
+      );
 
       await service.initialize();
 
@@ -220,22 +213,10 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     it('should log statistics about loaded states', async () => {
       ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
-      // Create state file with multiple states
-      const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
-      if (!fs.existsSync(path.dirname(stateFilePath))) {
-        await fsPromises.mkdir(path.dirname(stateFilePath), { recursive: true });
-      }
-
-      const states = Array.from({ length: 5 }, (_, i) => ({
-        symbol: 'BTCUSDT',
-        positionId: `pos-${i}`,
-        currentState: PositionState.OPEN,
-        createdAt: Date.now(),
-        stateChangedAt: Date.now(),
-      }));
-
-      const content = states.map(s => JSON.stringify(s)).join('\n');
-      await fsPromises.writeFile(stateFilePath, content);
+      const states = Array.from({ length: 5 }, (_, i) =>
+        createPositionStateMachinePersistedState({ positionId: `pos-${i}` }),
+      );
+      await seedStateMachineStatesFile(testDataDir, states);
 
       await service.initialize();
 
@@ -255,31 +236,19 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     it('should skip corrupted history entries and continue loading', async () => {
       ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
-      // Create history file with mixed valid/invalid entries
-      const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
-      await ensureParentDir(historyFilePath);
-
-      const validEntry = {
+      const validEntry = createPositionStateMachineHistoryEntry({
         request: {
           symbol: 'BTCUSDT',
           positionId: 'pos-history',
           targetState: PositionState.TP1_HIT,
           reason: 'Test',
         },
-        result: {
-          allowed: true,
-          currentState: PositionState.TP1_HIT,
-        },
-        timestamp: Date.now(),
-      };
-
-      const mixedContent = [
-        JSON.stringify(validEntry),
+      });
+      await seedStateMachineHistoryFile(testDataDir, [
+        validEntry,
         'CORRUPTED HISTORY LINE',
-        JSON.stringify(validEntry),
-      ].join('\n');
-
-      await fsPromises.writeFile(historyFilePath, mixedContent);
+        validEntry,
+      ]);
 
       await service.initialize();
 
@@ -292,26 +261,18 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     it('should limit history entries per position for memory efficiency', async () => {
       ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
 
-      // Create history file with many entries for one position
-      const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
-      await ensureParentDir(historyFilePath);
-
-      const entries = Array.from({ length: 1500 }, (_, i) => ({
-        request: {
-          symbol: 'BTCUSDT',
-          positionId: 'pos-many-transitions',
-          targetState: PositionState.TP1_HIT,
-          reason: `Transition ${i}`,
-        },
-        result: {
-          allowed: true,
-          currentState: PositionState.TP1_HIT,
-        },
-        timestamp: Date.now() + i,
-      }));
-
-      const content = entries.map(e => JSON.stringify(e)).join('\n');
-      await fsPromises.writeFile(historyFilePath, content);
+      const entries = Array.from({ length: 1500 }, (_, i) =>
+        createPositionStateMachineHistoryEntry({
+          request: {
+            symbol: 'BTCUSDT',
+            positionId: 'pos-many-transitions',
+            targetState: PositionState.TP1_HIT,
+            reason: `Transition ${i}`,
+          },
+          timestamp: Date.now() + i,
+        }),
+      );
+      await seedStateMachineHistoryFile(testDataDir, entries);
 
       await service.initialize();
 
@@ -328,7 +289,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transactional Integrity', () => {
     it('should maintain consistency between cache and disk during transitions', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       const posId = `pos-tx-test-${Date.now()}`;
       const result = service.transitionState({
@@ -353,7 +314,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle exit mode updates with persistence', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       // Create position
       service.transitionState({
@@ -373,12 +334,12 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       });
 
       // Verify update
-      const fullState = service.getFullState('BTCUSDT', 'pos-exit-mode');
+      const fullState = getPositionStateSnapshot(service, 'pos-exit-mode');
       expect(fullState?.preBEMode).toBeDefined();
     });
 
     it('should validate state transitions before persistence', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       const posId = `pos-invalid-tx-${Date.now()}`;
 
@@ -401,42 +362,22 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('E2E Lifecycle Scenarios', () => {
     it('should maintain full position lifecycle with error recovery', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       const posId = 'pos-e2e-full';
 
-      // OPEN (implicit initial state)
-      const result1 = service.transitionState({
-        symbol: 'BTCUSDT',
+      const [result1, result2, result3] = transitionPositionStateSequence(service, {
         positionId: posId,
-        targetState: PositionState.TP1_HIT,
-        reason: 'TP1 hit',
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT, PositionState.TP3_HIT],
+        reasonPrefix: 'TP hit',
       });
       expect(result1.allowed).toBe(true);
-
-      // TP1_HIT -> TP2_HIT
-      const result2 = service.transitionState({
-        symbol: 'BTCUSDT',
-        positionId: posId,
-        targetState: PositionState.TP2_HIT,
-        reason: 'TP2 hit',
-      });
       expect(result2.allowed).toBe(true);
-
-      // TP2_HIT -> TP3_HIT
-      const result3 = service.transitionState({
-        symbol: 'BTCUSDT',
-        positionId: posId,
-        targetState: PositionState.TP3_HIT,
-        reason: 'TP3 hit',
-      });
       expect(result3.allowed).toBe(true);
 
       // TP3_HIT -> CLOSED
-      const result4 = service.transitionState({
-        symbol: 'BTCUSDT',
+      const result4 = closePositionState(service, {
         positionId: posId,
-        targetState: PositionState.CLOSED,
         reason: 'Final close',
         closureReason: 'TP3_HIT',
         closurePrice: 50000,
@@ -447,14 +388,14 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       await waitForStateMachinePersistence();
 
       // Verify final state
-      const finalState = service.getFullState('BTCUSDT', posId);
+      const finalState = getPositionStateSnapshot(service, posId);
       expect(finalState?.currentState).toBe(PositionState.CLOSED);
       expect(finalState?.closedAt).toBeDefined();
       expect(finalState?.closurePnL).toBe(1000);
     });
 
     it('should handle multiple positions concurrently without interference', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       const timestamp = Date.now();
       // Create multiple positions with valid state transitions
@@ -467,28 +408,20 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       const results: StateTransitionResult[] = [];
       positions.forEach((pos, index) => {
         if (index % 2 === 0) {
-          // Even: OPEN -> TP1_HIT
-          results.push(service.transitionState({
+          results.push(transitionPositionState(service, {
             symbol: pos.symbol,
             positionId: pos.positionId,
             targetState: PositionState.TP1_HIT,
             reason: 'Concurrent test',
           }));
         } else {
-          // Odd: OPEN -> TP1_HIT
-          service.transitionState({
+          const sequenceResults = transitionPositionStateSequence(service, {
             symbol: pos.symbol,
             positionId: pos.positionId,
-            targetState: PositionState.TP1_HIT,
-            reason: 'First transition',
+            states: [PositionState.TP1_HIT, PositionState.TP2_HIT],
+            reasonPrefix: 'Concurrent test',
           });
-          // Then TP1_HIT -> TP2_HIT
-          results.push(service.transitionState({
-            symbol: pos.symbol,
-            positionId: pos.positionId,
-            targetState: PositionState.TP2_HIT,
-            reason: 'Concurrent test',
-          }));
+          results.push(sequenceResults[1]);
         }
       });
 
@@ -509,56 +442,28 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should provide accurate statistics after state transitions', async () => {
-      ({ service } = await createInitializedPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
 
       const timestamp = Date.now();
-      // Create positions in different states
-      // Position 1: OPEN -> TP1_HIT
-      service.transitionState({
-        symbol: 'BTCUSDT',
+      applyPositionStateSequence(service, {
         positionId: `pos-stat-${timestamp}-1`,
-        targetState: PositionState.TP1_HIT,
-        reason: 'Test',
+        states: [PositionState.TP1_HIT],
+        reasonPrefix: 'Test',
       });
-
-      // Position 2: OPEN -> TP1_HIT -> TP2_HIT
-      service.transitionState({
-        symbol: 'BTCUSDT',
+      applyPositionStateSequence(service, {
         positionId: `pos-stat-${timestamp}-2`,
-        targetState: PositionState.TP1_HIT,
-        reason: 'First transition',
+        states: [PositionState.TP1_HIT, PositionState.TP2_HIT],
+        reasonPrefix: 'Test',
       });
-      service.transitionState({
-        symbol: 'BTCUSDT',
-        positionId: `pos-stat-${timestamp}-2`,
-        targetState: PositionState.TP2_HIT,
-        reason: 'Test',
-      });
-
-      // Position 3: OPEN -> TP1_HIT -> TP2_HIT -> TP3_HIT -> CLOSED
-      service.transitionState({
-        symbol: 'BTCUSDT',
+      applyPositionStateSequence(service, {
         positionId: `pos-stat-${timestamp}-3`,
-        targetState: PositionState.TP1_HIT,
-        reason: 'First',
-      });
-      service.transitionState({
-        symbol: 'BTCUSDT',
-        positionId: `pos-stat-${timestamp}-3`,
-        targetState: PositionState.TP2_HIT,
-        reason: 'Second',
-      });
-      service.transitionState({
-        symbol: 'BTCUSDT',
-        positionId: `pos-stat-${timestamp}-3`,
-        targetState: PositionState.TP3_HIT,
-        reason: 'Third',
-      });
-      service.transitionState({
-        symbol: 'BTCUSDT',
-        positionId: `pos-stat-${timestamp}-3`,
-        targetState: PositionState.CLOSED,
-        reason: 'Close',
+        states: [
+          PositionState.TP1_HIT,
+          PositionState.TP2_HIT,
+          PositionState.TP3_HIT,
+          PositionState.CLOSED,
+        ],
+        reasonPrefix: 'Test',
       });
 
       const stats = service.getStatistics();
@@ -578,11 +483,11 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (optional DI)', async () => {
       // Create service without ErrorHandler
-      ({ service } = await createInitializedPositionStateMachineHarness({
+      service = await createInitializedPositionStateMachineService({
         logger,
         withErrorHandler: false,
         baseDir: testDataDir,
-      }));
+      });
 
       const result = service.transitionState({
         symbol: 'BTCUSDT',

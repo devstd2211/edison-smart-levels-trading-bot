@@ -5,6 +5,12 @@ import { PositionLifecycleService } from '../../services/position-lifecycle.serv
 import { PositionSyncService } from '../../services/position-sync.service';
 import { TelegramService } from '../../services/telegram.service';
 import {
+  ExchangeAPIError,
+  ExchangeConnectionError,
+  ExchangeRateLimitError,
+  TelegramNetworkError,
+} from '../../errors/DomainErrors';
+import {
   BybitOrder,
   ExitType,
   LogLevel,
@@ -141,6 +147,50 @@ export function createPositionSyncOldPosition(
   return createPositionSyncPosition(side, Date.now() - 3 * 60 * 1000, overrides);
 }
 
+export function createPositionSyncAgedPosition(
+  ageMs: number,
+  side: PositionSide = PositionSide.LONG,
+  overrides: Partial<Position> = {},
+): Position {
+  return createPositionSyncPosition(side, Date.now() - ageMs, overrides);
+}
+
+export function createPositionSyncExchangeConnectionError(
+  message = 'Network timeout',
+  overrides: { exchangeName?: string; endpoint?: string } = {},
+) {
+  return new ExchangeConnectionError(message, {
+    exchangeName: overrides.exchangeName ?? 'Bybit',
+    ...(overrides.endpoint !== undefined ? { endpoint: overrides.endpoint } : {}),
+  });
+}
+
+export function createPositionSyncExchangeRateLimitError(
+  message = 'Rate limit',
+  retryAfterMs = 100,
+) {
+  return new ExchangeRateLimitError(message, { retryAfterMs });
+}
+
+export function createPositionSyncExchangeApiError(
+  message = 'API error',
+  overrides: { statusCode?: number } = {},
+) {
+  return new ExchangeAPIError(message, {
+    ...(overrides.statusCode !== undefined ? { statusCode: overrides.statusCode } : {}),
+  });
+}
+
+export function createPositionSyncTelegramNetworkError(
+  message = 'Telegram API timeout',
+  overrides: { operation?: string; reason?: string } = {},
+) {
+  return new TelegramNetworkError(message, {
+    operation: overrides.operation ?? 'sendAlert',
+    reason: overrides.reason ?? 'Network timeout',
+  });
+}
+
 export function createPositionSyncProtectedOrders(
   options: {
     stopLossSide?: string;
@@ -199,6 +249,73 @@ export function prepareDeepSyncProtectionScenario(
     exchangePosition,
     activeOrders,
   };
+}
+
+export function preparePositionSyncRetrySequence<T>(
+  mockFn: jest.Mock,
+  failures: Error[],
+  successValue?: T,
+): void {
+  failures.forEach((error) => {
+    mockFn.mockRejectedValueOnce(error);
+  });
+
+  if (successValue !== undefined) {
+    mockFn.mockResolvedValueOnce(successValue);
+  }
+}
+
+export function preparePositionSyncEmergencyCloseScenario(
+  harness: Pick<PositionSyncHarness, 'mockBybit' | 'mockTelegram'>,
+  position: Position,
+  options: {
+    exchangePosition?: Position;
+    activeOrders?: BybitOrder[];
+    closeResult?: unknown;
+    telegramError?: Error;
+  } = {},
+): void {
+  const exchangePosition = options.exchangePosition ?? position;
+  preparePositionSyncRetrySequence(harness.mockBybit.getPosition, [], exchangePosition);
+  harness.mockBybit.getPosition.mockResolvedValueOnce(exchangePosition);
+  harness.mockBybit.getActiveOrders.mockResolvedValue(options.activeOrders ?? []);
+  harness.mockBybit.closePosition.mockResolvedValue(
+    options.closeResult ?? { orderId: 'close-order' },
+  );
+
+  if (options.telegramError) {
+    harness.mockTelegram.sendAlert.mockRejectedValue(options.telegramError);
+  } else {
+    harness.mockTelegram.sendAlert.mockResolvedValue(undefined);
+  }
+}
+
+export function preparePositionSyncMissingProtectionScenario(
+  harness: Pick<PositionSyncHarness, 'mockBybit' | 'mockTelegram'>,
+  position: Position,
+  options: {
+    exchangePosition?: Position;
+    closeResult?: unknown;
+    telegramError?: Error;
+  } = {},
+): void {
+  position.stopLoss.isTrailing = false;
+  preparePositionSyncEmergencyCloseScenario(harness, position, {
+    exchangePosition: options.exchangePosition,
+    activeOrders: [],
+    closeResult: options.closeResult,
+    telegramError: options.telegramError,
+  });
+}
+
+export function preparePositionSyncClosedDuringCheckScenario(
+  harness: Pick<PositionSyncHarness, 'mockBybit'>,
+  position: Position,
+): void {
+  position.stopLoss.isTrailing = false;
+  harness.mockBybit.getPosition.mockResolvedValueOnce(position);
+  harness.mockBybit.getActiveOrders.mockResolvedValue([]);
+  harness.mockBybit.getPosition.mockResolvedValueOnce(null);
 }
 
 export function createPositionSyncStopLossOrder(side: string = 'Sell') {

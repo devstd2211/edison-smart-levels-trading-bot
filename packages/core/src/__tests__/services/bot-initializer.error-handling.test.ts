@@ -26,8 +26,10 @@ import {
 import {
   createBotInitializerConfig,
   asBotInitializerMock,
+  createBotInitializerHarness,
   createBotInitializerMockLogger,
   createBotInitializerMockServices,
+  createBotInitializerWithoutHandler,
 } from '../helpers/bot-initializer-test.utils';
 
 // ============================================================================
@@ -66,17 +68,16 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let mockConfig: Config;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   const rebuildInitializer = (): void => {
-    initializer = new BotInitializer(
-      mockServices as unknown as IBotInitializerServices,
-      mockConfig,
-      mockErrorHandler,
-    );
+    initializer = createBotInitializerHarness({
+      services: mockServices as unknown as IBotInitializerServices,
+      config: mockConfig,
+      errorHandler: mockErrorHandler,
+    }).initializer;
   };
   const createInitializerWithoutHandler = (): BotInitializer => {
-    return new BotInitializer(
+    return createBotInitializerWithoutHandler(
       mockServices as unknown as IBotInitializerServices,
       mockConfig,
-      undefined,
     );
   };
   const cleanupMonitoringResources = async (): Promise<void> => {

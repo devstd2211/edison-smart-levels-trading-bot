@@ -16,6 +16,7 @@ import type { IBotInitializerServices } from '../interfaces';
 import {
   asBotInitializerMock,
   createBotInitializerConfig,
+  createBotInitializerHarness,
   createBotInitializerMockServices,
 } from './helpers/bot-initializer-test.utils';
 
@@ -25,7 +26,10 @@ describe('BotInitializer', () => {
   let mockConfig: Config;
 
   const rebuildInitializer = (): void => {
-    initializer = new BotInitializer(mockServices, mockConfig);
+    initializer = createBotInitializerHarness({
+      services: mockServices,
+      config: mockConfig,
+    }).initializer;
   };
 
   beforeEach(() => {

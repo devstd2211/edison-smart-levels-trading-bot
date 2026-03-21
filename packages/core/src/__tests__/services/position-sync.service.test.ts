@@ -12,11 +12,14 @@ import {
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createMockSyncedPositions,
+  createPositionSyncAgedPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
   createPositionSyncHarness,
+  preparePositionSyncClosedDuringCheckScenario,
   prepareClosedPositionSync,
   prepareDeepSyncProtectionScenario,
+  preparePositionSyncMissingProtectionScenario,
   createPositionSyncServiceWithHarness,
 } from '../helpers/position-sync-test.utils';
 
@@ -186,7 +189,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should skip check for positions < 2 minutes old', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 60000); // 1 minute ago
+      const position = createPositionSyncAgedPosition(60000); // 1 minute ago
 
       await service.deepSyncCheck(position);
 
@@ -194,7 +197,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should run check for positions >= 2 minutes old', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 121000); // 2+ minutes ago
+      const position = createPositionSyncAgedPosition(121000); // 2+ minutes ago
       mockBybit.getPosition.mockResolvedValue(position);
       mockBybit.getActiveOrders.mockResolvedValue([]);
 
@@ -204,7 +207,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should verify position exists on exchange', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
+      const position = createPositionSyncAgedPosition(150000);
       prepareDeepSyncProtectionScenario(
         { mockBybit },
         position,
@@ -220,7 +223,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should get active orders to check SL/TP', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
+      const position = createPositionSyncAgedPosition(150000);
       prepareDeepSyncProtectionScenario({ mockBybit }, position);
 
       await service.deepSyncCheck(position);
@@ -229,11 +232,10 @@ describe('PositionSyncService', () => {
     });
 
     it('should close position when Stop Loss missing', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      position.stopLoss.isTrailing = false; // Not trailing stop
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders.mockResolvedValue([]); // No orders = no SL
-      mockBybit.closePosition.mockResolvedValue(undefined);
+      const position = createPositionSyncAgedPosition(150000);
+      preparePositionSyncMissingProtectionScenario({ mockBybit, mockTelegram }, position, {
+        closeResult: undefined,
+      });
 
       await service.deepSyncCheck(position);
 
@@ -246,11 +248,10 @@ describe('PositionSyncService', () => {
     });
 
     it('should send alert when closing for missing SL', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      position.stopLoss.isTrailing = false;
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders.mockResolvedValue([]);
-      mockBybit.closePosition.mockResolvedValue(undefined);
+      const position = createPositionSyncAgedPosition(150000);
+      preparePositionSyncMissingProtectionScenario({ mockBybit, mockTelegram }, position, {
+        closeResult: undefined,
+      });
 
       await service.deepSyncCheck(position);
 
@@ -260,11 +261,8 @@ describe('PositionSyncService', () => {
     });
 
     it('should handle race condition when position closes during check', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      position.stopLoss.isTrailing = false;
-      mockBybit.getPosition.mockResolvedValueOnce(position); // First call succeeds
-      mockBybit.getActiveOrders.mockResolvedValue([]);
-      mockBybit.getPosition.mockResolvedValueOnce(null); // Second call fails (position closed)
+      const position = createPositionSyncAgedPosition(150000);
+      preparePositionSyncClosedDuringCheckScenario({ mockBybit }, position);
 
       await service.deepSyncCheck(position);
 
@@ -273,7 +271,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should skip check for positions less than 2 minutes old', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 60000); // 1 minute old
+      const position = createPositionSyncAgedPosition(60000); // 1 minute old
 
       await service.deepSyncCheck(position);
 
@@ -281,7 +279,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should handle trailing stop flag', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
+      const position = createPositionSyncAgedPosition(150000);
       position.stopLoss.isTrailing = true; // Has trailing stop
       const exchangePosition = { ...position };
       mockBybit.getPosition.mockResolvedValue(exchangePosition);
@@ -293,12 +291,12 @@ describe('PositionSyncService', () => {
     });
 
     it('should attempt emergency close when SL missing', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      position.stopLoss.isTrailing = false;
-      const exchangePosition = { ...position };
-      mockBybit.getPosition.mockResolvedValue(exchangePosition);
-      mockBybit.getActiveOrders.mockResolvedValue([]); // No SL
-      mockBybit.closePosition.mockResolvedValue(undefined);
+      const position = createPositionSyncAgedPosition(150000);
+      preparePositionSyncMissingProtectionScenario(
+        { mockBybit, mockTelegram },
+        position,
+        { exchangePosition: { ...position }, closeResult: undefined },
+      );
 
       await service.deepSyncCheck(position);
 
@@ -312,7 +310,7 @@ describe('PositionSyncService', () => {
     });
 
     it('should log position age', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 300000); // 5 minutes
+      const position = createPositionSyncAgedPosition(300000); // 5 minutes
       prepareDeepSyncProtectionScenario(
         { mockBybit },
         position,
@@ -350,11 +348,10 @@ describe('PositionSyncService', () => {
     });
 
     it('should handle deep sync and emergency close workflow', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      position.stopLoss.isTrailing = false;
-      mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders.mockResolvedValue([]); // No SL
-      mockBybit.closePosition.mockResolvedValue(undefined);
+      const position = createPositionSyncAgedPosition(150000);
+      preparePositionSyncMissingProtectionScenario({ mockBybit, mockTelegram }, position, {
+        closeResult: undefined,
+      });
 
       await service.deepSyncCheck(position);
 
@@ -433,11 +430,8 @@ describe('PositionSyncService', () => {
     });
 
     it('should handle position closed during deepSyncCheck', async () => {
-      const position = createMockPosition(PositionSide.LONG, Date.now() - 150000);
-      position.stopLoss.isTrailing = false;
-      mockBybit.getPosition.mockResolvedValueOnce(position);
-      mockBybit.getActiveOrders.mockResolvedValue([]);
-      mockBybit.getPosition.mockResolvedValueOnce(null); // Position closed
+      const position = createPositionSyncAgedPosition(150000);
+      preparePositionSyncClosedDuringCheckScenario({ mockBybit }, position);
 
       await service.deepSyncCheck(position);
 

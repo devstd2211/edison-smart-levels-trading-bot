@@ -28,9 +28,13 @@ import {
 import { ActionType } from '../../types/legacy';
 import * as fs from 'fs';
 import {
+  createGracefulShutdownSavedState,
   createGracefulShutdownHarness,
+  getGracefulShutdownInternals,
+  getRegisteredShutdownHandler,
   createMockShutdownPosition,
   defaultGracefulShutdownConfig,
+  registerGracefulShutdownHandlers,
   setupGracefulShutdownFsMocks,
 } from '../helpers/graceful-shutdown-test.utils';
 
@@ -57,8 +61,6 @@ describe('GracefulShutdownManager', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
   let gracefulShutdownHarness: ReturnType<typeof createGracefulShutdownHarness>;
-  const asInternals = (manager: GracefulShutdownManager): { cancelAllPendingOrders: () => Promise<number> } =>
-    manager as unknown as { cancelAllPendingOrders: () => Promise<number> };
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
@@ -76,9 +78,7 @@ describe('GracefulShutdownManager', () => {
 
   describe('Signal Handler Registration', () => {
     it('should register SIGINT and SIGTERM handlers', () => {
-      const spy = jest.spyOn(process, 'on');
-
-      shutdownManager.registerShutdownHandlers();
+      const spy = registerGracefulShutdownHandlers(shutdownManager);
 
       expect(spy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
       expect(spy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
@@ -90,10 +90,8 @@ describe('GracefulShutdownManager', () => {
     });
 
     it('should handle SIGINT signal', async () => {
-      const spy = jest.spyOn(process, 'on');
-      shutdownManager.registerShutdownHandlers();
-
-      const sigintHandler = spy.mock.calls.find((call) => call[0] === 'SIGINT')![1];
+      const spy = registerGracefulShutdownHandlers(shutdownManager);
+      const sigintHandler = getRegisteredShutdownHandler(spy, 'SIGINT');
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       await sigintHandler();
@@ -106,10 +104,8 @@ describe('GracefulShutdownManager', () => {
     });
 
     it('should handle SIGTERM signal', async () => {
-      const spy = jest.spyOn(process, 'on');
-      shutdownManager.registerShutdownHandlers();
-
-      const sigtermHandler = spy.mock.calls.find((call) => call[0] === 'SIGTERM')![1] as Function;
+      const spy = registerGracefulShutdownHandlers(shutdownManager);
+      const sigtermHandler = getRegisteredShutdownHandler(spy, 'SIGTERM');
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       await sigtermHandler();
@@ -211,7 +207,7 @@ describe('GracefulShutdownManager', () => {
 
   describe('Order Cancellation', () => {
     it('should cancel all orders when position exists', async () => {
-      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).toHaveBeenCalledWith('BTCUSDT');
       expect(mockExchange.cancelAllConditionalOrders).toHaveBeenCalled();
@@ -221,7 +217,7 @@ describe('GracefulShutdownManager', () => {
     it('should return 0 when no position exists', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).not.toHaveBeenCalled();
       expect(result).toBe(0);
@@ -230,7 +226,7 @@ describe('GracefulShutdownManager', () => {
     it('should handle error when cancelling hanging orders', async () => {
       mockExchange.cancelAllOrders.mockRejectedValue(new Error('API Error'));
 
-      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       // Should still try conditional orders
       expect(mockExchange.cancelAllConditionalOrders).toHaveBeenCalled();
@@ -244,7 +240,7 @@ describe('GracefulShutdownManager', () => {
     it('should handle error when cancelling conditional orders', async () => {
       mockExchange.cancelAllConditionalOrders.mockRejectedValue(new Error('API Error'));
 
-      const result = await asInternals(shutdownManager).cancelAllPendingOrders();
+      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
 
       // Should still try hanging orders
       expect(mockExchange.cancelAllOrders).toHaveBeenCalled();
@@ -356,27 +352,8 @@ describe('GracefulShutdownManager', () => {
 
   describe('State Recovery', () => {
     it('should recover state from disk', async () => {
-      const savedState = {
-        snapshotTime: Date.now(),
-        positions: [
-          {
-            positionId: 'pos-1',
-            symbol: 'BTCUSDT',
-            direction: 'LONG',
-            quantity: 1,
-            entryPrice: 45000,
-            entryTime: Date.now(),
-            currentPnL: 1000,
-            openOrders: [],
-            state: 'OPEN',
-          },
-        ],
-        sessionMetrics: { totalTrades: 5, totalPnL: 2500, startTime: Date.now() },
-        riskMetrics: { dailyPnL: 2500, consecutiveLosses: 0, totalExposure: 45000 },
-      };
-
       (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(savedState));
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(createGracefulShutdownSavedState()));
 
       const metadata = await shutdownManager.recoverState();
 
@@ -398,15 +375,16 @@ describe('GracefulShutdownManager', () => {
     });
 
     it('should emit state-recovered event', async () => {
-      const savedState = {
-        snapshotTime: Date.now(),
-        positions: [],
-        sessionMetrics: { totalTrades: 0, totalPnL: 0, startTime: Date.now() },
-        riskMetrics: { dailyPnL: 0, consecutiveLosses: 0, totalExposure: 0 },
-      };
-
       (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(savedState));
+      (fs.readFileSync as jest.Mock).mockReturnValue(
+        JSON.stringify(
+          createGracefulShutdownSavedState({
+            positions: [],
+            sessionMetrics: { totalTrades: 0, totalPnL: 0, startTime: Date.now() },
+            riskMetrics: { dailyPnL: 0, consecutiveLosses: 0, totalExposure: 0 },
+          }),
+        ),
+      );
 
       await shutdownManager.recoverState();
 

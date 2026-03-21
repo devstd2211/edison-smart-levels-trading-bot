@@ -18,8 +18,14 @@ import {
   createWebSocketManagerBackoffDelays,
   createMockWebSocketAuthenticationService,
   createWebSocketManagerService,
-  createWebSocketManagerHarness,
-  getWebSocketManagerInternals,
+  createTestnetWebSocketManagerHarness,
+  getWebSocketManagerDuplicateEventChecker,
+  getWebSocketManagerErrorHandler,
+  getWebSocketManagerIsConnecting,
+  getWebSocketManagerReconnectAttempts,
+  getWebSocketManagerShouldReconnect,
+  setWebSocketManagerReconnectAttempts,
+  setWebSocketManagerShouldReconnect,
   type WebSocketManagerHarness,
 } from '../helpers/websocket-manager-test.utils';
 
@@ -33,9 +39,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   let logger: LoggerService;
 
   beforeEach(() => {
-    harness = createWebSocketManagerHarness({
-      configOverrides: { testnet: true },
-    });
+    harness = createTestnetWebSocketManagerHarness();
     ({ wsManager, logger } = harness);
   });
 
@@ -50,7 +54,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('RETRY Strategy for Connection (3 tests)', () => {
     it('test-1.1: Should retry connection on network error', async () => {
       // Test that connection retry logic handles network errors gracefully
-      const errorHandler = getWebSocketManagerInternals(wsManager).errorHandler;
+      const errorHandler = getWebSocketManagerErrorHandler(wsManager);
 
       // Verify errorHandler exists and has RETRY capability
       expect(errorHandler).toBeDefined();
@@ -220,18 +224,18 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
     });
 
     it('test-6.2: Should track reconnect attempts', () => {
-      const reconnectAttempts = getWebSocketManagerInternals(wsManager).reconnectAttempts;
+      const reconnectAttempts = getWebSocketManagerReconnectAttempts(wsManager);
       expect(typeof reconnectAttempts).toBe('number');
     });
 
     it('test-6.3: Should reset reconnect counter on successful connection', () => {
       // Verify counter reset logic
-      getWebSocketManagerInternals(wsManager).reconnectAttempts = 5;
-      expect(getWebSocketManagerInternals(wsManager).reconnectAttempts).toBe(5);
+      setWebSocketManagerReconnectAttempts(wsManager, 5);
+      expect(getWebSocketManagerReconnectAttempts(wsManager)).toBe(5);
 
       // After successful connection, should reset
-      getWebSocketManagerInternals(wsManager).reconnectAttempts = 0;
-      expect(getWebSocketManagerInternals(wsManager).reconnectAttempts).toBe(0);
+      setWebSocketManagerReconnectAttempts(wsManager, 0);
+      expect(getWebSocketManagerReconnectAttempts(wsManager)).toBe(0);
     });
   });
 
@@ -241,15 +245,15 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
 
   describe('Connection State Management (3 tests)', () => {
     it('test-7.1: Should not attempt duplicate connections', () => {
-      const isConnecting = getWebSocketManagerInternals(wsManager).isConnecting;
+      const isConnecting = getWebSocketManagerIsConnecting(wsManager);
       expect(typeof isConnecting).toBe('boolean');
     });
 
     it('test-7.2: Should respect shouldReconnect flag', async () => {
-      getWebSocketManagerInternals(wsManager).shouldReconnect = false;
+      setWebSocketManagerShouldReconnect(wsManager, false);
       await wsManager.disconnect();
 
-      const shouldReconnect = getWebSocketManagerInternals(wsManager).shouldReconnect;
+      const shouldReconnect = getWebSocketManagerShouldReconnect(wsManager);
       expect(shouldReconnect).toBe(false);
     });
 
@@ -267,7 +271,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   describe('Integration Scenarios (2 tests)', () => {
     it('test-8.1: Should maintain deduplication during retry/recovery', () => {
       // Verify deduplication service still works during recovery
-      const isDuplicate = getWebSocketManagerInternals(wsManager).isDuplicateEvent(
+      const isDuplicate = getWebSocketManagerDuplicateEventChecker(wsManager)(
         'TP',
         'order-1',
         Date.now(),
@@ -277,7 +281,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
 
     it('test-8.2: Should handle strategy switching during operation', () => {
       // Verify ErrorHandler can switch strategies as needed
-      const errorHandler = getWebSocketManagerInternals(wsManager).errorHandler;
+      const errorHandler = getWebSocketManagerErrorHandler(wsManager);
       expect(errorHandler).toBeDefined();
     });
   });

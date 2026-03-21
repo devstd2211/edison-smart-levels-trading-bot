@@ -5,6 +5,11 @@ import { ErrorHandler } from '../../errors';
 import { LoggerService } from '../../services/logger.service';
 import { PositionStateMachineService } from '../../services/position-state-machine.service';
 import { PositionState } from '../../types/enums';
+import type {
+  PositionStateMachineState,
+  StateTransitionRequest,
+  StateTransitionResult,
+} from '../../types/position-state-machine';
 
 export function createMockPositionStateMachineLogger(): LoggerService {
   return {
@@ -22,6 +27,14 @@ export function createTestStateMachinePaths(baseDir: string = path.join(process.
     stateFilePath: path.join(baseDir, 'position-states.jsonl'),
     historyFilePath: path.join(baseDir, 'position-transitions.jsonl'),
   };
+}
+
+export function getStateMachineStateFilePath(baseDir: string): string {
+  return createTestStateMachinePaths(baseDir).stateFilePath;
+}
+
+export function getStateMachineHistoryFilePath(baseDir: string): string {
+  return createTestStateMachinePaths(baseDir).historyFilePath;
 }
 
 export async function ensureParentDir(filePath: string): Promise<void> {
@@ -86,6 +99,15 @@ export async function createInitializedPositionStateMachineHarness(options: {
   return harness;
 }
 
+export async function createInitializedPositionStateMachineService(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  baseDir?: string;
+} = {}): Promise<PositionStateMachineService> {
+  const harness = await createInitializedPositionStateMachineHarness(options);
+  return harness.service;
+}
+
 export function createPositionStateTransitionInput(
   overrides: Partial<{
     symbol: string;
@@ -106,6 +128,79 @@ export function createPositionStateTransitionInput(
     ...(overrides.reason !== undefined ? { reason: overrides.reason } : {}),
     ...(overrides.metadata !== undefined ? { metadata: overrides.metadata } : {}),
   };
+}
+
+export function createPositionStateMachinePersistedState(
+  overrides: Partial<PositionStateMachineState> = {},
+): PositionStateMachineState {
+  const now = Date.now();
+
+  return {
+    symbol: 'BTCUSDT',
+    positionId: createPositionStateMachinePositionId(),
+    currentState: PositionState.OPEN,
+    createdAt: now,
+    stateChangedAt: now,
+    ...overrides,
+  };
+}
+
+export function createPositionStateMachineHistoryEntry(
+  overrides: Partial<{
+    request: StateTransitionRequest;
+    result: StateTransitionResult;
+    timestamp: number;
+  }> = {},
+) {
+  return {
+    request: createPositionStateTransitionInput(overrides.request),
+    result: {
+      allowed: true,
+      currentState: overrides.request?.targetState ?? PositionState.TP1_HIT,
+    },
+    timestamp: overrides.timestamp ?? Date.now(),
+    ...overrides,
+  };
+}
+
+export async function seedStateMachineStatesFile(
+  baseDir: string,
+  states: PositionStateMachineState[],
+): Promise<string> {
+  const stateFilePath = getStateMachineStateFilePath(baseDir);
+  await ensureParentDir(stateFilePath);
+  await fsPromises.writeFile(
+    stateFilePath,
+    states.map((state) => JSON.stringify(state)).join('\n'),
+  );
+  return stateFilePath;
+}
+
+export async function seedStateMachineHistoryFile(
+  baseDir: string,
+  entries: Array<ReturnType<typeof createPositionStateMachineHistoryEntry> | string>,
+): Promise<string> {
+  const historyFilePath = getStateMachineHistoryFilePath(baseDir);
+  await ensureParentDir(historyFilePath);
+  await fsPromises.writeFile(
+    historyFilePath,
+    entries
+      .map((entry) => (typeof entry === 'string' ? entry : JSON.stringify(entry)))
+      .join('\n'),
+  );
+  return historyFilePath;
+}
+
+export function applyPositionStateSequence(
+  service: PositionStateMachineService,
+  options: {
+    symbol?: string;
+    positionId?: string;
+    states: PositionState[];
+    reasonPrefix?: string;
+  },
+) {
+  transitionPositionStateSequence(service, options);
 }
 
 export function createPositionStateMachinePositionId(prefix = 'pos'): string {
@@ -155,6 +250,37 @@ export function transitionPositionState(
       metadata: options.metadata,
     }),
   );
+}
+
+export function closePositionState(
+  service: PositionStateMachineService,
+  options: {
+    symbol?: string;
+    positionId: string;
+    reason: string;
+    closureReason?: 'SL_HIT' | 'TP1_HIT' | 'TP2_HIT' | 'TP3_HIT' | 'TRAILING_STOP' | 'MANUAL' | 'OTHER';
+    closurePrice?: number;
+    closurePnL?: number;
+  },
+) {
+  return service.closePosition(
+    options.symbol ?? 'BTCUSDT',
+    options.positionId,
+    options.reason,
+    {
+      closureReason: options.closureReason,
+      closurePrice: options.closurePrice,
+      closurePnL: options.closurePnL,
+    },
+  );
+}
+
+export function getPositionStateSnapshot(
+  service: PositionStateMachineService,
+  positionId: string,
+  symbol = 'BTCUSDT',
+) {
+  return service.getFullState(symbol, positionId);
 }
 
 export function createPositionStateMachineHarness(options: {

@@ -13,23 +13,23 @@ import {
   BybitOrder,
 } from '../../types/legacy';
 import {
-  ExchangeConnectionError,
-  ExchangeRateLimitError,
-  ExchangeAPIError,
-  TelegramNetworkError,
-} from '../../errors/DomainErrors';
-import {
   createMockPositionSyncExchange,
   createMockPositionSyncExitTypeDetector,
   createMockPositionSyncManager,
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
+  createPositionSyncExchangeApiError,
+  createPositionSyncExchangeConnectionError,
+  createPositionSyncExchangeRateLimitError,
   createPositionSyncErrorHandler,
   createPositionSyncOldPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
   createPositionSyncService,
+  createPositionSyncTelegramNetworkError,
   createPositionSyncHarness,
+  preparePositionSyncEmergencyCloseScenario,
+  preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
 } from '../helpers/position-sync-test.utils';
 
@@ -70,16 +70,15 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   describe('syncClosedPosition - Error Handling', () => {
     it('should RETRY getOrderHistory on network timeout (3 attempts)', async () => {
       const position = createMockPosition();
-      const networkError = new ExchangeConnectionError('Network timeout', {
-        exchangeName: 'Bybit',
+      const networkError = createPositionSyncExchangeConnectionError('Network timeout', {
         endpoint: '/order/history',
       });
 
-      // Fail 2 times, succeed on 3rd
-      mockBybit.getOrderHistory
-        .mockRejectedValueOnce(networkError)
-        .mockRejectedValueOnce(networkError)
-        .mockResolvedValueOnce([]);
+      preparePositionSyncRetrySequence(
+        mockBybit.getOrderHistory,
+        [networkError, networkError],
+        [],
+      );
 
       mockBybit.getCurrentPrice.mockResolvedValue(101);
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
@@ -93,15 +92,17 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should RETRY getCurrentPrice on rate limit (3 attempts with backoff)', async () => {
       const position = createMockPosition();
-      const rateLimitError = new ExchangeRateLimitError('Rate limit exceeded', {
-        retryAfterMs: 100,
-      });
+      const rateLimitError = createPositionSyncExchangeRateLimitError(
+        'Rate limit exceeded',
+        100,
+      );
 
       mockBybit.getOrderHistory.mockResolvedValue([]);
-      mockBybit.getCurrentPrice
-        .mockRejectedValueOnce(rateLimitError)
-        .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce(101);
+      preparePositionSyncRetrySequence(
+        mockBybit.getCurrentPrice,
+        [rateLimitError, rateLimitError],
+        101,
+      );
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
 
       const startTime = Date.now();
@@ -116,7 +117,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should GRACEFUL_DEGRADE closeFullPosition failure (continue even if fails)', async () => {
       const position = createMockPosition();
-      const closeError = new ExchangeAPIError('Failed to record close', {
+      const closeError = createPositionSyncExchangeApiError('Failed to record close', {
         statusCode: 500,
       });
 
@@ -145,10 +146,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should SKIP telegram alert on network error (non-blocking)', async () => {
       const position = createMockPosition();
-      const telegramError = new TelegramNetworkError('Telegram API timeout', {
-        operation: 'sendAlert',
-        reason: 'Network timeout',
-      });
+      const telegramError = createPositionSyncTelegramNetworkError();
 
       prepareClosedPositionSync({ mockBybit }, { currentPrice: 101 });
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
@@ -163,15 +161,13 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should fallback to entry price when getCurrentPrice fails after retries', async () => {
       const position = createMockPosition();
-      const priceError = new ExchangeConnectionError('API down', {
-        exchangeName: 'Bybit',
-      });
+      const priceError = createPositionSyncExchangeConnectionError('API down');
 
       prepareClosedPositionSync({ mockBybit });
-      mockBybit.getCurrentPrice
-        .mockRejectedValueOnce(priceError)
-        .mockRejectedValueOnce(priceError)
-        .mockRejectedValueOnce(priceError);
+      preparePositionSyncRetrySequence(
+        mockBybit.getCurrentPrice,
+        [priceError, priceError, priceError],
+      );
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
       mockTelegram.sendAlert.mockResolvedValue(undefined);
 
@@ -186,12 +182,16 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
     it('E2E: All operations fail → position still clears (fallback)', async () => {
       const position = createMockPosition();
 
-      mockBybit.getOrderHistory.mockRejectedValue(new ExchangeConnectionError('', {exchangeName: 'Bybit'}));
-      mockBybit.getCurrentPrice.mockRejectedValue(new ExchangeConnectionError('', {exchangeName: 'Bybit'}));
-      mockTelegram.sendAlert.mockRejectedValue(new TelegramNetworkError('', {operation: '', reason: ''}));
+      mockBybit.getOrderHistory.mockRejectedValue(createPositionSyncExchangeConnectionError(''));
+      mockBybit.getCurrentPrice.mockRejectedValue(createPositionSyncExchangeConnectionError(''));
+      mockTelegram.sendAlert.mockRejectedValue(
+        createPositionSyncTelegramNetworkError('', { operation: '', reason: '' }),
+      );
 
       const mockPositionExiting = createMockPositionCloseRecorder();
-      mockPositionExiting.closeFullPosition.mockRejectedValue(new ExchangeAPIError('', {}));
+      mockPositionExiting.closeFullPosition.mockRejectedValue(
+        createPositionSyncExchangeApiError(''),
+      );
       service = createPositionSyncService({
         mockBybit,
         mockPositionManager,
@@ -221,16 +221,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should RETRY getPosition on network timeout (2 attempts)', async () => {
       const position = createOldPosition();
-      const networkError = new ExchangeConnectionError('Network timeout', {
-        exchangeName: 'Bybit',
-      });
-
-      // First call fails, second succeeds (for initial fetch)
-      // Then potentially a third for pre-close verification
-      mockBybit.getPosition
-        .mockRejectedValueOnce(networkError)
-        .mockResolvedValueOnce(position)
-        .mockResolvedValueOnce(position);
+      const networkError = createPositionSyncExchangeConnectionError();
+      preparePositionSyncRetrySequence(mockBybit.getPosition, [networkError], position);
+      mockBybit.getPosition.mockResolvedValueOnce(position);
       mockBybit.getActiveOrders.mockResolvedValue(
         createPositionSyncProtectedOrders({ takeProfitLevels: [] }),
       );
@@ -243,14 +236,14 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should RETRY getActiveOrders on rate limit (2 attempts)', async () => {
       const position = createOldPosition();
-      const rateLimitError = new ExchangeRateLimitError('Rate limit', {
-        retryAfterMs: 100,
-      });
+      const rateLimitError = createPositionSyncExchangeRateLimitError('Rate limit', 100);
 
       mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders
-        .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce(createPositionSyncProtectedOrders({ takeProfitLevels: [] }));
+      preparePositionSyncRetrySequence(
+        mockBybit.getActiveOrders,
+        [rateLimitError],
+        createPositionSyncProtectedOrders({ takeProfitLevels: [] }),
+      );
 
       const startTime = Date.now();
       await service.deepSyncCheck(position);
@@ -263,14 +256,12 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should GRACEFUL_DEGRADE when getActiveOrders fails (assume protection exists)', async () => {
       const position = createOldPosition();
-      const apiError = new ExchangeAPIError('API error', {
+      const apiError = createPositionSyncExchangeApiError('API error', {
         statusCode: 500,
       });
 
       mockBybit.getPosition.mockResolvedValue(position);
-      mockBybit.getActiveOrders
-        .mockRejectedValueOnce(apiError)
-        .mockRejectedValueOnce(apiError);
+      preparePositionSyncRetrySequence(mockBybit.getActiveOrders, [apiError, apiError]);
 
       // Should NOT throw, should continue
       await service.deepSyncCheck(position);
@@ -309,17 +300,11 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should THROW on missing SL (critical error - no recovery)', async () => {
       const position = createOldPosition();
-      const exchangePos = position;
-
-      mockBybit.getPosition
-        .mockResolvedValueOnce(exchangePos)
-        .mockResolvedValueOnce(exchangePos); // For pre-close verification
-
-      // No SL, no TP, no trailing
-      const noProtectionOrders: BybitOrder[] = [];
-      mockBybit.getActiveOrders.mockResolvedValue(noProtectionOrders);
-      mockBybit.closePosition.mockResolvedValue({ orderId: 'close-order' });
-      mockTelegram.sendAlert.mockResolvedValue(undefined);
+      preparePositionSyncEmergencyCloseScenario(
+        { mockBybit, mockTelegram },
+        position,
+        { activeOrders: [] as BybitOrder[] },
+      );
 
       await service.deepSyncCheck(position);
 
@@ -332,19 +317,14 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('should SKIP telegram alerts during emergency close', async () => {
       const position = createOldPosition();
-      const exchangePos = position;
-      const telegramError = new TelegramNetworkError('Timeout', {
-        operation: 'sendAlert',
+      const telegramError = createPositionSyncTelegramNetworkError('Timeout', {
         reason: 'Network',
       });
-
-      mockBybit.getPosition
-        .mockResolvedValueOnce(exchangePos)
-        .mockResolvedValueOnce(exchangePos);
-
-      mockBybit.getActiveOrders.mockResolvedValue([]); // No protection
-      mockBybit.closePosition.mockResolvedValue({ orderId: 'close-order' });
-      mockTelegram.sendAlert.mockRejectedValue(telegramError);
+      preparePositionSyncEmergencyCloseScenario(
+        { mockBybit, mockTelegram },
+        position,
+        { activeOrders: [], telegramError },
+      );
 
       // Should NOT throw despite telegram error
       await service.deepSyncCheck(position);
@@ -354,13 +334,11 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
     it('E2E: All API calls fail → logs errors but position preserved', async () => {
       const position = createOldPosition();
-      const apiError = new ExchangeAPIError('API down', {
+      const apiError = createPositionSyncExchangeApiError('API down', {
         statusCode: 503,
       });
 
-      mockBybit.getPosition
-        .mockRejectedValueOnce(apiError)
-        .mockRejectedValueOnce(apiError);
+      preparePositionSyncRetrySequence(mockBybit.getPosition, [apiError, apiError]);
 
       // Should not throw
       await service.deepSyncCheck(position);
@@ -380,18 +358,18 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
       // Order history fails
       mockBybit.getOrderHistory.mockRejectedValue(
-        new ExchangeConnectionError('Network', {exchangeName: 'Bybit'})
+        createPositionSyncExchangeConnectionError('Network')
       );
 
       // Price fails
       mockBybit.getCurrentPrice.mockRejectedValue(
-        new ExchangeConnectionError('Network', {exchangeName: 'Bybit'})
+        createPositionSyncExchangeConnectionError('Network')
       );
 
       // Close fails
       const mockPositionExiting = createMockPositionCloseRecorder();
       mockPositionExiting.closeFullPosition.mockRejectedValue(
-        new ExchangeAPIError('Server error', {})
+        createPositionSyncExchangeApiError('Server error')
       );
       service = createPositionSyncService({
         mockBybit,
@@ -421,12 +399,12 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockBybit.getPosition.mockResolvedValue(exchangePos);
 
       // Active orders fails then succeeds
-      const rateLimitError = new ExchangeRateLimitError('Rate limit', {
-        retryAfterMs: 50,
-      });
-      mockBybit.getActiveOrders
-        .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce(createPositionSyncProtectedOrders());
+      const rateLimitError = createPositionSyncExchangeRateLimitError('Rate limit', 50);
+      preparePositionSyncRetrySequence(
+        mockBybit.getActiveOrders,
+        [rateLimitError],
+        createPositionSyncProtectedOrders(),
+      );
 
       await service.deepSyncCheck(position);
 

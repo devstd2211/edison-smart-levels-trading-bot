@@ -22,6 +22,8 @@ import {
 } from '../../errors/DomainErrors';
 import {
   createBotFactoryTestConfig,
+  createTrackedBotFactoryServices,
+  createTrackedSafeBotFactoryServices,
   deleteBotFactoryConfigPath,
   setBotFactoryConfigPath,
 } from '../helpers/bot-factory-test.utils';
@@ -343,26 +345,17 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
     test('T31: createSafe returns services for valid config with explicit teardown path', async () => {
       const config = createBotFactoryTestConfig();
-      const result = BotFactory.createSafe(config);
+      const services = createTrackedSafeBotFactoryServices(trackedServices, config);
+      const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
 
-      expect(result.success).toBe(true);
-      if (result.success) {
-        const services = trackCreatedServices(trackedServices, config, result.services);
-        const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
-
-        expect(services.logger).toBeDefined();
-        expect(services.executionServices.positionManager).toBeDefined();
-        expect(initializeSpy).not.toHaveBeenCalled();
-      }
+      expect(services.logger).toBeDefined();
+      expect(services.executionServices.positionManager).toBeDefined();
+      expect(initializeSpy).not.toHaveBeenCalled();
     });
 
     test('T32: createForTesting returns valid services for explicit lifecycle control', () => {
       const config = createBotFactoryTestConfig();
-      const services = trackCreatedServices(
-        trackedServices,
-        config,
-        BotFactory.createForTesting(config),
-      );
+      const services = createTrackedBotFactoryServices(trackedServices, config);
 
       expect(services.coreServices.eventBus).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBeDefined();

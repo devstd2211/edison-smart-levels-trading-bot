@@ -1,8 +1,6 @@
-import { BotInitializer } from '../../services/bot-initializer';
-import type { IBotInitializerServices } from '../../interfaces';
 import {
-  createTrackedLifecycleHarness,
-  createTrackedServices,
+  createTrackedInitializerHarness,
+  spyOnTrackedServiceLifecycle,
   shutdownTrackedServices,
   type TrackedServiceState,
 } from '../helpers/service-lifecycle-test.utils';
@@ -19,37 +17,22 @@ describe('createServices lifecycle orchestration', () => {
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
-    const harness = createTrackedLifecycleHarness(trackedServices);
+    const harness = createTrackedInitializerHarness(trackedServices);
     const services = harness.services;
-    const initializer = new BotInitializer(
-      services as unknown as IBotInitializerServices,
-      harness.config,
-    );
-
-    const bybit = services.marketDataServices.bybitService;
-    const wsManager = services.marketDataServices.webSocketManager;
-    const publicWs = services.marketDataServices.publicWebSocket;
-    const positionMonitor = services.executionServices.positionMonitor;
-
-    const bybitInitSpy = jest.spyOn(bybit, 'initialize');
-    const bybitOpenPositionsSpy = jest.spyOn(bybit, 'getOpenPositions');
-
-    const syncSpy = jest
-      .spyOn(services.coreServices.timeService, 'syncWithExchange')
-      .mockResolvedValue(undefined);
-    const sessionStartSpy = jest
-      .spyOn(services.sessionStats, 'startSession')
-      .mockReturnValue('session-test');
-    const sessionEndSpy = jest
-      .spyOn(services.sessionStats, 'endSession')
-      .mockImplementation(() => undefined);
-
-    const wsStartSpy = jest.spyOn(wsManager, 'start').mockResolvedValue(undefined);
-    const wsStopSpy = jest.spyOn(wsManager, 'stop').mockResolvedValue(undefined);
-    const publicStartSpy = jest.spyOn(publicWs, 'start').mockImplementation(() => undefined);
-    const publicStopSpy = jest.spyOn(publicWs, 'stop').mockImplementation(() => undefined);
-    const monitorStartSpy = jest.spyOn(positionMonitor, 'start').mockImplementation(() => undefined);
-    const monitorStopSpy = jest.spyOn(positionMonitor, 'stop').mockImplementation(() => undefined);
+    const initializer = harness.initializer;
+    const {
+      bybitInitSpy,
+      bybitOpenPositionsSpy,
+      syncSpy,
+      sessionStartSpy,
+      sessionEndSpy,
+      wsStartSpy,
+      wsStopSpy,
+      publicStartSpy,
+      publicStopSpy,
+      monitorStartSpy,
+      monitorStopSpy,
+    } = spyOnTrackedServiceLifecycle(services);
 
     // Side-effect-free creation: no lifecycle start calls at construction time.
     expect(bybitInitSpy).not.toHaveBeenCalled();

@@ -5,6 +5,7 @@ import { BotEventBus } from '../../services/event-bus';
 import { GracefulShutdownManager } from '../../services/graceful-shutdown.service';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import {
+  BotStateSnapshot,
   GracefulShutdownConfig,
   LoggerService,
   Position,
@@ -158,5 +159,59 @@ export function createGracefulShutdownHarness(options: {
     mocks,
     manager: createManager(),
     createManager,
+  };
+}
+
+export function getGracefulShutdownInternals(
+  manager: GracefulShutdownManager,
+): { cancelAllPendingOrders: () => Promise<number> } {
+  return manager as unknown as { cancelAllPendingOrders: () => Promise<number> };
+}
+
+export function registerGracefulShutdownHandlers(
+  manager: GracefulShutdownManager,
+): jest.SpiedFunction<typeof process.on> {
+  const spy = jest.spyOn(process, 'on');
+  manager.registerShutdownHandlers();
+  return spy;
+}
+
+export function getRegisteredShutdownHandler(
+  registrationSpy: jest.SpiedFunction<typeof process.on>,
+  signal: 'SIGINT' | 'SIGTERM',
+): () => Promise<void> {
+  return registrationSpy.mock.calls.find((call) => call[0] === signal)?.[1] as () => Promise<void>;
+}
+
+export function createGracefulShutdownSavedState(
+  overrides: Partial<BotStateSnapshot> = {},
+): BotStateSnapshot {
+  return {
+    snapshotTime: Date.now(),
+    positions: [
+      {
+        positionId: 'pos-1',
+        symbol: 'BTCUSDT',
+        direction: 'LONG',
+        quantity: 1,
+        entryPrice: 45000,
+        entryTime: Date.now(),
+        currentPnL: 1000,
+        openOrders: [],
+        state: 'OPEN',
+        persistedAt: Date.now(),
+      },
+    ],
+    sessionMetrics: {
+      totalTrades: 5,
+      totalPnL: 2500,
+      startTime: Date.now(),
+    },
+    riskMetrics: {
+      dailyPnL: 2500,
+      consecutiveLosses: 0,
+      totalExposure: 45000,
+    },
+    ...overrides,
   };
 }

@@ -1,3 +1,5 @@
+import { BotInitializer } from '../../services/bot-initializer';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { IBotInitializerServices } from '../../interfaces';
 import type { LoggerService } from '../../services/logger.service';
 import type { Config } from '../../types/legacy';
@@ -188,4 +190,26 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
 
 export function asBotInitializerMock(fn: unknown): jest.Mock {
   return fn as jest.Mock;
+}
+
+export function createBotInitializerHarness(options: {
+  services?: IBotInitializerServices;
+  config?: Config;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const services = options.services ?? createBotInitializerMockServices();
+  const config = options.config ?? createBotInitializerConfig();
+
+  return {
+    services,
+    config,
+    initializer: new BotInitializer(services, config, options.errorHandler),
+  };
+}
+
+export function createBotInitializerWithoutHandler(
+  services: IBotInitializerServices,
+  config: Config,
+): BotInitializer {
+  return new BotInitializer(services, config, undefined);
 }

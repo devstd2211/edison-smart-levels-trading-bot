@@ -8,6 +8,7 @@ import { WebSocketManagerService } from '../../services/websocket-manager.servic
 import {
   createWebSocketManagerHarness,
   getWebSocketManagerDuplicateEventChecker,
+  getWebSocketManagerShouldReconnect,
   type WebSocketManagerHarness,
 } from '../helpers/websocket-manager-test.utils';
 
@@ -145,6 +146,7 @@ describe('WebSocketManagerService', () => {
   describe('Basic Functionality', () => {
     it('should initialize with disconnected state', () => {
       expect(wsManager.isConnected()).toBe(false);
+      expect(getWebSocketManagerShouldReconnect(wsManager)).toBe(true);
     });
 
     it('should have null last close reason on init', () => {

@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-20)
-- Completed another three-iteration exiting helper-consolidation batch:
-  - extended `packages/core/src/__tests__/helpers/position-exiting-test.utils.ts` with reusable throwing-journal, entry-price transition, and nil-close helpers.
-  - routed `packages/core/src/__tests__/services/position-exiting.transactional.test.ts`, `packages/core/src/__tests__/services/position-exiting.functional.test.ts`, and `packages/core/src/__tests__/services/position-exiting.race-condition.test.ts` through those helpers instead of repeated throwing journal stubs, repeated entry-price before/after state objects, and repeated raw `closeFullPosition(null|undefined, ...)` calls.
-  - reviewed `services/position-exiting.service.ts`; left production code unchanged after review.
+## Last Completed (2026-03-21)
+- Completed another three-iteration websocket-manager helper consolidation batch for `websocket-manager.service` and `websocket-manager.error-handling`:
+  - extended `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts` with a shared testnet harness and compact internal-state accessors for error-handler and reconnect state.
+  - routed both suites through those helpers instead of repeated testnet bootstrap overrides and repeated direct `getWebSocketManagerInternals(...)` access.
+  - reviewed `services/websocket-manager.service.ts`; left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-exiting.transactional.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/services/position-exiting.race-condition.test.ts` -> PASS (3/3 suites, 31/31 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts` -> PASS (2/2 suites, 31/31 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next compact untouched or only partially-normalized suite adjacent to the refreshed exiting/lifecycle helpers, especially `position-sync.service.test.ts`, `position-state-machine.service.test.ts`, or another neighboring slice that still rebuilds rollback state, parsed update sequences, or concurrent transition variants inline.
+- Prefer the next adjacent partially-normalized lifecycle/stateful slice outside the now-refreshed `bot-factory` / `bot-initializer` / `graceful-shutdown` / `websocket-manager` cluster, especially a neighboring helper-backed suite that still rebuilds constructor inputs, signal/lifecycle spy packs, or saved-state fixtures inline.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.
