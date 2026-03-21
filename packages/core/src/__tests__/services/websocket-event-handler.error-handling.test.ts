@@ -21,9 +21,10 @@ import {
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   configureWebSocketCloseScenario,
+  createMockOrderFilledEvent,
   createMockWebSocketEventPosition,
+  createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
-  createWebSocketEventHandler,
   createWebSocketEventHandlerHarness,
   type WebSocketEventHandlerHarness,
 } from '../helpers/websocket-event-handler-test.utils';
@@ -37,9 +38,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let mockJournal: WebSocketEventHandlerHarness['mockJournal'];
   let mockTelegram: WebSocketEventHandlerHarness['mockTelegram'];
   let mockLogger: WebSocketEventHandlerHarness['mockLogger'];
+  let harness: WebSocketEventHandlerHarness;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    harness = createWebSocketEventHandlerHarness();
     ({
       handler,
       mockPositionManager,
@@ -49,7 +52,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = createWebSocketEventHandlerHarness());
+    } = harness);
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {
@@ -88,13 +91,12 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('[FALLBACK] getCurrentPriceWithFallback() - Price Retrieval (3 tests)', () => {
     it('test-8.6.5: Should use fallback when getCurrentPrice throws error', async () => {
-      const position = configureWebSocketCloseScenario(
-        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
-        { currentPrice: new Error('API error') },
-      );
+      const { handler: closeHandler, position } = harness.createCloseScenarioHandler({
+        currentPrice: new Error('API error'),
+      });
 
       // Trigger _handlePositionClosedInternal through handlePositionClosed
-      await handler.handlePositionClosed();
+      await closeHandler.handlePositionClosed();
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
       // Verify fallback price (entry price) was used - position.entryPrice = 45000
@@ -103,12 +105,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.6: Should use fallback when getCurrentPrice returns NaN', async () => {
-      const position = configureWebSocketCloseScenario(
-        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
-        { currentPrice: NaN },
-      );
+      const { handler: closeHandler, position } = harness.createCloseScenarioHandler({
+        currentPrice: NaN,
+      });
 
-      await handler.handlePositionClosed();
+      await closeHandler.handlePositionClosed();
 
       expect(ErrorHandler.handle).toHaveBeenCalled();
       const callArgs = mockPositionExitingService.closeFullPosition.mock.calls[0];
@@ -116,12 +117,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.7: Should use valid price when getCurrentPrice succeeds', async () => {
-      configureWebSocketCloseScenario(
-        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
-        { currentPrice: 46000 },
-      );
+      const { handler: closeHandler } = harness.createCloseScenarioHandler({
+        currentPrice: 46000,
+      });
 
-      await handler.handlePositionClosed();
+      await closeHandler.handlePositionClosed();
 
       expect(mockPositionExitingService.closeFullPosition).toHaveBeenCalled();
       const callArgs = mockPositionExitingService.closeFullPosition.mock.calls[0];
@@ -241,7 +241,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       // Setup cascading failures
       configureWebSocketCloseScenario(
         { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
-        { currentPrice: new Error('API down') },
+        { currentPrice: new Error('API error') },
       );
 
       // Invalid position update
@@ -275,7 +275,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('Integration with Existing Functionality', () => {
     it('should support explicit handler factory wiring', () => {
-      const explicitHandler = createWebSocketEventHandler({
+      const explicitHandler = harness.createHandler({
         mockPositionManager,
         mockPositionExitingService,
         mockBybitService,
@@ -289,13 +289,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('should not break existing handleOrderFilled functionality', async () => {
-      const order: OrderFilledEvent = {
-        orderId: 'order-456',
-        symbol: 'BTCUSDT',
-        side: 'Buy',
-        execQty: '0.1',
-        execPrice: '45500',
-      };
+      const order: OrderFilledEvent = createMockOrderFilledEvent();
 
       await handler.handleOrderFilled(order);
 
@@ -306,11 +300,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('should not break existing handleStopLossFilled functionality', async () => {
-      const event: StopLossFilledEvent = {
-        orderId: 'sl-order-1',
-        avgPrice: 44000,
-        cumExecQty: 0.1,
-      };
+      const event: StopLossFilledEvent = createMockStopLossFilledEvent();
 
       await handler.handleStopLossFilled(event);
 

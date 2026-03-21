@@ -33,10 +33,14 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     getLogger: jest.Mock;
   };
   let errorHandlerService: ErrorHandler;
+  let harness: ReturnType<typeof createPublicWebSocketHarness>;
   let createService: ReturnType<typeof createPublicWebSocketHarness>['createService'];
   let createStandardService: ReturnType<typeof createPublicWebSocketHarness>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createPublicWebSocketHarness>['createLegacyService'];
+  let createBtcConfiguredService: ReturnType<typeof createPublicWebSocketHarness>['createBtcConfiguredService'];
 
   beforeEach(() => {
+    harness = createPublicWebSocketHarness();
     ({
       service,
       mockLogger,
@@ -44,7 +48,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       errorHandlerService,
       createService,
       createStandardService,
-    } = createPublicWebSocketHarness());
+      createLegacyService,
+      createBtcConfiguredService,
+    } = harness);
   });
 
   // =========================================================================
@@ -224,15 +230,13 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('BTC Confirmation Feature', () => {
     it('should accept BTC confirmation config', () => {
-      const serviceWithBtc = createStandardService({
-        btcConfirmation: createPublicWebSocketBtcConfirmationConfig(),
-      });
+      const serviceWithBtc = createBtcConfiguredService();
 
       expect(serviceWithBtc).toBeDefined();
     });
 
     it('should handle BTC candle store assignment', () => {
-      const serviceWithBtc = createStandardService({
+      const serviceWithBtc = createBtcConfiguredService({
         btcConfirmation: createPublicWebSocketBtcConfirmationConfig({
           lookbackCandles: undefined,
         }),
@@ -323,8 +327,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (legacy mode)', () => {
-      const serviceNoHandler = createService({
-        withErrorHandler: false,
+      const serviceNoHandler = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -333,8 +336,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should provide all public methods without ErrorHandler', () => {
-      service = createService({
-        withErrorHandler: false,
+      service = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -345,8 +347,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should disconnect cleanly regardless of ErrorHandler presence', () => {
-      service = createService({
-        withErrorHandler: false,
+      service = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -370,8 +371,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
     it('should work with optional ErrorHandler parameter in builder flow', () => {
       // Simulate services creation without ErrorHandler (backward compat)
-      const service1 = createService({
-        withErrorHandler: false,
+      const service1 = createLegacyService({
         symbol: 'XRPUSDT',
       });
       expect(service1).toBeDefined();

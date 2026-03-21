@@ -9,6 +9,7 @@ import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createEventDeduplicationHarness,
+  populateEventDeduplicationCache,
   runEventDeduplicationChecks,
   type EventDeduplicationHarness,
 } from '../helpers/event-deduplication-test.utils';
@@ -28,7 +29,7 @@ describe('EventDeduplicationService', () => {
   });
 
   const createService = (cacheSize = 100, cacheTtlMs = 60000) =>
-    harness.createServiceWithDefaults({
+    harness.createStandardService({
       cacheSize,
       cacheTtlMs,
       logger,
@@ -126,7 +127,11 @@ describe('EventDeduplicationService', () => {
 
   describe('clear', () => {
     beforeEach(() => {
-      service = harness.createService(100, 60000, logger);
+      service = harness.createStandardService({
+        cacheSize: 100,
+        cacheTtlMs: 60000,
+        logger,
+      });
     });
 
     it('should clear all cached events', () => {
@@ -156,13 +161,12 @@ describe('EventDeduplicationService', () => {
   describe('Cache Management', () => {
     it('should use default cache size (100)', () => {
       const service1 = createService();
-      const timestamp = 1000; // Use fixed timestamp
+      const timestamp = 1000;
 
-      // Add 100 events with different timestamps
-      for (let i = 0; i < 100; i++) {
-        const result = service1.isDuplicate('TP', `order-${i}`, timestamp + i);
-        expect(result).toBe(false);
-      }
+      populateEventDeduplicationCache(service1, {
+        count: 100,
+        startTime: timestamp,
+      });
 
       // Should still detect duplicates (exact same event)
       expect(service1.isDuplicate('TP', 'order-0', timestamp)).toBe(true);
@@ -172,10 +176,10 @@ describe('EventDeduplicationService', () => {
       service = createService(50, 60000);
       const timestamp = 1000;
 
-      // Add 50 events with different timestamps
-      for (let i = 0; i < 50; i++) {
-        service.isDuplicate('TP', `order-${i}`, timestamp + i);
-      }
+      populateEventDeduplicationCache(service, {
+        count: 50,
+        startTime: timestamp,
+      });
 
       // Cache is at 50, should be fine - duplicate check
       expect(service.isDuplicate('TP', 'order-0', timestamp)).toBe(true);
@@ -196,9 +200,11 @@ describe('EventDeduplicationService', () => {
       service.isDuplicate('TP', 'order-old', oldTimestamp);
 
       // Trigger cleanup by adding new event to exceed cache
-      for (let i = 0; i < 110; i++) {
-        service.isDuplicate('TP', `fill-${i}`, Date.now());
-      }
+      populateEventDeduplicationCache(service, {
+        count: 110,
+        idPrefix: 'fill-',
+        startTime: Date.now(),
+      });
 
       // Old event should potentially be cleaned up
       // (depends on cleanup logic running during cache overflow)
@@ -264,10 +270,10 @@ describe('EventDeduplicationService', () => {
 
       const startTime = Date.now();
 
-      // Rapid checks
-      for (let i = 0; i < 1000; i++) {
-        service.isDuplicate('TP', `order-${i}`, Date.now());
-      }
+      populateEventDeduplicationCache(service, {
+        count: 1000,
+        startTime,
+      });
 
       const elapsed = Date.now() - startTime;
 

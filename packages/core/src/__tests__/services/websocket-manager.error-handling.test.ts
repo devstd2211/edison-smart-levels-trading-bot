@@ -17,7 +17,6 @@ import type { LoggerService } from '../../types/legacy';
 import {
   createWebSocketManagerBackoffDelays,
   createMockWebSocketAuthenticationService,
-  createWebSocketManagerService,
   createTestnetWebSocketManagerHarness,
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerErrorHandler,
@@ -96,8 +95,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       expect(payload).toBeDefined();
       expect(payload.op).toBe('auth');
 
-      const customManager = createWebSocketManagerService({
-        configOverrides: { testnet: true },
+      const customManager = harness.createTestnetService({
         authService,
       });
       expect(customManager).toBeDefined();

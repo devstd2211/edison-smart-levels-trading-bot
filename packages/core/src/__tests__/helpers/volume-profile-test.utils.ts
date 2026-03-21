@@ -148,6 +148,27 @@ export function createVolumeProfileHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardService: (serviceOptions: {
+      configOverrides?: Partial<VolumeProfileConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createVolumeProfileService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      configOverrides?: Partial<VolumeProfileConfig>;
+      logger?: LoggerService;
+    } = {}) =>
+      createVolumeProfileService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
   };
 }
 

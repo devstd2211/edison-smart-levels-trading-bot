@@ -3,6 +3,31 @@ import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbo
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 
+export interface OrderbookManagerHarness {
+  service: OrderbookManagerService;
+  mockLogger: ReturnType<typeof createOrderbookMockLogger>;
+  loggerService: LoggerService;
+  mockWallTracker: ReturnType<typeof createOrderbookWallTrackerMock>;
+  errorHandler?: ErrorHandler;
+  createService: (options?: {
+    symbol?: string;
+    logger?: LoggerService;
+    wallTracker?: WallTrackerService;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => OrderbookManagerService;
+  createLegacyService: (options?: {
+    symbol?: string;
+    logger?: LoggerService;
+    wallTracker?: WallTrackerService;
+  }) => OrderbookManagerService;
+  createServiceWithoutWallTracker: (options?: {
+    symbol?: string;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => OrderbookManagerService;
+}
+
 export function createOrderbookLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -131,7 +156,7 @@ export function createOrderbookManagerHarness(options: {
   logger?: LoggerService;
   wallTracker?: WallTrackerService;
   errorHandler?: ErrorHandler;
-} = {}) {
+} = {}): OrderbookManagerHarness {
   const mockLogger = createOrderbookMockLogger();
   const loggerService = options.logger ?? (mockLogger as unknown as LoggerService);
   const mockWallTracker = createOrderbookWallTrackerMock();
@@ -155,6 +180,23 @@ export function createOrderbookManagerHarness(options: {
     loggerService,
     mockWallTracker,
     errorHandler,
+    createService: (serviceOptions = {}) => createOrderbookManagerService({
+      symbol: serviceOptions.symbol ?? options.symbol,
+      logger: serviceOptions.logger ?? loggerService,
+      wallTracker: serviceOptions.wallTracker ?? wallTracker,
+      withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+      errorHandler: serviceOptions.errorHandler ?? errorHandler,
+    }),
+    createLegacyService: (serviceOptions = {}) => createOrderbookLegacyService({
+      symbol: serviceOptions.symbol ?? options.symbol,
+      logger: serviceOptions.logger ?? loggerService,
+      wallTracker: serviceOptions.wallTracker ?? wallTracker,
+    }),
+    createServiceWithoutWallTracker: (serviceOptions = {}) => createOrderbookServiceWithoutWallTracker({
+      symbol: serviceOptions.symbol ?? options.symbol,
+      logger: serviceOptions.logger ?? loggerService,
+      errorHandler: serviceOptions.errorHandler ?? errorHandler,
+    }),
   };
 }
 

@@ -9,6 +9,7 @@ import {
   createWebSocketManagerHarness,
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
+  populateWebSocketManagerDeduplicationCache,
   type WebSocketManagerHarness,
 } from '../helpers/websocket-manager-test.utils';
 
@@ -78,11 +79,9 @@ describe('WebSocketManagerService', () => {
     it('should cleanup old events from cache', () => {
       const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(wsManager);
 
-      // Fill cache with events
-      for (let i = 0; i < 110; i++) {
-        const result = isDuplicateEvent('TP', `order-${i}`, Date.now());
-        expect(result).toBe(i === 0 ? false : false); // All new events should not be duplicates
-      }
+      populateWebSocketManagerDeduplicationCache(wsManager, {
+        count: 110,
+      });
 
       // Verify cache management is working by adding another event
       // This should trigger cleanup internally in the deduplication service

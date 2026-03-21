@@ -17,10 +17,11 @@ import {
 
 describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
-  let createService: () => WebSocketAuthenticationService;
+  let harness: ReturnType<typeof createWebSocketAuthenticationHarness>;
+  let createService: ReturnType<typeof createWebSocketAuthenticationHarness>['createStandardService'];
 
   beforeEach(() => {
-    const harness = createWebSocketAuthenticationHarness();
+    harness = createWebSocketAuthenticationHarness();
     service = harness.service;
     createService = harness.createStandardService;
   });

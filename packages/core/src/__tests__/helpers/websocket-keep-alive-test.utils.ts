@@ -11,6 +11,15 @@ export interface WebSocketKeepAliveHarness {
   logger: LoggerService;
   createWebSocket: (readyState?: WebSocket['readyState']) => MockWebSocket;
   createService: (interval?: number, logger?: LoggerService) => WebSocketKeepAliveService;
+  createStandardService: (options?: {
+    interval?: number;
+    logger?: LoggerService;
+  }) => WebSocketKeepAliveService;
+  createStartedService: (options?: {
+    interval?: number;
+    logger?: LoggerService;
+    websocket?: MockWebSocket;
+  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
 }
 
 export function createWebSocketKeepAliveLogger(): LoggerService {
@@ -34,6 +43,16 @@ export function createWebSocketKeepAliveHarness(): WebSocketKeepAliveHarness {
     createWebSocket: (readyState?: WebSocket['readyState']) => createMockKeepAliveWebSocket(readyState),
     createService: (interval?: number, customLogger: LoggerService | undefined = logger) =>
       createWebSocketKeepAliveService(interval, customLogger),
+    createStandardService: (options = {}) =>
+      createWebSocketKeepAliveService(options.interval ?? 20000, options.logger ?? logger),
+    createStartedService: (options = {}) => {
+      const websocket = options.websocket ?? createMockKeepAliveWebSocket();
+      const interval = options.interval ?? 20000;
+      const service = createWebSocketKeepAliveService(interval, options.logger ?? logger);
+      service.start(websocket as WebSocket);
+
+      return { service, websocket, interval };
+    },
   };
 }
 

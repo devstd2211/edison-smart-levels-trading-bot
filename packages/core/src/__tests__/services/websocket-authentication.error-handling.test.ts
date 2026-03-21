@@ -21,10 +21,13 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;
+  let harness: ReturnType<typeof createWebSocketAuthenticationHarness>;
   let createService: ReturnType<typeof createWebSocketAuthenticationHarness>['createService'];
+  let createLegacyService: ReturnType<typeof createWebSocketAuthenticationHarness>['createLegacyService'];
 
   beforeEach(() => {
-    ({ service, errorHandler, mockLogger, createService } = createWebSocketAuthenticationHarness());
+    harness = createWebSocketAuthenticationHarness();
+    ({ service, errorHandler, mockLogger, createService, createLegacyService } = harness);
   });
 
   // ===== THROW: Input Validation =====
@@ -172,10 +175,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should handle missing errorHandler in SKIP operations', () => {
-      const serviceNoHandler = createWebSocketAuthenticationService({
-        logger: mockLogger,
-        withErrorHandler: false,
-      });
+      const serviceNoHandler = createLegacyService({ logger: mockLogger });
 
       expect(() => {
         serviceNoHandler.validateCredentials('short', 'short');
@@ -312,10 +312,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== Backward Compatibility =====
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const serviceNoHandler = createWebSocketAuthenticationService({
-        logger: mockLogger,
-        withErrorHandler: false,
-      });
+      const serviceNoHandler = createLegacyService({ logger: mockLogger });
 
       const { apiKey, apiSecret } = createWebSocketAuthCredentials();
       const result = serviceNoHandler.generateAuthPayload(apiKey, apiSecret);
@@ -332,10 +329,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should throw on validation errors even without ErrorHandler', () => {
-      const serviceNoHandler = createWebSocketAuthenticationService({
-        logger: undefined,
-        withErrorHandler: false,
-      });
+      const serviceNoHandler = createLegacyService({ logger: undefined });
 
       expect(() => {
         const { apiSecret } = createWebSocketAuthCredentials();

@@ -9,7 +9,6 @@ import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
   createWallTrackerConfig,
   createWallTrackerHarness,
-  createWallTrackerServiceWithHarness,
   detectWallTrackerWalls,
 } from '../helpers/wall-tracker-test.utils';
 
@@ -17,16 +16,17 @@ describe('WallTrackerService', () => {
   let service: WallTrackerService;
   let logger: LoggerService;
   let config: WallTrackingConfig;
+  let harness: ReturnType<typeof createWallTrackerHarness>;
 
   beforeEach(() => {
-    ({ service, logger, config } = createWallTrackerHarness({ withErrorHandler: false }));
+    harness = createWallTrackerHarness({ withErrorHandler: false });
+    ({ service, logger, config } = harness);
   });
 
   const createService = (configOverrides?: Partial<WallTrackingConfig>) =>
-    createWallTrackerServiceWithHarness({
-      config: configOverrides ? createWallTrackerConfig(configOverrides) : config,
+    harness.createLegacyService({
+      configOverrides: configOverrides ?? config,
       logger,
-      withErrorHandler: false,
     });
 
   describe('detectWall', () => {

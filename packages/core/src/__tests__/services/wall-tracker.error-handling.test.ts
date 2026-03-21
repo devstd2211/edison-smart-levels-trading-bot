@@ -26,6 +26,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let harness: ReturnType<typeof createWallTrackerHarness>;
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
@@ -33,9 +34,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   });
 
   beforeEach(() => {
-    ({ service, logger: mockLogger, errorHandler } = createWallTrackerHarness({
+    harness = createWallTrackerHarness({
       configOverrides: mockConfig,
-    }));
+    });
+    ({ service, logger: mockLogger, errorHandler } = harness);
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================
@@ -361,10 +363,9 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   describe('Category 5: Backward Compatibility', () => {
     it('test-8.9.28.17: Should work without ErrorHandler parameter', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerHarness({
+      const serviceWithoutErrorHandler = harness.createLegacyService({
         configOverrides: mockConfig,
-        withErrorHandler: false,
-      }).service;
+      });
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -379,10 +380,9 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.18: Should preserve existing behavior with ErrorHandler undefined', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerHarness({
+      const serviceWithoutErrorHandler = harness.createLegacyService({
         configOverrides: mockConfig,
-        withErrorHandler: false,
-      }).service;
+      });
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -405,10 +405,9 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.19: Should handle wall removal without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerHarness({
+      const serviceWithoutErrorHandler = harness.createLegacyService({
         configOverrides: mockConfig,
-        withErrorHandler: false,
-      }).service;
+      });
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -423,10 +422,9 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.20: Should detect clusters without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerHarness({
+      const serviceWithoutErrorHandler = harness.createLegacyService({
         configOverrides: mockConfig,
-        withErrorHandler: false,
-      }).service;
+      });
       const basePrice = 40000;
       const validSize = 1000;
 

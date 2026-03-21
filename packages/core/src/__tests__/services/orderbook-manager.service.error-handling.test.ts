@@ -16,12 +16,11 @@ import { WallTrackerService } from '../../services/wall-tracker.service';
 import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
-  createOrderbookLegacyService,
   createOrderbookMockLogger,
   createOrderbookManagerHarness,
-  createOrderbookServiceWithoutWallTracker,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
+  type OrderbookManagerHarness,
 } from '../helpers/orderbook-manager-test.utils';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
@@ -34,15 +33,17 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
+  let harness: OrderbookManagerHarness;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    harness = createOrderbookManagerHarness();
     ({
       service,
       mockLogger,
       mockWallTracker,
       errorHandler,
-    } = createOrderbookManagerHarness());
+    } = harness);
   });
 
   // ==========================================================================
@@ -224,7 +225,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       jest.useFakeTimers();
 
       // Service without error handler
-      const legacyService = createOrderbookLegacyService({
+      const legacyService = harness.createLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: mockWallTracker as unknown as WallTrackerService,
@@ -280,7 +281,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const legacyService = createOrderbookLegacyService({
+      const legacyService = harness.createLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: mockWallTracker as unknown as WallTrackerService,
@@ -296,7 +297,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without WallTracker', () => {
-      const serviceNoWall = createOrderbookServiceWithoutWallTracker({
+      const serviceNoWall = harness.createServiceWithoutWallTracker({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
@@ -311,7 +312,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without either ErrorHandler or WallTracker', () => {
-      const minimalService = createOrderbookLegacyService({
+      const minimalService = harness.createLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: undefined,

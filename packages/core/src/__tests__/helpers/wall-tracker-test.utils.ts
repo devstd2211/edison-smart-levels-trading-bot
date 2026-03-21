@@ -84,6 +84,27 @@ export function createWallTrackerHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardService: (serviceOptions: {
+      configOverrides?: Partial<WallTrackingConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createWallTrackerService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      configOverrides?: Partial<WallTrackingConfig>;
+      logger?: LoggerService;
+    } = {}) =>
+      createWallTrackerService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
   };
 }
 

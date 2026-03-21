@@ -29,18 +29,18 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-21)
-- Completed a three-slice websocket helper-consolidation batch:
-  - extended `packages/core/src/__tests__/helpers/websocket-authentication-test.utils.ts` with a shared standard-service path and canonical valid credentials defaults, then routed `websocket-authentication.service.test.ts` through those helpers instead of ad-hoc `harness.createService()` and short inline auth fixtures.
-  - routed `packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` through the shared credentials builders instead of repeated inline key/secret literals and repeated local valid-credential bootstrap.
-  - extended `packages/core/src/__tests__/helpers/public-websocket-test.utils.ts` with a shared standard-service path and routed `public-websocket.error-handling.test.ts` through it instead of repeated `createStandardPublicWebSocketService(...)` blocks.
-  - reviewed `services/websocket-authentication.service.ts` and `services/public-websocket.service.ts`; left production code unchanged after review.
+- Completed another three-step orderbook-adjacent helper-consolidation batch:
+  - extended `packages/core/src/__tests__/helpers/wall-tracker-test.utils.ts` with harness-backed standard and legacy service factories.
+  - routed both `packages/core/src/__tests__/services/wall-tracker.service.test.ts` and `packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts` through those shared legacy paths instead of repeated direct no-error-handler service bootstrap.
+  - extended `packages/core/src/__tests__/helpers/volume-profile-test.utils.ts` with harness-backed standard and legacy service factories, then routed `packages/core/src/__tests__/services/volume-profile.service.test.ts` through the shared legacy path instead of repeated direct `createVolumeProfileServiceWithHarness(...)` bootstrap.
+  - reviewed `services/wall-tracker.service.ts`; left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-authentication.service.test.ts` -> PASS (1/1 suite, 12/12 tests).
-  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` -> PASS (1/1 suite, 31/31 tests).
-  - `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.error-handling.test.ts` -> PASS (1/1 suite, 24/24 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/wall-tracker.service.test.ts` -> PASS (1/1 suite, 21/21 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts` -> PASS (1/1 suite, 23/23 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/volume-profile.service.test.ts` -> PASS (1/1 suite, 18/18 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent partially-normalized lifecycle/stateful slice around neighboring websocket/observability suites such as `websocket-authentication` follow-ups, `event-deduplication`, `orderbook-manager`, or other helper-light bootstrap near the refreshed public-websocket cluster.
+- Prefer the next adjacent partially-normalized constructor-heavy analytics slice such as `volume-profile.error-handling`, `whale-detection`, or another nearby service/error-handling pair adjacent to the refreshed wall-tracker / orderbook analytics cluster.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

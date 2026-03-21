@@ -13,11 +13,17 @@ export type WebSocketAuthenticationHarness = {
   errorHandler: ErrorHandler;
   mockLogger: AuthLogger;
   errorLogger: MockErrorLogger;
-  createStandardService: () => WebSocketAuthenticationService;
+  createStandardService: (options?: {
+    logger?: AuthLogger;
+    errorHandler?: ErrorHandler;
+  }) => WebSocketAuthenticationService;
   createService: (options?: {
     logger?: AuthLogger;
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
+  }) => WebSocketAuthenticationService;
+  createLegacyService: (options?: {
+    logger?: AuthLogger;
   }) => WebSocketAuthenticationService;
 };
 
@@ -60,16 +66,21 @@ export function createWebSocketAuthenticationHarness(options: {
     errorHandler: (errorHandler ?? new ErrorHandler(errorLogger)),
     mockLogger,
     errorLogger,
-    createStandardService: () =>
+    createStandardService: (serviceOptions = {}) =>
       createWebSocketAuthenticationService({
-        logger: mockLogger,
-        errorHandler,
+        logger: serviceOptions.logger ?? mockLogger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
       }),
     createService: (serviceOptions = {}) =>
       createWebSocketAuthenticationService({
         logger: serviceOptions.logger ?? mockLogger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         withErrorHandler: serviceOptions.withErrorHandler,
+      }),
+    createLegacyService: (serviceOptions = {}) =>
+      createWebSocketAuthenticationService({
+        logger: serviceOptions.logger ?? mockLogger,
+        withErrorHandler: false,
       }),
   };
 }

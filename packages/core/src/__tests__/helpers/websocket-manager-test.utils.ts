@@ -16,6 +16,26 @@ export type WebSocketManagerHarness = {
   deduplicationService: EventDeduplicationService;
   keepAliveService: WebSocketKeepAliveService;
   wsManager: WebSocketManagerService;
+  createService: (options?: {
+    configOverrides?: Partial<ExchangeConfig>;
+    symbol?: string;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    orderExecutionDetector?: OrderExecutionDetectorService;
+    authService?: WebSocketAuthenticationService;
+    deduplicationService?: EventDeduplicationService;
+    keepAliveService?: WebSocketKeepAliveService;
+  }) => WebSocketManagerService;
+  createTestnetService: (options?: {
+    configOverrides?: Partial<ExchangeConfig>;
+    symbol?: string;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    orderExecutionDetector?: OrderExecutionDetectorService;
+    authService?: WebSocketAuthenticationService;
+    deduplicationService?: EventDeduplicationService;
+    keepAliveService?: WebSocketKeepAliveService;
+  }) => WebSocketManagerService;
 };
 
 export type WebSocketManagerInternalState = {
@@ -112,6 +132,31 @@ export function createWebSocketManagerHarness(options: {
     deduplicationService,
     keepAliveService,
     wsManager,
+    createService: (serviceOptions = {}) =>
+      createWebSocketManagerService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        symbol: serviceOptions.symbol ?? options.symbol,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        orderExecutionDetector: serviceOptions.orderExecutionDetector ?? orderExecutionDetector,
+        authService: serviceOptions.authService ?? authService,
+        deduplicationService: serviceOptions.deduplicationService ?? deduplicationService,
+        keepAliveService: serviceOptions.keepAliveService ?? keepAliveService,
+      }),
+    createTestnetService: (serviceOptions = {}) =>
+      createWebSocketManagerService({
+        configOverrides: {
+          testnet: true,
+          ...(serviceOptions.configOverrides ?? options.configOverrides),
+        },
+        symbol: serviceOptions.symbol ?? options.symbol,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        orderExecutionDetector: serviceOptions.orderExecutionDetector ?? orderExecutionDetector,
+        authService: serviceOptions.authService ?? authService,
+        deduplicationService: serviceOptions.deduplicationService ?? deduplicationService,
+        keepAliveService: serviceOptions.keepAliveService ?? keepAliveService,
+      }),
   };
 }
 
@@ -195,4 +240,28 @@ export function createWebSocketManagerBackoffDelays(options: {
   return Array.from({ length: attempts }, (_, index) =>
     Math.min(baseDelay * Math.pow(multiplier, index), maxDelay),
   );
+}
+
+export function populateWebSocketManagerDeduplicationCache(
+  manager: WebSocketManagerService,
+  options: {
+    count: number;
+    eventType?: string;
+    idPrefix?: string;
+    startTime?: number;
+    timeStepMs?: number;
+  },
+): void {
+  const {
+    count,
+    eventType = 'TP',
+    idPrefix = 'order-',
+    startTime = Date.now(),
+    timeStepMs = 1,
+  } = options;
+
+  const isDuplicateEvent = getWebSocketManagerDuplicateEventChecker(manager);
+  for (let index = 0; index < count; index++) {
+    isDuplicateEvent(eventType, `${idPrefix}${index}`, startTime + (index * timeStepMs));
+  }
 }

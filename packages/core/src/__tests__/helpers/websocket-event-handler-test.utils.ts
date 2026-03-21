@@ -7,7 +7,7 @@ import { TelegramService } from '../../services/telegram.service';
 import { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { LoggerService, Position, PositionSide } from '../../types/legacy';
-import type { TakeProfitFilledEvent } from '../../types/legacy';
+import type { OrderFilledEvent, StopLossFilledEvent, TakeProfitFilledEvent } from '../../types/legacy';
 
 export type WebSocketEventHandlerHarness = {
   handler: WebSocketEventHandler;
@@ -18,6 +18,21 @@ export type WebSocketEventHandlerHarness = {
   mockJournal: jest.Mocked<TradingJournalService>;
   mockTelegram: jest.Mocked<TelegramService>;
   mockLogger: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
+  createHandler: (options?: {
+    mockPositionManager?: jest.Mocked<PositionLifecycleService>;
+    mockPositionExitingService?: jest.Mocked<PositionExitingService>;
+    mockBybitService?: jest.Mocked<IExchange>;
+    mockWebSocketManager?: jest.Mocked<WebSocketManagerService>;
+    mockJournal?: jest.Mocked<TradingJournalService>;
+    mockTelegram?: jest.Mocked<TelegramService>;
+    mockLogger?: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
+  }) => WebSocketEventHandler;
+  createCloseScenarioHandler: (options?: {
+    position?: Position;
+    currentPrice?: number | Error;
+    lastCloseReason?: 'SL' | 'TP' | 'TRAILING' | null;
+    existingTrade?: unknown;
+  }) => { handler: WebSocketEventHandler; position: Position };
 };
 
 export function createMockWebSocketEventPosition(
@@ -58,6 +73,30 @@ export function createMockTakeProfitFilledEvent(
     orderId: 'tp-order-1',
     avgPrice: 46000,
     cumExecQty: 0.05,
+    ...overrides,
+  };
+}
+
+export function createMockOrderFilledEvent(
+  overrides: Partial<OrderFilledEvent> = {},
+): OrderFilledEvent {
+  return {
+    orderId: 'order-456',
+    symbol: 'BTCUSDT',
+    side: 'Buy',
+    execQty: '0.1',
+    execPrice: '45500',
+    ...overrides,
+  };
+}
+
+export function createMockStopLossFilledEvent(
+  overrides: Partial<StopLossFilledEvent> = {},
+): StopLossFilledEvent {
+  return {
+    orderId: 'sl-order-1',
+    avgPrice: 44000,
+    cumExecQty: 0.1,
     ...overrides,
   };
 }
@@ -211,5 +250,32 @@ export function createWebSocketEventHandlerHarness(): WebSocketEventHandlerHarne
     mockJournal,
     mockTelegram,
     mockLogger,
+    createHandler: (options = {}) =>
+      createWebSocketEventHandler({
+        mockPositionManager: options.mockPositionManager ?? mockPositionManager,
+        mockPositionExitingService: options.mockPositionExitingService ?? mockPositionExitingService,
+        mockBybitService: options.mockBybitService ?? mockBybitService,
+        mockWebSocketManager: options.mockWebSocketManager ?? mockWebSocketManager,
+        mockJournal: options.mockJournal ?? mockJournal,
+        mockTelegram: options.mockTelegram ?? mockTelegram,
+        mockLogger: options.mockLogger ?? mockLogger,
+      }),
+    createCloseScenarioHandler: (options = {}) => {
+      const handler = createWebSocketEventHandler({
+        mockPositionManager,
+        mockPositionExitingService,
+        mockBybitService,
+        mockWebSocketManager,
+        mockJournal,
+        mockTelegram,
+        mockLogger,
+      });
+      const position = configureWebSocketCloseScenario(
+        { mockBybitService, mockPositionManager, mockWebSocketManager, mockJournal },
+        options,
+      );
+
+      return { handler, position };
+    },
   };
 }

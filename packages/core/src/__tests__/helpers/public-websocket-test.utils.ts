@@ -40,6 +40,25 @@ export type PublicWebSocketHarness = {
       Omit<PublicWebSocketServiceOptions, 'mockConfig' | 'mockTimeframeProvider' | 'loggerService'>
     > & { withErrorHandler?: boolean },
   ) => PublicWebSocketService;
+  createLegacyService: (overrides?: {
+    symbol?: string;
+    btcConfirmation?: {
+      enabled?: boolean;
+      timeframe?: string;
+      symbol?: string;
+      lookbackCandles?: number;
+    };
+  }) => PublicWebSocketService;
+  createBtcConfiguredService: (overrides?: {
+    symbol?: string;
+    withErrorHandler?: boolean;
+    btcConfirmation?: {
+      enabled?: boolean;
+      timeframe?: string;
+      symbol?: string;
+      lookbackCandles?: number;
+    };
+  }) => PublicWebSocketService;
 };
 
 export type PublicWebSocketServiceOptions = {
@@ -194,6 +213,38 @@ export function createPublicWebSocketHarness(options: {
         symbol: overrides.symbol,
         btcConfirmation: overrides.btcConfirmation,
       }),
+    createLegacyService: (overrides = {}) =>
+      createPublicWebSocketService({
+        mockConfig,
+        mockTimeframeProvider,
+        loggerService,
+        errorHandlerService: undefined,
+        symbol: overrides.symbol,
+        btcConfirmation: overrides.btcConfirmation,
+      }),
+    createBtcConfiguredService: (overrides = {}) =>
+      createStandardPublicWebSocketService(
+        {
+          createService: (serviceOverrides = {}) =>
+            createPublicWebSocketService({
+              mockConfig,
+              mockTimeframeProvider,
+              loggerService,
+              errorHandlerService:
+                serviceOverrides.withErrorHandler === false
+                  ? undefined
+                  : serviceOverrides.errorHandlerService ?? errorHandlerService,
+              symbol: serviceOverrides.symbol,
+              btcConfirmation: serviceOverrides.btcConfirmation,
+            }),
+          errorHandlerService,
+        },
+        {
+          symbol: overrides.symbol,
+          withErrorHandler: overrides.withErrorHandler,
+          btcConfirmation: overrides.btcConfirmation ?? createPublicWebSocketBtcConfirmationConfig(),
+        },
+      ),
   };
 }
 

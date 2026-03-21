@@ -10,7 +10,6 @@ import {
   advanceKeepAliveIntervals,
   createWebSocketKeepAliveHarness,
   setMockWebSocketReadyState,
-  startWebSocketKeepAlive,
   type MockWebSocket,
   type WebSocketKeepAliveHarness,
 } from '../helpers/websocket-keep-alive-test.utils';
@@ -41,7 +40,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('start', () => {
     it('should create ping interval when started', () => {
-      service = harness.createService(20000, logger);
+      service = harness.createStandardService({ interval: 20000, logger });
 
       service.start(mockWs as WebSocket);
 
@@ -49,7 +48,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should send ping messages at configured interval', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 5000,
         logger,
         websocket: mockWs,
@@ -68,7 +67,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should use default ping interval (20 seconds)', () => {
-      service = harness.createService(undefined, logger);
+      service = harness.createStandardService({ logger });
 
       service.start(mockWs as WebSocket);
 
@@ -82,7 +81,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should send correct ping payload', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 5000,
         logger,
         websocket: mockWs,
@@ -93,7 +92,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should stop existing interval before starting new one', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
       const mockWs2 = harness.createWebSocket();
 
       service.start(mockWs as WebSocket);
@@ -107,7 +106,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should only send ping when WebSocket is OPEN', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CONNECTING);
 
       service.start(mockWs as WebSocket);
@@ -125,7 +124,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle CLOSING state', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CLOSING);
 
       service.start(mockWs as WebSocket);
@@ -135,7 +134,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle CLOSED state', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CLOSED);
 
       service.start(mockWs as WebSocket);
@@ -147,7 +146,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('stop', () => {
     it('should clear ping interval when stopped', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
 
       service.start(mockWs as WebSocket);
       expect(jest.getTimerCount()).toBeGreaterThan(0);
@@ -157,7 +156,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should prevent further pings after stop', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 5000,
         logger,
         websocket: mockWs,
@@ -173,7 +172,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should be safe to call stop multiple times', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
 
       service.start(mockWs as WebSocket);
       service.stop();
@@ -184,7 +183,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should be safe to call stop without start', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
 
       expect(() => {
         service.stop();
@@ -194,7 +193,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Lifecycle', () => {
     it('should handle start-stop-start cycle', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
 
       // First start
       service.start(mockWs as WebSocket);
@@ -213,7 +212,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle multiple WebSocket instances', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
       const mockWs1 = harness.createWebSocket();
       const mockWs2 = harness.createWebSocket();
 
@@ -234,7 +233,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Interval Configuration', () => {
     it('should respect custom ping interval', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 3000,
         logger,
         websocket: mockWs,
@@ -251,7 +250,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle very short intervals', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 100,
         logger,
         websocket: mockWs,
@@ -263,7 +262,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle very long intervals', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 60000,
         logger,
         websocket: mockWs,
@@ -282,7 +281,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Concurrent Operations', () => {
     it('should handle rapid start/stop operations', () => {
-      service = harness.createService(5000, logger);
+      service = harness.createStandardService({ interval: 5000, logger });
 
       service.start(mockWs as WebSocket);
       service.stop();
@@ -294,7 +293,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle state changes during ping', () => {
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 5000,
         logger,
         websocket: mockWs,
@@ -316,7 +315,7 @@ describe('WebSocketKeepAliveService', () => {
       const mockLogger = createWebSocketKeepAliveHarness().logger;
       jest.spyOn(mockLogger, 'debug');
 
-      ({ service } = startWebSocketKeepAlive(harness, {
+      ({ service } = harness.createStartedService({
         interval: 5000,
         logger: mockLogger,
         websocket: mockWs,
@@ -327,7 +326,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should work without logger', () => {
-      service = harness.createService(5000, undefined); // No logger
+      service = harness.createStandardService({ interval: 5000, logger: undefined }); // No logger
 
       expect(() => {
         service.start(mockWs as WebSocket);

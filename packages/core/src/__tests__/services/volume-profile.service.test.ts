@@ -9,23 +9,23 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createVolumeProfileHarness,
-  createVolumeProfileServiceWithHarness,
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileService;
   let logger: LoggerService;
   let config: VolumeProfileConfig;
+  let harness: ReturnType<typeof createVolumeProfileHarness>;
 
   beforeEach(() => {
-    ({ service, logger, config } = createVolumeProfileHarness({ withErrorHandler: false }));
+    harness = createVolumeProfileHarness({ withErrorHandler: false });
+    ({ service, logger, config } = harness);
   });
 
   const createService = (configOverrides?: Partial<VolumeProfileConfig>) =>
-    createVolumeProfileServiceWithHarness({
+    harness.createLegacyService({
       configOverrides: configOverrides ?? config,
       logger,
-      withErrorHandler: false,
     });
 
   describe('initialization', () => {
