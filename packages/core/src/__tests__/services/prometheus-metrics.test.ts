@@ -19,6 +19,8 @@ import type { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createPrometheusMetricsHarness,
+  createStandardPrometheusMetricsService,
+  createStartedPrometheusMetricsService,
   type PrometheusMetricsHarness,
 } from '../helpers/prometheus-metrics-test.utils';
 
@@ -34,7 +36,13 @@ describe('PrometheusMetricsService', () => {
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler;
     trackedServices = [];
-    service = harness.createTrackedService(trackedServices, {}, mockLogger, errorHandler);
+    service = createStandardPrometheusMetricsService(
+      harness,
+      trackedServices,
+      {},
+      mockLogger,
+      errorHandler,
+    );
   });
 
   afterEach(() => {
@@ -47,12 +55,19 @@ describe('PrometheusMetricsService', () => {
 
   describe('Initialization', () => {
     it('should initialize with default config', () => {
-      const svc = harness.createTrackedService(trackedServices, undefined, undefined, undefined);
+      const svc = createStandardPrometheusMetricsService(
+        harness,
+        trackedServices,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(svc).toBeDefined();
     });
 
     it('should initialize with custom prefix', () => {
-      const svc = harness.createTrackedService(
+      const svc = createStandardPrometheusMetricsService(
+        harness,
         trackedServices,
         { prefix: 'my_bot_' },
         mockLogger,
@@ -62,7 +77,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with logger', () => {
-      const svc = harness.createTrackedService(trackedServices, {}, mockLogger, undefined);
+      const svc = createStandardPrometheusMetricsService(harness, trackedServices, {}, mockLogger, undefined);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('initialized'),
         expect.any(Object)
@@ -70,7 +85,8 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = harness.createStartedTrackedService(
+      const svc = createStartedPrometheusMetricsService(
+        harness,
         trackedServices,
         { collectInterval: 1000 },
         mockLogger,
@@ -80,7 +96,8 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with default labels', () => {
-      const svc = harness.createTrackedService(
+      const svc = createStandardPrometheusMetricsService(
+        harness,
         trackedServices,
         {
           defaultLabels: {
@@ -345,7 +362,8 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = harness.createStartedTrackedService(
+      const svc = createStartedPrometheusMetricsService(
+        harness,
         trackedServices,
         { collectInterval: 100 },
         mockLogger,
@@ -374,7 +392,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without logger', () => {
-      const svc = harness.createTrackedService(trackedServices, undefined, undefined, undefined);
+      const svc = createStandardPrometheusMetricsService(harness, trackedServices, undefined, undefined, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
@@ -383,7 +401,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without errorHandler', () => {
-      const svc = harness.createTrackedService(trackedServices, {}, mockLogger, undefined);
+      const svc = createStandardPrometheusMetricsService(harness, trackedServices, {}, mockLogger, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);

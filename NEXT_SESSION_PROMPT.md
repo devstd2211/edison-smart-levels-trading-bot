@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-21)
-- Completed a three-step `timeframe-weighting` helper-consolidation follow-up:
-  - extended `packages/core/src/__tests__/helpers/timeframe-weighting-test.utils.ts` with shared standard and legacy service factory paths.
-  - routed the main creation path in `packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts` through the shared standard factory instead of the generic local harness create method.
-  - routed the backward-compatibility assertions in the same suite through the shared legacy factory instead of ad hoc no-error-handler harness instances; reviewed `services/timeframe-weighting.service.ts` and left production code unchanged after review.
+- Completed a three-step monitoring helper-consolidation batch:
+  - extended `packages/core/src/__tests__/helpers/health-check-test.utils.ts` with a shared standard service path and routed the direct service bootstrap points in `packages/core/src/__tests__/services/health-check.test.ts` through it instead of repeated raw harness `createService(...)` calls.
+  - extended `packages/core/src/__tests__/helpers/monitoring-server-test.utils.ts` with shared standard and started server factory paths and routed `packages/core/src/__tests__/services/monitoring-server.test.ts` through them instead of repeated direct harness `createServer(...)` / `startServer(...)` calls.
+  - extended `packages/core/src/__tests__/helpers/prometheus-metrics-test.utils.ts` with shared standard and started tracked-service factory paths and routed `packages/core/src/__tests__/services/prometheus-metrics.test.ts` through them instead of repeated direct harness `createTrackedService(...)` / `createStartedTrackedService(...)` calls; reviewed `packages/core/src/services/health-check.service.ts`, `packages/core/src/services/monitoring-server.service.ts`, and `packages/core/src/services/prometheus-metrics.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts` -> PASS (1/1 suite, 27/27 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/health-check.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts` -> PASS (3/3 suites, 68/68 tests).
   - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent partially-normalized constructor-heavy analytics slice next to the refreshed funding/timeframe cluster, such as `multi-timeframe-trend.error-handling`, `liquidity-heatmap.error-handling`, or another nearby suite that still mixes local bootstrap with shared helpers.
+- Prefer the next adjacent partially-normalized monitoring/service slice next to the refreshed `health-check` / `monitoring-server` / `prometheus-metrics` area, such as `console-dashboard.error-handling`, `logger.service.error-handling`, or another nearby suite that still mixes local bootstrap with shared helpers.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

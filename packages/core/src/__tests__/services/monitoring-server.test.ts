@@ -21,6 +21,8 @@ import type { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createMonitoringServerHarness,
+  createStandardMonitoringServer,
+  createStartedMonitoringServer,
   type MonitoringServerHarness,
 } from '../helpers/monitoring-server-test.utils';
 
@@ -52,7 +54,7 @@ describe('MonitoringServer', () => {
 
   describe('GET /metrics', () => {
     it('should return Prometheus metrics in text format', async () => {
-      server = await harness.startServer({ port: 9091 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9091 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/metrics')
@@ -64,7 +66,8 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when metrics service not available', async () => {
-      server = await harness.startServer(
+      server = await createStartedMonitoringServer(
+        harness,
         { port: 9092, metricsService: undefined, healthService: mockHealthService },
         trackedServers,
       );
@@ -79,7 +82,7 @@ describe('MonitoringServer', () => {
     it('should return 500 on metrics retrieval error', async () => {
       mockMetricsService.getMetrics = jest.fn().mockRejectedValue(new Error('Metrics error'));
 
-      server = await harness.startServer({ port: 9093 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9093 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/metrics')
@@ -95,7 +98,7 @@ describe('MonitoringServer', () => {
 
   describe('GET /health', () => {
     it('should return health status as JSON with 200 when healthy', async () => {
-      server = await harness.startServer({ port: 9094 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9094 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/health')
@@ -112,7 +115,7 @@ describe('MonitoringServer', () => {
         .fn()
         .mockResolvedValue(harness.createDegradedHealthStatus());
 
-      server = await harness.startServer({ port: 9095 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9095 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/health')
@@ -122,7 +125,8 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when health service not available', async () => {
-      server = await harness.startServer(
+      server = await createStartedMonitoringServer(
+        harness,
         { port: 9096, metricsService: mockMetricsService, healthService: undefined },
         trackedServers,
       );
@@ -141,7 +145,7 @@ describe('MonitoringServer', () => {
 
   describe('Kubernetes Probes', () => {
     it('should return liveness status at /health/live', async () => {
-      server = await harness.startServer({ port: 9097 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9097 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/health/live')
@@ -152,7 +156,7 @@ describe('MonitoringServer', () => {
     });
 
     it('should return readiness status at /health/ready', async () => {
-      server = await harness.startServer({ port: 9098 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9098 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/health/ready')
@@ -169,7 +173,7 @@ describe('MonitoringServer', () => {
 
   describe('Error Handling', () => {
     it('should handle server start/stop lifecycle', async () => {
-      server = harness.createServer({ port: 9099 }, trackedServers);
+      server = createStandardMonitoringServer(harness, { port: 9099 }, trackedServers);
 
       expect(server.isRunning()).toBe(false);
 
@@ -178,7 +182,7 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 404 for unknown routes', async () => {
-      server = await harness.startServer({ port: 9100 }, trackedServers);
+      server = await createStartedMonitoringServer(harness, { port: 9100 }, trackedServers);
 
       const response = await request(harness.getBaseUrl(server))
         .get('/unknown')

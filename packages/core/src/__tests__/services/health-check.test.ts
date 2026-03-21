@@ -16,6 +16,7 @@
 import { HealthCheckService } from '../../services/health-check.service';
 import {
   createHealthCheckHarness,
+  createStandardHealthCheckService,
   type HealthCheckTestHarness,
 } from '../helpers/health-check-test.utils';
 
@@ -25,7 +26,7 @@ describe('HealthCheckService', () => {
 
   beforeEach(() => {
     harness = createHealthCheckHarness();
-    service = harness.createService();
+    service = createStandardHealthCheckService(harness);
   });
 
   // ==========================================================================
@@ -56,7 +57,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report exchange as degraded when connection fails with error', async () => {
-      service = harness.createService({
+      service = createStandardHealthCheckService(harness, {
         exchange: harness.configureExchangeHealth({
           throwOnConnection: new Error('API error'),
         }),
@@ -84,7 +85,7 @@ describe('HealthCheckService', () => {
 
   describe('WebSocket Health', () => {
     it('should report WebSocket as healthy when connected with recent messages', async () => {
-      service = harness.createService({
+      service = createStandardHealthCheckService(harness, {
         websocket: harness.configureWebSocketHealth({
           connected: true,
           messageAgeMs: 1000,
@@ -106,7 +107,7 @@ describe('HealthCheckService', () => {
     });
 
     it('should report WebSocket as degraded when disconnected', async () => {
-      service = harness.createService({
+      service = createStandardHealthCheckService(harness, {
         websocket: harness.configureWebSocketHealth({
           connected: false,
           messageAgeMs: Date.now(),
@@ -238,7 +239,7 @@ describe('HealthCheckService', () => {
 
     it('should handle complete health check errors gracefully', async () => {
       // Mock checkExchange to throw
-      const svc = harness.createService({
+      const svc = createStandardHealthCheckService(harness, {
         exchange: undefined,
         websocket: undefined,
       });

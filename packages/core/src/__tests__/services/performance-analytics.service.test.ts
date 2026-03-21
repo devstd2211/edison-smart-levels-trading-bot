@@ -17,7 +17,7 @@ import { PerformanceAnalytics } from '../../services/performance-analytics.servi
 import { LoggerService } from '../../types/legacy';
 import {
   createPerformanceAnalyticsHarness,
-  createPerformanceAnalyticsServiceWithHarness,
+  createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
 } from '../helpers/performance-analytics-test.utils';
@@ -32,7 +32,7 @@ describe('PerformanceAnalytics Service Tests', () => {
 
   beforeEach(() => {
     const harness = createPerformanceAnalyticsHarness();
-    analytics = createPerformanceAnalyticsServiceWithHarness({
+    analytics = createLegacyPerformanceAnalyticsService({
       config: harness.config,
       journal: harness.journal,
       logger: harness.logger,

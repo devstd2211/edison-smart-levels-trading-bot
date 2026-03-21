@@ -33,8 +33,9 @@ import {
   createJournalEntryCondition,
   createJournalExitCondition,
   createJournalOpenParams,
+  createLegacyTradingJournalService,
   createTradingJournalHarness,
-  createTradingJournalService,
+  createStandardTradingJournalService,
 } from '../helpers/trading-journal-test.utils';
 
 const createEntryCondition = createJournalEntryCondition;
@@ -64,14 +65,20 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   beforeEach(() => {
     ({ journal, logger, dataDir: tempDir, errorHandler } = createTradingJournalHarness());
     createService = (options = {}) =>
-      createTradingJournalService({
+      (options.withErrorHandler === false
+        ? createLegacyTradingJournalService({
+            logger,
+            dataDir: tempDir,
+            tradeHistoryConfig: options.tradeHistoryConfig,
+            baseDeposit: options.baseDeposit,
+          })
+        : createStandardTradingJournalService({
         logger,
         dataDir: tempDir,
         tradeHistoryConfig: options.tradeHistoryConfig,
         baseDeposit: options.baseDeposit,
         errorHandler,
-        withErrorHandler: options.withErrorHandler,
-      });
+          }));
   });
 
   afterEach(() => {

@@ -30,6 +30,7 @@ import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
   createGracefulShutdownHarness,
+  createStandardGracefulShutdownManager,
   getGracefulShutdownInternals,
   getRegisteredShutdownHandler,
   createMockShutdownPosition,
@@ -135,7 +136,7 @@ describe('GracefulShutdownManager', () => {
       );
 
       // Create a new manager
-      const manager1 = gracefulShutdownHarness.createManager();
+      const manager1 = createStandardGracefulShutdownManager(gracefulShutdownHarness);
 
       // Start first shutdown (won't complete due to mocked waitEmpty)
       const promise1 = manager1.initiateShutdown('First');
@@ -155,7 +156,7 @@ describe('GracefulShutdownManager', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       // Use a separate manager instance for this test
-      const manager = gracefulShutdownHarness.createManager();
+      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
 
       try {
         await manager.initiateShutdown('User interrupt');
@@ -175,7 +176,7 @@ describe('GracefulShutdownManager', () => {
     it('should wait for action queue to empty', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const manager = gracefulShutdownHarness.createManager();
+      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
 
       try {
         await manager.initiateShutdown('Queue test');
@@ -189,7 +190,7 @@ describe('GracefulShutdownManager', () => {
     it('should emit shutdown-completed event before exit', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const manager = gracefulShutdownHarness.createManager();
+      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
 
       try {
         await manager.initiateShutdown('Test');
@@ -289,7 +290,7 @@ describe('GracefulShutdownManager', () => {
 
     it('should skip closure if disabled in config', async () => {
       const noCloseConfig = { ...mockConfig, closeAllPositions: false };
-      const noCloseManager = gracefulShutdownHarness.createManager({ config: noCloseConfig });
+      const noCloseManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { config: noCloseConfig });
 
       const position = createMockShutdownPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
@@ -340,7 +341,7 @@ describe('GracefulShutdownManager', () => {
 
     it('should skip persistence if disabled in config', async () => {
       const noPersistConfig = { ...mockConfig, persistState: false };
-      const noPersistManager = gracefulShutdownHarness.createManager({ config: noPersistConfig });
+      const noPersistManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { config: noPersistConfig });
 
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
@@ -458,7 +459,7 @@ describe('GracefulShutdownManager', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
       mockActionQueue.waitEmpty.mockRejectedValue(new Error('Queue timeout'));
 
-      const manager = gracefulShutdownHarness.createManager();
+      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
 
       try {
         await manager.initiateShutdown('Queue timeout');

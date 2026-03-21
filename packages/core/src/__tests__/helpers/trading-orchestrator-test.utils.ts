@@ -25,6 +25,14 @@ export function createTradingOrchestratorMockLogger(): TradingOrchestratorMockLo
   };
 }
 
+export function createTradingOrchestratorErrorHandlingHarness(): {
+  logger: TradingOrchestratorMockLogger;
+} {
+  return {
+    logger: createTradingOrchestratorMockLogger(),
+  };
+}
+
 export function createStrategyExecutionTestError(
   message: string,
   reason: string,

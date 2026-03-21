@@ -16,7 +16,7 @@ import { DangerLevel, LiveTradingEventType } from '../../types/legacy';
 import {
   attachMockRiskMonitorPosition,
   createRealTimeRiskMonitorPublishFailure,
-  createRealTimeRiskMonitorHarness,
+  createStandardRealTimeRiskMonitorHarness,
   seedRiskMonitorCachedFallbackScore,
   seedRiskMonitorCachedHealthScore,
   type MockRiskMonitorEventBus,
@@ -33,7 +33,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const harness = createRealTimeRiskMonitorHarness();
+    const harness = createStandardRealTimeRiskMonitorHarness();
     monitor = harness.monitor;
     mockPositionLifecycleService = harness.mockPositionService;
     mockLogger = harness.mockLogger;

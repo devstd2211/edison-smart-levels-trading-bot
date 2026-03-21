@@ -27,7 +27,7 @@ import {
   createRiskMonitorOpenedAtHoursAgo,
   createRiskMonitorOpenedAtMinutesAgo,
   createRiskMonitorDetailedPosition,
-  createRealTimeRiskMonitorHarness,
+  createStandardRealTimeRiskMonitorHarness,
   seedRiskMonitorCachedHealthScore,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
@@ -37,13 +37,13 @@ import {
 
 describe('RealTimeRiskMonitor Service Tests', () => {
   let monitor: RealTimeRiskMonitor;
-  let riskHarness: ReturnType<typeof createRealTimeRiskMonitorHarness>;
+  let riskHarness: ReturnType<typeof createStandardRealTimeRiskMonitorHarness>;
   let mockPositionService: Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
   let mockEventBus: Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
   let mockLogger: jest.Mocked<LoggerService>;
 
   beforeEach(() => {
-    riskHarness = createRealTimeRiskMonitorHarness();
+    riskHarness = createStandardRealTimeRiskMonitorHarness();
     monitor = riskHarness.monitor;
     mockPositionService = riskHarness.mockPositionService as unknown as Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
     mockEventBus = riskHarness.mockEventBus as unknown as Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;

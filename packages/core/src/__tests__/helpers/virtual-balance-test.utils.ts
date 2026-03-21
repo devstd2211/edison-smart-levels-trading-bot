@@ -61,6 +61,15 @@ export function createVirtualBalanceHarness(options: {
   };
 }
 
+export function createStandardVirtualBalanceService(options: {
+  baseDeposit?: number;
+  dataDir?: string;
+  logger?: VirtualBalanceLogger;
+  errorHandler?: ErrorHandler;
+} = {}): VirtualBalanceService {
+  return createVirtualBalanceHarness(options).service;
+}
+
 export function createVirtualBalanceService(options: {
   baseDeposit?: number;
   dataDir?: string;

@@ -12,8 +12,8 @@ import { describe, it, expect, jest } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy, StrategyExecutionError, EntryValidationError } from '../../errors';
 import {
   createEntryValidationTestError,
+  createTradingOrchestratorErrorHandlingHarness,
   createStrategyExecutionTestError,
-  createTradingOrchestratorMockLogger,
   TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
   TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
   type TradingOrchestratorMockLogger,
@@ -23,7 +23,7 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   let mockLogger: TradingOrchestratorMockLogger;
 
   beforeEach(() => {
-    mockLogger = createTradingOrchestratorMockLogger();
+    ({ logger: mockLogger } = createTradingOrchestratorErrorHandlingHarness());
     jest.clearAllMocks();
   });
 

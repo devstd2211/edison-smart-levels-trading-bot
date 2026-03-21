@@ -12,6 +12,7 @@ import { ValidationError } from '../../errors/DomainErrors';
 import {
   cleanupVirtualBalanceTempDir,
   createVirtualBalanceHarness,
+  createStandardVirtualBalanceService,
   createVirtualBalanceService,
   createVirtualBalanceTempDir,
   type VirtualBalanceLogger,
@@ -24,12 +25,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let testDataDir: string;
   let testPath: string;
   const createService = (baseDeposit: number = 100): VirtualBalanceService =>
-    createVirtualBalanceHarness({
+    createStandardVirtualBalanceService({
       baseDeposit,
       dataDir: testDataDir,
       logger: mockLogger,
       errorHandler,
-    }).service;
+    });
 
   beforeEach(() => {
     testDataDir = createVirtualBalanceTempDir();
@@ -72,12 +73,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
     it('should successfully initialize with valid deposit', () => {
       expect(() => {
-        service = createVirtualBalanceHarness({
+        service = createStandardVirtualBalanceService({
           baseDeposit: 100,
           dataDir: testDataDir,
           logger: mockLogger,
           errorHandler,
-        }).service;
+        });
       }).not.toThrow();
 
       expect(service.getCurrentBalance()).toBe(100);
@@ -87,12 +88,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   // ========== SCENARIO 2: File Load Errors (RETRY) ==========
   describe('Scenario 2: File load with RETRY strategy', () => {
     it('should initialize with fresh state when file does not exist', () => {
-      service = createVirtualBalanceHarness({
+      service = createStandardVirtualBalanceService({
         baseDeposit: 50,
         dataDir: testDataDir,
         logger: mockLogger,
         errorHandler,
-      }).service;
+      });
       expect(service.getCurrentBalance()).toBe(50);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('✅'),
@@ -116,12 +117,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       fs.mkdirSync(testDataDir, { recursive: true });
       fs.writeFileSync(testPath, JSON.stringify(validState), 'utf-8');
 
-      service = createVirtualBalanceHarness({
+      service = createStandardVirtualBalanceService({
         baseDeposit: 100,
         dataDir: testDataDir,
         logger: mockLogger,
         errorHandler,
-      }).service;
+      });
       expect(service.getCurrentBalance()).toBe(150.5);
       expect(service.getState().totalTrades).toBe(5);
     });
@@ -141,12 +142,12 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       fs.mkdirSync(testDataDir, { recursive: true });
       fs.writeFileSync(testPath, JSON.stringify(oldState), 'utf-8');
 
-      service = createVirtualBalanceHarness({
+      service = createStandardVirtualBalanceService({
         baseDeposit: 120,
         dataDir: testDataDir,
         logger: mockLogger,
         errorHandler,
-      }).service;
+      });
 
       // Should update base deposit
       expect(service.getBaseDeposit()).toBe(120);
@@ -464,12 +465,12 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   const createIntegrationService = (baseDeposit: number = 100): VirtualBalanceService =>
-    createVirtualBalanceHarness({
+    createStandardVirtualBalanceService({
       baseDeposit,
       dataDir: testDataDir,
       logger: mockLogger,
       errorHandler,
-    }).service;
+    });
 
   beforeEach(() => {
     testDataDir = createVirtualBalanceTempDir('virtual-balance-integration-');

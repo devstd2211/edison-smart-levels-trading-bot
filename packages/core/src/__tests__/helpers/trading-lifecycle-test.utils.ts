@@ -197,3 +197,31 @@ export function createTradingLifecycleTestHarness(): TradingLifecycleTestHarness
     },
   };
 }
+
+export function createStandardTradingLifecycleManager(
+  harness: Pick<TradingLifecycleTestHarness, 'createManager'>,
+  overrides?: Partial<{
+    config: PositionLifecycleConfig;
+    logger: MockTradingLifecycleLogger;
+    eventBus: MockTradingLifecycleEventBus;
+    actionQueue: MockTradingLifecycleActionQueue;
+    errorHandler: jest.Mocked<ErrorHandler>;
+  }>,
+): TradingLifecycleManager {
+  return harness.createManager(overrides);
+}
+
+export function createLegacyTradingLifecycleManager(
+  harness: Pick<TradingLifecycleTestHarness, 'createManager'>,
+  overrides?: Partial<{
+    config: PositionLifecycleConfig;
+    logger: MockTradingLifecycleLogger;
+    eventBus: MockTradingLifecycleEventBus;
+    actionQueue: MockTradingLifecycleActionQueue;
+  }>,
+): TradingLifecycleManager {
+  return harness.createManager({
+    ...overrides,
+    errorHandler: undefined,
+  });
+}

@@ -23,6 +23,7 @@ import {
   createGracefulShutdownSavedState,
   createGracefulShutdownHarness,
   createMockShutdownPosition,
+  createStandardGracefulShutdownManager,
   defaultGracefulShutdownConfig,
   getGracefulShutdownInternals,
   setupGracefulShutdownFsMocks,
@@ -272,7 +273,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
       (fs.mkdirSync as jest.Mock).mockImplementationOnce(() => {});
 
-      const newManager = gracefulShutdownHarness.createManager({ stateDirectory: './test-new-dir' });
+      const newManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { stateDirectory: './test-new-dir' });
 
       newManager.registerShutdownHandlers();
 
@@ -288,7 +289,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         throw new Error('EACCES: permission denied');
       });
 
-      const newManager = gracefulShutdownHarness.createManager({ stateDirectory: './test-permission-denied' });
+      const newManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { stateDirectory: './test-permission-denied' });
 
       newManager.registerShutdownHandlers();
 
@@ -306,7 +307,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let constructorFailed = false;
       try {
-        const newManager = gracefulShutdownHarness.createManager({
+        const newManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, {
           config: mockConfig,
           stateDirectory: './test-fs-error',
         });

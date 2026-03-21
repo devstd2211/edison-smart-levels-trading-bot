@@ -62,6 +62,27 @@ export function createTelegramHarness() {
   };
 }
 
+export function createStandardTelegramService(options: {
+  config?: TelegramConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): TelegramService {
+  return createTelegramService({
+    ...options,
+    withErrorHandler: true,
+  });
+}
+
+export function createLegacyTelegramService(options: {
+  config?: TelegramConfig;
+  logger?: LoggerService;
+} = {}): TelegramService {
+  return createTelegramService({
+    ...options,
+    withErrorHandler: false,
+  });
+}
+
 export function createTelegramService(options: {
   config?: TelegramConfig;
   logger?: LoggerService;

@@ -142,7 +142,7 @@ export const createPerformanceAnalyticsService = ({
     errorHandler,
   );
 
-export const createPerformanceAnalyticsServiceWithHarness = ({
+export const createStandardPerformanceAnalyticsService = ({
   config,
   journal,
   logger,
@@ -158,6 +158,21 @@ export const createPerformanceAnalyticsServiceWithHarness = ({
     journal,
     logger,
     errorHandler,
+  });
+
+export const createLegacyPerformanceAnalyticsService = ({
+  config,
+  journal,
+  logger,
+}: {
+  config?: PerformanceAnalyticsConfig;
+  journal?: PerformanceAnalyticsMockJournal;
+  logger?: PerformanceAnalyticsMockLogger;
+} = {}): PerformanceAnalytics =>
+  createPerformanceAnalyticsService({
+    config,
+    journal,
+    logger,
   });
 
 export const createPerformanceAnalyticsHarness = () => {
@@ -198,11 +213,18 @@ export const createPerformanceAnalyticsFactory = ({
   errorHandler,
   createService: (overrides: {
     errorHandler?: jest.Mocked<ErrorHandler>;
+    withErrorHandler?: boolean;
   } = {}) =>
-    createPerformanceAnalyticsService({
-      config,
-      journal,
-      logger,
-      errorHandler: overrides.errorHandler,
-    }),
+    (overrides.withErrorHandler === false
+      ? createLegacyPerformanceAnalyticsService({
+          config,
+          journal,
+          logger,
+        })
+      : createStandardPerformanceAnalyticsService({
+          config,
+          journal,
+          logger,
+          errorHandler: overrides.errorHandler ?? errorHandler,
+        })),
 });

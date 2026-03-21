@@ -20,8 +20,8 @@ import {
   createJournalCloseParams,
   createJournalOpenParams,
   createJournalTakeProfit,
+  createLegacyTradingJournalService,
   createTradingJournalHarness,
-  createTradingJournalService,
 } from '../helpers/trading-journal-test.utils';
 
 // ============================================================================
@@ -93,10 +93,9 @@ describe('TradingJournalService', () => {
       fs.writeFileSync(journalPath, JSON.stringify(testTrades, null, 2));
 
       // Create new journal instance that should load the file
-      const newJournal = createTradingJournalService({
+      const newJournal = createLegacyTradingJournalService({
         logger,
         dataDir: testDataDir,
-        withErrorHandler: false,
       });
       const loaded = newJournal.getAllTrades();
 
@@ -111,10 +110,9 @@ describe('TradingJournalService', () => {
       fs.writeFileSync(journalPath, 'not valid json {{{');
 
       // Should not throw, just log error
-      const newJournal = createTradingJournalService({
+      const newJournal = createLegacyTradingJournalService({
         logger,
         dataDir: testDataDir,
-        withErrorHandler: false,
       });
       const trades = newJournal.getAllTrades();
 
@@ -258,10 +256,9 @@ describe('TradingJournalService', () => {
       });
 
       // Create new journal instance and check if trade is loaded
-      const newJournal = createTradingJournalService({
+      const newJournal = createLegacyTradingJournalService({
         logger,
         dataDir: testDataDir,
-        withErrorHandler: false,
       });
       const trade = newJournal.getTrade('PERSIST_TEST');
 
@@ -356,10 +353,9 @@ describe('TradingJournalService', () => {
       });
 
       // Create new journal instance and verify
-      const newJournal = createTradingJournalService({
+      const newJournal = createLegacyTradingJournalService({
         logger,
         dataDir: testDataDir,
-        withErrorHandler: false,
       });
       const trade = newJournal.getTrade('CLOSE_TEST');
 
@@ -759,10 +755,9 @@ describe('TradingJournalService', () => {
       expect(journal.getAllTrades()).toHaveLength(0);
 
       // Verify persistence
-      const newJournal = createTradingJournalService({
+      const newJournal = createLegacyTradingJournalService({
         logger,
         dataDir: testDataDir,
-        withErrorHandler: false,
       });
       expect(newJournal.getAllTrades()).toHaveLength(0);
     });

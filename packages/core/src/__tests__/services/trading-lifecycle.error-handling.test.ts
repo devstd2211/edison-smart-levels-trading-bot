@@ -18,6 +18,8 @@ import {
   createMockTradingLifecycleEventBus,
   createMockTradingLifecycleLogger,
   createTrackedPositionFixture,
+  createLegacyTradingLifecycleManager,
+  createStandardTradingLifecycleManager,
   createTradingLifecycleConfig,
   createTradingLifecycleTestHarness,
   type MockTradingLifecycleActionQueue,
@@ -99,7 +101,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
     mockEventBus = harness.eventBus;
     mockActionQueue = harness.actionQueue;
     mockErrorHandler = createMockErrorHandler();
-    manager = harness.createManager({ errorHandler: mockErrorHandler });
+    manager = createStandardTradingLifecycleManager(harness, { errorHandler: mockErrorHandler });
 
     jest.clearAllMocks();
   });
@@ -527,11 +529,10 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       const newEventBus = createMockTradingLifecycleEventBus();
       const newActionQueue = createMockTradingLifecycleActionQueue();
 
-      const newManager = harness.createManager({
+      const newManager = createLegacyTradingLifecycleManager(harness, {
         logger: newLogger,
         eventBus: newEventBus,
         actionQueue: newActionQueue,
-        errorHandler: undefined,
       });
 
       newManager.start();
@@ -740,9 +741,8 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
   describe('Configuration & Edge Cases', () => {
     it('should respect automatic timeout configuration', async () => {
-      const autoManager = harness.createManager({
+      const autoManager = createLegacyTradingLifecycleManager(harness, {
         config: createConfig({ enableAutomaticTimeout: false }),
-        errorHandler: undefined,
       });
 
       const position = createTrackedPosition({
@@ -794,7 +794,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
       expect(() => {
-        harness.createManager({ errorHandler: undefined });
+        createLegacyTradingLifecycleManager(harness);
       }).not.toThrow();
     });
 

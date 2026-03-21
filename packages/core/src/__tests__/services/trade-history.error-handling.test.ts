@@ -17,8 +17,9 @@ import { JournalWriteError } from '../../errors/DomainErrors';
 import {
   cleanupTradeHistoryTempDir,
   createTradeHistoryHarness,
+  createLegacyTradeHistoryService,
   createTradeHistoryRecord,
-  createTradeHistoryService,
+  createStandardTradeHistoryService,
   type ExecuteAsyncConfig,
   type FailureError,
   type RetryError,
@@ -45,12 +46,16 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     tempDir?: string;
     errorHandler?: jest.Mocked<ErrorHandler>;
   } = {}): TradeHistoryService =>
-    createTradeHistoryService({
-      logger,
-      tempDir: options.tempDir ?? tempDir,
-      errorHandler: options.errorHandler ?? errorHandler,
-      withErrorHandler: options.withErrorHandler,
-    });
+    (options.withErrorHandler === false
+      ? createLegacyTradeHistoryService({
+          logger,
+          tempDir: options.tempDir ?? tempDir,
+        })
+      : createStandardTradeHistoryService({
+          logger,
+          tempDir: options.tempDir ?? tempDir,
+          errorHandler: options.errorHandler ?? errorHandler,
+        }));
 
   beforeEach(() => {
     const harness = createTradeHistoryHarness();

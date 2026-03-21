@@ -78,3 +78,23 @@ export function createPrometheusMetricsHarness(): PrometheusMetricsHarness {
     },
   };
 }
+
+export function createStandardPrometheusMetricsService(
+  harness: Pick<PrometheusMetricsHarness, 'createTrackedService'>,
+  trackedServices: PrometheusMetricsService[],
+  config?: MetricsConfig,
+  logger?: LoggerService,
+  handler?: ErrorHandler,
+): PrometheusMetricsService {
+  return harness.createTrackedService(trackedServices, config, logger, handler);
+}
+
+export function createStartedPrometheusMetricsService(
+  harness: Pick<PrometheusMetricsHarness, 'createStartedTrackedService'>,
+  trackedServices: PrometheusMetricsService[],
+  config?: MetricsConfig,
+  logger?: LoggerService,
+  handler?: ErrorHandler,
+): PrometheusMetricsService {
+  return harness.createStartedTrackedService(trackedServices, config, logger, handler);
+}

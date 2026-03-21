@@ -116,6 +116,31 @@ export function createTradingJournalHarness(options: {
   };
 }
 
+export function createStandardTradingJournalService(options: {
+  logger?: LoggerService;
+  dataDir?: string;
+  tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+  baseDeposit?: number;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createTradingJournalService({
+    ...options,
+    withErrorHandler: true,
+  });
+}
+
+export function createLegacyTradingJournalService(options: {
+  logger?: LoggerService;
+  dataDir?: string;
+  tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+  baseDeposit?: number;
+} = {}) {
+  return createTradingJournalService({
+    ...options,
+    withErrorHandler: false,
+  });
+}
+
 export function createTradingJournalService(options: {
   logger?: LoggerService;
   dataDir?: string;

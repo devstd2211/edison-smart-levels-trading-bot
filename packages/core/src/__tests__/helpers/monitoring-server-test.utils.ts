@@ -134,3 +134,27 @@ export function createMonitoringServerHarness(): MonitoringServerHarness {
     },
   };
 }
+
+export function createStandardMonitoringServer(
+  harness: Pick<MonitoringServerHarness, 'createServer'>,
+  options: {
+    port: number;
+    metricsService?: PrometheusMetricsService;
+    healthService?: HealthCheckService;
+  },
+  trackedServers: MonitoringServer[],
+): MonitoringServer {
+  return harness.createServer(options, trackedServers);
+}
+
+export function createStartedMonitoringServer(
+  harness: Pick<MonitoringServerHarness, 'startServer'>,
+  options: {
+    port: number;
+    metricsService?: PrometheusMetricsService;
+    healthService?: HealthCheckService;
+  },
+  trackedServers: MonitoringServer[],
+): Promise<MonitoringServer> {
+  return harness.startServer(options, trackedServers);
+}

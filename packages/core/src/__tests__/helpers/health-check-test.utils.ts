@@ -215,3 +215,10 @@ export function createHealthCheckHarness(): HealthCheckTestHarness {
     },
   };
 }
+
+export function createStandardHealthCheckService(
+  harness: Pick<HealthCheckTestHarness, 'createService'>,
+  options?: Parameters<HealthCheckTestHarness['createService']>[0],
+): HealthCheckService {
+  return harness.createService(options);
+}

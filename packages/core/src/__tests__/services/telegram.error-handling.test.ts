@@ -15,7 +15,11 @@ import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../error
 import { TelegramRateLimitError } from '../../errors/DomainErrors';
 import { UnknownTradingError, TradingError } from '../../errors/BaseError';
 import { LoggerService, Position } from '../../types/legacy';
-import { createTelegramHarness, createTelegramService } from '../helpers/telegram-test.utils';
+import {
+  createLegacyTelegramService,
+  createStandardTelegramService,
+  createTelegramHarness,
+} from '../helpers/telegram-test.utils';
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;
@@ -386,10 +390,9 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
         ok: true,
       } as unknown as Response);
 
-      const serviceWithoutHandler = createTelegramService({
+      const serviceWithoutHandler = createLegacyTelegramService({
         config: mockConfig,
         logger: mockLogger,
-        withErrorHandler: false,
       });
 
       await serviceWithoutHandler['sendMessage']('test message');
@@ -401,10 +404,9 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
     test('F2: Maintain silent failure behavior', async () => {
       fetchMock.mockRejectedValue(new Error('Network error'));
 
-      const serviceWithoutHandler = createTelegramService({
+      const serviceWithoutHandler = createLegacyTelegramService({
         config: mockConfig,
         logger: mockLogger,
-        withErrorHandler: false,
       });
 
       // Should not throw, just log
@@ -534,7 +536,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
 
   describe('Disabled Service', () => {
     test('Service disabled: skip all notifications', async () => {
-      const disabledService = createTelegramService({
+      const disabledService = createStandardTelegramService({
         config: { enabled: false },
         logger: mockLogger,
         errorHandler: mockErrorHandler,
@@ -547,7 +549,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
     });
 
     test('Service disabled: no error for missing token', async () => {
-      const disabledService = createTelegramService({
+      const disabledService = createStandardTelegramService({
         config: { enabled: true, botToken: undefined, chatId: 'test' },
         logger: mockLogger,
         errorHandler: mockErrorHandler,

@@ -328,7 +328,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
-      service = createService();
+      service = createService({ withErrorHandler: false });
     });
 
     it('should work without ErrorHandler parameter', () => {

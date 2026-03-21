@@ -162,6 +162,16 @@ export function createGracefulShutdownHarness(options: {
   };
 }
 
+export function createStandardGracefulShutdownManager(
+  harness: Pick<GracefulShutdownHarness, 'createManager'>,
+  options?: {
+    config?: GracefulShutdownConfig;
+    stateDirectory?: string;
+  },
+): GracefulShutdownManager {
+  return harness.createManager(options);
+}
+
 export function getGracefulShutdownInternals(
   manager: GracefulShutdownManager,
 ): { cancelAllPendingOrders: () => Promise<number> } {

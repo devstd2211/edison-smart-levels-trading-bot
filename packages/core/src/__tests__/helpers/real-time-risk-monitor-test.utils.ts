@@ -200,8 +200,12 @@ export function createRealTimeRiskMonitorHarness(): {
   };
 }
 
+export function createStandardRealTimeRiskMonitorHarness(): RealTimeRiskMonitorHarness {
+  return createRealTimeRiskMonitorHarness();
+}
+
 export function createStartedRealTimeRiskMonitorHarness(): RealTimeRiskMonitorHarness {
-  const harness = createRealTimeRiskMonitorHarness();
+  const harness = createStandardRealTimeRiskMonitorHarness();
   harness.monitor.start();
   return harness;
 }
