@@ -18,7 +18,7 @@ import { LoggerService, Position } from '../../types/legacy';
 import {
   createLegacyTelegramService,
   createStandardTelegramService,
-  createTelegramHarness,
+  createManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
@@ -26,6 +26,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let fetchMock: jest.Mock;
+  let context: ReturnType<typeof createManagedTelegramContext>;
 
   const mockConfig: TelegramConfig = {
     botToken: 'test-bot-token',
@@ -34,16 +35,15 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   };
 
   beforeEach(() => {
-    ({
-      telegramService,
-      mockLogger,
-      mockErrorHandler,
-      fetchMock,
-    } = createTelegramHarness());
+    context = createManagedTelegramContext();
+    telegramService = context.telegramService;
+    mockLogger = context.mockLogger;
+    mockErrorHandler = context.mockErrorHandler;
+    fetchMock = context.fetchMock;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    context.cleanup();
   });
 
   // ============================================================================

@@ -15,13 +15,12 @@ import { LoggerService, PositionSide, SignalType, SignalDirection, ExitType } fr
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  cleanupTradingJournalTempDir,
   createJournalExitCondition,
   createJournalCloseParams,
   createJournalOpenParams,
   createJournalTakeProfit,
   createLegacyTradingJournalService,
-  createTradingJournalHarness,
+  createManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
 // ============================================================================
@@ -37,15 +36,19 @@ describe('TradingJournalService', () => {
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
+  let context: ReturnType<typeof createManagedTradingJournalContext>;
 
   beforeEach(() => {
-    ({ journal, logger, dataDir: testDataDir } = createTradingJournalHarness({
+    context = createManagedTradingJournalContext({
       withErrorHandler: false,
-    }));
+    });
+    journal = context.journal;
+    logger = context.logger;
+    testDataDir = context.dataDir;
   });
 
   afterEach(() => {
-    cleanupTradingJournalTempDir(testDataDir);
+    context.cleanup();
   });
 
   // ============================================================================

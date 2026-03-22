@@ -20,14 +20,10 @@ import { StrategyValidationError } from '../../types/strategy-config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import {
-  cleanupStrategyLoaderTempDir,
   createStrategyLoaderAnalyzer,
-  createStrategyLoaderErrorHandler,
-  createStrategyLoaderHarness,
+  createManagedStrategyLoaderContext,
   createStrategyLoaderMetadata,
-  createStrategyLoaderService,
   createStrategyLoaderStrategy,
-  createStrategyLoaderTempDir,
 } from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
@@ -36,26 +32,21 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let testStrategiesDir: string;
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
-  let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
+  let createLoader: Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>['createLoader'];
+  let context: Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
 
   beforeEach(async () => {
-    mockErrorHandler = createStrategyLoaderErrorHandler();
-    testStrategiesDir = await createStrategyLoaderTempDir();
-    ({ service: loaderService, createLoader } = createStrategyLoaderHarness({
-      strategiesDir: testStrategiesDir,
-      errorHandler: mockErrorHandler,
-    }));
-
-    // Setup spies for file operations
-    fileReadSpy = jest.spyOn(fs, 'readFile');
-    dirReadSpy = jest.spyOn(fs, 'readdir');
+    context = await createManagedStrategyLoaderContext();
+    mockErrorHandler = context.errorHandler;
+    testStrategiesDir = context.tempDir;
+    loaderService = context.loader;
+    createLoader = context.createLoader;
+    fileReadSpy = context.fileReadSpy;
+    dirReadSpy = context.dirReadSpy;
   });
 
   afterEach(async () => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-
-    await cleanupStrategyLoaderTempDir(testStrategiesDir);
+    await context.cleanup();
   });
 
   // ============================================================================

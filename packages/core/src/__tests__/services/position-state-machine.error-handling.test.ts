@@ -25,7 +25,7 @@ import {
   createPositionStateMachineHistoryEntry,
   createInitializedPositionStateMachineService,
   createPositionStateMachinePersistedState,
-  createPositionStateMachineHarness,
+  createManagedPositionStateMachineContext,
   createMockPositionStateMachineLogger,
   ensureParentDir,
   getPositionStateSnapshot,
@@ -42,14 +42,18 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: LoggerService;
   let testDataDir: string;
   let service: PositionStateMachineService;
+  let context: ReturnType<typeof createManagedPositionStateMachineContext>;
 
   beforeEach(() => {
-    logger = createMockPositionStateMachineLogger();
-    ({ testDataDir } = createPositionStateMachineHarness({ logger }));
+    context = createManagedPositionStateMachineContext({
+      logger: createMockPositionStateMachineLogger(),
+    });
+    logger = context.logger;
+    testDataDir = context.testDataDir;
   });
 
   afterEach(async () => {
-    await removeStateMachineArtifacts(testDataDir);
+    await context.cleanup();
   });
 
   // ============================================================================
@@ -58,7 +62,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('File I/O Errors', () => {
     it('should initialize successfully with ErrorHandler', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       // Should not throw when ErrorHandler is provided
       await expect(service.initialize()).resolves.not.toThrow();
@@ -70,7 +74,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle corrupted history file gracefully', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       // Create corrupted history file
       const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
@@ -103,7 +107,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log warning when backup is also corrupted', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       // Create main state file with invalid JSON
       const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
@@ -188,7 +192,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle mixed valid and invalid state lines gracefully', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       const validState = createPositionStateMachinePersistedState({ positionId: 'pos-valid' });
       const stateFilePath = await seedStateMachineStatesFile(testDataDir, [
@@ -213,7 +217,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log statistics about loaded states', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       const states = Array.from({ length: 5 }, (_, i) =>
         createPositionStateMachinePersistedState({ positionId: `pos-${i}` }),
@@ -236,7 +240,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transition History Recovery', () => {
     it('should skip corrupted history entries and continue loading', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       const validEntry = createPositionStateMachineHistoryEntry({
         request: {
@@ -261,7 +265,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should limit history entries per position for memory efficiency', async () => {
-      ({ service } = createPositionStateMachineHarness({ logger, baseDir: testDataDir }));
+      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
 
       const entries = Array.from({ length: 1500 }, (_, i) =>
         createPositionStateMachineHistoryEntry({

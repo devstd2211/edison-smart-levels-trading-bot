@@ -19,9 +19,9 @@ import {
   attachProtectedPosition,
   attachUnprotectedPosition,
   createProtectionVerificationResult,
+  createManagedPositionMonitorContext,
   createMockMonitoredPosition,
   createPositionMonitorHarness,
-  createStandardPositionMonitorService,
   defaultPositionMonitorRiskConfig,
   runPositionMonitorCycle,
   runPositionMonitorCycles,
@@ -39,39 +39,22 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
   let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
   let positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
+  let context: ReturnType<typeof createManagedPositionMonitorContext>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    const harness = createPositionMonitorHarness({
+    context = createManagedPositionMonitorContext({
       riskConfig: defaultPositionMonitorRiskConfig,
     });
-    monitor = createStandardPositionMonitorService(
-      {
-        mockBybit: harness.mockBybit,
-        mockPositionManager: harness.mockPositionManager,
-        mockTelegram: harness.mockTelegram,
-        mockExitTypeDetector: harness.mockExitTypeDetector,
-        mockPnLCalculator: harness.mockPnLCalculator,
-        mockPositionSync: harness.mockPositionSync,
-        logger: harness.logger,
-        errorHandler: harness.errorHandler,
-      },
-      {
-        riskConfig: defaultPositionMonitorRiskConfig,
-        errorHandler: harness.errorHandler,
-      },
-    );
-    mockBybit = harness.mockBybit;
-    mockPositionManager = harness.mockPositionManager;
-    mockTelegram = harness.mockTelegram;
-    mockPositionSync = harness.mockPositionSync;
-    positionHarness = { mockPositionManager };
+    monitor = context.monitor;
+    mockBybit = context.mockBybit;
+    mockPositionManager = context.mockPositionManager;
+    mockTelegram = context.mockTelegram;
+    mockPositionSync = context.mockPositionSync;
+    positionHarness = context.positionHarness;
   });
 
   afterEach(() => {
-    monitor.stop();
-    jest.useRealTimers();
+    context.cleanup();
   });
 
   // ==========================================================================

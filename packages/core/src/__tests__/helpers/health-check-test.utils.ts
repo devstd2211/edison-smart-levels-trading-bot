@@ -43,6 +43,12 @@ export interface HealthCheckTestHarness {
   }) => HealthCheckService;
 }
 
+export interface ManagedHealthCheckContext {
+  harness: HealthCheckTestHarness;
+  service: HealthCheckService;
+  cleanup: () => void;
+}
+
 export function createHealthCheckLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);
@@ -221,4 +227,19 @@ export function createStandardHealthCheckService(
   options?: Parameters<HealthCheckTestHarness['createService']>[0],
 ): HealthCheckService {
   return harness.createService(options);
+}
+
+export function createManagedHealthCheckContext(): ManagedHealthCheckContext {
+  jest.clearAllMocks();
+
+  const harness = createHealthCheckHarness();
+
+  return {
+    harness,
+    service: createStandardHealthCheckService(harness),
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
 }

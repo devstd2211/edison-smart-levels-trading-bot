@@ -116,6 +116,56 @@ export function createTradingJournalHarness(options: {
   };
 }
 
+export interface ManagedTradingJournalContext {
+  journal: TradingJournalService;
+  logger: LoggerService;
+  dataDir: string;
+  errorHandler: ErrorHandler;
+  createService: (options?: {
+    tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+    baseDeposit?: number;
+    withErrorHandler?: boolean;
+  }) => TradingJournalService;
+  cleanup: () => void;
+}
+
+export function createManagedTradingJournalContext(options: {
+  withErrorHandler?: boolean;
+} = {}): ManagedTradingJournalContext {
+  jest.clearAllMocks();
+
+  const harness = createTradingJournalHarness({
+    withErrorHandler: options.withErrorHandler,
+  });
+
+  return {
+    journal: harness.journal,
+    logger: harness.logger,
+    dataDir: harness.dataDir,
+    errorHandler: harness.errorHandler,
+    createService: (serviceOptions = {}) =>
+      (serviceOptions.withErrorHandler === false
+        ? createLegacyTradingJournalService({
+            logger: harness.logger,
+            dataDir: harness.dataDir,
+            tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
+            baseDeposit: serviceOptions.baseDeposit,
+          })
+        : createStandardTradingJournalService({
+            logger: harness.logger,
+            dataDir: harness.dataDir,
+            tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
+            baseDeposit: serviceOptions.baseDeposit,
+            errorHandler: harness.errorHandler,
+          })),
+    cleanup: () => {
+      cleanupTradingJournalTempDir(harness.dataDir);
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createStandardTradingJournalService(options: {
   logger?: LoggerService;
   dataDir?: string;

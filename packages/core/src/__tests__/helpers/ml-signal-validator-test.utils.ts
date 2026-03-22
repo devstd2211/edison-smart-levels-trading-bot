@@ -59,6 +59,32 @@ export function createMLSignalValidatorHarness(
   };
 }
 
+export interface ManagedMLSignalValidatorContext {
+  service: MLSignalValidatorService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  cleanup: () => void;
+}
+
+export function createManagedMLSignalValidatorContext(
+  options: MLSignalValidatorServiceOptions = {},
+): ManagedMLSignalValidatorContext {
+  jest.clearAllMocks();
+
+  const harness = createMLSignalValidatorHarness(options);
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    cleanup: () => {
+      harness.service.clearHistory();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createMLSignalValidatorSignal(overrides?: Partial<Signal>): Signal {
   return {
     direction: SignalDirection.LONG,

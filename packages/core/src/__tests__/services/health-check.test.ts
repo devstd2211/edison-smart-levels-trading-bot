@@ -16,6 +16,7 @@
 import { HealthCheckService } from '../../services/health-check.service';
 import {
   createHealthCheckHarness,
+  createManagedHealthCheckContext,
   createStandardHealthCheckService,
   type HealthCheckTestHarness,
 } from '../helpers/health-check-test.utils';
@@ -23,10 +24,16 @@ import {
 describe('HealthCheckService', () => {
   let service: HealthCheckService;
   let harness: HealthCheckTestHarness;
+  let context: ReturnType<typeof createManagedHealthCheckContext>;
 
   beforeEach(() => {
-    harness = createHealthCheckHarness();
-    service = createStandardHealthCheckService(harness);
+    context = createManagedHealthCheckContext();
+    harness = context.harness;
+    service = context.service;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

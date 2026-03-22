@@ -37,6 +37,15 @@ export interface TimeServiceHarness {
   createFailingSyncService: (message?: string) => TimeService;
 }
 
+export interface ManagedTimeServiceContext {
+  harness: TimeServiceHarness;
+  timeService: TimeService;
+  mockLogger: LoggerService;
+  mockExchange: MockTimeExchange;
+  errorHandler: ErrorHandler;
+  cleanup: () => void;
+}
+
 export function createTimeServiceLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);
@@ -107,6 +116,45 @@ export function createTimeServiceHarness(): TimeServiceHarness {
       const service = this.createService();
       this.exchange.getServerTime.mockRejectedValue(new Error(message));
       return service;
+    },
+  };
+}
+
+export function createManagedTimeServiceContext(): ManagedTimeServiceContext {
+  jest.clearAllMocks();
+
+  const harness = createTimeServiceHarness();
+  const originalUseFakeTimers = jest.useFakeTimers.bind(jest);
+  const originalUseRealTimers = jest.useRealTimers.bind(jest);
+  let usingFakeTimers = false;
+
+  jest.useFakeTimers = ((...args: Parameters<typeof jest.useFakeTimers>) => {
+    usingFakeTimers = true;
+    return originalUseFakeTimers(...args);
+  }) as typeof jest.useFakeTimers;
+
+  jest.useRealTimers = ((...args: Parameters<typeof jest.useRealTimers>) => {
+    usingFakeTimers = false;
+    return originalUseRealTimers(...args);
+  }) as typeof jest.useRealTimers;
+
+  return {
+    harness,
+    timeService: harness.createService(),
+    mockLogger: harness.logger,
+    mockExchange: harness.exchange,
+    errorHandler: harness.errorHandler,
+    cleanup: () => {
+      if (usingFakeTimers) {
+        originalUseFakeTimers();
+        jest.runOnlyPendingTimers();
+        originalUseRealTimers();
+        usingFakeTimers = false;
+      }
+      jest.useFakeTimers = originalUseFakeTimers;
+      jest.useRealTimers = originalUseRealTimers;
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
     },
   };
 }

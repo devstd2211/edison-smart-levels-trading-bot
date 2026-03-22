@@ -93,3 +93,30 @@ export function createLegacyLoggerFactory() {
   return (factoryOptions: LoggerFactoryOptions = {}) =>
     createLegacyLoggerService(factoryOptions);
 }
+
+export interface ManagedLoggerTestContext {
+  testLogDir: string;
+  errorHandler: ErrorHandler;
+  createLogger: ReturnType<typeof createStandardLoggerFactory>;
+  createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
+  cleanup: () => void;
+}
+
+export function createManagedLoggerTestContext(): ManagedLoggerTestContext {
+  jest.clearAllMocks();
+
+  const testLogDir = createLoggerTestDir();
+  const errorHandler = createLoggerErrorHandler();
+
+  return {
+    testLogDir,
+    errorHandler,
+    createLogger: createStandardLoggerFactory({ errorHandler }),
+    createLegacyLogger: createLegacyLoggerFactory(),
+    cleanup: () => {
+      cleanupLoggerTestDir(testLogDir);
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

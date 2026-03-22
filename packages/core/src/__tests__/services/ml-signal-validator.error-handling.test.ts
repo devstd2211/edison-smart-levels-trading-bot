@@ -27,6 +27,7 @@ import {
   createMLSignalValidatorHarness,
   createMLSignalValidatorLogger,
   createMLSignalValidatorRecord,
+  createManagedMLSignalValidatorContext,
   createMLSignalValidatorService,
   createMLSignalValidatorSignal,
 } from '../helpers/ml-signal-validator-test.utils';
@@ -56,13 +57,17 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
+  let context: ReturnType<typeof createManagedMLSignalValidatorContext>;
 
   beforeEach(() => {
-    ({ logger, errorHandler, service } = createMLSignalValidatorHarness());
+    context = createManagedMLSignalValidatorContext();
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    service = context.service;
   });
 
   afterEach(() => {
-    service.clearHistory();
+    context.cleanup();
   });
 
   // ========================================

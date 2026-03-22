@@ -190,3 +190,33 @@ export function asPatternRecognitionInternals(
 ): PatternRecognitionInternals {
   return service as unknown as PatternRecognitionInternals;
 }
+
+export interface ManagedPatternRecognitionContext {
+  service: PatternRecognitionService;
+  logger: LoggerService;
+  errorHandler?: ErrorHandler;
+  createService: ReturnType<typeof createPatternRecognitionHarness>['createService'];
+  cleanup: () => void;
+}
+
+export function createManagedPatternRecognitionContext(options: {
+  config?: Partial<PatternRecognitionConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}): ManagedPatternRecognitionContext {
+  jest.clearAllMocks();
+
+  const harness = createPatternRecognitionHarness(options);
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    createService: harness.createService,
+    cleanup: () => {
+      harness.service.clearHistory();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

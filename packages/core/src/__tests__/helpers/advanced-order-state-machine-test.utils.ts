@@ -82,3 +82,31 @@ export function createAdvancedOrderStateMachineService(options?: {
     ? createLegacyAdvancedOrderStateMachineService(options)
     : createStandardAdvancedOrderStateMachineService(options);
 }
+
+export interface ManagedAdvancedOrderStateMachineContext {
+  service: AdvancedOrderStateMachineService;
+  logger: AdvancedOrderStateMachineMockLogger;
+  errorHandler?: ErrorHandler;
+  cleanup: () => void;
+}
+
+export function createManagedAdvancedOrderStateMachineContext(options?: {
+  logger?: AdvancedOrderStateMachineMockLogger;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+}): ManagedAdvancedOrderStateMachineContext {
+  jest.clearAllMocks();
+
+  const harness = createAdvancedOrderStateMachineHarness(options);
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    cleanup: () => {
+      harness.service.cleanup();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

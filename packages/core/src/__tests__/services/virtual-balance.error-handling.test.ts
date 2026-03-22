@@ -10,12 +10,10 @@ import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
 import {
-  cleanupVirtualBalanceTempDir,
   createVirtualBalanceBoundFactory,
-  createVirtualBalanceHarness,
+  createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
-  createVirtualBalanceTempDir,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
@@ -26,27 +24,19 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let testDataDir: string;
   let testPath: string;
   let createService: (baseDeposit?: number) => VirtualBalanceService;
+  let context: ReturnType<typeof createManagedVirtualBalanceContext>;
 
   beforeEach(() => {
-    testDataDir = createVirtualBalanceTempDir();
-    testPath = path.join(testDataDir, 'virtual-balance.json');
-    jest.clearAllMocks();
-    const harness = createVirtualBalanceHarness({
-      dataDir: testDataDir,
-    });
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    createService = (baseDeposit = 100) =>
-      createVirtualBalanceBoundFactory({
-        dataDir: testDataDir,
-        logger: mockLogger,
-        errorHandler,
-        baseDeposit,
-      }).createStandardService();
+    context = createManagedVirtualBalanceContext();
+    testDataDir = context.dataDir;
+    testPath = context.statePath;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    createService = context.createService;
   });
 
   afterEach(() => {
-    cleanupVirtualBalanceTempDir(testDataDir);
+    context.cleanup();
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========
@@ -466,6 +456,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
+  let context: ReturnType<typeof createManagedVirtualBalanceContext>;
   const createIntegrationService = (baseDeposit: number = 100): VirtualBalanceService =>
     createStandardVirtualBalanceService({
       baseDeposit,
@@ -475,17 +466,16 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     });
 
   beforeEach(() => {
-    testDataDir = createVirtualBalanceTempDir('virtual-balance-integration-');
-    jest.clearAllMocks();
-    const harness = createVirtualBalanceHarness({
-      dataDir: testDataDir,
+    context = createManagedVirtualBalanceContext({
+      dataDirPrefix: 'virtual-balance-integration-',
     });
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
+    testDataDir = context.dataDir;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
-    cleanupVirtualBalanceTempDir(testDataDir);
+    context.cleanup();
   });
 
   it('should handle complete trading session lifecycle', () => {

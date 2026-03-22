@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed a managed-context follow-up for `data-collector.error-handling`, `anti-flip.error-handling`, and `event-handlers.error-handling`:
-  - extended `packages/core/src/__tests__/helpers/data-collector-test.utils.ts`, `packages/core/src/__tests__/helpers/anti-flip-test.utils.ts`, and `packages/core/src/__tests__/helpers/event-handlers-test.utils.ts` with shared managed test contexts for mock and timer cleanup.
-  - routed the corresponding suites through those managed contexts instead of local harness ownership and per-suite cleanup.
-  - reviewed `packages/core/src/services/data-collector.service.ts`, `packages/core/src/services/anti-flip.service.ts`, `packages/core/src/services/handlers/position.handler.ts`, and `packages/core/src/services/handlers/websocket.handler.ts` and left production code unchanged after review.
+- Completed an adjacent managed-context follow-up for `advanced-order-state-machine`, `ml-signal-validator.error-handling`, and `pattern-recognition.error-handling`:
+  - extended `packages/core/src/__tests__/helpers/advanced-order-state-machine-test.utils.ts`, `packages/core/src/__tests__/helpers/ml-signal-validator-test.utils.ts`, and `packages/core/src/__tests__/helpers/pattern-recognition-test.utils.ts` with shared managed contexts for service/history cleanup and helper bootstrap.
+  - routed the corresponding suites through those helper-owned contexts instead of local harness ownership and per-suite cleanup.
+  - reviewed `packages/core/src/services/advanced-order-state-machine.service.ts`, `packages/core/src/services/ml-signal-validator.service.ts`, and `packages/core/src/services/pattern-recognition.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/data-collector.error-handling.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep local async timing ownership, repeated harness bootstrap, or ad hoc mock error-handler branches outside the now-covered websocket and resilience slices.
-- Favor shared managed test contexts and helper-owned teardown in the next adjacent teardown-heavy service follow-ups such as `position-monitor`, `time.service`, or similarly timer-owned suites before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep local async timing ownership, repeated harness bootstrap, or ad hoc mock error-handler branches outside the now-covered monitoring, journaling, loader, state-machine, and analyzer slices.
+- Favor shared managed test contexts and helper-owned teardown in the next adjacent follow-ups such as `orderbook-manager.service.error-handling`, `micro-wall-detector.error-handling`, `advanced-order-flow.error-handling`, or similarly mock/spy-owned suites before reopening lower-signal constructor-only cleanup.

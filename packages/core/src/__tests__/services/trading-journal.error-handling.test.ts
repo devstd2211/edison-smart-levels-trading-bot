@@ -28,13 +28,12 @@ import {
 } from '../../types/legacy';
 import { LoggerService } from '../../services/logger.service';
 import {
-  cleanupTradingJournalTempDir,
   createJournalCloseParams,
   createJournalEntryCondition,
   createJournalExitCondition,
   createJournalOpenParams,
   createLegacyTradingJournalService,
-  createTradingJournalHarness,
+  createManagedTradingJournalContext,
   createStandardTradingJournalService,
 } from '../helpers/trading-journal-test.utils';
 
@@ -61,28 +60,19 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     baseDeposit?: number;
     withErrorHandler?: boolean;
   }) => TradingJournalService;
+  let context: ReturnType<typeof createManagedTradingJournalContext>;
 
   beforeEach(() => {
-    ({ journal, logger, dataDir: tempDir, errorHandler } = createTradingJournalHarness());
-    createService = (options = {}) =>
-      (options.withErrorHandler === false
-        ? createLegacyTradingJournalService({
-            logger,
-            dataDir: tempDir,
-            tradeHistoryConfig: options.tradeHistoryConfig,
-            baseDeposit: options.baseDeposit,
-          })
-        : createStandardTradingJournalService({
-        logger,
-        dataDir: tempDir,
-        tradeHistoryConfig: options.tradeHistoryConfig,
-        baseDeposit: options.baseDeposit,
-        errorHandler,
-          }));
+    context = createManagedTradingJournalContext();
+    journal = context.journal;
+    logger = context.logger;
+    tempDir = context.dataDir;
+    errorHandler = context.errorHandler;
+    createService = context.createService;
   });
 
   afterEach(() => {
-    cleanupTradingJournalTempDir(tempDir);
+    context.cleanup();
   });
 
   // ============================================================================

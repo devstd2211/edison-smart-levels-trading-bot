@@ -354,6 +354,63 @@ export function createPositionMonitorHarness(
   };
 }
 
+export interface ManagedPositionMonitorContext {
+  harness: PositionMonitorDependencies;
+  monitor: PositionMonitorService;
+  mockBybit: ReturnType<typeof createMockPositionMonitorExchange>;
+  mockPositionManager: ReturnType<typeof createMockPositionMonitorManager>;
+  mockTelegram: ReturnType<typeof createMockPositionMonitorTelegram>;
+  mockExitTypeDetector: ReturnType<typeof createMockPositionMonitorExitTypeDetector>;
+  mockPnLCalculator: ReturnType<typeof createMockPositionMonitorPnlCalculator>;
+  mockPositionSync: ReturnType<typeof createMockPositionMonitorSync>;
+  logger: LoggerService;
+  positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
+  rebuildMonitor: (config: RiskManagementConfig) => PositionMonitorService;
+  cleanup: () => void;
+}
+
+export function createManagedPositionMonitorContext(
+  options: {
+    riskConfig?: RiskManagementConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  } = {},
+): ManagedPositionMonitorContext {
+  jest.clearAllMocks();
+  jest.useFakeTimers();
+
+  const context = {} as ManagedPositionMonitorContext;
+
+  const syncFromHarness = (harness: PositionMonitorDependencies): void => {
+    context.harness = harness;
+    context.monitor = harness.monitor;
+    context.mockBybit = harness.mockBybit;
+    context.mockPositionManager = harness.mockPositionManager;
+    context.mockTelegram = harness.mockTelegram;
+    context.mockExitTypeDetector = harness.mockExitTypeDetector;
+    context.mockPnLCalculator = harness.mockPnLCalculator;
+    context.mockPositionSync = harness.mockPositionSync;
+    context.logger = harness.logger;
+    context.positionHarness = { mockPositionManager: harness.mockPositionManager };
+  };
+
+  syncFromHarness(createPositionMonitorHarness(options));
+
+  context.rebuildMonitor = (config: RiskManagementConfig): PositionMonitorService => {
+    syncFromHarness(recreatePositionMonitorHarness(context.harness, { riskConfig: config }));
+    return context.monitor;
+  };
+
+  context.cleanup = (): void => {
+    context.monitor.stop();
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  };
+
+  return context;
+}
+
 export function attachCurrentPosition(
   harness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>,
   position: Position = createMockMonitoredPosition(),

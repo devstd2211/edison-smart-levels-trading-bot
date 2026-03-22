@@ -18,6 +18,7 @@ import { TimeService } from '../../services/time.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../types/legacy';
 import {
+  createManagedTimeServiceContext,
   createTimeServiceHarness,
   type MockTimeExchange,
   type TimeServiceHarness,
@@ -29,17 +30,19 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let mockExchange: MockTimeExchange;
   let errorHandler: ErrorHandler;
   let harness: TimeServiceHarness;
+  let context: ReturnType<typeof createManagedTimeServiceContext>;
 
   beforeEach(() => {
-    harness = createTimeServiceHarness();
-    mockLogger = harness.logger;
-    mockExchange = harness.exchange;
-    errorHandler = harness.errorHandler;
-    timeService = harness.createService();
+    context = createManagedTimeServiceContext();
+    harness = context.harness;
+    mockLogger = context.mockLogger;
+    mockExchange = context.mockExchange;
+    errorHandler = context.errorHandler;
+    timeService = context.timeService;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    context.cleanup();
   });
 
   describe('RETRY Strategy - API call success', () => {

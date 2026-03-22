@@ -412,3 +412,31 @@ export function createLegacyPositionStateMachineHarness(options: {
 export async function waitForStateMachinePersistence(delayMs = 50): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, delayMs));
 }
+
+export interface ManagedPositionStateMachineContext {
+  logger: LoggerService;
+  testDataDir: string;
+  service: PositionStateMachineService;
+  cleanup: () => Promise<void>;
+}
+
+export function createManagedPositionStateMachineContext(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  baseDir?: string;
+} = {}): ManagedPositionStateMachineContext {
+  jest.clearAllMocks();
+
+  const harness = createPositionStateMachineHarness(options);
+
+  return {
+    logger: harness.logger,
+    testDataDir: harness.testDataDir,
+    service: harness.service,
+    cleanup: async () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      await removeStateMachineArtifacts(harness.testDataDir);
+    },
+  };
+}

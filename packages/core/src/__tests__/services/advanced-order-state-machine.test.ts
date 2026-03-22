@@ -24,6 +24,7 @@ import {
 } from '../../constants/phase-13-constants';
 import {
   createAdvancedOrderStateMachineHarness,
+  createManagedAdvancedOrderStateMachineContext,
   createLegacyAdvancedOrderStateMachineService,
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
@@ -32,16 +33,17 @@ describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
+  let context: ReturnType<typeof createManagedAdvancedOrderStateMachineContext>;
 
   beforeEach(() => {
-    const harness = createAdvancedOrderStateMachineHarness();
-    service = harness.service;
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
+    context = createManagedAdvancedOrderStateMachineContext();
+    service = context.service;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
-    service.cleanup();
+    context.cleanup();
   });
 
   // ==========================================================================

@@ -61,6 +61,16 @@ export function createVirtualBalanceHarness(options: {
   };
 }
 
+export interface ManagedVirtualBalanceContext {
+  service: VirtualBalanceService;
+  logger: VirtualBalanceLogger;
+  errorHandler: ErrorHandler;
+  dataDir: string;
+  statePath: string;
+  createService: (baseDeposit?: number) => VirtualBalanceService;
+  cleanup: () => void;
+}
+
 export function createStandardVirtualBalanceService(options: {
   baseDeposit?: number;
   dataDir?: string;
@@ -128,5 +138,44 @@ export function createVirtualBalanceBoundFactory(options: {
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
       }),
+  };
+}
+
+export function createManagedVirtualBalanceContext(options: {
+  baseDeposit?: number;
+  dataDirPrefix?: string;
+} = {}): ManagedVirtualBalanceContext {
+  jest.clearAllMocks();
+
+  const dataDir = createVirtualBalanceTempDir(options.dataDirPrefix);
+  const harness = createVirtualBalanceHarness({
+    dataDir,
+    baseDeposit: options.baseDeposit,
+  });
+  const factory = createVirtualBalanceBoundFactory({
+    dataDir,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    baseDeposit: options.baseDeposit ?? 100,
+  });
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    dataDir,
+    statePath: harness.statePath,
+    createService: (baseDeposit = options.baseDeposit ?? 100) =>
+      createVirtualBalanceBoundFactory({
+        dataDir,
+        logger: harness.logger,
+        errorHandler: harness.errorHandler,
+        baseDeposit,
+      }).createStandardService(),
+    cleanup: () => {
+      cleanupVirtualBalanceTempDir(dataDir);
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
   };
 }

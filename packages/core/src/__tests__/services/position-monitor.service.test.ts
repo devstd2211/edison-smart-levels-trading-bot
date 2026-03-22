@@ -15,6 +15,7 @@ import {
   attachExchangePosition,
   attachScenarioExchangePosition,
   attachTimeBasedExitScenario,
+  createManagedPositionMonitorContext,
   createPositionMonitorHarness,
   createPositionMonitorOpenedAtMinutesAgo,
   createPositionMonitorRiskConfig,
@@ -42,44 +43,38 @@ describe('PositionMonitorService', () => {
   let mockPnLCalculator: ReturnType<typeof createPositionMonitorHarness>['mockPnLCalculator'];
   let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
   let logger: LoggerService;
-  let harness: ReturnType<typeof createPositionMonitorHarness>;
   let positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
+  let context: ReturnType<typeof createManagedPositionMonitorContext>;
+
+  const syncFromContext = (): void => {
+    monitor = context.monitor;
+    mockBybit = context.mockBybit;
+    mockPositionManager = context.mockPositionManager;
+    mockTelegram = context.mockTelegram;
+    mockExitTypeDetector = context.mockExitTypeDetector;
+    mockPnLCalculator = context.mockPnLCalculator;
+    mockPositionSync = context.mockPositionSync;
+    logger = context.logger;
+    positionHarness = context.positionHarness;
+  };
+
   const rebuildMonitor = (config: RiskManagementConfig): void => {
-    harness = recreatePositionMonitorHarness(harness, { riskConfig: config });
-    monitor = harness.monitor;
-    mockBybit = harness.mockBybit;
-    mockPositionManager = harness.mockPositionManager;
-    mockTelegram = harness.mockTelegram;
-    mockExitTypeDetector = harness.mockExitTypeDetector;
-    mockPnLCalculator = harness.mockPnLCalculator;
-    mockPositionSync = harness.mockPositionSync;
-    logger = harness.logger;
-    positionHarness = { mockPositionManager };
+    context.rebuildMonitor(config);
+    syncFromContext();
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    harness = createPositionMonitorHarness({
+    context = createManagedPositionMonitorContext({
       riskConfig: {
         ...defaultPositionMonitorRiskConfig,
         positionSizeUsdt: 10,
       },
     });
-    monitor = harness.monitor;
-    mockBybit = harness.mockBybit;
-    mockPositionManager = harness.mockPositionManager;
-    mockTelegram = harness.mockTelegram;
-    mockExitTypeDetector = harness.mockExitTypeDetector;
-    mockPnLCalculator = harness.mockPnLCalculator;
-    mockPositionSync = harness.mockPositionSync;
-    logger = harness.logger;
-    positionHarness = { mockPositionManager };
+    syncFromContext();
   });
 
   afterEach(() => {
-    monitor.stop();
-    jest.useRealTimers();
+    context.cleanup();
   });
 
   // ==========================================================================

@@ -20,8 +20,8 @@ import { LogLevel } from '../../types/legacy';
 import * as fs from 'fs/promises';
 import { mkdirSync, rmSync } from 'fs';
 import {
-  cleanupLoggerTestDir,
   createLoggerErrorHandler,
+  createManagedLoggerTestContext,
   createLegacyLoggerFactory,
   createLegacyLoggerService,
   createStandardLoggerFactory,
@@ -38,17 +38,18 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let errorHandler: ErrorHandler;
   let createLogger: ReturnType<typeof createStandardLoggerFactory>;
   let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
+  let context: ReturnType<typeof createManagedLoggerTestContext>;
 
   beforeEach(() => {
-    // Create unique temp directory for tests
-    testLogDir = createLoggerTestDir();
-    errorHandler = createLoggerErrorHandler();
-    createLogger = createStandardLoggerFactory({ errorHandler });
-    createLegacyLogger = createLegacyLoggerFactory();
+    context = createManagedLoggerTestContext();
+    testLogDir = context.testLogDir;
+    errorHandler = context.errorHandler;
+    createLogger = context.createLogger;
+    createLegacyLogger = context.createLegacyLogger;
   });
 
   afterEach(async () => {
-    cleanupLoggerTestDir(testLogDir);
+    context.cleanup();
   });
 
   // ========== THROW VALIDATION TESTS ==========

@@ -42,6 +42,7 @@ export function createMockTelegramErrorHandler(): jest.Mocked<ErrorHandler> {
 }
 
 export function createTelegramHarness() {
+  const originalFetch = global.fetch;
   const mockConfig = createMockTelegramConfig();
   const mockLogger = createMockTelegramLogger();
   const mockErrorHandler = createMockTelegramErrorHandler();
@@ -59,7 +60,17 @@ export function createTelegramHarness() {
     mockLogger,
     mockErrorHandler,
     fetchMock,
+    originalFetch,
   };
+}
+
+export interface ManagedTelegramContext {
+  telegramService: TelegramService;
+  mockConfig: TelegramConfig;
+  mockLogger: jest.Mocked<LoggerService>;
+  mockErrorHandler: jest.Mocked<ErrorHandler>;
+  fetchMock: jest.Mock;
+  cleanup: () => void;
 }
 
 export function createStandardTelegramService(options: {
@@ -96,4 +107,22 @@ export function createTelegramService(options: {
       ? undefined
       : options.errorHandler ?? createMockTelegramErrorHandler(),
   );
+}
+
+export function createManagedTelegramContext(): ManagedTelegramContext {
+  jest.clearAllMocks();
+  const harness = createTelegramHarness();
+
+  return {
+    telegramService: harness.telegramService,
+    mockConfig: harness.mockConfig,
+    mockLogger: harness.mockLogger,
+    mockErrorHandler: harness.mockErrorHandler,
+    fetchMock: harness.fetchMock,
+    cleanup: () => {
+      global.fetch = harness.originalFetch;
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
 }

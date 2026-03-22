@@ -69,6 +69,16 @@ export async function cleanupStrategyLoaderTempDir(strategiesDir: string): Promi
   await rm(strategiesDir, { recursive: true, force: true });
 }
 
+export interface ManagedStrategyLoaderContext {
+  tempDir: string;
+  loader: StrategyLoaderService;
+  errorHandler: jest.Mocked<ErrorHandler>;
+  createLoader: StrategyLoaderHarness['createLoader'];
+  fileReadSpy: jest.SpyInstance;
+  dirReadSpy: jest.SpyInstance;
+  cleanup: () => Promise<void>;
+}
+
 export async function writeStrategyLoaderFile(
   strategiesDir: string,
   fileName: string,
@@ -114,5 +124,33 @@ export function createStrategyLoaderStrategy(overrides: Record<string, unknown> 
     metadata: createStrategyLoaderMetadata(),
     analyzers: [createStrategyLoaderAnalyzer()],
     ...overrides,
+  };
+}
+
+export async function createManagedStrategyLoaderContext(options: {
+  withErrorHandler?: boolean;
+} = {}): Promise<ManagedStrategyLoaderContext> {
+  jest.clearAllMocks();
+
+  const tempDir = await createStrategyLoaderTempDir();
+  const harness = createStrategyLoaderHarness({
+    strategiesDir: tempDir,
+    withErrorHandler: options.withErrorHandler,
+  });
+  const fileReadSpy = jest.spyOn(fs, 'readFile');
+  const dirReadSpy = jest.spyOn(fs, 'readdir');
+
+  return {
+    tempDir,
+    loader: harness.service,
+    errorHandler: harness.errorHandler,
+    createLoader: harness.createLoader,
+    fileReadSpy,
+    dirReadSpy,
+    cleanup: async () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      await cleanupStrategyLoaderTempDir(tempDir);
+    },
   };
 }

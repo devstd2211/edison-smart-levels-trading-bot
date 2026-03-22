@@ -6,12 +6,11 @@
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
 import {
-  cleanupStrategyLoaderTempDir,
+  createManagedStrategyLoaderContext,
   createStrategyLoaderHarness,
   createStrategyLoaderAnalyzer,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
-  createStrategyLoaderTempDir,
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
 
@@ -19,14 +18,17 @@ describe('StrategyLoaderService', () => {
   let tempDir: string;
   let loader: StrategyLoaderService;
   let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
+  let context: Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
 
   beforeEach(async () => {
-    tempDir = await createStrategyLoaderTempDir();
-    ({ service: loader, createLoader } = createStrategyLoaderHarness({ strategiesDir: tempDir }));
+    context = await createManagedStrategyLoaderContext();
+    tempDir = context.tempDir;
+    loader = context.loader;
+    createLoader = context.createLoader;
   });
 
   afterEach(async () => {
-    await cleanupStrategyLoaderTempDir(tempDir);
+    await context.cleanup();
   });
 
   describe('loadStrategy', () => {
