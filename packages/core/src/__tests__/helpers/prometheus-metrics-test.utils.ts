@@ -28,6 +28,15 @@ export interface PrometheusMetricsHarness {
   stopTrackedServices: (trackedServices: PrometheusMetricsService[]) => void;
 }
 
+export interface PrometheusMetricsTestContext {
+  harness: PrometheusMetricsHarness;
+  service: PrometheusMetricsService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  trackedServices: PrometheusMetricsService[];
+  stop: () => void;
+}
+
 export function createPrometheusMetricsLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);
@@ -97,4 +106,27 @@ export function createStartedPrometheusMetricsService(
   handler?: ErrorHandler,
 ): PrometheusMetricsService {
   return harness.createStartedTrackedService(trackedServices, config, logger, handler);
+}
+
+export function createPrometheusMetricsTestContext(): PrometheusMetricsTestContext {
+  const harness = createPrometheusMetricsHarness();
+  const trackedServices: PrometheusMetricsService[] = [];
+  const service = createStandardPrometheusMetricsService(
+    harness,
+    trackedServices,
+    {},
+    harness.logger,
+    harness.errorHandler,
+  );
+
+  return {
+    harness,
+    service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    trackedServices,
+    stop: () => {
+      harness.stopTrackedServices(trackedServices);
+    },
+  };
 }

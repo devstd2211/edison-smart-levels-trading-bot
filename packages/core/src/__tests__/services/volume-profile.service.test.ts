@@ -8,6 +8,7 @@ import { VolumeProfileConfig, LoggerService } from '../../types/legacy';
 import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
+  createVolumeProfileBoundFactory,
   createVolumeProfileHarness,
 } from '../helpers/volume-profile-test.utils';
 
@@ -15,18 +16,17 @@ describe('VolumeProfileService', () => {
   let service: VolumeProfileService;
   let logger: LoggerService;
   let config: VolumeProfileConfig;
-  let harness: ReturnType<typeof createVolumeProfileHarness>;
+  let createService: ReturnType<typeof createVolumeProfileBoundFactory>['createLegacyService'];
 
   beforeEach(() => {
-    harness = createVolumeProfileHarness({ withErrorHandler: false });
+    const harness = createVolumeProfileHarness({ withErrorHandler: false });
     ({ service, logger, config } = harness);
-  });
-
-  const createService = (configOverrides?: Partial<VolumeProfileConfig>) =>
-    harness.createLegacyService({
-      configOverrides: configOverrides ?? config,
+    createService = createVolumeProfileBoundFactory({
       logger,
-    });
+      configOverrides: config,
+      withErrorHandler: false,
+    }).createLegacyService;
+  });
 
   describe('initialization', () => {
     it('should initialize with config', () => {

@@ -11,6 +11,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolumeProfileService } from '../../services/volume-profile.service';
 import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
 import {
+  createVolumeProfileBoundFactory,
   createVolumeProfileCandles,
   createVolumeProfileCandlesFromSpecs,
   createVolumeProfileHarness,
@@ -42,16 +43,13 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   beforeEach(() => {
     const harness = createVolumeProfileHarness();
     mockLogger = harness.logger;
+    const factory = createVolumeProfileBoundFactory({
+      logger: harness.logger,
+      errorHandler: harness.errorHandler,
+    });
     createService = (configOverrides, logger = mockLogger, withErrorHandler = true) =>
-      harness.createStandardService({
-        configOverrides,
-        logger,
-        withErrorHandler,
-      });
-    createLegacyService = (configOverrides) =>
-      harness.createLegacyService({
-        configOverrides,
-      });
+      factory.createStandardService(configOverrides, logger, withErrorHandler);
+    createLegacyService = factory.createLegacyService;
   });
 
   // =========================================================================

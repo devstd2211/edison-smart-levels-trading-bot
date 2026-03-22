@@ -9,8 +9,8 @@ import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calc
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WeightMatrixConfig, WeightMatrixInput, SignalDirection, LoggerService } from '../../types/legacy';
 import {
+  createErrorWeightMatrixHarness,
   createWeightMatrixErrorConfig,
-  createWeightMatrixHarness,
   createWeightMatrixInput,
   createWeightMatrixService,
 } from '../helpers/weight-matrix-calculator-test.utils';
@@ -27,23 +27,19 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let service: WeightMatrixCalculatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let errorConfig: WeightMatrixConfig;
   let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
 
   beforeEach(() => {
-    const harness = createWeightMatrixHarness();
+    const harness = createErrorWeightMatrixHarness();
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
-    createService = (config = createWeightMatrixErrorConfig()) =>
-      harness.createStandardService({
-        config,
-        logger: mockLogger,
-      });
-    createLegacyService = (config = createWeightMatrixErrorConfig()) =>
-      harness.createLegacyService({
-        config,
-        logger: mockLogger,
-      });
+    errorConfig = harness.config;
+    createService = (config = errorConfig) =>
+      harness.createStandardErrorService({ config });
+    createLegacyService = (config = errorConfig) =>
+      harness.createLegacyErrorService({ config });
   });
 
   // ==========================================================================
@@ -285,7 +281,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       // First attempt with invalid config
       expect(() => {
         createWeightMatrixService({
-          config: { ...createWeightMatrixErrorConfig(), minConfidenceToEnter: 150 },
+          config: { ...errorConfig, minConfidenceToEnter: 150 },
           logger: mockLogger,
           errorHandler,
         });

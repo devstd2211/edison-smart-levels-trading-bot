@@ -232,6 +232,42 @@ export function createStandardWeightMatrixHarness(options: {
   };
 }
 
+export function createErrorWeightMatrixHarness(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createWeightMatrixLogger();
+  const config = options.config ?? createWeightMatrixErrorConfig();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    ...createWeightMatrixHarness({
+      config,
+      logger,
+      errorHandler,
+    }),
+    createStandardErrorService: (serviceOptions: {
+      config?: WeightMatrixConfig;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createStandardWeightMatrixService({
+        config: serviceOptions.config ?? config,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyErrorService: (serviceOptions: {
+      config?: WeightMatrixConfig;
+      logger?: LoggerService;
+    } = {}) =>
+      createLegacyWeightMatrixService({
+        config: serviceOptions.config ?? config,
+        logger: serviceOptions.logger ?? logger,
+      }),
+  };
+}
+
 export function createLegacyWeightMatrixHarness(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;

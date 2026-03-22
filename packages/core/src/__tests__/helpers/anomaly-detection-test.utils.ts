@@ -91,6 +91,43 @@ export function createAnomalyDetectionService(options: {
   );
 }
 
+export function createAnomalyDetectionBoundFactory(options: {
+  config?: Partial<AnomalyDetectionConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createAnomalyDetectionLogger();
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    errorHandler,
+    config: options.config,
+    createStandardService: (serviceOptions: {
+      config?: Partial<AnomalyDetectionConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createAnomalyDetectionService({
+        config: serviceOptions.config ?? options.config,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      config?: Partial<AnomalyDetectionConfig>;
+      logger?: LoggerService;
+    } = {}) =>
+      createAnomalyDetectionService({
+        config: serviceOptions.config ?? options.config,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
+  };
+}
+
 export function seedVolumeHistory(service: AnomalyDetectionService, values: number[]): void {
   values.forEach((value) => {
     service.detectVolumeAnomaly(value);

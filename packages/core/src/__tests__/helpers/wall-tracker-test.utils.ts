@@ -125,3 +125,52 @@ export function createWallTrackerService(options: {
     options.withErrorHandler === false ? undefined : errorHandler,
   );
 }
+
+export function createWallTrackerBoundFactory(options: {
+  config?: WallTrackingConfig;
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? createWallTrackerLogger();
+  const config = options.config ?? createWallTrackerConfig(options.configOverrides);
+  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+
+  return {
+    logger,
+    config,
+    errorHandler,
+    createStandardService: (serviceOptions: {
+      config?: WallTrackingConfig;
+      configOverrides?: Partial<WallTrackingConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) =>
+      createWallTrackerService({
+        config: serviceOptions.config,
+        configOverrides: serviceOptions.config ? undefined : {
+          ...options.configOverrides,
+          ...serviceOptions.configOverrides,
+        },
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      config?: WallTrackingConfig;
+      configOverrides?: Partial<WallTrackingConfig>;
+      logger?: LoggerService;
+    } = {}) =>
+      createWallTrackerService({
+        config: serviceOptions.config,
+        configOverrides: serviceOptions.config ? undefined : {
+          ...options.configOverrides,
+          ...serviceOptions.configOverrides,
+        },
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
+  };
+}

@@ -38,6 +38,16 @@ export interface MonitoringServerHarness {
   stopTrackedServers: (trackedServers: MonitoringServer[]) => Promise<void>;
 }
 
+export interface MonitoringServerTestContext {
+  harness: MonitoringServerHarness;
+  logger: jest.Mocked<LoggerService>;
+  metricsService: jest.Mocked<PrometheusMetricsService>;
+  healthService: jest.Mocked<HealthCheckService>;
+  errorHandler: ErrorHandler;
+  trackedServers: MonitoringServer[];
+  stop: () => Promise<void>;
+}
+
 export function createMonitoringServerHarness(): MonitoringServerHarness {
   const logger = {
     info: jest.fn(),
@@ -157,4 +167,19 @@ export function createStartedMonitoringServer(
   trackedServers: MonitoringServer[],
 ): Promise<MonitoringServer> {
   return harness.startServer(options, trackedServers);
+}
+
+export function createMonitoringServerTestContext(): MonitoringServerTestContext {
+  const harness = createMonitoringServerHarness();
+  const trackedServers: MonitoringServer[] = [];
+
+  return {
+    harness,
+    logger: harness.logger,
+    metricsService: harness.metricsService,
+    healthService: harness.healthService,
+    errorHandler: harness.errorHandler,
+    trackedServers,
+    stop: () => harness.stopTrackedServers(trackedServers),
+  };
 }

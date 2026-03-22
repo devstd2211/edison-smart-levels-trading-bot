@@ -6,6 +6,7 @@
 import { TFAlignmentService } from '../../services/tf-alignment.service';
 import { TFAlignmentConfig } from '../../types/legacy';
 import {
+  createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
   createTFAlignmentHarness,
 } from '../helpers/tf-alignment-test.utils';
@@ -13,13 +14,16 @@ import {
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
-  let createService: ReturnType<typeof createTFAlignmentHarness>['createLegacyService'];
+  let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
   beforeEach(() => {
     config = createTFAlignmentConfig();
     const harness = createTFAlignmentHarness({ configOverrides: config, withErrorHandler: false });
     ({ service } = harness);
-    createService = harness.createLegacyService;
+    createService = createTFAlignmentBoundFactory({
+      config,
+      withErrorHandler: false,
+    }).createLegacyService;
   });
 
   describe('calculateAlignment - LONG', () => {

@@ -15,10 +15,11 @@ import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.servi
 import { DangerLevel, LiveTradingEventType } from '../../types/legacy';
 import {
   attachMockRiskMonitorPosition,
+  createManagedRealTimeRiskMonitorHarness,
   createRealTimeRiskMonitorPublishFailure,
-  createStandardRealTimeRiskMonitorHarness,
   seedRiskMonitorCachedFallbackScore,
   seedRiskMonitorCachedHealthScore,
+  type ManagedRealTimeRiskMonitorHarness,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -29,19 +30,20 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let mockPositionLifecycleService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
+  let riskHarness: ManagedRealTimeRiskMonitorHarness;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const harness = createStandardRealTimeRiskMonitorHarness();
-    monitor = harness.monitor;
-    mockPositionLifecycleService = harness.mockPositionService;
-    mockLogger = harness.mockLogger;
-    mockEventBus = harness.mockEventBus;
+    riskHarness = createManagedRealTimeRiskMonitorHarness();
+    monitor = riskHarness.monitor;
+    mockPositionLifecycleService = riskHarness.mockPositionService;
+    mockLogger = riskHarness.mockLogger;
+    mockEventBus = riskHarness.mockEventBus;
   });
 
   afterEach(() => {
-    monitor.stop();
+    riskHarness.stop();
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {
@@ -237,7 +239,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   describe('End-to-End Error Recovery Scenarios (2 tests)', () => {
     it('test-8.5.14: Should continue monitoring when position validation fails', async () => {
       const { cachedScore: firstScore } = await seedRiskMonitorCachedHealthScore(
-        { monitor, mockPositionService: mockPositionLifecycleService, mockLogger, mockEventBus },
+        riskHarness,
         {},
         46000,
       );
@@ -273,7 +275,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   describe('Integration with Existing Functionality', () => {
     it('should not break existing getLatestHealthScore functionality', async () => {
       const { position, cachedScore: cached } = await seedRiskMonitorCachedHealthScore(
-        { monitor, mockPositionService: mockPositionLifecycleService, mockLogger, mockEventBus },
+        riskHarness,
         {},
         46000,
       );

@@ -11,6 +11,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
 import {
   cleanupVirtualBalanceTempDir,
+  createVirtualBalanceBoundFactory,
   createVirtualBalanceHarness,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
@@ -24,13 +25,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let testPath: string;
-  const createService = (baseDeposit: number = 100): VirtualBalanceService =>
-    createStandardVirtualBalanceService({
-      baseDeposit,
-      dataDir: testDataDir,
-      logger: mockLogger,
-      errorHandler,
-    });
+  let createService: (baseDeposit?: number) => VirtualBalanceService;
 
   beforeEach(() => {
     testDataDir = createVirtualBalanceTempDir();
@@ -41,6 +36,13 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
     });
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
+    createService = (baseDeposit = 100) =>
+      createVirtualBalanceBoundFactory({
+        dataDir: testDataDir,
+        logger: mockLogger,
+        errorHandler,
+        baseDeposit,
+      }).createStandardService();
   });
 
   afterEach(() => {

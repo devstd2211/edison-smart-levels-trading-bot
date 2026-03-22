@@ -18,6 +18,7 @@ import { LoggerService } from '../../services/logger.service';
 import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection';
 import {
   AnomalyDetectionInternals,
+  createAnomalyDetectionBoundFactory,
   createAnomalyDetectionMockLogger,
   createAnomalyDetectionService,
   createAnomalyDetectionServiceHarness,
@@ -37,9 +38,14 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
+  let createService: ReturnType<typeof createAnomalyDetectionBoundFactory>['createStandardService'];
 
   beforeEach(() => {
     ({ service, logger, errorHandler } = createAnomalyDetectionServiceHarness());
+    createService = createAnomalyDetectionBoundFactory({
+      logger,
+      errorHandler,
+    }).createStandardService;
   });
 
   afterEach(() => {
@@ -51,40 +57,41 @@ describe('AnomalyDetectionService - Error Handling', () => {
   // ========================================
 
   describe('THROW: Config Validation', () => {
-    const createService = (config?: ConfigInput, customLogger: LoggerService = logger) =>
-      createAnomalyDetectionService({
-        config: config as Partial<AnomalyDetectionConfig> | undefined,
-        logger: customLogger,
-        errorHandler,
-      });
-
     it('should throw when config is not an object', () => {
       expect(() => {
-        createService('invalid' as unknown as ConfigInput);
+        createService({
+          config: 'invalid' as unknown as Partial<AnomalyDetectionConfig>,
+        });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        createService(123 as unknown as ConfigInput);
+        createService({
+          config: 123 as unknown as Partial<AnomalyDetectionConfig>,
+        });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        createService([] as unknown as ConfigInput);
+        createService({
+          config: [] as unknown as Partial<AnomalyDetectionConfig>,
+        });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        createService(undefined);
+        createService();
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
-        createService({ volumeAnomalyThreshold: 3.0 } as unknown as ConfigInput);
+        createService({
+          config: { volumeAnomalyThreshold: 3.0 } as unknown as Partial<AnomalyDetectionConfig>,
+        });
       }).not.toThrow();
     });
   });

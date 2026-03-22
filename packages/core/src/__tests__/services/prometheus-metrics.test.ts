@@ -18,10 +18,10 @@ import type { PrometheusMetricsService } from '../../services/prometheus-metrics
 import type { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  createPrometheusMetricsHarness,
+  createPrometheusMetricsTestContext,
   createStandardPrometheusMetricsService,
   createStartedPrometheusMetricsService,
-  type PrometheusMetricsHarness,
+  type PrometheusMetricsTestContext,
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
@@ -29,24 +29,20 @@ describe('PrometheusMetricsService', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let trackedServices: PrometheusMetricsService[];
-  let harness: PrometheusMetricsHarness;
+  let harness: PrometheusMetricsTestContext['harness'];
+  let context: PrometheusMetricsTestContext;
 
   beforeEach(() => {
-    harness = createPrometheusMetricsHarness();
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler;
-    trackedServices = [];
-    service = createStandardPrometheusMetricsService(
-      harness,
-      trackedServices,
-      {},
-      mockLogger,
-      errorHandler,
-    );
+    context = createPrometheusMetricsTestContext();
+    harness = context.harness;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler;
+    trackedServices = context.trackedServices;
+    service = context.service;
   });
 
   afterEach(() => {
-    harness.stopTrackedServices(trackedServices);
+    context.stop();
   });
 
   // ==========================================================================

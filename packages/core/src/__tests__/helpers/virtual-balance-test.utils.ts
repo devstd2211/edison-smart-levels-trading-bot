@@ -87,3 +87,46 @@ export function createVirtualBalanceService(options: {
     dataDir,
   );
 }
+
+export function createVirtualBalanceBoundFactory(options: {
+  baseDeposit?: number;
+  dataDir?: string;
+  logger?: VirtualBalanceLogger;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createVirtualBalanceMockLogger();
+  const dataDir = options.dataDir ?? createVirtualBalanceTempDir();
+  const errorHandler = options.errorHandler ?? new ErrorHandler(asVirtualBalanceLogger(logger));
+  const baseDeposit = options.baseDeposit ?? 100;
+
+  return {
+    logger,
+    dataDir,
+    errorHandler,
+    baseDeposit,
+    createStandardService: (serviceOptions: {
+      baseDeposit?: number;
+      dataDir?: string;
+      logger?: VirtualBalanceLogger;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createStandardVirtualBalanceService({
+        baseDeposit: serviceOptions.baseDeposit ?? baseDeposit,
+        dataDir: serviceOptions.dataDir ?? dataDir,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createService: (serviceOptions: {
+      baseDeposit?: number;
+      dataDir?: string;
+      logger?: VirtualBalanceLogger;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createVirtualBalanceService({
+        baseDeposit: serviceOptions.baseDeposit ?? baseDeposit,
+        dataDir: serviceOptions.dataDir ?? dataDir,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+  };
+}

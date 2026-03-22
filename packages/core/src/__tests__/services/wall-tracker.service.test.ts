@@ -7,6 +7,7 @@
 import type { WallTrackerService } from '../../services/wall-tracker.service';
 import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
+  createWallTrackerBoundFactory,
   createWallTrackerConfig,
   createWallTrackerHarness,
   detectWallTrackerWalls,
@@ -16,18 +17,17 @@ describe('WallTrackerService', () => {
   let service: WallTrackerService;
   let logger: LoggerService;
   let config: WallTrackingConfig;
-  let harness: ReturnType<typeof createWallTrackerHarness>;
+  let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
 
   beforeEach(() => {
-    harness = createWallTrackerHarness({ withErrorHandler: false });
+    const harness = createWallTrackerHarness({ withErrorHandler: false });
     ({ service, logger, config } = harness);
-  });
-
-  const createService = (configOverrides?: Partial<WallTrackingConfig>) =>
-    harness.createLegacyService({
-      configOverrides: configOverrides ?? config,
+    createService = createWallTrackerBoundFactory({
+      config,
       logger,
-    });
+      withErrorHandler: false,
+    }).createLegacyService;
+  });
 
   describe('detectWall', () => {
     it('should detect new wall', () => {
@@ -66,7 +66,7 @@ describe('WallTrackerService', () => {
 
     it('should not detect walls when disabled', () => {
       config = createWallTrackerConfig({ enabled: false });
-      service = createService({ enabled: false });
+      service = createService({ configOverrides: { enabled: false } });
 
       service.detectWall(100, 50000, 'BID');
       const walls = service.getActiveWalls();
@@ -242,7 +242,7 @@ describe('WallTrackerService', () => {
 
     it('should limit history size', () => {
       config = createWallTrackerConfig({ trackHistoryCount: 10 });
-      service = createService({ trackHistoryCount: 10 });
+      service = createService({ configOverrides: { trackHistoryCount: 10 } });
 
       // Generate 20 events
       for (let i = 0; i < 20; i++) {

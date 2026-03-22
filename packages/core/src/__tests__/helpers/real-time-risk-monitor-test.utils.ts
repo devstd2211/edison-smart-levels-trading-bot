@@ -41,6 +41,10 @@ export interface RealTimeRiskMonitorHarness {
   mockEventBus: MockRiskMonitorEventBus;
 }
 
+export interface ManagedRealTimeRiskMonitorHarness extends RealTimeRiskMonitorHarness {
+  stop: () => void;
+}
+
 export const mockRiskMonitorConfig: RiskMonitoringConfig = {
   enabled: true,
   checkIntervalCandles: 5,
@@ -208,6 +212,21 @@ export function createStartedRealTimeRiskMonitorHarness(): RealTimeRiskMonitorHa
   const harness = createStandardRealTimeRiskMonitorHarness();
   harness.monitor.start();
   return harness;
+}
+
+export function createManagedRealTimeRiskMonitorHarness(
+  options: { started?: boolean } = {},
+): ManagedRealTimeRiskMonitorHarness {
+  const harness = options.started
+    ? createStartedRealTimeRiskMonitorHarness()
+    : createStandardRealTimeRiskMonitorHarness();
+
+  return {
+    ...harness,
+    stop: () => {
+      harness.monitor.stop();
+    },
+  };
 }
 
 export function createRealTimeRiskMonitorPublishFailure(

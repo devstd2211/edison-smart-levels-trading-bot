@@ -6,6 +6,7 @@
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
 import { LoggerService } from '../../types/legacy';
 import {
+  createEventDeduplicationBoundFactory,
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createEventDeduplicationHarness,
@@ -22,22 +23,19 @@ describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let harness: EventDeduplicationHarness;
+  let createService: ReturnType<typeof createEventDeduplicationBoundFactory>['createStandardService'];
 
   beforeEach(() => {
     harness = createEventDeduplicationHarness();
     logger = harness.logger;
-  });
-
-  const createService = (cacheSize = 100, cacheTtlMs = 60000) =>
-    harness.createServiceWithDefaults({
-      cacheSize,
-      cacheTtlMs,
+    createService = createEventDeduplicationBoundFactory({
       logger,
-    });
+    }).createStandardService;
+  });
 
   describe('isDuplicate', () => {
     beforeEach(() => {
-      service = createService(10, 1000);
+      service = createService({ cacheSize: 10, cacheTtlMs: 1000 });
     });
 
     it('should return false for first occurrence of event', () => {
@@ -172,7 +170,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should use custom cache size', () => {
-      service = createService(50, 60000);
+      service = createService({ cacheSize: 50, cacheTtlMs: 60000 });
       const timestamp = 1000;
 
       populateEventDeduplicationCache(service, {
@@ -185,7 +183,7 @@ describe('EventDeduplicationService', () => {
     });
 
     it('should use custom TTL', () => {
-      service = createService(100, 500); // 500ms TTL
+      service = createService({ cacheSize: 100, cacheTtlMs: 500 }); // 500ms TTL
       const timestamp = Date.now();
 
       service.isDuplicate('TP', 'order-123', timestamp);
@@ -265,7 +263,7 @@ describe('EventDeduplicationService', () => {
 
   describe('Performance', () => {
     it('should handle rapid duplicate checks efficiently', () => {
-      service = createService(1000, 60000);
+      service = createService({ cacheSize: 1000, cacheTtlMs: 60000 });
 
       const startTime = Date.now();
 

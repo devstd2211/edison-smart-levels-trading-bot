@@ -14,6 +14,7 @@ import { TFAlignmentService } from '../../services/tf-alignment.service';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
+  createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
   createTFAlignmentHarness,
   createTFAlignmentIndicators,
@@ -37,8 +38,12 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
       logger: mockLogger as unknown as LoggerService,
       errorHandler,
     });
-    createService = harness.createStandardService;
-    createLegacyService = harness.createLegacyService;
+    const factory = createTFAlignmentBoundFactory({
+      logger: mockLogger as unknown as LoggerService,
+      errorHandler,
+    });
+    createService = factory.createStandardService;
+    createLegacyService = factory.createLegacyService;
   });
 
   describe('THROW: Input Validation', () => {

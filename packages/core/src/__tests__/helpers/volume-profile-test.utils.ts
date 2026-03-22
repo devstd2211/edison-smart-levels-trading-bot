@@ -218,7 +218,7 @@ export function createVolumeProfileBoundFactory(options: {
   return {
     logger,
     errorHandler,
-    createService: (
+    createStandardService: (
       configOverrides?: Partial<VolumeProfileConfig>,
       serviceLogger: LoggerService = logger,
       withErrorHandler: boolean = options.withErrorHandler ?? true,
@@ -231,6 +231,18 @@ export function createVolumeProfileBoundFactory(options: {
         logger: serviceLogger,
         errorHandler,
         withErrorHandler,
+      }),
+    createLegacyService: (
+      configOverrides?: Partial<VolumeProfileConfig>,
+      serviceLogger: LoggerService = logger,
+    ) =>
+      createVolumeProfileServiceWithHarness({
+        configOverrides: {
+          ...options.configOverrides,
+          ...configOverrides,
+        },
+        logger: serviceLogger,
+        withErrorHandler: false,
       }),
   };
 }

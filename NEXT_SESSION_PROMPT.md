@@ -29,15 +29,16 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed an adjacent helper-consolidation batch for `console-dashboard.error-handling`, `circuit-breaker.service`, `circuit-breaker.error-handling`, `compound-interest-calculator.service`, and `compound-interest-calculator.error-handling`:
-  - extended `packages/core/src/__tests__/helpers/console-dashboard-test.utils.ts` and `packages/core/src/__tests__/helpers/circuit-breaker-test.utils.ts` with harness-backed shared service recreation paths so suites stop mixing direct legacy/standard service construction with ad hoc harness bootstrap.
-  - added shared harness aliases in `packages/core/src/__tests__/helpers/compound-interest-calculator-test.utils.ts` and routed both compound-interest suites through those harness-backed calculator creators instead of mixing bound-factory and direct factory setup.
-  - reviewed `packages/core/src/services/console-dashboard.service.ts`, `packages/core/src/services/circuit-breaker.service.ts`, and `packages/core/src/services/compound-interest-calculator.service.ts` and left production code unchanged after review.
+- Completed a monitoring/lifecycle helper-consolidation batch for `prometheus-metrics`, `monitoring-server`, `real-time-risk-monitor.service`, `real-time-risk-monitor.error-handling`, and `real-time-risk-monitor.cache-invalidation`:
+  - extended `packages/core/src/__tests__/helpers/prometheus-metrics-test.utils.ts` and `packages/core/src/__tests__/helpers/monitoring-server-test.utils.ts` with managed test-context wrappers for tracked lifecycle cleanup.
+  - added a managed lifecycle harness path in `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts`.
+  - routed the corresponding suites through those shared managed contexts instead of local tracked arrays, ad hoc harness objects, and direct `monitor.stop()` teardown.
+  - reviewed `packages/core/src/services/prometheus-metrics.service.ts`, `packages/core/src/services/monitoring-server.service.ts`, and `packages/core/src/services/real-time-risk-monitor.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.service.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the compact helper-consolidation stream before reopening adapter cleanup.
-- Prefer the next adjacent constructor-heavy helper/error-handling or helper/service pair still mixing shared setup with direct recreation after the refreshed `console-dashboard` / `circuit-breaker` / `compound-interest` cluster.
-- Keep favoring shared harnesses, explicit standard/legacy creation paths, and minimal required dependency groups per suite.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep broad service-state or manual tracked cleanup.
+- Favor shared managed test contexts for started/stopped resources, explicit teardown paths, and minimal grouped service construction instead of suite-local tracked arrays or ad hoc harness objects.
+- Re-scan remaining monitoring/bot/lifecycle-adjacent suites before reopening lower-signal constructor-only cleanup.

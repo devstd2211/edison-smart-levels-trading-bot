@@ -118,6 +118,24 @@ export function createTFAlignmentHarness(options: {
   };
 }
 
+export function createTFAlignmentBoundFactory(options: {
+  configOverrides?: Partial<TFAlignmentConfig>;
+  logger?: LoggerService;
+  config?: TFAlignmentConfig;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const harness = createTFAlignmentHarness(options);
+
+  return {
+    logger: harness.logger,
+    config: harness.config,
+    errorHandler: harness.errorHandler,
+    createStandardService: harness.createStandardService,
+    createLegacyService: harness.createLegacyService,
+  };
+}
+
 export function createTFAlignmentService(options: {
   configOverrides?: Partial<TFAlignmentConfig>;
   logger?: LoggerService;

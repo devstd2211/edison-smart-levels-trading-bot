@@ -209,3 +209,44 @@ export function createEventDeduplicationHarness(): EventDeduplicationHarness {
     }),
   };
 }
+
+export function createEventDeduplicationBoundFactory(options: {
+  cacheSize?: number;
+  cacheTtlMs?: number;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const logger = options.logger ?? createEventDeduplicationLogger();
+  const errorHandler = options.errorHandler ?? createEventDeduplicationErrorHandler(logger);
+  const cacheSize = options.cacheSize ?? 100;
+  const cacheTtlMs = options.cacheTtlMs ?? 60000;
+
+  return {
+    logger,
+    errorHandler,
+    cacheSize,
+    cacheTtlMs,
+    createStandardService: (serviceOptions: {
+      cacheSize?: number;
+      cacheTtlMs?: number;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createStandardEventDeduplicationService({
+        cacheSize: serviceOptions.cacheSize ?? cacheSize,
+        cacheTtlMs: serviceOptions.cacheTtlMs ?? cacheTtlMs,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      cacheSize?: number;
+      cacheTtlMs?: number;
+      logger?: LoggerService;
+    } = {}) =>
+      createLegacyEventDeduplicationService({
+        cacheSize: serviceOptions.cacheSize ?? cacheSize,
+        cacheTtlMs: serviceOptions.cacheTtlMs ?? cacheTtlMs,
+        logger: serviceOptions.logger ?? logger,
+      }),
+  };
+}

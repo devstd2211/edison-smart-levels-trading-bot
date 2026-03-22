@@ -16,6 +16,7 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { JournalWriteError } from '../../errors/DomainErrors';
 import {
   cleanupTradeHistoryTempDir,
+  createTradeHistoryBoundFactory,
   createTradeHistoryHarness,
   createLegacyTradeHistoryService,
   createTradeHistoryRecord,
@@ -41,21 +42,11 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
-  const createService = (options: {
+  let createService: (options?: {
     withErrorHandler?: boolean;
     tempDir?: string;
     errorHandler?: jest.Mocked<ErrorHandler>;
-  } = {}): TradeHistoryService =>
-    (options.withErrorHandler === false
-      ? createLegacyTradeHistoryService({
-          logger,
-          tempDir: options.tempDir ?? tempDir,
-        })
-      : createStandardTradeHistoryService({
-          logger,
-          tempDir: options.tempDir ?? tempDir,
-          errorHandler: options.errorHandler ?? errorHandler,
-        }));
+  }) => TradeHistoryService;
 
   beforeEach(() => {
     const harness = createTradeHistoryHarness();
@@ -63,6 +54,20 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     errorHandler = harness.errorHandler;
     tempDir = harness.tempDir;
     service = harness.service;
+    const factory = createTradeHistoryBoundFactory({
+      logger,
+      errorHandler,
+      tempDir,
+    });
+    createService = (options = {}) =>
+      options.withErrorHandler === false
+        ? factory.createLegacyService({
+            tempDir: options.tempDir,
+          })
+        : factory.createStandardService({
+            tempDir: options.tempDir,
+            errorHandler: options.errorHandler,
+          });
   });
 
   afterEach(() => {

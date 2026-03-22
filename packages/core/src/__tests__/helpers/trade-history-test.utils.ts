@@ -164,3 +164,38 @@ export function createTradeHistoryService(options: {
 } = {}): TradeHistoryService {
   return createTradeHistoryHarness(options).service;
 }
+
+export function createTradeHistoryBoundFactory(options: {
+  logger?: TradeHistoryMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+  tempDir?: string;
+  withErrorHandler?: boolean;
+} = {}) {
+  const logger = options.logger ?? new TradeHistoryMockLogger();
+  const errorHandler = options.errorHandler ?? createTradeHistoryErrorHandler();
+  const tempDir = options.tempDir ?? createTradeHistoryTempDir();
+
+  return {
+    logger,
+    errorHandler,
+    tempDir,
+    createStandardService: (serviceOptions: {
+      logger?: TradeHistoryMockLogger;
+      errorHandler?: jest.Mocked<ErrorHandler>;
+      tempDir?: string;
+    } = {}) =>
+      createStandardTradeHistoryService({
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        tempDir: serviceOptions.tempDir ?? tempDir,
+      }),
+    createLegacyService: (serviceOptions: {
+      logger?: TradeHistoryMockLogger;
+      tempDir?: string;
+    } = {}) =>
+      createLegacyTradeHistoryService({
+        logger: serviceOptions.logger ?? logger,
+        tempDir: serviceOptions.tempDir ?? tempDir,
+      }),
+  };
+}
