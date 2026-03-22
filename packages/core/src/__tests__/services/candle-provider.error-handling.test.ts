@@ -19,44 +19,16 @@ import {
 } from '../../errors/DomainErrors';
 import { TimeframeRole } from '../../types/enums';
 import {
-  createCandleProviderHarness,
   createCandleProviderMockCandle,
-  createCandleProviderMockExchange,
-  createCandleProviderErrorHandler,
-  createCandleProviderMockLogger,
-  createCandleProviderMockRepository,
-  createCandleProviderMockTimeframeProvider,
+  createLegacyCandleProviderScenario,
+  createStandardCandleProviderScenario,
   type CandleProviderGetCandlesParams,
 } from '../helpers/candle-provider-test.utils';
-
-function createCandleProviderScenario() {
-  const logger = createCandleProviderMockLogger();
-  const timeframeProvider = createCandleProviderMockTimeframeProvider();
-  const exchange = createCandleProviderMockExchange();
-  const repository = createCandleProviderMockRepository();
-  const errorHandler = createCandleProviderErrorHandler(logger);
-  const { provider } = createCandleProviderHarness({
-    logger,
-    timeframeProvider,
-    exchange,
-    repository,
-    errorHandler,
-  });
-
-  return {
-    logger,
-    timeframeProvider,
-    exchange,
-    repository,
-    errorHandler,
-    provider,
-  };
-}
 
 describe('CandleProvider - RETRY Strategy', () => {
   describe('A1: Network error -> retries 3x -> throws ExchangeConnectionError', () => {
     it('should retry 3 times on ECONNREFUSED and throw ExchangeConnectionError', async () => {
-      const { logger, exchange, provider } = createCandleProviderScenario();
+      const { logger, exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(
         new Error('ECONNREFUSED: Connection refused'),
@@ -78,7 +50,7 @@ describe('CandleProvider - RETRY Strategy', () => {
 
   describe('A2: Rate limit error -> retries with backoff -> throws ExchangeRateLimitError', () => {
     it('should retry on 429 rate limit error and throw ExchangeRateLimitError', async () => {
-      const { exchange, provider } = createCandleProviderScenario();
+      const { exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(new Error('429: Rate limit exceeded'));
 
@@ -92,7 +64,7 @@ describe('CandleProvider - RETRY Strategy', () => {
 
   describe('A3: Successful load after 2 retries -> stores in repository', () => {
     it('should retry and succeed on the second attempt', async () => {
-      const { logger, exchange, repository, provider } = createCandleProviderScenario();
+      const { logger, exchange, repository, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles
         .mockRejectedValueOnce(new Error('timeout'))
@@ -114,7 +86,7 @@ describe('CandleProvider - RETRY Strategy', () => {
 describe('CandleProvider - SKIP Strategy for initialize()', () => {
   describe('B1: One timeframe fails -> skips it, loads others successfully', () => {
     it('should skip failed timeframe and load others', async () => {
-      const { logger, exchange, provider } = createCandleProviderScenario();
+      const { logger, exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockImplementation(
         ({ timeframe }: CandleProviderGetCandlesParams) => {
@@ -143,7 +115,7 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
 
   describe('B2: All timeframes fail -> logs warnings, completes without throwing', () => {
     it('should handle all timeframes failing gracefully', async () => {
-      const { logger, exchange, provider } = createCandleProviderScenario();
+      const { logger, exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(new Error('network error'));
 
@@ -158,7 +130,7 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
 
   describe('B3: All timeframes succeed -> loads all into repository', () => {
     it('should load all timeframes successfully', async () => {
-      const { logger, exchange, repository, provider } = createCandleProviderScenario();
+      const { logger, exchange, repository, provider } = createStandardCandleProviderScenario();
 
       await provider.initialize();
 
@@ -174,24 +146,13 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
 describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
   describe('C1: Cache empty -> loads from API with RETRY -> returns candles', () => {
     it('should load from API when cache is empty', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { logger, exchange, repository, provider } =
+        createStandardCandleProviderScenario();
 
       repository.getCandles.mockReturnValueOnce([]).mockReturnValueOnce([
         { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
         { timestamp: 2, open: 105, high: 115, low: 95, close: 110, volume: 1100 },
       ]);
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       const result = await provider.getCandles(TimeframeRole.ENTRY);
 
@@ -209,24 +170,13 @@ describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
 
   describe('C2: Cache hit -> returns from repository (no API call)', () => {
     it('should return from cache without API call', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, repository, provider } =
+        createStandardCandleProviderScenario();
       const mockCandles = [
         { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
       ];
 
       repository.getCandles.mockReturnValue(mockCandles);
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       const result = await provider.getCandles(TimeframeRole.ENTRY);
 
@@ -237,22 +187,11 @@ describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
 
   describe('C3: API fails after 3 retries -> throws ExchangeAPIError', () => {
     it('should throw after exhausting retries', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, repository, provider } =
+        createStandardCandleProviderScenario();
 
       repository.getCandles.mockReturnValue([]);
       exchange.getCandles.mockRejectedValue(new Error('API error'));
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await expect(provider.getCandles(TimeframeRole.ENTRY)).rejects.toThrow(
         ExchangeAPIError,
@@ -265,22 +204,11 @@ describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
 describe('CandleProvider - onCandleClosed() with SKIP', () => {
   describe('D1: Repository save fails -> logs warning, continues (SKIP)', () => {
     it('should skip repository errors gracefully', () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { logger, repository, provider } =
+        createStandardCandleProviderScenario();
 
       repository.saveCandles.mockImplementation(() => {
         throw new Error('Repository write failed');
-      });
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
       });
 
       provider.onCandleClosed(TimeframeRole.ENTRY, createCandleProviderMockCandle());
@@ -294,21 +222,10 @@ describe('CandleProvider - onCandleClosed() with SKIP', () => {
 
   describe('D2: Invalid timeframe config -> logs warning, returns early', () => {
     it('should handle invalid timeframe gracefully', () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { logger, timeframeProvider, repository, provider } =
+        createStandardCandleProviderScenario();
 
       timeframeProvider.getTimeframe.mockReturnValue(null);
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       provider.onCandleClosed(TimeframeRole.ENTRY, createCandleProviderMockCandle());
 
@@ -323,23 +240,11 @@ describe('CandleProvider - onCandleClosed() with SKIP', () => {
 describe('CandleProvider - Error Classification', () => {
   describe('E1: ECONNREFUSED -> ExchangeConnectionError with context', () => {
     it('should classify ECONNREFUSED as ExchangeConnectionError', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(
         new Error('ECONNREFUSED: Connection refused'),
       );
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await expect(
         provider['loadTimeframeCandles'](TimeframeRole.ENTRY, '1', 100),
@@ -349,21 +254,9 @@ describe('CandleProvider - Error Classification', () => {
 
   describe('E2: 429 status code -> ExchangeRateLimitError with retryAfterMs', () => {
     it('should classify 429 as ExchangeRateLimitError', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(new Error('429: Too Many Requests'));
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await expect(
         provider['loadTimeframeCandles'](TimeframeRole.ENTRY, '1', 100),
@@ -373,21 +266,9 @@ describe('CandleProvider - Error Classification', () => {
 
   describe('E3: Unknown error -> ExchangeAPIError with generic message', () => {
     it('should classify unknown errors as ExchangeAPIError', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, provider } = createStandardCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(new Error('Unknown API error'));
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await expect(
         provider['loadTimeframeCandles'](TimeframeRole.ENTRY, '1', 100),
@@ -399,19 +280,9 @@ describe('CandleProvider - Error Classification', () => {
 describe('CandleProvider - Backward Compatibility', () => {
   describe('F1: Without ErrorHandler -> errors propagate directly (original behavior)', () => {
     it('should propagate errors when no ErrorHandler provided', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
+      const { exchange, provider } = createLegacyCandleProviderScenario();
 
       exchange.getCandles.mockRejectedValue(new Error('API error'));
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-      });
 
       await expect(
         provider['loadTimeframeCandles'](TimeframeRole.ENTRY, '1', 100),
@@ -423,25 +294,14 @@ describe('CandleProvider - Backward Compatibility', () => {
 
   describe('F2: With ErrorHandler -> uses retry logic (new behavior)', () => {
     it('should use retry logic when ErrorHandler provided', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, repository, provider } =
+        createStandardCandleProviderScenario();
 
       exchange.getCandles
         .mockRejectedValueOnce(new Error('timeout'))
         .mockResolvedValueOnce([
           { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
         ]);
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await provider['loadTimeframeCandles'](TimeframeRole.ENTRY, '1', 100);
 
@@ -454,11 +314,8 @@ describe('CandleProvider - Backward Compatibility', () => {
 describe('CandleProvider - E2E Recovery Scenarios', () => {
   describe('G1: Full initialization with mixed failures -> partial success', () => {
     it('should handle mixed success/failure across timeframes', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { logger, exchange, repository, provider } =
+        createStandardCandleProviderScenario();
 
       exchange.getCandles.mockImplementation(
         ({ timeframe }: CandleProviderGetCandlesParams) => {
@@ -471,14 +328,6 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
           ]);
         },
       );
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await provider.initialize();
 
@@ -495,11 +344,8 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
 
   describe('G2: Live trading candle update -> handles repository errors gracefully', () => {
     it('should handle candle update errors without disrupting trading', () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { logger, repository, provider } =
+        createStandardCandleProviderScenario();
 
       let callCount = 0;
       repository.saveCandles.mockImplementation(() => {
@@ -507,14 +353,6 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
         if (callCount === 2) {
           throw new Error('Repository temporarily unavailable');
         }
-      });
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
       });
 
       provider.onCandleClosed(TimeframeRole.ENTRY, createCandleProviderMockCandle());
@@ -531,11 +369,8 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
 describe('CandleProvider - Integration Tests', () => {
   describe('H1: Real scenario - startup with partial failures', () => {
     it('should start up successfully despite some timeframe load failures', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { logger, exchange, repository, provider } =
+        createStandardCandleProviderScenario();
 
       let attempt = 0;
       exchange.getCandles.mockImplementation(
@@ -551,14 +386,6 @@ describe('CandleProvider - Integration Tests', () => {
         },
       );
 
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
-
       await provider.initialize();
 
       expect(repository.saveCandles).toHaveBeenCalled();
@@ -570,11 +397,8 @@ describe('CandleProvider - Integration Tests', () => {
 
   describe('H2: Cache population after initialization', () => {
     it('should successfully populate cache and retrieve candles', async () => {
-      const logger = createCandleProviderMockLogger();
-      const timeframeProvider = createCandleProviderMockTimeframeProvider();
-      const exchange = createCandleProviderMockExchange();
-      const repository = createCandleProviderMockRepository();
-      const errorHandler = createCandleProviderErrorHandler(logger);
+      const { exchange, repository, provider } =
+        createStandardCandleProviderScenario();
       const mockCandles = [
         { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
         { timestamp: 2, open: 105, high: 115, low: 95, close: 110, volume: 1100 },
@@ -583,14 +407,6 @@ describe('CandleProvider - Integration Tests', () => {
 
       exchange.getCandles.mockResolvedValue(mockCandles);
       repository.getCandles.mockReturnValue(mockCandles);
-
-      const { provider } = createCandleProviderHarness({
-        logger,
-        timeframeProvider,
-        exchange,
-        repository,
-        errorHandler,
-      });
 
       await provider.initialize();
       const candles = await provider.getCandles(TimeframeRole.ENTRY);

@@ -17,7 +17,8 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createIndicatorPrecalculationHarness,
-  createIndicatorPrecalculationService,
+  createLegacyIndicatorPrecalculationHarness,
+  createStandardIndicatorPrecalculationService,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
@@ -122,7 +123,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
         debug: jest.fn(),
       };
 
-      const customService = createIndicatorPrecalculationService({
+      const customService = createStandardIndicatorPrecalculationService({
         logger: customLogger as unknown as LoggerService,
         candleProvider: mockCandleProvider,
         cache: mockCache,
@@ -485,12 +486,11 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     it('test-E1: Should work without ErrorHandler parameter', async () => {
       // Arrange: Create service without errorHandler
       const { service: serviceWithoutHandler } =
-        createIndicatorPrecalculationHarness({
+        createLegacyIndicatorPrecalculationHarness({
           logger,
           candleProvider: mockCandleProvider,
           cache: mockCache,
           calculators: mockCalculators,
-          withErrorHandler: false,
         });
 
       mockCalculators[0].calculate.mockResolvedValue(
@@ -512,12 +512,11 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     it('test-E2: Should maintain original behavior for cache failures', async () => {
       // Arrange: Without errorHandler, cache failures logged to console
       const { service: serviceWithoutHandler } =
-        createIndicatorPrecalculationHarness({
+        createLegacyIndicatorPrecalculationHarness({
           logger,
           candleProvider: mockCandleProvider,
           cache: mockCache,
           calculators: mockCalculators,
-          withErrorHandler: false,
         });
 
       mockCache.set.mockImplementation(() => {

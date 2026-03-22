@@ -109,6 +109,37 @@ export function createIndicatorPrecalculationService(options?: {
   );
 }
 
+export function createStandardIndicatorPrecalculationService(options?: {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+  errorHandler?: ErrorHandler;
+}) {
+  return createIndicatorPrecalculationService({
+    logger: options?.logger,
+    candleProvider: options?.candleProvider,
+    cache: options?.cache,
+    calculators: options?.calculators,
+    errorHandler: options?.errorHandler,
+  });
+}
+
+export function createLegacyIndicatorPrecalculationService(options?: {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+}) {
+  return createIndicatorPrecalculationService({
+    logger: options?.logger,
+    candleProvider: options?.candleProvider,
+    cache: options?.cache,
+    calculators: options?.calculators,
+    withErrorHandler: false,
+  });
+}
+
 export function createIndicatorPrecalculationHarness(options?: {
   logger?: LoggerService;
   candleProvider?: IndicatorPrecalculationMockCandleProvider;
@@ -127,14 +158,21 @@ export function createIndicatorPrecalculationHarness(options?: {
     createIndicatorPrecalculationMockCalculator('BB'),
   ];
 
-  const service = createIndicatorPrecalculationService({
-    logger,
-    candleProvider,
-    cache,
-    calculators,
-    errorHandler,
-    withErrorHandler: options?.withErrorHandler,
-  });
+  const service =
+    options?.withErrorHandler === false
+      ? createLegacyIndicatorPrecalculationService({
+          logger,
+          candleProvider,
+          cache,
+          calculators,
+        })
+      : createStandardIndicatorPrecalculationService({
+          logger,
+          candleProvider,
+          cache,
+          calculators,
+          errorHandler,
+        });
 
   service.setOnIndicatorsReady(jest.fn().mockResolvedValue(undefined));
 
@@ -146,4 +184,16 @@ export function createIndicatorPrecalculationHarness(options?: {
     cache,
     calculators,
   };
+}
+
+export function createLegacyIndicatorPrecalculationHarness(options?: {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+}) {
+  return createIndicatorPrecalculationHarness({
+    ...options,
+    withErrorHandler: false,
+  });
 }

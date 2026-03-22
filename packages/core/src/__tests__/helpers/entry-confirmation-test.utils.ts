@@ -39,12 +39,17 @@ export function createEntryConfirmationHarness(options: {
   const errorHandler = options.withErrorHandler === false
     ? undefined
     : options.errorHandler ?? new ErrorHandler(logger);
-  const manager = createEntryConfirmationManager({
-    config,
-    logger,
-    withErrorHandler: options.withErrorHandler,
-    errorHandler,
-  });
+  const manager =
+    options.withErrorHandler === false
+      ? createLegacyEntryConfirmationManager({
+          config,
+          logger,
+        })
+      : createStandardEntryConfirmationManager({
+          config,
+          logger,
+          errorHandler,
+        });
 
   return {
     manager,
@@ -72,6 +77,33 @@ export function createEntryConfirmationManager(options: {
     logger,
     errorHandler,
   );
+}
+
+export function createStandardEntryConfirmationManager(options: {
+  config?: EntryConfirmationConfig;
+  configOverrides?: Partial<EntryConfirmationConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): EntryConfirmationManager {
+  return createEntryConfirmationManager({
+    config: options.config,
+    configOverrides: options.configOverrides,
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyEntryConfirmationManager(options: {
+  config?: EntryConfirmationConfig;
+  configOverrides?: Partial<EntryConfirmationConfig>;
+  logger?: LoggerService;
+} = {}): EntryConfirmationManager {
+  return createEntryConfirmationManager({
+    config: options.config,
+    configOverrides: options.configOverrides,
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }
 
 export function createPendingEntryInput(
@@ -130,7 +162,9 @@ export function createEntryConfirmationManagerWithHarness(options: {
   withErrorHandler?: boolean;
   errorHandler?: ErrorHandler;
 } = {}): EntryConfirmationManager {
-  return createEntryConfirmationManager(options);
+  return options.withErrorHandler === false
+    ? createLegacyEntryConfirmationManager(options)
+    : createStandardEntryConfirmationManager(options);
 }
 
 export function createEntryConfirmationFactory(options: {
@@ -156,12 +190,17 @@ export function createEntryConfirmationFactory(options: {
       withErrorHandler?: boolean;
       errorHandler?: ErrorHandler;
     } = {}) =>
-      createEntryConfirmationManager({
-        config: overrides.config,
-        configOverrides: overrides.configOverrides,
-        logger,
-        withErrorHandler: overrides.withErrorHandler ?? options.withErrorHandler,
-        errorHandler: overrides.errorHandler ?? errorHandler,
-      }),
+      (overrides.withErrorHandler ?? options.withErrorHandler) === false
+        ? createLegacyEntryConfirmationManager({
+            config: overrides.config,
+            configOverrides: overrides.configOverrides,
+            logger,
+          })
+        : createStandardEntryConfirmationManager({
+            config: overrides.config,
+            configOverrides: overrides.configOverrides,
+            logger,
+            errorHandler: overrides.errorHandler ?? errorHandler,
+          }),
   };
 }

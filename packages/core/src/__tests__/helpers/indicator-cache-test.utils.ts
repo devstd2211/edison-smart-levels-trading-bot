@@ -81,12 +81,17 @@ export function createIndicatorCacheHarness(options?: {
     options?.withErrorHandler === false
       ? undefined
       : (options?.errorHandler ?? new ErrorHandler(logger));
-  const cache = createIndicatorCacheService({
-    logger,
-    repository,
-    errorHandler,
-    withErrorHandler: options?.withErrorHandler,
-  });
+  const cache =
+    options?.withErrorHandler === false
+      ? createLegacyIndicatorCache({
+          logger,
+          repository,
+        })
+      : createStandardIndicatorCache({
+          logger,
+          repository,
+          errorHandler,
+        });
 
   return {
     logger,
@@ -94,6 +99,29 @@ export function createIndicatorCacheHarness(options?: {
     errorHandler: errorHandler ?? new ErrorHandler(logger),
     cache,
   };
+}
+
+export function createStandardIndicatorCache(options?: {
+  logger?: LoggerService;
+  repository?: IndicatorCacheMockRepository;
+  errorHandler?: ErrorHandler;
+}) {
+  return createIndicatorCacheService({
+    logger: options?.logger,
+    repository: options?.repository,
+    errorHandler: options?.errorHandler,
+  });
+}
+
+export function createLegacyIndicatorCache(options?: {
+  logger?: LoggerService;
+  repository?: IndicatorCacheMockRepository;
+}) {
+  return createIndicatorCacheService({
+    logger: options?.logger,
+    repository: options?.repository,
+    withErrorHandler: false,
+  });
 }
 
 export function createIndicatorCacheService(options?: {

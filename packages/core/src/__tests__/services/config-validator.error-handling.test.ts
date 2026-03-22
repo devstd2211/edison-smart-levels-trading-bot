@@ -26,10 +26,10 @@ import {
 } from '../../errors/DomainErrors';
 import {
   asConfigValidatorInput,
+  createBoundLegacyConfigValidatorFactory,
+  createBoundStandardConfigValidatorFactory,
   createConfigValidatorConfig,
-  createLegacyConfigValidatorFactory,
   createConfigValidatorLogger,
-  createStandardConfigValidatorFactory,
   createStandardConfigValidatorHarness,
   createStandardConfigValidatorService,
   omitConfigValidatorSection,
@@ -48,7 +48,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ({ logger, errorHandler } = createStandardConfigValidatorHarness());
-    createValidator = createStandardConfigValidatorFactory({ logger, errorHandler });
+    createValidator = createBoundStandardConfigValidatorFactory({ logger, errorHandler });
   });
 
   // ========================================================================
@@ -76,7 +76,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.A3: Should work without ErrorHandler (backward compat)', () => {
-      const validator = createLegacyConfigValidatorFactory({ logger })();
+      const validator = createBoundLegacyConfigValidatorFactory({ logger })();
 
       expect(() => validator.validateAll(validConfig)).not.toThrow();
     });

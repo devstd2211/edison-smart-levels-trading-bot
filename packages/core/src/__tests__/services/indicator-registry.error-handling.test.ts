@@ -20,10 +20,11 @@ import {
   asIndicatorRegistryMetadata,
   asIndicatorRegistryType,
   createIndicatorRegistryHarness,
+  createLegacyIndicatorRegistry,
   createIndicatorRegistryMetadata,
   createIndicatorRegistryMockLogger,
   createIndicatorRegistryRegistrations,
-  createIndicatorRegistryService,
+  createStandardIndicatorRegistry,
   type IndicatorRegistryMockLogger,
 } from '../helpers/indicator-registry-test.utils';
 
@@ -174,7 +175,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = createIndicatorRegistryService({
+      const reg = createStandardIndicatorRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -198,7 +199,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = createIndicatorRegistryService({
+      const reg = createStandardIndicatorRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -219,7 +220,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = createIndicatorRegistryService({
+      const reg = createStandardIndicatorRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -349,13 +350,13 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = createIndicatorRegistryService({ logger, withErrorHandler: false });
+      const reg = createLegacyIndicatorRegistry({ logger });
       expect(reg).toBeDefined();
       expect(reg.getCount()).toBe(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const reg = createIndicatorRegistryService({ logger, withErrorHandler: false });
+      const reg = createLegacyIndicatorRegistry({ logger });
 
       // Register should work as before
       reg.register(IndicatorType.EMA, {
@@ -375,7 +376,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
     it('should support legacy calls without logger', () => {
       // Should work even without logger
-      const reg = createIndicatorRegistryService({ withErrorHandler: false });
+      const reg = createLegacyIndicatorRegistry();
       expect(reg).toBeDefined();
 
       // Basic operations should work

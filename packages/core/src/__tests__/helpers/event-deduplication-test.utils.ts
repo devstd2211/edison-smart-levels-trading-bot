@@ -12,6 +12,11 @@ export interface EventDeduplicationHarness {
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => EventDeduplicationService;
+  createLegacyService: (options?: {
+    cacheSize?: number;
+    cacheTtlMs?: number;
+    logger?: LoggerService;
+  }) => EventDeduplicationService;
   createServiceWithDefaults: (options?: {
     cacheSize?: number;
     cacheTtlMs?: number;
@@ -62,6 +67,33 @@ export function createEventDeduplicationService(options: {
     logger,
     errorHandler,
   );
+}
+
+export function createStandardEventDeduplicationService(options: {
+  cacheSize?: number;
+  cacheTtlMs?: number;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): EventDeduplicationService {
+  return createEventDeduplicationService({
+    cacheSize: options.cacheSize,
+    cacheTtlMs: options.cacheTtlMs,
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyEventDeduplicationService(options: {
+  cacheSize?: number;
+  cacheTtlMs?: number;
+  logger?: LoggerService;
+} = {}): EventDeduplicationService {
+  return createEventDeduplicationService({
+    cacheSize: options.cacheSize,
+    cacheTtlMs: options.cacheTtlMs,
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }
 
 export function createEventDeduplicationServiceWithHarness(options: {
@@ -139,27 +171,37 @@ export function createEventDeduplicationHarness(): EventDeduplicationHarness {
     logger,
     errorHandler,
     createStandardService: (options = {}) =>
-      createEventDeduplicationService({
+      createStandardEventDeduplicationService({
         cacheSize: options.cacheSize ?? 100,
         cacheTtlMs: options.cacheTtlMs ?? 60000,
         logger: options.logger ?? logger,
-        withErrorHandler: options.withErrorHandler,
         errorHandler: options.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (options = {}) =>
+      createLegacyEventDeduplicationService({
+        cacheSize: options.cacheSize ?? 100,
+        cacheTtlMs: options.cacheTtlMs ?? 60000,
+        logger: options.logger ?? logger,
       }),
     createServiceWithDefaults: (options = {}) =>
-      createEventDeduplicationService({
-        cacheSize: options.cacheSize,
-        cacheTtlMs: options.cacheTtlMs,
-        logger: options.logger ?? logger,
-        withErrorHandler: options.withErrorHandler,
-        errorHandler: options.errorHandler ?? errorHandler,
-      }),
+      (options.withErrorHandler === false
+        ? createLegacyEventDeduplicationService({
+            cacheSize: options.cacheSize,
+            cacheTtlMs: options.cacheTtlMs,
+            logger: options.logger ?? logger,
+          })
+        : createStandardEventDeduplicationService({
+            cacheSize: options.cacheSize,
+            cacheTtlMs: options.cacheTtlMs,
+            logger: options.logger ?? logger,
+            errorHandler: options.errorHandler ?? errorHandler,
+          })),
     createService: (
       cacheSize: number = 100,
       cacheTtlMs: number = 60000,
       customLogger: LoggerService = logger,
       customErrorHandler: ErrorHandler = errorHandler,
-    ) => createEventDeduplicationService({
+    ) => createStandardEventDeduplicationService({
       cacheSize,
       cacheTtlMs,
       logger: customLogger,

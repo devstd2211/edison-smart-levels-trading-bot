@@ -96,6 +96,20 @@ export const createBotMetricsService = ({
   errorHandler?: ErrorHandler;
 } = {}): BotMetricsService => new BotMetricsService(logger, errorHandler);
 
+export const createStandardBotMetricsService = ({
+  logger = createBotMetricsMockLogger() as LoggerService,
+  errorHandler = createBotMetricsErrorHandler(),
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): BotMetricsService => createBotMetricsService({ logger, errorHandler });
+
+export const createLegacyBotMetricsService = ({
+  logger = createBotMetricsMockLogger() as LoggerService,
+}: {
+  logger?: LoggerService;
+} = {}): BotMetricsService => createBotMetricsService({ logger });
+
 export const createBotMetricsHarness = ({
   logger = new BotMetricsTestLogger(),
   errorHandler = createBotMetricsErrorHandler(),
@@ -109,7 +123,7 @@ export const createBotMetricsHarness = ({
 } => ({
   logger,
   errorHandler,
-  service: createBotMetricsService({ logger, errorHandler }),
+  service: createStandardBotMetricsService({ logger, errorHandler }),
 });
 
 export const seedBotMetricsService = (

@@ -154,14 +154,22 @@ export function createCandleProviderHarness(options?: {
   const repository =
     options?.repository ?? createCandleProviderMockRepository();
   const symbol = options?.symbol ?? 'APEXUSDT';
-  const provider = createCandleProviderService({
-    timeframeProvider,
-    exchange,
-    logger,
-    symbol,
-    repository,
-    errorHandler: options?.errorHandler,
-  });
+  const provider = options?.errorHandler
+    ? createStandardCandleProvider({
+        timeframeProvider,
+        exchange,
+        logger,
+        symbol,
+        repository,
+        errorHandler: options.errorHandler,
+      })
+    : createLegacyCandleProvider({
+        timeframeProvider,
+        exchange,
+        logger,
+        symbol,
+        repository,
+      });
 
   return {
     provider,
@@ -205,4 +213,111 @@ export function createCandleProviderService(options?: {
     repository,
     options?.errorHandler,
   );
+}
+
+export function createStandardCandleProvider(options?: {
+  logger?: CandleProviderMockLogger & ProviderLogger;
+  timeframeProvider?: CandleProviderMockTimeframeProvider &
+    ProviderTimeframeProvider;
+  exchange?: CandleProviderMockExchange & ProviderExchange;
+  repository?: CandleProviderMockRepository & ProviderRepository;
+  errorHandler?: ErrorHandler;
+  symbol?: string;
+}) {
+  return createCandleProviderService({
+    logger: options?.logger,
+    timeframeProvider: options?.timeframeProvider,
+    exchange: options?.exchange,
+    repository: options?.repository,
+    errorHandler: options?.errorHandler,
+    symbol: options?.symbol,
+  });
+}
+
+export function createLegacyCandleProvider(options?: {
+  logger?: CandleProviderMockLogger & ProviderLogger;
+  timeframeProvider?: CandleProviderMockTimeframeProvider &
+    ProviderTimeframeProvider;
+  exchange?: CandleProviderMockExchange & ProviderExchange;
+  repository?: CandleProviderMockRepository & ProviderRepository;
+  symbol?: string;
+}) {
+  return createCandleProviderService({
+    logger: options?.logger,
+    timeframeProvider: options?.timeframeProvider,
+    exchange: options?.exchange,
+    repository: options?.repository,
+    symbol: options?.symbol,
+  });
+}
+
+export function createStandardCandleProviderScenario(options?: {
+  logger?: CandleProviderMockLogger & ProviderLogger;
+  timeframeProvider?: CandleProviderMockTimeframeProvider &
+    ProviderTimeframeProvider;
+  exchange?: CandleProviderMockExchange & ProviderExchange;
+  repository?: CandleProviderMockRepository & ProviderRepository;
+  errorHandler?: ErrorHandler;
+  symbol?: string;
+}) {
+  const logger = options?.logger ?? createCandleProviderMockLogger();
+  const timeframeProvider =
+    options?.timeframeProvider ?? createCandleProviderMockTimeframeProvider();
+  const exchange = options?.exchange ?? createCandleProviderMockExchange();
+  const repository =
+    options?.repository ?? createCandleProviderMockRepository();
+  const symbol = options?.symbol ?? 'APEXUSDT';
+  const errorHandler =
+    options?.errorHandler ?? createCandleProviderErrorHandler(logger);
+  const provider = createStandardCandleProvider({
+    logger,
+    timeframeProvider,
+    exchange,
+    repository,
+    errorHandler,
+    symbol,
+  });
+
+  return {
+    logger,
+    timeframeProvider,
+    exchange,
+    repository,
+    errorHandler,
+    provider,
+    symbol,
+  };
+}
+
+export function createLegacyCandleProviderScenario(options?: {
+  logger?: CandleProviderMockLogger & ProviderLogger;
+  timeframeProvider?: CandleProviderMockTimeframeProvider &
+    ProviderTimeframeProvider;
+  exchange?: CandleProviderMockExchange & ProviderExchange;
+  repository?: CandleProviderMockRepository & ProviderRepository;
+  symbol?: string;
+}) {
+  const logger = options?.logger ?? createCandleProviderMockLogger();
+  const timeframeProvider =
+    options?.timeframeProvider ?? createCandleProviderMockTimeframeProvider();
+  const exchange = options?.exchange ?? createCandleProviderMockExchange();
+  const repository =
+    options?.repository ?? createCandleProviderMockRepository();
+  const symbol = options?.symbol ?? 'APEXUSDT';
+  const provider = createLegacyCandleProvider({
+    logger,
+    timeframeProvider,
+    exchange,
+    repository,
+    symbol,
+  });
+
+  return {
+    logger,
+    timeframeProvider,
+    exchange,
+    repository,
+    provider,
+    symbol,
+  };
 }

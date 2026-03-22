@@ -29,11 +29,10 @@ describe('EventDeduplicationService', () => {
   });
 
   const createService = (cacheSize = 100, cacheTtlMs = 60000) =>
-    harness.createStandardService({
+    harness.createServiceWithDefaults({
       cacheSize,
       cacheTtlMs,
       logger,
-      errorHandler: harness.errorHandler,
     });
 
   describe('isDuplicate', () => {
@@ -127,7 +126,7 @@ describe('EventDeduplicationService', () => {
 
   describe('clear', () => {
     beforeEach(() => {
-      service = harness.createStandardService({
+      service = harness.createServiceWithDefaults({
         cacheSize: 100,
         cacheTtlMs: 60000,
         logger,

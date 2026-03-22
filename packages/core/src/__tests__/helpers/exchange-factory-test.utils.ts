@@ -144,6 +144,28 @@ export function createExchangeFactoryService(options: {
   );
 }
 
+export function createStandardExchangeFactory(options: {
+  logger?: LoggerService;
+  config?: ExchangeConfig;
+  errorHandler?: ErrorHandler;
+} = {}): ExchangeFactory {
+  return createExchangeFactoryService({
+    logger: options.logger,
+    config: options.config,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyExchangeFactory(options: {
+  logger?: LoggerService;
+  config?: ExchangeConfig;
+} = {}): ExchangeFactory {
+  return createExchangeFactoryService({
+    logger: options.logger,
+    config: options.config,
+  });
+}
+
 export function createExchangeFactoryServiceWithHarness(options: {
   logger?: LoggerService;
   config?: ExchangeConfig;
@@ -198,25 +220,25 @@ export function createExchangeFactoryBoundCreators(options: {
     logger,
     errorHandler,
     createFactory: (overrides: Partial<ExchangeConfig> = {}) =>
-      createExchangeFactoryService({
+      createStandardExchangeFactory({
         logger,
         config: createExchangeFactoryConfig(overrides),
         errorHandler,
       }),
     createBybitFactory: (overrides: Partial<ExchangeConfig> = {}) =>
-      createExchangeFactoryService({
+      createStandardExchangeFactory({
         logger,
         config: createBybitExchangeFactoryConfig(overrides),
         errorHandler,
       }),
     createBinanceFactory: (overrides: Partial<ExchangeConfig> = {}) =>
-      createExchangeFactoryService({
+      createStandardExchangeFactory({
         logger,
         config: createBinanceExchangeFactoryConfig(overrides),
         errorHandler,
       }),
     createFactoryWithoutErrorHandler: (overrides: Partial<ExchangeConfig> = {}) =>
-      createExchangeFactoryService({
+      createLegacyExchangeFactory({
         logger,
         config: createExchangeFactoryConfig(overrides),
       }),

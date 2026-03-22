@@ -29,12 +29,13 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
-  let createService: ReturnType<typeof createCandleAggregatorHarness>['createService'];
+  let createStandardService: ReturnType<typeof createCandleAggregatorHarness>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createCandleAggregatorHarness>['createLegacyService'];
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
   beforeEach(() => {
-    ({ service, errorHandler, mockLogger, createService } = createCandleAggregatorHarness());
+    ({ service, errorHandler, mockLogger, createStandardService, createLegacyService } = createCandleAggregatorHarness());
   });
 
   describe('THROW: Input Validation', () => {
@@ -165,7 +166,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
           throw new Error('Logger failed');
         }),
       };
-      const badService = createBasicAggregatorService(createService, {
+      const badService = createBasicAggregatorService(createStandardService, {
         logger: badLogger as unknown as LoggerService,
         errorHandler,
       });
@@ -227,9 +228,8 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = createBasicAggregatorService(createService, {
+      const basicService = createBasicAggregatorService(createLegacyService, {
         logger: asCandleAggregatorLogger(mockLogger),
-        withErrorHandler: false,
       });
       const candles = [createAggregatorMockCandle(1000, 100)];
 
@@ -239,9 +239,8 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = createBasicAggregatorService(createService, {
+      const basicService = createBasicAggregatorService(createLegacyService, {
         logger: asCandleAggregatorLogger(mockLogger),
-        withErrorHandler: false,
       });
 
       expect(() => {
@@ -250,10 +249,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = createBasicAggregatorService(createService, {
-        errorHandler,
-        withErrorHandler: false,
-      });
+      const basicService = createLegacyService();
       const candles = [createAggregatorMockCandle(1000, 100)];
 
       expect(() => {

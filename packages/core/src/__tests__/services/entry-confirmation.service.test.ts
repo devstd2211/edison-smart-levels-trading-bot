@@ -6,7 +6,7 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEntryConfirmationConfig,
   createEntryConfirmationHarness,
-  createEntryConfirmationManagerWithHarness,
+  createLegacyEntryConfirmationManager,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
@@ -393,10 +393,9 @@ describe('EntryConfirmationManager', () => {
         },
       });
 
-      const disabledManager = createEntryConfirmationManagerWithHarness({
+      const disabledManager = createLegacyEntryConfirmationManager({
         config: disabledConfig,
         logger,
-        withErrorHandler: false,
       });
 
       expect(disabledManager.isEnabled(SignalDirection.LONG)).toBe(false);

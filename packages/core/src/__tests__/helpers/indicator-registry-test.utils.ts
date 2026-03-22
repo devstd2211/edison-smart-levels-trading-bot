@@ -48,11 +48,15 @@ export function createIndicatorRegistryHarness(
     options.withErrorHandler === false
       ? undefined
       : createIndicatorRegistryErrorHandler(logger);
-  const registry = createIndicatorRegistryService({
-    logger,
-    errorHandler,
-    withErrorHandler: options.withErrorHandler,
-  });
+  const registry =
+    options.withErrorHandler === false
+      ? createLegacyIndicatorRegistry({
+          logger,
+        })
+      : createStandardIndicatorRegistry({
+          logger,
+          errorHandler,
+        });
 
   return {
     logger,
@@ -77,6 +81,25 @@ export function createIndicatorRegistryService(options: {
     logger ? asIndicatorRegistryLogger(logger) : undefined,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createStandardIndicatorRegistry(options: {
+  logger?: IndicatorRegistryMockLogger;
+  errorHandler?: ErrorHandler;
+} = {}): IndicatorRegistry {
+  return createIndicatorRegistryService({
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyIndicatorRegistry(options: {
+  logger?: IndicatorRegistryMockLogger;
+} = {}): IndicatorRegistry {
+  return createIndicatorRegistryService({
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }
 
 export function createIndicatorRegistryMetadata(

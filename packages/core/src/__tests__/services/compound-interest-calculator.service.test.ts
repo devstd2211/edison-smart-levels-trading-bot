@@ -12,23 +12,18 @@ import {
 } from '../../utils/compound-interest.helpers';
 import {
   createCompoundInterestConfig,
-  createLegacyCompoundInterestFactory,
-  createLegacyCompoundInterestBoundFactory,
+  createLegacyCompoundInterestHarness,
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
-  let createCalculator: ReturnType<typeof createLegacyCompoundInterestFactory>;
+  let createCalculator: ReturnType<typeof createLegacyCompoundInterestHarness>['createCalculator'];
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    ({ logger, mockGetBalance } = createLegacyCompoundInterestBoundFactory());
-    createCalculator = createLegacyCompoundInterestFactory({
-      logger,
-      getBalance: mockGetBalance,
-    });
+    ({ logger, mockGetBalance, createCalculator } = createLegacyCompoundInterestHarness());
   });
 
   // ============================================================================

@@ -14,7 +14,8 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createBotMetricsHarness,
   BotMetricsTestLogger,
-  createBotMetricsService,
+  createLegacyBotMetricsService,
+  createStandardBotMetricsService,
   createBotMetricsTrade,
   seedBotMetricsService,
 } from '../helpers/bot-metrics-test.utils';
@@ -38,20 +39,20 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('Constructor', () => {
     it('should initialize with ErrorHandler', () => {
-      const service = createBotMetricsService({ logger, errorHandler });
+      const service = createStandardBotMetricsService({ logger, errorHandler });
       service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(logger.logCalls.length).toBeGreaterThan(0);
     });
 
     it('should initialize without ErrorHandler', () => {
-      const service = createBotMetricsService({ logger });
+      const service = createLegacyBotMetricsService({ logger });
       expect(service).toBeDefined();
     });
 
     it('should handle logger failure in constructor with RETRY strategy', () => {
       logger.throwOnCall = true;
-      const service = createBotMetricsService({ logger, errorHandler });
+      const service = createStandardBotMetricsService({ logger, errorHandler });
       service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(errorHandler.handle).toHaveBeenCalled();
@@ -59,7 +60,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should continue if constructor logger fails without ErrorHandler', () => {
       logger.throwOnCall = true;
-      const service = createBotMetricsService({ logger });
+      const service = createLegacyBotMetricsService({ logger });
       expect(() => service.getSessionDuration()).not.toThrow();
       expect(service).toBeDefined();
     });
@@ -173,7 +174,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should handle trade recording without ErrorHandler', () => {
-      const serviceNoEH = createBotMetricsService({ logger });
+      const serviceNoEH = createLegacyBotMetricsService({ logger });
       logger.throwOnCall = true;
       const trade = createBotMetricsTrade({
         entryPrice: 50000,
@@ -293,7 +294,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should handle report generation without ErrorHandler', () => {
       const freshLogger = new BotMetricsTestLogger();
-      const serviceNoEH = createBotMetricsService({ logger: freshLogger });
+      const serviceNoEH = createLegacyBotMetricsService({ logger: freshLogger });
       freshLogger.throwOnCall = true;
       serviceNoEH.printReport(); // Should not throw
       // Logger should attempt error logging but we don't verify it since error logger also fails

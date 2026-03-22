@@ -189,6 +189,15 @@ export function createStandardCompoundInterestBoundFactory(options: {
   };
 }
 
+export function createStandardCompoundInterestHarness(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createStandardCompoundInterestBoundFactory(options);
+}
+
 export function createLegacyCompoundInterestBoundFactory(options: {
   configOverrides?: Partial<CompoundInterestConfig>;
   logger?: LoggerService;
@@ -215,6 +224,14 @@ export function createLegacyCompoundInterestBoundFactory(options: {
         getBalance: mockGetBalance,
       }),
   };
+}
+
+export function createLegacyCompoundInterestHarness(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+} = {}) {
+  return createLegacyCompoundInterestBoundFactory(options);
 }
 
 export function createCompoundInterestBoundFactory(options: {

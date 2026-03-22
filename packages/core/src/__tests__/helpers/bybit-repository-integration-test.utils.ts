@@ -38,6 +38,11 @@ export function createBybitRepositoryHarness(
     logger?: LoggerService;
     repository?: MarketDataCacheRepository;
   }) => BybitService;
+  createStandardService: (options?: {
+    config?: ExchangeConfig;
+    logger?: LoggerService;
+    repository?: MarketDataCacheRepository;
+  }) => BybitService;
 } {
   const logger = createBybitRepositoryLogger();
   const repository = new MarketDataCacheRepository();
@@ -58,6 +63,7 @@ export function createBybitRepositoryHarness(
     repository,
     config,
     createService,
+    createStandardService: createService,
   };
 }
 

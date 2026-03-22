@@ -123,6 +123,13 @@ export function createStandardConsoleDashboardHarness(options: {
     service,
     logger,
     errorHandler,
+    createService: (serviceOptions: {
+      config?: DashboardConfigInput;
+    } = {}) =>
+      createStandardConsoleDashboardService({
+        config: serviceOptions.config,
+        errorHandler,
+      }),
   };
 }
 
@@ -139,6 +146,12 @@ export function createLegacyConsoleDashboardHarness(options: {
     service,
     logger,
     errorHandler: undefined,
+    createService: (serviceOptions: {
+      config?: DashboardConfigInput;
+    } = {}) =>
+      createLegacyConsoleDashboardService({
+        config: serviceOptions.config,
+      }),
   };
 }
 

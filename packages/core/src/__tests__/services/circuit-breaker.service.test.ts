@@ -15,11 +15,11 @@ import {
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
+  let createService: ReturnType<typeof createStandardCircuitBreakerHarness>['createService'];
 
   beforeEach(() => {
     defaultConfig = createCircuitBreakerConfig();
-    const harness = createStandardCircuitBreakerHarness({ configOverrides: defaultConfig });
-    service = harness.service;
+    ({ service, createService } = createStandardCircuitBreakerHarness({ configOverrides: defaultConfig }));
   });
 
   // TEST 1-2: Initial state
@@ -141,14 +141,14 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should manually reset circuit', () => {
-      // Trip circuit
+      service = createService();
+
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
       }
 
       expect(service.getState()).toBe(CircuitState.OPEN);
 
-      // Manual reset
       service.reset();
 
       expect(service.getState()).toBe(CircuitState.CLOSED);

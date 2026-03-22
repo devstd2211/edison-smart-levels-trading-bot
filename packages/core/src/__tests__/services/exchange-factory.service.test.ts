@@ -8,16 +8,38 @@ import { BybitServiceAdapter } from '../../services/bybit/bybit-service.adapter'
 import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
-  createExchangeFactoryBoundCreators,
+  createBinanceExchangeFactoryConfig,
+  createBybitExchangeFactoryConfig,
+  createExchangeFactoryConfig,
+  createExchangeFactoryHarness,
+  createStandardExchangeFactory,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let createFactory: ReturnType<typeof createExchangeFactoryBoundCreators>['createFactory'];
-  let createBybitFactory: ReturnType<typeof createExchangeFactoryBoundCreators>['createBybitFactory'];
-  let createBinanceFactory: ReturnType<typeof createExchangeFactoryBoundCreators>['createBinanceFactory'];
+  let createFactory: (overrides?: Parameters<typeof createExchangeFactoryConfig>[0]) => ReturnType<typeof createStandardExchangeFactory>;
+  let createBybitFactory: (overrides?: Parameters<typeof createBybitExchangeFactoryConfig>[0]) => ReturnType<typeof createStandardExchangeFactory>;
+  let createBinanceFactory: (overrides?: Parameters<typeof createBinanceExchangeFactoryConfig>[0]) => ReturnType<typeof createStandardExchangeFactory>;
 
   beforeEach(() => {
-    ({ createFactory, createBybitFactory, createBinanceFactory } = createExchangeFactoryBoundCreators());
+    const { logger, errorHandler } = createExchangeFactoryHarness();
+    createFactory = (overrides = {}) =>
+      createStandardExchangeFactory({
+        logger,
+        errorHandler,
+        config: createExchangeFactoryConfig(overrides),
+      });
+    createBybitFactory = (overrides = {}) =>
+      createStandardExchangeFactory({
+        logger,
+        errorHandler,
+        config: createBybitExchangeFactoryConfig(overrides),
+      });
+    createBinanceFactory = (overrides = {}) =>
+      createStandardExchangeFactory({
+        logger,
+        errorHandler,
+        config: createBinanceExchangeFactoryConfig(overrides),
+      });
   });
 
   describe('Factory Initialization', () => {

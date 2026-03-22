@@ -80,6 +80,17 @@ export function createStandardCircuitBreakerHarness(options: {
     logger,
     config,
     errorHandler,
+    createService: (serviceOptions: {
+      configOverrides?: Partial<CircuitBreakerConfig>;
+    } = {}) =>
+      createStandardCircuitBreakerService({
+        configOverrides: {
+          ...options.configOverrides,
+          ...serviceOptions.configOverrides,
+        },
+        logger,
+        errorHandler,
+      }),
   };
 }
 
@@ -99,6 +110,16 @@ export function createLegacyCircuitBreakerHarness(options: {
     logger,
     config,
     errorHandler: undefined,
+    createService: (serviceOptions: {
+      configOverrides?: Partial<CircuitBreakerConfig>;
+    } = {}) =>
+      createLegacyCircuitBreakerService({
+        configOverrides: {
+          ...options.configOverrides,
+          ...serviceOptions.configOverrides,
+        },
+        logger,
+      }),
   };
 }
 

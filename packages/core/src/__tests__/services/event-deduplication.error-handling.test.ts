@@ -18,6 +18,7 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createEventDeduplicationHarness,
   createEventDeduplicationErrorHandler,
+  createLegacyEventDeduplicationService,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
@@ -39,12 +40,12 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let harness: EventDeduplicationHarness;
-  let createService: EventDeduplicationHarness['createStandardService'];
+  let createService: EventDeduplicationHarness['createServiceWithDefaults'];
 
   beforeEach(() => {
     harness = createEventDeduplicationHarness();
     ({ logger, errorHandler } = harness);
-    createService = harness.createStandardService;
+    createService = harness.createServiceWithDefaults;
   });
 
   // ========================================================================
@@ -116,7 +117,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.4: Should work without ErrorHandler when logger fails', () => {
       // No ErrorHandler provided
-      service = createService({ cacheSize: 10, cacheTtlMs: 1000, logger, withErrorHandler: false });
+      service = harness.createLegacyService({ cacheSize: 10, cacheTtlMs: 1000, logger });
       const timestamp = Date.now();
 
       // Mock logger to throw
@@ -214,7 +215,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
     it('test-8.9.19.8: Should degrade without ErrorHandler in cleanup', () => {
       // No ErrorHandler
-      service = createService({ cacheSize: 5, cacheTtlMs: 100, logger, withErrorHandler: false });
+      service = harness.createLegacyService({ cacheSize: 5, cacheTtlMs: 100, logger });
 
       const timestamp = Date.now();
 
@@ -337,7 +338,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
       // Create service with ErrorHandler
       const service1 = createService({ cacheSize: 10, cacheTtlMs: 1000, logger, errorHandler });
       const service2 = createService({ cacheSize: 10, cacheTtlMs: 1000, logger });
-      const service3 = createService({ cacheSize: 10, cacheTtlMs: 1000, withErrorHandler: false });
+      const service3 = harness.createLegacyService({ cacheSize: 10, cacheTtlMs: 1000 });
 
       const timestamp = Date.now();
 
@@ -369,7 +370,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.16: Should work without logger or ErrorHandler', () => {
-      service = createService({ cacheSize: 10, cacheTtlMs: 1000, withErrorHandler: false });
+      service = createLegacyEventDeduplicationService({ cacheSize: 10, cacheTtlMs: 1000 });
       const timestamp = Date.now();
 
       const first = service.isDuplicate('TP', 'order-123', timestamp);

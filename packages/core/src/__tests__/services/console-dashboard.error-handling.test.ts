@@ -10,22 +10,20 @@
 
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
 import {
-  createConsoleDashboardErrorHandler,
-  createLegacyConsoleDashboardService,
   createConsoleDashboardPosition as createValidPosition,
-  createStandardConsoleDashboardFactory,
+  createLegacyConsoleDashboardHarness,
   createStandardConsoleDashboardHarness,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ReturnType<typeof createStandardConsoleDashboardFactory>;
+  let createDashboard: ReturnType<typeof createStandardConsoleDashboardHarness>['createService'];
+  let createLegacyDashboard: ReturnType<typeof createLegacyConsoleDashboardHarness>['createService'];
 
   beforeEach(() => {
-    createDashboard = createStandardConsoleDashboardFactory({
-      errorHandler: createConsoleDashboardErrorHandler(),
-    });
+    ({ createService: createDashboard } = createStandardConsoleDashboardHarness());
+    ({ createService: createLegacyDashboard } = createLegacyConsoleDashboardHarness());
   });
 
   // ============================================================================
@@ -221,14 +219,14 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should create service without ErrorHandler', () => {
-      const service = createLegacyConsoleDashboardService({
+      const service = createLegacyDashboard({
         config: { enabled: false },
       });
       expect(service).toBeDefined();
     });
 
     test('should handle price update', () => {
-      const service = createLegacyConsoleDashboardService({
+      const service = createLegacyDashboard({
         config: { enabled: false },
       });
       expect(() => {
@@ -237,7 +235,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should throw on invalid price even without ErrorHandler', () => {
-      const service = createLegacyConsoleDashboardService({
+      const service = createLegacyDashboard({
         config: { enabled: false },
       });
       expect(() => {
@@ -246,7 +244,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should handle destroy gracefully', () => {
-      const service = createLegacyConsoleDashboardService({
+      const service = createLegacyDashboard({
         config: { enabled: false },
       });
       expect(() => {
@@ -255,7 +253,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should handle multiple sequential updates', () => {
-      const service = createLegacyConsoleDashboardService({
+      const service = createLegacyDashboard({
         config: { enabled: false },
       });
       expect(() => {
@@ -267,7 +265,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     });
 
     test('should maintain event history (max 50)', () => {
-      const service = createLegacyConsoleDashboardService({
+      const service = createLegacyDashboard({
         config: { enabled: false },
       });
       for (let i = 0; i < 60; i++) {

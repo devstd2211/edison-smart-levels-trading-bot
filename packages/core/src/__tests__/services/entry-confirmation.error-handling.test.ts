@@ -8,9 +8,8 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 import {
   createEntryConfirmationConfig,
-  createEntryConfirmationFactory,
   createEntryConfirmationHarness,
-  createEntryConfirmationManager,
+  createLegacyEntryConfirmationManager,
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
@@ -30,14 +29,9 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createManager: ReturnType<typeof createEntryConfirmationFactory>['createManager'];
 
   beforeEach(() => {
     ({ manager, logger, errorHandler } = createEntryConfirmationHarness());
-    ({ createManager } = createEntryConfirmationFactory({
-      logger,
-      errorHandler,
-    }));
   });
 
   // TEST 1-3: Logger failure SKIP strategy
@@ -256,9 +250,9 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   // TEST 11-13: Backward compatibility
   describe('backward compatibility - optional ErrorHandler', () => {
     it('should work without ErrorHandler parameter', () => {
-      const managerWithoutEH = createManager({
+      const managerWithoutEH = createLegacyEntryConfirmationManager({
         config: defaultConfig,
-        withErrorHandler: false,
+        logger,
       });
 
       const id = managerWithoutEH.addPending(createLongPendingEntryInput({
@@ -273,9 +267,9 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should preserve existing behavior with logger failures (no ErrorHandler)', () => {
-      const managerWithoutEH = createManager({
+      const managerWithoutEH = createLegacyEntryConfirmationManager({
         config: defaultConfig,
-        withErrorHandler: false,
+        logger,
       });
 
       // Mock logger to throw
@@ -293,9 +287,9 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should handle undefined ErrorHandler gracefully', () => {
-      const managerWithoutEH = createManager({
+      const managerWithoutEH = createLegacyEntryConfirmationManager({
         config: defaultConfig,
-        withErrorHandler: false,
+        logger,
       });
 
       const id = managerWithoutEH.addPending(createLongPendingEntryInput({ keyLevel: 1.5 }));
@@ -334,9 +328,9 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
     });
 
     it('should skip ErrorHandler when not provided', () => {
-      const managerWithoutEH = createManager({
+      const managerWithoutEH = createLegacyEntryConfirmationManager({
         config: defaultConfig,
-        withErrorHandler: false,
+        logger,
       });
 
       // Mock logger to throw

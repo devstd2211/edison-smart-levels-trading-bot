@@ -47,6 +47,20 @@ export function createCandleAggregatorHarness() {
     errorHandler,
     mockLogger,
     createService,
+    createStandardService: (options: {
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createStandardCandleAggregatorService({
+        logger: options.logger ?? asCandleAggregatorLogger(mockLogger),
+        errorHandler: options.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (options: {
+      logger?: LoggerService;
+    } = {}) =>
+      createLegacyCandleAggregatorService({
+        logger: options.logger ?? asCandleAggregatorLogger(mockLogger),
+      }),
   };
 }
 
@@ -65,6 +79,25 @@ export function createCandleAggregatorService(options: {
     options.logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createStandardCandleAggregatorService(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): CandleAggregatorService {
+  return createCandleAggregatorService({
+    logger: options.logger,
+    errorHandler: options.errorHandler,
+  });
+}
+
+export function createLegacyCandleAggregatorService(options: {
+  logger?: LoggerService;
+} = {}): CandleAggregatorService {
+  return createCandleAggregatorService({
+    logger: options.logger,
+    withErrorHandler: false,
+  });
 }
 
 export function createAggregatorMockCandle(timestamp: number, price: number): Candle {
@@ -100,7 +133,10 @@ export function createAggregatorCandlesWithVolumes(
 }
 
 export function createBasicAggregatorService(
-  createService: ReturnType<typeof createCandleAggregatorHarness>['createService'],
+  createService:
+    | ReturnType<typeof createCandleAggregatorHarness>['createService']
+    | ReturnType<typeof createCandleAggregatorHarness>['createStandardService']
+    | ReturnType<typeof createCandleAggregatorHarness>['createLegacyService'],
   options: {
     logger?: LoggerService;
     errorHandler?: ErrorHandler;

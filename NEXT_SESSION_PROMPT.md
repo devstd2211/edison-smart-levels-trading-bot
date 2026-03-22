@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed adjacent helper-consolidation follow-ups for `enhanced-exit.error-handling` and `risk-calculator.error-handling`:
-  - updated `packages/core/src/__tests__/helpers/enhanced-exit-test.utils.ts` and `packages/core/src/__tests__/helpers/risk-calculator-test.utils.ts` so each base harness instantiates through the same shared local `createService(...)` / `createCalculator(...)` path it exposes.
-  - routed the corresponding suites through those shared helper creation paths instead of repeated local harness recreation.
-  - reviewed `packages/core/src/services/enhanced-exit.service.ts` and `packages/core/src/services/risk-calculator.service.ts` and left production code unchanged after review.
+- Completed an adjacent helper-consolidation batch for `console-dashboard.error-handling`, `circuit-breaker.service`, `circuit-breaker.error-handling`, `compound-interest-calculator.service`, and `compound-interest-calculator.error-handling`:
+  - extended `packages/core/src/__tests__/helpers/console-dashboard-test.utils.ts` and `packages/core/src/__tests__/helpers/circuit-breaker-test.utils.ts` with harness-backed shared service recreation paths so suites stop mixing direct legacy/standard service construction with ad hoc harness bootstrap.
+  - added shared harness aliases in `packages/core/src/__tests__/helpers/compound-interest-calculator-test.utils.ts` and routed both compound-interest suites through those harness-backed calculator creators instead of mixing bound-factory and direct factory setup.
+  - reviewed `packages/core/src/services/console-dashboard.service.ts`, `packages/core/src/services/circuit-breaker.service.ts`, and `packages/core/src/services/compound-interest-calculator.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.service.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent constructor-heavy helper/error-handling or helper/service pair still mixing shared setup with direct recreation after the refreshed `risk-manager`, `retest-entry`, `enhanced-exit`, and `risk-calculator` clusters.
-- Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.
+- Continue the compact helper-consolidation stream before reopening adapter cleanup.
+- Prefer the next adjacent constructor-heavy helper/error-handling or helper/service pair still mixing shared setup with direct recreation after the refreshed `console-dashboard` / `circuit-breaker` / `compound-interest` cluster.
+- Keep favoring shared harnesses, explicit standard/legacy creation paths, and minimal required dependency groups per suite.

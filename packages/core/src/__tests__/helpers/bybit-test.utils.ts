@@ -36,3 +36,10 @@ export function createBybitErrorHandlingHarness(options: {
     },
   };
 }
+
+export function createStandardBybitErrorHandlingHarness(options: {
+  logger?: jest.Mocked<LoggerService>;
+  config?: ExchangeConfig;
+} = {}) {
+  return createBybitErrorHandlingHarness(options);
+}

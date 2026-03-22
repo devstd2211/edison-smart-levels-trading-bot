@@ -109,6 +109,27 @@ export const createStandardConfigValidatorHarness = () => {
   };
 };
 
+export const createBoundStandardConfigValidatorFactory = ({
+  logger = createConfigValidatorLogger(),
+  errorHandler = createConfigValidatorErrorHandler(),
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}) => () =>
+  createStandardConfigValidatorService({
+    logger,
+    errorHandler,
+  });
+
+export const createBoundLegacyConfigValidatorFactory = ({
+  logger = createConfigValidatorLogger(),
+}: {
+  logger?: LoggerService;
+} = {}) => () =>
+  createLegacyConfigValidatorService({
+    logger,
+  });
+
 export const createLegacyConfigValidatorHarness = () => {
   const logger = createConfigValidatorLogger();
   const validator = createLegacyConfigValidatorService({ logger });
