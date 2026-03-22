@@ -10,7 +10,7 @@
  * Total: 18 comprehensive tests
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import type { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
 import {
   Position,
@@ -25,25 +25,24 @@ import {
   createMockWebSocketEventPosition,
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
-  createWebSocketEventHandlerHarness,
+  createManagedWebSocketEventHandlerContext,
   createStandardWebSocketEventHandler,
-  type WebSocketEventHandlerHarness,
+  type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
-  let mockPositionManager: WebSocketEventHandlerHarness['mockPositionManager'];
-  let mockPositionExitingService: WebSocketEventHandlerHarness['mockPositionExitingService'];
-  let mockBybitService: WebSocketEventHandlerHarness['mockBybitService'];
-  let mockWebSocketManager: WebSocketEventHandlerHarness['mockWebSocketManager'];
-  let mockJournal: WebSocketEventHandlerHarness['mockJournal'];
-  let mockTelegram: WebSocketEventHandlerHarness['mockTelegram'];
-  let mockLogger: WebSocketEventHandlerHarness['mockLogger'];
-  let harness: WebSocketEventHandlerHarness;
+  let mockPositionManager: ManagedWebSocketEventHandlerContext['mockPositionManager'];
+  let mockPositionExitingService: ManagedWebSocketEventHandlerContext['mockPositionExitingService'];
+  let mockBybitService: ManagedWebSocketEventHandlerContext['mockBybitService'];
+  let mockWebSocketManager: ManagedWebSocketEventHandlerContext['mockWebSocketManager'];
+  let mockJournal: ManagedWebSocketEventHandlerContext['mockJournal'];
+  let mockTelegram: ManagedWebSocketEventHandlerContext['mockTelegram'];
+  let mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
+  let context: ManagedWebSocketEventHandlerContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    harness = createWebSocketEventHandlerHarness();
+    context = createManagedWebSocketEventHandlerContext();
     ({
       handler,
       mockPositionManager,
@@ -53,7 +52,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = harness);
+    } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {
@@ -92,7 +95,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('[FALLBACK] getCurrentPriceWithFallback() - Price Retrieval (3 tests)', () => {
     it('test-8.6.5: Should use fallback when getCurrentPrice throws error', async () => {
-      const { handler: closeHandler, position } = harness.createCloseScenarioHandler({
+      const { handler: closeHandler, position } = context.createCloseScenarioHandler({
         currentPrice: new Error('API error'),
       });
 
@@ -106,7 +109,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.6: Should use fallback when getCurrentPrice returns NaN', async () => {
-      const { handler: closeHandler, position } = harness.createCloseScenarioHandler({
+      const { handler: closeHandler, position } = context.createCloseScenarioHandler({
         currentPrice: NaN,
       });
 
@@ -118,7 +121,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.7: Should use valid price when getCurrentPrice succeeds', async () => {
-      const { handler: closeHandler } = harness.createCloseScenarioHandler({
+      const { handler: closeHandler } = context.createCloseScenarioHandler({
         currentPrice: 46000,
       });
 

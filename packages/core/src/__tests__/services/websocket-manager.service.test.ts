@@ -6,12 +6,11 @@
 
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import {
-  createWebSocketManagerHarness,
-  createStandardWebSocketManagerService,
+  createManagedWebSocketManagerContext,
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
-  type WebSocketManagerHarness,
+  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
@@ -19,23 +18,16 @@ import {
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
-  let harness: WebSocketManagerHarness;
+  let context: ManagedWebSocketManagerContext;
   let wsManager: WebSocketManagerService;
 
   beforeEach(() => {
-    harness = createWebSocketManagerHarness();
-    wsManager = createStandardWebSocketManagerService({
-      logger: harness.logger,
-      errorHandler: harness.errorHandler,
-      orderExecutionDetector: harness.orderExecutionDetector,
-      authService: harness.authService,
-      deduplicationService: harness.deduplicationService,
-      keepAliveService: harness.keepAliveService,
-    });
+    context = createManagedWebSocketManagerContext();
+    wsManager = context.createStandardService();
   });
 
   afterEach(async () => {
-    await wsManager.disconnect();
+    await context.cleanup();
   });
 
   // ============================================================================

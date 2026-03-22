@@ -52,6 +52,30 @@ export interface ResilienceTestContext {
   cleanup: () => void;
 }
 
+export interface ManagedRateLimiterContext extends ResilienceTestContext {
+  createService: (
+    config?: Partial<RateLimiterConfig>,
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => RateLimiterService;
+}
+
+export interface ManagedRetryPolicyContext extends ResilienceTestContext {
+  createService: (
+    config?: Partial<RetryPolicyConfig>,
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => RetryPolicyService;
+  useFakeTimers: () => void;
+}
+
+export interface ManagedResilienceCoordinatorContext extends ResilienceTestContext {
+  coordinator: ResilienceCoordinator;
+  circuitBreaker: CircuitBreakerService;
+  rateLimiter: RateLimiterService;
+  retryPolicy: RetryPolicyService;
+  bulkhead: BulkheadService;
+  metrics: PrometheusMetricsService;
+}
+
 export function createMockResilienceLogger(): MockLogger {
   return {
     info: jest.fn(),
@@ -219,5 +243,57 @@ export function createResilienceTestContext(): ResilienceTestContext {
     logger: harness.logger,
     errorHandler: harness.errorHandler,
     cleanup: () => harness.stopTrackedServices(),
+  };
+}
+
+export function createManagedRateLimiterContext(): ManagedRateLimiterContext {
+  const context = createResilienceTestContext();
+
+  return {
+    ...context,
+    createService: (config = {}, options = {}) =>
+      context.harness.createTrackedRateLimiterService(config, options),
+    cleanup: () => {
+      context.cleanup();
+      jest.clearAllTimers();
+    },
+  };
+}
+
+export function createManagedRetryPolicyContext(): ManagedRetryPolicyContext {
+  const context = createResilienceTestContext();
+  let usingFakeTimers = false;
+
+  return {
+    ...context,
+    createService: (config = {}, options = {}) =>
+      context.harness.createTrackedRetryPolicyService(config, options),
+    useFakeTimers: () => {
+      jest.clearAllTimers();
+      jest.useFakeTimers();
+      usingFakeTimers = true;
+    },
+    cleanup: () => {
+      context.cleanup();
+      jest.clearAllTimers();
+      if (usingFakeTimers) {
+        jest.useRealTimers();
+      }
+    },
+  };
+}
+
+export function createManagedResilienceCoordinatorContext(): ManagedResilienceCoordinatorContext {
+  const context = createResilienceTestContext();
+  const stack = context.harness.createCoordinatorStack();
+
+  return {
+    ...context,
+    ...stack,
+    cleanup: () => {
+      stack.coordinator.stop();
+      context.cleanup();
+      jest.clearAllTimers();
+    },
   };
 }

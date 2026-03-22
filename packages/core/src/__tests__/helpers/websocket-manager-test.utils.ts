@@ -66,6 +66,10 @@ export type WebSocketManagerInternalState = {
   isDuplicateEvent: (eventType: string, eventId: string, timestamp: number) => boolean;
 };
 
+export type ManagedWebSocketManagerContext = WebSocketManagerHarness & {
+  cleanup: () => Promise<void>;
+};
+
 export function createMockWebSocketAuthenticationService(): WebSocketAuthenticationService {
   return new WebSocketAuthenticationService();
 }
@@ -242,6 +246,48 @@ export function createTestnetWebSocketManagerHarness(options: {
       ...options.configOverrides,
     },
   });
+}
+
+export function createManagedWebSocketManagerContext(options: {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+  testnet?: boolean;
+} = {}): ManagedWebSocketManagerContext {
+  const harness = options.testnet
+    ? createTestnetWebSocketManagerHarness({
+        configOverrides: options.configOverrides,
+        symbol: options.symbol,
+      })
+    : createWebSocketManagerHarness({
+        configOverrides: options.configOverrides,
+        symbol: options.symbol,
+      });
+
+  const trackedManagers = new Set<WebSocketManagerService>([harness.wsManager]);
+
+  const trackManager = (manager: WebSocketManagerService): WebSocketManagerService => {
+    trackedManagers.add(manager);
+    return manager;
+  };
+
+  return {
+    ...harness,
+    createStandardService: (serviceOptions = {}) =>
+      trackManager(harness.createStandardService(serviceOptions)),
+    createService: (serviceOptions = {}) =>
+      trackManager(harness.createService(serviceOptions)),
+    createStandardTestnetService: (serviceOptions = {}) =>
+      trackManager(harness.createStandardTestnetService(serviceOptions)),
+    createTestnetService: (serviceOptions = {}) =>
+      trackManager(harness.createTestnetService(serviceOptions)),
+    cleanup: async () => {
+      for (const manager of trackedManagers) {
+        await manager.disconnect();
+      }
+      trackedManagers.clear();
+      jest.clearAllMocks();
+    },
+  };
 }
 
 export function getWebSocketManagerInternals(

@@ -6,7 +6,7 @@
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  createWebSocketAuthenticationHarness,
+  createManagedWebSocketAuthenticationContext,
   createLegacyWebSocketAuthenticationService,
   createStandardWebSocketAuthenticationService,
   createWebSocketAuthCredentials,
@@ -16,19 +16,24 @@ import {
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;
-  let harness: ReturnType<typeof createWebSocketAuthenticationHarness>;
-  let createService: ReturnType<typeof createWebSocketAuthenticationHarness>['createService'];
-  let createLegacyService: ReturnType<typeof createWebSocketAuthenticationHarness>['createLegacyService'];
+  let context: ManagedWebSocketAuthenticationContext;
+  let createService: ManagedWebSocketAuthenticationContext['createService'];
+  let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
 
   beforeEach(() => {
-    harness = createWebSocketAuthenticationHarness();
-    ({ service, errorHandler, mockLogger, createService, createLegacyService } = harness);
+    context = createManagedWebSocketAuthenticationContext();
+    ({ service, errorHandler, mockLogger, createService, createLegacyService } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ===== THROW: Input Validation =====
@@ -395,15 +400,17 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
 
     it('should handle constructor with partial logger', () => {
       const partialLogger: AuthLogger = { info: jest.fn() };
-      const servicePartialLogger = createWebSocketAuthenticationHarness({
+      const partialContext = createManagedWebSocketAuthenticationContext({
         logger: partialLogger,
         errorHandler,
-      }).service;
+      });
+      const servicePartialLogger = partialContext.service;
 
       const { apiKey, apiSecret } = createWebSocketAuthCredentials();
       const result = servicePartialLogger.generateAuthPayload(apiKey, apiSecret);
 
       expect(result).toBeDefined();
+      partialContext.cleanup();
     });
   });
 });

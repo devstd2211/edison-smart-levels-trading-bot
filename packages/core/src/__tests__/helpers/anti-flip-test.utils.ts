@@ -57,6 +57,10 @@ export interface AntiFlipHarness {
   ) => AntiFlipService;
 }
 
+export interface ManagedAntiFlipContext extends AntiFlipHarness {
+  cleanup: () => void;
+}
+
 export const createAntiFlipService = (
   overrides: Partial<AntiFlipConfig> = {},
   options: {
@@ -134,6 +138,23 @@ export const createStandardAntiFlipHarness = () => {
       logger: options.logger ?? logger,
       errorHandler: options.errorHandler ?? errorHandler,
     }),
+  };
+};
+
+export const createManagedAntiFlipContext = (): ManagedAntiFlipContext => {
+  jest.clearAllMocks();
+  jest.clearAllTimers();
+  jest.useFakeTimers();
+
+  const harness = createStandardAntiFlipHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
   };
 };
 

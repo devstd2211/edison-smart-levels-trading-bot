@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed a resilience helper-context follow-up for `resilience/bulkhead` and `resilience/circuit-breaker`:
-  - extended `packages/core/src/__tests__/helpers/resilience-test.utils.ts` with a shared managed resilience test context.
-  - routed the corresponding suites through that context instead of local harness/bootstrap ownership.
-  - reviewed `packages/core/src/services/resilience/bulkhead.service.ts` and `packages/core/src/services/resilience/circuit-breaker.service.ts` and left production code unchanged after review.
+- Completed a managed-context follow-up for `data-collector.error-handling`, `anti-flip.error-handling`, and `event-handlers.error-handling`:
+  - extended `packages/core/src/__tests__/helpers/data-collector-test.utils.ts`, `packages/core/src/__tests__/helpers/anti-flip-test.utils.ts`, and `packages/core/src/__tests__/helpers/event-handlers-test.utils.ts` with shared managed test contexts for mock and timer cleanup.
+  - routed the corresponding suites through those managed contexts instead of local harness ownership and per-suite cleanup.
+  - reviewed `packages/core/src/services/data-collector.service.ts`, `packages/core/src/services/anti-flip.service.ts`, `packages/core/src/services/handlers/position.handler.ts`, and `packages/core/src/services/handlers/websocket.handler.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/resilience/bulkhead.test.ts packages/core/src/__tests__/services/resilience/circuit-breaker.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/data-collector.error-handling.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep local async timing ownership, repeated harness bootstrap, or ad hoc mock error-handler branches.
-- Favor shared managed test contexts and helper-owned teardown before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep local async timing ownership, repeated harness bootstrap, or ad hoc mock error-handler branches outside the now-covered websocket and resilience slices.
+- Favor shared managed test contexts and helper-owned teardown in the next adjacent teardown-heavy service follow-ups such as `position-monitor`, `time.service`, or similarly timer-owned suites before reopening lower-signal constructor-only cleanup.

@@ -120,6 +120,26 @@ export function createStandardDataCollectorHarness(options: {
   };
 }
 
+export type ManagedDataCollectorContext = ReturnType<typeof createStandardDataCollectorHarness> & {
+  cleanup: () => void;
+};
+
+export function createManagedDataCollectorContext(options: {
+  config?: DataCollectionConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedDataCollectorContext {
+  const harness = createStandardDataCollectorHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+    },
+  };
+}
+
 export function createLegacyDataCollectorHarness(options: {
   config?: DataCollectionConfig;
   logger?: LoggerService;

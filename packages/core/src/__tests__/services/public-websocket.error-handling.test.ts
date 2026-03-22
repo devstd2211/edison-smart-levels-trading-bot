@@ -15,9 +15,10 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
-  createPublicWebSocketHarness,
+  createManagedPublicWebSocketContext,
   createLegacyPublicWebSocketService,
   createStandardPublicWebSocketServiceFromOptions,
+  type ManagedPublicWebSocketContext,
 } from '../helpers/public-websocket-test.utils';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
@@ -35,14 +36,14 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     getLogger: jest.Mock;
   };
   let errorHandlerService: ErrorHandler;
-  let harness: ReturnType<typeof createPublicWebSocketHarness>;
-  let createService: ReturnType<typeof createPublicWebSocketHarness>['createService'];
-  let createStandardService: ReturnType<typeof createPublicWebSocketHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createPublicWebSocketHarness>['createLegacyService'];
-  let createBtcConfiguredService: ReturnType<typeof createPublicWebSocketHarness>['createBtcConfiguredService'];
+  let context: ManagedPublicWebSocketContext;
+  let createService: ManagedPublicWebSocketContext['createService'];
+  let createStandardService: ManagedPublicWebSocketContext['createStandardService'];
+  let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];
+  let createBtcConfiguredService: ManagedPublicWebSocketContext['createBtcConfiguredService'];
 
   beforeEach(() => {
-    harness = createPublicWebSocketHarness();
+    context = createManagedPublicWebSocketContext();
     ({
       service,
       mockLogger,
@@ -52,7 +53,11 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       createStandardService,
       createLegacyService,
       createBtcConfiguredService,
-    } = harness);
+    } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // =========================================================================
@@ -67,9 +72,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       expect(serviceWithoutHandler).toBeDefined();
 
       const serviceWithHandler = createStandardPublicWebSocketServiceFromOptions({
-        mockConfig: harness.mockConfig,
-        mockTimeframeProvider: harness.mockTimeframeProvider,
-        loggerService: harness.loggerService,
+        mockConfig: context.mockConfig,
+        mockTimeframeProvider: context.mockTimeframeProvider,
+        loggerService: context.loggerService,
         symbol: 'XRPUSDT',
         errorHandlerService: createPublicWebSocketErrorHandlerService(mockLogger),
       });
@@ -368,9 +373,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   describe('Integration with service composition', () => {
     it('should accept ErrorHandler injected from services builder', () => {
       const service = createStandardPublicWebSocketServiceFromOptions({
-        mockConfig: harness.mockConfig,
-        mockTimeframeProvider: harness.mockTimeframeProvider,
-        loggerService: harness.loggerService,
+        mockConfig: context.mockConfig,
+        mockTimeframeProvider: context.mockTimeframeProvider,
+        loggerService: context.loggerService,
         symbol: 'XRPUSDT',
         errorHandlerService,
       });

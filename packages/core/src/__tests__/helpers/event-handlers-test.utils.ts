@@ -52,6 +52,14 @@ export type EventHandlersJournalMock = {
   recordTrade: jest.Mock;
 };
 
+export type ManagedPositionEventHandlerContext = ReturnType<typeof createPositionEventHandlerHarness> & {
+  cleanup: () => void;
+};
+
+export type ManagedWebSocketEventHandlerContext = ReturnType<typeof createWebSocketEventHandlerHarness> & {
+  cleanup: () => void;
+};
+
 type PositionManagerInput = ConstructorParameters<typeof PositionEventHandler>[0];
 type PositionExitingInput = ConstructorParameters<typeof PositionEventHandler>[1];
 type ExchangeInput = ConstructorParameters<typeof PositionEventHandler>[2];
@@ -317,5 +325,45 @@ export function createWebSocketEventHandlerHarness(options?: {
     mockJournal,
     mockTelegram,
     mockLogger,
+  };
+}
+
+export function createManagedPositionEventHandlerContext(options?: {
+  positionManager?: EventHandlersPositionManagerMock;
+  positionExitingService?: EventHandlersPositionExitingMock;
+  exchange?: EventHandlersExchangeMock;
+  telegram?: EventHandlersTelegramMock;
+  logger?: EventHandlersLoggerMock;
+}): ManagedPositionEventHandlerContext {
+  const harness = createPositionEventHandlerHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
+export function createManagedEventHandlersWebSocketContext(options?: {
+  positionManager?: EventHandlersPositionManagerMock;
+  positionExitingService?: EventHandlersPositionExitingMock;
+  exchange?: EventHandlersExchangeMock;
+  webSocketManager?: EventHandlersWebSocketManagerMock;
+  journal?: EventHandlersJournalMock;
+  telegram?: EventHandlersTelegramMock;
+  logger?: EventHandlersLoggerMock;
+}): ManagedWebSocketEventHandlerContext {
+  const harness = createWebSocketEventHandlerHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
   };
 }

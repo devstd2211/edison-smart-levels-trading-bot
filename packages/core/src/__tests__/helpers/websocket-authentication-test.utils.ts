@@ -27,6 +27,10 @@ export type WebSocketAuthenticationHarness = {
   }) => WebSocketAuthenticationService;
 };
 
+export type ManagedWebSocketAuthenticationContext = WebSocketAuthenticationHarness & {
+  cleanup: () => void;
+};
+
 export function createMockWebSocketAuthLogger(): AuthLogger {
   return {
     debug: jest.fn(),
@@ -88,6 +92,22 @@ export function createWebSocketAuthenticationHarness(options: {
       createLegacyWebSocketAuthenticationService({
         logger: serviceOptions.logger ?? mockLogger,
       }),
+  };
+}
+
+export function createManagedWebSocketAuthenticationContext(options: {
+  logger?: AuthLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedWebSocketAuthenticationContext {
+  const harness = createWebSocketAuthenticationHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+    },
   };
 }
 

@@ -8,26 +8,22 @@ import {
   RetryBudgetExceededError,
   MaxRetriesExceededError,
 } from '../../../services/resilience/retry-policy.service';
-import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
+import { createManagedRetryPolicyContext, type ManagedRetryPolicyContext } from '../../helpers/resilience-test.utils';
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
 
 describe('RetryPolicyService', () => {
-  let harness: ResilienceTestHarness;
-
+  let context: ManagedRetryPolicyContext;
   let service: RetryPolicyService | undefined;
 
   beforeEach(() => {
-    harness = createResilienceTestHarness();
+    context = createManagedRetryPolicyContext();
   });
 
   afterEach(() => {
-    harness.stopTrackedServices();
+    context.cleanup();
     service = undefined;
-    // Always restore real timers
-    jest.useRealTimers();
-    jest.clearAllTimers();
   });
 
   // ============================================================================
@@ -36,7 +32,7 @@ describe('RetryPolicyService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      service = harness.createTrackedRetryPolicyService();
+      service = context.createService();
       expect(service).toBeDefined();
 
       const stats = service.getStats();
@@ -77,7 +73,7 @@ describe('RetryPolicyService', () => {
 
   describe('Exponential Backoff', () => {
     it('should calculate exponential backoff correctly', () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: false,
@@ -94,7 +90,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should add jitter when enabled', () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: true,
@@ -117,7 +113,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should respect maximum delay', () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         baseDelayMs: 100,
         exponentialBase: 10,
         maxDelayMs: 500,
@@ -130,7 +126,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should respect minimum delay', () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         baseDelayMs: 1,
         exponentialBase: 1,
         jitterEnabled: false,
@@ -142,7 +138,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should handle custom exponential base', () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         baseDelayMs: 100,
         exponentialBase: 3,
         jitterEnabled: false,
@@ -165,7 +161,7 @@ describe('RetryPolicyService', () => {
 
   describe('Retry Budget', () => {
     it('should track retry budget correctly', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5, // 50% of operations can retry
         baseDelayMs: 10,
@@ -189,7 +185,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should throw RetryBudgetExceededError when budget exhausted', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10% budget
         baseDelayMs: 10,
@@ -221,9 +217,8 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should reset budget periodically', () => {
-      jest.useFakeTimers();
-
-      service = harness.createTrackedRetryPolicyService({
+      context.useFakeTimers();
+      service = context.createService({
         maxAttempts: 3,
         retryBudgetPercent: 0.1,
         baseDelayMs: 10,
@@ -239,12 +234,10 @@ describe('RetryPolicyService', () => {
       jest.advanceTimersByTime(60000);
 
       expect(service.getBudgetUsage()).toBe(0);
-
-      jest.useRealTimers();
     });
 
     it('should manually reset budget', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5,
         baseDelayMs: 10,
@@ -267,7 +260,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should calculate budget limit correctly', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10%
         baseDelayMs: 10,
@@ -296,7 +289,7 @@ describe('RetryPolicyService', () => {
 
   describe('Conditional Retry', () => {
     it('should retry on transient errors (network errors)', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -318,7 +311,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should retry on retryable HTTP errors (429, 5xx)', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -340,7 +333,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should not retry on non-retryable HTTP errors (4xx)', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -366,7 +359,7 @@ describe('RetryPolicyService', () => {
 
   describe('Integration Tests', () => {
     it('should succeed after retries', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -388,7 +381,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should throw MaxRetriesExceededError when all retries fail', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -409,7 +402,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should handle immediate success (no retries)', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -425,7 +418,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should track statistics correctly', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -453,7 +446,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should work with custom config per operation', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 1,
         baseDelayMs: 100,
       });
@@ -478,7 +471,7 @@ describe('RetryPolicyService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -497,7 +490,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should work without Logger', async () => {
-      service = harness.createTrackedRetryPolicyService({
+      service = context.createService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit

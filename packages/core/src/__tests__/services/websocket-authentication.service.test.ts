@@ -8,7 +8,8 @@ import crypto from 'crypto';
 import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
-  createWebSocketAuthenticationHarness,
+  createManagedWebSocketAuthenticationContext,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
@@ -17,13 +18,17 @@ import {
 
 describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
-  let harness: ReturnType<typeof createWebSocketAuthenticationHarness>;
-  let createService: ReturnType<typeof createWebSocketAuthenticationHarness>['createStandardService'];
+  let context: ManagedWebSocketAuthenticationContext;
+  let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
 
   beforeEach(() => {
-    harness = createWebSocketAuthenticationHarness();
-    service = harness.service;
-    createService = harness.createStandardService;
+    context = createManagedWebSocketAuthenticationContext();
+    service = context.service;
+    createService = context.createStandardService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('generateAuthPayload', () => {

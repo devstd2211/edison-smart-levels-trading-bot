@@ -22,12 +22,14 @@ import { ExchangeAPIError } from '../../errors/DomainErrors';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createEventHandlersMockPosition,
-  createPositionEventHandlerHarness,
+  createManagedEventHandlersWebSocketContext,
+  createManagedPositionEventHandlerContext,
   createStandardPositionEventHandler,
-  createWebSocketEventHandlerHarness,
   type EventHandlersExchangeMock,
   type EventHandlersJournalMock,
   type EventHandlersLoggerMock,
+  type ManagedPositionEventHandlerContext,
+  type ManagedWebSocketEventHandlerContext,
   type EventHandlersPositionExitingMock,
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
@@ -49,15 +51,15 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
+  let context: ManagedPositionEventHandlerContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    const harness = createPositionEventHandlerHarness();
-    mockPositionManager = harness.mockPositionManager;
-    mockPositionExitingService = harness.mockPositionExitingService;
-    mockBybitService = harness.mockBybitService;
-    mockTelegram = harness.mockTelegram;
-    mockLogger = harness.mockLogger;
+    context = createManagedPositionEventHandlerContext();
+    mockPositionManager = context.mockPositionManager;
+    mockPositionExitingService = context.mockPositionExitingService;
+    mockBybitService = context.mockBybitService;
+    mockTelegram = context.mockTelegram;
+    mockLogger = context.mockLogger;
     handler = createStandardPositionEventHandler({
       positionManager: mockPositionManager,
       positionExitingService: mockPositionExitingService,
@@ -65,6 +67,10 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
       telegram: mockTelegram,
       logger: mockLogger,
     });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('[SKIP] handleStopLossHit() - SL Event Logging (3 tests)', () => {
@@ -348,9 +354,10 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
+  let context: ManagedWebSocketEventHandlerContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    context = createManagedEventHandlersWebSocketContext();
     ({
       handler,
       mockPositionManager,
@@ -360,11 +367,11 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = createWebSocketEventHandlerHarness());
+    } = context);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    context.cleanup();
   });
 
   describe('[RETRY + GRACEFUL_DEGRADE + SKIP] handlePositionClosed() (4 tests)', () => {

@@ -8,20 +8,19 @@ import {
   RateLimitExceededError,
 } from '../../../services/resilience/rate-limiter.service';
 import { LoggerService } from '../../../services/logger.service';
-import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
+import { createManagedRateLimiterContext, type ManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
 
 describe('RateLimiterService', () => {
-  let harness: ResilienceTestHarness;
+  let context: ManagedRateLimiterContext;
   let service: RateLimiterService | undefined;
 
   beforeEach(() => {
-    harness = createResilienceTestHarness();
+    context = createManagedRateLimiterContext();
   });
 
   afterEach(() => {
-    harness.stopTrackedServices();
+    context.cleanup();
     service = undefined;
-    jest.clearAllTimers();
   });
 
   // ============================================================================
@@ -30,7 +29,7 @@ describe('RateLimiterService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      service = harness.createTrackedRateLimiterService();
+      service = context.createService();
       expect(service).toBeDefined();
       expect(service.getKeys()).toEqual([]);
     });
@@ -71,7 +70,7 @@ describe('RateLimiterService', () => {
 
   describe('Token Bucket Mechanics', () => {
     it('should acquire tokens successfully', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -83,7 +82,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should refill tokens over time', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10, // 10 tokens per second
         windowMs: 1000,
         burstSize: 10,
@@ -101,7 +100,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should respect burst capacity', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 15, // Allow burst of 15
@@ -114,7 +113,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should not exceed max tokens on refill', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -128,7 +127,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should track multiple independent rate limiters', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -150,7 +149,7 @@ describe('RateLimiterService', () => {
 
   describe('Rate Limiting', () => {
     it('should reject when tokens exhausted', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
@@ -166,7 +165,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should throw RateLimitExceededError in execute', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 2,
         windowMs: 1000,
         burstSize: 2,
@@ -187,7 +186,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should queue requests when queue enabled', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
@@ -210,7 +209,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should reject when queue is full', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 2,
         windowMs: 1000,
         burstSize: 2,
@@ -234,7 +233,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should provide accurate statistics', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -265,7 +264,7 @@ describe('RateLimiterService', () => {
 
   describe('Adaptive Rate Limiting', () => {
     it('should reduce rate on 429 error', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -292,7 +291,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should increase rate on success when adaptive enabled', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -318,7 +317,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should not adjust rate when adaptive disabled', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -341,7 +340,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should manually adjust rate with adjustRate', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -361,7 +360,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should respect minimum rate limit', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -384,7 +383,7 @@ describe('RateLimiterService', () => {
 
   describe('Edge Cases', () => {
     it('should throw on invalid key', async () => {
-      service = harness.createTrackedRateLimiterService({});
+      service = context.createService({});
       type AcquireKey = Parameters<RateLimiterService['acquire']>[0];
 
       await expect(service.acquire('', 1))
@@ -395,7 +394,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should throw on invalid token count', async () => {
-      service = harness.createTrackedRateLimiterService({});
+      service = context.createService({});
 
       await expect(service.acquire('test', 0))
         .rejects.toThrow('Token count must be positive');
@@ -421,7 +420,7 @@ describe('RateLimiterService', () => {
       };
 
       // Should not throw despite logging errors
-      service = harness.createTrackedRateLimiterService(
+      service = context.createService(
         {},
         { logger: faultyLogger as unknown as LoggerService },
       );
@@ -435,7 +434,7 @@ describe('RateLimiterService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
@@ -447,7 +446,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should work without Logger', async () => {
-      service = harness.createTrackedRateLimiterService({
+      service = context.createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,

@@ -4,31 +4,32 @@ import { RateLimiterService } from '../../../services/resilience/rate-limiter.se
 import { RetryPolicyService } from '../../../services/resilience/retry-policy.service';
 import { BulkheadService } from '../../../services/resilience/bulkhead.service';
 import { PrometheusMetricsService } from '../../../services/prometheus-metrics.service';
-import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
+import {
+  createManagedResilienceCoordinatorContext,
+  type ManagedResilienceCoordinatorContext,
+} from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
+  let context: ManagedResilienceCoordinatorContext;
   let coordinator: ResilienceCoordinator;
   let circuitBreaker: CircuitBreakerService;
   let rateLimiter: RateLimiterService;
   let retryPolicy: RetryPolicyService;
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
-  let harness: ResilienceTestHarness;
 
   beforeEach(() => {
-    harness = createResilienceTestHarness();
-    const stack = harness.createCoordinatorStack();
-    circuitBreaker = stack.circuitBreaker;
-    rateLimiter = stack.rateLimiter;
-    retryPolicy = stack.retryPolicy;
-    bulkhead = stack.bulkhead;
-    metrics = stack.metrics;
-    coordinator = stack.coordinator;
+    context = createManagedResilienceCoordinatorContext();
+    circuitBreaker = context.circuitBreaker;
+    rateLimiter = context.rateLimiter;
+    retryPolicy = context.retryPolicy;
+    bulkhead = context.bulkhead;
+    metrics = context.metrics;
+    coordinator = context.coordinator;
   });
 
   afterEach(() => {
-    coordinator.stop();
-    harness.stopTrackedServices();
+    context.cleanup();
   });
 
   // ===========================

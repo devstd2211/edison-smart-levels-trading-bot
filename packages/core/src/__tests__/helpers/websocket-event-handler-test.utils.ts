@@ -44,6 +44,10 @@ export type WebSocketEventHandlerHarness = {
   }) => { handler: WebSocketEventHandler; position: Position };
 };
 
+export type ManagedWebSocketEventHandlerContext = WebSocketEventHandlerHarness & {
+  cleanup: () => void;
+};
+
 export function createMockWebSocketEventPosition(
   overrides: Partial<Position> = {},
 ): Position {
@@ -309,6 +313,18 @@ export function createWebSocketEventHandlerHarness(): WebSocketEventHandlerHarne
       );
 
       return { handler, position };
+    },
+  };
+}
+
+export function createManagedWebSocketEventHandlerContext(): ManagedWebSocketEventHandlerContext {
+  const harness = createWebSocketEventHandlerHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
     },
   };
 }

@@ -61,6 +61,10 @@ export type PublicWebSocketHarness = {
   }) => PublicWebSocketService;
 };
 
+export type ManagedPublicWebSocketContext = PublicWebSocketHarness & {
+  cleanup: () => void;
+};
+
 export type PublicWebSocketServiceOptions = {
   mockConfig: ExchangeConfig;
   symbol?: string;
@@ -245,6 +249,42 @@ export function createPublicWebSocketHarness(options: {
             btcConfirmation:
               overrides.btcConfirmation ?? createPublicWebSocketBtcConfirmationConfig(),
           }),
+  };
+}
+
+export function createManagedPublicWebSocketContext(options: {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+  withErrorHandler?: boolean;
+  btcConfirmation?: {
+    enabled?: boolean;
+    timeframe?: string;
+    symbol?: string;
+    lookbackCandles?: number;
+  };
+} = {}): ManagedPublicWebSocketContext {
+  const harness = createPublicWebSocketHarness(options);
+  const trackedServices = new Set<PublicWebSocketService>([harness.service]);
+
+  const trackService = (service: PublicWebSocketService): PublicWebSocketService => {
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createStandardService: (overrides = {}) => trackService(harness.createStandardService(overrides)),
+    createService: (overrides = {}) => trackService(harness.createService(overrides)),
+    createLegacyService: (overrides = {}) => trackService(harness.createLegacyService(overrides)),
+    createBtcConfiguredService: (overrides = {}) => trackService(harness.createBtcConfiguredService(overrides)),
+    cleanup: () => {
+      for (const service of trackedServices) {
+        service.disconnect();
+      }
+      trackedServices.clear();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+    },
   };
 }
 

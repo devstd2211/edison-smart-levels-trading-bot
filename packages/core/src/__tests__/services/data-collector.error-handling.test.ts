@@ -17,9 +17,10 @@ import {
   createLegacyDataCollectorDatabaseWriter,
   createLegacyDataCollectorService,
   createMockCollectorDatabase,
+  createManagedDataCollectorContext,
   createStandardDataCollectorDatabaseWriter,
-  createStandardDataCollectorHarness,
   createStandardDataCollectorService,
+  type ManagedDataCollectorContext,
 } from '../helpers/data-collector-test.utils';
 
 // ============================================================================
@@ -39,17 +40,18 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let mockDatabase: MockDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
+  let context: ManagedDataCollectorContext;
 
   beforeEach(() => {
-    const harness = createStandardDataCollectorHarness();
-    mockLogger = harness.logger;
+    context = createManagedDataCollectorContext();
+    mockLogger = context.logger;
     mockDatabase = createMockCollectorDatabase();
-    errorHandler = harness.errorHandler as ErrorHandler;
-    config = harness.config;
+    errorHandler = context.errorHandler as ErrorHandler;
+    config = context.config;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    context.cleanup();
   });
 
   // ========================================================================

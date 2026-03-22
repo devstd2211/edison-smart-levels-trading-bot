@@ -17,8 +17,7 @@ import type { LoggerService } from '../../types/legacy';
 import {
   createWebSocketManagerBackoffDelays,
   createMockWebSocketAuthenticationService,
-  createTestnetWebSocketManagerHarness,
-  createTestnetWebSocketManagerService,
+  createManagedWebSocketManagerContext,
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerErrorHandler,
   getWebSocketManagerIsConnecting,
@@ -26,7 +25,7 @@ import {
   getWebSocketManagerShouldReconnect,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
-  type WebSocketManagerHarness,
+  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
@@ -34,17 +33,17 @@ import {
 // ============================================================================
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
-  let harness: WebSocketManagerHarness;
+  let context: ManagedWebSocketManagerContext;
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
 
   beforeEach(() => {
-    harness = createTestnetWebSocketManagerHarness();
-    ({ wsManager, logger } = harness);
+    context = createManagedWebSocketManagerContext({ testnet: true });
+    ({ wsManager, logger } = context);
   });
 
   afterEach(async () => {
-    await wsManager.disconnect();
+    await context.cleanup();
   });
 
   // ============================================================================
@@ -96,14 +95,14 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       expect(payload).toBeDefined();
       expect(payload.op).toBe('auth');
 
-      const customManager = createTestnetWebSocketManagerService({
+      const customManager = context.createStandardTestnetService({
         configOverrides: { testnet: true },
         logger,
-        errorHandler: harness.errorHandler,
-        orderExecutionDetector: harness.orderExecutionDetector,
+        errorHandler: context.errorHandler,
+        orderExecutionDetector: context.orderExecutionDetector,
         authService,
-        deduplicationService: harness.deduplicationService,
-        keepAliveService: harness.keepAliveService,
+        deduplicationService: context.deduplicationService,
+        keepAliveService: context.keepAliveService,
       });
       expect(customManager).toBeDefined();
     });
