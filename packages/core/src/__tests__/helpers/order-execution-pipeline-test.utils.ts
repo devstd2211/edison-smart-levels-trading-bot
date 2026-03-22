@@ -102,3 +102,30 @@ export function createOrderExecutionPipelineHarness(options: {
     pipeline,
   };
 }
+
+export interface ManagedOrderExecutionPipelineContext {
+  config: OrderExecutionConfig;
+  exchange: OrderExecutionPipelineMockExchange;
+  logger: OrderExecutionPipelineMockLogger;
+  pipeline: OrderExecutionPipeline;
+  cleanup: () => void;
+}
+
+export function createManagedOrderExecutionPipelineContext(options: {
+  config?: OrderExecutionConfig;
+  exchange?: OrderExecutionPipelineMockExchange;
+  logger?: OrderExecutionPipelineMockLogger;
+} = {}): ManagedOrderExecutionPipelineContext {
+  jest.clearAllMocks();
+
+  const harness = createOrderExecutionPipelineHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

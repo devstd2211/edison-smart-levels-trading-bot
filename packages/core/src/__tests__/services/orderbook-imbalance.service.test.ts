@@ -7,7 +7,7 @@ import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.se
 import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
-  createLegacyOrderbookImbalanceHarness,
+  createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -15,12 +15,17 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  let createService: ReturnType<typeof createLegacyOrderbookImbalanceHarness>['createLegacyService'];
+  let context: ReturnType<typeof createManagedOrderbookImbalanceContext>;
+  let createService: ReturnType<typeof createManagedOrderbookImbalanceContext>['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createLegacyOrderbookImbalanceHarness();
-    ({ service, logger, config } = harness);
-    createService = harness.createLegacyService;
+    context = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+    ({ service, logger, config } = context);
+    createService = context.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('initialization', () => {

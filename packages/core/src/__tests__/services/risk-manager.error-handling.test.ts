@@ -17,7 +17,7 @@ import type { TradeRecord } from '../../types/legacy';
 import {
   MockRiskManagerLogger,
   createRiskManagerConfig,
-  createRiskManagerHarness,
+  createManagedRiskManagerContext,
   createRiskManagerPosition,
   createRiskManagerSignal,
   createRiskManagerTrade,
@@ -27,14 +27,19 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
-  let createRiskManager: ReturnType<typeof createRiskManagerHarness>['createRiskManager'];
+  let context: ReturnType<typeof createManagedRiskManagerContext>;
+  let createRiskManager: ReturnType<typeof createManagedRiskManagerContext>['createRiskManager'];
 
   beforeEach(() => {
-    const harness = createRiskManagerHarness();
-    riskManager = harness.riskManager;
-    mockLogger = harness.mockLogger;
-    errorHandler = harness.errorHandler;
-    createRiskManager = harness.createRiskManager;
+    context = createManagedRiskManagerContext();
+    riskManager = context.riskManager;
+    mockLogger = context.mockLogger;
+    errorHandler = context.errorHandler;
+    createRiskManager = context.createRiskManager;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================
@@ -330,17 +335,21 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
       const freshLogger = new MockRiskManagerLogger();
       const freshErrorHandler = new ErrorHandler(freshLogger);
       const freshConfig = createRiskManagerConfig();
-      const freshRiskManager = createRiskManagerHarness({
+      const freshContext = createManagedRiskManagerContext({
         config: freshConfig,
         balance: 1000,
         logger: freshLogger,
         errorHandler: freshErrorHandler,
-      }).riskManager;
+      });
 
-      const signal = createRiskManagerSignal();
-      const result = await freshRiskManager.canTrade(signal, 1000, []);
-      expect(result.allowed).toBe(true);
-      expect(result.adjustedPositionSize).toBeGreaterThan(0);
+      try {
+        const signal = createRiskManagerSignal();
+        const result = await freshContext.riskManager.canTrade(signal, 1000, []);
+        expect(result.allowed).toBe(true);
+        expect(result.adjustedPositionSize).toBeGreaterThan(0);
+      } finally {
+        freshContext.cleanup();
+      }
     });
   });
 });

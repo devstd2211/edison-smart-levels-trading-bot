@@ -141,3 +141,54 @@ export function createTakeProfitManagerBoundFactory(options: {
       }),
   };
 }
+
+export interface ManagedTakeProfitManagerContext {
+  manager: TakeProfitManagerService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  config: ReturnType<typeof createTakeProfitManagerConfig>;
+  createManager: ReturnType<typeof createTakeProfitManagerBoundFactory>['createManager'];
+  cleanup: () => void;
+}
+
+export function createManagedTakeProfitManagerContext(options: {
+  configOverrides?: Partial<{
+    positionId: string;
+    symbol: string;
+    side: PositionSide;
+    entryPrice: number;
+    totalQuantity: number;
+    leverage: number;
+  }>;
+  withErrorHandler?: boolean;
+} = {}): ManagedTakeProfitManagerContext {
+  jest.clearAllMocks();
+
+  const harness = createTakeProfitManagerHarness(options);
+  const factory = createTakeProfitManagerBoundFactory({
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
+  const createdManagers = new Set<TakeProfitManagerService>([harness.manager]);
+
+  const trackManager = (manager: TakeProfitManagerService) => {
+    createdManagers.add(manager);
+    return manager;
+  };
+
+  return {
+    manager: harness.manager,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    config: harness.config,
+    createManager: (factoryOptions = {}) => trackManager(factory.createManager(factoryOptions)),
+    cleanup: () => {
+      createdManagers.forEach((manager) => {
+        manager.reset();
+      });
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

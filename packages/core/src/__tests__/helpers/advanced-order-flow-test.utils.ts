@@ -190,6 +190,65 @@ export function createAdvancedOrderFlowHarness(options?: {
   };
 }
 
+export interface ManagedAdvancedOrderFlowContext {
+  service: AdvancedOrderFlowService;
+  logger: LoggerService;
+  errorHandler?: ErrorHandler;
+  config: AdvancedOrderFlowConfig;
+  createService: (options?: {
+    config?: AdvancedOrderFlowConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => AdvancedOrderFlowService;
+  cleanup: () => void;
+}
+
+export function createManagedAdvancedOrderFlowContext(options?: {
+  config?: AdvancedOrderFlowConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}) {
+  jest.clearAllMocks();
+
+  const harness = createAdvancedOrderFlowHarness(options);
+  const createdServices = new Set<AdvancedOrderFlowService>([harness.service]);
+
+  const trackService = (service: AdvancedOrderFlowService) => {
+    createdServices.add(service);
+    return service;
+  };
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    config: harness.config,
+    createService: (serviceOptions = {}) => {
+      const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : harness.config;
+
+      return trackService(
+        createAdvancedOrderFlowService({
+          config: resolvedConfig,
+          logger: serviceOptions.logger ?? harness.logger,
+          errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+          withErrorHandler: serviceOptions.withErrorHandler ?? options?.withErrorHandler,
+        }),
+      );
+    },
+    cleanup: () => {
+      createdServices.forEach((service) => {
+        service.clearHistory();
+      });
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  } satisfies ManagedAdvancedOrderFlowContext;
+}
+
 export function createStandardAdvancedOrderFlowService(options?: {
   config?: AdvancedOrderFlowConfig;
   logger?: LoggerService;

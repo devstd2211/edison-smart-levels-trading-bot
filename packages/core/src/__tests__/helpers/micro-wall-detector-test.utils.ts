@@ -158,6 +158,55 @@ export function createMicroWallDetectorHarness(options: {
   };
 }
 
+export interface ManagedMicroWallDetectorContext {
+  detector: MicroWallDetectorService;
+  logger: LoggerService;
+  config: MicroWallDetectorConfig;
+  errorHandler?: ErrorHandler;
+  createDetector: (options?: Parameters<typeof createMicroWallDetectorService>[0]) => MicroWallDetectorService;
+  cleanup: () => void;
+}
+
+export function createManagedMicroWallDetectorContext(options: {
+  configOverrides?: Partial<MicroWallDetectorConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedMicroWallDetectorContext {
+  jest.clearAllMocks();
+
+  const harness = createMicroWallDetectorHarness(options);
+  const createdDetectors = new Set<MicroWallDetectorService>([harness.detector]);
+
+  const trackDetector = (detector: MicroWallDetectorService) => {
+    createdDetectors.add(detector);
+    return detector;
+  };
+
+  return {
+    detector: harness.detector,
+    logger: harness.logger,
+    config: harness.config,
+    errorHandler: harness.errorHandler,
+    createDetector: (serviceOptions = {}) =>
+      trackDetector(
+        createMicroWallDetectorService({
+          logger: harness.logger,
+          errorHandler: harness.errorHandler,
+          withErrorHandler: options.withErrorHandler,
+          ...serviceOptions,
+        }),
+      ),
+    cleanup: () => {
+      createdDetectors.forEach((detector) => {
+        detector.reset();
+      });
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createMicroWallDetectorService(options: {
   config?: MicroWallDetectorConfig;
   configOverrides?: Partial<MicroWallDetectorConfig>;

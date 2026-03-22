@@ -123,6 +123,48 @@ export function createSmartOrderExecutionHarness(
   };
 }
 
+export interface ManagedSmartOrderExecutionContext {
+  service: SmartOrderExecutionService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  config: SmartOrderConfig;
+  order: SmartOrderRequest;
+  createNoHandlerService: ReturnType<typeof createSmartOrderExecutionHarness>['createNoHandlerService'];
+  createService: ReturnType<typeof createSmartOrderExecutionHarness>['createService'];
+  cleanup: () => void;
+}
+
+export function createManagedSmartOrderExecutionContext(
+  overrides: Partial<SmartOrderConfig> = {},
+): ManagedSmartOrderExecutionContext {
+  jest.clearAllMocks();
+
+  const harness = createSmartOrderExecutionHarness(overrides);
+  const createdServices = new Set<SmartOrderExecutionService>([harness.service]);
+
+  const trackService = (service: SmartOrderExecutionService) => {
+    createdServices.add(service);
+    return service;
+  };
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    config: harness.config,
+    order: harness.order,
+    createNoHandlerService: () => trackService(harness.createNoHandlerService()),
+    createService: (options = {}) => trackService(harness.createService(options)),
+    cleanup: () => {
+      createdServices.forEach((service) => {
+        service.clearAllOrders();
+      });
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export type SmartOrderInternals = {
   doExecuteSmartOrder: (...args: unknown[]) => Promise<ExecutionReport>;
   doCalculateOptimalSplit: (size: number, price: number) => number[];

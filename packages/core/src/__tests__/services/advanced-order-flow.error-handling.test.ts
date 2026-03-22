@@ -29,12 +29,11 @@ import {
   asAdvancedOrderFlowTick,
   createAdvancedOrderFlowConfig,
   createAdvancedOrderFlowErrorHandler,
-  createAdvancedOrderFlowHarness,
+  createManagedAdvancedOrderFlowContext,
   createLegacyAdvancedOrderFlowService,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
   createAdvancedOrderFlowOrderbookWithOverrides,
-  createStandardAdvancedOrderFlowService,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
 } from '../helpers/advanced-order-flow-test.utils';
@@ -43,6 +42,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let context: ReturnType<typeof createManagedAdvancedOrderFlowContext>;
   let createService: (options?: {
     config?: AdvancedOrderFlowConfig;
     logger?: LoggerService;
@@ -51,20 +51,14 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   }) => AdvancedOrderFlowService;
 
   beforeEach(() => {
-    const harness = createAdvancedOrderFlowHarness();
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    createService = (options = {}) =>
-      options.withErrorHandler === false
-        ? createLegacyAdvancedOrderFlowService({
-            config: options.config,
-            logger: options.logger ?? mockLogger,
-          })
-        : createStandardAdvancedOrderFlowService({
-            config: options.config,
-            logger: options.logger ?? mockLogger,
-            errorHandler: options.errorHandler ?? errorHandler,
-          });
+    context = createManagedAdvancedOrderFlowContext();
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    createService = (options = {}) => context.createService(options);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('THROW: Config Validation', () => {
@@ -117,10 +111,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('THROW: Input Validation', () => {
     beforeEach(() => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
     });
 
     it('should throw on null tick in addTick()', () => {
@@ -175,10 +169,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
     });
 
     it('should handle NaN in imbalance calculation', () => {
@@ -254,10 +248,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       const badLogger = createAdvancedOrderFlowMockLogger('info');
 
       expect(() => {
-        ({ service } = createAdvancedOrderFlowHarness({
+        service = createService({
           logger: badLogger,
           errorHandler,
-        }));
+        });
       }).not.toThrow();
 
       expect(service).toBeDefined();
@@ -265,10 +259,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
     it('should continue on logger failure in analyze()', () => {
       const badLogger = createAdvancedOrderFlowMockLogger('warn');
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: badLogger,
         errorHandler,
-      }));
+      });
 
       expect(() => {
         service.addTick(createAdvancedOrderFlowTick('BUY'));
@@ -278,10 +272,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
     it('should continue on logger failure in addTick()', () => {
       const badLogger = createAdvancedOrderFlowMockLogger('debug');
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: badLogger,
         errorHandler,
-      }));
+      });
 
       expect(() => {
         service.addTick(createAdvancedOrderFlowTick('BUY'));
@@ -290,10 +284,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
     it('should continue on logger failure in updateConfig()', () => {
       const badLogger = createAdvancedOrderFlowMockLogger('info');
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: badLogger,
         errorHandler,
-      }));
+      });
 
       expect(() => {
         service.updateConfig({ tickWindowMs: 3000 });
@@ -303,10 +297,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('Integration: E2E Scenarios', () => {
     beforeEach(() => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
     });
 
     it('should analyze complete order flow workflow', () => {
@@ -393,10 +387,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
         createService({ config: badConfig });
       }).toThrow();
 
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
       expect(() => {
         service.analyze();
       }).not.toThrow();
@@ -427,10 +421,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should preserve legacy behavior', () => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
 
       service.addTick(createAdvancedOrderFlowTick('BUY', 50000, 1.0));
       service.processOrderbook(createAdvancedOrderFlowOrderbook());
@@ -445,10 +439,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should handle partial config updates', () => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
 
       service.updateConfig({ tickWindowMs: 3000 });
 
@@ -460,10 +454,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
     });
 
     it('should handle zero-volume ticks', () => {
@@ -529,10 +523,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
         throw new Error('ErrorHandler.handle threw');
       });
 
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler: throwingErrorHandler,
-      }));
+      });
 
       expect(() => {
         service.analyze();
@@ -542,10 +536,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('Additional Features', () => {
     beforeEach(() => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createService({
         logger: mockLogger,
         errorHandler,
-      }));
+      });
     });
 
     it('should track history correctly', () => {

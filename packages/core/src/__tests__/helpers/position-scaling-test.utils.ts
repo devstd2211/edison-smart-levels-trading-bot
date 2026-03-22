@@ -160,3 +160,23 @@ export function createPositionScalingScenarioHarness(
     ) => evaluatePositionScaleDecision(service, scenarioOverrides),
   };
 }
+
+export interface ManagedPositionScalingContext extends ReturnType<typeof createPositionScalingScenarioHarness> {
+  cleanup: () => void;
+}
+
+export function createManagedPositionScalingContext(
+  overrides: Partial<ScalingConfig> = {},
+): ManagedPositionScalingContext {
+  jest.clearAllMocks();
+
+  const harness = createPositionScalingScenarioHarness(overrides);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

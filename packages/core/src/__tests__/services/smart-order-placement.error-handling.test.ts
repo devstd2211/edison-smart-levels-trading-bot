@@ -24,7 +24,7 @@ import {
   asSmartOrderPlacementOrderbook as asOrderbook,
   createSmartOrderPlacementConfig,
   createSmartOrderPlacementErrorHandler,
-  createSmartOrderPlacementHarness,
+  createManagedSmartOrderPlacementContext,
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
   createSmartOrderPlacementService,
@@ -90,8 +90,18 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 // ============================================================================
 
 describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
+  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
+
+  beforeEach(() => {
+    context = createManagedSmartOrderPlacementContext({ withErrorHandler: false });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
   it('should THROW when order size is invalid', async () => {
-    const { service } = createSmartOrderPlacementHarness({ withErrorHandler: false });
+    const { service } = context;
     const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
@@ -100,7 +110,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when direction is invalid', async () => {
-    const { service } = createSmartOrderPlacementHarness({ withErrorHandler: false });
+    const { service } = context;
     const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
@@ -109,7 +119,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is null', async () => {
-    const { service } = createSmartOrderPlacementHarness({ withErrorHandler: false });
+    const { service } = context;
 
     await expect(
       service.planOrderExecution(asOrderbook(null), 1.0, 'buy'),
@@ -123,13 +133,19 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
+  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
 
   beforeEach(() => {
-    ({ logger } = createSmartOrderPlacementHarness());
+    context = createManagedSmartOrderPlacementContext();
+    ({ logger } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should return conservative plan on corrupt orderbook', async () => {
-    const { service } = createSmartOrderPlacementHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.bids.forEach((b) => {
@@ -153,7 +169,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return single order split on calculation failure', async () => {
-    const { service } = createSmartOrderPlacementHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
@@ -172,7 +188,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return market price level on liquidity search failure', async () => {
-    const { service } = createSmartOrderPlacementHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
@@ -190,7 +206,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return conservative fill probability on estimation failure', async () => {
-    const { service } = createSmartOrderPlacementHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
@@ -210,7 +226,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle empty orderbook gracefully', async () => {
-    const { service } = createSmartOrderPlacementHarness({ logger });
+    const service = context.createService({ logger });
 
     const emptyOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -231,7 +247,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
 
   it('should handle disabled adaptive mode', async () => {
     const config = createSmartOrderPlacementConfig({ enableAdaptive: false });
-    const { service } = createSmartOrderPlacementHarness({ config, logger });
+    const service = context.createService({ config, logger });
     const orderbook = createSmartOrderPlacementOrderbook();
 
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');
@@ -308,9 +324,15 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
 describe('SmartOrderPlacementService - Integration (E2E)', () => {
   let service: SmartOrderPlacementService;
+  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
 
   beforeEach(() => {
-    ({ service } = createSmartOrderPlacementHarness());
+    context = createManagedSmartOrderPlacementContext();
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should plan single order execution for small size', async () => {
@@ -405,9 +427,15 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
 
 describe('SmartOrderPlacementService - Edge Cases', () => {
   let service: SmartOrderPlacementService;
+  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
 
   beforeEach(() => {
-    ({ service } = createSmartOrderPlacementHarness());
+    context = createManagedSmartOrderPlacementContext();
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should handle very thin liquidity', async () => {
@@ -459,9 +487,15 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
 
 describe('SmartOrderPlacementService - Backward Compatibility', () => {
   let service: SmartOrderPlacementService;
+  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
 
   beforeEach(() => {
-    ({ service } = createSmartOrderPlacementHarness({ withErrorHandler: false }));
+    context = createManagedSmartOrderPlacementContext({ withErrorHandler: false });
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should work without ErrorHandler', async () => {

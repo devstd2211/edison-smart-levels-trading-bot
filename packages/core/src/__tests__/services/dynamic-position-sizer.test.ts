@@ -25,7 +25,7 @@ import {
 import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
-  createDynamicPositionSizerHarness,
+  createManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
@@ -36,8 +36,9 @@ describe('DynamicPositionSizerService', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
-  let createBrokenService: ReturnType<typeof createDynamicPositionSizerHarness>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createDynamicPositionSizerHarness>['createNoHandlerService'];
+  let context: ReturnType<typeof createManagedDynamicPositionSizerContext>;
+  let createBrokenService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createBrokenService'];
+  let createNoHandlerService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createNoHandlerService'];
   let createService: (options?: {
     config?: SizingConfig;
     logger?: LoggerService;
@@ -45,14 +46,18 @@ describe('DynamicPositionSizerService', () => {
   }) => DynamicPositionSizerService;
 
   beforeEach(() => {
-    const harness = createDynamicPositionSizerHarness();
-    service = harness.service;
-    logger = harness.logger;
-    errorHandler = harness.errorHandler;
-    mockConfig = harness.config;
-    createBrokenService = harness.createBrokenService;
-    createNoHandlerService = harness.createNoHandlerService;
-    createService = harness.createService;
+    context = createManagedDynamicPositionSizerContext();
+    service = context.service;
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    mockConfig = context.config;
+    createBrokenService = context.createBrokenService;
+    createNoHandlerService = context.createNoHandlerService;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

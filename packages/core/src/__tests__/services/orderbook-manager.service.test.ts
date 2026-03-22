@@ -13,11 +13,10 @@ import { LoggerService } from '../../types/legacy';
 import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
-  createOrderbookManagerHarness,
+  createManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
-  type OrderbookManagerHarness,
 } from '../helpers/orderbook-manager-test.utils';
 
 // ============================================================================
@@ -31,12 +30,16 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
-  let harness: OrderbookManagerHarness;
+  let context: ReturnType<typeof createManagedOrderbookManagerContext>;
 
   beforeEach(() => {
-    harness = createOrderbookManagerHarness({ withErrorHandler: false });
-    logger = harness.loggerService;
-    manager = harness.service;
+    context = createManagedOrderbookManagerContext({ withErrorHandler: false });
+    logger = context.loggerService;
+    manager = context.service;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Snapshot handling', () => {
@@ -183,7 +186,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should ignore delta before snapshot', () => {
-      const freshManager = harness.createLegacyService({
+      const freshManager = context.createLegacyService({
         symbol: 'BTCUSDT',
         logger,
       });

@@ -29,7 +29,7 @@ import {
 } from '../../constants';
 import {
   createRiskManagerConfig,
-  createRiskManagerHarness,
+  createManagedRiskManagerContext,
   createRiskManagerPosition,
   createRiskManagerSignal,
   createRiskManagerTrade,
@@ -134,15 +134,20 @@ describe('RiskManager', () => {
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
-  let createRiskManager: ReturnType<typeof createRiskManagerHarness>['createRiskManager'];
+  let context: ReturnType<typeof createManagedRiskManagerContext>;
+  let createRiskManager: ReturnType<typeof createManagedRiskManagerContext>['createRiskManager'];
 
   beforeEach(() => {
     defaultConfig = createDefaultConfig();
-    const harness = createRiskManagerHarness({ config: defaultConfig, balance: 1000 });
-    mockLogger = harness.mockLogger;
-    errorHandler = harness.errorHandler;
-    riskManager = harness.riskManager;
-    createRiskManager = harness.createRiskManager;
+    context = createManagedRiskManagerContext({ config: defaultConfig, balance: 1000 });
+    mockLogger = context.mockLogger;
+    errorHandler = context.errorHandler;
+    riskManager = context.riskManager;
+    createRiskManager = context.createRiskManager;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Constructor', () => {

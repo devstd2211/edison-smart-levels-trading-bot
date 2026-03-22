@@ -138,3 +138,30 @@ export function createDynamicPositionSizerHarness(
     createService,
   };
 }
+
+export interface ManagedDynamicPositionSizerContext {
+  service: DynamicPositionSizerService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  config: SizingConfig;
+  createBrokenService: ReturnType<typeof createDynamicPositionSizerHarness>['createBrokenService'];
+  createNoHandlerService: ReturnType<typeof createDynamicPositionSizerHarness>['createNoHandlerService'];
+  createService: ReturnType<typeof createDynamicPositionSizerHarness>['createService'];
+  cleanup: () => void;
+}
+
+export function createManagedDynamicPositionSizerContext(
+  overrides: Partial<SizingConfig> = {},
+): ManagedDynamicPositionSizerContext {
+  jest.clearAllMocks();
+
+  const harness = createDynamicPositionSizerHarness(overrides);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

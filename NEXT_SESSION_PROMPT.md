@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed an adjacent managed-context follow-up for `advanced-order-state-machine`, `ml-signal-validator.error-handling`, and `pattern-recognition.error-handling`:
-  - extended `packages/core/src/__tests__/helpers/advanced-order-state-machine-test.utils.ts`, `packages/core/src/__tests__/helpers/ml-signal-validator-test.utils.ts`, and `packages/core/src/__tests__/helpers/pattern-recognition-test.utils.ts` with shared managed contexts for service/history cleanup and helper bootstrap.
-  - routed the corresponding suites through those helper-owned contexts instead of local harness ownership and per-suite cleanup.
-  - reviewed `packages/core/src/services/advanced-order-state-machine.service.ts`, `packages/core/src/services/ml-signal-validator.service.ts`, and `packages/core/src/services/pattern-recognition.service.ts` and left production code unchanged after review.
+- Completed an adjacent managed-context follow-up for `risk-manager.service`, `risk-manager.error-handling`, `take-profit-manager.service`, and `take-profit-manager.error-handling`:
+  - extended `packages/core/src/__tests__/helpers/risk-manager-test.utils.ts` and `packages/core/src/__tests__/helpers/take-profit-manager-test.utils.ts` with shared managed contexts for helper-backed service creation, manager reset where needed, and mock/spy restoration.
+  - routed the corresponding suites through those helper-owned contexts instead of local harness ownership and per-suite teardown.
+  - reviewed `packages/core/src/services/risk-manager.service.ts` and `packages/core/src/services/take-profit-manager.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/risk-manager.service.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts packages/core/src/__tests__/services/take-profit-manager.service.test.ts packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep local async timing ownership, repeated harness bootstrap, or ad hoc mock error-handler branches outside the now-covered monitoring, journaling, loader, state-machine, and analyzer slices.
-- Favor shared managed test contexts and helper-owned teardown in the next adjacent follow-ups such as `orderbook-manager.service.error-handling`, `micro-wall-detector.error-handling`, `advanced-order-flow.error-handling`, or similarly mock/spy-owned suites before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep local harness ownership, repeated bootstrap, or ad hoc cleanup in the remaining position/pnl/risk slice.
+- Favor shared managed test contexts and helper-owned teardown in follow-ups such as `position-pnl-calculator.service`, `position-pnl-calculator.error-handling`, `pnl-calculator.service`, `pnl-calculator.error-handling`, and `risk-calculator.error-handling` before reopening lower-signal constructor-only cleanup.

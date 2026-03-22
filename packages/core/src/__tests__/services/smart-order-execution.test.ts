@@ -28,7 +28,7 @@ import {
   asSmartOrderInternals,
   asSmartOrderLogger,
   createSmartOrderExecutionReport,
-  createSmartOrderExecutionHarness,
+  createManagedSmartOrderExecutionContext,
   createSmartOrderExecutionLogger,
   createMinimalSmartOrder,
   createSmartOrderScenario,
@@ -40,7 +40,8 @@ describe('SmartOrderExecutionService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
-  let createNoHandlerService: ReturnType<typeof createSmartOrderExecutionHarness>['createNoHandlerService'];
+  let context: ReturnType<typeof createManagedSmartOrderExecutionContext>;
+  let createNoHandlerService: ReturnType<typeof createManagedSmartOrderExecutionContext>['createNoHandlerService'];
   let createService: (options?: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
@@ -48,14 +49,18 @@ describe('SmartOrderExecutionService', () => {
   }) => SmartOrderExecutionService;
 
   beforeEach(() => {
-    const harness = createSmartOrderExecutionHarness();
-    service = harness.service;
-    logger = harness.logger;
-    errorHandler = harness.errorHandler;
-    mockConfig = harness.config;
-    baseOrder = harness.order;
-    createNoHandlerService = harness.createNoHandlerService;
-    createService = harness.createService;
+    context = createManagedSmartOrderExecutionContext();
+    service = context.service;
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    mockConfig = context.config;
+    baseOrder = context.order;
+    createNoHandlerService = context.createNoHandlerService;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

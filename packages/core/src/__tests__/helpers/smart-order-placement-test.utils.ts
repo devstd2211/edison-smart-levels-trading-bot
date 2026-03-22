@@ -113,6 +113,56 @@ export function createSmartOrderPlacementHarness(options: {
     logger,
     errorHandler,
     config,
+    createService: (serviceOptions: {
+      config?: SmartOrderPlacementConfig;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      withErrorHandler?: boolean;
+    } = {}) => createSmartOrderPlacementService({
+      config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : config,
+      logger: serviceOptions.logger ?? logger,
+      errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+    }),
+  };
+}
+
+export interface ManagedSmartOrderPlacementContext {
+  service: SmartOrderPlacementService;
+  logger: LoggerService;
+  errorHandler?: ErrorHandler;
+  config: SmartOrderPlacementConfig;
+  createService: NonNullable<ReturnType<typeof createSmartOrderPlacementHarness>['createService']>;
+  cleanup: () => void;
+}
+
+export function createManagedSmartOrderPlacementContext(options: {
+  config?: SmartOrderPlacementConfig;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}): ManagedSmartOrderPlacementContext {
+  jest.clearAllMocks();
+
+  const harness = createSmartOrderPlacementHarness(options);
+  const createdServices = new Set<SmartOrderPlacementService>([harness.service]);
+
+  const trackService = (service: SmartOrderPlacementService) => {
+    createdServices.add(service);
+    return service;
+  };
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    config: harness.config,
+    createService: (serviceOptions = {}) => trackService(harness.createService(serviceOptions)),
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
   };
 }
 

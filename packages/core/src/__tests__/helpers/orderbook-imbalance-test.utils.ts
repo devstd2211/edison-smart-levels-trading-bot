@@ -141,6 +141,16 @@ export function createOrderbookImbalanceHarness(options: {
   };
 }
 
+export interface ManagedOrderbookImbalanceContext {
+  service: OrderbookImbalanceService;
+  logger: LoggerService;
+  config: OrderbookImbalanceConfig;
+  errorHandler?: ErrorHandler;
+  createService: ReturnType<typeof createOrderbookImbalanceHarness>['createStandardService'];
+  createLegacyService: ReturnType<typeof createOrderbookImbalanceHarness>['createLegacyService'];
+  cleanup: () => void;
+}
+
 export function createStandardOrderbookImbalanceHarness(options: {
   configOverrides?: Partial<OrderbookImbalanceConfig>;
   logger?: LoggerService;
@@ -205,6 +215,36 @@ export function createLegacyOrderbookImbalanceHarness(options: {
           : serviceOptions.configOverrides ?? options.configOverrides,
         logger: serviceOptions.logger ?? logger,
       }),
+  };
+}
+
+export function createManagedOrderbookImbalanceContext(options: {
+  configOverrides?: Partial<OrderbookImbalanceConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedOrderbookImbalanceContext {
+  jest.clearAllMocks();
+
+  const harness = createOrderbookImbalanceHarness(options);
+  const createdServices = new Set<OrderbookImbalanceService>([harness.service]);
+
+  const trackService = (service: OrderbookImbalanceService) => {
+    createdServices.add(service);
+    return service;
+  };
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    config: harness.config,
+    errorHandler: harness.errorHandler,
+    createService: (serviceOptions = {}) => trackService(harness.createStandardService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) => trackService(harness.createLegacyService(serviceOptions)),
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
   };
 }
 

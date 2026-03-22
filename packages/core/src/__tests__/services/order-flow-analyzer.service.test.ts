@@ -18,7 +18,7 @@ import {
 import {
   createMockFlow,
   createMockOrderbook,
-  createOrderFlowAnalyzerHarness,
+  createManagedOrderFlowAnalyzerContext,
   createOrderFlowSeries,
   createOrderFlowUpdateSeries,
   seedOrderFlowHistory,
@@ -27,11 +27,16 @@ import {
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let config: OrderFlowAnalyzerConfig;
+  let context: ReturnType<typeof createManagedOrderFlowAnalyzerContext>;
 
   beforeEach(() => {
-    const harness = createOrderFlowAnalyzerHarness();
-    service = harness.service;
-    config = harness.config;
+    context = createManagedOrderFlowAnalyzerContext();
+    service = context.service;
+    config = context.config;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('processOrderbookUpdate', () => {

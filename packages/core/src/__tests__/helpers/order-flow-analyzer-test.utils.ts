@@ -123,3 +123,41 @@ export function createOrderFlowAnalyzerHarness(
     createService,
   };
 }
+
+export interface ManagedOrderFlowAnalyzerContext {
+  service: OrderFlowAnalyzerService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  config: OrderFlowAnalyzerConfig;
+  createService: ReturnType<typeof createOrderFlowAnalyzerHarness>['createService'];
+  cleanup: () => void;
+}
+
+export function createManagedOrderFlowAnalyzerContext(
+  overrides: Partial<OrderFlowAnalyzerConfig> = {},
+): ManagedOrderFlowAnalyzerContext {
+  jest.clearAllMocks();
+
+  const harness = createOrderFlowAnalyzerHarness(overrides);
+  const createdServices = new Set<OrderFlowAnalyzerService>([harness.service]);
+
+  const trackService = (service: OrderFlowAnalyzerService) => {
+    createdServices.add(service);
+    return service;
+  };
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    config: harness.config,
+    createService: (options = {}) => trackService(harness.createService(options)),
+    cleanup: () => {
+      createdServices.forEach((service) => {
+        service.clearHistory();
+      });
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

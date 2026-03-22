@@ -18,7 +18,7 @@ import {
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createMicroWallDetectorConfig,
-  createMicroWallDetectorHarness,
+  createManagedMicroWallDetectorContext,
   createMicroWallDetectorService,
   createMicroWall,
   createMicroWallFailingLogger,
@@ -61,11 +61,16 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let context: ReturnType<typeof createManagedMicroWallDetectorContext>;
 
   beforeEach(() => {
-    const harness = createMicroWallDetectorHarness();
-    logger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
+    context = createManagedMicroWallDetectorContext();
+    logger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================

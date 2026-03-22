@@ -10,7 +10,7 @@ import {
 import {
   createAgedMicroWall,
   createBrokenMicroWall,
-  createMicroWallDetectorHarness,
+  createManagedMicroWallDetectorContext,
   createMicroWall,
   createMicroWallDetectionOrderBook,
   createTrackedMicroWallOrderBook,
@@ -23,10 +23,16 @@ import {
 describe('MicroWallDetectorService', () => {
   let detector: MicroWallDetectorService;
   let logger: LoggerService;
-  let config: ReturnType<typeof createMicroWallDetectorHarness>['config'];
+  let config: ReturnType<typeof createManagedMicroWallDetectorContext>['config'];
+  let context: ReturnType<typeof createManagedMicroWallDetectorContext>;
 
   beforeEach(() => {
-    ({ detector, logger, config } = createMicroWallDetectorHarness({ withErrorHandler: false }));
+    context = createManagedMicroWallDetectorContext({ withErrorHandler: false });
+    ({ detector, logger, config } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('detectMicroWalls', () => {

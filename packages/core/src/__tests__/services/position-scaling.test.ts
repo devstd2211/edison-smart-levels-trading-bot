@@ -25,7 +25,7 @@ import {
   MIN_POSITION_SIZE_FOR_SCALING,
 } from '../../constants/phase-11-constants';
 import {
-  createPositionScalingScenarioHarness,
+  createManagedPositionScalingContext,
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
@@ -34,34 +34,39 @@ describe('PositionScalingService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
-  let createBrokenService: ReturnType<typeof createPositionScalingScenarioHarness>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createPositionScalingScenarioHarness>['createNoHandlerService'];
+  let context: ReturnType<typeof createManagedPositionScalingContext>;
+  let createBrokenService: ReturnType<typeof createManagedPositionScalingContext>['createBrokenService'];
+  let createNoHandlerService: ReturnType<typeof createManagedPositionScalingContext>['createNoHandlerService'];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => PositionScalingService;
-  let createScenario: ReturnType<typeof createPositionScalingScenarioHarness>['createScenario'];
-  let createExtremes: ReturnType<typeof createPositionScalingScenarioHarness>['createExtremes'];
-  let createSequence: ReturnType<typeof createPositionScalingScenarioHarness>['createSequence'];
-  let evaluateDecision: ReturnType<typeof createPositionScalingScenarioHarness>['evaluateDecision'];
+  let createScenario: ReturnType<typeof createManagedPositionScalingContext>['createScenario'];
+  let createExtremes: ReturnType<typeof createManagedPositionScalingContext>['createExtremes'];
+  let createSequence: ReturnType<typeof createManagedPositionScalingContext>['createSequence'];
+  let evaluateDecision: ReturnType<typeof createManagedPositionScalingContext>['evaluateDecision'];
   type ScalingConfigInput = ConstructorParameters<typeof PositionScalingService>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
-    const harness = createPositionScalingScenarioHarness();
-    service = harness.service;
-    logger = harness.logger;
-    errorHandler = harness.errorHandler;
-    mockConfig = harness.config;
-    mockPosition = harness.position;
-    createBrokenService = harness.createBrokenService;
-    createNoHandlerService = harness.createNoHandlerService;
-    createService = harness.createService;
-    createScenario = harness.createScenario;
-    createExtremes = harness.createExtremes;
-    createSequence = harness.createSequence;
-    evaluateDecision = harness.evaluateDecision;
+    context = createManagedPositionScalingContext();
+    service = context.service;
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    mockConfig = context.config;
+    mockPosition = context.position;
+    createBrokenService = context.createBrokenService;
+    createNoHandlerService = context.createNoHandlerService;
+    createService = context.createService;
+    createScenario = context.createScenario;
+    createExtremes = context.createExtremes;
+    createSequence = context.createSequence;
+    evaluateDecision = context.evaluateDecision;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

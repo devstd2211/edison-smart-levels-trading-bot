@@ -176,3 +176,32 @@ export function createRiskManagerFactory(options: {
     createRiskManager: harness.createRiskManager,
   };
 }
+
+export interface ManagedRiskManagerContext {
+  config: RiskManagerConfig;
+  balance: number;
+  riskManager: RiskManager;
+  mockLogger: MockRiskManagerLogger;
+  errorHandler: ErrorHandler;
+  createRiskManager: ReturnType<typeof createRiskManagerHarness>['createRiskManager'];
+  cleanup: () => void;
+}
+
+export function createManagedRiskManagerContext(options: {
+  config?: RiskManagerConfig;
+  balance?: number;
+  logger?: MockRiskManagerLogger;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedRiskManagerContext {
+  jest.clearAllMocks();
+
+  const harness = createRiskManagerHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

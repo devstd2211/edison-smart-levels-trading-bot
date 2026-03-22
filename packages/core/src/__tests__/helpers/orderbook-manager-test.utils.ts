@@ -28,6 +28,18 @@ export interface OrderbookManagerHarness {
   }) => OrderbookManagerService;
 }
 
+export interface ManagedOrderbookManagerContext {
+  service: OrderbookManagerService;
+  mockLogger: ReturnType<typeof createOrderbookMockLogger>;
+  loggerService: LoggerService;
+  mockWallTracker: ReturnType<typeof createOrderbookWallTrackerMock>;
+  errorHandler?: ErrorHandler;
+  createService: OrderbookManagerHarness['createService'];
+  createLegacyService: OrderbookManagerHarness['createLegacyService'];
+  createServiceWithoutWallTracker: OrderbookManagerHarness['createServiceWithoutWallTracker'];
+  cleanup: () => void;
+}
+
 export function createOrderbookLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -229,6 +241,45 @@ export function createOrderbookLegacyService(options: {
     ...options,
     withErrorHandler: false,
   });
+}
+
+export function createManagedOrderbookManagerContext(options: {
+  symbol?: string;
+  withWallTracker?: boolean;
+  withErrorHandler?: boolean;
+  logger?: LoggerService;
+  wallTracker?: WallTrackerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedOrderbookManagerContext {
+  jest.clearAllMocks();
+
+  const harness = createOrderbookManagerHarness(options);
+  const createdServices = new Set<OrderbookManagerService>([harness.service]);
+
+  const trackService = (service: OrderbookManagerService) => {
+    createdServices.add(service);
+    return service;
+  };
+
+  return {
+    service: harness.service,
+    mockLogger: harness.mockLogger,
+    loggerService: harness.loggerService,
+    mockWallTracker: harness.mockWallTracker,
+    errorHandler: harness.errorHandler,
+    createService: (serviceOptions = {}) => trackService(harness.createService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) => trackService(harness.createLegacyService(serviceOptions)),
+    createServiceWithoutWallTracker: (serviceOptions = {}) =>
+      trackService(harness.createServiceWithoutWallTracker(serviceOptions)),
+    cleanup: () => {
+      jest.useRealTimers();
+      createdServices.forEach((service) => {
+        service.reset();
+      });
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
 }
 
 export function createOrderbookServiceWithoutWallTracker(options: {

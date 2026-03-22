@@ -16,15 +16,14 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LoggerService, PositionSide, LogLevel } from '../../types/legacy';
 import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
-  createTakeProfitManagerBoundFactory,
   createTakeProfitManagerCloseSequence,
-  createTakeProfitManagerFactory,
-  createTakeProfitManagerHarness,
+  createManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
+  let context: ReturnType<typeof createManagedTakeProfitManagerContext>;
   let createManager: (options?: {
     configOverrides?: Partial<{
       positionId: string;
@@ -38,11 +37,13 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   }) => TakeProfitManagerService;
 
   beforeEach(() => {
-    ({ logger, errorHandler } = createTakeProfitManagerHarness());
-    createManager = createTakeProfitManagerBoundFactory({
-      logger,
-      errorHandler,
-    }).createManager;
+    context = createManagedTakeProfitManagerContext();
+    ({ logger, errorHandler } = context);
+    createManager = context.createManager;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

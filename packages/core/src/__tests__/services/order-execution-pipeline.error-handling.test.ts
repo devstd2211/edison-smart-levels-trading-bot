@@ -14,7 +14,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { ExchangeAPIError } from '../../errors/DomainErrors';
 import {
-  createOrderExecutionPipelineHarness,
+  createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
@@ -30,14 +30,20 @@ function createRetryableError(message: string): ExchangeAPIError {
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
   let mockLogger: OrderExecutionPipelineMockLogger;
   let mockBybitService: OrderExecutionPipelineMockExchange;
+  let context: ReturnType<typeof createManagedOrderExecutionPipelineContext>;
 
   beforeEach(() => {
-    ({ logger: mockLogger, exchange: mockBybitService } = createOrderExecutionPipelineHarness({
+    context = createManagedOrderExecutionPipelineContext({
       exchange: createOrderExecutionPipelineMockExchange({
         placeOrder: jest.fn(async (_params: unknown) => ({ orderId: 'ORD-DEFAULT' })),
         getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
       }),
-    }));
+    });
+    ({ logger: mockLogger, exchange: mockBybitService } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('[RETRY Strategy] placeOrder()', () => {

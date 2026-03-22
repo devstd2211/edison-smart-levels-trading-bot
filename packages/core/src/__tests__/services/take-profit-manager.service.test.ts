@@ -5,17 +5,22 @@
 import { TakeProfitManagerService } from '../../services/take-profit-manager.service';
 import { LoggerService, PositionSide } from '../../types/legacy';
 import {
-  createTakeProfitManagerFactory,
-  createTakeProfitManagerHarness,
+  createManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService', () => {
   let logger: LoggerService;
-  let createManager: ReturnType<typeof createTakeProfitManagerFactory>;
+  let context: ReturnType<typeof createManagedTakeProfitManagerContext>;
+  let createManager: ReturnType<typeof createManagedTakeProfitManagerContext>['createManager'];
 
   beforeEach(() => {
-    ({ logger } = createTakeProfitManagerHarness());
-    createManager = createTakeProfitManagerFactory({ logger });
+    context = createManagedTakeProfitManagerContext();
+    ({ logger } = context);
+    createManager = context.createManager;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('recordPartialClose', () => {

@@ -36,10 +36,9 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceFailingLogger,
-  createLegacyOrderbookImbalanceHarness,
+  createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
-  createStandardOrderbookImbalanceHarness,
   createStandardOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 
@@ -52,17 +51,19 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: ReturnType<typeof createStandardOrderbookImbalanceHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createLegacyOrderbookImbalanceHarness>['createLegacyService'];
+  let context: ReturnType<typeof createManagedOrderbookImbalanceContext>;
+  let createService: ReturnType<typeof createManagedOrderbookImbalanceContext>['createService'];
+  let createLegacyService: ReturnType<typeof createManagedOrderbookImbalanceContext>['createLegacyService'];
 
   beforeEach(() => {
-    const standardHarness = createStandardOrderbookImbalanceHarness();
-    const legacyHarness = createLegacyOrderbookImbalanceHarness({
-      logger: standardHarness.logger,
-    });
-    ({ logger, errorHandler } = standardHarness);
-    createService = standardHarness.createStandardService;
-    createLegacyService = legacyHarness.createLegacyService;
+    context = createManagedOrderbookImbalanceContext();
+    ({ logger, errorHandler } = context);
+    createService = context.createService;
+    createLegacyService = context.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================
@@ -366,7 +367,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       });
 
       // Should throw even without errorHandler
-      expect(() => createLegacyOrderbookImbalanceHarness({ logger }).createLegacyService({ config })).toThrow(
+      expect(() => createLegacyService({ config, logger })).toThrow(
         'config.minImbalancePercent must be between 0 and 100',
       );
     });
