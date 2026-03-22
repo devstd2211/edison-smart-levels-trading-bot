@@ -257,6 +257,36 @@ export function createPositionMonitorServiceWithHarness(
   return createPositionMonitorService(dependencies, options);
 }
 
+export function recreatePositionMonitorHarness(
+  harness: PositionMonitorDependencies,
+  options: {
+    riskConfig?: RiskManagementConfig;
+    errorHandler?: ErrorHandler;
+  } = {},
+): PositionMonitorDependencies {
+  harness.monitor.stop();
+
+  const errorHandler = options.errorHandler ?? harness.errorHandler;
+  const dependencies = {
+    mockBybit: harness.mockBybit,
+    mockPositionManager: harness.mockPositionManager,
+    mockTelegram: harness.mockTelegram,
+    mockExitTypeDetector: harness.mockExitTypeDetector,
+    mockPnLCalculator: harness.mockPnLCalculator,
+    mockPositionSync: harness.mockPositionSync,
+    logger: harness.logger,
+    errorHandler,
+  };
+
+  return {
+    ...dependencies,
+    monitor: createStandardPositionMonitorService(dependencies, {
+      riskConfig: options.riskConfig,
+      errorHandler,
+    }),
+  };
+}
+
 export function createPositionMonitorRiskConfig(
   overrides: Partial<RiskManagementConfig> = {},
 ): RiskManagementConfig {

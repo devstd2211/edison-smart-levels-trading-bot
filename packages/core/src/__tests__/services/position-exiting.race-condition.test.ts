@@ -8,8 +8,7 @@
  * "Position not found" errors when WebSocket closes externally.
  */
 
-import { PositionExitingService } from '../../services/position-exiting.service';
-import { Position, ExitType } from '../../types/legacy';
+import { ExitType } from '../../types/legacy';
 import {
   createRaceConditionCloseRequest,
   createRaceConditionPositionExitingHarness,
@@ -23,26 +22,16 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  let positionExitingService: PositionExitingService;
-  let mockLogger: {
-    debug: jest.Mock;
-    info: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-    getLogFilePath: jest.Mock;
-  };
-  let mockBybitService: {
-    closePosition: jest.Mock;
-    cancelAllConditionalOrders: jest.Mock;
-    getCurrentPrice: jest.Mock;
-  };
-  let mockTelegram: { sendAlert: jest.Mock; notifyPositionClosed: jest.Mock };
-  let mockJournal: { recordPositionClose: jest.Mock; getTrade: jest.Mock };
-  let mockSessionStats: { updateTradeExit: jest.Mock };
+  let harness: ReturnType<typeof createRaceConditionPositionExitingHarness>;
+  let positionExitingService: ReturnType<typeof createRaceConditionPositionExitingHarness>['service'];
+  let mockLogger: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockLogger'];
+  let mockBybitService: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockBybit'];
+  let mockTelegram: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockTelegram'];
+  let mockJournal: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockJournal'];
+  let mockSessionStats: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockSessionStats'];
 
   beforeEach(() => {
-    const harness = createRaceConditionPositionExitingHarness();
-
+    harness = createRaceConditionPositionExitingHarness();
     positionExitingService = harness.service;
     mockLogger = harness.mockLogger;
     mockBybitService = harness.mockBybit;

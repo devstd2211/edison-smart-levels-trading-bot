@@ -100,12 +100,6 @@ export function createEnhancedExitHarness(options: {
   const errorHandler = options.withErrorHandler === false
     ? undefined
     : options.errorHandler ?? createEnhancedExitErrorHandler(logger);
-  const service = createEnhancedExitService({
-    logger,
-    config: options.config,
-    withErrorHandler: options.withErrorHandler,
-    errorHandler,
-  });
   const createService = (
     serviceOptions: {
       logger?: LoggerService;
@@ -121,6 +115,7 @@ export function createEnhancedExitHarness(options: {
       errorHandler,
       ...serviceOptions,
     });
+  const service = createService();
 
   return {
     service,

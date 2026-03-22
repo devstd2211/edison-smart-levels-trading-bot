@@ -29,14 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed a lifecycle/state-machine helper-consolidation batch:
-  - extended `packages/core/src/__tests__/helpers/position-lifecycle-test.utils.ts` with explicit shared standard and legacy repository/memory/safety service paths and routed `packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts` plus `packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts` through them instead of broad harness extraction.
-  - extended `packages/core/src/__tests__/helpers/position-state-machine-test.utils.ts` with explicit shared standard and legacy service/harness initialization paths and routed `packages/core/src/__tests__/services/position-state-machine.service.test.ts` plus `packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts` through them instead of generic `withErrorHandler: false` branches.
-  - reviewed `packages/core/src/services/position-lifecycle.service.ts` and `packages/core/src/services/position-state-machine.service.ts` and left production code unchanged after review.
+- Completed adjacent helper-consolidation follow-ups for `enhanced-exit.error-handling` and `risk-calculator.error-handling`:
+  - updated `packages/core/src/__tests__/helpers/enhanced-exit-test.utils.ts` and `packages/core/src/__tests__/helpers/risk-calculator-test.utils.ts` so each base harness instantiates through the same shared local `createService(...)` / `createCalculator(...)` path it exposes.
+  - routed the corresponding suites through those shared helper creation paths instead of repeated local harness recreation.
+  - reviewed `packages/core/src/services/enhanced-exit.service.ts` and `packages/core/src/services/risk-calculator.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-state-machine.service.test.ts packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts` -> PASS (4/4 suites, 75/75 tests).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts` -> PASS.
+  - `npm run build` -> PASS.
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent lifecycle/position slice next to the refreshed lifecycle/state-machine area, such as `position-sync.service`, `position-monitor.service`, `position-exiting.*`, or another nearby constructor-heavy suite that still mixes shared setup with direct service recreation or generic legacy branches.
+- Prefer the next adjacent constructor-heavy helper/error-handling or helper/service pair still mixing shared setup with direct recreation after the refreshed `risk-manager`, `retest-entry`, `enhanced-exit`, and `risk-calculator` clusters.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

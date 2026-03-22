@@ -25,11 +25,7 @@ import {
   MIN_POSITION_SIZE_FOR_SCALING,
 } from '../../constants/phase-11-constants';
 import {
-  createPositionScalingHarness,
-  createPositionScalingExtremes,
-  createPositionScalingScenario,
-  createPositionScalingSequence,
-  evaluatePositionScaleDecision,
+  createPositionScalingScenarioHarness,
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
@@ -38,18 +34,22 @@ describe('PositionScalingService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
-  let createBrokenService: ReturnType<typeof createPositionScalingHarness>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createPositionScalingHarness>['createNoHandlerService'];
+  let createBrokenService: ReturnType<typeof createPositionScalingScenarioHarness>['createBrokenService'];
+  let createNoHandlerService: ReturnType<typeof createPositionScalingScenarioHarness>['createNoHandlerService'];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => PositionScalingService;
+  let createScenario: ReturnType<typeof createPositionScalingScenarioHarness>['createScenario'];
+  let createExtremes: ReturnType<typeof createPositionScalingScenarioHarness>['createExtremes'];
+  let createSequence: ReturnType<typeof createPositionScalingScenarioHarness>['createSequence'];
+  let evaluateDecision: ReturnType<typeof createPositionScalingScenarioHarness>['evaluateDecision'];
   type ScalingConfigInput = ConstructorParameters<typeof PositionScalingService>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
-    const harness = createPositionScalingHarness();
+    const harness = createPositionScalingScenarioHarness();
     service = harness.service;
     logger = harness.logger;
     errorHandler = harness.errorHandler;
@@ -58,6 +58,10 @@ describe('PositionScalingService', () => {
     createBrokenService = harness.createBrokenService;
     createNoHandlerService = harness.createNoHandlerService;
     createService = harness.createService;
+    createScenario = harness.createScenario;
+    createExtremes = harness.createExtremes;
+    createSequence = harness.createSequence;
+    evaluateDecision = harness.evaluateDecision;
   });
 
   // ============================================================================
@@ -146,7 +150,7 @@ describe('PositionScalingService', () => {
 
   describe('GRACEFUL_DEGRADE - Calculation Failures', () => {
     it('should return hold action when shouldScale calculation fails', async () => {
-      const brokenPosition = createPositionScalingExtremes();
+      const brokenPosition = createExtremes();
 
       const result = await service.shouldScale(brokenPosition);
 
@@ -156,7 +160,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should return hold action when scaleIntoWinner calculation fails', async () => {
-      const brokenPosition = createPositionScalingExtremes();
+      const brokenPosition = createExtremes();
 
       const result = await service.scaleIntoWinner(brokenPosition, Number.MAX_VALUE);
 
@@ -165,7 +169,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should return hold action when reduceRiskOnProfit calculation fails', async () => {
-      const brokenPosition = createPositionScalingExtremes();
+      const brokenPosition = createExtremes();
 
       const result = await service.reduceRiskOnProfit(brokenPosition);
 
@@ -181,7 +185,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should handle negative profit (loss) gracefully', async () => {
-      const result = await evaluatePositionScaleDecision(service, {
+      const result = await evaluateDecision(service, {
         currentPrice: 95,
       });
 
@@ -190,7 +194,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should handle position at exact profit target', async () => {
-      const result = await evaluatePositionScaleDecision(service, {
+      const result = await evaluateDecision(service, {
         currentPrice: 110,
       });
 
@@ -200,7 +204,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should handle very small position size', async () => {
-      const result = await evaluatePositionScaleDecision(service, {
+      const result = await evaluateDecision(service, {
         size: 1,
       });
 
@@ -217,7 +221,7 @@ describe('PositionScalingService', () => {
     it('should not throw when logging fails in shouldScale', async () => {
       const brokenService = createBrokenService();
 
-      const extremePosition = createPositionScalingExtremes({ profitTarget: mockPosition.profitTarget });
+      const extremePosition = createExtremes({ profitTarget: mockPosition.profitTarget });
 
       await expect(
         brokenService.shouldScale(extremePosition)
@@ -227,7 +231,7 @@ describe('PositionScalingService', () => {
     it('should not throw when logging fails in scaleIntoWinner', async () => {
       const brokenService = createBrokenService();
 
-      const extremePosition = createPositionScalingExtremes({ profitTarget: mockPosition.profitTarget });
+      const extremePosition = createExtremes({ profitTarget: mockPosition.profitTarget });
 
       await expect(
         brokenService.scaleIntoWinner(extremePosition, Number.MAX_VALUE)
@@ -237,7 +241,7 @@ describe('PositionScalingService', () => {
     it('should not throw when logging fails in reduceRiskOnProfit', async () => {
       const brokenService = createBrokenService();
 
-      const extremePosition = createPositionScalingExtremes({ profitTarget: mockPosition.profitTarget });
+      const extremePosition = createExtremes({ profitTarget: mockPosition.profitTarget });
 
       await expect(
         brokenService.reduceRiskOnProfit(extremePosition)
@@ -269,7 +273,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should not scale at 30% profit (below threshold)', async () => {
-      const result = await evaluatePositionScaleDecision(service, {
+      const result = await evaluateDecision(service, {
         currentPrice: 103,
       });
 
@@ -279,7 +283,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should hold when max scales reached', async () => {
-      const result = await evaluatePositionScaleDecision(service, {
+      const result = await evaluateDecision(service, {
         scaleCount: 3,
       });
 
@@ -365,7 +369,7 @@ describe('PositionScalingService', () => {
 
   describe('Edge Cases', () => {
     it('should handle position at exact breakeven', async () => {
-      const result = await evaluatePositionScaleDecision(service, {
+      const result = await evaluateDecision(service, {
         currentPrice: mockPosition.entryPrice,
       });
 
@@ -380,7 +384,7 @@ describe('PositionScalingService', () => {
 
   describe('Helper Methods - calculateScaleSize', () => {
     it('should calculate scale size with reduction factor', () => {
-      const [position1, position2, position3] = createPositionScalingSequence([0, 1, 2]);
+      const [position1, position2, position3] = createSequence([0, 1, 2]);
 
       const scale1 = service.calculateScaleSize(position1);
       expect(scale1).toBeCloseTo(50, 1); // 100 * 0.5^1
@@ -413,7 +417,7 @@ describe('PositionScalingService', () => {
 
   describe('Short Position Scaling', () => {
     it('should scale short position correctly', async () => {
-      const shortPosition: PositionState = createPositionScalingScenario({
+      const shortPosition: PositionState = createScenario({
         currentPrice: 95,
         stopLoss: 105,
         profitTarget: 90,
@@ -428,7 +432,7 @@ describe('PositionScalingService', () => {
     });
 
     it('should move SL to breakeven for short position', async () => {
-      const shortPosition: PositionState = createPositionScalingScenario({
+      const shortPosition: PositionState = createScenario({
         currentPrice: 95,
         stopLoss: 105,
         profitTarget: 90,

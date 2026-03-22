@@ -20,7 +20,7 @@ import {
   prepareClosedPositionSync,
   prepareDeepSyncProtectionScenario,
   preparePositionSyncMissingProtectionScenario,
-  createPositionSyncServiceWithHarness,
+  recreatePositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
 const createMockPosition = createPositionSyncPosition;
@@ -89,14 +89,14 @@ describe('PositionSyncService', () => {
       mockExitTypeDetector.determineExitTypeFromHistory.mockReturnValue(ExitType.TAKE_PROFIT_1);
 
       const positionExitingService = createMockPositionCloseRecorder();
-      const syncService = createPositionSyncServiceWithHarness({
+      const syncService = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
         mockTelegram,
         logger,
         positionExiting: positionExitingService,
-      });
+      }).service;
 
       await syncService.syncClosedPosition(position);
 
@@ -376,14 +376,14 @@ describe('PositionSyncService', () => {
         }),
       };
 
-      const serviceLocal = createPositionSyncServiceWithHarness({
+      const serviceLocal = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager: mockPositionManagerLocal,
         mockExitTypeDetector,
         mockTelegram,
         logger,
         positionExiting: createMockPositionCloseRecorder(),
-      });
+      }).service;
 
       mockBybit.getOrderHistory.mockResolvedValue([]);
       mockBybit.getCurrentPrice.mockResolvedValue(105);

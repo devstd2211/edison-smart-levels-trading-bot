@@ -143,3 +143,21 @@ export function createPositionPnLFactory(options: {
     createPositions: createMockPnlPositions,
   };
 }
+
+export function createPositionPnLScenarioHarness(options: {
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}) {
+  const factory = createPositionPnLFactory(options);
+
+  return {
+    errorHandler: factory.errorHandler,
+    service: factory.createService({
+      errorHandler: factory.errorHandler,
+      withErrorHandler: options.withErrorHandler,
+    }),
+    createService: factory.createService,
+    createPosition: factory.createPosition,
+    createPositions: factory.createPositions,
+  };
+}

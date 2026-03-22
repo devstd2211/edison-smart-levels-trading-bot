@@ -783,6 +783,43 @@ export function createTransactionalCloseHarness() {
   };
 }
 
+export function createJournalSkipTracker() {
+  return {
+    recordTradeClose: jest.fn(),
+  };
+}
+
+export function invokeRollbackMultipleTimes(
+  rollback: jest.Mock,
+  times: number,
+): jest.Mock {
+  for (let index = 0; index < times; index++) {
+    rollback();
+  }
+
+  return rollback;
+}
+
+export function writeTransactionalRollbackLog(
+  logger: Pick<ReturnType<typeof createTransactionalCloseHarness>['mockLogger'], 'info'>,
+  message: string = 'Journal rollback complete',
+): string {
+  logger.info(message);
+  return message;
+}
+
+export function formatPositionExitingTrace(
+  title: string,
+  details: Array<[string, unknown]>,
+): string {
+  return [
+    '',
+    `${title}:`,
+    ...details.map(([label, value]) => `- ${label}: ${String(value)}`),
+    '',
+  ].join('\n');
+}
+
 export function executeTransactionalCloseFlow(options: {
   tradeCloseOverrides?: Parameters<typeof createTransactionalTradeCloseRequest>[0];
   statsImplementation?: (trade: unknown) => undefined;
@@ -921,7 +958,7 @@ export function createRaceConditionPositionExitingHarness() {
   });
 }
 
-type PositionExitingHarness = {
+export type PositionExitingHarness = {
   service: PositionExitingService;
   mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   mockBybit: ReturnType<typeof createMockPositionExitingExchange>;

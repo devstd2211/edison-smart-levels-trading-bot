@@ -116,19 +116,35 @@ export function createRiskManagerHarness(options: {
   logger?: MockRiskManagerLogger;
   errorHandler?: ErrorHandler;
 } = {}) {
+  const config = options.config ?? createRiskManagerConfig();
+  const balance = options.balance ?? 1000;
   const mockLogger = options.logger ?? new MockRiskManagerLogger();
   const errorHandler = options.errorHandler ?? new ErrorHandler(mockLogger);
-  const riskManager = createRiskManagerService({
-    config: options.config,
-    logger: mockLogger,
-    errorHandler,
-  });
-  riskManager.setAccountBalance(options.balance ?? 1000);
+  const createRiskManager = (
+    overrides: {
+      config?: RiskManagerConfig;
+      balance?: number;
+      logger?: MockRiskManagerLogger;
+      errorHandler?: ErrorHandler;
+    } = {},
+  ) => {
+    const riskManager = createRiskManagerService({
+      config: overrides.config ?? config,
+      logger: overrides.logger ?? mockLogger,
+      errorHandler: overrides.errorHandler ?? errorHandler,
+    });
+    riskManager.setAccountBalance(overrides.balance ?? balance);
+    return riskManager;
+  };
+  const riskManager = createRiskManager();
 
   return {
+    config,
+    balance,
     riskManager,
     mockLogger,
     errorHandler,
+    createRiskManager,
   };
 }
 
@@ -151,22 +167,12 @@ export function createRiskManagerFactory(options: {
   logger?: MockRiskManagerLogger;
   errorHandler?: ErrorHandler;
 } = {}) {
-  const config = options.config ?? createRiskManagerConfig();
-  const logger = options.logger ?? new MockRiskManagerLogger();
-  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
+  const harness = createRiskManagerHarness(options);
 
   return {
-    config,
-    logger,
-    errorHandler,
-    createRiskManager: () => {
-      const riskManager = createRiskManagerService({
-        config,
-        logger,
-        errorHandler,
-      });
-      riskManager.setAccountBalance(options.balance ?? 1000);
-      return riskManager;
-    },
+    config: harness.config,
+    logger: harness.mockLogger,
+    errorHandler: harness.errorHandler,
+    createRiskManager: harness.createRiskManager,
   };
 }

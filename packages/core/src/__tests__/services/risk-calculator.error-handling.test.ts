@@ -290,10 +290,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
 
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
-      ({ calculator } = createRiskCalculatorHarness({
+      calculator = createCalculator({
         logger: mockLogger,
         withErrorHandler: false,
-      }));
+      });
     });
 
     it('still validates input and throws on errors', () => {

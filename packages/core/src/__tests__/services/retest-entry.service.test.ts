@@ -18,9 +18,12 @@ describe('RetestEntryService', () => {
   let mockConfig = createRetestEntryConfig();
   let mockSignal: Signal = createRetestEntrySignal();
   let mockCandles: Candle[] = createRetestEntryCandles();
+  let createService: ReturnType<typeof createRetestEntryHarness>['createService'];
 
   beforeEach(() => {
-    ({ service } = createRetestEntryHarness());
+    const harness = createRetestEntryHarness();
+    service = harness.service;
+    createService = harness.createService;
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
@@ -49,9 +52,7 @@ describe('RetestEntryService', () => {
 
     it('should not detect impulse when service disabled', () => {
       const disabledConfig = { ...mockConfig, enabled: false };
-      const { service: disabledService } = createRetestEntryHarness({
-        configOverrides: disabledConfig,
-      });
+      const disabledService = createService({ configOverrides: disabledConfig });
 
       const result = disabledService.detectImpulse('BTCUSDT', 1.1600, mockCandles);
 
@@ -144,7 +145,7 @@ describe('RetestEntryService', () => {
     });
 
     it('should use config Fibonacci levels', () => {
-      const { service: customService } = createRetestEntryHarness({
+      const customService = createService({
         configOverrides: { retestZoneFibStart: 38.2, retestZoneFibEnd: 50 },
       });
 
@@ -253,7 +254,7 @@ describe('RetestEntryService', () => {
     });
 
     it('should skip structure check when not required', () => {
-      const { service: noStructureService } = createRetestEntryHarness({
+      const noStructureService = createService({
         configOverrides: { requireStructureIntact: false },
       });
 

@@ -389,6 +389,21 @@ export function createPositionSyncServiceWithHarness(
   return createPositionSyncService(dependencies);
 }
 
+export function recreatePositionSyncHarness(
+  harness: Omit<PositionSyncHarness, 'service'>,
+  overrides: Partial<Omit<PositionSyncHarness, 'service'>> = {},
+): PositionSyncHarness {
+  const nextHarness = {
+    ...harness,
+    ...overrides,
+  };
+
+  return {
+    ...nextHarness,
+    service: createStandardPositionSyncService(nextHarness),
+  };
+}
+
 export function createMockSyncedPositions(
   positions: Array<{
     side?: PositionSide;

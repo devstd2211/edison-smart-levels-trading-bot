@@ -34,7 +34,6 @@ import {
   createMockPositionExitingTelegram,
   createMockTakeProfitManager,
   createPositionExitingHarness,
-  createPositionExitingService,
   executePositionExitActionDirect,
   executePositionExitSequence,
   executePositionExitRequest,
@@ -318,18 +317,20 @@ describe('PositionExitingService', () => {
     });
 
     it('should calculate simple PnL without TakeProfitManager', async () => {
-      service = createPositionExitingService({
-        mockBybit,
-        mockTelegram,
-        mockLogger,
-        mockJournal,
-        mockSessionStats,
-        mockTakeProfitManager,
-        mockPositionManager: createMockPositionExitingManager(null),
-        tradingConfig,
-        riskConfig,
-        fullConfig,
+      const noTakeProfitHarness = createPositionExitingHarness({
+        withTakeProfitManager: false,
       });
+      service = noTakeProfitHarness.service;
+      mockLogger = noTakeProfitHarness.mockLogger;
+      mockBybit = noTakeProfitHarness.mockBybit;
+      mockTelegram = noTakeProfitHarness.mockTelegram;
+      mockJournal = noTakeProfitHarness.mockJournal;
+      mockSessionStats = noTakeProfitHarness.mockSessionStats;
+      mockPositionManager =
+        noTakeProfitHarness.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
+      tradingConfig = noTakeProfitHarness.tradingConfig;
+      riskConfig = noTakeProfitHarness.riskConfig;
+      fullConfig = noTakeProfitHarness.fullConfig;
 
       const { result } = await executePositionExitRequest(service, {
         action: { action: ExitAction.CLOSE_ALL },

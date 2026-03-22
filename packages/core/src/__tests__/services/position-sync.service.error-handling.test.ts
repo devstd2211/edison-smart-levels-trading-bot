@@ -25,12 +25,12 @@ import {
   createPositionSyncOldPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
-  createStandardPositionSyncService,
   createPositionSyncTelegramNetworkError,
   createPositionSyncHarness,
   preparePositionSyncEmergencyCloseScenario,
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
+  recreatePositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================
@@ -55,15 +55,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
     jest.clearAllMocks();
     errorHandler = createPositionSyncErrorHandler();
     const harness = createPositionSyncHarness({ errorHandler });
-    service = createStandardPositionSyncService({
-      mockBybit: harness.mockBybit,
-      mockPositionManager: harness.mockPositionManager,
-      mockExitTypeDetector: harness.mockExitTypeDetector,
-      mockTelegram: harness.mockTelegram,
-      logger: harness.logger,
-      positionExiting: harness.positionExiting,
-      errorHandler,
-    });
+    service = harness.service;
     mockBybit = harness.mockBybit;
     mockPositionManager = harness.mockPositionManager;
     mockExitTypeDetector = harness.mockExitTypeDetector;
@@ -133,7 +125,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
       const mockPositionExiting = createMockPositionCloseRecorder();
       mockPositionExiting.closeFullPosition.mockRejectedValue(closeError);
-      service = createStandardPositionSyncService({
+      service = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -141,7 +133,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         logger,
         positionExiting: mockPositionExiting,
         errorHandler,
-      });
+      }).service;
 
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
       mockTelegram.sendAlert.mockResolvedValue(undefined);
@@ -200,7 +192,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockPositionExiting.closeFullPosition.mockRejectedValue(
         createPositionSyncExchangeApiError(''),
       );
-      service = createStandardPositionSyncService({
+      service = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -208,7 +200,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         logger,
         positionExiting: mockPositionExiting,
         errorHandler,
-      });
+      }).service;
 
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
 
@@ -379,7 +371,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockPositionExiting.closeFullPosition.mockRejectedValue(
         createPositionSyncExchangeApiError('Server error')
       );
-      service = createStandardPositionSyncService({
+      service = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -387,7 +379,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
         logger,
         positionExiting: mockPositionExiting,
         errorHandler,
-      });
+      }).service;
 
       mockPositionManager.clearPosition.mockResolvedValue(undefined);
       mockTelegram.sendAlert.mockResolvedValue(undefined);
@@ -433,7 +425,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
       // Create service with custom ErrorHandler
       const customErrorHandler = new ErrorHandler(logger);
-      service = createStandardPositionSyncService({
+      service = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -443,7 +435,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
           closeFullPosition: jest.fn().mockResolvedValue(true),
         },
         errorHandler: customErrorHandler,
-      });
+      }).service;
 
       await service.deepSyncCheck(position);
 
@@ -467,7 +459,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockTelegram.sendAlert.mockResolvedValue(undefined);
 
       // Create service WITHOUT errorHandler parameter
-      const serviceWithoutHandler = createStandardPositionSyncService({
+      const serviceWithoutHandler = recreatePositionSyncHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -477,7 +469,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
           closeFullPosition: jest.fn().mockResolvedValue(true),
         },
         errorHandler: undefined,
-      });
+      }).service;
 
       // Should still work
       await serviceWithoutHandler.syncClosedPosition(position);

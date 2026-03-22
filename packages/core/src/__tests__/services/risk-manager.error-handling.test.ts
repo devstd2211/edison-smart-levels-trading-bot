@@ -16,11 +16,9 @@ import {
 import type { TradeRecord } from '../../types/legacy';
 import {
   MockRiskManagerLogger,
-  createRiskManagerFactory,
   createRiskManagerConfig,
   createRiskManagerHarness,
   createRiskManagerPosition,
-  createRiskManagerService,
   createRiskManagerSignal,
   createRiskManagerTrade,
 } from '../helpers/risk-manager-test.utils';
@@ -29,14 +27,14 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
-  let createRiskManager: ReturnType<typeof createRiskManagerFactory>['createRiskManager'];
+  let createRiskManager: ReturnType<typeof createRiskManagerHarness>['createRiskManager'];
 
   beforeEach(() => {
-    ({ riskManager, mockLogger, errorHandler } = createRiskManagerHarness());
-    ({ createRiskManager } = createRiskManagerFactory({
-      logger: mockLogger,
-      errorHandler,
-    }));
+    const harness = createRiskManagerHarness();
+    riskManager = harness.riskManager;
+    mockLogger = harness.mockLogger;
+    errorHandler = harness.errorHandler;
+    createRiskManager = harness.createRiskManager;
   });
 
   // ========================================================================
@@ -321,8 +319,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   describe('G. Backward Compatibility', () => {
     it('should work with direct instantiation', () => {
       const config = createRiskManagerConfig();
-      const rm = createRiskManagerService({ config, logger: mockLogger, errorHandler });
-      rm.setAccountBalance(1000);
+      const rm = createRiskManager({ config });
       const status = rm.getRiskStatus();
       expect(status).toBeDefined();
       expect(status.dailyPnL).toBe(0);
@@ -333,12 +330,12 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
       const freshLogger = new MockRiskManagerLogger();
       const freshErrorHandler = new ErrorHandler(freshLogger);
       const freshConfig = createRiskManagerConfig();
-      const freshRiskManager = createRiskManagerService({
+      const freshRiskManager = createRiskManagerHarness({
         config: freshConfig,
+        balance: 1000,
         logger: freshLogger,
         errorHandler: freshErrorHandler,
-      });
-      freshRiskManager.setAccountBalance(1000);
+      }).riskManager;
 
       const signal = createRiskManagerSignal();
       const result = await freshRiskManager.canTrade(signal, 1000, []);

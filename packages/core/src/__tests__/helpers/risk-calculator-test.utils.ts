@@ -82,23 +82,20 @@ export const createRiskCalculatorHarness = (
     options.withErrorHandler === false
       ? undefined
       : options.errorHandler ?? createRiskCalculatorErrorHandler(logger);
+  const createCalculator = (overrides: RiskCalculatorHarnessOptions = {}) =>
+    createRiskCalculatorService({
+      logger: overrides.logger ?? logger,
+      withErrorHandler: overrides.withErrorHandler,
+      errorHandler: overrides.errorHandler ?? errorHandler,
+    });
 
   return {
-    calculator: createRiskCalculatorService({
-      logger,
-      withErrorHandler: options.withErrorHandler,
-      errorHandler,
-    }),
+    calculator: createCalculator({ withErrorHandler: options.withErrorHandler }),
     logger,
     errorHandler,
     defaultInput: createRiskCalculationInput(),
     createInput: (overrides = {}) => createRiskCalculationInput(overrides),
-    createCalculator: (overrides = {}) =>
-      createRiskCalculatorService({
-        logger: overrides.logger ?? logger,
-        withErrorHandler: overrides.withErrorHandler,
-        errorHandler: overrides.errorHandler ?? errorHandler,
-      }),
+    createCalculator,
   };
 };
 

@@ -116,10 +116,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let service: EnhancedExitService;
 
     beforeEach(() => {
-      ({ service } = createEnhancedExitHarness({
+      service = createService({
         logger: mockLogger,
         config: defaultConfig,
-      }));
+      });
     });
 
     it('should GRACEFUL_DEGRADE on invalid entryPrice (NaN)', () => {
@@ -159,10 +159,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let service: EnhancedExitService;
 
     beforeEach(() => {
-      ({ service } = createEnhancedExitHarness({
+      service = createService({
         logger: mockLogger,
         config: defaultConfig,
-      }));
+      });
     });
 
     it('should GRACEFUL_DEGRADE when SL equals entry price (division by zero)', () => {
@@ -223,7 +223,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should SKIP logger failures in updateConfig', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
       });
@@ -241,7 +241,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   describe('Integration E2E Scenarios', () => {
     it('should handle complete R:R validation flow with error handling', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
       });
@@ -257,7 +257,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should work correctly without ErrorHandler (backward compatibility)', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
         withErrorHandler: false,
@@ -276,7 +276,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   describe('Configuration Updates', () => {
     it('should validate config on update and reject invalid changes', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
       });
@@ -298,7 +298,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should apply valid config updates successfully', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
       });
@@ -320,10 +320,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     let service: EnhancedExitService;
 
     beforeEach(() => {
-      ({ service } = createEnhancedExitHarness({
+      service = createService({
         logger: mockLogger,
         config: defaultConfig,
-      }));
+      });
     });
 
     it('should handle R:R validation with very small distances', () => {
@@ -353,7 +353,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         ...defaultConfig,
         adaptiveTrailing: { enabled: true, activationPercent: 0.01, trailingDistancePercent: 0.5, useATRDistance: true, trailingDistanceATR: 0.5 },
       };
-      const { service: service2 } = createEnhancedExitHarness({
+      const service2 = createService({
         logger: mockLogger,
         config,
       });
@@ -371,7 +371,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   describe('Backward Compatibility', () => {
     it('should maintain original behavior without ErrorHandler', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
         withErrorHandler: false,
@@ -399,7 +399,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
     });
 
     it('should calculate structure-based TP correctly', () => {
-      const { service } = createEnhancedExitHarness({
+      const service = createService({
         logger: mockLogger,
         config: defaultConfig,
         withErrorHandler: false,

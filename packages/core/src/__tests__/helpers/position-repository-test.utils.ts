@@ -163,3 +163,83 @@ export function updateRepositoryCurrentPosition(
   repository.setCurrentPosition(updatedPosition);
   return updatedPosition;
 }
+
+export function createRepositoryCurrentPositionHarness(
+  overrides: Partial<Position> = {},
+): {
+  repository: IPositionRepository;
+  position: Position;
+} {
+  const position = createRepositoryPosition(overrides);
+  return {
+    repository: createSeededCurrentPositionRepository(position),
+    position,
+  };
+}
+
+export function createRepositoryClosedHistoryHarness(
+  overrides: Partial<Position>[] = [{}],
+): {
+  repository: IPositionRepository;
+  history: Position[];
+} {
+  const history = overrides.map((positionOverrides) =>
+    createClosedRepositoryPosition(positionOverrides),
+  );
+
+  return {
+    repository: createSeededHistoryRepository(history),
+    history,
+  };
+}
+
+export function createRepositoryCurrentAndHistoryHarness(options: {
+  currentPosition?: Partial<Position>;
+  history?: Partial<Position>[];
+} = {}): {
+  repository: IPositionRepository;
+  currentPosition: Position | null;
+  history: Position[];
+} {
+  const currentPosition = options.currentPosition
+    ? createRepositoryPosition(options.currentPosition)
+    : null;
+  const history = (options.history ?? []).map((positionOverrides) =>
+    createClosedRepositoryPosition(positionOverrides),
+  );
+
+  return {
+    repository: createSeededPositionRepositoryHarness({
+      currentPosition: currentPosition ?? undefined,
+      history,
+    }),
+    currentPosition,
+    history,
+  };
+}
+
+export function createRepositoryBulkHistoryHarness(
+  count: number,
+  buildOverrides: (index: number) => Partial<Position> = () => ({}),
+): {
+  repository: IPositionRepository;
+  history: Position[];
+} {
+  const history = createRepositoryPositions(count, buildOverrides).map((position) =>
+    createClosedRepositoryPosition(position),
+  );
+
+  return {
+    repository: createSeededHistoryRepository(history),
+    history,
+  };
+}
+
+export function createRepositoryUpdateHarness(
+  overrides: Partial<Position> = {},
+): {
+  repository: IPositionRepository;
+  position: Position;
+} {
+  return createRepositoryCurrentPositionHarness(overrides);
+}

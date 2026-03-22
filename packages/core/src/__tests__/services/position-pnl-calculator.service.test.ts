@@ -7,9 +7,8 @@ import { PositionPnLCalculatorService } from '../../services/position-pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import { PERCENT_MULTIPLIER } from '../../constants';
 import {
-  createPositionPnLFactory,
   createMockPnlPositions,
-  createPositionPnLCalculatorServiceWithHarness,
+  createPositionPnLScenarioHarness,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
@@ -18,11 +17,12 @@ import {
 
 describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
-  let createPosition: ReturnType<typeof createPositionPnLFactory>['createPosition'];
+  let createPosition: ReturnType<typeof createPositionPnLScenarioHarness>['createPosition'];
 
   beforeEach(() => {
-    service = createPositionPnLCalculatorServiceWithHarness({ withErrorHandler: false });
-    ({ createPosition } = createPositionPnLFactory({ withErrorHandler: false }));
+    const harness = createPositionPnLScenarioHarness({ withErrorHandler: false });
+    service = harness.service;
+    createPosition = harness.createPosition;
   });
 
   // ==========================================================================

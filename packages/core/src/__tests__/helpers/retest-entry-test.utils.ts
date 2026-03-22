@@ -104,12 +104,6 @@ export function createRetestEntryHarness(options: {
   const config = createRetestEntryConfig(options.configOverrides);
   const errorHandler =
     options.withErrorHandler === false ? undefined : createRetestEntryErrorHandler(logger);
-  const service = createRetestEntryService({
-    configOverrides: options.configOverrides,
-    logger,
-    errorHandler,
-    withErrorHandler: options.withErrorHandler,
-  });
   const createService = (
     serviceOptions: {
       configOverrides?: Partial<RetestConfig>;
@@ -125,6 +119,7 @@ export function createRetestEntryHarness(options: {
       withErrorHandler: options.withErrorHandler,
       ...serviceOptions,
     });
+  const service = createService();
 
   return {
     service,

@@ -143,3 +143,20 @@ export function createPositionScalingHarness(
     createService,
   };
 }
+
+export function createPositionScalingScenarioHarness(
+  overrides: Partial<ScalingConfig> = {},
+) {
+  const harness = createPositionScalingHarness(overrides);
+
+  return {
+    ...harness,
+    createScenario: createPositionScalingScenario,
+    createExtremes: createPositionScalingExtremes,
+    createSequence: createPositionScalingSequence,
+    evaluateDecision: (
+      service: PositionScalingService,
+      scenarioOverrides: Partial<PositionState> = {},
+    ) => evaluatePositionScaleDecision(service, scenarioOverrides),
+  };
+}

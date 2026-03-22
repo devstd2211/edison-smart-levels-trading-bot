@@ -42,7 +42,6 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createRetestEntryCandles,
   createRetestEntryConfig,
-  createRetestEntryErrorHandler,
   createRetestEntryHarness,
   createRetestEntryLogger,
   createRetestEntryMockLoggerService,
@@ -378,7 +377,7 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (optional DI)', () => {
-      const { service } = createRetestEntryHarness({ withErrorHandler: false });
+      const service = createService({ withErrorHandler: false });
 
       const impulseResult = service.detectImpulse('BTCUSDT', 1.1575, mockCandles);
       expect(impulseResult.hasImpulse).toBe(true);

@@ -20,6 +20,7 @@ import {
   createEntryPriceState,
   createEntryPriceTransitionState,
   createFunctionalPositionExitingHarness,
+  formatPositionExitingTrace,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
 } from '../helpers/position-exiting-test.utils';
@@ -41,13 +42,12 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         entryPrice: position.entryPrice,
       });
 
-      console.log(`
-        BREAKEVEN CALCULATION:
-        - Entry Price: ${entryPrice}
-        - Offset Percent: ${offsetPercent}%
-        - Offset Value: ${offset}
-        - Breakeven Price: ${breakevenPrice}
-      `);
+      console.log(formatPositionExitingTrace('BREAKEVEN CALCULATION', [
+        ['Entry Price', entryPrice],
+        ['Offset Percent', `${offsetPercent}%`],
+        ['Offset Value', offset],
+        ['Breakeven Price', breakevenPrice],
+      ]));
 
       if (offset === undefined || breakevenPrice === undefined) {
         throw new Error('Expected numeric breakeven inspection output');
@@ -68,13 +68,12 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         entryPrice: position.entryPrice,
       });
 
-      console.log(`
-        CORRUPTED ENTRY PRICE:
-        - Entry Price: ${entryState.entryPrice}
-        - Is NaN: ${!entryState.isValid}
-        - Calculated Offset: ${offset}
-        - Calculated Breakeven: ${breakevenPrice}
-      `);
+      console.log(formatPositionExitingTrace('CORRUPTED ENTRY PRICE', [
+        ['Entry Price', entryState.entryPrice],
+        ['Is NaN', !entryState.isValid],
+        ['Calculated Offset', offset],
+        ['Calculated Breakeven', breakevenPrice],
+      ]));
 
       if (offset === undefined || breakevenPrice === undefined) {
         throw new Error('Expected NaN numeric output for corrupted entry price');
@@ -99,11 +98,10 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         breakevenPrice = undefined;
       }
 
-      console.log(`
-        UNDEFINED ENTRY PRICE:
-        - Entry Price: ${position.entryPrice}
-        - Calculated Breakeven: ${breakevenPrice}
-      `);
+      console.log(formatPositionExitingTrace('UNDEFINED ENTRY PRICE', [
+        ['Entry Price', position.entryPrice],
+        ['Calculated Breakeven', breakevenPrice],
+      ]));
 
       expect(breakevenPrice === undefined || isNaN(breakevenPrice)).toBe(true);
     });
@@ -138,22 +136,20 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     it('Should log detailed info before/after TP1 hit', async () => {
       const position = createRealScenarioPosition();
 
-      console.log(`
-        POSITION STATE BEFORE TP1:
-        - ID: ${position.id}
-        - Entry Price: ${position.entryPrice}
-        - SL: ${position.stopLoss.price}
-        - Quantity: ${position.quantity}
-        - TP1 Hit: ${position.takeProfits[0].hit}
-      `);
+      console.log(formatPositionExitingTrace('POSITION STATE BEFORE TP1', [
+        ['ID', position.id],
+        ['Entry Price', position.entryPrice],
+        ['SL', position.stopLoss.price],
+        ['Quantity', position.quantity],
+        ['TP1 Hit', position.takeProfits[0].hit],
+      ]));
 
       position.takeProfits[0].hit = true;
 
-      console.log(`
-        POSITION STATE AFTER TP1:
-        - Entry Price: ${position.entryPrice}
-        - Entry Price Valid: ${!isNaN(position.entryPrice)}
-      `);
+      console.log(formatPositionExitingTrace('POSITION STATE AFTER TP1', [
+        ['Entry Price', position.entryPrice],
+        ['Entry Price Valid', !isNaN(position.entryPrice)],
+      ]));
 
       expect(position.entryPrice).toBe(1.892);
       expect(isNaN(position.entryPrice)).toBe(false);
@@ -169,29 +165,21 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         corruptedEntryPrice,
       } = createEntryPriceLifecycleSnapshot(position);
 
-      console.log(`
-        PARTIAL CLOSE LIFECYCLE:
-
-        STEP 1: Before Close
-        - Entry Price: ${position.entryPrice}
-        - Remaining Qty: ${position.quantity}
-        - Close Qty (TP${tp1Level.level}): ${partialCloseQty}
-
-        STEP 2: Execute Close on Exchange
-        - Close at price: ${tp1Level.price}
-
-        STEP 3: Update Position State
-        - New Qty: ${remainingQuantity}
-        - Entry Price Should Still Be: ${initialEntryPrice}
-      `);
+      console.log(formatPositionExitingTrace('PARTIAL CLOSE LIFECYCLE', [
+        ['Entry Price', position.entryPrice],
+        ['Remaining Qty', position.quantity],
+        [`Close Qty (TP${tp1Level.level})`, partialCloseQty],
+        ['Close Price', tp1Level.price],
+        ['New Qty', remainingQuantity],
+        ['Entry Price Should Still Be', initialEntryPrice],
+      ]));
 
       expect(position.entryPrice).toBe(initialEntryPrice);
 
-      console.log(`
-        POTENTIAL CORRUPTION SOURCE:
-        - If service tries to recalculate entry price: ${corruptedEntryPrice}
-        - Is it NaN? ${isNaN(corruptedEntryPrice)}
-      `);
+      console.log(formatPositionExitingTrace('POTENTIAL CORRUPTION SOURCE', [
+        ['If service tries to recalculate entry price', corruptedEntryPrice],
+        ['Is it NaN?', isNaN(corruptedEntryPrice)],
+      ]));
 
       expect(position.entryPrice).toBe(initialEntryPrice);
     });
@@ -204,12 +192,11 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
       position.quantity = position.quantity * (1 - position.takeProfits[0].sizePercent / 100);
       const testState = createEntryPriceTransitionState(initialEntryPrice, position.entryPrice);
 
-      console.log(`
-        ENTRY PRICE CORRUPTION TEST:
-        - Before: ${testState.entryPriceBefore}
-        - After: ${testState.entryPriceAfter}
-        - Same? ${testState.isSame}
-      `);
+      console.log(formatPositionExitingTrace('ENTRY PRICE CORRUPTION TEST', [
+        ['Before', testState.entryPriceBefore],
+        ['After', testState.entryPriceAfter],
+        ['Same?', testState.isSame],
+      ]));
 
       expect(testState.entryPriceAfter).toBe(initialEntryPrice);
       expect(isNaN(testState.entryPriceAfter)).toBe(false);
@@ -226,12 +213,11 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
         mode: 'MergedSingleTP',
       };
 
-      console.log(`
-        WEBSOCKET UPDATE RISK:
-        - Original Entry: ${originalEntryPrice}
-        - WebSocket avgPrice: ${wsUpdate.avgPrice}
-        - If service uses avgPrice instead of entryPrice: CORRUPTION!
-      `);
+      console.log(formatPositionExitingTrace('WEBSOCKET UPDATE RISK', [
+        ['Original Entry', originalEntryPrice],
+        ['WebSocket avgPrice', wsUpdate.avgPrice],
+        ['If service uses avgPrice instead of entryPrice', 'CORRUPTION!'],
+      ]));
 
       const corruptedEntry = parseFloat(wsUpdate.avgPrice);
       expect(corruptedEntry).toBe(1.9203);
@@ -242,16 +228,13 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
       const wsPosition = createWebSocketEntryPriceScenario();
       const entryState = createEntryPriceState(position);
 
-      console.log(`
-        WEBSOCKET DATA:
-        - entryPrice: ${wsPosition.entryPrice} (empty)
-        - avgPrice: ${wsPosition.avgPrice} (current)
-
-        BUG LOCATION HYPOTHESIS:
-        - If updatePositionState() does: position.entryPrice = wsPosition.avgPrice
-        - Then: position.entryPrice = 1.9203 (WRONG!)
-        - Instead of: position.entryPrice = ${entryState.entryPrice} (original)
-      `);
+      console.log(formatPositionExitingTrace('WEBSOCKET DATA', [
+        ['entryPrice', `${wsPosition.entryPrice} (empty)`],
+        ['avgPrice', `${wsPosition.avgPrice} (current)`],
+        ['If updatePositionState() does', 'position.entryPrice = wsPosition.avgPrice'],
+        ['Then', 'position.entryPrice = 1.9203 (WRONG!)'],
+        ['Instead of', `position.entryPrice = ${entryState.entryPrice} (original)`],
+      ]));
 
       expect(wsPosition.entryPrice).toBe(0);
       expect(wsPosition.avgPrice).not.toBe(position.entryPrice);
