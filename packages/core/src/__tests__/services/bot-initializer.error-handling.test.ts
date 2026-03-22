@@ -12,50 +12,27 @@
  */
 
 import { BotInitializer } from '../../services/bot-initializer';
-import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { Config } from '../../types/legacy';
-import type { IBotInitializerServices } from '../../interfaces';
-import type { LoggerService } from '../../services/logger.service';
 import {
   ExchangeConnectionError,
   ExchangeRateLimitError,
   WebSocketConnectionError,
   PositionMonitoringError,
-  ConfigurationError,
 } from '../../errors/DomainErrors';
 import {
-  createBotInitializerConfig,
   asBotInitializerMock,
-  createBotInitializerHarness,
-  createBotInitializerMockLogger,
-  createBotInitializerMockServices,
-  createBotInitializerWithoutHandler,
+  createBotInitializerMockErrorHandler,
+  createBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-type MockBotServices = ReturnType<typeof createBotInitializerMockServices>;
+type MockBotServices = ReturnType<typeof createBotInitializerTestContext>['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
-};
-
-const createMockErrorHandler = (): jest.Mocked<ErrorHandler> => {
-  return {
-    handle: jest.fn(async (operation, options) => {
-      // Default mock - can be overridden per test
-      return {
-        success: true,
-        recovered: false,
-        attempts: 1,
-        message: 'Handled',
-        strategy: options.strategy || RecoveryStrategy.SKIP,
-        error: undefined,
-      } as ErrorHandlingResult;
-    }),
-    getLogger: jest.fn(() => createBotInitializerMockLogger()),
-  } as unknown as jest.Mocked<ErrorHandler>;
 };
 
 // ============================================================================
@@ -63,34 +40,36 @@ const createMockErrorHandler = (): jest.Mocked<ErrorHandler> => {
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
+  let context: ReturnType<typeof createBotInitializerTestContext>;
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
   let mockConfig: Config;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   const rebuildInitializer = (): void => {
-    initializer = createBotInitializerHarness({
-      services: mockServices as unknown as IBotInitializerServices,
+    initializer = context.rebuild({
+      services: mockServices,
       config: mockConfig,
       errorHandler: mockErrorHandler,
-    }).initializer;
+    });
   };
   const createInitializerWithoutHandler = (): BotInitializer => {
-    return createBotInitializerWithoutHandler(
-      mockServices as unknown as IBotInitializerServices,
-      mockConfig,
-    );
-  };
-  const cleanupMonitoringResources = async (): Promise<void> => {
-    await initializer.shutdown();
+    return context.createWithoutHandler();
   };
 
   beforeEach(() => {
-    mockServices = createBotInitializerMockServices();
-    mockConfig = createBotInitializerConfig();
-    mockErrorHandler = createMockErrorHandler();
+    context = createBotInitializerTestContext({
+      errorHandler: createBotInitializerMockErrorHandler(),
+    });
+    mockServices = context.services as MockBotServices;
+    mockConfig = context.config;
+    mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
     rebuildInitializer();
 
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await context.shutdown();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {
@@ -256,8 +235,6 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   // ============================================================================
 
   describe('C: startMonitoring() - Position Monitor with RETRY', () => {
-    afterEach(cleanupMonitoringResources);
-
     test('C1: Position monitor fails to start -> retries 3x -> throws', async () => {
       const monitorError = new Error('Monitor initialization failed');
       asBotInitializerMock(mockServices.executionServices.positionMonitor.start).mockImplementation(() => {

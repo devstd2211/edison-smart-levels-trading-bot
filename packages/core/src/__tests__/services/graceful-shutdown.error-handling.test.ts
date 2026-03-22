@@ -21,7 +21,7 @@ import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/legacy
 import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
-  createGracefulShutdownHarness,
+  createGracefulShutdownTestContext,
   createMockShutdownPosition,
   createStandardGracefulShutdownManager,
   defaultGracefulShutdownConfig,
@@ -44,29 +44,29 @@ const mockExit = jest.fn(() => {
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
+  let context: ReturnType<typeof createGracefulShutdownTestContext>;
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let gracefulShutdownHarness: ReturnType<typeof createGracefulShutdownHarness>;
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
-    gracefulShutdownHarness = createGracefulShutdownHarness({
+    context = createGracefulShutdownTestContext({
       position: createMockShutdownPosition({ reason: 'error-handling-test' }),
     });
     mockPositionLifecycleService =
-      gracefulShutdownHarness.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
-    mockActionQueue = gracefulShutdownHarness.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
-    mockExchange = gracefulShutdownHarness.mocks.exchange as unknown as jest.Mocked<IExchange>;
-    mockLogger = gracefulShutdownHarness.mocks.logger as unknown as jest.Mocked<LoggerService>;
-    mockEventBus = gracefulShutdownHarness.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
-    shutdownManager = gracefulShutdownHarness.manager;
+      context.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
+    mockActionQueue = context.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
+    mockExchange = context.mocks.exchange as unknown as jest.Mocked<IExchange>;
+    mockLogger = context.mocks.logger as unknown as jest.Mocked<LoggerService>;
+    mockEventBus = context.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
+    shutdownManager = context.manager;
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {
@@ -273,7 +273,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
       (fs.mkdirSync as jest.Mock).mockImplementationOnce(() => {});
 
-      const newManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { stateDirectory: './test-new-dir' });
+      const newManager = createStandardGracefulShutdownManager(context.harness, { stateDirectory: './test-new-dir' });
 
       newManager.registerShutdownHandlers();
 
@@ -289,7 +289,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         throw new Error('EACCES: permission denied');
       });
 
-      const newManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { stateDirectory: './test-permission-denied' });
+      const newManager = createStandardGracefulShutdownManager(context.harness, { stateDirectory: './test-permission-denied' });
 
       newManager.registerShutdownHandlers();
 
@@ -307,7 +307,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let constructorFailed = false;
       try {
-        const newManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, {
+        const newManager = createStandardGracefulShutdownManager(context.harness, {
           config: mockConfig,
           stateDirectory: './test-fs-error',
         });

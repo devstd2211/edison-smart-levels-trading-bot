@@ -1,5 +1,5 @@
 import { BotInitializer } from '../../services/bot-initializer';
-import { ErrorHandler } from '../../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import type { IBotInitializerServices } from '../../interfaces';
 import type { LoggerService } from '../../services/logger.service';
 import type { Config } from '../../types/legacy';
@@ -192,6 +192,22 @@ export function asBotInitializerMock(fn: unknown): jest.Mock {
   return fn as jest.Mock;
 }
 
+export function createBotInitializerMockErrorHandler(): jest.Mocked<ErrorHandler> {
+  return {
+    handle: jest.fn(async (_operation, options) => {
+      return {
+        success: true,
+        recovered: false,
+        attempts: 1,
+        message: 'Handled',
+        strategy: options.strategy || RecoveryStrategy.SKIP,
+        error: undefined,
+      };
+    }),
+    getLogger: jest.fn(() => createBotInitializerMockLogger()),
+  } as unknown as jest.Mocked<ErrorHandler>;
+}
+
 export function createBotInitializerHarness(options: {
   services?: IBotInitializerServices;
   config?: Config;
@@ -212,4 +228,55 @@ export function createBotInitializerWithoutHandler(
   config: Config,
 ): BotInitializer {
   return new BotInitializer(services, config, undefined);
+}
+
+export interface BotInitializerTestContext {
+  services: IBotInitializerServices;
+  config: Config;
+  errorHandler?: ErrorHandler;
+  initializer: BotInitializer;
+  rebuild: (overrides?: {
+    services?: IBotInitializerServices;
+    config?: Config;
+    errorHandler?: ErrorHandler;
+  }) => BotInitializer;
+  createWithoutHandler: () => BotInitializer;
+  shutdown: () => Promise<void>;
+}
+
+export function createBotInitializerTestContext(options: {
+  services?: IBotInitializerServices;
+  config?: Config;
+  errorHandler?: ErrorHandler;
+} = {}): BotInitializerTestContext {
+  const context: BotInitializerTestContext = {
+    services: options.services ?? createBotInitializerMockServices(),
+    config: options.config ?? createBotInitializerConfig(),
+    errorHandler: options.errorHandler,
+    initializer: undefined as unknown as BotInitializer,
+    rebuild(overrides = {}) {
+      context.services = overrides.services ?? context.services;
+      context.config = overrides.config ?? context.config;
+      context.errorHandler =
+        Object.prototype.hasOwnProperty.call(overrides, 'errorHandler')
+          ? overrides.errorHandler
+          : context.errorHandler;
+      context.initializer = createBotInitializerHarness({
+        services: context.services,
+        config: context.config,
+        errorHandler: context.errorHandler,
+      }).initializer;
+      return context.initializer;
+    },
+    createWithoutHandler() {
+      return createBotInitializerWithoutHandler(context.services, context.config);
+    },
+    async shutdown() {
+      await context.initializer.shutdown().catch(() => undefined);
+    },
+  };
+
+  context.rebuild();
+
+  return context;
 }

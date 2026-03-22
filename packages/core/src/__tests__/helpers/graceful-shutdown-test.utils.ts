@@ -29,6 +29,23 @@ export interface GracefulShutdownHarness {
   }) => GracefulShutdownManager;
 }
 
+export interface GracefulShutdownTestContext {
+  harness: GracefulShutdownHarness;
+  mocks: GracefulShutdownMocks;
+  manager: GracefulShutdownManager;
+  rebuild: (options?: {
+    position?: Position | null;
+    config?: GracefulShutdownConfig;
+    stateDirectory?: string;
+  }) => GracefulShutdownManager;
+}
+
+type GracefulShutdownContextOptions = {
+  position?: Position | null;
+  config?: GracefulShutdownConfig;
+  stateDirectory?: string;
+};
+
 export const defaultGracefulShutdownConfig: GracefulShutdownConfig = {
   enabled: true,
   timeoutMs: 30000,
@@ -170,6 +187,33 @@ export function createStandardGracefulShutdownManager(
   },
 ): GracefulShutdownManager {
   return harness.createManager(options);
+}
+
+export function createGracefulShutdownTestContext(
+  options: GracefulShutdownContextOptions = {},
+): GracefulShutdownTestContext {
+  const context = {
+    harness: undefined as unknown as GracefulShutdownHarness,
+    mocks: undefined as unknown as GracefulShutdownMocks,
+    manager: undefined as unknown as GracefulShutdownManager,
+    rebuild(rebuildOptions: GracefulShutdownContextOptions = {}) {
+      context.harness = createGracefulShutdownHarness({
+        position:
+          Object.prototype.hasOwnProperty.call(rebuildOptions, 'position')
+            ? rebuildOptions.position
+            : options.position,
+        config: rebuildOptions.config ?? options.config,
+        stateDirectory: rebuildOptions.stateDirectory ?? options.stateDirectory,
+      });
+      context.mocks = context.harness.mocks;
+      context.manager = context.harness.manager;
+      return context.manager;
+    },
+  };
+
+  context.rebuild();
+
+  return context;
 }
 
 export function getGracefulShutdownInternals(

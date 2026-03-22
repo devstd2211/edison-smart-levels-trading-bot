@@ -126,6 +126,46 @@ export const createBotMetricsHarness = ({
   service: createStandardBotMetricsService({ logger, errorHandler }),
 });
 
+export interface BotMetricsTestContext {
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  service: BotMetricsService;
+  rebuild: (overrides?: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    legacy?: boolean;
+  }) => BotMetricsService;
+}
+
+export const createBotMetricsTestContext = ({
+  logger = new BotMetricsTestLogger(),
+  errorHandler = createBotMetricsErrorHandler(),
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): BotMetricsTestContext => {
+  const context: BotMetricsTestContext = {
+    logger,
+    errorHandler,
+    service: undefined as unknown as BotMetricsService,
+    rebuild(overrides = {}) {
+      context.logger = overrides.logger ?? context.logger;
+      context.errorHandler = overrides.errorHandler ?? context.errorHandler;
+      context.service = overrides.legacy
+        ? createLegacyBotMetricsService({ logger: context.logger })
+        : createStandardBotMetricsService({
+            logger: context.logger,
+            errorHandler: context.errorHandler,
+          });
+      return context.service;
+    },
+  };
+
+  context.rebuild();
+
+  return context;
+};
+
 export const seedBotMetricsService = (
   service: BotMetricsService,
   options: {

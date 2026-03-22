@@ -12,7 +12,7 @@
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
-  createBotMetricsHarness,
+  createBotMetricsTestContext,
   BotMetricsTestLogger,
   createLegacyBotMetricsService,
   createStandardBotMetricsService,
@@ -21,15 +21,16 @@ import {
 } from '../helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
+  let context: ReturnType<typeof createBotMetricsTestContext>;
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
 
   beforeEach(() => {
-    const harness = createBotMetricsHarness();
-    logger = harness.logger as BotMetricsTestLogger;
-    errorHandler = harness.errorHandler;
-    metricsService = harness.service;
+    context = createBotMetricsTestContext();
+    logger = context.logger as BotMetricsTestLogger;
+    errorHandler = context.errorHandler;
+    metricsService = context.service;
     jest.clearAllMocks();
   });
 

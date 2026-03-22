@@ -29,7 +29,7 @@ import { ActionType } from '../../types/legacy';
 import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
-  createGracefulShutdownHarness,
+  createGracefulShutdownTestContext,
   createStandardGracefulShutdownManager,
   getGracefulShutdownInternals,
   getRegisteredShutdownHandler,
@@ -55,26 +55,26 @@ jest.spyOn(process, 'exit').mockImplementation(
 );
 
 describe('GracefulShutdownManager', () => {
+  let context: ReturnType<typeof createGracefulShutdownTestContext>;
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let gracefulShutdownHarness: ReturnType<typeof createGracefulShutdownHarness>;
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks();
-    gracefulShutdownHarness = createGracefulShutdownHarness();
-    mockPositionLifecycleService = gracefulShutdownHarness.mocks.positionLifecycleService;
-    mockActionQueue = gracefulShutdownHarness.mocks.actionQueue;
-    mockExchange = gracefulShutdownHarness.mocks.exchange;
-    mockLogger = gracefulShutdownHarness.mocks.logger;
-    mockEventBus = gracefulShutdownHarness.mocks.eventBus;
-    shutdownManager = gracefulShutdownHarness.manager;
+    context = createGracefulShutdownTestContext();
+    mockPositionLifecycleService = context.mocks.positionLifecycleService;
+    mockActionQueue = context.mocks.actionQueue;
+    mockExchange = context.mocks.exchange;
+    mockLogger = context.mocks.logger;
+    mockEventBus = context.mocks.eventBus;
+    shutdownManager = context.manager;
   });
 
   describe('Signal Handler Registration', () => {
@@ -136,7 +136,7 @@ describe('GracefulShutdownManager', () => {
       );
 
       // Create a new manager
-      const manager1 = createStandardGracefulShutdownManager(gracefulShutdownHarness);
+      const manager1 = createStandardGracefulShutdownManager(context.harness);
 
       // Start first shutdown (won't complete due to mocked waitEmpty)
       const promise1 = manager1.initiateShutdown('First');
@@ -156,7 +156,7 @@ describe('GracefulShutdownManager', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
       // Use a separate manager instance for this test
-      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
+      const manager = createStandardGracefulShutdownManager(context.harness);
 
       try {
         await manager.initiateShutdown('User interrupt');
@@ -176,7 +176,7 @@ describe('GracefulShutdownManager', () => {
     it('should wait for action queue to empty', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
+      const manager = createStandardGracefulShutdownManager(context.harness);
 
       try {
         await manager.initiateShutdown('Queue test');
@@ -190,7 +190,7 @@ describe('GracefulShutdownManager', () => {
     it('should emit shutdown-completed event before exit', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
+      const manager = createStandardGracefulShutdownManager(context.harness);
 
       try {
         await manager.initiateShutdown('Test');
@@ -290,7 +290,7 @@ describe('GracefulShutdownManager', () => {
 
     it('should skip closure if disabled in config', async () => {
       const noCloseConfig = { ...mockConfig, closeAllPositions: false };
-      const noCloseManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { config: noCloseConfig });
+      const noCloseManager = createStandardGracefulShutdownManager(context.harness, { config: noCloseConfig });
 
       const position = createMockShutdownPosition();
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(position);
@@ -341,7 +341,7 @@ describe('GracefulShutdownManager', () => {
 
     it('should skip persistence if disabled in config', async () => {
       const noPersistConfig = { ...mockConfig, persistState: false };
-      const noPersistManager = createStandardGracefulShutdownManager(gracefulShutdownHarness, { config: noPersistConfig });
+      const noPersistManager = createStandardGracefulShutdownManager(context.harness, { config: noPersistConfig });
 
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
@@ -459,7 +459,7 @@ describe('GracefulShutdownManager', () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
       mockActionQueue.waitEmpty.mockRejectedValue(new Error('Queue timeout'));
 
-      const manager = createStandardGracefulShutdownManager(gracefulShutdownHarness);
+      const manager = createStandardGracefulShutdownManager(context.harness);
 
       try {
         await manager.initiateShutdown('Queue timeout');

@@ -3,12 +3,11 @@ import { BotEventBus } from '../services/event-bus';
 import { LoggerService } from '../types/legacy';
 import { PositionSide } from '../types/legacy';
 import {
-  createBotEventEmitterMockLogger,
+  createBotEventEmitterTestContext,
   createBotEventEmitterPosition,
   createBotEventEmitterSignal,
   createBotEventEmitterStopLoss,
   createBotEventEmitterTakeProfits,
-  createStartedBotEventEmitterHarness,
 } from './helpers/bot-event-emitter-test.utils';
 
 /**
@@ -17,33 +16,24 @@ import {
  * Tests the event adapter that bridges internal BotEventBus to external EventEmitter API
  */
 describe('BotEventEmitter', () => {
+  let context: ReturnType<typeof createBotEventEmitterTestContext>;
   let eventBus: BotEventBus;
   let emitter: BotEventEmitter;
   let mockLogger: LoggerService;
-  let secondaryEmitters: BotEventEmitter[];
 
   const createStartedEmitter = (): BotEventEmitter => {
-    const extraEmitter = new BotEventEmitter(eventBus);
-    extraEmitter.start();
-    secondaryEmitters.push(extraEmitter);
-    return extraEmitter;
+    return context.createStartedEmitter();
   };
 
   beforeEach(() => {
-    const harness = createStartedBotEventEmitterHarness();
-    mockLogger = harness.logger;
-    eventBus = harness.eventBus;
-    emitter = harness.emitter;
-    secondaryEmitters = [];
+    context = createBotEventEmitterTestContext();
+    mockLogger = context.logger;
+    eventBus = context.eventBus;
+    emitter = context.emitter;
   });
 
   afterEach(() => {
-    secondaryEmitters.forEach((extraEmitter) => {
-      extraEmitter.stop();
-      extraEmitter.removeAllListeners();
-    });
-    emitter.stop();
-    emitter.removeAllListeners();
+    context.cleanup();
   });
 
   // ============================================================================

@@ -10,7 +10,7 @@
  */
 
 import { TradingLifecycleManager } from '../../services/trading-lifecycle.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors';
+import { ErrorHandler } from '../../errors';
 import { TradingError } from '../../errors/BaseError';
 import { PositionLifecycleState, EmergencyCloseReason } from '../../types/legacy';
 import {
@@ -19,66 +19,13 @@ import {
   createMockTradingLifecycleLogger,
   createTrackedPositionFixture,
   createLegacyTradingLifecycleManager,
-  createStandardTradingLifecycleManager,
   createTradingLifecycleConfig,
-  createTradingLifecycleTestHarness,
+  createTradingLifecycleTestContext,
+  createMockTradingLifecycleErrorHandler,
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
 } from '../helpers/trading-lifecycle-test.utils';
-
-// ============================================================================
-// MOCK UTILITIES
-// ============================================================================
-
-const createMockErrorHandler = () => {
-  type ExecuteAsyncResult = { success: boolean; value?: unknown; error?: TradingError };
-  type ExecuteAsyncConfig = { retryConfig?: { maxAttempts?: number; initialDelayMs?: number } };
-
-  const mockEH = {
-    handle: jest.fn((error: unknown, options: { strategy?: RecoveryStrategy }) => {
-      if (options.strategy === RecoveryStrategy.THROW) {
-        throw error;
-      }
-      return {
-        success: false,
-        error: error instanceof TradingError ? error : undefined,
-        strategy: options.strategy,
-      };
-    }),
-    executeAsync: jest.fn(
-      async (fn: () => Promise<unknown>, config: ExecuteAsyncConfig): Promise<ExecuteAsyncResult> => {
-        // Simulate RETRY with exponential backoff
-        let lastError: unknown = null;
-        const maxAttempts = config?.retryConfig?.maxAttempts ?? 1;
-
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          try {
-            const value = await fn();
-            return { success: true, value };
-          } catch (error) {
-            lastError = error;
-            if (attempt < maxAttempts - 1) {
-              // Wait before retry
-              await new Promise((resolve) =>
-                setTimeout(resolve, config?.retryConfig?.initialDelayMs ?? 100)
-              );
-            }
-          }
-        }
-
-        // If all retries failed, return gracefully (don't throw)
-        return { success: false, error: lastError instanceof TradingError ? lastError : undefined };
-      }
-    ),
-    getLogger: jest.fn(() => createMockTradingLifecycleLogger()),
-    addCallback: jest.fn(),
-    removeCallback: jest.fn(),
-    isRecoveryMode: jest.fn(() => true),
-  } as unknown as jest.Mocked<ErrorHandler>;
-
-  return mockEH;
-};
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
@@ -88,7 +35,7 @@ const createConfig = createTradingLifecycleConfig;
 // ============================================================================
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
-  let harness: ReturnType<typeof createTradingLifecycleTestHarness>;
+  let context: ReturnType<typeof createTradingLifecycleTestContext>;
   let manager: TradingLifecycleManager;
   let mockLogger: MockTradingLifecycleLogger;
   let mockEventBus: MockTradingLifecycleEventBus;
@@ -96,18 +43,18 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
 
   beforeEach(() => {
-    harness = createTradingLifecycleTestHarness();
-    mockLogger = harness.logger;
-    mockEventBus = harness.eventBus;
-    mockActionQueue = harness.actionQueue;
-    mockErrorHandler = createMockErrorHandler();
-    manager = createStandardTradingLifecycleManager(harness, { errorHandler: mockErrorHandler });
+    context = createTradingLifecycleTestContext();
+    mockLogger = context.logger;
+    mockEventBus = context.eventBus;
+    mockActionQueue = context.actionQueue;
+    mockErrorHandler = createMockTradingLifecycleErrorHandler();
+    manager = context.rebuild({ errorHandler: mockErrorHandler });
 
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    harness.stopTrackedManagers();
+    context.cleanup();
   });
 
   // ==================== RETRY Strategy - Event Publishing ====================
@@ -529,12 +476,12 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       const newEventBus = createMockTradingLifecycleEventBus();
       const newActionQueue = createMockTradingLifecycleActionQueue();
 
-      const newManager = createLegacyTradingLifecycleManager(harness, {
+      const newManager = createLegacyTradingLifecycleManager(context.harness, {
         logger: newLogger,
         eventBus: newEventBus,
         actionQueue: newActionQueue,
       });
-
+      
       newManager.start();
 
       // Verify both subscriptions were set up
@@ -741,7 +688,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
   describe('Configuration & Edge Cases', () => {
     it('should respect automatic timeout configuration', async () => {
-      const autoManager = createLegacyTradingLifecycleManager(harness, {
+      const autoManager = createLegacyTradingLifecycleManager(context.harness, {
         config: createConfig({ enableAutomaticTimeout: false }),
       });
 
@@ -794,7 +741,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
       expect(() => {
-        createLegacyTradingLifecycleManager(harness);
+        createLegacyTradingLifecycleManager(context.harness);
       }).not.toThrow();
     });
 

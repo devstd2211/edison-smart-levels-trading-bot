@@ -11,6 +11,17 @@ export interface TrackedServiceState {
   services: IBotServicesAdapterSource;
 }
 
+export interface ManagedTrackedServicesContext {
+  trackedServices: TrackedServiceState[];
+  cleanup: () => Promise<void>;
+  createTradingBotHarness: (
+    overrides?: Parameters<typeof createTrackedLifecycleHarness>[1],
+  ) => ReturnType<typeof createTrackedTradingBotHarness>;
+  createInitializerHarness: (
+    overrides?: Parameters<typeof createTrackedLifecycleHarness>[1],
+  ) => ReturnType<typeof createTrackedInitializerHarness>;
+}
+
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
@@ -43,6 +54,19 @@ export async function shutdownTrackedServices(
     );
     await initializer.shutdown().catch(() => undefined);
   }
+}
+
+export function createManagedTrackedServicesContext(): ManagedTrackedServicesContext {
+  const trackedServices: TrackedServiceState[] = [];
+
+  return {
+    trackedServices,
+    cleanup: () => shutdownTrackedServices(trackedServices),
+    createTradingBotHarness: (overrides = {}) =>
+      createTrackedTradingBotHarness(trackedServices, overrides),
+    createInitializerHarness: (overrides = {}) =>
+      createTrackedInitializerHarness(trackedServices, overrides),
+  };
 }
 
 export function createMinimalLifecycleConfig(): Config {

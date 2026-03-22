@@ -91,3 +91,36 @@ export function createStartedBotEventEmitterHarness(): {
     emitter,
   };
 }
+
+export interface BotEventEmitterTestContext {
+  logger: LoggerService;
+  eventBus: BotEventBus;
+  emitter: BotEventEmitter;
+  createStartedEmitter: () => BotEventEmitter;
+  cleanup: () => void;
+}
+
+export function createBotEventEmitterTestContext(): BotEventEmitterTestContext {
+  const harness = createStartedBotEventEmitterHarness();
+  const secondaryEmitters: BotEventEmitter[] = [];
+
+  return {
+    logger: harness.logger,
+    eventBus: harness.eventBus,
+    emitter: harness.emitter,
+    createStartedEmitter() {
+      const emitter = new BotEventEmitter(harness.eventBus, harness.logger);
+      emitter.start();
+      secondaryEmitters.push(emitter);
+      return emitter;
+    },
+    cleanup() {
+      secondaryEmitters.forEach((extraEmitter) => {
+        extraEmitter.stop();
+        extraEmitter.removeAllListeners();
+      });
+      harness.emitter.stop();
+      harness.emitter.removeAllListeners();
+    },
+  };
+}

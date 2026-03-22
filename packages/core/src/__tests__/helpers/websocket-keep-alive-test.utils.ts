@@ -26,6 +26,13 @@ export interface WebSocketKeepAliveHarness {
   }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
 }
 
+export interface ManagedWebSocketKeepAliveContext {
+  harness: WebSocketKeepAliveHarness;
+  logger: LoggerService;
+  websocket: MockWebSocket;
+  cleanup: (service?: WebSocketKeepAliveService) => void;
+}
+
 export function createWebSocketKeepAliveLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -104,4 +111,22 @@ export function startWebSocketKeepAlive(
 
 export function advanceKeepAliveIntervals(interval: number, ticks: number = 1): void {
   jest.advanceTimersByTime(interval * ticks);
+}
+
+export function createManagedWebSocketKeepAliveContext(): ManagedWebSocketKeepAliveContext {
+  jest.clearAllTimers();
+  jest.useFakeTimers();
+
+  const harness = createWebSocketKeepAliveHarness();
+
+  return {
+    harness,
+    logger: harness.logger,
+    websocket: harness.createWebSocket(),
+    cleanup(service) {
+      service?.stop();
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    },
+  };
 }

@@ -29,16 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed a monitoring/lifecycle helper-consolidation batch for `prometheus-metrics`, `monitoring-server`, `real-time-risk-monitor.service`, `real-time-risk-monitor.error-handling`, and `real-time-risk-monitor.cache-invalidation`:
-  - extended `packages/core/src/__tests__/helpers/prometheus-metrics-test.utils.ts` and `packages/core/src/__tests__/helpers/monitoring-server-test.utils.ts` with managed test-context wrappers for tracked lifecycle cleanup.
-  - added a managed lifecycle harness path in `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts`.
-  - routed the corresponding suites through those shared managed contexts instead of local tracked arrays, ad hoc harness objects, and direct `monitor.stop()` teardown.
-  - reviewed `packages/core/src/services/prometheus-metrics.service.ts`, `packages/core/src/services/monitoring-server.service.ts`, and `packages/core/src/services/real-time-risk-monitor.service.ts` and left production code unchanged after review.
+- Completed a resilience helper-context follow-up for `resilience/bulkhead` and `resilience/circuit-breaker`:
+  - extended `packages/core/src/__tests__/helpers/resilience-test.utils.ts` with a shared managed resilience test context.
+  - routed the corresponding suites through that context instead of local harness/bootstrap ownership.
+  - reviewed `packages/core/src/services/resilience/bulkhead.service.ts` and `packages/core/src/services/resilience/circuit-breaker.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/resilience/bulkhead.test.ts packages/core/src/__tests__/services/resilience/circuit-breaker.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep broad service-state or manual tracked cleanup.
-- Favor shared managed test contexts for started/stopped resources, explicit teardown paths, and minimal grouped service construction instead of suite-local tracked arrays or ad hoc harness objects.
-- Re-scan remaining monitoring/bot/lifecycle-adjacent suites before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep local async timing ownership, repeated harness bootstrap, or ad hoc mock error-handler branches.
+- Favor shared managed test contexts and helper-owned teardown before reopening lower-signal constructor-only cleanup.

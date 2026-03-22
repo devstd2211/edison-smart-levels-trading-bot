@@ -15,34 +15,31 @@ import type { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import {
   asBotInitializerMock,
-  createBotInitializerConfig,
-  createBotInitializerHarness,
-  createBotInitializerMockServices,
+  createBotInitializerTestContext,
 } from './helpers/bot-initializer-test.utils';
 
 describe('BotInitializer', () => {
+  let context: ReturnType<typeof createBotInitializerTestContext>;
   let initializer: BotInitializer;
   let mockServices: IBotInitializerServices;
   let mockConfig: Config;
 
   const rebuildInitializer = (): void => {
-    initializer = createBotInitializerHarness({
-      services: mockServices,
-      config: mockConfig,
-    }).initializer;
+    initializer = context.rebuild();
   };
 
   beforeEach(() => {
-    mockServices = createBotInitializerMockServices();
-    mockConfig = createBotInitializerConfig();
-    rebuildInitializer();
+    context = createBotInitializerTestContext();
+    mockServices = context.services;
+    mockConfig = context.config;
+    initializer = context.initializer;
 
     // Clear all mocks
     jest.clearAllMocks();
   });
 
   afterEach(async () => {
-    await initializer.shutdown().catch(() => undefined);
+    await context.shutdown();
   });
 
   describe('initialize()', () => {

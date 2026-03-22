@@ -58,6 +58,23 @@ export interface TradingLifecycleTestHarness {
   stopTrackedManagers: () => void;
 }
 
+export interface TradingLifecycleTestContext {
+  harness: TradingLifecycleTestHarness;
+  logger: MockTradingLifecycleLogger;
+  eventBus: MockTradingLifecycleEventBus;
+  actionQueue: MockTradingLifecycleActionQueue;
+  errorHandler: jest.Mocked<ErrorHandler>;
+  manager: TradingLifecycleManager;
+  rebuild: (overrides?: Partial<{
+    config: PositionLifecycleConfig;
+    logger: MockTradingLifecycleLogger;
+    eventBus: MockTradingLifecycleEventBus;
+    actionQueue: MockTradingLifecycleActionQueue;
+    errorHandler: jest.Mocked<ErrorHandler> | undefined;
+  }>) => TradingLifecycleManager;
+  cleanup: () => void;
+}
+
 export function createMockTradingLifecycleLogger(): MockTradingLifecycleLogger {
   return {
     debug: jest.fn(),
@@ -196,6 +213,48 @@ export function createTradingLifecycleTestHarness(): TradingLifecycleTestHarness
       }
     },
   };
+}
+
+export function createTradingLifecycleTestContext(
+  overrides?: Partial<{
+    config: PositionLifecycleConfig;
+    logger: MockTradingLifecycleLogger;
+    eventBus: MockTradingLifecycleEventBus;
+    actionQueue: MockTradingLifecycleActionQueue;
+    errorHandler: jest.Mocked<ErrorHandler> | undefined;
+  }>,
+): TradingLifecycleTestContext {
+  const harness = createTradingLifecycleTestHarness();
+
+  const context: TradingLifecycleTestContext = {
+    harness,
+    logger: harness.logger,
+    eventBus: harness.eventBus,
+    actionQueue: harness.actionQueue,
+    errorHandler: harness.errorHandler,
+    manager: harness.manager,
+    rebuild(rebuildOverrides = {}) {
+      context.logger = rebuildOverrides.logger ?? harness.logger;
+      context.eventBus = rebuildOverrides.eventBus ?? harness.eventBus;
+      context.actionQueue = rebuildOverrides.actionQueue ?? harness.actionQueue;
+      context.errorHandler =
+        Object.prototype.hasOwnProperty.call(rebuildOverrides, 'errorHandler')
+          ? (rebuildOverrides.errorHandler as jest.Mocked<ErrorHandler>)
+          : harness.errorHandler;
+      context.manager = harness.createManager({
+        ...overrides,
+        ...rebuildOverrides,
+      });
+      return context.manager;
+    },
+    cleanup() {
+      harness.stopTrackedManagers();
+    },
+  };
+
+  context.manager = harness.createManager(overrides);
+
+  return context;
 }
 
 export function createStandardTradingLifecycleManager(

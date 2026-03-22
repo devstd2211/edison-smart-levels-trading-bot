@@ -11,12 +11,12 @@ import {
 } from '../../../services/resilience/circuit-breaker.service';
 import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
-import { createResilienceTestHarness, type ResilienceTestHarness } from '../../helpers/resilience-test.utils';
+import { createResilienceTestContext } from '../../helpers/resilience-test.utils';
 
 describe('CircuitBreakerService', () => {
+  let context: ReturnType<typeof createResilienceTestContext>;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
-  let harness: ResilienceTestHarness;
   let createService: (
     config?: Partial<CircuitBreakerConfig>,
     serviceLogger?: LoggerService,
@@ -24,20 +24,18 @@ describe('CircuitBreakerService', () => {
   ) => CircuitBreakerService;
 
   beforeEach(() => {
-    harness = createResilienceTestHarness();
-    logger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
-    errorHandler = new ErrorHandler(logger as LoggerService);
+    context = createResilienceTestContext();
+    logger = context.logger;
+    errorHandler = context.errorHandler;
     createService = (
       config = {},
       serviceLogger = logger as LoggerService,
       handler = errorHandler,
-    ) => harness.createCircuitBreakerService(config, { logger: serviceLogger, errorHandler: handler });
+    ) => context.harness.createCircuitBreakerService(config, { logger: serviceLogger, errorHandler: handler });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

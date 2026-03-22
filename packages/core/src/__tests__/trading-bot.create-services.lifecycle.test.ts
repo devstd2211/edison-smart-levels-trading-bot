@@ -1,22 +1,20 @@
 import {
-  createTrackedTradingBotHarness,
-  shutdownTrackedServices,
-  type TrackedServiceState,
+  createManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('TradingBot + createServices lifecycle orchestration', () => {
-  let trackedServices: TrackedServiceState[];
+  let context: ReturnType<typeof createManagedTrackedServicesContext>;
 
   beforeEach(() => {
-    trackedServices = [];
+    context = createManagedTrackedServicesContext();
   });
 
   afterEach(async () => {
-    await shutdownTrackedServices(trackedServices);
+    await context.cleanup();
   });
 
   test('services are idle before start and explicitly stopped via bot.stop()', async () => {
-    const harness = createTrackedTradingBotHarness(trackedServices);
+    const harness = context.createTradingBotHarness();
     const serviceState = harness.services;
     const bot = harness.bot;
 

@@ -1,23 +1,21 @@
 import {
-  createTrackedInitializerHarness,
+  createManagedTrackedServicesContext,
   spyOnTrackedServiceLifecycle,
-  shutdownTrackedServices,
-  type TrackedServiceState,
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  let trackedServices: TrackedServiceState[];
+  let context: ReturnType<typeof createManagedTrackedServicesContext>;
 
   beforeEach(() => {
-    trackedServices = [];
+    context = createManagedTrackedServicesContext();
   });
 
   afterEach(async () => {
-    await shutdownTrackedServices(trackedServices);
+    await context.cleanup();
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
-    const harness = createTrackedInitializerHarness(trackedServices);
+    const harness = context.createInitializerHarness();
     const services = harness.services;
     const initializer = harness.initializer;
     const {

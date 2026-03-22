@@ -45,6 +45,13 @@ export interface ResilienceTestHarness {
   };
 }
 
+export interface ResilienceTestContext {
+  harness: ResilienceTestHarness;
+  logger: MockLogger;
+  errorHandler: ErrorHandler;
+  cleanup: () => void;
+}
+
 export function createMockResilienceLogger(): MockLogger {
   return {
     info: jest.fn(),
@@ -201,5 +208,16 @@ export function createResilienceTestHarness(): ResilienceTestHarness {
         coordinator,
       };
     },
+  };
+}
+
+export function createResilienceTestContext(): ResilienceTestContext {
+  const harness = createResilienceTestHarness();
+
+  return {
+    harness,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    cleanup: () => harness.stopTrackedServices(),
   };
 }
