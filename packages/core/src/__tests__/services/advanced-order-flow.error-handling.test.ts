@@ -30,10 +30,11 @@ import {
   createAdvancedOrderFlowConfig,
   createAdvancedOrderFlowErrorHandler,
   createAdvancedOrderFlowHarness,
+  createLegacyAdvancedOrderFlowService,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
   createAdvancedOrderFlowOrderbookWithOverrides,
-  createAdvancedOrderFlowServiceWithHarness,
+  createStandardAdvancedOrderFlowService,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
 } from '../helpers/advanced-order-flow-test.utils';
@@ -54,12 +55,16 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     mockLogger = harness.logger;
     errorHandler = harness.errorHandler as ErrorHandler;
     createService = (options = {}) =>
-      createAdvancedOrderFlowServiceWithHarness({
-        config: options.config,
-        logger: options.logger ?? mockLogger,
-        errorHandler: options.errorHandler ?? errorHandler,
-        withErrorHandler: options.withErrorHandler,
-      });
+      options.withErrorHandler === false
+        ? createLegacyAdvancedOrderFlowService({
+            config: options.config,
+            logger: options.logger ?? mockLogger,
+          })
+        : createStandardAdvancedOrderFlowService({
+            config: options.config,
+            logger: options.logger ?? mockLogger,
+            errorHandler: options.errorHandler ?? errorHandler,
+          });
   });
 
   describe('THROW: Config Validation', () => {
@@ -400,10 +405,9 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createLegacyAdvancedOrderFlowService({
         logger: mockLogger,
-        withErrorHandler: false,
-      }));
+      });
 
       service.addTick(createAdvancedOrderFlowTick('BUY'));
       const result = service.analyze();
@@ -413,10 +417,9 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw validation errors without ErrorHandler', () => {
-      ({ service } = createAdvancedOrderFlowHarness({
+      service = createLegacyAdvancedOrderFlowService({
         logger: mockLogger,
-        withErrorHandler: false,
-      }));
+      });
 
       expect(() => {
         service.addTick(asAdvancedOrderFlowTick(null));

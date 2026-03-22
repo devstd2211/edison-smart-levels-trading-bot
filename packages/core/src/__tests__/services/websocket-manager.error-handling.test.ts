@@ -18,6 +18,7 @@ import {
   createWebSocketManagerBackoffDelays,
   createMockWebSocketAuthenticationService,
   createTestnetWebSocketManagerHarness,
+  createTestnetWebSocketManagerService,
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerErrorHandler,
   getWebSocketManagerIsConnecting,
@@ -95,8 +96,14 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       expect(payload).toBeDefined();
       expect(payload.op).toBe('auth');
 
-      const customManager = harness.createTestnetService({
+      const customManager = createTestnetWebSocketManagerService({
+        configOverrides: { testnet: true },
+        logger,
+        errorHandler: harness.errorHandler,
+        orderExecutionDetector: harness.orderExecutionDetector,
         authService,
+        deduplicationService: harness.deduplicationService,
+        keepAliveService: harness.keepAliveService,
       });
       expect(customManager).toBeDefined();
     });

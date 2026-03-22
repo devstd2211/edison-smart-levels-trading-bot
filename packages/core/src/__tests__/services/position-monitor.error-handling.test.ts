@@ -21,6 +21,7 @@ import {
   createProtectionVerificationResult,
   createMockMonitoredPosition,
   createPositionMonitorHarness,
+  createStandardPositionMonitorService,
   defaultPositionMonitorRiskConfig,
   runPositionMonitorCycle,
   runPositionMonitorCycles,
@@ -45,7 +46,22 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
     const harness = createPositionMonitorHarness({
       riskConfig: defaultPositionMonitorRiskConfig,
     });
-    monitor = harness.monitor;
+    monitor = createStandardPositionMonitorService(
+      {
+        mockBybit: harness.mockBybit,
+        mockPositionManager: harness.mockPositionManager,
+        mockTelegram: harness.mockTelegram,
+        mockExitTypeDetector: harness.mockExitTypeDetector,
+        mockPnLCalculator: harness.mockPnLCalculator,
+        mockPositionSync: harness.mockPositionSync,
+        logger: harness.logger,
+        errorHandler: harness.errorHandler,
+      },
+      {
+        riskConfig: defaultPositionMonitorRiskConfig,
+        errorHandler: harness.errorHandler,
+      },
+    );
     mockBybit = harness.mockBybit;
     mockPositionManager = harness.mockPositionManager;
     mockTelegram = harness.mockTelegram;

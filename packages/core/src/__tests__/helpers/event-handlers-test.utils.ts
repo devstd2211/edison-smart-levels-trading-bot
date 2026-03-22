@@ -151,6 +151,52 @@ function asJournal(value: unknown): JournalInput {
   return value as JournalInput;
 }
 
+export function createPositionEventHandler(options?: {
+  positionManager?: EventHandlersPositionManagerMock;
+  positionExitingService?: EventHandlersPositionExitingMock;
+  exchange?: EventHandlersExchangeMock;
+  telegram?: EventHandlersTelegramMock;
+  logger?: EventHandlersLoggerMock;
+}) {
+  const positionManager = options?.positionManager ?? {
+    getCurrentPosition: jest.fn(),
+    clearPosition: jest.fn(async () => {}),
+    syncWithWebSocket: jest.fn(async () => {}),
+    closePositionWithAtomicLock: jest.fn(),
+  };
+  const positionExitingService = options?.positionExitingService ?? {
+    closeFullPosition: jest.fn(async () => {}),
+    onTakeProfitHit: jest.fn(async () => {}),
+  };
+  const exchange = options?.exchange ?? {
+    closePosition: jest.fn(async () => {}),
+    getCurrentPrice: jest.fn(),
+  };
+  const telegram = options?.telegram ?? {
+    sendAlert: jest.fn(async () => {}),
+    notifyPositionClosed: jest.fn(async () => {}),
+  };
+  const logger = options?.logger ?? createEventHandlersMockLogger();
+
+  return new PositionEventHandler(
+    asPositionManager(positionManager),
+    asPositionExiting(positionExitingService),
+    asExchange(exchange),
+    asTelegram(telegram),
+    asPositionLogger(logger as unknown as LoggerService),
+  );
+}
+
+export function createStandardPositionEventHandler(options?: {
+  positionManager?: EventHandlersPositionManagerMock;
+  positionExitingService?: EventHandlersPositionExitingMock;
+  exchange?: EventHandlersExchangeMock;
+  telegram?: EventHandlersTelegramMock;
+  logger?: EventHandlersLoggerMock;
+}) {
+  return createPositionEventHandler(options);
+}
+
 export function createPositionEventHandlerHarness(options?: {
   positionManager?: EventHandlersPositionManagerMock;
   positionExitingService?: EventHandlersPositionExitingMock;
@@ -187,13 +233,13 @@ export function createPositionEventHandlerHarness(options?: {
   const mockLogger = options?.logger ?? createEventHandlersMockLogger();
 
   return {
-    handler: new PositionEventHandler(
-      asPositionManager(mockPositionManager),
-      asPositionExiting(mockPositionExitingService),
-      asExchange(mockBybitService),
-      asTelegram(mockTelegram),
-      asPositionLogger(mockLogger as unknown as LoggerService),
-    ),
+    handler: createStandardPositionEventHandler({
+      positionManager: mockPositionManager,
+      positionExitingService: mockPositionExitingService,
+      exchange: mockBybitService,
+      telegram: mockTelegram,
+      logger: mockLogger,
+    }),
     mockPositionManager,
     mockPositionExitingService,
     mockBybitService,

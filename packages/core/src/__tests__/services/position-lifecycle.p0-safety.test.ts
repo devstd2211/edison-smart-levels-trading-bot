@@ -19,15 +19,15 @@ import {
   collectLifecycleSnapshots,
   createLifecycleSafetyPosition,
   createLifecycleUpdatedSafetyPosition,
-  createPositionLifecycleSafetyHarness,
+  createStandardPositionLifecycleSafetyHarness,
   findLifecycleLogCall,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
   let service: PositionLifecycleService;
   let position: Position;
-  let internals: ReturnType<typeof createPositionLifecycleSafetyHarness>['internals'];
-  let setCurrentPosition: ReturnType<typeof createPositionLifecycleSafetyHarness>['setCurrentPosition'];
+  let internals: ReturnType<typeof createStandardPositionLifecycleSafetyHarness>['internals'];
+  let setCurrentPosition: ReturnType<typeof createStandardPositionLifecycleSafetyHarness>['setCurrentPosition'];
   let mockExchange: IExchange;
   let mockLogger: LoggerService;
   let mockEventBus: BotEventBus;
@@ -36,7 +36,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    const harness = createPositionLifecycleSafetyHarness();
+    const harness = createStandardPositionLifecycleSafetyHarness();
     service = harness.service;
     mockExchange = harness.mockExchange;
     mockLogger = harness.mockLogger;

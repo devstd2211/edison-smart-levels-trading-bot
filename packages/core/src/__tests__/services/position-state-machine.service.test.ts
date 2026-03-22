@@ -13,11 +13,11 @@ import { PositionState } from '../../types/enums';
 import { LoggerService } from '../../services/logger.service';
 import {
   closePositionState,
-  createInitializedPositionStateMachineService,
+  createInitializedLegacyPositionStateMachineService,
+  createLegacyPositionStateMachineService,
+  createLegacyPositionStateMachineHarness,
   createMockPositionStateMachineLogger,
   createPositionStateMachinePositionId,
-  createPositionStateMachineService,
-  createPositionStateMachineServiceWithHarness,
   getPositionStateSnapshot,
   transitionPositionState,
   transitionPositionStateSequence,
@@ -34,10 +34,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should allow OPEN -> TP1_HIT transition', () => {
@@ -100,10 +97,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should prevent backward transitions', () => {
@@ -158,10 +152,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should track pre-BE mode', () => {
@@ -213,10 +204,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should get current state', () => {
@@ -263,10 +251,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should close position', () => {
@@ -385,10 +370,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should return statistics', () => {
@@ -412,10 +394,7 @@ describe('PositionStateMachineService', () => {
     let service: PositionStateMachineService;
 
     beforeEach(async () => {
-      service = await createInitializedPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      service = await createInitializedLegacyPositionStateMachineService({ logger });
     });
 
     it('should clear position state', () => {
@@ -437,19 +416,13 @@ describe('PositionStateMachineService', () => {
 
   describe('Initialization', () => {
     it('should initialize without errors', async () => {
-      const service = createPositionStateMachineService({
-        logger,
-        withErrorHandler: false,
-      });
+      const service = createLegacyPositionStateMachineService({ logger });
       await expect(service.initialize()).resolves.not.toThrow();
       expect(service.isInitialized()).toBe(true);
     });
 
     it('should initialize without errors via shared service builder', async () => {
-      const service = createPositionStateMachineServiceWithHarness({
-        logger,
-        withErrorHandler: false,
-      });
+      const { service } = createLegacyPositionStateMachineHarness({ logger });
       await expect(service.initialize()).resolves.not.toThrow();
       expect(service.isInitialized()).toBe(true);
     });

@@ -28,11 +28,15 @@ export function createAdvancedOrderStateMachineHarness(options?: {
     options?.withErrorHandler === false
       ? undefined
       : options?.errorHandler ?? createAdvancedOrderStateMachineErrorHandler(logger);
-  const service = createAdvancedOrderStateMachineService({
-    logger,
-    withErrorHandler: options?.withErrorHandler,
-    errorHandler,
-  });
+  const service =
+    options?.withErrorHandler === false
+      ? createLegacyAdvancedOrderStateMachineService({
+          logger,
+        })
+      : createStandardAdvancedOrderStateMachineService({
+          logger,
+          errorHandler,
+        });
 
   return {
     service,
@@ -47,9 +51,8 @@ export function createAdvancedOrderStateMachineErrorHandler(
   return new ErrorHandler(logger as unknown as LoggerService);
 }
 
-export function createAdvancedOrderStateMachineService(options?: {
+export function createStandardAdvancedOrderStateMachineService(options?: {
   logger?: AdvancedOrderStateMachineMockLogger;
-  withErrorHandler?: boolean;
   errorHandler?: ErrorHandler;
 }) {
   const logger =
@@ -57,6 +60,25 @@ export function createAdvancedOrderStateMachineService(options?: {
   const loggerService = logger as unknown as LoggerService;
   return new AdvancedOrderStateMachineService(
     loggerService,
-    options?.withErrorHandler === false ? undefined : options?.errorHandler,
+    options?.errorHandler,
   );
+}
+
+export function createLegacyAdvancedOrderStateMachineService(options?: {
+  logger?: AdvancedOrderStateMachineMockLogger;
+}) {
+  const logger =
+    options?.logger ?? createAdvancedOrderStateMachineMockLogger();
+  const loggerService = logger as unknown as LoggerService;
+  return new AdvancedOrderStateMachineService(loggerService);
+}
+
+export function createAdvancedOrderStateMachineService(options?: {
+  logger?: AdvancedOrderStateMachineMockLogger;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+}) {
+  return options?.withErrorHandler === false
+    ? createLegacyAdvancedOrderStateMachineService(options)
+    : createStandardAdvancedOrderStateMachineService(options);
 }

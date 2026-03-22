@@ -28,16 +28,15 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-21)
-- Completed a three-step helper-consolidation batch:
-  - extended `packages/core/src/__tests__/helpers/orderbook-imbalance-test.utils.ts` with explicit shared standard and legacy service and harness paths and routed `packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts` plus `packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts` through them instead of generic harness bootstrap and direct `withErrorHandler: false` branches.
-  - extended `packages/core/src/__tests__/helpers/strategy-circuit-breaker-test.utils.ts` with explicit shared standard and legacy service and harness paths and routed `packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts` through them instead of mixed direct bootstrap.
-  - reviewed `packages/core/src/services/orderbook-imbalance.service.ts` and `packages/core/src/services/multi-strategy/strategy-circuit-breaker.service.ts` and left production code unchanged after review.
+## Last Completed (2026-03-22)
+- Completed a lifecycle/state-machine helper-consolidation batch:
+  - extended `packages/core/src/__tests__/helpers/position-lifecycle-test.utils.ts` with explicit shared standard and legacy repository/memory/safety service paths and routed `packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts` plus `packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts` through them instead of broad harness extraction.
+  - extended `packages/core/src/__tests__/helpers/position-state-machine-test.utils.ts` with explicit shared standard and legacy service/harness initialization paths and routed `packages/core/src/__tests__/services/position-state-machine.service.test.ts` plus `packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts` through them instead of generic `withErrorHandler: false` branches.
+  - reviewed `packages/core/src/services/position-lifecycle.service.ts` and `packages/core/src/services/position-state-machine.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts` -> PASS (3/3 suites, 60/60 tests).
-  - `npm run build` -> PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client`).
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-state-machine.service.test.ts packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts` -> PASS (4/4 suites, 75/75 tests).
 
 ## Next Step
 - Continue the testability stream before reopening adapter cleanup.
-- Prefer the next adjacent partially-normalized helper-backed service slice next to the refreshed `orderbook-imbalance` / `strategy-circuit-breaker` area, such as `config-validator.service`, another nearby constructor-heavy suite with a generic harness still carrying both standard and legacy paths, or a helper-backed suite that still mixes shared setup with direct `withErrorHandler: false` creation.
+- Prefer the next adjacent lifecycle/position slice next to the refreshed lifecycle/state-machine area, such as `position-sync.service`, `position-monitor.service`, `position-exiting.*`, or another nearby constructor-heavy suite that still mixes shared setup with direct service recreation or generic legacy branches.
 - Keep favoring shared harnesses, explicit teardown where lifecycle exists, and minimal required dependency groups per suite.

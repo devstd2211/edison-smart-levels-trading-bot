@@ -7,7 +7,8 @@ import { WebSocketAuthenticationService } from '../../services/websocket-authent
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createWebSocketAuthenticationHarness,
-  createWebSocketAuthenticationService,
+  createLegacyWebSocketAuthenticationService,
+  createStandardWebSocketAuthenticationService,
   createWebSocketAuthCredentials,
   createLongWebSocketAuthCredentials,
   createShortWebSocketAuthCredentials,
@@ -159,7 +160,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should handle missing logger gracefully', () => {
-      const serviceNoLogger = createWebSocketAuthenticationService({
+      const serviceNoLogger = createStandardWebSocketAuthenticationService({
         logger: undefined,
         errorHandler,
       });
@@ -329,7 +330,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should throw on validation errors even without ErrorHandler', () => {
-      const serviceNoHandler = createLegacyService({ logger: undefined });
+      const serviceNoHandler = createLegacyWebSocketAuthenticationService({ logger: undefined });
 
       expect(() => {
         const { apiSecret } = createWebSocketAuthCredentials();

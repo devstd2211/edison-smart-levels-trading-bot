@@ -23,6 +23,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createEventHandlersMockPosition,
   createPositionEventHandlerHarness,
+  createStandardPositionEventHandler,
   createWebSocketEventHandlerHarness,
   type EventHandlersExchangeMock,
   type EventHandlersJournalMock,
@@ -51,14 +52,19 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ({
-      handler,
-      mockPositionManager,
-      mockPositionExitingService,
-      mockBybitService,
-      mockTelegram,
-      mockLogger,
-    } = createPositionEventHandlerHarness());
+    const harness = createPositionEventHandlerHarness();
+    mockPositionManager = harness.mockPositionManager;
+    mockPositionExitingService = harness.mockPositionExitingService;
+    mockBybitService = harness.mockBybitService;
+    mockTelegram = harness.mockTelegram;
+    mockLogger = harness.mockLogger;
+    handler = createStandardPositionEventHandler({
+      positionManager: mockPositionManager,
+      positionExitingService: mockPositionExitingService,
+      exchange: mockBybitService,
+      telegram: mockTelegram,
+      logger: mockLogger,
+    });
   });
 
   describe('[SKIP] handleStopLossHit() - SL Event Logging (3 tests)', () => {

@@ -23,10 +23,11 @@ import {
   createAnalyzerRegistryBaseConfig,
   createAnalyzerRegistryHarness,
   createAnalyzerRegistryIndicatorMap,
+  createLegacyAnalyzerRegistryService,
   createAnalyzerRegistryMockIndicator,
   createAnalyzerRegistryMockLogger,
   createAnalyzerRegistryScenarioHarness,
-  createAnalyzerRegistryService,
+  createStandardAnalyzerRegistryService,
   type AnalyzerRegistryMockLogger,
 } from '../helpers/analyzer-registry-test.utils';
 
@@ -211,7 +212,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = createAnalyzerRegistryService({
+      const reg = createStandardAnalyzerRegistryService({
         logger: failingLogger,
         errorHandler,
       });
@@ -233,7 +234,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = createAnalyzerRegistryService({
+      const reg = createStandardAnalyzerRegistryService({
         logger: failingLogger,
         errorHandler,
       });
@@ -258,7 +259,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = createAnalyzerRegistryService({
+      const reg = createStandardAnalyzerRegistryService({
         logger: failingLogger,
         errorHandler,
       });
@@ -351,13 +352,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = createAnalyzerRegistryService({ logger, withErrorHandler: false });
+      const reg = createLegacyAnalyzerRegistryService({ logger });
       expect(reg).toBeDefined();
       expect(reg.getAvailableAnalyzers().length).toBeGreaterThan(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', async () => {
-      const reg = createAnalyzerRegistryService({ logger, withErrorHandler: false });
+      const reg = createLegacyAnalyzerRegistryService({ logger });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig({
         name: 'UNKNOWN_ANALYZER',
@@ -372,7 +373,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should support legacy calls to getEnabledAnalyzers without ErrorHandler', async () => {
-      const reg = createAnalyzerRegistryService({ logger, withErrorHandler: false });
+      const reg = createLegacyAnalyzerRegistryService({ logger });
       const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = createAnalyzerRegistryAnalyzerConfigs([
         { name: 'EMA_ANALYZER_NEW' },

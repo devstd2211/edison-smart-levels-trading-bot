@@ -237,6 +237,16 @@ export function createPositionMonitorService(
   );
 }
 
+export function createStandardPositionMonitorService(
+  dependencies: Omit<PositionMonitorDependencies, 'monitor'>,
+  options: {
+    riskConfig?: RiskManagementConfig;
+    errorHandler?: ErrorHandler;
+  } = {},
+): PositionMonitorService {
+  return createPositionMonitorService(dependencies, options);
+}
+
 export function createPositionMonitorServiceWithHarness(
   dependencies: Omit<PositionMonitorDependencies, 'monitor'>,
   options: {
@@ -288,7 +298,7 @@ export function createPositionMonitorHarness(
     : options.errorHandler ?? new ErrorHandler(logger);
 
   return {
-    monitor: createPositionMonitorService(
+    monitor: createStandardPositionMonitorService(
       {
         mockBybit,
         mockPositionManager,

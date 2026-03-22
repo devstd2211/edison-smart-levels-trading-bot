@@ -289,6 +289,26 @@ export function createPositionLifecycleService(
   );
 }
 
+export function createStandardPositionLifecycleService(
+  dependencies: Omit<LifecycleHarness, 'service' | 'signal' | 'position'> & {
+    position: Position;
+    errorHandler?: ErrorHandler;
+  },
+): PositionLifecycleService {
+  return createPositionLifecycleService(dependencies);
+}
+
+export function createLegacyPositionLifecycleService(
+  dependencies: Omit<LifecycleHarness, 'service' | 'signal' | 'position'> & {
+    position: Position;
+  },
+): PositionLifecycleService {
+  return createPositionLifecycleService({
+    ...dependencies,
+    errorHandler: undefined,
+  });
+}
+
 export function createPositionLifecycleRepositoryHarness(options: {
   positionOverrides?: Partial<Position>;
   tradingOverrides?: Partial<TradingConfig>;
@@ -340,6 +360,44 @@ export function createPositionLifecycleRepositoryHarness(options: {
   };
 }
 
+export function createStandardPositionLifecycleRepositoryHarness(options: {
+  positionOverrides?: Partial<Position>;
+  tradingOverrides?: Partial<TradingConfig>;
+  riskOverrides?: Partial<RiskManagementConfig>;
+  entryOverrides?: Partial<EntryConfirmationConfig>;
+  configOverrides?: Partial<Config>;
+  errorHandler?: ErrorHandler;
+} = {}): LifecycleHarness {
+  return createPositionLifecycleRepositoryHarness(options);
+}
+
+export function createLegacyPositionLifecycleRepositoryHarness(options: {
+  positionOverrides?: Partial<Position>;
+  tradingOverrides?: Partial<TradingConfig>;
+  riskOverrides?: Partial<RiskManagementConfig>;
+  entryOverrides?: Partial<EntryConfirmationConfig>;
+  configOverrides?: Partial<Config>;
+} = {}): LifecycleHarness {
+  const harness = createPositionLifecycleRepositoryHarness(options);
+
+  return {
+    ...harness,
+    service: createLegacyPositionLifecycleService({
+      mockExchange: harness.mockExchange,
+      mockTelegram: harness.mockTelegram,
+      mockLogger: harness.mockLogger,
+      mockJournal: harness.mockJournal,
+      mockEventBus: harness.mockEventBus,
+      mockRepository: harness.mockRepository,
+      tradingConfig: harness.tradingConfig,
+      riskConfig: harness.riskConfig,
+      entryConfig: harness.entryConfig,
+      fullConfig: harness.fullConfig,
+      position: harness.position,
+    }),
+  };
+}
+
 export function createPositionLifecycleMemoryHarness(options: {
   positionOverrides?: Partial<Position>;
   tradingOverrides?: Partial<TradingConfig>;
@@ -388,6 +446,17 @@ export function createPositionLifecycleMemoryHarness(options: {
   };
 }
 
+export function createStandardPositionLifecycleMemoryHarness(options: {
+  positionOverrides?: Partial<Position>;
+  tradingOverrides?: Partial<TradingConfig>;
+  riskOverrides?: Partial<RiskManagementConfig>;
+  entryOverrides?: Partial<EntryConfirmationConfig>;
+  configOverrides?: Partial<Config>;
+  errorHandler?: ErrorHandler;
+} = {}): LifecycleHarness {
+  return createPositionLifecycleMemoryHarness(options);
+}
+
 export function createPositionLifecycleSafetyHarness(options: {
   positionOverrides?: Partial<Position>;
   tradingOverrides?: Partial<TradingConfig>;
@@ -419,6 +488,17 @@ export function createPositionLifecycleSafetyHarness(options: {
   };
 }
 
+export function createStandardPositionLifecycleSafetyHarness(options: {
+  positionOverrides?: Partial<Position>;
+  tradingOverrides?: Partial<TradingConfig>;
+  riskOverrides?: Partial<RiskManagementConfig>;
+  entryOverrides?: Partial<EntryConfirmationConfig>;
+  configOverrides?: Partial<Config>;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  return createPositionLifecycleSafetyHarness(options);
+}
+
 export function createLifecycleUpdatedSafetyPosition(
   overrides: Partial<Position> = {},
 ): Position {
@@ -448,7 +528,7 @@ export function createPositionLifecycleWithErrorHandlerHarness(
     configOverrides?: Partial<Config>;
   } = {},
 ): LifecycleHarness {
-  return createPositionLifecycleRepositoryHarness({
+  return createStandardPositionLifecycleRepositoryHarness({
     ...options,
     errorHandler,
   });

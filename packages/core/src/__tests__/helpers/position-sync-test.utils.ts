@@ -377,6 +377,12 @@ export function createPositionSyncService(
   );
 }
 
+export function createStandardPositionSyncService(
+  dependencies: Omit<PositionSyncHarness, 'service'>,
+): PositionSyncService {
+  return createPositionSyncService(dependencies);
+}
+
 export function createPositionSyncServiceWithHarness(
   dependencies: Omit<PositionSyncHarness, 'service'>,
 ): PositionSyncService {
@@ -416,7 +422,7 @@ export function createPositionSyncHarness(options: {
   const logger = options.logger ?? createMockPositionSyncLogger();
 
   return {
-    service: createPositionSyncService({
+    service: createStandardPositionSyncService({
       mockBybit,
       mockPositionManager,
       mockExitTypeDetector,

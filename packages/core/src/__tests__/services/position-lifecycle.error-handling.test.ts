@@ -40,7 +40,8 @@ import {
   createMockLifecyclePosition,
   createMockLifecycleSignal,
   createLifecycleWebSocketPosition,
-  createPositionLifecycleRepositoryHarness,
+  createLegacyPositionLifecycleRepositoryHarness,
+  createStandardPositionLifecycleRepositoryHarness,
   createPositionLifecycleWithErrorHandlerHarness,
   seedLifecycleSyncedPosition,
   syncLifecycleWebSocketPosition,
@@ -64,7 +65,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const harness = createPositionLifecycleRepositoryHarness();
+    const harness = createLegacyPositionLifecycleRepositoryHarness();
     service = harness.service;
     mockExchange = harness.mockExchange as unknown as jest.Mocked<IExchange>;
     mockTelegram = harness.mockTelegram as unknown as jest.Mocked<TelegramService>;
@@ -416,7 +417,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       });
 
       // Verify ErrorHandler parameter is optional (backward compatibility)
-      const serviceWithoutHandler = createPositionLifecycleRepositoryHarness().service;
+      const serviceWithoutHandler = createLegacyPositionLifecycleRepositoryHarness().service;
 
       expect(serviceWithoutHandler).toBeDefined();
     });
@@ -425,7 +426,9 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       // Test comprehensive error handling scenario where multiple operations fail
       const errorHandler = new ErrorHandler(mockLogger);
 
-      const serviceWithHandler = createPositionLifecycleWithErrorHandlerHarness(errorHandler).service;
+      const serviceWithHandler = createStandardPositionLifecycleRepositoryHarness({
+        errorHandler,
+      }).service;
 
       // Simulate cascading failures:
       // 1. getCurrentPrice fails but recovers

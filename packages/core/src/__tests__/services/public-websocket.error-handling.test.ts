@@ -16,6 +16,8 @@ import {
   createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
   createPublicWebSocketHarness,
+  createLegacyPublicWebSocketService,
+  createStandardPublicWebSocketServiceFromOptions,
 } from '../helpers/public-websocket-test.utils';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
@@ -59,13 +61,15 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Constructor & ErrorHandler Integration', () => {
     it('should accept optional ErrorHandler parameter for backward compatibility', () => {
-      const serviceWithoutHandler = createService({
-        withErrorHandler: false,
+      const serviceWithoutHandler = createLegacyService({
         symbol: 'XRPUSDT',
       });
       expect(serviceWithoutHandler).toBeDefined();
 
-      const serviceWithHandler = createService({
+      const serviceWithHandler = createStandardPublicWebSocketServiceFromOptions({
+        mockConfig: harness.mockConfig,
+        mockTimeframeProvider: harness.mockTimeframeProvider,
+        loggerService: harness.loggerService,
         symbol: 'XRPUSDT',
         errorHandlerService: createPublicWebSocketErrorHandlerService(mockLogger),
       });
@@ -276,8 +280,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should support ErrorHandler-less fallback mode', () => {
-      const serviceNoHandler = createService({
-        withErrorHandler: false,
+      const serviceNoHandler = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -364,7 +367,13 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Integration with service composition', () => {
     it('should accept ErrorHandler injected from services builder', () => {
-      const service = createService({ symbol: 'XRPUSDT', errorHandlerService });
+      const service = createStandardPublicWebSocketServiceFromOptions({
+        mockConfig: harness.mockConfig,
+        mockTimeframeProvider: harness.mockTimeframeProvider,
+        loggerService: harness.loggerService,
+        symbol: 'XRPUSDT',
+        errorHandlerService,
+      });
 
       expect(service).toBeDefined();
     });

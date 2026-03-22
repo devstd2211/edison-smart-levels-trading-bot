@@ -40,11 +40,13 @@ export function createAnalyzerRegistryHarness(
     options.withErrorHandler === false
       ? undefined
       : createAnalyzerRegistryErrorHandler(logger);
-  const registry = createAnalyzerRegistryService({
-    logger,
-    errorHandler,
-    withErrorHandler: options.withErrorHandler,
-  });
+  const registry =
+    options.withErrorHandler === false
+      ? createLegacyAnalyzerRegistryService({ logger })
+      : createStandardAnalyzerRegistryService({
+          logger,
+          errorHandler,
+        });
 
   return {
     logger,
@@ -59,18 +61,32 @@ export function createAnalyzerRegistryErrorHandler(
   return new ErrorHandler(asAnalyzerRegistryLogger(logger));
 }
 
+export function createStandardAnalyzerRegistryService(options: {
+  logger?: AnalyzerRegistryMockLogger;
+  errorHandler?: ErrorHandler;
+} = {}): AnalyzerRegistryService {
+  const logger = options.logger ?? createAnalyzerRegistryMockLogger();
+  return new AnalyzerRegistryService(
+    asAnalyzerRegistryLogger(logger),
+    options.errorHandler,
+  );
+}
+
+export function createLegacyAnalyzerRegistryService(options: {
+  logger?: AnalyzerRegistryMockLogger;
+} = {}): AnalyzerRegistryService {
+  const logger = options.logger ?? createAnalyzerRegistryMockLogger();
+  return new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
+}
+
 export function createAnalyzerRegistryService(options: {
   logger?: AnalyzerRegistryMockLogger;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
 } = {}): AnalyzerRegistryService {
-  const logger = options.logger ?? createAnalyzerRegistryMockLogger();
-  return new AnalyzerRegistryService(
-    asAnalyzerRegistryLogger(logger),
-    options.withErrorHandler === false
-      ? undefined
-      : options.errorHandler,
-  );
+  return options.withErrorHandler === false
+    ? createLegacyAnalyzerRegistryService(options)
+    : createStandardAnalyzerRegistryService(options);
 }
 
 export function createAnalyzerRegistryMockIndicator(name: string) {

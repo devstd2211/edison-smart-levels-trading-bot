@@ -81,6 +81,33 @@ export function createPositionStateMachineService(options: {
   return service;
 }
 
+export function createStandardPositionStateMachineService(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  baseDir?: string;
+} = {}) {
+  const logger = options.logger ?? createMockPositionStateMachineLogger();
+  const errorHandler =
+    options.errorHandler ?? createPositionStateMachineErrorHandler(logger);
+
+  return createPositionStateMachineService({
+    logger,
+    errorHandler,
+    baseDir: options.baseDir,
+  });
+}
+
+export function createLegacyPositionStateMachineService(options: {
+  logger?: LoggerService;
+  baseDir?: string;
+} = {}) {
+  return createPositionStateMachineService({
+    logger: options.logger,
+    withErrorHandler: false,
+    baseDir: options.baseDir,
+  });
+}
+
 export function createPositionStateMachineServiceWithHarness(options: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
@@ -106,6 +133,25 @@ export async function createInitializedPositionStateMachineService(options: {
 } = {}): Promise<PositionStateMachineService> {
   const harness = await createInitializedPositionStateMachineHarness(options);
   return harness.service;
+}
+
+export async function createInitializedStandardPositionStateMachineService(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  baseDir?: string;
+} = {}): Promise<PositionStateMachineService> {
+  const service = createStandardPositionStateMachineService(options);
+  await service.initialize();
+  return service;
+}
+
+export async function createInitializedLegacyPositionStateMachineService(options: {
+  logger?: LoggerService;
+  baseDir?: string;
+} = {}): Promise<PositionStateMachineService> {
+  const service = createLegacyPositionStateMachineService(options);
+  await service.initialize();
+  return service;
 }
 
 export function createPositionStateTransitionInput(
@@ -308,6 +354,56 @@ export function createPositionStateMachineHarness(options: {
     service,
     logger,
     errorHandler,
+    testDataDir,
+    paths,
+  };
+}
+
+export function createStandardPositionStateMachineHarness(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  baseDir?: string;
+} = {}) {
+  const logger = options.logger ?? createMockPositionStateMachineLogger();
+  const errorHandler =
+    options.errorHandler ?? createPositionStateMachineErrorHandler(logger);
+  const testDataDir =
+    options.baseDir ??
+    path.join(process.cwd(), 'data', `test-state-machine-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const service = createStandardPositionStateMachineService({
+    logger,
+    errorHandler,
+    baseDir: testDataDir,
+  });
+  const paths = createTestStateMachinePaths(testDataDir);
+
+  return {
+    service,
+    logger,
+    errorHandler,
+    testDataDir,
+    paths,
+  };
+}
+
+export function createLegacyPositionStateMachineHarness(options: {
+  logger?: LoggerService;
+  baseDir?: string;
+} = {}) {
+  const logger = options.logger ?? createMockPositionStateMachineLogger();
+  const testDataDir =
+    options.baseDir ??
+    path.join(process.cwd(), 'data', `test-state-machine-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const service = createLegacyPositionStateMachineService({
+    logger,
+    baseDir: testDataDir,
+  });
+  const paths = createTestStateMachinePaths(testDataDir);
+
+  return {
+    service,
+    logger,
+    errorHandler: undefined,
     testDataDir,
     paths,
   };

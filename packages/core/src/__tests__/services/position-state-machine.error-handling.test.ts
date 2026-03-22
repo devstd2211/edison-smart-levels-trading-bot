@@ -20,6 +20,8 @@ import type { StateTransitionResult } from '../../types/position-state-machine';
 import {
   applyPositionStateSequence,
   closePositionState,
+  createInitializedLegacyPositionStateMachineService,
+  createLegacyPositionStateMachineHarness,
   createPositionStateMachineHistoryEntry,
   createInitializedPositionStateMachineService,
   createPositionStateMachinePersistedState,
@@ -483,9 +485,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (optional DI)', async () => {
       // Create service without ErrorHandler
-      service = await createInitializedPositionStateMachineService({
+      service = await createInitializedLegacyPositionStateMachineService({
         logger,
-        withErrorHandler: false,
         baseDir: testDataDir,
       });
 
@@ -501,9 +502,8 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle missing files gracefully without ErrorHandler', async () => {
-      ({ service } = createPositionStateMachineHarness({
+      ({ service } = createLegacyPositionStateMachineHarness({
         logger,
-        withErrorHandler: false,
         baseDir: testDataDir,
       }));
 

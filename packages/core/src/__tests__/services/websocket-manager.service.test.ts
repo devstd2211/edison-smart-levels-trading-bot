@@ -7,6 +7,7 @@
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import {
   createWebSocketManagerHarness,
+  createStandardWebSocketManagerService,
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
@@ -23,7 +24,14 @@ describe('WebSocketManagerService', () => {
 
   beforeEach(() => {
     harness = createWebSocketManagerHarness();
-    ({ wsManager } = harness);
+    wsManager = createStandardWebSocketManagerService({
+      logger: harness.logger,
+      errorHandler: harness.errorHandler,
+      orderExecutionDetector: harness.orderExecutionDetector,
+      authService: harness.authService,
+      deduplicationService: harness.deduplicationService,
+      keepAliveService: harness.keepAliveService,
+    });
   });
 
   afterEach(async () => {

@@ -16,7 +16,27 @@ export type WebSocketManagerHarness = {
   deduplicationService: EventDeduplicationService;
   keepAliveService: WebSocketKeepAliveService;
   wsManager: WebSocketManagerService;
+  createStandardService: (options?: {
+    configOverrides?: Partial<ExchangeConfig>;
+    symbol?: string;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    orderExecutionDetector?: OrderExecutionDetectorService;
+    authService?: WebSocketAuthenticationService;
+    deduplicationService?: EventDeduplicationService;
+    keepAliveService?: WebSocketKeepAliveService;
+  }) => WebSocketManagerService;
   createService: (options?: {
+    configOverrides?: Partial<ExchangeConfig>;
+    symbol?: string;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    orderExecutionDetector?: OrderExecutionDetectorService;
+    authService?: WebSocketAuthenticationService;
+    deduplicationService?: EventDeduplicationService;
+    keepAliveService?: WebSocketKeepAliveService;
+  }) => WebSocketManagerService;
+  createStandardTestnetService: (options?: {
     configOverrides?: Partial<ExchangeConfig>;
     symbol?: string;
     logger?: LoggerService;
@@ -101,6 +121,38 @@ export function createWebSocketManagerService(options: {
   );
 }
 
+export function createStandardWebSocketManagerService(options: {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  orderExecutionDetector?: OrderExecutionDetectorService;
+  authService?: WebSocketAuthenticationService;
+  deduplicationService?: EventDeduplicationService;
+  keepAliveService?: WebSocketKeepAliveService;
+} = {}): WebSocketManagerService {
+  return createWebSocketManagerService(options);
+}
+
+export function createTestnetWebSocketManagerService(options: {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  orderExecutionDetector?: OrderExecutionDetectorService;
+  authService?: WebSocketAuthenticationService;
+  deduplicationService?: EventDeduplicationService;
+  keepAliveService?: WebSocketKeepAliveService;
+} = {}): WebSocketManagerService {
+  return createWebSocketManagerService({
+    ...options,
+    configOverrides: {
+      testnet: true,
+      ...options.configOverrides,
+    },
+  });
+}
+
 export function createWebSocketManagerHarness(options: {
   configOverrides?: Partial<ExchangeConfig>;
   symbol?: string;
@@ -132,6 +184,17 @@ export function createWebSocketManagerHarness(options: {
     deduplicationService,
     keepAliveService,
     wsManager,
+    createStandardService: (serviceOptions = {}) =>
+      createStandardWebSocketManagerService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        symbol: serviceOptions.symbol ?? options.symbol,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        orderExecutionDetector: serviceOptions.orderExecutionDetector ?? orderExecutionDetector,
+        authService: serviceOptions.authService ?? authService,
+        deduplicationService: serviceOptions.deduplicationService ?? deduplicationService,
+        keepAliveService: serviceOptions.keepAliveService ?? keepAliveService,
+      }),
     createService: (serviceOptions = {}) =>
       createWebSocketManagerService({
         configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
@@ -143,12 +206,20 @@ export function createWebSocketManagerHarness(options: {
         deduplicationService: serviceOptions.deduplicationService ?? deduplicationService,
         keepAliveService: serviceOptions.keepAliveService ?? keepAliveService,
       }),
+    createStandardTestnetService: (serviceOptions = {}) =>
+      createTestnetWebSocketManagerService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        symbol: serviceOptions.symbol ?? options.symbol,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        orderExecutionDetector: serviceOptions.orderExecutionDetector ?? orderExecutionDetector,
+        authService: serviceOptions.authService ?? authService,
+        deduplicationService: serviceOptions.deduplicationService ?? deduplicationService,
+        keepAliveService: serviceOptions.keepAliveService ?? keepAliveService,
+      }),
     createTestnetService: (serviceOptions = {}) =>
-      createWebSocketManagerService({
-        configOverrides: {
-          testnet: true,
-          ...(serviceOptions.configOverrides ?? options.configOverrides),
-        },
+      createTestnetWebSocketManagerService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
         symbol: serviceOptions.symbol ?? options.symbol,
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,

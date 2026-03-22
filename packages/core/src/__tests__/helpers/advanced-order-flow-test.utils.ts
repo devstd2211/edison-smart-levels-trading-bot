@@ -170,12 +170,17 @@ export function createAdvancedOrderFlowHarness(options?: {
   const errorHandler = options?.withErrorHandler === false
     ? undefined
     : options?.errorHandler ?? createAdvancedOrderFlowErrorHandler(logger);
-  const service = createAdvancedOrderFlowService({
-    config,
-    logger,
-    errorHandler,
-    withErrorHandler: options?.withErrorHandler,
-  });
+  const service =
+    options?.withErrorHandler === false
+      ? createLegacyAdvancedOrderFlowService({
+          config,
+          logger,
+        })
+      : createStandardAdvancedOrderFlowService({
+          config,
+          logger,
+          errorHandler,
+        });
 
   return {
     service,
@@ -185,11 +190,10 @@ export function createAdvancedOrderFlowHarness(options?: {
   };
 }
 
-export function createAdvancedOrderFlowService(options?: {
+export function createStandardAdvancedOrderFlowService(options?: {
   config?: AdvancedOrderFlowConfig;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
 }) {
   const config =
     options && 'config' in options
@@ -201,8 +205,36 @@ export function createAdvancedOrderFlowService(options?: {
     config as AdvancedOrderFlowConfig,
     undefined,
     logger,
-    options?.withErrorHandler === false ? undefined : options?.errorHandler,
+    options?.errorHandler,
   );
+}
+
+export function createLegacyAdvancedOrderFlowService(options?: {
+  config?: AdvancedOrderFlowConfig;
+  logger?: LoggerService;
+}) {
+  const config =
+    options && 'config' in options
+      ? options.config
+      : createAdvancedOrderFlowValidConfig();
+  const logger = options?.logger ?? createAdvancedOrderFlowMockLogger();
+
+  return new AdvancedOrderFlowService(
+    config as AdvancedOrderFlowConfig,
+    undefined,
+    logger,
+  );
+}
+
+export function createAdvancedOrderFlowService(options?: {
+  config?: AdvancedOrderFlowConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}) {
+  return options?.withErrorHandler === false
+    ? createLegacyAdvancedOrderFlowService(options)
+    : createStandardAdvancedOrderFlowService(options);
 }
 
 export function createAdvancedOrderFlowServiceWithHarness(options?: {

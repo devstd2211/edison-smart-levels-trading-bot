@@ -165,14 +165,23 @@ export function createPublicWebSocketHarness(options: {
   const mockConfig = createMockPublicWebSocketConfig(options.configOverrides);
   const errorHandler = createMockPublicWebSocketErrorHandler(mockLogger);
   const errorHandlerService = errorHandler as unknown as ErrorHandler;
-  const service = new PublicWebSocketService(
-    mockConfig,
-    options.symbol ?? mockConfig.symbol,
-    mockTimeframeProvider,
-    loggerService,
-    options.withErrorHandler === false ? undefined : errorHandlerService,
-    options.btcConfirmation,
-  );
+  const service =
+    options.withErrorHandler === false
+      ? createLegacyPublicWebSocketService({
+          mockConfig,
+          mockTimeframeProvider,
+          loggerService,
+          symbol: options.symbol ?? mockConfig.symbol,
+          btcConfirmation: options.btcConfirmation,
+        })
+      : createStandardPublicWebSocketServiceFromOptions({
+          mockConfig,
+          mockTimeframeProvider,
+          loggerService,
+          errorHandlerService,
+          symbol: options.symbol ?? mockConfig.symbol,
+          btcConfirmation: options.btcConfirmation,
+        });
 
   return {
     service,
@@ -183,68 +192,59 @@ export function createPublicWebSocketHarness(options: {
     errorHandler,
     errorHandlerService,
     createStandardService: (overrides = {}) =>
-      createStandardPublicWebSocketService(
-        {
-          createService: (serviceOverrides = {}) =>
-            createPublicWebSocketService({
-              mockConfig,
-              mockTimeframeProvider,
-              loggerService,
-              errorHandlerService:
-                serviceOverrides.withErrorHandler === false
-                  ? undefined
-                  : serviceOverrides.errorHandlerService ?? errorHandlerService,
-              symbol: serviceOverrides.symbol,
-              btcConfirmation: serviceOverrides.btcConfirmation,
-            }),
-          errorHandlerService,
-        },
-        overrides,
-      ),
-    createService: (overrides = {}) =>
-      createPublicWebSocketService({
+      createStandardPublicWebSocketServiceFromOptions({
         mockConfig,
         mockTimeframeProvider,
         loggerService,
-        errorHandlerService:
-          overrides.withErrorHandler === false
-            ? undefined
-            : overrides.errorHandlerService ?? errorHandlerService,
-        symbol: overrides.symbol,
+        errorHandlerService,
+        symbol: overrides.symbol ?? 'XRPUSDT',
         btcConfirmation: overrides.btcConfirmation,
       }),
+    createService: (overrides = {}) =>
+      overrides.withErrorHandler === false
+        ? createLegacyPublicWebSocketService({
+            mockConfig,
+            mockTimeframeProvider,
+            loggerService,
+            symbol: overrides.symbol,
+            btcConfirmation: overrides.btcConfirmation,
+          })
+        : createStandardPublicWebSocketServiceFromOptions({
+            mockConfig,
+            mockTimeframeProvider,
+            loggerService,
+            errorHandlerService:
+              overrides.errorHandlerService ?? errorHandlerService,
+            symbol: overrides.symbol,
+            btcConfirmation: overrides.btcConfirmation,
+          }),
     createLegacyService: (overrides = {}) =>
-      createPublicWebSocketService({
+      createLegacyPublicWebSocketService({
         mockConfig,
         mockTimeframeProvider,
         loggerService,
-        errorHandlerService: undefined,
         symbol: overrides.symbol,
         btcConfirmation: overrides.btcConfirmation,
       }),
     createBtcConfiguredService: (overrides = {}) =>
-      createStandardPublicWebSocketService(
-        {
-          createService: (serviceOverrides = {}) =>
-            createPublicWebSocketService({
-              mockConfig,
-              mockTimeframeProvider,
-              loggerService,
-              errorHandlerService:
-                serviceOverrides.withErrorHandler === false
-                  ? undefined
-                  : serviceOverrides.errorHandlerService ?? errorHandlerService,
-              symbol: serviceOverrides.symbol,
-              btcConfirmation: serviceOverrides.btcConfirmation,
-            }),
-          errorHandlerService,
-        },
-        {
-          symbol: overrides.symbol,
-          withErrorHandler: overrides.withErrorHandler,
-          btcConfirmation: overrides.btcConfirmation ?? createPublicWebSocketBtcConfirmationConfig(),
-        },
-      ),
+      overrides.withErrorHandler === false
+        ? createLegacyPublicWebSocketService({
+            mockConfig,
+            mockTimeframeProvider,
+            loggerService,
+            symbol: overrides.symbol,
+            btcConfirmation:
+              overrides.btcConfirmation ?? createPublicWebSocketBtcConfirmationConfig(),
+          })
+        : createStandardPublicWebSocketServiceFromOptions({
+            mockConfig,
+            mockTimeframeProvider,
+            loggerService,
+            errorHandlerService,
+            symbol: overrides.symbol,
+            btcConfirmation:
+              overrides.btcConfirmation ?? createPublicWebSocketBtcConfirmationConfig(),
+          }),
   };
 }
 
@@ -259,6 +259,24 @@ export function createPublicWebSocketService(
     options.errorHandlerService,
     options.btcConfirmation,
   );
+}
+
+export function createStandardPublicWebSocketServiceFromOptions(
+  options: PublicWebSocketServiceOptions,
+): PublicWebSocketService {
+  return createPublicWebSocketService({
+    ...options,
+    errorHandlerService: options.errorHandlerService,
+  });
+}
+
+export function createLegacyPublicWebSocketService(
+  options: Omit<PublicWebSocketServiceOptions, 'errorHandlerService'>,
+): PublicWebSocketService {
+  return createPublicWebSocketService({
+    ...options,
+    errorHandlerService: undefined,
+  });
 }
 
 export function createStandardPublicWebSocketService(
