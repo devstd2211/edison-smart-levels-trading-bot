@@ -9,6 +9,7 @@ import { PositionPnLCalculatorService } from '../../services/position-pnl-calcul
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { Position, PositionSide } from '../../types/legacy';
 import {
+  createManagedPositionPnLCalculatorContext,
   createMockPnlPosition,
   createPositionPnLScenarioHarness,
 } from '../helpers/position-pnl-calculator-test.utils';
@@ -27,12 +28,17 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
   let createService: ReturnType<typeof createPositionPnLScenarioHarness>['createService'];
+  let context: ReturnType<typeof createManagedPositionPnLCalculatorContext>;
 
   beforeEach(() => {
-    const harness = createPositionPnLScenarioHarness();
-    errorHandler = harness.errorHandler;
-    createService = harness.createService;
-    service = harness.service;
+    context = createManagedPositionPnLCalculatorContext();
+    errorHandler = context.errorHandler;
+    createService = context.createService;
+    service = context.service;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================
@@ -232,9 +238,7 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
     let serviceWithoutHandler: PositionPnLCalculatorService;
 
     beforeEach(() => {
-      ({ service: serviceWithoutHandler } = createPositionPnLScenarioHarness({
-        withErrorHandler: false,
-      }));
+      serviceWithoutHandler = createService({ withErrorHandler: false });
     });
 
     it('should still throw on null position without ErrorHandler', () => {

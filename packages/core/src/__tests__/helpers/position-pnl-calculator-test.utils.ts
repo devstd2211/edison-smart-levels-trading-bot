@@ -161,3 +161,33 @@ export function createPositionPnLScenarioHarness(options: {
     createPositions: factory.createPositions,
   };
 }
+
+export interface ManagedPositionPnLCalculatorContext {
+  service: PositionPnLCalculatorService;
+  errorHandler?: ErrorHandler;
+  createService: ReturnType<typeof createPositionPnLScenarioHarness>['createService'];
+  createPosition: ReturnType<typeof createPositionPnLScenarioHarness>['createPosition'];
+  createPositions: ReturnType<typeof createPositionPnLScenarioHarness>['createPositions'];
+  cleanup: () => void;
+}
+
+export function createManagedPositionPnLCalculatorContext(options: {
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedPositionPnLCalculatorContext {
+  jest.clearAllMocks();
+
+  const harness = createPositionPnLScenarioHarness(options);
+
+  return {
+    service: harness.service,
+    errorHandler: harness.errorHandler,
+    createService: harness.createService,
+    createPosition: harness.createPosition,
+    createPositions: harness.createPositions,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}

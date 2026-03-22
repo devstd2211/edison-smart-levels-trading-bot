@@ -33,8 +33,6 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let riskHarness: ManagedRealTimeRiskMonitorHarness;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     riskHarness = createManagedRealTimeRiskMonitorHarness();
     monitor = riskHarness.monitor;
     mockPositionLifecycleService = riskHarness.mockPositionService;
@@ -43,7 +41,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   });
 
   afterEach(() => {
-    riskHarness.stop();
+    riskHarness.cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {

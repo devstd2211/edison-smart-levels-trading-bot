@@ -6,15 +6,18 @@
 import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calculator.service';
 import { PositionSide } from '../../types/legacy';
 import {
-  createPartialCloseInput,
-  createPnlErrorHandler,
-  createPnlMockLogger,
-  createPnlTradeInput,
+  createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
+  let context: ReturnType<typeof createManagedPnlCalculatorContext>;
+
   beforeEach(() => {
-    createPnlErrorHandler(createPnlMockLogger());
+    context = createManagedPnlCalculatorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Input Validation (THROW)', () => {
@@ -25,7 +28,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on Infinity exitPrice', () => {
-      const trade = createPnlTradeInput({ exit: Infinity });
+      const trade = context.createTradeInput({ exit: Infinity });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -39,7 +42,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on negative entryPrice', () => {
-      const trade = createPnlTradeInput({ entry: -1.15 });
+      const trade = context.createTradeInput({ entry: -1.15 });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -53,7 +56,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on zero quantity', () => {
-      const trade = createPnlTradeInput({ quantity: 0 });
+      const trade = context.createTradeInput({ quantity: 0 });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -67,7 +70,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on negative quantity', () => {
-      const trade = createPnlTradeInput({ quantity: -50 });
+      const trade = context.createTradeInput({ quantity: -50 });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -81,7 +84,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on fee rate > 1.0', () => {
-      const trade = createPnlTradeInput();
+      const trade = context.createTradeInput();
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -97,7 +100,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Calculation Errors (GRACEFUL_DEGRADE)', () => {
     it('should handle NaN in percentage calculation gracefully', () => {
-      const trade = createPnlTradeInput();
+      const trade = context.createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -121,7 +124,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
         PnLCalculatorService.calculatePartialCloses(
           PositionSide.LONG,
           1.15,
-          [createPartialCloseInput({ quantity: 50, exitPrice: NaN })],
+          [context.createPartialCloseInput({ quantity: 50, exitPrice: NaN })],
           BYBIT_TAKER_FEE,
         );
       }).toThrow(/Invalid|NaN/i);
@@ -132,7 +135,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
         PnLCalculatorService.calculatePartialCloses(
           PositionSide.LONG,
           1.15,
-          [createPartialCloseInput({ quantity: -50, exitPrice: 1.16 })],
+          [context.createPartialCloseInput({ quantity: -50, exitPrice: 1.16 })],
           BYBIT_TAKER_FEE,
         );
       }).toThrow(/Invalid|quantity|negative/i);
@@ -164,7 +167,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Integration E2E Scenarios', () => {
     it('should calculate complete LONG position PnL correctly', () => {
-      const trade = createPnlTradeInput();
+      const trade = context.createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -185,9 +188,9 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
         PositionSide.SHORT,
         1.1748,
         [
-          createPartialCloseInput({ quantity: 28.4, exitPrice: 1.1676 }),
-          createPartialCloseInput({ quantity: 28.4, exitPrice: 1.18 }),
-          createPartialCloseInput({ quantity: 28.4, exitPrice: 1.165 }),
+          context.createPartialCloseInput({ quantity: 28.4, exitPrice: 1.1676 }),
+          context.createPartialCloseInput({ quantity: 28.4, exitPrice: 1.18 }),
+          context.createPartialCloseInput({ quantity: 28.4, exitPrice: 1.165 }),
         ],
         BYBIT_TAKER_FEE,
       );
@@ -214,7 +217,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work correctly without ErrorHandler', () => {
-      const trade = createPnlTradeInput();
+      const trade = context.createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -237,7 +240,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Edge Cases', () => {
     it('should handle very large quantities', () => {
-      const trade = createPnlTradeInput({ quantity: 1000000 });
+      const trade = context.createTradeInput({ quantity: 1000000 });
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -252,7 +255,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should handle very small fee rates', () => {
-      const trade = createPnlTradeInput({
+      const trade = context.createTradeInput({
         side: PositionSide.SHORT,
         entry: 1.1748,
         exit: 1.1676,

@@ -51,7 +51,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   });
 
   afterEach(() => {
-    riskHarness.stop();
+    riskHarness.cleanup();
   });
 
   // ========================================================================

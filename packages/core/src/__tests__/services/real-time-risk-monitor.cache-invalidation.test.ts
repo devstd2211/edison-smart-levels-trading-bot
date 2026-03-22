@@ -20,8 +20,6 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   let riskHarness: ManagedRealTimeRiskMonitorHarness;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     riskHarness = createManagedRealTimeRiskMonitorHarness({ started: true });
     monitor = riskHarness.monitor;
     mockPositionService = riskHarness.mockPositionService;
@@ -30,7 +28,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   afterEach(() => {
-    riskHarness.stop();
+    riskHarness.cleanup();
   });
 
   it('CI1: position-closed event clears health score cache', async () => {

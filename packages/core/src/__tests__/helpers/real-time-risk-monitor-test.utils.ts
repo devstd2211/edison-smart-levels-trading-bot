@@ -42,7 +42,7 @@ export interface RealTimeRiskMonitorHarness {
 }
 
 export interface ManagedRealTimeRiskMonitorHarness extends RealTimeRiskMonitorHarness {
-  stop: () => void;
+  cleanup: () => void;
 }
 
 export const mockRiskMonitorConfig: RiskMonitoringConfig = {
@@ -217,14 +217,18 @@ export function createStartedRealTimeRiskMonitorHarness(): RealTimeRiskMonitorHa
 export function createManagedRealTimeRiskMonitorHarness(
   options: { started?: boolean } = {},
 ): ManagedRealTimeRiskMonitorHarness {
+  jest.clearAllMocks();
+
   const harness = options.started
     ? createStartedRealTimeRiskMonitorHarness()
     : createStandardRealTimeRiskMonitorHarness();
 
   return {
     ...harness,
-    stop: () => {
+    cleanup: () => {
       harness.monitor.stop();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
     },
   };
 }

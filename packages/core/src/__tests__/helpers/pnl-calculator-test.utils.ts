@@ -87,3 +87,33 @@ export const createBybitTradeValidationSet = () => [
     expectedPnL: 1.0573,
   },
 ];
+
+export interface ManagedPnlCalculatorContext {
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  createTradeInput: typeof createPnlTradeInput;
+  createPartialCloseInput: typeof createPartialCloseInput;
+  createPartialCloses: typeof createBybitPartialCloseSet;
+  createTradeValidationSet: typeof createBybitTradeValidationSet;
+  cleanup: () => void;
+}
+
+export const createManagedPnlCalculatorContext = (): ManagedPnlCalculatorContext => {
+  jest.clearAllMocks();
+
+  const logger = createPnlMockLogger();
+  const errorHandler = createPnlErrorHandler(logger);
+
+  return {
+    logger,
+    errorHandler,
+    createTradeInput: createPnlTradeInput,
+    createPartialCloseInput,
+    createPartialCloses: createBybitPartialCloseSet,
+    createTradeValidationSet: createBybitTradeValidationSet,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+};

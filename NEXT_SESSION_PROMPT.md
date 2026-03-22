@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-22)
-- Completed an adjacent managed-context follow-up for `risk-manager.service`, `risk-manager.error-handling`, `take-profit-manager.service`, and `take-profit-manager.error-handling`:
-  - extended `packages/core/src/__tests__/helpers/risk-manager-test.utils.ts` and `packages/core/src/__tests__/helpers/take-profit-manager-test.utils.ts` with shared managed contexts for helper-backed service creation, manager reset where needed, and mock/spy restoration.
-  - routed the corresponding suites through those helper-owned contexts instead of local harness ownership and per-suite teardown.
-  - reviewed `packages/core/src/services/risk-manager.service.ts` and `packages/core/src/services/take-profit-manager.service.ts` and left production code unchanged after review.
+- Completed a managed-context lifecycle follow-up for `real-time-risk-monitor.service`, `real-time-risk-monitor.error-handling`, and `real-time-risk-monitor.cache-invalidation`:
+  - extended `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts` with helper-owned cleanup for lifecycle stop plus mock restoration.
+  - routed the corresponding suites through that managed harness instead of local `jest.clearAllMocks()` and ad hoc monitor shutdown.
+  - reviewed `packages/core/src/services/real-time-risk-monitor.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/risk-manager.service.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts packages/core/src/__tests__/services/take-profit-manager.service.test.ts packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep local harness ownership, repeated bootstrap, or ad hoc cleanup in the remaining position/pnl/risk slice.
-- Favor shared managed test contexts and helper-owned teardown in follow-ups such as `position-pnl-calculator.service`, `position-pnl-calculator.error-handling`, `pnl-calculator.service`, `pnl-calculator.error-handling`, and `risk-calculator.error-handling` before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep local harness ownership, repeated bootstrap, or ad hoc cleanup around the remaining monitoring/risk slice.
+- Favor shared managed test contexts and helper-owned teardown in follow-ups adjacent to this batch, especially `real-time-risk-monitor` neighbors such as remaining monitoring/cache/lifecycle suites or any untouched risk-adjacent service tests before reopening lower-signal constructor-only cleanup.

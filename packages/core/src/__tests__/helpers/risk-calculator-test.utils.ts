@@ -110,3 +110,34 @@ export const createRiskCalculatorService = (
 
   return new RiskCalculator(logger as unknown as LoggerService, errorHandler);
 };
+
+export interface ManagedRiskCalculatorContext {
+  calculator: RiskCalculator;
+  logger: RiskCalculatorMockLogger;
+  errorHandler?: ErrorHandler;
+  defaultInput: RiskCalculationInput;
+  createInput: ReturnType<typeof createRiskCalculatorHarness>['createInput'];
+  createCalculator: ReturnType<typeof createRiskCalculatorHarness>['createCalculator'];
+  cleanup: () => void;
+}
+
+export const createManagedRiskCalculatorContext = (
+  options: RiskCalculatorHarnessOptions = {},
+): ManagedRiskCalculatorContext => {
+  jest.clearAllMocks();
+
+  const harness = createRiskCalculatorHarness(options);
+
+  return {
+    calculator: harness.calculator,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    defaultInput: harness.defaultInput,
+    createInput: harness.createInput,
+    createCalculator: harness.createCalculator,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+};

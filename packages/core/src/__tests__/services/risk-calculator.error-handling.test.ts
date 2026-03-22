@@ -19,7 +19,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { RiskCalculationError } from '../../errors/DomainErrors';
 import { SignalDirection } from '../../types/legacy';
 import {
-  createRiskCalculatorHarness,
+  createManagedRiskCalculatorContext,
   createRiskCalculatorInvalidInput,
   createRiskCalculatorTakeProfitConfigs,
   RiskCalculatorMockLogger,
@@ -30,17 +30,22 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let mockLogger: RiskCalculatorMockLogger;
   let errorHandler: ErrorHandler;
   let defaultInput: RiskCalculationInput;
-  let createInput: ReturnType<typeof createRiskCalculatorHarness>['createInput'];
-  let createCalculator: ReturnType<typeof createRiskCalculatorHarness>['createCalculator'];
+  let createInput: ReturnType<typeof createManagedRiskCalculatorContext>['createInput'];
+  let createCalculator: ReturnType<typeof createManagedRiskCalculatorContext>['createCalculator'];
+  let context: ReturnType<typeof createManagedRiskCalculatorContext>;
 
   beforeEach(() => {
-    const harness = createRiskCalculatorHarness();
-    calculator = harness.calculator;
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    defaultInput = harness.defaultInput;
-    createInput = harness.createInput;
-    createCalculator = harness.createCalculator;
+    context = createManagedRiskCalculatorContext();
+    calculator = context.calculator;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    defaultInput = context.defaultInput;
+    createInput = context.createInput;
+    createCalculator = context.createCalculator;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('THROW Strategy - Input Validation', () => {
