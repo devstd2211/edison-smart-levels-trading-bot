@@ -234,6 +234,33 @@ export function createLegacyCompoundInterestHarness(options: {
   return createLegacyCompoundInterestBoundFactory(options);
 }
 
+export interface ManagedCompoundInterestContext {
+  logger: LoggerService;
+  mockGetBalance: jest.Mock;
+  errorHandler: undefined;
+  defaultConfig: CompoundInterestConfig;
+  createCalculator: (factoryOptions?: {
+    configOverrides?: Partial<CompoundInterestConfig>;
+  }) => CompoundInterestCalculatorService;
+  cleanup: () => void;
+}
+
+export function createManagedLegacyCompoundInterestContext(options: {
+  configOverrides?: Partial<CompoundInterestConfig>;
+  logger?: LoggerService;
+  getBalance?: jest.Mock;
+} = {}): ManagedCompoundInterestContext {
+  const harness = createLegacyCompoundInterestHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      harness.mockGetBalance.mockReset();
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createCompoundInterestBoundFactory(options: {
   configOverrides?: Partial<CompoundInterestConfig>;
   logger?: LoggerService;

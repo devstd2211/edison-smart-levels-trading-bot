@@ -10,10 +10,11 @@ import { LoggerService } from '../../types/legacy';
 import {
   createCircuitBreakerFailingLogger,
   createCircuitBreakerConfig,
-  createCircuitBreakerErrorHandler,
-  createLegacyCircuitBreakerHarness,
   createCircuitBreakerMockLogger,
+  createLegacyCircuitBreakerHarness,
+  createManagedCircuitBreakerContext,
   createStandardCircuitBreakerHarness,
+  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
@@ -21,25 +22,25 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
   let config: CircuitBreakerConfig;
-  let createStandardService: ReturnType<typeof createStandardCircuitBreakerHarness>['createService'];
-  let createLegacyService: ReturnType<typeof createLegacyCircuitBreakerHarness>['createService'];
+  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
+  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
+  let context: ManagedCircuitBreakerContext;
 
   beforeEach(() => {
-    config = createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 });
-    logger = createCircuitBreakerMockLogger();
-
-    errorHandler = createCircuitBreakerErrorHandler(logger as LoggerService);
-    const harness = createStandardCircuitBreakerHarness({
-      configOverrides: config,
-      logger: logger as LoggerService,
-      errorHandler,
+    context = createManagedCircuitBreakerContext({
+      configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
+      logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
-    service = harness.service;
-    createStandardService = harness.createService;
-    createLegacyService = createLegacyCircuitBreakerHarness({
-      configOverrides: config,
-      logger: logger as LoggerService,
-    }).createService;
+    config = context.config;
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    service = context.service;
+    createStandardService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // =========================================================================

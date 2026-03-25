@@ -33,6 +33,10 @@ export interface ActionQueueHarness {
   ) => IAction[];
 }
 
+export interface ManagedActionQueueContext extends ActionQueueHarness {
+  cleanup: () => void;
+}
+
 export function createTestSignal(): Signal {
   return {
     direction: SignalDirection.LONG,
@@ -130,5 +134,21 @@ export function createActionQueueHarness(): ActionQueueHarness {
     createHandler: createTestHandler,
     enqueueActions,
     createActionBatch,
+  };
+}
+
+export function createManagedActionQueueContext(): ManagedActionQueueContext {
+  const harness = createActionQueueHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      Object.values(mockActionQueueLogger).forEach((mockFn) => {
+        if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
+          (mockFn as jest.Mock).mockClear();
+        }
+      });
+      jest.clearAllMocks();
+    },
   };
 }

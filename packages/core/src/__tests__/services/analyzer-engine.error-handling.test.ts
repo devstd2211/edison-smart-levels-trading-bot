@@ -29,9 +29,10 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createAnalyzerEngineMockStrategyConfig,
-  createAnalyzerEngineScenarioHarness,
+  createManagedAnalyzerEngineScenarioContext,
   createAnalyzerEngineService,
   type AnalyzerEngineMockLogger,
+  type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -80,13 +81,13 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       analyzerNames?: string[];
       candleCount?: number;
     },
-  ) => ReturnType<typeof createAnalyzerEngineScenarioHarness>;
+  ) => ManagedAnalyzerEngineContext;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     mockErrorHandler = createAnalyzerEngineMockErrorHandler();
     createScenario = (analyzers, options = {}) =>
-      createAnalyzerEngineScenarioHarness(analyzers, {
+      createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler ?? mockErrorHandler,
         registry: options.registry,

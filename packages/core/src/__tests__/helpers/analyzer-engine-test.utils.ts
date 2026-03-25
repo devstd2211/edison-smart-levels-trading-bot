@@ -260,3 +260,27 @@ export function createAnalyzerEngineScenarioHarness(
     config,
   };
 }
+
+export interface ManagedAnalyzerEngineContext {
+  logger: AnalyzerEngineMockLogger;
+  registry: AnalyzerRegistryService;
+  errorHandler: ErrorHandler | undefined;
+  service: AnalyzerEngineService;
+  candles: Candle[];
+  config: StrategyConfig;
+  cleanup: () => void;
+}
+
+export function createManagedAnalyzerEngineScenarioContext(
+  analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+  options: AnalyzerEngineScenarioOptions = {},
+): ManagedAnalyzerEngineContext {
+  const scenario = createAnalyzerEngineScenarioHarness(analyzers, options);
+
+  return {
+    ...scenario,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
+}

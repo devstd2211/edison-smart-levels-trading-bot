@@ -64,6 +64,41 @@ export function createCandleAggregatorHarness() {
   };
 }
 
+export interface ManagedCandleAggregatorContext {
+  service: CandleAggregatorService;
+  errorHandler: ErrorHandler;
+  mockLogger: CandleAggregatorMockLogger;
+  createService: (options?: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => CandleAggregatorService;
+  createStandardService: (options?: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => CandleAggregatorService;
+  createLegacyService: (options?: {
+    logger?: LoggerService;
+  }) => CandleAggregatorService;
+  cleanup: () => void;
+}
+
+export function createManagedCandleAggregatorContext(): ManagedCandleAggregatorContext {
+  const harness = createCandleAggregatorHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      Object.values(harness.mockLogger).forEach((mockFn) => {
+        if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
+          (mockFn as jest.Mock).mockClear();
+        }
+      });
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createCandleAggregatorErrorHandler(
   logger: CandleAggregatorMockLogger = createCandleAggregatorMockLogger(),
 ): ErrorHandler {

@@ -21,13 +21,14 @@ import {
   createAnomalyDetectionBoundFactory,
   createAnomalyDetectionMockLogger,
   createAnomalyDetectionService,
-  createAnomalyDetectionServiceHarness,
+  createManagedAnomalyDetectionContext,
   createAnomalyDetectionTrade,
   createAnomalyDetectionTradeSeries,
   createAnomalyDetectionValueSeries,
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
+  type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
 describe('AnomalyDetectionService - Error Handling', () => {
@@ -38,18 +39,16 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
-  let createService: ReturnType<typeof createAnomalyDetectionBoundFactory>['createStandardService'];
+  let createService: ManagedAnomalyDetectionContext['createStandardService'];
+  let context: ManagedAnomalyDetectionContext;
 
   beforeEach(() => {
-    ({ service, logger, errorHandler } = createAnomalyDetectionServiceHarness());
-    createService = createAnomalyDetectionBoundFactory({
-      logger,
-      errorHandler,
-    }).createStandardService;
+    context = createManagedAnomalyDetectionContext();
+    ({ service, logger, errorHandler, createStandardService: createService } = context);
   });
 
   afterEach(() => {
-    service.clearHistory();
+    context.cleanup();
   });
 
   // ========================================
@@ -329,7 +328,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const config: Partial<AnomalyDetectionConfig> = {
         whaleTradeThreshold: 3.0, // Lower threshold (300% vs default 500%)
       };
-      const { service: testService } = createAnomalyDetectionServiceHarness({ config, logger });
+      const { service: testService } = createManagedAnomalyDetectionContext({ config, logger });
 
       const trades: Trade[] = createAnomalyDetectionTradeSeries([
         { size: 0.1, price: 50000 },
@@ -341,7 +340,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const alerts = testService.detectWhaleActivity(trades);
 
       expect(alerts.length).toBeGreaterThan(0);
-      const whaleAlert = alerts.find((a) => a.type === 'single_large_trade');
+      const whaleAlert = alerts.find(
+        (a: ReturnType<AnomalyDetectionService['detectWhaleActivity']>[number]) => a.type === 'single_large_trade',
+      );
       expect(whaleAlert).toBeDefined();
       if (whaleAlert) {
         expect(whaleAlert.volumeUSDT).toBeGreaterThan(100000);
@@ -460,7 +461,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
     let serviceWithoutEH: AnomalyDetectionService;
 
     beforeEach(() => {
-      ({ service: serviceWithoutEH } = createAnomalyDetectionServiceHarness({ withErrorHandler: false }));
+      ({ service: serviceWithoutEH } = createManagedAnomalyDetectionContext({ withErrorHandler: false }));
     });
 
     afterEach(() => {

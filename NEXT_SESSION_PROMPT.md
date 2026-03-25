@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-25)
-- Completed the last remaining explicit managed-context typing follow-up in `packages/core/src/__tests__/services/*` for `smart-order-placement.error-handling`:
-  - routed all repeated local context declarations to the exported `ManagedSmartOrderPlacementContext` helper interface instead of suite-local `ReturnType<typeof createManagedSmartOrderPlacementContext>` ownership.
-  - kept cleanup/resource ownership inside the existing helper-managed context without reopening production behavior.
-  - reviewed `packages/core/src/services/smart-order-placement.service.ts` and left production code unchanged after review.
+- Completed a helper-managed context follow-up for `entry-confirmation.service`, `entry-confirmation.error-handling`, `ml-feature-extractor.service`, `ml-feature-extractor.error-handling`, `analyzer-engine.service`, and `analyzer-engine.error-handling`:
+  - added/exported managed helper contexts in the adjacent test utils and reused them across both service and error-handling suites.
+  - routed the target suites to helper-owned cleanup instead of local harness ownership.
+  - reviewed the adjacent production services and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/entry-confirmation.service.test.ts packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Shift to the next lifecycle/testability slice that still builds overly broad grouped services or keeps teardown ownership outside helper/context boundaries.
-- Favor adjacent suites where `createServices()` or grouped service construction can be narrowed without changing runtime behavior.
+- Continue with the next helper-backed lifecycle/testability slice around adjacent registry/feature-extraction/entry-orchestration suites that still own harness state locally.
+- After that, keep pushing toward broader grouped-service / `createServices()` narrowing only where no helper-managed cleanup path exists yet.

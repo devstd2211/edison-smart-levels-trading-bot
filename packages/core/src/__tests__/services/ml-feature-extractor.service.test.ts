@@ -6,17 +6,24 @@ import { MLFeatureExtractorService } from '../../services/ml-feature-extractor.s
 import { Candle } from '../../types/legacy';
 import {
   createMLFeatureCandleSequence,
-  createMLFeatureExtractorHarness,
+  createManagedMLFeatureExtractorContext,
   createMLFeatureFlatCandleSequence,
   createMLFeatureUniformCandleSequence,
   createMLFeatureVolumeImbalanceSequence,
+  type ManagedMLFeatureExtractorContext,
 } from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
+  let context: ManagedMLFeatureExtractorContext;
 
   beforeEach(() => {
-    ({ service } = createMLFeatureExtractorHarness());
+    context = createManagedMLFeatureExtractorContext();
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('extractFeatures', () => {

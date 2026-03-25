@@ -2,25 +2,31 @@ import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
 import { DeltaConfig, LoggerService, Signal, SignalDirection } from '../../types/legacy';
 import {
   createDeltaAnalyzerConfig,
-  createDeltaAnalyzerHarness,
+  createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerService,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTickBatch,
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
+  type ManagedDeltaAnalyzerContext,
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
   let logger: LoggerService;
   let config: DeltaConfig;
+  let context: ManagedDeltaAnalyzerContext;
 
   beforeEach(() => {
-    const harness = createDeltaAnalyzerHarness();
-    service = harness.service;
-    logger = harness.logger as unknown as LoggerService;
-    config = harness.config;
+    context = createManagedDeltaAnalyzerContext();
+    service = context.service;
+    logger = context.logger as unknown as LoggerService;
+    config = context.config;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('initialization', () => {

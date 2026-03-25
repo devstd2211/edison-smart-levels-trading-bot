@@ -77,6 +77,22 @@ export function createAnomalyDetectionServiceHarness(options: {
   };
 }
 
+export interface ManagedAnomalyDetectionContext {
+  service: AnomalyDetectionService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler | undefined;
+  createStandardService: (serviceOptions?: {
+    config?: Partial<AnomalyDetectionConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => AnomalyDetectionService;
+  createLegacyService: (serviceOptions?: {
+    config?: Partial<AnomalyDetectionConfig>;
+    logger?: LoggerService;
+  }) => AnomalyDetectionService;
+  cleanup: () => void;
+}
+
 export function createAnomalyDetectionService(options: {
   config?: Partial<AnomalyDetectionConfig>;
   logger?: LoggerService;
@@ -125,6 +141,33 @@ export function createAnomalyDetectionBoundFactory(options: {
         logger: serviceOptions.logger ?? logger,
         withErrorHandler: false,
       }),
+  };
+}
+
+export function createManagedAnomalyDetectionContext(options: {
+  config?: Partial<AnomalyDetectionConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedAnomalyDetectionContext {
+  const harness = createAnomalyDetectionServiceHarness(options);
+  const factory = createAnomalyDetectionBoundFactory({
+    config: options.config,
+    logger: harness.logger,
+    errorHandler: options.withErrorHandler === false ? undefined : options.errorHandler ?? harness.errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    createStandardService: factory.createStandardService,
+    createLegacyService: factory.createLegacyService,
+    cleanup: () => {
+      harness.service.clearHistory();
+      jest.clearAllMocks();
+    },
   };
 }
 

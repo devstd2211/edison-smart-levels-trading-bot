@@ -26,13 +26,12 @@ import {
 } from '../../errors/DomainErrors';
 import {
   asConfigValidatorInput,
-  createBoundLegacyConfigValidatorFactory,
-  createBoundStandardConfigValidatorFactory,
   createConfigValidatorConfig,
   createConfigValidatorLogger,
-  createStandardConfigValidatorHarness,
+  createManagedConfigValidatorContext,
   createStandardConfigValidatorService,
   omitConfigValidatorSection,
+  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
 // ============================================================================
@@ -40,15 +39,20 @@ import {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ReturnType<typeof createStandardConfigValidatorHarness>['logger'];
+  let logger: ManagedConfigValidatorContext['logger'];
   let errorHandler: ErrorHandler;
-  let createValidator: () => ConfigValidatorService;
+  let createValidator: ManagedConfigValidatorContext['createValidator'];
+  let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
+  let context: ManagedConfigValidatorContext;
   const validConfig = createConfigValidatorConfig();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    ({ logger, errorHandler } = createStandardConfigValidatorHarness());
-    createValidator = createBoundStandardConfigValidatorFactory({ logger, errorHandler });
+    context = createManagedConfigValidatorContext();
+    ({ logger, errorHandler, createValidator, createLegacyValidator } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================
@@ -76,7 +80,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.A3: Should work without ErrorHandler (backward compat)', () => {
-      const validator = createBoundLegacyConfigValidatorFactory({ logger })();
+      const validator = createLegacyValidator();
 
       expect(() => validator.validateAll(validConfig)).not.toThrow();
     });

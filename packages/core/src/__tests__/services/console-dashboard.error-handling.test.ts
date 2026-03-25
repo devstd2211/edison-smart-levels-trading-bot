@@ -11,19 +11,25 @@
 import { ConsoleDashboardService } from '../../services/console-dashboard.service';
 import {
   createConsoleDashboardPosition as createValidPosition,
-  createLegacyConsoleDashboardHarness,
-  createStandardConsoleDashboardHarness,
+  createManagedConsoleDashboardContext,
+  type ManagedConsoleDashboardContext,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ReturnType<typeof createStandardConsoleDashboardHarness>['createService'];
-  let createLegacyDashboard: ReturnType<typeof createLegacyConsoleDashboardHarness>['createService'];
+  let createDashboard: ManagedConsoleDashboardContext['createService'];
+  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
+  let context: ManagedConsoleDashboardContext;
 
   beforeEach(() => {
-    ({ createService: createDashboard } = createStandardConsoleDashboardHarness());
-    ({ createService: createLegacyDashboard } = createLegacyConsoleDashboardHarness());
+    context = createManagedConsoleDashboardContext();
+    createDashboard = context.createService;
+    createLegacyDashboard = context.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================
@@ -72,7 +78,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createStandardConsoleDashboardHarness({
+      ({ service } = createManagedConsoleDashboardContext({
         config: { enabled: false },
       }));
     });
@@ -116,7 +122,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createStandardConsoleDashboardHarness({
+      ({ service } = createManagedConsoleDashboardContext({
         config: { enabled: false },
       }));
     });
@@ -178,7 +184,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createStandardConsoleDashboardHarness({
+      ({ service } = createManagedConsoleDashboardContext({
         config: { enabled: false },
       }));
     });
@@ -283,7 +289,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
     let service: ConsoleDashboardService;
 
     beforeEach(() => {
-      ({ service } = createStandardConsoleDashboardHarness({
+      ({ service } = createManagedConsoleDashboardContext({
         config: { enabled: false },
       }));
     });

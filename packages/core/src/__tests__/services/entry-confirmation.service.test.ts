@@ -5,10 +5,11 @@ import type { EntryConfirmationManager } from '../../services/entry-confirmation
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEntryConfirmationConfig,
-  createEntryConfirmationHarness,
   createLegacyEntryConfirmationManager,
+  createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -22,9 +23,15 @@ import {
 describe('EntryConfirmationManager', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
+  let context: ManagedEntryConfirmationContext;
 
   beforeEach(() => {
-    ({ manager, logger } = createEntryConfirmationHarness({ withErrorHandler: false }));
+    context = createManagedEntryConfirmationContext({ withErrorHandler: false });
+    ({ manager, logger } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // TEST 1-2: Basic operations

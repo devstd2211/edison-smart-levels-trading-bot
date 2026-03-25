@@ -115,6 +115,11 @@ export function createMLFeatureExtractorHarness(options: {
   };
 }
 
+export interface ManagedMLFeatureExtractorContext extends MLFeatureExtractorHarness {
+  createService: (options?: MLFeatureExtractorServiceOptions) => MLFeatureExtractorService;
+  cleanup: () => void;
+}
+
 export function createMLFeatureExtractorService(options: MLFeatureExtractorServiceOptions = {}): MLFeatureExtractorService {
   if (options.withErrorHandler === false) {
     return new MLFeatureExtractorService(options.logger);
@@ -124,6 +129,26 @@ export function createMLFeatureExtractorService(options: MLFeatureExtractorServi
     options.logger,
     options.errorHandler ?? (options.logger ? new ErrorHandler(options.logger) : undefined),
   );
+}
+
+export function createManagedMLFeatureExtractorContext(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedMLFeatureExtractorContext {
+  const harness = createMLFeatureExtractorHarness(options);
+
+  return {
+    ...harness,
+    createService: (serviceOptions: MLFeatureExtractorServiceOptions = {}) =>
+      createMLFeatureExtractorService({
+        logger: serviceOptions.logger ?? harness.logger,
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler,
+      }),
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
 }
 
 export function createMLFeatureCandle(price: number, options: CandleOptions = {}): Candle {

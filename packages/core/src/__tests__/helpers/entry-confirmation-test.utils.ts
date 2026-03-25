@@ -59,6 +59,20 @@ export function createEntryConfirmationHarness(options: {
   };
 }
 
+export interface ManagedEntryConfirmationContext {
+  manager: EntryConfirmationManager;
+  logger: LoggerService;
+  config: EntryConfirmationConfig;
+  errorHandler: ErrorHandler | undefined;
+  createManager: (overrides?: {
+    config?: EntryConfirmationConfig;
+    configOverrides?: Partial<EntryConfirmationConfig>;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => EntryConfirmationManager;
+  cleanup: () => void;
+}
+
 export function createEntryConfirmationManager(options: {
   config?: EntryConfirmationConfig;
   configOverrides?: Partial<EntryConfirmationConfig>;
@@ -202,5 +216,28 @@ export function createEntryConfirmationFactory(options: {
             logger,
             errorHandler: overrides.errorHandler ?? errorHandler,
           }),
+  };
+}
+
+export function createManagedEntryConfirmationContext(options: {
+  configOverrides?: Partial<EntryConfirmationConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedEntryConfirmationContext {
+  const harness = createEntryConfirmationHarness(options);
+  const factory = createEntryConfirmationFactory({
+    config: harness.config,
+    logger: harness.logger,
+    withErrorHandler: options.withErrorHandler,
+    errorHandler: options.withErrorHandler === false ? undefined : options.errorHandler ?? harness.errorHandler,
+  });
+
+  return {
+    ...harness,
+    createManager: factory.createManager,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
   };
 }

@@ -18,23 +18,25 @@ import {
   createEnhancedExitConfig,
   createEnhancedExitErrorHandler,
   createEnhancedExitFailingLogger,
-  createEnhancedExitHarness,
+  createManagedEnhancedExitContext,
   createEnhancedExitInvalidRiskRewardInput,
+  type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: (options?: {
-    logger?: LoggerService;
-    config?: Partial<EnhancedExitConfig>;
-    withErrorHandler?: boolean;
-    errorHandler?: ErrorHandler;
-  }) => EnhancedExitService;
+  let createService: ManagedEnhancedExitContext['createService'];
+  let context: ManagedEnhancedExitContext;
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
-    ({ logger: mockLogger, errorHandler, createService } = createEnhancedExitHarness());
+    context = createManagedEnhancedExitContext();
+    ({ logger: mockLogger, errorHandler, createService } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

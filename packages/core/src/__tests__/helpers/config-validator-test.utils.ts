@@ -109,6 +109,37 @@ export const createStandardConfigValidatorHarness = () => {
   };
 };
 
+export interface ManagedConfigValidatorContext {
+  logger: LoggerService;
+  errorHandler: ErrorHandler & { handle: jest.Mock };
+  validator: ConfigValidatorService;
+  createValidator: () => ConfigValidatorService;
+  createLegacyValidator: () => ConfigValidatorService;
+  cleanup: () => void;
+}
+
+export const createManagedConfigValidatorContext = ({
+  logger = createConfigValidatorLogger(),
+  errorHandler = createConfigValidatorErrorHandler(),
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler & { handle: jest.Mock };
+} = {}): ManagedConfigValidatorContext => {
+  const validator = createStandardConfigValidatorService({ logger, errorHandler });
+
+  return {
+    logger,
+    errorHandler,
+    validator,
+    createValidator: createBoundStandardConfigValidatorFactory({ logger, errorHandler }),
+    createLegacyValidator: createBoundLegacyConfigValidatorFactory({ logger }),
+    cleanup: () => {
+      errorHandler.handle.mockClear();
+      jest.clearAllMocks();
+    },
+  };
+};
+
 export const createBoundStandardConfigValidatorFactory = ({
   logger = createConfigValidatorLogger(),
   errorHandler = createConfigValidatorErrorHandler(),

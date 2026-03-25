@@ -37,6 +37,10 @@ export type DeltaAnalyzerHarness = {
   config: DeltaConfig;
 };
 
+export interface ManagedDeltaAnalyzerContext extends DeltaAnalyzerHarness {
+  cleanup: () => void;
+}
+
 export const createDeltaAnalyzerErrorHandler = (
   logger: LoggerService = asDeltaAnalyzerLogger(createDeltaAnalyzerMockLogger()),
 ): ErrorHandler => new ErrorHandler(logger);
@@ -153,5 +157,28 @@ export const createDeltaAnalyzerHarness = (
     logger,
     errorHandler,
     config,
+  };
+};
+
+export const createManagedDeltaAnalyzerContext = (
+  options: {
+    config?: DeltaConfig;
+    configOverrides?: Partial<DeltaConfig>;
+    logger?: DeltaAnalyzerMockLogger;
+    errorHandler?: ErrorHandler;
+  } = {},
+): ManagedDeltaAnalyzerContext => {
+  const harness = createDeltaAnalyzerHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      Object.values(harness.logger).forEach((mockFn) => {
+        if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
+          (mockFn as jest.Mock).mockClear();
+        }
+      });
+      jest.clearAllMocks();
+    },
   };
 };

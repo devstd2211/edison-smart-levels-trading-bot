@@ -123,6 +123,20 @@ export function createLegacyCircuitBreakerHarness(options: {
   };
 }
 
+export interface ManagedCircuitBreakerContext {
+  service: CircuitBreakerService;
+  logger: LoggerService;
+  config: CircuitBreakerConfig;
+  errorHandler: ErrorHandler;
+  createStandardService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+  }) => CircuitBreakerService;
+  createLegacyService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+  }) => CircuitBreakerService;
+  cleanup: () => void;
+}
+
 export function createCircuitBreakerErrorHandler(
   logger: LoggerService = createCircuitBreakerLogger(),
 ): ErrorHandler {
@@ -166,4 +180,29 @@ export function createLegacyCircuitBreakerService(options: {
     logger: options.logger,
     withErrorHandler: false,
   });
+}
+
+export function createManagedCircuitBreakerContext(options: {
+  configOverrides?: Partial<CircuitBreakerConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedCircuitBreakerContext {
+  const standardHarness = createStandardCircuitBreakerHarness(options);
+  const legacyHarness = createLegacyCircuitBreakerHarness({
+    configOverrides: options.configOverrides,
+    logger: standardHarness.logger,
+  });
+
+  return {
+    service: standardHarness.service,
+    logger: standardHarness.logger,
+    config: standardHarness.config,
+    errorHandler: standardHarness.errorHandler,
+    createStandardService: standardHarness.createService,
+    createLegacyService: legacyHarness.createService,
+    cleanup: () => {
+      jest.useRealTimers();
+      jest.clearAllMocks();
+    },
+  };
 }

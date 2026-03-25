@@ -13,8 +13,10 @@ import {
   createDeltaAnalyzerConfig,
   createDeltaAnalyzerHarness,
   createDeltaAnalyzerService,
+  createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
+  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
@@ -26,9 +28,15 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: DeltaAnalyzerMockLogger;
+  let context: ManagedDeltaAnalyzerContext;
 
   beforeEach(() => {
-    ({ logger: mockLogger, errorHandler } = createDeltaAnalyzerHarness());
+    context = createManagedDeltaAnalyzerContext();
+    ({ logger: mockLogger, errorHandler } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================
@@ -87,7 +95,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
-      ({ service } = createDeltaAnalyzerHarness({
+      ({ service } = createManagedDeltaAnalyzerContext({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },

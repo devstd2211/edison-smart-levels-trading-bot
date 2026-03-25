@@ -20,13 +20,13 @@ import type { AnalyzerRegistryService } from '../../services/analyzer-registry.s
 import type { IAnalyzer } from '../../types/analyzer';
 import {
   createAnalyzerEngineFailingRegistry,
-  createAnalyzerEngineHarness,
   createAnalyzerEngineInvalidSignalAnalyzer,
   createAnalyzerEngineMockAnalyzer,
   createAnalyzerEngineMockLogger,
-  createAnalyzerEngineScenarioHarness,
   createAnalyzerEngineService,
+  createManagedAnalyzerEngineScenarioContext,
   type AnalyzerEngineMockLogger,
+  type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -43,12 +43,12 @@ describe('AnalyzerEngineService', () => {
       analyzerNames?: string[];
       candleCount?: number;
     },
-  ) => ReturnType<typeof createAnalyzerEngineScenarioHarness>;
+  ) => ManagedAnalyzerEngineContext;
 
   beforeEach(() => {
     mockLogger = createAnalyzerEngineMockLogger();
     createScenario = (analyzers, options = {}) =>
-      createAnalyzerEngineScenarioHarness(analyzers, {
+      createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: mockLogger,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,

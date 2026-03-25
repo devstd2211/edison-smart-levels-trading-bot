@@ -8,11 +8,12 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 import {
   createEntryConfirmationConfig,
-  createEntryConfirmationHarness,
   createLegacyEntryConfirmationManager,
+  createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -29,9 +30,15 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
+  let context: ManagedEntryConfirmationContext;
 
   beforeEach(() => {
-    ({ manager, logger, errorHandler } = createEntryConfirmationHarness());
+    context = createManagedEntryConfirmationContext();
+    ({ manager, logger, errorHandler } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // TEST 1-3: Logger failure SKIP strategy

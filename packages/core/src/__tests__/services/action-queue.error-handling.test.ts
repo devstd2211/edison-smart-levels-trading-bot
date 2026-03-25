@@ -6,24 +6,29 @@
 import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
-  createActionQueueHarness,
+  createManagedActionQueueContext,
+  type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
-  let createAction: ReturnType<typeof createActionQueueHarness>['createAction'];
-  let createHandler: ReturnType<typeof createActionQueueHarness>['createHandler'];
-  let enqueueActions: ReturnType<typeof createActionQueueHarness>['enqueueActions'];
-  let createActionBatch: ReturnType<typeof createActionQueueHarness>['createActionBatch'];
+  let createAction: ManagedActionQueueContext['createAction'];
+  let createHandler: ManagedActionQueueContext['createHandler'];
+  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
+  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
+  let context: ManagedActionQueueContext;
 
   beforeEach(() => {
-    const harness = createActionQueueHarness();
-    service = harness.service;
-    createAction = harness.createAction;
-    createHandler = harness.createHandler;
-    enqueueActions = harness.enqueueActions;
-    createActionBatch = harness.createActionBatch;
-    jest.clearAllMocks();
+    context = createManagedActionQueueContext();
+    service = context.service;
+    createAction = context.createAction;
+    createHandler = context.createHandler;
+    enqueueActions = context.enqueueActions;
+    createActionBatch = context.createActionBatch;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

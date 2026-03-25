@@ -5,7 +5,8 @@
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
 import {
   createCircuitBreakerConfig,
-  createStandardCircuitBreakerHarness,
+  createManagedCircuitBreakerContext,
+  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
 // ============================================================================
@@ -15,11 +16,18 @@ import {
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
-  let createService: ReturnType<typeof createStandardCircuitBreakerHarness>['createService'];
+  let createService: ManagedCircuitBreakerContext['createStandardService'];
+  let context: ManagedCircuitBreakerContext;
 
   beforeEach(() => {
     defaultConfig = createCircuitBreakerConfig();
-    ({ service, createService } = createStandardCircuitBreakerHarness({ configOverrides: defaultConfig }));
+    context = createManagedCircuitBreakerContext({ configOverrides: defaultConfig });
+    service = context.service;
+    createService = context.createStandardService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // TEST 1-2: Initial state

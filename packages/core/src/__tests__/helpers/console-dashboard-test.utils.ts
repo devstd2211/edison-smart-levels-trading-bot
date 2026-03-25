@@ -133,6 +133,19 @@ export function createStandardConsoleDashboardHarness(options: {
   };
 }
 
+export interface ManagedConsoleDashboardContext {
+  service: ConsoleDashboardService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  createService: (serviceOptions?: {
+    config?: DashboardConfigInput;
+  }) => ConsoleDashboardService;
+  createLegacyService: (serviceOptions?: {
+    config?: DashboardConfigInput;
+  }) => ConsoleDashboardService;
+  cleanup: () => void;
+}
+
 export function createLegacyConsoleDashboardHarness(options: {
   config?: DashboardConfigInput;
   logger?: LoggerService;
@@ -152,6 +165,29 @@ export function createLegacyConsoleDashboardHarness(options: {
       createLegacyConsoleDashboardService({
         config: serviceOptions.config,
       }),
+  };
+}
+
+export function createManagedConsoleDashboardContext(options: {
+  config?: DashboardConfigInput;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedConsoleDashboardContext {
+  const standardHarness = createStandardConsoleDashboardHarness(options);
+  const legacyHarness = createLegacyConsoleDashboardHarness({
+    config: options.config,
+    logger: standardHarness.logger,
+  });
+
+  return {
+    service: standardHarness.service,
+    logger: standardHarness.logger,
+    errorHandler: standardHarness.errorHandler,
+    createService: standardHarness.createService,
+    createLegacyService: legacyHarness.createService,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
   };
 }
 

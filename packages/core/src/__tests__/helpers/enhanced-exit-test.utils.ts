@@ -125,6 +125,35 @@ export function createEnhancedExitHarness(options: {
   };
 }
 
+export interface ManagedEnhancedExitContext {
+  service: EnhancedExitService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler | undefined;
+  createService: (options?: {
+    logger?: LoggerService;
+    config?: Partial<EnhancedExitConfig>;
+    withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => EnhancedExitService;
+  cleanup: () => void;
+}
+
+export function createManagedEnhancedExitContext(options: {
+  logger?: LoggerService;
+  config?: Partial<EnhancedExitConfig>;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedEnhancedExitContext {
+  const harness = createEnhancedExitHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createEnhancedExitService(options: {
   logger?: LoggerService;
   config?: Partial<EnhancedExitConfig>;
