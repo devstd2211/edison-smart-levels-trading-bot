@@ -52,3 +52,19 @@ export function createStrategyCacheHarness(): {
     createCache,
   };
 }
+
+export function createManagedStrategyCacheContext(): {
+  cache: StrategyOrchestratorCacheService;
+  logger: LoggerService;
+  createCache: (logger?: LoggerService) => StrategyOrchestratorCacheService;
+  cleanup: () => void;
+} {
+  const harness = createStrategyCacheHarness();
+
+  return {
+    ...harness,
+    cleanup() {
+      jest.restoreAllMocks();
+    },
+  };
+}

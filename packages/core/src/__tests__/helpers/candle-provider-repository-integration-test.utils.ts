@@ -132,3 +132,22 @@ export function createCandleProviderRepositoryIntegrationHarness(): {
     logger,
   };
 }
+
+export function createManagedCandleProviderRepositoryIntegrationContext(): {
+  provider: CandleProvider;
+  exchange: IntegrationMockExchange;
+  repository: IMarketDataRepository;
+  timeframeProvider: TimeframeProvider;
+  logger: CandleProviderMockLogger & LoggerService;
+  cleanup: () => void;
+} {
+  const harness = createCandleProviderRepositoryIntegrationHarness();
+
+  return {
+    ...harness,
+    cleanup() {
+      harness.provider.clearAllCaches();
+      jest.restoreAllMocks();
+    },
+  };
+}

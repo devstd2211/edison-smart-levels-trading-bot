@@ -32,6 +32,13 @@ export interface EventDeduplicationHarness {
   ) => EventDeduplicationService;
 }
 
+export interface ManagedEventDeduplicationContext {
+  harness: EventDeduplicationHarness;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  cleanup: () => void;
+}
+
 export function createEventDeduplicationLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -207,6 +214,19 @@ export function createEventDeduplicationHarness(): EventDeduplicationHarness {
       logger: customLogger,
       errorHandler: customErrorHandler,
     }),
+  };
+}
+
+export function createManagedEventDeduplicationContext(): ManagedEventDeduplicationContext {
+  const harness = createEventDeduplicationHarness();
+
+  return {
+    harness,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    cleanup() {
+      jest.restoreAllMocks();
+    },
   };
 }
 

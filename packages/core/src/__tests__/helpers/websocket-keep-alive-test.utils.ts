@@ -125,6 +125,7 @@ export function createManagedWebSocketKeepAliveContext(): ManagedWebSocketKeepAl
     websocket: harness.createWebSocket(),
     cleanup(service) {
       service?.stop();
+      jest.restoreAllMocks();
       jest.runOnlyPendingTimers();
       jest.useRealTimers();
     },

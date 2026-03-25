@@ -16,6 +16,14 @@ export type IndicatorCacheMockRepository = IMarketDataRepository & {
   clear: jest.Mock;
 };
 
+export interface ManagedIndicatorCacheContext {
+  logger: LoggerService;
+  repository: IndicatorCacheMockRepository;
+  errorHandler: ErrorHandler;
+  cache: IndicatorCacheService;
+  cleanup: () => void;
+}
+
 export function createIndicatorCacheMockLogger(
   overrides: Partial<IndicatorCacheMockLogger> = {},
 ): LoggerService {
@@ -98,6 +106,22 @@ export function createIndicatorCacheHarness(options?: {
     repository,
     errorHandler: errorHandler ?? new ErrorHandler(logger),
     cache,
+  };
+}
+
+export function createManagedIndicatorCacheContext(options?: {
+  logger?: LoggerService;
+  repository?: IndicatorCacheMockRepository;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}): ManagedIndicatorCacheContext {
+  const context = createIndicatorCacheHarness(options);
+
+  return {
+    ...context,
+    cleanup() {
+      jest.restoreAllMocks();
+    },
   };
 }
 

@@ -16,8 +16,8 @@ import { EventDeduplicationService } from '../../services/event-deduplication.se
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
-  createEventDeduplicationHarness,
   createEventDeduplicationErrorHandler,
+  createManagedEventDeduplicationContext,
   createLegacyEventDeduplicationService,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
@@ -41,11 +41,17 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
   let harness: EventDeduplicationHarness;
   let createService: EventDeduplicationHarness['createServiceWithDefaults'];
+  let context: ReturnType<typeof createManagedEventDeduplicationContext>;
 
   beforeEach(() => {
-    harness = createEventDeduplicationHarness();
-    ({ logger, errorHandler } = harness);
+    context = createManagedEventDeduplicationContext();
+    harness = context.harness;
+    ({ logger, errorHandler } = context);
     createService = harness.createServiceWithDefaults;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================

@@ -20,7 +20,7 @@ import {
   asIndicatorCacheKey,
   createIndicatorCacheFailingLogger,
   createIndicatorCacheFailingRepository,
-  createIndicatorCacheHarness,
+  createManagedIndicatorCacheContext,
   createLegacyIndicatorCache,
   createStandardIndicatorCache,
   type IndicatorCacheMockRepository,
@@ -31,10 +31,15 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
   let cache: IndicatorCacheService;
+  let context: ReturnType<typeof createManagedIndicatorCacheContext>;
 
   beforeEach(() => {
-    ({ logger, errorHandler, repository: mockRepo, cache } =
-      createIndicatorCacheHarness());
+    context = createManagedIndicatorCacheContext();
+    ({ logger, errorHandler, repository: mockRepo, cache } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================
@@ -155,7 +160,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     it('should skip debug logging failures in get()', () => {
       const failingLogger = createIndicatorCacheFailingLogger('debug');
 
-      const repo = createIndicatorCacheHarness({
+      const repo = createManagedIndicatorCacheContext({
         repository: {
           ...createIndicatorCacheFailingRepository('clear', 'unused'),
           getIndicator: jest.fn().mockReturnValue(75),

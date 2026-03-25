@@ -11,17 +11,22 @@ import {
   createMockStrategyOrchestrator,
   createMockStrategyOrchestrators,
   seedStrategyCache,
-  createStrategyCacheHarness,
+  createManagedStrategyCacheContext,
 } from '../helpers/multi-strategy-cache-test.utils';
 
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
+  let context: ReturnType<typeof createManagedStrategyCacheContext>;
 
   beforeEach(() => {
-    const harness = createStrategyCacheHarness();
-    logger = harness.logger;
-    cache = harness.cache;
+    context = createManagedStrategyCacheContext();
+    logger = context.logger;
+    cache = context.cache;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Initialization', () => {

@@ -9,7 +9,7 @@ import {
   createEventDeduplicationBoundFactory,
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
-  createEventDeduplicationHarness,
+  createManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
   type EventDeduplicationHarness,
@@ -24,13 +24,19 @@ describe('EventDeduplicationService', () => {
   let logger: LoggerService;
   let harness: EventDeduplicationHarness;
   let createService: ReturnType<typeof createEventDeduplicationBoundFactory>['createStandardService'];
+  let context: ReturnType<typeof createManagedEventDeduplicationContext>;
 
   beforeEach(() => {
-    harness = createEventDeduplicationHarness();
-    logger = harness.logger;
+    context = createManagedEventDeduplicationContext();
+    harness = context.harness;
+    logger = context.logger;
     createService = createEventDeduplicationBoundFactory({
       logger,
     }).createStandardService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('isDuplicate', () => {

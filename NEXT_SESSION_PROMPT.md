@@ -28,15 +28,15 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-22)
-- Completed a managed-context lifecycle follow-up for `real-time-risk-monitor.service`, `real-time-risk-monitor.error-handling`, and `real-time-risk-monitor.cache-invalidation`:
-  - extended `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts` with helper-owned cleanup for lifecycle stop plus mock restoration.
-  - routed the corresponding suites through that managed harness instead of local `jest.clearAllMocks()` and ad hoc monitor shutdown.
-  - reviewed `packages/core/src/services/real-time-risk-monitor.service.ts` and left production code unchanged after review.
+## Last Completed (2026-03-25)
+- Completed a managed-context follow-up for `websocket-keep-alive.service`, `multi-strategy.cache`, and `candle-provider.repository-integration`:
+  - extended `packages/core/src/__tests__/helpers/websocket-keep-alive-test.utils.ts`, `packages/core/src/__tests__/helpers/multi-strategy-cache-test.utils.ts`, and `packages/core/src/__tests__/helpers/candle-provider-repository-integration-test.utils.ts` with helper-owned managed cleanup.
+  - routed the corresponding suites through those managed contexts instead of local harness bootstrap and ad hoc teardown.
+  - reviewed `packages/core/src/services/websocket-keep-alive.service.ts`, `packages/core/src/services/multi-strategy/strategy-orchestrator-cache.service.ts`, and `packages/core/src/providers/candle.provider.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts packages/core/src/__tests__/services/multi-strategy.cache.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep local harness ownership, repeated bootstrap, or ad hoc cleanup around the remaining monitoring/risk slice.
-- Favor shared managed test contexts and helper-owned teardown in follow-ups adjacent to this batch, especially `real-time-risk-monitor` neighbors such as remaining monitoring/cache/lifecycle suites or any untouched risk-adjacent service tests before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next adjacent suites that still keep local harness ownership, repeated bootstrap, or ad hoc cleanup around the remaining monitoring/cache slice.
+- Favor shared managed test contexts and helper-owned teardown in follow-ups adjacent to this batch, especially remaining cache-centric neighbors such as `candle-provider.error-handling` or other untouched monitoring/cache suites before reopening lower-signal constructor-only cleanup.

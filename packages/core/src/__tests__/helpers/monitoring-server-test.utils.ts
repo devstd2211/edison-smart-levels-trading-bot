@@ -48,6 +48,10 @@ export interface MonitoringServerTestContext {
   stop: () => Promise<void>;
 }
 
+export interface ManagedMonitoringServerContext extends MonitoringServerTestContext {
+  cleanup: () => Promise<void>;
+}
+
 export function createMonitoringServerHarness(): MonitoringServerHarness {
   const logger = {
     info: jest.fn(),
@@ -181,5 +185,17 @@ export function createMonitoringServerTestContext(): MonitoringServerTestContext
     errorHandler: harness.errorHandler,
     trackedServers,
     stop: () => harness.stopTrackedServers(trackedServers),
+  };
+}
+
+export function createManagedMonitoringServerContext(): ManagedMonitoringServerContext {
+  const context = createMonitoringServerTestContext();
+
+  return {
+    ...context,
+    cleanup: async () => {
+      jest.restoreAllMocks();
+      await context.stop();
+    },
   };
 }

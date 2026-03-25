@@ -10,7 +10,7 @@ import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import type { CandleProvider } from '../../providers/candle.provider';
 import {
-  createCandleProviderRepositoryIntegrationHarness,
+  createManagedCandleProviderRepositoryIntegrationContext,
   createIntegrationClosedCandle,
   createIntegrationRapidCandles,
   getRepositoryCandlesByRole,
@@ -23,14 +23,19 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
   let logger: LoggerService;
+  let context: ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>;
 
   beforeEach(() => {
-    const harness = createCandleProviderRepositoryIntegrationHarness();
-    provider = harness.provider;
-    exchange = harness.exchange;
-    repository = harness.repository;
-    timeframeProvider = harness.timeframeProvider;
-    logger = harness.logger;
+    context = createManagedCandleProviderRepositoryIntegrationContext();
+    provider = context.provider;
+    exchange = context.exchange;
+    repository = context.repository;
+    timeframeProvider = context.timeframeProvider;
+    logger = context.logger;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Initialization', () => {

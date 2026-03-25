@@ -20,11 +20,11 @@ import type { HealthCheckService } from '../../services/health-check.service';
 import type { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  createMonitoringServerTestContext,
+  createManagedMonitoringServerContext,
   createStandardMonitoringServer,
   createStartedMonitoringServer,
   type MonitoringServerHarness,
-  type MonitoringServerTestContext,
+  type ManagedMonitoringServerContext,
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
@@ -35,10 +35,10 @@ describe('MonitoringServer', () => {
   let errorHandler: ErrorHandler;
   let harness: MonitoringServerHarness;
   let trackedServers: MonitoringServer[];
-  let context: MonitoringServerTestContext;
+  let context: ManagedMonitoringServerContext;
 
   beforeEach(() => {
-    context = createMonitoringServerTestContext();
+    context = createManagedMonitoringServerContext();
     harness = context.harness;
     trackedServers = context.trackedServers;
     mockLogger = context.logger;
@@ -48,7 +48,7 @@ describe('MonitoringServer', () => {
   });
 
   afterEach(async () => {
-    await context.stop();
+    await context.cleanup();
   });
 
   // ==========================================================================
