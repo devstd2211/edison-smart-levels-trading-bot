@@ -11,6 +11,7 @@ import {
   createStrategyLoaderAnalyzer,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
+  type ManagedStrategyLoaderContext,
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
 
@@ -18,7 +19,7 @@ describe('StrategyLoaderService', () => {
   let tempDir: string;
   let loader: StrategyLoaderService;
   let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
-  let context: Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
+  let context: ManagedStrategyLoaderContext;
 
   beforeEach(async () => {
     context = await createManagedStrategyLoaderContext();

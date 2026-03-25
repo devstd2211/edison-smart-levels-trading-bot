@@ -23,14 +23,15 @@ import {
 import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
-  createBotInitializerTestContext,
+  createManagedBotInitializerTestContext,
+  type ManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-type MockBotServices = ReturnType<typeof createBotInitializerTestContext>['services'];
+type MockBotServices = ManagedBotInitializerTestContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
@@ -40,7 +41,7 @@ type BotInitializerInternals = {
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let context: ReturnType<typeof createBotInitializerTestContext>;
+  let context: ManagedBotInitializerTestContext;
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
   let mockConfig: Config;
@@ -57,7 +58,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   };
 
   beforeEach(() => {
-    context = createBotInitializerTestContext({
+    context = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
     mockServices = context.services as MockBotServices;
@@ -69,7 +70,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   });
 
   afterEach(async () => {
-    await context.shutdown();
+    await context.cleanup();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {

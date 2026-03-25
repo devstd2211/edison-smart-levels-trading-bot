@@ -26,6 +26,7 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
+  type ManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
@@ -36,9 +37,9 @@ describe('DynamicPositionSizerService', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
-  let context: ReturnType<typeof createManagedDynamicPositionSizerContext>;
-  let createBrokenService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createNoHandlerService'];
+  let context: ManagedDynamicPositionSizerContext;
+  let createBrokenService: ManagedDynamicPositionSizerContext['createBrokenService'];
+  let createNoHandlerService: ManagedDynamicPositionSizerContext['createNoHandlerService'];
   let createService: (options?: {
     config?: SizingConfig;
     logger?: LoggerService;

@@ -20,6 +20,7 @@ export interface ManagedTrackedServicesContext {
   createInitializerHarness: (
     overrides?: Parameters<typeof createTrackedLifecycleHarness>[1],
   ) => ReturnType<typeof createTrackedInitializerHarness>;
+  reset: () => void;
 }
 
 export function trackCreatedServices(
@@ -62,6 +63,9 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
   return {
     trackedServices,
     cleanup: () => shutdownTrackedServices(trackedServices),
+    reset: () => {
+      trackedServices.length = 0;
+    },
     createTradingBotHarness: (overrides = {}) =>
       createTrackedTradingBotHarness(trackedServices, overrides),
     createInitializerHarness: (overrides = {}) =>
@@ -85,7 +89,7 @@ export function createMinimalLifecycleConfig(): Config {
       takeProfits: [0.5, 1, 1.5],
       positionSizeUsdt: 100,
     },
-    logging: { level: 'info', logDir: './logs' },
+    logging: { level: 'info', logDir: './logs', logToFile: false },
     telegram: { enabled: false },
     timeframes: {
       entry: { interval: '1', candleLimit: 1000, enabled: true },

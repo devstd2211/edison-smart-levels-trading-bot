@@ -29,7 +29,7 @@ import { ActionType } from '../../types/legacy';
 import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
-  createGracefulShutdownTestContext,
+  createManagedGracefulShutdownTestContext,
   createStandardGracefulShutdownManager,
   getGracefulShutdownInternals,
   getRegisteredShutdownHandler,
@@ -37,6 +37,7 @@ import {
   defaultGracefulShutdownConfig,
   registerGracefulShutdownHandlers,
   setupGracefulShutdownFsMocks,
+  type ManagedGracefulShutdownTestContext,
 } from '../helpers/graceful-shutdown-test.utils';
 
 // Mock fs and path modules
@@ -55,7 +56,7 @@ jest.spyOn(process, 'exit').mockImplementation(
 );
 
 describe('GracefulShutdownManager', () => {
-  let context: ReturnType<typeof createGracefulShutdownTestContext>;
+  let context: ManagedGracefulShutdownTestContext;
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
@@ -68,13 +69,17 @@ describe('GracefulShutdownManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks();
-    context = createGracefulShutdownTestContext();
+    context = createManagedGracefulShutdownTestContext();
     mockPositionLifecycleService = context.mocks.positionLifecycleService;
     mockActionQueue = context.mocks.actionQueue;
     mockExchange = context.mocks.exchange;
     mockLogger = context.mocks.logger;
     mockEventBus = context.mocks.eventBus;
     shutdownManager = context.manager;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Signal Handler Registration', () => {

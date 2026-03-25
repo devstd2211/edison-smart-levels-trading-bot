@@ -244,6 +244,10 @@ export interface BotInitializerTestContext {
   shutdown: () => Promise<void>;
 }
 
+export interface ManagedBotInitializerTestContext extends BotInitializerTestContext {
+  cleanup: () => Promise<void>;
+}
+
 export function createBotInitializerTestContext(options: {
   services?: IBotInitializerServices;
   config?: Config;
@@ -279,4 +283,21 @@ export function createBotInitializerTestContext(options: {
   context.rebuild();
 
   return context;
+}
+
+export function createManagedBotInitializerTestContext(options: {
+  services?: IBotInitializerServices;
+  config?: Config;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedBotInitializerTestContext {
+  const context = createBotInitializerTestContext(options);
+
+  return {
+    ...context,
+    cleanup: async () => {
+      await context.shutdown();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
 }

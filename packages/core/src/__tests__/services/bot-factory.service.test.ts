@@ -13,45 +13,44 @@ import {
   createTrackedBotFactoryServices,
 } from '../helpers/bot-factory-test.utils';
 import {
-  createTrackedLifecycleHarness,
+  createManagedTrackedServicesContext,
   createTrackedServices,
-  shutdownTrackedServices,
   trackCreatedServices,
-  type TrackedServiceState,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
-  let trackedServices: TrackedServiceState[];
+  let context: ManagedTrackedServicesContext;
 
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    trackedServices = [];
+    context = createManagedTrackedServicesContext();
   });
 
   afterEach(async () => {
-    await shutdownTrackedServices(trackedServices);
+    await context.cleanup();
   });
 
   describe('Basic Factory Operations', () => {
     test('T1: Should create services state', () => {
-      const services = createTrackedServices(trackedServices, config);
+      const services = createTrackedServices(context.trackedServices, config);
       expect(services).toBeDefined();
       expect(services.logger).toBeDefined();
     });
 
     test('T2: Should create multiple independent instances', () => {
-      const services1 = createTrackedServices(trackedServices, config);
-      const services2 = createTrackedServices(trackedServices, config);
+      const services1 = createTrackedServices(context.trackedServices, config);
+      const services2 = createTrackedServices(context.trackedServices, config);
 
       expect(services1).not.toBe(services2);
       expect(services1.logger).not.toBe(services2.logger);
     });
 
     test('T3: Should initialize all required services', () => {
-      const services = createTrackedServices(trackedServices, config);
+      const services = createTrackedServices(context.trackedServices, config);
 
       expect(services.logger).toBeDefined();
       expect(services.coreServices.eventBus).toBeDefined();
@@ -61,7 +60,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T4: Should have proper service type structure', () => {
-      const services = createTrackedServices(trackedServices, config);
+      const services = createTrackedServices(context.trackedServices, config);
 
       // Check function types
       expect(typeof services.logger.info).toBe('function');
@@ -83,7 +82,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     };
 
     test('T5: Should allow exchange service override', () => {
-      const services = createTrackedServices(trackedServices, config, {
+      const services = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange as unknown as IExchange,
       });
 
@@ -92,7 +91,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T6: Should allow telegram service override', () => {
-      const services = createTrackedServices(trackedServices, config, {
+      const services = createTrackedServices(context.trackedServices, config, {
         telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
 
@@ -101,7 +100,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T7: Should allow multiple service overrides', () => {
-      const services = createTrackedServices(trackedServices, config, {
+      const services = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange as unknown as IExchange,
         telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
@@ -111,11 +110,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T8: Override should not affect other instances', () => {
-      const services1 = createTrackedServices(trackedServices, config, {
+      const services1 = createTrackedServices(context.trackedServices, config, {
         telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
 
-      const services2 = createTrackedServices(trackedServices, config, {});
+      const services2 = createTrackedServices(context.trackedServices, config, {});
 
       expect(services1.coreServices.telegram).toBe(mockTelegram);
       expect(services2.coreServices.telegram).not.toBe(mockTelegram);
@@ -129,7 +128,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
         isConnected: jest.fn(() => true),
       };
 
-      const services = createTrackedServices(trackedServices, config, {
+      const services = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange as unknown as IExchange,
       });
 
@@ -138,7 +137,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     });
 
     test('T10: createServices with empty options creates normal services', () => {
-      const services = createTrackedBotFactoryServices(trackedServices, config);
+      const services = createTrackedBotFactoryServices(context.trackedServices, config);
 
       expect(services).toBeDefined();
       expect(services.logger).toBeDefined();
@@ -162,7 +161,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
         })),
       };
 
-      const services = createTrackedServices(trackedServices, config, {
+      const services = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange as unknown as IExchange,
       });
 
@@ -173,11 +172,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const exchangeA = { name: 'BybitMock', isConnected: jest.fn(() => true) };
       const exchangeB = { name: 'BinanceMock', isConnected: jest.fn(() => true) };
 
-      const servicesA = createTrackedServices(trackedServices, config, {
+      const servicesA = createTrackedServices(context.trackedServices, config, {
         bybitService: exchangeA as unknown as IExchange,
       });
 
-      const servicesB = createTrackedServices(trackedServices, config, {
+      const servicesB = createTrackedServices(context.trackedServices, config, {
         bybitService: exchangeB as unknown as IExchange,
       });
 
@@ -189,11 +188,11 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const mockExchange1 = { name: 'Exchange1' };
       const mockExchange2 = { name: 'Exchange2' };
 
-      const services1 = createTrackedServices(trackedServices, config, {
+      const services1 = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange1 as unknown as IExchange,
       });
 
-      const services2 = createTrackedServices(trackedServices, config, {
+      const services2 = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange2 as unknown as IExchange,
       });
 
@@ -205,20 +204,20 @@ describe('BotFactory - DI Container for BotServices state', () => {
   describe('Error Handling', () => {
     test('T14: Should handle empty override options', () => {
       expect(() => {
-        trackCreatedServices(trackedServices, config, createServices(config, {}));
+        trackCreatedServices(context.trackedServices, config, createServices(config, {}));
       }).not.toThrow();
     });
 
     test('T15: Should handle undefined overrides', () => {
       expect(() => {
-        trackCreatedServices(trackedServices, config, createServices(config, undefined));
+        trackCreatedServices(context.trackedServices, config, createServices(config, undefined));
       }).not.toThrow();
     });
 
     test('T16: Should create valid services with partial overrides', () => {
       const mockExchange = { name: 'MockExchange' };
 
-      const services = createTrackedServices(trackedServices, config, {
+      const services = createTrackedServices(context.trackedServices, config, {
         bybitService: mockExchange as unknown as IExchange,
       });
 

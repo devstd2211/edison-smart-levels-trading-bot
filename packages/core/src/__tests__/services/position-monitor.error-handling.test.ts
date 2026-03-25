@@ -26,6 +26,7 @@ import {
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
+  type ManagedPositionMonitorContext,
 } from '../helpers/position-monitor-test.utils';
 
 // ============================================================================
@@ -34,12 +35,12 @@ import {
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let monitor: PositionMonitorService;
-  let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
-  let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
-  let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
-  let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
-  let positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
-  let context: ReturnType<typeof createManagedPositionMonitorContext>;
+  let mockBybit: ManagedPositionMonitorContext['mockBybit'];
+  let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
+  let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
+  let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
+  let positionHarness: ManagedPositionMonitorContext['positionHarness'];
+  let context: ManagedPositionMonitorContext;
 
   beforeEach(() => {
     context = createManagedPositionMonitorContext({

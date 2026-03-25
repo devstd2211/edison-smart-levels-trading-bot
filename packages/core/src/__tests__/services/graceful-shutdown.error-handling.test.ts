@@ -21,12 +21,13 @@ import { GracefulShutdownConfig, LiveTradingEventType } from '../../types/legacy
 import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
-  createGracefulShutdownTestContext,
+  createManagedGracefulShutdownTestContext,
   createMockShutdownPosition,
   createStandardGracefulShutdownManager,
   defaultGracefulShutdownConfig,
   getGracefulShutdownInternals,
   setupGracefulShutdownFsMocks,
+  type ManagedGracefulShutdownTestContext,
 } from '../helpers/graceful-shutdown-test.utils';
 
 jest.mock('fs');
@@ -44,7 +45,7 @@ const mockExit = jest.fn(() => {
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
-  let context: ReturnType<typeof createGracefulShutdownTestContext>;
+  let context: ManagedGracefulShutdownTestContext;
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
@@ -57,7 +58,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
-    context = createGracefulShutdownTestContext({
+    context = createManagedGracefulShutdownTestContext({
       position: createMockShutdownPosition({ reason: 'error-handling-test' }),
     });
     mockPositionLifecycleService =
@@ -67,6 +68,10 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     mockLogger = context.mocks.logger as unknown as jest.Mocked<LoggerService>;
     mockEventBus = context.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
     shutdownManager = context.manager;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {

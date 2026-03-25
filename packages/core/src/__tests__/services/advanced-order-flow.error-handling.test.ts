@@ -36,13 +36,14 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
+  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let context: ReturnType<typeof createManagedAdvancedOrderFlowContext>;
+  let context: ManagedAdvancedOrderFlowContext;
   let createService: (options?: {
     config?: AdvancedOrderFlowConfig;
     logger?: LoggerService;

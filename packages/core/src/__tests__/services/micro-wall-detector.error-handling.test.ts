@@ -23,6 +23,7 @@ import {
   createMicroWall,
   createMicroWallFailingLogger,
   createMicroWallOrderBook,
+  type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
 
 // ============================================================================
@@ -61,7 +62,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let context: ReturnType<typeof createManagedMicroWallDetectorContext>;
+  let context: ManagedMicroWallDetectorContext;
 
   beforeEach(() => {
     context = createManagedMicroWallDetectorContext();

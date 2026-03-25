@@ -137,6 +137,10 @@ export interface BotMetricsTestContext {
   }) => BotMetricsService;
 }
 
+export interface ManagedBotMetricsTestContext extends BotMetricsTestContext {
+  cleanup: () => void;
+}
+
 export const createBotMetricsTestContext = ({
   logger = new BotMetricsTestLogger(),
   errorHandler = createBotMetricsErrorHandler(),
@@ -164,6 +168,24 @@ export const createBotMetricsTestContext = ({
   context.rebuild();
 
   return context;
+};
+
+export const createManagedBotMetricsTestContext = ({
+  logger = new BotMetricsTestLogger(),
+  errorHandler = createBotMetricsErrorHandler(),
+}: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedBotMetricsTestContext => {
+  const context = createBotMetricsTestContext({ logger, errorHandler });
+
+  return {
+    ...context,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
 };
 
 export const seedBotMetricsService = (

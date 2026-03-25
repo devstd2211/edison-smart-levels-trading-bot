@@ -40,6 +40,10 @@ export interface GracefulShutdownTestContext {
   }) => GracefulShutdownManager;
 }
 
+export interface ManagedGracefulShutdownTestContext extends GracefulShutdownTestContext {
+  cleanup: () => void;
+}
+
 type GracefulShutdownContextOptions = {
   position?: Position | null;
   config?: GracefulShutdownConfig;
@@ -214,6 +218,19 @@ export function createGracefulShutdownTestContext(
   context.rebuild();
 
   return context;
+}
+
+export function createManagedGracefulShutdownTestContext(
+  options: GracefulShutdownContextOptions = {},
+): ManagedGracefulShutdownTestContext {
+  const context = createGracefulShutdownTestContext(options);
+
+  return {
+    ...context,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
 }
 
 export function getGracefulShutdownInternals(

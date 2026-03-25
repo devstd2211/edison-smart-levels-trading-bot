@@ -12,26 +12,31 @@
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
-  createBotMetricsTestContext,
+  createManagedBotMetricsTestContext,
   BotMetricsTestLogger,
   createLegacyBotMetricsService,
   createStandardBotMetricsService,
   createBotMetricsTrade,
   seedBotMetricsService,
+  type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
-  let context: ReturnType<typeof createBotMetricsTestContext>;
+  let context: ManagedBotMetricsTestContext;
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
 
   beforeEach(() => {
-    context = createBotMetricsTestContext();
+    context = createManagedBotMetricsTestContext();
     logger = context.logger as BotMetricsTestLogger;
     errorHandler = context.errorHandler;
     metricsService = context.service;
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

@@ -26,6 +26,7 @@ import {
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
+  type ManagedPositionMonitorContext,
 } from '../helpers/position-monitor-test.utils';
 
 const createMockPosition = createPositionMonitorScenarioPosition;
@@ -36,15 +37,15 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 
 describe('PositionMonitorService', () => {
   let monitor: PositionMonitorService;
-  let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
-  let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
-  let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
-  let mockExitTypeDetector: ReturnType<typeof createPositionMonitorHarness>['mockExitTypeDetector'];
-  let mockPnLCalculator: ReturnType<typeof createPositionMonitorHarness>['mockPnLCalculator'];
-  let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
+  let mockBybit: ManagedPositionMonitorContext['mockBybit'];
+  let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
+  let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
+  let mockExitTypeDetector: ManagedPositionMonitorContext['mockExitTypeDetector'];
+  let mockPnLCalculator: ManagedPositionMonitorContext['mockPnLCalculator'];
+  let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
   let logger: LoggerService;
-  let positionHarness: Pick<ReturnType<typeof createPositionMonitorHarness>, 'mockPositionManager'>;
-  let context: ReturnType<typeof createManagedPositionMonitorContext>;
+  let positionHarness: ManagedPositionMonitorContext['positionHarness'];
+  let context: ManagedPositionMonitorContext;
 
   const syncFromContext = (): void => {
     monitor = context.monitor;

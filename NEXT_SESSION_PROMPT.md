@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-25)
-- Completed an explicit managed-context typing follow-up for `orderbook-manager.service`, `orderbook-manager.service.error-handling`, `orderbook-imbalance.service`, `orderbook-imbalance.error-handling`, `pnl-calculator.service`, and `pnl-calculator.error-handling`:
-  - routed those suites to exported helper context types instead of local `ReturnType<typeof ...>` inference while keeping helper-owned cleanup unchanged.
-  - tightened the adjacent orderbook and pnl service suites without changing runtime behavior.
-  - reviewed `packages/core/src/services/orderbook-manager.service.ts`, `packages/core/src/services/orderbook-imbalance.service.ts`, and `packages/core/src/services/pnl-calculator.service.ts` and left production code unchanged after review.
+- Completed an explicit managed-context typing follow-up for `strategy-loader`, `strategy-loader.error-handling`, `position-monitor.service`, `position-monitor.error-handling`, `risk-manager.service`, and `risk-manager.error-handling`:
+  - routed those suites to exported helper-managed context types instead of local `ReturnType<typeof ...>` and `Awaited<ReturnType<...>>` ownership.
+  - kept cleanup ownership in the existing helper-managed contexts instead of suite-local inferred harness types.
+  - reviewed `packages/core/src/services/strategy-loader.service.ts`, `packages/core/src/services/position-monitor.service.ts`, and `packages/core/src/services/risk-manager.service.ts` and left production code unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/pnl-calculator.service.test.ts packages/core/src/__tests__/services/pnl-calculator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/strategy-loader.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/risk-manager.service.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue the lifecycle/testability stream in the next adjacent suites that still keep local harness ownership, repeated bootstrap, or ad hoc cleanup around the remaining monitoring/cache slice.
-- Favor shared managed test contexts and explicit helper-owned context typing in follow-ups adjacent to this batch, especially the remaining service suites that still rely on `ReturnType<typeof ...>` or broader tracked-service ownership before reopening lower-signal constructor-only cleanup.
+- Continue the lifecycle/testability stream in the next untouched suites that still keep local harness ownership or local `ReturnType<typeof ...>` typing around remaining helper-managed contexts.
+- Favor adjacent follow-ups around other helper-backed service suites that already export managed context types but still infer them locally inside the test files before reopening lower-signal constructor-only cleanup.

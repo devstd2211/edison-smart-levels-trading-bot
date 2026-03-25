@@ -1,10 +1,11 @@
 import {
   createManagedTrackedServicesContext,
   spyOnTrackedServiceLifecycle,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+  let context: ManagedTrackedServicesContext;
 
   beforeEach(() => {
     context = createManagedTrackedServicesContext();

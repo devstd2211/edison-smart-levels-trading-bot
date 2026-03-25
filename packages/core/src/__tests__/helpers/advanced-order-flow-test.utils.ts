@@ -209,7 +209,7 @@ export function createManagedAdvancedOrderFlowContext(options?: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
-}) {
+}): ManagedAdvancedOrderFlowContext {
   jest.clearAllMocks();
 
   const harness = createAdvancedOrderFlowHarness(options);
