@@ -16,6 +16,7 @@ import { ExchangeAPIError } from '../../errors/DomainErrors';
 import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineMockExchange,
+  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
@@ -30,7 +31,7 @@ function createRetryableError(message: string): ExchangeAPIError {
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
   let mockLogger: OrderExecutionPipelineMockLogger;
   let mockBybitService: OrderExecutionPipelineMockExchange;
-  let context: ReturnType<typeof createManagedOrderExecutionPipelineContext>;
+  let context: ManagedOrderExecutionPipelineContext;
 
   beforeEach(() => {
     context = createManagedOrderExecutionPipelineContext({

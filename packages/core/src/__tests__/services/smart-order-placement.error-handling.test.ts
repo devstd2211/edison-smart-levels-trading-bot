@@ -22,6 +22,7 @@ import {
   asSmartOrderDirection as asDirection,
   asSmartOrderPlacementConfig as asConfig,
   asSmartOrderPlacementOrderbook as asOrderbook,
+  type ManagedSmartOrderPlacementContext,
   createSmartOrderPlacementConfig,
   createSmartOrderPlacementErrorHandler,
   createManagedSmartOrderPlacementContext,
@@ -90,7 +91,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 // ============================================================================
 
 describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
-  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
+  let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext({ withErrorHandler: false });
@@ -133,7 +134,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
+  let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext();
@@ -324,7 +325,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
 describe('SmartOrderPlacementService - Integration (E2E)', () => {
   let service: SmartOrderPlacementService;
-  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
+  let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext();
@@ -427,7 +428,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
 
 describe('SmartOrderPlacementService - Edge Cases', () => {
   let service: SmartOrderPlacementService;
-  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
+  let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext();
@@ -487,7 +488,7 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
 
 describe('SmartOrderPlacementService - Backward Compatibility', () => {
   let service: SmartOrderPlacementService;
-  let context: ReturnType<typeof createManagedSmartOrderPlacementContext>;
+  let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext({ withErrorHandler: false });

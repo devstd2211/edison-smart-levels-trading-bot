@@ -36,13 +36,14 @@ import {
   transitionPositionState,
   transitionPositionStateSequence,
   waitForStateMachinePersistence,
+  type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: LoggerService;
   let testDataDir: string;
   let service: PositionStateMachineService;
-  let context: ReturnType<typeof createManagedPositionStateMachineContext>;
+  let context: ManagedPositionStateMachineContext;
 
   beforeEach(() => {
     context = createManagedPositionStateMachineContext({

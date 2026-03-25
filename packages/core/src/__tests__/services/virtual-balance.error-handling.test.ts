@@ -14,6 +14,7 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
+  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
@@ -24,7 +25,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let testDataDir: string;
   let testPath: string;
   let createService: (baseDeposit?: number) => VirtualBalanceService;
-  let context: ReturnType<typeof createManagedVirtualBalanceContext>;
+  let context: ManagedVirtualBalanceContext;
 
   beforeEach(() => {
     context = createManagedVirtualBalanceContext();
@@ -456,7 +457,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let context: ReturnType<typeof createManagedVirtualBalanceContext>;
+  let context: ManagedVirtualBalanceContext;
   const createIntegrationService = (baseDeposit: number = 100): VirtualBalanceService =>
     createStandardVirtualBalanceService({
       baseDeposit,

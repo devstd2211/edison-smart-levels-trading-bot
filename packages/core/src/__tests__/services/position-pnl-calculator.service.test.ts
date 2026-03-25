@@ -9,7 +9,7 @@ import { PERCENT_MULTIPLIER } from '../../constants';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPositions,
-  createPositionPnLScenarioHarness,
+  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
@@ -18,8 +18,8 @@ import {
 
 describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
-  let createPosition: ReturnType<typeof createPositionPnLScenarioHarness>['createPosition'];
-  let context: ReturnType<typeof createManagedPositionPnLCalculatorContext>;
+  let createPosition: ManagedPositionPnLCalculatorContext['createPosition'];
+  let context: ManagedPositionPnLCalculatorContext;
 
   beforeEach(() => {
     context = createManagedPositionPnLCalculatorContext({ withErrorHandler: false });

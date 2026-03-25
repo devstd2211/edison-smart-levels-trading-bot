@@ -26,6 +26,7 @@ import {
 } from '../../constants/phase-11-constants';
 import {
   createManagedPositionScalingContext,
+  type ManagedPositionScalingContext,
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
@@ -34,18 +35,18 @@ describe('PositionScalingService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
-  let context: ReturnType<typeof createManagedPositionScalingContext>;
-  let createBrokenService: ReturnType<typeof createManagedPositionScalingContext>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createManagedPositionScalingContext>['createNoHandlerService'];
+  let context: ManagedPositionScalingContext;
+  let createBrokenService: ManagedPositionScalingContext['createBrokenService'];
+  let createNoHandlerService: ManagedPositionScalingContext['createNoHandlerService'];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => PositionScalingService;
-  let createScenario: ReturnType<typeof createManagedPositionScalingContext>['createScenario'];
-  let createExtremes: ReturnType<typeof createManagedPositionScalingContext>['createExtremes'];
-  let createSequence: ReturnType<typeof createManagedPositionScalingContext>['createSequence'];
-  let evaluateDecision: ReturnType<typeof createManagedPositionScalingContext>['evaluateDecision'];
+  let createScenario: ManagedPositionScalingContext['createScenario'];
+  let createExtremes: ManagedPositionScalingContext['createExtremes'];
+  let createSequence: ManagedPositionScalingContext['createSequence'];
+  let evaluateDecision: ManagedPositionScalingContext['evaluateDecision'];
   type ScalingConfigInput = ConstructorParameters<typeof PositionScalingService>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 

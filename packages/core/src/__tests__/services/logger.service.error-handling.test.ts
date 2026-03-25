@@ -28,6 +28,7 @@ import {
   createStandardLoggerService,
   createLoggerTestDir,
   ensureLoggerTestDir,
+  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
@@ -38,7 +39,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let errorHandler: ErrorHandler;
   let createLogger: ReturnType<typeof createStandardLoggerFactory>;
   let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
-  let context: ReturnType<typeof createManagedLoggerTestContext>;
+  let context: ManagedLoggerTestContext;
 
   beforeEach(() => {
     context = createManagedLoggerTestContext();

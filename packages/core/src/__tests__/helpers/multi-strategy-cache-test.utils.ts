@@ -53,12 +53,14 @@ export function createStrategyCacheHarness(): {
   };
 }
 
-export function createManagedStrategyCacheContext(): {
+export interface ManagedStrategyCacheContext {
   cache: StrategyOrchestratorCacheService;
   logger: LoggerService;
   createCache: (logger?: LoggerService) => StrategyOrchestratorCacheService;
   cleanup: () => void;
-} {
+}
+
+export function createManagedStrategyCacheContext(): ManagedStrategyCacheContext {
   const harness = createStrategyCacheHarness();
 
   return {

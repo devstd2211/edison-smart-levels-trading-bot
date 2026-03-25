@@ -19,6 +19,7 @@ import {
   createLegacyTelegramService,
   createStandardTelegramService,
   createManagedTelegramContext,
+  type ManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
@@ -26,7 +27,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let fetchMock: jest.Mock;
-  let context: ReturnType<typeof createManagedTelegramContext>;
+  let context: ManagedTelegramContext;
 
   const mockConfig: TelegramConfig = {
     botToken: 'test-bot-token',

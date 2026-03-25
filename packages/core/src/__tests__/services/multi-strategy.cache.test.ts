@@ -12,12 +12,13 @@ import {
   createMockStrategyOrchestrators,
   seedStrategyCache,
   createManagedStrategyCacheContext,
+  type ManagedStrategyCacheContext,
 } from '../helpers/multi-strategy-cache-test.utils';
 
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
-  let context: ReturnType<typeof createManagedStrategyCacheContext>;
+  let context: ManagedStrategyCacheContext;
 
   beforeEach(() => {
     context = createManagedStrategyCacheContext();

@@ -23,6 +23,7 @@ import {
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
   type EventDeduplicationHarness,
+  type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
@@ -41,7 +42,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
   let harness: EventDeduplicationHarness;
   let createService: EventDeduplicationHarness['createServiceWithDefaults'];
-  let context: ReturnType<typeof createManagedEventDeduplicationContext>;
+  let context: ManagedEventDeduplicationContext;
 
   beforeEach(() => {
     context = createManagedEventDeduplicationContext();

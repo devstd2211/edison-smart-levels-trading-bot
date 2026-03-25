@@ -13,6 +13,7 @@ import {
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
   type EventDeduplicationHarness,
+  type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
@@ -24,7 +25,7 @@ describe('EventDeduplicationService', () => {
   let logger: LoggerService;
   let harness: EventDeduplicationHarness;
   let createService: ReturnType<typeof createEventDeduplicationBoundFactory>['createStandardService'];
-  let context: ReturnType<typeof createManagedEventDeduplicationContext>;
+  let context: ManagedEventDeduplicationContext;
 
   beforeEach(() => {
     context = createManagedEventDeduplicationContext();

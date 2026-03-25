@@ -133,14 +133,17 @@ export function createCandleProviderRepositoryIntegrationHarness(): {
   };
 }
 
-export function createManagedCandleProviderRepositoryIntegrationContext(): {
+export interface ManagedCandleProviderRepositoryIntegrationContext {
   provider: CandleProvider;
   exchange: IntegrationMockExchange;
   repository: IMarketDataRepository;
   timeframeProvider: TimeframeProvider;
   logger: CandleProviderMockLogger & LoggerService;
   cleanup: () => void;
-} {
+}
+
+export function createManagedCandleProviderRepositoryIntegrationContext():
+ManagedCandleProviderRepositoryIntegrationContext {
   const harness = createCandleProviderRepositoryIntegrationHarness();
 
   return {

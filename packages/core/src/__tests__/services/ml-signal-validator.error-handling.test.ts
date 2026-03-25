@@ -30,6 +30,7 @@ import {
   createManagedMLSignalValidatorContext,
   createMLSignalValidatorService,
   createMLSignalValidatorSignal,
+  type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
 
 describe('MLSignalValidatorService - Error Handling', () => {
@@ -57,7 +58,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
-  let context: ReturnType<typeof createManagedMLSignalValidatorContext>;
+  let context: ManagedMLSignalValidatorContext;
 
   beforeEach(() => {
     context = createManagedMLSignalValidatorContext();
