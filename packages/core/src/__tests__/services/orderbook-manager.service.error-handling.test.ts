@@ -19,19 +19,20 @@ import {
   createManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
+  type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler | undefined;
-  let mockLogger: ReturnType<typeof createManagedOrderbookManagerContext>['mockLogger'];
+  let mockLogger: ManagedOrderbookManagerContext['mockLogger'];
   let mockWallTracker: {
     detectWall: jest.Mock;
     removeWall: jest.Mock;
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  let context: ReturnType<typeof createManagedOrderbookManagerContext>;
+  let context: ManagedOrderbookManagerContext;
 
   beforeEach(() => {
     context = createManagedOrderbookManagerContext();

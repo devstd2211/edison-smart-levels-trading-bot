@@ -3158,3 +3158,73 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 3/3 suites PASS, 58/58 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 240 (2026-03-25):
+  - `packages/core/src/__tests__/helpers/candle-provider-test.utils.ts`:
+    - added a managed candle-provider context that owns jest cleanup around the standard scenario bootstrap.
+  - `packages/core/src/__tests__/services/candle-provider.error-handling.test.ts`:
+    - routed representative lifecycle/cache scenarios through the managed context instead of ad hoc local teardown ownership.
+  - `packages/core/src/__tests__/helpers/prometheus-metrics-test.utils.ts`:
+    - added a managed metrics test context that stops tracked services and restores mocks from the helper surface.
+  - `packages/core/src/__tests__/services/prometheus-metrics.test.ts`:
+    - routed the suite through the managed metrics context instead of per-suite local stop ownership.
+  - `packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts`:
+    - aligned the suite on the existing managed risk-monitor harness so lifecycle cleanup stays helper-driven and consistent with adjacent monitoring refactors.
+  - behavior-preserving production review: reviewed `candle.provider.ts`, `prometheus-metrics.service.ts`, and `real-time-risk-monitor.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-25, post testability batch 240):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts`
+  - Result: 3/3 suites PASS, 60/60 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 241 (2026-03-25):
+  - `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts`:
+    - added a managed-context alias/factory so adjacent suites can share one helper-owned context entrypoint without duplicating harness naming.
+  - `packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts`:
+    - routed the suite through the shared managed context naming instead of direct harness ownership while preserving the existing helper surface.
+  - `packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts`:
+    - aligned the suite on the shared managed context naming so adjacent risk-monitor coverage uses the same helper-owned lifecycle pattern.
+  - `packages/core/src/__tests__/services/health-check.test.ts`:
+    - tightened the suite to use the explicit managed-context type and removed ad hoc return-type inference around the helper-owned context.
+  - behavior-preserving production review: reviewed `real-time-risk-monitor.service.ts` and `health-check.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-25, post testability batch 241):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/health-check.test.ts`
+  - Result: 3/3 suites PASS, 77/77 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 242 (2026-03-25):
+  - `packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts`:
+    - replaced local `ReturnType<typeof createManagedWebSocketKeepAliveContext>` inference with the exported managed context type from the helper.
+  - `packages/core/src/__tests__/services/trading-journal.service.test.ts`:
+    - replaced local `ReturnType<typeof createManagedTradingJournalContext>` inference with the exported managed context type from the helper.
+  - `packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`:
+    - aligned the suite on the exported managed trading-journal context type instead of local return-type inference.
+  - `packages/core/src/__tests__/services/time.service.test.ts`:
+    - aligned the suite on the exported managed time-service context type and dropped the now-unused helper import.
+  - `packages/core/src/__tests__/services/take-profit-manager.service.test.ts`:
+    - aligned context and `createManager` typing on the exported managed take-profit context type instead of local return-type inference.
+  - `packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts`:
+    - aligned the suite on the exported managed take-profit context type instead of local return-type inference.
+  - behavior-preserving production review: reviewed `websocket-keep-alive.service.ts`, `trading-journal.service.ts`, `time.service.ts`, and `take-profit-manager.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-25, post testability batch 242):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/time.service.test.ts packages/core/src/__tests__/services/take-profit-manager.service.test.ts packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 135/135 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 243 (2026-03-25):
+  - `packages/core/src/__tests__/services/orderbook-manager.service.test.ts`:
+    - replaced local `ReturnType<typeof createManagedOrderbookManagerContext>` inference with the exported managed context type from the helper.
+  - `packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts`:
+    - aligned both the managed context and mocked logger typing on the exported helper context type instead of local return-type inference.
+  - `packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts`:
+    - aligned the managed context and legacy-service factory typing on the exported helper context type.
+  - `packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts`:
+    - aligned the managed context plus service factory typings on the exported helper context type instead of local return-type inference.
+  - `packages/core/src/__tests__/services/pnl-calculator.service.test.ts`:
+    - replaced local `ReturnType<typeof createManagedPnlCalculatorContext>` inference with the exported managed context type.
+  - `packages/core/src/__tests__/services/pnl-calculator.error-handling.test.ts`:
+    - replaced local `ReturnType<typeof createManagedPnlCalculatorContext>` inference with the exported managed context type.
+  - behavior-preserving production review: reviewed `orderbook-manager.service.ts`, `orderbook-imbalance.service.ts`, and `pnl-calculator.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-25, post testability batch 243):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/pnl-calculator.service.test.ts packages/core/src/__tests__/services/pnl-calculator.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 108/108 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

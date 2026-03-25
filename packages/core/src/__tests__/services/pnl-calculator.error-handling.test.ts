@@ -7,10 +7,11 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
+  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
-  let context: ReturnType<typeof createManagedPnlCalculatorContext>;
+  let context: ManagedPnlCalculatorContext;
 
   beforeEach(() => {
     context = createManagedPnlCalculatorContext();

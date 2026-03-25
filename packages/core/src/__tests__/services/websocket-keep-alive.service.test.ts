@@ -10,6 +10,7 @@ import {
   advanceKeepAliveIntervals,
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
+  type ManagedWebSocketKeepAliveContext,
   type MockWebSocket,
 } from '../helpers/websocket-keep-alive-test.utils';
 
@@ -18,7 +19,7 @@ import {
 // ============================================================================
 
 describe('WebSocketKeepAliveService', () => {
-  let context: ReturnType<typeof createManagedWebSocketKeepAliveContext>;
+  let context: ManagedWebSocketKeepAliveContext;
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;

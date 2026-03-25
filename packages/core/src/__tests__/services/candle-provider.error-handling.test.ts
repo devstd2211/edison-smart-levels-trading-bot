@@ -21,6 +21,7 @@ import { TimeframeRole } from '../../types/enums';
 import {
   createCandleProviderMockCandle,
   createLegacyCandleProviderScenario,
+  createManagedStandardCandleProviderContext,
   createStandardCandleProviderScenario,
   type CandleProviderGetCandlesParams,
 } from '../helpers/candle-provider-test.utils';
@@ -86,30 +87,35 @@ describe('CandleProvider - RETRY Strategy', () => {
 describe('CandleProvider - SKIP Strategy for initialize()', () => {
   describe('B1: One timeframe fails -> skips it, loads others successfully', () => {
     it('should skip failed timeframe and load others', async () => {
-      const { logger, exchange, provider } = createStandardCandleProviderScenario();
+      const { logger, exchange, provider, cleanup } =
+        createManagedStandardCandleProviderContext();
 
-      exchange.getCandles.mockImplementation(
-        ({ timeframe }: CandleProviderGetCandlesParams) => {
-          if (timeframe === '5') {
-            return Promise.reject(new Error('timeout'));
-          }
+      try {
+        exchange.getCandles.mockImplementation(
+          ({ timeframe }: CandleProviderGetCandlesParams) => {
+            if (timeframe === '5') {
+              return Promise.reject(new Error('timeout'));
+            }
 
-          return Promise.resolve([
-            { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
-          ]);
-        },
-      );
+            return Promise.resolve([
+              { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
+            ]);
+          },
+        );
 
-      await provider.initialize();
+        await provider.initialize();
 
-      expect(exchange.getCandles).toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to load PRIMARY'),
-        expect.any(Object),
-      );
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Candle loading complete'),
-      );
+        expect(exchange.getCandles).toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining('Failed to load PRIMARY'),
+          expect.any(Object),
+        );
+        expect(logger.info).toHaveBeenCalledWith(
+          expect.stringContaining('Candle loading complete'),
+        );
+      } finally {
+        cleanup();
+      }
     });
   });
 
@@ -146,25 +152,29 @@ describe('CandleProvider - SKIP Strategy for initialize()', () => {
 describe('CandleProvider - Cache Miss Recovery with RETRY', () => {
   describe('C1: Cache empty -> loads from API with RETRY -> returns candles', () => {
     it('should load from API when cache is empty', async () => {
-      const { logger, exchange, repository, provider } =
-        createStandardCandleProviderScenario();
+      const { logger, exchange, repository, provider, cleanup } =
+        createManagedStandardCandleProviderContext();
 
-      repository.getCandles.mockReturnValueOnce([]).mockReturnValueOnce([
-        { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
-        { timestamp: 2, open: 105, high: 115, low: 95, close: 110, volume: 1100 },
-      ]);
+      try {
+        repository.getCandles.mockReturnValueOnce([]).mockReturnValueOnce([
+          { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
+          { timestamp: 2, open: 105, high: 115, low: 95, close: 110, volume: 1100 },
+        ]);
 
-      const result = await provider.getCandles(TimeframeRole.ENTRY);
+        const result = await provider.getCandles(TimeframeRole.ENTRY);
 
-      expect(result).toHaveLength(2);
-      expect(exchange.getCandles).toHaveBeenCalledWith({
-        symbol: 'APEXUSDT',
-        timeframe: '1',
-        limit: 100,
-      });
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Repository empty'),
-      );
+        expect(result).toHaveLength(2);
+        expect(exchange.getCandles).toHaveBeenCalledWith({
+          symbol: 'APEXUSDT',
+          timeframe: '1',
+          limit: 100,
+        });
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining('Repository empty'),
+        );
+      } finally {
+        cleanup();
+      }
     });
   });
 
@@ -369,29 +379,33 @@ describe('CandleProvider - E2E Recovery Scenarios', () => {
 describe('CandleProvider - Integration Tests', () => {
   describe('H1: Real scenario - startup with partial failures', () => {
     it('should start up successfully despite some timeframe load failures', async () => {
-      const { logger, exchange, repository, provider } =
-        createStandardCandleProviderScenario();
+      const { logger, exchange, repository, provider, cleanup } =
+        createManagedStandardCandleProviderContext();
 
-      let attempt = 0;
-      exchange.getCandles.mockImplementation(
-        ({ timeframe }: CandleProviderGetCandlesParams) => {
-          attempt++;
-          if (timeframe === '1' && attempt === 1) {
-            return Promise.reject(new Error('timeout'));
-          }
+      try {
+        let attempt = 0;
+        exchange.getCandles.mockImplementation(
+          ({ timeframe }: CandleProviderGetCandlesParams) => {
+            attempt++;
+            if (timeframe === '1' && attempt === 1) {
+              return Promise.reject(new Error('timeout'));
+            }
 
-          return Promise.resolve([
-            { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
-          ]);
-        },
-      );
+            return Promise.resolve([
+              { timestamp: 1, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
+            ]);
+          },
+        );
 
-      await provider.initialize();
+        await provider.initialize();
 
-      expect(repository.saveCandles).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Candle loading complete'),
-      );
+        expect(repository.saveCandles).toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledWith(
+          expect.stringContaining('Candle loading complete'),
+        );
+      } finally {
+        cleanup();
+      }
     });
   });
 

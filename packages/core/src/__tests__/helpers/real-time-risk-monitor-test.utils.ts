@@ -45,6 +45,8 @@ export interface ManagedRealTimeRiskMonitorHarness extends RealTimeRiskMonitorHa
   cleanup: () => void;
 }
 
+export type ManagedRealTimeRiskMonitorContext = ManagedRealTimeRiskMonitorHarness;
+
 export const mockRiskMonitorConfig: RiskMonitoringConfig = {
   enabled: true,
   checkIntervalCandles: 5,
@@ -231,6 +233,12 @@ export function createManagedRealTimeRiskMonitorHarness(
       jest.clearAllMocks();
     },
   };
+}
+
+export function createManagedRealTimeRiskMonitorContext(
+  options: { started?: boolean } = {},
+): ManagedRealTimeRiskMonitorContext {
+  return createManagedRealTimeRiskMonitorHarness(options);
 }
 
 export function createRealTimeRiskMonitorPublishFailure(

@@ -15,11 +15,11 @@ import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.servi
 import { DangerLevel, LiveTradingEventType } from '../../types/legacy';
 import {
   attachMockRiskMonitorPosition,
-  createManagedRealTimeRiskMonitorHarness,
+  createManagedRealTimeRiskMonitorContext,
   createRealTimeRiskMonitorPublishFailure,
   seedRiskMonitorCachedFallbackScore,
   seedRiskMonitorCachedHealthScore,
-  type ManagedRealTimeRiskMonitorHarness,
+  type ManagedRealTimeRiskMonitorContext,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -30,18 +30,18 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let mockPositionLifecycleService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
-  let riskHarness: ManagedRealTimeRiskMonitorHarness;
+  let context: ManagedRealTimeRiskMonitorContext;
 
   beforeEach(() => {
-    riskHarness = createManagedRealTimeRiskMonitorHarness();
-    monitor = riskHarness.monitor;
-    mockPositionLifecycleService = riskHarness.mockPositionService;
-    mockLogger = riskHarness.mockLogger;
-    mockEventBus = riskHarness.mockEventBus;
+    context = createManagedRealTimeRiskMonitorContext();
+    monitor = context.monitor;
+    mockPositionLifecycleService = context.mockPositionService;
+    mockLogger = context.mockLogger;
+    mockEventBus = context.mockEventBus;
   });
 
   afterEach(() => {
-    riskHarness.cleanup();
+    context.cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {
@@ -237,7 +237,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   describe('End-to-End Error Recovery Scenarios (2 tests)', () => {
     it('test-8.5.14: Should continue monitoring when position validation fails', async () => {
       const { cachedScore: firstScore } = await seedRiskMonitorCachedHealthScore(
-        riskHarness,
+        context,
         {},
         46000,
       );
@@ -273,7 +273,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   describe('Integration with Existing Functionality', () => {
     it('should not break existing getLatestHealthScore functionality', async () => {
       const { position, cachedScore: cached } = await seedRiskMonitorCachedHealthScore(
-        riskHarness,
+        context,
         {},
         46000,
       );

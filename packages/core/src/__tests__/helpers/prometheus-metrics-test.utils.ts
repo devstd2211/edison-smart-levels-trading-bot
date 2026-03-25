@@ -37,6 +37,11 @@ export interface PrometheusMetricsTestContext {
   stop: () => void;
 }
 
+export interface ManagedPrometheusMetricsTestContext
+  extends PrometheusMetricsTestContext {
+  cleanup: () => void;
+}
+
 export function createPrometheusMetricsLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);
@@ -127,6 +132,20 @@ export function createPrometheusMetricsTestContext(): PrometheusMetricsTestConte
     trackedServices,
     stop: () => {
       harness.stopTrackedServices(trackedServices);
+    },
+  };
+}
+
+export function createManagedPrometheusMetricsTestContext():
+  ManagedPrometheusMetricsTestContext {
+  const context = createPrometheusMetricsTestContext();
+
+  return {
+    ...context,
+    cleanup: () => {
+      context.stop();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
     },
   };
 }

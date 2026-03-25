@@ -35,6 +35,7 @@ import {
   createLegacyTradingJournalService,
   createManagedTradingJournalContext,
   createStandardTradingJournalService,
+  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
 const createEntryCondition = createJournalEntryCondition;
@@ -60,7 +61,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     baseDeposit?: number;
     withErrorHandler?: boolean;
   }) => TradingJournalService;
-  let context: ReturnType<typeof createManagedTradingJournalContext>;
+  let context: ManagedTradingJournalContext;
 
   beforeEach(() => {
     context = createManagedTradingJournalContext();

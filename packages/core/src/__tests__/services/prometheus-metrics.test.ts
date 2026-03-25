@@ -18,10 +18,10 @@ import type { PrometheusMetricsService } from '../../services/prometheus-metrics
 import type { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  createPrometheusMetricsTestContext,
+  createManagedPrometheusMetricsTestContext,
   createStandardPrometheusMetricsService,
   createStartedPrometheusMetricsService,
-  type PrometheusMetricsTestContext,
+  type ManagedPrometheusMetricsTestContext,
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
@@ -29,11 +29,11 @@ describe('PrometheusMetricsService', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let trackedServices: PrometheusMetricsService[];
-  let harness: PrometheusMetricsTestContext['harness'];
-  let context: PrometheusMetricsTestContext;
+  let harness: ManagedPrometheusMetricsTestContext['harness'];
+  let context: ManagedPrometheusMetricsTestContext;
 
   beforeEach(() => {
-    context = createPrometheusMetricsTestContext();
+    context = createManagedPrometheusMetricsTestContext();
     harness = context.harness;
     mockLogger = context.logger;
     errorHandler = context.errorHandler;
@@ -42,7 +42,7 @@ describe('PrometheusMetricsService', () => {
   });
 
   afterEach(() => {
-    context.stop();
+    context.cleanup();
   });
 
   // ==========================================================================

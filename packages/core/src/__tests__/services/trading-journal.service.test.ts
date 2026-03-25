@@ -21,6 +21,7 @@ import {
   createJournalTakeProfit,
   createLegacyTradingJournalService,
   createManagedTradingJournalContext,
+  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
 // ============================================================================
@@ -36,7 +37,7 @@ describe('TradingJournalService', () => {
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
-  let context: ReturnType<typeof createManagedTradingJournalContext>;
+  let context: ManagedTradingJournalContext;
 
   beforeEach(() => {
     context = createManagedTradingJournalContext({
