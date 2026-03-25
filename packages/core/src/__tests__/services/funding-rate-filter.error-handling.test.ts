@@ -15,22 +15,28 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateData,
   createFundingRateDataSeries,
-  createFundingRateFilterHarness,
+  createManagedFundingRateFilterContext,
+  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
+  let context: ManagedFundingRateFilterContext;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
-  let createFilter: ReturnType<typeof createFundingRateFilterHarness>['createStandardFilter'];
-  let createLegacyFilter: ReturnType<typeof createFundingRateFilterHarness>['createLegacyFilter'];
+  let createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
+  let createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
   beforeEach(() => {
-    const harness = createFundingRateFilterHarness();
-    ({ logger, config, mockGetFundingRate, errorHandler } = harness);
-    createFilter = harness.createStandardFilter;
-    createLegacyFilter = harness.createLegacyFilter;
+    context = createManagedFundingRateFilterContext();
+    ({ logger, config, mockGetFundingRate, errorHandler } = context);
+    createFilter = context.createStandardFilter;
+    createLegacyFilter = context.createLegacyFilter;
+  });
+
+  afterEach(async () => {
+    await context.cleanup();
   });
 
   // ============================================================================

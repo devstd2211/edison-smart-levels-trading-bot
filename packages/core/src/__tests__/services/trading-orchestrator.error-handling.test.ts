@@ -8,23 +8,30 @@
  * Full integration is tested in phase-8-error-handling-integration.e2e.test.ts
  */
 
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy, StrategyExecutionError, EntryValidationError } from '../../errors';
 import {
   createEntryValidationTestError,
-  createTradingOrchestratorErrorHandlingHarness,
+  createManagedTradingOrchestratorContext,
   createStrategyExecutionTestError,
   TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
   TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
   type TradingOrchestratorMockLogger,
+  type ManagedTradingOrchestratorContext,
 } from '../helpers/trading-orchestrator-test.utils';
 
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
+  let context: ManagedTradingOrchestratorContext;
   let mockLogger: TradingOrchestratorMockLogger;
 
   beforeEach(() => {
-    ({ logger: mockLogger } = createTradingOrchestratorErrorHandlingHarness());
+    context = createManagedTradingOrchestratorContext();
+    ({ logger: mockLogger } = context);
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('runStrategyAnalysis Error Handling (4 tests)', () => {

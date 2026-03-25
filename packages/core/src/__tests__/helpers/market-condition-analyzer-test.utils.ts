@@ -9,6 +9,15 @@ export type MarketConditionMockLogger = {
   error: jest.Mock;
 };
 
+export interface ManagedMarketConditionContext {
+  logger: MarketConditionMockLogger;
+  errorHandler: ErrorHandler;
+  service: MarketConditionAnalyzerService;
+  createService: typeof createMarketConditionService;
+  cleanup: () => void;
+  reset: () => void;
+}
+
 export function createMarketConditionMockLogger(
   overrides?: Partial<MarketConditionMockLogger>,
 ): MarketConditionMockLogger {
@@ -157,5 +166,29 @@ export function createInvalidMarketConditionResult(
     isFlat: true,
     confidence: NaN,
     ...overrides,
+  };
+}
+
+export function createManagedMarketConditionContext(
+  overrides?: Partial<MarketConditionMockLogger>,
+): ManagedMarketConditionContext {
+  const { logger, errorHandler, service } = createMarketConditionHarness(overrides);
+
+  return {
+    logger,
+    errorHandler,
+    service,
+    createService: (serviceOptions = {}) =>
+      createMarketConditionService({
+        logger,
+        errorHandler,
+        ...serviceOptions,
+      }),
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      jest.clearAllMocks();
+    },
   };
 }

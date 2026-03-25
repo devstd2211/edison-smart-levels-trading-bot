@@ -118,3 +118,56 @@ export function createInvalidVolatilityRegimeThresholds(overrides: {
     },
   };
 }
+
+export interface ManagedVolatilityRegimeContext {
+  service: VolatilityRegimeService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  createStandardService: ReturnType<typeof createVolatilityRegimeHarness>['createStandardService'];
+  createLegacyService: ReturnType<typeof createVolatilityRegimeHarness>['createLegacyService'];
+  createService: ReturnType<typeof createVolatilityRegimeHarness>['createService'];
+  cleanup: () => void;
+  reset: () => void;
+}
+
+export function createManagedVolatilityRegimeContext(options: {
+  logger?: LoggerService;
+  config?: Partial<VolatilityRegimeConfig>;
+  withErrorHandler?: boolean;
+} = {}): ManagedVolatilityRegimeContext {
+  const harness = createVolatilityRegimeHarness(options);
+  const trackedServices = new Set<VolatilityRegimeService>([harness.service]);
+
+  return {
+    ...harness,
+    createStandardService: (overrides = {}) => {
+      const service = harness.createStandardService(overrides);
+      trackedServices.add(service);
+      return service;
+    },
+    createLegacyService: (overrides = {}) => {
+      const service = harness.createLegacyService(overrides);
+      trackedServices.add(service);
+      return service;
+    },
+    createService: (overrides = {}) => {
+      const service = harness.createService(overrides);
+      trackedServices.add(service);
+      return service;
+    },
+    cleanup: () => {
+      for (const service of trackedServices) {
+        service.reset();
+      }
+      trackedServices.clear();
+      trackedServices.add(harness.service);
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      for (const service of trackedServices) {
+        service.reset();
+      }
+      jest.clearAllMocks();
+    },
+  };
+}

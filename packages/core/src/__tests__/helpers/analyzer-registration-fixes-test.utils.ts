@@ -101,3 +101,25 @@ export function createAnalyzerRegistrationFixesHarness() {
     analyzerStrategic: config.analyzerStrategic,
   };
 }
+
+export interface ManagedAnalyzerRegistrationFixesContext {
+  logger: ReturnType<typeof createAnalyzerRegistrationFixesHarness>['logger'];
+  config: ReturnType<typeof createAnalyzerRegistrationFixesHarness>['config'];
+  analyzerStrategic: ReturnType<typeof createAnalyzerRegistrationFixesHarness>['analyzerStrategic'];
+  cleanup: () => void;
+  reset: () => void;
+}
+
+export function createManagedAnalyzerRegistrationFixesContext(): ManagedAnalyzerRegistrationFixesContext {
+  const harness = createAnalyzerRegistrationFixesHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      jest.clearAllMocks();
+    },
+  };
+}

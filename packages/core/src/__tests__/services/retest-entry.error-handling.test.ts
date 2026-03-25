@@ -42,11 +42,12 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createRetestEntryCandles,
   createRetestEntryConfig,
-  createRetestEntryHarness,
   createRetestEntryLogger,
   createRetestEntryMockLoggerService,
   createRetestEntryInvalidCandle,
   createRetestEntrySignal,
+  createManagedRetestEntryContext,
+  type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
 
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
@@ -59,21 +60,21 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   let mockConfig: RetestConfig;
   let mockSignal: Signal;
   let mockCandles: Candle[];
-  let createService: (options?: {
-    configOverrides?: Partial<RetestConfig>;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => RetestEntryService;
+  let context: ManagedRetestEntryContext;
+  let createService: ManagedRetestEntryContext['createService'];
 
   beforeEach(() => {
-    const harness = createRetestEntryHarness({ logger: createRetestEntryLogger() });
-    logger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    mockConfig = harness.config;
+    context = createManagedRetestEntryContext({ logger: createRetestEntryLogger() });
+    logger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    mockConfig = context.config;
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
-    createService = harness.createService;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

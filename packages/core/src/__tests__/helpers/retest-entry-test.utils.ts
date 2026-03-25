@@ -30,6 +30,16 @@ export function createRetestEntryMockLoggerService(
   return createRetestEntryMockLogger(overrides) as unknown as LoggerService;
 }
 
+export interface ManagedRetestEntryContext {
+  service: RetestEntryService;
+  logger: LoggerService;
+  config: RetestConfig;
+  errorHandler?: ErrorHandler;
+  createService: typeof createRetestEntryService;
+  cleanup: () => void;
+  reset: () => void;
+}
+
 export function createRetestEntryConfig(
   overrides: Partial<RetestConfig> = {},
 ): RetestConfig {
@@ -150,4 +160,57 @@ export function createRetestEntryService(options: {
     logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createManagedRetestEntryContext(options: {
+  configOverrides?: Partial<RetestConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}): ManagedRetestEntryContext {
+  const { service, logger, config, errorHandler } = createRetestEntryHarness(options);
+  const trackedServices = new Set<RetestEntryService>([service]);
+
+  const cleanupTrackedServices = (): void => {
+    for (const trackedService of trackedServices) {
+      trackedService.getAllZones().forEach((zone) => trackedService.clearZone(zone.symbol));
+    }
+  };
+
+  const clearLoggerMocks = (): void => {
+    const loggerWithMocks = logger as unknown as Record<string, unknown>;
+    ['info', 'debug', 'warn', 'error'].forEach((methodName) => {
+      const candidate = loggerWithMocks[methodName];
+      if (jest.isMockFunction(candidate)) {
+        candidate.mockClear();
+      }
+    });
+  };
+
+  return {
+    service,
+    logger,
+    config,
+    errorHandler,
+    createService: (serviceOptions = {}) => {
+      const nextService = createRetestEntryService({
+        logger,
+        errorHandler,
+        configOverrides: options.configOverrides,
+        withErrorHandler: options.withErrorHandler,
+        ...serviceOptions,
+      });
+      trackedServices.add(nextService);
+      return nextService;
+    },
+    cleanup: () => {
+      cleanupTrackedServices();
+      trackedServices.clear();
+      trackedServices.add(service);
+      clearLoggerMocks();
+    },
+    reset: () => {
+      cleanupTrackedServices();
+      clearLoggerMocks();
+    },
+  };
 }

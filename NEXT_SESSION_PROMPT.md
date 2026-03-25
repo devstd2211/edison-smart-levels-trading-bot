@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-25)
-- Completed a helper-managed context follow-up for `entry-confirmation.service`, `entry-confirmation.error-handling`, `ml-feature-extractor.service`, `ml-feature-extractor.error-handling`, `analyzer-engine.service`, and `analyzer-engine.error-handling`:
-  - added/exported managed helper contexts in the adjacent test utils and reused them across both service and error-handling suites.
-  - routed the target suites to helper-owned cleanup instead of local harness ownership.
+- Completed a helper-managed context follow-up for `exchange-factory.service`, `exchange-factory.error-handling`, `funding-rate-filter.service`, `funding-rate-filter.error-handling`, `volatility-regime.service`, and `volatility-regime.error-handling`:
+  - added/exported managed helper contexts in the adjacent exchange / funding-filter / volatility-regime test utils and reused them across the target suites.
+  - routed the target suites to helper-owned cleanup instead of suite-local harness ownership.
   - reviewed the adjacent production services and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/entry-confirmation.service.test.ts packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/funding-rate-filter.service.test.ts packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/services/volatility-regime.service.test.ts packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next helper-backed lifecycle/testability slice around adjacent registry/feature-extraction/entry-orchestration suites that still own harness state locally.
+- Continue with the next helper-backed lifecycle/testability slice around the remaining websocket / detector / volume-profile-adjacent suites that still own harness state or cleanup locally.
 - After that, keep pushing toward broader grouped-service / `createServices()` narrowing only where no helper-managed cleanup path exists yet.

@@ -21,17 +21,18 @@ import {
   createAnalyzerRegistryAnalyzerConfig,
   createAnalyzerRegistryAnalyzerConfigs,
   createAnalyzerRegistryBaseConfig,
-  createAnalyzerRegistryHarness,
   createAnalyzerRegistryIndicatorMap,
   createLegacyAnalyzerRegistryService,
   createAnalyzerRegistryMockIndicator,
   createAnalyzerRegistryMockLogger,
-  createAnalyzerRegistryScenarioHarness,
+  createManagedAnalyzerRegistryContext,
   createStandardAnalyzerRegistryService,
   type AnalyzerRegistryMockLogger,
+  type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
+  let context: ManagedAnalyzerRegistryContext;
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
@@ -39,11 +40,16 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     analyzerConfigOverrides?: Partial<StrategyAnalyzerConfig>;
     analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
     indicatorNames?: string[];
-  }) => ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
+  }) => ReturnType<ManagedAnalyzerRegistryContext['createScenario']>;
 
   beforeEach(() => {
-    ({ logger, errorHandler, registry } = createAnalyzerRegistryHarness());
-    createScenario = (options = {}) => createAnalyzerRegistryScenarioHarness(options);
+    context = createManagedAnalyzerRegistryContext();
+    ({ logger, errorHandler, registry } = context);
+    createScenario = (options = {}) => context.createScenario(options);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

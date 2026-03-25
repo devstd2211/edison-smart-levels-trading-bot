@@ -7,16 +7,23 @@ import { SignalDirection } from '../../types/legacy';
 import {
   createTickDeltaAnalyzerConfig,
   createTickDeltaAnalyzerDirectionalTicks,
-  createTickDeltaAnalyzerHarness,
+  createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 describe('TickDeltaAnalyzerService', () => {
+  let context: ManagedTickDeltaAnalyzerContext;
   let service: TickDeltaAnalyzerService;
 
   beforeEach(() => {
-    ({ service } = createTickDeltaAnalyzerHarness());
+    context = createManagedTickDeltaAnalyzerContext();
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('addTick', () => {
@@ -169,7 +176,8 @@ describe('TickDeltaAnalyzerService', () => {
     });
 
     it('should cap confidence at maxConfidence', () => {
-      const { service: cappedService, config } = createTickDeltaAnalyzerHarness();
+      const cappedService = context.createService();
+      const config = createTickDeltaAnalyzerConfig();
       const now = 1_700_000_100_000;
       seedTickDeltaAnalyzerHistory(cappedService, createTickDeltaAnalyzerDirectionalTicks(200, 10, { timestamp: now }));
 

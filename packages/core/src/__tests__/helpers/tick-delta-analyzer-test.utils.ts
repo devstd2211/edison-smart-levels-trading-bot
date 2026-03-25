@@ -22,6 +22,12 @@ export type TickDeltaAnalyzerHarness = {
   errorHandler?: ErrorHandler;
 };
 
+export interface ManagedTickDeltaAnalyzerContext extends TickDeltaAnalyzerHarness {
+  createService: typeof createTickDeltaAnalyzerService;
+  cleanup: () => void;
+  reset: () => void;
+}
+
 export function createTickDeltaAnalyzerMockLogger(): TickDeltaAnalyzerMockLogger {
   return {
     debug: jest.fn(),
@@ -166,4 +172,45 @@ export function createTickDeltaAnalyzerService(options: {
     logger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createManagedTickDeltaAnalyzerContext(options: {
+  config?: TickDeltaAnalyzerConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedTickDeltaAnalyzerContext {
+  const harness = createTickDeltaAnalyzerHarness(options);
+  const trackedServices = new Set<TickDeltaAnalyzerService>([harness.service]);
+
+  return {
+    ...harness,
+    createService: (serviceOptions = {}) => {
+      const service = createTickDeltaAnalyzerService({
+        ...(options.config !== undefined ? { config: options.config } : {}),
+        logger: harness.logger,
+        errorHandler: harness.errorHandler,
+        ...(options.withErrorHandler !== undefined
+          ? { withErrorHandler: options.withErrorHandler }
+          : {}),
+        ...serviceOptions,
+      });
+      trackedServices.add(service);
+      return service;
+    },
+    cleanup: () => {
+      for (const service of trackedServices) {
+        service.clearHistory();
+      }
+      trackedServices.clear();
+      trackedServices.add(harness.service);
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      for (const service of trackedServices) {
+        service.clearHistory();
+      }
+      jest.clearAllMocks();
+    },
+  };
 }

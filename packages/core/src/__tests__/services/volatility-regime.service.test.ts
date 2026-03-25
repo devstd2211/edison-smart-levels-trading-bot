@@ -5,18 +5,24 @@ import {
   VolatilityRegimeConfig,
 } from '../../types/legacy';
 import {
-  createVolatilityRegimeHarness,
+  createManagedVolatilityRegimeContext,
+  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
 describe('VolatilityRegimeService', () => {
+  let context: ManagedVolatilityRegimeContext;
   let service: VolatilityRegimeService;
   let logger: LoggerService;
-  let createService: ReturnType<typeof createVolatilityRegimeHarness>['createLegacyService'];
+  let createService: ManagedVolatilityRegimeContext['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createVolatilityRegimeHarness({ withErrorHandler: false });
-    ({ service, logger } = harness);
-    createService = harness.createLegacyService;
+    context = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+    ({ service, logger } = context);
+    createService = context.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('initialization', () => {

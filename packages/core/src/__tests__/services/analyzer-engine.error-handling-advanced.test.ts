@@ -35,9 +35,10 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createAnalyzerEngineMockStrategyConfig,
-  createAnalyzerEngineScenarioHarness,
+  createManagedAnalyzerEngineScenarioContext,
   createAnalyzerEngineService,
   type AnalyzerEngineMockLogger,
+  type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -149,6 +150,7 @@ function getMemoryUsage() {
 // ============================================================================
 
 describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
+  const managedContexts: ManagedAnalyzerEngineContext[] = [];
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: ReturnType<typeof createMockLogger>;
@@ -161,19 +163,28 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
       analyzerNames?: string[];
       candleCount?: number;
     },
-  ) => ReturnType<typeof createAnalyzerEngineScenarioHarness>;
+  ) => ManagedAnalyzerEngineContext;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     // ErrorRegistry state is shared across tests - that's by design
-    createScenario = (analyzers, options = {}) =>
-      createAnalyzerEngineScenarioHarness(analyzers, {
+    createScenario = (analyzers, options = {}) => {
+      const context = createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler,
         registry: options.registry,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
       });
+      managedContexts.push(context);
+      return context;
+    };
+  });
+
+  afterEach(() => {
+    while (managedContexts.length > 0) {
+      managedContexts.pop()?.cleanup();
+    }
   });
 
   // ========== SECTION F: ErrorHandler Callbacks (4 tests) ==========

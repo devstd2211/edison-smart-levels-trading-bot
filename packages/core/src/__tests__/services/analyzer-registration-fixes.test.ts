@@ -17,16 +17,24 @@
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SignalDirection, SwingPointType } from '../../types/legacy';
-import { createAnalyzerRegistrationFixesHarness } from '../helpers/analyzer-registration-fixes-test.utils';
+import {
+  createManagedAnalyzerRegistrationFixesContext,
+  type ManagedAnalyzerRegistrationFixesContext,
+} from '../helpers/analyzer-registration-fixes-test.utils';
 
 describe('Analyzer Registration Service - All Fixes', () => {
+  let context: ManagedAnalyzerRegistrationFixesContext;
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
   beforeEach(() => {
-    const harness = createAnalyzerRegistrationFixesHarness();
+    context = createManagedAnalyzerRegistrationFixesContext();
     mockConfig = {
-      analyzerStrategic: harness.analyzerStrategic,
+      analyzerStrategic: context.analyzerStrategic,
     };
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

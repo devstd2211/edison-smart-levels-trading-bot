@@ -11,35 +11,25 @@ import {
   createBinanceExchangeFactoryConfig,
   createBybitExchangeFactoryConfig,
   createExchangeFactoryConfig,
-  createExchangeFactoryHarness,
-  createStandardExchangeFactory,
+  createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let createFactory: (overrides?: Parameters<typeof createExchangeFactoryConfig>[0]) => ReturnType<typeof createStandardExchangeFactory>;
-  let createBybitFactory: (overrides?: Parameters<typeof createBybitExchangeFactoryConfig>[0]) => ReturnType<typeof createStandardExchangeFactory>;
-  let createBinanceFactory: (overrides?: Parameters<typeof createBinanceExchangeFactoryConfig>[0]) => ReturnType<typeof createStandardExchangeFactory>;
+  let context: ManagedExchangeFactoryContext;
+  let createFactory: ManagedExchangeFactoryContext['createFactory'];
+  let createBybitFactory: ManagedExchangeFactoryContext['createBybitFactory'];
+  let createBinanceFactory: ManagedExchangeFactoryContext['createBinanceFactory'];
 
   beforeEach(() => {
-    const { logger, errorHandler } = createExchangeFactoryHarness();
-    createFactory = (overrides = {}) =>
-      createStandardExchangeFactory({
-        logger,
-        errorHandler,
-        config: createExchangeFactoryConfig(overrides),
-      });
-    createBybitFactory = (overrides = {}) =>
-      createStandardExchangeFactory({
-        logger,
-        errorHandler,
-        config: createBybitExchangeFactoryConfig(overrides),
-      });
-    createBinanceFactory = (overrides = {}) =>
-      createStandardExchangeFactory({
-        logger,
-        errorHandler,
-        config: createBinanceExchangeFactoryConfig(overrides),
-      });
+    context = createManagedExchangeFactoryContext();
+    createFactory = context.createFactory;
+    createBybitFactory = context.createBybitFactory;
+    createBinanceFactory = context.createBinanceFactory;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Factory Initialization', () => {

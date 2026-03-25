@@ -6,12 +6,13 @@
 import { ExitTypeDetectorService } from '../../services/exit-type-detector.service';
 import { LoggerService, ExitType, PositionSide, Position, BybitOrder } from '../../types/legacy';
 import {
-  createExitTypeDetectorHarness,
+  createManagedExitTypeDetectorContext,
   createExitTypeDetectorOrder,
   createExitTypeDetectorScenarioHarness,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
+  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const createMockOrder = createExitTypeDetectorOrder;
@@ -25,6 +26,7 @@ const createMockOrder = createExitTypeDetectorOrder;
 // ============================================================================
 
 describe('ExitTypeDetectorService', () => {
+  let context: ManagedExitTypeDetectorContext;
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
   let createScenario: (options?: {
@@ -33,12 +35,13 @@ describe('ExitTypeDetectorService', () => {
   }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
 
   beforeEach(() => {
-    ({ service, logger } = createExitTypeDetectorHarness({ withErrorHandler: false }));
-    createScenario = (options = {}) =>
-      createExitTypeDetectorScenarioHarness({
-        withErrorHandler: false,
-        ...options,
-      });
+    context = createManagedExitTypeDetectorContext({ withErrorHandler: false });
+    ({ service, logger } = context);
+    createScenario = (options = {}) => context.createScenario(options);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

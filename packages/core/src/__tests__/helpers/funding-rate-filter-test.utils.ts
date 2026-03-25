@@ -130,3 +130,51 @@ export function createFundingRateFilterService(options: {
     errorHandler,
   );
 }
+
+export interface ManagedFundingRateFilterContext {
+  service: FundingRateFilterService;
+  logger: LoggerService;
+  config: FundingRateFilterConfig;
+  mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
+  errorHandler?: ErrorHandler;
+  createStandardFilter: ReturnType<typeof createFundingRateFilterHarness>['createStandardFilter'];
+  createLegacyFilter: ReturnType<typeof createFundingRateFilterHarness>['createLegacyFilter'];
+  cleanup: () => Promise<void>;
+  reset: () => void;
+}
+
+export function createManagedFundingRateFilterContext(options: {
+  configOverrides?: Partial<FundingRateFilterConfig>;
+  logger?: LoggerService;
+  getFundingRate?: jest.Mock<Promise<FundingRateData>>;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedFundingRateFilterContext {
+  const harness = createFundingRateFilterHarness(options);
+  const trackedServices = new Set<FundingRateFilterService>([harness.service]);
+
+  return {
+    ...harness,
+    createStandardFilter: (overrides = {}) => {
+      const service = harness.createStandardFilter(overrides);
+      trackedServices.add(service);
+      return service;
+    },
+    createLegacyFilter: (overrides = {}) => {
+      const service = harness.createLegacyFilter(overrides);
+      trackedServices.add(service);
+      return service;
+    },
+    cleanup: async () => {
+      for (const service of trackedServices) {
+        await service.clearCache().catch(() => undefined);
+      }
+      trackedServices.clear();
+      trackedServices.add(harness.service);
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      jest.clearAllMocks();
+    },
+  };
+}

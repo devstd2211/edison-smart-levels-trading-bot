@@ -11,6 +11,16 @@ export type AnalyzerRegistryMockLogger = {
   error: jest.Mock;
 };
 
+export interface ManagedAnalyzerRegistryContext {
+  logger: AnalyzerRegistryMockLogger;
+  errorHandler: ErrorHandler;
+  registry: AnalyzerRegistryService;
+  createRegistry: typeof createAnalyzerRegistryService;
+  createScenario: typeof createAnalyzerRegistryScenarioHarness;
+  cleanup: () => void;
+  reset: () => void;
+}
+
 export function createAnalyzerRegistryMockLogger(
   overrides: Partial<AnalyzerRegistryMockLogger> = {},
 ): AnalyzerRegistryMockLogger {
@@ -157,5 +167,43 @@ export function createAnalyzerRegistryScenarioHarness(options: {
     analyzerConfig,
     analyzerConfigs,
     indicators,
+  };
+}
+
+export function createManagedAnalyzerRegistryContext(
+  overrides: Partial<AnalyzerRegistryMockLogger> = {},
+  options: {
+    withErrorHandler?: boolean;
+  } = {},
+): ManagedAnalyzerRegistryContext {
+  const { logger, errorHandler, registry } = createAnalyzerRegistryHarness(overrides, options);
+  const trackedRegistries = new Set<AnalyzerRegistryService>([registry]);
+
+  return {
+    logger,
+    errorHandler,
+    registry,
+    createRegistry: (serviceOptions = {}) => {
+      const nextRegistry = createAnalyzerRegistryService({
+        logger,
+        errorHandler,
+        ...serviceOptions,
+      });
+      trackedRegistries.add(nextRegistry);
+      return nextRegistry;
+    },
+    createScenario: createAnalyzerRegistryScenarioHarness,
+    cleanup: () => {
+      for (const trackedRegistry of trackedRegistries) {
+        trackedRegistry.clearCache();
+      }
+      trackedRegistries.clear();
+      trackedRegistries.add(registry);
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      registry.clearCache();
+      jest.clearAllMocks();
+    },
   };
 }

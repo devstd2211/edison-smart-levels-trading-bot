@@ -13,6 +13,15 @@ export type IndicatorRegistryMockLogger = {
   error: jest.Mock;
 };
 
+export interface ManagedIndicatorRegistryContext {
+  logger: IndicatorRegistryMockLogger;
+  errorHandler: ErrorHandler;
+  registry: IndicatorRegistry;
+  createRegistry: typeof createIndicatorRegistryService;
+  cleanup: () => void;
+  reset: () => void;
+}
+
 export function createIndicatorRegistryMockLogger(
   overrides: Partial<IndicatorRegistryMockLogger> = {},
 ): IndicatorRegistryMockLogger {
@@ -137,4 +146,41 @@ export function asIndicatorRegistryType(value: unknown): IndicatorType {
 
 export function asIndicatorRegistryMetadata(value: unknown): IIndicatorMetadata {
   return value as IIndicatorMetadata;
+}
+
+export function createManagedIndicatorRegistryContext(
+  overrides: Partial<IndicatorRegistryMockLogger> = {},
+  options: {
+    withErrorHandler?: boolean;
+  } = {},
+): ManagedIndicatorRegistryContext {
+  const { logger, errorHandler, registry } = createIndicatorRegistryHarness(overrides, options);
+  const trackedRegistries = new Set<IndicatorRegistry>([registry]);
+
+  return {
+    logger,
+    errorHandler,
+    registry,
+    createRegistry: (serviceOptions = {}) => {
+      const nextRegistry = createIndicatorRegistryService({
+        logger,
+        errorHandler,
+        ...serviceOptions,
+      });
+      trackedRegistries.add(nextRegistry);
+      return nextRegistry;
+    },
+    cleanup: () => {
+      for (const trackedRegistry of trackedRegistries) {
+        trackedRegistry.clear();
+      }
+      trackedRegistries.clear();
+      trackedRegistries.add(registry);
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      registry.clear();
+      jest.clearAllMocks();
+    },
+  };
 }

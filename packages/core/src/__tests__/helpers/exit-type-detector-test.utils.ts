@@ -54,6 +54,45 @@ export function createExitTypeDetectorScenarioHarness(options: {
   };
 }
 
+export interface ManagedExitTypeDetectorContext {
+  service: ExitTypeDetectorService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  createScenario: typeof createExitTypeDetectorScenarioHarness;
+  createService: typeof createExitTypeDetectorHarness;
+  cleanup: () => void;
+  reset: () => void;
+}
+
+export function createManagedExitTypeDetectorContext(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}): ManagedExitTypeDetectorContext {
+  const harness = createExitTypeDetectorHarness(options);
+
+  return {
+    ...harness,
+    createScenario: (scenarioOptions = {}) =>
+      createExitTypeDetectorScenarioHarness({
+        logger: harness.logger,
+        withErrorHandler: options.withErrorHandler,
+        ...scenarioOptions,
+      }),
+    createService: (serviceOptions = {}) =>
+      createExitTypeDetectorHarness({
+        logger: harness.logger,
+        withErrorHandler: options.withErrorHandler,
+        ...serviceOptions,
+      }),
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function createExitTypeDetectorPosition(
   side: PositionSide = PositionSide.LONG,
 ): Position {

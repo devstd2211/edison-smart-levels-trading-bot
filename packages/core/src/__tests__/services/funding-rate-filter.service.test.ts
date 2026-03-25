@@ -6,23 +6,26 @@ import { FundingRateFilterService, FundingRateData } from '../../services/fundin
 import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
 import {
   createFundingRateData,
-  createFundingRateFilterHarness,
+  createManagedFundingRateFilterContext,
+  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
+  let context: ManagedFundingRateFilterContext;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let createFilter: (overrides?: {
-    config?: FundingRateFilterConfig;
-    configOverrides?: Partial<FundingRateFilterConfig>;
-  }) => FundingRateFilterService;
+  let createFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
   beforeEach(() => {
-    const harness = createFundingRateFilterHarness({
+    context = createManagedFundingRateFilterContext({
       withErrorHandler: false,
     });
-    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = harness);
+    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = context);
+  });
+
+  afterEach(async () => {
+    await context.cleanup();
   });
 
   describe('checkSignal', () => {

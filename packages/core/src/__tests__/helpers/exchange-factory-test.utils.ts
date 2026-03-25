@@ -244,3 +244,32 @@ export function createExchangeFactoryBoundCreators(options: {
       }),
   };
 }
+
+export interface ManagedExchangeFactoryContext {
+  logger: LoggerService;
+  mockLogger: ExchangeFactoryMockLogger;
+  errorHandler: ErrorHandler;
+  createFactory: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
+  createBybitFactory: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
+  createBinanceFactory: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
+  createFactoryWithoutErrorHandler: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
+  cleanup: () => void;
+  reset: () => void;
+}
+
+export function createManagedExchangeFactoryContext(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedExchangeFactoryContext {
+  const bound = createExchangeFactoryBoundCreators(options);
+
+  return {
+    ...bound,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      jest.clearAllMocks();
+    },
+  };
+}

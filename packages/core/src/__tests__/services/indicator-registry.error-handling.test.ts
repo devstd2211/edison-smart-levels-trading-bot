@@ -19,22 +19,29 @@ import { IndicatorType } from '../../types/indicator';
 import {
   asIndicatorRegistryMetadata,
   asIndicatorRegistryType,
-  createIndicatorRegistryHarness,
   createLegacyIndicatorRegistry,
   createIndicatorRegistryMetadata,
   createIndicatorRegistryMockLogger,
   createIndicatorRegistryRegistrations,
+  createManagedIndicatorRegistryContext,
   createStandardIndicatorRegistry,
   type IndicatorRegistryMockLogger,
+  type ManagedIndicatorRegistryContext,
 } from '../helpers/indicator-registry-test.utils';
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
+  let context: ManagedIndicatorRegistryContext;
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
 
   beforeEach(() => {
-    ({ logger, errorHandler, registry } = createIndicatorRegistryHarness());
+    context = createManagedIndicatorRegistryContext();
+    ({ logger, errorHandler, registry } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

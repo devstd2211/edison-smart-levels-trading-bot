@@ -12,37 +12,27 @@ import { ExchangeFactoryConfigError } from '../../errors/DomainErrors';
 import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
-  createExchangeFactoryConfig,
-  createExchangeFactoryHarness,
-  createLegacyExchangeFactory,
-  createStandardExchangeFactory,
+  createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ReturnType<typeof createExchangeFactoryHarness>['mockLogger'];
+  let context: ManagedExchangeFactoryContext;
+  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: (
-    overrides?: Partial<ExchangeConfig>,
-  ) => ExchangeFactory;
-  let createFactoryWithoutErrorHandler: (
-    overrides?: Partial<ExchangeConfig>,
-  ) => ExchangeFactory;
+  let createFactory: ManagedExchangeFactoryContext['createFactory'];
+  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
 
   beforeEach(() => {
-    const context = createExchangeFactoryHarness();
+    context = createManagedExchangeFactoryContext();
     mockLogger = context.mockLogger;
     mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
-    createFactory = (overrides = {}) =>
-      createStandardExchangeFactory({
-        logger: context.logger,
-        errorHandler: context.errorHandler,
-        config: createExchangeFactoryConfig(overrides),
-      });
-    createFactoryWithoutErrorHandler = (overrides = {}) =>
-      createLegacyExchangeFactory({
-        logger: context.logger,
-        config: createExchangeFactoryConfig(overrides),
-      });
+    createFactory = context.createFactory;
+    createFactoryWithoutErrorHandler = context.createFactoryWithoutErrorHandler;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

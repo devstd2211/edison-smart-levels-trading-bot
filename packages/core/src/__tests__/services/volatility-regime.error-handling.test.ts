@@ -7,14 +7,15 @@
  * - SKIP: Logger errors
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { VolatilityRegimeService } from '../../services/volatility-regime.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, VolatilityRegime } from '../../types/legacy';
 import {
-  createVolatilityRegimeHarness,
+  createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
+  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
 // ============================================================================
@@ -22,16 +23,21 @@ import {
 // ============================================================================
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
+  let context: ManagedVolatilityRegimeContext;
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let createService: ReturnType<typeof createVolatilityRegimeHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createVolatilityRegimeHarness>['createLegacyService'];
+  let createService: ManagedVolatilityRegimeContext['createStandardService'];
+  let createLegacyService: ManagedVolatilityRegimeContext['createLegacyService'];
 
   beforeEach(() => {
     mockLogger = createVolatilityRegimeMockLogger();
-    ({ errorHandler, createStandardService: createService, createLegacyService } =
-      createVolatilityRegimeHarness({ logger: mockLogger }));
+    context = createManagedVolatilityRegimeContext({ logger: mockLogger });
+    ({ errorHandler, createStandardService: createService, createLegacyService } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // =========================================================================
@@ -65,7 +71,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
     it('should throw on invalid threshold values in constructor', () => {
       expect(() => {
-        createVolatilityRegimeHarness({
+        createService({
           logger: mockLogger,
           config: createInvalidVolatilityRegimeThresholds(),
         });
@@ -74,7 +80,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
 
     it('should throw on negative threshold values in constructor', () => {
       expect(() => {
-        createVolatilityRegimeHarness({
+        createService({
           logger: mockLogger,
           config: createInvalidVolatilityRegimeThresholds({ lowAtrPercent: -0.3 }),
         });

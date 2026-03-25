@@ -9,24 +9,30 @@ import { Candle, Signal, SignalDirection } from '../../types/legacy';
 import {
   createRetestEntryCandles,
   createRetestEntryConfig,
-  createRetestEntryHarness,
   createRetestEntrySignal,
+  createManagedRetestEntryContext,
+  type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
 
 describe('RetestEntryService', () => {
+  let context: ManagedRetestEntryContext;
   let service: RetestEntryService;
   let mockConfig = createRetestEntryConfig();
   let mockSignal: Signal = createRetestEntrySignal();
   let mockCandles: Candle[] = createRetestEntryCandles();
-  let createService: ReturnType<typeof createRetestEntryHarness>['createService'];
+  let createService: ManagedRetestEntryContext['createService'];
 
   beforeEach(() => {
-    const harness = createRetestEntryHarness();
-    service = harness.service;
-    createService = harness.createService;
+    context = createManagedRetestEntryContext();
+    service = context.service;
+    createService = context.createService;
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('detectImpulse', () => {

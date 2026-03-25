@@ -16,6 +16,12 @@ export type TradingOrchestratorMockLogger = {
   debug: jest.Mock;
 };
 
+export interface ManagedTradingOrchestratorContext {
+  logger: TradingOrchestratorMockLogger;
+  cleanup: () => void;
+  reset: () => void;
+}
+
 export function createTradingOrchestratorMockLogger(): TradingOrchestratorMockLogger {
   return {
     info: jest.fn(),
@@ -30,6 +36,20 @@ export function createTradingOrchestratorErrorHandlingHarness(): {
 } {
   return {
     logger: createTradingOrchestratorMockLogger(),
+  };
+}
+
+export function createManagedTradingOrchestratorContext(): ManagedTradingOrchestratorContext {
+  const { logger } = createTradingOrchestratorErrorHandlingHarness();
+
+  return {
+    logger,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+    reset: () => {
+      jest.clearAllMocks();
+    },
   };
 }
 
