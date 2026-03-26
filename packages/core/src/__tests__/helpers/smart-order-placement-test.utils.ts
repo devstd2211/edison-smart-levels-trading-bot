@@ -113,18 +113,26 @@ export function createSmartOrderPlacementHarness(options: {
     logger,
     errorHandler,
     config,
-    createService: (serviceOptions: {
+    createStandardService: (serviceOptions: {
       config?: SmartOrderPlacementConfig;
       logger?: LoggerService;
       errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
     } = {}) => createSmartOrderPlacementService({
       config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
         ? serviceOptions.config
         : config,
       logger: serviceOptions.logger ?? logger,
       errorHandler: serviceOptions.errorHandler ?? errorHandler,
-      withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
+    }),
+    createLegacyService: (serviceOptions: {
+      config?: SmartOrderPlacementConfig;
+      logger?: LoggerService;
+    } = {}) => createSmartOrderPlacementService({
+      config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : config,
+      logger: serviceOptions.logger ?? logger,
+      withErrorHandler: false,
     }),
   };
 }
@@ -134,7 +142,9 @@ export interface ManagedSmartOrderPlacementContext {
   logger: LoggerService;
   errorHandler?: ErrorHandler;
   config: SmartOrderPlacementConfig;
-  createService: NonNullable<ReturnType<typeof createSmartOrderPlacementHarness>['createService']>;
+  createService: NonNullable<ReturnType<typeof createSmartOrderPlacementHarness>['createStandardService']>;
+  createStandardService: NonNullable<ReturnType<typeof createSmartOrderPlacementHarness>['createStandardService']>;
+  createLegacyService: NonNullable<ReturnType<typeof createSmartOrderPlacementHarness>['createLegacyService']>;
   cleanup: () => void;
 }
 
@@ -158,7 +168,11 @@ export function createManagedSmartOrderPlacementContext(options: {
     logger: harness.logger,
     errorHandler: harness.errorHandler,
     config: harness.config,
-    createService: (serviceOptions = {}) => trackService(harness.createService(serviceOptions)),
+    createService: (serviceOptions = {}) => trackService(harness.createStandardService(serviceOptions)),
+    createStandardService: (serviceOptions = {}) =>
+      trackService(harness.createStandardService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) =>
+      trackService(harness.createLegacyService(serviceOptions)),
     cleanup: () => {
       jest.restoreAllMocks();
       jest.clearAllMocks();

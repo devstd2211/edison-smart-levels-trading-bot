@@ -67,7 +67,7 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     test('should throw on null config', () => {
       const logger = createWhaleDetectionMockLoggerService(mockLogger);
       expect(() => {
-        createWhaleDetectionService({
+        createService({
           config: null as unknown as WhaleConfigInput,
           logger,
         });

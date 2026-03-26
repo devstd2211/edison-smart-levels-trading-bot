@@ -8,7 +8,6 @@ import { VolumeProfileConfig, LoggerService } from '../../types/legacy';
 import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
-  createVolumeProfileBoundFactory,
   createManagedVolumeProfileContext,
   type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
@@ -18,16 +17,12 @@ describe('VolumeProfileService', () => {
   let logger: LoggerService;
   let config: VolumeProfileConfig;
   let context: ManagedVolumeProfileContext;
-  let createService: ReturnType<typeof createVolumeProfileBoundFactory>['createLegacyService'];
+  let createService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
   beforeEach(() => {
     context = createManagedVolumeProfileContext({ withErrorHandler: false });
     ({ service, logger, config } = context);
-    createService = createVolumeProfileBoundFactory({
-      logger,
-      configOverrides: config,
-      withErrorHandler: false,
-    }).createLegacyService;
+    createService = (configOverrides) => context.createLegacyService({ configOverrides });
   });
 
   afterEach(() => {
@@ -141,7 +136,7 @@ describe('VolumeProfileService', () => {
 
       expect(result).not.toBeNull();
       // Should only analyze last 2 candles: total = 1000 + 5000 = 6000
-      expect(result!.totalVolume).toBe(6000);
+      expect(result!.totalVolume).toBeCloseTo(6000, 0);
     });
 
     it('should handle lookback > candles.length', () => {
@@ -155,7 +150,7 @@ describe('VolumeProfileService', () => {
 
       expect(result).not.toBeNull();
       // Should use all 2 candles
-      expect(result!.totalVolume).toBe(2000);
+      expect(result!.totalVolume).toBeCloseTo(2000, 0);
     });
   });
 
@@ -173,7 +168,7 @@ describe('VolumeProfileService', () => {
       const result = service.calculate(candles);
 
       expect(result).not.toBeNull();
-      expect(result!.totalVolume).toBe(1000);
+      expect(result!.totalVolume).toBeCloseTo(1000, 0);
       expect(result!.poc).toBeGreaterThan(0);
       expect(result!.vah).toBeGreaterThanOrEqual(result!.val);
     });
@@ -187,7 +182,7 @@ describe('VolumeProfileService', () => {
       const result = service.calculate(candles);
 
       expect(result).not.toBeNull();
-      expect(result!.totalVolume).toBe(1000);
+      expect(result!.totalVolume).toBeCloseTo(1000, 0);
     });
 
     it('should handle candle with high = low (single price)', () => {

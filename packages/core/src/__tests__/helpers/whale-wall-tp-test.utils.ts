@@ -168,6 +168,8 @@ export function createWhaleWallTPService(options: {
 export type WhaleWallTPHarness = ReturnType<typeof createWhaleWallTPHarness>;
 
 export type ManagedWhaleWallTPContext = WhaleWallTPHarness & {
+  createStandardService: typeof createWhaleWallTPService;
+  createLegacyService: typeof createWhaleWallTPService;
   createService: typeof createWhaleWallTPService;
   cleanup: () => void;
 };
@@ -180,7 +182,7 @@ export function createManagedWhaleWallTPContext(options: {
   const harness = createWhaleWallTPHarness(options);
   const trackedServices = new Set<WhaleWallTPService>([harness.service]);
 
-  const createService = (serviceOptions = {}) => {
+  const createStandardService: typeof createWhaleWallTPService = (serviceOptions = {}) => {
     const service = createWhaleWallTPService({
       logger: harness.logger,
       config: options.config,
@@ -192,11 +194,25 @@ export function createManagedWhaleWallTPContext(options: {
     return service;
   };
 
+  const createLegacyService: typeof createWhaleWallTPService = (serviceOptions = {}) => {
+    const service = createWhaleWallTPService({
+      logger: harness.logger,
+      config: options.config,
+      withErrorHandler: false,
+      ...serviceOptions,
+    });
+    trackedServices.add(service);
+    return service;
+  };
+
   return {
     ...harness,
-    createService,
+    createStandardService,
+    createLegacyService,
+    createService: createStandardService,
     cleanup: () => {
       trackedServices.clear();
+      jest.restoreAllMocks();
       jest.clearAllMocks();
     },
   };

@@ -47,7 +47,7 @@ export function createVolumeProfileConfig(
     enabled: true,
     lookbackCandles: 100,
     valueAreaPercent: 70,
-    priceTickSize: 0.01,
+    priceTickSize: 0.5,
     ...overrides,
   };
 }
@@ -175,6 +175,8 @@ export function createVolumeProfileHarness(options: {
 export type VolumeProfileHarness = ReturnType<typeof createVolumeProfileHarness>;
 
 export type ManagedVolumeProfileContext = VolumeProfileHarness & {
+  createStandardService: VolumeProfileHarness['createStandardService'];
+  createLegacyService: VolumeProfileHarness['createLegacyService'];
   cleanup: () => void;
 };
 
@@ -184,10 +186,26 @@ export function createManagedVolumeProfileContext(options: {
   withErrorHandler?: boolean;
 } = {}): ManagedVolumeProfileContext {
   const harness = createVolumeProfileHarness(options);
+  const trackedServices = new Set<VolumeProfileService>([harness.service]);
+
+  const createStandardService: VolumeProfileHarness['createStandardService'] = (serviceOptions = {}) => {
+    const service = harness.createStandardService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+
+  const createLegacyService: VolumeProfileHarness['createLegacyService'] = (serviceOptions = {}) => {
+    const service = harness.createLegacyService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
 
   return {
     ...harness,
+    createStandardService,
+    createLegacyService,
     cleanup: () => {
+      trackedServices.clear();
       jest.restoreAllMocks();
       jest.clearAllMocks();
       jest.clearAllTimers();

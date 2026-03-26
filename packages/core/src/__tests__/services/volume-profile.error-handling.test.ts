@@ -11,14 +11,12 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { VolumeProfileService } from '../../services/volume-profile.service';
 import { LoggerService, Candle, VolumeProfileConfig } from '../../types/legacy';
 import {
-  createVolumeProfileBoundFactory,
   createVolumeProfileCandles,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
   createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
-  createVolumeProfileServiceWithHarness,
   type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
@@ -34,28 +32,29 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let service: VolumeProfileService;
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
-  let createService: (
-    configOverrides?: Partial<VolumeProfileConfig>,
-    logger?: LoggerService,
-    withErrorHandler?: boolean,
-  ) => VolumeProfileService;
+  let createStandardService: ManagedVolumeProfileContext['createStandardService'];
   let createLegacyService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
   let context: ManagedVolumeProfileContext;
 
   beforeEach(() => {
     context = createManagedVolumeProfileContext();
     mockLogger = context.logger;
-    const factory = createVolumeProfileBoundFactory({
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-    });
-    createService = (configOverrides, logger = mockLogger, withErrorHandler = true) =>
-      factory.createStandardService(configOverrides, logger, withErrorHandler);
-    createLegacyService = factory.createLegacyService;
+    createStandardService = context.createStandardService;
+    createLegacyService = (configOverrides) => context.createLegacyService({ configOverrides });
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  const createService = (
+    configOverrides?: Partial<VolumeProfileConfig>,
+    logger: LoggerService = mockLogger,
+    withErrorHandler = true,
+  ) => createStandardService({
+    configOverrides,
+    logger,
+    withErrorHandler,
   });
 
   // =========================================================================
@@ -65,6 +64,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   describe('THROW: Input Validation', () => {
     it('should throw on null candles array', () => {
       service = createService();
+      
 
       expect(() => {
         service.calculate(null as unknown as VolumeCandlesInput);
@@ -448,13 +448,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle config with partial overrides without ErrorHandler', () => {
-      service = createVolumeProfileServiceWithHarness({
-        config: {
-          lookbackCandles: 100,
-          valueAreaPercent: 68,
-        },
-        logger: mockLogger,
-        withErrorHandler: false,
+      service = createLegacyService({
+        lookbackCandles: 100,
+        valueAreaPercent: 68,
       });
 
       const config = service.getConfig();

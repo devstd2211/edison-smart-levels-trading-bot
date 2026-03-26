@@ -29,6 +29,7 @@ type MLSignalValidatorServiceOptions = {
   strategicConfig?: SignalValidationConfig;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 };
 
 export function createMLSignalValidatorService(
@@ -38,7 +39,7 @@ export function createMLSignalValidatorService(
     options.config,
     options.strategicConfig,
     options.logger,
-    options.errorHandler,
+    options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
 
@@ -46,7 +47,9 @@ export function createMLSignalValidatorHarness(
   options: MLSignalValidatorServiceOptions = {},
 ) {
   const logger = options.logger ?? createMLSignalValidatorLogger();
-  const errorHandler = options.errorHandler ?? createMLSignalValidatorErrorHandler(logger);
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? createMLSignalValidatorErrorHandler(logger);
 
   return {
     logger,
@@ -56,13 +59,30 @@ export function createMLSignalValidatorHarness(
       logger,
       errorHandler,
     }),
+    createStandardService: (serviceOptions: MLSignalValidatorServiceOptions = {}) =>
+      createMLSignalValidatorService({
+        config: serviceOptions.config ?? options.config,
+        strategicConfig: serviceOptions.strategicConfig ?? options.strategicConfig,
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (serviceOptions: Omit<MLSignalValidatorServiceOptions, 'errorHandler'> = {}) =>
+      createMLSignalValidatorService({
+        config: serviceOptions.config ?? options.config,
+        strategicConfig: serviceOptions.strategicConfig ?? options.strategicConfig,
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
   };
 }
 
 export interface ManagedMLSignalValidatorContext {
   service: MLSignalValidatorService;
   logger: LoggerService;
-  errorHandler: ErrorHandler;
+  errorHandler?: ErrorHandler;
+  createService: NonNullable<ReturnType<typeof createMLSignalValidatorHarness>['createStandardService']>;
+  createStandardService: NonNullable<ReturnType<typeof createMLSignalValidatorHarness>['createStandardService']>;
+  createLegacyService: NonNullable<ReturnType<typeof createMLSignalValidatorHarness>['createLegacyService']>;
   cleanup: () => void;
 }
 
@@ -72,13 +92,26 @@ export function createManagedMLSignalValidatorContext(
   jest.clearAllMocks();
 
   const harness = createMLSignalValidatorHarness(options);
+  const createdServices = new Set<MLSignalValidatorService>([harness.service]);
+
+  const trackService = (service: MLSignalValidatorService) => {
+    createdServices.add(service);
+    return service;
+  };
 
   return {
     service: harness.service,
     logger: harness.logger,
     errorHandler: harness.errorHandler,
+    createService: (serviceOptions = {}) => trackService(harness.createStandardService(serviceOptions)),
+    createStandardService: (serviceOptions = {}) =>
+      trackService(harness.createStandardService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) =>
+      trackService(harness.createLegacyService(serviceOptions)),
     cleanup: () => {
-      harness.service.clearHistory();
+      for (const service of createdServices) {
+        service.clearHistory();
+      }
       jest.restoreAllMocks();
       jest.clearAllMocks();
     },

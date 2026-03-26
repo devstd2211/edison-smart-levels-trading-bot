@@ -93,6 +93,29 @@ export function createLadderTpHarness(options: {
     bybitService,
     errorHandler,
     config,
+    createStandardService: (serviceOptions: {
+      configOverrides?: Partial<LadderTpManagerConfig>;
+      logger?: LoggerService;
+      bybitService?: jest.Mocked<IExchange>;
+      errorHandler?: ErrorHandler;
+    } = {}) =>
+      createLadderTpService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        bybitService: serviceOptions.bybitService ?? bybitService,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (serviceOptions: {
+      configOverrides?: Partial<LadderTpManagerConfig>;
+      logger?: LoggerService;
+      bybitService?: jest.Mocked<IExchange>;
+    } = {}) =>
+      createLadderTpService({
+        configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
+        logger: serviceOptions.logger ?? logger,
+        bybitService: serviceOptions.bybitService ?? bybitService,
+        withErrorHandler: false,
+      }),
     createInvalidService: (
       invalidConfig: ConstructorParameters<typeof LadderTpManagerService>[0],
       overrides: {
@@ -124,10 +147,23 @@ export function createManagedLadderTpContext(options: {
   withErrorHandler?: boolean;
 } = {}): ManagedLadderTpContext {
   const harness = createLadderTpHarness(options);
+  const trackedServices = new Set<LadderTpManagerService>([harness.service]);
+
+  const trackService = (service: LadderTpManagerService) => {
+    trackedServices.add(service);
+    return service;
+  };
 
   return {
     ...harness,
+    createStandardService: (serviceOptions = {}) =>
+      trackService(harness.createStandardService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) =>
+      trackService(harness.createLegacyService(serviceOptions)),
+    createInvalidService: (invalidConfig, overrides = {}) =>
+      trackService(harness.createInvalidService(invalidConfig, overrides)),
     cleanup: () => {
+      trackedServices.clear();
       jest.restoreAllMocks();
       jest.clearAllMocks();
       jest.clearAllTimers();

@@ -18,9 +18,7 @@ import { LoggerService } from '../../services/logger.service';
 import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection';
 import {
   AnomalyDetectionInternals,
-  createAnomalyDetectionBoundFactory,
   createAnomalyDetectionMockLogger,
-  createAnomalyDetectionService,
   createManagedAnomalyDetectionContext,
   createAnomalyDetectionTrade,
   createAnomalyDetectionTradeSeries,
@@ -230,7 +228,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       });
 
       expect(() => {
-        createAnomalyDetectionService({ logger: badLogger, errorHandler });
+        context.createStandardService({ logger: badLogger, errorHandler });
       }).not.toThrow();
     });
 
@@ -241,7 +239,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         }),
       });
 
-      const testService = createAnomalyDetectionService({ logger: badLogger, errorHandler });
+      const testService = context.createStandardService({ logger: badLogger, errorHandler });
 
       // Force detection to log a warning
       const testInternals = testService as unknown as AnomalyDetectionInternals;
@@ -261,7 +259,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         }),
       });
 
-      const testService = createAnomalyDetectionService({ logger: badLogger, errorHandler });
+      const testService = context.createStandardService({ logger: badLogger, errorHandler });
 
       expect(() => {
         testService.clearHistory();
@@ -459,13 +457,15 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     let serviceWithoutEH: AnomalyDetectionService;
+    let legacyContext: ManagedAnomalyDetectionContext;
 
     beforeEach(() => {
-      ({ service: serviceWithoutEH } = createManagedAnomalyDetectionContext({ withErrorHandler: false }));
+      legacyContext = createManagedAnomalyDetectionContext({ withErrorHandler: false });
+      ({ service: serviceWithoutEH } = legacyContext);
     });
 
     afterEach(() => {
-      serviceWithoutEH.clearHistory();
+      legacyContext.cleanup();
     });
 
     it('should detect volume anomalies without ErrorHandler', () => {

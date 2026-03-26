@@ -167,20 +167,32 @@ export function createLiquidityHeatmapHarness(options: {
     errorHandler,
     withErrorHandler: options.withErrorHandler,
   });
-  const createService = (
+  const createStandardService = (
     serviceOptions: {
       config?: LiquidityHeatmapConfig;
       logger?: LoggerService;
       errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
     } = {},
   ) =>
     createLiquidityHeatmapService({
-      config,
-      logger,
-      errorHandler,
-      withErrorHandler: options.withErrorHandler,
-      ...serviceOptions,
+      config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : config,
+      logger: serviceOptions.logger ?? logger,
+      errorHandler: serviceOptions.errorHandler ?? errorHandler,
+    });
+  const createLegacyService = (
+    serviceOptions: {
+      config?: LiquidityHeatmapConfig;
+      logger?: LoggerService;
+    } = {},
+  ) =>
+    createLiquidityHeatmapService({
+      config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : config,
+      logger: serviceOptions.logger ?? logger,
+      withErrorHandler: false,
     });
 
   return {
@@ -188,7 +200,9 @@ export function createLiquidityHeatmapHarness(options: {
     logger,
     errorHandler,
     config,
-    createService,
+    createService: createStandardService,
+    createStandardService,
+    createLegacyService,
   };
 }
 
@@ -233,13 +247,17 @@ export function createManagedLiquidityHeatmapContext(options: {
   const trackedServices = new Set<LiquidityHeatmapService>([harness.service]);
 
   const createService: LiquidityHeatmapHarness['createService'] = (serviceOptions = {}) => {
-    const service = createLiquidityHeatmapService({
-      config: harness.config,
-      logger: harness.logger,
-      errorHandler: harness.errorHandler,
-      withErrorHandler: options.withErrorHandler,
-      ...serviceOptions,
-    });
+    const service = harness.createStandardService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+  const createStandardService: LiquidityHeatmapHarness['createStandardService'] = (serviceOptions = {}) => {
+    const service = harness.createStandardService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+  const createLegacyService: LiquidityHeatmapHarness['createLegacyService'] = (serviceOptions = {}) => {
+    const service = harness.createLegacyService(serviceOptions);
     trackedServices.add(service);
     return service;
   };
@@ -247,8 +265,11 @@ export function createManagedLiquidityHeatmapContext(options: {
   return {
     ...harness,
     createService,
+    createStandardService,
+    createLegacyService,
     cleanup: () => {
       trackedServices.clear();
+      jest.restoreAllMocks();
       jest.clearAllMocks();
     },
   };

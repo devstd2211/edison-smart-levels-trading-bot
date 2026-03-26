@@ -28,7 +28,6 @@ import {
   createManagedSmartOrderPlacementContext,
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
-  createSmartOrderPlacementService,
   createThinSmartOrderPlacementOrderbook,
 } from '../helpers/smart-order-placement-test.utils';
 
@@ -37,51 +36,55 @@ import {
 // ============================================================================
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  it('should THROW when config is null', () => {
-    const logger = createSmartOrderPlacementLogger();
+  let context: ManagedSmartOrderPlacementContext;
 
+  beforeEach(() => {
+    context = createManagedSmartOrderPlacementContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  it('should THROW when config is null', () => {
     expect(() => {
-      createSmartOrderPlacementService({ config: asConfig(null), logger });
+      context.createStandardService({ config: asConfig(null) });
     }).toThrow('SmartOrderPlacementConfig cannot be null or undefined');
   });
 
   it('should THROW when maxOrderSize is invalid', () => {
-    const logger = createSmartOrderPlacementLogger();
     const config = createSmartOrderPlacementConfig();
     config.maxOrderSize = -10;
 
     expect(() => {
-      createSmartOrderPlacementService({ config, logger });
+      context.createStandardService({ config });
     }).toThrow('Invalid maxOrderSize');
   });
 
   it('should THROW when maxSlippageBps is invalid', () => {
-    const logger = createSmartOrderPlacementLogger();
     const config = createSmartOrderPlacementConfig();
     config.maxSlippageBps = -1;
 
     expect(() => {
-      createSmartOrderPlacementService({ config, logger });
+      context.createStandardService({ config });
     }).toThrow('Invalid maxSlippageBps');
   });
 
   it('should THROW when minFillProbability is out of range', () => {
-    const logger = createSmartOrderPlacementLogger();
     const config = createSmartOrderPlacementConfig();
     config.minFillProbability = 150;
 
     expect(() => {
-      createSmartOrderPlacementService({ config, logger });
+      context.createStandardService({ config });
     }).toThrow('Invalid minFillProbability');
   });
 
   it('should THROW when executionTimeHorizon is invalid', () => {
-    const logger = createSmartOrderPlacementLogger();
     const config = createSmartOrderPlacementConfig();
     config.executionTimeHorizon = 0;
 
     expect(() => {
-      createSmartOrderPlacementService({ config, logger });
+      context.createStandardService({ config });
     }).toThrow('Invalid executionTimeHorizon');
   });
 });
@@ -264,10 +267,16 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
 
 describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
+  let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
     const mockLogger = createSmartOrderPlacementLogger();
     errorHandler = createSmartOrderPlacementErrorHandler(mockLogger);
+    context = createManagedSmartOrderPlacementContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -275,7 +284,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
     const config = createSmartOrderPlacementConfig();
 
     expect(() => {
-      createSmartOrderPlacementService({
+      context.createStandardService({
         config,
         logger: loggerWithFailingInfo,
         errorHandler,
@@ -286,7 +295,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   it('should SKIP logger.warn failure during planning', async () => {
     const loggerWithFailingWarn = createSmartOrderPlacementLogger('warn');
     const config = createSmartOrderPlacementConfig();
-    const service = createSmartOrderPlacementService({
+    const service = context.createStandardService({
       config,
       logger: loggerWithFailingWarn,
       errorHandler,
@@ -302,7 +311,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   it('should SKIP logger.error failure during error handling', async () => {
     const loggerWithFailingError = createSmartOrderPlacementLogger('error');
     const config = createSmartOrderPlacementConfig();
-    const service = createSmartOrderPlacementService({
+    const service = context.createStandardService({
       config,
       logger: loggerWithFailingError,
       errorHandler,
@@ -522,13 +531,10 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
 
   it('should handle logger failures without ErrorHandler', async () => {
     const failingLogger = createSmartOrderPlacementLogger('info');
-    const config = createSmartOrderPlacementConfig();
 
     expect(() => {
-      createSmartOrderPlacementService({
-        config,
+      context.createLegacyService({
         logger: failingLogger,
-        withErrorHandler: false,
       });
     }).not.toThrow();
   });

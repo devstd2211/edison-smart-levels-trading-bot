@@ -36,6 +36,10 @@ export interface ManagedEventDeduplicationContext {
   harness: EventDeduplicationHarness;
   logger: LoggerService;
   errorHandler: ErrorHandler;
+  createStandardService: EventDeduplicationHarness['createStandardService'];
+  createLegacyService: EventDeduplicationHarness['createLegacyService'];
+  createServiceWithDefaults: EventDeduplicationHarness['createServiceWithDefaults'];
+  createService: EventDeduplicationHarness['createService'];
   cleanup: () => void;
 }
 
@@ -219,13 +223,49 @@ export function createEventDeduplicationHarness(): EventDeduplicationHarness {
 
 export function createManagedEventDeduplicationContext(): ManagedEventDeduplicationContext {
   const harness = createEventDeduplicationHarness();
+  const trackedServices = new Set<EventDeduplicationService>();
+
+  const createStandardService: EventDeduplicationHarness['createStandardService'] = (options = {}) => {
+    const service = harness.createStandardService(options);
+    trackedServices.add(service);
+    return service;
+  };
+
+  const createLegacyService: EventDeduplicationHarness['createLegacyService'] = (options = {}) => {
+    const service = harness.createLegacyService(options);
+    trackedServices.add(service);
+    return service;
+  };
+
+  const createServiceWithDefaults: EventDeduplicationHarness['createServiceWithDefaults'] = (options = {}) =>
+    options.withErrorHandler === false
+      ? createLegacyService(options)
+      : createStandardService(options);
+
+  const createService: EventDeduplicationHarness['createService'] = (
+    cacheSize = 100,
+    cacheTtlMs = 60000,
+    customLogger = harness.logger,
+    customErrorHandler = harness.errorHandler,
+  ) => createStandardService({
+    cacheSize,
+    cacheTtlMs,
+    logger: customLogger,
+    errorHandler: customErrorHandler,
+  });
 
   return {
     harness,
     logger: harness.logger,
     errorHandler: harness.errorHandler,
+    createStandardService,
+    createLegacyService,
+    createServiceWithDefaults,
+    createService,
     cleanup() {
+      trackedServices.clear();
       jest.restoreAllMocks();
+      jest.clearAllMocks();
     },
   };
 }

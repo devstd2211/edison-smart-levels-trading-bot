@@ -6,11 +6,11 @@ import { WhaleWallTPService, WhaleWallTPConfig } from '../services/whale-wall-tp
 import { SignalDirection, LoggerService } from '../types/legacy';
 import {
   createWhaleWallTPConfig,
-  createWhaleWallTPHarness,
+  createManagedWhaleWallTPContext,
   createWhaleWallTPMockLoggerService,
-  createWhaleWallTPService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWall,
+  type ManagedWhaleWallTPContext,
 } from './helpers/whale-wall-tp-test.utils';
 
 // ============================================================================
@@ -21,14 +21,22 @@ describe('WhaleWallTPService', () => {
   let service: WhaleWallTPService;
   let mockLogger: Partial<LoggerService>;
   let defaultConfig: Partial<WhaleWallTPConfig>;
+  let context: ManagedWhaleWallTPContext;
+  let createService: ManagedWhaleWallTPContext['createStandardService'];
 
   beforeEach(() => {
     mockLogger = createWhaleWallTPMockLoggerService();
     defaultConfig = createWhaleWallTPConfig();
-    service = createWhaleWallTPHarness({
+    context = createManagedWhaleWallTPContext({
       logger: mockLogger as LoggerService,
       config: defaultConfig,
-    }).service;
+    });
+    service = context.service;
+    createService = context.createStandardService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================
@@ -37,7 +45,7 @@ describe('WhaleWallTPService', () => {
 
   describe('Basic Functionality', () => {
     it('should return no adjustment when disabled', () => {
-      const disabledService = createWhaleWallTPService({
+      const disabledService = createService({
         logger: mockLogger as LoggerService,
         config: { enabled: false },
       });
@@ -368,7 +376,7 @@ describe('WhaleWallTPService', () => {
 
   describe('Configuration', () => {
     it('should use default config when none provided', () => {
-      const defaultService = createWhaleWallTPService({
+      const defaultService = createService({
         logger: mockLogger as LoggerService,
       });
 
@@ -381,7 +389,7 @@ describe('WhaleWallTPService', () => {
     });
 
     it('should merge partial config with defaults', () => {
-      const partialService = createWhaleWallTPService({
+      const partialService = createService({
         logger: mockLogger as LoggerService,
         config: {
           minWallPercent: 10,
@@ -403,7 +411,7 @@ describe('WhaleWallTPService', () => {
     });
 
     it('should disable TP targeting when configured', () => {
-      const service = createWhaleWallTPService({
+      const service = createService({
         logger: mockLogger as LoggerService,
         config: {
           tpTargeting: {
@@ -422,7 +430,7 @@ describe('WhaleWallTPService', () => {
     });
 
     it('should disable SL protection when configured', () => {
-      const service = createWhaleWallTPService({
+      const service = createService({
         logger: mockLogger as LoggerService,
         config: {
           slProtection: {

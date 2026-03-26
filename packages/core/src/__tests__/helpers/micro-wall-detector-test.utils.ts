@@ -155,6 +155,31 @@ export function createMicroWallDetectorHarness(options: {
     logger,
     config,
     errorHandler,
+    createStandardDetector: (serviceOptions: {
+      config?: MicroWallDetectorConfig;
+      configOverrides?: Partial<MicroWallDetectorConfig>;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    } = {}) => createMicroWallDetectorService({
+      logger: serviceOptions.logger ?? logger,
+      errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : undefined,
+      configOverrides: serviceOptions.configOverrides,
+    }),
+    createLegacyDetector: (serviceOptions: {
+      config?: MicroWallDetectorConfig;
+      configOverrides?: Partial<MicroWallDetectorConfig>;
+      logger?: LoggerService;
+    } = {}) => createMicroWallDetectorService({
+      logger: serviceOptions.logger ?? logger,
+      withErrorHandler: false,
+      config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : undefined,
+      configOverrides: serviceOptions.configOverrides,
+    }),
   };
 }
 
@@ -164,6 +189,8 @@ export interface ManagedMicroWallDetectorContext {
   config: MicroWallDetectorConfig;
   errorHandler?: ErrorHandler;
   createDetector: (options?: Parameters<typeof createMicroWallDetectorService>[0]) => MicroWallDetectorService;
+  createStandardDetector: NonNullable<ReturnType<typeof createMicroWallDetectorHarness>['createStandardDetector']>;
+  createLegacyDetector: NonNullable<ReturnType<typeof createMicroWallDetectorHarness>['createLegacyDetector']>;
   cleanup: () => void;
 }
 
@@ -188,15 +215,11 @@ export function createManagedMicroWallDetectorContext(options: {
     logger: harness.logger,
     config: harness.config,
     errorHandler: harness.errorHandler,
-    createDetector: (serviceOptions = {}) =>
-      trackDetector(
-        createMicroWallDetectorService({
-          logger: harness.logger,
-          errorHandler: harness.errorHandler,
-          withErrorHandler: options.withErrorHandler,
-          ...serviceOptions,
-        }),
-      ),
+    createDetector: (serviceOptions = {}) => trackDetector(harness.createStandardDetector(serviceOptions)),
+    createStandardDetector: (serviceOptions = {}) =>
+      trackDetector(harness.createStandardDetector(serviceOptions)),
+    createLegacyDetector: (serviceOptions = {}) =>
+      trackDetector(harness.createLegacyDetector(serviceOptions)),
     cleanup: () => {
       createdDetectors.forEach((detector) => {
         detector.reset();

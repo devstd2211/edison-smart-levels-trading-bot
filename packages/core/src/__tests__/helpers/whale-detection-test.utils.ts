@@ -169,25 +169,35 @@ export function createWhaleDetectionHarness(options: {
       strategy?: 'BREAKOUT' | 'FOLLOW';
       errorHandler?: ErrorHandler;
       withErrorHandler?: boolean;
-    } = {}) =>
-      createWhaleDetectionService({
+    } = {}) => {
+      const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : config;
+
+      return createWhaleDetectionService({
         logger: serviceOptions.logger ?? logger,
-        config: serviceOptions.config ?? config,
+        config: resolvedConfig,
         strategy: serviceOptions.strategy ?? options.strategy,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
-      }),
+      });
+    },
     createLegacyService: (serviceOptions: {
       logger?: LoggerService;
       config?: WhaleDetectorConfig;
       strategy?: 'BREAKOUT' | 'FOLLOW';
-    } = {}) =>
-      createWhaleDetectionService({
+    } = {}) => {
+      const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : config;
+
+      return createWhaleDetectionService({
         logger: serviceOptions.logger ?? logger,
-        config: serviceOptions.config ?? config,
+        config: resolvedConfig,
         strategy: serviceOptions.strategy ?? options.strategy,
         withErrorHandler: false,
-      }),
+      });
+    },
     createScenario: (scenarioOptions: {
       logger?: LoggerService;
       config?: WhaleDetectorConfig;
@@ -223,10 +233,59 @@ export function createManagedWhaleDetectionContext(options: {
   withErrorHandler?: boolean;
 } = {}): ManagedWhaleDetectionContext {
   const harness = createWhaleDetectionHarness(options);
+  const trackedServices = new Set<WhaleDetectionService>([harness.detector]);
+
+  const createStandardService: WhaleDetectionHarness['createStandardService'] = (serviceOptions = {}) => {
+    const service = harness.createStandardService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+
+  const createLegacyService: WhaleDetectionHarness['createLegacyService'] = (serviceOptions = {}) => {
+    const service = harness.createLegacyService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+
+  const createScenario: WhaleDetectionHarness['createScenario'] = (scenarioOptions = {}) => {
+    const detector =
+      scenarioOptions.withErrorHandler === false
+        ? createLegacyService({
+            logger: scenarioOptions.logger,
+            config: scenarioOptions.config,
+            strategy: scenarioOptions.strategy,
+          })
+        : createStandardService({
+            logger: scenarioOptions.logger,
+            config: scenarioOptions.config,
+            strategy: scenarioOptions.strategy,
+            errorHandler: scenarioOptions.errorHandler,
+            withErrorHandler: scenarioOptions.withErrorHandler,
+          });
+
+    return {
+      detector,
+      logger: scenarioOptions.logger ?? harness.logger,
+      config: scenarioOptions.config ?? harness.config,
+      errorHandler: scenarioOptions.errorHandler ?? harness.errorHandler,
+      analysis: createWhaleDetectionAnalysis(
+        scenarioOptions.walls,
+        scenarioOptions.ratio,
+        scenarioOptions.direction,
+      ),
+      createStandardService,
+      createLegacyService,
+      createScenario,
+    };
+  };
 
   return {
     ...harness,
+    createStandardService,
+    createLegacyService,
+    createScenario,
     cleanup: () => {
+      trackedServices.clear();
       jest.restoreAllMocks();
       jest.clearAllMocks();
       jest.clearAllTimers();

@@ -6,8 +6,10 @@ export type MLFeatureExtractorLogger = Pick<LoggerService, 'info' | 'warn' | 'er
 
 export type MLFeatureExtractorHarness = {
   service: MLFeatureExtractorService;
-  errorHandler: ErrorHandler;
+  errorHandler?: ErrorHandler;
   logger: LoggerService;
+  createStandardService: (options?: MLFeatureExtractorServiceOptions) => MLFeatureExtractorService;
+  createLegacyService: (options?: Omit<MLFeatureExtractorServiceOptions, 'errorHandler'>) => MLFeatureExtractorService;
 };
 
 type MLFeatureExtractorServiceOptions = {
@@ -103,15 +105,32 @@ export function createMLFeatureFailingLogger(
 export function createMLFeatureExtractorHarness(options: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): MLFeatureExtractorHarness {
   const logger = options.logger ?? createMLFeatureExtractorLogger();
-  const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
-  const service = createMLFeatureExtractorService({ logger, errorHandler });
+  const errorHandler = options.withErrorHandler === false
+    ? undefined
+    : options.errorHandler ?? new ErrorHandler(logger);
+  const service = createMLFeatureExtractorService({
+    logger,
+    errorHandler,
+    withErrorHandler: options.withErrorHandler,
+  });
 
   return {
     service,
     errorHandler,
     logger,
+    createStandardService: (serviceOptions: MLFeatureExtractorServiceOptions = {}) =>
+      createMLFeatureExtractorService({
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      }),
+    createLegacyService: (serviceOptions: Omit<MLFeatureExtractorServiceOptions, 'errorHandler'> = {}) =>
+      createMLFeatureExtractorService({
+        logger: serviceOptions.logger ?? logger,
+        withErrorHandler: false,
+      }),
   };
 }
 
@@ -134,18 +153,28 @@ export function createMLFeatureExtractorService(options: MLFeatureExtractorServi
 export function createManagedMLFeatureExtractorContext(options: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
 } = {}): ManagedMLFeatureExtractorContext {
+  jest.clearAllMocks();
   const harness = createMLFeatureExtractorHarness(options);
+  const createdServices = new Set<MLFeatureExtractorService>([harness.service]);
+
+  const trackService = (service: MLFeatureExtractorService) => {
+    createdServices.add(service);
+    return service;
+  };
 
   return {
     ...harness,
     createService: (serviceOptions: MLFeatureExtractorServiceOptions = {}) =>
-      createMLFeatureExtractorService({
-        logger: serviceOptions.logger ?? harness.logger,
-        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
-        withErrorHandler: serviceOptions.withErrorHandler,
-      }),
+      trackService(harness.createStandardService(serviceOptions)),
+    createStandardService: (serviceOptions: MLFeatureExtractorServiceOptions = {}) =>
+      trackService(harness.createStandardService(serviceOptions)),
+    createLegacyService: (serviceOptions: Omit<MLFeatureExtractorServiceOptions, 'errorHandler'> = {}) =>
+      trackService(harness.createLegacyService(serviceOptions)),
     cleanup: () => {
+      createdServices.clear();
+      jest.restoreAllMocks();
       jest.clearAllMocks();
     },
   };

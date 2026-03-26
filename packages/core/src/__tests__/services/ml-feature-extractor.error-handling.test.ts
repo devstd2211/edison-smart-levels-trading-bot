@@ -10,7 +10,6 @@ import {
   createMLFeatureCandleSequence,
   createMLFeatureFailingLogger,
   createManagedMLFeatureExtractorContext,
-  createMLFeatureExtractorService,
   type ManagedMLFeatureExtractorContext,
 } from '../helpers/ml-feature-extractor-test.utils';
 
@@ -20,7 +19,7 @@ const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let service: MLFeatureExtractorService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
   let context: ManagedMLFeatureExtractorContext;
 
@@ -148,7 +147,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails on info', () => {
       const badLogger = createMLFeatureFailingLogger({ info: 'Logger failed' }) as LoggerService;
-      const badService = createMLFeatureExtractorService({ logger: badLogger, errorHandler });
+      const badService = context.createStandardService({ logger: badLogger, errorHandler });
       const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
@@ -158,7 +157,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
     test('should not throw when logger fails on error', () => {
       const badLogger = createMLFeatureFailingLogger({ error: 'Logger error failed' }) as LoggerService;
-      const badService = createMLFeatureExtractorService({ logger: badLogger, errorHandler });
+      const badService = context.createStandardService({ logger: badLogger, errorHandler });
       const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
@@ -228,7 +227,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     test('should work without ErrorHandler provided', () => {
-      const basicService = createMLFeatureExtractorService({ logger: mockLogger, withErrorHandler: false });
+      const basicService = context.createLegacyService({ logger: mockLogger });
       const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
@@ -237,7 +236,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should work without logger', () => {
-      const basicService = createMLFeatureExtractorService({ errorHandler });
+      const basicService = context.createStandardService({ errorHandler });
       const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
@@ -246,7 +245,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should work without any optional parameters', () => {
-      const basicService = createMLFeatureExtractorService({ withErrorHandler: false });
+      const basicService = context.createLegacyService();
       const candles = createMLFeatureCandleSequence(10);
 
       expect(() => {
@@ -255,7 +254,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const basicService = createMLFeatureExtractorService({ logger: mockLogger, withErrorHandler: false });
+      const basicService = context.createLegacyService({ logger: mockLogger });
 
       expect(() => {
         basicService.extractFeatures(asCandles(null), 'BREAKOUT', 'WIN');

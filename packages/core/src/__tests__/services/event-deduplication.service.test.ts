@@ -6,13 +6,11 @@
 import { EventDeduplicationService } from '../../services/event-deduplication.service';
 import { LoggerService } from '../../types/legacy';
 import {
-  createEventDeduplicationBoundFactory,
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
-  type EventDeduplicationHarness,
   type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
@@ -23,17 +21,15 @@ import {
 describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let harness: EventDeduplicationHarness;
-  let createService: ReturnType<typeof createEventDeduplicationBoundFactory>['createStandardService'];
+  let createService: ManagedEventDeduplicationContext['createStandardService'];
+  let createServiceWithDefaults: ManagedEventDeduplicationContext['createServiceWithDefaults'];
   let context: ManagedEventDeduplicationContext;
 
   beforeEach(() => {
     context = createManagedEventDeduplicationContext();
-    harness = context.harness;
     logger = context.logger;
-    createService = createEventDeduplicationBoundFactory({
-      logger,
-    }).createStandardService;
+    createService = context.createStandardService;
+    createServiceWithDefaults = context.createServiceWithDefaults;
   });
 
   afterEach(() => {
@@ -131,7 +127,7 @@ describe('EventDeduplicationService', () => {
 
   describe('clear', () => {
     beforeEach(() => {
-      service = harness.createServiceWithDefaults({
+      service = createServiceWithDefaults({
         cacheSize: 100,
         cacheTtlMs: 60000,
         logger,

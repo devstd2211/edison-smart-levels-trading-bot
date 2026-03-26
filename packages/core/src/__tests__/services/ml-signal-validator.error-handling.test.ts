@@ -13,9 +13,9 @@
  */
 
 import { MLSignalValidatorService } from '../../services/ml-signal-validator.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../services/logger.service';
-import { Signal, SignalType, SignalDirection, LogLevel } from '../../types/legacy';
+import { Signal, SignalType } from '../../types/legacy';
 import {
   MarketContext,
   MarketRegime,
@@ -24,18 +24,16 @@ import {
 } from '../../types/ml-signal-validator';
 import {
   createMLSignalValidatorContext,
-  createMLSignalValidatorHarness,
   createMLSignalValidatorLogger,
   createMLSignalValidatorRecord,
   createManagedMLSignalValidatorContext,
-  createMLSignalValidatorService,
   createMLSignalValidatorSignal,
   type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
 
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
   const asConfig = (value: unknown): MLSignalValidatorConfig => value as MLSignalValidatorConfig;
   const asSignal = (value: unknown): Signal => value as Signal;
@@ -78,34 +76,32 @@ describe('MLSignalValidatorService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        createMLSignalValidatorService({ config: asConfig('invalid'), logger, errorHandler });
+        context.createStandardService({ config: asConfig('invalid') });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        createMLSignalValidatorService({ config: asConfig(123), logger, errorHandler });
+        context.createStandardService({ config: asConfig(123) });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        createMLSignalValidatorService({ config: asConfig([]), logger, errorHandler });
+        context.createStandardService({ config: asConfig([]) });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        createMLSignalValidatorService({ logger, errorHandler });
+        context.createStandardService();
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
-        createMLSignalValidatorService({
+        context.createStandardService({
           config: { minHistoricalSamples: 50 },
-          logger,
-          errorHandler,
         });
       }).not.toThrow();
     });
@@ -305,7 +301,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       } as unknown as LoggerService;
 
       expect(() => {
-        createMLSignalValidatorService({ logger: badLogger, errorHandler });
+        context.createStandardService({ logger: badLogger, errorHandler });
       }).not.toThrow();
     });
 
@@ -319,7 +315,10 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = createMLSignalValidatorService({ logger: asLogger(badLogger), errorHandler });
+      const testService = context.createStandardService({
+        logger: asLogger(badLogger),
+        errorHandler,
+      });
 
       // Force validation to log a warning
       jest.spyOn(asInternals(testService), 'performValidation').mockImplementation(() => {
@@ -327,10 +326,10 @@ describe('MLSignalValidatorService - Error Handling', () => {
       });
 
       const signal = createMockSignal();
-      const context = createMockContext();
+      const marketContext = createMockContext();
 
       await expect(
-        testService.validateSignal(signal, context),
+        testService.validateSignal(signal, marketContext),
       ).resolves.toBeDefined();
     });
 
@@ -344,7 +343,10 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = createMLSignalValidatorService({ logger: asLogger(badLogger), errorHandler });
+      const testService = context.createStandardService({
+        logger: asLogger(badLogger),
+        errorHandler,
+      });
 
       expect(() => {
         testService.addSignalRecord(createMockSignalRecord());
@@ -361,7 +363,10 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = createMLSignalValidatorService({ logger: asLogger(badLogger), errorHandler });
+      const testService = context.createStandardService({
+        logger: asLogger(badLogger),
+        errorHandler,
+      });
 
       expect(() => {
         testService.clearHistory();
@@ -646,13 +651,9 @@ describe('MLSignalValidatorService - Error Handling', () => {
     let serviceWithoutEH: MLSignalValidatorService;
 
     beforeEach(() => {
-      serviceWithoutEH = createMLSignalValidatorService({
+      serviceWithoutEH = context.createLegacyService({
         logger: createMLSignalValidatorLogger(),
       });
-    });
-
-    afterEach(() => {
-      serviceWithoutEH.clearHistory();
     });
 
     it('should validate signals without ErrorHandler', async () => {

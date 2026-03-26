@@ -29,14 +29,13 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-26)
-- Completed a helper-owned factory-path follow-up for `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `trading-journal.error-handling`, and their adjacent test helpers:
-  - extended the three helpers with explicit managed standard/legacy factory paths so the target suites no longer reach for residual direct legacy factory helpers outside managed contexts.
-  - routed the affected backward-compatibility and lifecycle assertions through helper-owned factory paths while preserving behavior and existing coverage.
-  - reviewed `advanced-order-flow.service.ts`, `advanced-order-state-machine.service.ts`, and `trading-journal.service.ts` and left production code unchanged.
+- Completed a helper-owned factory-path follow-up for the `ladder-tp-manager` / `anomaly-detection` cluster: `ladder-tp-manager.error-handling`, `anomaly-detection.error-handling`, `ladder-tp-manager-test.utils`, and `anomaly-detection-test.utils`.
+  - extended both helper families with explicit managed `standard` / `legacy` creation paths so the target suites no longer reach for residual direct standalone service construction outside helper-owned cleanup.
+  - tightened managed cleanup so created ladder-tp and anomaly-detection instances stay inside helper-owned teardown boundaries, while leaving production `ladder-tp-manager.service.ts` and `anomaly-detection.service.ts` unchanged after review.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next concentrated lifecycle/testability slice in suites that still rely on broad grouped-service setup or residual suite-local factory/setup helpers outside helper-owned creation boundaries, prioritizing the next six-file batch beyond the now-refreshed advanced-order-flow / advanced-order-state-machine / trading-journal-error-handling cluster.
+- Continue with the next concentrated lifecycle/testability slice in suites that still rely on broad grouped-service setup or residual suite-local factory/setup helpers outside helper-owned creation boundaries, prioritizing the next six-file batch beyond the now-refreshed ladder-tp-manager / anomaly-detection cluster.
 - Keep pushing toward narrower grouped-service / `createServices()` ownership only where no helper-managed cleanup path exists yet, and prefer helper-owned standard/legacy or injected-service factory paths over suite-local service construction whenever the target suite is primarily validating compatibility, lifecycle, or logging-failure behavior.

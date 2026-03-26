@@ -157,15 +157,26 @@ export function createManagedAnomalyDetectionContext(options: {
     errorHandler: options.withErrorHandler === false ? undefined : options.errorHandler ?? harness.errorHandler,
     withErrorHandler: options.withErrorHandler,
   });
+  const createdServices = new Set<AnomalyDetectionService>([harness.service]);
+
+  const trackService = (service: AnomalyDetectionService) => {
+    createdServices.add(service);
+    return service;
+  };
 
   return {
     service: harness.service,
     logger: harness.logger,
     errorHandler: harness.errorHandler,
-    createStandardService: factory.createStandardService,
-    createLegacyService: factory.createLegacyService,
+    createStandardService: (serviceOptions = {}) =>
+      trackService(factory.createStandardService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) =>
+      trackService(factory.createLegacyService(serviceOptions)),
     cleanup: () => {
-      harness.service.clearHistory();
+      createdServices.forEach((service) => {
+        service.clearHistory();
+      });
+      jest.restoreAllMocks();
       jest.clearAllMocks();
     },
   };
