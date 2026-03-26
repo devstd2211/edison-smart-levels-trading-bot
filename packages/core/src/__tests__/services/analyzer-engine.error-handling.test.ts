@@ -22,15 +22,11 @@ import {
   createAnalyzerEngineAnalyzerEntry,
   asAnalyzerEngineLogger,
   createAnalyzerEngineFailingRegistry,
-  createAnalyzerEngineHarness,
   createAnalyzerEngineMockAnalyzer,
-  createAnalyzerEngineMockCandles,
   createAnalyzerEngineMockErrorHandler,
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
-  createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineScenarioContext,
-  createAnalyzerEngineService,
   type AnalyzerEngineMockLogger,
   type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
@@ -48,16 +44,6 @@ const createMockAnalyzer = createAnalyzerEngineMockAnalyzer;
  * Create mock analyzer registry
  */
 const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
-
-/**
- * Create mock strategy config
- */
-const createMockStrategyConfig = createAnalyzerEngineMockStrategyConfig;
-
-/**
- * Create mock candles
- */
-const createMockCandles = createAnalyzerEngineMockCandles;
 
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
@@ -163,17 +149,14 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       });
       const analyzers = new Map([['EMA', { instance: analyzer, weight: 0.5, priority: 5 }]]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        registry: createMockAnalyzerRegistry(analyzers),
+        analyzerNames: ['EMA'],
       });
+      mockRegistry = scenario.registry;
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA']);
-
-      await service.executeAnalyzers(candles, config);
+      await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(mockErrorHandler.handle).toHaveBeenCalled();
       const call = mockErrorHandler.handle.mock.calls[0];
@@ -194,17 +177,14 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
 
       const analyzers = new Map([['BAD', { instance: badAnalyzer, weight: 0.5, priority: 5 }]]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        registry: createMockAnalyzerRegistry(analyzers),
+        analyzerNames: ['BAD'],
       });
+      mockRegistry = scenario.registry;
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['BAD']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.signals).toHaveLength(0);
       expect(result.analyzersFailed).toBe(1);
@@ -267,16 +247,16 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         new Error('Registry connection failed'),
       );
 
-      service = createAnalyzerEngineService(new Map(), {
+      const scenario = createScenario(new Map(), {
         registry: mockFailingRegistry,
+        analyzerNames: ['EMA'],
         logger: mockLogger,
+        errorHandler: undefined,
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA']);
+      service = scenario.service;
       const executionConfig: AnalyzerExecutionConfig = { errorHandling: 'lenient' };
 
-      const result = await service.executeAnalyzers(candles, config, executionConfig);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config, executionConfig);
 
       expect(result.signals).toHaveLength(0);
       expect(result.errors).toBeDefined();
@@ -288,17 +268,14 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         new Error('Registry service unavailable'),
       );
 
-      service = createAnalyzerEngineService(new Map(), {
+      const scenario = createScenario(new Map(), {
         registry: mockFailingRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+        analyzerNames: ['EMA'],
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA']);
+      service = scenario.service;
       const executionConfig: AnalyzerExecutionConfig = { errorHandling: 'lenient' };
 
-      await service.executeAnalyzers(candles, config, executionConfig);
+      await service.executeAnalyzers(scenario.candles, scenario.config, executionConfig);
 
       expect(mockErrorHandler.handle).toHaveBeenCalled();
       const call = mockErrorHandler.handle.mock.calls[0];
@@ -319,19 +296,15 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
       ]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        analyzerNames: ['EMA', 'RSI'],
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA', 'RSI']);
+      mockRegistry = scenario.registry;
+      service = scenario.service;
       const executionConfig: AnalyzerExecutionConfig = { errorHandling: 'strict' };
 
       // In strict mode with ErrorHandler, still continues (SKIP is non-fatal)
-      const result = await service.executeAnalyzers(candles, config, executionConfig);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config, executionConfig);
       expect(result.signals).toHaveLength(1);
       expect(result.analyzersFailed).toBe(1);
     });
@@ -342,18 +315,14 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         { name: 'RSI', direction: 'SHORT', throwError: new Error('RSI failed') },
       ]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        analyzerNames: ['EMA', 'RSI'],
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA', 'RSI']);
+      mockRegistry = scenario.registry;
+      service = scenario.service;
       const executionConfig: AnalyzerExecutionConfig = { errorHandling: 'lenient' };
 
-      const result = await service.executeAnalyzers(candles, config, executionConfig);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config, executionConfig);
 
       expect(result.signals).toHaveLength(1);
       expect(result.analyzersExecuted).toBe(1);
@@ -370,16 +339,16 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
       ]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
+      const scenario = createScenario(analyzers, {
+        registry: createMockAnalyzerRegistry(analyzers),
+        analyzerNames: ['EMA', 'RSI'],
         logger: mockLogger,
+        errorHandler: undefined,
       });
+      mockRegistry = scenario.registry;
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA', 'RSI']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.signals).toHaveLength(1);
       expect(result.analyzersFailed).toBe(1);
@@ -397,18 +366,14 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         { name: 'ANALYZER3', direction: 'LONG' },
       ]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        analyzerNames: ['ANALYZER1', 'ANALYZER2', 'ANALYZER3'],
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['ANALYZER1', 'ANALYZER2', 'ANALYZER3']);
+      mockRegistry = scenario.registry;
+      service = scenario.service;
       const executionConfig: AnalyzerExecutionConfig = { executionMode: 'parallel' };
 
-      const result = await service.executeAnalyzers(candles, config, executionConfig);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config, executionConfig);
 
       expect(result.signals).toHaveLength(1);
       expect(result.analyzersFailed).toBe(2);
@@ -425,21 +390,17 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
       ]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        analyzerNames: ['EMA', 'RSI'],
       });
-
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA', 'RSI']);
+      mockRegistry = scenario.registry;
+      service = scenario.service;
       const executionConfig: AnalyzerExecutionConfig = {
         executionMode: 'sequential',
         errorHandling: 'lenient',
       };
 
-      const result = await service.executeAnalyzers(candles, config, executionConfig);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config, executionConfig);
 
       expect(result.executionMode).toBe('sequential');
       expect(result.analyzersFailed).toBe(1);
@@ -461,18 +422,13 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         ['RSI', { instance: analyzer2, weight: 0.5, priority: 5 }],
       ]);
 
-      const harness = createAnalyzerEngineHarness(analyzers, {
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
-      });
-      mockRegistry = harness.registry;
-      service = harness.service;
-
       const scenario = createScenario(analyzers, {
         logger: mockLogger,
         errorHandler: mockErrorHandler,
         analyzerNames: ['EMA', 'RSI'],
       });
+      mockRegistry = scenario.registry;
+      service = scenario.service;
 
       await service.executeAnalyzers(scenario.candles, scenario.config);
 
@@ -488,17 +444,13 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         { name: 'RSI', direction: 'SHORT', throwError: new Error('Specific RSI error message') },
       ]);
 
-      mockRegistry = createMockAnalyzerRegistry(analyzers);
-      service = createAnalyzerEngineService(analyzers, {
-        registry: mockRegistry,
-        logger: mockLogger,
-        errorHandler: mockErrorHandler,
+      const scenario = createScenario(analyzers, {
+        analyzerNames: ['EMA', 'RSI'],
       });
+      mockRegistry = scenario.registry;
+      service = scenario.service;
 
-      const candles = createMockCandles(50);
-      const config = createMockStrategyConfig(['EMA', 'RSI']);
-
-      const result = await service.executeAnalyzers(candles, config);
+      const result = await service.executeAnalyzers(scenario.candles, scenario.config);
 
       expect(result.errors).toHaveLength(2);
       expect(result.errors![0]).toEqual({

@@ -9,13 +9,10 @@ import { IPositionRepository } from '../../repositories/IRepositories';
 import { Position } from '../../types/legacy';
 import {
   createClosedRepositoryPosition,
+  createManagedPositionRepositoryContext,
+  type ManagedPositionRepositoryContext,
   createRepositoryPosition,
   createRepositoryTakeProfits,
-  createRepositoryBulkHistoryHarness,
-  createRepositoryClosedHistoryHarness,
-  createRepositoryCurrentAndHistoryHarness,
-  createRepositoryCurrentPositionHarness,
-  createRepositoryUpdateHarness,
   seedRepositoryHistory,
   seedRepositoryCurrentPosition,
   updateRepositoryCurrentPosition,
@@ -23,9 +20,15 @@ import {
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
   let repository: IPositionRepository;
+  let context: ManagedPositionRepositoryContext;
 
   beforeEach(() => {
-    repository = createRepositoryCurrentAndHistoryHarness().repository;
+    context = createManagedPositionRepositoryContext();
+    repository = context.repository;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Basic Position Operations', () => {
@@ -43,7 +46,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should retrieve current position from repository', () => {
-      const { repository: seededRepository, position } = createRepositoryCurrentPositionHarness();
+      const { repository: seededRepository, position } = context.createCurrentPositionHarness();
       repository = seededRepository;
 
       const current = repository.getCurrentPosition();
@@ -68,7 +71,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position History', () => {
     it('should add positions to history', () => {
-      const { repository: seededRepository } = createRepositoryClosedHistoryHarness([
+      const { repository: seededRepository } = context.createClosedHistoryHarness([
         {
           id: 'BTCUSDT_Buy_1',
           unrealizedPnL: 100,
@@ -109,7 +112,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should clear history', () => {
-      const { repository: seededRepository } = createRepositoryClosedHistoryHarness();
+      const { repository: seededRepository } = context.createClosedHistoryHarness();
       repository = seededRepository;
       expect(repository.getHistory()).toHaveLength(1);
 
@@ -120,7 +123,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position Queries', () => {
     it('should find position by ID', () => {
-      repository = createRepositoryClosedHistoryHarness().repository;
+      repository = context.createClosedHistoryHarness().repository;
 
       const found = repository.findPosition('BTCUSDT_Buy');
       expect(found).not.toBeNull();
@@ -133,7 +136,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should get all positions', () => {
-      repository = createRepositoryCurrentAndHistoryHarness({
+      repository = context.createCurrentAndHistoryHarness({
         currentPosition: {
           id: 'BTCUSDT_Buy_2',
           status: 'OPEN',
@@ -148,7 +151,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Repository Maintenance', () => {
     it('should get repository size', () => {
-      repository = createRepositoryCurrentAndHistoryHarness({
+      repository = context.createCurrentAndHistoryHarness({
         currentPosition: { status: 'OPEN' },
         history: [{ status: 'CLOSED' }],
       }).repository;
@@ -158,7 +161,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should clear all repository data', () => {
-      repository = createRepositoryCurrentAndHistoryHarness({
+      repository = context.createCurrentAndHistoryHarness({
         currentPosition: { status: 'OPEN' },
         history: [{ status: 'CLOSED' }],
       }).repository;
@@ -173,7 +176,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
 
   describe('Position Updates', () => {
     it('should update position fields', () => {
-      const updateHarness = createRepositoryUpdateHarness();
+      const updateHarness = context.createUpdateHarness();
       const position = updateHarness.position;
       repository = updateHarness.repository;
 
@@ -189,7 +192,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     });
 
     it('should handle concurrent position updates', () => {
-      repository = createRepositoryBulkHistoryHarness(5, (i) => ({
+      repository = context.createBulkHistoryHarness(5, (i) => ({
         id: `BTCUSDT_Buy_${i}`,
         journalId: `trade-${i}`,
         quantity: 0.1 + i * 0.01,

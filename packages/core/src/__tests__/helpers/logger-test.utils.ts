@@ -99,6 +99,8 @@ export interface ManagedLoggerTestContext {
   errorHandler: ErrorHandler;
   createLogger: ReturnType<typeof createStandardLoggerFactory>;
   createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
+  createStandardService: typeof createStandardLoggerService;
+  createLegacyService: typeof createLegacyLoggerService;
   cleanup: () => void;
 }
 
@@ -113,6 +115,8 @@ export function createManagedLoggerTestContext(): ManagedLoggerTestContext {
     errorHandler,
     createLogger: createStandardLoggerFactory({ errorHandler }),
     createLegacyLogger: createLegacyLoggerFactory(),
+    createStandardService: createStandardLoggerService,
+    createLegacyService: createLegacyLoggerService,
     cleanup: () => {
       cleanupLoggerTestDir(testLogDir);
       jest.restoreAllMocks();

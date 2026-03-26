@@ -242,6 +242,32 @@ export function createPhase10Harness() {
   };
 }
 
+export interface ManagedPhase10Context extends ReturnType<typeof createPhase10Harness> {
+  createHarness: () => ReturnType<typeof createPhase10Harness>;
+  cleanup: () => void;
+}
+
+export function createManagedPhase10Context(): ManagedPhase10Context {
+  const trackedHarnesses: Array<ReturnType<typeof createPhase10Harness>> = [];
+  const createHarness = () => {
+    const harness = createPhase10Harness();
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+
+  const harness = createHarness();
+
+  return {
+    ...harness,
+    createHarness,
+    cleanup: () => {
+      trackedHarnesses.length = 0;
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function seedPhase10VolumeBaseline(service: ReturnType<typeof createAnomalyDetectionServiceHarness>['service']): void {
   for (let i = 0; i < 25; i++) {
     seedVolumeHistory(service, [100 + Math.random() * 20]);

@@ -12,29 +12,35 @@ import { StructureAwareExitService } from '../../services/structure-aware-exit.s
 import { LoggerService, SignalDirection, SwingPointType, StructureAwareExitConfig, LiquidityZone, SwingPoint } from '../../types/legacy';
 import {
   createStructureAwareExitConfig,
-  createStructureAwareExitHarness,
+  createManagedStructureAwareExitContext,
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
+  type ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService', () => {
   let service: StructureAwareExitService;
   let mockLogger: LoggerService;
   let defaultConfig: StructureAwareExitConfig;
+  let context: ManagedStructureAwareExitContext;
 
   beforeEach(() => {
     defaultConfig = createStructureAwareExitConfig();
-    const harness = createStructureAwareExitHarness({
+    context = createManagedStructureAwareExitContext({
       config: defaultConfig,
       withErrorHandler: false,
     });
-    mockLogger = harness.logger;
-    service = createStructureAwareExitHarness({
+    mockLogger = context.logger;
+    service = context.createService({
       config: defaultConfig,
       logger: mockLogger,
       withErrorHandler: false,
-    }).service;
+    });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================
@@ -240,11 +246,11 @@ describe('StructureAwareExitService', () => {
       const disabledConfig = createStructureAwareExitConfig({
         trailingStopAfterTP1: { enabled: false },
       });
-      const disabledService = createStructureAwareExitHarness({
+      const disabledService = context.createService({
         config: disabledConfig,
         logger: mockLogger,
         withErrorHandler: false,
-      }).service;
+      });
 
       const result = disabledService.shouldActivateTrailing();
       expect(result).toBe(false);

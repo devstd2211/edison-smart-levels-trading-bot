@@ -455,3 +455,37 @@ export function createPositionSyncHarness(options: {
     errorHandler: options.errorHandler,
   };
 }
+
+export interface ManagedPositionSyncContext extends PositionSyncHarness {
+  createHarness: (
+    overrides?: Parameters<typeof createPositionSyncHarness>[0],
+  ) => PositionSyncHarness;
+  cleanup: () => void;
+}
+
+export function createManagedPositionSyncContext(
+  options: Parameters<typeof createPositionSyncHarness>[0] = {},
+): ManagedPositionSyncContext {
+  const trackedHarnesses: PositionSyncHarness[] = [];
+  const createHarness = (
+    overrides: Parameters<typeof createPositionSyncHarness>[0] = {},
+  ): PositionSyncHarness => {
+    const harness = createPositionSyncHarness({
+      ...options,
+      ...overrides,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+
+  const harness = createHarness();
+
+  return {
+    ...harness,
+    createHarness,
+    cleanup: () => {
+      trackedHarnesses.length = 0;
+      jest.clearAllMocks();
+    },
+  };
+}

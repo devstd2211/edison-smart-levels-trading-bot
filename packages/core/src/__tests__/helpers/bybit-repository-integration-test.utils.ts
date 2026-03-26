@@ -106,3 +106,39 @@ export function createSequentialRepositoryCandles(
     createRepositoryCandle((index + 1) * 1000, buildOverrides(index)),
   );
 }
+
+export interface ManagedBybitRepositoryIntegrationContext
+  extends ReturnType<typeof createBybitRepositoryHarness> {
+  createHarness: (
+    overrides?: Parameters<typeof createBybitRepositoryHarness>[0],
+  ) => ReturnType<typeof createBybitRepositoryHarness>;
+  cleanup: () => void;
+}
+
+export function createManagedBybitRepositoryIntegrationContext(
+  overrides: Parameters<typeof createBybitRepositoryHarness>[0] = {},
+): ManagedBybitRepositoryIntegrationContext {
+  const trackedHarnesses: Array<ReturnType<typeof createBybitRepositoryHarness>> = [];
+  const createHarness = (
+    nextOverrides: Parameters<typeof createBybitRepositoryHarness>[0] = {},
+  ) => {
+    const harness = createBybitRepositoryHarness({
+      ...overrides,
+      ...nextOverrides,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+
+  const harness = createHarness();
+
+  return {
+    ...harness,
+    createHarness,
+    cleanup: () => {
+      trackedHarnesses.forEach(({ repository }) => repository.clear());
+      trackedHarnesses.length = 0;
+      jest.clearAllMocks();
+    },
+  };
+}

@@ -601,7 +601,7 @@ describe('PatternRecognitionService - Error Handling', () => {
     let serviceWithoutEH: PatternRecognitionService;
 
     beforeEach(() => {
-      ({ service: serviceWithoutEH } = createPatternRecognitionHarness({ withErrorHandler: false }));
+      serviceWithoutEH = createService({ withErrorHandler: false });
     });
 
     afterEach(() => {

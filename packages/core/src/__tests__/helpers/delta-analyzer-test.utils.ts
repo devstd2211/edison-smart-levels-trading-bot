@@ -38,6 +38,17 @@ export type DeltaAnalyzerHarness = {
 };
 
 export interface ManagedDeltaAnalyzerContext extends DeltaAnalyzerHarness {
+  createHarness: (options?: {
+    config?: DeltaConfig;
+    configOverrides?: Partial<DeltaConfig>;
+    logger?: DeltaAnalyzerMockLogger;
+    errorHandler?: ErrorHandler;
+  }) => DeltaAnalyzerHarness;
+  createService: (options?: {
+    config?: DeltaConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => DeltaAnalyzerService;
   cleanup: () => void;
 }
 
@@ -168,11 +179,33 @@ export const createManagedDeltaAnalyzerContext = (
     errorHandler?: ErrorHandler;
   } = {},
 ): ManagedDeltaAnalyzerContext => {
-  const harness = createDeltaAnalyzerHarness(options);
+  const trackedHarnesses: DeltaAnalyzerHarness[] = [];
+  const createHarness = (nextOptions: {
+    config?: DeltaConfig;
+    configOverrides?: Partial<DeltaConfig>;
+    logger?: DeltaAnalyzerMockLogger;
+    errorHandler?: ErrorHandler;
+  } = {}) => {
+    const harness = createDeltaAnalyzerHarness({
+      ...options,
+      ...nextOptions,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+  const harness = createHarness(options);
 
   return {
     ...harness,
+    createHarness,
+    createService: (serviceOptions = {}) =>
+      createDeltaAnalyzerService({
+        config: serviceOptions.config,
+        logger: serviceOptions.logger ?? asDeltaAnalyzerLogger(harness.logger),
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+      }),
     cleanup: () => {
+      trackedHarnesses.length = 0;
       Object.values(harness.logger).forEach((mockFn) => {
         if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
           (mockFn as jest.Mock).mockClear();

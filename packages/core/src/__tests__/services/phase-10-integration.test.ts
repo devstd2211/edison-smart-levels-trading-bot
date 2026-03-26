@@ -11,7 +11,7 @@ import { Orderbook } from '../../types/legacy';
 import { Signal, MarketContext } from '../../types/legacy';
 import {
   asPhase10Context,
-  createPhase10Harness,
+  createManagedPhase10Context,
   createPhase10BalancedOrderbook,
   createPhase10IntegrationOrderbook,
   createPhase10InvalidOrderbook,
@@ -23,6 +23,7 @@ import {
   createPhase10ValidRecoveryOrderbook,
   createPhase10WorkflowFixtures,
   seedPhase10VolumeBaseline,
+  type ManagedPhase10Context,
 } from '../helpers/phase-10-integration-test.utils';
 
 describe('Phase 10 Integration Tests', () => {
@@ -32,15 +33,21 @@ describe('Phase 10 Integration Tests', () => {
   // Phase 10.2 Services
   let mlValidatorService: MLSignalValidatorService;
   let anomalyService: AnomalyDetectionService;
+  let context: ManagedPhase10Context;
   const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
 
   beforeEach(() => {
+    context = createManagedPhase10Context();
     ({
       liquidityService,
       smartOrderService,
       mlValidatorService,
       anomalyService,
-    } = createPhase10Harness());
+    } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Phase 10.1 Services Integration', () => {

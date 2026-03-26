@@ -36,6 +36,7 @@ import { IPositionRepository } from '../../repositories/IRepositories';
 import {
   attachLifecycleRepositoryPosition,
   cloneLifecyclePosition,
+  createManagedPositionLifecycleRepositoryContext,
   createLifecycleRestorePosition,
   createMockLifecyclePosition,
   createMockLifecycleSignal,
@@ -43,6 +44,7 @@ import {
   createLegacyPositionLifecycleRepositoryHarness,
   createStandardPositionLifecycleRepositoryHarness,
   createPositionLifecycleWithErrorHandlerHarness,
+  type ManagedPositionLifecycleRepositoryContext,
   seedLifecycleSyncedPosition,
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
@@ -55,6 +57,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockJournal: jest.Mocked<TradingJournalService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
   let mockRepository: jest.Mocked<IPositionRepository>;
+  let context: ManagedPositionLifecycleRepositoryContext;
 
   const mockPosition: Position = createMockLifecyclePosition();
   const mockSignal: Signal = createMockLifecycleSignal();
@@ -65,18 +68,22 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const harness = createLegacyPositionLifecycleRepositoryHarness();
-    service = harness.service;
-    mockExchange = harness.mockExchange as unknown as jest.Mocked<IExchange>;
-    mockTelegram = harness.mockTelegram as unknown as jest.Mocked<TelegramService>;
-    mockLogger = harness.mockLogger as unknown as jest.Mocked<LoggerService>;
-    mockJournal = harness.mockJournal as unknown as jest.Mocked<TradingJournalService>;
-    mockEventBus = harness.mockEventBus as unknown as jest.Mocked<BotEventBus>;
-    mockRepository = harness.mockRepository as jest.Mocked<IPositionRepository>;
-    mockTradingConfig = harness.tradingConfig;
-    mockRiskConfig = harness.riskConfig;
-    mockEntryConfirmationConfig = harness.entryConfig;
-    mockConfig = harness.fullConfig;
+    context = createManagedPositionLifecycleRepositoryContext();
+    service = context.service;
+    mockExchange = context.mockExchange as unknown as jest.Mocked<IExchange>;
+    mockTelegram = context.mockTelegram as unknown as jest.Mocked<TelegramService>;
+    mockLogger = context.mockLogger as unknown as jest.Mocked<LoggerService>;
+    mockJournal = context.mockJournal as unknown as jest.Mocked<TradingJournalService>;
+    mockEventBus = context.mockEventBus as unknown as jest.Mocked<BotEventBus>;
+    mockRepository = context.mockRepository as jest.Mocked<IPositionRepository>;
+    mockTradingConfig = context.tradingConfig;
+    mockRiskConfig = context.riskConfig;
+    mockEntryConfirmationConfig = context.entryConfig;
+    mockConfig = context.fullConfig;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================

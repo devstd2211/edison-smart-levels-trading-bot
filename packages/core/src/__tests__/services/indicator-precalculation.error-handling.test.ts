@@ -16,10 +16,7 @@ import type { LoggerService } from '../../services/logger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/legacy';
 import {
-  createIndicatorPrecalculationHarness,
-  createLegacyIndicatorPrecalculationHarness,
   createManagedIndicatorPrecalculationContext,
-  createStandardIndicatorPrecalculationService,
   type ManagedIndicatorPrecalculationContext,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
@@ -38,6 +35,8 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let mockCache: IndicatorPrecalculationMockCache;
   let mockCalculators: IndicatorPrecalculationMockCalculator[];
   let context: ManagedIndicatorPrecalculationContext;
+  let createStandardService: ManagedIndicatorPrecalculationContext['createStandardService'];
+  let createLegacyHarness: ManagedIndicatorPrecalculationContext['createLegacyHarness'];
 
   beforeEach(() => {
     context = createManagedIndicatorPrecalculationContext();
@@ -49,6 +48,8 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       cache: mockCache,
       calculators: mockCalculators,
     } = context);
+    createStandardService = context.createStandardService;
+    createLegacyHarness = context.createLegacyHarness;
   });
 
   afterEach(() => {
@@ -131,7 +132,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
         debug: jest.fn(),
       };
 
-      const customService = createStandardIndicatorPrecalculationService({
+      const customService = createStandardService({
         logger: customLogger as unknown as LoggerService,
         candleProvider: mockCandleProvider,
         cache: mockCache,
@@ -494,7 +495,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     it('test-E1: Should work without ErrorHandler parameter', async () => {
       // Arrange: Create service without errorHandler
       const { service: serviceWithoutHandler } =
-        createLegacyIndicatorPrecalculationHarness({
+        createLegacyHarness({
           logger,
           candleProvider: mockCandleProvider,
           cache: mockCache,
@@ -520,7 +521,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
     it('test-E2: Should maintain original behavior for cache failures', async () => {
       // Arrange: Without errorHandler, cache failures logged to console
       const { service: serviceWithoutHandler } =
-        createLegacyIndicatorPrecalculationHarness({
+        createLegacyHarness({
           logger,
           candleProvider: mockCandleProvider,
           cache: mockCache,

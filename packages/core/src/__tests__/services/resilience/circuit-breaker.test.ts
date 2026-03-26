@@ -11,10 +11,13 @@ import {
 } from '../../../services/resilience/circuit-breaker.service';
 import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
-import { createResilienceTestContext } from '../../helpers/resilience-test.utils';
+import {
+  createManagedCircuitBreakerContext,
+  type ManagedCircuitBreakerContext,
+} from '../../helpers/resilience-test.utils';
 
 describe('CircuitBreakerService', () => {
-  let context: ReturnType<typeof createResilienceTestContext>;
+  let context: ManagedCircuitBreakerContext;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
   let createService: (
@@ -24,7 +27,7 @@ describe('CircuitBreakerService', () => {
   ) => CircuitBreakerService;
 
   beforeEach(() => {
-    context = createResilienceTestContext();
+    context = createManagedCircuitBreakerContext();
     logger = context.logger;
     errorHandler = context.errorHandler;
     createService = (

@@ -243,3 +243,44 @@ export function createRepositoryUpdateHarness(
 } {
   return createRepositoryCurrentPositionHarness(overrides);
 }
+
+export interface ManagedPositionRepositoryContext {
+  repository: IPositionRepository;
+  createCurrentPositionHarness: typeof createRepositoryCurrentPositionHarness;
+  createClosedHistoryHarness: typeof createRepositoryClosedHistoryHarness;
+  createCurrentAndHistoryHarness: typeof createRepositoryCurrentAndHistoryHarness;
+  createBulkHistoryHarness: typeof createRepositoryBulkHistoryHarness;
+  createUpdateHarness: typeof createRepositoryUpdateHarness;
+  cleanup: () => void;
+}
+
+export function createManagedPositionRepositoryContext(
+  options: Parameters<typeof createRepositoryCurrentAndHistoryHarness>[0] = {},
+): ManagedPositionRepositoryContext {
+  const trackedRepositories: IPositionRepository[] = [];
+  const trackRepository = <THarness extends { repository: IPositionRepository }>(harness: THarness): THarness => {
+    trackedRepositories.push(harness.repository);
+    return harness;
+  };
+
+  const baseHarness = trackRepository(createRepositoryCurrentAndHistoryHarness(options));
+
+  return {
+    repository: baseHarness.repository,
+    createCurrentPositionHarness: (overrides = {}) =>
+      trackRepository(createRepositoryCurrentPositionHarness(overrides)),
+    createClosedHistoryHarness: (overrides = [{}]) =>
+      trackRepository(createRepositoryClosedHistoryHarness(overrides)),
+    createCurrentAndHistoryHarness: (overrides = {}) =>
+      trackRepository(createRepositoryCurrentAndHistoryHarness(overrides)),
+    createBulkHistoryHarness: (count, buildOverrides = () => ({})) =>
+      trackRepository(createRepositoryBulkHistoryHarness(count, buildOverrides)),
+    createUpdateHarness: (overrides = {}) =>
+      trackRepository(createRepositoryUpdateHarness(overrides)),
+    cleanup: () => {
+      trackedRepositories.forEach((repository) => repository.clear());
+      trackedRepositories.length = 0;
+      jest.clearAllMocks();
+    },
+  };
+}

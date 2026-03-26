@@ -203,6 +203,26 @@ export type IndicatorPrecalculationHarness = ReturnType<
 >;
 
 export type ManagedIndicatorPrecalculationContext = IndicatorPrecalculationHarness & {
+  createHarness: (options?: {
+    logger?: LoggerService;
+    candleProvider?: IndicatorPrecalculationMockCandleProvider;
+    cache?: IndicatorPrecalculationMockCache;
+    calculators?: IndicatorPrecalculationMockCalculator[];
+    withErrorHandler?: boolean;
+  }) => IndicatorPrecalculationHarness;
+  createStandardService: (options?: {
+    logger?: LoggerService;
+    candleProvider?: IndicatorPrecalculationMockCandleProvider;
+    cache?: IndicatorPrecalculationMockCache;
+    calculators?: IndicatorPrecalculationMockCalculator[];
+    errorHandler?: ErrorHandler;
+  }) => IndicatorPreCalculationService;
+  createLegacyHarness: (options?: {
+    logger?: LoggerService;
+    candleProvider?: IndicatorPrecalculationMockCandleProvider;
+    cache?: IndicatorPrecalculationMockCache;
+    calculators?: IndicatorPrecalculationMockCalculator[];
+  }) => IndicatorPrecalculationHarness;
   cleanup: () => void;
 };
 
@@ -213,11 +233,50 @@ export function createManagedIndicatorPrecalculationContext(options?: {
   calculators?: IndicatorPrecalculationMockCalculator[];
   withErrorHandler?: boolean;
 }): ManagedIndicatorPrecalculationContext {
-  const harness = createIndicatorPrecalculationHarness(options);
+  const trackedHarnesses: IndicatorPrecalculationHarness[] = [];
+  const createHarness = (nextOptions?: {
+    logger?: LoggerService;
+    candleProvider?: IndicatorPrecalculationMockCandleProvider;
+    cache?: IndicatorPrecalculationMockCache;
+    calculators?: IndicatorPrecalculationMockCalculator[];
+    withErrorHandler?: boolean;
+  }) => {
+    const harness = createIndicatorPrecalculationHarness({
+      ...options,
+      ...nextOptions,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+  const createLegacyHarness = (nextOptions?: {
+    logger?: LoggerService;
+    candleProvider?: IndicatorPrecalculationMockCandleProvider;
+    cache?: IndicatorPrecalculationMockCache;
+    calculators?: IndicatorPrecalculationMockCalculator[];
+  }) => {
+    const harness = createLegacyIndicatorPrecalculationHarness({
+      ...options,
+      ...nextOptions,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+  const harness = createHarness(options);
 
   return {
     ...harness,
+    createHarness,
+    createStandardService: (serviceOptions = {}) =>
+      createStandardIndicatorPrecalculationService({
+        logger: serviceOptions.logger ?? harness.logger,
+        candleProvider: serviceOptions.candleProvider ?? harness.candleProvider,
+        cache: serviceOptions.cache ?? harness.cache,
+        calculators: serviceOptions.calculators ?? harness.calculators,
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+      }),
+    createLegacyHarness,
     cleanup: () => {
+      trackedHarnesses.length = 0;
       jest.clearAllMocks();
       jest.clearAllTimers();
     },

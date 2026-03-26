@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-26)
-- Completed a helper-managed context follow-up for `position-exiting.service`, `position-exiting.error-handling`, `position-exiting.functional`, `position-exiting.integration`, `position-exiting.transactional`, and `position-exiting.race-condition`:
-  - added managed helper contexts so the shared `position-exiting` test utils own created service/harness families and cleanup for the standard / error-handling / functional / real-scenario / transactional / race-condition slices.
-  - routed the target suites away from ad-hoc suite-local lifecycle ownership.
-  - reviewed the adjacent production service and left production code unchanged.
+- Completed a helper-managed context follow-up for `analyzer-engine.error-handling`, `indicator-precalculation.error-handling`, `pattern-recognition.error-handling`, `logger.service.error-handling`, `delta-analyzer.error-handling`, and `circuit-breaker.error-handling`:
+  - extended the adjacent helpers so managed contexts own scenario, service, and harness creation plus cleanup.
+  - routed the target suites away from repeated suite-local construction.
+  - reviewed the adjacent production services and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/services/position-exiting.integration.test.ts packages/core/src/__tests__/services/position-exiting.transactional.test.ts packages/core/src/__tests__/services/position-exiting.race-condition.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next helper-backed lifecycle/testability slice in the remaining suites whose helpers still lack managed-context ownership for created services, prioritizing the remaining helper-less clusters such as `position-lifecycle*`, `position-sync*`, `bybit.repository-integration`, or similarly concentrated harness families.
+- Continue with the next helper-backed lifecycle/testability slice in the remaining suites whose helpers still lack managed-context ownership for created services, prioritizing the next concentrated harness families beyond the now-refreshed analyzer / indicator / logger / delta-analyzer / circuit-breaker clusters.
 - After that, keep pushing toward broader grouped-service / `createServices()` narrowing only where no helper-managed cleanup path exists yet.

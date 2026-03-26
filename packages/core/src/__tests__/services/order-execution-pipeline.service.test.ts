@@ -19,9 +19,10 @@ import {
 } from '../../types/legacy';
 import {
   createOrderExecutionPipelineConfig,
-  createOrderExecutionPipelineHarness,
+  createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineOrder,
   createOrderExecutionPipelineSuccessResponse,
+  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
@@ -31,11 +32,15 @@ describe('OrderExecutionPipeline', () => {
   let mockBybitService: OrderExecutionPipelineMockExchange;
   let mockLogger: OrderExecutionPipelineMockLogger;
   let config: OrderExecutionConfig;
+  let context: ManagedOrderExecutionPipelineContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } =
-      createOrderExecutionPipelineHarness());
+    context = createManagedOrderExecutionPipelineContext();
+    ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Order Placement', () => {

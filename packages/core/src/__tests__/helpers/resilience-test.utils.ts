@@ -67,6 +67,20 @@ export interface ManagedRetryPolicyContext extends ResilienceTestContext {
   useFakeTimers: () => void;
 }
 
+export interface ManagedCircuitBreakerContext extends ResilienceTestContext {
+  createService: (
+    config?: Partial<CircuitBreakerConfig>,
+    options?: { logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => CircuitBreakerService;
+}
+
+export interface ManagedBulkheadContext extends ResilienceTestContext {
+  createService: (
+    config?: Partial<BulkheadConfig>,
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => BulkheadService;
+}
+
 export interface ManagedResilienceCoordinatorContext extends ResilienceTestContext {
   coordinator: ResilienceCoordinator;
   circuitBreaker: CircuitBreakerService;
@@ -279,6 +293,38 @@ export function createManagedRetryPolicyContext(): ManagedRetryPolicyContext {
       if (usingFakeTimers) {
         jest.useRealTimers();
       }
+    },
+  };
+}
+
+export function createManagedCircuitBreakerContext(): ManagedCircuitBreakerContext {
+  const context = createResilienceTestContext();
+
+  return {
+    ...context,
+    createService: (config = {}, options = {}) =>
+      context.harness.createCircuitBreakerService(config, options),
+    cleanup: () => {
+      context.cleanup();
+      jest.clearAllTimers();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export function createManagedBulkheadContext(): ManagedBulkheadContext {
+  const context = createResilienceTestContext();
+
+  return {
+    ...context,
+    createService: (config = {}, options = {}) =>
+      context.harness.createTrackedBulkheadService(config, options),
+    cleanup: () => {
+      context.cleanup();
+      jest.clearAllTimers();
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
     },
   };
 }

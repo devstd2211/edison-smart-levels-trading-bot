@@ -16,10 +16,11 @@ import { MarketDataCacheRepository } from '../../repositories/market-data.cache-
 import { LoggerService } from '../../services/logger.service';
 import type { ExchangeConfig } from '../../types/legacy';
 import {
-  createBybitRepositoryHarness,
+  createManagedBybitRepositoryIntegrationContext,
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
+  type ManagedBybitRepositoryIntegrationContext,
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
@@ -31,13 +32,18 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     logger?: LoggerService;
     repository?: MarketDataCacheRepository;
   }) => BybitService;
+  let context: ManagedBybitRepositoryIntegrationContext;
 
   beforeEach(() => {
-    const harness = createBybitRepositoryHarness();
-    mockLogger = harness.logger;
-    repository = harness.repository;
-    bybitConfig = harness.config;
-    createService = harness.createService;
+    context = createManagedBybitRepositoryIntegrationContext();
+    mockLogger = context.logger;
+    repository = context.repository;
+    bybitConfig = context.config;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Construction & Initialization', () => {

@@ -17,17 +17,19 @@ import { TradingJournalService } from '../../services/trading-journal.service';
 import { IExchange } from '../../interfaces/IExchange';
 import {
   collectLifecycleSnapshots,
+  createManagedPositionLifecycleSafetyContext,
   createLifecycleSafetyPosition,
   createLifecycleUpdatedSafetyPosition,
-  createStandardPositionLifecycleSafetyHarness,
+  type ManagedPositionLifecycleSafetyContext,
   findLifecycleLogCall,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
   let service: PositionLifecycleService;
   let position: Position;
-  let internals: ReturnType<typeof createStandardPositionLifecycleSafetyHarness>['internals'];
-  let setCurrentPosition: ReturnType<typeof createStandardPositionLifecycleSafetyHarness>['setCurrentPosition'];
+  let context: ManagedPositionLifecycleSafetyContext;
+  let internals: ManagedPositionLifecycleSafetyContext['internals'];
+  let setCurrentPosition: ManagedPositionLifecycleSafetyContext['setCurrentPosition'];
   let mockExchange: IExchange;
   let mockLogger: LoggerService;
   let mockEventBus: BotEventBus;
@@ -35,17 +37,20 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockJournal: TradingJournalService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    const harness = createStandardPositionLifecycleSafetyHarness();
-    service = harness.service;
-    mockExchange = harness.mockExchange;
-    mockLogger = harness.mockLogger;
-    mockEventBus = harness.mockEventBus;
-    mockTelegram = harness.mockTelegram;
-    mockJournal = harness.mockJournal;
-    internals = harness.internals;
-    setCurrentPosition = harness.setCurrentPosition;
-    position = harness.position;
+    context = createManagedPositionLifecycleSafetyContext();
+    service = context.service;
+    mockExchange = context.mockExchange;
+    mockLogger = context.mockLogger;
+    mockEventBus = context.mockEventBus;
+    mockTelegram = context.mockTelegram;
+    mockJournal = context.mockJournal;
+    internals = context.internals;
+    setCurrentPosition = context.setCurrentPosition;
+    position = context.position;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // =========================================================================

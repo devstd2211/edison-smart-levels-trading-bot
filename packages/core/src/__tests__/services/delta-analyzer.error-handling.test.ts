@@ -11,8 +11,6 @@ import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types/leg
 import {
   asDeltaAnalyzerLogger,
   createDeltaAnalyzerConfig,
-  createDeltaAnalyzerHarness,
-  createDeltaAnalyzerService,
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
@@ -29,10 +27,14 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: DeltaAnalyzerMockLogger;
   let context: ManagedDeltaAnalyzerContext;
+  let createHarness: ManagedDeltaAnalyzerContext['createHarness'];
+  let createService: ManagedDeltaAnalyzerContext['createService'];
 
   beforeEach(() => {
     context = createManagedDeltaAnalyzerContext();
     ({ logger: mockLogger, errorHandler } = context);
+    createHarness = context.createHarness;
+    createService = context.createService;
   });
 
   afterEach(() => {
@@ -46,7 +48,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        createDeltaAnalyzerService({
+        createService({
           config: null as unknown as DeltaConfig,
           logger: asDeltaAnalyzerLogger(mockLogger),
           errorHandler,
@@ -56,7 +58,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
     it('should throw on undefined config', () => {
       expect(() => {
-        createDeltaAnalyzerService({
+        createService({
           config: undefined as unknown as DeltaConfig,
           logger: asDeltaAnalyzerLogger(mockLogger),
           errorHandler,
@@ -68,7 +70,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
       const config = createDeltaAnalyzerConfig({ minDeltaThreshold: 100, windowSizeMs: 0 });
 
       expect(() => {
-        createDeltaAnalyzerService({
+        createService({
           config,
           logger: asDeltaAnalyzerLogger(mockLogger),
           errorHandler,
@@ -80,7 +82,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
       const config = createDeltaAnalyzerConfig({ minDeltaThreshold: -50 });
 
       expect(() => {
-        createDeltaAnalyzerService({
+        createService({
           config,
           logger: asDeltaAnalyzerLogger(mockLogger),
           errorHandler,
@@ -95,7 +97,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Tick Validation', () => {
     beforeEach(() => {
-      ({ service } = createManagedDeltaAnalyzerContext({
+      ({ service } = createHarness({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },
@@ -142,7 +144,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('THROW: Signal Validation', () => {
     beforeEach(() => {
-      ({ service } = createDeltaAnalyzerHarness({
+      ({ service } = createHarness({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },
@@ -171,7 +173,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('GRACEFUL_DEGRADE: Calculation Failures', () => {
     beforeEach(() => {
-      ({ service } = createDeltaAnalyzerHarness({
+      ({ service } = createHarness({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },
@@ -214,7 +216,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('SKIP: Logger Errors', () => {
     beforeEach(() => {
-      ({ service } = createDeltaAnalyzerHarness({
+      ({ service } = createHarness({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },
@@ -227,7 +229,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
       });
 
       expect(() => {
-        createDeltaAnalyzerService({
+        createService({
           config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
           logger: asDeltaAnalyzerLogger(mockLogger),
           errorHandler,
@@ -255,7 +257,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('Integration: Complex Scenarios', () => {
     beforeEach(() => {
-      ({ service } = createDeltaAnalyzerHarness({
+      ({ service } = createHarness({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },
@@ -308,7 +310,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        createDeltaAnalyzerService({
+        createService({
           config: null as unknown as DeltaConfig,
           logger: asDeltaAnalyzerLogger(mockLogger),
         });
@@ -316,9 +318,10 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     });
 
     it('should throw on null tick without ErrorHandler', () => {
-      service = createDeltaAnalyzerService({
+      service = createService({
         config: createDeltaAnalyzerConfig({ minDeltaThreshold: 100 }),
         logger: asDeltaAnalyzerLogger(mockLogger),
+        errorHandler: undefined,
       });
 
       expect(() => {
@@ -333,7 +336,7 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      ({ service } = createDeltaAnalyzerHarness({
+      ({ service } = createHarness({
         logger: mockLogger,
         errorHandler,
         configOverrides: { minDeltaThreshold: 100 },

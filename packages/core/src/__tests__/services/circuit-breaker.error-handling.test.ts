@@ -11,9 +11,7 @@ import {
   createCircuitBreakerFailingLogger,
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
-  createLegacyCircuitBreakerHarness,
   createManagedCircuitBreakerContext,
-  createStandardCircuitBreakerHarness,
   type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
@@ -57,11 +55,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
       // Should not throw despite logger failure
       expect(() => {
-        createStandardCircuitBreakerHarness({
+        createStandardService({
           configOverrides: config,
           logger: failingLogger as unknown as LoggerService,
-          errorHandler,
-        }).service;
+        });
       }).not.toThrow();
     });
 
@@ -72,11 +69,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
       testService.recordError('Test error 1');
       testService.recordError('Test error 2'); // Trigger trip
 
@@ -102,11 +98,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
 
       // Should not throw despite logger failures
       expect(() => {
@@ -123,11 +118,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
 
       // Should not throw despite logger failure
       expect(() => {
@@ -144,11 +138,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
       testService.recordError('Error 1');
 
       // Should not throw despite logger failure
@@ -166,11 +159,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
       testService.recordError('Error 1');
       testService.recordError('Error 2'); // Trip circuit
 
@@ -304,10 +296,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       });
 
       // Service without ErrorHandler should still work
-      const testService = createLegacyCircuitBreakerHarness({
+      const testService = createLegacyService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-      }).service;
+      });
 
       // Should handle error despite failing logger (degraded mode)
       expect(() => {
@@ -362,11 +354,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
 
       // All operations should succeed despite logger failures
       expect(() => {
@@ -389,11 +380,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      const testService = createStandardCircuitBreakerHarness({
+      const testService = createStandardService({
         configOverrides: config,
         logger: intermittentLogger as unknown as LoggerService,
-        errorHandler,
-      }).service;
+      });
 
       // First operation fails in logger
       expect(() => {

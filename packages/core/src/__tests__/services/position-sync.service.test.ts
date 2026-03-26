@@ -6,16 +6,17 @@
 import type { PositionSyncService } from '../../services/position-sync.service';
 import { LoggerService, Position, PositionSide, ExitType } from '../../types/legacy';
 import {
+  createManagedPositionSyncContext,
   createMockPositionSyncExchange,
   createMockPositionSyncExitTypeDetector,
   createMockPositionSyncManager,
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createMockSyncedPositions,
+  type ManagedPositionSyncContext,
   createPositionSyncAgedPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
-  createPositionSyncHarness,
   preparePositionSyncClosedDuringCheckScenario,
   prepareClosedPositionSync,
   prepareDeepSyncProtectionScenario,
@@ -36,16 +37,20 @@ describe('PositionSyncService', () => {
   let mockExitTypeDetector: ReturnType<typeof createMockPositionSyncExitTypeDetector>;
   let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
   let logger: LoggerService;
+  let context: ManagedPositionSyncContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    const harness = createPositionSyncHarness();
-    service = harness.service;
-    mockBybit = harness.mockBybit;
-    mockPositionManager = harness.mockPositionManager;
-    mockExitTypeDetector = harness.mockExitTypeDetector;
-    mockTelegram = harness.mockTelegram;
-    logger = harness.logger;
+    context = createManagedPositionSyncContext();
+    service = context.service;
+    mockBybit = context.mockBybit;
+    mockPositionManager = context.mockPositionManager;
+    mockExitTypeDetector = context.mockExitTypeDetector;
+    mockTelegram = context.mockTelegram;
+    logger = context.logger;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

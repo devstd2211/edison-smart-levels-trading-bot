@@ -16,18 +16,26 @@ import {
   createInitializedLegacyPositionStateMachineService,
   createLegacyPositionStateMachineService,
   createLegacyPositionStateMachineHarness,
+  createManagedPositionStateMachineContext,
   createMockPositionStateMachineLogger,
   createPositionStateMachinePositionId,
   getPositionStateSnapshot,
   transitionPositionState,
   transitionPositionStateSequence,
+  type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
   let logger: LoggerService;
+  let context: ManagedPositionStateMachineContext;
 
   beforeEach(() => {
-    logger = createMockPositionStateMachineLogger();
+    context = createManagedPositionStateMachineContext();
+    logger = context.logger;
+  });
+
+  afterEach(async () => {
+    await context.cleanup();
   });
 
   describe('State Transitions', () => {

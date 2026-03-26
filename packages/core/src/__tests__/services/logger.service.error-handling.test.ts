@@ -23,10 +23,7 @@ import {
   createLoggerErrorHandler,
   createManagedLoggerTestContext,
   createLegacyLoggerFactory,
-  createLegacyLoggerService,
   createStandardLoggerFactory,
-  createStandardLoggerService,
-  createLoggerTestDir,
   ensureLoggerTestDir,
   type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
@@ -39,6 +36,8 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let errorHandler: ErrorHandler;
   let createLogger: ReturnType<typeof createStandardLoggerFactory>;
   let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
+  let createStandardService: ManagedLoggerTestContext['createStandardService'];
+  let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
   let context: ManagedLoggerTestContext;
 
   beforeEach(() => {
@@ -47,6 +46,8 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     errorHandler = context.errorHandler;
     createLogger = context.createLogger;
     createLegacyLogger = context.createLegacyLogger;
+    createStandardService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
   });
 
   afterEach(async () => {
@@ -458,7 +459,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     });
 
     it('should return null log file path when logToFile=false', () => {
-      const logger = createLegacyLoggerService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
+      const logger = createLegacyService({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: false });
 
       const filePath = logger.getLogFilePath();
       expect(filePath).toBeNull();
@@ -489,7 +490,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should track ErrorHandler integration during logging', async () => {
       mkdirSync(testLogDir, { recursive: true });
-      const logger = createStandardLoggerService({
+      const logger = createStandardService({
         minLevel: LogLevel.INFO,
         logDir: testLogDir,
         logToFile: true,

@@ -268,6 +268,10 @@ export interface ManagedAnalyzerEngineContext {
   service: AnalyzerEngineService;
   candles: Candle[];
   config: StrategyConfig;
+  createScenario: (
+    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    options?: AnalyzerEngineScenarioOptions,
+  ) => ManagedAnalyzerEngineContext;
   cleanup: () => void;
 }
 
@@ -275,11 +279,35 @@ export function createManagedAnalyzerEngineScenarioContext(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
   options: AnalyzerEngineScenarioOptions = {},
 ): ManagedAnalyzerEngineContext {
+  const trackedScenarios: Array<ReturnType<typeof createAnalyzerEngineScenarioHarness>> = [];
+  const createScenario = (
+    nextAnalyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    nextOptions: AnalyzerEngineScenarioOptions = {},
+  ): ManagedAnalyzerEngineContext => {
+    const scenario = createAnalyzerEngineScenarioHarness(nextAnalyzers, {
+      ...options,
+      ...nextOptions,
+    });
+    trackedScenarios.push(scenario);
+
+    return {
+      ...scenario,
+      createScenario,
+      cleanup: () => {
+        trackedScenarios.length = 0;
+        jest.clearAllMocks();
+      },
+    };
+  };
+
   const scenario = createAnalyzerEngineScenarioHarness(analyzers, options);
+  trackedScenarios.push(scenario);
 
   return {
     ...scenario,
+    createScenario,
     cleanup: () => {
+      trackedScenarios.length = 0;
       jest.clearAllMocks();
     },
   };

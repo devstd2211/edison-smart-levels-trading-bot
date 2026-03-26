@@ -534,6 +534,40 @@ export function createPositionLifecycleWithErrorHandlerHarness(
   });
 }
 
+export interface ManagedPositionLifecycleRepositoryContext extends LifecycleHarness {
+  createHarness: (
+    overrides?: Parameters<typeof createPositionLifecycleRepositoryHarness>[0],
+  ) => LifecycleHarness;
+  cleanup: () => void;
+}
+
+export function createManagedPositionLifecycleRepositoryContext(
+  options: Parameters<typeof createPositionLifecycleRepositoryHarness>[0] = {},
+): ManagedPositionLifecycleRepositoryContext {
+  const trackedHarnesses: LifecycleHarness[] = [];
+  const createHarness = (
+    overrides: Parameters<typeof createPositionLifecycleRepositoryHarness>[0] = {},
+  ): LifecycleHarness => {
+    const harness = createPositionLifecycleRepositoryHarness({
+      ...options,
+      ...overrides,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+
+  const harness = createHarness();
+
+  return {
+    ...harness,
+    createHarness,
+    cleanup: () => {
+      trackedHarnesses.length = 0;
+      jest.clearAllMocks();
+    },
+  };
+}
+
 export function syncLifecycleWebSocketPosition(
   service: PositionLifecycleService,
   basePosition: Position,
@@ -552,4 +586,39 @@ export function seedLifecycleSyncedPosition(options: {
   attachLifecycleRepositoryPosition(options.mockRepository, options.position);
   options.service.syncWithWebSocket(options.position);
   return options.position;
+}
+
+export interface ManagedPositionLifecycleSafetyContext
+  extends ReturnType<typeof createPositionLifecycleSafetyHarness> {
+  createHarness: (
+    overrides?: Parameters<typeof createPositionLifecycleSafetyHarness>[0],
+  ) => ReturnType<typeof createPositionLifecycleSafetyHarness>;
+  cleanup: () => void;
+}
+
+export function createManagedPositionLifecycleSafetyContext(
+  options: Parameters<typeof createPositionLifecycleSafetyHarness>[0] = {},
+): ManagedPositionLifecycleSafetyContext {
+  const trackedHarnesses: Array<ReturnType<typeof createPositionLifecycleSafetyHarness>> = [];
+  const createHarness = (
+    overrides: Parameters<typeof createPositionLifecycleSafetyHarness>[0] = {},
+  ) => {
+    const harness = createPositionLifecycleSafetyHarness({
+      ...options,
+      ...overrides,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+
+  const harness = createHarness();
+
+  return {
+    ...harness,
+    createHarness,
+    cleanup: () => {
+      trackedHarnesses.length = 0;
+      jest.clearAllMocks();
+    },
+  };
 }
