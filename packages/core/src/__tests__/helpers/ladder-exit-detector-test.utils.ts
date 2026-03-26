@@ -72,6 +72,28 @@ export const createLadderExitHarness = (options: LadderExitHarnessOptions = {}) 
   };
 };
 
+export type LadderExitHarness = ReturnType<typeof createLadderExitHarness>;
+
+export type ManagedLadderExitContext = LadderExitHarness & {
+  cleanup: () => void;
+};
+
+export const createManagedLadderExitContext = (
+  options: LadderExitHarnessOptions = {},
+): ManagedLadderExitContext => {
+  const harness = createLadderExitHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+};
+
 export const createLadderExitScenarioHarness = (options: LadderExitScenarioOptions = {}) => {
   const harness = createLadderExitHarness(options);
   const position = createLadderExitPosition(

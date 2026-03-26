@@ -10,8 +10,9 @@ import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
   createWhaleDetectionConfigWithWallBreak,
-  createWhaleDetectionHarness,
+  createManagedWhaleDetectionContext,
   createWhaleDetectionWall,
+  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
@@ -20,25 +21,26 @@ describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
   let logger: LoggerService;
   let config: WhaleDetectorConfig;
-  let createService: ReturnType<typeof createWhaleDetectionHarness>['createLegacyService'];
+  let context: ManagedWhaleDetectionContext;
+  let createService: ManagedWhaleDetectionContext['createLegacyService'];
   let createScenario: (options?: {
     strategy?: 'BREAKOUT' | 'FOLLOW';
     withErrorHandler?: boolean;
     walls?: OrderBookWall[];
     ratio?: number;
     direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  }) => ReturnType<ReturnType<typeof createWhaleDetectionHarness>['createScenario']>;
+  }) => ReturnType<ManagedWhaleDetectionContext['createScenario']>;
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    const harness = createWhaleDetectionHarness({
+    context = createManagedWhaleDetectionContext({
       strategy: 'BREAKOUT',
       withErrorHandler: false,
     });
-    ({ detector, logger, config } = harness);
-    createService = harness.createLegacyService;
+    ({ detector, logger, config } = context);
+    createService = context.createLegacyService;
     createScenario = (options = {}) =>
-      harness.createScenario({
+      context.createScenario({
         logger,
         config,
         strategy: options.strategy ?? 'BREAKOUT',
@@ -50,7 +52,7 @@ describe('WhaleDetectionService', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers(); // Restore real timers after each test
+    context.cleanup();
   });
 
   describe('Initialization', () => {

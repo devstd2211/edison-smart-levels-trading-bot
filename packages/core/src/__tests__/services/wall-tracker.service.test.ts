@@ -9,24 +9,30 @@ import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
   createWallTrackerBoundFactory,
   createWallTrackerConfig,
-  createWallTrackerHarness,
+  createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('WallTrackerService', () => {
   let service: WallTrackerService;
   let logger: LoggerService;
   let config: WallTrackingConfig;
+  let context: ManagedWallTrackerContext;
   let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createWallTrackerHarness({ withErrorHandler: false });
-    ({ service, logger, config } = harness);
+    context = createManagedWallTrackerContext({ withErrorHandler: false });
+    ({ service, logger, config } = context);
     createService = createWallTrackerBoundFactory({
       config,
       logger,
       withErrorHandler: false,
     }).createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('detectWall', () => {

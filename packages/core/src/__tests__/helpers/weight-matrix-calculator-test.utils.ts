@@ -200,6 +200,31 @@ export function createWeightMatrixHarness(options: {
   };
 }
 
+export type WeightMatrixHarness = ReturnType<typeof createWeightMatrixHarness>;
+
+export type ManagedWeightMatrixContext = WeightMatrixHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedWeightMatrixContext(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedWeightMatrixContext {
+  const harness = createWeightMatrixHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createStandardWeightMatrixHarness(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;
@@ -268,6 +293,32 @@ export function createErrorWeightMatrixHarness(options: {
   };
 }
 
+export type ErrorWeightMatrixHarness = ReturnType<
+  typeof createErrorWeightMatrixHarness
+>;
+
+export type ManagedErrorWeightMatrixContext = ErrorWeightMatrixHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedErrorWeightMatrixContext(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedErrorWeightMatrixContext {
+  const harness = createErrorWeightMatrixHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createLegacyWeightMatrixHarness(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;
@@ -292,6 +343,31 @@ export function createLegacyWeightMatrixHarness(options: {
         config: serviceOptions.config ?? config,
         logger: serviceOptions.logger ?? logger,
       }),
+  };
+}
+
+export type LegacyWeightMatrixHarness = ReturnType<
+  typeof createLegacyWeightMatrixHarness
+>;
+
+export type ManagedLegacyWeightMatrixContext = LegacyWeightMatrixHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedLegacyWeightMatrixContext(options: {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+} = {}): ManagedLegacyWeightMatrixContext {
+  const harness = createLegacyWeightMatrixHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
   };
 }
 

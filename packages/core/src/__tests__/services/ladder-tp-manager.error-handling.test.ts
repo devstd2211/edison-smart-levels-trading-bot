@@ -26,8 +26,9 @@ import type { IExchange } from '../../interfaces/IExchange';
 import {
   createLadderTpConfig,
   createLadderTpService,
-  createLadderTpHarness,
+  createManagedLadderTpContext,
   createLadderTpPosition,
+  type ManagedLadderTpContext,
 } from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
@@ -39,12 +40,18 @@ import {
 // ============================================================================
 
 describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
+  let context: ManagedLadderTpContext;
   let logger: LoggerService;
   let bybitService: jest.Mocked<IExchange>;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
-    ({ logger, bybitService, errorHandler } = createLadderTpHarness());
+    context = createManagedLadderTpContext();
+    ({ logger, bybitService, errorHandler } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================

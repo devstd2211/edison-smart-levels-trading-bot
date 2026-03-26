@@ -172,6 +172,30 @@ export function createVolumeProfileHarness(options: {
   };
 }
 
+export type VolumeProfileHarness = ReturnType<typeof createVolumeProfileHarness>;
+
+export type ManagedVolumeProfileContext = VolumeProfileHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedVolumeProfileContext(options: {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}): ManagedVolumeProfileContext {
+  const harness = createVolumeProfileHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createVolumeProfileErrorHandler(
   logger: LoggerService = createVolumeProfileLogger(),
 ): ErrorHandler {

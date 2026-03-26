@@ -22,7 +22,8 @@ import {
 } from '../../errors/DomainErrors';
 import {
   createLimitOrderExecutorConfig,
-  createLimitOrderExecutorHarness,
+  createManagedLimitOrderExecutorContext,
+  type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -35,16 +36,21 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
-  let createService: ReturnType<typeof createLimitOrderExecutorHarness>['createService'];
+  let context: ManagedLimitOrderExecutorContext;
+  let createService: ManagedLimitOrderExecutorContext['createService'];
 
   beforeEach(() => {
-    const harness = createLimitOrderExecutorHarness();
-    logger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    config = harness.config;
-    bybitService = harness.bybitService;
-    service = harness.service;
-    createService = harness.createService;
+    context = createManagedLimitOrderExecutorContext();
+    logger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    config = context.config;
+    bybitService = context.bybitService;
+    service = context.service;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

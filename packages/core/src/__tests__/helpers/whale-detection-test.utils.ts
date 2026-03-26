@@ -210,6 +210,31 @@ export function createWhaleDetectionHarness(options: {
   };
 }
 
+export type WhaleDetectionHarness = ReturnType<typeof createWhaleDetectionHarness>;
+
+export type ManagedWhaleDetectionContext = WhaleDetectionHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedWhaleDetectionContext(options: {
+  logger?: LoggerService;
+  config?: WhaleDetectorConfig;
+  strategy?: 'BREAKOUT' | 'FOLLOW';
+  withErrorHandler?: boolean;
+} = {}): ManagedWhaleDetectionContext {
+  const harness = createWhaleDetectionHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createWhaleDetectionScenarioHarness(options: {
   logger?: LoggerService;
   config?: WhaleDetectorConfig;

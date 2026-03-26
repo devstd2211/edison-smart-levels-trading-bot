@@ -118,6 +118,32 @@ export function createTFAlignmentHarness(options: {
   };
 }
 
+export type TFAlignmentHarness = ReturnType<typeof createTFAlignmentHarness>;
+
+export type ManagedTFAlignmentContext = TFAlignmentHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedTFAlignmentContext(options: {
+  configOverrides?: Partial<TFAlignmentConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  config?: TFAlignmentConfig;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedTFAlignmentContext {
+  const harness = createTFAlignmentHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createTFAlignmentBoundFactory(options: {
   configOverrides?: Partial<TFAlignmentConfig>;
   logger?: LoggerService;

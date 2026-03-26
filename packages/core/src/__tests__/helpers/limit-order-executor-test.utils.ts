@@ -148,3 +148,32 @@ export function createLimitOrderExecutorHarness(options: {
     createService,
   };
 }
+
+export type LimitOrderExecutorHarness = ReturnType<
+  typeof createLimitOrderExecutorHarness
+>;
+
+export type ManagedLimitOrderExecutorContext = LimitOrderExecutorHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedLimitOrderExecutorContext(options: {
+  config?: LimitOrderExecutorConfig;
+  configOverrides?: Partial<LimitOrderExecutorConfig>;
+  bybitService?: BybitService;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedLimitOrderExecutorContext {
+  const harness = createLimitOrderExecutorHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}

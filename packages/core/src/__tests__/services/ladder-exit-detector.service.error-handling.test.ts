@@ -22,10 +22,11 @@ import {
   asLadderExitPosition,
   asLadderExitPrice,
   asLadderExitTakeProfits,
-  createLadderExitHarness,
+  createManagedLadderExitContext,
   createLadderExitScenarioHarness,
   createLadderExitTpOrderHistory,
   queueLadderExitOrderHistory,
+  type ManagedLadderExitContext,
 } from '../helpers/ladder-exit-detector-test.utils';
 
 // ============================================================================
@@ -33,8 +34,9 @@ import {
 // ============================================================================
 
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
+  let context: ManagedLadderExitContext;
   let logger: LoggerService;
-  let bybitService: ReturnType<typeof createLadderExitHarness>['bybitService'];
+  let bybitService: ManagedLadderExitContext['bybitService'];
   let createScenario: (options?: {
     withErrorHandler?: boolean;
     side?: PositionSide;
@@ -43,9 +45,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
 
   beforeEach(() => {
-    const harness = createLadderExitHarness();
-    logger = harness.logger;
-    bybitService = harness.bybitService;
+    context = createManagedLadderExitContext();
+    logger = context.logger;
+    bybitService = context.bybitService;
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
         logger,
@@ -55,6 +57,10 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
         entryPrice: options.entryPrice,
         quantity: options.quantity,
       });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================

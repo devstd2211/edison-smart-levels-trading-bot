@@ -19,15 +19,16 @@ import {
   createWallTrackerBoundFactory,
   createWallTrackerWall,
   createWallTrackerConfig,
-  createWallTrackerHarness,
+  createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let harness: ReturnType<typeof createWallTrackerHarness>;
+  let context: ManagedWallTrackerContext;
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
@@ -35,10 +36,14 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   });
 
   beforeEach(() => {
-    harness = createWallTrackerHarness({
+    context = createManagedWallTrackerContext({
       configOverrides: mockConfig,
     });
-    ({ service, logger: mockLogger, errorHandler } = harness);
+    ({ service, logger: mockLogger, errorHandler } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================

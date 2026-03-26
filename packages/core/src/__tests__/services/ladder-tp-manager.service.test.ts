@@ -24,9 +24,10 @@ import {
 } from '../../types/legacy';
 import {
   createLadderTpConfig,
-  createLadderTpHarness,
+  createManagedLadderTpContext,
   createLadderTpPosition,
   createLadderTpService,
+  type ManagedLadderTpContext,
 } from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
@@ -42,9 +43,15 @@ describe('LadderTpManagerService', () => {
   let bybitService: jest.Mocked<IExchange>;
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
+  let context: ManagedLadderTpContext;
 
   beforeEach(() => {
-    ({ service, logger, bybitService, config } = createLadderTpHarness());
+    context = createManagedLadderTpContext();
+    ({ service, logger, bybitService, config } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

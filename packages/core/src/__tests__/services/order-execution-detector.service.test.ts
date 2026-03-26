@@ -8,9 +8,10 @@ import { LoggerService } from '../../types/legacy';
 import {
   createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
-  createOrderExecutionDetectorHarness,
+  createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
+  type ManagedOrderExecutionDetectorContext,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -32,11 +33,13 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 describe('OrderExecutionDetectorService', () => {
   let service: OrderExecutionDetectorService;
   let logger: LoggerService;
+  let context: ManagedOrderExecutionDetectorContext;
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
   beforeEach(() => {
-    ({ service, logger } = createOrderExecutionDetectorHarness({ withErrorHandler: false }));
+    context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+    ({ service, logger } = context);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger,
@@ -44,6 +47,10 @@ describe('OrderExecutionDetectorService', () => {
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('detectExecution', () => {

@@ -96,6 +96,31 @@ export function createLadderTpHarness(options: {
   };
 }
 
+export type LadderTpHarness = ReturnType<typeof createLadderTpHarness>;
+
+export type ManagedLadderTpContext = LadderTpHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedLadderTpContext(options: {
+  configOverrides?: Partial<LadderTpManagerConfig>;
+  logger?: LoggerService;
+  bybitService?: jest.Mocked<IExchange>;
+  withErrorHandler?: boolean;
+} = {}): ManagedLadderTpContext {
+  const harness = createLadderTpHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createLadderTpErrorHandler(
   logger: LoggerService = createLadderTpLogger(),
 ): ErrorHandler {

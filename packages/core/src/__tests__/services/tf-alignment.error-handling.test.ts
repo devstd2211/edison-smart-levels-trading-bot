@@ -16,10 +16,11 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
-  createTFAlignmentHarness,
+  createManagedTFAlignmentContext,
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
   createTFAlignmentService,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
@@ -29,12 +30,13 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
   type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
   type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
-  let createService: ReturnType<typeof createTFAlignmentHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createTFAlignmentHarness>['createLegacyService'];
+  let context: ManagedTFAlignmentContext;
+  let createService: ManagedTFAlignmentContext['createStandardService'];
+  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
 
   beforeEach(() => {
     errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
-    const harness = createTFAlignmentHarness({
+    context = createManagedTFAlignmentContext({
       logger: mockLogger as unknown as LoggerService,
       errorHandler,
     });
@@ -44,6 +46,10 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
     });
     createService = factory.createStandardService;
     createLegacyService = factory.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('THROW: Input Validation', () => {

@@ -143,3 +143,29 @@ export const createTimeframeWeightingHarness = (options: {
       createTimeframeWeightingMultiTF(overrides),
   };
 };
+
+export type TimeframeWeightingHarness = ReturnType<
+  typeof createTimeframeWeightingHarness
+>;
+
+export type ManagedTimeframeWeightingContext = TimeframeWeightingHarness & {
+  cleanup: () => void;
+};
+
+export const createManagedTimeframeWeightingContext = (options: {
+  logger?: TimeframeWeightingMockLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedTimeframeWeightingContext => {
+  const harness = createTimeframeWeightingHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+};

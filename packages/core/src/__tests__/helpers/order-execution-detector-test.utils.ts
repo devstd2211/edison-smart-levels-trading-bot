@@ -102,6 +102,32 @@ export function createOrderExecutionDetectorHarness(options: {
   };
 }
 
+export type OrderExecutionDetectorHarness = ReturnType<
+  typeof createOrderExecutionDetectorHarness
+>;
+
+export type ManagedOrderExecutionDetectorContext = OrderExecutionDetectorHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedOrderExecutionDetectorContext(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedOrderExecutionDetectorContext {
+  const harness = createOrderExecutionDetectorHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createOrderExecutionDetectorScenarioHarness(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

@@ -8,22 +8,28 @@ import { TFAlignmentConfig } from '../../types/legacy';
 import {
   createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
-  createTFAlignmentHarness,
+  createManagedTFAlignmentContext,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
+  let context: ManagedTFAlignmentContext;
   let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
   beforeEach(() => {
     config = createTFAlignmentConfig();
-    const harness = createTFAlignmentHarness({ configOverrides: config, withErrorHandler: false });
-    ({ service } = harness);
+    context = createManagedTFAlignmentContext({ configOverrides: config, withErrorHandler: false });
+    ({ service } = context);
     createService = createTFAlignmentBoundFactory({
       config,
       withErrorHandler: false,
     }).createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('calculateAlignment - LONG', () => {

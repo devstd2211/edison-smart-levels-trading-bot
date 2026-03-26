@@ -9,23 +9,29 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createVolumeProfileBoundFactory,
-  createVolumeProfileHarness,
+  createManagedVolumeProfileContext,
+  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileService;
   let logger: LoggerService;
   let config: VolumeProfileConfig;
+  let context: ManagedVolumeProfileContext;
   let createService: ReturnType<typeof createVolumeProfileBoundFactory>['createLegacyService'];
 
   beforeEach(() => {
-    const harness = createVolumeProfileHarness({ withErrorHandler: false });
-    ({ service, logger, config } = harness);
+    context = createManagedVolumeProfileContext({ withErrorHandler: false });
+    ({ service, logger, config } = context);
     createService = createVolumeProfileBoundFactory({
       logger,
       configOverrides: config,
       withErrorHandler: false,
     }).createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('initialization', () => {

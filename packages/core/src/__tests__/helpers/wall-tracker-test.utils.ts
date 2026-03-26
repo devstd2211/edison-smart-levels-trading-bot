@@ -108,6 +108,31 @@ export function createWallTrackerHarness(options: {
   };
 }
 
+export type WallTrackerHarness = ReturnType<typeof createWallTrackerHarness>;
+
+export type ManagedWallTrackerContext = WallTrackerHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedWallTrackerContext(options: {
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedWallTrackerContext {
+  const harness = createWallTrackerHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createWallTrackerService(options: {
   config?: WallTrackingConfig;
   configOverrides?: Partial<WallTrackingConfig>;

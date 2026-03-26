@@ -14,10 +14,11 @@ import {
   createWhaleDetectionConfig,
   createWhaleDetectionConfigWithImbalanceSpike,
   createWhaleDetectionConfigWithWallBreak,
-  createWhaleDetectionHarness,
+  createManagedWhaleDetectionContext,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
   createWhaleDetectionService,
+  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
 const createMockLogger = createWhaleDetectionMockLogger;
@@ -26,28 +27,33 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
-  let createService: ReturnType<typeof createWhaleDetectionHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createWhaleDetectionHarness>['createLegacyService'];
+  let context: ManagedWhaleDetectionContext;
+  let createService: ManagedWhaleDetectionContext['createStandardService'];
+  let createLegacyService: ManagedWhaleDetectionContext['createLegacyService'];
   let createScenario: (options?: {
     config?: WhaleDetectorConfig;
     logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
     withErrorHandler?: boolean;
     ratio?: number;
     direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  }) => ReturnType<ReturnType<typeof createWhaleDetectionHarness>['createScenario']>;
+  }) => ReturnType<ManagedWhaleDetectionContext['createScenario']>;
 
   beforeEach(() => {
-    const harness = createWhaleDetectionHarness();
-    createService = harness.createStandardService;
-    createLegacyService = harness.createLegacyService;
+    context = createManagedWhaleDetectionContext();
+    createService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
     createScenario = (options = {}) =>
-      harness.createScenario({
+      context.createScenario({
         config: options.config ?? createValidConfig(),
         logger: options.logger,
         withErrorHandler: options.withErrorHandler,
         ratio: options.ratio,
         direction: options.direction,
       });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

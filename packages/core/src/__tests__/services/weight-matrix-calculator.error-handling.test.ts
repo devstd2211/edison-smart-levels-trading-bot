@@ -9,10 +9,11 @@ import { WeightMatrixCalculatorService } from '../../services/weight-matrix-calc
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WeightMatrixConfig, WeightMatrixInput, SignalDirection, LoggerService } from '../../types/legacy';
 import {
-  createErrorWeightMatrixHarness,
+  createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
   createWeightMatrixService,
+  type ManagedErrorWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
@@ -30,16 +31,21 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let errorConfig: WeightMatrixConfig;
   let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let context: ManagedErrorWeightMatrixContext;
 
   beforeEach(() => {
-    const harness = createErrorWeightMatrixHarness();
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    errorConfig = harness.config;
+    context = createManagedErrorWeightMatrixContext();
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    errorConfig = context.config;
     createService = (config = errorConfig) =>
-      harness.createStandardErrorService({ config });
+      context.createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
-      harness.createLegacyErrorService({ config });
+      context.createLegacyErrorService({ config });
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

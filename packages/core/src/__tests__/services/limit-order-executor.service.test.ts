@@ -16,10 +16,11 @@ import {
   attachLimitOrderRestClient,
   createLimitOrderStatusRecord,
   createLimitOrderExecutorConfig,
-  createLimitOrderExecutorHarness,
+  createManagedLimitOrderExecutorContext,
   createLimitOrderExecutorLogger,
   createMockLimitOrderBybitService,
   MockLimitOrderRestClient,
+  type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -32,21 +33,26 @@ describe('LimitOrderExecutorService', () => {
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let restClient: MockLimitOrderRestClient;
-  let createService: ReturnType<typeof createLimitOrderExecutorHarness>['createService'];
+  let context: ManagedLimitOrderExecutorContext;
+  let createService: ManagedLimitOrderExecutorContext['createService'];
 
   beforeEach(() => {
     logger = createLimitOrderExecutorLogger();
     config = createLimitOrderExecutorConfig({ maxRetries: 1 });
     bybitService = createMockLimitOrderBybitService();
-    const harness = createLimitOrderExecutorHarness({
+    context = createManagedLimitOrderExecutorContext({
       config,
       bybitService,
       logger,
       withErrorHandler: false,
     });
-    service = harness.service;
-    createService = harness.createService;
+    service = context.service;
+    createService = context.createService;
     restClient = attachLimitOrderRestClient(bybitService);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================================================

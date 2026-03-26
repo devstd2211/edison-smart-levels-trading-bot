@@ -16,8 +16,9 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asTimeframeWeightingMode,
   asTimeframeWeightingMultiTF,
-  createTimeframeWeightingHarness,
+  createManagedTimeframeWeightingContext,
   createInvalidTimeframeWeightingMultiTF,
+  type ManagedTimeframeWeightingContext,
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
@@ -25,18 +26,23 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
-  let createService: ReturnType<typeof createTimeframeWeightingHarness>['createStandardService'];
-  let createLegacyService: ReturnType<typeof createTimeframeWeightingHarness>['createLegacyService'];
-  let createMultiTF: ReturnType<typeof createTimeframeWeightingHarness>['createMultiTF'];
+  let context: ManagedTimeframeWeightingContext;
+  let createService: ManagedTimeframeWeightingContext['createStandardService'];
+  let createLegacyService: ManagedTimeframeWeightingContext['createLegacyService'];
+  let createMultiTF: ManagedTimeframeWeightingContext['createMultiTF'];
 
   beforeEach(() => {
-    const harness = createTimeframeWeightingHarness();
-    service = harness.service;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    mockLogger = harness.logger;
-    createService = harness.createStandardService;
-    createLegacyService = harness.createLegacyService;
-    createMultiTF = harness.createMultiTF;
+    context = createManagedTimeframeWeightingContext();
+    service = context.service;
+    errorHandler = context.errorHandler as ErrorHandler;
+    mockLogger = context.logger;
+    createService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
+    createMultiTF = context.createMultiTF;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('THROW: Input Validation', () => {
@@ -136,7 +142,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails', () => {
-      const badLogger = createTimeframeWeightingHarness().logger;
+      const badLogger = createManagedTimeframeWeightingContext().logger;
       badLogger.info.mockImplementation(() => {
         throw new Error('Logger failed');
       });

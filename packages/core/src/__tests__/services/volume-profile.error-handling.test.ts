@@ -14,11 +14,12 @@ import {
   createVolumeProfileBoundFactory,
   createVolumeProfileCandles,
   createVolumeProfileCandlesFromSpecs,
-  createVolumeProfileHarness,
+  createManagedVolumeProfileContext,
   createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
   createVolumeProfileServiceWithHarness,
+  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
 // ============================================================================
@@ -39,17 +40,22 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     withErrorHandler?: boolean,
   ) => VolumeProfileService;
   let createLegacyService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
+  let context: ManagedVolumeProfileContext;
 
   beforeEach(() => {
-    const harness = createVolumeProfileHarness();
-    mockLogger = harness.logger;
+    context = createManagedVolumeProfileContext();
+    mockLogger = context.logger;
     const factory = createVolumeProfileBoundFactory({
-      logger: harness.logger,
-      errorHandler: harness.errorHandler,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
     });
     createService = (configOverrides, logger = mockLogger, withErrorHandler = true) =>
       factory.createStandardService(configOverrides, logger, withErrorHandler);
     createLegacyService = factory.createLegacyService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // =========================================================================
