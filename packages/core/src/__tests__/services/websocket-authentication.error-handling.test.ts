@@ -7,8 +7,6 @@ import { WebSocketAuthenticationService } from '../../services/websocket-authent
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createManagedWebSocketAuthenticationContext,
-  createLegacyWebSocketAuthenticationService,
-  createStandardWebSocketAuthenticationService,
   createWebSocketAuthCredentials,
   createLongWebSocketAuthCredentials,
   createShortWebSocketAuthCredentials,
@@ -26,10 +24,11 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let context: ManagedWebSocketAuthenticationContext;
   let createService: ManagedWebSocketAuthenticationContext['createService'];
   let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
+  let createServiceWithoutLogger: ManagedWebSocketAuthenticationContext['createServiceWithoutLogger'];
 
   beforeEach(() => {
     context = createManagedWebSocketAuthenticationContext();
-    ({ service, errorHandler, mockLogger, createService, createLegacyService } = context);
+    ({ service, errorHandler, mockLogger, createService, createLegacyService, createServiceWithoutLogger } = context);
   });
 
   afterEach(() => {
@@ -165,10 +164,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should handle missing logger gracefully', () => {
-      const serviceNoLogger = createStandardWebSocketAuthenticationService({
-        logger: undefined,
-        errorHandler,
-      });
+      const serviceNoLogger = createServiceWithoutLogger({ errorHandler });
 
       const { apiKey, apiSecret } = createWebSocketAuthCredentials({
         apiKey: 'valid-key-1234567890',
@@ -335,7 +331,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
     });
 
     it('should throw on validation errors even without ErrorHandler', () => {
-      const serviceNoHandler = createLegacyWebSocketAuthenticationService({ logger: undefined });
+      const serviceNoHandler = createServiceWithoutLogger({ withErrorHandler: false });
 
       expect(() => {
         const { apiSecret } = createWebSocketAuthCredentials();

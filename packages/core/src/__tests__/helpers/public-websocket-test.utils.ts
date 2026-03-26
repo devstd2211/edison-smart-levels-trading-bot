@@ -59,6 +59,9 @@ export type PublicWebSocketHarness = {
       lookbackCandles?: number;
     };
   }) => PublicWebSocketService;
+  createInjectedService: (
+    overrides?: Partial<PublicWebSocketServiceOptions>,
+  ) => PublicWebSocketService;
 };
 
 export type ManagedPublicWebSocketContext = PublicWebSocketHarness & {
@@ -249,6 +252,15 @@ export function createPublicWebSocketHarness(options: {
             btcConfirmation:
               overrides.btcConfirmation ?? createPublicWebSocketBtcConfirmationConfig(),
           }),
+    createInjectedService: (overrides = {}) =>
+      createStandardPublicWebSocketServiceFromOptions({
+        mockConfig: overrides.mockConfig ?? mockConfig,
+        mockTimeframeProvider: overrides.mockTimeframeProvider ?? mockTimeframeProvider,
+        loggerService: overrides.loggerService ?? loggerService,
+        errorHandlerService: overrides.errorHandlerService ?? errorHandlerService,
+        symbol: overrides.symbol ?? (overrides.mockConfig ?? mockConfig).symbol,
+        btcConfirmation: overrides.btcConfirmation,
+      }),
   };
 }
 
@@ -277,6 +289,7 @@ export function createManagedPublicWebSocketContext(options: {
     createService: (overrides = {}) => trackService(harness.createService(overrides)),
     createLegacyService: (overrides = {}) => trackService(harness.createLegacyService(overrides)),
     createBtcConfiguredService: (overrides = {}) => trackService(harness.createBtcConfiguredService(overrides)),
+    createInjectedService: (overrides = {}) => trackService(harness.createInjectedService(overrides)),
     cleanup: () => {
       for (const service of trackedServices) {
         service.disconnect();

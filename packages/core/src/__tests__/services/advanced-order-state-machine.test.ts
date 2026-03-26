@@ -23,9 +23,7 @@ import {
   TransitionTrigger,
 } from '../../constants/phase-13-constants';
 import {
-  createAdvancedOrderStateMachineHarness,
   createManagedAdvancedOrderStateMachineContext,
-  createLegacyAdvancedOrderStateMachineService,
   type AdvancedOrderStateMachineMockLogger,
   type ManagedAdvancedOrderStateMachineContext,
 } from '../helpers/advanced-order-state-machine-test.utils';
@@ -35,12 +33,14 @@ describe('AdvancedOrderStateMachineService', () => {
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
   let context: ManagedAdvancedOrderStateMachineContext;
+  let createLegacyService: ManagedAdvancedOrderStateMachineContext['createLegacyService'];
 
   beforeEach(() => {
     context = createManagedAdvancedOrderStateMachineContext();
     service = context.service;
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
+    createLegacyService = context.createLegacyService;
   });
 
   afterEach(() => {
@@ -566,7 +566,7 @@ describe('AdvancedOrderStateMachineService', () => {
   describe('Backward Compatibility - Without ErrorHandler', () => {
     beforeEach(() => {
       service.cleanup();
-      service = createLegacyAdvancedOrderStateMachineService({
+      service = createLegacyService({
         logger: mockLogger,
       });
     });

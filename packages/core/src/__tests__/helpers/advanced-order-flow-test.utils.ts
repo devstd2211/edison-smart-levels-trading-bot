@@ -195,6 +195,15 @@ export interface ManagedAdvancedOrderFlowContext {
   logger: LoggerService;
   errorHandler?: ErrorHandler;
   config: AdvancedOrderFlowConfig;
+  createStandardService: (options?: {
+    config?: AdvancedOrderFlowConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => AdvancedOrderFlowService;
+  createLegacyService: (options?: {
+    config?: AdvancedOrderFlowConfig;
+    logger?: LoggerService;
+  }) => AdvancedOrderFlowService;
   createService: (options?: {
     config?: AdvancedOrderFlowConfig;
     logger?: LoggerService;
@@ -225,6 +234,31 @@ export function createManagedAdvancedOrderFlowContext(options?: {
     logger: harness.logger,
     errorHandler: harness.errorHandler,
     config: harness.config,
+    createStandardService: (serviceOptions = {}) => {
+      const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : harness.config;
+
+      return trackService(
+        createStandardAdvancedOrderFlowService({
+          config: resolvedConfig,
+          logger: serviceOptions.logger ?? harness.logger,
+          errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        }),
+      );
+    },
+    createLegacyService: (serviceOptions = {}) => {
+      const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
+        ? serviceOptions.config
+        : harness.config;
+
+      return trackService(
+        createLegacyAdvancedOrderFlowService({
+          config: resolvedConfig,
+          logger: serviceOptions.logger ?? harness.logger,
+        }),
+      );
+    },
     createService: (serviceOptions = {}) => {
       const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
         ? serviceOptions.config

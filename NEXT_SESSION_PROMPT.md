@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-26)
-- Completed a lifecycle/testability follow-up for `logger.service.error-handling`, `resilience/circuit-breaker`, `resilience/bulkhead`, and their adjacent test helpers:
-  - extended the helper-managed contexts with invalid/default constructor factory paths so constructor-validation/default-init coverage now goes through helper-owned creation boundaries instead of direct suite-local `new ...Service(...)` calls.
-  - routed the three constructor-heavy suites to those helper-owned invalid/default factory paths while preserving behavior and existing coverage.
-  - reviewed `logger.service.ts`, `resilience/circuit-breaker.service.ts`, and `resilience/bulkhead.service.ts` and left production code unchanged.
+- Completed a helper-owned factory-path follow-up for `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `trading-journal.error-handling`, and their adjacent test helpers:
+  - extended the three helpers with explicit managed standard/legacy factory paths so the target suites no longer reach for residual direct legacy factory helpers outside managed contexts.
+  - routed the affected backward-compatibility and lifecycle assertions through helper-owned factory paths while preserving behavior and existing coverage.
+  - reviewed `advanced-order-flow.service.ts`, `advanced-order-state-machine.service.ts`, and `trading-journal.service.ts` and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/logger.service.error-handling.test.ts packages/core/src/__tests__/services/resilience/circuit-breaker.test.ts packages/core/src/__tests__/services/resilience/bulkhead.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next concentrated lifecycle/testability slice in suites that still rely on broad grouped-service setup or residual suite-local constructor/setup helpers outside helper-owned creation boundaries, prioritizing the next six-file batch beyond the now-refreshed logger / resilience constructor-heavy cluster.
-- Keep pushing toward narrower grouped-service / `createServices()` ownership only where no helper-managed cleanup path exists yet, and prefer helper-owned invalid/default factory paths over suite-local service construction whenever the target suite is primarily validating constructor behavior.
+- Continue with the next concentrated lifecycle/testability slice in suites that still rely on broad grouped-service setup or residual suite-local factory/setup helpers outside helper-owned creation boundaries, prioritizing the next six-file batch beyond the now-refreshed advanced-order-flow / advanced-order-state-machine / trading-journal-error-handling cluster.
+- Keep pushing toward narrower grouped-service / `createServices()` ownership only where no helper-managed cleanup path exists yet, and prefer helper-owned standard/legacy or injected-service factory paths over suite-local service construction whenever the target suite is primarily validating compatibility, lifecycle, or logging-failure behavior.

@@ -121,6 +121,27 @@ export function createStandardDataCollectorHarness(options: {
 }
 
 export type ManagedDataCollectorContext = ReturnType<typeof createStandardDataCollectorHarness> & {
+  createService: (options?: {
+    config?: DataCollectionConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => DataCollectorService;
+  createLegacyService: (options?: {
+    config?: DataCollectionConfig;
+    logger?: LoggerService;
+  }) => DataCollectorService;
+  createDatabase: () => MockCollectorDatabase;
+  createWriter: (options?: {
+    database?: MockCollectorDatabase;
+    logger?: LoggerService;
+    compression?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => DatabaseWriter;
+  createLegacyWriter: (options?: {
+    database?: MockCollectorDatabase;
+    logger?: LoggerService;
+    compression?: boolean;
+  }) => DatabaseWriter;
   cleanup: () => void;
 };
 
@@ -133,6 +154,31 @@ export function createManagedDataCollectorContext(options: {
 
   return {
     ...harness,
+    createService: (serviceOptions = {}) =>
+      createStandardDataCollectorService({
+        config: serviceOptions.config ?? harness.config,
+        logger: serviceOptions.logger ?? (harness.logger as LoggerService),
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+      }),
+    createLegacyService: (serviceOptions = {}) =>
+      createLegacyDataCollectorService({
+        config: serviceOptions.config ?? harness.config,
+        logger: serviceOptions.logger ?? (harness.logger as LoggerService),
+      }),
+    createDatabase: () => createMockCollectorDatabase(),
+    createWriter: (writerOptions = {}) =>
+      createStandardDataCollectorDatabaseWriter({
+        database: writerOptions.database ?? createMockCollectorDatabase(),
+        logger: writerOptions.logger ?? (harness.logger as LoggerService),
+        compression: writerOptions.compression,
+        errorHandler: writerOptions.errorHandler ?? harness.errorHandler,
+      }),
+    createLegacyWriter: (writerOptions = {}) =>
+      createLegacyDataCollectorDatabaseWriter({
+        database: writerOptions.database ?? createMockCollectorDatabase(),
+        logger: writerOptions.logger ?? (harness.logger as LoggerService),
+        compression: writerOptions.compression,
+      }),
     cleanup: () => {
       jest.clearAllMocks();
       jest.clearAllTimers();
@@ -165,15 +211,15 @@ export const createMockCollectorDatabase = () => ({
   prepare: jest.fn(),
 });
 
-type MockDatabase = ReturnType<typeof createMockCollectorDatabase>;
+export type MockCollectorDatabase = ReturnType<typeof createMockCollectorDatabase>;
 
 export const asWriterDatabase = (
-  db: MockDatabase,
+  db: MockCollectorDatabase,
 ): ConstructorParameters<typeof DatabaseWriter>[0] =>
   db as unknown as ConstructorParameters<typeof DatabaseWriter>[0];
 
 export function createDataCollectorDatabaseWriter(options: {
-  database?: MockDatabase;
+  database?: MockCollectorDatabase;
   logger?: LoggerService;
   compression?: boolean;
   errorHandler?: ErrorHandler;
@@ -193,7 +239,7 @@ export function createDataCollectorDatabaseWriter(options: {
 }
 
 export function createStandardDataCollectorDatabaseWriter(options: {
-  database?: MockDatabase;
+  database?: MockCollectorDatabase;
   logger?: LoggerService;
   compression?: boolean;
   errorHandler?: ErrorHandler;
@@ -207,7 +253,7 @@ export function createStandardDataCollectorDatabaseWriter(options: {
 }
 
 export function createLegacyDataCollectorDatabaseWriter(options: {
-  database?: MockDatabase;
+  database?: MockCollectorDatabase;
   logger?: LoggerService;
   compression?: boolean;
 } = {}): DatabaseWriter {

@@ -22,11 +22,9 @@ import {
   createAnalyzerRegistryAnalyzerConfigs,
   createAnalyzerRegistryBaseConfig,
   createAnalyzerRegistryIndicatorMap,
-  createLegacyAnalyzerRegistryService,
   createAnalyzerRegistryMockIndicator,
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
-  createStandardAnalyzerRegistryService,
   type AnalyzerRegistryMockLogger,
   type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
@@ -41,11 +39,15 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
     indicatorNames?: string[];
   }) => ReturnType<ManagedAnalyzerRegistryContext['createScenario']>;
+  let createStandardRegistry: ManagedAnalyzerRegistryContext['createStandardRegistry'];
+  let createLegacyRegistry: ManagedAnalyzerRegistryContext['createLegacyRegistry'];
 
   beforeEach(() => {
     context = createManagedAnalyzerRegistryContext();
     ({ logger, errorHandler, registry } = context);
     createScenario = (options = {}) => context.createScenario(options);
+    createStandardRegistry = context.createStandardRegistry;
+    createLegacyRegistry = context.createLegacyRegistry;
   });
 
   afterEach(() => {
@@ -218,7 +220,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = createStandardAnalyzerRegistryService({
+      const reg = createStandardRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -240,7 +242,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = createStandardAnalyzerRegistryService({
+      const reg = createStandardRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -265,7 +267,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         }),
       });
 
-      const reg = createStandardAnalyzerRegistryService({
+      const reg = createStandardRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -358,13 +360,13 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = createLegacyAnalyzerRegistryService({ logger });
+      const reg = createLegacyRegistry({ logger });
       expect(reg).toBeDefined();
       expect(reg.getAvailableAnalyzers().length).toBeGreaterThan(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', async () => {
-      const reg = createLegacyAnalyzerRegistryService({ logger });
+      const reg = createLegacyRegistry({ logger });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = createAnalyzerRegistryAnalyzerConfig({
         name: 'UNKNOWN_ANALYZER',
@@ -379,7 +381,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     });
 
     it('should support legacy calls to getEnabledAnalyzers without ErrorHandler', async () => {
-      const reg = createLegacyAnalyzerRegistryService({ logger });
+      const reg = createLegacyRegistry({ logger });
       const config = createAnalyzerRegistryBaseConfig();
       const configs: StrategyAnalyzerConfig[] = createAnalyzerRegistryAnalyzerConfigs([
         { name: 'EMA_ANALYZER_NEW' },

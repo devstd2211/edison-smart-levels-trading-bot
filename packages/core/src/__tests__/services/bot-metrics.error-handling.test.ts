@@ -14,8 +14,6 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createManagedBotMetricsTestContext,
   BotMetricsTestLogger,
-  createLegacyBotMetricsService,
-  createStandardBotMetricsService,
   createBotMetricsTrade,
   seedBotMetricsService,
   type ManagedBotMetricsTestContext,
@@ -26,12 +24,16 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
+  let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
+  let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
 
   beforeEach(() => {
     context = createManagedBotMetricsTestContext();
     logger = context.logger as BotMetricsTestLogger;
     errorHandler = context.errorHandler;
     metricsService = context.service;
+    createStandardService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
     jest.clearAllMocks();
   });
 
@@ -45,20 +47,20 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   describe('Constructor', () => {
     it('should initialize with ErrorHandler', () => {
-      const service = createStandardBotMetricsService({ logger, errorHandler });
+      const service = createStandardService({ logger, errorHandler });
       service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(logger.logCalls.length).toBeGreaterThan(0);
     });
 
     it('should initialize without ErrorHandler', () => {
-      const service = createLegacyBotMetricsService({ logger });
+      const service = createLegacyService({ logger });
       expect(service).toBeDefined();
     });
 
     it('should handle logger failure in constructor with RETRY strategy', () => {
       logger.throwOnCall = true;
-      const service = createStandardBotMetricsService({ logger, errorHandler });
+      const service = createStandardService({ logger, errorHandler });
       service.getSessionDuration(); // trigger lazy start lifecycle
       expect(service).toBeDefined();
       expect(errorHandler.handle).toHaveBeenCalled();
@@ -66,7 +68,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should continue if constructor logger fails without ErrorHandler', () => {
       logger.throwOnCall = true;
-      const service = createLegacyBotMetricsService({ logger });
+      const service = createLegacyService({ logger });
       expect(() => service.getSessionDuration()).not.toThrow();
       expect(service).toBeDefined();
     });
@@ -180,7 +182,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     });
 
     it('should handle trade recording without ErrorHandler', () => {
-      const serviceNoEH = createLegacyBotMetricsService({ logger });
+      const serviceNoEH = createLegacyService({ logger });
       logger.throwOnCall = true;
       const trade = createBotMetricsTrade({
         entryPrice: 50000,
@@ -300,7 +302,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
     it('should handle report generation without ErrorHandler', () => {
       const freshLogger = new BotMetricsTestLogger();
-      const serviceNoEH = createLegacyBotMetricsService({ logger: freshLogger });
+      const serviceNoEH = createLegacyService({ logger: freshLogger });
       freshLogger.throwOnCall = true;
       serviceNoEH.printReport(); // Should not throw
       // Logger should attempt error logging but we don't verify it since error logger also fails

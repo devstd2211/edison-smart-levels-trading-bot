@@ -19,12 +19,10 @@ import { IndicatorType } from '../../types/indicator';
 import {
   asIndicatorRegistryMetadata,
   asIndicatorRegistryType,
-  createLegacyIndicatorRegistry,
   createIndicatorRegistryMetadata,
   createIndicatorRegistryMockLogger,
   createIndicatorRegistryRegistrations,
   createManagedIndicatorRegistryContext,
-  createStandardIndicatorRegistry,
   type IndicatorRegistryMockLogger,
   type ManagedIndicatorRegistryContext,
 } from '../helpers/indicator-registry-test.utils';
@@ -34,10 +32,14 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
+  let createStandardRegistry: ManagedIndicatorRegistryContext['createStandardRegistry'];
+  let createLegacyRegistry: ManagedIndicatorRegistryContext['createLegacyRegistry'];
 
   beforeEach(() => {
     context = createManagedIndicatorRegistryContext();
     ({ logger, errorHandler, registry } = context);
+    createStandardRegistry = context.createStandardRegistry;
+    createLegacyRegistry = context.createLegacyRegistry;
   });
 
   afterEach(() => {
@@ -182,7 +184,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = createStandardIndicatorRegistry({
+      const reg = createStandardRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -206,7 +208,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = createStandardIndicatorRegistry({
+      const reg = createStandardRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -227,7 +229,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
         }),
       });
 
-      const reg = createStandardIndicatorRegistry({
+      const reg = createStandardRegistry({
         logger: failingLogger,
         errorHandler,
       });
@@ -357,13 +359,13 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (uses default)', () => {
       // Should create instance without explicit ErrorHandler
-      const reg = createLegacyIndicatorRegistry({ logger });
+      const reg = createLegacyRegistry({ logger });
       expect(reg).toBeDefined();
       expect(reg.getCount()).toBe(0);
     });
 
     it('should maintain existing behavior when ErrorHandler not provided', () => {
-      const reg = createLegacyIndicatorRegistry({ logger });
+      const reg = createLegacyRegistry({ logger });
 
       // Register should work as before
       reg.register(IndicatorType.EMA, {
@@ -383,7 +385,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
     it('should support legacy calls without logger', () => {
       // Should work even without logger
-      const reg = createLegacyIndicatorRegistry();
+      const reg = createLegacyRegistry();
       expect(reg).toBeDefined();
 
       // Basic operations should work

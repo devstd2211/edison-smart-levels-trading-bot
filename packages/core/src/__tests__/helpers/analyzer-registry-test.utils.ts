@@ -15,6 +15,13 @@ export interface ManagedAnalyzerRegistryContext {
   logger: AnalyzerRegistryMockLogger;
   errorHandler: ErrorHandler;
   registry: AnalyzerRegistryService;
+  createStandardRegistry: (options?: {
+    logger?: AnalyzerRegistryMockLogger;
+    errorHandler?: ErrorHandler;
+  }) => AnalyzerRegistryService;
+  createLegacyRegistry: (options?: {
+    logger?: AnalyzerRegistryMockLogger;
+  }) => AnalyzerRegistryService;
   createRegistry: typeof createAnalyzerRegistryService;
   createScenario: typeof createAnalyzerRegistryScenarioHarness;
   cleanup: () => void;
@@ -183,6 +190,21 @@ export function createManagedAnalyzerRegistryContext(
     logger,
     errorHandler,
     registry,
+    createStandardRegistry: (serviceOptions = {}) => {
+      const nextRegistry = createStandardAnalyzerRegistryService({
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      });
+      trackedRegistries.add(nextRegistry);
+      return nextRegistry;
+    },
+    createLegacyRegistry: (serviceOptions = {}) => {
+      const nextRegistry = createLegacyAnalyzerRegistryService({
+        logger: serviceOptions.logger ?? logger,
+      });
+      trackedRegistries.add(nextRegistry);
+      return nextRegistry;
+    },
     createRegistry: (serviceOptions = {}) => {
       const nextRegistry = createAnalyzerRegistryService({
         logger,
@@ -195,14 +217,22 @@ export function createManagedAnalyzerRegistryContext(
     createScenario: createAnalyzerRegistryScenarioHarness,
     cleanup: () => {
       for (const trackedRegistry of trackedRegistries) {
-        trackedRegistry.clearCache();
+        try {
+          trackedRegistry.clearCache();
+        } catch {
+          // Scenario loggers may be configured to throw; cleanup must remain best-effort.
+        }
       }
       trackedRegistries.clear();
       trackedRegistries.add(registry);
       jest.clearAllMocks();
     },
     reset: () => {
-      registry.clearCache();
+      try {
+        registry.clearCache();
+      } catch {
+        // Reset is test-only housekeeping and should not fail on logger-side effects.
+      }
       jest.clearAllMocks();
     },
   };

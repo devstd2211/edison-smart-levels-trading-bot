@@ -32,9 +32,7 @@ import {
   createJournalEntryCondition,
   createJournalExitCondition,
   createJournalOpenParams,
-  createLegacyTradingJournalService,
   createManagedTradingJournalContext,
-  createStandardTradingJournalService,
   type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 

@@ -19,7 +19,6 @@ import {
   createJournalCloseParams,
   createJournalOpenParams,
   createJournalTakeProfit,
-  createLegacyTradingJournalService,
   createManagedTradingJournalContext,
   type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
@@ -97,10 +96,7 @@ describe('TradingJournalService', () => {
       fs.writeFileSync(journalPath, JSON.stringify(testTrades, null, 2));
 
       // Create new journal instance that should load the file
-      const newJournal = createLegacyTradingJournalService({
-        logger,
-        dataDir: testDataDir,
-      });
+      const newJournal = context.createLegacyService();
       const loaded = newJournal.getAllTrades();
 
       expect(loaded).toHaveLength(1);
@@ -114,10 +110,7 @@ describe('TradingJournalService', () => {
       fs.writeFileSync(journalPath, 'not valid json {{{');
 
       // Should not throw, just log error
-      const newJournal = createLegacyTradingJournalService({
-        logger,
-        dataDir: testDataDir,
-      });
+      const newJournal = context.createLegacyService();
       const trades = newJournal.getAllTrades();
 
       expect(trades).toEqual([]); // Empty journal
@@ -260,10 +253,7 @@ describe('TradingJournalService', () => {
       });
 
       // Create new journal instance and check if trade is loaded
-      const newJournal = createLegacyTradingJournalService({
-        logger,
-        dataDir: testDataDir,
-      });
+      const newJournal = context.createLegacyService();
       const trade = newJournal.getTrade('PERSIST_TEST');
 
       expect(trade).toBeDefined();
@@ -357,10 +347,7 @@ describe('TradingJournalService', () => {
       });
 
       // Create new journal instance and verify
-      const newJournal = createLegacyTradingJournalService({
-        logger,
-        dataDir: testDataDir,
-      });
+      const newJournal = context.createLegacyService();
       const trade = newJournal.getTrade('CLOSE_TEST');
 
       expect(trade).toBeDefined();
@@ -759,10 +746,7 @@ describe('TradingJournalService', () => {
       expect(journal.getAllTrades()).toHaveLength(0);
 
       // Verify persistence
-      const newJournal = createLegacyTradingJournalService({
-        logger,
-        dataDir: testDataDir,
-      });
+      const newJournal = context.createLegacyService();
       expect(newJournal.getAllTrades()).toHaveLength(0);
     });
   });

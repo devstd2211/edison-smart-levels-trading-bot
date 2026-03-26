@@ -18,9 +18,7 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createAntiFlipConfig,
   type ManagedAntiFlipContext,
-  createLegacyAntiFlipService,
   createAntiFlipLogger,
-  createStandardAntiFlipService,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
@@ -337,7 +335,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   describe('Backward Compatibility (3 tests)', () => {
     it('test-8.9.20.11: Should work without ErrorHandler (old behavior)', () => {
       // No ErrorHandler provided
-      service = createLegacyAntiFlipService(createAntiFlipConfig(), { logger });
+      service = context.createLegacyService(createAntiFlipConfig(), { logger });
 
       // Mock logger to throw
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -355,7 +353,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
     });
 
     it('test-8.9.20.12: Should silently skip logger errors without ErrorHandler', () => {
-      service = createLegacyAntiFlipService(createAntiFlipConfig(), { logger });
+      service = context.createLegacyService(createAntiFlipConfig(), { logger });
 
       jest.spyOn(logger, 'debug').mockImplementation(() => {
         throw new Error('Logger error');
@@ -374,7 +372,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
     it('test-8.9.20.13: Should have identical blocking logic with/without ErrorHandler', () => {
       const service1 = context.createService();
-      const service2 = createLegacyAntiFlipService(createAntiFlipConfig(), { logger });
+      const service2 = context.createLegacyService(createAntiFlipConfig(), { logger });
 
       // Mock logger to always fail
       jest.spyOn(logger, 'info').mockImplementation(() => {
@@ -490,7 +488,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       nullableLogger.info = null;
       nullableLogger.warn = null;
 
-      service = createStandardAntiFlipService(createAntiFlipConfig({}), {
+      service = context.createStandardService(createAntiFlipConfig({}), {
         logger: mockLoggerWithNullMethods,
         errorHandler,
       });

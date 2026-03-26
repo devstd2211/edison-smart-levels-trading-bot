@@ -17,6 +17,13 @@ export interface ManagedIndicatorRegistryContext {
   logger: IndicatorRegistryMockLogger;
   errorHandler: ErrorHandler;
   registry: IndicatorRegistry;
+  createStandardRegistry: (options?: {
+    logger?: IndicatorRegistryMockLogger;
+    errorHandler?: ErrorHandler;
+  }) => IndicatorRegistry;
+  createLegacyRegistry: (options?: {
+    logger?: IndicatorRegistryMockLogger;
+  }) => IndicatorRegistry;
   createRegistry: typeof createIndicatorRegistryService;
   cleanup: () => void;
   reset: () => void;
@@ -161,6 +168,21 @@ export function createManagedIndicatorRegistryContext(
     logger,
     errorHandler,
     registry,
+    createStandardRegistry: (serviceOptions = {}) => {
+      const nextRegistry = createStandardIndicatorRegistry({
+        logger: serviceOptions.logger ?? logger,
+        errorHandler: serviceOptions.errorHandler ?? errorHandler,
+      });
+      trackedRegistries.add(nextRegistry);
+      return nextRegistry;
+    },
+    createLegacyRegistry: (serviceOptions = {}) => {
+      const nextRegistry = createLegacyIndicatorRegistry({
+        logger: serviceOptions.logger ?? logger,
+      });
+      trackedRegistries.add(nextRegistry);
+      return nextRegistry;
+    },
     createRegistry: (serviceOptions = {}) => {
       const nextRegistry = createIndicatorRegistryService({
         logger,

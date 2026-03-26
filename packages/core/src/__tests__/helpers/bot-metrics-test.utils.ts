@@ -130,6 +130,13 @@ export interface BotMetricsTestContext {
   logger: LoggerService;
   errorHandler: ErrorHandler;
   service: BotMetricsService;
+  createStandardService: (overrides?: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => BotMetricsService;
+  createLegacyService: (overrides?: {
+    logger?: LoggerService;
+  }) => BotMetricsService;
   rebuild: (overrides?: {
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
@@ -152,12 +159,23 @@ export const createBotMetricsTestContext = ({
     logger,
     errorHandler,
     service: undefined as unknown as BotMetricsService,
+    createStandardService(overrides = {}) {
+      return createStandardBotMetricsService({
+        logger: overrides.logger ?? context.logger,
+        errorHandler: overrides.errorHandler ?? context.errorHandler,
+      });
+    },
+    createLegacyService(overrides = {}) {
+      return createLegacyBotMetricsService({
+        logger: overrides.logger ?? context.logger,
+      });
+    },
     rebuild(overrides = {}) {
       context.logger = overrides.logger ?? context.logger;
       context.errorHandler = overrides.errorHandler ?? context.errorHandler;
       context.service = overrides.legacy
-        ? createLegacyBotMetricsService({ logger: context.logger })
-        : createStandardBotMetricsService({
+        ? context.createLegacyService({ logger: context.logger })
+        : context.createStandardService({
             logger: context.logger,
             errorHandler: context.errorHandler,
           });

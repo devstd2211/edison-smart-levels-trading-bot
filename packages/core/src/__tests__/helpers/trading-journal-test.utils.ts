@@ -121,10 +121,24 @@ export interface ManagedTradingJournalContext {
   logger: LoggerService;
   dataDir: string;
   errorHandler: ErrorHandler;
+  createStandardService: (options?: {
+    tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+    baseDeposit?: number;
+    errorHandler?: ErrorHandler;
+  }) => TradingJournalService;
+  createLegacyService: (options?: {
+    tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+    baseDeposit?: number;
+  }) => TradingJournalService;
   createService: (options?: {
     tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
     baseDeposit?: number;
     withErrorHandler?: boolean;
+    errorHandler?: ErrorHandler;
+  }) => TradingJournalService;
+  createServiceWithoutErrorHandler: (options?: {
+    tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
+    baseDeposit?: number;
   }) => TradingJournalService;
   cleanup: () => void;
 }
@@ -143,6 +157,21 @@ export function createManagedTradingJournalContext(options: {
     logger: harness.logger,
     dataDir: harness.dataDir,
     errorHandler: harness.errorHandler,
+    createStandardService: (serviceOptions = {}) =>
+      createStandardTradingJournalService({
+        logger: harness.logger,
+        dataDir: harness.dataDir,
+        tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
+        baseDeposit: serviceOptions.baseDeposit,
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+      }),
+    createLegacyService: (serviceOptions = {}) =>
+      createLegacyTradingJournalService({
+        logger: harness.logger,
+        dataDir: harness.dataDir,
+        tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
+        baseDeposit: serviceOptions.baseDeposit,
+      }),
     createService: (serviceOptions = {}) =>
       (serviceOptions.withErrorHandler === false
         ? createLegacyTradingJournalService({
@@ -156,8 +185,15 @@ export function createManagedTradingJournalContext(options: {
             dataDir: harness.dataDir,
             tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
             baseDeposit: serviceOptions.baseDeposit,
-            errorHandler: harness.errorHandler,
+            errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
           })),
+    createServiceWithoutErrorHandler: (serviceOptions = {}) =>
+      createLegacyTradingJournalService({
+        logger: harness.logger,
+        dataDir: harness.dataDir,
+        tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
+        baseDeposit: serviceOptions.baseDeposit,
+      }),
     cleanup: () => {
       cleanupTradingJournalTempDir(harness.dataDir);
       jest.restoreAllMocks();

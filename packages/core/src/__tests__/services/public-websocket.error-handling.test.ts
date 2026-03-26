@@ -16,8 +16,6 @@ import {
   createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
   createManagedPublicWebSocketContext,
-  createLegacyPublicWebSocketService,
-  createStandardPublicWebSocketServiceFromOptions,
   type ManagedPublicWebSocketContext,
 } from '../helpers/public-websocket-test.utils';
 
@@ -41,6 +39,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let createStandardService: ManagedPublicWebSocketContext['createStandardService'];
   let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];
   let createBtcConfiguredService: ManagedPublicWebSocketContext['createBtcConfiguredService'];
+  let createInjectedService: ManagedPublicWebSocketContext['createInjectedService'];
 
   beforeEach(() => {
     context = createManagedPublicWebSocketContext();
@@ -53,6 +52,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       createStandardService,
       createLegacyService,
       createBtcConfiguredService,
+      createInjectedService,
     } = context);
   });
 
@@ -71,7 +71,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       });
       expect(serviceWithoutHandler).toBeDefined();
 
-      const serviceWithHandler = createStandardPublicWebSocketServiceFromOptions({
+      const serviceWithHandler = createInjectedService({
         mockConfig: context.mockConfig,
         mockTimeframeProvider: context.mockTimeframeProvider,
         loggerService: context.loggerService,
@@ -372,7 +372,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Integration with service composition', () => {
     it('should accept ErrorHandler injected from services builder', () => {
-      const service = createStandardPublicWebSocketServiceFromOptions({
+      const service = createInjectedService({
         mockConfig: context.mockConfig,
         mockTimeframeProvider: context.mockTimeframeProvider,
         loggerService: context.loggerService,

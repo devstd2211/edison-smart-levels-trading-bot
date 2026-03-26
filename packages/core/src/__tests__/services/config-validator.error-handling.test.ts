@@ -29,7 +29,6 @@ import {
   createConfigValidatorConfig,
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
-  createStandardConfigValidatorService,
   omitConfigValidatorSection,
   type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
@@ -283,7 +282,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
         throw new Error('Logger write failed');
       });
 
-      const validator = createStandardConfigValidatorService({ logger: mockLogger, errorHandler });
+      const validator = createValidator({ logger: mockLogger, errorHandler });
 
       // Should not throw despite logger error
       expect(() => validator.validateAll(validConfig)).not.toThrow();

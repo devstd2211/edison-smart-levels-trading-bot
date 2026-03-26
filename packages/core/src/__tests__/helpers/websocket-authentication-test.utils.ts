@@ -25,6 +25,10 @@ export type WebSocketAuthenticationHarness = {
   createLegacyService: (options?: {
     logger?: AuthLogger;
   }) => WebSocketAuthenticationService;
+  createServiceWithoutLogger: (options?: {
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => WebSocketAuthenticationService;
 };
 
 export type ManagedWebSocketAuthenticationContext = WebSocketAuthenticationHarness & {
@@ -92,6 +96,15 @@ export function createWebSocketAuthenticationHarness(options: {
       createLegacyWebSocketAuthenticationService({
         logger: serviceOptions.logger ?? mockLogger,
       }),
+    createServiceWithoutLogger: (serviceOptions = {}) =>
+      serviceOptions.withErrorHandler === false
+        ? createLegacyWebSocketAuthenticationService({
+            logger: undefined,
+          })
+        : createStandardWebSocketAuthenticationService({
+            logger: undefined,
+            errorHandler: serviceOptions.errorHandler ?? errorHandler,
+          }),
   };
 }
 
@@ -115,6 +128,8 @@ export function createManagedWebSocketAuthenticationContext(options: {
       trackService(harness.createService(serviceOptions)),
     createLegacyService: (serviceOptions = {}) =>
       trackService(harness.createLegacyService(serviceOptions)),
+    createServiceWithoutLogger: (serviceOptions = {}) =>
+      trackService(harness.createServiceWithoutLogger(serviceOptions)),
     cleanup: () => {
       trackedServices.clear();
       jest.clearAllMocks();

@@ -51,6 +51,14 @@ export const createAntiFlipErrorHandler = (): ErrorHandler & { handle: jest.Mock
 export interface AntiFlipHarness {
   logger: LoggerService;
   errorHandler: ErrorHandler & { handle: jest.Mock };
+  createStandardService: (
+    overrides?: Partial<AntiFlipConfig>,
+    options?: { errorHandler?: ErrorHandler; logger?: LoggerService },
+  ) => AntiFlipService;
+  createLegacyService: (
+    overrides?: Partial<AntiFlipConfig>,
+    options?: { logger?: LoggerService },
+  ) => AntiFlipService;
   createService: (
     overrides?: Partial<AntiFlipConfig>,
     options?: { errorHandler?: ErrorHandler; logger?: LoggerService; withErrorHandler?: boolean },
@@ -111,6 +119,19 @@ export const createAntiFlipHarness = (): AntiFlipHarness => {
   return {
     logger,
     errorHandler,
+    createStandardService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { errorHandler?: ErrorHandler; logger?: LoggerService } = {},
+    ) => createStandardAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
+      errorHandler: options.errorHandler ?? errorHandler,
+    }),
+    createLegacyService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { logger?: LoggerService } = {},
+    ) => createLegacyAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
+    }),
     createService: (
       overrides: Partial<AntiFlipConfig> = {},
       options: { errorHandler?: ErrorHandler; logger?: LoggerService; withErrorHandler?: boolean } = {},
@@ -131,6 +152,19 @@ export const createStandardAntiFlipHarness = () => {
   return {
     logger,
     errorHandler,
+    createLegacyService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { logger?: LoggerService } = {},
+    ) => createLegacyAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
+    }),
+    createStandardService: (
+      overrides: Partial<AntiFlipConfig> = {},
+      options: { errorHandler?: ErrorHandler; logger?: LoggerService } = {},
+    ) => createStandardAntiFlipService(overrides, {
+      logger: options.logger ?? logger,
+      errorHandler: options.errorHandler ?? errorHandler,
+    }),
     createService: (
       overrides: Partial<AntiFlipConfig> = {},
       options: { errorHandler?: ErrorHandler; logger?: LoggerService } = {},

@@ -87,6 +87,13 @@ export interface ManagedAdvancedOrderStateMachineContext {
   service: AdvancedOrderStateMachineService;
   logger: AdvancedOrderStateMachineMockLogger;
   errorHandler?: ErrorHandler;
+  createStandardService: (options?: {
+    logger?: AdvancedOrderStateMachineMockLogger;
+    errorHandler?: ErrorHandler;
+  }) => AdvancedOrderStateMachineService;
+  createLegacyService: (options?: {
+    logger?: AdvancedOrderStateMachineMockLogger;
+  }) => AdvancedOrderStateMachineService;
   cleanup: () => void;
 }
 
@@ -98,13 +105,34 @@ export function createManagedAdvancedOrderStateMachineContext(options?: {
   jest.clearAllMocks();
 
   const harness = createAdvancedOrderStateMachineHarness(options);
+  const trackedServices = new Set<AdvancedOrderStateMachineService>([harness.service]);
+
+  const trackService = (service: AdvancedOrderStateMachineService): AdvancedOrderStateMachineService => {
+    trackedServices.add(service);
+    return service;
+  };
 
   return {
     service: harness.service,
     logger: harness.logger,
     errorHandler: harness.errorHandler,
+    createStandardService: (serviceOptions = {}) =>
+      trackService(
+        createStandardAdvancedOrderStateMachineService({
+          logger: serviceOptions.logger ?? harness.logger,
+          errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        }),
+      ),
+    createLegacyService: (serviceOptions = {}) =>
+      trackService(
+        createLegacyAdvancedOrderStateMachineService({
+          logger: serviceOptions.logger ?? harness.logger,
+        }),
+      ),
     cleanup: () => {
-      harness.service.cleanup();
+      trackedServices.forEach((service) => {
+        service.cleanup();
+      });
       jest.restoreAllMocks();
       jest.clearAllMocks();
     },

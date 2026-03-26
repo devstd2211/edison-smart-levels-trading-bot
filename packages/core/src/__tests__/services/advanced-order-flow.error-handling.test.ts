@@ -30,7 +30,6 @@ import {
   createAdvancedOrderFlowConfig,
   createAdvancedOrderFlowErrorHandler,
   createManagedAdvancedOrderFlowContext,
-  createLegacyAdvancedOrderFlowService,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
   createAdvancedOrderFlowOrderbookWithOverrides,
@@ -50,12 +49,14 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     withErrorHandler?: boolean;
     errorHandler?: ErrorHandler;
   }) => AdvancedOrderFlowService;
+  let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
 
   beforeEach(() => {
     context = createManagedAdvancedOrderFlowContext();
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     createService = (options = {}) => context.createService(options);
+    createLegacyService = context.createLegacyService;
   });
 
   afterEach(() => {
@@ -400,7 +401,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      service = createLegacyAdvancedOrderFlowService({
+      service = createLegacyService({
         logger: mockLogger,
       });
 
@@ -412,7 +413,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     });
 
     it('should throw validation errors without ErrorHandler', () => {
-      service = createLegacyAdvancedOrderFlowService({
+      service = createLegacyService({
         logger: mockLogger,
       });
 
