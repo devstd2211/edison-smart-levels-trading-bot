@@ -113,8 +113,10 @@ export interface ManagedConfigValidatorContext {
   logger: LoggerService;
   errorHandler: ErrorHandler & { handle: jest.Mock };
   validator: ConfigValidatorService;
+  validConfig: ConfigValidatorTestConfig;
   createValidator: () => ConfigValidatorService;
   createLegacyValidator: () => ConfigValidatorService;
+  validateAtStartup: (config: unknown) => void;
   cleanup: () => void;
 }
 
@@ -126,13 +128,16 @@ export const createManagedConfigValidatorContext = ({
   errorHandler?: ErrorHandler & { handle: jest.Mock };
 } = {}): ManagedConfigValidatorContext => {
   const validator = createStandardConfigValidatorService({ logger, errorHandler });
+  const validConfig = createConfigValidatorConfig();
 
   return {
     logger,
     errorHandler,
     validator,
+    validConfig,
     createValidator: createBoundStandardConfigValidatorFactory({ logger, errorHandler }),
     createLegacyValidator: createBoundLegacyConfigValidatorFactory({ logger }),
+    validateAtStartup: ConfigValidatorService.validateAtStartup,
     cleanup: () => {
       errorHandler.handle.mockClear();
       jest.clearAllMocks();

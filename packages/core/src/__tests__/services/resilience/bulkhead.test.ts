@@ -16,9 +16,13 @@ import {
 describe('BulkheadService', () => {
   let context: ManagedBulkheadContext;
   let service: BulkheadService | undefined;
+  let createDefaultService: ManagedBulkheadContext['createDefaultService'];
+  let createInvalidService: ManagedBulkheadContext['createInvalidService'];
 
   beforeEach(() => {
     context = createManagedBulkheadContext();
+    createDefaultService = context.createDefaultService;
+    createInvalidService = context.createInvalidService;
   });
 
   afterEach(() => {
@@ -33,7 +37,7 @@ describe('BulkheadService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      service = new BulkheadService();
+      service = createDefaultService();
       expect(service).toBeDefined();
 
       const stats = service.getStats('test-pool');
@@ -41,15 +45,15 @@ describe('BulkheadService', () => {
     });
 
     it('should throw on invalid maxConcurrent', () => {
-      expect(() => new BulkheadService({ maxConcurrent: 0 }))
+      expect(() => createInvalidService({ maxConcurrent: 0 }))
         .toThrow('maxConcurrent must be positive');
 
-      expect(() => new BulkheadService({ maxConcurrent: -5 }))
+      expect(() => createInvalidService({ maxConcurrent: -5 }))
         .toThrow('maxConcurrent must be positive');
     });
 
     it('should throw on invalid queueSize', () => {
-      expect(() => new BulkheadService({ queueSize: -1 }))
+      expect(() => createInvalidService({ queueSize: -1 }))
         .toThrow('queueSize must be non-negative');
     });
   });

@@ -2,44 +2,13 @@
  * Signal Processing Service - Timeframe Conflict Detection Tests
  *
  * Tests for PHASE 6c: Multi-timeframe conflict detection
- * Verifies that signals conflicting with trend are penalized
+ * Verifies that signals conflicting with trend are penalized via production utility logic
  */
 
 import { SignalDirection, TrendAnalysis, TrendBias } from '../../types/legacy';
+import { getTimeframeConflictMultiplier } from '../../services/signal-processing/timeframe-conflict.utils';
 
 describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
-  /**
-   * Mock implementation of detectTimeframeConflict for testing
-   * Real implementation is in signal-processing.service.ts
-   */
-  function detectTimeframeConflict(
-    trendAnalysis: TrendAnalysis | null,
-    direction: SignalDirection,
-  ): number {
-    if (!trendAnalysis) {
-      return 1.0; // No conflict possible without trend analysis
-    }
-
-    const bias = trendAnalysis.bias; // BULLISH/BEARISH/NEUTRAL
-
-    // No conflict if trend is neutral
-    if (bias === TrendBias.NEUTRAL) {
-      return 1.0;
-    }
-
-    // Check for directional mismatch
-    const isConflicting =
-      (bias === TrendBias.BULLISH && direction === SignalDirection.SHORT) ||
-      (bias === TrendBias.BEARISH && direction === SignalDirection.LONG);
-
-    if (isConflicting) {
-      return 0.7; // Reduce confidence by 30%
-    }
-
-    // No conflict - signal aligns with trend
-    return 1.0;
-  }
-
   describe('Conflict Detection Logic', () => {
     it('should return 1.0 (no adjustment) when trend is NEUTRAL', () => {
       const trendAnalysis: TrendAnalysis = {
@@ -50,10 +19,10 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       expect(multiplier).toBe(1.0);
 
-      const multiplier2 = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier2 = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       expect(multiplier2).toBe(1.0);
     });
 
@@ -66,7 +35,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: ['Lower high - Lower low'],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       expect(multiplier).toBe(0.7); // 30% confidence reduction
     });
 
@@ -79,7 +48,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: ['Higher high - Higher low'],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       expect(multiplier).toBe(0.7); // 30% confidence reduction
     });
 
@@ -92,7 +61,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       expect(multiplier).toBe(1.0); // No conflict - SHORT aligns with BEARISH
     });
 
@@ -105,12 +74,12 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       expect(multiplier).toBe(1.0); // No conflict - LONG aligns with BULLISH
     });
 
     it('should return 1.0 when no trend analysis provided (null)', () => {
-      const multiplier = detectTimeframeConflict(null, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(null, SignalDirection.LONG);
       expect(multiplier).toBe(1.0);
     });
   });
@@ -126,7 +95,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBe(56); // 80 * 0.7 = 56
@@ -142,7 +111,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBe(49); // 70 * 0.7 = 49
@@ -159,7 +128,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBe(80); // No reduction
@@ -175,7 +144,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBe(66.5); // 95 * 0.7 = 66.5 (still usable)
@@ -191,7 +160,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBe(45.5); // 65 * 0.7 = 45.5 (below 60% threshold)
@@ -210,7 +179,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
       };
 
       const confidence = 80;
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
 
       expect(multiplier).toBe(0.7);
       expect(confidence * multiplier).toBe(56); // Reduced but not blocked
@@ -227,7 +196,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
       };
 
       const confidence = 75;
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
 
       expect(multiplier).toBe(1.0);
       expect(confidence * multiplier).toBe(75); // No reduction
@@ -243,8 +212,8 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplierLong = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
-      const multiplierShort = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplierLong = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
+      const multiplierShort = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
 
       expect(multiplierLong).toBe(1.0);
       expect(multiplierShort).toBe(1.0);
@@ -264,7 +233,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBeLessThan(ENTRY_THRESHOLD);
@@ -280,7 +249,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBeGreaterThanOrEqual(ENTRY_THRESHOLD);
@@ -296,7 +265,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
 
       expect(adjustedConfidence).toBe(65); // No penalty
@@ -314,7 +283,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       expect(multiplier).toBe(1.0);
     });
 
@@ -328,12 +297,12 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
       };
 
       // Conflict still exists regardless of strength
-      const multiplier = detectTimeframeConflict(trendAnalysis, SignalDirection.SHORT);
+      const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       expect(multiplier).toBe(0.7); // Same 30% penalty
     });
 
     it('should handle undefined trend analysis', () => {
-      const multiplier = detectTimeframeConflict(
+      const multiplier = getTimeframeConflictMultiplier(
         undefined as unknown as TrendAnalysis,
         SignalDirection.LONG,
       );
@@ -349,8 +318,8 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
         reasoning: [],
       };
 
-      const multiplier1 = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
-      const multiplier2 = detectTimeframeConflict(trendAnalysis, SignalDirection.LONG);
+      const multiplier1 = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
+      const multiplier2 = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
 
       expect(multiplier1).toBe(multiplier2);
     });

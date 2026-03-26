@@ -16,9 +16,13 @@ type ErrorWithStatus = Error & { status?: number };
 describe('RetryPolicyService', () => {
   let context: ManagedRetryPolicyContext;
   let service: RetryPolicyService | undefined;
+  let createInvalidService: ManagedRetryPolicyContext['createInvalidService'];
+  let createDefaultService: ManagedRetryPolicyContext['createDefaultService'];
 
   beforeEach(() => {
     context = createManagedRetryPolicyContext();
+    createInvalidService = context.createInvalidService;
+    createDefaultService = context.createDefaultService;
   });
 
   afterEach(() => {
@@ -32,7 +36,7 @@ describe('RetryPolicyService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      service = context.createService();
+      service = createDefaultService();
       expect(service).toBeDefined();
 
       const stats = service.getStats();
@@ -41,28 +45,28 @@ describe('RetryPolicyService', () => {
     });
 
     it('should throw on invalid maxAttempts', () => {
-      expect(() => new RetryPolicyService({ maxAttempts: -1 }))
+      expect(() => createInvalidService({ maxAttempts: -1 }))
         .toThrow('maxAttempts must be non-negative');
     });
 
     it('should throw on invalid baseDelayMs', () => {
-      expect(() => new RetryPolicyService({ baseDelayMs: -100 }))
+      expect(() => createInvalidService({ baseDelayMs: -100 }))
         .toThrow('baseDelayMs must be non-negative');
     });
 
     it('should throw on invalid exponentialBase', () => {
-      expect(() => new RetryPolicyService({ exponentialBase: 0 }))
+      expect(() => createInvalidService({ exponentialBase: 0 }))
         .toThrow('exponentialBase must be positive');
 
-      expect(() => new RetryPolicyService({ exponentialBase: -2 }))
+      expect(() => createInvalidService({ exponentialBase: -2 }))
         .toThrow('exponentialBase must be positive');
     });
 
     it('should throw on invalid retryBudgetPercent', () => {
-      expect(() => new RetryPolicyService({ retryBudgetPercent: -0.1 }))
+      expect(() => createInvalidService({ retryBudgetPercent: -0.1 }))
         .toThrow('retryBudgetPercent must be between 0 and 1');
 
-      expect(() => new RetryPolicyService({ retryBudgetPercent: 1.5 }))
+      expect(() => createInvalidService({ retryBudgetPercent: 1.5 }))
         .toThrow('retryBudgetPercent must be between 0 and 1');
     });
   });

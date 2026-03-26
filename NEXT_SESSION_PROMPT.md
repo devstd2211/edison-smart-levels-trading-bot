@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-26)
-- Completed a helper-managed context follow-up for `analyzer-engine.error-handling`, `indicator-precalculation.error-handling`, `pattern-recognition.error-handling`, `logger.service.error-handling`, `delta-analyzer.error-handling`, and `circuit-breaker.error-handling`:
-  - extended the adjacent helpers so managed contexts own scenario, service, and harness creation plus cleanup.
-  - routed the target suites away from repeated suite-local construction.
-  - reviewed the adjacent production services and left production code unchanged.
+- Completed a lifecycle/testability follow-up for `logger.service.error-handling`, `resilience/circuit-breaker`, `resilience/bulkhead`, and their adjacent test helpers:
+  - extended the helper-managed contexts with invalid/default constructor factory paths so constructor-validation/default-init coverage now goes through helper-owned creation boundaries instead of direct suite-local `new ...Service(...)` calls.
+  - routed the three constructor-heavy suites to those helper-owned invalid/default factory paths while preserving behavior and existing coverage.
+  - reviewed `logger.service.ts`, `resilience/circuit-breaker.service.ts`, and `resilience/bulkhead.service.ts` and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/pattern-recognition.error-handling.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/logger.service.error-handling.test.ts packages/core/src/__tests__/services/resilience/circuit-breaker.test.ts packages/core/src/__tests__/services/resilience/bulkhead.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next helper-backed lifecycle/testability slice in the remaining suites whose helpers still lack managed-context ownership for created services, prioritizing the next concentrated harness families beyond the now-refreshed analyzer / indicator / logger / delta-analyzer / circuit-breaker clusters.
-- After that, keep pushing toward broader grouped-service / `createServices()` narrowing only where no helper-managed cleanup path exists yet.
+- Continue with the next concentrated lifecycle/testability slice in suites that still rely on broad grouped-service setup or residual suite-local constructor/setup helpers outside helper-owned creation boundaries, prioritizing the next six-file batch beyond the now-refreshed logger / resilience constructor-heavy cluster.
+- Keep pushing toward narrower grouped-service / `createServices()` ownership only where no helper-managed cleanup path exists yet, and prefer helper-owned invalid/default factory paths over suite-local service construction whenever the target suite is primarily validating constructor behavior.

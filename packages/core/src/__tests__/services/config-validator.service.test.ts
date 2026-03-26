@@ -3,19 +3,31 @@
  * Tests for Phase 3 config validation
  */
 
-import { ConfigValidatorService } from '../../services/config-validator.service';
 import {
   asConfigValidatorInput,
   createConfigValidatorConfig,
+  createManagedConfigValidatorContext,
   omitConfigValidatorSection,
+  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
-    const validConfig = createConfigValidatorConfig();
+    let context: ManagedConfigValidatorContext;
+    let validateAtStartup: ManagedConfigValidatorContext['validateAtStartup'];
+    let validConfig: ManagedConfigValidatorContext['validConfig'];
+
+    beforeEach(() => {
+      context = createManagedConfigValidatorContext();
+      ({ validateAtStartup, validConfig } = context);
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
 
     it('should pass validation for valid config', () => {
-      expect(() => ConfigValidatorService.validateAtStartup(validConfig)).not.toThrow();
+      expect(() => validateAtStartup(validConfig)).not.toThrow();
     });
 
     describe('required fields', () => {
@@ -23,14 +35,14 @@ describe('ConfigValidatorService', () => {
         const config = createConfigValidatorConfig({
           exchange: { symbol: '' },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('REQUIRED FIELD MISSING');
+        expect(() => validateAtStartup(config)).toThrow('REQUIRED FIELD MISSING');
       });
 
       it('should fail when riskManagement.stopLossPercent is missing', () => {
         const config = createConfigValidatorConfig({
           riskManagement: { stopLossPercent: undefined },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(asConfigValidatorInput(config))).toThrow(
+        expect(() => validateAtStartup(asConfigValidatorInput(config))).toThrow(
           'REQUIRED FIELD MISSING',
         );
       });
@@ -39,7 +51,7 @@ describe('ConfigValidatorService', () => {
         const config = createConfigValidatorConfig({
           trading: { leverage: undefined },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(asConfigValidatorInput(config))).toThrow(
+        expect(() => validateAtStartup(asConfigValidatorInput(config))).toThrow(
           'REQUIRED FIELD MISSING',
         );
       });
@@ -48,17 +60,17 @@ describe('ConfigValidatorService', () => {
     describe('deprecated keys', () => {
       it('should fail when deprecated contextConfig is present', () => {
         const config = { ...validConfig, contextConfig: { someValue: true } };
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('DEPRECATED KEY');
+        expect(() => validateAtStartup(config)).toThrow('DEPRECATED KEY');
       });
 
       it('should fail when deprecated features is present', () => {
         const config = { ...validConfig, features: { someFeature: true } };
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('DEPRECATED KEY');
+        expect(() => validateAtStartup(config)).toThrow('DEPRECATED KEY');
       });
 
       it('should fail when deprecated mode is present', () => {
         const config = { ...validConfig, mode: 'SCALPING' };
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('DEPRECATED KEY');
+        expect(() => validateAtStartup(config)).toThrow('DEPRECATED KEY');
       });
     });
 
@@ -67,14 +79,14 @@ describe('ConfigValidatorService', () => {
         const config = createConfigValidatorConfig({
           thresholdsDefaultsConfidence: { min: 60 },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('must be 0-1');
+        expect(() => validateAtStartup(config)).toThrow('must be 0-1');
       });
 
       it('should pass when confidence is correctly in 0-1 format', () => {
         const config = createConfigValidatorConfig({
           thresholdsDefaultsConfidence: { min: 0.6 },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).not.toThrow();
+        expect(() => validateAtStartup(config)).not.toThrow();
       });
     });
 
@@ -83,28 +95,28 @@ describe('ConfigValidatorService', () => {
         const config = createConfigValidatorConfig({
           riskManagement: { stopLossPercent: -1 },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('must be > 0');
+        expect(() => validateAtStartup(config)).toThrow('must be > 0');
       });
 
       it('should fail when stopLossPercent is too high', () => {
         const config = createConfigValidatorConfig({
           riskManagement: { stopLossPercent: 25 },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('max 20%');
+        expect(() => validateAtStartup(config)).toThrow('max 20%');
       });
 
       it('should fail when leverage is out of range', () => {
         const config = createConfigValidatorConfig({
           trading: { leverage: 150 },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('must be 1-100');
+        expect(() => validateAtStartup(config)).toThrow('must be 1-100');
       });
 
       it('should fail when leverage is zero', () => {
         const config = createConfigValidatorConfig({
           trading: { leverage: 0 },
         });
-        expect(() => ConfigValidatorService.validateAtStartup(config)).toThrow('must be 1-100');
+        expect(() => validateAtStartup(config)).toThrow('must be 1-100');
       });
     });
 
@@ -119,7 +131,7 @@ describe('ConfigValidatorService', () => {
         };
 
         try {
-          ConfigValidatorService.validateAtStartup(config);
+          validateAtStartup(config);
           fail('Should have thrown');
         } catch (error: unknown) {
           const configError = error as Error;

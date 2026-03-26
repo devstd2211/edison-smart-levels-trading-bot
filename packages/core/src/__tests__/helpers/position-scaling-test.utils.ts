@@ -103,6 +103,13 @@ export function createPositionScalingHarness(
   errorHandler: ErrorHandler;
   config: ScalingConfig;
   position: PositionState;
+  createInvalidService: (
+    config: ConstructorParameters<typeof PositionScalingService>[0],
+    options?: {
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    },
+  ) => PositionScalingService;
   createBrokenService: () => PositionScalingService;
   createNoHandlerService: () => PositionScalingService;
   createService: (options?: {
@@ -132,6 +139,12 @@ export function createPositionScalingHarness(
     errorHandler,
     config,
     position,
+    createInvalidService: (invalidConfig, options = {}) =>
+      new PositionScalingService(
+        invalidConfig,
+        Object.prototype.hasOwnProperty.call(options, 'logger') ? options.logger : logger,
+        Object.prototype.hasOwnProperty.call(options, 'errorHandler') ? options.errorHandler : errorHandler,
+      ),
     createBrokenService: () => {
       const brokenLogger = createPositionScalingBrokenLogger() as unknown as LoggerService;
       return createService({

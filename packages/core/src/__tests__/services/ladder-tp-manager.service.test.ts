@@ -44,10 +44,11 @@ describe('LadderTpManagerService', () => {
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
   let context: ManagedLadderTpContext;
+  let createInvalidService: ManagedLadderTpContext['createInvalidService'];
 
   beforeEach(() => {
     context = createManagedLadderTpContext();
-    ({ service, logger, bybitService, config } = context);
+    ({ service, logger, bybitService, config, createInvalidService } = context);
   });
 
   afterEach(() => {
@@ -523,7 +524,7 @@ describe('LadderTpManagerService', () => {
       };
 
       expect(() => {
-        new LadderTpManagerService(invalidConfig, bybitService, logger);
+        createInvalidService(invalidConfig, { bybitService, logger, withErrorHandler: false });
       }).toThrow('LadderTpManagerConfig must have at least 1 level');
     });
 
@@ -538,7 +539,7 @@ describe('LadderTpManagerService', () => {
       };
 
       expect(() => {
-        new LadderTpManagerService(invalidConfig, bybitService, logger);
+        createInvalidService(invalidConfig, { bybitService, logger, withErrorHandler: false });
       }).toThrow('Invalid pricePercent: 0 (must be > 0)');
     });
 
@@ -553,7 +554,7 @@ describe('LadderTpManagerService', () => {
       };
 
       expect(() => {
-        new LadderTpManagerService(invalidConfig, bybitService, logger);
+        createInvalidService(invalidConfig, { bybitService, logger, withErrorHandler: false });
       }).toThrow('Invalid closePercent: 5 (must be 10-90%)');
     });
 
@@ -568,7 +569,7 @@ describe('LadderTpManagerService', () => {
       };
 
       expect(() => {
-        new LadderTpManagerService(invalidConfig, bybitService, logger);
+        createInvalidService(invalidConfig, { bybitService, logger, withErrorHandler: false });
       }).toThrow('Invalid closePercent: 95 (must be 10-90%)');
     });
 
@@ -583,7 +584,7 @@ describe('LadderTpManagerService', () => {
       };
 
       expect(() => {
-        new LadderTpManagerService(invalidConfig, bybitService, logger);
+        createInvalidService(invalidConfig, { bybitService, logger, withErrorHandler: false });
       }).toThrow('Invalid trailingDistancePercent: 0 (must be > 0)');
     });
   });

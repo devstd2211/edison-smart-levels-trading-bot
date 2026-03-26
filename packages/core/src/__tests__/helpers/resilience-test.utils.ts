@@ -53,6 +53,13 @@ export interface ResilienceTestContext {
 }
 
 export interface ManagedRateLimiterContext extends ResilienceTestContext {
+  createDefaultService: (
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => RateLimiterService;
+  createInvalidService: (
+    config: ConstructorParameters<typeof RateLimiterService>[0],
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => RateLimiterService;
   createService: (
     config?: Partial<RateLimiterConfig>,
     options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
@@ -60,6 +67,13 @@ export interface ManagedRateLimiterContext extends ResilienceTestContext {
 }
 
 export interface ManagedRetryPolicyContext extends ResilienceTestContext {
+  createDefaultService: (
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => RetryPolicyService;
+  createInvalidService: (
+    config: ConstructorParameters<typeof RetryPolicyService>[0],
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => RetryPolicyService;
   createService: (
     config?: Partial<RetryPolicyConfig>,
     options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
@@ -68,6 +82,13 @@ export interface ManagedRetryPolicyContext extends ResilienceTestContext {
 }
 
 export interface ManagedCircuitBreakerContext extends ResilienceTestContext {
+  createDefaultService: (
+    options?: { logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => CircuitBreakerService;
+  createInvalidService: (
+    config: ConstructorParameters<typeof CircuitBreakerService>[0],
+    options?: { logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => CircuitBreakerService;
   createService: (
     config?: Partial<CircuitBreakerConfig>,
     options?: { logger?: LoggerService; errorHandler?: ErrorHandler },
@@ -75,6 +96,13 @@ export interface ManagedCircuitBreakerContext extends ResilienceTestContext {
 }
 
 export interface ManagedBulkheadContext extends ResilienceTestContext {
+  createDefaultService: (
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => BulkheadService;
+  createInvalidService: (
+    config: ConstructorParameters<typeof BulkheadService>[0],
+    options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
+  ) => BulkheadService;
   createService: (
     config?: Partial<BulkheadConfig>,
     options?: { start?: boolean; logger?: LoggerService; errorHandler?: ErrorHandler },
@@ -265,6 +293,17 @@ export function createManagedRateLimiterContext(): ManagedRateLimiterContext {
 
   return {
     ...context,
+    createDefaultService: (options = {}) =>
+      context.harness.createTrackedRateLimiterService({}, options),
+    createInvalidService: (config, options = {}) =>
+      context.harness.trackLifecycle(
+        new RateLimiterService(
+          config,
+          options.logger ?? (context.logger as LoggerService),
+          options.errorHandler ?? context.errorHandler,
+        ),
+        { start: options.start },
+      ),
     createService: (config = {}, options = {}) =>
       context.harness.createTrackedRateLimiterService(config, options),
     cleanup: () => {
@@ -280,6 +319,17 @@ export function createManagedRetryPolicyContext(): ManagedRetryPolicyContext {
 
   return {
     ...context,
+    createDefaultService: (options = {}) =>
+      context.harness.createTrackedRetryPolicyService({}, options),
+    createInvalidService: (config, options = {}) =>
+      context.harness.trackLifecycle(
+        new RetryPolicyService(
+          config,
+          options.logger ?? (context.logger as LoggerService),
+          options.errorHandler ?? context.errorHandler,
+        ),
+        { start: options.start },
+      ),
     createService: (config = {}, options = {}) =>
       context.harness.createTrackedRetryPolicyService(config, options),
     useFakeTimers: () => {
@@ -302,6 +352,14 @@ export function createManagedCircuitBreakerContext(): ManagedCircuitBreakerConte
 
   return {
     ...context,
+    createDefaultService: (options = {}) =>
+      context.harness.createCircuitBreakerService({}, options),
+    createInvalidService: (config, options = {}) =>
+      new CircuitBreakerService(
+        config,
+        options.logger ?? (context.logger as LoggerService),
+        options.errorHandler ?? context.errorHandler,
+      ),
     createService: (config = {}, options = {}) =>
       context.harness.createCircuitBreakerService(config, options),
     cleanup: () => {
@@ -318,6 +376,17 @@ export function createManagedBulkheadContext(): ManagedBulkheadContext {
 
   return {
     ...context,
+    createDefaultService: (options = {}) =>
+      context.harness.createTrackedBulkheadService({}, options),
+    createInvalidService: (config, options = {}) =>
+      context.harness.trackLifecycle(
+        new BulkheadService(
+          config,
+          options.logger ?? (context.logger as LoggerService),
+          options.errorHandler ?? context.errorHandler,
+        ),
+        { start: options.start },
+      ),
     createService: (config = {}, options = {}) =>
       context.harness.createTrackedBulkheadService(config, options),
     cleanup: () => {

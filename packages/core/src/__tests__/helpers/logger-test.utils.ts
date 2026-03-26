@@ -99,6 +99,12 @@ export interface ManagedLoggerTestContext {
   errorHandler: ErrorHandler;
   createLogger: ReturnType<typeof createStandardLoggerFactory>;
   createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
+  createInvalidStandardService: (
+    minLevel: ConstructorParameters<typeof LoggerService>[0],
+    logDir?: ConstructorParameters<typeof LoggerService>[1],
+    logToFile?: ConstructorParameters<typeof LoggerService>[2],
+    errorHandler?: ConstructorParameters<typeof LoggerService>[3],
+  ) => LoggerService;
   createStandardService: typeof createStandardLoggerService;
   createLegacyService: typeof createLegacyLoggerService;
   cleanup: () => void;
@@ -115,6 +121,8 @@ export function createManagedLoggerTestContext(): ManagedLoggerTestContext {
     errorHandler,
     createLogger: createStandardLoggerFactory({ errorHandler }),
     createLegacyLogger: createLegacyLoggerFactory(),
+    createInvalidStandardService: (minLevel, logDir = './logs', logToFile = false, handler = errorHandler) =>
+      new LoggerService(minLevel, logDir, logToFile, handler),
     createStandardService: createStandardLoggerService,
     createLegacyService: createLegacyLoggerService,
     cleanup: () => {

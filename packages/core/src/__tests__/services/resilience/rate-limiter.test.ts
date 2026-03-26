@@ -13,9 +13,13 @@ import { createManagedRateLimiterContext, type ManagedRateLimiterContext } from 
 describe('RateLimiterService', () => {
   let context: ManagedRateLimiterContext;
   let service: RateLimiterService | undefined;
+  let createInvalidService: ManagedRateLimiterContext['createInvalidService'];
+  let createDefaultService: ManagedRateLimiterContext['createDefaultService'];
 
   beforeEach(() => {
     context = createManagedRateLimiterContext();
+    createInvalidService = context.createInvalidService;
+    createDefaultService = context.createDefaultService;
   });
 
   afterEach(() => {
@@ -29,37 +33,37 @@ describe('RateLimiterService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      service = context.createService();
+      service = createDefaultService();
       expect(service).toBeDefined();
       expect(service.getKeys()).toEqual([]);
     });
 
     it('should throw on invalid maxRequests', () => {
-      expect(() => new RateLimiterService({ maxRequests: 0 }))
+      expect(() => createInvalidService({ maxRequests: 0 }))
         .toThrow('maxRequests must be positive');
 
-      expect(() => new RateLimiterService({ maxRequests: -5 }))
+      expect(() => createInvalidService({ maxRequests: -5 }))
         .toThrow('maxRequests must be positive');
     });
 
     it('should throw on invalid windowMs', () => {
-      expect(() => new RateLimiterService({ windowMs: 0 }))
+      expect(() => createInvalidService({ windowMs: 0 }))
         .toThrow('windowMs must be positive');
 
-      expect(() => new RateLimiterService({ windowMs: -1000 }))
+      expect(() => createInvalidService({ windowMs: -1000 }))
         .toThrow('windowMs must be positive');
     });
 
     it('should throw on invalid burstSize', () => {
-      expect(() => new RateLimiterService({ burstSize: 0 }))
+      expect(() => createInvalidService({ burstSize: 0 }))
         .toThrow('burstSize must be positive');
 
-      expect(() => new RateLimiterService({ burstSize: -10 }))
+      expect(() => createInvalidService({ burstSize: -10 }))
         .toThrow('burstSize must be positive');
     });
 
     it('should throw on invalid queueSize', () => {
-      expect(() => new RateLimiterService({ queueSize: -1 }))
+      expect(() => createInvalidService({ queueSize: -1 }))
         .toThrow('queueSize must be non-negative');
     });
   });

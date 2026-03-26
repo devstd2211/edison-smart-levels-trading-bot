@@ -20,6 +20,8 @@ describe('CircuitBreakerService', () => {
   let context: ManagedCircuitBreakerContext;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
+  let createDefaultService: ManagedCircuitBreakerContext['createDefaultService'];
+  let createInvalidService: ManagedCircuitBreakerContext['createInvalidService'];
   let createService: (
     config?: Partial<CircuitBreakerConfig>,
     serviceLogger?: LoggerService,
@@ -30,6 +32,8 @@ describe('CircuitBreakerService', () => {
     context = createManagedCircuitBreakerContext();
     logger = context.logger;
     errorHandler = context.errorHandler;
+    createDefaultService = context.createDefaultService;
+    createInvalidService = context.createInvalidService;
     createService = (
       config = {},
       serviceLogger = logger as LoggerService,
@@ -47,37 +51,37 @@ describe('CircuitBreakerService', () => {
 
   describe('Initialization and Validation', () => {
     it('should initialize with default config', () => {
-      const service = new CircuitBreakerService();
+      const service = createDefaultService();
       expect(service).toBeDefined();
       expect(service.getCircuitNames()).toEqual([]);
     });
 
     it('should throw on invalid failureThreshold', () => {
-      expect(() => new CircuitBreakerService({ failureThreshold: 0 }))
+      expect(() => createInvalidService({ failureThreshold: 0 }))
         .toThrow('failureThreshold must be positive');
 
-      expect(() => new CircuitBreakerService({ failureThreshold: -1 }))
+      expect(() => createInvalidService({ failureThreshold: -1 }))
         .toThrow('failureThreshold must be positive');
     });
 
     it('should throw on invalid failureRateThreshold', () => {
-      expect(() => new CircuitBreakerService({ failureRateThreshold: -0.1 }))
+      expect(() => createInvalidService({ failureRateThreshold: -0.1 }))
         .toThrow('failureRateThreshold must be between 0 and 1');
 
-      expect(() => new CircuitBreakerService({ failureRateThreshold: 1.5 }))
+      expect(() => createInvalidService({ failureRateThreshold: 1.5 }))
         .toThrow('failureRateThreshold must be between 0 and 1');
     });
 
     it('should throw on invalid successThreshold', () => {
-      expect(() => new CircuitBreakerService({ successThreshold: 0 }))
+      expect(() => createInvalidService({ successThreshold: 0 }))
         .toThrow('successThreshold must be positive');
     });
 
     it('should throw on invalid timeout', () => {
-      expect(() => new CircuitBreakerService({ timeout: 0 }))
+      expect(() => createInvalidService({ timeout: 0 }))
         .toThrow('timeout must be positive');
 
-      expect(() => new CircuitBreakerService({ timeout: -1000 }))
+      expect(() => createInvalidService({ timeout: -1000 }))
         .toThrow('timeout must be positive');
     });
   });
@@ -658,10 +662,10 @@ describe('CircuitBreakerService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      const service = new CircuitBreakerService({
+      const service = createInvalidService({
         failureThreshold: 2,
         volumeThreshold: 2,
-      }, logger as LoggerService);
+      }, { logger: logger as LoggerService, errorHandler: undefined });
 
       const fail = async () => {
         throw new Error('Fail');
@@ -679,10 +683,10 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should work without Logger', async () => {
-      const service = new CircuitBreakerService({
+      const service = createInvalidService({
         failureThreshold: 2,
         volumeThreshold: 2,
-      });
+      }, { logger: undefined, errorHandler: undefined });
 
       const fail = async () => {
         throw new Error('Fail');

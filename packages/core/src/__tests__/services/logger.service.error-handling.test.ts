@@ -36,6 +36,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let errorHandler: ErrorHandler;
   let createLogger: ReturnType<typeof createStandardLoggerFactory>;
   let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
+  let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
   let createStandardService: ManagedLoggerTestContext['createStandardService'];
   let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
   let context: ManagedLoggerTestContext;
@@ -46,6 +47,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     errorHandler = context.errorHandler;
     createLogger = context.createLogger;
     createLegacyLogger = context.createLegacyLogger;
+    createInvalidStandardService = context.createInvalidStandardService;
     createStandardService = context.createStandardService;
     createLegacyService = context.createLegacyService;
   });
@@ -58,25 +60,25 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   describe('THROW: Constructor Validation', () => {
     it('should throw on invalid logLevel in constructor', () => {
       expect(() => {
-        new LoggerService(asLogLevel('INVALID_LEVEL'), testLogDir, true);
+        createInvalidStandardService(asLogLevel('INVALID_LEVEL'), testLogDir, true);
       }).toThrow();
     });
 
     it('should throw on null minLevel', () => {
       expect(() => {
-        new LoggerService(asLogLevel(null), testLogDir, true);
+        createInvalidStandardService(asLogLevel(null), testLogDir, true);
       }).toThrow();
     });
 
     it('should throw on non-string logDir with logToFile=true', () => {
       expect(() => {
-        new LoggerService(LogLevel.INFO, asPath(123), true);
+        createInvalidStandardService(LogLevel.INFO, asPath(123), true);
       }).toThrow();
     });
 
     it('should throw on empty string logDir with logToFile=true', () => {
       expect(() => {
-        new LoggerService(LogLevel.INFO, '', true);
+        createInvalidStandardService(LogLevel.INFO, '', true);
       }).toThrow();
     });
 
@@ -101,7 +103,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
     it('should throw on invalid string log level', () => {
       expect(() => {
-        new LoggerService('INVALID_LEVEL', testLogDir, false);
+        createInvalidStandardService('INVALID_LEVEL', testLogDir, false);
       }).toThrow();
     });
   });
@@ -359,7 +361,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should still throw on invalid logLevel without ErrorHandler', () => {
       expect(() => {
-        new LoggerService(asLogLevel('INVALID'), testLogDir, true);
+        createInvalidStandardService(asLogLevel('INVALID'), testLogDir, true, undefined);
       }).toThrow();
     });
 

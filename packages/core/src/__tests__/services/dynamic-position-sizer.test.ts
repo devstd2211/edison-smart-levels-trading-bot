@@ -14,7 +14,6 @@
  */
 
 import {
-  DynamicPositionSizerService,
   SizingConfig,
 } from '../../services/dynamic-position-sizer.service';
 import { LoggerService } from '../../types/legacy';
@@ -33,11 +32,13 @@ describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
+  type DynamicPositionSizerService = ManagedDynamicPositionSizerContext['service'];
   let service: DynamicPositionSizerService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
   let context: ManagedDynamicPositionSizerContext;
+  let createInvalidService: ManagedDynamicPositionSizerContext['createInvalidService'];
   let createBrokenService: ManagedDynamicPositionSizerContext['createBrokenService'];
   let createNoHandlerService: ManagedDynamicPositionSizerContext['createNoHandlerService'];
   let createService: (options?: {
@@ -52,6 +53,7 @@ describe('DynamicPositionSizerService', () => {
     logger = context.logger;
     errorHandler = context.errorHandler;
     mockConfig = context.config;
+    createInvalidService = context.createInvalidService;
     createBrokenService = context.createBrokenService;
     createNoHandlerService = context.createNoHandlerService;
     createService = context.createService;
@@ -68,7 +70,7 @@ describe('DynamicPositionSizerService', () => {
   describe('THROW - Config Validation', () => {
     it('should throw when config is null', () => {
       expect(() => {
-        new DynamicPositionSizerService(asSizingConfig(null), logger, errorHandler);
+        createInvalidService(asSizingConfig(null), { logger, errorHandler });
       }).toThrow('config is required');
     });
 

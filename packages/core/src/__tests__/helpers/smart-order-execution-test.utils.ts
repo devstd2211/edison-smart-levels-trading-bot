@@ -90,6 +90,13 @@ export function createSmartOrderExecutionHarness(
   errorHandler: ErrorHandler;
   config: SmartOrderConfig;
   order: SmartOrderRequest;
+  createInvalidService: (
+    config: ConstructorParameters<typeof SmartOrderExecutionService>[0],
+    options?: {
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    },
+  ) => SmartOrderExecutionService;
   createNoHandlerService: () => SmartOrderExecutionService;
   createService: (options?: {
     config?: SmartOrderConfig;
@@ -118,6 +125,12 @@ export function createSmartOrderExecutionHarness(
     errorHandler,
     config,
     order,
+    createInvalidService: (invalidConfig, options = {}) =>
+      new SmartOrderExecutionService(
+        invalidConfig,
+        Object.prototype.hasOwnProperty.call(options, 'logger') ? options.logger : logger,
+        Object.prototype.hasOwnProperty.call(options, 'errorHandler') ? options.errorHandler : errorHandler,
+      ),
     createNoHandlerService: () => createService({ errorHandler: undefined }),
     createService,
   };
@@ -129,6 +142,7 @@ export interface ManagedSmartOrderExecutionContext {
   errorHandler: ErrorHandler;
   config: SmartOrderConfig;
   order: SmartOrderRequest;
+  createInvalidService: ReturnType<typeof createSmartOrderExecutionHarness>['createInvalidService'];
   createNoHandlerService: ReturnType<typeof createSmartOrderExecutionHarness>['createNoHandlerService'];
   createService: ReturnType<typeof createSmartOrderExecutionHarness>['createService'];
   cleanup: () => void;
@@ -153,6 +167,7 @@ export function createManagedSmartOrderExecutionContext(
     errorHandler: harness.errorHandler,
     config: harness.config,
     order: harness.order,
+    createInvalidService: (config, options = {}) => trackService(harness.createInvalidService(config, options)),
     createNoHandlerService: () => trackService(harness.createNoHandlerService()),
     createService: (options = {}) => trackService(harness.createService(options)),
     cleanup: () => {

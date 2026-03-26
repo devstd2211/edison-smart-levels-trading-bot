@@ -44,6 +44,7 @@ import {
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import * as crypto from 'crypto';
 import type { ILifecycle } from '../interfaces/ILifecycle';
+import { isBiasCompatibleWithSignal } from './signal-processing/timeframe-conflict.utils';
 
 // ============================================================================
 // TYPES
@@ -287,7 +288,7 @@ export class MTFSnapshotGate implements ILifecycle {
 
     // Check 2: HTF Bias mismatch
     // Determine what bias direction the signal expects
-    const currentBiasAllowsSignal = this.isBiasCompatibleWithSignal(
+    const currentBiasAllowsSignal = isBiasCompatibleWithSignal(
       currentHTFBias,
       snapshot.signal.direction
     );
@@ -361,26 +362,6 @@ export class MTFSnapshotGate implements ILifecycle {
         () => this.logger.debug(`[MTF-SNAPSHOT] Cleared snapshot ${id.substring(0, 8)}...`)
       );
     }
-  }
-
-  /**
-   * Check if current HTF bias is compatible with signal direction
-   */
-  private isBiasCompatibleWithSignal(
-    bias: TrendBias,
-    direction: SignalDirection
-  ): boolean {
-    if (bias === 'NEUTRAL') return true; // NEUTRAL allows both directions
-
-    if (direction === SignalDirection.LONG) {
-      // LONG only allowed in BULLISH
-      return bias === 'BULLISH';
-    } else if (direction === SignalDirection.SHORT) {
-      // SHORT only allowed in BEARISH
-      return bias === 'BEARISH';
-    }
-
-    return false;
   }
 
   /**

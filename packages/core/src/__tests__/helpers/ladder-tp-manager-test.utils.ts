@@ -93,6 +93,21 @@ export function createLadderTpHarness(options: {
     bybitService,
     errorHandler,
     config,
+    createInvalidService: (
+      invalidConfig: ConstructorParameters<typeof LadderTpManagerService>[0],
+      overrides: {
+        logger?: LoggerService;
+        bybitService?: jest.Mocked<IExchange>;
+        errorHandler?: ErrorHandler;
+        withErrorHandler?: boolean;
+      } = {},
+    ) =>
+      new LadderTpManagerService(
+        invalidConfig,
+        overrides.bybitService ?? bybitService,
+        overrides.logger ?? logger,
+        overrides.withErrorHandler === false ? undefined : overrides.errorHandler ?? errorHandler,
+      ),
   };
 }
 

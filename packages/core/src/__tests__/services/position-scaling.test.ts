@@ -14,7 +14,6 @@
  */
 
 import {
-  PositionScalingService,
   ScalingConfig,
   PositionState,
 } from '../../services/position-scaling.service';
@@ -30,12 +29,14 @@ import {
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
+  type PositionScalingService = ManagedPositionScalingContext['service'];
   let service: PositionScalingService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
   let context: ManagedPositionScalingContext;
+  let createInvalidService: ManagedPositionScalingContext['createInvalidService'];
   let createBrokenService: ManagedPositionScalingContext['createBrokenService'];
   let createNoHandlerService: ManagedPositionScalingContext['createNoHandlerService'];
   let createService: (options?: {
@@ -47,7 +48,7 @@ describe('PositionScalingService', () => {
   let createExtremes: ManagedPositionScalingContext['createExtremes'];
   let createSequence: ManagedPositionScalingContext['createSequence'];
   let evaluateDecision: ManagedPositionScalingContext['evaluateDecision'];
-  type ScalingConfigInput = ConstructorParameters<typeof PositionScalingService>[0];
+  type ScalingConfigInput = Parameters<ManagedPositionScalingContext['createInvalidService']>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
@@ -57,6 +58,7 @@ describe('PositionScalingService', () => {
     errorHandler = context.errorHandler;
     mockConfig = context.config;
     mockPosition = context.position;
+    createInvalidService = context.createInvalidService;
     createBrokenService = context.createBrokenService;
     createNoHandlerService = context.createNoHandlerService;
     createService = context.createService;
@@ -77,7 +79,7 @@ describe('PositionScalingService', () => {
   describe('THROW - Config Validation', () => {
     it('should throw when config is null', () => {
       expect(() => {
-        new PositionScalingService(null as unknown as ScalingConfigInput, logger, errorHandler);
+        createInvalidService(null as unknown as ScalingConfigInput, { logger, errorHandler });
       }).toThrow('config is required');
     });
 

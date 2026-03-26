@@ -41,14 +41,15 @@ import {
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let logger: ManagedConfigValidatorContext['logger'];
   let errorHandler: ErrorHandler;
+  let validator: ManagedConfigValidatorContext['validator'];
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
+  let validConfig: ManagedConfigValidatorContext['validConfig'];
   let context: ManagedConfigValidatorContext;
-  const validConfig = createConfigValidatorConfig();
 
   beforeEach(() => {
     context = createManagedConfigValidatorContext();
-    ({ logger, errorHandler, createValidator, createLegacyValidator } = context);
+    ({ logger, errorHandler, validator, createValidator, createLegacyValidator, validConfig } = context);
   });
 
   afterEach(() => {
@@ -164,8 +165,6 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
     });
 
     it('test-8.9.31.C3: Should pass with valid 0-1 confidence', () => {
-      const validator = createValidator();
-
       expect(() => validator.validateAll(validConfig)).not.toThrow();
     });
   });
@@ -297,14 +296,10 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   describe('I. Additional Coverage (2 tests)', () => {
     it('test-8.9.31.I1: Should handle validateAnalyzerConfig with ErrorHandler', () => {
-      const validator = createValidator();
-
       expect(() => validator.validateAnalyzerConfig(validConfig)).not.toThrow();
     });
 
     it('test-8.9.31.I2: Should handle validateStrategyConfig with ErrorHandler', () => {
-      const validator = createValidator();
-
       expect(() => validator.validateStrategyConfig(validConfig)).not.toThrow();
     });
   });

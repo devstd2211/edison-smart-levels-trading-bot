@@ -100,6 +100,13 @@ export function createDynamicPositionSizerHarness(
   logger: LoggerService;
   errorHandler: ErrorHandler;
   config: SizingConfig;
+  createInvalidService: (
+    config: ConstructorParameters<typeof DynamicPositionSizerService>[0],
+    options?: {
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    },
+  ) => DynamicPositionSizerService;
   createBrokenService: () => DynamicPositionSizerService;
   createNoHandlerService: () => DynamicPositionSizerService;
   createService: (options?: {
@@ -127,6 +134,12 @@ export function createDynamicPositionSizerHarness(
     logger,
     errorHandler,
     config,
+    createInvalidService: (invalidConfig, options = {}) =>
+      new DynamicPositionSizerService(
+        invalidConfig,
+        Object.prototype.hasOwnProperty.call(options, 'logger') ? options.logger : logger,
+        Object.prototype.hasOwnProperty.call(options, 'errorHandler') ? options.errorHandler : errorHandler,
+      ),
     createBrokenService: () => {
       const brokenLogger = createDynamicPositionSizerBrokenLogger() as unknown as LoggerService;
       return createService({
@@ -144,6 +157,7 @@ export interface ManagedDynamicPositionSizerContext {
   logger: LoggerService;
   errorHandler: ErrorHandler;
   config: SizingConfig;
+  createInvalidService: ReturnType<typeof createDynamicPositionSizerHarness>['createInvalidService'];
   createBrokenService: ReturnType<typeof createDynamicPositionSizerHarness>['createBrokenService'];
   createNoHandlerService: ReturnType<typeof createDynamicPositionSizerHarness>['createNoHandlerService'];
   createService: ReturnType<typeof createDynamicPositionSizerHarness>['createService'];

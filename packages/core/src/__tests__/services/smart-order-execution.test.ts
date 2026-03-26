@@ -14,7 +14,6 @@
  */
 
 import {
-  SmartOrderExecutionService,
   SmartOrderConfig,
   SmartOrderRequest,
   ExecutionReport,
@@ -36,12 +35,14 @@ import {
   type ManagedSmartOrderExecutionContext,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
+  type SmartOrderExecutionService = ManagedSmartOrderExecutionContext['service'];
   let service: SmartOrderExecutionService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
   let context: ManagedSmartOrderExecutionContext;
+  let createInvalidService: ManagedSmartOrderExecutionContext['createInvalidService'];
   let createNoHandlerService: ManagedSmartOrderExecutionContext['createNoHandlerService'];
   let createService: (options?: {
     config?: SmartOrderConfig;
@@ -56,6 +57,7 @@ describe('SmartOrderExecutionService', () => {
     errorHandler = context.errorHandler;
     mockConfig = context.config;
     baseOrder = context.order;
+    createInvalidService = context.createInvalidService;
     createNoHandlerService = context.createNoHandlerService;
     createService = context.createService;
   });
@@ -71,56 +73,51 @@ describe('SmartOrderExecutionService', () => {
   describe('THROW - Config Validation', () => {
     it('should throw when config is null', () => {
       expect(() => {
-        new SmartOrderExecutionService(asConfig(null), logger, errorHandler);
+        createInvalidService(asConfig(null), { logger, errorHandler });
       }).toThrow('config is required');
     });
 
     it('should throw when maxSlippagePercent is negative', () => {
       expect(() => {
-        new SmartOrderExecutionService(
+        createInvalidService(
           { ...mockConfig, maxSlippagePercent: -1 },
-          logger,
-          errorHandler
+          { logger, errorHandler },
         );
       }).toThrow('maxSlippagePercent must be >= 0');
     });
 
     it('should throw when maxOrderSplits is less than 1', () => {
       expect(() => {
-        new SmartOrderExecutionService(
+        createInvalidService(
           { ...mockConfig, maxOrderSplits: 0 },
-          logger,
-          errorHandler
+          { logger, errorHandler },
         );
       }).toThrow('maxOrderSplits must be >= 1');
     });
 
     it('should throw when minFillProbability is out of range', () => {
       expect(() => {
-        new SmartOrderExecutionService(
+        createInvalidService(
           { ...mockConfig, minFillProbability: 1.5 },
-          logger,
-          errorHandler
+          { logger, errorHandler },
         );
       }).toThrow('minFillProbability must be between 0 and 1');
     });
 
     it('should throw when executionTimeout is zero or negative', () => {
       expect(() => {
-        new SmartOrderExecutionService(
+        createInvalidService(
           { ...mockConfig, executionTimeout: 0 },
-          logger,
-          errorHandler
+          { logger, errorHandler },
         );
       }).toThrow('executionTimeout must be > 0');
     });
 
     it('should throw when executionStrategy is missing', () => {
       expect(() => {
-        new SmartOrderExecutionService(
+        createInvalidService(
           { ...mockConfig, executionStrategy: '' as unknown as SmartOrderConfig['executionStrategy'] },
-          logger,
-          errorHandler
+          { logger, errorHandler },
         );
       }).toThrow('executionStrategy is required');
     });
