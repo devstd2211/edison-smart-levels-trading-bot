@@ -53,6 +53,13 @@ export type EventHandlersJournalMock = {
 };
 
 export type ManagedPositionEventHandlerContext = ReturnType<typeof createPositionEventHandlerHarness> & {
+  createStandardHandler: (options?: {
+    positionManager?: EventHandlersPositionManagerMock;
+    positionExitingService?: EventHandlersPositionExitingMock;
+    exchange?: EventHandlersExchangeMock;
+    telegram?: EventHandlersTelegramMock;
+    logger?: EventHandlersLoggerMock;
+  }) => PositionEventHandler;
   cleanup: () => void;
 };
 
@@ -339,6 +346,15 @@ export function createManagedPositionEventHandlerContext(options?: {
 
   return {
     ...harness,
+    createStandardHandler: (handlerOptions = {}) =>
+      createStandardPositionEventHandler({
+        positionManager: handlerOptions.positionManager ?? harness.mockPositionManager,
+        positionExitingService:
+          handlerOptions.positionExitingService ?? harness.mockPositionExitingService,
+        exchange: handlerOptions.exchange ?? harness.mockBybitService,
+        telegram: handlerOptions.telegram ?? harness.mockTelegram,
+        logger: handlerOptions.logger ?? harness.mockLogger,
+      }),
     cleanup: () => {
       jest.clearAllMocks();
       jest.clearAllTimers();

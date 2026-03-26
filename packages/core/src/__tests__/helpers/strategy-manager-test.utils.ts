@@ -5,6 +5,18 @@ import { StrategyManagerService } from '../../services/strategy-manager.service'
 import type { ConfigNew } from '../../types/config/config-new.types';
 import type { StrategyConfig } from '../../types/strategy-config';
 
+export interface ManagedStrategyManagerContext {
+  strategyManager: StrategyManagerService;
+  mockLoader: jest.Mocked<StrategyLoaderService>;
+  mockMerger: jest.Mocked<StrategyConfigMergerService>;
+  mockErrorHandler: jest.Mocked<ErrorHandler>;
+  mockStrategy: StrategyConfig;
+  mockMainConfig: ConfigNew;
+  createManager: (options?: { withErrorHandler?: boolean }) => StrategyManagerService;
+  consoleLogSpy: jest.SpyInstance;
+  cleanup: () => void;
+}
+
 export function createMockStrategyLoader(): jest.Mocked<StrategyLoaderService> {
   return {
     loadStrategy: jest.fn(),
@@ -105,4 +117,33 @@ export function createStrategyManagerService(options: {
     merger,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+}
+
+export function createManagedStrategyManagerContext(): ManagedStrategyManagerContext {
+  jest.clearAllMocks();
+
+  const mockLoader = createMockStrategyLoader();
+  const mockMerger = createMockStrategyMerger();
+  const mockErrorHandler = createMockStrategyErrorHandler();
+  const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+  const createManager = createStrategyManagerFactory({
+    loader: mockLoader,
+    merger: mockMerger,
+    errorHandler: mockErrorHandler,
+  });
+
+  return {
+    strategyManager: createManager(),
+    mockLoader,
+    mockMerger,
+    mockErrorHandler,
+    mockStrategy: createMockStrategyConfig(),
+    mockMainConfig: createMockStrategyMainConfig(),
+    createManager,
+    consoleLogSpy,
+    cleanup() {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    },
+  };
 }

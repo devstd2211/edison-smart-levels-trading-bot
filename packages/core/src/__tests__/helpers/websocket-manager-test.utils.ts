@@ -286,6 +286,8 @@ export function createManagedWebSocketManagerContext(options: {
       }
       trackedManagers.clear();
       jest.clearAllMocks();
+      jest.clearAllTimers();
+      jest.restoreAllMocks();
     },
   };
 }

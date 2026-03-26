@@ -21,6 +21,15 @@ type StructureAwareExitHarnessOptions = {
   errorHandler?: ErrorHandler;
 };
 
+export interface ManagedStructureAwareExitContext {
+  service: StructureAwareExitService;
+  logger: LoggerService;
+  errorHandler?: ErrorHandler;
+  config: StructureAwareExitConfig;
+  createService: (serviceOptions?: StructureAwareExitHarnessOptions) => StructureAwareExitService;
+  cleanup: () => void;
+}
+
 export const createStructureAwareExitMockLogger = (
   overrides: Partial<Record<'info' | 'debug' | 'warn' | 'error', jest.Mock>> = {},
 ): LoggerService =>
@@ -152,3 +161,19 @@ export const createInvalidStructureAwareLevel = (overrides: {
   type: overrides.type ?? 'SWING_POINT',
   strength: overrides.strength ?? 0.8,
 });
+
+export const createManagedStructureAwareExitContext = (
+  options: StructureAwareExitHarnessOptions = {},
+): ManagedStructureAwareExitContext => {
+  jest.clearAllMocks();
+
+  const harness = createStructureAwareExitHarness(options);
+
+  return {
+    ...harness,
+    cleanup() {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    },
+  };
+};

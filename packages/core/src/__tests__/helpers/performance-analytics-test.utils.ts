@@ -79,6 +79,19 @@ export type PerformanceAnalyticsMockJournal = {
   getAllTrades: jest.Mock<unknown[], []>;
 };
 
+export interface ManagedPerformanceAnalyticsContext {
+  service: PerformanceAnalytics;
+  config: PerformanceAnalyticsConfig;
+  logger: PerformanceAnalyticsMockLogger;
+  journal: PerformanceAnalyticsMockJournal;
+  errorHandler: jest.Mocked<ErrorHandler>;
+  createService: (overrides?: {
+    errorHandler?: jest.Mocked<ErrorHandler>;
+    withErrorHandler?: boolean;
+  }) => PerformanceAnalytics;
+  cleanup: () => void;
+}
+
 export const createPerformanceAnalyticsJournal = (
   trades: unknown[] = [],
 ): PerformanceAnalyticsMockJournal => ({
@@ -228,3 +241,28 @@ export const createPerformanceAnalyticsFactory = ({
           errorHandler: overrides.errorHandler ?? errorHandler,
         })),
 });
+
+export const createManagedPerformanceAnalyticsContext = (): ManagedPerformanceAnalyticsContext => {
+  jest.clearAllMocks();
+
+  const harness = createPerformanceAnalyticsHarness();
+  const factory = createPerformanceAnalyticsFactory({
+    config: harness.config,
+    journal: harness.journal,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+  });
+
+  return {
+    service: harness.service,
+    config: harness.config,
+    logger: harness.logger,
+    journal: harness.journal,
+    errorHandler: harness.errorHandler,
+    createService: factory.createService,
+    cleanup() {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    },
+  };
+};

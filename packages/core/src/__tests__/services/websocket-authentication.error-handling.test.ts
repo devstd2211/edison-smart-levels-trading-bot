@@ -410,7 +410,6 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       const result = servicePartialLogger.generateAuthPayload(apiKey, apiSecret);
 
       expect(result).toBeDefined();
-      partialContext.cleanup();
     });
   });
 });

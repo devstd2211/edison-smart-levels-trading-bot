@@ -24,7 +24,6 @@ import {
   createEventHandlersMockPosition,
   createManagedEventHandlersWebSocketContext,
   createManagedPositionEventHandlerContext,
-  createStandardPositionEventHandler,
   type EventHandlersExchangeMock,
   type EventHandlersJournalMock,
   type EventHandlersLoggerMock,
@@ -60,13 +59,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
     mockBybitService = context.mockBybitService;
     mockTelegram = context.mockTelegram;
     mockLogger = context.mockLogger;
-    handler = createStandardPositionEventHandler({
-      positionManager: mockPositionManager,
-      positionExitingService: mockPositionExitingService,
-      exchange: mockBybitService,
-      telegram: mockTelegram,
-      logger: mockLogger,
-    });
+    handler = context.createStandardHandler();
   });
 
   afterEach(() => {

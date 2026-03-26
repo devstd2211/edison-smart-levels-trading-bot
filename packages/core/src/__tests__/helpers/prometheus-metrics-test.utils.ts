@@ -39,6 +39,16 @@ export interface PrometheusMetricsTestContext {
 
 export interface ManagedPrometheusMetricsTestContext
   extends PrometheusMetricsTestContext {
+  createService: (
+    config?: MetricsConfig,
+    logger?: LoggerService,
+    handler?: ErrorHandler,
+  ) => PrometheusMetricsService;
+  createStartedService: (
+    config?: MetricsConfig,
+    logger?: LoggerService,
+    handler?: ErrorHandler,
+  ) => PrometheusMetricsService;
   cleanup: () => void;
 }
 
@@ -142,6 +152,22 @@ export function createManagedPrometheusMetricsTestContext():
 
   return {
     ...context,
+    createService: (config, logger, handler) =>
+      createStandardPrometheusMetricsService(
+        context.harness,
+        context.trackedServices,
+        config,
+        logger,
+        handler,
+      ),
+    createStartedService: (config, logger, handler) =>
+      createStartedPrometheusMetricsService(
+        context.harness,
+        context.trackedServices,
+        config,
+        logger,
+        handler,
+      ),
     cleanup: () => {
       context.stop();
       jest.restoreAllMocks();

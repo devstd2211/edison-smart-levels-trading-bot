@@ -23,7 +23,7 @@ describe('WebSocketManagerService', () => {
 
   beforeEach(() => {
     context = createManagedWebSocketManagerContext();
-    wsManager = context.createStandardService();
+    wsManager = context.wsManager;
   });
 
   afterEach(async () => {

@@ -15,14 +15,11 @@ import { TradeHistoryService } from '../../services/trade-history.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { JournalWriteError } from '../../errors/DomainErrors';
 import {
-  cleanupTradeHistoryTempDir,
-  createTradeHistoryBoundFactory,
-  createTradeHistoryHarness,
-  createLegacyTradeHistoryService,
   createTradeHistoryRecord,
-  createStandardTradeHistoryService,
+  createManagedTradeHistoryContext,
   type ExecuteAsyncConfig,
   type FailureError,
+  type ManagedTradeHistoryContext,
   type RetryError,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
@@ -38,6 +35,7 @@ const asFailureError = (value: unknown): FailureError => value as FailureError;
 const createTradeRecord = createTradeHistoryRecord;
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
+  let context: ManagedTradeHistoryContext;
   let service: TradeHistoryService;
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
@@ -49,29 +47,16 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   }) => TradeHistoryService;
 
   beforeEach(() => {
-    const harness = createTradeHistoryHarness();
-    logger = harness.logger;
-    errorHandler = harness.errorHandler;
-    tempDir = harness.tempDir;
-    service = harness.service;
-    const factory = createTradeHistoryBoundFactory({
-      logger,
-      errorHandler,
-      tempDir,
-    });
-    createService = (options = {}) =>
-      options.withErrorHandler === false
-        ? factory.createLegacyService({
-            tempDir: options.tempDir,
-          })
-        : factory.createStandardService({
-            tempDir: options.tempDir,
-            errorHandler: options.errorHandler,
-          });
+    context = createManagedTradeHistoryContext();
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    tempDir = context.tempDir;
+    service = context.service;
+    createService = context.createService;
   });
 
   afterEach(() => {
-    cleanupTradeHistoryTempDir(tempDir);
+    context.cleanup();
   });
 
   // ============================================================================

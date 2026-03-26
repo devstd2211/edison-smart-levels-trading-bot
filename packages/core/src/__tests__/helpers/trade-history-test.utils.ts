@@ -12,6 +12,19 @@ export type ExecuteAsyncResult<T = unknown> = { success: boolean; value?: T; err
 export type RetryError = Parameters<NonNullable<ExecuteAsyncConfig['onRetry']>>[1];
 export type FailureError = Parameters<NonNullable<ExecuteAsyncConfig['onFailure']>>[0];
 
+export interface ManagedTradeHistoryContext {
+  service: TradeHistoryService;
+  logger: TradeHistoryMockLogger;
+  errorHandler: jest.Mocked<ErrorHandler>;
+  tempDir: string;
+  createService: (options?: {
+    withErrorHandler?: boolean;
+    tempDir?: string;
+    errorHandler?: jest.Mocked<ErrorHandler>;
+  }) => TradeHistoryService;
+  cleanup: () => void;
+}
+
 export class TradeHistoryMockLogger extends LoggerService {
   constructor() {
     super(LogLevel.INFO, './logs', false);
@@ -197,5 +210,38 @@ export function createTradeHistoryBoundFactory(options: {
         logger: serviceOptions.logger ?? logger,
         tempDir: serviceOptions.tempDir ?? tempDir,
       }),
+  };
+}
+
+export function createManagedTradeHistoryContext(options: {
+  logger?: TradeHistoryMockLogger;
+  errorHandler?: jest.Mocked<ErrorHandler>;
+  tempDir?: string;
+} = {}): ManagedTradeHistoryContext {
+  const harness = createTradeHistoryHarness(options);
+  const factory = createTradeHistoryBoundFactory({
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    tempDir: harness.tempDir,
+  });
+
+  return {
+    service: harness.service,
+    logger: harness.logger,
+    errorHandler: harness.errorHandler,
+    tempDir: harness.tempDir,
+    createService: (serviceOptions = {}) =>
+      serviceOptions.withErrorHandler === false
+        ? factory.createLegacyService({
+            tempDir: serviceOptions.tempDir,
+          })
+        : factory.createStandardService({
+            tempDir: serviceOptions.tempDir,
+            errorHandler: serviceOptions.errorHandler,
+          }),
+    cleanup() {
+      cleanupTradeHistoryTempDir(harness.tempDir);
+      jest.clearAllMocks();
+    },
   };
 }

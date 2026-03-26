@@ -29,8 +29,23 @@ export interface WebSocketKeepAliveHarness {
 export interface ManagedWebSocketKeepAliveContext {
   harness: WebSocketKeepAliveHarness;
   logger: LoggerService;
+  service: WebSocketKeepAliveService;
   websocket: MockWebSocket;
-  cleanup: (service?: WebSocketKeepAliveService) => void;
+  createService: (interval?: number, logger?: LoggerService) => WebSocketKeepAliveService;
+  createStandardService: (options?: {
+    interval?: number;
+    logger?: LoggerService;
+  }) => WebSocketKeepAliveService;
+  createStartedService: (options?: {
+    interval?: number;
+    logger?: LoggerService;
+    websocket?: MockWebSocket;
+  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
+  createStartedStandardService: (options?: {
+    interval?: number;
+    websocket?: MockWebSocket;
+  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
+  cleanup: () => void;
 }
 
 export function createWebSocketKeepAliveLogger(): LoggerService {
@@ -118,13 +133,41 @@ export function createManagedWebSocketKeepAliveContext(): ManagedWebSocketKeepAl
   jest.useFakeTimers();
 
   const harness = createWebSocketKeepAliveHarness();
+  const trackedServices = new Set<WebSocketKeepAliveService>();
+  const trackService = (service: WebSocketKeepAliveService): WebSocketKeepAliveService => {
+    trackedServices.add(service);
+    return service;
+  };
+  const createService = (interval?: number, logger?: LoggerService) =>
+    trackService(harness.createService(interval, logger));
+  const createStandardService = (options = {}) =>
+    trackService(harness.createStandardService(options));
+  const createStartedService = (options = {}) => {
+    const started = harness.createStartedService(options);
+    trackService(started.service);
+    return started;
+  };
+  const createStartedStandardService = (options = {}) => {
+    const started = harness.createStartedStandardService(options);
+    trackService(started.service);
+    return started;
+  };
+  const service = createStandardService();
 
   return {
     harness,
     logger: harness.logger,
+    service,
     websocket: harness.createWebSocket(),
-    cleanup(service) {
-      service?.stop();
+    createService,
+    createStandardService,
+    createStartedService,
+    createStartedStandardService,
+    cleanup() {
+      for (const trackedService of trackedServices) {
+        trackedService.stop();
+      }
+      trackedServices.clear();
       jest.restoreAllMocks();
       jest.runOnlyPendingTimers();
       jest.useRealTimers();

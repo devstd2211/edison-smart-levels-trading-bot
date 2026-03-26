@@ -19,17 +19,15 @@ import {
   SessionRecordValidationError,
 } from '../../errors/DomainErrors';
 import {
-} from '../../types/legacy';
-import {
-  cleanupSessionStatsTempDir,
   createSessionStatsConfig,
   createSessionStatsExitUpdate,
-  createSessionStatsHarness,
   createSessionStatsLogger,
   createSessionStatsService,
   createSessionStatsTrade,
+  createManagedSessionStatsContext,
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
+  type ManagedSessionStatsContext,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
@@ -37,6 +35,7 @@ const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
+  let context: ManagedSessionStatsContext;
   let stats: SessionStatsService;
   let errorHandler: ErrorHandler;
   let logger: SessionStatsMockLogger;
@@ -46,13 +45,14 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   ) => SessionStatsService;
 
   beforeEach(() => {
-    ({ stats, errorHandler, logger, tempDir, createService } = createSessionStatsHarness({
+    context = createManagedSessionStatsContext({
       logger: createSessionStatsLogger(),
-    }));
+    });
+    ({ stats, errorHandler, logger, tempDir, createService } = context);
   });
 
   afterEach(() => {
-    cleanupSessionStatsTempDir(tempDir);
+    context.cleanup();
   });
 
   // ============================================================================

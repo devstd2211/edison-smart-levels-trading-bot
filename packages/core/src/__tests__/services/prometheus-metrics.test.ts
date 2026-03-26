@@ -16,28 +16,19 @@
 
 import type { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
 import type { LoggerService } from '../../types/legacy';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createManagedPrometheusMetricsTestContext,
-  createStandardPrometheusMetricsService,
-  createStartedPrometheusMetricsService,
   type ManagedPrometheusMetricsTestContext,
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
   let service: PrometheusMetricsService;
   let mockLogger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let trackedServices: PrometheusMetricsService[];
-  let harness: ManagedPrometheusMetricsTestContext['harness'];
   let context: ManagedPrometheusMetricsTestContext;
 
   beforeEach(() => {
     context = createManagedPrometheusMetricsTestContext();
-    harness = context.harness;
     mockLogger = context.logger;
-    errorHandler = context.errorHandler;
-    trackedServices = context.trackedServices;
     service = context.service;
   });
 
@@ -51,29 +42,17 @@ describe('PrometheusMetricsService', () => {
 
   describe('Initialization', () => {
     it('should initialize with default config', () => {
-      const svc = createStandardPrometheusMetricsService(
-        harness,
-        trackedServices,
-        undefined,
-        undefined,
-        undefined,
-      );
+      const svc = context.createService();
       expect(svc).toBeDefined();
     });
 
     it('should initialize with custom prefix', () => {
-      const svc = createStandardPrometheusMetricsService(
-        harness,
-        trackedServices,
-        { prefix: 'my_bot_' },
-        mockLogger,
-        undefined,
-      );
+      const svc = context.createService({ prefix: 'my_bot_' }, mockLogger, undefined);
       expect(svc).toBeDefined();
     });
 
     it('should initialize with logger', () => {
-      const svc = createStandardPrometheusMetricsService(harness, trackedServices, {}, mockLogger, undefined);
+      const svc = context.createService({}, mockLogger, undefined);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('initialized'),
         expect.any(Object)
@@ -81,20 +60,12 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = createStartedPrometheusMetricsService(
-        harness,
-        trackedServices,
-        { collectInterval: 1000 },
-        mockLogger,
-        undefined,
-      );
+      const svc = context.createStartedService({ collectInterval: 1000 }, mockLogger, undefined);
       expect(svc).toBeDefined();
     });
 
     it('should initialize with default labels', () => {
-      const svc = createStandardPrometheusMetricsService(
-        harness,
-        trackedServices,
+      const svc = context.createService(
         {
           defaultLabels: {
             env: 'test',
@@ -358,13 +329,7 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = createStartedPrometheusMetricsService(
-        harness,
-        trackedServices,
-        { collectInterval: 100 },
-        mockLogger,
-        undefined,
-      );
+      const svc = context.createStartedService({ collectInterval: 100 }, mockLogger, undefined);
 
       expect(svc).toBeDefined();
 
@@ -388,7 +353,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without logger', () => {
-      const svc = createStandardPrometheusMetricsService(harness, trackedServices, undefined, undefined, undefined);
+      const svc = context.createService(undefined, undefined, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
@@ -397,7 +362,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without errorHandler', () => {
-      const svc = createStandardPrometheusMetricsService(harness, trackedServices, {}, mockLogger, undefined);
+      const svc = context.createService({}, mockLogger, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);

@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-26)
-- Completed a helper-managed context follow-up for `limit-order-executor.service`, `limit-order-executor.error-handling`, `ladder-tp-manager.service`, `ladder-tp-manager.error-handling`, `weight-matrix-calculator.service`, and `weight-matrix-calculator.error-handling`:
-  - added/exported managed helper contexts in the adjacent limit-order-executor / ladder-tp-manager / weight-matrix test utils and reused them across the target suites.
-  - routed the target suites to helper-owned cleanup instead of suite-local harness ownership.
+- Completed a helper-managed context follow-up for `event-handlers.error-handling`, `websocket-event-handler.error-handling`, `monitoring-server`, `prometheus-metrics`, `session-stats.error-handling`, and `performance-analytics.service`:
+  - extended the adjacent event-handlers / monitoring-server / prometheus-metrics / session-stats / performance-analytics test utils so managed contexts own bound factory helpers, tracked services, and cleanup.
+  - routed the target suites away from suite-local harness ownership and ad-hoc lifecycle tracking.
   - reviewed the adjacent production services and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/limit-order-executor.service.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.service.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.service.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts packages/core/src/__tests__/services/performance-analytics.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next helper-backed lifecycle/testability slice around the remaining execution / strategy-adjacent suites that still own harness state or cleanup locally, prioritizing helpers that do not yet export managed contexts.
+- Continue with the next helper-backed lifecycle/testability slice in the remaining monitoring/cache-adjacent suites that still keep suite-local cleanup or over-broad grouped service construction, prioritizing helpers that do not yet fully own created service tracking.
 - After that, keep pushing toward broader grouped-service / `createServices()` narrowing only where no helper-managed cleanup path exists yet.

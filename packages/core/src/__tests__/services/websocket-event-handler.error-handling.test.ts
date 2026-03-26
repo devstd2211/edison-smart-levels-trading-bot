@@ -26,7 +26,6 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
-  createStandardWebSocketEventHandler,
   type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
@@ -279,7 +278,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('Integration with Existing Functionality', () => {
     it('should support explicit handler factory wiring', () => {
-      const explicitHandler = createStandardWebSocketEventHandler({
+      const explicitHandler = context.createStandardHandler({
         mockPositionManager,
         mockPositionExitingService,
         mockBybitService,

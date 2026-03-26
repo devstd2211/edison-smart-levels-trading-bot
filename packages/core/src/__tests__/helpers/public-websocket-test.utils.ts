@@ -284,6 +284,7 @@ export function createManagedPublicWebSocketContext(options: {
       trackedServices.clear();
       jest.clearAllMocks();
       jest.clearAllTimers();
+      jest.restoreAllMocks();
     },
   };
 }

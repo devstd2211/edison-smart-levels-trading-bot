@@ -101,12 +101,25 @@ export function createManagedWebSocketAuthenticationContext(options: {
   withErrorHandler?: boolean;
 } = {}): ManagedWebSocketAuthenticationContext {
   const harness = createWebSocketAuthenticationHarness(options);
+  const trackedServices = new Set<WebSocketAuthenticationService>([harness.service]);
+  const trackService = (service: WebSocketAuthenticationService): WebSocketAuthenticationService => {
+    trackedServices.add(service);
+    return service;
+  };
 
   return {
     ...harness,
+    createStandardService: (serviceOptions = {}) =>
+      trackService(harness.createStandardService(serviceOptions)),
+    createService: (serviceOptions = {}) =>
+      trackService(harness.createService(serviceOptions)),
+    createLegacyService: (serviceOptions = {}) =>
+      trackService(harness.createLegacyService(serviceOptions)),
     cleanup: () => {
+      trackedServices.clear();
       jest.clearAllMocks();
       jest.clearAllTimers();
+      jest.restoreAllMocks();
     },
   };
 }

@@ -14,6 +14,14 @@ type StrategyConfigMergerHarness = {
   logger: StrategyConfigMergerLogger;
 };
 
+export interface ManagedStrategyConfigMergerContext {
+  service: StrategyConfigMergerService;
+  errorHandler: ErrorHandler;
+  logger: StrategyConfigMergerLogger;
+  createService: (options?: ServiceOptions) => StrategyConfigMergerService;
+  cleanup: () => void;
+}
+
 type ServiceOptions = {
   logger?: ConstructorParameters<typeof StrategyConfigMergerService>[0];
   errorHandler?: ErrorHandler;
@@ -95,5 +103,27 @@ export function createStrategyConfigMergerStrategy() {
       takeProfits: [{ percent: 1 }],
     },
     analyzers: [],
+  };
+}
+
+export function createManagedStrategyConfigMergerContext(
+  options: ServiceOptions = {},
+): ManagedStrategyConfigMergerContext {
+  jest.clearAllMocks();
+
+  const harness = createStrategyConfigMergerHarness(options);
+
+  return {
+    ...harness,
+    createService: (serviceOptions: ServiceOptions = {}) =>
+      createStrategyConfigMergerService({
+        logger: serviceOptions.logger ?? harness.logger,
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        withErrorHandler: serviceOptions.withErrorHandler,
+      }),
+    cleanup() {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    },
   };
 }

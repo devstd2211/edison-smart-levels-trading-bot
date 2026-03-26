@@ -150,6 +150,17 @@ type SessionStatsHarnessOptions = {
   autoStart?: boolean;
 };
 
+export interface ManagedSessionStatsContext {
+  stats: SessionStatsService;
+  errorHandler: ErrorHandler;
+  logger: SessionStatsMockLogger;
+  tempDir: string;
+  createService: (
+    overrides?: { errorHandler?: ErrorHandler; autoStart?: boolean },
+  ) => SessionStatsService;
+  cleanup: () => void;
+}
+
 export function createSessionStatsService(
   options: SessionStatsHarnessOptions = {},
 ): SessionStatsService {
@@ -191,5 +202,20 @@ export function createSessionStatsHarness(
     errorHandler,
     createService,
     stats: createService({ autoStart: options.autoStart ?? true }),
+  };
+}
+
+export function createManagedSessionStatsContext(
+  options: SessionStatsHarnessOptions = {},
+): ManagedSessionStatsContext {
+  const harness = createSessionStatsHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      cleanupSessionStatsTempDir(harness.tempDir);
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
   };
 }

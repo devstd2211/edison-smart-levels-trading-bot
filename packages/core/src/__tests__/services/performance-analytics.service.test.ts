@@ -16,13 +16,15 @@
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
 import { LoggerService } from '../../types/legacy';
 import {
-  createPerformanceAnalyticsHarness,
+  createManagedPerformanceAnalyticsContext,
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
+  type ManagedPerformanceAnalyticsContext,
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
+  let context: ManagedPerformanceAnalyticsContext;
   let analytics: PerformanceAnalytics;
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
@@ -31,14 +33,18 @@ describe('PerformanceAnalytics Service Tests', () => {
   let mockLogger: jest.Mocked<LoggerService>;
 
   beforeEach(() => {
-    const harness = createPerformanceAnalyticsHarness();
+    context = createManagedPerformanceAnalyticsContext();
     analytics = createLegacyPerformanceAnalyticsService({
-      config: harness.config,
-      journal: harness.journal,
-      logger: harness.logger,
+      config: context.config,
+      journal: context.journal,
+      logger: context.logger,
     });
-    mockJournalService = harness.journal;
-    mockLogger = harness.logger as unknown as jest.Mocked<LoggerService>;
+    mockJournalService = context.journal;
+    mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ========================================================================

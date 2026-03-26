@@ -20,8 +20,9 @@ import {
   createTrackedPositionFixture,
   createLegacyTradingLifecycleManager,
   createTradingLifecycleConfig,
-  createTradingLifecycleTestContext,
+  createManagedTradingLifecycleContext,
   createMockTradingLifecycleErrorHandler,
+  type ManagedTradingLifecycleContext,
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
@@ -35,7 +36,7 @@ const createConfig = createTradingLifecycleConfig;
 // ============================================================================
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
-  let context: ReturnType<typeof createTradingLifecycleTestContext>;
+  let context: ManagedTradingLifecycleContext;
   let manager: TradingLifecycleManager;
   let mockLogger: MockTradingLifecycleLogger;
   let mockEventBus: MockTradingLifecycleEventBus;
@@ -43,14 +44,12 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
 
   beforeEach(() => {
-    context = createTradingLifecycleTestContext();
+    context = createManagedTradingLifecycleContext();
     mockLogger = context.logger;
     mockEventBus = context.eventBus;
     mockActionQueue = context.actionQueue;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = context.rebuild({ errorHandler: mockErrorHandler });
-
-    jest.clearAllMocks();
   });
 
   afterEach(() => {

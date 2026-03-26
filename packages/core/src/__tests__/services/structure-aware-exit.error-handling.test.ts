@@ -18,27 +18,34 @@ import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointTyp
 import {
   createStructureAwareExitConfig,
   createStructureAwareExitHarness,
+  createManagedStructureAwareExitContext,
   createInvalidStructureAwareLevel,
   createStructureAwareExitMockLogger,
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
+  type ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
+  let context: ManagedStructureAwareExitContext;
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let defaultConfig: StructureAwareExitConfig;
-  let createService: ReturnType<typeof createStructureAwareExitHarness>['createService'];
+  let createService: ManagedStructureAwareExitContext['createService'];
 
   beforeEach(() => {
-    const harness = createStructureAwareExitHarness({
+    context = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
-    mockLogger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    defaultConfig = harness.config;
-    createService = harness.createService;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    defaultConfig = context.config;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================
@@ -107,10 +114,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = createStructureAwareExitHarness({
+      service = createService({
         config: defaultConfig,
         logger: mockLogger,
-      }).service;
+      });
     });
 
     it('should THROW on invalid currentPrice (NaN)', () => {
@@ -159,10 +166,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = createStructureAwareExitHarness({
+      service = createService({
         config: defaultConfig,
         logger: mockLogger,
-      }).service;
+      });
     });
 
     it('should GRACEFUL_DEGRADE when swing points processing fails', () => {
@@ -213,10 +220,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = createStructureAwareExitHarness({
+      service = createService({
         config: defaultConfig,
         logger: mockLogger,
-      }).service;
+      });
     });
 
     it('should GRACEFUL_DEGRADE when calculation produces NaN', () => {
@@ -421,10 +428,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     let service: StructureAwareExitService;
 
     beforeEach(() => {
-      service = createStructureAwareExitHarness({
+      service = createService({
         config: defaultConfig,
         logger: mockLogger,
-      }).service;
+      });
     });
 
     it('should handle empty arrays gracefully', () => {

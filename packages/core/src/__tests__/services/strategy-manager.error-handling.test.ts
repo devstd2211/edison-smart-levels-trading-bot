@@ -16,15 +16,12 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
 import { ConfigNew } from '../../types/config/config-new.types';
 import {
-  createMockStrategyConfig,
-  createMockStrategyErrorHandler,
-  createMockStrategyLoader,
-  createMockStrategyMainConfig,
-  createMockStrategyMerger,
-  createStrategyManagerFactory,
+  createManagedStrategyManagerContext,
+  type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
+  let context: ManagedStrategyManagerContext;
   let strategyManager: StrategyManagerService;
   let mockLoader: jest.Mocked<StrategyLoaderService>;
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
@@ -35,24 +32,22 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
 
   // Mock strategy for testing
-  const mockStrategy: StrategyConfig = createMockStrategyConfig();
-  const mockMainConfig: InitMainConfig = createMockStrategyMainConfig() as unknown as InitMainConfig;
+  let mockStrategy: StrategyConfig;
+  let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
-    mockLoader = createMockStrategyLoader();
-    mockMerger = createMockStrategyMerger();
-    mockErrorHandler = createMockStrategyErrorHandler();
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-    createManager = createStrategyManagerFactory({
-      loader: mockLoader,
-      merger: mockMerger,
-      errorHandler: mockErrorHandler,
-    });
+    context = createManagedStrategyManagerContext();
+    mockLoader = context.mockLoader;
+    mockMerger = context.mockMerger;
+    mockErrorHandler = context.mockErrorHandler;
+    consoleLogSpy = context.consoleLogSpy;
+    createManager = context.createManager;
+    mockStrategy = context.mockStrategy;
+    mockMainConfig = context.mockMainConfig as unknown as InitMainConfig;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    context.cleanup();
   });
 
   // ============================================================================

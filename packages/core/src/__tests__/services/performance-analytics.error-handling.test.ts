@@ -16,10 +16,9 @@ import type { PerformanceAnalyticsConfig } from '../../types/legacy';
 import {
   asPerformanceAnalyticsPeriod,
   asPerformanceAnalyticsTrades,
-  createPerformanceAnalyticsFactory,
-  createPerformanceAnalyticsHarness,
-  createPerformanceAnalyticsService,
+  createManagedPerformanceAnalyticsContext,
   createPerformanceAnalyticsTradeSeries,
+  type ManagedPerformanceAnalyticsContext,
 } from '../helpers/performance-analytics-test.utils';
 
 // ============================================================================
@@ -27,25 +26,25 @@ import {
 // ============================================================================
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
+  let context: ManagedPerformanceAnalyticsContext;
   let service: PerformanceAnalytics;
-  let mockLogger: ReturnType<typeof createPerformanceAnalyticsHarness>['logger'];
-  let mockJournal: ReturnType<typeof createPerformanceAnalyticsHarness>['journal'];
+  let mockLogger: ManagedPerformanceAnalyticsContext['logger'];
+  let mockJournal: ManagedPerformanceAnalyticsContext['journal'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
-  let createService: ReturnType<typeof createPerformanceAnalyticsFactory>['createService'];
+  let createService: ManagedPerformanceAnalyticsContext['createService'];
 
   beforeEach(() => {
-    const harness = createPerformanceAnalyticsHarness();
-    mockConfig = harness.config;
-    mockLogger = harness.logger;
-    mockJournal = harness.journal;
-    mockErrorHandler = harness.errorHandler;
-    ({ createService } = createPerformanceAnalyticsFactory({
-      config: mockConfig,
-      journal: mockJournal,
-      logger: mockLogger,
-      errorHandler: mockErrorHandler,
-    }));
+    context = createManagedPerformanceAnalyticsContext();
+    mockConfig = context.config;
+    mockLogger = context.logger;
+    mockJournal = context.journal;
+    mockErrorHandler = context.errorHandler;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==================== THROW Strategy - Input Validation ====================

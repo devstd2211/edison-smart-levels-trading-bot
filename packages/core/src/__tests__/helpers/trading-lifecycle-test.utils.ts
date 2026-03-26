@@ -75,6 +75,8 @@ export interface TradingLifecycleTestContext {
   cleanup: () => void;
 }
 
+export interface ManagedTradingLifecycleContext extends TradingLifecycleTestContext {}
+
 export function createMockTradingLifecycleLogger(): MockTradingLifecycleLogger {
   return {
     debug: jest.fn(),
@@ -253,6 +255,28 @@ export function createTradingLifecycleTestContext(
   };
 
   context.manager = harness.createManager(overrides);
+
+  return context;
+}
+
+export function createManagedTradingLifecycleContext(
+  overrides?: Partial<{
+    config: PositionLifecycleConfig;
+    logger: MockTradingLifecycleLogger;
+    eventBus: MockTradingLifecycleEventBus;
+    actionQueue: MockTradingLifecycleActionQueue;
+    errorHandler: jest.Mocked<ErrorHandler> | undefined;
+  }>,
+): ManagedTradingLifecycleContext {
+  jest.clearAllMocks();
+
+  const context = createTradingLifecycleTestContext(overrides);
+  const cleanup = context.cleanup.bind(context);
+
+  context.cleanup = () => {
+    cleanup();
+    jest.clearAllMocks();
+  };
 
   return context;
 }

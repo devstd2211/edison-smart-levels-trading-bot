@@ -7,14 +7,16 @@ import { StrategyConfigMergerService } from '../../services/strategy-config-merg
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createStrategyConfigMergerErrorHandler,
-  createStrategyConfigMergerHarness,
   createStrategyConfigMergerLogger,
   createStrategyConfigMergerMainConfig as createMockConfig,
+  createManagedStrategyConfigMergerContext,
   createStrategyConfigMergerService,
   createStrategyConfigMergerStrategy as createMockStrategy,
+  type ManagedStrategyConfigMergerContext,
 } from '../helpers/strategy-config-merger-test.utils';
 
 describe('StrategyConfigMergerService - Error Handling', () => {
+  let context: ManagedStrategyConfigMergerContext;
   let service: StrategyConfigMergerService;
   let errorHandler: ErrorHandler;
   type MainConfigInput = Parameters<StrategyConfigMergerService['mergeConfigs']>[0];
@@ -46,10 +48,16 @@ describe('StrategyConfigMergerService - Error Handling', () => {
 
   beforeEach(() => {
     mockLogger = createStrategyConfigMergerLogger();
-    ({ service, errorHandler } = createStrategyConfigMergerHarness({
+    context = createManagedStrategyConfigMergerContext({
       logger: mockLogger,
       errorHandler: createStrategyConfigMergerErrorHandler(asErrorLogger(mockLogger)),
-    }));
+    });
+    service = context.service;
+    errorHandler = context.errorHandler;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ===== THROW: Input Validation =====

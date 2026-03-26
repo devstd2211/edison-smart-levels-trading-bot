@@ -49,6 +49,22 @@ export interface MonitoringServerTestContext {
 }
 
 export interface ManagedMonitoringServerContext extends MonitoringServerTestContext {
+  createServer: (options: {
+    port: number;
+    metricsService?: PrometheusMetricsService;
+    healthService?: HealthCheckService;
+  }) => MonitoringServer;
+  startServer: (options: {
+    port: number;
+    metricsService?: PrometheusMetricsService;
+    healthService?: HealthCheckService;
+  }) => Promise<MonitoringServer>;
+  startAndStopServer: (options: {
+    port: number;
+    metricsService?: PrometheusMetricsService;
+    healthService?: HealthCheckService;
+  }) => Promise<MonitoringServer>;
+  getBaseUrl: (server: MonitoringServer) => string;
   cleanup: () => Promise<void>;
 }
 
@@ -193,6 +209,10 @@ export function createManagedMonitoringServerContext(): ManagedMonitoringServerC
 
   return {
     ...context,
+    createServer: (options) => context.harness.createServer(options, context.trackedServers),
+    startServer: (options) => context.harness.startServer(options, context.trackedServers),
+    startAndStopServer: (options) => context.harness.startAndStopServer(options, context.trackedServers),
+    getBaseUrl: context.harness.getBaseUrl,
     cleanup: async () => {
       jest.restoreAllMocks();
       await context.stop();
