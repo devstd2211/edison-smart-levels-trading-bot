@@ -146,3 +146,33 @@ export const createSwingPoint = (
   timestamp,
   type,
 });
+
+export type SwingPointDetectorHarness = ReturnType<
+  typeof createSwingPointDetectorHarness
+>;
+
+export type ManagedSwingPointDetectorContext = SwingPointDetectorHarness & {
+  cleanup: () => void;
+};
+
+export const createManagedSwingPointDetectorContext = (
+  options: SwingPointDetectorHarnessOptions = {},
+): ManagedSwingPointDetectorContext => {
+  const harness = createSwingPointDetectorHarness(options);
+  const trackedServices = new Set<SwingPointDetectorService>([harness.service]);
+
+  const createService: SwingPointDetectorHarness['createService'] = (serviceOptions = {}) => {
+    const service = harness.createService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService,
+    cleanup: () => {
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+};

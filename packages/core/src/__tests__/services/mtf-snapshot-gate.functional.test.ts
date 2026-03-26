@@ -12,11 +12,9 @@ import {
 import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 import {
-  createMockSnapshotLogger,
-  createStartedSnapshotGate,
+  createManagedMTFSnapshotGateContext,
+  type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
-
-const mockLogger = createMockSnapshotLogger();
 
 /**
  * Helper: Create realistic candles for a market pattern
@@ -118,15 +116,15 @@ function createRealisticCandles(
 
 describe('MTFSnapshotGate - Functional Tests', () => {
   let gate: MTFSnapshotGate;
+  let context: ManagedMTFSnapshotGateContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    gate = createStartedSnapshotGate(mockLogger);
+    context = createManagedMTFSnapshotGateContext();
+    gate = context.gate;
   });
 
   afterEach(() => {
-    gate.stop();
-    jest.useRealTimers();
+    context.cleanup();
   });
 
   // ========================================================================
@@ -562,7 +560,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         restrictedDirections: [],
       } as unknown as TrendAnalysis, signal, candle);
 
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(context.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Created snapshot')
       );
     });
@@ -593,7 +591,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
       // Valid validation
       gate.validateSnapshot(TrendBias.BULLISH);
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(context.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Snapshot valid')
       );
 
@@ -601,7 +599,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
       // Invalid validation
       gate.validateSnapshot(TrendBias.BEARISH);
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(context.logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Bias mismatch')
       );
     });

@@ -19,20 +19,26 @@ import {
   createEntryPriceLifecycleSnapshot,
   createEntryPriceState,
   createEntryPriceTransitionState,
-  createFunctionalPositionExitingHarness,
+  createManagedFunctionalPositionExitingContext,
   formatPositionExitingTrace,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
+  type ManagedFunctionalPositionExitingContext,
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
+  let context: ManagedFunctionalPositionExitingContext;
   let service: PositionExitingService;
-  let mockBybitService: ReturnType<typeof createFunctionalPositionExitingHarness>['mockBybit'];
+  let mockBybitService: ManagedFunctionalPositionExitingContext['mockBybit'];
 
   beforeEach(() => {
-    const harness = createFunctionalPositionExitingHarness();
-    service = harness.service;
-    mockBybitService = harness.mockBybit;
+    context = createManagedFunctionalPositionExitingContext();
+    service = context.service;
+    mockBybitService = context.mockBybit;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {

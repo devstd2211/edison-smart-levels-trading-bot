@@ -33,16 +33,18 @@ import {
   createMockPositionExitingSessionStats,
   createMockPositionExitingTelegram,
   createMockTakeProfitManager,
-  createPositionExitingHarness,
+  createManagedPositionExitingContext,
   executePositionExitActionDirect,
   executePositionExitSequence,
   executePositionExitRequest,
+  type ManagedPositionExitingContext,
 } from '../helpers/position-exiting-test.utils';
 
 const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
+  let context: ManagedPositionExitingContext;
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -56,22 +58,22 @@ describe('PositionExitingService', () => {
   let fullConfig: Config;
 
   beforeEach(() => {
-    const harness = createPositionExitingHarness();
-    service = harness.service;
-    mockLogger = harness.mockLogger;
-    mockBybit = harness.mockBybit;
-    mockTelegram = harness.mockTelegram;
-    mockJournal = harness.mockJournal;
-    mockSessionStats = harness.mockSessionStats;
-    mockTakeProfitManager = harness.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
-    mockPositionManager = harness.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
-    tradingConfig = harness.tradingConfig;
-    riskConfig = harness.riskConfig;
-    fullConfig = harness.fullConfig;
+    context = createManagedPositionExitingContext();
+    service = context.service;
+    mockLogger = context.mockLogger;
+    mockBybit = context.mockBybit;
+    mockTelegram = context.mockTelegram;
+    mockJournal = context.mockJournal;
+    mockSessionStats = context.mockSessionStats;
+    mockTakeProfitManager = context.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
+    mockPositionManager = context.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
+    tradingConfig = context.tradingConfig;
+    riskConfig = context.riskConfig;
+    fullConfig = context.fullConfig;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    context.cleanup();
   });
 
   describe('executeExitAction()', () => {
@@ -317,7 +319,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should calculate simple PnL without TakeProfitManager', async () => {
-      const noTakeProfitHarness = createPositionExitingHarness({
+      const noTakeProfitHarness = context.createHarness({
         withTakeProfitManager: false,
       });
       service = noTakeProfitHarness.service;

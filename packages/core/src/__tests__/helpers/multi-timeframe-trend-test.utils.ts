@@ -147,3 +147,33 @@ export function createMultiTimeframeTrendHarness(
 export function asMultiTimeframeTrendData(value: unknown): MultiTimeframeData {
   return value as MultiTimeframeData;
 }
+
+export type MultiTimeframeTrendHarness = ReturnType<
+  typeof createMultiTimeframeTrendHarness
+>;
+
+export type ManagedMultiTimeframeTrendContext = MultiTimeframeTrendHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedMultiTimeframeTrendContext(
+  options: MultiTimeframeTrendOptions = {},
+): ManagedMultiTimeframeTrendContext {
+  const harness = createMultiTimeframeTrendHarness(options);
+  const trackedServices = new Set<MultiTimeframeTrendService>([harness.service]);
+
+  const createService: MultiTimeframeTrendHarness['createService'] = (serviceOptions = {}) => {
+    const service = harness.createService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService,
+    cleanup: () => {
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+}

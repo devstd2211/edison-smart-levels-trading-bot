@@ -43,3 +43,26 @@ export function createStandardBybitErrorHandlingHarness(options: {
 } = {}) {
   return createBybitErrorHandlingHarness(options);
 }
+
+export type BybitErrorHandlingHarness = ReturnType<
+  typeof createStandardBybitErrorHandlingHarness
+>;
+
+export type ManagedBybitErrorHandlingContext = BybitErrorHandlingHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedBybitErrorHandlingContext(options: {
+  logger?: jest.Mocked<LoggerService>;
+  config?: ExchangeConfig;
+} = {}): ManagedBybitErrorHandlingContext {
+  const harness = createStandardBybitErrorHandlingHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+    },
+  };
+}

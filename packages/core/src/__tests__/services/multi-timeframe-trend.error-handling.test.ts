@@ -21,9 +21,10 @@ import {
   createMultiTimeframeTrendCandles as createValidCandles,
   createMultiTimeframeTrendData as createValidMultiTFData,
   createMultiTimeframeTrendFailingLogger,
-  createMultiTimeframeTrendHarness,
+  createManagedMultiTimeframeTrendContext,
   createMultiTimeframeTrendInvalidCandle,
   createMultiTimeframeTrendLogger as createMockLogger,
+  type ManagedMultiTimeframeTrendContext,
 } from '../helpers/multi-timeframe-trend-test.utils';
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
@@ -37,14 +38,19 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => MultiTimeframeTrendService;
+  let context: ManagedMultiTimeframeTrendContext;
 
   beforeEach(() => {
-    const harness = createMultiTimeframeTrendHarness();
-    logger = harness.logger;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    swingPointDetector = harness.swingPointDetector;
-    service = harness.service;
-    createService = harness.createService;
+    context = createManagedMultiTimeframeTrendContext();
+    logger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    swingPointDetector = context.swingPointDetector;
+    service = context.service;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('THROW Strategy - Input Validation', () => {

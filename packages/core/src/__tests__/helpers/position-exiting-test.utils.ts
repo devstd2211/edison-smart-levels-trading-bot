@@ -972,6 +972,8 @@ export type PositionExitingHarness = {
   fullConfig: Config;
 };
 
+type PositionExitingHarnessOptions = Parameters<typeof createPositionExitingHarness>[0];
+
 export function createPositionExitingService(
   dependencies: Omit<PositionExitingHarness, 'service'>,
 ): PositionExitingService {
@@ -1061,5 +1063,141 @@ export function createPositionExitingHarness(options: {
     tradingConfig,
     riskConfig,
     fullConfig,
+  };
+}
+
+export interface ManagedPositionExitingContext extends PositionExitingHarness {
+  createHarness: (options?: PositionExitingHarnessOptions) => PositionExitingHarness;
+  cleanup: () => void;
+}
+
+export function createManagedPositionExitingContext(
+  options: PositionExitingHarnessOptions = {},
+): ManagedPositionExitingContext {
+  const trackedHarnesses: PositionExitingHarness[] = [];
+
+  const createHarness = (overrides: PositionExitingHarnessOptions = {}) => {
+    const harness = createPositionExitingHarness({
+      ...options,
+      ...overrides,
+    });
+    trackedHarnesses.push(harness);
+    return harness;
+  };
+
+  const harness = createHarness();
+
+  return {
+    ...harness,
+    createHarness,
+    cleanup: () => {
+      trackedHarnesses.length = 0;
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export interface ManagedPositionExitingErrorHandlingContext {
+  mockTradingConfig: TradingConfig;
+  mockRiskConfig: RiskManagementConfig;
+  mockConfig: Config;
+  mockPosition: Position;
+  mockExchange: jest.Mocked<import('../../interfaces/IExchange').IExchange>;
+  mockTelegram: jest.Mocked<import('../../services').TelegramService>;
+  mockLogger: jest.Mocked<LoggerService>;
+  mockJournal: jest.Mocked<import('../../services').TradingJournalService>;
+  mockSessionStats: jest.Mocked<import('../../services').SessionStatsService>;
+  cleanup: () => void;
+}
+
+export function createManagedPositionExitingErrorHandlingContext():
+  ManagedPositionExitingErrorHandlingContext {
+  const harness = createPositionExitingErrorHandlingHarness();
+  const mockExchange = {
+    ...createMockPositionExitingExchange(),
+    getCandles: jest.fn(),
+  } as unknown as jest.Mocked<import('../../interfaces/IExchange').IExchange>;
+  const mockTelegram =
+    createMockPositionExitingTelegram() as unknown as jest.Mocked<import('../../services').TelegramService>;
+  const mockLogger =
+    createMockPositionExitingLogger() as unknown as jest.Mocked<LoggerService>;
+  const mockJournal =
+    createMockPositionExitingJournal() as unknown as jest.Mocked<import('../../services').TradingJournalService>;
+  const mockSessionStats =
+    createMockPositionExitingSessionStats() as unknown as jest.Mocked<import('../../services').SessionStatsService>;
+
+  return {
+    ...harness,
+    mockExchange,
+    mockTelegram,
+    mockLogger,
+    mockJournal,
+    mockSessionStats,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export interface ManagedFunctionalPositionExitingContext extends PositionExitingHarness {
+  cleanup: () => void;
+}
+
+export function createManagedFunctionalPositionExitingContext():
+  ManagedFunctionalPositionExitingContext {
+  const harness = createFunctionalPositionExitingHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export interface ManagedRealScenarioPositionExitingContext extends PositionExitingHarness {
+  cleanup: () => void;
+}
+
+export function createManagedRealScenarioPositionExitingContext(
+  loggerOverrides: Partial<ReturnType<typeof createMockPositionExitingLogger>> = {},
+): ManagedRealScenarioPositionExitingContext {
+  const harness = createRealScenarioPositionExitingHarness(loggerOverrides);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export interface ManagedTransactionalCloseContext {
+  harness: ReturnType<typeof createTransactionalCloseHarness>;
+  cleanup: () => void;
+}
+
+export function createManagedTransactionalCloseContext(): ManagedTransactionalCloseContext {
+  return {
+    harness: createTransactionalCloseHarness(),
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export interface ManagedRaceConditionPositionExitingContext extends PositionExitingHarness {
+  cleanup: () => void;
+}
+
+export function createManagedRaceConditionPositionExitingContext():
+  ManagedRaceConditionPositionExitingContext {
+  const harness = createRaceConditionPositionExitingHarness();
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+    },
   };
 }

@@ -15,7 +15,8 @@ import { ExchangeAPIError, OrderTimeoutError } from '../../errors/DomainErrors';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
-  createStandardBybitErrorHandlingHarness,
+  createManagedBybitErrorHandlingContext,
+  type ManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
 /**
@@ -29,12 +30,17 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
+  let context: ManagedBybitErrorHandlingContext;
 
   beforeEach(() => {
-    const harness = createStandardBybitErrorHandlingHarness();
-    mockLogger = harness.logger as unknown as jest.Mocked<LoggerService>;
-    mockConfig = harness.config;
-    mockRestClient = harness.restClient as unknown as { getServerTime: jest.Mock };
+    context = createManagedBybitErrorHandlingContext();
+    mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
+    mockConfig = context.config;
+    mockRestClient = context.restClient as unknown as { getServerTime: jest.Mock };
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('[RETRY Strategy] initialize()', () => {

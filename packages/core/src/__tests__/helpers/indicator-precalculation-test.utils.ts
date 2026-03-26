@@ -197,3 +197,29 @@ export function createLegacyIndicatorPrecalculationHarness(options?: {
     withErrorHandler: false,
   });
 }
+
+export type IndicatorPrecalculationHarness = ReturnType<
+  typeof createIndicatorPrecalculationHarness
+>;
+
+export type ManagedIndicatorPrecalculationContext = IndicatorPrecalculationHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedIndicatorPrecalculationContext(options?: {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+  withErrorHandler?: boolean;
+}): ManagedIndicatorPrecalculationContext {
+  const harness = createIndicatorPrecalculationHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      jest.clearAllMocks();
+      jest.clearAllTimers();
+    },
+  };
+}

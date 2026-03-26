@@ -18,7 +18,9 @@ import { TimeframeRole } from '../../types/legacy';
 import {
   createIndicatorPrecalculationHarness,
   createLegacyIndicatorPrecalculationHarness,
+  createManagedIndicatorPrecalculationContext,
   createStandardIndicatorPrecalculationService,
+  type ManagedIndicatorPrecalculationContext,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
@@ -35,8 +37,10 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let mockCandleProvider: IndicatorPrecalculationMockCandleProvider;
   let mockCache: IndicatorPrecalculationMockCache;
   let mockCalculators: IndicatorPrecalculationMockCalculator[];
+  let context: ManagedIndicatorPrecalculationContext;
 
   beforeEach(() => {
+    context = createManagedIndicatorPrecalculationContext();
     ({
       service,
       logger,
@@ -44,7 +48,11 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       candleProvider: mockCandleProvider,
       cache: mockCache,
       calculators: mockCalculators,
-    } = createIndicatorPrecalculationHarness());
+    } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ==========================================

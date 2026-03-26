@@ -57,6 +57,29 @@ export function createMTFSnapshotGateHarness(options: {
   };
 }
 
+export type MTFSnapshotGateHarness = ReturnType<typeof createMTFSnapshotGateHarness>;
+
+export type ManagedMTFSnapshotGateContext = MTFSnapshotGateHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedMTFSnapshotGateContext(options: {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+} = {}): ManagedMTFSnapshotGateContext {
+  const harness = createMTFSnapshotGateHarness(options);
+
+  return {
+    ...harness,
+    cleanup: () => {
+      harness.cleanupTrackedGates();
+      jest.clearAllMocks();
+      jest.useRealTimers();
+    },
+  };
+}
+
 export function createSnapshotSignal(overrides: Partial<Signal> = {}): Signal {
   return {
     direction: SignalDirection.LONG,

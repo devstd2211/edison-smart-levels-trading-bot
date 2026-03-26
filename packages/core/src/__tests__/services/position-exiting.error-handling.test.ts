@@ -10,35 +10,28 @@
  * Total: 18 comprehensive tests
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { Position, ExitType, PositionSide, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
-import type { IExchange } from '../../interfaces/IExchange';
-import { LoggerService, TelegramService, TradingJournalService, SessionStatsService } from '../../services';
+import type { SessionStatsService, TradingJournalService } from '../../services';
 import {
   createAtomicCloseGuard,
   calculatePositionExitingRetryDelays,
-  createMockPositionExitingConfig,
-  createMockPositionExitingExchange,
-  createMockPositionExitingJournal,
-  createMockPositionExitingLogger,
-  createMockPositionExitingRiskConfig,
-  createMockPositionExitingSessionStats,
-  createMockPositionExitingTelegram,
-  createMockPositionExitingTradingConfig,
-  createPositionExitingErrorHandlingHarness,
+  createManagedPositionExitingErrorHandlingContext,
   createPositionExitingRetryConfig,
   createTransactionalTradeCloseRequest,
   executeRetrySequence,
   handlePositionExitingError,
+  type ManagedPositionExitingErrorHandlingContext,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
-  let mockExchange: jest.Mocked<IExchange>;
-  let mockTelegram: jest.Mocked<TelegramService>;
-  let mockLogger: jest.Mocked<LoggerService>;
-  let mockJournal: jest.Mocked<TradingJournalService>;
-  let mockSessionStats: jest.Mocked<SessionStatsService>;
+  let context: ManagedPositionExitingErrorHandlingContext;
+  let mockExchange: ManagedPositionExitingErrorHandlingContext['mockExchange'];
+  let mockTelegram: ManagedPositionExitingErrorHandlingContext['mockTelegram'];
+  let mockLogger: ManagedPositionExitingErrorHandlingContext['mockLogger'];
+  let mockJournal: ManagedPositionExitingErrorHandlingContext['mockJournal'];
+  let mockSessionStats: ManagedPositionExitingErrorHandlingContext['mockSessionStats'];
 
   let mockTradingConfig: TradingConfig;
   let mockRiskConfig: RiskManagementConfig;
@@ -46,21 +39,20 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockPosition: Position;
 
   beforeEach(() => {
-    const harness = createPositionExitingErrorHandlingHarness();
-    mockTradingConfig = harness.mockTradingConfig;
-    mockRiskConfig = harness.mockRiskConfig;
-    mockConfig = harness.mockConfig;
-    mockPosition = harness.mockPosition;
-    mockExchange = {
-      ...createMockPositionExitingExchange(),
-      getCandles: jest.fn(),
-    } as unknown as jest.Mocked<IExchange>;
+    context = createManagedPositionExitingErrorHandlingContext();
+    mockTradingConfig = context.mockTradingConfig;
+    mockRiskConfig = context.mockRiskConfig;
+    mockConfig = context.mockConfig;
+    mockPosition = context.mockPosition;
+    mockExchange = context.mockExchange;
+    mockTelegram = context.mockTelegram;
+    mockLogger = context.mockLogger;
+    mockJournal = context.mockJournal;
+    mockSessionStats = context.mockSessionStats;
+  });
 
-    mockTelegram = createMockPositionExitingTelegram() as unknown as jest.Mocked<TelegramService>;
-    mockLogger = createMockPositionExitingLogger() as unknown as jest.Mocked<LoggerService>;
-    mockJournal = createMockPositionExitingJournal() as unknown as jest.Mocked<TradingJournalService>;
-    mockSessionStats =
-      createMockPositionExitingSessionStats() as unknown as jest.Mocked<SessionStatsService>;
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

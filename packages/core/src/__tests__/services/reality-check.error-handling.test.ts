@@ -17,9 +17,10 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createRealityCheckAnalyzerSignal,
   createRealityCheckEvent,
-  createRealityCheckHarness,
+  createManagedRealityCheckContext,
   createRealityCheckPriceScenario,
   createRealityCheckSignal,
+  type ManagedRealityCheckContext,
 } from '../helpers/reality-check-test.utils';
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
@@ -30,13 +31,18 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     logger?: LoggerService;
     withLogger?: boolean;
   }) => RealityCheckService;
+  let context: ManagedRealityCheckContext;
 
   beforeEach(() => {
-    const harness = createRealityCheckHarness();
-    logger = harness.logger as LoggerService;
-    errorHandler = harness.errorHandler as ErrorHandler;
-    service = harness.service;
-    createService = harness.createService;
+    context = createManagedRealityCheckContext();
+    logger = context.logger as LoggerService;
+    errorHandler = context.errorHandler as ErrorHandler;
+    service = context.service;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

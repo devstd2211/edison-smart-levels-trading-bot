@@ -217,3 +217,39 @@ export function createLiquidityHeatmapService(options: {
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
+
+export type LiquidityHeatmapHarness = ReturnType<typeof createLiquidityHeatmapHarness>;
+
+export type ManagedLiquidityHeatmapContext = LiquidityHeatmapHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedLiquidityHeatmapContext(options: {
+  config?: LiquidityHeatmapConfig;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+} = {}): ManagedLiquidityHeatmapContext {
+  const harness = createLiquidityHeatmapHarness(options);
+  const trackedServices = new Set<LiquidityHeatmapService>([harness.service]);
+
+  const createService: LiquidityHeatmapHarness['createService'] = (serviceOptions = {}) => {
+    const service = createLiquidityHeatmapService({
+      config: harness.config,
+      logger: harness.logger,
+      errorHandler: harness.errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService,
+    cleanup: () => {
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+}

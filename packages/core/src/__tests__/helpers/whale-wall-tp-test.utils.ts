@@ -164,3 +164,40 @@ export function createWhaleWallTPService(options: {
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
 }
+
+export type WhaleWallTPHarness = ReturnType<typeof createWhaleWallTPHarness>;
+
+export type ManagedWhaleWallTPContext = WhaleWallTPHarness & {
+  createService: typeof createWhaleWallTPService;
+  cleanup: () => void;
+};
+
+export function createManagedWhaleWallTPContext(options: {
+  logger?: LoggerService;
+  config?: Partial<WhaleWallTPConfig>;
+  withErrorHandler?: boolean;
+} = {}): ManagedWhaleWallTPContext {
+  const harness = createWhaleWallTPHarness(options);
+  const trackedServices = new Set<WhaleWallTPService>([harness.service]);
+
+  const createService = (serviceOptions = {}) => {
+    const service = createWhaleWallTPService({
+      logger: harness.logger,
+      config: options.config,
+      errorHandler: harness.errorHandler,
+      withErrorHandler: options.withErrorHandler,
+      ...serviceOptions,
+    });
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService,
+    cleanup: () => {
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+}

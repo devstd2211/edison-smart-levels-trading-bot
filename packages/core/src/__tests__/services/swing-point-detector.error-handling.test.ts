@@ -13,10 +13,11 @@ import {
   createSwingPoint,
   createSwingPointDetectorCandleArray,
   createSwingPointDetectorFailingLogger,
-  createSwingPointDetectorHarness,
+  createManagedSwingPointDetectorContext,
   createSwingPointDetectorInvalidCandle,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
+  type ManagedSwingPointDetectorContext,
 } from '../helpers/swing-point-detector-test.utils';
 
 describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {
@@ -29,16 +30,21 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
     lookbackPeriod?: number;
     withErrorHandler?: boolean;
   }) => SwingPointDetectorService;
+  let context: ManagedSwingPointDetectorContext;
 
   beforeEach(() => {
-    const harness = createSwingPointDetectorHarness({
+    context = createManagedSwingPointDetectorContext({
       logger: createSwingPointDetectorMockLogger(),
       errorHandler: createSwingPointDetectorMockErrorHandler(),
     });
-    mockLogger = harness.logger;
-    mockErrorHandler = harness.errorHandler as ErrorHandler;
-    service = harness.service;
-    createService = harness.createService;
+    mockLogger = context.logger;
+    mockErrorHandler = context.errorHandler as ErrorHandler;
+    service = context.service;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('A. detectSwingPoints() Errors - GRACEFUL_DEGRADE (5 tests)', () => {

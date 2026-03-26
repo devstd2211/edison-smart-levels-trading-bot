@@ -16,11 +16,12 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createFractalSmcWeightingConfig,
   createFractalSmcWeightingData,
-  createFractalSmcWeightingHarness,
   createFractalSmcWeightingInvalidSetup,
+  createManagedFractalSmcWeightingContext,
   createFractalSmcWeightingMockLoggerWithFailures,
   createFractalSmcWeightingMockLogger,
   createFractalSmcWeightingSetup,
+  type ManagedFractalSmcWeightingContext,
 } from '../helpers/fractal-smc-weighting-test.utils';
 
 type SetupInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[0];
@@ -41,13 +42,18 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => FractalSmcWeightingService;
+  let context: ManagedFractalSmcWeightingContext;
 
   beforeEach(() => {
     mockLogger = createFractalSmcWeightingMockLogger();
-    const harness = createFractalSmcWeightingHarness({ logger: mockLogger });
-    errorHandler = harness.errorHandler as ErrorHandler;
-    service = harness.service;
-    createService = harness.createService;
+    context = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+    errorHandler = context.errorHandler as ErrorHandler;
+    service = context.service;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // ============================================================================

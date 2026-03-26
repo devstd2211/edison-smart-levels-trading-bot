@@ -120,3 +120,35 @@ export const createRealityCheckService = (
       : options.logger ?? createRealityCheckMockLogger();
   return new RealityCheckService(logger);
 };
+
+export type RealityCheckHarness = ReturnType<typeof createRealityCheckHarness>;
+
+export type ManagedRealityCheckContext = RealityCheckHarness & {
+  cleanup: () => void;
+};
+
+export const createManagedRealityCheckContext = (
+  options: RealityCheckHarnessOptions = {},
+): ManagedRealityCheckContext => {
+  const harness = createRealityCheckHarness(options);
+  const trackedServices = new Set<RealityCheckService>([harness.service]);
+
+  const createService: RealityCheckHarness['createService'] = (serviceOptions = {}) => {
+    const service = createRealityCheckService({
+      logger: harness.logger,
+      withLogger: options.withLogger,
+      ...serviceOptions,
+    });
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService,
+    cleanup: () => {
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+};

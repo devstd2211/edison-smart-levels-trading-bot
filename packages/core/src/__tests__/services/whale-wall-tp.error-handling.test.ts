@@ -16,15 +16,23 @@ import {
   createWhaleWallTPConfigWithQuality as createConfigWithQualityValidation,
   createWhaleWallTPConfigWithTargeting as createConfigWithTPTargeting,
   createWhaleWallTPErrorHandler,
-  createWhaleWallTPHarness,
+  createManagedWhaleWallTPContext,
   createWhaleWallTPMockLogger as createMockLogger,
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
+  type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
+  let context: ManagedWhaleWallTPContext | undefined;
+
+  afterEach(() => {
+    context?.cleanup();
+    context = undefined;
+  });
+
   // ============================================================================
   // THROW: Config Validation (5 tests)
   // ============================================================================
@@ -98,10 +106,11 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     type WallsInput = Parameters<WhaleWallTPService['adjustTPSL']>[0];
 
     beforeEach(() => {
-      ({ service } = createWhaleWallTPHarness({
+      context = createManagedWhaleWallTPContext({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
-      }));
+      });
+      ({ service } = context);
     });
 
     test('should throw on null walls array', () => {
@@ -145,10 +154,11 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      ({ service } = createWhaleWallTPHarness({
+      context = createManagedWhaleWallTPContext({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
-      }));
+      });
+      ({ service } = context);
     });
 
     test('should handle valid adjustment request', () => {
@@ -234,10 +244,11 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      ({ service } = createWhaleWallTPHarness({
+      context = createManagedWhaleWallTPContext({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
-      }));
+      });
+      ({ service } = context);
     });
 
     test('should handle multiple sequential adjustments', () => {
@@ -274,21 +285,23 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     const mockLogger = createMockLogger();
 
     test('should work without ErrorHandler', () => {
-      const { service } = createWhaleWallTPHarness({
+      context = createManagedWhaleWallTPContext({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
         withErrorHandler: false,
       });
+      const { service } = context;
       const result = service.adjustTPSL(createValidWalls(), 50000, SignalDirection.LONG, 51000, 49000);
       expect(result).toBeDefined();
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
-      const { service } = createWhaleWallTPHarness({
+      context = createManagedWhaleWallTPContext({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
         withErrorHandler: false,
       });
+      const { service } = context;
       expect(() => {
         service.adjustTPSL(createValidWalls(), NaN, SignalDirection.LONG, 51000, 49000);
       }).toThrow('Entry price must be a finite number');
@@ -305,10 +318,11 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      ({ service } = createWhaleWallTPHarness({
+      context = createManagedWhaleWallTPContext({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
-      }));
+      });
+      ({ service } = context);
     });
 
     test('should handle zero minWallPercent', () => {

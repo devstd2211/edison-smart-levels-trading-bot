@@ -11,10 +11,11 @@
 import { ExitType } from '../../types/legacy';
 import {
   createRaceConditionCloseRequest,
-  createRaceConditionPositionExitingHarness,
+  createManagedRaceConditionPositionExitingContext,
   executeConcurrentRaceConditionCloses,
   executeNilRaceConditionClose,
   executeRaceConditionClose,
+  type ManagedRaceConditionPositionExitingContext,
 } from '../helpers/position-exiting-test.utils';
 
 // ============================================================================
@@ -22,22 +23,26 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  let harness: ReturnType<typeof createRaceConditionPositionExitingHarness>;
-  let positionExitingService: ReturnType<typeof createRaceConditionPositionExitingHarness>['service'];
-  let mockLogger: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockLogger'];
-  let mockBybitService: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockBybit'];
-  let mockTelegram: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockTelegram'];
-  let mockJournal: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockJournal'];
-  let mockSessionStats: ReturnType<typeof createRaceConditionPositionExitingHarness>['mockSessionStats'];
+  let context: ManagedRaceConditionPositionExitingContext;
+  let positionExitingService: ManagedRaceConditionPositionExitingContext['service'];
+  let mockLogger: ManagedRaceConditionPositionExitingContext['mockLogger'];
+  let mockBybitService: ManagedRaceConditionPositionExitingContext['mockBybit'];
+  let mockTelegram: ManagedRaceConditionPositionExitingContext['mockTelegram'];
+  let mockJournal: ManagedRaceConditionPositionExitingContext['mockJournal'];
+  let mockSessionStats: ManagedRaceConditionPositionExitingContext['mockSessionStats'];
 
   beforeEach(() => {
-    harness = createRaceConditionPositionExitingHarness();
-    positionExitingService = harness.service;
-    mockLogger = harness.mockLogger;
-    mockBybitService = harness.mockBybit;
-    mockTelegram = harness.mockTelegram;
-    mockJournal = harness.mockJournal;
-    mockSessionStats = harness.mockSessionStats;
+    context = createManagedRaceConditionPositionExitingContext();
+    positionExitingService = context.service;
+    mockLogger = context.mockLogger;
+    mockBybitService = context.mockBybit;
+    mockTelegram = context.mockTelegram;
+    mockJournal = context.mockJournal;
+    mockSessionStats = context.mockSessionStats;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   // =========================================================================

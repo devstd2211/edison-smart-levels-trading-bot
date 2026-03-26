@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-26)
-- Completed a helper-managed context follow-up for `event-handlers.error-handling`, `websocket-event-handler.error-handling`, `monitoring-server`, `prometheus-metrics`, `session-stats.error-handling`, and `performance-analytics.service`:
-  - extended the adjacent event-handlers / monitoring-server / prometheus-metrics / session-stats / performance-analytics test utils so managed contexts own bound factory helpers, tracked services, and cleanup.
-  - routed the target suites away from suite-local harness ownership and ad-hoc lifecycle tracking.
-  - reviewed the adjacent production services and left production code unchanged.
+- Completed a helper-managed context follow-up for `position-exiting.service`, `position-exiting.error-handling`, `position-exiting.functional`, `position-exiting.integration`, `position-exiting.transactional`, and `position-exiting.race-condition`:
+  - added managed helper contexts so the shared `position-exiting` test utils own created service/harness families and cleanup for the standard / error-handling / functional / real-scenario / transactional / race-condition slices.
+  - routed the target suites away from ad-hoc suite-local lifecycle ownership.
+  - reviewed the adjacent production service and left production code unchanged.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts packages/core/src/__tests__/services/performance-analytics.service.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/services/position-exiting.integration.test.ts packages/core/src/__tests__/services/position-exiting.transactional.test.ts packages/core/src/__tests__/services/position-exiting.race-condition.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next helper-backed lifecycle/testability slice in the remaining monitoring/cache-adjacent suites that still keep suite-local cleanup or over-broad grouped service construction, prioritizing helpers that do not yet fully own created service tracking.
+- Continue with the next helper-backed lifecycle/testability slice in the remaining suites whose helpers still lack managed-context ownership for created services, prioritizing the remaining helper-less clusters such as `position-lifecycle*`, `position-sync*`, `bybit.repository-integration`, or similarly concentrated harness families.
 - After that, keep pushing toward broader grouped-service / `createServices()` narrowing only where no helper-managed cleanup path exists yet.

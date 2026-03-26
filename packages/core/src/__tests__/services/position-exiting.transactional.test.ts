@@ -9,15 +9,26 @@ import {
   createCloseStatusGuard,
   createBalanceTrackingHarness,
   createTransactionalTradeCloseRequest,
-  createTransactionalCloseHarness,
+  createManagedTransactionalCloseContext,
   createJournalSkipTracker,
   createThrowingTradeCloseRecorder,
   executeTransactionalCloseFlow,
   invokeRollbackMultipleTimes,
   writeTransactionalRollbackLog,
+  type ManagedTransactionalCloseContext,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
+  let context: ManagedTransactionalCloseContext;
+
+  beforeEach(() => {
+    context = createManagedTransactionalCloseContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
   it('T1: Normal flow - journal and stats both succeed', () => {
     const { mockJournal, mockStats, journalResult } = executeTransactionalCloseFlow();
 
@@ -63,7 +74,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   });
 
   it('T6: Rollback operation logs errors for debugging', () => {
-    const { mockLogger } = createTransactionalCloseHarness();
+    const { mockLogger } = context.harness;
 
     writeTransactionalRollbackLog(mockLogger, 'Journal rollback complete');
 

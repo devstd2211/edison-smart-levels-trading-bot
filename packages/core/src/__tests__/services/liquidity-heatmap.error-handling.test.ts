@@ -30,11 +30,12 @@ import {
   createDeepLiquidityHeatmapOrderbook,
   createLiquidityHeatmapConfig,
   createLiquidityHeatmapErrorHandler,
-  createLiquidityHeatmapHarness,
+  createManagedLiquidityHeatmapContext,
   createLiquidityHeatmapLogger,
   createLiquidityHeatmapOrderbook,
   createLiquidityHeatmapService,
   createThinLiquidityHeatmapOrderbook,
+  type ManagedLiquidityHeatmapContext,
 } from '../helpers/liquidity-heatmap-test.utils';
 
 const createHeatmapService = (options: {
@@ -190,13 +191,19 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
+  let context: ManagedLiquidityHeatmapContext;
 
   beforeEach(() => {
-    ({ logger } = createLiquidityHeatmapHarness());
+    context = createManagedLiquidityHeatmapContext();
+    ({ logger } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should return safe default heatmap on calculation failure', async () => {
-    const { service } = createLiquidityHeatmapHarness({ logger });
+    const service = context.createService({ logger });
 
     // Corrupt orderbook to force calculation error
     // Make >50% of levels invalid to trigger data quality check
@@ -222,7 +229,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return empty support/resistance on detection failure', async () => {
-    const { service } = createLiquidityHeatmapHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     // Corrupt both bids and asks to force failure
@@ -244,7 +251,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return pessimistic slippage estimate on calculation failure', async () => {
-    const { service } = createLiquidityHeatmapHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.volume = NaN));
@@ -261,7 +268,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return conservative execution cost on failure', async () => {
-    const { service } = createLiquidityHeatmapHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.price = Infinity));
@@ -273,7 +280,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle empty orderbook gracefully', async () => {
-    const { service } = createLiquidityHeatmapHarness({ logger });
+    const service = context.createService({ logger });
 
     const emptyOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -297,7 +304,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
       enableExecutionCost: false,
     });
 
-    const { service } = createLiquidityHeatmapHarness({ config, logger });
+    const service = context.createService({ config, logger });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     const heatmap = await service.buildLiquidityHeatmap(orderbook);
@@ -311,7 +318,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should survive when all calculations fail', async () => {
-    const { service } = createLiquidityHeatmapHarness({ logger });
+    const service = context.createService({ logger });
 
     const corruptOrderbook: Orderbook = createCorruptLiquidityHeatmapOrderbook({
       askVolume: -1,
@@ -397,9 +404,15 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
 describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let service: LiquidityHeatmapService;
+  let context: ManagedLiquidityHeatmapContext;
 
   beforeEach(() => {
-    ({ service } = createLiquidityHeatmapHarness());
+    context = createManagedLiquidityHeatmapContext();
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should build complete heatmap for normal orderbook', async () => {
@@ -504,9 +517,15 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
 
 describe('LiquidityHeatmapService - Edge Cases', () => {
   let service: LiquidityHeatmapService;
+  let context: ManagedLiquidityHeatmapContext;
 
   beforeEach(() => {
-    ({ service } = createLiquidityHeatmapHarness());
+    context = createManagedLiquidityHeatmapContext();
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should handle single-sided orderbook (only bids)', async () => {
@@ -575,9 +594,15 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
 
 describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let service: LiquidityHeatmapService;
+  let context: ManagedLiquidityHeatmapContext;
 
   beforeEach(() => {
-    ({ service } = createLiquidityHeatmapHarness({ withErrorHandler: false }));
+    context = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
+    ({ service } = context);
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   it('should work without ErrorHandler', async () => {

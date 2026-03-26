@@ -11,27 +11,33 @@ import {
   createBreakevenInspection,
   createEntryPriceState,
   createRealScenarioPartialClose,
-  createRealScenarioPositionExitingHarness,
   createRealScenarioTakeProfitManager,
+  createManagedRealScenarioPositionExitingContext,
   createRealScenarioPosition,
   createWebSocketBugScenario,
   formatPositionExitingTrace,
   parseWebSocketEntryPrice,
+  type ManagedRealScenarioPositionExitingContext,
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
+  let context: ManagedRealScenarioPositionExitingContext;
   let service: PositionExitingService;
-  let mockBybitService: ReturnType<typeof createRealScenarioPositionExitingHarness>['mockBybit'];
-  let mockLogger: ReturnType<typeof createRealScenarioPositionExitingHarness>['mockLogger'];
+  let mockBybitService: ManagedRealScenarioPositionExitingContext['mockBybit'];
+  let mockLogger: ManagedRealScenarioPositionExitingContext['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
   beforeEach(() => {
-    const harness = createRealScenarioPositionExitingHarness();
-    service = harness.service;
-    mockLogger = harness.mockLogger;
-    mockBybitService = harness.mockBybit;
+    context = createManagedRealScenarioPositionExitingContext();
+    service = context.service;
+    mockLogger = context.mockLogger;
+    mockBybitService = context.mockBybit;
     mockTakeProfitManager =
-      harness.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
+      context.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {

@@ -13,26 +13,24 @@ import {
 import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 import {
-  createMockSnapshotLogger,
   createSnapshotCandle,
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
-  createStartedSnapshotGate,
+  createManagedMTFSnapshotGateContext,
+  type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
-
-const mockLogger = createMockSnapshotLogger();
 
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
+  let context: ManagedMTFSnapshotGateContext;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    gate = createStartedSnapshotGate(mockLogger);
+    context = createManagedMTFSnapshotGateContext();
+    gate = context.gate;
   });
 
   afterEach(() => {
-    gate.stop();
-    jest.useRealTimers();
+    context.cleanup();
   });
 
   // ========================================================================
@@ -300,8 +298,6 @@ describe('MTFSnapshotGate', () => {
       expect(result.valid).toBe(false);
       expect(result.expired).toBe(true);
       expect(result.reason).toContain('expired');
-
-      jest.useRealTimers();
       done();
     });
   });

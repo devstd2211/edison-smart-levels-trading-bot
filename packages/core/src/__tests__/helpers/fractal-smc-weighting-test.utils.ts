@@ -130,3 +130,33 @@ export function createFractalSmcWeightingHarness(
     createService,
   };
 }
+
+export type FractalSmcWeightingHarness = ReturnType<
+  typeof createFractalSmcWeightingHarness
+>;
+
+export type ManagedFractalSmcWeightingContext = FractalSmcWeightingHarness & {
+  cleanup: () => void;
+};
+
+export function createManagedFractalSmcWeightingContext(
+  options: FractalSmcWeightingServiceOptions = {},
+): ManagedFractalSmcWeightingContext {
+  const harness = createFractalSmcWeightingHarness(options);
+  const trackedServices = new Set<FractalSmcWeightingService>([harness.service]);
+
+  const createService = (serviceOptions: FractalSmcWeightingServiceOptions = {}) => {
+    const service = harness.createService(serviceOptions);
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService,
+    cleanup: () => {
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+}

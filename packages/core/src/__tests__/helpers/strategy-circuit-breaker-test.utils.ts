@@ -112,3 +112,68 @@ export function createLegacyStrategyCircuitBreakerHarness(options: {
     errorHandler: undefined,
   };
 }
+
+export type StrategyCircuitBreakerHarness = ReturnType<
+  typeof createStandardStrategyCircuitBreakerHarness
+>;
+
+export type ManagedStrategyCircuitBreakerContext = StrategyCircuitBreakerHarness & {
+  createService: typeof createStrategyCircuitBreakerService;
+  createStandardService: typeof createStandardStrategyCircuitBreakerService;
+  createLegacyService: typeof createLegacyStrategyCircuitBreakerService;
+  cleanup: () => void;
+};
+
+export function createManagedStrategyCircuitBreakerContext(options: {
+  logger?: LoggerService;
+  config?: Record<string, unknown>;
+  errorHandler?: ErrorHandler;
+} = {}): ManagedStrategyCircuitBreakerContext {
+  const harness = createStandardStrategyCircuitBreakerHarness(options);
+  const trackedServices = new Set<StrategyCircuitBreakerService>([harness.service]);
+
+  const trackService = (service: StrategyCircuitBreakerService): StrategyCircuitBreakerService => {
+    trackedServices.add(service);
+    return service;
+  };
+
+  return {
+    ...harness,
+    createService(serviceOptions = {}) {
+      return trackService(
+        createStrategyCircuitBreakerService({
+          logger: harness.logger,
+          config: options.config,
+          errorHandler: harness.errorHandler,
+          ...serviceOptions,
+        }),
+      );
+    },
+    createStandardService(serviceOptions = {}) {
+      return trackService(
+        createStandardStrategyCircuitBreakerService({
+          logger: harness.logger,
+          config: options.config,
+          errorHandler: harness.errorHandler,
+          ...serviceOptions,
+        }),
+      );
+    },
+    createLegacyService(serviceOptions = {}) {
+      return trackService(
+        createLegacyStrategyCircuitBreakerService({
+          logger: harness.logger,
+          config: options.config,
+          ...serviceOptions,
+        }),
+      );
+    },
+    cleanup: () => {
+      for (const service of trackedServices) {
+        service.clear();
+      }
+      trackedServices.clear();
+      jest.clearAllMocks();
+    },
+  };
+}
