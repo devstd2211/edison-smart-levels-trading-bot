@@ -31,6 +31,20 @@ import {
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
 
+function bindTradingLifecycleContext() {
+  let context: ManagedTradingLifecycleContext;
+
+  beforeEach(() => {
+    context = createManagedTradingLifecycleContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -42,18 +56,15 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockEventBus: MockTradingLifecycleEventBus;
   let mockActionQueue: MockTradingLifecycleActionQueue;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  const getContext = bindTradingLifecycleContext();
 
   beforeEach(() => {
-    context = createManagedTradingLifecycleContext();
+    context = getContext();
     mockLogger = context.logger;
     mockEventBus = context.eventBus;
     mockActionQueue = context.actionQueue;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = context.rebuild({ errorHandler: mockErrorHandler });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==================== RETRY Strategy - Event Publishing ====================

@@ -21,10 +21,23 @@ import {
   type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
+function bindTakeProfitManagerContext() {
+  let context: ManagedTakeProfitManagerContext;
+
+  beforeEach(() => {
+    context = createManagedTakeProfitManagerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let context: ManagedTakeProfitManagerContext;
   let createManager: (options?: {
     configOverrides?: Partial<{
       positionId: string;
@@ -36,15 +49,12 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     }>;
     withErrorHandler?: boolean;
   }) => TakeProfitManagerService;
+  const getContext = bindTakeProfitManagerContext();
 
   beforeEach(() => {
-    context = createManagedTakeProfitManagerContext();
+    const context = getContext();
     ({ logger, errorHandler } = context);
     createManager = context.createManager;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

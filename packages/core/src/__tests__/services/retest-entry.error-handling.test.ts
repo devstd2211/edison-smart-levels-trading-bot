@@ -50,6 +50,20 @@ import {
   type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
 
+function bindRetestEntryContext() {
+  let context: ManagedRetestEntryContext;
+
+  beforeEach(() => {
+    context = createManagedRetestEntryContext({ logger: createRetestEntryLogger() });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   const asCandles = (value: unknown): Candle[] => value as Candle[];
   const asSignal = (value: unknown): Signal => value as Signal;
@@ -60,21 +74,17 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   let mockConfig: RetestConfig;
   let mockSignal: Signal;
   let mockCandles: Candle[];
-  let context: ManagedRetestEntryContext;
   let createService: ManagedRetestEntryContext['createService'];
+  const getContext = bindRetestEntryContext();
 
   beforeEach(() => {
-    context = createManagedRetestEntryContext({ logger: createRetestEntryLogger() });
+    const context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     mockConfig = context.config;
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

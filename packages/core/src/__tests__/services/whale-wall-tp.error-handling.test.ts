@@ -23,20 +23,30 @@ import {
   type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
-describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
-  let context: ManagedWhaleWallTPContext | undefined;
-  let createStandardService: ManagedWhaleWallTPContext['createStandardService'];
-  let createLegacyService: ManagedWhaleWallTPContext['createLegacyService'];
+function bindWhaleWallTPContext() {
+  let context: ManagedWhaleWallTPContext;
 
   beforeEach(() => {
     context = createManagedWhaleWallTPContext();
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
   });
 
   afterEach(() => {
-    context?.cleanup();
-    context = undefined;
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
+  let context: ManagedWhaleWallTPContext;
+  let createStandardService: ManagedWhaleWallTPContext['createStandardService'];
+  let createLegacyService: ManagedWhaleWallTPContext['createLegacyService'];
+  const getContext = bindWhaleWallTPContext();
+
+  beforeEach(() => {
+    context = getContext();
+    createStandardService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
   });
 
   // ============================================================================

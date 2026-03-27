@@ -43,6 +43,20 @@ import {
   type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
 
+function bindOrderbookImbalanceContext() {
+  let context: ManagedOrderbookImbalanceContext;
+
+  beforeEach(() => {
+    context = createManagedOrderbookImbalanceContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   const asOrderbook = (
     value: unknown
@@ -52,19 +66,15 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let context: ManagedOrderbookImbalanceContext;
   let createService: ManagedOrderbookImbalanceContext['createService'];
   let createLegacyService: ManagedOrderbookImbalanceContext['createLegacyService'];
+  const getContext = bindOrderbookImbalanceContext();
 
   beforeEach(() => {
-    context = createManagedOrderbookImbalanceContext();
+    const context = getContext();
     ({ logger, errorHandler } = context);
     createService = context.createService;
     createLegacyService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

@@ -49,6 +49,21 @@ const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
 
+function bindManagedAnalyzerEngineScenarios() {
+  const managedContexts: ManagedAnalyzerEngineContext[] = [];
+
+  afterEach(() => {
+    while (managedContexts.length > 0) {
+      managedContexts.pop()?.cleanup();
+    }
+  });
+
+  return (context: ManagedAnalyzerEngineContext) => {
+    managedContexts.push(context);
+    return context;
+  };
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -68,18 +83,19 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       candleCount?: number;
     },
   ) => ManagedAnalyzerEngineContext;
+  const bindScenario = bindManagedAnalyzerEngineScenarios();
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     mockErrorHandler = createAnalyzerEngineMockErrorHandler();
     createScenario = (analyzers, options = {}) =>
-      createManagedAnalyzerEngineScenarioContext(analyzers, {
+      bindScenario(createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler ?? mockErrorHandler,
         registry: options.registry,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
-      });
+      }));
   });
 
   // ========== SECTION A: Individual Analyzer Failures - SKIP Strategy (5 tests) ==========

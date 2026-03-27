@@ -26,25 +26,35 @@ import {
   type ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
-describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
+function bindStructureAwareExitContext() {
   let context: ManagedStructureAwareExitContext;
-  let mockLogger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let defaultConfig: StructureAwareExitConfig;
-  let createService: ManagedStructureAwareExitContext['createService'];
 
   beforeEach(() => {
     context = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    defaultConfig = context.config;
-    createService = context.createService;
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
+  let mockLogger: LoggerService;
+  let errorHandler: ErrorHandler;
+  let defaultConfig: StructureAwareExitConfig;
+  let createService: ManagedStructureAwareExitContext['createService'];
+  const getContext = bindStructureAwareExitContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    defaultConfig = context.config;
+    createService = context.createService;
   });
 
   // ============================================================================

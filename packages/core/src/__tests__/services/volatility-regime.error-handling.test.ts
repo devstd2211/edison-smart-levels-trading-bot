@@ -22,22 +22,37 @@ import {
 // TEST HELPERS
 // ============================================================================
 
-describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
+function bindVolatilityRegimeContext() {
   let context: ManagedVolatilityRegimeContext;
+  let mockLogger: LoggerService;
+
+  beforeEach(() => {
+    mockLogger = createVolatilityRegimeMockLogger();
+    context = createManagedVolatilityRegimeContext({ logger: mockLogger });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => ({
+    context,
+    mockLogger,
+  });
+}
+
+describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   let createService: ManagedVolatilityRegimeContext['createStandardService'];
   let createLegacyService: ManagedVolatilityRegimeContext['createLegacyService'];
+  const getBoundContext = bindVolatilityRegimeContext();
 
   beforeEach(() => {
-    mockLogger = createVolatilityRegimeMockLogger();
-    context = createManagedVolatilityRegimeContext({ logger: mockLogger });
+    const { context, mockLogger: boundLogger } = getBoundContext();
+    mockLogger = boundLogger;
     ({ errorHandler, createStandardService: createService, createLegacyService } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // =========================================================================

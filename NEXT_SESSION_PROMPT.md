@@ -29,15 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Completed a lifecycle/testability cleanup follow-up for `performance-analytics.error-handling`, `position-pnl-calculator.error-handling`, `strategy-circuit-breaker.error-handling`, `real-time-risk-monitor.error-handling`, `websocket-authentication.error-handling`, and `weight-matrix-calculator.error-handling`.
-  - replaced the remaining direct suite-local managed-context ownership with shared suite-owned binders, including suites that still passed the managed context into helper seeders or reached back into the context for alternate standard/legacy factory creation.
-  - kept the touched suites on their existing helper-owned service / lifecycle / legacy factory paths instead of rebuilding local setup wiring.
+- Completed the remaining lifecycle/testability cleanup follow-up for `wall-tracker.error-handling`, `websocket-event-handler.error-handling`, `whale-wall-tp.error-handling`, and `candle-provider.error-handling`.
+  - replaced the remaining direct suite-local managed-context setup/cleanup with shared suite-owned binders and converted candle-provider error-handling scenarios onto managed standard/legacy helper-owned contexts.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue with the next concentrated lifecycle/testability slice in suites that still keep direct managed-context setup/cleanup, nested per-describe lifecycle ownership, or scenario-local context creation.
-- Prioritize the next six-file batch of error-handling suites where `createManaged...Context()` still bypasses a single suite-owned binder, and keep preferring suite-owned binders plus helper-owned standard/legacy factories.
+- Direct managed-context ownership cleanup across `packages/core/src/__tests__/services/*error-handling*.test.ts` is complete; move to the next lifecycle/testability slice around explicit lifecycle ownership, `createServices()` / `start` / `stop` usage, and replacing broad suite-level service state with minimal grouped services in the next highest-signal non-completed service-adjacent suites.
+- Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

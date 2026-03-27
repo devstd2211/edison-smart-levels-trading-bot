@@ -28,9 +28,7 @@ function createRetryableError(message: string): ExchangeAPIError {
   return new ExchangeAPIError(message, { retCode: 99, retMsg: 'test' });
 }
 
-describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
-  let mockLogger: OrderExecutionPipelineMockLogger;
-  let mockBybitService: OrderExecutionPipelineMockExchange;
+function bindOrderExecutionPipelineContext() {
   let context: ManagedOrderExecutionPipelineContext;
 
   beforeEach(() => {
@@ -40,11 +38,23 @@ describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
         getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
       }),
     });
-    ({ logger: mockLogger, exchange: mockBybitService } = context);
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
+  let mockLogger: OrderExecutionPipelineMockLogger;
+  let mockBybitService: OrderExecutionPipelineMockExchange;
+  const getContext = bindOrderExecutionPipelineContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ logger: mockLogger, exchange: mockBybitService } = context);
   });
 
   describe('[RETRY Strategy] placeOrder()', () => {

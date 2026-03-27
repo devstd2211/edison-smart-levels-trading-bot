@@ -47,6 +47,12 @@ export interface ManagedCandleProviderContext extends ReturnType<
   cleanup: () => void;
 }
 
+export interface ManagedLegacyCandleProviderContext extends ReturnType<
+  typeof createLegacyCandleProviderScenario
+> {
+  cleanup: () => void;
+}
+
 export function createCandleProviderMockLogger():
   CandleProviderMockLogger & ProviderLogger {
   return {
@@ -340,6 +346,27 @@ export function createManagedStandardCandleProviderContext(options?: {
   jest.clearAllMocks();
 
   const context = createStandardCandleProviderScenario(options);
+
+  return {
+    ...context,
+    cleanup: () => {
+      jest.restoreAllMocks();
+      jest.clearAllMocks();
+    },
+  };
+}
+
+export function createManagedLegacyCandleProviderContext(options?: {
+  logger?: CandleProviderMockLogger & ProviderLogger;
+  timeframeProvider?: CandleProviderMockTimeframeProvider &
+    ProviderTimeframeProvider;
+  exchange?: CandleProviderMockExchange & ProviderExchange;
+  repository?: CandleProviderMockRepository & ProviderRepository;
+  symbol?: string;
+}): ManagedLegacyCandleProviderContext {
+  jest.clearAllMocks();
+
+  const context = createLegacyCandleProviderScenario(options);
 
   return {
     ...context,

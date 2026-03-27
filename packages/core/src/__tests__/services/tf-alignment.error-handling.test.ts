@@ -23,33 +23,50 @@ import {
   type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
-describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
-  let service: TFAlignmentService;
-  let errorHandler: ErrorHandler;
-  const mockLogger = createTFAlignmentMockLogger();
-  type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
-  type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
-  type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
+function bindTFAlignmentContext() {
   let context: ManagedTFAlignmentContext;
-  let createService: ManagedTFAlignmentContext['createStandardService'];
-  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
+  let mockLogger: ReturnType<typeof createTFAlignmentMockLogger>;
 
   beforeEach(() => {
-    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
+    mockLogger = createTFAlignmentMockLogger();
+    const errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
     context = createManagedTFAlignmentContext({
       logger: mockLogger as unknown as LoggerService,
       errorHandler,
     });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => ({
+    context,
+    mockLogger,
+  });
+}
+
+describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
+  let service: TFAlignmentService;
+  let errorHandler: ErrorHandler;
+  let mockLogger: ReturnType<typeof createTFAlignmentMockLogger>;
+  type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
+  type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
+  type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
+  let createService: ManagedTFAlignmentContext['createStandardService'];
+  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
+  const getBoundContext = bindTFAlignmentContext();
+
+  beforeEach(() => {
+    const { mockLogger: boundLogger } = getBoundContext();
+    mockLogger = boundLogger;
+    errorHandler = new ErrorHandler(mockLogger as unknown as LoggerService);
     const factory = createTFAlignmentBoundFactory({
       logger: mockLogger as unknown as LoggerService,
       errorHandler,
     });
     createService = factory.createStandardService;
     createLegacyService = factory.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW: Input Validation', () => {

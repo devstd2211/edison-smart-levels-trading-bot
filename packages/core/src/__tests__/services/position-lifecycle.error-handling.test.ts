@@ -49,6 +49,20 @@ import {
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
+function bindPositionLifecycleRepositoryContext() {
+  let context: ManagedPositionLifecycleRepositoryContext;
+
+  beforeEach(() => {
+    context = createManagedPositionLifecycleRepositoryContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
   let service: PositionLifecycleService;
   let mockExchange: jest.Mocked<IExchange>;
@@ -65,10 +79,11 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
+  const getContext = bindPositionLifecycleRepositoryContext();
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    context = createManagedPositionLifecycleRepositoryContext();
+    const context = getContext();
     service = context.service;
     mockExchange = context.mockExchange as unknown as jest.Mocked<IExchange>;
     mockTelegram = context.mockTelegram as unknown as jest.Mocked<TelegramService>;
@@ -80,10 +95,6 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     mockRiskConfig = context.riskConfig;
     mockEntryConfirmationConfig = context.entryConfig;
     mockConfig = context.fullConfig;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================

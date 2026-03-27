@@ -23,26 +23,37 @@ import {
   type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
+function bindWallTrackerContext(configOverrides: Partial<WallTrackingConfig>) {
+  let context: ManagedWallTrackerContext;
+
+  beforeEach(() => {
+    context = createManagedWallTrackerContext({
+      configOverrides,
+    });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let context: ManagedWallTrackerContext;
+  let createLegacyService: ManagedWallTrackerContext['createLegacyService'];
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
     trackHistoryCount: 1000,
   });
+  const getContext = bindWallTrackerContext(mockConfig);
 
   beforeEach(() => {
-    context = createManagedWallTrackerContext({
-      configOverrides: mockConfig,
-    });
-    ({ service, logger: mockLogger, errorHandler } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
+    const context = getContext();
+    ({ service, logger: mockLogger, errorHandler, createLegacyService } = context);
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================
@@ -368,7 +379,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   describe('Category 5: Backward Compatibility', () => {
     it('test-8.9.28.17: Should work without ErrorHandler parameter', () => {
       // Arrange
-      const serviceWithoutErrorHandler = context.createLegacyService();
+      const serviceWithoutErrorHandler = createLegacyService();
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -383,7 +394,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.18: Should preserve existing behavior with ErrorHandler undefined', () => {
       // Arrange
-      const serviceWithoutErrorHandler = context.createLegacyService();
+      const serviceWithoutErrorHandler = createLegacyService();
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -406,7 +417,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.19: Should handle wall removal without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = context.createLegacyService();
+      const serviceWithoutErrorHandler = createLegacyService();
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -421,7 +432,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.20: Should detect clusters without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = context.createLegacyService();
+      const serviceWithoutErrorHandler = createLegacyService();
       const basePrice = 40000;
       const validSize = 1000;
 

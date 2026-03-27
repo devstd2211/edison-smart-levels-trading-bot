@@ -31,6 +31,20 @@ import {
   type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
 
+function bindMLSignalValidatorContext() {
+  let context: ManagedMLSignalValidatorContext;
+
+  beforeEach(() => {
+    context = createManagedMLSignalValidatorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
   let errorHandler: ErrorHandler | undefined;
@@ -57,16 +71,13 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
   let context: ManagedMLSignalValidatorContext;
+  const getContext = bindMLSignalValidatorContext();
 
   beforeEach(() => {
-    context = createManagedMLSignalValidatorContext();
+    context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler;
     service = context.service;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================

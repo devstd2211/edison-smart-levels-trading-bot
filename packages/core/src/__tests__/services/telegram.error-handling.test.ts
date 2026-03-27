@@ -22,12 +22,26 @@ import {
   type ManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
+function bindTelegramContext() {
+  let context: ManagedTelegramContext;
+
+  beforeEach(() => {
+    context = createManagedTelegramContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let fetchMock: jest.Mock;
-  let context: ManagedTelegramContext;
+  const getContext = bindTelegramContext();
 
   const mockConfig: TelegramConfig = {
     botToken: 'test-bot-token',
@@ -36,15 +50,11 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   };
 
   beforeEach(() => {
-    context = createManagedTelegramContext();
+    const context = getContext();
     telegramService = context.telegramService;
     mockLogger = context.mockLogger;
     mockErrorHandler = context.mockErrorHandler;
     fetchMock = context.fetchMock;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

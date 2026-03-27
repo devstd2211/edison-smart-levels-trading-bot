@@ -32,6 +32,20 @@ import {
   type ManagedPatternRecognitionContext,
 } from '../helpers/pattern-recognition-test.utils';
 
+function bindPatternRecognitionContext() {
+  let context: ManagedPatternRecognitionContext;
+
+  beforeEach(() => {
+    context = createManagedPatternRecognitionContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
   let errorHandler: ErrorHandler | undefined;
@@ -42,18 +56,14 @@ describe('PatternRecognitionService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => PatternRecognitionService;
-  let context: ManagedPatternRecognitionContext;
+  const getContext = bindPatternRecognitionContext();
 
   beforeEach(() => {
-    context = createManagedPatternRecognitionContext();
+    const context = getContext();
     service = context.service;
     logger = context.logger;
     errorHandler = context.errorHandler;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================

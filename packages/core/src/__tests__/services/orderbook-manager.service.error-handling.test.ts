@@ -22,30 +22,44 @@ import {
   type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
 
+function bindOrderbookManagerContext() {
+  let context: ManagedOrderbookManagerContext;
+
+  beforeEach(() => {
+    context = createManagedOrderbookManagerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler | undefined;
   let mockLogger: ManagedOrderbookManagerContext['mockLogger'];
+  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
+  let createServiceWithoutWallTracker: ManagedOrderbookManagerContext['createServiceWithoutWallTracker'];
   let mockWallTracker: {
     detectWall: jest.Mock;
     removeWall: jest.Mock;
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  let context: ManagedOrderbookManagerContext;
+  const getContext = bindOrderbookManagerContext();
 
   beforeEach(() => {
-    context = createManagedOrderbookManagerContext();
+    const context = getContext();
     ({
       service,
       mockLogger,
+      createLegacyService,
+      createServiceWithoutWallTracker,
       mockWallTracker,
       errorHandler,
     } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================
@@ -227,7 +241,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       jest.useFakeTimers();
 
       // Service without error handler
-      const legacyService = context.createLegacyService({
+      const legacyService = createLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: mockWallTracker as unknown as WallTrackerService,
@@ -283,7 +297,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const legacyService = context.createLegacyService({
+      const legacyService = createLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: mockWallTracker as unknown as WallTrackerService,
@@ -299,7 +313,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without WallTracker', () => {
-      const serviceNoWall = context.createServiceWithoutWallTracker({
+      const serviceNoWall = createServiceWithoutWallTracker({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         errorHandler,
@@ -314,7 +328,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should work without either ErrorHandler or WallTracker', () => {
-      const minimalService = context.createLegacyService({
+      const minimalService = createLegacyService({
         symbol: 'BTCUSDT',
         logger: mockLogger as unknown as LoggerService,
         wallTracker: undefined,

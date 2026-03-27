@@ -34,8 +34,23 @@ import {
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
 
-describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
+function bindSessionStatsContext() {
   let context: ManagedSessionStatsContext;
+
+  beforeEach(() => {
+    context = createManagedSessionStatsContext({
+      logger: createSessionStatsLogger(),
+    });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
   let stats: SessionStatsService;
   let errorHandler: ErrorHandler;
   let logger: SessionStatsMockLogger;
@@ -43,16 +58,11 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   let createService: (
     overrides?: { errorHandler?: ErrorHandler; autoStart?: boolean }
   ) => SessionStatsService;
+  const getContext = bindSessionStatsContext();
 
   beforeEach(() => {
-    context = createManagedSessionStatsContext({
-      logger: createSessionStatsLogger(),
-    });
+    const context = getContext();
     ({ stats, errorHandler, logger, tempDir, createService } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

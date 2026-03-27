@@ -29,6 +29,20 @@ import {
   type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
+function bindWebSocketEventHandlerContext() {
+  let context: ManagedWebSocketEventHandlerContext;
+
+  beforeEach(() => {
+    context = createManagedWebSocketEventHandlerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
   let mockPositionManager: ManagedWebSocketEventHandlerContext['mockPositionManager'];
@@ -39,9 +53,10 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let mockTelegram: ManagedWebSocketEventHandlerContext['mockTelegram'];
   let mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
   let context: ManagedWebSocketEventHandlerContext;
+  const getContext = bindWebSocketEventHandlerContext();
 
   beforeEach(() => {
-    context = createManagedWebSocketEventHandlerContext();
+    context = getContext();
     ({
       handler,
       mockPositionManager,
@@ -52,10 +67,6 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockTelegram,
       mockLogger,
     } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {

@@ -49,6 +49,20 @@ type OrderExecutionDetectorScenarioOptions = {
   executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
 };
 
+function bindOrderExecutionDetectorContext() {
+  let context: ManagedOrderExecutionDetectorContext;
+
+  beforeEach(() => {
+    context = createManagedOrderExecutionDetectorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>
     value as OrderExecutionData;
@@ -57,12 +71,12 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let context: ManagedOrderExecutionDetectorContext;
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
+  const getContext = bindOrderExecutionDetectorContext();
 
   beforeEach(() => {
-    context = createManagedOrderExecutionDetectorContext();
+    const context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     createScenario = (options = {}) =>
@@ -73,10 +87,6 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   const createMockExecutionData = createOrderExecutionDetectorExecutionData;
