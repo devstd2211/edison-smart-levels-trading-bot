@@ -27,6 +27,20 @@ import {
   type ManagedMultiTimeframeTrendContext,
 } from '../helpers/multi-timeframe-trend-test.utils';
 
+function bindMultiTimeframeTrendContext() {
+  let context: ManagedMultiTimeframeTrendContext;
+
+  beforeEach(() => {
+    context = createManagedMultiTimeframeTrendContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('MultiTimeframeTrendService - Error Handling', () => {
   let service: MultiTimeframeTrendService;
   let errorHandler: ErrorHandler;
@@ -38,19 +52,15 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => MultiTimeframeTrendService;
-  let context: ManagedMultiTimeframeTrendContext;
+  const getContext = bindMultiTimeframeTrendContext();
 
   beforeEach(() => {
-    context = createManagedMultiTimeframeTrendContext();
+    const context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     swingPointDetector = context.swingPointDetector;
     service = context.service;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW Strategy - Input Validation', () => {

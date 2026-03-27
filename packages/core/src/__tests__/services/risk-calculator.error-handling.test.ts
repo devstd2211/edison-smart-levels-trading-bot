@@ -26,6 +26,20 @@ import {
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
 
+function bindRiskCalculatorContext() {
+  let context: ManagedRiskCalculatorContext;
+
+  beforeEach(() => {
+    context = createManagedRiskCalculatorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let calculator: RiskCalculator;
   let mockLogger: RiskCalculatorMockLogger;
@@ -33,20 +47,16 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let defaultInput: RiskCalculationInput;
   let createInput: ManagedRiskCalculatorContext['createInput'];
   let createCalculator: ManagedRiskCalculatorContext['createCalculator'];
-  let context: ManagedRiskCalculatorContext;
+  const getContext = bindRiskCalculatorContext();
 
   beforeEach(() => {
-    context = createManagedRiskCalculatorContext();
+    const context = getContext();
     calculator = context.calculator;
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     defaultInput = context.defaultInput;
     createInput = context.createInput;
     createCalculator = context.createCalculator;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW Strategy - Input Validation', () => {

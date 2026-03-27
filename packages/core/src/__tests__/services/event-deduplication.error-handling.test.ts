@@ -24,6 +24,20 @@ import {
   type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
+function bindEventDeduplicationContext() {
+  let context: ManagedEventDeduplicationContext;
+
+  beforeEach(() => {
+    context = createManagedEventDeduplicationContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // MOCKS
 // ============================================================================
@@ -41,17 +55,13 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
   let createService: ManagedEventDeduplicationContext['createServiceWithDefaults'];
   let createLegacyService: ManagedEventDeduplicationContext['createLegacyService'];
-  let context: ManagedEventDeduplicationContext;
+  const getContext = bindEventDeduplicationContext();
 
   beforeEach(() => {
-    context = createManagedEventDeduplicationContext();
+    const context = getContext();
     ({ logger, errorHandler } = context);
     createService = context.createServiceWithDefaults;
     createLegacyService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================

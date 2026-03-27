@@ -23,6 +23,20 @@ import {
   type ManagedRealityCheckContext,
 } from '../helpers/reality-check-test.utils';
 
+function bindRealityCheckContext() {
+  let context: ManagedRealityCheckContext;
+
+  beforeEach(() => {
+    context = createManagedRealityCheckContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let service: RealityCheckService;
   let logger: LoggerService;
@@ -31,18 +45,14 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     logger?: LoggerService;
     withLogger?: boolean;
   }) => RealityCheckService;
-  let context: ManagedRealityCheckContext;
+  const getContext = bindRealityCheckContext();
 
   beforeEach(() => {
-    context = createManagedRealityCheckContext();
+    const context = getContext();
     logger = context.logger as LoggerService;
     errorHandler = context.errorHandler as ErrorHandler;
     service = context.service;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

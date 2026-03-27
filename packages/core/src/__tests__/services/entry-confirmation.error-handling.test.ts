@@ -16,6 +16,20 @@ import {
   type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
+function bindEntryConfirmationContext() {
+  let context: ManagedEntryConfirmationContext;
+
+  beforeEach(() => {
+    context = createManagedEntryConfirmationContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -30,15 +44,11 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let context: ManagedEntryConfirmationContext;
+  const getContext = bindEntryConfirmationContext();
 
   beforeEach(() => {
-    context = createManagedEntryConfirmationContext();
+    const context = getContext();
     ({ manager, logger, errorHandler } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // TEST 1-3: Logger failure SKIP strategy

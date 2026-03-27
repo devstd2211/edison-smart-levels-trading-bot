@@ -27,20 +27,30 @@ import {
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
+function bindIndicatorCacheContext() {
+  let context: ManagedIndicatorCacheContext;
+
+  beforeEach(() => {
+    context = createManagedIndicatorCacheContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
   let cache: IndicatorCacheService;
-  let context: ManagedIndicatorCacheContext;
+  const getContext = bindIndicatorCacheContext();
 
   beforeEach(() => {
-    context = createManagedIndicatorCacheContext();
+    const context = getContext();
     ({ logger, errorHandler, repository: mockRepo, cache } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

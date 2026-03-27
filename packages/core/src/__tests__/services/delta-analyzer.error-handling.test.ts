@@ -18,6 +18,20 @@ import {
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
+function bindDeltaAnalyzerContext() {
+  let context: ManagedDeltaAnalyzerContext;
+
+  beforeEach(() => {
+    context = createManagedDeltaAnalyzerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -26,19 +40,15 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: DeltaAnalyzerMockLogger;
-  let context: ManagedDeltaAnalyzerContext;
   let createHarness: ManagedDeltaAnalyzerContext['createHarness'];
   let createService: ManagedDeltaAnalyzerContext['createService'];
+  const getContext = bindDeltaAnalyzerContext();
 
   beforeEach(() => {
-    context = createManagedDeltaAnalyzerContext();
+    const context = getContext();
     ({ logger: mockLogger, errorHandler } = context);
     createHarness = context.createHarness;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

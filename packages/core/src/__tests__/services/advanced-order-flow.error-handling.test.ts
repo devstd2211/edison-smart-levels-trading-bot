@@ -38,11 +38,24 @@ import {
   type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
+function bindAdvancedOrderFlowContext() {
+  let context: ManagedAdvancedOrderFlowContext;
+
+  beforeEach(() => {
+    context = createManagedAdvancedOrderFlowContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let context: ManagedAdvancedOrderFlowContext;
   let createService: (options?: {
     config?: AdvancedOrderFlowConfig;
     logger?: LoggerService;
@@ -50,17 +63,14 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     errorHandler?: ErrorHandler;
   }) => AdvancedOrderFlowService;
   let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
+  const getContext = bindAdvancedOrderFlowContext();
 
   beforeEach(() => {
-    context = createManagedAdvancedOrderFlowContext();
+    const context = getContext();
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     createService = (options = {}) => context.createService(options);
     createLegacyService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW: Config Validation', () => {

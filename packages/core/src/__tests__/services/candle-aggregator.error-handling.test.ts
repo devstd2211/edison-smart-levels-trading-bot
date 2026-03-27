@@ -26,23 +26,33 @@ import {
   type CandleAggregatorMockLogger,
 } from '../helpers/candle-aggregator-test.utils';
 
+function bindCandleAggregatorContext() {
+  let context: ManagedCandleAggregatorContext;
+
+  beforeEach(() => {
+    context = createManagedCandleAggregatorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
   let createStandardService: ManagedCandleAggregatorContext['createStandardService'];
   let createLegacyService: ManagedCandleAggregatorContext['createLegacyService'];
-  let context: ManagedCandleAggregatorContext;
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
+  const getContext = bindCandleAggregatorContext();
 
   beforeEach(() => {
-    context = createManagedCandleAggregatorContext();
+    const context = getContext();
     ({ service, errorHandler, mockLogger, createStandardService, createLegacyService } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW: Input Validation', () => {

@@ -26,6 +26,20 @@ import {
   type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
+function bindLimitOrderExecutorContext() {
+  let context: ManagedLimitOrderExecutorContext;
+
+  beforeEach(() => {
+    context = createManagedLimitOrderExecutorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TEST SETUP
 // ============================================================================
@@ -36,21 +50,17 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
-  let context: ManagedLimitOrderExecutorContext;
   let createService: ManagedLimitOrderExecutorContext['createService'];
+  const getContext = bindLimitOrderExecutorContext();
 
   beforeEach(() => {
-    context = createManagedLimitOrderExecutorContext();
+    const context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     config = context.config;
     bybitService = context.bybitService;
     service = context.service;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

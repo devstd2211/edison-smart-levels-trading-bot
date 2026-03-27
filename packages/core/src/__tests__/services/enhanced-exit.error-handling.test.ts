@@ -23,20 +23,30 @@ import {
   type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
 
-describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
-  let mockLogger: LoggerService;
-  let errorHandler: ErrorHandler | undefined;
-  let createService: ManagedEnhancedExitContext['createService'];
+function bindEnhancedExitContext() {
   let context: ManagedEnhancedExitContext;
-  const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
     context = createManagedEnhancedExitContext();
-    ({ logger: mockLogger, errorHandler, createService } = context);
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
+  let mockLogger: LoggerService;
+  let errorHandler: ErrorHandler | undefined;
+  let createService: ManagedEnhancedExitContext['createService'];
+  const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
+  const getContext = bindEnhancedExitContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ logger: mockLogger, errorHandler, createService } = context);
   });
 
   // ============================================================================

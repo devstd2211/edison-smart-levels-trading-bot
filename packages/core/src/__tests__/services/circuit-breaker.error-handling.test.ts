@@ -15,13 +15,7 @@ import {
   type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
-  let service: CircuitBreakerService;
-  let logger: Partial<LoggerService>;
-  let errorHandler: ErrorHandler;
-  let config: CircuitBreakerConfig;
-  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
-  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
+function bindCircuitBreakerContext() {
   let context: ManagedCircuitBreakerContext;
 
   beforeEach(() => {
@@ -29,16 +23,32 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
+  let service: CircuitBreakerService;
+  let logger: Partial<LoggerService>;
+  let errorHandler: ErrorHandler;
+  let config: CircuitBreakerConfig;
+  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
+  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
+  const getContext = bindCircuitBreakerContext();
+
+  beforeEach(() => {
+    const context = getContext();
     config = context.config;
     logger = context.logger;
     errorHandler = context.errorHandler;
     service = context.service;
     createStandardService = context.createStandardService;
     createLegacyService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // =========================================================================

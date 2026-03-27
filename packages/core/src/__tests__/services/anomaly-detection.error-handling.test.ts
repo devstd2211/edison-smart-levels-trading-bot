@@ -29,6 +29,20 @@ import {
   type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
+function bindAnomalyDetectionContext() {
+  let context: ManagedAnomalyDetectionContext;
+
+  beforeEach(() => {
+    context = createManagedAnomalyDetectionContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler | undefined;
@@ -39,10 +53,10 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
   let createService: ManagedAnomalyDetectionContext['createStandardService'];
   let createLegacyService: ManagedAnomalyDetectionContext['createLegacyService'];
-  let context: ManagedAnomalyDetectionContext;
+  const getContext = bindAnomalyDetectionContext();
 
   beforeEach(() => {
-    context = createManagedAnomalyDetectionContext();
+    const context = getContext();
     ({
       service,
       logger,
@@ -50,10 +64,6 @@ describe('AnomalyDetectionService - Error Handling', () => {
       createStandardService: createService,
       createLegacyService,
     } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================
@@ -235,7 +245,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       });
 
       expect(() => {
-        context.createStandardService({ logger: badLogger, errorHandler });
+        createService({ logger: badLogger, errorHandler });
       }).not.toThrow();
     });
 
@@ -246,7 +256,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         }),
       });
 
-      const testService = context.createStandardService({ logger: badLogger, errorHandler });
+      const testService = createService({ logger: badLogger, errorHandler });
 
       // Force detection to log a warning
       const testInternals = testService as unknown as AnomalyDetectionInternals;
@@ -266,7 +276,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
         }),
       });
 
-      const testService = context.createStandardService({ logger: badLogger, errorHandler });
+      const testService = createService({ logger: badLogger, errorHandler });
 
       expect(() => {
         testService.clearHistory();
@@ -333,7 +343,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const config: Partial<AnomalyDetectionConfig> = {
         whaleTradeThreshold: 3.0, // Lower threshold (300% vs default 500%)
       };
-      const testService = context.createStandardService({ config, logger });
+      const testService = createService({ config, logger });
 
       const trades: Trade[] = createAnomalyDetectionTradeSeries([
         { size: 0.1, price: 50000 },

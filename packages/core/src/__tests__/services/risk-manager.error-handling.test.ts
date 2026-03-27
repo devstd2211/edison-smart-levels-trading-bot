@@ -24,23 +24,33 @@ import {
   type ManagedRiskManagerContext,
 } from '../helpers/risk-manager-test.utils';
 
-describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
-  let riskManager: RiskManager;
-  let mockLogger: MockRiskManagerLogger;
-  let errorHandler: ErrorHandler;
+function bindRiskManagerContext() {
   let context: ManagedRiskManagerContext;
-  let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
 
   beforeEach(() => {
     context = createManagedRiskManagerContext();
-    riskManager = context.riskManager;
-    mockLogger = context.mockLogger;
-    errorHandler = context.errorHandler;
-    createRiskManager = context.createRiskManager;
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
+  let riskManager: RiskManager;
+  let mockLogger: MockRiskManagerLogger;
+  let errorHandler: ErrorHandler;
+  let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
+  const getContext = bindRiskManagerContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    riskManager = context.riskManager;
+    mockLogger = context.mockLogger;
+    errorHandler = context.errorHandler;
+    createRiskManager = context.createRiskManager;
   });
 
   // ========================================================================

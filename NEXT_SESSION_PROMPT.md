@@ -29,11 +29,12 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Completed a lifecycle/testability cleanup follow-up for `action-queue.error-handling`, `analyzer-registry.error-handling`, `bot-metrics.error-handling`, `compound-interest-calculator.error-handling`, `strategy-manager.error-handling`, and `timeframe-weighting.error-handling`.
+- Completed a lifecycle/testability cleanup follow-up for `enhanced-exit.error-handling`, `graceful-shutdown.error-handling`, `ladder-tp-manager.error-handling`, `limit-order-executor.error-handling`, `micro-wall-detector.error-handling`, and `reality-check.error-handling`.
   - replaced repeated managed-context setup with shared suite-owned binders.
   - kept the touched suites on their existing helper-owned standard/legacy factory paths instead of local top-level context wiring.
+  - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/graceful-shutdown.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step

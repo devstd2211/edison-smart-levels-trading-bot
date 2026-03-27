@@ -20,6 +20,21 @@ import {
   type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
+function bindMTFSnapshotGateContext() {
+  let context: ManagedMTFSnapshotGateContext;
+
+  beforeEach(() => {
+    context = createManagedMTFSnapshotGateContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+    ErrorRegistry.clear();
+  });
+
+  return () => context;
+}
+
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let gate: MTFSnapshotGate;
   let errorHandler: ErrorHandler;
@@ -28,21 +43,16 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     logger?: LoggerService,
     handler?: ErrorHandler,
   ) => MTFSnapshotGate;
-  let context: ManagedMTFSnapshotGateContext;
+  const getContext = bindMTFSnapshotGateContext();
 
   beforeEach(() => {
-    context = createManagedMTFSnapshotGateContext();
     jest.useFakeTimers();
     ErrorRegistry.clear();
+    const context = getContext();
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     createTrackedGate = context.createTrackedGate;
     gate = context.gate;
-  });
-
-  afterEach(() => {
-    context.cleanup();
-    ErrorRegistry.clear();
   });
 
   // ========================================================================

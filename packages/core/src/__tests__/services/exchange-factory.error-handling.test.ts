@@ -16,23 +16,33 @@ import {
   type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
-describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
+function bindExchangeFactoryContext() {
   let context: ManagedExchangeFactoryContext;
-  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
-  let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: ManagedExchangeFactoryContext['createFactory'];
-  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
 
   beforeEach(() => {
     context = createManagedExchangeFactoryContext();
-    mockLogger = context.mockLogger;
-    mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
-    createFactory = context.createFactory;
-    createFactoryWithoutErrorHandler = context.createFactoryWithoutErrorHandler;
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
+  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
+  let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  let createFactory: ManagedExchangeFactoryContext['createFactory'];
+  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
+  const getContext = bindExchangeFactoryContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    mockLogger = context.mockLogger;
+    mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
+    createFactory = context.createFactory;
+    createFactoryWithoutErrorHandler = context.createFactoryWithoutErrorHandler;
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

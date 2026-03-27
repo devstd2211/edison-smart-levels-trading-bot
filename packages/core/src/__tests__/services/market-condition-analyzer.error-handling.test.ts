@@ -28,23 +28,33 @@ import {
   type ManagedMarketConditionContext,
 } from '../helpers/market-condition-analyzer-test.utils';
 
-const createTP = createMarketConditionTakeProfit;
-const createFlatResult = createMarketConditionResult;
-
-describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
+function bindMarketConditionContext() {
   let context: ManagedMarketConditionContext;
-  let logger: MarketConditionMockLogger;
-  let errorHandler: ErrorHandler;
-  let service: MarketConditionAnalyzerService;
-  let createService: ManagedMarketConditionContext['createService'];
 
   beforeEach(() => {
     context = createManagedMarketConditionContext();
-    ({ logger, errorHandler, service, createService } = context);
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+const createTP = createMarketConditionTakeProfit;
+const createFlatResult = createMarketConditionResult;
+
+describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
+  let logger: MarketConditionMockLogger;
+  let errorHandler: ErrorHandler;
+  let service: MarketConditionAnalyzerService;
+  let createService: ManagedMarketConditionContext['createService'];
+  const getContext = bindMarketConditionContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ logger, errorHandler, service, createService } = context);
   });
 
   // ============================================================================

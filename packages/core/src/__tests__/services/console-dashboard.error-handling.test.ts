@@ -17,20 +17,30 @@ import {
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
-describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ManagedConsoleDashboardContext['createService'];
-  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
+function bindConsoleDashboardContext() {
   let context: ManagedConsoleDashboardContext;
-  let service: ConsoleDashboardService;
 
   beforeEach(() => {
     context = createManagedConsoleDashboardContext();
-    createDashboard = context.createService;
-    createLegacyDashboard = context.createLegacyService;
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
+  let createDashboard: ManagedConsoleDashboardContext['createService'];
+  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
+  let service: ConsoleDashboardService;
+  const getContext = bindConsoleDashboardContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    createDashboard = context.createService;
+    createLegacyDashboard = context.createLegacyService;
   });
 
   // ============================================================================

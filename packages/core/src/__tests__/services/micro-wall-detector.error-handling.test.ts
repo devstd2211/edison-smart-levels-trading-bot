@@ -25,6 +25,20 @@ import {
   type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
 
+function bindMicroWallDetectorContext() {
+  let context: ManagedMicroWallDetectorContext;
+
+  beforeEach(() => {
+    context = createManagedMicroWallDetectorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -61,16 +75,16 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let context: ManagedMicroWallDetectorContext;
+  let createStandardDetector: ManagedMicroWallDetectorContext['createStandardDetector'];
+  let createLegacyDetector: ManagedMicroWallDetectorContext['createLegacyDetector'];
+  const getContext = bindMicroWallDetectorContext();
 
   beforeEach(() => {
-    context = createManagedMicroWallDetectorContext();
+    const context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
-  });
-
-  afterEach(() => {
-    context.cleanup();
+    createStandardDetector = context.createStandardDetector;
+    createLegacyDetector = context.createLegacyDetector;
   });
 
   // ========================================================================
@@ -80,7 +94,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: asConfig(null),
         });
       }).toThrow('config is required');
@@ -88,7 +102,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on invalid minWallSizePercent (0)', () => {
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: createConfig({ minWallSizePercent: 0 }),
         });
       }).toThrow('minWallSizePercent must be 0-100');
@@ -96,7 +110,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on invalid minWallSizePercent (>100)', () => {
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: createConfig({ minWallSizePercent: 101 }),
         });
       }).toThrow('minWallSizePercent must be 0-100');
@@ -104,7 +118,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on negative breakConfirmationMs', () => {
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: createConfig({ breakConfirmationMs: -1 }),
         });
       }).toThrow('breakConfirmationMs must be >= 0');
@@ -112,7 +126,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on invalid maxConfidence (0)', () => {
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: createConfig({ maxConfidence: 0 }),
         });
       }).toThrow('maxConfidence must be 1-100');
@@ -120,7 +134,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw on invalid wallExpiryMs (0)', () => {
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: createConfig({ wallExpiryMs: 0 }),
         });
       }).toThrow('wallExpiryMs must be > 0');
@@ -135,7 +149,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = context.createStandardDetector({ config: createConfig() });
+      detector = createStandardDetector({ config: createConfig() });
     });
 
     it('should throw on null orderbook', () => {
@@ -173,7 +187,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = context.createStandardDetector({ config: createConfig() });
+      detector = createStandardDetector({ config: createConfig() });
     });
 
     it('should throw on null wall', () => {
@@ -205,7 +219,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = context.createStandardDetector({ config: createConfig() });
+      detector = createStandardDetector({ config: createConfig() });
     });
 
     it('should return empty array on NaN bid volume', () => {
@@ -277,7 +291,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
       const badLogger = createMicroWallFailingLogger({ info: 'Logger error' });
 
       expect(() => {
-        context.createStandardDetector({
+        createStandardDetector({
           config: createConfig(),
           logger: asLogger(badLogger),
           errorHandler,
@@ -288,7 +302,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     it('should not throw on logger.debug failure during detection', () => {
       const badLogger = createMicroWallFailingLogger({ debug: 'Logger error' });
 
-      const detector = context.createStandardDetector({
+      const detector = createStandardDetector({
         config: createConfig(),
         logger: asLogger(badLogger),
         errorHandler,
@@ -304,7 +318,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     it('should not throw on logger failure during cleanup', () => {
       const badLogger = createMicroWallFailingLogger({ debug: 'Logger error' });
 
-      const detector = context.createStandardDetector({
+      const detector = createStandardDetector({
         config: createConfig(),
         logger: asLogger(badLogger),
         errorHandler,
@@ -323,7 +337,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   describe('Integration: E2E Error Handling', () => {
     it('should handle full detection flow with invalid data mixed in', () => {
-      const detector = context.createStandardDetector({ config: createConfig() });
+      const detector = createStandardDetector({ config: createConfig() });
 
       // Orderbook with some invalid levels
       const orderbook = createOrderBook(
@@ -346,7 +360,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should handle wall breaking with invalid price', () => {
-      const detector = context.createStandardDetector({ config: createConfig() });
+      const detector = createStandardDetector({ config: createConfig() });
 
       const wall = createMicroWall({ timestamp: Date.now() - 2000 });
 
@@ -362,7 +376,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     });
 
     it('should continue operations after graceful degradation', () => {
-      const detector = context.createStandardDetector({ config: createConfig() });
+      const detector = createStandardDetector({ config: createConfig() });
 
       // First call with invalid data (gracefully degrades)
       const badOrderbook = createOrderBook(
@@ -385,7 +399,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (optional parameter)', () => {
-      const detector = context.createLegacyDetector({
+      const detector = createLegacyDetector({
         config: createConfig(),
       });
       const orderbook = createOrderBook([[1.0, 500]], [[1.001, 4500]]);
@@ -396,14 +410,14 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
     it('should throw config validation errors even without ErrorHandler', () => {
       expect(() => {
-        context.createLegacyDetector({
+        createLegacyDetector({
           config: createConfig({ minWallSizePercent: 0 }),
         });
       }).toThrow('minWallSizePercent must be 0-100');
     });
 
     it('should throw input validation errors even without ErrorHandler', () => {
-      const detector = context.createLegacyDetector({
+      const detector = createLegacyDetector({
         config: createConfig(),
       });
 
@@ -421,7 +435,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     let detector: MicroWallDetectorService;
 
     beforeEach(() => {
-      detector = context.createStandardDetector({ config: createConfig() });
+      detector = createStandardDetector({ config: createConfig() });
     });
 
     it('should handle very small prices and quantities', () => {
@@ -457,7 +471,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
       const badLogger = createMicroWallFailingLogger({ info: 'Logger error' });
 
-      context.createStandardDetector({
+      createStandardDetector({
         config: createConfig(),
         logger: asLogger(badLogger),
         errorHandler,

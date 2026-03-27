@@ -3415,3 +3415,79 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 6/6 suites PASS, 108/108 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 249 (2026-03-27):
+  - `packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts`:
+    - centralized the managed advanced-order-flow context behind a suite-owned binder and kept the helper-owned standard/legacy service factories as the only construction paths.
+  - `packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts`:
+    - centralized the managed anomaly-detection context behind a suite-owned binder and replaced the remaining direct context factory calls with the existing helper-owned service factory surface.
+  - `packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts`:
+    - centralized the managed candle-aggregator context behind a suite-owned binder while preserving the helper-owned standard/legacy factory paths.
+  - `packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts`:
+    - centralized the configured managed circuit-breaker context behind a suite-owned binder and kept factory access flowing through the helper-managed context.
+  - `packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts`:
+    - centralized the managed console-dashboard context behind a suite-owned binder and preserved helper-owned service construction.
+  - `packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts`:
+    - centralized the managed delta-analyzer context behind a suite-owned binder and kept harness/service creation on the helper-managed surface.
+  - behavior-preserving production review: reviewed `advanced-order-flow.service.ts`, `anomaly-detection.service.ts`, `candle-aggregator.service.ts`, `circuit-breaker.service.ts`, `console-dashboard.service.ts`, and `delta-analyzer.service.ts`; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 249):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 173/173 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 250 (2026-03-27):
+  - `packages/core/src/__tests__/services/data-collector.error-handling.test.ts`:
+    - centralized the managed data-collector context behind a suite-owned binder and routed writer/service construction through the existing helper-owned factory surface.
+  - `packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts`:
+    - centralized the managed entry-confirmation context behind a suite-owned binder while preserving the existing helper-managed manager surface.
+  - `packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts`:
+    - centralized the managed event-deduplication context behind a suite-owned binder and kept service creation on the helper-owned factory paths.
+  - `packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts`:
+    - centralized the managed exchange-factory context behind a suite-owned binder and preserved helper-owned factory creation.
+  - `packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts`:
+    - centralized the managed indicator-cache context behind a suite-owned binder while keeping the helper-managed cache/repository surface unchanged.
+  - `packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts`:
+    - centralized the managed ML-feature-extractor context behind a suite-owned binder and replaced the remaining direct context factory calls with the existing helper-owned standard/legacy service factories.
+  - behavior-preserving production review: reviewed `data-collector.service.ts`, `entry-confirmation.service.ts`, `event-deduplication.service.ts`, `exchange-factory.service.ts`, `indicator-cache.service.ts`, and `ml-feature-extractor.service.ts`; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 250):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/data-collector.error-handling.test.ts packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 135/135 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 251 (2026-03-27):
+  - `packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts`:
+    - centralized the managed indicator-precalculation context behind a suite-owned binder and kept the helper-owned standard/legacy harness surfaces as the only construction paths.
+  - `packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts`:
+    - centralized the managed market-condition context behind a suite-owned binder while preserving helper-owned service creation.
+  - `packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts`:
+    - centralized the managed MTF snapshot gate context behind a suite-owned binder and preserved the existing ErrorRegistry cleanup behavior around the helper-owned gate surface.
+  - `packages/core/src/__tests__/services/multi-timeframe-trend.error-handling.test.ts`:
+    - centralized the managed multi-timeframe-trend context behind a suite-owned binder while preserving helper-owned service creation and detector wiring.
+  - `packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts`:
+    - centralized the managed risk-calculator context behind a suite-owned binder and kept the existing helper-owned calculator/input factory paths intact.
+  - `packages/core/src/__tests__/services/risk-manager.error-handling.test.ts`:
+    - centralized the managed risk-manager context behind a suite-owned binder and preserved helper-owned risk-manager factory access.
+  - behavior-preserving production review: reviewed `indicator-precalculation.service.ts`, `market-condition-analyzer.service.ts`, `mtf-snapshot-gate.service.ts`, `multi-timeframe-trend.service.ts`, `risk-calculator.service.ts`, and `risk-manager.service.ts`; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 251):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts packages/core/src/__tests__/services/multi-timeframe-trend.error-handling.test.ts packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 142/142 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 252 (2026-03-27):
+  - `packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts`:
+    - centralized the managed enhanced-exit context behind a suite-owned binder while preserving the helper-owned service factory path.
+  - `packages/core/src/__tests__/services/graceful-shutdown.error-handling.test.ts`:
+    - centralized the managed graceful-shutdown context behind a suite-owned binder and kept the helper-owned harness plus shutdown-manager factory paths intact.
+  - `packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts`:
+    - centralized the managed ladder-TP context behind a suite-owned binder and replaced direct context factory calls with the helper-owned standard/legacy service surfaces.
+  - `packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts`:
+    - centralized the managed limit-order-executor context behind a suite-owned binder while preserving the helper-owned service creation path.
+  - `packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts`:
+    - centralized the managed micro-wall-detector context behind a suite-owned binder and replaced direct context factory calls with the helper-owned standard/legacy detector surfaces.
+  - `packages/core/src/__tests__/services/reality-check.error-handling.test.ts`:
+    - centralized the managed reality-check context behind a suite-owned binder while preserving the helper-owned service factory path.
+  - behavior-preserving production review: reviewed `enhanced-exit.service.ts`, `graceful-shutdown.service.ts`, `ladder-tp-manager.service.ts`, `limit-order-executor.service.ts`, `micro-wall-detector.service.ts`, and `reality-check.service.ts`; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 252):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/graceful-shutdown.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 160/160 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

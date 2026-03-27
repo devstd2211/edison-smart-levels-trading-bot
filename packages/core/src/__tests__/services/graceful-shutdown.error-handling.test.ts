@@ -44,23 +44,38 @@ const mockExit = jest.fn(() => {
 });
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
-describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
+function bindGracefulShutdownContext() {
   let context: ManagedGracefulShutdownTestContext;
+
+  beforeEach(() => {
+    context = createManagedGracefulShutdownTestContext({
+      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
+    });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
+  let harness: ManagedGracefulShutdownTestContext['harness'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
+  const getContext = bindGracefulShutdownContext();
 
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
-    context = createManagedGracefulShutdownTestContext({
-      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
-    });
+    const context = getContext();
     mockPositionLifecycleService =
       context.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = context.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
@@ -68,10 +83,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     mockLogger = context.mocks.logger as unknown as jest.Mocked<LoggerService>;
     mockEventBus = context.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
     shutdownManager = context.manager;
-  });
-
-  afterEach(() => {
-    context.cleanup();
+    harness = context.harness;
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {
@@ -278,7 +290,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
       (fs.mkdirSync as jest.Mock).mockImplementationOnce(() => {});
 
-      const newManager = createStandardGracefulShutdownManager(context.harness, { stateDirectory: './test-new-dir' });
+      const newManager = createStandardGracefulShutdownManager(harness, { stateDirectory: './test-new-dir' });
 
       newManager.registerShutdownHandlers();
 
@@ -294,7 +306,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
         throw new Error('EACCES: permission denied');
       });
 
-      const newManager = createStandardGracefulShutdownManager(context.harness, { stateDirectory: './test-permission-denied' });
+      const newManager = createStandardGracefulShutdownManager(harness, { stateDirectory: './test-permission-denied' });
 
       newManager.registerShutdownHandlers();
 
@@ -312,7 +324,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       let constructorFailed = false;
       try {
-        const newManager = createStandardGracefulShutdownManager(context.harness, {
+        const newManager = createStandardGracefulShutdownManager(harness, {
           config: mockConfig,
           stateDirectory: './test-fs-error',
         });
