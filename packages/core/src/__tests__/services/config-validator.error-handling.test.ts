@@ -33,6 +33,20 @@ import {
   type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
+function bindConfigValidatorContext() {
+  let context: ManagedConfigValidatorContext;
+
+  beforeEach(() => {
+    context = createManagedConfigValidatorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -44,20 +58,6 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
   let validConfig: ManagedConfigValidatorContext['validConfig'];
-  function bindConfigValidatorContext() {
-    let context: ManagedConfigValidatorContext;
-
-    beforeEach(() => {
-      context = createManagedConfigValidatorContext();
-    });
-
-    afterEach(() => {
-      context.cleanup();
-    });
-
-    return () => context;
-  }
-
   const getContext = bindConfigValidatorContext();
 
   beforeEach(() => {

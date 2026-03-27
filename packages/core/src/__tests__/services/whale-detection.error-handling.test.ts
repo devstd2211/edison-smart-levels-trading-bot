@@ -21,13 +21,26 @@ import {
   type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
+function bindWhaleDetectionContext() {
+  let context: ManagedWhaleDetectionContext;
+
+  beforeEach(() => {
+    context = createManagedWhaleDetectionContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 const createMockLogger = createWhaleDetectionMockLogger;
 const createValidAnalysis = () => createWhaleDetectionAnalysis([], 1.2, 'BULLISH');
 const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
-  let context: ManagedWhaleDetectionContext;
   let createService: ManagedWhaleDetectionContext['createStandardService'];
   let createLegacyService: ManagedWhaleDetectionContext['createLegacyService'];
   let createScenario: (options?: {
@@ -37,9 +50,10 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     ratio?: number;
     direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   }) => ReturnType<ManagedWhaleDetectionContext['createScenario']>;
+  const getContext = bindWhaleDetectionContext();
 
   beforeEach(() => {
-    context = createManagedWhaleDetectionContext();
+    const context = getContext();
     createService = context.createStandardService;
     createLegacyService = context.createLegacyService;
     createScenario = (options = {}) =>
@@ -50,10 +64,6 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
         ratio: options.ratio,
         direction: options.direction,
       });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

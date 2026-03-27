@@ -25,23 +25,34 @@ import {
   type MockRiskMonitorPositionService,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
+function bindRealTimeRiskMonitorContext() {
+  let context: ManagedRealTimeRiskMonitorContext;
+
+  beforeEach(() => {
+    context = createManagedRealTimeRiskMonitorContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
   let mockPositionLifecycleService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
   let context: ManagedRealTimeRiskMonitorContext;
+  const getContext = bindRealTimeRiskMonitorContext();
 
   beforeEach(() => {
-    context = createManagedRealTimeRiskMonitorContext();
+    context = getContext();
     monitor = context.monitor;
     mockPositionLifecycleService = context.mockPositionService;
     mockLogger = context.mockLogger;
     mockEventBus = context.mockEventBus;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {

@@ -10,7 +10,7 @@ import {
   type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
+function bindPnlCalculatorContext() {
   let context: ManagedPnlCalculatorContext;
 
   beforeEach(() => {
@@ -19,6 +19,17 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
+  let context: ManagedPnlCalculatorContext;
+  const getContext = bindPnlCalculatorContext();
+
+  beforeEach(() => {
+    context = getContext();
   });
 
   describe('Input Validation (THROW)', () => {

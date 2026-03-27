@@ -14,8 +14,21 @@ import {
   type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
-describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
+function bindTickDeltaAnalyzerContext() {
   let context: ManagedTickDeltaAnalyzerContext;
+
+  beforeEach(() => {
+    context = createManagedTickDeltaAnalyzerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: ManagedTickDeltaAnalyzerContext['mockLogger'];
@@ -23,16 +36,14 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
+  const getContext = bindTickDeltaAnalyzerContext();
 
   beforeEach(() => {
-    context = createManagedTickDeltaAnalyzerContext();
+    const context = getContext();
+    service = context.service;
     mockLogger = context.mockLogger;
     errorHandler = context.errorHandler as ErrorHandler;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW: Config Validation', () => {

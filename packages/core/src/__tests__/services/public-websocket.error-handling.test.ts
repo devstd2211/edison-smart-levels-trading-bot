@@ -19,6 +19,20 @@ import {
   type ManagedPublicWebSocketContext,
 } from '../helpers/public-websocket-test.utils';
 
+function bindPublicWebSocketContext() {
+  let context: ManagedPublicWebSocketContext;
+
+  beforeEach(() => {
+    context = createManagedPublicWebSocketContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let service: PublicWebSocketService;
   let mockLogger: {
@@ -40,9 +54,10 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];
   let createBtcConfiguredService: ManagedPublicWebSocketContext['createBtcConfiguredService'];
   let createInjectedService: ManagedPublicWebSocketContext['createInjectedService'];
+  const getContext = bindPublicWebSocketContext();
 
   beforeEach(() => {
-    context = createManagedPublicWebSocketContext();
+    context = getContext();
     ({
       service,
       mockLogger,
@@ -54,10 +69,6 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       createBtcConfiguredService,
       createInjectedService,
     } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // =========================================================================

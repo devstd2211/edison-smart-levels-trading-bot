@@ -30,6 +30,21 @@ import {
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
 
+function bindExitTypeDetectorContext() {
+  let context: ManagedExitTypeDetectorContext;
+
+  beforeEach(() => {
+    const mockLogger = createExitTypeDetectorMockLogger();
+    context = createManagedExitTypeDetectorContext({ logger: mockLogger });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
   let context: ManagedExitTypeDetectorContext;
   let service: ExitTypeDetectorService;
@@ -38,17 +53,14 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     withErrorHandler?: boolean;
     positionOverrides?: Partial<Position>;
   }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
+  const getContext = bindExitTypeDetectorContext();
 
   beforeEach(() => {
-    mockLogger = createExitTypeDetectorMockLogger();
-    context = createManagedExitTypeDetectorContext({ logger: mockLogger });
+    context = getContext();
+    mockLogger = context.logger;
     ({ service } = context);
     createScenario = (options = {}) => context.createScenario(options);
     jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // =============================== ===================================================

@@ -23,6 +23,20 @@ import {
 // TESTS
 // ============================================================================
 
+function bindErrorWeightMatrixContext() {
+  let context: ManagedErrorWeightMatrixContext;
+
+  beforeEach(() => {
+    context = createManagedErrorWeightMatrixContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
   let service: WeightMatrixCalculatorService;
   let errorHandler: ErrorHandler;
@@ -31,9 +45,10 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let context: ManagedErrorWeightMatrixContext;
+  const getContext = bindErrorWeightMatrixContext();
 
   beforeEach(() => {
-    context = createManagedErrorWeightMatrixContext();
+    context = getContext();
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     errorConfig = context.config;
@@ -41,10 +56,6 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       context.createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
       context.createLegacyErrorService({ config });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

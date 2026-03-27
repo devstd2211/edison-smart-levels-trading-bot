@@ -29,13 +29,26 @@ const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
 
+function bindTradeHistoryContext() {
+  let context: ManagedTradeHistoryContext;
+
+  beforeEach(() => {
+    context = createManagedTradeHistoryContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 /**
  * Helper to create a valid trade record
  */
 const createTradeRecord = createTradeHistoryRecord;
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
-  let context: ManagedTradeHistoryContext;
   let service: TradeHistoryService;
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
@@ -45,18 +58,15 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     tempDir?: string;
     errorHandler?: jest.Mocked<ErrorHandler>;
   }) => TradeHistoryService;
+  const getContext = bindTradeHistoryContext();
 
   beforeEach(() => {
-    context = createManagedTradeHistoryContext();
+    const context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler;
     tempDir = context.tempDir;
     service = context.service;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

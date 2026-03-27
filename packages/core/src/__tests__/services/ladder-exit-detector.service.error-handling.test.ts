@@ -33,6 +33,20 @@ import {
 // TEST SUITE
 // ============================================================================
 
+function bindLadderExitContext() {
+  let context: ManagedLadderExitContext;
+
+  beforeEach(() => {
+    context = createManagedLadderExitContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   let context: ManagedLadderExitContext;
   let logger: LoggerService;
@@ -43,9 +57,10 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     entryPrice?: number;
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
+  const getContext = bindLadderExitContext();
 
   beforeEach(() => {
-    context = createManagedLadderExitContext();
+    context = getContext();
     logger = context.logger;
     bybitService = context.bybitService;
     createScenario = (options = {}) =>
@@ -57,10 +72,6 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
         entryPrice: options.entryPrice,
         quantity: options.quantity,
       });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================

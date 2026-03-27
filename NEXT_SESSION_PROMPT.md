@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Completed a lifecycle/testability cleanup follow-up for `enhanced-exit.error-handling`, `graceful-shutdown.error-handling`, `ladder-tp-manager.error-handling`, `limit-order-executor.error-handling`, `micro-wall-detector.error-handling`, and `reality-check.error-handling`.
-  - replaced repeated managed-context setup with shared suite-owned binders.
-  - kept the touched suites on their existing helper-owned standard/legacy factory paths instead of local top-level context wiring.
+- Completed a lifecycle/testability cleanup follow-up for `performance-analytics.error-handling`, `position-pnl-calculator.error-handling`, `strategy-circuit-breaker.error-handling`, `real-time-risk-monitor.error-handling`, `websocket-authentication.error-handling`, and `weight-matrix-calculator.error-handling`.
+  - replaced the remaining direct suite-local managed-context ownership with shared suite-owned binders, including suites that still passed the managed context into helper seeders or reached back into the context for alternate standard/legacy factory creation.
+  - kept the touched suites on their existing helper-owned service / lifecycle / legacy factory paths instead of rebuilding local setup wiring.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/graceful-shutdown.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/performance-analytics.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue with the next concentrated lifecycle/testability slice in suites that still rebuild managed contexts per describe or keep one-off legacy/service factories in local test bodies.
-- Prioritize the next six-file batch of error-handling suites where `createManaged...Context()` remains the default top-level setup path, and keep preferring suite-owned binders plus helper-owned standard/legacy factories.
+- Continue with the next concentrated lifecycle/testability slice in suites that still keep direct managed-context setup/cleanup, nested per-describe lifecycle ownership, or scenario-local context creation.
+- Prioritize the next six-file batch of error-handling suites where `createManaged...Context()` still bypasses a single suite-owned binder, and keep preferring suite-owned binders plus helper-owned standard/legacy factories.

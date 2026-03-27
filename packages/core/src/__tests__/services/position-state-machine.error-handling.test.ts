@@ -37,22 +37,33 @@ import {
   type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
-describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
-  let logger: LoggerService;
-  let testDataDir: string;
-  let service: PositionStateMachineService;
+function bindPositionStateMachineContext() {
   let context: ManagedPositionStateMachineContext;
 
   beforeEach(() => {
     context = createManagedPositionStateMachineContext({
       logger: createMockPositionStateMachineLogger(),
     });
-    logger = context.logger;
-    testDataDir = context.testDataDir;
   });
 
   afterEach(async () => {
     await context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
+  let logger: LoggerService;
+  let testDataDir: string;
+  let service: PositionStateMachineService;
+  let context: ManagedPositionStateMachineContext;
+  const getContext = bindPositionStateMachineContext();
+
+  beforeEach(() => {
+    context = getContext();
+    logger = context.logger;
+    testDataDir = context.testDataDir;
   });
 
   // ============================================================================

@@ -36,12 +36,27 @@ type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
 
+function bindBotInitializerContext() {
+  let context: ManagedBotInitializerTestContext;
+
+  beforeEach(() => {
+    context = createManagedBotInitializerTestContext({
+      errorHandler: createBotInitializerMockErrorHandler(),
+    });
+  });
+
+  afterEach(async () => {
+    await context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let context: ManagedBotInitializerTestContext;
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
   let mockConfig: Config;
@@ -56,21 +71,17 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return context.createWithoutHandler();
   };
+  let context: ManagedBotInitializerTestContext;
+  const getContext = bindBotInitializerContext();
 
   beforeEach(() => {
-    context = createManagedBotInitializerTestContext({
-      errorHandler: createBotInitializerMockErrorHandler(),
-    });
+    context = getContext();
     mockServices = context.services as MockBotServices;
     mockConfig = context.config;
     mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
     rebuildInitializer();
 
     jest.clearAllMocks();
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {

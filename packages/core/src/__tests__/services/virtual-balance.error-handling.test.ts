@@ -17,6 +17,20 @@ import {
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
+function bindVirtualBalanceContext() {
+  let context: ManagedVirtualBalanceContext;
+
+  beforeEach(() => {
+    context = createManagedVirtualBalanceContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
@@ -25,18 +39,15 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let testPath: string;
   let createService: (baseDeposit?: number) => VirtualBalanceService;
   let context: ManagedVirtualBalanceContext;
+  const getContext = bindVirtualBalanceContext();
 
   beforeEach(() => {
-    context = createManagedVirtualBalanceContext();
+    context = getContext();
     testDataDir = context.dataDir;
     testPath = context.statePath;
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========

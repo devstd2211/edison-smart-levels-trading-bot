@@ -20,18 +20,28 @@ import {
   type ManagedTradingOrchestratorContext,
 } from '../helpers/trading-orchestrator-test.utils';
 
-describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
+function bindTradingOrchestratorContext() {
   let context: ManagedTradingOrchestratorContext;
-  let mockLogger: TradingOrchestratorMockLogger;
 
   beforeEach(() => {
     context = createManagedTradingOrchestratorContext();
-    ({ logger: mockLogger } = context);
-    jest.clearAllMocks();
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
+  let mockLogger: TradingOrchestratorMockLogger;
+  const getContext = bindTradingOrchestratorContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ logger: mockLogger } = context);
+    jest.clearAllMocks();
   });
 
   describe('runStrategyAnalysis Error Handling (4 tests)', () => {

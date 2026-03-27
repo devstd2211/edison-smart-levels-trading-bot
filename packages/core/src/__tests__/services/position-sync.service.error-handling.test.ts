@@ -43,6 +43,21 @@ const createMockPosition = createPositionSyncPosition;
 // TESTS
 // ============================================================================
 
+function bindPositionSyncContext() {
+  let context: ManagedPositionSyncContext;
+
+  beforeEach(() => {
+    const errorHandler = createPositionSyncErrorHandler();
+    context = createManagedPositionSyncContext({ errorHandler });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let service: PositionSyncService;
   let mockBybit: ReturnType<typeof createMockPositionSyncExchange>;
@@ -52,20 +67,17 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let context: ManagedPositionSyncContext;
+  const getContext = bindPositionSyncContext();
 
   beforeEach(() => {
-    errorHandler = createPositionSyncErrorHandler();
-    context = createManagedPositionSyncContext({ errorHandler });
+    context = getContext();
+    errorHandler = context.errorHandler as ErrorHandler;
     service = context.service;
     mockBybit = context.mockBybit;
     mockPositionManager = context.mockPositionManager;
     mockExitTypeDetector = context.mockExitTypeDetector;
     mockTelegram = context.mockTelegram;
     logger = context.logger;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

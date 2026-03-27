@@ -35,7 +35,7 @@ import {
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
 
-describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
+function bindSmartOrderPlacementValidationContext() {
   let context: ManagedSmartOrderPlacementContext;
 
   beforeEach(() => {
@@ -44,6 +44,17 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
+  let context: ManagedSmartOrderPlacementContext;
+  const getContext = bindSmartOrderPlacementValidationContext();
+
+  beforeEach(() => {
+    context = getContext();
   });
 
   it('should THROW when config is null', () => {

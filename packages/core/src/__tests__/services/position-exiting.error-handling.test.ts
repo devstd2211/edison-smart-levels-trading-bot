@@ -25,8 +25,21 @@ import {
   type ManagedPositionExitingErrorHandlingContext,
 } from '../helpers/position-exiting-test.utils';
 
-describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
+function bindPositionExitingContext() {
   let context: ManagedPositionExitingErrorHandlingContext;
+
+  beforeEach(() => {
+    context = createManagedPositionExitingErrorHandlingContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockExchange: ManagedPositionExitingErrorHandlingContext['mockExchange'];
   let mockTelegram: ManagedPositionExitingErrorHandlingContext['mockTelegram'];
   let mockLogger: ManagedPositionExitingErrorHandlingContext['mockLogger'];
@@ -37,9 +50,10 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockRiskConfig: RiskManagementConfig;
   let mockConfig: Config;
   let mockPosition: Position;
+  const getContext = bindPositionExitingContext();
 
   beforeEach(() => {
-    context = createManagedPositionExitingErrorHandlingContext();
+    const context = getContext();
     mockTradingConfig = context.mockTradingConfig;
     mockRiskConfig = context.mockRiskConfig;
     mockConfig = context.mockConfig;
@@ -49,10 +63,6 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
     mockLogger = context.mockLogger;
     mockJournal = context.mockJournal;
     mockSessionStats = context.mockSessionStats;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

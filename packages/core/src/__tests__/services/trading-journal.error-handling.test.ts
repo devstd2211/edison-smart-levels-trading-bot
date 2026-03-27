@@ -36,6 +36,20 @@ import {
   type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
+function bindTradingJournalContext() {
+  let context: ManagedTradingJournalContext;
+
+  beforeEach(() => {
+    context = createManagedTradingJournalContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 const createEntryCondition = createJournalEntryCondition;
 const createOpenTrade = createJournalOpenParams;
 const createCloseTrade = createJournalCloseParams;
@@ -59,19 +73,15 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
     baseDeposit?: number;
     withErrorHandler?: boolean;
   }) => TradingJournalService;
-  let context: ManagedTradingJournalContext;
+  const getContext = bindTradingJournalContext();
 
   beforeEach(() => {
-    context = createManagedTradingJournalContext();
+    const context = getContext();
     journal = context.journal;
     logger = context.logger;
     tempDir = context.dataDir;
     errorHandler = context.errorHandler;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

@@ -23,6 +23,20 @@ import {
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
 
+function bindAntiFlipContext() {
+  let context: ManagedAntiFlipContext;
+
+  beforeEach(() => {
+    context = createManagedAntiFlipContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -33,21 +47,6 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let errorHandler: ErrorHandler;
   let createService: ManagedAntiFlipContext['createService'];
   let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
-
-  function bindAntiFlipContext() {
-    let context: ManagedAntiFlipContext;
-
-    beforeEach(() => {
-      context = createManagedAntiFlipContext();
-    });
-
-    afterEach(() => {
-      context.cleanup();
-    });
-
-    return () => context;
-  }
-
   const getContext = bindAntiFlipContext();
 
   beforeEach(() => {

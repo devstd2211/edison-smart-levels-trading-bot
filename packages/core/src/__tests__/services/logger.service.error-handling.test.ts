@@ -28,6 +28,20 @@ import {
   type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
+function bindLoggerTestContext() {
+  let context: ManagedLoggerTestContext;
+
+  beforeEach(() => {
+    context = createManagedLoggerTestContext();
+  });
+
+  afterEach(async () => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   const asLogLevel = (value: unknown): LogLevel => value as LogLevel;
   const asPath = (value: unknown): string => value as string;
@@ -40,9 +54,10 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let createStandardService: ManagedLoggerTestContext['createStandardService'];
   let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
   let context: ManagedLoggerTestContext;
+  const getContext = bindLoggerTestContext();
 
   beforeEach(() => {
-    context = createManagedLoggerTestContext();
+    context = getContext();
     testLogDir = context.testLogDir;
     errorHandler = context.errorHandler;
     createLogger = context.createLogger;
@@ -50,10 +65,6 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
     createInvalidStandardService = context.createInvalidStandardService;
     createStandardService = context.createStandardService;
     createLegacyService = context.createLegacyService;
-  });
-
-  afterEach(async () => {
-    context.cleanup();
   });
 
   // ========== THROW VALIDATION TESTS ==========

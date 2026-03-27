@@ -25,26 +25,36 @@ import {
 // TESTS
 // ============================================================================
 
-describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
+function bindPerformanceAnalyticsContext() {
   let context: ManagedPerformanceAnalyticsContext;
+
+  beforeEach(() => {
+    context = createManagedPerformanceAnalyticsContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let service: PerformanceAnalytics;
   let mockLogger: ManagedPerformanceAnalyticsContext['logger'];
   let mockJournal: ManagedPerformanceAnalyticsContext['journal'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
   let createService: ManagedPerformanceAnalyticsContext['createService'];
+  const getContext = bindPerformanceAnalyticsContext();
 
   beforeEach(() => {
-    context = createManagedPerformanceAnalyticsContext();
+    const context = getContext();
     mockConfig = context.config;
     mockLogger = context.logger;
     mockJournal = context.journal;
     mockErrorHandler = context.errorHandler;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==================== THROW Strategy - Input Validation ====================

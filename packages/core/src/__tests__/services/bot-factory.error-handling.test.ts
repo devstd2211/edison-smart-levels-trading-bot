@@ -39,17 +39,28 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   throw error;
 };
 
-describe('BotFactory Error Handling - Phase 8.9.41', () => {
-  let validConfig: Config;
+function bindTrackedServicesContext() {
   let context: ManagedTrackedServicesContext;
 
   beforeEach(() => {
-    validConfig = createBotFactoryTestConfig();
     context = createManagedTrackedServicesContext();
   });
 
   afterEach(async () => {
     await context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('BotFactory Error Handling - Phase 8.9.41', () => {
+  let validConfig: Config;
+  let context: ManagedTrackedServicesContext;
+  const getContext = bindTrackedServicesContext();
+
+  beforeEach(() => {
+    validConfig = createBotFactoryTestConfig();
+    context = getContext();
   });
 
   describe('Config Validation - THROW Strategy', () => {

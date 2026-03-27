@@ -6,7 +6,6 @@
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  createStrategyConfigMergerErrorHandler,
   createStrategyConfigMergerLogger,
   createStrategyConfigMergerMainConfig as createMockConfig,
   createManagedStrategyConfigMergerContext,
@@ -15,8 +14,23 @@ import {
   type ManagedStrategyConfigMergerContext,
 } from '../helpers/strategy-config-merger-test.utils';
 
-describe('StrategyConfigMergerService - Error Handling', () => {
+function bindStrategyConfigMergerContext() {
   let context: ManagedStrategyConfigMergerContext;
+
+  beforeEach(() => {
+    context = createManagedStrategyConfigMergerContext({
+      logger: createStrategyConfigMergerLogger(),
+    });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('StrategyConfigMergerService - Error Handling', () => {
   let service: StrategyConfigMergerService;
   let errorHandler: ErrorHandler;
   type MainConfigInput = Parameters<StrategyConfigMergerService['mergeConfigs']>[0];
@@ -27,8 +41,6 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   const asConfigValueMain = (value: unknown): ConfigValueMainInput => value as ConfigValueMainInput;
   const asStrategy = (value: unknown): StrategyInput => value as StrategyInput;
   const asPath = (value: unknown): PathInput => value as PathInput;
-  const asErrorLogger = (value: ReturnType<typeof createStrategyConfigMergerLogger>) =>
-    value as unknown as ConstructorParameters<typeof ErrorHandler>[0];
   const viewMerged = (value: ReturnType<StrategyConfigMergerService['mergeConfigs']>) =>
     value as unknown as {
       version: number;
@@ -45,19 +57,13 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       indicators: { ema: { enabled?: boolean } };
     };
   let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
+  const getContext = bindStrategyConfigMergerContext();
 
   beforeEach(() => {
-    mockLogger = createStrategyConfigMergerLogger();
-    context = createManagedStrategyConfigMergerContext({
-      logger: mockLogger,
-      errorHandler: createStrategyConfigMergerErrorHandler(asErrorLogger(mockLogger)),
-    });
+    const context = getContext();
+    mockLogger = context.logger;
     service = context.service;
     errorHandler = context.errorHandler;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ===== THROW: Input Validation =====

@@ -32,18 +32,33 @@ import {
 // TESTS
 // ============================================================================
 
-describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
+function bindWebSocketManagerContext() {
   let context: ManagedWebSocketManagerContext;
-  let wsManager: WebSocketManagerService;
-  let logger: LoggerService;
 
   beforeEach(() => {
     context = createManagedWebSocketManagerContext({ testnet: true });
-    ({ wsManager, logger } = context);
   });
 
   afterEach(async () => {
     await context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
+  let wsManager: WebSocketManagerService;
+  let logger: LoggerService;
+  let createStandardTestnetService: ManagedWebSocketManagerContext['createStandardTestnetService'];
+  let errorHandler: ManagedWebSocketManagerContext['errorHandler'];
+  let orderExecutionDetector: ManagedWebSocketManagerContext['orderExecutionDetector'];
+  let deduplicationService: ManagedWebSocketManagerContext['deduplicationService'];
+  let keepAliveService: ManagedWebSocketManagerContext['keepAliveService'];
+  const getContext = bindWebSocketManagerContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ wsManager, logger, createStandardTestnetService, errorHandler, orderExecutionDetector, deduplicationService, keepAliveService } = context);
   });
 
   // ============================================================================
@@ -95,14 +110,14 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       expect(payload).toBeDefined();
       expect(payload.op).toBe('auth');
 
-      const customManager = context.createStandardTestnetService({
+      const customManager = createStandardTestnetService({
         configOverrides: { testnet: true },
         logger,
-        errorHandler: context.errorHandler,
-        orderExecutionDetector: context.orderExecutionDetector,
+        errorHandler,
+        orderExecutionDetector,
         authService,
-        deduplicationService: context.deduplicationService,
-        keepAliveService: context.keepAliveService,
+        deduplicationService,
+        keepAliveService,
       });
       expect(customManager).toBeDefined();
     });

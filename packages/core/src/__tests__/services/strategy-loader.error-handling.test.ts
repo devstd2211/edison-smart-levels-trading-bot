@@ -27,6 +27,20 @@ import {
   type ManagedStrategyLoaderContext,
 } from '../helpers/strategy-loader-test.utils';
 
+function bindStrategyLoaderContext() {
+  let context: ManagedStrategyLoaderContext;
+
+  beforeEach(async () => {
+    context = await createManagedStrategyLoaderContext();
+  });
+
+  afterEach(async () => {
+    await context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let loaderService: StrategyLoaderService;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
@@ -34,20 +48,16 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
   let createLoader: ManagedStrategyLoaderContext['createLoader'];
-  let context: ManagedStrategyLoaderContext;
+  const getContext = bindStrategyLoaderContext();
 
   beforeEach(async () => {
-    context = await createManagedStrategyLoaderContext();
+    const context = getContext();
     mockErrorHandler = context.errorHandler;
     testStrategiesDir = context.tempDir;
     loaderService = context.loader;
     createLoader = context.createLoader;
     fileReadSpy = context.fileReadSpy;
     dirReadSpy = context.dirReadSpy;
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
   });
 
   // ============================================================================

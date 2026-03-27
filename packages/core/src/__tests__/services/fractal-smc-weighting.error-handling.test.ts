@@ -32,6 +32,21 @@ const createValidConfig = createFractalSmcWeightingConfig;
 const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
+function bindFractalSmcWeightingContext() {
+  let context: ManagedFractalSmcWeightingContext;
+
+  beforeEach(() => {
+    const mockLogger = createFractalSmcWeightingMockLogger();
+    context = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service: FractalSmcWeightingService;
   let errorHandler: ErrorHandler;
@@ -43,17 +58,14 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     withErrorHandler?: boolean;
   }) => FractalSmcWeightingService;
   let context: ManagedFractalSmcWeightingContext;
+  const getContext = bindFractalSmcWeightingContext();
 
   beforeEach(() => {
-    mockLogger = createFractalSmcWeightingMockLogger();
-    context = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+    context = getContext();
+    mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     service = context.service;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

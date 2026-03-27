@@ -17,22 +17,32 @@ import {
   type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-describe('WebSocketAuthenticationService - Error Handling', () => {
-  let service: WebSocketAuthenticationService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: AuthLogger;
+function bindWebSocketAuthenticationContext() {
   let context: ManagedWebSocketAuthenticationContext;
-  let createService: ManagedWebSocketAuthenticationContext['createService'];
-  let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
-  let createServiceWithoutLogger: ManagedWebSocketAuthenticationContext['createServiceWithoutLogger'];
 
   beforeEach(() => {
     context = createManagedWebSocketAuthenticationContext();
-    ({ service, errorHandler, mockLogger, createService, createLegacyService, createServiceWithoutLogger } = context);
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('WebSocketAuthenticationService - Error Handling', () => {
+  let service: WebSocketAuthenticationService;
+  let errorHandler: ErrorHandler;
+  let mockLogger: AuthLogger;
+  let createService: ManagedWebSocketAuthenticationContext['createService'];
+  let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
+  let createServiceWithoutLogger: ManagedWebSocketAuthenticationContext['createServiceWithoutLogger'];
+  const getContext = bindWebSocketAuthenticationContext();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ service, errorHandler, mockLogger, createService, createLegacyService, createServiceWithoutLogger } = context);
   });
 
   // ===== THROW: Input Validation =====
