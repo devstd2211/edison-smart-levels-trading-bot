@@ -33,12 +33,27 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 describe('OrderExecutionDetectorService', () => {
   let service: OrderExecutionDetectorService;
   let logger: LoggerService;
-  let context: ManagedOrderExecutionDetectorContext;
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
+  function bindOrderExecutionDetectorContext() {
+    let context: ManagedOrderExecutionDetectorContext;
+
+    beforeEach(() => {
+      context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindOrderExecutionDetectorContext();
+
   beforeEach(() => {
-    context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+    const context = getContext();
     ({ service, logger } = context);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
@@ -47,10 +62,6 @@ describe('OrderExecutionDetectorService', () => {
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('detectExecution', () => {

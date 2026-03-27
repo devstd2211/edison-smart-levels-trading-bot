@@ -22,15 +22,26 @@ import {
 
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
-  let context: ManagedMTFSnapshotGateContext;
+
+  function bindMTFSnapshotGateContext() {
+    let context: ManagedMTFSnapshotGateContext;
+
+    beforeEach(() => {
+      context = createManagedMTFSnapshotGateContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindMTFSnapshotGateContext();
 
   beforeEach(() => {
-    context = createManagedMTFSnapshotGateContext();
+    const context = getContext();
     gate = context.gate;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================

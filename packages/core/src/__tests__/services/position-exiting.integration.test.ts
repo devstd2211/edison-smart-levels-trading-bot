@@ -27,17 +27,29 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
   let mockLogger: ManagedRealScenarioPositionExitingContext['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
+  function bindRealScenarioPositionExitingContext() {
+    let managedContext: ManagedRealScenarioPositionExitingContext;
+
+    beforeEach(() => {
+      managedContext = createManagedRealScenarioPositionExitingContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRealScenarioPositionExitingContext();
+
   beforeEach(() => {
-    context = createManagedRealScenarioPositionExitingContext();
+    context = getContext();
     service = context.service;
     mockLogger = context.mockLogger;
     mockBybitService = context.mockBybit;
     mockTakeProfitManager =
       context.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {

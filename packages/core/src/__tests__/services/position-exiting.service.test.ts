@@ -57,8 +57,24 @@ describe('PositionExitingService', () => {
   let riskConfig: RiskManagementConfig;
   let fullConfig: Config;
 
+  function bindPositionExitingContext() {
+    let managedContext: ManagedPositionExitingContext;
+
+    beforeEach(() => {
+      managedContext = createManagedPositionExitingContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionExitingContext();
+
   beforeEach(() => {
-    context = createManagedPositionExitingContext();
+    context = getContext();
     service = context.service;
     mockLogger = context.mockLogger;
     mockBybit = context.mockBybit;
@@ -70,10 +86,6 @@ describe('PositionExitingService', () => {
     tradingConfig = context.tradingConfig;
     riskConfig = context.riskConfig;
     fullConfig = context.fullConfig;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('executeExitAction()', () => {

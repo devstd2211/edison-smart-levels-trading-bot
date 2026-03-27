@@ -31,16 +31,29 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
-  let context: ManagedOrderbookManagerContext;
+  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
+
+  function bindOrderbookManagerContext() {
+    let context: ManagedOrderbookManagerContext;
+
+    beforeEach(() => {
+      context = createManagedOrderbookManagerContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindOrderbookManagerContext();
 
   beforeEach(() => {
-    context = createManagedOrderbookManagerContext({ withErrorHandler: false });
+    const context = getContext();
     logger = context.loggerService;
     manager = context.service;
-  });
-
-  afterEach(() => {
-    context.cleanup();
+    createLegacyService = context.createLegacyService;
   });
 
   describe('Snapshot handling', () => {
@@ -187,7 +200,7 @@ describe('OrderbookManagerService', () => {
     });
 
     it('should ignore delta before snapshot', () => {
-      const freshManager = context.createLegacyService({
+      const freshManager = createLegacyService({
         symbol: 'BTCUSDT',
         logger,
       });

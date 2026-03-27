@@ -118,13 +118,25 @@ describe('MTFSnapshotGate - Functional Tests', () => {
   let gate: MTFSnapshotGate;
   let context: ManagedMTFSnapshotGateContext;
 
-  beforeEach(() => {
-    context = createManagedMTFSnapshotGateContext();
-    gate = context.gate;
-  });
+  function bindMTFSnapshotGateFunctionalContext() {
+    let managedContext: ManagedMTFSnapshotGateContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedMTFSnapshotGateContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindMTFSnapshotGateFunctionalContext();
+
+  beforeEach(() => {
+    context = getContext();
+    gate = context.gate;
   });
 
   // ========================================================================

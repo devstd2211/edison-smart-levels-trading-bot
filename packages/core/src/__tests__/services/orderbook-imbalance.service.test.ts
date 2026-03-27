@@ -16,17 +16,28 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  let context: ManagedOrderbookImbalanceContext;
   let createService: ManagedOrderbookImbalanceContext['createLegacyService'];
 
+  function bindOrderbookImbalanceContext() {
+    let context: ManagedOrderbookImbalanceContext;
+
+    beforeEach(() => {
+      context = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindOrderbookImbalanceContext();
+
   beforeEach(() => {
-    context = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+    const context = getContext();
     ({ service, logger, config } = context);
     createService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('initialization', () => {

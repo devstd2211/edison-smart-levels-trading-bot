@@ -21,12 +21,24 @@ import {
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   let context: ManagedTransactionalCloseContext;
 
-  beforeEach(() => {
-    context = createManagedTransactionalCloseContext();
-  });
+  function bindTransactionalCloseContext() {
+    let managedContext: ManagedTransactionalCloseContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedTransactionalCloseContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTransactionalCloseContext();
+
+  beforeEach(() => {
+    context = getContext();
   });
 
   it('T1: Normal flow - journal and stats both succeed', () => {

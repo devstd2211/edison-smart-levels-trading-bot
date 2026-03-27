@@ -31,18 +31,30 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   let mockJournal: ManagedRaceConditionPositionExitingContext['mockJournal'];
   let mockSessionStats: ManagedRaceConditionPositionExitingContext['mockSessionStats'];
 
+  function bindRaceConditionPositionExitingContext() {
+    let managedContext: ManagedRaceConditionPositionExitingContext;
+
+    beforeEach(() => {
+      managedContext = createManagedRaceConditionPositionExitingContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRaceConditionPositionExitingContext();
+
   beforeEach(() => {
-    context = createManagedRaceConditionPositionExitingContext();
+    context = getContext();
     positionExitingService = context.service;
     mockLogger = context.mockLogger;
     mockBybitService = context.mockBybit;
     mockTelegram = context.mockTelegram;
     mockJournal = context.mockJournal;
     mockSessionStats = context.mockSessionStats;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // =========================================================================

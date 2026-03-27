@@ -33,21 +33,32 @@ describe('Phase 10 Integration Tests', () => {
   // Phase 10.2 Services
   let mlValidatorService: MLSignalValidatorService;
   let anomalyService: AnomalyDetectionService;
-  let context: ManagedPhase10Context;
   const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
 
+  function bindPhase10Context() {
+    let context: ManagedPhase10Context;
+
+    beforeEach(() => {
+      context = createManagedPhase10Context();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindPhase10Context();
+
   beforeEach(() => {
-    context = createManagedPhase10Context();
+    const context = getContext();
     ({
       liquidityService,
       smartOrderService,
       mlValidatorService,
       anomalyService,
     } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Phase 10.1 Services Integration', () => {

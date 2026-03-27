@@ -31,14 +31,26 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
   let service: PositionExitingService;
   let mockBybitService: ManagedFunctionalPositionExitingContext['mockBybit'];
 
+  function bindFunctionalPositionExitingContext() {
+    let managedContext: ManagedFunctionalPositionExitingContext;
+
+    beforeEach(() => {
+      managedContext = createManagedFunctionalPositionExitingContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindFunctionalPositionExitingContext();
+
   beforeEach(() => {
-    context = createManagedFunctionalPositionExitingContext();
+    context = getContext();
     service = context.service;
     mockBybitService = context.mockBybit;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {

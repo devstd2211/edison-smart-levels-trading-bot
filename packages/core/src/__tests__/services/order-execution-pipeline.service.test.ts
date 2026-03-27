@@ -32,15 +32,26 @@ describe('OrderExecutionPipeline', () => {
   let mockBybitService: OrderExecutionPipelineMockExchange;
   let mockLogger: OrderExecutionPipelineMockLogger;
   let config: OrderExecutionConfig;
-  let context: ManagedOrderExecutionPipelineContext;
+
+  function bindOrderExecutionPipelineContext() {
+    let context: ManagedOrderExecutionPipelineContext;
+
+    beforeEach(() => {
+      context = createManagedOrderExecutionPipelineContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindOrderExecutionPipelineContext();
 
   beforeEach(() => {
-    context = createManagedOrderExecutionPipelineContext();
+    const context = getContext();
     ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Order Placement', () => {

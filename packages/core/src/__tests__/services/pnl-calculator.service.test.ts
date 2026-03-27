@@ -16,12 +16,24 @@ import {
 describe('PnLCalculatorService', () => {
   let context: ManagedPnlCalculatorContext;
 
-  beforeEach(() => {
-    context = createManagedPnlCalculatorContext();
-  });
+  function bindPnlCalculatorContext() {
+    let managedContext: ManagedPnlCalculatorContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedPnlCalculatorContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPnlCalculatorContext();
+
+  beforeEach(() => {
+    context = getContext();
   });
 
   describe('calculate', () => {

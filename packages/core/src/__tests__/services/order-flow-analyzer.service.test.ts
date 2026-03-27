@@ -28,16 +28,27 @@ import {
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let config: OrderFlowAnalyzerConfig;
-  let context: ManagedOrderFlowAnalyzerContext;
+
+  function bindOrderFlowAnalyzerContext() {
+    let context: ManagedOrderFlowAnalyzerContext;
+
+    beforeEach(() => {
+      context = createManagedOrderFlowAnalyzerContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindOrderFlowAnalyzerContext();
 
   beforeEach(() => {
-    context = createManagedOrderFlowAnalyzerContext();
+    const context = getContext();
     service = context.service;
     config = context.config;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('processOrderbookUpdate', () => {

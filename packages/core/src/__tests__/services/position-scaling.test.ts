@@ -51,8 +51,24 @@ describe('PositionScalingService', () => {
   type ScalingConfigInput = Parameters<ManagedPositionScalingContext['createInvalidService']>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
+  function bindPositionScalingContext() {
+    let managedContext: ManagedPositionScalingContext;
+
+    beforeEach(() => {
+      managedContext = createManagedPositionScalingContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionScalingContext();
+
   beforeEach(() => {
-    context = createManagedPositionScalingContext();
+    context = getContext();
     service = context.service;
     logger = context.logger;
     errorHandler = context.errorHandler;
@@ -66,10 +82,6 @@ describe('PositionScalingService', () => {
     createExtremes = context.createExtremes;
     createSequence = context.createSequence;
     evaluateDecision = context.evaluateDecision;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

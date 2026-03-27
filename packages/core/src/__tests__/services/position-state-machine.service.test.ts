@@ -27,15 +27,30 @@ import {
 
 describe('PositionStateMachineService', () => {
   let logger: LoggerService;
-  let context: ManagedPositionStateMachineContext;
+  let createLegacyService: typeof createLegacyPositionStateMachineService;
+  let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
+
+  function bindPositionStateMachineContext() {
+    let context: ManagedPositionStateMachineContext;
+
+    beforeEach(() => {
+      context = createManagedPositionStateMachineContext();
+    });
+
+    afterEach(async () => {
+      await context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindPositionStateMachineContext();
 
   beforeEach(() => {
-    context = createManagedPositionStateMachineContext();
+    const context = getContext();
     logger = context.logger;
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
+    createLegacyService = createLegacyPositionStateMachineService;
+    createLegacyHarness = createLegacyPositionStateMachineHarness;
   });
 
   describe('State Transitions', () => {
@@ -424,13 +439,13 @@ describe('PositionStateMachineService', () => {
 
   describe('Initialization', () => {
     it('should initialize without errors', async () => {
-      const service = createLegacyPositionStateMachineService({ logger });
+      const service = createLegacyService({ logger });
       await expect(service.initialize()).resolves.not.toThrow();
       expect(service.isInitialized()).toBe(true);
     });
 
     it('should initialize without errors via shared service builder', async () => {
-      const { service } = createLegacyPositionStateMachineHarness({ logger });
+      const { service } = createLegacyHarness({ logger });
       await expect(service.initialize()).resolves.not.toThrow();
       expect(service.isInitialized()).toBe(true);
     });

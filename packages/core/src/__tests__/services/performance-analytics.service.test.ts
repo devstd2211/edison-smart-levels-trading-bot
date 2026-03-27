@@ -24,7 +24,6 @@ import {
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
-  let context: ManagedPerformanceAnalyticsContext;
   let analytics: PerformanceAnalytics;
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
@@ -32,8 +31,24 @@ describe('PerformanceAnalytics Service Tests', () => {
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
 
+  function bindPerformanceAnalyticsContext() {
+    let context: ManagedPerformanceAnalyticsContext;
+
+    beforeEach(() => {
+      context = createManagedPerformanceAnalyticsContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindPerformanceAnalyticsContext();
+
   beforeEach(() => {
-    context = createManagedPerformanceAnalyticsContext();
+    const context = getContext();
     analytics = createLegacyPerformanceAnalyticsService({
       config: context.config,
       journal: context.journal,
@@ -41,10 +56,6 @@ describe('PerformanceAnalytics Service Tests', () => {
     });
     mockJournalService = context.journal;
     mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================
