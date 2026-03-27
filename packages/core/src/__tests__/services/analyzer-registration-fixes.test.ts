@@ -26,15 +26,27 @@ describe('Analyzer Registration Service - All Fixes', () => {
   let context: ManagedAnalyzerRegistrationFixesContext;
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
+  function bindAnalyzerRegistrationFixesContext() {
+    let managedContext: ManagedAnalyzerRegistrationFixesContext;
+
+    beforeEach(() => {
+      managedContext = createManagedAnalyzerRegistrationFixesContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindAnalyzerRegistrationFixesContext();
+
   beforeEach(() => {
-    context = createManagedAnalyzerRegistrationFixesContext();
+    context = getContext();
     mockConfig = {
       analyzerStrategic: context.analyzerStrategic,
     };
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

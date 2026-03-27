@@ -18,18 +18,30 @@ describe('ResilienceCoordinator', () => {
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
 
+  function bindResilienceCoordinatorContext() {
+    let managedContext: ManagedResilienceCoordinatorContext;
+
+    beforeEach(() => {
+      managedContext = createManagedResilienceCoordinatorContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindResilienceCoordinatorContext();
+
   beforeEach(() => {
-    context = createManagedResilienceCoordinatorContext();
+    context = getContext();
     circuitBreaker = context.circuitBreaker;
     rateLimiter = context.rateLimiter;
     retryPolicy = context.retryPolicy;
     bulkhead = context.bulkhead;
     metrics = context.metrics;
     coordinator = context.coordinator;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ===========================

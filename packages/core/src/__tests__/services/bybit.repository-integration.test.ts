@@ -34,16 +34,28 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   }) => BybitService;
   let context: ManagedBybitRepositoryIntegrationContext;
 
+  function bindBybitRepositoryIntegrationContext() {
+    let managedContext: ManagedBybitRepositoryIntegrationContext;
+
+    beforeEach(() => {
+      managedContext = createManagedBybitRepositoryIntegrationContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindBybitRepositoryIntegrationContext();
+
   beforeEach(() => {
-    context = createManagedBybitRepositoryIntegrationContext();
+    context = getContext();
     mockLogger = context.logger;
     repository = context.repository;
     bybitConfig = context.config;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Construction & Initialization', () => {

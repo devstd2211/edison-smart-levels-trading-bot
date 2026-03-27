@@ -29,14 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Completed the remaining lifecycle/testability cleanup follow-up for `wall-tracker.error-handling`, `websocket-event-handler.error-handling`, `whale-wall-tp.error-handling`, and `candle-provider.error-handling`.
-  - replaced the remaining direct suite-local managed-context setup/cleanup with shared suite-owned binders and converted candle-provider error-handling scenarios onto managed standard/legacy helper-owned contexts.
+- Completed a lifecycle/testability follow-up for `delta-analyzer.service`, `dynamic-position-sizer`, `entry-confirmation.service`, `event-deduplication.service`, `exchange-factory.service`, and `health-check`.
+  - replaced their remaining suite-local managed-context ownership with local binder-owned helper-managed setup/cleanup so those non-error-handling suites now share one explicit lifecycle path per suite.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/delta-analyzer.service.test.ts packages/core/src/__tests__/services/dynamic-position-sizer.test.ts packages/core/src/__tests__/services/entry-confirmation.service.test.ts packages/core/src/__tests__/services/event-deduplication.service.test.ts packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/health-check.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Direct managed-context ownership cleanup across `packages/core/src/__tests__/services/*error-handling*.test.ts` is complete; move to the next lifecycle/testability slice around explicit lifecycle ownership, `createServices()` / `start` / `stop` usage, and replacing broad suite-level service state with minimal grouped services in the next highest-signal non-completed service-adjacent suites.
+- Continue the non-error-handling lifecycle/testability slice around explicit lifecycle ownership, `createServices()` / `start` / `stop` usage, and replacing broad suite-level service state with minimal grouped services in the next highest-signal suites that still keep local managed-context setup/cleanup.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

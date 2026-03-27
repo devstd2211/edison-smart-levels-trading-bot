@@ -19,15 +19,27 @@ describe('RetryPolicyService', () => {
   let createInvalidService: ManagedRetryPolicyContext['createInvalidService'];
   let createDefaultService: ManagedRetryPolicyContext['createDefaultService'];
 
+  function bindRetryPolicyContext() {
+    let managedContext: ManagedRetryPolicyContext;
+
+    beforeEach(() => {
+      managedContext = createManagedRetryPolicyContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+      service = undefined;
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRetryPolicyContext();
+
   beforeEach(() => {
-    context = createManagedRetryPolicyContext();
+    context = getContext();
     createInvalidService = context.createInvalidService;
     createDefaultService = context.createDefaultService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
-    service = undefined;
   });
 
   // ============================================================================

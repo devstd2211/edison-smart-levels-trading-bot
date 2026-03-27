@@ -26,17 +26,29 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let logger: LoggerService;
   let context: ManagedCandleProviderRepositoryIntegrationContext;
 
+  function bindCandleProviderRepositoryIntegrationContext() {
+    let managedContext: ManagedCandleProviderRepositoryIntegrationContext;
+
+    beforeEach(() => {
+      managedContext = createManagedCandleProviderRepositoryIntegrationContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindCandleProviderRepositoryIntegrationContext();
+
   beforeEach(() => {
-    context = createManagedCandleProviderRepositoryIntegrationContext();
+    context = getContext();
     provider = context.provider;
     exchange = context.exchange;
     repository = context.repository;
     timeframeProvider = context.timeframeProvider;
     logger = context.logger;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Initialization', () => {

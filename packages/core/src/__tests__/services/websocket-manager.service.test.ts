@@ -21,13 +21,25 @@ describe('WebSocketManagerService', () => {
   let context: ManagedWebSocketManagerContext;
   let wsManager: WebSocketManagerService;
 
-  beforeEach(() => {
-    context = createManagedWebSocketManagerContext();
-    wsManager = context.wsManager;
-  });
+  function bindWebSocketManagerContext() {
+    let managedContext: ManagedWebSocketManagerContext;
 
-  afterEach(async () => {
-    await context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedWebSocketManagerContext();
+    });
+
+    afterEach(async () => {
+      await managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindWebSocketManagerContext();
+
+  beforeEach(() => {
+    context = getContext();
+    wsManager = context.wsManager;
   });
 
   // ============================================================================

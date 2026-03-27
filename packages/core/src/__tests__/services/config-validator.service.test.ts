@@ -17,13 +17,25 @@ describe('ConfigValidatorService', () => {
     let validateAtStartup: ManagedConfigValidatorContext['validateAtStartup'];
     let validConfig: ManagedConfigValidatorContext['validConfig'];
 
-    beforeEach(() => {
-      context = createManagedConfigValidatorContext();
-      ({ validateAtStartup, validConfig } = context);
-    });
+    function bindConfigValidatorContext() {
+      let managedContext: ManagedConfigValidatorContext;
 
-    afterEach(() => {
-      context.cleanup();
+      beforeEach(() => {
+        managedContext = createManagedConfigValidatorContext();
+      });
+
+      afterEach(() => {
+        managedContext.cleanup();
+      });
+
+      return () => managedContext;
+    }
+
+    const getContext = bindConfigValidatorContext();
+
+    beforeEach(() => {
+      context = getContext();
+      ({ validateAtStartup, validConfig } = context);
     });
 
     it('should pass validation for valid config', () => {

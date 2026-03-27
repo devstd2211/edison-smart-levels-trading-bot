@@ -23,15 +23,27 @@ describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
   let context: ManagedTrackedServicesContext;
 
+  function bindTrackedServicesContext() {
+    let managedContext: ManagedTrackedServicesContext;
+
+    beforeEach(() => {
+      managedContext = createManagedTrackedServicesContext();
+    });
+
+    afterEach(async () => {
+      await managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTrackedServicesContext();
+
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    context = createManagedTrackedServicesContext();
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
+    context = getContext();
   });
 
   describe('Basic Factory Operations', () => {

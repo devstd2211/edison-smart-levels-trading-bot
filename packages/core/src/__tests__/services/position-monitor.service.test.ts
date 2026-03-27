@@ -16,13 +16,11 @@ import {
   attachScenarioExchangePosition,
   attachTimeBasedExitScenario,
   createManagedPositionMonitorContext,
-  createPositionMonitorHarness,
   createPositionMonitorOpenedAtMinutesAgo,
   createPositionMonitorRiskConfig,
   createPositionMonitorScenarioPosition,
   createTimeBasedExitRiskConfig,
   defaultPositionMonitorRiskConfig,
-  recreatePositionMonitorHarness,
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
@@ -47,35 +45,47 @@ describe('PositionMonitorService', () => {
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
   let context: ManagedPositionMonitorContext;
 
-  const syncFromContext = (): void => {
-    monitor = context.monitor;
-    mockBybit = context.mockBybit;
-    mockPositionManager = context.mockPositionManager;
-    mockTelegram = context.mockTelegram;
-    mockExitTypeDetector = context.mockExitTypeDetector;
-    mockPnLCalculator = context.mockPnLCalculator;
-    mockPositionSync = context.mockPositionSync;
-    logger = context.logger;
-    positionHarness = context.positionHarness;
+  const bindContext = (managedContext: ManagedPositionMonitorContext): void => {
+    context = managedContext;
+    monitor = managedContext.monitor;
+    mockBybit = managedContext.mockBybit;
+    mockPositionManager = managedContext.mockPositionManager;
+    mockTelegram = managedContext.mockTelegram;
+    mockExitTypeDetector = managedContext.mockExitTypeDetector;
+    mockPnLCalculator = managedContext.mockPnLCalculator;
+    mockPositionSync = managedContext.mockPositionSync;
+    logger = managedContext.logger;
+    positionHarness = managedContext.positionHarness;
   };
 
   const rebuildMonitor = (config: RiskManagementConfig): void => {
     context.rebuildMonitor(config);
-    syncFromContext();
+    bindContext(context);
   };
 
-  beforeEach(() => {
-    context = createManagedPositionMonitorContext({
-      riskConfig: {
-        ...defaultPositionMonitorRiskConfig,
-        positionSizeUsdt: 10,
-      },
-    });
-    syncFromContext();
-  });
+  function bindPositionMonitorContext() {
+    let managedContext: ManagedPositionMonitorContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedPositionMonitorContext({
+        riskConfig: {
+          ...defaultPositionMonitorRiskConfig,
+          positionSizeUsdt: 10,
+        },
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionMonitorContext();
+
+  beforeEach(() => {
+    bindContext(getContext());
   });
 
   // ==========================================================================

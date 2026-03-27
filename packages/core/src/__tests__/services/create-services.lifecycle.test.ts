@@ -7,12 +7,24 @@ import {
 describe('createServices lifecycle orchestration', () => {
   let context: ManagedTrackedServicesContext;
 
-  beforeEach(() => {
-    context = createManagedTrackedServicesContext();
-  });
+  function bindTrackedServicesContext() {
+    let managedContext: ManagedTrackedServicesContext;
 
-  afterEach(async () => {
-    await context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedTrackedServicesContext();
+    });
+
+    afterEach(async () => {
+      await managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTrackedServicesContext();
+
+  beforeEach(() => {
+    context = getContext();
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {

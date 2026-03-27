@@ -30,15 +30,27 @@ describe('MonitoringServer', () => {
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let context: ManagedMonitoringServerContext;
 
+  function bindMonitoringServerContext() {
+    let managedContext: ManagedMonitoringServerContext;
+
+    beforeEach(() => {
+      managedContext = createManagedMonitoringServerContext();
+    });
+
+    afterEach(async () => {
+      await managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindMonitoringServerContext();
+
   beforeEach(() => {
-    context = createManagedMonitoringServerContext();
+    context = getContext();
     mockLogger = context.logger;
     mockMetricsService = context.metricsService;
     mockHealthService = context.healthService;
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
   });
 
   // ==========================================================================

@@ -26,14 +26,26 @@ describe('HealthCheckService', () => {
   let harness: HealthCheckTestHarness;
   let context: ManagedHealthCheckContext;
 
+  function bindHealthCheckContext() {
+    let managedContext: ManagedHealthCheckContext;
+
+    beforeEach(() => {
+      managedContext = createManagedHealthCheckContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindHealthCheckContext();
+
   beforeEach(() => {
-    context = createManagedHealthCheckContext();
+    context = getContext();
     harness = context.harness;
     service = context.service;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

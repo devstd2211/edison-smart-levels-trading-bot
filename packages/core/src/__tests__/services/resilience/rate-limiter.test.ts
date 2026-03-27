@@ -16,15 +16,27 @@ describe('RateLimiterService', () => {
   let createInvalidService: ManagedRateLimiterContext['createInvalidService'];
   let createDefaultService: ManagedRateLimiterContext['createDefaultService'];
 
+  function bindRateLimiterContext() {
+    let managedContext: ManagedRateLimiterContext;
+
+    beforeEach(() => {
+      managedContext = createManagedRateLimiterContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+      service = undefined;
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRateLimiterContext();
+
   beforeEach(() => {
-    context = createManagedRateLimiterContext();
+    context = getContext();
     createInvalidService = context.createInvalidService;
     createDefaultService = context.createDefaultService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
-    service = undefined;
   });
 
   // ============================================================================

@@ -21,15 +21,27 @@ describe('ExchangeFactory Service', () => {
   let createBybitFactory: ManagedExchangeFactoryContext['createBybitFactory'];
   let createBinanceFactory: ManagedExchangeFactoryContext['createBinanceFactory'];
 
+  function bindExchangeFactoryContext() {
+    let managedContext: ManagedExchangeFactoryContext;
+
+    beforeEach(() => {
+      managedContext = createManagedExchangeFactoryContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindExchangeFactoryContext();
+
   beforeEach(() => {
-    context = createManagedExchangeFactoryContext();
+    context = getContext();
     createFactory = context.createFactory;
     createBybitFactory = context.createBybitFactory;
     createBinanceFactory = context.createBinanceFactory;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Factory Initialization', () => {

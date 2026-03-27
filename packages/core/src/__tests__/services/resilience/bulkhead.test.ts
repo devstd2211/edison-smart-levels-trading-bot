@@ -19,16 +19,28 @@ describe('BulkheadService', () => {
   let createDefaultService: ManagedBulkheadContext['createDefaultService'];
   let createInvalidService: ManagedBulkheadContext['createInvalidService'];
 
+  function bindBulkheadContext() {
+    let managedContext: ManagedBulkheadContext;
+
+    beforeEach(() => {
+      managedContext = createManagedBulkheadContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+      service = undefined;
+      jest.clearAllTimers();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindBulkheadContext();
+
   beforeEach(() => {
-    context = createManagedBulkheadContext();
+    context = getContext();
     createDefaultService = context.createDefaultService;
     createInvalidService = context.createInvalidService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
-    service = undefined;
-    jest.clearAllTimers();
   });
 
   // ============================================================================

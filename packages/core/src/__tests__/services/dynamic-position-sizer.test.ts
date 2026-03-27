@@ -47,8 +47,24 @@ describe('DynamicPositionSizerService', () => {
     errorHandler?: ErrorHandler;
   }) => DynamicPositionSizerService;
 
+  function bindDynamicPositionSizerContext() {
+    let managedContext: ManagedDynamicPositionSizerContext;
+
+    beforeEach(() => {
+      managedContext = createManagedDynamicPositionSizerContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindDynamicPositionSizerContext();
+
   beforeEach(() => {
-    context = createManagedDynamicPositionSizerContext();
+    context = getContext();
     service = context.service;
     logger = context.logger;
     errorHandler = context.errorHandler;
@@ -57,10 +73,6 @@ describe('DynamicPositionSizerService', () => {
     createBrokenService = context.createBrokenService;
     createNoHandlerService = context.createNoHandlerService;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

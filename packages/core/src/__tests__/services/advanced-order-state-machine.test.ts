@@ -35,16 +35,28 @@ describe('AdvancedOrderStateMachineService', () => {
   let context: ManagedAdvancedOrderStateMachineContext;
   let createLegacyService: ManagedAdvancedOrderStateMachineContext['createLegacyService'];
 
+  function bindAdvancedOrderStateMachineContext() {
+    let managedContext: ManagedAdvancedOrderStateMachineContext;
+
+    beforeEach(() => {
+      managedContext = createManagedAdvancedOrderStateMachineContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindAdvancedOrderStateMachineContext();
+
   beforeEach(() => {
-    context = createManagedAdvancedOrderStateMachineContext();
+    context = getContext();
     service = context.service;
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
     createLegacyService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

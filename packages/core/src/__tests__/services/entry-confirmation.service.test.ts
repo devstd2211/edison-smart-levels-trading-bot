@@ -25,13 +25,25 @@ describe('EntryConfirmationManager', () => {
   let logger: LoggerService;
   let context: ManagedEntryConfirmationContext;
 
-  beforeEach(() => {
-    context = createManagedEntryConfirmationContext({ withErrorHandler: false });
-    ({ manager, logger } = context);
-  });
+  function bindEntryConfirmationContext() {
+    let managedContext: ManagedEntryConfirmationContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindEntryConfirmationContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ manager, logger } = context);
   });
 
   // TEST 1-2: Basic operations

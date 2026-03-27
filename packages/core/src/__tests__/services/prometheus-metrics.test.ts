@@ -26,14 +26,26 @@ describe('PrometheusMetricsService', () => {
   let mockLogger: LoggerService;
   let context: ManagedPrometheusMetricsTestContext;
 
+  function bindPrometheusMetricsContext() {
+    let managedContext: ManagedPrometheusMetricsTestContext;
+
+    beforeEach(() => {
+      managedContext = createManagedPrometheusMetricsTestContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPrometheusMetricsContext();
+
   beforeEach(() => {
-    context = createManagedPrometheusMetricsTestContext();
+    context = getContext();
     mockLogger = context.logger;
     service = context.service;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

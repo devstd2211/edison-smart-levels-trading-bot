@@ -25,15 +25,27 @@ describe('EventDeduplicationService', () => {
   let createServiceWithDefaults: ManagedEventDeduplicationContext['createServiceWithDefaults'];
   let context: ManagedEventDeduplicationContext;
 
+  function bindEventDeduplicationContext() {
+    let managedContext: ManagedEventDeduplicationContext;
+
+    beforeEach(() => {
+      managedContext = createManagedEventDeduplicationContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindEventDeduplicationContext();
+
   beforeEach(() => {
-    context = createManagedEventDeduplicationContext();
+    context = getContext();
     logger = context.logger;
     createService = context.createStandardService;
     createServiceWithDefaults = context.createServiceWithDefaults;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('isDuplicate', () => {

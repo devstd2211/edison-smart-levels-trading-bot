@@ -24,15 +24,27 @@ describe('WebSocketKeepAliveService', () => {
   let logger: LoggerService;
   let mockWs: MockWebSocket;
 
+  function bindWebSocketKeepAliveContext() {
+    let managedContext: ManagedWebSocketKeepAliveContext;
+
+    beforeEach(() => {
+      managedContext = createManagedWebSocketKeepAliveContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindWebSocketKeepAliveContext();
+
   beforeEach(() => {
-    context = createManagedWebSocketKeepAliveContext();
+    context = getContext();
     service = context.service;
     logger = context.logger;
     mockWs = context.websocket;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('start', () => {

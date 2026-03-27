@@ -24,13 +24,25 @@ describe('CompoundInterestCalculatorService', () => {
 
   const defaultConfig = createCompoundInterestConfig();
 
-  beforeEach(() => {
-    context = createManagedLegacyCompoundInterestContext();
-    ({ logger, mockGetBalance, createCalculator } = context);
-  });
+  function bindCompoundInterestContext() {
+    let managedContext: ManagedCompoundInterestContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedLegacyCompoundInterestContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindCompoundInterestContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ logger, mockGetBalance, createCalculator } = context);
   });
 
   // ============================================================================

@@ -18,15 +18,27 @@ describe('DeltaAnalyzerService', () => {
   let config: DeltaConfig;
   let context: ManagedDeltaAnalyzerContext;
 
+  function bindDeltaAnalyzerContext() {
+    let managedContext: ManagedDeltaAnalyzerContext;
+
+    beforeEach(() => {
+      managedContext = createManagedDeltaAnalyzerContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindDeltaAnalyzerContext();
+
   beforeEach(() => {
-    context = createManagedDeltaAnalyzerContext();
+    context = getContext();
     service = context.service;
     logger = context.logger as unknown as LoggerService;
     config = context.config;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('initialization', () => {

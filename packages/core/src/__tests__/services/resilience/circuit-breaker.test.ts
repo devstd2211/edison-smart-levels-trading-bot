@@ -28,8 +28,24 @@ describe('CircuitBreakerService', () => {
     handler?: ErrorHandler,
   ) => CircuitBreakerService;
 
+  function bindCircuitBreakerContext() {
+    let managedContext: ManagedCircuitBreakerContext;
+
+    beforeEach(() => {
+      managedContext = createManagedCircuitBreakerContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindCircuitBreakerContext();
+
   beforeEach(() => {
-    context = createManagedCircuitBreakerContext();
+    context = getContext();
     logger = context.logger;
     errorHandler = context.errorHandler;
     createDefaultService = context.createDefaultService;
@@ -39,10 +55,6 @@ describe('CircuitBreakerService', () => {
       serviceLogger = logger as LoggerService,
       handler = errorHandler,
     ) => context.harness.createCircuitBreakerService(config, { logger: serviceLogger, errorHandler: handler });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================
