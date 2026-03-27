@@ -19,16 +19,28 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   let mockEventBus: MockRiskMonitorEventBus;
   let context: ManagedRealTimeRiskMonitorHarness;
 
+  function bindRealTimeRiskMonitorHarness() {
+    let managedContext: ManagedRealTimeRiskMonitorHarness;
+
+    beforeEach(() => {
+      managedContext = createManagedRealTimeRiskMonitorHarness({ started: true });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRealTimeRiskMonitorHarness();
+
   beforeEach(() => {
-    context = createManagedRealTimeRiskMonitorHarness({ started: true });
+    context = getContext();
     monitor = context.monitor;
     mockPositionService = context.mockPositionService;
     mockLogger = context.mockLogger;
     mockEventBus = context.mockEventBus;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   it('CI1: position-closed event clears health score cache', async () => {

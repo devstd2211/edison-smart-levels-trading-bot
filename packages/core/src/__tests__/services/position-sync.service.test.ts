@@ -39,18 +39,30 @@ describe('PositionSyncService', () => {
   let logger: LoggerService;
   let context: ManagedPositionSyncContext;
 
+  function bindPositionSyncContext() {
+    let managedContext: ManagedPositionSyncContext;
+
+    beforeEach(() => {
+      managedContext = createManagedPositionSyncContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionSyncContext();
+
   beforeEach(() => {
-    context = createManagedPositionSyncContext();
+    context = getContext();
     service = context.service;
     mockBybit = context.mockBybit;
     mockPositionManager = context.mockPositionManager;
     mockExitTypeDetector = context.mockExitTypeDetector;
     mockTelegram = context.mockTelegram;
     logger = context.logger;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

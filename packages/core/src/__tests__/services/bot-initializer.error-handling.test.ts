@@ -13,7 +13,6 @@
 
 import { BotInitializer } from '../../services/bot-initializer';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import type { Config } from '../../types/legacy';
 import {
   ExchangeConnectionError,
   ExchangeRateLimitError,
@@ -59,13 +58,11 @@ function bindBotInitializerContext() {
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
-  let mockConfig: Config;
-  let mockErrorHandler: jest.Mocked<ErrorHandler>;
   const rebuildInitializer = (): void => {
     initializer = context.rebuild({
       services: mockServices,
-      config: mockConfig,
-      errorHandler: mockErrorHandler,
+      config: context.config,
+      errorHandler: context.errorHandler as jest.Mocked<ErrorHandler>,
     });
   };
   const createInitializerWithoutHandler = (): BotInitializer => {
@@ -77,8 +74,6 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   beforeEach(() => {
     context = getContext();
     mockServices = context.services as MockBotServices;
-    mockConfig = context.config;
-    mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
     rebuildInitializer();
 
     jest.clearAllMocks();

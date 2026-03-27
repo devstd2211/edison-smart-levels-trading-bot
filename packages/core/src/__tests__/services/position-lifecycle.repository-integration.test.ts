@@ -22,13 +22,25 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
   let repository: IPositionRepository;
   let context: ManagedPositionRepositoryContext;
 
-  beforeEach(() => {
-    context = createManagedPositionRepositoryContext();
-    repository = context.repository;
-  });
+  function bindPositionRepositoryContext() {
+    let managedContext: ManagedPositionRepositoryContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedPositionRepositoryContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionRepositoryContext();
+
+  beforeEach(() => {
+    context = getContext();
+    repository = context.repository;
   });
 
   describe('Basic Position Operations', () => {

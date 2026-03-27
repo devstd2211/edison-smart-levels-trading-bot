@@ -25,22 +25,34 @@ describe('StructureAwareExitService', () => {
   let defaultConfig: StructureAwareExitConfig;
   let context: ManagedStructureAwareExitContext;
 
+  function bindStructureAwareExitContext() {
+    let managedContext: ManagedStructureAwareExitContext;
+
+    beforeEach(() => {
+      managedContext = createManagedStructureAwareExitContext({
+        config: createStructureAwareExitConfig(),
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindStructureAwareExitContext();
+
   beforeEach(() => {
     defaultConfig = createStructureAwareExitConfig();
-    context = createManagedStructureAwareExitContext({
-      config: defaultConfig,
-      withErrorHandler: false,
-    });
+    context = getContext();
     mockLogger = context.logger;
     service = context.createService({
       config: defaultConfig,
       logger: mockLogger,
       withErrorHandler: false,
     });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

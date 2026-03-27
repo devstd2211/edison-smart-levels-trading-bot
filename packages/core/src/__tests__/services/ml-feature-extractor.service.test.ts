@@ -17,13 +17,25 @@ describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
   let context: ManagedMLFeatureExtractorContext;
 
-  beforeEach(() => {
-    context = createManagedMLFeatureExtractorContext();
-    ({ service } = context);
-  });
+  function bindMLFeatureExtractorContext() {
+    let managedContext: ManagedMLFeatureExtractorContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedMLFeatureExtractorContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindMLFeatureExtractorContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ service } = context);
   });
 
   describe('extractFeatures', () => {

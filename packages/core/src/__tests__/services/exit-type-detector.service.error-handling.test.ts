@@ -21,7 +21,6 @@ import {
   asExitTypeDetectorPosition,
   createManagedExitTypeDetectorContext,
   createExitTypeDetectorMockLogger,
-  createExitTypeDetectorScenarioHarness,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   type ManagedExitTypeDetectorContext,
@@ -49,17 +48,12 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
   let context: ManagedExitTypeDetectorContext;
   let service: ExitTypeDetectorService;
   let mockLogger: LoggerService;
-  let createScenario: (options?: {
-    withErrorHandler?: boolean;
-    positionOverrides?: Partial<Position>;
-  }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
   const getContext = bindExitTypeDetectorContext();
 
   beforeEach(() => {
     context = getContext();
     mockLogger = context.logger;
     ({ service } = context);
-    createScenario = (options = {}) => context.createScenario(options);
     jest.clearAllMocks();
   });
 
@@ -125,7 +119,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Error Handling with ErrorHandler', () => {
     it('should handle empty order history gracefully (SKIP fallback)', () => {
-      const { position } = createScenario({
+      const { position } = context.createScenario({
         positionOverrides: {
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
@@ -139,7 +133,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle NaN price in TP level identification (SKIP)', () => {
-      const { position } = createScenario({
+      const { position } = context.createScenario({
         positionOverrides: {
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
@@ -152,7 +146,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle empty takeProfits array (SKIP)', () => {
-      const { position } = createScenario({
+      const { position } = context.createScenario({
         positionOverrides: {
         symbol: 'BTCUSDT',
         side: PositionSide.LONG,
@@ -183,7 +177,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Backward Compatibility (without ErrorHandler)', () => {
     it('should work without ErrorHandler in constructor', () => {
-      const { service: legacyService, position } = createScenario({
+      const { service: legacyService, position } = context.createScenario({
         withErrorHandler: false,
         positionOverrides: {
           symbol: 'BTCUSDT',
@@ -197,7 +191,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should handle NaN without ErrorHandler', () => {
-      const { service: legacyService, position } = createScenario({
+      const { service: legacyService, position } = context.createScenario({
         withErrorHandler: false,
         positionOverrides: {
           symbol: 'BTCUSDT',
@@ -217,7 +211,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   describe('Integration Scenarios', () => {
     it('should handle multiple orders and use most recent', () => {
-      const { position } = createScenario({
+      const { position } = context.createScenario({
         positionOverrides: {
           symbol: 'BTCUSDT',
           side: PositionSide.LONG,
@@ -246,7 +240,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should identify correct TP level among multiple TPs', () => {
-      const { position } = createScenario({
+      const { position } = context.createScenario({
         positionOverrides: {
           symbol: 'BTCUSDT',
           side: PositionSide.LONG,
@@ -265,7 +259,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
     });
 
     it('should filter orders by symbol correctly', () => {
-      const { position } = createScenario({
+      const { position } = context.createScenario({
         positionOverrides: {
           symbol: 'BTCUSDT',
           side: PositionSide.LONG,

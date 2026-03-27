@@ -36,8 +36,24 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockTelegram: TelegramService;
   let mockJournal: TradingJournalService;
 
+  function bindPositionLifecycleSafetyContext() {
+    let managedContext: ManagedPositionLifecycleSafetyContext;
+
+    beforeEach(() => {
+      managedContext = createManagedPositionLifecycleSafetyContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionLifecycleSafetyContext();
+
   beforeEach(() => {
-    context = createManagedPositionLifecycleSafetyContext();
+    context = getContext();
     service = context.service;
     mockExchange = context.mockExchange;
     mockLogger = context.mockLogger;
@@ -47,10 +63,6 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     internals = context.internals;
     setCurrentPosition = context.setCurrentPosition;
     position = context.position;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // =========================================================================

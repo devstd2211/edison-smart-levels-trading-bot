@@ -8,7 +8,6 @@ import { PositionMonitorService } from '../../services/position-monitor.service'
 import {
   PositionSide,
   RiskManagementConfig,
-  LoggerService,
 } from '../../types/legacy';
 import {
   attachCurrentPosition,
@@ -38,10 +37,7 @@ describe('PositionMonitorService', () => {
   let mockBybit: ManagedPositionMonitorContext['mockBybit'];
   let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
   let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
-  let mockExitTypeDetector: ManagedPositionMonitorContext['mockExitTypeDetector'];
-  let mockPnLCalculator: ManagedPositionMonitorContext['mockPnLCalculator'];
   let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
-  let logger: LoggerService;
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
   let context: ManagedPositionMonitorContext;
 
@@ -51,10 +47,7 @@ describe('PositionMonitorService', () => {
     mockBybit = managedContext.mockBybit;
     mockPositionManager = managedContext.mockPositionManager;
     mockTelegram = managedContext.mockTelegram;
-    mockExitTypeDetector = managedContext.mockExitTypeDetector;
-    mockPnLCalculator = managedContext.mockPnLCalculator;
     mockPositionSync = managedContext.mockPositionSync;
-    logger = managedContext.logger;
     positionHarness = managedContext.positionHarness;
   };
 

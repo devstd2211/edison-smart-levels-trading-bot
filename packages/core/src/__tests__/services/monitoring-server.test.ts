@@ -17,7 +17,6 @@ import request from 'supertest';
 import type { MonitoringServer } from '../../services/monitoring-server.service';
 import type { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
 import type { HealthCheckService } from '../../services/health-check.service';
-import type { LoggerService } from '../../types/legacy';
 import {
   createManagedMonitoringServerContext,
   type ManagedMonitoringServerContext,
@@ -25,7 +24,6 @@ import {
 
 describe('MonitoringServer', () => {
   let server: MonitoringServer;
-  let mockLogger: jest.Mocked<LoggerService>;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let context: ManagedMonitoringServerContext;
@@ -48,7 +46,6 @@ describe('MonitoringServer', () => {
 
   beforeEach(() => {
     context = getContext();
-    mockLogger = context.logger;
     mockMetricsService = context.metricsService;
     mockHealthService = context.healthService;
   });

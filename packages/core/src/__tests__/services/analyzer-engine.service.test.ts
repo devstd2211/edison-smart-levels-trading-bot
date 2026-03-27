@@ -37,6 +37,7 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
+  let context: ManagedAnalyzerEngineContext;
   let createScenario: (
     analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
     options?: {
@@ -45,14 +46,45 @@ describe('AnalyzerEngineService', () => {
     },
   ) => ManagedAnalyzerEngineContext;
 
+  function bindAnalyzerEngineScenarioContext() {
+    const managedContexts: ManagedAnalyzerEngineContext[] = [];
+    let managedLogger: AnalyzerEngineMockLogger;
+
+    beforeEach(() => {
+      managedLogger = createAnalyzerEngineMockLogger();
+    });
+
+    afterEach(() => {
+      while (managedContexts.length > 0) {
+        managedContexts.pop()?.cleanup();
+      }
+    });
+
+    return {
+      getLogger: () => managedLogger,
+      createScenario: (
+        analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+        options: {
+          analyzerNames?: string[];
+          candleCount?: number;
+        } = {},
+      ) => {
+        const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
+          logger: managedLogger,
+          analyzerNames: options.analyzerNames,
+          candleCount: options.candleCount,
+        });
+        managedContexts.push(managedContext);
+        return managedContext;
+      },
+    };
+  }
+
+  const { getLogger, createScenario: bindScenario } = bindAnalyzerEngineScenarioContext();
+
   beforeEach(() => {
-    mockLogger = createAnalyzerEngineMockLogger();
-    createScenario = (analyzers, options = {}) =>
-      createManagedAnalyzerEngineScenarioContext(analyzers, {
-        logger: mockLogger,
-        analyzerNames: options.analyzerNames,
-        candleCount: options.candleCount,
-      });
+    mockLogger = getLogger();
+    createScenario = bindScenario;
   });
 
   // ========== BASIC EXECUTION (5 tests) ==========

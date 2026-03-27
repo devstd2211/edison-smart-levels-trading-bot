@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Completed a lifecycle/testability follow-up for `position-exiting.service`, `position-exiting.integration`, `position-exiting.functional`, `position-exiting.race-condition`, `position-exiting.transactional`, and `multi-strategy.cache`.
-  - replaced their remaining suite-local managed-context ownership with local binder-owned helper-managed setup/cleanup so those non-error-handling suites now share one explicit lifecycle path per suite.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `structure-aware-exit.service`, `monitoring-server`, `prometheus-metrics`, `position-monitor.service`, `bot-initializer.error-handling`, and `exit-type-detector.service.error-handling`.
+  - moved the remaining direct managed-context setup/cleanup in `structure-aware-exit.service` onto a local binder-owned helper-managed lifecycle path and trimmed broad suite-level helper state in the adjacent monitoring/lifecycle suites so those tests now pull less unnecessary state out of the managed context.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.integration.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/services/position-exiting.race-condition.test.ts packages/core/src/__tests__/services/position-exiting.transactional.test.ts packages/core/src/__tests__/services/multi-strategy.cache.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/structure-aware-exit.service.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue the non-error-handling lifecycle/testability slice around explicit lifecycle ownership, `createServices()` / `start` / `stop` usage, and replacing broad suite-level service state with minimal grouped services in the next highest-signal suites that still keep direct managed-context setup/cleanup.
-- Favor the next remaining adjacent non-error-handling cache/monitoring/managed-service suites that still hold direct managed-context setup/cleanup after the `position-exiting.service` / `position-exiting.integration` / `position-exiting.functional` / `position-exiting.race-condition` / `position-exiting.transactional` / `multi-strategy.cache` batch.
+- Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services in the adjacent cache/monitoring/managed-service suites.
+- Favor the next remaining cache/manager/error-handling slices that still over-bind helper-managed state even though their lifecycle ownership is already centralized.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

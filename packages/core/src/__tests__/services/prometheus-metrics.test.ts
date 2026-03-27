@@ -23,7 +23,6 @@ import {
 
 describe('PrometheusMetricsService', () => {
   let service: PrometheusMetricsService;
-  let mockLogger: LoggerService;
   let context: ManagedPrometheusMetricsTestContext;
 
   function bindPrometheusMetricsContext() {
@@ -44,7 +43,6 @@ describe('PrometheusMetricsService', () => {
 
   beforeEach(() => {
     context = getContext();
-    mockLogger = context.logger;
     service = context.service;
   });
 
@@ -59,20 +57,20 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should initialize with custom prefix', () => {
-      const svc = context.createService({ prefix: 'my_bot_' }, mockLogger, undefined);
+      const svc = context.createService({ prefix: 'my_bot_' }, context.logger, undefined);
       expect(svc).toBeDefined();
     });
 
     it('should initialize with logger', () => {
-      const svc = context.createService({}, mockLogger, undefined);
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      const svc = context.createService({}, context.logger, undefined);
+      expect(context.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('initialized'),
         expect.any(Object)
       );
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = context.createStartedService({ collectInterval: 1000 }, mockLogger, undefined);
+      const svc = context.createStartedService({ collectInterval: 1000 }, context.logger, undefined);
       expect(svc).toBeDefined();
     });
 
@@ -84,7 +82,7 @@ describe('PrometheusMetricsService', () => {
             bot: 'v1',
           },
         },
-        mockLogger,
+        context.logger,
         undefined,
       );
       expect(svc).toBeDefined();
@@ -341,14 +339,14 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = context.createStartedService({ collectInterval: 100 }, mockLogger, undefined);
+      const svc = context.createStartedService({ collectInterval: 100 }, context.logger, undefined);
 
       expect(svc).toBeDefined();
 
       // Stop collection
       svc.stop();
 
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(context.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('stopped'),
         expect.any(Object)
       );
@@ -374,7 +372,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without errorHandler', () => {
-      const svc = context.createService({}, mockLogger, undefined);
+      const svc = context.createService({}, context.logger, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
