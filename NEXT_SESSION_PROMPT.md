@@ -7,8 +7,8 @@ You are continuing refactoring in `D:\src\Edison`.
 - Prioritize lifecycle/testability and `any` cleanup in `packages/core/src/__tests__/services/*` and related services.
 
 ## Source of Truth
-- Progress log and active status tracking: `ACTIVE_REFACTOR_PLAN.md` (single source of truth).
-- Completed historical log: `REFACTOR_PLAN.md` (archived completed track).
+- Active status + current target only: `ACTIVE_REFACTOR_PLAN.md` (single source of truth for open work).
+- Completed historical log: `REFACTOR_PLAN.md` (archived completed track; do not load unless historical detail is needed).
 - Task catalog/backlog by area: `REFACTOR_TASKS.md`.
 - This file (`NEXT_SESSION_PROMPT.md`) is operational guidance only; do not store full historical progress here.
 
@@ -28,14 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-26)
-- Completed a helper-owned factory-path follow-up for the `ladder-tp-manager` / `anomaly-detection` cluster: `ladder-tp-manager.error-handling`, `anomaly-detection.error-handling`, `ladder-tp-manager-test.utils`, and `anomaly-detection-test.utils`.
-  - extended both helper families with explicit managed `standard` / `legacy` creation paths so the target suites no longer reach for residual direct standalone service construction outside helper-owned cleanup.
-  - tightened managed cleanup so created ladder-tp and anomaly-detection instances stay inside helper-owned teardown boundaries, while leaving production `ladder-tp-manager.service.ts` and `anomaly-detection.service.ts` unchanged after review.
+## Last Completed (2026-03-27)
+- Compressed the active handoff so `ACTIVE_REFACTOR_PLAN.md` is back to open-work-only instead of carrying token-heavy chronological history.
+- Completed a lifecycle/testability cleanup follow-up for `position-state-machine.error-handling`, `event-deduplication.error-handling`, `timeframe-weighting.error-handling`, `anomaly-detection.error-handling`, `websocket-authentication.error-handling`, and `indicator-cache.error-handling`.
+  - added bound same-sandbox service creation to `position-state-machine-test.utils` so the suite reuses the main context-owned temp directory instead of creating throwaway managed contexts inline.
+  - replaced remaining ad-hoc managed-context creation inside the touched suites with the existing primary suite-owned context or direct helper factories where no managed cleanup was needed.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Continue with the next concentrated lifecycle/testability slice in suites that still rely on broad grouped-service setup or residual suite-local factory/setup helpers outside helper-owned creation boundaries, prioritizing the next six-file batch beyond the now-refreshed ladder-tp-manager / anomaly-detection cluster.
-- Keep pushing toward narrower grouped-service / `createServices()` ownership only where no helper-managed cleanup path exists yet, and prefer helper-owned standard/legacy or injected-service factory paths over suite-local service construction whenever the target suite is primarily validating compatibility, lifecycle, or logging-failure behavior.
+- Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
+- Continue with the next concentrated lifecycle/testability slice in suites that still create temporary managed contexts or bound service instances outside the primary suite-owned cleanup path.
+- Prioritize the next six-file batch of error-handling suites that still instantiate throwaway helper contexts inline, and prefer helper-owned standard/legacy or injected-service factory paths over ad-hoc `createManaged...Context()` calls inside individual tests.

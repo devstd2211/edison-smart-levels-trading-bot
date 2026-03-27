@@ -16,6 +16,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asTimeframeWeightingMode,
   asTimeframeWeightingMultiTF,
+  createTimeframeWeightingMockLogger,
   createManagedTimeframeWeightingContext,
   createInvalidTimeframeWeightingMultiTF,
   type ManagedTimeframeWeightingContext,
@@ -142,7 +143,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
 
   describe('SKIP: Logging Failures', () => {
     test('should not throw when logger fails', () => {
-      const badLogger = createManagedTimeframeWeightingContext().logger;
+      const badLogger = createTimeframeWeightingMockLogger();
       badLogger.info.mockImplementation(() => {
         throw new Error('Logger failed');
       });

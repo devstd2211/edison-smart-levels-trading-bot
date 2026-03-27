@@ -326,7 +326,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       const config: Partial<AnomalyDetectionConfig> = {
         whaleTradeThreshold: 3.0, // Lower threshold (300% vs default 500%)
       };
-      const { service: testService } = createManagedAnomalyDetectionContext({ config, logger });
+      const testService = context.createStandardService({ config, logger });
 
       const trades: Trade[] = createAnomalyDetectionTradeSeries([
         { size: 0.1, price: 50000 },

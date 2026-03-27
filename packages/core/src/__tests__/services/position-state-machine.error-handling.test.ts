@@ -20,10 +20,8 @@ import type { StateTransitionResult } from '../../types/position-state-machine';
 import {
   applyPositionStateSequence,
   closePositionState,
-  createInitializedLegacyPositionStateMachineService,
   createLegacyPositionStateMachineHarness,
   createPositionStateMachineHistoryEntry,
-  createInitializedPositionStateMachineService,
   createPositionStateMachinePersistedState,
   createManagedPositionStateMachineContext,
   createMockPositionStateMachineLogger,
@@ -63,7 +61,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('File I/O Errors', () => {
     it('should initialize successfully with ErrorHandler', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       // Should not throw when ErrorHandler is provided
       await expect(service.initialize()).resolves.not.toThrow();
@@ -75,7 +73,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle corrupted history file gracefully', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       // Create corrupted history file
       const historyFilePath = path.join(testDataDir, 'position-transitions.jsonl');
@@ -90,7 +88,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should create backup file after successful state load', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       // Transition state to ensure persistence
       service.transitionState({
@@ -108,7 +106,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log warning when backup is also corrupted', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       // Create main state file with invalid JSON
       const stateFilePath = path.join(testDataDir, 'position-states.jsonl');
@@ -134,7 +132,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should RETRY on state persistence disk full error', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       let retryCount = 0;
       jest.spyOn(fsPromises, 'appendFile').mockImplementation(async (...args) => {
@@ -175,7 +173,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       await seedStateMachineStatesFile(testDataDir, [
         createPositionStateMachinePersistedState({ positionId: 'pos-seeded-backup' }),
       ]);
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       // Transition state
       transitionPositionState(service, {
@@ -193,7 +191,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle mixed valid and invalid state lines gracefully', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       const validState = createPositionStateMachinePersistedState({ positionId: 'pos-valid' });
       const stateFilePath = await seedStateMachineStatesFile(testDataDir, [
@@ -218,7 +216,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should log statistics about loaded states', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       const states = Array.from({ length: 5 }, (_, i) =>
         createPositionStateMachinePersistedState({ positionId: `pos-${i}` }),
@@ -241,7 +239,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transition History Recovery', () => {
     it('should skip corrupted history entries and continue loading', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       const validEntry = createPositionStateMachineHistoryEntry({
         request: {
@@ -266,7 +264,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should limit history entries per position for memory efficiency', async () => {
-      service = createManagedPositionStateMachineContext({ logger, baseDir: testDataDir }).service;
+      service = context.createStandardService({ logger });
 
       const entries = Array.from({ length: 1500 }, (_, i) =>
         createPositionStateMachineHistoryEntry({
@@ -296,7 +294,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('Transactional Integrity', () => {
     it('should maintain consistency between cache and disk during transitions', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       const posId = `pos-tx-test-${Date.now()}`;
       const result = service.transitionState({
@@ -321,7 +319,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle exit mode updates with persistence', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       // Create position
       service.transitionState({
@@ -346,7 +344,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should validate state transitions before persistence', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       const posId = `pos-invalid-tx-${Date.now()}`;
 
@@ -369,7 +367,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
 
   describe('E2E Lifecycle Scenarios', () => {
     it('should maintain full position lifecycle with error recovery', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       const posId = 'pos-e2e-full';
 
@@ -402,7 +400,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should handle multiple positions concurrently without interference', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       const timestamp = Date.now();
       // Create multiple positions with valid state transitions
@@ -449,7 +447,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
     });
 
     it('should provide accurate statistics after state transitions', async () => {
-      service = await createInitializedPositionStateMachineService({ logger, baseDir: testDataDir });
+      service = await context.createInitializedStandardService({ logger });
 
       const timestamp = Date.now();
       applyPositionStateSequence(service, {
@@ -490,10 +488,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter (optional DI)', async () => {
       // Create service without ErrorHandler
-      service = await createInitializedLegacyPositionStateMachineService({
-        logger,
-        baseDir: testDataDir,
-      });
+      service = await context.createInitializedLegacyService({ logger });
 
       const result = service.transitionState({
         symbol: 'BTCUSDT',

@@ -16,6 +16,7 @@ import { EventDeduplicationService } from '../../services/event-deduplication.se
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
+  createEventDeduplicationErrorHandler,
   createManagedEventDeduplicationContext,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
@@ -27,7 +28,8 @@ import {
 // MOCKS
 // ============================================================================
 
-const createMockErrorHandler = (): ErrorHandler => createManagedEventDeduplicationContext().errorHandler;
+const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
+  createEventDeduplicationErrorHandler(logger);
 
 // ============================================================================
 // TESTS
@@ -204,7 +206,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
     });
 
     it('test-8.9.19.7: Should handle cleanup with ErrorHandler callbacks', () => {
-      const errorHandler2 = createMockErrorHandler();
+      const errorHandler2 = createMockErrorHandler(logger);
       service = createService({ cacheSize: 10, cacheTtlMs: 500, logger, errorHandler: errorHandler2 });
 
       // Trigger cleanup multiple times

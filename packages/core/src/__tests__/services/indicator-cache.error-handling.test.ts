@@ -161,12 +161,10 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
     it('should skip debug logging failures in get()', () => {
       const failingLogger = createIndicatorCacheFailingLogger('debug');
 
-      const repo = createManagedIndicatorCacheContext({
-        repository: {
-          ...createIndicatorCacheFailingRepository('clear', 'unused'),
-          getIndicator: jest.fn().mockReturnValue(75),
-        } as IndicatorCacheMockRepository,
-      }).repository;
+      const repo = {
+        ...createIndicatorCacheFailingRepository('clear', 'unused'),
+        getIndicator: jest.fn().mockReturnValue(75),
+      } as IndicatorCacheMockRepository;
       const cache = createStandardIndicatorCache({
         repository: repo,
         logger: failingLogger,

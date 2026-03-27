@@ -417,6 +417,20 @@ export interface ManagedPositionStateMachineContext {
   logger: LoggerService;
   testDataDir: string;
   service: PositionStateMachineService;
+  createStandardService: (options?: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => PositionStateMachineService;
+  createLegacyService: (options?: {
+    logger?: LoggerService;
+  }) => PositionStateMachineService;
+  createInitializedStandardService: (options?: {
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => Promise<PositionStateMachineService>;
+  createInitializedLegacyService: (options?: {
+    logger?: LoggerService;
+  }) => Promise<PositionStateMachineService>;
   cleanup: () => Promise<void>;
 }
 
@@ -433,6 +447,28 @@ export function createManagedPositionStateMachineContext(options: {
     logger: harness.logger,
     testDataDir: harness.testDataDir,
     service: harness.service,
+    createStandardService: (serviceOptions = {}) =>
+      createStandardPositionStateMachineService({
+        logger: serviceOptions.logger ?? harness.logger,
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        baseDir: harness.testDataDir,
+      }),
+    createLegacyService: (serviceOptions = {}) =>
+      createLegacyPositionStateMachineService({
+        logger: serviceOptions.logger ?? harness.logger,
+        baseDir: harness.testDataDir,
+      }),
+    createInitializedStandardService: async (serviceOptions = {}) =>
+      createInitializedStandardPositionStateMachineService({
+        logger: serviceOptions.logger ?? harness.logger,
+        errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        baseDir: harness.testDataDir,
+      }),
+    createInitializedLegacyService: async (serviceOptions = {}) =>
+      createInitializedLegacyPositionStateMachineService({
+        logger: serviceOptions.logger ?? harness.logger,
+        baseDir: harness.testDataDir,
+      }),
     cleanup: async () => {
       jest.restoreAllMocks();
       jest.clearAllMocks();

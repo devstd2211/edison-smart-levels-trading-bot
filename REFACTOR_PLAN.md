@@ -3260,6 +3260,30 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 3/3 suites PASS, 60/60 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 244 (2026-03-27):
+  - `ACTIVE_REFACTOR_PLAN.md`:
+    - reduced the active handoff back to open-work-only so the current-session source of truth no longer carries token-heavy chronological history.
+  - `NEXT_SESSION_PROMPT.md`:
+    - tightened the handoff instructions to keep future sessions on the compact active plan and away from loading archived history unless needed.
+  - `packages/core/src/__tests__/helpers/position-state-machine-test.utils.ts`:
+    - added bound standard/legacy initialized service factories to the managed context so the suite can reuse its primary temp-directory ownership instead of spawning throwaway managed contexts inline.
+  - `packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts`:
+    - routed repeated service creation through the primary managed context factories so all state-machine temp artifacts stay under the suite-owned cleanup path.
+  - `packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts`:
+    - replaced a throwaway managed-context error-handler creation path with the direct helper factory.
+  - `packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts`:
+    - replaced the throwaway managed-context logger path with a direct mock logger factory.
+  - `packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts`:
+    - routed the temporary service creation path through the existing primary managed context.
+  - `packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts`:
+    - replaced a temporary managed-context construction path with the suite's bound `createService` factory.
+  - `packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts`:
+    - replaced a temporary managed-context repository construction path with a direct failing repository factory.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 244):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 156/156 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
 - [x] Testability batch 241 (2026-03-25):
   - `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts`:
     - added a managed-context alias/factory so adjacent suites can share one helper-owned context entrypoint without duplicating harness naming.

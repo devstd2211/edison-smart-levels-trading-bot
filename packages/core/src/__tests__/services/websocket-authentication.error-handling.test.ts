@@ -396,11 +396,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
 
     it('should handle constructor with partial logger', () => {
       const partialLogger: AuthLogger = { info: jest.fn() };
-      const partialContext = createManagedWebSocketAuthenticationContext({
+      const servicePartialLogger = createService({
         logger: partialLogger,
         errorHandler,
       });
-      const servicePartialLogger = partialContext.service;
 
       const { apiKey, apiSecret } = createWebSocketAuthCredentials();
       const result = servicePartialLogger.generateAuthPayload(apiKey, apiSecret);
