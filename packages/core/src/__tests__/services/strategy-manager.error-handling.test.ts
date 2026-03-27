@@ -20,8 +20,21 @@ import {
   type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
-describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
+function bindStrategyManagerContext() {
   let context: ManagedStrategyManagerContext;
+
+  beforeEach(() => {
+    context = createManagedStrategyManagerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let strategyManager: StrategyManagerService;
   let mockLoader: jest.Mocked<StrategyLoaderService>;
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
@@ -30,13 +43,14 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let createManager: (options?: { withErrorHandler?: boolean }) => StrategyManagerService;
   type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
+  const getContext = bindStrategyManagerContext();
 
   // Mock strategy for testing
   let mockStrategy: StrategyConfig;
   let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
-    context = createManagedStrategyManagerContext();
+    const context = getContext();
     mockLoader = context.mockLoader;
     mockMerger = context.mockMerger;
     mockErrorHandler = context.mockErrorHandler;
@@ -44,10 +58,6 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     createManager = context.createManager;
     mockStrategy = context.mockStrategy;
     mockMainConfig = context.mockMainConfig as unknown as InitMainConfig;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

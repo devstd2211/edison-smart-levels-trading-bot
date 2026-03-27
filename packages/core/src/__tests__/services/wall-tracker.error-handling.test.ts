@@ -16,7 +16,6 @@ import { WallTrackerService } from '../../services/wall-tracker.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WallTrackingConfig, LoggerService } from '../../types/legacy';
 import {
-  createWallTrackerBoundFactory,
   createWallTrackerWall,
   createWallTrackerConfig,
   createManagedWallTrackerContext,
@@ -369,11 +368,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   describe('Category 5: Backward Compatibility', () => {
     it('test-8.9.28.17: Should work without ErrorHandler parameter', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerBoundFactory({
-        config: mockConfig,
-        logger: mockLogger,
-        errorHandler,
-      }).createLegacyService();
+      const serviceWithoutErrorHandler = context.createLegacyService();
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -388,11 +383,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.18: Should preserve existing behavior with ErrorHandler undefined', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerBoundFactory({
-        config: mockConfig,
-        logger: mockLogger,
-        errorHandler,
-      }).createLegacyService();
+      const serviceWithoutErrorHandler = context.createLegacyService();
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -415,11 +406,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.19: Should handle wall removal without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerBoundFactory({
-        config: mockConfig,
-        logger: mockLogger,
-        errorHandler,
-      }).createLegacyService();
+      const serviceWithoutErrorHandler = context.createLegacyService();
       const validPrice = 40000;
       const validSize = 1000;
 
@@ -434,11 +421,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
 
     it('test-8.9.28.20: Should detect clusters without ErrorHandler', () => {
       // Arrange
-      const serviceWithoutErrorHandler = createWallTrackerBoundFactory({
-        config: mockConfig,
-        logger: mockLogger,
-        errorHandler,
-      }).createLegacyService();
+      const serviceWithoutErrorHandler = context.createLegacyService();
       const basePrice = 40000;
       const validSize = 1000;
 

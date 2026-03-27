@@ -44,15 +44,25 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
   let validConfig: ManagedConfigValidatorContext['validConfig'];
-  let context: ManagedConfigValidatorContext;
+  function bindConfigValidatorContext() {
+    let context: ManagedConfigValidatorContext;
+
+    beforeEach(() => {
+      context = createManagedConfigValidatorContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindConfigValidatorContext();
 
   beforeEach(() => {
-    context = createManagedConfigValidatorContext();
+    const context = getContext();
     ({ logger, errorHandler, validator, createValidator, createLegacyValidator, validConfig } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================

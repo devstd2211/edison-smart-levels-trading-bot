@@ -10,7 +10,6 @@ import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
 import {
-  createVirtualBalanceBoundFactory,
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
@@ -458,13 +457,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let context: ManagedVirtualBalanceContext;
-  const createIntegrationService = (baseDeposit: number = 100): VirtualBalanceService =>
-    createStandardVirtualBalanceService({
-      baseDeposit,
-      dataDir: testDataDir,
-      logger: mockLogger,
-      errorHandler,
-    });
+  let createIntegrationService: (baseDeposit?: number) => VirtualBalanceService;
 
   beforeEach(() => {
     context = createManagedVirtualBalanceContext({
@@ -473,6 +466,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     testDataDir = context.dataDir;
     mockLogger = context.logger;
     errorHandler = context.errorHandler as ErrorHandler;
+    createIntegrationService = context.createService;
   });
 
   afterEach(() => {

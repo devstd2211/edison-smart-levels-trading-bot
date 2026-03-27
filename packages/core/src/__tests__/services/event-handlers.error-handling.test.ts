@@ -43,6 +43,34 @@ const asTimeBasedExit = (value: unknown): TimeBasedExitInput => value as TimeBas
 const asOrderFilled = (value: unknown): OrderFilledInput => value as OrderFilledInput;
 const asStopLossFilled = (value: unknown): StopLossFilledInput => value as StopLossFilledInput;
 
+function bindPositionEventHandlerContext() {
+  let context: ManagedPositionEventHandlerContext;
+
+  beforeEach(() => {
+    context = createManagedPositionEventHandlerContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+function bindWebSocketEventHandlerContext() {
+  let context: ManagedWebSocketEventHandlerContext;
+
+  beforeEach(() => {
+    context = createManagedEventHandlersWebSocketContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
   let handler: PositionEventHandler;
   let mockPositionManager: EventHandlersPositionManagerMock;
@@ -50,20 +78,16 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let context: ManagedPositionEventHandlerContext;
+  const getContext = bindPositionEventHandlerContext();
 
   beforeEach(() => {
-    context = createManagedPositionEventHandlerContext();
+    const context = getContext();
     mockPositionManager = context.mockPositionManager;
     mockPositionExitingService = context.mockPositionExitingService;
     mockBybitService = context.mockBybitService;
     mockTelegram = context.mockTelegram;
     mockLogger = context.mockLogger;
     handler = context.createStandardHandler();
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('[SKIP] handleStopLossHit() - SL Event Logging (3 tests)', () => {
@@ -347,10 +371,10 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let context: ManagedWebSocketEventHandlerContext;
+  const getContext = bindWebSocketEventHandlerContext();
 
   beforeEach(() => {
-    context = createManagedEventHandlersWebSocketContext();
+    const context = getContext();
     ({
       handler,
       mockPositionManager,
@@ -361,10 +385,6 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockTelegram,
       mockLogger,
     } = context);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('[RETRY + GRACEFUL_DEGRADE + SKIP] handlePositionClosed() (4 tests)', () => {

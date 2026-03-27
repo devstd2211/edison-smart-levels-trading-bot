@@ -34,17 +34,28 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
   let createStandardService: ManagedVolumeProfileContext['createStandardService'];
   let createLegacyService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
-  let context: ManagedVolumeProfileContext;
+
+  function bindVolumeProfileContext() {
+    let context: ManagedVolumeProfileContext;
+
+    beforeEach(() => {
+      context = createManagedVolumeProfileContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindVolumeProfileContext();
 
   beforeEach(() => {
-    context = createManagedVolumeProfileContext();
+    const context = getContext();
     mockLogger = context.logger;
     createStandardService = context.createStandardService;
     createLegacyService = (configOverrides) => context.createLegacyService({ configOverrides });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   const createService = (

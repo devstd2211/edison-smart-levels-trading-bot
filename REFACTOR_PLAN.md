@@ -3284,6 +3284,84 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 6/6 suites PASS, 156/156 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 245 (2026-03-27):
+  - `packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts`:
+    - replaced nested throwaway managed-context creation with the suite-owned dashboard factory so disabled-service cases stay on the primary helper-owned cleanup path.
+  - `packages/core/src/__tests__/services/candle-provider.error-handling.test.ts`:
+    - replaced inline managed contexts with direct standard provider scenarios for retry/cache-path tests that do not require dedicated cleanup ownership.
+  - `packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts`:
+    - routed nested describe setup and backward-compat coverage through the top-level standard/legacy service factories instead of spawning fresh managed contexts.
+  - `packages/core/src/__tests__/services/risk-manager.error-handling.test.ts`:
+    - replaced the last fresh managed-context compatibility path with a direct factory-built `RiskManager` instance.
+  - `packages/core/src/__tests__/helpers/virtual-balance-test.utils.ts`:
+    - tightened the managed context so bound service creation reuses one helper-owned factory and temp-directory sandbox path.
+  - `packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts`:
+    - switched the integration slice to the managed context's bound service factory instead of rebuilding direct standard services inline.
+  - `packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts`:
+    - centralized repeated managed-context setup behind a shared binder so the suite reuses one describe-owned lifecycle path per slice instead of duplicating local setup blocks.
+  - behavior-preserving production review: reviewed `console-dashboard.service.ts`, `candle.provider.ts`, `whale-wall-tp.service.ts`, `risk-manager.service.ts`, `virtual-balance.service.ts`, and `smart-order-placement.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 245):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 161/161 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 246 (2026-03-27):
+  - `packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts`:
+    - centralized repeated managed-context setup behind a shared suite-owned binder so each describe reuses one helper-owned lifecycle path instead of duplicating local setup/cleanup blocks.
+  - `packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts`:
+    - replaced the backward-compat managed-context branch with the existing legacy-service factory from the primary suite-owned context.
+  - `packages/core/src/__tests__/services/event-handlers.error-handling.test.ts`:
+    - centralized both position-handler and websocket-handler managed-context setup behind shared binders while preserving the existing handler factories.
+  - `packages/core/src/__tests__/services/position-monitor.error-handling.test.ts`:
+    - routed the suite through a shared managed-context binder so the monitor slice uses one explicit helper-owned lifecycle entrypoint.
+  - `packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts`:
+    - replaced repeated ad hoc legacy-service construction with the managed context's existing legacy-service factory.
+  - `packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts`:
+    - moved logging, integration, and backward-compat slices off throwaway harness creation and onto the suite-owned service factory.
+  - behavior-preserving production review: reviewed `liquidity-heatmap.service.ts`, `anomaly-detection.service.ts`, `services/handlers/position.handler.ts`, `services/handlers/websocket.handler.ts`, `position-monitor.service.ts`, `wall-tracker.service.ts`, and `structure-aware-exit.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 246):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 171/171 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 247 (2026-03-27):
+  - `packages/core/src/__tests__/services/bybit.error-handling.test.ts`:
+    - centralized the managed context behind a suite-owned binder instead of local top-level setup/cleanup wiring.
+  - `packages/core/src/__tests__/services/anti-flip.error-handling.test.ts`:
+    - routed suite operations through shared `createService` / `createLegacyService` references from the primary managed context instead of repeated local context access.
+  - `packages/core/src/__tests__/services/config-validator.error-handling.test.ts`:
+    - moved managed-context lifecycle into a suite-owned binder while preserving the validator factory usage.
+  - `packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts`:
+    - moved the async managed-context lifecycle into a shared binder so the suite stays on one helper-owned cleanup path.
+  - `packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts`:
+    - centralized registry managed-context setup/cleanup behind a binder and left the existing standard/legacy registry factories as the only construction paths.
+  - `packages/core/src/__tests__/services/volume-profile.error-handling.test.ts`:
+    - replaced local managed-context boilerplate with a shared suite-owned binder while preserving the existing helper-owned standard and legacy factory paths.
+  - behavior-preserving production review: reviewed `services/bybit/bybit.service.ts`, `anti-flip.service.ts`, `config-validator.service.ts`, `funding-rate-filter.service.ts`, `indicator-registry.service.ts`, and `volume-profile.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 247):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/volume-profile.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 144/144 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 248 (2026-03-27):
+  - `packages/core/src/__tests__/services/action-queue.error-handling.test.ts`:
+    - centralized the managed queue context behind a suite-owned binder instead of repeated top-level lifecycle wiring.
+  - `packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts`:
+    - moved the registry managed-context lifecycle into a shared binder and preserved the existing scenario plus standard/legacy registry factories.
+  - `packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts`:
+    - replaced local managed-context ownership with a suite-owned binder while keeping the helper-owned standard and legacy service factories intact.
+  - `packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts`:
+    - centralized the legacy managed calculator context behind a binder instead of local per-suite setup/cleanup boilerplate.
+  - `packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts`:
+    - moved the strategy-manager managed context into a binder so the suite reuses one helper-owned lifecycle path.
+  - `packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts`:
+    - centralized the managed timeframe-weighting context behind a binder and kept the existing standard/legacy service factories as the only construction paths.
+  - behavior-preserving production review: reviewed `action-queue.service.ts`, `analyzer-registry.service.ts`, `bot-metrics.service.ts`, `compound-interest-calculator.service.ts`, `strategy-manager.service.ts`, and `timeframe-weighting.service.ts` while tightening the adjacent tests; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-03-27, post testability batch 248):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 162/162 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
 - [x] Testability batch 241 (2026-03-25):
   - `packages/core/src/__tests__/helpers/real-time-risk-monitor-test.utils.ts`:
     - added a managed-context alias/factory so adjacent suites can share one helper-owned context entrypoint without duplicating harness naming.

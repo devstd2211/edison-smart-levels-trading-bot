@@ -332,25 +332,20 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
     });
 
     it('should maintain existing behavior without errors', async () => {
-      // Create a fresh RiskManager for this test (avoid cascading failures from previous tests)
       const freshLogger = new MockRiskManagerLogger();
       const freshErrorHandler = new ErrorHandler(freshLogger);
       const freshConfig = createRiskManagerConfig();
-      const freshContext = createManagedRiskManagerContext({
+      const freshRiskManager = createRiskManager({
         config: freshConfig,
         balance: 1000,
         logger: freshLogger,
         errorHandler: freshErrorHandler,
       });
 
-      try {
-        const signal = createRiskManagerSignal();
-        const result = await freshContext.riskManager.canTrade(signal, 1000, []);
-        expect(result.allowed).toBe(true);
-        expect(result.adjustedPositionSize).toBeGreaterThan(0);
-      } finally {
-        freshContext.cleanup();
-      }
+      const signal = createRiskManagerSignal();
+      const result = await freshRiskManager.canTrade(signal, 1000, []);
+      expect(result.allowed).toBe(true);
+      expect(result.adjustedPositionSize).toBeGreaterThan(0);
     });
   });
 });

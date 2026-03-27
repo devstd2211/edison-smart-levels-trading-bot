@@ -18,21 +18,31 @@ import {
   type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
-  let logger: LoggerService;
-  let mockGetBalance: jest.Mock;
-  let createCalculator: ManagedCompoundInterestContext['createCalculator'];
+function bindCompoundInterestContext() {
   let context: ManagedCompoundInterestContext;
-
-  const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
     context = createManagedLegacyCompoundInterestContext();
-    ({ logger, mockGetBalance, createCalculator } = context);
   });
 
   afterEach(() => {
     context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
+  let logger: LoggerService;
+  let mockGetBalance: jest.Mock;
+  let createCalculator: ManagedCompoundInterestContext['createCalculator'];
+  const getContext = bindCompoundInterestContext();
+
+  const defaultConfig = createCompoundInterestConfig();
+
+  beforeEach(() => {
+    const context = getContext();
+    ({ logger, mockGetBalance, createCalculator } = context);
   });
 
   // ============================================================================

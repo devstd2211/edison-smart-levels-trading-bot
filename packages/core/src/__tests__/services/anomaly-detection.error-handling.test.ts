@@ -38,11 +38,18 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
   let createService: ManagedAnomalyDetectionContext['createStandardService'];
+  let createLegacyService: ManagedAnomalyDetectionContext['createLegacyService'];
   let context: ManagedAnomalyDetectionContext;
 
   beforeEach(() => {
     context = createManagedAnomalyDetectionContext();
-    ({ service, logger, errorHandler, createStandardService: createService } = context);
+    ({
+      service,
+      logger,
+      errorHandler,
+      createStandardService: createService,
+      createLegacyService,
+    } = context);
   });
 
   afterEach(() => {
@@ -457,15 +464,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     let serviceWithoutEH: AnomalyDetectionService;
-    let legacyContext: ManagedAnomalyDetectionContext;
 
     beforeEach(() => {
-      legacyContext = createManagedAnomalyDetectionContext({ withErrorHandler: false });
-      ({ service: serviceWithoutEH } = legacyContext);
-    });
-
-    afterEach(() => {
-      legacyContext.cleanup();
+      serviceWithoutEH = createLegacyService();
     });
 
     it('should detect volume anomalies without ErrorHandler', () => {

@@ -21,6 +21,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: ManagedConsoleDashboardContext['createService'];
   let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
   let context: ManagedConsoleDashboardContext;
+  let service: ConsoleDashboardService;
 
   beforeEach(() => {
     context = createManagedConsoleDashboardContext();
@@ -75,12 +76,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('THROW: Input Validation', () => {
-    let service: ConsoleDashboardService;
-
     beforeEach(() => {
-      ({ service } = createManagedConsoleDashboardContext({
+      service = createDashboard({
         config: { enabled: false },
-      }));
+      });
     });
 
     test('should throw on invalid price (NaN)', () => {
@@ -119,12 +118,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('GRACEFUL_DEGRADE: Update Failures', () => {
-    let service: ConsoleDashboardService;
-
     beforeEach(() => {
-      ({ service } = createManagedConsoleDashboardContext({
+      service = createDashboard({
         config: { enabled: false },
-      }));
+      });
     });
 
     test('should handle valid price update', () => {
@@ -181,12 +178,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('Integration: Data Updates', () => {
-    let service: ConsoleDashboardService;
-
     beforeEach(() => {
-      ({ service } = createManagedConsoleDashboardContext({
+      service = createDashboard({
         config: { enabled: false },
-      }));
+      });
     });
 
     test('should update multiple metrics correctly', () => {
@@ -286,12 +281,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   // ============================================================================
 
   describe('Edge Cases', () => {
-    let service: ConsoleDashboardService;
-
     beforeEach(() => {
-      ({ service } = createManagedConsoleDashboardContext({
+      service = createDashboard({
         config: { enabled: false },
-      }));
+      });
     });
 
     test('should handle zero values correctly', () => {

@@ -28,22 +28,33 @@ import {
 } from '../helpers/indicator-registry-test.utils';
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
-  let context: ManagedIndicatorRegistryContext;
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
   let createStandardRegistry: ManagedIndicatorRegistryContext['createStandardRegistry'];
   let createLegacyRegistry: ManagedIndicatorRegistryContext['createLegacyRegistry'];
 
+  function bindIndicatorRegistryContext() {
+    let context: ManagedIndicatorRegistryContext;
+
+    beforeEach(() => {
+      context = createManagedIndicatorRegistryContext();
+    });
+
+    afterEach(() => {
+      context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindIndicatorRegistryContext();
+
   beforeEach(() => {
-    context = createManagedIndicatorRegistryContext();
+    const context = getContext();
     ({ logger, errorHandler, registry } = context);
     createStandardRegistry = context.createStandardRegistry;
     createLegacyRegistry = context.createLegacyRegistry;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

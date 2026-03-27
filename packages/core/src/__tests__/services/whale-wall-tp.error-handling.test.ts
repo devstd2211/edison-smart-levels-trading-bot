@@ -102,11 +102,10 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     type WallsInput = Parameters<WhaleWallTPService['adjustTPSL']>[0];
 
     beforeEach(() => {
-      context = createManagedWhaleWallTPContext({
+      service = createStandardService({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       });
-      ({ service } = context);
     });
 
     test('should throw on null walls array', () => {
@@ -149,11 +148,10 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      context = createManagedWhaleWallTPContext({
+      service = createStandardService({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       });
-      ({ service } = context);
     });
 
     test('should handle valid adjustment request', () => {
@@ -234,11 +232,10 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      context = createManagedWhaleWallTPContext({
+      service = createStandardService({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       });
-      ({ service } = context);
     });
 
     test('should handle multiple sequential adjustments', () => {
@@ -275,15 +272,12 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     const mockLogger = createMockLogger();
 
     test('should work without ErrorHandler', () => {
-      const legacyContext = createManagedWhaleWallTPContext({
+      const service = createLegacyService({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
-        withErrorHandler: false,
       });
-      const { service } = legacyContext;
       const result = service.adjustTPSL(createValidWalls(), 50000, SignalDirection.LONG, 51000, 49000);
       expect(result).toBeDefined();
-      legacyContext.cleanup();
     });
 
     test('should throw on invalid input even without ErrorHandler', () => {
@@ -306,11 +300,10 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
     let service: WhaleWallTPService;
 
     beforeEach(() => {
-      context = createManagedWhaleWallTPContext({
+      service = createStandardService({
         logger: createWhaleWallTPMockLoggerService(mockLogger),
         config: createValidConfig(),
       });
-      ({ service } = context);
     });
 
     test('should handle zero minWallPercent', () => {

@@ -166,12 +166,7 @@ export function createManagedVirtualBalanceContext(options: {
     dataDir,
     statePath: harness.statePath,
     createService: (baseDeposit = options.baseDeposit ?? 100) =>
-      createVirtualBalanceBoundFactory({
-        dataDir,
-        logger: harness.logger,
-        errorHandler: harness.errorHandler,
-        baseDeposit,
-      }).createStandardService(),
+      factory.createStandardService({ baseDeposit }),
     cleanup: () => {
       cleanupVirtualBalanceTempDir(dataDir);
       jest.restoreAllMocks();

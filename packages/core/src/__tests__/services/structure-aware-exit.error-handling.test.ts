@@ -17,7 +17,6 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, StructureAwareExitConfig, SignalDirection, SwingPointType } from '../../types/legacy';
 import {
   createStructureAwareExitConfig,
-  createStructureAwareExitHarness,
   createManagedStructureAwareExitContext,
   createInvalidStructureAwareLevel,
   createStructureAwareExitMockLogger,
@@ -278,10 +277,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      service = createStructureAwareExitHarness({
+      service = createService({
         config: defaultConfig,
         logger: throwingLogger,
-      }).service;
+      });
     });
 
     it('should SKIP logger.info failures in calculateDynamicTP2', () => {
@@ -308,10 +307,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
         }),
       });
 
-      const svc = createStructureAwareExitHarness({
+      const svc = createService({
         config: defaultConfig,
         logger: badLogger,
-      }).service;
+      });
       const structure = { price: 2.05, type: 'SWING_POINT' as const, strength: 0.8 };
 
       // Should not throw despite all logging failing
@@ -325,10 +324,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
   describe('Integration E2E Scenarios', () => {
     it('should handle cascading failures gracefully: detect → calculate with all errors', () => {
-      const service = createStructureAwareExitHarness({
+      const service = createService({
         config: defaultConfig,
         logger: mockLogger,
-      }).service;
+      });
 
       // Simulate: no valid structures found
       const structure = service.detectNearestResistance(2.0, SignalDirection.LONG, [], [], null);
@@ -345,11 +344,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
     it('should work correctly without ErrorHandler (backward compatibility)', () => {
       // Create service WITHOUT errorHandler (legacy mode)
-      const service = createStructureAwareExitHarness({
+      const service = createService({
         config: defaultConfig,
         logger: mockLogger,
         withErrorHandler: false,
-      }).service;
+      });
 
       const swingPoints = [createStructureAwareSwingPoint(2.05, SwingPointType.HIGH)];
 
@@ -372,11 +371,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
 
   describe('Backward Compatibility', () => {
     it('should maintain original behavior without ErrorHandler', () => {
-      const service = createStructureAwareExitHarness({
+      const service = createService({
         config: defaultConfig,
         logger: mockLogger,
         withErrorHandler: false,
-      }).service;
+      });
 
       // Structure detection without ErrorHandler
       const swingPoints = [
@@ -400,11 +399,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     });
 
     it('should apply constraints in TP2 calculation consistently', () => {
-      const service = createStructureAwareExitHarness({
+      const service = createService({
         config: defaultConfig,
         logger: mockLogger,
         withErrorHandler: false,
-      }).service;
+      });
 
       const structureLevel = {
         price: 2.01, // Very close to entry

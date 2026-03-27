@@ -19,26 +19,36 @@ import {
   type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
-describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
+function bindBotMetricsContext() {
   let context: ManagedBotMetricsTestContext;
+
+  beforeEach(() => {
+    context = createManagedBotMetricsTestContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
   let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
   let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
+  const getContext = bindBotMetricsContext();
 
   beforeEach(() => {
-    context = createManagedBotMetricsTestContext();
+    const context = getContext();
     logger = context.logger as BotMetricsTestLogger;
     errorHandler = context.errorHandler;
     metricsService = context.service;
     createStandardService = context.createStandardService;
     createLegacyService = context.createLegacyService;
     jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

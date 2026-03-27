@@ -19,6 +19,20 @@ import {
   type ManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
+function bindBybitErrorHandlingContext() {
+  let context: ManagedBybitErrorHandlingContext;
+
+  beforeEach(() => {
+    context = createManagedBybitErrorHandlingContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 /**
  * Helper: Create a retryable error for testing
  */
@@ -30,17 +44,13 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  let context: ManagedBybitErrorHandlingContext;
+  const getContext = bindBybitErrorHandlingContext();
 
   beforeEach(() => {
-    context = createManagedBybitErrorHandlingContext();
+    const context = getContext();
     mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = context.config;
     mockRestClient = context.restClient as unknown as { getServerTime: jest.Mock };
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('[RETRY Strategy] initialize()', () => {

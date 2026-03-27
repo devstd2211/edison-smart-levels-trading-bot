@@ -20,7 +20,6 @@ import {
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
-  let context: ManagedFundingRateFilterContext;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
@@ -28,15 +27,27 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
   let createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
+  function bindFundingRateFilterContext() {
+    let context: ManagedFundingRateFilterContext;
+
+    beforeEach(() => {
+      context = createManagedFundingRateFilterContext();
+    });
+
+    afterEach(async () => {
+      await context.cleanup();
+    });
+
+    return () => context;
+  }
+
+  const getContext = bindFundingRateFilterContext();
+
   beforeEach(() => {
-    context = createManagedFundingRateFilterContext();
+    const context = getContext();
     ({ logger, config, mockGetFundingRate, errorHandler } = context);
     createFilter = context.createStandardFilter;
     createLegacyFilter = context.createLegacyFilter;
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
   });
 
   // ============================================================================

@@ -29,8 +29,21 @@ import {
   type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
-describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
+function bindAnalyzerRegistryContext() {
   let context: ManagedAnalyzerRegistryContext;
+
+  beforeEach(() => {
+    context = createManagedAnalyzerRegistryContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
+describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
@@ -41,17 +54,14 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   }) => ReturnType<ManagedAnalyzerRegistryContext['createScenario']>;
   let createStandardRegistry: ManagedAnalyzerRegistryContext['createStandardRegistry'];
   let createLegacyRegistry: ManagedAnalyzerRegistryContext['createLegacyRegistry'];
+  const getContext = bindAnalyzerRegistryContext();
 
   beforeEach(() => {
-    context = createManagedAnalyzerRegistryContext();
+    const context = getContext();
     ({ logger, errorHandler, registry } = context);
     createScenario = (options = {}) => context.createScenario(options);
     createStandardRegistry = context.createStandardRegistry;
     createLegacyRegistry = context.createLegacyRegistry;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

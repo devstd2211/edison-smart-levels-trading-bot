@@ -29,15 +29,14 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Compressed the active handoff so `ACTIVE_REFACTOR_PLAN.md` is back to open-work-only instead of carrying token-heavy chronological history.
-- Completed a lifecycle/testability cleanup follow-up for `position-state-machine.error-handling`, `event-deduplication.error-handling`, `timeframe-weighting.error-handling`, `anomaly-detection.error-handling`, `websocket-authentication.error-handling`, and `indicator-cache.error-handling`.
-  - added bound same-sandbox service creation to `position-state-machine-test.utils` so the suite reuses the main context-owned temp directory instead of creating throwaway managed contexts inline.
-  - replaced remaining ad-hoc managed-context creation inside the touched suites with the existing primary suite-owned context or direct helper factories where no managed cleanup was needed.
+- Completed a lifecycle/testability cleanup follow-up for `action-queue.error-handling`, `analyzer-registry.error-handling`, `bot-metrics.error-handling`, `compound-interest-calculator.error-handling`, `strategy-manager.error-handling`, and `timeframe-weighting.error-handling`.
+  - replaced repeated managed-context setup with shared suite-owned binders.
+  - kept the touched suites on their existing helper-owned standard/legacy factory paths instead of local top-level context wiring.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue with the next concentrated lifecycle/testability slice in suites that still create temporary managed contexts or bound service instances outside the primary suite-owned cleanup path.
-- Prioritize the next six-file batch of error-handling suites that still instantiate throwaway helper contexts inline, and prefer helper-owned standard/legacy or injected-service factory paths over ad-hoc `createManaged...Context()` calls inside individual tests.
+- Continue with the next concentrated lifecycle/testability slice in suites that still rebuild managed contexts per describe or keep one-off legacy/service factories in local test bodies.
+- Prioritize the next six-file batch of error-handling suites where `createManaged...Context()` remains the default top-level setup path, and keep preferring suite-owned binders plus helper-owned standard/legacy factories.

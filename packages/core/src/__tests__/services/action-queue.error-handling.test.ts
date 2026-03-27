@@ -10,25 +10,35 @@ import {
   type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
+function bindActionQueueContext() {
+  let context: ManagedActionQueueContext;
+
+  beforeEach(() => {
+    context = createManagedActionQueueContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
   let createAction: ManagedActionQueueContext['createAction'];
   let createHandler: ManagedActionQueueContext['createHandler'];
   let enqueueActions: ManagedActionQueueContext['enqueueActions'];
   let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  let context: ManagedActionQueueContext;
+  const getContext = bindActionQueueContext();
 
   beforeEach(() => {
-    context = createManagedActionQueueContext();
+    const context = getContext();
     service = context.service;
     createAction = context.createAction;
     createHandler = context.createHandler;
     enqueueActions = context.enqueueActions;
     createActionBatch = context.createActionBatch;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

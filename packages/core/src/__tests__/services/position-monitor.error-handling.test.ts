@@ -29,6 +29,24 @@ import {
   type ManagedPositionMonitorContext,
 } from '../helpers/position-monitor-test.utils';
 
+function bindPositionMonitorContext(
+  options: Parameters<typeof createManagedPositionMonitorContext>[0] = {
+    riskConfig: defaultPositionMonitorRiskConfig,
+  },
+) {
+  let context: ManagedPositionMonitorContext;
+
+  beforeEach(() => {
+    context = createManagedPositionMonitorContext(options);
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -40,22 +58,16 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
   let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
-  let context: ManagedPositionMonitorContext;
+  const getContext = bindPositionMonitorContext();
 
   beforeEach(() => {
-    context = createManagedPositionMonitorContext({
-      riskConfig: defaultPositionMonitorRiskConfig,
-    });
+    const context = getContext();
     monitor = context.monitor;
     mockBybit = context.mockBybit;
     mockPositionManager = context.mockPositionManager;
     mockTelegram = context.mockTelegram;
     mockPositionSync = context.mockPositionSync;
     positionHarness = context.positionHarness;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

@@ -23,27 +23,37 @@ import {
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
+function bindTimeframeWeightingContext() {
+  let context: ManagedTimeframeWeightingContext;
+
+  beforeEach(() => {
+    context = createManagedTimeframeWeightingContext();
+  });
+
+  afterEach(() => {
+    context.cleanup();
+  });
+
+  return () => context;
+}
+
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
-  let context: ManagedTimeframeWeightingContext;
   let createService: ManagedTimeframeWeightingContext['createStandardService'];
   let createLegacyService: ManagedTimeframeWeightingContext['createLegacyService'];
   let createMultiTF: ManagedTimeframeWeightingContext['createMultiTF'];
+  const getContext = bindTimeframeWeightingContext();
 
   beforeEach(() => {
-    context = createManagedTimeframeWeightingContext();
+    const context = getContext();
     service = context.service;
     errorHandler = context.errorHandler as ErrorHandler;
     mockLogger = context.logger;
     createService = context.createStandardService;
     createLegacyService = context.createLegacyService;
     createMultiTF = context.createMultiTF;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('THROW: Input Validation', () => {
