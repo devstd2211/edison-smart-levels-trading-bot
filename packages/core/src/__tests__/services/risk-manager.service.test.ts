@@ -138,17 +138,32 @@ describe('RiskManager', () => {
   let context: ManagedRiskManagerContext;
   let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
 
+  function bindRiskManagerContext() {
+    let managedContext: ManagedRiskManagerContext;
+
+    beforeEach(() => {
+      defaultConfig = createDefaultConfig();
+      managedContext = createManagedRiskManagerContext({
+        config: defaultConfig,
+        balance: 1000,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRiskManagerContext();
+
   beforeEach(() => {
-    defaultConfig = createDefaultConfig();
-    context = createManagedRiskManagerContext({ config: defaultConfig, balance: 1000 });
+    context = getContext();
     mockLogger = context.mockLogger;
     errorHandler = context.errorHandler;
     riskManager = context.riskManager;
     createRiskManager = context.createRiskManager;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Constructor', () => {

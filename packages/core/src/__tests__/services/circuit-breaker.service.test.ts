@@ -19,15 +19,29 @@ describe('CircuitBreakerService', () => {
   let createService: ManagedCircuitBreakerContext['createStandardService'];
   let context: ManagedCircuitBreakerContext;
 
+  function bindCircuitBreakerContext() {
+    let managedContext: ManagedCircuitBreakerContext;
+
+    beforeEach(() => {
+      defaultConfig = createCircuitBreakerConfig();
+      managedContext = createManagedCircuitBreakerContext({
+        configOverrides: defaultConfig,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindCircuitBreakerContext();
+
   beforeEach(() => {
-    defaultConfig = createCircuitBreakerConfig();
-    context = createManagedCircuitBreakerContext({ configOverrides: defaultConfig });
+    context = getContext();
     service = context.service;
     createService = context.createStandardService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // TEST 1-2: Initial state

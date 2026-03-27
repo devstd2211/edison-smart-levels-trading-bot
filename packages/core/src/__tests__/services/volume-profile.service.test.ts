@@ -19,14 +19,26 @@ describe('VolumeProfileService', () => {
   let context: ManagedVolumeProfileContext;
   let createService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
+  function bindVolumeProfileContext() {
+    let managedContext: ManagedVolumeProfileContext;
+
+    beforeEach(() => {
+      managedContext = createManagedVolumeProfileContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindVolumeProfileContext();
+
   beforeEach(() => {
-    context = createManagedVolumeProfileContext({ withErrorHandler: false });
+    context = getContext();
     ({ service, logger, config } = context);
     createService = (configOverrides) => context.createLegacyService({ configOverrides });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('initialization', () => {

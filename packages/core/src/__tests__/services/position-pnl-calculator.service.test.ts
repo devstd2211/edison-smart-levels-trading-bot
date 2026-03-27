@@ -21,14 +21,28 @@ describe('PositionPnLCalculatorService', () => {
   let createPosition: ManagedPositionPnLCalculatorContext['createPosition'];
   let context: ManagedPositionPnLCalculatorContext;
 
+  function bindPositionPnlCalculatorContext() {
+    let managedContext: ManagedPositionPnLCalculatorContext;
+
+    beforeEach(() => {
+      managedContext = createManagedPositionPnLCalculatorContext({
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindPositionPnlCalculatorContext();
+
   beforeEach(() => {
-    context = createManagedPositionPnLCalculatorContext({ withErrorHandler: false });
+    context = getContext();
     service = context.service;
     createPosition = context.createPosition;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

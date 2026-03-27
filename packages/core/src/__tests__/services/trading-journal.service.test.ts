@@ -38,17 +38,29 @@ describe('TradingJournalService', () => {
   let testDataDir: string;
   let context: ManagedTradingJournalContext;
 
-  beforeEach(() => {
-    context = createManagedTradingJournalContext({
-      withErrorHandler: false,
+  function bindTradingJournalContext() {
+    let managedContext: ManagedTradingJournalContext;
+
+    beforeEach(() => {
+      managedContext = createManagedTradingJournalContext({
+        withErrorHandler: false,
+      });
     });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTradingJournalContext();
+
+  beforeEach(() => {
+    context = getContext();
     journal = context.journal;
     logger = context.logger;
     testDataDir = context.dataDir;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

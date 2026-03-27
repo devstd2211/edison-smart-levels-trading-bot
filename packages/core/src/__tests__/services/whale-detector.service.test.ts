@@ -31,12 +31,28 @@ describe('WhaleDetectionService', () => {
     direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   }) => ReturnType<ManagedWhaleDetectionContext['createScenario']>;
 
+  function bindWhaleDetectionContext() {
+    let managedContext: ManagedWhaleDetectionContext;
+
+    beforeEach(() => {
+      managedContext = createManagedWhaleDetectionContext({
+        strategy: 'BREAKOUT',
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindWhaleDetectionContext();
+
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    context = createManagedWhaleDetectionContext({
-      strategy: 'BREAKOUT',
-      withErrorHandler: false,
-    });
+    context = getContext();
     ({ detector, logger, config } = context);
     createService = context.createLegacyService;
     createScenario = (options = {}) =>
@@ -49,10 +65,6 @@ describe('WhaleDetectionService', () => {
         ratio: options.ratio,
         direction: options.direction,
       });
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Initialization', () => {

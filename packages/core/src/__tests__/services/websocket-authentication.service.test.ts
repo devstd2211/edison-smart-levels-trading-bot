@@ -21,14 +21,26 @@ describe('WebSocketAuthenticationService', () => {
   let context: ManagedWebSocketAuthenticationContext;
   let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
 
+  function bindWebSocketAuthenticationContext() {
+    let managedContext: ManagedWebSocketAuthenticationContext;
+
+    beforeEach(() => {
+      managedContext = createManagedWebSocketAuthenticationContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindWebSocketAuthenticationContext();
+
   beforeEach(() => {
-    context = createManagedWebSocketAuthenticationContext();
+    context = getContext();
     service = context.service;
     createService = context.createStandardService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('generateAuthPayload', () => {

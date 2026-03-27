@@ -17,15 +17,27 @@ describe('FundingRateFilterService', () => {
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let createFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
-  beforeEach(() => {
-    context = createManagedFundingRateFilterContext({
-      withErrorHandler: false,
-    });
-    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = context);
-  });
+  function bindFundingRateFilterContext() {
+    let managedContext: ManagedFundingRateFilterContext;
 
-  afterEach(async () => {
-    await context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedFundingRateFilterContext({
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(async () => {
+      await managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindFundingRateFilterContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = context);
   });
 
   describe('checkSignal', () => {

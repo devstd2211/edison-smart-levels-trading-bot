@@ -14,14 +14,26 @@ describe('TakeProfitManagerService', () => {
   let context: ManagedTakeProfitManagerContext;
   let createManager: ManagedTakeProfitManagerContext['createManager'];
 
+  function bindTakeProfitManagerContext() {
+    let managedContext: ManagedTakeProfitManagerContext;
+
+    beforeEach(() => {
+      managedContext = createManagedTakeProfitManagerContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTakeProfitManagerContext();
+
   beforeEach(() => {
-    context = createManagedTakeProfitManagerContext();
+    context = getContext();
     ({ logger } = context);
     createManager = context.createManager;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('recordPartialClose', () => {

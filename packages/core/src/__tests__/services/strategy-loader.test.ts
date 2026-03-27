@@ -21,15 +21,27 @@ describe('StrategyLoaderService', () => {
   let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
   let context: ManagedStrategyLoaderContext;
 
-  beforeEach(async () => {
-    context = await createManagedStrategyLoaderContext();
+  function bindStrategyLoaderContext() {
+    let managedContext: ManagedStrategyLoaderContext;
+
+    beforeEach(async () => {
+      managedContext = await createManagedStrategyLoaderContext();
+    });
+
+    afterEach(async () => {
+      await managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindStrategyLoaderContext();
+
+  beforeEach(() => {
+    context = getContext();
     tempDir = context.tempDir;
     loader = context.loader;
     createLoader = context.createLoader;
-  });
-
-  afterEach(async () => {
-    await context.cleanup();
   });
 
   describe('loadStrategy', () => {

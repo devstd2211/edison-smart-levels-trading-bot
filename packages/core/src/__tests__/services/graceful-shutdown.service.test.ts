@@ -66,20 +66,32 @@ describe('GracefulShutdownManager', () => {
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
+  function bindGracefulShutdownContext() {
+    let managedContext: ManagedGracefulShutdownTestContext;
+
+    beforeEach(() => {
+      managedContext = createManagedGracefulShutdownTestContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindGracefulShutdownContext();
+
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks();
-    context = createManagedGracefulShutdownTestContext();
+    context = getContext();
     mockPositionLifecycleService = context.mocks.positionLifecycleService;
     mockActionQueue = context.mocks.actionQueue;
     mockExchange = context.mocks.exchange;
     mockLogger = context.mocks.logger;
     mockEventBus = context.mocks.eventBus;
     shutdownManager = context.manager;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('Signal Handler Registration', () => {

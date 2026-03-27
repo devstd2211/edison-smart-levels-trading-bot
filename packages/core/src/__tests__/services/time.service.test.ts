@@ -32,17 +32,29 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let harness: TimeServiceHarness;
   let context: ManagedTimeServiceContext;
 
+  function bindTimeServiceContext() {
+    let managedContext: ManagedTimeServiceContext;
+
+    beforeEach(() => {
+      managedContext = createManagedTimeServiceContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTimeServiceContext();
+
   beforeEach(() => {
-    context = createManagedTimeServiceContext();
+    context = getContext();
     harness = context.harness;
     mockLogger = context.mockLogger;
     mockExchange = context.mockExchange;
     errorHandler = context.errorHandler;
     timeService = context.timeService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('RETRY Strategy - API call success', () => {

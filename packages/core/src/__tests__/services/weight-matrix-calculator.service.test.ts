@@ -23,14 +23,26 @@ describe('WeightMatrixCalculatorService', () => {
   let context: ManagedLegacyWeightMatrixContext;
   let createService: ManagedLegacyWeightMatrixContext['createLegacyService'];
 
+  function bindLegacyWeightMatrixContext() {
+    let managedContext: ManagedLegacyWeightMatrixContext;
+
+    beforeEach(() => {
+      managedContext = createManagedLegacyWeightMatrixContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindLegacyWeightMatrixContext();
+
   beforeEach(() => {
-    context = createManagedLegacyWeightMatrixContext();
+    context = getContext();
     ({ service: calculator, logger, config } = context);
     createService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================

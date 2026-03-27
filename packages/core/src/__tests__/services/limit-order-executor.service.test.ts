@@ -16,8 +16,8 @@ import {
   attachLimitOrderRestClient,
   createLimitOrderStatusRecord,
   createLimitOrderExecutorConfig,
-  createManagedLimitOrderExecutorContext,
   createLimitOrderExecutorLogger,
+  createManagedLimitOrderExecutorContext,
   createMockLimitOrderBybitService,
   MockLimitOrderRestClient,
   type ManagedLimitOrderExecutorContext,
@@ -36,23 +36,38 @@ describe('LimitOrderExecutorService', () => {
   let context: ManagedLimitOrderExecutorContext;
   let createService: ManagedLimitOrderExecutorContext['createService'];
 
-  beforeEach(() => {
-    logger = createLimitOrderExecutorLogger();
-    config = createLimitOrderExecutorConfig({ maxRetries: 1 });
-    bybitService = createMockLimitOrderBybitService();
-    context = createManagedLimitOrderExecutorContext({
-      config,
-      bybitService,
-      logger,
-      withErrorHandler: false,
+  function bindLimitOrderExecutorContext() {
+    let managedContext: ManagedLimitOrderExecutorContext;
+
+    beforeEach(() => {
+      logger = createLimitOrderExecutorLogger();
+      config = createLimitOrderExecutorConfig({ maxRetries: 1 });
+      bybitService = createMockLimitOrderBybitService();
+      managedContext = createManagedLimitOrderExecutorContext({
+        config,
+        bybitService,
+        logger,
+        withErrorHandler: false,
+      });
     });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindLimitOrderExecutorContext();
+
+  beforeEach(() => {
+    context = getContext();
+    logger = context.logger;
+    config = context.config;
+    bybitService = context.bybitService;
     service = context.service;
     createService = context.createService;
     restClient = attachLimitOrderRestClient(bybitService);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

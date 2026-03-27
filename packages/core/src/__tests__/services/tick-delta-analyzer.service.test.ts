@@ -17,13 +17,25 @@ describe('TickDeltaAnalyzerService', () => {
   let context: ManagedTickDeltaAnalyzerContext;
   let service: TickDeltaAnalyzerService;
 
-  beforeEach(() => {
-    context = createManagedTickDeltaAnalyzerContext();
-    ({ service } = context);
-  });
+  function bindTickDeltaAnalyzerContext() {
+    let managedContext: ManagedTickDeltaAnalyzerContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedTickDeltaAnalyzerContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTickDeltaAnalyzerContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ service } = context);
   });
 
   describe('addTick', () => {

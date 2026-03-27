@@ -22,17 +22,29 @@ describe('RetestEntryService', () => {
   let mockCandles: Candle[] = createRetestEntryCandles();
   let createService: ManagedRetestEntryContext['createService'];
 
+  function bindRetestEntryContext() {
+    let managedContext: ManagedRetestEntryContext;
+
+    beforeEach(() => {
+      managedContext = createManagedRetestEntryContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRetestEntryContext();
+
   beforeEach(() => {
-    context = createManagedRetestEntryContext();
+    context = getContext();
     service = context.service;
     createService = context.createService;
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('detectImpulse', () => {

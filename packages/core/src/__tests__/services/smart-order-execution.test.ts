@@ -50,8 +50,24 @@ describe('SmartOrderExecutionService', () => {
     errorHandler?: ErrorHandler;
   }) => SmartOrderExecutionService;
 
+  function bindSmartOrderExecutionContext() {
+    let managedContext: ManagedSmartOrderExecutionContext;
+
+    beforeEach(() => {
+      managedContext = createManagedSmartOrderExecutionContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindSmartOrderExecutionContext();
+
   beforeEach(() => {
-    context = createManagedSmartOrderExecutionContext();
+    context = getContext();
     service = context.service;
     logger = context.logger;
     errorHandler = context.errorHandler;
@@ -60,10 +76,6 @@ describe('SmartOrderExecutionService', () => {
     createInvalidService = context.createInvalidService;
     createNoHandlerService = context.createNoHandlerService;
     createService = context.createService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ============================================================================

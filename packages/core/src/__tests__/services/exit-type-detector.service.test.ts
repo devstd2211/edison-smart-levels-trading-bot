@@ -34,14 +34,28 @@ describe('ExitTypeDetectorService', () => {
     positionOverrides?: Partial<Position>;
   }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
 
+  function bindExitTypeDetectorContext() {
+    let managedContext: ManagedExitTypeDetectorContext;
+
+    beforeEach(() => {
+      managedContext = createManagedExitTypeDetectorContext({
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindExitTypeDetectorContext();
+
   beforeEach(() => {
-    context = createManagedExitTypeDetectorContext({ withErrorHandler: false });
+    context = getContext();
     ({ service, logger } = context);
     createScenario = (options = {}) => context.createScenario(options);
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ==========================================================================

@@ -21,18 +21,30 @@ describe('WallTrackerService', () => {
   let context: ManagedWallTrackerContext;
   let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
 
+  function bindWallTrackerContext() {
+    let managedContext: ManagedWallTrackerContext;
+
+    beforeEach(() => {
+      managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindWallTrackerContext();
+
   beforeEach(() => {
-    context = createManagedWallTrackerContext({ withErrorHandler: false });
+    context = getContext();
     ({ service, logger, config } = context);
     createService = createWallTrackerBoundFactory({
       config,
       logger,
       withErrorHandler: false,
     }).createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('detectWall', () => {

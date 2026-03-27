@@ -46,13 +46,25 @@ describe('LadderTpManagerService', () => {
   let context: ManagedLadderTpContext;
   let createInvalidService: ManagedLadderTpContext['createInvalidService'];
 
-  beforeEach(() => {
-    context = createManagedLadderTpContext();
-    ({ service, logger, bybitService, config, createInvalidService } = context);
-  });
+  function bindLadderTpContext() {
+    let managedContext: ManagedLadderTpContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedLadderTpContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindLadderTpContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ service, logger, bybitService, config, createInvalidService } = context);
   });
 
   // ==========================================================================

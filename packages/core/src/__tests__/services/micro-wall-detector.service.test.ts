@@ -27,13 +27,27 @@ describe('MicroWallDetectorService', () => {
   let config: ManagedMicroWallDetectorContext['config'];
   let context: ManagedMicroWallDetectorContext;
 
-  beforeEach(() => {
-    context = createManagedMicroWallDetectorContext({ withErrorHandler: false });
-    ({ detector, logger, config } = context);
-  });
+  function bindMicroWallDetectorContext() {
+    let managedContext: ManagedMicroWallDetectorContext;
 
-  afterEach(() => {
-    context.cleanup();
+    beforeEach(() => {
+      managedContext = createManagedMicroWallDetectorContext({
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindMicroWallDetectorContext();
+
+  beforeEach(() => {
+    context = getContext();
+    ({ detector, logger, config } = context);
   });
 
   describe('detectMicroWalls', () => {

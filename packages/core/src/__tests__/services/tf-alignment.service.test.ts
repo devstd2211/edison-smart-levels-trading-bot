@@ -18,18 +18,33 @@ describe('TFAlignmentService', () => {
   let context: ManagedTFAlignmentContext;
   let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
+  function bindTFAlignmentContext() {
+    let managedContext: ManagedTFAlignmentContext;
+
+    beforeEach(() => {
+      managedContext = createManagedTFAlignmentContext({
+        configOverrides: createTFAlignmentConfig(),
+        withErrorHandler: false,
+      });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindTFAlignmentContext();
+
   beforeEach(() => {
-    config = createTFAlignmentConfig();
-    context = createManagedTFAlignmentContext({ configOverrides: config, withErrorHandler: false });
+    context = getContext();
+    config = context.config ?? createTFAlignmentConfig();
     ({ service } = context);
     createService = createTFAlignmentBoundFactory({
       config,
       withErrorHandler: false,
     }).createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('calculateAlignment - LONG', () => {

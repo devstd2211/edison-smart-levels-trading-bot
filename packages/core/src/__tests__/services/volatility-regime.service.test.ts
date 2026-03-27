@@ -15,14 +15,26 @@ describe('VolatilityRegimeService', () => {
   let logger: LoggerService;
   let createService: ManagedVolatilityRegimeContext['createLegacyService'];
 
+  function bindVolatilityRegimeContext() {
+    let managedContext: ManagedVolatilityRegimeContext;
+
+    beforeEach(() => {
+      managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindVolatilityRegimeContext();
+
   beforeEach(() => {
-    context = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+    context = getContext();
     ({ service, logger } = context);
     createService = context.createLegacyService;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   describe('initialization', () => {

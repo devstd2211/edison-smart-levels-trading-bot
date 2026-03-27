@@ -29,14 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-27)
-- Completed a lifecycle/testability follow-up for `delta-analyzer.service`, `dynamic-position-sizer`, `entry-confirmation.service`, `event-deduplication.service`, `exchange-factory.service`, and `health-check`.
+- Completed a lifecycle/testability follow-up for `limit-order-executor.service`, `funding-rate-filter.service`, `exit-type-detector.service`, `micro-wall-detector.service`, `real-time-risk-monitor.service`, and `position-pnl-calculator.service`.
   - replaced their remaining suite-local managed-context ownership with local binder-owned helper-managed setup/cleanup so those non-error-handling suites now share one explicit lifecycle path per suite.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/delta-analyzer.service.test.ts packages/core/src/__tests__/services/dynamic-position-sizer.test.ts packages/core/src/__tests__/services/entry-confirmation.service.test.ts packages/core/src/__tests__/services/event-deduplication.service.test.ts packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/health-check.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/limit-order-executor.service.test.ts packages/core/src/__tests__/services/funding-rate-filter.service.test.ts packages/core/src/__tests__/services/exit-type-detector.service.test.ts packages/core/src/__tests__/services/micro-wall-detector.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/position-pnl-calculator.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue the non-error-handling lifecycle/testability slice around explicit lifecycle ownership, `createServices()` / `start` / `stop` usage, and replacing broad suite-level service state with minimal grouped services in the next highest-signal suites that still keep local managed-context setup/cleanup.
+- Continue the non-error-handling lifecycle/testability slice around explicit lifecycle ownership, `createServices()` / `start` / `stop` usage, and replacing broad suite-level service state with minimal grouped services in the next highest-signal suites that still keep direct managed-context setup/cleanup.
+- Favor the next remaining adjacent non-error-handling suites that still hold direct managed-context setup/cleanup after the `limit-order-executor.service` / `funding-rate-filter.service` / `exit-type-detector.service` / `micro-wall-detector.service` / `real-time-risk-monitor.service` / `position-pnl-calculator.service` batch.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

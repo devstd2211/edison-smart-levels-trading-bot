@@ -43,16 +43,28 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   let mockEventBus: Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
   let mockLogger: jest.Mocked<LoggerService>;
 
+  function bindRealTimeRiskMonitorContext() {
+    let managedContext: ManagedRealTimeRiskMonitorContext;
+
+    beforeEach(() => {
+      managedContext = createManagedRealTimeRiskMonitorContext();
+    });
+
+    afterEach(() => {
+      managedContext.cleanup();
+    });
+
+    return () => managedContext;
+  }
+
+  const getContext = bindRealTimeRiskMonitorContext();
+
   beforeEach(() => {
-    context = createManagedRealTimeRiskMonitorContext();
+    context = getContext();
     monitor = context.monitor;
     mockPositionService = context.mockPositionService as unknown as Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
     mockEventBus = context.mockEventBus as unknown as Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
     mockLogger = context.mockLogger as unknown as jest.Mocked<LoggerService>;
-  });
-
-  afterEach(() => {
-    context.cleanup();
   });
 
   // ========================================================================
