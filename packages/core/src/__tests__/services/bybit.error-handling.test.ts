@@ -21,16 +21,25 @@ import {
 
 function bindBybitErrorHandlingContext() {
   let context: ManagedBybitErrorHandlingContext;
+  let fixtures: Pick<
+    ManagedBybitErrorHandlingContext,
+    'logger' | 'config' | 'restClient'
+  >;
 
   beforeEach(() => {
     context = createManagedBybitErrorHandlingContext();
+    fixtures = {
+      logger: context.logger,
+      config: context.config,
+      restClient: context.restClient,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 /**
@@ -51,13 +60,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   const getContext = bindBybitErrorHandlingContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: BybitFixtures = {
-      logger: context.logger,
-      config: context.config,
-      restClient: context.restClient,
-    };
-
+    const fixtures: BybitFixtures = getContext();
     mockLogger = fixtures.logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = fixtures.config;
     mockRestClient = fixtures.restClient as unknown as { getServerTime: jest.Mock };

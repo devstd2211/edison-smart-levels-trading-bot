@@ -27,17 +27,29 @@ import {
 } from '../helpers/risk-calculator-test.utils';
 
 function bindRiskCalculatorContext() {
+  let fixtures: Pick<
+    ManagedRiskCalculatorContext,
+    'calculator' | 'logger' | 'errorHandler' | 'defaultInput' | 'createInput' | 'createCalculator'
+  >;
   let context: ManagedRiskCalculatorContext;
 
   beforeEach(() => {
     context = createManagedRiskCalculatorContext();
+    fixtures = {
+      calculator: context.calculator,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      defaultInput: context.defaultInput,
+      createInput: context.createInput,
+      createCalculator: context.createCalculator,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
@@ -50,13 +62,13 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   const getContext = bindRiskCalculatorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    calculator = context.calculator;
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    defaultInput = context.defaultInput;
-    createInput = context.createInput;
-    createCalculator = context.createCalculator;
+    const fixtures = getContext();
+    calculator = fixtures.calculator;
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    defaultInput = fixtures.defaultInput;
+    createInput = fixtures.createInput;
+    createCalculator = fixtures.createCalculator;
   });
 
   describe('THROW Strategy - Input Validation', () => {

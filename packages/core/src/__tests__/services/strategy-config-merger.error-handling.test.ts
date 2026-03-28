@@ -16,18 +16,28 @@ import {
 
 function bindStrategyConfigMergerContext() {
   let context: ManagedStrategyConfigMergerContext;
+  let fixtures: Pick<
+    ManagedStrategyConfigMergerContext,
+    'logger' | 'service' | 'errorHandler' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedStrategyConfigMergerContext({
       logger: createStrategyConfigMergerLogger(),
     });
+    fixtures = {
+      logger: context.logger,
+      service: context.service,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('StrategyConfigMergerService - Error Handling', () => {
@@ -65,14 +75,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   const getContext = bindStrategyConfigMergerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: StrategyConfigMergerFixtures = {
-      logger: context.logger,
-      service: context.service,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures: StrategyConfigMergerFixtures = getContext();
     mockLogger = fixtures.logger;
     service = fixtures.service;
     errorHandler = fixtures.errorHandler;

@@ -63,23 +63,6 @@ function bindPublicWebSocketContext() {
 }
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
-  type PublicWebSocketFixtures = Pick<
-    ManagedPublicWebSocketContext,
-    | 'mockLogger'
-    | 'mockConfig'
-    | 'mockTimeframeProvider'
-    | 'loggerService'
-    | 'errorHandler'
-    | 'errorHandlerService'
-  >;
-  type PublicWebSocketFactories = Pick<
-    ManagedPublicWebSocketContext,
-    | 'createService'
-    | 'createStandardService'
-    | 'createLegacyService'
-    | 'createBtcConfiguredService'
-    | 'createInjectedService'
-  >;
   let service: PublicWebSocketService;
   let mockLogger: {
     debug: jest.Mock;
@@ -97,40 +80,27 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let mockTimeframeProvider: ManagedPublicWebSocketContext['mockTimeframeProvider'];
   let loggerService: ManagedPublicWebSocketContext['loggerService'];
   let errorHandlerService: ErrorHandler;
-  let factories: PublicWebSocketFactories;
+  let createService: ManagedPublicWebSocketContext['createService'];
+  let createStandardService: ManagedPublicWebSocketContext['createStandardService'];
+  let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];
+  let createBtcConfiguredService: ManagedPublicWebSocketContext['createBtcConfiguredService'];
+  let createInjectedService: ManagedPublicWebSocketContext['createInjectedService'];
   const getContext = bindPublicWebSocketContext();
 
   beforeEach(() => {
     const fixtures = getContext();
-    const {
-      service: nextService,
-      mockLogger: nextLogger,
-      mockConfig: nextConfig,
-      mockTimeframeProvider: nextTimeframeProvider,
-      loggerService: nextLoggerService,
-      errorHandler: nextErrorHandler,
-      errorHandlerService: nextErrorHandlerService,
-      createService,
-      createStandardService,
-      createLegacyService,
-      createBtcConfiguredService,
-      createInjectedService,
-    } = fixtures;
-
-    service = nextService;
-    mockLogger = nextLogger;
-    mockConfig = nextConfig;
-    mockTimeframeProvider = nextTimeframeProvider;
-    loggerService = nextLoggerService;
-    errorHandler = nextErrorHandler;
-    errorHandlerService = nextErrorHandlerService;
-    factories = {
-      createService,
-      createStandardService,
-      createLegacyService,
-      createBtcConfiguredService,
-      createInjectedService,
-    };
+    service = fixtures.service;
+    mockLogger = fixtures.mockLogger;
+    mockConfig = fixtures.mockConfig;
+    mockTimeframeProvider = fixtures.mockTimeframeProvider;
+    loggerService = fixtures.loggerService;
+    errorHandler = fixtures.errorHandler;
+    errorHandlerService = fixtures.errorHandlerService;
+    createService = fixtures.createService;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
+    createBtcConfiguredService = fixtures.createBtcConfiguredService;
+    createInjectedService = fixtures.createInjectedService;
   });
 
   // =========================================================================
@@ -139,12 +109,12 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Constructor & ErrorHandler Integration', () => {
     it('should accept optional ErrorHandler parameter for backward compatibility', () => {
-      const serviceWithoutHandler = factories.createLegacyService({
+      const serviceWithoutHandler = createLegacyService({
         symbol: 'XRPUSDT',
       });
       expect(serviceWithoutHandler).toBeDefined();
 
-      const serviceWithHandler = factories.createInjectedService({
+      const serviceWithHandler = createInjectedService({
         mockConfig,
         mockTimeframeProvider,
         loggerService,
@@ -165,7 +135,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Message Parsing & GRACEFUL_DEGRADE Strategy', () => {
     beforeEach(() => {
-      service = factories.createStandardService();
+      service = createStandardService();
     });
 
     it('should handle invalid JSON messages with GRACEFUL_DEGRADE', () => {
@@ -218,7 +188,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Event Emission & Connectivity', () => {
     beforeEach(() => {
-      service = factories.createStandardService();
+      service = createStandardService();
     });
 
     it('should emit candleClosed events for valid kline data', (done) => {
@@ -257,7 +227,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Reconnection Logic', () => {
     beforeEach(() => {
-      service = factories.createStandardService();
+      service = createStandardService();
     });
 
     it('should emit disconnected event when connection is lost', (done) => {
@@ -289,7 +259,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Error Handling Strategies', () => {
     beforeEach(() => {
-      service = factories.createStandardService();
+      service = createStandardService();
     });
 
     it('should use GRACEFUL_DEGRADE for data validation errors', () => {
@@ -312,13 +282,13 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('BTC Confirmation Feature', () => {
     it('should accept BTC confirmation config', () => {
-      const serviceWithBtc = factories.createBtcConfiguredService();
+      const serviceWithBtc = createBtcConfiguredService();
 
       expect(serviceWithBtc).toBeDefined();
     });
 
     it('should handle BTC candle store assignment', () => {
-      const serviceWithBtc = factories.createBtcConfiguredService({
+      const serviceWithBtc = createBtcConfiguredService({
         btcConfirmation: createPublicWebSocketBtcConfirmationConfig({
           lookbackCandles: undefined,
         }),
@@ -337,7 +307,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('E2E Recovery Scenarios', () => {
     beforeEach(() => {
-      service = factories.createStandardService();
+      service = createStandardService();
     });
 
     it('should maintain service state after disconnect', () => {
@@ -358,7 +328,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should support ErrorHandler-less fallback mode', () => {
-      const serviceNoHandler = factories.createLegacyService({
+      const serviceNoHandler = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -373,7 +343,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Error Classification', () => {
     beforeEach(() => {
-      service = factories.createStandardService();
+      service = createStandardService();
     });
 
     it('should handle connection-related errors', () => {
@@ -408,7 +378,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler (legacy mode)', () => {
-      const serviceNoHandler = factories.createLegacyService({
+      const serviceNoHandler = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -417,7 +387,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should provide all public methods without ErrorHandler', () => {
-      service = factories.createLegacyService({
+      service = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -428,7 +398,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     });
 
     it('should disconnect cleanly regardless of ErrorHandler presence', () => {
-      service = factories.createLegacyService({
+      service = createLegacyService({
         symbol: 'XRPUSDT',
       });
 
@@ -445,7 +415,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
   describe('Integration with service composition', () => {
     it('should accept ErrorHandler injected from services builder', () => {
-      const service = factories.createInjectedService({
+      const service = createInjectedService({
         mockConfig,
         mockTimeframeProvider,
         loggerService,
@@ -458,13 +428,13 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
 
     it('should work with optional ErrorHandler parameter in builder flow', () => {
       // Simulate services creation without ErrorHandler (backward compat)
-      const service1 = factories.createLegacyService({
+      const service1 = createLegacyService({
         symbol: 'XRPUSDT',
       });
       expect(service1).toBeDefined();
 
       // With ErrorHandler (normal flow)
-      const service2 = factories.createStandardService();
+      const service2 = createStandardService();
       expect(service2).toBeDefined();
     });
   });

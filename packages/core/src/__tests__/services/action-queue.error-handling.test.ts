@@ -12,16 +12,27 @@ import {
 
 function bindActionQueueContext() {
   let context: ManagedActionQueueContext;
+  let fixtures: Pick<
+    ManagedActionQueueContext,
+    'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
+  >;
 
   beforeEach(() => {
     context = createManagedActionQueueContext();
+    fixtures = {
+      service: context.service,
+      createAction: context.createAction,
+      createHandler: context.createHandler,
+      enqueueActions: context.enqueueActions,
+      createActionBatch: context.createActionBatch,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
@@ -37,15 +48,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   const getContext = bindActionQueueContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: ActionQueueFixtures = {
-      service: context.service,
-      createAction: context.createAction,
-      createHandler: context.createHandler,
-      enqueueActions: context.enqueueActions,
-      createActionBatch: context.createActionBatch,
-    };
-
+    const fixtures: ActionQueueFixtures = getContext();
     service = fixtures.service;
     createAction = fixtures.createAction;
     createHandler = fixtures.createHandler;

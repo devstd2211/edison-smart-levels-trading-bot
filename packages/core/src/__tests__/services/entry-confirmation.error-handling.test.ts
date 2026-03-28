@@ -18,16 +18,22 @@ import {
 
 function bindEntryConfirmationContext() {
   let context: ManagedEntryConfirmationContext;
+  let fixtures: Pick<ManagedEntryConfirmationContext, 'manager' | 'logger' | 'errorHandler'>;
 
   beforeEach(() => {
     context = createManagedEntryConfirmationContext();
+    fixtures = {
+      manager: context.manager,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -47,8 +53,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   const getContext = bindEntryConfirmationContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ manager, logger, errorHandler } = context);
+    ({ manager, logger, errorHandler } = getContext());
   });
 
   // TEST 1-3: Logger failure SKIP strategy

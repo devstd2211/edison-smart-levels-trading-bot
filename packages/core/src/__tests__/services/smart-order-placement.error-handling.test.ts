@@ -174,15 +174,15 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
+  let createService: ManagedSmartOrderPlacementContext['createService'];
   const getContext = bindSmartOrderPlacementContext();
 
   beforeEach(() => {
-    ({ logger } = getContext());
+    ({ logger, createService } = getContext());
   });
 
   it('should return conservative plan on corrupt orderbook', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.bids.forEach((b) => {
@@ -206,8 +206,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return single order split on calculation failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
@@ -226,8 +225,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return market price level on liquidity search failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
@@ -245,8 +243,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return conservative fill probability on estimation failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createSmartOrderPlacementOrderbook();
     corruptOrderbook.asks.forEach((a) => {
@@ -266,8 +263,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle empty orderbook gracefully', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const emptyOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -287,9 +283,8 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle disabled adaptive mode', async () => {
-    const context = getContext();
     const config = createSmartOrderPlacementConfig({ enableAdaptive: false });
-    const service = context.createService({ config, logger });
+    const service = createService({ config, logger });
     const orderbook = createSmartOrderPlacementOrderbook();
 
     const result = await service.planOrderExecution(orderbook, 1.0, 'buy');

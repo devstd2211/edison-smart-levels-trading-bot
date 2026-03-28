@@ -23,16 +23,25 @@ import {
 
 function bindWhaleDetectionContext() {
   let context: ManagedWhaleDetectionContext;
+  let fixtures: Pick<
+    ManagedWhaleDetectionContext,
+    'createStandardService' | 'createLegacyService' | 'createScenario'
+  >;
 
   beforeEach(() => {
     context = createManagedWhaleDetectionContext();
+    fixtures = {
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+      createScenario: context.createScenario,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 const createMockLogger = createWhaleDetectionMockLogger;
@@ -53,11 +62,11 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   const getContext = bindWhaleDetectionContext();
 
   beforeEach(() => {
-    const context = getContext();
-    createService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures = getContext();
+    createService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
     createScenario = (options = {}) =>
-      context.createScenario({
+      fixtures.createScenario({
         config: options.config ?? createValidConfig(),
         logger: options.logger,
         withErrorHandler: options.withErrorHandler,

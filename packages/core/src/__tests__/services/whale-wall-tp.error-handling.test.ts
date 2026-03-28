@@ -25,28 +25,35 @@ import {
 
 function bindWhaleWallTPContext() {
   let context: ManagedWhaleWallTPContext;
+  let fixtures: Pick<
+    ManagedWhaleWallTPContext,
+    'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedWhaleWallTPContext();
+    fixtures = {
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
-  let context: ManagedWhaleWallTPContext;
   let createStandardService: ManagedWhaleWallTPContext['createStandardService'];
   let createLegacyService: ManagedWhaleWallTPContext['createLegacyService'];
   const getContext = bindWhaleWallTPContext();
 
   beforeEach(() => {
-    context = getContext();
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures = getContext();
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ============================================================================

@@ -26,16 +26,26 @@ import {
 
 function bindEventDeduplicationContext() {
   let context: ManagedEventDeduplicationContext;
+  let fixtures: Pick<
+    ManagedEventDeduplicationContext,
+    'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedEventDeduplicationContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createServiceWithDefaults: context.createServiceWithDefaults,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -62,14 +72,7 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   const getContext = bindEventDeduplicationContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: EventDeduplicationFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createServiceWithDefaults: context.createServiceWithDefaults,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: EventDeduplicationFixtures = getContext();
     ({ logger, errorHandler } = fixtures);
     createService = fixtures.createServiceWithDefaults;
     createLegacyService = fixtures.createLegacyService;

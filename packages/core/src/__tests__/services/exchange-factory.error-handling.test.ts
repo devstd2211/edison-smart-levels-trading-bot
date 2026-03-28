@@ -18,16 +18,26 @@ import {
 
 function bindExchangeFactoryContext() {
   let context: ManagedExchangeFactoryContext;
+  let fixtures: Pick<
+    ManagedExchangeFactoryContext,
+    'mockLogger' | 'errorHandler' | 'createFactory' | 'createFactoryWithoutErrorHandler'
+  >;
 
   beforeEach(() => {
     context = createManagedExchangeFactoryContext();
+    fixtures = {
+      mockLogger: context.mockLogger,
+      errorHandler: context.errorHandler,
+      createFactory: context.createFactory,
+      createFactoryWithoutErrorHandler: context.createFactoryWithoutErrorHandler,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
@@ -42,14 +52,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   const getContext = bindExchangeFactoryContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: ExchangeFactoryFixtures = {
-      mockLogger: context.mockLogger,
-      errorHandler: context.errorHandler,
-      createFactory: context.createFactory,
-      createFactoryWithoutErrorHandler: context.createFactoryWithoutErrorHandler,
-    };
-
+    const fixtures: ExchangeFactoryFixtures = getContext();
     mockLogger = fixtures.mockLogger;
     mockErrorHandler = fixtures.errorHandler as jest.Mocked<ErrorHandler>;
     createFactory = fixtures.createFactory;

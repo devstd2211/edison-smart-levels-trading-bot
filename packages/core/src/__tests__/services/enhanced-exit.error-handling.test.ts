@@ -25,16 +25,25 @@ import {
 
 function bindEnhancedExitContext() {
   let context: ManagedEnhancedExitContext;
+  let fixtures: Pick<
+    ManagedEnhancedExitContext,
+    'logger' | 'errorHandler' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedEnhancedExitContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
@@ -49,13 +58,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   const getContext = bindEnhancedExitContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: EnhancedExitFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures: EnhancedExitFixtures = getContext();
     ({ logger: mockLogger, errorHandler, createService } = fixtures);
   });
 

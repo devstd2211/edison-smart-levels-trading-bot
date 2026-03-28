@@ -25,16 +25,31 @@ import {
 
 function bindErrorWeightMatrixContext() {
   let context: ManagedErrorWeightMatrixContext;
+  let fixtures: Pick<
+    ManagedErrorWeightMatrixContext,
+    | 'logger'
+    | 'errorHandler'
+    | 'config'
+    | 'createStandardErrorService'
+    | 'createLegacyErrorService'
+  >;
 
   beforeEach(() => {
     context = createManagedErrorWeightMatrixContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      config: context.config,
+      createStandardErrorService: context.createStandardErrorService,
+      createLegacyErrorService: context.createLegacyErrorService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
@@ -44,18 +59,21 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let errorConfig: WeightMatrixConfig;
   let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let context: ManagedErrorWeightMatrixContext;
+  let createStandardErrorService: ManagedErrorWeightMatrixContext['createStandardErrorService'];
+  let createLegacyErrorService: ManagedErrorWeightMatrixContext['createLegacyErrorService'];
   const getContext = bindErrorWeightMatrixContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    errorConfig = context.config;
+    const fixtures = getContext();
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    errorConfig = fixtures.config;
+    createStandardErrorService = fixtures.createStandardErrorService;
+    createLegacyErrorService = fixtures.createLegacyErrorService;
     createService = (config = errorConfig) =>
-      context.createStandardErrorService({ config });
+      createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
-      context.createLegacyErrorService({ config });
+      createLegacyErrorService({ config });
   });
 
   // ==========================================================================
@@ -65,7 +83,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   describe('THROW: Config Validation', () => {
     it('should throw on null config', () => {
       expect(() => {
-        context.createStandardErrorService({
+        createStandardErrorService({
           config: null as unknown as WeightMatrixConfig,
         });
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
@@ -73,7 +91,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
 
     it('should throw on undefined config', () => {
       expect(() => {
-        context.createStandardErrorService({
+        createStandardErrorService({
           config: undefined as unknown as WeightMatrixConfig,
         });
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
@@ -84,7 +102,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceToEnter = -10;
 
       expect(() => {
-        context.createStandardErrorService({ config });
+        createStandardErrorService({ config });
       }).toThrow('minConfidenceToEnter must be 0-100');
     });
 
@@ -93,7 +111,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceToEnter = 150;
 
       expect(() => {
-        context.createStandardErrorService({ config });
+        createStandardErrorService({ config });
       }).toThrow('minConfidenceToEnter must be 0-100');
     });
 
@@ -102,7 +120,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceForReducedSize = -5;
 
       expect(() => {
-        context.createStandardErrorService({ config });
+        createStandardErrorService({ config });
       }).toThrow('minConfidenceForReducedSize must be 0-100');
     });
 
@@ -111,7 +129,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       config.minConfidenceForReducedSize = 120;
 
       expect(() => {
-        context.createStandardErrorService({ config });
+        createStandardErrorService({ config });
       }).toThrow('minConfidenceForReducedSize must be 0-100');
     });
   });
@@ -253,7 +271,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   describe('Backward Compatibility: No ErrorHandler', () => {
     it('should throw on null config without ErrorHandler', () => {
       expect(() => {
-        context.createLegacyErrorService({
+        createLegacyErrorService({
           config: null as unknown as WeightMatrixConfig,
         });
       }).toThrow('WeightMatrixConfig cannot be null or undefined');
@@ -290,7 +308,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     it('should recover from invalid config and succeed with valid config', () => {
       // First attempt with invalid config
       expect(() => {
-        context.createStandardErrorService({
+        createStandardErrorService({
           config: { ...errorConfig, minConfidenceToEnter: 150 },
         });
       }).toThrow();

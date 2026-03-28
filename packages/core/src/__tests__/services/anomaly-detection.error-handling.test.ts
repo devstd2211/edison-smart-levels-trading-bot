@@ -31,16 +31,27 @@ import {
 
 function bindAnomalyDetectionContext() {
   let context: ManagedAnomalyDetectionContext;
+  let fixtures: Pick<
+    ManagedAnomalyDetectionContext,
+    'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedAnomalyDetectionContext();
+    fixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('AnomalyDetectionService - Error Handling', () => {
@@ -60,15 +71,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   const getContext = bindAnomalyDetectionContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: AnomalyDetectionFixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: AnomalyDetectionFixtures = getContext();
     service = fixtures.service;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;

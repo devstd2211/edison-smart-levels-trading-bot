@@ -26,16 +26,26 @@ import {
 
 function bindRiskManagerContext() {
   let context: ManagedRiskManagerContext;
+  let fixtures: Pick<
+    ManagedRiskManagerContext,
+    'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
+  >;
 
   beforeEach(() => {
     context = createManagedRiskManagerContext();
+    fixtures = {
+      riskManager: context.riskManager,
+      mockLogger: context.mockLogger,
+      errorHandler: context.errorHandler,
+      createRiskManager: context.createRiskManager,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
@@ -46,11 +56,11 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   const getContext = bindRiskManagerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    riskManager = context.riskManager;
-    mockLogger = context.mockLogger;
-    errorHandler = context.errorHandler;
-    createRiskManager = context.createRiskManager;
+    const fixtures = getContext();
+    riskManager = fixtures.riskManager;
+    mockLogger = fixtures.mockLogger;
+    errorHandler = fixtures.errorHandler;
+    createRiskManager = fixtures.createRiskManager;
   });
 
   // ========================================================================

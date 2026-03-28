@@ -19,16 +19,33 @@ import {
 
 function bindWebSocketAuthenticationContext() {
   let context: ManagedWebSocketAuthenticationContext;
+  let fixtures: Pick<
+    ManagedWebSocketAuthenticationContext,
+    | 'service'
+    | 'errorHandler'
+    | 'mockLogger'
+    | 'createService'
+    | 'createLegacyService'
+    | 'createServiceWithoutLogger'
+  >;
 
   beforeEach(() => {
     context = createManagedWebSocketAuthenticationContext();
+    fixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      mockLogger: context.mockLogger,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+      createServiceWithoutLogger: context.createServiceWithoutLogger,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
@@ -41,8 +58,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   const getContext = bindWebSocketAuthenticationContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ service, errorHandler, mockLogger, createService, createLegacyService, createServiceWithoutLogger } = context);
+    ({ service, errorHandler, mockLogger, createService, createLegacyService, createServiceWithoutLogger } = getContext());
   });
 
   // ===== THROW: Input Validation =====

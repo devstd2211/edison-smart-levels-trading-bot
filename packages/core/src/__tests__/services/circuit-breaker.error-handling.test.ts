@@ -17,19 +17,31 @@ import {
 
 function bindCircuitBreakerContext() {
   let context: ManagedCircuitBreakerContext;
+  let fixtures: Pick<
+    ManagedCircuitBreakerContext,
+    'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
+    fixtures = {
+      config: context.config,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
@@ -46,16 +58,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   const getContext = bindCircuitBreakerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: CircuitBreakerFixtures = {
-      config: context.config,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      service: context.service,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: CircuitBreakerFixtures = getContext();
     config = fixtures.config;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;

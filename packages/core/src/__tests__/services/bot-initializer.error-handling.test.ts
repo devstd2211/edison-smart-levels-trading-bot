@@ -37,18 +37,29 @@ type BotInitializerInternals = {
 
 function bindBotInitializerContext() {
   let context: ManagedBotInitializerTestContext;
+  let fixtures: Pick<
+    ManagedBotInitializerTestContext,
+    'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler'
+  >;
 
   beforeEach(() => {
     context = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
+    fixtures = {
+      services: context.services,
+      config: context.config,
+      errorHandler: context.errorHandler,
+      rebuild: context.rebuild,
+      createWithoutHandler: context.createWithoutHandler,
+    };
   });
 
   afterEach(async () => {
     await context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -58,22 +69,29 @@ function bindBotInitializerContext() {
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
+  let config: ManagedBotInitializerTestContext['config'];
+  let errorHandler: ManagedBotInitializerTestContext['errorHandler'];
+  let rebuild: ManagedBotInitializerTestContext['rebuild'];
+  let createWithoutHandler: ManagedBotInitializerTestContext['createWithoutHandler'];
   const rebuildInitializer = (): void => {
-    initializer = context.rebuild({
+    initializer = rebuild({
       services: mockServices,
-      config: context.config,
-      errorHandler: context.errorHandler as jest.Mocked<ErrorHandler>,
+      config,
+      errorHandler: errorHandler as jest.Mocked<ErrorHandler>,
     });
   };
   const createInitializerWithoutHandler = (): BotInitializer => {
-    return context.createWithoutHandler();
+    return createWithoutHandler();
   };
-  let context: ManagedBotInitializerTestContext;
   const getContext = bindBotInitializerContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockServices = context.services as MockBotServices;
+    const fixtures = getContext();
+    mockServices = fixtures.services as MockBotServices;
+    config = fixtures.config;
+    errorHandler = fixtures.errorHandler;
+    rebuild = fixtures.rebuild;
+    createWithoutHandler = fixtures.createWithoutHandler;
     rebuildInitializer();
 
     jest.clearAllMocks();

@@ -29,16 +29,27 @@ import {
 
 function bindIndicatorRegistryContext() {
   let context: ManagedIndicatorRegistryContext;
+  let fixtures: Pick<
+    ManagedIndicatorRegistryContext,
+    'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
+  >;
 
   beforeEach(() => {
     context = createManagedIndicatorRegistryContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      registry: context.registry,
+      createStandardRegistry: context.createStandardRegistry,
+      createLegacyRegistry: context.createLegacyRegistry,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
@@ -54,15 +65,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   const getContext = bindIndicatorRegistryContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: IndicatorRegistryFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      registry: context.registry,
-      createStandardRegistry: context.createStandardRegistry,
-      createLegacyRegistry: context.createLegacyRegistry,
-    };
-
+    const fixtures: IndicatorRegistryFixtures = getContext();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;
     registry = fixtures.registry;

@@ -22,16 +22,35 @@ import {
 
 function bindStrategyManagerContext() {
   let context: ManagedStrategyManagerContext;
+  let fixtures: Pick<
+    ManagedStrategyManagerContext,
+    | 'mockLoader'
+    | 'mockMerger'
+    | 'mockErrorHandler'
+    | 'mockStrategy'
+    | 'mockMainConfig'
+    | 'consoleLogSpy'
+    | 'createManager'
+  >;
 
   beforeEach(() => {
     context = createManagedStrategyManagerContext();
+    fixtures = {
+      mockLoader: context.mockLoader,
+      mockMerger: context.mockMerger,
+      mockErrorHandler: context.mockErrorHandler,
+      mockStrategy: context.mockStrategy,
+      mockMainConfig: context.mockMainConfig,
+      consoleLogSpy: context.consoleLogSpy,
+      createManager: context.createManager,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
@@ -60,17 +79,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: StrategyManagerFixtures = {
-      mockLoader: context.mockLoader,
-      mockMerger: context.mockMerger,
-      mockErrorHandler: context.mockErrorHandler,
-      mockStrategy: context.mockStrategy,
-      mockMainConfig: context.mockMainConfig,
-      consoleLogSpy: context.consoleLogSpy,
-      createManager: context.createManager,
-    };
-
+    const fixtures: StrategyManagerFixtures = getContext();
     mockLoader = fixtures.mockLoader;
     mockMerger = fixtures.mockMerger;
     mockErrorHandler = fixtures.mockErrorHandler;

@@ -19,16 +19,24 @@ type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService
 
 function bindConsoleDashboardContext() {
   let context: ManagedConsoleDashboardContext;
+  let fixtures: Pick<
+    ManagedConsoleDashboardContext,
+    'createService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedConsoleDashboardContext();
+    fixtures = {
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
@@ -42,12 +50,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   const getContext = bindConsoleDashboardContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: ConsoleDashboardFixtures = {
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: ConsoleDashboardFixtures = getContext();
     createDashboard = fixtures.createService;
     createLegacyDashboard = fixtures.createLegacyService;
   });
