@@ -30,16 +30,26 @@ import {
 
 function bindMarketConditionContext() {
   let context: ManagedMarketConditionContext;
+  let fixtures: Pick<
+    ManagedMarketConditionContext,
+    'logger' | 'errorHandler' | 'service' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedMarketConditionContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 const createTP = createMarketConditionTakeProfit;
@@ -53,8 +63,7 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   const getContext = bindMarketConditionContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ logger, errorHandler, service, createService } = context);
+    ({ logger, errorHandler, service, createService } = getContext());
   });
 
   // ============================================================================

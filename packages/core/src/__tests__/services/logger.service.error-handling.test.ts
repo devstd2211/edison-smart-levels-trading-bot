@@ -28,18 +28,39 @@ import {
   type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
+type LoggerTestFixtures = Pick<
+  ManagedLoggerTestContext,
+  | 'testLogDir'
+  | 'errorHandler'
+  | 'createLogger'
+  | 'createLegacyLogger'
+  | 'createInvalidStandardService'
+  | 'createStandardService'
+  | 'createLegacyService'
+>;
+
 function bindLoggerTestContext() {
   let context: ManagedLoggerTestContext;
+  let fixtures: LoggerTestFixtures;
 
   beforeEach(() => {
     context = createManagedLoggerTestContext();
+    fixtures = {
+      testLogDir: context.testLogDir,
+      errorHandler: context.errorHandler,
+      createLogger: context.createLogger,
+      createLegacyLogger: context.createLegacyLogger,
+      createInvalidStandardService: context.createInvalidStandardService,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(async () => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
@@ -53,18 +74,17 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
   let createStandardService: ManagedLoggerTestContext['createStandardService'];
   let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
-  let context: ManagedLoggerTestContext;
   const getContext = bindLoggerTestContext();
 
   beforeEach(() => {
-    context = getContext();
-    testLogDir = context.testLogDir;
-    errorHandler = context.errorHandler;
-    createLogger = context.createLogger;
-    createLegacyLogger = context.createLegacyLogger;
-    createInvalidStandardService = context.createInvalidStandardService;
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures = getContext();
+    testLogDir = fixtures.testLogDir;
+    errorHandler = fixtures.errorHandler;
+    createLogger = fixtures.createLogger;
+    createLegacyLogger = fixtures.createLegacyLogger;
+    createInvalidStandardService = fixtures.createInvalidStandardService;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ========== THROW VALIDATION TESTS ==========

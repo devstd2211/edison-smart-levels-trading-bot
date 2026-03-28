@@ -35,20 +35,24 @@ import {
 
 function bindLadderExitContext() {
   let context: ManagedLadderExitContext;
+  let fixtures: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
 
   beforeEach(() => {
     context = createManagedLadderExitContext();
+    fixtures = {
+      logger: context.logger,
+      bybitService: context.bybitService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
-  let context: ManagedLadderExitContext;
   let logger: LoggerService;
   let bybitService: ManagedLadderExitContext['bybitService'];
   let createScenario: (options?: {
@@ -60,9 +64,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   const getContext = bindLadderExitContext();
 
   beforeEach(() => {
-    context = getContext();
-    logger = context.logger;
-    bybitService = context.bybitService;
+    const fixtures = getContext();
+    logger = fixtures.logger;
+    bybitService = fixtures.bybitService;
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
         logger,

@@ -49,6 +49,11 @@ const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
 
+type ManagedAnalyzerEngineScenarioFixtures = Pick<
+  ManagedAnalyzerEngineContext,
+  'service' | 'registry' | 'candles' | 'config'
+>;
+
 function bindManagedAnalyzerEngineScenarios() {
   const managedContexts: ManagedAnalyzerEngineContext[] = [];
 
@@ -60,7 +65,12 @@ function bindManagedAnalyzerEngineScenarios() {
 
   return (context: ManagedAnalyzerEngineContext) => {
     managedContexts.push(context);
-    return context;
+    return {
+      service: context.service,
+      registry: context.registry,
+      candles: context.candles,
+      config: context.config,
+    } satisfies ManagedAnalyzerEngineScenarioFixtures;
   };
 }
 
@@ -82,7 +92,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       analyzerNames?: string[];
       candleCount?: number;
     },
-  ) => ManagedAnalyzerEngineContext;
+  ) => ManagedAnalyzerEngineScenarioFixtures;
   const bindScenario = bindManagedAnalyzerEngineScenarios();
 
   beforeEach(() => {

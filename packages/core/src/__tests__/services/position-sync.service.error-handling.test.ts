@@ -45,17 +45,30 @@ const createMockPosition = createPositionSyncPosition;
 
 function bindPositionSyncContext() {
   let context: ManagedPositionSyncContext;
+  let fixtures: Pick<
+    ManagedPositionSyncContext,
+    'errorHandler' | 'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
+  >;
 
   beforeEach(() => {
     const errorHandler = createPositionSyncErrorHandler();
     context = createManagedPositionSyncContext({ errorHandler });
+    fixtures = {
+      errorHandler: context.errorHandler,
+      service: context.service,
+      mockBybit: context.mockBybit,
+      mockPositionManager: context.mockPositionManager,
+      mockExitTypeDetector: context.mockExitTypeDetector,
+      mockTelegram: context.mockTelegram,
+      logger: context.logger,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
@@ -66,18 +79,17 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let context: ManagedPositionSyncContext;
   const getContext = bindPositionSyncContext();
 
   beforeEach(() => {
-    context = getContext();
-    errorHandler = context.errorHandler as ErrorHandler;
-    service = context.service;
-    mockBybit = context.mockBybit;
-    mockPositionManager = context.mockPositionManager;
-    mockExitTypeDetector = context.mockExitTypeDetector;
-    mockTelegram = context.mockTelegram;
-    logger = context.logger;
+    const fixtures = getContext();
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    service = fixtures.service;
+    mockBybit = fixtures.mockBybit;
+    mockPositionManager = fixtures.mockPositionManager;
+    mockExitTypeDetector = fixtures.mockExitTypeDetector;
+    mockTelegram = fixtures.mockTelegram;
+    logger = fixtures.logger;
   });
 
   // ============================================================================

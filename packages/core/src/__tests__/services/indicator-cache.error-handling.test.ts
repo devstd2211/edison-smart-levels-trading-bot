@@ -29,16 +29,26 @@ import {
 
 function bindIndicatorCacheContext() {
   let context: ManagedIndicatorCacheContext;
+  let fixtures: Pick<
+    ManagedIndicatorCacheContext,
+    'logger' | 'errorHandler' | 'repository' | 'cache'
+  >;
 
   beforeEach(() => {
     context = createManagedIndicatorCacheContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      repository: context.repository,
+      cache: context.cache,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
@@ -53,13 +63,7 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   const getContext = bindIndicatorCacheContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: IndicatorCacheFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      repository: context.repository,
-      cache: context.cache,
-    };
+    const fixtures: IndicatorCacheFixtures = getContext();
 
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;

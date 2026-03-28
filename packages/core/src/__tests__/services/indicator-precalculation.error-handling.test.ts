@@ -25,16 +25,37 @@ import {
 
 function bindIndicatorPrecalculationContext() {
   let context: ManagedIndicatorPrecalculationContext;
+  let fixtures: Pick<
+    ManagedIndicatorPrecalculationContext,
+    | 'service'
+    | 'logger'
+    | 'errorHandler'
+    | 'candleProvider'
+    | 'cache'
+    | 'calculators'
+    | 'createStandardService'
+    | 'createLegacyHarness'
+  >;
 
   beforeEach(() => {
     context = createManagedIndicatorPrecalculationContext();
+    fixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      candleProvider: context.candleProvider,
+      cache: context.cache,
+      calculators: context.calculators,
+      createStandardService: context.createStandardService,
+      createLegacyHarness: context.createLegacyHarness,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -64,17 +85,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   const getContext = bindIndicatorPrecalculationContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: IndicatorPrecalculationFixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      candleProvider: context.candleProvider,
-      cache: context.cache,
-      calculators: context.calculators,
-      createStandardService: context.createStandardService,
-      createLegacyHarness: context.createLegacyHarness,
-    };
+    const fixtures: IndicatorPrecalculationFixtures = getContext();
 
     service = fixtures.service;
     logger = fixtures.logger;

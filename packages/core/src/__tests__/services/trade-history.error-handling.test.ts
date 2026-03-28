@@ -31,16 +31,27 @@ const asFailureError = (value: unknown): FailureError => value as FailureError;
 
 function bindTradeHistoryContext() {
   let context: ManagedTradeHistoryContext;
+  let fixtures: Pick<
+    ManagedTradeHistoryContext,
+    'logger' | 'errorHandler' | 'tempDir' | 'service' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedTradeHistoryContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      tempDir: context.tempDir,
+      service: context.service,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 /**
@@ -61,12 +72,12 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   const getContext = bindTradeHistoryContext();
 
   beforeEach(() => {
-    const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    tempDir = context.tempDir;
-    service = context.service;
-    createService = context.createService;
+    const fixtures = getContext();
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    tempDir = fixtures.tempDir;
+    service = fixtures.service;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

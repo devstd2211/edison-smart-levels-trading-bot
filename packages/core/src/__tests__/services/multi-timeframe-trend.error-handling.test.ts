@@ -29,16 +29,27 @@ import {
 
 function bindMultiTimeframeTrendContext() {
   let context: ManagedMultiTimeframeTrendContext;
+  let fixtures: Pick<
+    ManagedMultiTimeframeTrendContext,
+    'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedMultiTimeframeTrendContext();
+    fixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      logger: context.logger,
+      swingPointDetector: context.swingPointDetector,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
@@ -55,12 +66,12 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
   const getContext = bindMultiTimeframeTrendContext();
 
   beforeEach(() => {
-    const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    swingPointDetector = context.swingPointDetector;
-    service = context.service;
-    createService = context.createService;
+    const fixtures = getContext();
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    swingPointDetector = fixtures.swingPointDetector;
+    service = fixtures.service;
+    createService = fixtures.createService;
   });
 
   describe('THROW Strategy - Input Validation', () => {

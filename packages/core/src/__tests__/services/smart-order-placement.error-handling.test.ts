@@ -37,29 +37,33 @@ import {
 
 function bindSmartOrderPlacementValidationContext() {
   let context: ManagedSmartOrderPlacementContext;
+  let fixtures: Pick<ManagedSmartOrderPlacementContext, 'createStandardService'>;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext();
+    fixtures = {
+      createStandardService: context.createStandardService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  let context: ManagedSmartOrderPlacementContext;
+  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
   const getContext = bindSmartOrderPlacementValidationContext();
 
   beforeEach(() => {
-    context = getContext();
+    ({ createStandardService } = getContext());
   });
 
   it('should THROW when config is null', () => {
     expect(() => {
-      context.createStandardService({ config: asConfig(null) });
+      createStandardService({ config: asConfig(null) });
     }).toThrow('SmartOrderPlacementConfig cannot be null or undefined');
   });
 
@@ -68,7 +72,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.maxOrderSize = -10;
 
     expect(() => {
-      context.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid maxOrderSize');
   });
 
@@ -77,7 +81,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.maxSlippageBps = -1;
 
     expect(() => {
-      context.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid maxSlippageBps');
   });
 
@@ -86,7 +90,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.minFillProbability = 150;
 
     expect(() => {
-      context.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid minFillProbability');
   });
 
@@ -95,7 +99,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
     config.executionTimeHorizon = 0;
 
     expect(() => {
-      context.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid executionTimeHorizon');
   });
 });
@@ -104,16 +108,27 @@ function bindSmartOrderPlacementContext(
   options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
 ) {
   let context: ManagedSmartOrderPlacementContext;
+  let fixtures: Pick<
+    ManagedSmartOrderPlacementContext,
+    'service' | 'logger' | 'createService' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedSmartOrderPlacementContext(options);
+    fixtures = {
+      service: context.service,
+      logger: context.logger,
+      createService: context.createService,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================

@@ -27,16 +27,39 @@ import {
 
 function bindPositionExitingContext() {
   let context: ManagedPositionExitingErrorHandlingContext;
+  let fixtures: Pick<
+    ManagedPositionExitingErrorHandlingContext,
+    | 'mockExchange'
+    | 'mockTelegram'
+    | 'mockLogger'
+    | 'mockJournal'
+    | 'mockSessionStats'
+    | 'mockTradingConfig'
+    | 'mockRiskConfig'
+    | 'mockConfig'
+    | 'mockPosition'
+  >;
 
   beforeEach(() => {
     context = createManagedPositionExitingErrorHandlingContext();
+    fixtures = {
+      mockExchange: context.mockExchange,
+      mockTelegram: context.mockTelegram,
+      mockLogger: context.mockLogger,
+      mockJournal: context.mockJournal,
+      mockSessionStats: context.mockSessionStats,
+      mockTradingConfig: context.mockTradingConfig,
+      mockRiskConfig: context.mockRiskConfig,
+      mockConfig: context.mockConfig,
+      mockPosition: context.mockPosition,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
@@ -53,16 +76,16 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   const getContext = bindPositionExitingContext();
 
   beforeEach(() => {
-    const context = getContext();
-    mockTradingConfig = context.mockTradingConfig;
-    mockRiskConfig = context.mockRiskConfig;
-    mockConfig = context.mockConfig;
-    mockPosition = context.mockPosition;
-    mockExchange = context.mockExchange;
-    mockTelegram = context.mockTelegram;
-    mockLogger = context.mockLogger;
-    mockJournal = context.mockJournal;
-    mockSessionStats = context.mockSessionStats;
+    const fixtures = getContext();
+    mockTradingConfig = fixtures.mockTradingConfig;
+    mockRiskConfig = fixtures.mockRiskConfig;
+    mockConfig = fixtures.mockConfig;
+    mockPosition = fixtures.mockPosition;
+    mockExchange = fixtures.mockExchange;
+    mockTelegram = fixtures.mockTelegram;
+    mockLogger = fixtures.mockLogger;
+    mockJournal = fixtures.mockJournal;
+    mockSessionStats = fixtures.mockSessionStats;
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

@@ -33,16 +33,27 @@ const createConfig = createTradingLifecycleConfig;
 
 function bindTradingLifecycleContext() {
   let context: ManagedTradingLifecycleContext;
+  let fixtures: Pick<
+    ManagedTradingLifecycleContext,
+    'logger' | 'eventBus' | 'actionQueue' | 'rebuild' | 'harness'
+  >;
 
   beforeEach(() => {
     context = createManagedTradingLifecycleContext();
+    fixtures = {
+      logger: context.logger,
+      eventBus: context.eventBus,
+      actionQueue: context.actionQueue,
+      rebuild: context.rebuild,
+      harness: context.harness,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -50,21 +61,24 @@ function bindTradingLifecycleContext() {
 // ============================================================================
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
-  let context: ManagedTradingLifecycleContext;
   let manager: TradingLifecycleManager;
   let mockLogger: MockTradingLifecycleLogger;
   let mockEventBus: MockTradingLifecycleEventBus;
   let mockActionQueue: MockTradingLifecycleActionQueue;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  let rebuild: ManagedTradingLifecycleContext['rebuild'];
+  let harness: ManagedTradingLifecycleContext['harness'];
   const getContext = bindTradingLifecycleContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockLogger = context.logger;
-    mockEventBus = context.eventBus;
-    mockActionQueue = context.actionQueue;
+    const fixtures = getContext();
+    mockLogger = fixtures.logger;
+    mockEventBus = fixtures.eventBus;
+    mockActionQueue = fixtures.actionQueue;
+    rebuild = fixtures.rebuild;
+    harness = fixtures.harness;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
-    manager = context.rebuild({ errorHandler: mockErrorHandler });
+    manager = rebuild({ errorHandler: mockErrorHandler });
   });
 
   // ==================== RETRY Strategy - Event Publishing ====================
@@ -486,7 +500,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       const newEventBus = createMockTradingLifecycleEventBus();
       const newActionQueue = createMockTradingLifecycleActionQueue();
 
-      const newManager = createLegacyTradingLifecycleManager(context.harness, {
+      const newManager = createLegacyTradingLifecycleManager(harness, {
         logger: newLogger,
         eventBus: newEventBus,
         actionQueue: newActionQueue,
@@ -698,7 +712,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
   describe('Configuration & Edge Cases', () => {
     it('should respect automatic timeout configuration', async () => {
-      const autoManager = createLegacyTradingLifecycleManager(context.harness, {
+      const autoManager = createLegacyTradingLifecycleManager(harness, {
         config: createConfig({ enableAutomaticTimeout: false }),
       });
 
@@ -751,7 +765,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
       expect(() => {
-        createLegacyTradingLifecycleManager(context.harness);
+        createLegacyTradingLifecycleManager(harness);
       }).not.toThrow();
     });
 

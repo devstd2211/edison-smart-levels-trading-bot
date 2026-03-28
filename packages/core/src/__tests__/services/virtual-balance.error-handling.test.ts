@@ -19,16 +19,27 @@ import {
 
 function bindVirtualBalanceContext() {
   let context: ManagedVirtualBalanceContext;
+  let fixtures: Pick<
+    ManagedVirtualBalanceContext,
+    'dataDir' | 'statePath' | 'logger' | 'errorHandler' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedVirtualBalanceContext();
+    fixtures = {
+      dataDir: context.dataDir,
+      statePath: context.statePath,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
@@ -38,16 +49,15 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let testDataDir: string;
   let testPath: string;
   let createService: (baseDeposit?: number) => VirtualBalanceService;
-  let context: ManagedVirtualBalanceContext;
   const getContext = bindVirtualBalanceContext();
 
   beforeEach(() => {
-    context = getContext();
-    testDataDir = context.dataDir;
-    testPath = context.statePath;
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    createService = context.createService;
+    const fixtures = getContext();
+    testDataDir = fixtures.dataDir;
+    testPath = fixtures.statePath;
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    createService = fixtures.createService;
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========

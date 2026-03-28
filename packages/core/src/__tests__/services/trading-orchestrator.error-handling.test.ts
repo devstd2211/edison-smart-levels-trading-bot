@@ -22,16 +22,20 @@ import {
 
 function bindTradingOrchestratorContext() {
   let context: ManagedTradingOrchestratorContext;
+  let fixtures: Pick<ManagedTradingOrchestratorContext, 'logger'>;
 
   beforeEach(() => {
     context = createManagedTradingOrchestratorContext();
+    fixtures = {
+      logger: context.logger,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
@@ -39,8 +43,7 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   const getContext = bindTradingOrchestratorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ logger: mockLogger } = context);
+    ({ logger: mockLogger } = getContext());
     jest.clearAllMocks();
   });
 

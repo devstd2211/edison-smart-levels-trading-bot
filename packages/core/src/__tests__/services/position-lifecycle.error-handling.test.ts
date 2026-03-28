@@ -51,16 +51,43 @@ import {
 
 function bindPositionLifecycleRepositoryContext() {
   let context: ManagedPositionLifecycleRepositoryContext;
+  let fixtures: Pick<
+    ManagedPositionLifecycleRepositoryContext,
+    | 'service'
+    | 'mockExchange'
+    | 'mockTelegram'
+    | 'mockLogger'
+    | 'mockJournal'
+    | 'mockEventBus'
+    | 'mockRepository'
+    | 'tradingConfig'
+    | 'riskConfig'
+    | 'entryConfig'
+    | 'fullConfig'
+  >;
 
   beforeEach(() => {
     context = createManagedPositionLifecycleRepositoryContext();
+    fixtures = {
+      service: context.service,
+      mockExchange: context.mockExchange,
+      mockTelegram: context.mockTelegram,
+      mockLogger: context.mockLogger,
+      mockJournal: context.mockJournal,
+      mockEventBus: context.mockEventBus,
+      mockRepository: context.mockRepository,
+      tradingConfig: context.tradingConfig,
+      riskConfig: context.riskConfig,
+      entryConfig: context.entryConfig,
+      fullConfig: context.fullConfig,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
@@ -71,7 +98,6 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockJournal: jest.Mocked<TradingJournalService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
   let mockRepository: jest.Mocked<IPositionRepository>;
-  let context: ManagedPositionLifecycleRepositoryContext;
 
   const mockPosition: Position = createMockLifecyclePosition();
   const mockSignal: Signal = createMockLifecycleSignal();
@@ -83,18 +109,18 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const context = getContext();
-    service = context.service;
-    mockExchange = context.mockExchange as unknown as jest.Mocked<IExchange>;
-    mockTelegram = context.mockTelegram as unknown as jest.Mocked<TelegramService>;
-    mockLogger = context.mockLogger as unknown as jest.Mocked<LoggerService>;
-    mockJournal = context.mockJournal as unknown as jest.Mocked<TradingJournalService>;
-    mockEventBus = context.mockEventBus as unknown as jest.Mocked<BotEventBus>;
-    mockRepository = context.mockRepository as jest.Mocked<IPositionRepository>;
-    mockTradingConfig = context.tradingConfig;
-    mockRiskConfig = context.riskConfig;
-    mockEntryConfirmationConfig = context.entryConfig;
-    mockConfig = context.fullConfig;
+    const fixtures = getContext();
+    service = fixtures.service;
+    mockExchange = fixtures.mockExchange as unknown as jest.Mocked<IExchange>;
+    mockTelegram = fixtures.mockTelegram as unknown as jest.Mocked<TelegramService>;
+    mockLogger = fixtures.mockLogger as unknown as jest.Mocked<LoggerService>;
+    mockJournal = fixtures.mockJournal as unknown as jest.Mocked<TradingJournalService>;
+    mockEventBus = fixtures.mockEventBus as unknown as jest.Mocked<BotEventBus>;
+    mockRepository = fixtures.mockRepository as jest.Mocked<IPositionRepository>;
+    mockTradingConfig = fixtures.tradingConfig;
+    mockRiskConfig = fixtures.riskConfig;
+    mockEntryConfirmationConfig = fixtures.entryConfig;
+    mockConfig = fixtures.fullConfig;
   });
 
   // ========================================================================

@@ -41,16 +41,27 @@ function bindLiquidityHeatmapContext(
   options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
 ) {
   let context: ManagedLiquidityHeatmapContext;
+  let fixtures: Pick<
+    ManagedLiquidityHeatmapContext,
+    'service' | 'logger' | 'createService' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedLiquidityHeatmapContext(options);
+    fixtures = {
+      service: context.service,
+      logger: context.logger,
+      createService: context.createService,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================

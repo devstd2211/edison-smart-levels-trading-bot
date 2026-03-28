@@ -32,19 +32,31 @@ const createValidConfig = createFractalSmcWeightingConfig;
 const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
+type FractalSmcWeightingFixtures = Pick<
+  ManagedFractalSmcWeightingContext,
+  'logger' | 'errorHandler' | 'service' | 'createService'
+>;
+
 function bindFractalSmcWeightingContext() {
   let context: ManagedFractalSmcWeightingContext;
+  let fixtures: FractalSmcWeightingFixtures;
 
   beforeEach(() => {
     const mockLogger = createFractalSmcWeightingMockLogger();
     context = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
@@ -57,15 +69,14 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => FractalSmcWeightingService;
-  let context: ManagedFractalSmcWeightingContext;
   const getContext = bindFractalSmcWeightingContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    service = context.service;
-    createService = context.createService;
+    const fixtures = getContext();
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    service = fixtures.service;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

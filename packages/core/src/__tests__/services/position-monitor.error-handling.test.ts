@@ -35,16 +35,28 @@ function bindPositionMonitorContext(
   },
 ) {
   let context: ManagedPositionMonitorContext;
+  let fixtures: Pick<
+    ManagedPositionMonitorContext,
+    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
+  >;
 
   beforeEach(() => {
     context = createManagedPositionMonitorContext(options);
+    fixtures = {
+      monitor: context.monitor,
+      mockBybit: context.mockBybit,
+      mockPositionManager: context.mockPositionManager,
+      mockTelegram: context.mockTelegram,
+      mockPositionSync: context.mockPositionSync,
+      positionHarness: context.positionHarness,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -61,13 +73,13 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   const getContext = bindPositionMonitorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    monitor = context.monitor;
-    mockBybit = context.mockBybit;
-    mockPositionManager = context.mockPositionManager;
-    mockTelegram = context.mockTelegram;
-    mockPositionSync = context.mockPositionSync;
-    positionHarness = context.positionHarness;
+    const fixtures = getContext();
+    monitor = fixtures.monitor;
+    mockBybit = fixtures.mockBybit;
+    mockPositionManager = fixtures.mockPositionManager;
+    mockTelegram = fixtures.mockTelegram;
+    mockPositionSync = fixtures.mockPositionSync;
+    positionHarness = fixtures.positionHarness;
   });
 
   // ==========================================================================

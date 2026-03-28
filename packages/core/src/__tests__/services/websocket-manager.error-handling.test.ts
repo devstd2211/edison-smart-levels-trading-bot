@@ -34,16 +34,35 @@ import {
 
 function bindWebSocketManagerContext() {
   let context: ManagedWebSocketManagerContext;
+  let fixtures: Pick<
+    ManagedWebSocketManagerContext,
+    | 'wsManager'
+    | 'logger'
+    | 'createStandardTestnetService'
+    | 'errorHandler'
+    | 'orderExecutionDetector'
+    | 'deduplicationService'
+    | 'keepAliveService'
+  >;
 
   beforeEach(() => {
     context = createManagedWebSocketManagerContext({ testnet: true });
+    fixtures = {
+      wsManager: context.wsManager,
+      logger: context.logger,
+      createStandardTestnetService: context.createStandardTestnetService,
+      errorHandler: context.errorHandler,
+      orderExecutionDetector: context.orderExecutionDetector,
+      deduplicationService: context.deduplicationService,
+      keepAliveService: context.keepAliveService,
+    };
   });
 
   afterEach(async () => {
     await context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
@@ -57,8 +76,15 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   const getContext = bindWebSocketManagerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ wsManager, logger, createStandardTestnetService, errorHandler, orderExecutionDetector, deduplicationService, keepAliveService } = context);
+    ({
+      wsManager,
+      logger,
+      createStandardTestnetService,
+      errorHandler,
+      orderExecutionDetector,
+      deduplicationService,
+      keepAliveService,
+    } = getContext());
   });
 
   // ============================================================================

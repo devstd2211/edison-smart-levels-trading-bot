@@ -21,16 +21,45 @@ import {
 
 function bindPublicWebSocketContext() {
   let context: ManagedPublicWebSocketContext;
+  let fixtures: Pick<
+    ManagedPublicWebSocketContext,
+    | 'service'
+    | 'mockLogger'
+    | 'mockConfig'
+    | 'mockTimeframeProvider'
+    | 'loggerService'
+    | 'errorHandler'
+    | 'errorHandlerService'
+    | 'createService'
+    | 'createStandardService'
+    | 'createLegacyService'
+    | 'createBtcConfiguredService'
+    | 'createInjectedService'
+  >;
 
   beforeEach(() => {
     context = createManagedPublicWebSocketContext();
+    fixtures = {
+      service: context.service,
+      mockLogger: context.mockLogger,
+      mockConfig: context.mockConfig,
+      mockTimeframeProvider: context.mockTimeframeProvider,
+      loggerService: context.loggerService,
+      errorHandler: context.errorHandler,
+      errorHandlerService: context.errorHandlerService,
+      createService: context.createService,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+      createBtcConfiguredService: context.createBtcConfiguredService,
+      createInjectedService: context.createInjectedService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
@@ -72,7 +101,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   const getContext = bindPublicWebSocketContext();
 
   beforeEach(() => {
-    const context = getContext();
+    const fixtures = getContext();
     const {
       service: nextService,
       mockLogger: nextLogger,
@@ -86,7 +115,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       createLegacyService,
       createBtcConfiguredService,
       createInjectedService,
-    } = context;
+    } = fixtures;
 
     service = nextService;
     mockLogger = nextLogger;

@@ -41,26 +41,30 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 
 function bindTrackedServicesContext() {
   let context: ManagedTrackedServicesContext;
+  let fixtures: Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
   beforeEach(() => {
     context = createManagedTrackedServicesContext();
+    fixtures = {
+      trackedServices: context.trackedServices,
+    };
   });
 
   afterEach(async () => {
     await context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let validConfig: Config;
-  let context: ManagedTrackedServicesContext;
+  let trackedServices: ManagedTrackedServicesContext['trackedServices'];
   const getContext = bindTrackedServicesContext();
 
   beforeEach(() => {
     validConfig = createBotFactoryTestConfig();
-    context = getContext();
+    ({ trackedServices } = getContext());
   });
 
   describe('Config Validation - THROW Strategy', () => {
@@ -355,7 +359,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
     test('T31: createSafe returns services for valid config with explicit teardown path', async () => {
       const config = createBotFactoryTestConfig();
-      const services = createTrackedSafeBotFactoryServices(context.trackedServices, config);
+      const services = createTrackedSafeBotFactoryServices(trackedServices, config);
       const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
 
       expect(services.logger).toBeDefined();
@@ -365,7 +369,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
     test('T32: createForTesting returns valid services for explicit lifecycle control', () => {
       const config = createBotFactoryTestConfig();
-      const services = createTrackedBotFactoryServices(context.trackedServices, config);
+      const services = createTrackedBotFactoryServices(trackedServices, config);
 
       expect(services.coreServices.eventBus).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBeDefined();

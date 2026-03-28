@@ -29,16 +29,28 @@ import {
 
 function bindStrategyLoaderContext() {
   let context: ManagedStrategyLoaderContext;
+  let fixtures: Pick<
+    ManagedStrategyLoaderContext,
+    'errorHandler' | 'tempDir' | 'loader' | 'createLoader' | 'fileReadSpy' | 'dirReadSpy'
+  >;
 
   beforeEach(async () => {
     context = await createManagedStrategyLoaderContext();
+    fixtures = {
+      errorHandler: context.errorHandler,
+      tempDir: context.tempDir,
+      loader: context.loader,
+      createLoader: context.createLoader,
+      fileReadSpy: context.fileReadSpy,
+      dirReadSpy: context.dirReadSpy,
+    };
   });
 
   afterEach(async () => {
     await context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
@@ -51,13 +63,13 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   const getContext = bindStrategyLoaderContext();
 
   beforeEach(async () => {
-    const context = getContext();
-    mockErrorHandler = context.errorHandler;
-    testStrategiesDir = context.tempDir;
-    loaderService = context.loader;
-    createLoader = context.createLoader;
-    fileReadSpy = context.fileReadSpy;
-    dirReadSpy = context.dirReadSpy;
+    const fixtures = getContext();
+    mockErrorHandler = fixtures.errorHandler;
+    testStrategiesDir = fixtures.tempDir;
+    loaderService = fixtures.loader;
+    createLoader = fixtures.createLoader;
+    fileReadSpy = fixtures.fileReadSpy;
+    dirReadSpy = fixtures.dirReadSpy;
   });
 
   // ============================================================================

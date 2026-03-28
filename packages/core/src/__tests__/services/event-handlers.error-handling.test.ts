@@ -43,32 +43,74 @@ const asTimeBasedExit = (value: unknown): TimeBasedExitInput => value as TimeBas
 const asOrderFilled = (value: unknown): OrderFilledInput => value as OrderFilledInput;
 const asStopLossFilled = (value: unknown): StopLossFilledInput => value as StopLossFilledInput;
 
+type PositionEventHandlerFixtures = Pick<
+  ManagedPositionEventHandlerContext,
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'createStandardHandler'
+>;
+
+type WebSocketEventHandlerFixtures = Pick<
+  ManagedWebSocketEventHandlerContext,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockWebSocketManager'
+  | 'mockJournal'
+  | 'mockTelegram'
+  | 'mockLogger'
+>;
+
 function bindPositionEventHandlerContext() {
   let context: ManagedPositionEventHandlerContext;
+  let fixtures: PositionEventHandlerFixtures;
 
   beforeEach(() => {
     context = createManagedPositionEventHandlerContext();
+    fixtures = {
+      mockPositionManager: context.mockPositionManager,
+      mockPositionExitingService: context.mockPositionExitingService,
+      mockBybitService: context.mockBybitService,
+      mockTelegram: context.mockTelegram,
+      mockLogger: context.mockLogger,
+      createStandardHandler: context.createStandardHandler,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 function bindWebSocketEventHandlerContext() {
   let context: ManagedWebSocketEventHandlerContext;
+  let fixtures: WebSocketEventHandlerFixtures;
 
   beforeEach(() => {
     context = createManagedEventHandlersWebSocketContext();
+    fixtures = {
+      handler: context.handler,
+      mockPositionManager: context.mockPositionManager,
+      mockPositionExitingService: context.mockPositionExitingService,
+      mockBybitService: context.mockBybitService,
+      mockWebSocketManager: context.mockWebSocketManager,
+      mockJournal: context.mockJournal,
+      mockTelegram: context.mockTelegram,
+      mockLogger: context.mockLogger,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
@@ -81,13 +123,13 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
   const getContext = bindPositionEventHandlerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    mockPositionManager = context.mockPositionManager;
-    mockPositionExitingService = context.mockPositionExitingService;
-    mockBybitService = context.mockBybitService;
-    mockTelegram = context.mockTelegram;
-    mockLogger = context.mockLogger;
-    handler = context.createStandardHandler();
+    const fixtures = getContext();
+    mockPositionManager = fixtures.mockPositionManager;
+    mockPositionExitingService = fixtures.mockPositionExitingService;
+    mockBybitService = fixtures.mockBybitService;
+    mockTelegram = fixtures.mockTelegram;
+    mockLogger = fixtures.mockLogger;
+    handler = fixtures.createStandardHandler();
   });
 
   describe('[SKIP] handleStopLossHit() - SL Event Logging (3 tests)', () => {
@@ -374,7 +416,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   const getContext = bindWebSocketEventHandlerContext();
 
   beforeEach(() => {
-    const context = getContext();
+    const fixtures = getContext();
     ({
       handler,
       mockPositionManager,
@@ -384,7 +426,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = context);
+    } = fixtures);
   });
 
   describe('[RETRY + GRACEFUL_DEGRADE + SKIP] handlePositionClosed() (4 tests)', () => {
