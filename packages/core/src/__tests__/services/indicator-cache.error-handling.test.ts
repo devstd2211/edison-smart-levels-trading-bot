@@ -42,6 +42,10 @@ function bindIndicatorCacheContext() {
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
+  type IndicatorCacheFixtures = Pick<
+    ManagedIndicatorCacheContext,
+    'logger' | 'errorHandler' | 'repository' | 'cache'
+  >;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
@@ -50,7 +54,17 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, errorHandler, repository: mockRepo, cache } = context);
+    const fixtures: IndicatorCacheFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      repository: context.repository,
+      cache: context.cache,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    mockRepo = fixtures.repository;
+    cache = fixtures.cache;
   });
 
   // ============================================================================

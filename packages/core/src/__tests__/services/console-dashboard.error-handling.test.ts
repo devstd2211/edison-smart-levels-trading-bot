@@ -32,6 +32,10 @@ function bindConsoleDashboardContext() {
 }
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
+  type ConsoleDashboardFixtures = Pick<
+    ManagedConsoleDashboardContext,
+    'createService' | 'createLegacyService'
+  >;
   let createDashboard: ManagedConsoleDashboardContext['createService'];
   let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
   let service: ConsoleDashboardService;
@@ -39,8 +43,13 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    createDashboard = context.createService;
-    createLegacyDashboard = context.createLegacyService;
+    const fixtures: ConsoleDashboardFixtures = {
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    createDashboard = fixtures.createService;
+    createLegacyDashboard = fixtures.createLegacyService;
   });
 
   // ============================================================================

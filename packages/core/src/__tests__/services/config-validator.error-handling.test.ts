@@ -52,6 +52,15 @@ function bindConfigValidatorContext() {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
+  type ConfigValidatorFixtures = Pick<
+    ManagedConfigValidatorContext,
+    | 'logger'
+    | 'errorHandler'
+    | 'validator'
+    | 'createValidator'
+    | 'createLegacyValidator'
+    | 'validConfig'
+  >;
   let logger: ManagedConfigValidatorContext['logger'];
   let errorHandler: ErrorHandler;
   let validator: ManagedConfigValidatorContext['validator'];
@@ -62,7 +71,21 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, errorHandler, validator, createValidator, createLegacyValidator, validConfig } = context);
+    const fixtures: ConfigValidatorFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      validator: context.validator,
+      createValidator: context.createValidator,
+      createLegacyValidator: context.createLegacyValidator,
+      validConfig: context.validConfig,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    validator = fixtures.validator;
+    createValidator = fixtures.createValidator;
+    createLegacyValidator = fixtures.createLegacyValidator;
+    validConfig = fixtures.validConfig;
   });
 
   // ========================================================================

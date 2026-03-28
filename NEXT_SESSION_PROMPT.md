@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-27)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `structure-aware-exit.service`, `monitoring-server`, `prometheus-metrics`, `position-monitor.service`, `bot-initializer.error-handling`, and `exit-type-detector.service.error-handling`.
-  - moved the remaining direct managed-context setup/cleanup in `structure-aware-exit.service` onto a local binder-owned helper-managed lifecycle path and trimmed broad suite-level helper state in the adjacent monitoring/lifecycle suites so those tests now pull less unnecessary state out of the managed context.
+## Last Completed (2026-03-28)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `funding-rate-filter.error-handling`, `circuit-breaker.error-handling`, `exchange-factory.error-handling`, `event-deduplication.error-handling`, `enhanced-exit.error-handling`, and `delta-analyzer.error-handling`.
+  - replaced broad managed-context access in those adjacent error-handling suites with narrower helper-owned fixture/factory groupings so each suite now keeps only the helper state and factory surface it actively exercises in scope while preserving the existing helper-managed cleanup path.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/structure-aware-exit.service.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/exit-type-detector.service.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services in the adjacent cache/monitoring/managed-service suites.
-- Favor the next remaining cache/manager/error-handling slices that still over-bind helper-managed state even though their lifecycle ownership is already centralized.
+- Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the adjacent cache/monitoring/managed-service suites.
+- Favor the next remaining error-handling slices that still keep full helper contexts, inline temporary managed contexts, or wider factory state in scope even though their lifecycle ownership is already centralized, especially the adjacent lifecycle/cache/manager suites that still bind whole helper contexts in `beforeEach`.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

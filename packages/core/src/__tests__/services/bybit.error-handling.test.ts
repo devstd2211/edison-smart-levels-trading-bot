@@ -41,6 +41,10 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
+  type BybitFixtures = Pick<
+    ManagedBybitErrorHandlingContext,
+    'logger' | 'config' | 'restClient'
+  >;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
@@ -48,9 +52,15 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
 
   beforeEach(() => {
     const context = getContext();
-    mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
-    mockConfig = context.config;
-    mockRestClient = context.restClient as unknown as { getServerTime: jest.Mock };
+    const fixtures: BybitFixtures = {
+      logger: context.logger,
+      config: context.config,
+      restClient: context.restClient,
+    };
+
+    mockLogger = fixtures.logger as unknown as jest.Mocked<LoggerService>;
+    mockConfig = fixtures.config;
+    mockRestClient = fixtures.restClient as unknown as { getServerTime: jest.Mock };
   });
 
   describe('[RETRY Strategy] initialize()', () => {

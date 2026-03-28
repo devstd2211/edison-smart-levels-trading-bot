@@ -34,6 +34,10 @@ function bindBotMetricsContext() {
 }
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
+  type BotMetricsFixtures = Pick<
+    ManagedBotMetricsTestContext,
+    'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  >;
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
@@ -43,11 +47,19 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger as BotMetricsTestLogger;
-    errorHandler = context.errorHandler;
-    metricsService = context.service;
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures: BotMetricsFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    logger = fixtures.logger as BotMetricsTestLogger;
+    errorHandler = fixtures.errorHandler;
+    metricsService = fixtures.service;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
     jest.clearAllMocks();
   });
 

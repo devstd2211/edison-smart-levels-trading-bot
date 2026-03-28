@@ -44,6 +44,10 @@ function bindAnomalyDetectionContext() {
 }
 
 describe('AnomalyDetectionService - Error Handling', () => {
+  type AnomalyDetectionFixtures = Pick<
+    ManagedAnomalyDetectionContext,
+    'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+  >;
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
@@ -57,13 +61,19 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({
-      service,
-      logger,
-      errorHandler,
-      createStandardService: createService,
-      createLegacyService,
-    } = context);
+    const fixtures: AnomalyDetectionFixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    service = fixtures.service;
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    createService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ========================================

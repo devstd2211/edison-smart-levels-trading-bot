@@ -33,6 +33,10 @@ function bindCircuitBreakerContext() {
 }
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
+  type CircuitBreakerFixtures = Pick<
+    ManagedCircuitBreakerContext,
+    'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  >;
   let service: CircuitBreakerService;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
@@ -43,12 +47,21 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    config = context.config;
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    service = context.service;
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures: CircuitBreakerFixtures = {
+      config: context.config,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    config = fixtures.config;
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    service = fixtures.service;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // =========================================================================

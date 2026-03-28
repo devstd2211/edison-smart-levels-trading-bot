@@ -41,6 +41,10 @@ function bindCandleAggregatorContext() {
 }
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
+  type CandleAggregatorFixtures = Pick<
+    ManagedCandleAggregatorContext,
+    'service' | 'errorHandler' | 'mockLogger' | 'createStandardService' | 'createLegacyService'
+  >;
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
@@ -52,7 +56,19 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ service, errorHandler, mockLogger, createStandardService, createLegacyService } = context);
+    const fixtures: CandleAggregatorFixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      mockLogger: context.mockLogger,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    service = fixtures.service;
+    errorHandler = fixtures.errorHandler;
+    mockLogger = fixtures.mockLogger;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   describe('THROW: Input Validation', () => {

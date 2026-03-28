@@ -35,6 +35,16 @@ function bindStrategyManagerContext() {
 }
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
+  type StrategyManagerFixtures = Pick<
+    ManagedStrategyManagerContext,
+    | 'mockLoader'
+    | 'mockMerger'
+    | 'mockErrorHandler'
+    | 'mockStrategy'
+    | 'mockMainConfig'
+    | 'consoleLogSpy'
+    | 'createManager'
+  >;
   let strategyManager: StrategyManagerService;
   let mockLoader: jest.Mocked<StrategyLoaderService>;
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
@@ -51,13 +61,23 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    mockLoader = context.mockLoader;
-    mockMerger = context.mockMerger;
-    mockErrorHandler = context.mockErrorHandler;
-    consoleLogSpy = context.consoleLogSpy;
-    createManager = context.createManager;
-    mockStrategy = context.mockStrategy;
-    mockMainConfig = context.mockMainConfig as unknown as InitMainConfig;
+    const fixtures: StrategyManagerFixtures = {
+      mockLoader: context.mockLoader,
+      mockMerger: context.mockMerger,
+      mockErrorHandler: context.mockErrorHandler,
+      mockStrategy: context.mockStrategy,
+      mockMainConfig: context.mockMainConfig,
+      consoleLogSpy: context.consoleLogSpy,
+      createManager: context.createManager,
+    };
+
+    mockLoader = fixtures.mockLoader;
+    mockMerger = fixtures.mockMerger;
+    mockErrorHandler = fixtures.mockErrorHandler;
+    consoleLogSpy = fixtures.consoleLogSpy;
+    createManager = fixtures.createManager;
+    mockStrategy = fixtures.mockStrategy;
+    mockMainConfig = fixtures.mockMainConfig as unknown as InitMainConfig;
   });
 
   // ============================================================================

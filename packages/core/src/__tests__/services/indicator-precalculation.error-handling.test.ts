@@ -42,6 +42,17 @@ function bindIndicatorPrecalculationContext() {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
+  type IndicatorPrecalculationFixtures = Pick<
+    ManagedIndicatorPrecalculationContext,
+    | 'service'
+    | 'logger'
+    | 'errorHandler'
+    | 'candleProvider'
+    | 'cache'
+    | 'calculators'
+    | 'createStandardService'
+    | 'createLegacyHarness'
+  >;
   let service: IndicatorPreCalculationService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
@@ -54,16 +65,25 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
 
   beforeEach(() => {
     const context = getContext();
-    ({
-      service,
-      logger,
-      errorHandler,
-      candleProvider: mockCandleProvider,
-      cache: mockCache,
-      calculators: mockCalculators,
-    } = context);
-    createStandardService = context.createStandardService;
-    createLegacyHarness = context.createLegacyHarness;
+    const fixtures: IndicatorPrecalculationFixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      candleProvider: context.candleProvider,
+      cache: context.cache,
+      calculators: context.calculators,
+      createStandardService: context.createStandardService,
+      createLegacyHarness: context.createLegacyHarness,
+    };
+
+    service = fixtures.service;
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    mockCandleProvider = fixtures.candleProvider;
+    mockCache = fixtures.cache;
+    mockCalculators = fixtures.calculators;
+    createStandardService = fixtures.createStandardService;
+    createLegacyHarness = fixtures.createLegacyHarness;
   });
 
   // ==========================================

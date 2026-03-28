@@ -25,6 +25,10 @@ function bindActionQueueContext() {
 }
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
+  type ActionQueueFixtures = Pick<
+    ManagedActionQueueContext,
+    'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
+  >;
   let service: ActionQueueService;
   let createAction: ManagedActionQueueContext['createAction'];
   let createHandler: ManagedActionQueueContext['createHandler'];
@@ -34,11 +38,19 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    service = context.service;
-    createAction = context.createAction;
-    createHandler = context.createHandler;
-    enqueueActions = context.enqueueActions;
-    createActionBatch = context.createActionBatch;
+    const fixtures: ActionQueueFixtures = {
+      service: context.service,
+      createAction: context.createAction,
+      createHandler: context.createHandler,
+      enqueueActions: context.enqueueActions,
+      createActionBatch: context.createActionBatch,
+    };
+
+    service = fixtures.service;
+    createAction = fixtures.createAction;
+    createHandler = fixtures.createHandler;
+    enqueueActions = fixtures.enqueueActions;
+    createActionBatch = fixtures.createActionBatch;
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

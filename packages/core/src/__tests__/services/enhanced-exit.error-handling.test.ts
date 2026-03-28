@@ -38,6 +38,10 @@ function bindEnhancedExitContext() {
 }
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
+  type EnhancedExitFixtures = Pick<
+    ManagedEnhancedExitContext,
+    'logger' | 'errorHandler' | 'createService'
+  >;
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
   let createService: ManagedEnhancedExitContext['createService'];
@@ -46,7 +50,13 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger: mockLogger, errorHandler, createService } = context);
+    const fixtures: EnhancedExitFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    ({ logger: mockLogger, errorHandler, createService } = fixtures);
   });
 
   // ============================================================================

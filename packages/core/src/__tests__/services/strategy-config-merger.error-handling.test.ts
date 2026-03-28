@@ -31,6 +31,10 @@ function bindStrategyConfigMergerContext() {
 }
 
 describe('StrategyConfigMergerService - Error Handling', () => {
+  type StrategyConfigMergerFixtures = Pick<
+    ManagedStrategyConfigMergerContext,
+    'logger' | 'service' | 'errorHandler' | 'createService'
+  >;
   let service: StrategyConfigMergerService;
   let errorHandler: ErrorHandler;
   type MainConfigInput = Parameters<StrategyConfigMergerService['mergeConfigs']>[0];
@@ -57,13 +61,22 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       indicators: { ema: { enabled?: boolean } };
     };
   let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
+  let createService: ManagedStrategyConfigMergerContext['createService'];
   const getContext = bindStrategyConfigMergerContext();
 
   beforeEach(() => {
     const context = getContext();
-    mockLogger = context.logger;
-    service = context.service;
-    errorHandler = context.errorHandler;
+    const fixtures: StrategyConfigMergerFixtures = {
+      logger: context.logger,
+      service: context.service,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    mockLogger = fixtures.logger;
+    service = fixtures.service;
+    errorHandler = fixtures.errorHandler;
+    createService = fixtures.createService;
   });
 
   // ===== THROW: Input Validation =====
@@ -177,7 +190,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
         }),
       };
 
-      const serviceWithBadLogger = createStrategyConfigMergerService({ logger: loggerWithError, errorHandler });
+      const serviceWithBadLogger = createService({ logger: loggerWithError, errorHandler });
 
       expect(() => {
         serviceWithBadLogger.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(createMockStrategy()));
@@ -191,7 +204,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
         }),
       };
 
-      const serviceWithBadLogger = createStrategyConfigMergerService({ logger: loggerWithError, errorHandler });
+      const serviceWithBadLogger = createService({ logger: loggerWithError, errorHandler });
 
       const result = serviceWithBadLogger.getConfigValue(
         asConfigValueMain(createMockConfig()),
@@ -203,7 +216,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should handle missing logger gracefully', () => {
-      const serviceNoLogger = createStrategyConfigMergerService({ logger: undefined, errorHandler });
+      const serviceNoLogger = createService({ logger: undefined, errorHandler });
 
       const result = serviceNoLogger.mergeConfigs(asMainConfig(createMockConfig()), asStrategy(createMockStrategy()));
 
@@ -211,7 +224,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should handle missing errorHandler in SKIP operations', () => {
-      const serviceNoHandler = createStrategyConfigMergerService({ logger: mockLogger, withErrorHandler: false });
+      const serviceNoHandler = createService({ logger: mockLogger, withErrorHandler: false });
 
       const result = serviceNoHandler.getConfigValue(
         asConfigValueMain(createMockConfig()),
@@ -313,7 +326,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   // ===== Backward Compatibility =====
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', () => {
-      const serviceNoHandler = createStrategyConfigMergerService({ logger: mockLogger, withErrorHandler: false });
+      const serviceNoHandler = createService({ logger: mockLogger, withErrorHandler: false });
 
       const result = serviceNoHandler.mergeConfigs(
         asMainConfig(createMockConfig()),
@@ -333,7 +346,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     });
 
     it('should throw on validation errors even without ErrorHandler', () => {
-      const serviceNoHandler = createStrategyConfigMergerService({ logger: undefined, withErrorHandler: false });
+      const serviceNoHandler = createService({ logger: undefined, withErrorHandler: false });
 
       expect(() => {
         serviceNoHandler.mergeConfigs(asMainConfig(null), asStrategy(createMockStrategy()));

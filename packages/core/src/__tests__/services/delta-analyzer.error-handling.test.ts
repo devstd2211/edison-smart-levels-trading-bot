@@ -37,6 +37,10 @@ function bindDeltaAnalyzerContext() {
 // ============================================================================
 
 describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
+  type DeltaAnalyzerFixtures = Pick<
+    ManagedDeltaAnalyzerContext,
+    'logger' | 'errorHandler' | 'createHarness' | 'createService'
+  >;
   let service: DeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: DeltaAnalyzerMockLogger;
@@ -46,9 +50,16 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger: mockLogger, errorHandler } = context);
-    createHarness = context.createHarness;
-    createService = context.createService;
+    const fixtures: DeltaAnalyzerFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createHarness: context.createHarness,
+      createService: context.createService,
+    };
+
+    ({ logger: mockLogger, errorHandler } = fixtures);
+    createHarness = fixtures.createHarness;
+    createService = fixtures.createService;
   });
 
   // ==========================================================================

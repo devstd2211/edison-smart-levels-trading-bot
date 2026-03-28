@@ -33,6 +33,10 @@ function bindCompoundInterestContext() {
 }
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
+  type CompoundInterestFixtures = Pick<
+    ManagedCompoundInterestContext,
+    'logger' | 'mockGetBalance' | 'createCalculator'
+  >;
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: ManagedCompoundInterestContext['createCalculator'];
@@ -42,7 +46,15 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, mockGetBalance, createCalculator } = context);
+    const fixtures: CompoundInterestFixtures = {
+      logger: context.logger,
+      mockGetBalance: context.mockGetBalance,
+      createCalculator: context.createCalculator,
+    };
+
+    logger = fixtures.logger;
+    mockGetBalance = fixtures.mockGetBalance;
+    createCalculator = fixtures.createCalculator;
   });
 
   // ============================================================================

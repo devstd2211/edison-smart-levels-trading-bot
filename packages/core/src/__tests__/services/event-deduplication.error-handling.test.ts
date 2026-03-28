@@ -50,6 +50,10 @@ const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
 // ============================================================================
 
 describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
+  type EventDeduplicationFixtures = Pick<
+    ManagedEventDeduplicationContext,
+    'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
+  >;
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -59,9 +63,16 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, errorHandler } = context);
-    createService = context.createServiceWithDefaults;
-    createLegacyService = context.createLegacyService;
+    const fixtures: EventDeduplicationFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createServiceWithDefaults: context.createServiceWithDefaults,
+      createLegacyService: context.createLegacyService,
+    };
+
+    ({ logger, errorHandler } = fixtures);
+    createService = fixtures.createServiceWithDefaults;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ========================================================================

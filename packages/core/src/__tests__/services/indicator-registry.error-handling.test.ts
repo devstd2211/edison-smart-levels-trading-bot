@@ -42,6 +42,10 @@ function bindIndicatorRegistryContext() {
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
+  type IndicatorRegistryFixtures = Pick<
+    ManagedIndicatorRegistryContext,
+    'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
+  >;
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
@@ -51,9 +55,19 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, errorHandler, registry } = context);
-    createStandardRegistry = context.createStandardRegistry;
-    createLegacyRegistry = context.createLegacyRegistry;
+    const fixtures: IndicatorRegistryFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      registry: context.registry,
+      createStandardRegistry: context.createStandardRegistry,
+      createLegacyRegistry: context.createLegacyRegistry,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    registry = fixtures.registry;
+    createStandardRegistry = fixtures.createStandardRegistry;
+    createLegacyRegistry = fixtures.createLegacyRegistry;
   });
 
   // ============================================================================

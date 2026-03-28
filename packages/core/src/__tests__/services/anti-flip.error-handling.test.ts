@@ -42,6 +42,10 @@ function bindAntiFlipContext() {
 // ============================================================================
 
 describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
+  type AntiFlipFixtures = Pick<
+    ManagedAntiFlipContext,
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
+  >;
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -51,10 +55,17 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    createService = context.createService;
-    createLegacyService = context.createLegacyService;
+    const fixtures: AntiFlipFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    createService = fixtures.createService;
+    createLegacyService = fixtures.createLegacyService;
     service = createService();
   });
 

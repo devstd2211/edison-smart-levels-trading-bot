@@ -53,6 +53,10 @@ function bindAdvancedOrderFlowContext() {
 }
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
+  type AdvancedOrderFlowFixtures = Pick<
+    ManagedAdvancedOrderFlowContext,
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
+  >;
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
@@ -67,10 +71,17 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    createService = (options = {}) => context.createService(options);
-    createLegacyService = context.createLegacyService;
+    const fixtures: AdvancedOrderFlowFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    createService = (options = {}) => fixtures.createService(options);
+    createLegacyService = fixtures.createLegacyService;
   });
 
   describe('THROW: Config Validation', () => {

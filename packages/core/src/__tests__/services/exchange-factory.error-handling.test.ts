@@ -31,6 +31,10 @@ function bindExchangeFactoryContext() {
 }
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
+  type ExchangeFactoryFixtures = Pick<
+    ManagedExchangeFactoryContext,
+    'mockLogger' | 'errorHandler' | 'createFactory' | 'createFactoryWithoutErrorHandler'
+  >;
   let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createFactory: ManagedExchangeFactoryContext['createFactory'];
@@ -39,10 +43,17 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    mockLogger = context.mockLogger;
-    mockErrorHandler = context.errorHandler as jest.Mocked<ErrorHandler>;
-    createFactory = context.createFactory;
-    createFactoryWithoutErrorHandler = context.createFactoryWithoutErrorHandler;
+    const fixtures: ExchangeFactoryFixtures = {
+      mockLogger: context.mockLogger,
+      errorHandler: context.errorHandler,
+      createFactory: context.createFactory,
+      createFactoryWithoutErrorHandler: context.createFactoryWithoutErrorHandler,
+    };
+
+    mockLogger = fixtures.mockLogger;
+    mockErrorHandler = fixtures.errorHandler as jest.Mocked<ErrorHandler>;
+    createFactory = fixtures.createFactory;
+    createFactoryWithoutErrorHandler = fixtures.createFactoryWithoutErrorHandler;
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

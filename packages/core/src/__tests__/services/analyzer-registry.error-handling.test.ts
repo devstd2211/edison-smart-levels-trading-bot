@@ -44,6 +44,15 @@ function bindAnalyzerRegistryContext() {
 }
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
+  type AnalyzerRegistryFixtures = Pick<
+    ManagedAnalyzerRegistryContext,
+    | 'logger'
+    | 'errorHandler'
+    | 'registry'
+    | 'createScenario'
+    | 'createStandardRegistry'
+    | 'createLegacyRegistry'
+  >;
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
@@ -58,10 +67,21 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, errorHandler, registry } = context);
-    createScenario = (options = {}) => context.createScenario(options);
-    createStandardRegistry = context.createStandardRegistry;
-    createLegacyRegistry = context.createLegacyRegistry;
+    const fixtures: AnalyzerRegistryFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      registry: context.registry,
+      createScenario: context.createScenario,
+      createStandardRegistry: context.createStandardRegistry,
+      createLegacyRegistry: context.createLegacyRegistry,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    registry = fixtures.registry;
+    createScenario = (options = {}) => fixtures.createScenario(options);
+    createStandardRegistry = fixtures.createStandardRegistry;
+    createLegacyRegistry = fixtures.createLegacyRegistry;
   });
 
   // ============================================================================
