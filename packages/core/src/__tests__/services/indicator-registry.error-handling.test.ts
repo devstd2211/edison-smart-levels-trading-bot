@@ -27,12 +27,14 @@ import {
   type ManagedIndicatorRegistryContext,
 } from '../helpers/indicator-registry-test.utils';
 
+type IndicatorRegistryFixtures = Pick<
+  ManagedIndicatorRegistryContext,
+  'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
+>;
+
 function bindIndicatorRegistryContext() {
   let context: ManagedIndicatorRegistryContext;
-  let fixtures: Pick<
-    ManagedIndicatorRegistryContext,
-    'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
-  >;
+  let fixtures: IndicatorRegistryFixtures;
 
   beforeEach(() => {
     context = createManagedIndicatorRegistryContext();
@@ -53,10 +55,6 @@ function bindIndicatorRegistryContext() {
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
-  type IndicatorRegistryFixtures = Pick<
-    ManagedIndicatorRegistryContext,
-    'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
-  >;
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
@@ -65,12 +63,13 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   const getContext = bindIndicatorRegistryContext();
 
   beforeEach(() => {
-    const fixtures: IndicatorRegistryFixtures = getContext();
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    registry = fixtures.registry;
-    createStandardRegistry = fixtures.createStandardRegistry;
-    createLegacyRegistry = fixtures.createLegacyRegistry;
+    ({
+      logger,
+      errorHandler,
+      registry,
+      createStandardRegistry,
+      createLegacyRegistry,
+    } = getContext());
   });
 
   // ============================================================================

@@ -15,12 +15,14 @@ import {
   type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
+type CircuitBreakerFixtures = Pick<
+  ManagedCircuitBreakerContext,
+  'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+>;
+
 function bindCircuitBreakerContext() {
   let context: ManagedCircuitBreakerContext;
-  let fixtures: Pick<
-    ManagedCircuitBreakerContext,
-    'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
-  >;
+  let fixtures: CircuitBreakerFixtures;
 
   beforeEach(() => {
     context = createManagedCircuitBreakerContext({
@@ -45,10 +47,6 @@ function bindCircuitBreakerContext() {
 }
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
-  type CircuitBreakerFixtures = Pick<
-    ManagedCircuitBreakerContext,
-    'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
-  >;
   let service: CircuitBreakerService;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
@@ -58,13 +56,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   const getContext = bindCircuitBreakerContext();
 
   beforeEach(() => {
-    const fixtures: CircuitBreakerFixtures = getContext();
-    config = fixtures.config;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    service = fixtures.service;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({
+      config,
+      logger,
+      errorHandler,
+      service,
+      createStandardService,
+      createLegacyService,
+    } = getContext());
   });
 
   // =========================================================================

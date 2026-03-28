@@ -19,12 +19,14 @@ import {
   type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
+type BotMetricsFixtures = Pick<
+  ManagedBotMetricsTestContext,
+  'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+>;
+
 function bindBotMetricsContext() {
   let context: ManagedBotMetricsTestContext;
-  let fixtures: Pick<
-    ManagedBotMetricsTestContext,
-    'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
-  >;
+  let fixtures: BotMetricsFixtures;
 
   beforeEach(() => {
     context = createManagedBotMetricsTestContext();
@@ -53,13 +55,18 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   const getContext = bindBotMetricsContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-
-    logger = fixtures.logger as BotMetricsTestLogger;
-    errorHandler = fixtures.errorHandler;
-    metricsService = fixtures.service;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    const {
+      logger: fixtureLogger,
+      errorHandler: fixtureErrorHandler,
+      service,
+      createStandardService: createStandardServiceFixture,
+      createLegacyService: createLegacyServiceFixture,
+    } = getContext();
+    logger = fixtureLogger as BotMetricsTestLogger;
+    errorHandler = fixtureErrorHandler;
+    metricsService = service;
+    createStandardService = createStandardServiceFixture;
+    createLegacyService = createLegacyServiceFixture;
     jest.clearAllMocks();
   });
 

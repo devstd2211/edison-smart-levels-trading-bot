@@ -27,12 +27,14 @@ import {
   type ManagedStrategyLoaderContext,
 } from '../helpers/strategy-loader-test.utils';
 
+type StrategyLoaderFixtures = Pick<
+  ManagedStrategyLoaderContext,
+  'errorHandler' | 'tempDir' | 'loader' | 'createLoader' | 'fileReadSpy' | 'dirReadSpy'
+>;
+
 function bindStrategyLoaderContext() {
   let context: ManagedStrategyLoaderContext;
-  let fixtures: Pick<
-    ManagedStrategyLoaderContext,
-    'errorHandler' | 'tempDir' | 'loader' | 'createLoader' | 'fileReadSpy' | 'dirReadSpy'
-  >;
+  let fixtures: StrategyLoaderFixtures;
 
   beforeEach(async () => {
     context = await createManagedStrategyLoaderContext();
@@ -63,13 +65,14 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   const getContext = bindStrategyLoaderContext();
 
   beforeEach(async () => {
-    const fixtures = getContext();
-    mockErrorHandler = fixtures.errorHandler;
-    testStrategiesDir = fixtures.tempDir;
-    loaderService = fixtures.loader;
-    createLoader = fixtures.createLoader;
-    fileReadSpy = fixtures.fileReadSpy;
-    dirReadSpy = fixtures.dirReadSpy;
+    ({
+      errorHandler: mockErrorHandler,
+      tempDir: testStrategiesDir,
+      loader: loaderService,
+      createLoader,
+      fileReadSpy,
+      dirReadSpy,
+    } = getContext());
   });
 
   // ============================================================================

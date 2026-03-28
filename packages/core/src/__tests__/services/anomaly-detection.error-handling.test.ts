@@ -29,12 +29,14 @@ import {
   type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
+type AnomalyDetectionFixtures = Pick<
+  ManagedAnomalyDetectionContext,
+  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+>;
+
 function bindAnomalyDetectionContext() {
   let context: ManagedAnomalyDetectionContext;
-  let fixtures: Pick<
-    ManagedAnomalyDetectionContext,
-    'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
-  >;
+  let fixtures: AnomalyDetectionFixtures;
 
   beforeEach(() => {
     context = createManagedAnomalyDetectionContext();
@@ -55,10 +57,6 @@ function bindAnomalyDetectionContext() {
 }
 
 describe('AnomalyDetectionService - Error Handling', () => {
-  type AnomalyDetectionFixtures = Pick<
-    ManagedAnomalyDetectionContext,
-    'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
-  >;
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
@@ -71,12 +69,13 @@ describe('AnomalyDetectionService - Error Handling', () => {
   const getContext = bindAnomalyDetectionContext();
 
   beforeEach(() => {
-    const fixtures: AnomalyDetectionFixtures = getContext();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    createService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({
+      service,
+      logger,
+      errorHandler,
+      createStandardService: createService,
+      createLegacyService,
+    } = getContext());
   });
 
   // ========================================

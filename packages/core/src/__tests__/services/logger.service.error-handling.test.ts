@@ -77,14 +77,15 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   const getContext = bindLoggerTestContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    testLogDir = fixtures.testLogDir;
-    errorHandler = fixtures.errorHandler;
-    createLogger = fixtures.createLogger;
-    createLegacyLogger = fixtures.createLegacyLogger;
-    createInvalidStandardService = fixtures.createInvalidStandardService;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({
+      testLogDir,
+      errorHandler,
+      createLogger,
+      createLegacyLogger,
+      createInvalidStandardService,
+      createStandardService,
+      createLegacyService,
+    } = getContext());
   });
 
   // ========== THROW VALIDATION TESTS ==========

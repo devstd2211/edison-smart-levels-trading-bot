@@ -35,12 +35,14 @@ type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
 
+type BotInitializerFixtures = Pick<
+  ManagedBotInitializerTestContext,
+  'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler'
+>;
+
 function bindBotInitializerContext() {
   let context: ManagedBotInitializerTestContext;
-  let fixtures: Pick<
-    ManagedBotInitializerTestContext,
-    'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler'
-  >;
+  let fixtures: BotInitializerFixtures;
 
   beforeEach(() => {
     context = createManagedBotInitializerTestContext({
@@ -86,12 +88,14 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const getContext = bindBotInitializerContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    mockServices = fixtures.services as MockBotServices;
-    config = fixtures.config;
-    errorHandler = fixtures.errorHandler;
-    rebuild = fixtures.rebuild;
-    createWithoutHandler = fixtures.createWithoutHandler;
+    ({
+      services: mockServices,
+      config,
+      errorHandler,
+      rebuild,
+      createWithoutHandler,
+    } = getContext());
+    mockServices = mockServices as MockBotServices;
     rebuildInitializer();
 
     jest.clearAllMocks();

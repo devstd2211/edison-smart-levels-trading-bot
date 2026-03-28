@@ -33,17 +33,19 @@ import {
   type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
+type ConfigValidatorFixtures = Pick<
+  ManagedConfigValidatorContext,
+  | 'logger'
+  | 'errorHandler'
+  | 'validator'
+  | 'createValidator'
+  | 'createLegacyValidator'
+  | 'validConfig'
+>;
+
 function bindConfigValidatorContext() {
   let context: ManagedConfigValidatorContext;
-  let fixtures: Pick<
-    ManagedConfigValidatorContext,
-    | 'logger'
-    | 'errorHandler'
-    | 'validator'
-    | 'createValidator'
-    | 'createLegacyValidator'
-    | 'validConfig'
-  >;
+  let fixtures: ConfigValidatorFixtures;
 
   beforeEach(() => {
     context = createManagedConfigValidatorContext();
@@ -69,15 +71,6 @@ function bindConfigValidatorContext() {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  type ConfigValidatorFixtures = Pick<
-    ManagedConfigValidatorContext,
-    | 'logger'
-    | 'errorHandler'
-    | 'validator'
-    | 'createValidator'
-    | 'createLegacyValidator'
-    | 'validConfig'
-  >;
   let logger: ManagedConfigValidatorContext['logger'];
   let errorHandler: ErrorHandler;
   let validator: ManagedConfigValidatorContext['validator'];
@@ -87,13 +80,14 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   const getContext = bindConfigValidatorContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    validator = fixtures.validator;
-    createValidator = fixtures.createValidator;
-    createLegacyValidator = fixtures.createLegacyValidator;
-    validConfig = fixtures.validConfig;
+    ({
+      logger,
+      errorHandler,
+      validator,
+      createValidator,
+      createLegacyValidator,
+      validConfig,
+    } = getContext());
   });
 
   // ========================================================================

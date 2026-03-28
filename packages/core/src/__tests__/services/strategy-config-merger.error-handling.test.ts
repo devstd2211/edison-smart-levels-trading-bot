@@ -14,12 +14,14 @@ import {
   type ManagedStrategyConfigMergerContext,
 } from '../helpers/strategy-config-merger-test.utils';
 
+type StrategyConfigMergerFixtures = Pick<
+  ManagedStrategyConfigMergerContext,
+  'logger' | 'service' | 'errorHandler' | 'createService'
+>;
+
 function bindStrategyConfigMergerContext() {
   let context: ManagedStrategyConfigMergerContext;
-  let fixtures: Pick<
-    ManagedStrategyConfigMergerContext,
-    'logger' | 'service' | 'errorHandler' | 'createService'
-  >;
+  let fixtures: StrategyConfigMergerFixtures;
 
   beforeEach(() => {
     context = createManagedStrategyConfigMergerContext({
@@ -41,10 +43,6 @@ function bindStrategyConfigMergerContext() {
 }
 
 describe('StrategyConfigMergerService - Error Handling', () => {
-  type StrategyConfigMergerFixtures = Pick<
-    ManagedStrategyConfigMergerContext,
-    'logger' | 'service' | 'errorHandler' | 'createService'
-  >;
   let service: StrategyConfigMergerService;
   let errorHandler: ErrorHandler;
   type MainConfigInput = Parameters<StrategyConfigMergerService['mergeConfigs']>[0];
@@ -75,11 +73,12 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   const getContext = bindStrategyConfigMergerContext();
 
   beforeEach(() => {
-    const fixtures: StrategyConfigMergerFixtures = getContext();
-    mockLogger = fixtures.logger;
-    service = fixtures.service;
-    errorHandler = fixtures.errorHandler;
-    createService = fixtures.createService;
+    ({
+      logger: mockLogger,
+      service,
+      errorHandler,
+      createService,
+    } = getContext());
   });
 
   // ===== THROW: Input Validation =====

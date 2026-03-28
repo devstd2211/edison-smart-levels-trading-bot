@@ -29,12 +29,14 @@ const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
 
+type TradeHistoryFixtures = Pick<
+  ManagedTradeHistoryContext,
+  'logger' | 'errorHandler' | 'tempDir' | 'service' | 'createService'
+>;
+
 function bindTradeHistoryContext() {
   let context: ManagedTradeHistoryContext;
-  let fixtures: Pick<
-    ManagedTradeHistoryContext,
-    'logger' | 'errorHandler' | 'tempDir' | 'service' | 'createService'
-  >;
+  let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {
     context = createManagedTradeHistoryContext();
@@ -72,12 +74,13 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   const getContext = bindTradeHistoryContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    tempDir = fixtures.tempDir;
-    service = fixtures.service;
-    createService = fixtures.createService;
+    ({
+      logger,
+      errorHandler,
+      tempDir,
+      service,
+      createService,
+    } = getContext());
   });
 
   // ============================================================================

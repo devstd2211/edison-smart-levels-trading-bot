@@ -20,18 +20,20 @@ import {
   type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
+type StrategyManagerFixtures = Pick<
+  ManagedStrategyManagerContext,
+  | 'mockLoader'
+  | 'mockMerger'
+  | 'mockErrorHandler'
+  | 'mockStrategy'
+  | 'mockMainConfig'
+  | 'consoleLogSpy'
+  | 'createManager'
+>;
+
 function bindStrategyManagerContext() {
   let context: ManagedStrategyManagerContext;
-  let fixtures: Pick<
-    ManagedStrategyManagerContext,
-    | 'mockLoader'
-    | 'mockMerger'
-    | 'mockErrorHandler'
-    | 'mockStrategy'
-    | 'mockMainConfig'
-    | 'consoleLogSpy'
-    | 'createManager'
-  >;
+  let fixtures: StrategyManagerFixtures;
 
   beforeEach(() => {
     context = createManagedStrategyManagerContext();
@@ -54,16 +56,6 @@ function bindStrategyManagerContext() {
 }
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
-  type StrategyManagerFixtures = Pick<
-    ManagedStrategyManagerContext,
-    | 'mockLoader'
-    | 'mockMerger'
-    | 'mockErrorHandler'
-    | 'mockStrategy'
-    | 'mockMainConfig'
-    | 'consoleLogSpy'
-    | 'createManager'
-  >;
   let strategyManager: StrategyManagerService;
   let mockLoader: jest.Mocked<StrategyLoaderService>;
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
@@ -79,14 +71,16 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
-    const fixtures: StrategyManagerFixtures = getContext();
-    mockLoader = fixtures.mockLoader;
-    mockMerger = fixtures.mockMerger;
-    mockErrorHandler = fixtures.mockErrorHandler;
-    consoleLogSpy = fixtures.consoleLogSpy;
-    createManager = fixtures.createManager;
-    mockStrategy = fixtures.mockStrategy;
-    mockMainConfig = fixtures.mockMainConfig as unknown as InitMainConfig;
+    ({
+      mockLoader,
+      mockMerger,
+      mockErrorHandler,
+      consoleLogSpy,
+      createManager,
+      mockStrategy,
+      mockMainConfig,
+    } = getContext());
+    mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 
   // ============================================================================

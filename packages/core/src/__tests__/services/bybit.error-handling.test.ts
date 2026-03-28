@@ -19,12 +19,14 @@ import {
   type ManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
+type BybitFixtures = Pick<
+  ManagedBybitErrorHandlingContext,
+  'logger' | 'config' | 'restClient'
+>;
+
 function bindBybitErrorHandlingContext() {
   let context: ManagedBybitErrorHandlingContext;
-  let fixtures: Pick<
-    ManagedBybitErrorHandlingContext,
-    'logger' | 'config' | 'restClient'
-  >;
+  let fixtures: BybitFixtures;
 
   beforeEach(() => {
     context = createManagedBybitErrorHandlingContext();
@@ -50,20 +52,16 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
-  type BybitFixtures = Pick<
-    ManagedBybitErrorHandlingContext,
-    'logger' | 'config' | 'restClient'
-  >;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
   const getContext = bindBybitErrorHandlingContext();
 
   beforeEach(() => {
-    const fixtures: BybitFixtures = getContext();
-    mockLogger = fixtures.logger as unknown as jest.Mocked<LoggerService>;
-    mockConfig = fixtures.config;
-    mockRestClient = fixtures.restClient as unknown as { getServerTime: jest.Mock };
+    const { logger, config, restClient } = getContext();
+    mockLogger = logger as unknown as jest.Mocked<LoggerService>;
+    mockConfig = config;
+    mockRestClient = restClient as unknown as { getServerTime: jest.Mock };
   });
 
   describe('[RETRY Strategy] initialize()', () => {

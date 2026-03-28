@@ -36,12 +36,14 @@ import {
   type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
+type TradingJournalFixtures = Pick<
+  ManagedTradingJournalContext,
+  'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
+>;
+
 function bindTradingJournalContext() {
   let context: ManagedTradingJournalContext;
-  let fixtures: Pick<
-    ManagedTradingJournalContext,
-    'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
-  >;
+  let fixtures: TradingJournalFixtures;
 
   beforeEach(() => {
     context = createManagedTradingJournalContext();
@@ -75,10 +77,6 @@ const createExitCondition = () => createJournalExitCondition(
 );
 
 describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
-  type TradingJournalFixtures = Pick<
-    ManagedTradingJournalContext,
-    'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
-  >;
   let journal: TradingJournalService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
@@ -91,12 +89,13 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   const getContext = bindTradingJournalContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    journal = fixtures.journal;
-    logger = fixtures.logger;
-    tempDir = fixtures.dataDir;
-    errorHandler = fixtures.errorHandler;
-    createService = fixtures.createService;
+    ({
+      journal,
+      logger,
+      dataDir: tempDir,
+      errorHandler,
+      createService,
+    } = getContext());
   });
 
   // ============================================================================

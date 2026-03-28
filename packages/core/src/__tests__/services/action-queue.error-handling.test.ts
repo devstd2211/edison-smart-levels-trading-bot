@@ -10,12 +10,14 @@ import {
   type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
+type ActionQueueFixtures = Pick<
+  ManagedActionQueueContext,
+  'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
+>;
+
 function bindActionQueueContext() {
   let context: ManagedActionQueueContext;
-  let fixtures: Pick<
-    ManagedActionQueueContext,
-    'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
-  >;
+  let fixtures: ActionQueueFixtures;
 
   beforeEach(() => {
     context = createManagedActionQueueContext();
@@ -36,10 +38,6 @@ function bindActionQueueContext() {
 }
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  type ActionQueueFixtures = Pick<
-    ManagedActionQueueContext,
-    'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
-  >;
   let service: ActionQueueService;
   let createAction: ManagedActionQueueContext['createAction'];
   let createHandler: ManagedActionQueueContext['createHandler'];
@@ -48,12 +46,13 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   const getContext = bindActionQueueContext();
 
   beforeEach(() => {
-    const fixtures: ActionQueueFixtures = getContext();
-    service = fixtures.service;
-    createAction = fixtures.createAction;
-    createHandler = fixtures.createHandler;
-    enqueueActions = fixtures.enqueueActions;
-    createActionBatch = fixtures.createActionBatch;
+    ({
+      service,
+      createAction,
+      createHandler,
+      enqueueActions,
+      createActionBatch,
+    } = getContext());
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

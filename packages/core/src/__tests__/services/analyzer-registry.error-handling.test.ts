@@ -29,17 +29,19 @@ import {
   type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
+type AnalyzerRegistryFixtures = Pick<
+  ManagedAnalyzerRegistryContext,
+  | 'logger'
+  | 'errorHandler'
+  | 'registry'
+  | 'createScenario'
+  | 'createStandardRegistry'
+  | 'createLegacyRegistry'
+>;
+
 function bindAnalyzerRegistryContext() {
   let context: ManagedAnalyzerRegistryContext;
-  let fixtures: Pick<
-    ManagedAnalyzerRegistryContext,
-    | 'logger'
-    | 'errorHandler'
-    | 'registry'
-    | 'createScenario'
-    | 'createStandardRegistry'
-    | 'createLegacyRegistry'
-  >;
+  let fixtures: AnalyzerRegistryFixtures;
 
   beforeEach(() => {
     context = createManagedAnalyzerRegistryContext();
@@ -61,15 +63,6 @@ function bindAnalyzerRegistryContext() {
 }
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  type AnalyzerRegistryFixtures = Pick<
-    ManagedAnalyzerRegistryContext,
-    | 'logger'
-    | 'errorHandler'
-    | 'registry'
-    | 'createScenario'
-    | 'createStandardRegistry'
-    | 'createLegacyRegistry'
-  >;
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
@@ -83,13 +76,20 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   const getContext = bindAnalyzerRegistryContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    registry = fixtures.registry;
-    createScenario = (options = {}) => fixtures.createScenario(options);
-    createStandardRegistry = fixtures.createStandardRegistry;
-    createLegacyRegistry = fixtures.createLegacyRegistry;
+    const {
+      logger: fixtureLogger,
+      errorHandler: fixtureErrorHandler,
+      registry: fixtureRegistry,
+      createScenario: createScenarioFixture,
+      createStandardRegistry: createStandardRegistryFixture,
+      createLegacyRegistry: createLegacyRegistryFixture,
+    } = getContext();
+    logger = fixtureLogger;
+    errorHandler = fixtureErrorHandler;
+    registry = fixtureRegistry;
+    createScenario = (options = {}) => createScenarioFixture(options);
+    createStandardRegistry = createStandardRegistryFixture;
+    createLegacyRegistry = createLegacyRegistryFixture;
   });
 
   // ============================================================================

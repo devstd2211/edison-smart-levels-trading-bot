@@ -18,12 +18,14 @@ import {
   type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
+type CompoundInterestFixtures = Pick<
+  ManagedCompoundInterestContext,
+  'logger' | 'mockGetBalance' | 'createCalculator'
+>;
+
 function bindCompoundInterestContext() {
   let context: ManagedCompoundInterestContext;
-  let fixtures: Pick<
-    ManagedCompoundInterestContext,
-    'logger' | 'mockGetBalance' | 'createCalculator'
-  >;
+  let fixtures: CompoundInterestFixtures;
 
   beforeEach(() => {
     context = createManagedLegacyCompoundInterestContext();
@@ -42,10 +44,6 @@ function bindCompoundInterestContext() {
 }
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
-  type CompoundInterestFixtures = Pick<
-    ManagedCompoundInterestContext,
-    'logger' | 'mockGetBalance' | 'createCalculator'
-  >;
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: ManagedCompoundInterestContext['createCalculator'];
@@ -54,10 +52,11 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    mockGetBalance = fixtures.mockGetBalance;
-    createCalculator = fixtures.createCalculator;
+    ({
+      logger,
+      mockGetBalance,
+      createCalculator,
+    } = getContext());
   });
 
   // ============================================================================
