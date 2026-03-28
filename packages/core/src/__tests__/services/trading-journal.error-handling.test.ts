@@ -64,6 +64,10 @@ const createExitCondition = () => createJournalExitCondition(
 );
 
 describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
+  type TradingJournalFixtures = Pick<
+    ManagedTradingJournalContext,
+    'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
+  >;
   let journal: TradingJournalService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
@@ -77,11 +81,19 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
 
   beforeEach(() => {
     const context = getContext();
-    journal = context.journal;
-    logger = context.logger;
-    tempDir = context.dataDir;
-    errorHandler = context.errorHandler;
-    createService = context.createService;
+    const fixtures: TradingJournalFixtures = {
+      journal: context.journal,
+      logger: context.logger,
+      dataDir: context.dataDir,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    journal = fixtures.journal;
+    logger = fixtures.logger;
+    tempDir = fixtures.dataDir;
+    errorHandler = fixtures.errorHandler;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

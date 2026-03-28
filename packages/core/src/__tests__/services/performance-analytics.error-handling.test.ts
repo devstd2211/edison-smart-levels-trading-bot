@@ -40,6 +40,10 @@ function bindPerformanceAnalyticsContext() {
 }
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
+  type PerformanceAnalyticsFixtures = Pick<
+    ManagedPerformanceAnalyticsContext,
+    'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
+  >;
   let service: PerformanceAnalytics;
   let mockLogger: ManagedPerformanceAnalyticsContext['logger'];
   let mockJournal: ManagedPerformanceAnalyticsContext['journal'];
@@ -50,11 +54,19 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    mockConfig = context.config;
-    mockLogger = context.logger;
-    mockJournal = context.journal;
-    mockErrorHandler = context.errorHandler;
-    createService = context.createService;
+    const fixtures: PerformanceAnalyticsFixtures = {
+      config: context.config,
+      logger: context.logger,
+      journal: context.journal,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    mockConfig = fixtures.config;
+    mockLogger = fixtures.logger;
+    mockJournal = fixtures.journal;
+    mockErrorHandler = fixtures.errorHandler;
+    createService = fixtures.createService;
   });
 
   // ==================== THROW Strategy - Input Validation ====================

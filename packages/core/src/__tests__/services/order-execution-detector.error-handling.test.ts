@@ -64,6 +64,10 @@ function bindOrderExecutionDetectorContext() {
 }
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
+  type OrderExecutionDetectorFixtures = Pick<
+    ManagedOrderExecutionDetectorContext,
+    'logger' | 'errorHandler'
+  >;
   const asExecData = (value: unknown): OrderExecutionData =>
     value as OrderExecutionData;
   const asLogger = (value: unknown): LoggerService =>
@@ -77,8 +81,13 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
+    const fixtures: OrderExecutionDetectorFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger: options.logger ?? logger,

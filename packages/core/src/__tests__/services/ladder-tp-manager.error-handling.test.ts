@@ -53,6 +53,10 @@ function bindLadderTpContext() {
 // ============================================================================
 
 describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
+  type LadderTpFixtures = Pick<
+    ManagedLadderTpContext,
+    'logger' | 'bybitService' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+  >;
   let logger: LoggerService;
   let bybitService: jest.Mocked<IExchange>;
   let errorHandler: ErrorHandler;
@@ -62,9 +66,17 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, bybitService, errorHandler } = context);
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures: LadderTpFixtures = {
+      logger: context.logger,
+      bybitService: context.bybitService,
+      errorHandler: context.errorHandler,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    ({ logger, bybitService, errorHandler } = fixtures);
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ========================================================================

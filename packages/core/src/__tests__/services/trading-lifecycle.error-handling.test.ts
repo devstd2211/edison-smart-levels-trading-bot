@@ -61,6 +61,10 @@ function bindTradingLifecycleContext() {
 // ============================================================================
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
+  type TradingLifecycleFixtures = Pick<
+    ManagedTradingLifecycleContext,
+    'logger' | 'eventBus' | 'actionQueue' | 'rebuild' | 'harness'
+  >;
   let manager: TradingLifecycleManager;
   let mockLogger: MockTradingLifecycleLogger;
   let mockEventBus: MockTradingLifecycleEventBus;
@@ -71,7 +75,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   const getContext = bindTradingLifecycleContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures: TradingLifecycleFixtures = getContext();
     mockLogger = fixtures.logger;
     mockEventBus = fixtures.eventBus;
     mockActionQueue = fixtures.actionQueue;

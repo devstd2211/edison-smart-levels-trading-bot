@@ -51,6 +51,10 @@ const createOrderBook = createMicroWallOrderBook;
 // ============================================================================
 
 describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
+  type MicroWallFixtures = Pick<
+    ManagedMicroWallDetectorContext,
+    'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
+  >;
   const asConfig = (value: unknown): MicroWallDetectorConfig =>
     value as MicroWallDetectorConfig;
   const asOrderBook = (value: unknown): OrderBook => value as OrderBook;
@@ -81,10 +85,17 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    createStandardDetector = context.createStandardDetector;
-    createLegacyDetector = context.createLegacyDetector;
+    const fixtures: MicroWallFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createStandardDetector: context.createStandardDetector,
+      createLegacyDetector: context.createLegacyDetector,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    createStandardDetector = fixtures.createStandardDetector;
+    createLegacyDetector = fixtures.createLegacyDetector;
   });
 
   // ========================================================================

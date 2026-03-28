@@ -40,6 +40,10 @@ function bindRealTimeRiskMonitorContext() {
 }
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
+  type RealTimeRiskMonitorFixtures = Pick<
+    ManagedRealTimeRiskMonitorContext,
+    'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
+  >;
   let monitor: RealTimeRiskMonitor;
   let mockPositionLifecycleService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
@@ -49,10 +53,17 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   beforeEach(() => {
     context = getContext();
-    monitor = context.monitor;
-    mockPositionLifecycleService = context.mockPositionService;
-    mockLogger = context.mockLogger;
-    mockEventBus = context.mockEventBus;
+    const fixtures: RealTimeRiskMonitorFixtures = {
+      monitor: context.monitor,
+      mockPositionService: context.mockPositionService,
+      mockLogger: context.mockLogger,
+      mockEventBus: context.mockEventBus,
+    };
+
+    monitor = fixtures.monitor;
+    mockPositionLifecycleService = fixtures.mockPositionService;
+    mockLogger = fixtures.mockLogger;
+    mockEventBus = fixtures.mockEventBus;
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {

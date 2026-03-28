@@ -39,6 +39,10 @@ function bindPositionPnLCalculatorContext() {
 }
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
+  type PositionPnlFixtures = Pick<
+    ManagedPositionPnLCalculatorContext,
+    'service' | 'errorHandler' | 'createService'
+  >;
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
   let createService: ManagedPositionPnLCalculatorContext['createService'];
@@ -46,9 +50,15 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    errorHandler = context.errorHandler;
-    createService = context.createService;
-    service = context.service;
+    const fixtures: PositionPnlFixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    errorHandler = fixtures.errorHandler;
+    createService = fixtures.createService;
+    service = fixtures.service;
   });
 
   // ==========================================================================

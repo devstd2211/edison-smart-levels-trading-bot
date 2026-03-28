@@ -29,6 +29,10 @@ import {
 // ============================================================================
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
+  type VolumeProfileFixtures = Pick<
+    ManagedVolumeProfileContext,
+    'logger' | 'createStandardService' | 'createLegacyService'
+  >;
   let service: VolumeProfileService;
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
@@ -53,9 +57,15 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    mockLogger = context.logger;
-    createStandardService = context.createStandardService;
-    createLegacyService = (configOverrides) => context.createLegacyService({ configOverrides });
+    const fixtures: VolumeProfileFixtures = {
+      logger: context.logger,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    mockLogger = fixtures.logger;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = configOverrides => fixtures.createLegacyService({ configOverrides });
   });
 
   const createService = (

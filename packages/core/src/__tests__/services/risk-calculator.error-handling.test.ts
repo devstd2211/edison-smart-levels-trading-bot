@@ -53,6 +53,10 @@ function bindRiskCalculatorContext() {
 }
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
+  type RiskCalculatorFixtures = Pick<
+    ManagedRiskCalculatorContext,
+    'calculator' | 'logger' | 'errorHandler' | 'defaultInput' | 'createInput' | 'createCalculator'
+  >;
   let calculator: RiskCalculator;
   let mockLogger: RiskCalculatorMockLogger;
   let errorHandler: ErrorHandler;
@@ -62,7 +66,7 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   const getContext = bindRiskCalculatorContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures: RiskCalculatorFixtures = getContext();
     calculator = fixtures.calculator;
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;

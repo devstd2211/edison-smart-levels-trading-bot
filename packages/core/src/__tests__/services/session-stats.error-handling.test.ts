@@ -62,6 +62,10 @@ function bindSessionStatsContext() {
 }
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
+  type SessionStatsFixtures = Pick<
+    ManagedSessionStatsContext,
+    'stats' | 'errorHandler' | 'logger' | 'tempDir' | 'createService'
+  >;
   let stats: SessionStatsService;
   let errorHandler: ErrorHandler;
   let logger: SessionStatsMockLogger;
@@ -72,7 +76,8 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   const getContext = bindSessionStatsContext();
 
   beforeEach(() => {
-    ({ stats, errorHandler, logger, tempDir, createService } = getContext());
+    const fixtures: SessionStatsFixtures = getContext();
+    ({ stats, errorHandler, logger, tempDir, createService } = fixtures);
   });
 
   // ============================================================================

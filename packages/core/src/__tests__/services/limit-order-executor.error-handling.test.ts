@@ -45,6 +45,10 @@ function bindLimitOrderExecutorContext() {
 // ============================================================================
 
 describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
+  type LimitOrderExecutorFixtures = Pick<
+    ManagedLimitOrderExecutorContext,
+    'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler' | 'createService'
+  >;
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;
@@ -55,12 +59,21 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    config = context.config;
-    bybitService = context.bybitService;
-    service = context.service;
-    createService = context.createService;
+    const fixtures: LimitOrderExecutorFixtures = {
+      service: context.service,
+      bybitService: context.bybitService,
+      logger: context.logger,
+      config: context.config,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    config = fixtures.config;
+    bybitService = fixtures.bybitService;
+    service = fixtures.service;
+    createService = fixtures.createService;
   });
 
   // ==========================================================================

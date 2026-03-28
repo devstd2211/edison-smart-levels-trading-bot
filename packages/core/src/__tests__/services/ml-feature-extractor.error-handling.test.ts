@@ -32,6 +32,10 @@ function bindMLFeatureExtractorContext() {
 }
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
+  type MLFeatureExtractorFixtures = Pick<
+    ManagedMLFeatureExtractorContext,
+    'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService'
+  >;
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
@@ -41,9 +45,17 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ service, errorHandler, logger: mockLogger } = context);
-    createStandardService = context.createStandardService;
-    createLegacyService = context.createLegacyService;
+    const fixtures: MLFeatureExtractorFixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      logger: context.logger,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    ({ service, errorHandler, logger: mockLogger } = fixtures);
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   describe('THROW: extractFeatures Input Validation', () => {

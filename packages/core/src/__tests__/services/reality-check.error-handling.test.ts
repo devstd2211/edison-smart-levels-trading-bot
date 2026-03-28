@@ -38,6 +38,10 @@ function bindRealityCheckContext() {
 }
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
+  type RealityCheckFixtures = Pick<
+    ManagedRealityCheckContext,
+    'service' | 'logger' | 'errorHandler' | 'createService'
+  >;
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -49,10 +53,17 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger as LoggerService;
-    errorHandler = context.errorHandler as ErrorHandler;
-    service = context.service;
-    createService = context.createService;
+    const fixtures: RealityCheckFixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+
+    logger = fixtures.logger as LoggerService;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    service = fixtures.service;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

@@ -42,6 +42,13 @@ function bindVolatilityRegimeContext() {
 }
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
+  type VolatilityRegimeFixtures = {
+    mockLogger: LoggerService;
+    context: Pick<
+      ManagedVolatilityRegimeContext,
+      'errorHandler' | 'createStandardService' | 'createLegacyService'
+    >;
+  };
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
@@ -50,9 +57,13 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   const getBoundContext = bindVolatilityRegimeContext();
 
   beforeEach(() => {
-    const { context, mockLogger: boundLogger } = getBoundContext();
-    mockLogger = boundLogger;
-    ({ errorHandler, createStandardService: createService, createLegacyService } = context);
+    const fixtures: VolatilityRegimeFixtures = getBoundContext();
+    mockLogger = fixtures.mockLogger;
+    ({
+      errorHandler,
+      createStandardService: createService,
+      createLegacyService,
+    } = fixtures.context);
   });
 
   // =========================================================================

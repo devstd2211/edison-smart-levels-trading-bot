@@ -61,6 +61,14 @@ function bindGracefulShutdownContext() {
 }
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
+  type GracefulShutdownFixtures = {
+    manager: ManagedGracefulShutdownTestContext['manager'];
+    harness: ManagedGracefulShutdownTestContext['harness'];
+    mocks: Pick<
+      ManagedGracefulShutdownTestContext['mocks'],
+      'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
+    >;
+  };
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
@@ -76,14 +84,25 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
     const context = getContext();
+    const fixtures: GracefulShutdownFixtures = {
+      manager: context.manager,
+      harness: context.harness,
+      mocks: {
+        positionLifecycleService: context.mocks.positionLifecycleService,
+        actionQueue: context.mocks.actionQueue,
+        exchange: context.mocks.exchange,
+        logger: context.mocks.logger,
+        eventBus: context.mocks.eventBus,
+      },
+    };
     mockPositionLifecycleService =
-      context.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
-    mockActionQueue = context.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
-    mockExchange = context.mocks.exchange as unknown as jest.Mocked<IExchange>;
-    mockLogger = context.mocks.logger as unknown as jest.Mocked<LoggerService>;
-    mockEventBus = context.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
-    shutdownManager = context.manager;
-    harness = context.harness;
+      fixtures.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
+    mockActionQueue = fixtures.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
+    mockExchange = fixtures.mocks.exchange as unknown as jest.Mocked<IExchange>;
+    mockLogger = fixtures.mocks.logger as unknown as jest.Mocked<LoggerService>;
+    mockEventBus = fixtures.mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
+    shutdownManager = fixtures.manager;
+    harness = fixtures.harness;
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {

@@ -65,6 +65,10 @@ function bindRetestEntryContext() {
 }
 
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
+  type RetestEntryFixtures = Pick<
+    ManagedRetestEntryContext,
+    'logger' | 'errorHandler' | 'config' | 'createService'
+  >;
   const asCandles = (value: unknown): Candle[] => value as Candle[];
   const asSignal = (value: unknown): Signal => value as Signal;
   const asRetestConfig = (value: unknown): RetestConfig => value as RetestConfig;
@@ -79,12 +83,19 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    mockConfig = context.config;
+    const fixtures: RetestEntryFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      config: context.config,
+      createService: context.createService,
+    };
+
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    mockConfig = fixtures.config;
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
-    createService = context.createService;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

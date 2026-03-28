@@ -48,13 +48,22 @@ function bindOrderExecutionPipelineContext() {
 }
 
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
+  type OrderExecutionPipelineFixtures = Pick<
+    ManagedOrderExecutionPipelineContext,
+    'logger' | 'exchange'
+  >;
   let mockLogger: OrderExecutionPipelineMockLogger;
   let mockBybitService: OrderExecutionPipelineMockExchange;
   const getContext = bindOrderExecutionPipelineContext();
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger: mockLogger, exchange: mockBybitService } = context);
+    const fixtures: OrderExecutionPipelineFixtures = {
+      logger: context.logger,
+      exchange: context.exchange,
+    };
+
+    ({ logger: mockLogger, exchange: mockBybitService } = fixtures);
   });
 
   describe('[RETRY Strategy] placeOrder()', () => {

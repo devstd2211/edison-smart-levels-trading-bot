@@ -58,6 +58,10 @@ function bindOrderbookImbalanceContext() {
 }
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
+  type OrderbookImbalanceFixtures = Pick<
+    ManagedOrderbookImbalanceContext,
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
+  >;
   const asOrderbook = (
     value: unknown
   ): { bids: [number, number][]; asks: [number, number][] } =>
@@ -72,9 +76,16 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   beforeEach(() => {
     const context = getContext();
-    ({ logger, errorHandler } = context);
-    createService = context.createService;
-    createLegacyService = context.createLegacyService;
+    const fixtures: OrderbookImbalanceFixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
+
+    ({ logger, errorHandler } = fixtures);
+    createService = fixtures.createService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ============================================================================

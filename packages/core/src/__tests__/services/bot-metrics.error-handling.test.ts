@@ -33,11 +33,22 @@ function bindBotMetricsContext() {
   return () => context;
 }
 
-describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
-  type BotMetricsFixtures = Pick<
+function extractBotMetricsFixtures(context: ManagedBotMetricsTestContext) {
+  const fixtures: Pick<
     ManagedBotMetricsTestContext,
     'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
-  >;
+  > = {
+    logger: context.logger,
+    errorHandler: context.errorHandler,
+    service: context.service,
+    createStandardService: context.createStandardService,
+    createLegacyService: context.createLegacyService,
+  };
+
+  return fixtures;
+}
+
+describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
@@ -46,14 +57,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   const getContext = bindBotMetricsContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: BotMetricsFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      service: context.service,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
+    const fixtures = extractBotMetricsFixtures(getContext());
 
     logger = fixtures.logger as BotMetricsTestLogger;
     errorHandler = fixtures.errorHandler;
