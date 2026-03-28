@@ -13,36 +13,47 @@ import {
 import {
   createWeightMatrixConfig,
   createManagedLegacyWeightMatrixContext,
-  type ManagedLegacyWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
-  let context: ManagedLegacyWeightMatrixContext;
-  let createService: ManagedLegacyWeightMatrixContext['createLegacyService'];
+  let createService: ReturnType<typeof createManagedLegacyWeightMatrixContext>['createLegacyService'];
+
+  type WeightMatrixFixtures = Pick<
+    ReturnType<typeof createManagedLegacyWeightMatrixContext>,
+    'service' | 'logger' | 'config' | 'createLegacyService'
+  >;
 
   function bindLegacyWeightMatrixContext() {
-    let managedContext: ManagedLegacyWeightMatrixContext;
+    let fixtures: WeightMatrixFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedLegacyWeightMatrixContext();
+      const managedContext = createManagedLegacyWeightMatrixContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        config: managedContext.config,
+        createLegacyService: managedContext.createLegacyService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindLegacyWeightMatrixContext();
+  const getFixtures = bindLegacyWeightMatrixContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ service: calculator, logger, config } = context);
-    createService = context.createLegacyService;
+    const fixtures = getFixtures();
+    ({ service: calculator, logger, config } = fixtures);
+    createService = fixtures.createLegacyService;
   });
 
   // ========================================================================

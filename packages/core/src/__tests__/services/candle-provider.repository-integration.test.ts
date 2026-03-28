@@ -15,7 +15,6 @@ import {
   createIntegrationRapidCandles,
   getRepositoryCandlesByRole,
   IntegrationMockExchange,
-  type ManagedCandleProviderRepositoryIntegrationContext,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
@@ -24,31 +23,44 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
   let logger: LoggerService;
-  let context: ManagedCandleProviderRepositoryIntegrationContext;
+
+  type CandleProviderRepositoryFixtures = Pick<
+    ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>,
+    'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger'
+  >;
 
   function bindCandleProviderRepositoryIntegrationContext() {
-    let managedContext: ManagedCandleProviderRepositoryIntegrationContext;
+    let fixtures: CandleProviderRepositoryFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedCandleProviderRepositoryIntegrationContext();
+      const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
+      fixtures = {
+        provider: managedContext.provider,
+        exchange: managedContext.exchange,
+        repository: managedContext.repository,
+        timeframeProvider: managedContext.timeframeProvider,
+        logger: managedContext.logger,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindCandleProviderRepositoryIntegrationContext();
+  const getFixtures = bindCandleProviderRepositoryIntegrationContext();
 
   beforeEach(() => {
-    context = getContext();
-    provider = context.provider;
-    exchange = context.exchange;
-    repository = context.repository;
-    timeframeProvider = context.timeframeProvider;
-    logger = context.logger;
+    const fixtures = getFixtures();
+    provider = fixtures.provider;
+    exchange = fixtures.exchange;
+    repository = fixtures.repository;
+    timeframeProvider = fixtures.timeframeProvider;
+    logger = fixtures.logger;
   });
 
   describe('Initialization', () => {

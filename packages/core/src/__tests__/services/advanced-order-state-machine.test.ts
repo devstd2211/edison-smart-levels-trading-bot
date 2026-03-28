@@ -25,38 +25,49 @@ import {
 import {
   createManagedAdvancedOrderStateMachineContext,
   type AdvancedOrderStateMachineMockLogger,
-  type ManagedAdvancedOrderStateMachineContext,
 } from '../helpers/advanced-order-state-machine-test.utils';
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
-  let context: ManagedAdvancedOrderStateMachineContext;
-  let createLegacyService: ManagedAdvancedOrderStateMachineContext['createLegacyService'];
+  let createLegacyService: ReturnType<typeof createManagedAdvancedOrderStateMachineContext>['createLegacyService'];
+
+  type AdvancedOrderStateMachineFixtures = Pick<
+    ReturnType<typeof createManagedAdvancedOrderStateMachineContext>,
+    'service' | 'logger' | 'errorHandler' | 'createLegacyService'
+  >;
 
   function bindAdvancedOrderStateMachineContext() {
-    let managedContext: ManagedAdvancedOrderStateMachineContext;
+    let fixtures: AdvancedOrderStateMachineFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedAdvancedOrderStateMachineContext();
+      const managedContext = createManagedAdvancedOrderStateMachineContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        createLegacyService: managedContext.createLegacyService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindAdvancedOrderStateMachineContext();
+  const getFixtures = bindAdvancedOrderStateMachineContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    createLegacyService = context.createLegacyService;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ==========================================================================

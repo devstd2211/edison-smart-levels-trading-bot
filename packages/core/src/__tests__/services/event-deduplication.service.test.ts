@@ -11,7 +11,6 @@ import {
   createManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
-  type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
@@ -21,31 +20,42 @@ import {
 describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let createService: ManagedEventDeduplicationContext['createStandardService'];
-  let createServiceWithDefaults: ManagedEventDeduplicationContext['createServiceWithDefaults'];
-  let context: ManagedEventDeduplicationContext;
+  let createService: ReturnType<typeof createManagedEventDeduplicationContext>['createStandardService'];
+  let createServiceWithDefaults: ReturnType<typeof createManagedEventDeduplicationContext>['createServiceWithDefaults'];
+
+  type EventDeduplicationFixtures = Pick<
+    ReturnType<typeof createManagedEventDeduplicationContext>,
+    'logger' | 'createStandardService' | 'createServiceWithDefaults'
+  >;
 
   function bindEventDeduplicationContext() {
-    let managedContext: ManagedEventDeduplicationContext;
+    let fixtures: EventDeduplicationFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedEventDeduplicationContext();
+      const managedContext = createManagedEventDeduplicationContext();
+      fixtures = {
+        logger: managedContext.logger,
+        createStandardService: managedContext.createStandardService,
+        createServiceWithDefaults: managedContext.createServiceWithDefaults,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindEventDeduplicationContext();
+  const getFixtures = bindEventDeduplicationContext();
 
   beforeEach(() => {
-    context = getContext();
-    logger = context.logger;
-    createService = context.createStandardService;
-    createServiceWithDefaults = context.createServiceWithDefaults;
+    const fixtures = getFixtures();
+    logger = fixtures.logger;
+    createService = fixtures.createStandardService;
+    createServiceWithDefaults = fixtures.createServiceWithDefaults;
   });
 
   describe('isDuplicate', () => {

@@ -12,36 +12,46 @@ import {
   createBybitExchangeFactoryConfig,
   createExchangeFactoryConfig,
   createManagedExchangeFactoryContext,
-  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let context: ManagedExchangeFactoryContext;
-  let createFactory: ManagedExchangeFactoryContext['createFactory'];
-  let createBybitFactory: ManagedExchangeFactoryContext['createBybitFactory'];
-  let createBinanceFactory: ManagedExchangeFactoryContext['createBinanceFactory'];
+  let createFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createFactory'];
+  let createBybitFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createBybitFactory'];
+  let createBinanceFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createBinanceFactory'];
+
+  type ExchangeFactoryFixtures = Pick<
+    ReturnType<typeof createManagedExchangeFactoryContext>,
+    'createFactory' | 'createBybitFactory' | 'createBinanceFactory'
+  >;
 
   function bindExchangeFactoryContext() {
-    let managedContext: ManagedExchangeFactoryContext;
+    let fixtures: ExchangeFactoryFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedExchangeFactoryContext();
+      const managedContext = createManagedExchangeFactoryContext();
+      fixtures = {
+        createFactory: managedContext.createFactory,
+        createBybitFactory: managedContext.createBybitFactory,
+        createBinanceFactory: managedContext.createBinanceFactory,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindExchangeFactoryContext();
+  const getFixtures = bindExchangeFactoryContext();
 
   beforeEach(() => {
-    context = getContext();
-    createFactory = context.createFactory;
-    createBybitFactory = context.createBybitFactory;
-    createBinanceFactory = context.createBinanceFactory;
+    const fixtures = getFixtures();
+    createFactory = fixtures.createFactory;
+    createBybitFactory = fixtures.createBybitFactory;
+    createBinanceFactory = fixtures.createBinanceFactory;
   });
 
   describe('Factory Initialization', () => {

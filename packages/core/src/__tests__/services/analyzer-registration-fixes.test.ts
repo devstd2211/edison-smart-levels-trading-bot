@@ -19,33 +19,39 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SignalDirection, SwingPointType } from '../../types/legacy';
 import {
   createManagedAnalyzerRegistrationFixesContext,
-  type ManagedAnalyzerRegistrationFixesContext,
 } from '../helpers/analyzer-registration-fixes-test.utils';
 
 describe('Analyzer Registration Service - All Fixes', () => {
-  let context: ManagedAnalyzerRegistrationFixesContext;
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
+  type AnalyzerRegistrationFixesFixtures = {
+    analyzerStrategic: ReturnType<typeof createManagedAnalyzerRegistrationFixesContext>['analyzerStrategic'];
+  };
+
   function bindAnalyzerRegistrationFixesContext() {
-    let managedContext: ManagedAnalyzerRegistrationFixesContext;
+    let fixtures: AnalyzerRegistrationFixesFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedAnalyzerRegistrationFixesContext();
+      const managedContext = createManagedAnalyzerRegistrationFixesContext();
+      fixtures = {
+        analyzerStrategic: managedContext.analyzerStrategic,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindAnalyzerRegistrationFixesContext();
+  const getFixtures = bindAnalyzerRegistrationFixesContext();
 
   beforeEach(() => {
-    context = getContext();
     mockConfig = {
-      analyzerStrategic: context.analyzerStrategic,
+      analyzerStrategic: getFixtures().analyzerStrategic,
     };
   });
 

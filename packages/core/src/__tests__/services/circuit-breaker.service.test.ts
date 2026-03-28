@@ -6,7 +6,6 @@ import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../..
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
-  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
 // ============================================================================
@@ -16,32 +15,42 @@ import {
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
-  let createService: ManagedCircuitBreakerContext['createStandardService'];
-  let context: ManagedCircuitBreakerContext;
+  let createService: ReturnType<typeof createManagedCircuitBreakerContext>['createStandardService'];
+
+  type CircuitBreakerFixtures = Pick<
+    ReturnType<typeof createManagedCircuitBreakerContext>,
+    'service' | 'createStandardService'
+  >;
 
   function bindCircuitBreakerContext() {
-    let managedContext: ManagedCircuitBreakerContext;
+    let fixtures: CircuitBreakerFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
       defaultConfig = createCircuitBreakerConfig();
-      managedContext = createManagedCircuitBreakerContext({
+      const managedContext = createManagedCircuitBreakerContext({
         configOverrides: defaultConfig,
       });
+      fixtures = {
+        service: managedContext.service,
+        createStandardService: managedContext.createStandardService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindCircuitBreakerContext();
+  const getFixtures = bindCircuitBreakerContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    createService = context.createStandardService;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    createService = fixtures.createStandardService;
   });
 
   // TEST 1-2: Initial state

@@ -10,35 +10,54 @@ import {
   createBybitTradeValidationSet,
   createPartialCloseInput,
   createPnlTradeInput,
-  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
-  let context: ManagedPnlCalculatorContext;
+  let createTradeInput: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeInput'];
+  let createPartialCloseInputFromFixtures: ReturnType<typeof createManagedPnlCalculatorContext>['createPartialCloseInput'];
+  let createPartialCloses: ReturnType<typeof createManagedPnlCalculatorContext>['createPartialCloses'];
+  let createTradeValidationSet: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeValidationSet'];
+
+  type PnlCalculatorFixtures = Pick<
+    ReturnType<typeof createManagedPnlCalculatorContext>,
+    'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
+  >;
 
   function bindPnlCalculatorContext() {
-    let managedContext: ManagedPnlCalculatorContext;
+    let fixtures: PnlCalculatorFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedPnlCalculatorContext();
+      const managedContext = createManagedPnlCalculatorContext();
+      fixtures = {
+        createTradeInput: managedContext.createTradeInput,
+        createPartialCloseInput: managedContext.createPartialCloseInput,
+        createPartialCloses: managedContext.createPartialCloses,
+        createTradeValidationSet: managedContext.createTradeValidationSet,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindPnlCalculatorContext();
+  const getFixtures = bindPnlCalculatorContext();
 
   beforeEach(() => {
-    context = getContext();
+    const fixtures = getFixtures();
+    createTradeInput = fixtures.createTradeInput;
+    createPartialCloseInputFromFixtures = fixtures.createPartialCloseInput;
+    createPartialCloses = fixtures.createPartialCloses;
+    createTradeValidationSet = fixtures.createTradeValidationSet;
   });
 
   describe('calculate', () => {
     it('should calculate PnL correctly for SHORT with profit', () => {
-      const trade = context.createTradeInput({
+      const trade = createTradeInput({
         side: PositionSide.SHORT,
         entry: 1.1316,
         exit: 1.1428,
@@ -59,7 +78,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should calculate PnL correctly for SHORT partial close (TP1)', () => {
-      const trade = context.createTradeInput({
+      const trade = createTradeInput({
         side: PositionSide.SHORT,
         entry: 1.1748,
         exit: 1.1676,
@@ -79,7 +98,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should calculate PnL correctly for SHORT partial close (TP3)', () => {
-      const trade = context.createTradeInput({
+      const trade = createTradeInput({
         side: PositionSide.SHORT,
         entry: 1.1748,
         exit: 1.1363,
@@ -98,7 +117,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should calculate PnL correctly for LONG with loss', () => {
-      const trade = context.createTradeInput({
+      const trade = createTradeInput({
         side: PositionSide.LONG,
         entry: 1.1517,
         exit: 1.1492,
@@ -118,7 +137,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should calculate PnL correctly for LONG with profit', () => {
-      const trade = context.createTradeInput();
+      const trade = createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -133,7 +152,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should return zero PnL for same entry/exit price (before fees)', () => {
-      const trade = context.createTradeInput({ exit: 1.15 });
+      const trade = createTradeInput({ exit: 1.15 });
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -148,7 +167,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should handle zero fee rate', () => {
-      const trade = context.createTradeInput({
+      const trade = createTradeInput({
         side: PositionSide.SHORT,
         entry: 1.1748,
         exit: 1.1676,
@@ -172,7 +191,7 @@ describe('PnLCalculatorService', () => {
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,
-        context.createPartialCloses(),
+        createPartialCloses(),
         BYBIT_TAKER_FEE,
       );
 
@@ -184,7 +203,7 @@ describe('PnLCalculatorService', () => {
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,
-        context.createPartialCloses(),
+        createPartialCloses(),
         BYBIT_TAKER_FEE,
       );
 
@@ -193,7 +212,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should handle single close', () => {
-      const close = context.createPartialCloseInput({ quantity: 85.2, exitPrice: 1.1676 });
+      const close = createPartialCloseInputFromFixtures({ quantity: 85.2, exitPrice: 1.1676 });
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,
@@ -270,7 +289,7 @@ describe('PnLCalculatorService', () => {
 
   describe('real-world validation', () => {
     it('should match all Bybit trades from today', () => {
-      const trades = context.createTradeValidationSet();
+      const trades = createTradeValidationSet();
 
       trades.forEach((trade) => {
         const result = PnLCalculatorService.calculate(

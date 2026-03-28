@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-28)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `action-queue.error-handling`, `anomaly-detection.error-handling`, `circuit-breaker.error-handling`, `bybit.error-handling`, `anti-flip.error-handling`, and `indicator-registry.error-handling`.
-  - replaced their remaining broad suite-level managed helper binding patterns with narrower typed fixture bundles so those suites now keep only the queue fixtures, anomaly services, circuit-breaker setup, bybit exchange stubs, anti-flip builders, or indicator-registry surfaces they actively exercise in scope while preserving the existing helper-managed cleanup path.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `whale-detector.service`, `weight-matrix-calculator.service`, `websocket-manager.service`, `websocket-keep-alive.service`, `websocket-authentication.service`, and `order-flow-analyzer.service`.
+  - replaced their remaining broad suite-level managed helper bindings with narrower typed fixture bundles so those suites now keep only the service instances, logger/config surfaces, or helper factory methods they actively exercise in scope while preserving the existing helper-managed cleanup path.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detector.service.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.service.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts packages/core/src/__tests__/services/websocket-authentication.service.test.ts packages/core/src/__tests__/services/order-flow-analyzer.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the adjacent cache/monitoring/managed-service suites.
-- Favor the next remaining error-handling slices that still keep full helper contexts, inline temporary managed contexts, or wider factory state in scope even though their lifecycle ownership is already centralized, especially the remaining initializer / exchange / handler / monitoring-style suites plus any adjacent shutdown/metrics-style suites that still bind whole helper contexts in `beforeEach`.
+- Favor the next remaining managed-service and integration slices that still keep full helper contexts, inline temporary managed contexts, or wider factory state in scope even though their lifecycle ownership is already centralized, especially adjacent exchange / monitoring / repository / cache suites that still bind whole helper contexts in `beforeEach`.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

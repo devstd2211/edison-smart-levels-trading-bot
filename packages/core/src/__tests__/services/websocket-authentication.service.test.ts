@@ -9,7 +9,6 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
-  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
@@ -18,29 +17,39 @@ import {
 
 describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
-  let context: ManagedWebSocketAuthenticationContext;
-  let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
+  let createService: ReturnType<typeof createManagedWebSocketAuthenticationContext>['createStandardService'];
+
+  type WebSocketAuthenticationFixtures = Pick<
+    ReturnType<typeof createManagedWebSocketAuthenticationContext>,
+    'service' | 'createStandardService'
+  >;
 
   function bindWebSocketAuthenticationContext() {
-    let managedContext: ManagedWebSocketAuthenticationContext;
+    let fixtures: WebSocketAuthenticationFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedWebSocketAuthenticationContext();
+      const managedContext = createManagedWebSocketAuthenticationContext();
+      fixtures = {
+        service: managedContext.service,
+        createStandardService: managedContext.createStandardService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindWebSocketAuthenticationContext();
+  const getFixtures = bindWebSocketAuthenticationContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    createService = context.createStandardService;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    createService = fixtures.createStandardService;
   });
 
   describe('generateAuthPayload', () => {

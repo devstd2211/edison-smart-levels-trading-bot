@@ -9,7 +9,6 @@ import { PERCENT_MULTIPLIER } from '../../constants';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPositions,
-  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
@@ -18,31 +17,41 @@ import {
 
 describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
-  let createPosition: ManagedPositionPnLCalculatorContext['createPosition'];
-  let context: ManagedPositionPnLCalculatorContext;
+  let createPosition: ReturnType<typeof createManagedPositionPnLCalculatorContext>['createPosition'];
+
+  type PositionPnlCalculatorFixtures = Pick<
+    ReturnType<typeof createManagedPositionPnLCalculatorContext>,
+    'service' | 'createPosition'
+  >;
 
   function bindPositionPnlCalculatorContext() {
-    let managedContext: ManagedPositionPnLCalculatorContext;
+    let fixtures: PositionPnlCalculatorFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedPositionPnLCalculatorContext({
+      const managedContext = createManagedPositionPnLCalculatorContext({
         withErrorHandler: false,
       });
+      fixtures = {
+        service: managedContext.service,
+        createPosition: managedContext.createPosition,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindPositionPnlCalculatorContext();
+  const getFixtures = bindPositionPnlCalculatorContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    createPosition = context.createPosition;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    createPosition = fixtures.createPosition;
   });
 
   // ==========================================================================

@@ -22,33 +22,43 @@ import {
   createOrderFlowSeries,
   createOrderFlowUpdateSeries,
   seedOrderFlowHistory,
-  type ManagedOrderFlowAnalyzerContext,
 } from '../helpers/order-flow-analyzer-test.utils';
 
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let config: OrderFlowAnalyzerConfig;
 
+  type OrderFlowAnalyzerFixtures = Pick<
+    ReturnType<typeof createManagedOrderFlowAnalyzerContext>,
+    'service' | 'config'
+  >;
+
   function bindOrderFlowAnalyzerContext() {
-    let context: ManagedOrderFlowAnalyzerContext;
+    let fixtures: OrderFlowAnalyzerFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      context = createManagedOrderFlowAnalyzerContext();
+      const context = createManagedOrderFlowAnalyzerContext();
+      fixtures = {
+        service: context.service,
+        config: context.config,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup?.();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindOrderFlowAnalyzerContext();
+  const getFixtures = bindOrderFlowAnalyzerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    service = context.service;
-    config = context.config;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    config = fixtures.config;
   });
 
   describe('processOrderbookUpdate', () => {

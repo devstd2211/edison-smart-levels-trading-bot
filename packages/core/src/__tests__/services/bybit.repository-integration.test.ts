@@ -20,7 +20,6 @@ import {
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
-  type ManagedBybitRepositoryIntegrationContext,
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
@@ -32,30 +31,42 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     logger?: LoggerService;
     repository?: MarketDataCacheRepository;
   }) => BybitService;
-  let context: ManagedBybitRepositoryIntegrationContext;
+
+  type BybitRepositoryFixtures = Pick<
+    ReturnType<typeof createManagedBybitRepositoryIntegrationContext>,
+    'logger' | 'repository' | 'config' | 'createService'
+  >;
 
   function bindBybitRepositoryIntegrationContext() {
-    let managedContext: ManagedBybitRepositoryIntegrationContext;
+    let fixtures: BybitRepositoryFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedBybitRepositoryIntegrationContext();
+      const managedContext = createManagedBybitRepositoryIntegrationContext();
+      fixtures = {
+        logger: managedContext.logger,
+        repository: managedContext.repository,
+        config: managedContext.config,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindBybitRepositoryIntegrationContext();
+  const getFixtures = bindBybitRepositoryIntegrationContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockLogger = context.logger;
-    repository = context.repository;
-    bybitConfig = context.config;
-    createService = context.createService;
+    const fixtures = getFixtures();
+    mockLogger = fixtures.logger;
+    repository = fixtures.repository;
+    bybitConfig = fixtures.config;
+    createService = fixtures.createService;
   });
 
   describe('Construction & Initialization', () => {

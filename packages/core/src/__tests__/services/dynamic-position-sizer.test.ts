@@ -25,54 +25,76 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
-  type ManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  type DynamicPositionSizerService = ManagedDynamicPositionSizerContext['service'];
+  type DynamicPositionSizerService = ReturnType<typeof createManagedDynamicPositionSizerContext>['service'];
   let service: DynamicPositionSizerService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
-  let context: ManagedDynamicPositionSizerContext;
-  let createInvalidService: ManagedDynamicPositionSizerContext['createInvalidService'];
-  let createBrokenService: ManagedDynamicPositionSizerContext['createBrokenService'];
-  let createNoHandlerService: ManagedDynamicPositionSizerContext['createNoHandlerService'];
+  let createInvalidService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createInvalidService'];
+  let createBrokenService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createBrokenService'];
+  let createNoHandlerService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createNoHandlerService'];
   let createService: (options?: {
     config?: SizingConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => DynamicPositionSizerService;
 
+  type DynamicPositionSizerFixtures = Pick<
+    ReturnType<typeof createManagedDynamicPositionSizerContext>,
+    | 'service'
+    | 'logger'
+    | 'errorHandler'
+    | 'config'
+    | 'createInvalidService'
+    | 'createBrokenService'
+    | 'createNoHandlerService'
+    | 'createService'
+  >;
+
   function bindDynamicPositionSizerContext() {
-    let managedContext: ManagedDynamicPositionSizerContext;
+    let fixtures: DynamicPositionSizerFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedDynamicPositionSizerContext();
+      const managedContext = createManagedDynamicPositionSizerContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        config: managedContext.config,
+        createInvalidService: managedContext.createInvalidService,
+        createBrokenService: managedContext.createBrokenService,
+        createNoHandlerService: managedContext.createNoHandlerService,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindDynamicPositionSizerContext();
+  const getFixtures = bindDynamicPositionSizerContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    mockConfig = context.config;
-    createInvalidService = context.createInvalidService;
-    createBrokenService = context.createBrokenService;
-    createNoHandlerService = context.createNoHandlerService;
-    createService = context.createService;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    mockConfig = fixtures.config;
+    createInvalidService = fixtures.createInvalidService;
+    createBrokenService = fixtures.createBrokenService;
+    createNoHandlerService = fixtures.createNoHandlerService;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

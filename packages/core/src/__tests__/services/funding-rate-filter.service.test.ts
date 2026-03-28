@@ -7,37 +7,47 @@ import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../t
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
-  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
-  let context: ManagedFundingRateFilterContext;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let createFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+  let createFilter: ReturnType<typeof createManagedFundingRateFilterContext>['createLegacyFilter'];
+
+  type FundingRateFilterFixtures = Pick<
+    ReturnType<typeof createManagedFundingRateFilterContext>,
+    'logger' | 'config' | 'mockGetFundingRate' | 'createLegacyFilter'
+  >;
 
   function bindFundingRateFilterContext() {
-    let managedContext: ManagedFundingRateFilterContext;
+    let fixtures: FundingRateFilterFixtures;
+    let cleanup: (() => Promise<void>) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedFundingRateFilterContext({
+      const managedContext = createManagedFundingRateFilterContext({
         withErrorHandler: false,
       });
+      fixtures = {
+        logger: managedContext.logger,
+        config: managedContext.config,
+        mockGetFundingRate: managedContext.mockGetFundingRate,
+        createLegacyFilter: managedContext.createLegacyFilter,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await managedContext.cleanup();
+      await cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindFundingRateFilterContext();
+  const getFixtures = bindFundingRateFilterContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = context);
+    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = getFixtures());
   });
 
   describe('checkSignal', () => {

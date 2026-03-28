@@ -9,38 +9,47 @@ import {
   createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
-  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
-  let context: ManagedTFAlignmentContext;
   let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
+  type TFAlignmentFixtures = Pick<
+    ReturnType<typeof createManagedTFAlignmentContext>,
+    'service' | 'config'
+  >;
+
   function bindTFAlignmentContext() {
-    let managedContext: ManagedTFAlignmentContext;
+    let fixtures: TFAlignmentFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedTFAlignmentContext({
+      const managedContext = createManagedTFAlignmentContext({
         configOverrides: createTFAlignmentConfig(),
         withErrorHandler: false,
       });
+      fixtures = {
+        service: managedContext.service,
+        config: managedContext.config,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindTFAlignmentContext();
+  const getFixtures = bindTFAlignmentContext();
 
   beforeEach(() => {
-    context = getContext();
-    config = context.config ?? createTFAlignmentConfig();
-    ({ service } = context);
+    const fixtures = getFixtures();
+    config = fixtures.config ?? createTFAlignmentConfig();
+    ({ service } = fixtures);
     createService = createTFAlignmentBoundFactory({
       config,
       withErrorHandler: false,

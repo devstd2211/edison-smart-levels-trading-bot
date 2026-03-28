@@ -10,32 +10,41 @@ import {
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
-  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 describe('TickDeltaAnalyzerService', () => {
-  let context: ManagedTickDeltaAnalyzerContext;
   let service: TickDeltaAnalyzerService;
+  let createService: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['createService'];
+
+  type TickDeltaAnalyzerFixtures = Pick<
+    ReturnType<typeof createManagedTickDeltaAnalyzerContext>,
+    'service' | 'createService'
+  >;
 
   function bindTickDeltaAnalyzerContext() {
-    let managedContext: ManagedTickDeltaAnalyzerContext;
+    let fixtures: TickDeltaAnalyzerFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedTickDeltaAnalyzerContext();
+      const managedContext = createManagedTickDeltaAnalyzerContext();
+      fixtures = {
+        service: managedContext.service,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindTickDeltaAnalyzerContext();
+  const getFixtures = bindTickDeltaAnalyzerContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ service } = context);
+    ({ service, createService } = getFixtures());
   });
 
   describe('addTick', () => {
@@ -188,7 +197,7 @@ describe('TickDeltaAnalyzerService', () => {
     });
 
     it('should cap confidence at maxConfidence', () => {
-      const cappedService = context.createService();
+      const cappedService = createService();
       const config = createTickDeltaAnalyzerConfig();
       const now = 1_700_000_100_000;
       seedTickDeltaAnalyzerHistory(cappedService, createTickDeltaAnalyzerDirectionalTicks(200, 10, { timestamp: now }));

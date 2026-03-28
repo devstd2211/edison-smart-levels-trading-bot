@@ -12,7 +12,6 @@ import {
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
-  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const createMockOrder = createExitTypeDetectorOrder;
@@ -26,7 +25,6 @@ const createMockOrder = createExitTypeDetectorOrder;
 // ============================================================================
 
 describe('ExitTypeDetectorService', () => {
-  let context: ManagedExitTypeDetectorContext;
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
   let createScenario: (options?: {
@@ -34,28 +32,40 @@ describe('ExitTypeDetectorService', () => {
     positionOverrides?: Partial<Position>;
   }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
 
+  type ExitTypeDetectorFixtures = Pick<
+    ReturnType<typeof createManagedExitTypeDetectorContext>,
+    'service' | 'logger' | 'createScenario'
+  >;
+
   function bindExitTypeDetectorContext() {
-    let managedContext: ManagedExitTypeDetectorContext;
+    let fixtures: ExitTypeDetectorFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedExitTypeDetectorContext({
+      const managedContext = createManagedExitTypeDetectorContext({
         withErrorHandler: false,
       });
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        createScenario: managedContext.createScenario,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindExitTypeDetectorContext();
+  const getFixtures = bindExitTypeDetectorContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ service, logger } = context);
-    createScenario = (options = {}) => context.createScenario(options);
+    const fixtures = getFixtures();
+    ({ service, logger } = fixtures);
+    createScenario = (options = {}) => fixtures.createScenario(options);
   });
 
   // ==========================================================================

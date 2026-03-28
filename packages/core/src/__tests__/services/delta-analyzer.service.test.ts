@@ -9,36 +9,46 @@ import {
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
-  type ManagedDeltaAnalyzerContext,
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
   let logger: LoggerService;
   let config: DeltaConfig;
-  let context: ManagedDeltaAnalyzerContext;
+
+  type DeltaAnalyzerFixtures = Pick<
+    ReturnType<typeof createManagedDeltaAnalyzerContext>,
+    'service' | 'logger' | 'config'
+  >;
 
   function bindDeltaAnalyzerContext() {
-    let managedContext: ManagedDeltaAnalyzerContext;
+    let fixtures: DeltaAnalyzerFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedDeltaAnalyzerContext();
+      const managedContext = createManagedDeltaAnalyzerContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        config: managedContext.config,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindDeltaAnalyzerContext();
+  const getFixtures = bindDeltaAnalyzerContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    logger = context.logger as unknown as LoggerService;
-    config = context.config;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    logger = fixtures.logger as unknown as LoggerService;
+    config = fixtures.config;
   });
 
   describe('initialization', () => {

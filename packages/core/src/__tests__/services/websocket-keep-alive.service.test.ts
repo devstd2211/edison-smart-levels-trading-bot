@@ -10,7 +10,6 @@ import {
   advanceKeepAliveIntervals,
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
-  type ManagedWebSocketKeepAliveContext,
   type MockWebSocket,
 } from '../helpers/websocket-keep-alive-test.utils';
 
@@ -19,37 +18,66 @@ import {
 // ============================================================================
 
 describe('WebSocketKeepAliveService', () => {
-  let context: ManagedWebSocketKeepAliveContext;
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
+  let createStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStandardService'];
+  let createStartedStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedStandardService'];
+  let createStartedService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedService'];
+  let createWebSocket: ReturnType<typeof createManagedWebSocketKeepAliveContext>['harness']['createWebSocket'];
+
+  type WebSocketKeepAliveFixtures = Pick<
+    ReturnType<typeof createManagedWebSocketKeepAliveContext>,
+    | 'service'
+    | 'logger'
+    | 'websocket'
+    | 'createStandardService'
+    | 'createStartedStandardService'
+    | 'createStartedService'
+    | 'harness'
+  >;
 
   function bindWebSocketKeepAliveContext() {
-    let managedContext: ManagedWebSocketKeepAliveContext;
+    let fixtures: WebSocketKeepAliveFixtures;
+    let cleanup: (() => void) | undefined;
 
     beforeEach(() => {
-      managedContext = createManagedWebSocketKeepAliveContext();
+      const managedContext = createManagedWebSocketKeepAliveContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        websocket: managedContext.websocket,
+        createStandardService: managedContext.createStandardService,
+        createStartedStandardService: managedContext.createStartedStandardService,
+        createStartedService: managedContext.createStartedService,
+        harness: managedContext.harness,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup?.();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindWebSocketKeepAliveContext();
+  const getFixtures = bindWebSocketKeepAliveContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    logger = context.logger;
-    mockWs = context.websocket;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    logger = fixtures.logger;
+    mockWs = fixtures.websocket;
+    createStandardService = fixtures.createStandardService;
+    createStartedStandardService = fixtures.createStartedStandardService;
+    createStartedService = fixtures.createStartedService;
+    createWebSocket = fixtures.harness.createWebSocket;
   });
 
   describe('start', () => {
     it('should create ping interval when started', () => {
-      service = context.createStandardService({ interval: 20000, logger });
+      service = createStandardService({ interval: 20000, logger });
 
       service.start(mockWs as WebSocket);
 
@@ -57,7 +85,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should send ping messages at configured interval', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 5000,
         websocket: mockWs,
       }));
@@ -75,7 +103,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should use default ping interval (20 seconds)', () => {
-      service = context.createStandardService({ logger });
+      service = createStandardService({ logger });
 
       service.start(mockWs as WebSocket);
 
@@ -89,7 +117,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should send correct ping payload', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 5000,
         websocket: mockWs,
       }));
@@ -99,8 +127,8 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should stop existing interval before starting new one', () => {
-      service = context.createStandardService({ interval: 5000, logger });
-      const mockWs2 = context.harness.createWebSocket();
+      service = createStandardService({ interval: 5000, logger });
+      const mockWs2 = createWebSocket();
 
       service.start(mockWs as WebSocket);
       const firstTimerCount = jest.getTimerCount();
@@ -113,7 +141,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should only send ping when WebSocket is OPEN', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CONNECTING);
 
       service.start(mockWs as WebSocket);
@@ -131,7 +159,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle CLOSING state', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CLOSING);
 
       service.start(mockWs as WebSocket);
@@ -141,7 +169,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle CLOSED state', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CLOSED);
 
       service.start(mockWs as WebSocket);
@@ -153,7 +181,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('stop', () => {
     it('should clear ping interval when stopped', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
 
       service.start(mockWs as WebSocket);
       expect(jest.getTimerCount()).toBeGreaterThan(0);
@@ -163,7 +191,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should prevent further pings after stop', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 5000,
         websocket: mockWs,
       }));
@@ -178,7 +206,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should be safe to call stop multiple times', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
 
       service.start(mockWs as WebSocket);
       service.stop();
@@ -189,7 +217,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should be safe to call stop without start', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
 
       expect(() => {
         service.stop();
@@ -199,7 +227,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Lifecycle', () => {
     it('should handle start-stop-start cycle', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
 
       // First start
       service.start(mockWs as WebSocket);
@@ -218,9 +246,9 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle multiple WebSocket instances', () => {
-      service = context.createStandardService({ interval: 5000, logger });
-      const mockWs1 = context.harness.createWebSocket();
-      const mockWs2 = context.harness.createWebSocket();
+      service = createStandardService({ interval: 5000, logger });
+      const mockWs1 = createWebSocket();
+      const mockWs2 = createWebSocket();
 
       // Start with first WebSocket
       service.start(mockWs1 as WebSocket);
@@ -239,7 +267,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Interval Configuration', () => {
     it('should respect custom ping interval', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 3000,
         websocket: mockWs,
       }));
@@ -255,7 +283,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle very short intervals', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 100,
         websocket: mockWs,
       }));
@@ -266,7 +294,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle very long intervals', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 60000,
         websocket: mockWs,
       }));
@@ -284,7 +312,7 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Concurrent Operations', () => {
     it('should handle rapid start/stop operations', () => {
-      service = context.createStandardService({ interval: 5000, logger });
+      service = createStandardService({ interval: 5000, logger });
 
       service.start(mockWs as WebSocket);
       service.stop();
@@ -296,7 +324,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should handle state changes during ping', () => {
-      ({ service } = context.createStartedStandardService({
+      ({ service } = createStartedStandardService({
         interval: 5000,
         websocket: mockWs,
       }));
@@ -314,10 +342,10 @@ describe('WebSocketKeepAliveService', () => {
 
   describe('Logger Integration', () => {
     it('should log debug message on ping', () => {
-      const mockLogger = context.harness.logger;
+      const mockLogger = logger;
       jest.spyOn(mockLogger, 'debug');
 
-      ({ service } = context.createStartedService({
+      ({ service } = createStartedService({
         interval: 5000,
         logger: mockLogger,
         websocket: mockWs,
@@ -328,7 +356,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     it('should work without logger', () => {
-      service = context.createStandardService({ interval: 5000, logger: undefined }); // No logger
+      service = createStandardService({ interval: 5000, logger: undefined }); // No logger
 
       expect(() => {
         service.start(mockWs as WebSocket);
