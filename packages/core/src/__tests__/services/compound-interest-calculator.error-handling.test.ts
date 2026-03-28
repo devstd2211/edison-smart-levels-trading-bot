@@ -20,16 +20,25 @@ import {
 
 function bindCompoundInterestContext() {
   let context: ManagedCompoundInterestContext;
+  let fixtures: Pick<
+    ManagedCompoundInterestContext,
+    'logger' | 'mockGetBalance' | 'createCalculator'
+  >;
 
   beforeEach(() => {
     context = createManagedLegacyCompoundInterestContext();
+    fixtures = {
+      logger: context.logger,
+      mockGetBalance: context.mockGetBalance,
+      createCalculator: context.createCalculator,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
@@ -45,13 +54,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: CompoundInterestFixtures = {
-      logger: context.logger,
-      mockGetBalance: context.mockGetBalance,
-      createCalculator: context.createCalculator,
-    };
-
+    const fixtures = getContext();
     logger = fixtures.logger;
     mockGetBalance = fixtures.mockGetBalance;
     createCalculator = fixtures.createCalculator;

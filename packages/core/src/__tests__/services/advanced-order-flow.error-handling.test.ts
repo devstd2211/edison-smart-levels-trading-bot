@@ -40,16 +40,26 @@ import {
 
 function bindAdvancedOrderFlowContext() {
   let context: ManagedAdvancedOrderFlowContext;
+  let fixtures: Pick<
+    ManagedAdvancedOrderFlowContext,
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedAdvancedOrderFlowContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
@@ -70,14 +80,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   const getContext = bindAdvancedOrderFlowContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: AdvancedOrderFlowFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures = getContext();
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createService = (options = {}) => fixtures.createService(options);

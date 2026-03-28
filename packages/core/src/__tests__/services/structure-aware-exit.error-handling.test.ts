@@ -28,18 +28,28 @@ import {
 
 function bindStructureAwareExitContext() {
   let context: ManagedStructureAwareExitContext;
+  let fixtures: Pick<
+    ManagedStructureAwareExitContext,
+    'logger' | 'errorHandler' | 'config' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      config: context.config,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
@@ -50,11 +60,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   const getContext = bindStructureAwareExitContext();
 
   beforeEach(() => {
-    const context = getContext();
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    defaultConfig = context.config;
-    createService = context.createService;
+    const fixtures = getContext();
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    defaultConfig = fixtures.config;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

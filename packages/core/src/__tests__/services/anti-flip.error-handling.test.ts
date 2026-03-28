@@ -25,16 +25,27 @@ import {
 
 function bindAntiFlipContext() {
   let context: ManagedAntiFlipContext;
+  let fixtures: Pick<
+    ManagedAntiFlipContext,
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService'
+  >;
 
   beforeEach(() => {
     context = createManagedAntiFlipContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+      createStandardService: context.createStandardService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -44,28 +55,23 @@ function bindAntiFlipContext() {
 describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   type AntiFlipFixtures = Pick<
     ManagedAntiFlipContext,
-    'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService'
   >;
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createService: ManagedAntiFlipContext['createService'];
   let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
+  let createStandardService: ManagedAntiFlipContext['createStandardService'];
   const getContext = bindAntiFlipContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: AntiFlipFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures = getContext();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;
     createService = fixtures.createService;
     createLegacyService = fixtures.createLegacyService;
+    createStandardService = fixtures.createStandardService;
     service = createService();
   });
 
@@ -513,8 +519,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       nullableLogger.info = null;
       nullableLogger.warn = null;
 
-      const context = getContext();
-      service = context.createStandardService(createAntiFlipConfig({}), {
+      service = createStandardService(createAntiFlipConfig({}), {
         logger: mockLoggerWithNullMethods,
         errorHandler,
       });

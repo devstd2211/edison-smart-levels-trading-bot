@@ -41,28 +41,28 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   function bindVolumeProfileContext() {
     let context: ManagedVolumeProfileContext;
+    let fixtures: VolumeProfileFixtures;
 
     beforeEach(() => {
       context = createManagedVolumeProfileContext();
+      fixtures = {
+        logger: context.logger,
+        createStandardService: context.createStandardService,
+        createLegacyService: context.createLegacyService,
+      };
     });
 
     afterEach(() => {
       context.cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
   const getContext = bindVolumeProfileContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: VolumeProfileFixtures = {
-      logger: context.logger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures = getContext();
     mockLogger = fixtures.logger;
     createStandardService = fixtures.createStandardService;
     createLegacyService = configOverrides => fixtures.createLegacyService({ configOverrides });

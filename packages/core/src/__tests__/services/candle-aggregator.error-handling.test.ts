@@ -28,16 +28,27 @@ import {
 
 function bindCandleAggregatorContext() {
   let context: ManagedCandleAggregatorContext;
+  let fixtures: Pick<
+    ManagedCandleAggregatorContext,
+    'service' | 'errorHandler' | 'mockLogger' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedCandleAggregatorContext();
+    fixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      mockLogger: context.mockLogger,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
@@ -55,15 +66,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   const getContext = bindCandleAggregatorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: CandleAggregatorFixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      mockLogger: context.mockLogger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: CandleAggregatorFixtures = getContext();
     service = fixtures.service;
     errorHandler = fixtures.errorHandler;
     mockLogger = fixtures.mockLogger;

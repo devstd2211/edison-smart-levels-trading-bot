@@ -27,16 +27,26 @@ import {
 
 function bindMicroWallDetectorContext() {
   let context: ManagedMicroWallDetectorContext;
+  let fixtures: Pick<
+    ManagedMicroWallDetectorContext,
+    'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
+  >;
 
   beforeEach(() => {
     context = createManagedMicroWallDetectorContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createStandardDetector: context.createStandardDetector,
+      createLegacyDetector: context.createLegacyDetector,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -84,14 +94,7 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   const getContext = bindMicroWallDetectorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: MicroWallFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createStandardDetector: context.createStandardDetector,
-      createLegacyDetector: context.createLegacyDetector,
-    };
-
+    const fixtures: MicroWallFixtures = getContext();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createStandardDetector = fixtures.createStandardDetector;

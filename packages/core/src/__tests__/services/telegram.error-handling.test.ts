@@ -24,16 +24,26 @@ import {
 
 function bindTelegramContext() {
   let context: ManagedTelegramContext;
+  let fixtures: Pick<
+    ManagedTelegramContext,
+    'telegramService' | 'mockLogger' | 'mockErrorHandler' | 'fetchMock'
+  >;
 
   beforeEach(() => {
     context = createManagedTelegramContext();
+    fixtures = {
+      telegramService: context.telegramService,
+      mockLogger: context.mockLogger,
+      mockErrorHandler: context.mockErrorHandler,
+      fetchMock: context.fetchMock,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
@@ -50,11 +60,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   };
 
   beforeEach(() => {
-    const context = getContext();
-    telegramService = context.telegramService;
-    mockLogger = context.mockLogger;
-    mockErrorHandler = context.mockErrorHandler;
-    fetchMock = context.fetchMock;
+    ({ telegramService, mockLogger, mockErrorHandler, fetchMock } = getContext());
   });
 
   // ============================================================================

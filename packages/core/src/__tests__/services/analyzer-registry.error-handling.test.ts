@@ -31,16 +31,33 @@ import {
 
 function bindAnalyzerRegistryContext() {
   let context: ManagedAnalyzerRegistryContext;
+  let fixtures: Pick<
+    ManagedAnalyzerRegistryContext,
+    | 'logger'
+    | 'errorHandler'
+    | 'registry'
+    | 'createScenario'
+    | 'createStandardRegistry'
+    | 'createLegacyRegistry'
+  >;
 
   beforeEach(() => {
     context = createManagedAnalyzerRegistryContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      registry: context.registry,
+      createScenario: context.createScenario,
+      createStandardRegistry: context.createStandardRegistry,
+      createLegacyRegistry: context.createLegacyRegistry,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
@@ -66,16 +83,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   const getContext = bindAnalyzerRegistryContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: AnalyzerRegistryFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      registry: context.registry,
-      createScenario: context.createScenario,
-      createStandardRegistry: context.createStandardRegistry,
-      createLegacyRegistry: context.createLegacyRegistry,
-    };
-
+    const fixtures = getContext();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;
     registry = fixtures.registry;

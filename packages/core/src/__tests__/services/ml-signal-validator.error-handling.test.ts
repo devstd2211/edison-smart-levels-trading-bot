@@ -33,16 +33,27 @@ import {
 
 function bindMLSignalValidatorContext() {
   let context: ManagedMLSignalValidatorContext;
+  let fixtures: Pick<
+    ManagedMLSignalValidatorContext,
+    'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedMLSignalValidatorContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('MLSignalValidatorService - Error Handling', () => {
@@ -70,14 +81,17 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
-  let context: ManagedMLSignalValidatorContext;
+  let createStandardService: ManagedMLSignalValidatorContext['createStandardService'];
+  let createLegacyService: ManagedMLSignalValidatorContext['createLegacyService'];
   const getContext = bindMLSignalValidatorContext();
 
   beforeEach(() => {
-    context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    service = context.service;
+    const fixtures = getContext();
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    service = fixtures.service;
+    createStandardService = fixtures.createStandardService;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   // ========================================
@@ -87,31 +101,31 @@ describe('MLSignalValidatorService - Error Handling', () => {
   describe('THROW: Config Validation', () => {
     it('should throw when config is not an object', () => {
       expect(() => {
-        context.createStandardService({ config: asConfig('invalid') });
+        createStandardService({ config: asConfig('invalid') });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is a number', () => {
       expect(() => {
-        context.createStandardService({ config: asConfig(123) });
+        createStandardService({ config: asConfig(123) });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should throw when config is an array', () => {
       expect(() => {
-        context.createStandardService({ config: asConfig([]) });
+        createStandardService({ config: asConfig([]) });
       }).toThrow('Config must be an object or undefined');
     });
 
     it('should NOT throw when config is undefined', () => {
       expect(() => {
-        context.createStandardService();
+        createStandardService();
       }).not.toThrow();
     });
 
     it('should NOT throw when config is a valid object', () => {
       expect(() => {
-        context.createStandardService({
+        createStandardService({
           config: { minHistoricalSamples: 50 },
         });
       }).not.toThrow();
@@ -312,7 +326,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       } as unknown as LoggerService;
 
       expect(() => {
-        context.createStandardService({ logger: badLogger, errorHandler });
+        createStandardService({ logger: badLogger, errorHandler });
       }).not.toThrow();
     });
 
@@ -326,7 +340,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = context.createStandardService({
+      const testService = createStandardService({
         logger: asLogger(badLogger),
         errorHandler,
       });
@@ -354,7 +368,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = context.createStandardService({
+      const testService = createStandardService({
         logger: asLogger(badLogger),
         errorHandler,
       });
@@ -374,7 +388,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
         error: jest.fn(),
       } as unknown as LoggerService;
 
-      const testService = context.createStandardService({
+      const testService = createStandardService({
         logger: asLogger(badLogger),
         errorHandler,
       });
@@ -662,7 +676,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
     let serviceWithoutEH: MLSignalValidatorService;
 
     beforeEach(() => {
-      serviceWithoutEH = context.createLegacyService({
+      serviceWithoutEH = createLegacyService({
         logger: createMLSignalValidatorLogger(),
       });
     });

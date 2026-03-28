@@ -22,19 +22,29 @@ import {
 
 function bindSwingPointDetectorContext() {
   let context: ManagedSwingPointDetectorContext;
+  let fixtures: Pick<
+    ManagedSwingPointDetectorContext,
+    'logger' | 'errorHandler' | 'service' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedSwingPointDetectorContext({
       logger: createSwingPointDetectorMockLogger(),
       errorHandler: createSwingPointDetectorMockErrorHandler(),
     });
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {
@@ -50,11 +60,11 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
   const getContext = bindSwingPointDetectorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    mockLogger = context.logger;
-    mockErrorHandler = context.errorHandler as ErrorHandler;
-    service = context.service;
-    createService = context.createService;
+    const fixtures = getContext();
+    mockLogger = fixtures.logger;
+    mockErrorHandler = fixtures.errorHandler as ErrorHandler;
+    service = fixtures.service;
+    createService = fixtures.createService;
   });
 
   describe('A. detectSwingPoints() Errors - GRACEFUL_DEGRADE (5 tests)', () => {

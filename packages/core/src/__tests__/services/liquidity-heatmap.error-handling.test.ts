@@ -72,46 +72,46 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   const getContext = bindLiquidityHeatmapContext();
 
   it('should THROW when config is null', () => {
-    const context = getContext();
+    const fixtures = getContext();
     expect(() => {
-      context.createStandardService({ config: asConfig(null) });
+      fixtures.createStandardService({ config: asConfig(null) });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
   it('should THROW when config is undefined', () => {
-    const context = getContext();
+    const fixtures = getContext();
     expect(() => {
-      context.createStandardService({ config: asConfig(undefined) });
+      fixtures.createStandardService({ config: asConfig(undefined) });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
   it('should THROW when maxLevels is invalid', () => {
-    const context = getContext();
+    const fixtures = getContext();
     const config = createLiquidityHeatmapConfig();
     config.maxLevels = -10;
 
     expect(() => {
-      context.createStandardService({ config });
+      fixtures.createStandardService({ config });
     }).toThrow('Invalid maxLevels');
   });
 
   it('should THROW when minStrengthThreshold is out of range', () => {
-    const context = getContext();
+    const fixtures = getContext();
     const config = createLiquidityHeatmapConfig();
     config.minStrengthThreshold = 150; // > 100
 
     expect(() => {
-      context.createStandardService({ config });
+      fixtures.createStandardService({ config });
     }).toThrow('Invalid minStrengthThreshold');
   });
 
   it('should THROW when clusteringTolerance is invalid', () => {
-    const context = getContext();
+    const fixtures = getContext();
     const config = createLiquidityHeatmapConfig();
     config.clusteringTolerance = -0.5;
 
     expect(() => {
-      context.createStandardService({ config });
+      fixtures.createStandardService({ config });
     }).toThrow('Invalid clusteringTolerance');
   });
 });

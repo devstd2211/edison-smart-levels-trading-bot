@@ -31,16 +31,41 @@ import {
 
 function bindWebSocketEventHandlerContext() {
   let context: ManagedWebSocketEventHandlerContext;
+  let fixtures: Pick<
+    ManagedWebSocketEventHandlerContext,
+    | 'handler'
+    | 'mockPositionManager'
+    | 'mockPositionExitingService'
+    | 'mockBybitService'
+    | 'mockWebSocketManager'
+    | 'mockJournal'
+    | 'mockTelegram'
+    | 'mockLogger'
+    | 'createCloseScenarioHandler'
+    | 'createStandardHandler'
+  >;
 
   beforeEach(() => {
     context = createManagedWebSocketEventHandlerContext();
+    fixtures = {
+      handler: context.handler,
+      mockPositionManager: context.mockPositionManager,
+      mockPositionExitingService: context.mockPositionExitingService,
+      mockBybitService: context.mockBybitService,
+      mockWebSocketManager: context.mockWebSocketManager,
+      mockJournal: context.mockJournal,
+      mockTelegram: context.mockTelegram,
+      mockLogger: context.mockLogger,
+      createCloseScenarioHandler: context.createCloseScenarioHandler,
+      createStandardHandler: context.createStandardHandler,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
@@ -52,11 +77,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let mockJournal: ManagedWebSocketEventHandlerContext['mockJournal'];
   let mockTelegram: ManagedWebSocketEventHandlerContext['mockTelegram'];
   let mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
-  let context: ManagedWebSocketEventHandlerContext;
+  let createCloseScenarioHandler: ManagedWebSocketEventHandlerContext['createCloseScenarioHandler'];
+  let createStandardHandler: ManagedWebSocketEventHandlerContext['createStandardHandler'];
   const getContext = bindWebSocketEventHandlerContext();
 
   beforeEach(() => {
-    context = getContext();
     ({
       handler,
       mockPositionManager,
@@ -66,7 +91,9 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = context);
+      createCloseScenarioHandler,
+      createStandardHandler,
+    } = getContext());
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {
@@ -105,7 +132,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('[FALLBACK] getCurrentPriceWithFallback() - Price Retrieval (3 tests)', () => {
     it('test-8.6.5: Should use fallback when getCurrentPrice throws error', async () => {
-      const { handler: closeHandler, position } = context.createCloseScenarioHandler({
+      const { handler: closeHandler, position } = createCloseScenarioHandler({
         currentPrice: new Error('API error'),
       });
 
@@ -119,7 +146,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.6: Should use fallback when getCurrentPrice returns NaN', async () => {
-      const { handler: closeHandler, position } = context.createCloseScenarioHandler({
+      const { handler: closeHandler, position } = createCloseScenarioHandler({
         currentPrice: NaN,
       });
 
@@ -131,7 +158,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
     });
 
     it('test-8.6.7: Should use valid price when getCurrentPrice succeeds', async () => {
-      const { handler: closeHandler } = context.createCloseScenarioHandler({
+      const { handler: closeHandler } = createCloseScenarioHandler({
         currentPrice: 46000,
       });
 
@@ -289,7 +316,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   describe('Integration with Existing Functionality', () => {
     it('should support explicit handler factory wiring', () => {
-      const explicitHandler = context.createStandardHandler({
+      const explicitHandler = createStandardHandler({
         mockPositionManager,
         mockPositionExitingService,
         mockBybitService,

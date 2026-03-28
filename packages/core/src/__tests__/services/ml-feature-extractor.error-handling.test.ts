@@ -19,16 +19,27 @@ const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
 function bindMLFeatureExtractorContext() {
   let context: ManagedMLFeatureExtractorContext;
+  let fixtures: Pick<
+    ManagedMLFeatureExtractorContext,
+    'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedMLFeatureExtractorContext();
+    fixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      logger: context.logger,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
@@ -44,15 +55,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   const getContext = bindMLFeatureExtractorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: MLFeatureExtractorFixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      logger: context.logger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: MLFeatureExtractorFixtures = getContext();
     ({ service, errorHandler, logger: mockLogger } = fixtures);
     createStandardService = fixtures.createStandardService;
     createLegacyService = fixtures.createLegacyService;

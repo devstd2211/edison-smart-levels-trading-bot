@@ -33,31 +33,31 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
   function bindFundingRateFilterContext() {
     let context: ManagedFundingRateFilterContext;
+    let fixtures: FundingRateFilterFixtures;
 
     beforeEach(() => {
       context = createManagedFundingRateFilterContext();
+      fixtures = {
+        logger: context.logger,
+        config: context.config,
+        mockGetFundingRate: context.mockGetFundingRate,
+        errorHandler: context.errorHandler,
+        createStandardFilter: context.createStandardFilter,
+        createLegacyFilter: context.createLegacyFilter,
+      };
     });
 
     afterEach(async () => {
       await context.cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
   const getContext = bindFundingRateFilterContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: FundingRateFilterFixtures = {
-      logger: context.logger,
-      config: context.config,
-      mockGetFundingRate: context.mockGetFundingRate,
-      errorHandler: context.errorHandler,
-      createStandardFilter: context.createStandardFilter,
-      createLegacyFilter: context.createLegacyFilter,
-    };
-
+    const fixtures = getContext();
     ({ logger, config, mockGetFundingRate, errorHandler } = fixtures);
     createFilter = fixtures.createStandardFilter;
     createLegacyFilter = fixtures.createLegacyFilter;

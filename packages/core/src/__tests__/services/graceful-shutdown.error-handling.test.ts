@@ -46,18 +46,37 @@ jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: st
 
 function bindGracefulShutdownContext() {
   let context: ManagedGracefulShutdownTestContext;
+  let fixtures: {
+    manager: ManagedGracefulShutdownTestContext['manager'];
+    harness: ManagedGracefulShutdownTestContext['harness'];
+    mocks: Pick<
+      ManagedGracefulShutdownTestContext['mocks'],
+      'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
+    >;
+  };
 
   beforeEach(() => {
     context = createManagedGracefulShutdownTestContext({
       position: createMockShutdownPosition({ reason: 'error-handling-test' }),
     });
+    fixtures = {
+      manager: context.manager,
+      harness: context.harness,
+      mocks: {
+        positionLifecycleService: context.mocks.positionLifecycleService,
+        actionQueue: context.mocks.actionQueue,
+        exchange: context.mocks.exchange,
+        logger: context.mocks.logger,
+        eventBus: context.mocks.eventBus,
+      },
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
@@ -83,18 +102,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
-    const context = getContext();
-    const fixtures: GracefulShutdownFixtures = {
-      manager: context.manager,
-      harness: context.harness,
-      mocks: {
-        positionLifecycleService: context.mocks.positionLifecycleService,
-        actionQueue: context.mocks.actionQueue,
-        exchange: context.mocks.exchange,
-        logger: context.mocks.logger,
-        eventBus: context.mocks.eventBus,
-      },
-    };
+    const fixtures = getContext();
     mockPositionLifecycleService =
       fixtures.mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = fixtures.mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;

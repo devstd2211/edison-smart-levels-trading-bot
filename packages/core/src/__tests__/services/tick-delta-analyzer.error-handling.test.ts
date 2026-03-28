@@ -16,16 +16,26 @@ import {
 
 function bindTickDeltaAnalyzerContext() {
   let context: ManagedTickDeltaAnalyzerContext;
+  let fixtures: Pick<
+    ManagedTickDeltaAnalyzerContext,
+    'service' | 'mockLogger' | 'errorHandler' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedTickDeltaAnalyzerContext();
+    fixtures = {
+      service: context.service,
+      mockLogger: context.mockLogger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
@@ -43,14 +53,7 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   const getContext = bindTickDeltaAnalyzerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: TickDeltaFixtures = {
-      service: context.service,
-      mockLogger: context.mockLogger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures = getContext();
     service = fixtures.service;
     mockLogger = fixtures.mockLogger;
     errorHandler = fixtures.errorHandler as ErrorHandler;

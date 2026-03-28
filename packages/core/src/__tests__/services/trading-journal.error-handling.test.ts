@@ -38,16 +38,27 @@ import {
 
 function bindTradingJournalContext() {
   let context: ManagedTradingJournalContext;
+  let fixtures: Pick<
+    ManagedTradingJournalContext,
+    'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
+  >;
 
   beforeEach(() => {
     context = createManagedTradingJournalContext();
+    fixtures = {
+      journal: context.journal,
+      logger: context.logger,
+      dataDir: context.dataDir,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 const createEntryCondition = createJournalEntryCondition;
@@ -80,15 +91,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   const getContext = bindTradingJournalContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: TradingJournalFixtures = {
-      journal: context.journal,
-      logger: context.logger,
-      dataDir: context.dataDir,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures = getContext();
     journal = fixtures.journal;
     logger = fixtures.logger;
     tempDir = fixtures.dataDir;

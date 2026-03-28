@@ -35,16 +35,33 @@ import {
 
 function bindConfigValidatorContext() {
   let context: ManagedConfigValidatorContext;
+  let fixtures: Pick<
+    ManagedConfigValidatorContext,
+    | 'logger'
+    | 'errorHandler'
+    | 'validator'
+    | 'createValidator'
+    | 'createLegacyValidator'
+    | 'validConfig'
+  >;
 
   beforeEach(() => {
     context = createManagedConfigValidatorContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      validator: context.validator,
+      createValidator: context.createValidator,
+      createLegacyValidator: context.createLegacyValidator,
+      validConfig: context.validConfig,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -70,16 +87,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   const getContext = bindConfigValidatorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: ConfigValidatorFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      validator: context.validator,
-      createValidator: context.createValidator,
-      createLegacyValidator: context.createLegacyValidator,
-      validConfig: context.validConfig,
-    };
-
+    const fixtures = getContext();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;
     validator = fixtures.validator;

@@ -21,31 +21,27 @@ import {
 
 function bindBotMetricsContext() {
   let context: ManagedBotMetricsTestContext;
+  let fixtures: Pick<
+    ManagedBotMetricsTestContext,
+    'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     context = createManagedBotMetricsTestContext();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      service: context.service,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+    };
   });
 
   afterEach(() => {
     context.cleanup();
   });
 
-  return () => context;
-}
-
-function extractBotMetricsFixtures(context: ManagedBotMetricsTestContext) {
-  const fixtures: Pick<
-    ManagedBotMetricsTestContext,
-    'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
-  > = {
-    logger: context.logger,
-    errorHandler: context.errorHandler,
-    service: context.service,
-    createStandardService: context.createStandardService,
-    createLegacyService: context.createLegacyService,
-  };
-
-  return fixtures;
+  return () => fixtures;
 }
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
@@ -57,7 +53,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   const getContext = bindBotMetricsContext();
 
   beforeEach(() => {
-    const fixtures = extractBotMetricsFixtures(getContext());
+    const fixtures = getContext();
 
     logger = fixtures.logger as BotMetricsTestLogger;
     errorHandler = fixtures.errorHandler;
