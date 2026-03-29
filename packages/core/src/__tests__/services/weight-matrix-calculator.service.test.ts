@@ -28,7 +28,7 @@ describe('WeightMatrixCalculatorService', () => {
 
   function bindLegacyWeightMatrixContext() {
     let fixtures: WeightMatrixFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedLegacyWeightMatrixContext();
@@ -42,7 +42,7 @@ describe('WeightMatrixCalculatorService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

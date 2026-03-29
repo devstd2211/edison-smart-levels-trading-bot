@@ -13,41 +13,52 @@ import {
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
+  type RealTimeRiskMonitorHarnessFixtures = Pick<
+    ManagedRealTimeRiskMonitorHarness,
+    'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
+  >;
   let monitor: RealTimeRiskMonitor;
   let mockPositionService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
-  let context: ManagedRealTimeRiskMonitorHarness;
 
   function bindRealTimeRiskMonitorHarness() {
-    let managedContext: ManagedRealTimeRiskMonitorHarness;
+    let cleanup: ManagedRealTimeRiskMonitorHarness['cleanup'];
+    let fixtures: RealTimeRiskMonitorHarnessFixtures;
 
     beforeEach(() => {
-      managedContext = createManagedRealTimeRiskMonitorHarness({ started: true });
+      const managedContext = createManagedRealTimeRiskMonitorHarness({ started: true });
+      fixtures = {
+        monitor: managedContext.monitor,
+        mockPositionService: managedContext.mockPositionService,
+        mockLogger: managedContext.mockLogger,
+        mockEventBus: managedContext.mockEventBus,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindRealTimeRiskMonitorHarness();
 
   beforeEach(() => {
-    context = getContext();
-    monitor = context.monitor;
-    mockPositionService = context.mockPositionService;
-    mockLogger = context.mockLogger;
-    mockEventBus = context.mockEventBus;
+    const fixtures = getContext();
+    monitor = fixtures.monitor;
+    mockPositionService = fixtures.mockPositionService;
+    mockLogger = fixtures.mockLogger;
+    mockEventBus = fixtures.mockEventBus;
   });
 
   it('CI1: position-closed event clears health score cache', async () => {
-    const position = await seedRiskMonitorHealthScore(context);
+    const position = await seedRiskMonitorHealthScore(getContext());
     expect(monitor.getLatestHealthScore(position.id)).toBeDefined();
 
-    invalidateRiskMonitorPosition(context, { positionId: position.id });
+    invalidateRiskMonitorPosition(getContext(), { positionId: position.id });
 
     expect(monitor.getLatestHealthScore(position.id)).toBeUndefined();
   });
@@ -68,7 +79,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
     });
 
     await seedRiskMonitorHealthScores(
-      context,
+      getContext(),
       [
         { position: firstPosition, currentPrice: 46000 },
         { position: secondPosition, currentPrice: 3100 },
@@ -76,7 +87,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
     );
 
     invalidateRiskMonitorPosition(
-      context,
+      getContext(),
       { positionId: firstPosition.id },
     );
 
@@ -100,7 +111,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
     expect(monitor.getStatistics().generatedAlerts).toBeGreaterThanOrEqual(0);
 
     invalidateRiskMonitorPosition(
-      context,
+      getContext(),
       { closedPosition: position },
     );
 
@@ -110,10 +121,10 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   it('CI5: Multiple close events are idempotent', async () => {
-    const position = await seedRiskMonitorHealthScore(context);
+    const position = await seedRiskMonitorHealthScore(getContext());
 
-    invalidateRiskMonitorPosition(context, { positionId: position.id });
-    invalidateRiskMonitorPosition(context, { positionId: position.id });
+    invalidateRiskMonitorPosition(getContext(), { positionId: position.id });
+    invalidateRiskMonitorPosition(getContext(), { positionId: position.id });
 
     expect(monitor.getLatestHealthScore(position.id)).toBeUndefined();
     expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -123,8 +134,8 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   it('CI6: Cache invalidation logged for debugging', async () => {
-    const position = await seedRiskMonitorHealthScore(context);
-    invalidateRiskMonitorPosition(context, { position });
+    const position = await seedRiskMonitorHealthScore(getContext());
+    invalidateRiskMonitorPosition(getContext(), { position });
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       expect.stringContaining('invalidated'),

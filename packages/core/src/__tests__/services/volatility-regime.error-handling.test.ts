@@ -23,16 +23,26 @@ import {
 // ============================================================================
 
 function bindVolatilityRegimeContext() {
-  let context: ManagedVolatilityRegimeContext;
+  let cleanup: ManagedVolatilityRegimeContext['cleanup'];
   let mockLogger: LoggerService;
+  let context: Pick<
+    ManagedVolatilityRegimeContext,
+    'errorHandler' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
     mockLogger = createVolatilityRegimeMockLogger();
-    context = createManagedVolatilityRegimeContext({ logger: mockLogger });
+    const managedContext = createManagedVolatilityRegimeContext({ logger: mockLogger });
+    context = {
+      errorHandler: managedContext.errorHandler,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => ({

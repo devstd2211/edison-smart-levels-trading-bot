@@ -39,7 +39,7 @@ describe('WhaleDetectionService', () => {
 
   function bindWhaleDetectionContext() {
     let fixtures: WhaleDetectionFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedWhaleDetectionContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedWhaleDetectionContext({
@@ -57,7 +57,7 @@ describe('WhaleDetectionService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

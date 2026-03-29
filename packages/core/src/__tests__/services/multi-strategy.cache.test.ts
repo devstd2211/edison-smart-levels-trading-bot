@@ -18,19 +18,29 @@ import {
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
+  type StrategyCacheFixtures = Pick<
+    ManagedStrategyCacheContext,
+    'cache' | 'logger'
+  >;
 
   function bindStrategyCacheContext() {
-    let context: ManagedStrategyCacheContext;
+    let cleanup: ManagedStrategyCacheContext['cleanup'];
+    let fixtures: StrategyCacheFixtures;
 
     beforeEach(() => {
-      context = createManagedStrategyCacheContext();
+      const context = createManagedStrategyCacheContext();
+      fixtures = {
+        cache: context.cache,
+        logger: context.logger,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
   const getContext = bindStrategyCacheContext();

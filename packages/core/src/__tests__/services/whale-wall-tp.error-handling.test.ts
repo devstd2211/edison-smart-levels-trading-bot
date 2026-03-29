@@ -23,23 +23,26 @@ import {
   type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
+type WhaleWallTPFixtures = Pick<
+  ManagedWhaleWallTPContext,
+  'createStandardService' | 'createLegacyService'
+>;
+
 function bindWhaleWallTPContext() {
-  let context: ManagedWhaleWallTPContext;
-  let fixtures: Pick<
-    ManagedWhaleWallTPContext,
-    'createStandardService' | 'createLegacyService'
-  >;
+  let cleanup: ManagedWhaleWallTPContext['cleanup'];
+  let fixtures: WhaleWallTPFixtures;
 
   beforeEach(() => {
-    context = createManagedWhaleWallTPContext();
+    const context = createManagedWhaleWallTPContext();
     fixtures = {
       createStandardService: context.createStandardService,
       createLegacyService: context.createLegacyService,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

@@ -72,10 +72,10 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: WebSocketManagerFixtures['createStandardTestnetService'];
-  let errorHandler: WebSocketManagerFixtures['errorHandler'];
-  let orderExecutionDetector: WebSocketManagerFixtures['orderExecutionDetector'];
-  let deduplicationService: WebSocketManagerFixtures['deduplicationService'];
-  let keepAliveService: WebSocketManagerFixtures['keepAliveService'];
+  let errorHandler: ManagedWebSocketManagerContext['errorHandler'];
+  let orderExecutionDetector: ManagedWebSocketManagerContext['orderExecutionDetector'];
+  let deduplicationService: ManagedWebSocketManagerContext['deduplicationService'];
+  let keepAliveService: ManagedWebSocketManagerContext['keepAliveService'];
   const getContext = bindWebSocketManagerContext();
 
   beforeEach(() => {

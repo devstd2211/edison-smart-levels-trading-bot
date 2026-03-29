@@ -23,31 +23,55 @@ import {
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
+  type MonitoringServerFixtures = Pick<
+    ManagedMonitoringServerContext,
+    'metricsService' | 'healthService' | 'startServer' | 'getBaseUrl' | 'harness' | 'createServer' | 'startAndStopServer'
+  >;
   let server: MonitoringServer;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
-  let context: ManagedMonitoringServerContext;
+  let startServer: MonitoringServerFixtures['startServer'];
+  let getBaseUrl: MonitoringServerFixtures['getBaseUrl'];
+  let monitoringHarness: MonitoringServerFixtures['harness'];
+  let createServer: MonitoringServerFixtures['createServer'];
+  let startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
 
   function bindMonitoringServerContext() {
-    let managedContext: ManagedMonitoringServerContext;
+    let cleanup: ManagedMonitoringServerContext['cleanup'];
+    let fixtures: MonitoringServerFixtures;
 
     beforeEach(() => {
-      managedContext = createManagedMonitoringServerContext();
+      const managedContext = createManagedMonitoringServerContext();
+      fixtures = {
+        metricsService: managedContext.metricsService,
+        healthService: managedContext.healthService,
+        startServer: managedContext.startServer,
+        getBaseUrl: managedContext.getBaseUrl,
+        harness: managedContext.harness,
+        createServer: managedContext.createServer,
+        startAndStopServer: managedContext.startAndStopServer,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await managedContext.cleanup();
+      await cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindMonitoringServerContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockMetricsService = context.metricsService;
-    mockHealthService = context.healthService;
+    const fixtures = getContext();
+    mockMetricsService = fixtures.metricsService;
+    mockHealthService = fixtures.healthService;
+    startServer = fixtures.startServer;
+    getBaseUrl = fixtures.getBaseUrl;
+    monitoringHarness = fixtures.harness;
+    createServer = fixtures.createServer;
+    startAndStopServer = fixtures.startAndStopServer;
   });
 
   // ==========================================================================
@@ -56,9 +80,9 @@ describe('MonitoringServer', () => {
 
   describe('GET /metrics', () => {
     it('should return Prometheus metrics in text format', async () => {
-      server = await context.startServer({ port: 9091 });
+      server = await startServer({ port: 9091 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/metrics')
         .expect(200);
 
@@ -68,11 +92,11 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when metrics service not available', async () => {
-      server = await context.startServer(
+      server = await startServer(
         { port: 9092, metricsService: undefined, healthService: mockHealthService },
       );
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/metrics')
         .expect(503);
 
@@ -82,9 +106,9 @@ describe('MonitoringServer', () => {
     it('should return 500 on metrics retrieval error', async () => {
       mockMetricsService.getMetrics = jest.fn().mockRejectedValue(new Error('Metrics error'));
 
-      server = await context.startServer({ port: 9093 });
+      server = await startServer({ port: 9093 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/metrics')
         .expect(500);
 
@@ -98,9 +122,9 @@ describe('MonitoringServer', () => {
 
   describe('GET /health', () => {
     it('should return health status as JSON with 200 when healthy', async () => {
-      server = await context.startServer({ port: 9094 });
+      server = await startServer({ port: 9094 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/health')
         .expect(200);
 
@@ -113,11 +137,11 @@ describe('MonitoringServer', () => {
     it('should return 503 when system is degraded', async () => {
       mockHealthService.checkHealth = jest
         .fn()
-        .mockResolvedValue(context.harness.createDegradedHealthStatus());
+        .mockResolvedValue(monitoringHarness.createDegradedHealthStatus());
 
-      server = await context.startServer({ port: 9095 });
+      server = await startServer({ port: 9095 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/health')
         .expect(503);
 
@@ -125,11 +149,11 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when health service not available', async () => {
-      server = await context.startServer(
+      server = await startServer(
         { port: 9096, metricsService: mockMetricsService, healthService: undefined },
       );
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/health')
         .expect(503);
 
@@ -143,9 +167,9 @@ describe('MonitoringServer', () => {
 
   describe('Kubernetes Probes', () => {
     it('should return liveness status at /health/live', async () => {
-      server = await context.startServer({ port: 9097 });
+      server = await startServer({ port: 9097 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/health/live')
         .expect(200);
 
@@ -154,9 +178,9 @@ describe('MonitoringServer', () => {
     });
 
     it('should return readiness status at /health/ready', async () => {
-      server = await context.startServer({ port: 9098 });
+      server = await startServer({ port: 9098 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/health/ready')
         .expect(200);
 
@@ -171,18 +195,18 @@ describe('MonitoringServer', () => {
 
   describe('Error Handling', () => {
     it('should handle server start/stop lifecycle', async () => {
-      server = context.createServer({ port: 9099 });
+      server = createServer({ port: 9099 });
 
       expect(server.isRunning()).toBe(false);
 
-      await context.startAndStopServer({ port: 9099 });
+      await startAndStopServer({ port: 9099 });
       expect(server.isRunning()).toBe(false);
     });
 
     it('should return 404 for unknown routes', async () => {
-      server = await context.startServer({ port: 9100 });
+      server = await startServer({ port: 9100 });
 
-      const response = await request(context.getBaseUrl(server))
+      const response = await request(getBaseUrl(server))
         .get('/unknown')
         .expect(404);
 

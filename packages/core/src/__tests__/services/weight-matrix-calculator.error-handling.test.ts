@@ -62,8 +62,8 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   let errorConfig: WeightMatrixConfig;
-  let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let createService: (config?: WeightMatrixConfig) => ReturnType<WeightMatrixStandardServiceFactory>;
+  let createLegacyService: (config?: WeightMatrixConfig) => ReturnType<WeightMatrixLegacyServiceFactory>;
   let createStandardErrorService: WeightMatrixStandardServiceFactory;
   let createLegacyErrorService: WeightMatrixLegacyServiceFactory;
   const getContext = bindErrorWeightMatrixContext();

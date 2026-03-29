@@ -25,23 +25,25 @@ import {
   type ManagedPositionExitingErrorHandlingContext,
 } from '../helpers/position-exiting-test.utils';
 
+type PositionExitingFixtures = Pick<
+  ManagedPositionExitingErrorHandlingContext,
+  | 'mockExchange'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'mockJournal'
+  | 'mockSessionStats'
+  | 'mockTradingConfig'
+  | 'mockRiskConfig'
+  | 'mockConfig'
+  | 'mockPosition'
+>;
+
 function bindPositionExitingContext() {
-  let context: ManagedPositionExitingErrorHandlingContext;
-  let fixtures: Pick<
-    ManagedPositionExitingErrorHandlingContext,
-    | 'mockExchange'
-    | 'mockTelegram'
-    | 'mockLogger'
-    | 'mockJournal'
-    | 'mockSessionStats'
-    | 'mockTradingConfig'
-    | 'mockRiskConfig'
-    | 'mockConfig'
-    | 'mockPosition'
-  >;
+  let cleanup: ManagedPositionExitingErrorHandlingContext['cleanup'];
+  let fixtures: PositionExitingFixtures;
 
   beforeEach(() => {
-    context = createManagedPositionExitingErrorHandlingContext();
+    const context = createManagedPositionExitingErrorHandlingContext();
     fixtures = {
       mockExchange: context.mockExchange,
       mockTelegram: context.mockTelegram,
@@ -53,10 +55,11 @@ function bindPositionExitingContext() {
       mockConfig: context.mockConfig,
       mockPosition: context.mockPosition,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

@@ -11,7 +11,7 @@
  * Total: 20 comprehensive tests covering error scenarios
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WallTrackingConfig, LoggerService } from '../../types/legacy';
@@ -23,15 +23,17 @@ import {
   type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
+type WallTrackerFixtures = Pick<
+  ManagedWallTrackerContext,
+  'service' | 'logger' | 'errorHandler' | 'createLegacyService'
+>;
+
 function bindWallTrackerContext(configOverrides: Partial<WallTrackingConfig>) {
-  let context: ManagedWallTrackerContext;
-  let fixtures: Pick<
-    ManagedWallTrackerContext,
-    'service' | 'logger' | 'errorHandler' | 'createLegacyService'
-  >;
+  let cleanup: ManagedWallTrackerContext['cleanup'];
+  let fixtures: WallTrackerFixtures;
 
   beforeEach(() => {
-    context = createManagedWallTrackerContext({
+    const context = createManagedWallTrackerContext({
       configOverrides,
     });
     fixtures = {
@@ -40,10 +42,11 @@ function bindWallTrackerContext(configOverrides: Partial<WallTrackingConfig>) {
       errorHandler: context.errorHandler,
       createLegacyService: context.createLegacyService,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

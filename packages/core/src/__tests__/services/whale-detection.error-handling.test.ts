@@ -64,7 +64,7 @@ const createValidConfig = (): WhaleDetectorConfig =>
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   let createService: WhaleDetectionServiceFactory;
   let createLegacyService: WhaleDetectionLegacyServiceFactory;
-  let createScenario: (options?: WhaleDetectionScenarioOptions) => ReturnType<WhaleDetectionScenarioFactory>;
+  let createScenario: WhaleDetectionScenarioFactory;
   const getContext = bindWhaleDetectionContext();
 
   beforeEach(() => {
@@ -73,11 +73,8 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
     createLegacyService = fixtures.createLegacyService;
     createScenario = (options = {}) =>
       fixtures.createScenario({
+        ...options,
         config: options.config ?? createValidConfig(),
-        logger: options.logger,
-        withErrorHandler: options.withErrorHandler,
-        ratio: options.ratio,
-        direction: options.direction,
       });
   });
 

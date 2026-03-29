@@ -62,6 +62,7 @@ describe('PositionMonitorService', () => {
 
   function bindPositionMonitorContext() {
     let context: ManagedPositionMonitorContext;
+    let cleanup: ManagedPositionMonitorContext['cleanup'];
 
     beforeEach(() => {
       context = createManagedPositionMonitorContext({
@@ -70,10 +71,11 @@ describe('PositionMonitorService', () => {
           positionSizeUsdt: 10,
         },
       });
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
     return (): PositionMonitorFixtures => ({

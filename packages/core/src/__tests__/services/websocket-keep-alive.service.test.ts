@@ -39,7 +39,7 @@ describe('WebSocketKeepAliveService', () => {
 
   function bindWebSocketKeepAliveContext() {
     let fixtures: WebSocketKeepAliveFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketKeepAliveContext();
@@ -56,7 +56,7 @@ describe('WebSocketKeepAliveService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

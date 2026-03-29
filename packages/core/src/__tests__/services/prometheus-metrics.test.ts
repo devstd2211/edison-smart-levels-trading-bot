@@ -27,9 +27,9 @@ describe('PrometheusMetricsService', () => {
     'service' | 'logger' | 'createService' | 'createStartedService'
   >;
   let service: PrometheusMetricsService;
-  let logger: ManagedPrometheusMetricsTestContext['logger'];
-  let createService: ManagedPrometheusMetricsTestContext['createService'];
-  let createStartedService: ManagedPrometheusMetricsTestContext['createStartedService'];
+  let logger: PrometheusMetricsFixtures['logger'];
+  let createService: PrometheusMetricsFixtures['createService'];
+  let createStartedService: PrometheusMetricsFixtures['createStartedService'];
 
   function bindPrometheusMetricsContext() {
     let fixtures: PrometheusMetricsFixtures;

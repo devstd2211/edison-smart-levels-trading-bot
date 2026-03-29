@@ -29,21 +29,23 @@ import {
   type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
+type WebSocketEventHandlerFixtures = Pick<
+  ManagedWebSocketEventHandlerContext,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockWebSocketManager'
+  | 'mockJournal'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'createCloseScenarioHandler'
+  | 'createStandardHandler'
+>;
+
 function bindWebSocketEventHandlerContext() {
   let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
-  let fixtures: Pick<
-    ManagedWebSocketEventHandlerContext,
-    | 'handler'
-    | 'mockPositionManager'
-    | 'mockPositionExitingService'
-    | 'mockBybitService'
-    | 'mockWebSocketManager'
-    | 'mockJournal'
-    | 'mockTelegram'
-    | 'mockLogger'
-    | 'createCloseScenarioHandler'
-    | 'createStandardHandler'
-  >;
+  let fixtures: WebSocketEventHandlerFixtures;
 
   beforeEach(() => {
     const context = createManagedWebSocketEventHandlerContext();

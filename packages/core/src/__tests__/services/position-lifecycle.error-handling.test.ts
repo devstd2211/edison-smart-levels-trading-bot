@@ -11,7 +11,7 @@
  * Phase 8.7 (20 tests) + Phase 8.9.17 (2 new tests) = 22 comprehensive tests
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
@@ -49,25 +49,27 @@ import {
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
+type PositionLifecycleFixtures = Pick<
+  ManagedPositionLifecycleRepositoryContext,
+  | 'service'
+  | 'mockExchange'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'mockJournal'
+  | 'mockEventBus'
+  | 'mockRepository'
+  | 'tradingConfig'
+  | 'riskConfig'
+  | 'entryConfig'
+  | 'fullConfig'
+>;
+
 function bindPositionLifecycleRepositoryContext() {
-  let context: ManagedPositionLifecycleRepositoryContext;
-  let fixtures: Pick<
-    ManagedPositionLifecycleRepositoryContext,
-    | 'service'
-    | 'mockExchange'
-    | 'mockTelegram'
-    | 'mockLogger'
-    | 'mockJournal'
-    | 'mockEventBus'
-    | 'mockRepository'
-    | 'tradingConfig'
-    | 'riskConfig'
-    | 'entryConfig'
-    | 'fullConfig'
-  >;
+  let cleanup: ManagedPositionLifecycleRepositoryContext['cleanup'];
+  let fixtures: PositionLifecycleFixtures;
 
   beforeEach(() => {
-    context = createManagedPositionLifecycleRepositoryContext();
+    const context = createManagedPositionLifecycleRepositoryContext();
     fixtures = {
       service: context.service,
       mockExchange: context.mockExchange,
@@ -81,10 +83,11 @@ function bindPositionLifecycleRepositoryContext() {
       entryConfig: context.entryConfig,
       fullConfig: context.fullConfig,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

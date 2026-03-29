@@ -27,7 +27,7 @@ describe('WebSocketManagerService', () => {
 
   function bindWebSocketManagerContext() {
     let fixtures: WebSocketManagerFixtures;
-    let cleanup: ManagedWebSocketManagerContext['cleanup'] | undefined;
+    let cleanup: ManagedWebSocketManagerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketManagerContext();
@@ -38,7 +38,7 @@ describe('WebSocketManagerService', () => {
     });
 
     afterEach(async () => {
-      await cleanup?.();
+      await cleanup();
     });
 
     return () => fixtures;

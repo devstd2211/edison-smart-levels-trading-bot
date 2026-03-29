@@ -31,7 +31,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
 
   function bindAnalyzerRegistrationFixesContext() {
     let fixtures: AnalyzerRegistrationFixesFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedAnalyzerRegistrationFixesContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedAnalyzerRegistrationFixesContext();
@@ -42,7 +42,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

@@ -40,20 +40,21 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let createLegacyService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
   function bindVolumeProfileContext() {
-    let context: ManagedVolumeProfileContext;
+    let cleanup: ManagedVolumeProfileContext['cleanup'];
     let fixtures: VolumeProfileFixtures;
 
     beforeEach(() => {
-      context = createManagedVolumeProfileContext();
+      const context = createManagedVolumeProfileContext();
       fixtures = {
         logger: context.logger,
         createStandardService: context.createStandardService,
         createLegacyService: context.createLegacyService,
       };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
     return () => fixtures;
