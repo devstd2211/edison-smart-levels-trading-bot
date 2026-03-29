@@ -116,27 +116,36 @@ function createRealisticCandles(
 
 describe('MTFSnapshotGate - Functional Tests', () => {
   let gate: MTFSnapshotGate;
-  let context: ManagedMTFSnapshotGateContext;
+
+  type MTFSnapshotGateFunctionalFixtures = Pick<
+    ManagedMTFSnapshotGateContext,
+    'gate' | 'logger'
+  >;
 
   function bindMTFSnapshotGateFunctionalContext() {
-    let managedContext: ManagedMTFSnapshotGateContext;
+    let fixtures: MTFSnapshotGateFunctionalFixtures;
+    let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedMTFSnapshotGateContext();
+      const managedContext = createManagedMTFSnapshotGateContext();
+      fixtures = {
+        gate: managedContext.gate,
+        logger: managedContext.logger,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindMTFSnapshotGateFunctionalContext();
+  const getFixtures = bindMTFSnapshotGateFunctionalContext();
 
   beforeEach(() => {
-    context = getContext();
-    gate = context.gate;
+    gate = getFixtures().gate;
   });
 
   // ========================================================================
@@ -572,7 +581,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         restrictedDirections: [],
       } as unknown as TrendAnalysis, signal, candle);
 
-      expect(context.logger.info).toHaveBeenCalledWith(
+      expect(getFixtures().logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Created snapshot')
       );
     });
@@ -603,7 +612,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
       // Valid validation
       gate.validateSnapshot(TrendBias.BULLISH);
-      expect(context.logger.info).toHaveBeenCalledWith(
+      expect(getFixtures().logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Snapshot valid')
       );
 
@@ -611,7 +620,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
       // Invalid validation
       gate.validateSnapshot(TrendBias.BEARISH);
-      expect(context.logger.warn).toHaveBeenCalledWith(
+      expect(getFixtures().logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Bias mismatch')
       );
     });

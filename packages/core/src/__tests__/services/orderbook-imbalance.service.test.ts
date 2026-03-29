@@ -18,26 +18,39 @@ describe('OrderbookImbalanceService', () => {
   let config: OrderbookImbalanceConfig;
   let createService: ManagedOrderbookImbalanceContext['createLegacyService'];
 
+  type OrderbookImbalanceFixtures = Pick<
+    ManagedOrderbookImbalanceContext,
+    'service' | 'logger' | 'config' | 'createLegacyService'
+  >;
+
   function bindOrderbookImbalanceContext() {
-    let context: ManagedOrderbookImbalanceContext;
+    let fixtures: OrderbookImbalanceFixtures;
+    let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+      const context = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+      fixtures = {
+        service: context.service,
+        logger: context.logger,
+        config: context.config,
+        createLegacyService: context.createLegacyService,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindOrderbookImbalanceContext();
+  const getFixtures = bindOrderbookImbalanceContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ service, logger, config } = context);
-    createService = context.createLegacyService;
+    const fixtures = getFixtures();
+    ({ service, logger, config } = fixtures);
+    createService = fixtures.createLegacyService;
   });
 
   describe('initialization', () => {

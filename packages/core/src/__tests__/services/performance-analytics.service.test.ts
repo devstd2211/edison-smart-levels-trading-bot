@@ -31,24 +31,36 @@ describe('PerformanceAnalytics Service Tests', () => {
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
 
+  type PerformanceAnalyticsFixtures = Pick<
+    ManagedPerformanceAnalyticsContext,
+    'config' | 'journal' | 'logger'
+  >;
+
   function bindPerformanceAnalyticsContext() {
-    let context: ManagedPerformanceAnalyticsContext;
+    let fixtures: PerformanceAnalyticsFixtures;
+    let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedPerformanceAnalyticsContext();
+      const context = createManagedPerformanceAnalyticsContext();
+      fixtures = {
+        config: context.config,
+        journal: context.journal,
+        logger: context.logger,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindPerformanceAnalyticsContext();
+  const getFixtures = bindPerformanceAnalyticsContext();
 
   beforeEach(() => {
-    const context = getContext();
+    const context = getFixtures();
     analytics = createLegacyPerformanceAnalyticsService({
       config: context.config,
       journal: context.journal,

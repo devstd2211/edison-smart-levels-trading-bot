@@ -131,39 +131,50 @@ function createMockTradeRecord(realizedPnL: number = 10, quantity: number = 1): 
 }
 
 describe('RiskManager', () => {
+  type RiskManagerFixtures = Pick<
+    ManagedRiskManagerContext,
+    'mockLogger' | 'errorHandler' | 'riskManager' | 'createRiskManager'
+  >;
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
-  let context: ManagedRiskManagerContext;
   let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
 
   function bindRiskManagerContext() {
-    let managedContext: ManagedRiskManagerContext;
+    let fixtures: RiskManagerFixtures;
+    let cleanup: ManagedRiskManagerContext['cleanup'];
 
     beforeEach(() => {
       defaultConfig = createDefaultConfig();
-      managedContext = createManagedRiskManagerContext({
+      const managedContext = createManagedRiskManagerContext({
         config: defaultConfig,
         balance: 1000,
       });
+      fixtures = {
+        mockLogger: managedContext.mockLogger,
+        errorHandler: managedContext.errorHandler,
+        riskManager: managedContext.riskManager,
+        createRiskManager: managedContext.createRiskManager,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindRiskManagerContext();
+  const getFixtures = bindRiskManagerContext();
 
   beforeEach(() => {
-    context = getContext();
-    mockLogger = context.mockLogger;
-    errorHandler = context.errorHandler;
-    riskManager = context.riskManager;
-    createRiskManager = context.createRiskManager;
+    const fixtures = getFixtures();
+    mockLogger = fixtures.mockLogger;
+    errorHandler = fixtures.errorHandler;
+    riskManager = fixtures.riskManager;
+    createRiskManager = fixtures.createRiskManager;
   });
 
   describe('Constructor', () => {

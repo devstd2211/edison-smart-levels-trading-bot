@@ -26,29 +26,35 @@ import {
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
+  type PositionStateMachineFixtures = Pick<ManagedPositionStateMachineContext, 'logger'>;
   let logger: LoggerService;
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
 
   function bindPositionStateMachineContext() {
-    let context: ManagedPositionStateMachineContext;
+    let fixtures: PositionStateMachineFixtures;
+    let cleanup: ManagedPositionStateMachineContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedPositionStateMachineContext();
+      const context = createManagedPositionStateMachineContext();
+      fixtures = {
+        logger: context.logger,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(async () => {
-      await context.cleanup();
+      await cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindPositionStateMachineContext();
+  const getFixtures = bindPositionStateMachineContext();
 
   beforeEach(() => {
-    const context = getContext();
-    logger = context.logger;
+    const fixtures = getFixtures();
+    logger = fixtures.logger;
     createLegacyService = createLegacyPositionStateMachineService;
     createLegacyHarness = createLegacyPositionStateMachineHarness;
   });

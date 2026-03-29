@@ -23,7 +23,6 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  let context: ManagedRaceConditionPositionExitingContext;
   let positionExitingService: ManagedRaceConditionPositionExitingContext['service'];
   let mockLogger: ManagedRaceConditionPositionExitingContext['mockLogger'];
   let mockBybitService: ManagedRaceConditionPositionExitingContext['mockBybit'];
@@ -31,30 +30,45 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   let mockJournal: ManagedRaceConditionPositionExitingContext['mockJournal'];
   let mockSessionStats: ManagedRaceConditionPositionExitingContext['mockSessionStats'];
 
+  type RaceConditionFixtures = Pick<
+    ManagedRaceConditionPositionExitingContext,
+    'service' | 'mockLogger' | 'mockBybit' | 'mockTelegram' | 'mockJournal' | 'mockSessionStats'
+  >;
+
   function bindRaceConditionPositionExitingContext() {
-    let managedContext: ManagedRaceConditionPositionExitingContext;
+    let fixtures: RaceConditionFixtures;
+    let cleanup: ManagedRaceConditionPositionExitingContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedRaceConditionPositionExitingContext();
+      const managedContext = createManagedRaceConditionPositionExitingContext();
+      fixtures = {
+        service: managedContext.service,
+        mockLogger: managedContext.mockLogger,
+        mockBybit: managedContext.mockBybit,
+        mockTelegram: managedContext.mockTelegram,
+        mockJournal: managedContext.mockJournal,
+        mockSessionStats: managedContext.mockSessionStats,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindRaceConditionPositionExitingContext();
+  const getFixtures = bindRaceConditionPositionExitingContext();
 
   beforeEach(() => {
-    context = getContext();
-    positionExitingService = context.service;
-    mockLogger = context.mockLogger;
-    mockBybitService = context.mockBybit;
-    mockTelegram = context.mockTelegram;
-    mockJournal = context.mockJournal;
-    mockSessionStats = context.mockSessionStats;
+    const fixtures = getFixtures();
+    positionExitingService = fixtures.service;
+    mockLogger = fixtures.mockLogger;
+    mockBybitService = fixtures.mockBybit;
+    mockTelegram = fixtures.mockTelegram;
+    mockJournal = fixtures.mockJournal;
+    mockSessionStats = fixtures.mockSessionStats;
   });
 
   // =========================================================================

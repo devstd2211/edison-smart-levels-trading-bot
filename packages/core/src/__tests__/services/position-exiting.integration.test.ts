@@ -21,35 +21,47 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
-  let context: ManagedRealScenarioPositionExitingContext;
   let service: PositionExitingService;
   let mockBybitService: ManagedRealScenarioPositionExitingContext['mockBybit'];
   let mockLogger: ManagedRealScenarioPositionExitingContext['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
+  type RealScenarioFixtures = Pick<
+    ManagedRealScenarioPositionExitingContext,
+    'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager'
+  >;
+
   function bindRealScenarioPositionExitingContext() {
-    let managedContext: ManagedRealScenarioPositionExitingContext;
+    let fixtures: RealScenarioFixtures;
+    let cleanup: ManagedRealScenarioPositionExitingContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedRealScenarioPositionExitingContext();
+      const managedContext = createManagedRealScenarioPositionExitingContext();
+      fixtures = {
+        service: managedContext.service,
+        mockBybit: managedContext.mockBybit,
+        mockLogger: managedContext.mockLogger,
+        mockTakeProfitManager: managedContext.mockTakeProfitManager,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindRealScenarioPositionExitingContext();
+  const getFixtures = bindRealScenarioPositionExitingContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    mockLogger = context.mockLogger;
-    mockBybitService = context.mockBybit;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    mockLogger = fixtures.mockLogger;
+    mockBybitService = fixtures.mockBybit;
     mockTakeProfitManager =
-      context.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
+      fixtures.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {

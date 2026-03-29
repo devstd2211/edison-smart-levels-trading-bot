@@ -36,25 +36,35 @@ describe('OrderExecutionDetectorService', () => {
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
+  type OrderExecutionDetectorFixtures = Pick<
+    ManagedOrderExecutionDetectorContext,
+    'service' | 'logger'
+  >;
+
   function bindOrderExecutionDetectorContext() {
-    let context: ManagedOrderExecutionDetectorContext;
+    let fixtures: OrderExecutionDetectorFixtures;
+    let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+      const context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+      fixtures = {
+        service: context.service,
+        logger: context.logger,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindOrderExecutionDetectorContext();
+  const getFixtures = bindOrderExecutionDetectorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ service, logger } = context);
+    ({ service, logger } = getFixtures());
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger,

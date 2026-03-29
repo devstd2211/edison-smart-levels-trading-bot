@@ -44,7 +44,21 @@ const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
-  let context: ManagedPositionExitingContext;
+  type PositionExitingFixtures = Pick<
+    ManagedPositionExitingContext,
+    | 'service'
+    | 'mockLogger'
+    | 'mockBybit'
+    | 'mockTelegram'
+    | 'mockJournal'
+    | 'mockSessionStats'
+    | 'mockTakeProfitManager'
+    | 'mockPositionManager'
+    | 'tradingConfig'
+    | 'riskConfig'
+    | 'fullConfig'
+    | 'createHarness'
+  >;
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -58,34 +72,50 @@ describe('PositionExitingService', () => {
   let fullConfig: Config;
 
   function bindPositionExitingContext() {
-    let managedContext: ManagedPositionExitingContext;
+    let fixtures: PositionExitingFixtures;
+    let cleanup: ManagedPositionExitingContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedPositionExitingContext();
+      const managedContext = createManagedPositionExitingContext();
+      fixtures = {
+        service: managedContext.service,
+        mockLogger: managedContext.mockLogger,
+        mockBybit: managedContext.mockBybit,
+        mockTelegram: managedContext.mockTelegram,
+        mockJournal: managedContext.mockJournal,
+        mockSessionStats: managedContext.mockSessionStats,
+        mockTakeProfitManager: managedContext.mockTakeProfitManager,
+        mockPositionManager: managedContext.mockPositionManager,
+        tradingConfig: managedContext.tradingConfig,
+        riskConfig: managedContext.riskConfig,
+        fullConfig: managedContext.fullConfig,
+        createHarness: managedContext.createHarness,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindPositionExitingContext();
+  const getFixtures = bindPositionExitingContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    mockLogger = context.mockLogger;
-    mockBybit = context.mockBybit;
-    mockTelegram = context.mockTelegram;
-    mockJournal = context.mockJournal;
-    mockSessionStats = context.mockSessionStats;
-    mockTakeProfitManager = context.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
-    mockPositionManager = context.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
-    tradingConfig = context.tradingConfig;
-    riskConfig = context.riskConfig;
-    fullConfig = context.fullConfig;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    mockLogger = fixtures.mockLogger;
+    mockBybit = fixtures.mockBybit;
+    mockTelegram = fixtures.mockTelegram;
+    mockJournal = fixtures.mockJournal;
+    mockSessionStats = fixtures.mockSessionStats;
+    mockTakeProfitManager = fixtures.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
+    mockPositionManager = fixtures.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
+    tradingConfig = fixtures.tradingConfig;
+    riskConfig = fixtures.riskConfig;
+    fullConfig = fixtures.fullConfig;
   });
 
   describe('executeExitAction()', () => {
@@ -331,7 +361,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should calculate simple PnL without TakeProfitManager', async () => {
-      const noTakeProfitHarness = context.createHarness({
+      const noTakeProfitHarness = getFixtures().createHarness({
         withTakeProfitManager: false,
       });
       service = noTakeProfitHarness.service;

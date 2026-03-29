@@ -33,27 +33,39 @@ describe('OrderbookManagerService', () => {
   let logger: LoggerService;
   let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
 
+  type OrderbookManagerFixtures = Pick<
+    ManagedOrderbookManagerContext,
+    'loggerService' | 'service' | 'createLegacyService'
+  >;
+
   function bindOrderbookManagerContext() {
-    let context: ManagedOrderbookManagerContext;
+    let fixtures: OrderbookManagerFixtures;
+    let cleanup: ManagedOrderbookManagerContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedOrderbookManagerContext({ withErrorHandler: false });
+      const context = createManagedOrderbookManagerContext({ withErrorHandler: false });
+      fixtures = {
+        loggerService: context.loggerService,
+        service: context.service,
+        createLegacyService: context.createLegacyService,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindOrderbookManagerContext();
+  const getFixtures = bindOrderbookManagerContext();
 
   beforeEach(() => {
-    const context = getContext();
-    logger = context.loggerService;
-    manager = context.service;
-    createLegacyService = context.createLegacyService;
+    const fixtures = getFixtures();
+    logger = fixtures.loggerService;
+    manager = fixtures.service;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   describe('Snapshot handling', () => {

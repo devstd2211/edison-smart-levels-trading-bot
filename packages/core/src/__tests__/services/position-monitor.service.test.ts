@@ -61,16 +61,38 @@ describe('PositionMonitorService', () => {
   };
 
   function bindPositionMonitorContext() {
-    let context: ManagedPositionMonitorContext;
+    let managedMonitor: PositionMonitorFixtures['monitor'];
+    let managedBybit: PositionMonitorFixtures['mockBybit'];
+    let managedPositionManager: PositionMonitorFixtures['mockPositionManager'];
+    let managedTelegram: PositionMonitorFixtures['mockTelegram'];
+    let managedPositionSync: PositionMonitorFixtures['mockPositionSync'];
+    let managedPositionHarness: PositionMonitorFixtures['positionHarness'];
+    let managedRebuildMonitor: PositionMonitorFixtures['rebuildMonitor'];
     let cleanup: ManagedPositionMonitorContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedPositionMonitorContext({
+      const context = createManagedPositionMonitorContext({
         riskConfig: {
           ...defaultPositionMonitorRiskConfig,
           positionSizeUsdt: 10,
         },
       });
+      managedMonitor = context.monitor;
+      managedBybit = context.mockBybit;
+      managedPositionManager = context.mockPositionManager;
+      managedTelegram = context.mockTelegram;
+      managedPositionSync = context.mockPositionSync;
+      managedPositionHarness = context.positionHarness;
+      managedRebuildMonitor = (config: RiskManagementConfig): PositionMonitorService => {
+        const nextMonitor = context.rebuildMonitor(config);
+        managedMonitor = nextMonitor;
+        managedBybit = context.mockBybit;
+        managedPositionManager = context.mockPositionManager;
+        managedTelegram = context.mockTelegram;
+        managedPositionSync = context.mockPositionSync;
+        managedPositionHarness = context.positionHarness;
+        return nextMonitor;
+      };
       cleanup = context.cleanup;
     });
 
@@ -79,13 +101,13 @@ describe('PositionMonitorService', () => {
     });
 
     return (): PositionMonitorFixtures => ({
-      monitor: context.monitor,
-      mockBybit: context.mockBybit,
-      mockPositionManager: context.mockPositionManager,
-      mockTelegram: context.mockTelegram,
-      mockPositionSync: context.mockPositionSync,
-      positionHarness: context.positionHarness,
-      rebuildMonitor: context.rebuildMonitor,
+      monitor: managedMonitor,
+      mockBybit: managedBybit,
+      mockPositionManager: managedPositionManager,
+      mockTelegram: managedTelegram,
+      mockPositionSync: managedPositionSync,
+      positionHarness: managedPositionHarness,
+      rebuildMonitor: managedRebuildMonitor,
     });
   }
 

@@ -10,7 +10,6 @@ import {
 } from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
-  let context: ManagedResilienceCoordinatorContext;
   let coordinator: ResilienceCoordinator;
   let circuitBreaker: CircuitBreakerService;
   let rateLimiter: RateLimiterService;
@@ -18,30 +17,45 @@ describe('ResilienceCoordinator', () => {
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
 
+  type ResilienceCoordinatorFixtures = Pick<
+    ManagedResilienceCoordinatorContext,
+    'coordinator' | 'circuitBreaker' | 'rateLimiter' | 'retryPolicy' | 'bulkhead' | 'metrics'
+  >;
+
   function bindResilienceCoordinatorContext() {
-    let managedContext: ManagedResilienceCoordinatorContext;
+    let fixtures: ResilienceCoordinatorFixtures;
+    let cleanup: ManagedResilienceCoordinatorContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedResilienceCoordinatorContext();
+      const managedContext = createManagedResilienceCoordinatorContext();
+      fixtures = {
+        coordinator: managedContext.coordinator,
+        circuitBreaker: managedContext.circuitBreaker,
+        rateLimiter: managedContext.rateLimiter,
+        retryPolicy: managedContext.retryPolicy,
+        bulkhead: managedContext.bulkhead,
+        metrics: managedContext.metrics,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindResilienceCoordinatorContext();
+  const getFixtures = bindResilienceCoordinatorContext();
 
   beforeEach(() => {
-    context = getContext();
-    circuitBreaker = context.circuitBreaker;
-    rateLimiter = context.rateLimiter;
-    retryPolicy = context.retryPolicy;
-    bulkhead = context.bulkhead;
-    metrics = context.metrics;
-    coordinator = context.coordinator;
+    const fixtures = getFixtures();
+    circuitBreaker = fixtures.circuitBreaker;
+    rateLimiter = fixtures.rateLimiter;
+    retryPolicy = fixtures.retryPolicy;
+    bulkhead = fixtures.bulkhead;
+    metrics = fixtures.metrics;
+    coordinator = fixtures.coordinator;
   });
 
   // ===========================

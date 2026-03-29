@@ -43,28 +43,40 @@ describe('LadderTpManagerService', () => {
   let bybitService: jest.Mocked<IExchange>;
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
-  let context: ManagedLadderTpContext;
   let createInvalidService: ManagedLadderTpContext['createInvalidService'];
 
+  type LadderTpFixtures = Pick<
+    ManagedLadderTpContext,
+    'service' | 'logger' | 'bybitService' | 'config' | 'createInvalidService'
+  >;
+
   function bindLadderTpContext() {
-    let managedContext: ManagedLadderTpContext;
+    let fixtures: LadderTpFixtures;
+    let cleanup: ManagedLadderTpContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedLadderTpContext();
+      const managedContext = createManagedLadderTpContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        bybitService: managedContext.bybitService,
+        config: managedContext.config,
+        createInvalidService: managedContext.createInvalidService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindLadderTpContext();
+  const getFixtures = bindLadderTpContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ service, logger, bybitService, config, createInvalidService } = context);
+    ({ service, logger, bybitService, config, createInvalidService } = getFixtures());
   });
 
   // ==========================================================================

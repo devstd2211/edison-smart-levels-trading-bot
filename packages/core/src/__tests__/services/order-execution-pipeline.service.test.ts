@@ -33,25 +33,37 @@ describe('OrderExecutionPipeline', () => {
   let mockLogger: OrderExecutionPipelineMockLogger;
   let config: OrderExecutionConfig;
 
+  type OrderExecutionPipelineFixtures = Pick<
+    ManagedOrderExecutionPipelineContext,
+    'config' | 'exchange' | 'logger' | 'pipeline'
+  >;
+
   function bindOrderExecutionPipelineContext() {
-    let context: ManagedOrderExecutionPipelineContext;
+    let fixtures: OrderExecutionPipelineFixtures;
+    let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedOrderExecutionPipelineContext();
+      const context = createManagedOrderExecutionPipelineContext();
+      fixtures = {
+        config: context.config,
+        exchange: context.exchange,
+        logger: context.logger,
+        pipeline: context.pipeline,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindOrderExecutionPipelineContext();
+  const getFixtures = bindOrderExecutionPipelineContext();
 
   beforeEach(() => {
-    const context = getContext();
-    ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } = context);
+    ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } = getFixtures());
   });
 
   describe('Order Placement', () => {

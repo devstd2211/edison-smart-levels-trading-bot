@@ -15,27 +15,32 @@ import {
 
 describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
-  let context: ManagedMLFeatureExtractorContext;
+
+  type MLFeatureExtractorFixtures = Pick<ManagedMLFeatureExtractorContext, 'service'>;
 
   function bindMLFeatureExtractorContext() {
-    let managedContext: ManagedMLFeatureExtractorContext;
+    let fixtures: MLFeatureExtractorFixtures;
+    let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedMLFeatureExtractorContext();
+      const managedContext = createManagedMLFeatureExtractorContext();
+      fixtures = {
+        service: managedContext.service,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindMLFeatureExtractorContext();
+  const getFixtures = bindMLFeatureExtractorContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ service } = context);
+    ({ service } = getFixtures());
   });
 
   describe('extractFeatures', () => {

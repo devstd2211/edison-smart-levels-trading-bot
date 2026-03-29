@@ -23,25 +23,31 @@ import {
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
 
+  type MTFSnapshotGateFixtures = Pick<ManagedMTFSnapshotGateContext, 'gate'>;
+
   function bindMTFSnapshotGateContext() {
-    let context: ManagedMTFSnapshotGateContext;
+    let fixtures: MTFSnapshotGateFixtures;
+    let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
     beforeEach(() => {
-      context = createManagedMTFSnapshotGateContext();
+      const context = createManagedMTFSnapshotGateContext();
+      fixtures = {
+        gate: context.gate,
+      };
+      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      context.cleanup();
+      cleanup();
     });
 
-    return () => context;
+    return () => fixtures;
   }
 
-  const getContext = bindMTFSnapshotGateContext();
+  const getFixtures = bindMTFSnapshotGateContext();
 
   beforeEach(() => {
-    const context = getContext();
-    gate = context.gate;
+    gate = getFixtures().gate;
   });
 
   // ========================================================================

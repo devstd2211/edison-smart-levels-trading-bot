@@ -27,30 +27,40 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
-  let context: ManagedFunctionalPositionExitingContext;
   let service: PositionExitingService;
   let mockBybitService: ManagedFunctionalPositionExitingContext['mockBybit'];
 
+  type FunctionalPositionExitingFixtures = Pick<
+    ManagedFunctionalPositionExitingContext,
+    'service' | 'mockBybit'
+  >;
+
   function bindFunctionalPositionExitingContext() {
-    let managedContext: ManagedFunctionalPositionExitingContext;
+    let fixtures: FunctionalPositionExitingFixtures;
+    let cleanup: ManagedFunctionalPositionExitingContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedFunctionalPositionExitingContext();
+      const managedContext = createManagedFunctionalPositionExitingContext();
+      fixtures = {
+        service: managedContext.service,
+        mockBybit: managedContext.mockBybit,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindFunctionalPositionExitingContext();
+  const getFixtures = bindFunctionalPositionExitingContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    mockBybitService = context.mockBybit;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    mockBybitService = fixtures.mockBybit;
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {
