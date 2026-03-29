@@ -26,24 +26,25 @@ import {
 } from '../helpers/micro-wall-detector-test.utils';
 
 function bindMicroWallDetectorContext() {
-  let context: ManagedMicroWallDetectorContext;
+  let cleanup: ManagedMicroWallDetectorContext['cleanup'];
   let fixtures: Pick<
     ManagedMicroWallDetectorContext,
     'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
   >;
 
   beforeEach(() => {
-    context = createManagedMicroWallDetectorContext();
+    const managedContext = createManagedMicroWallDetectorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createStandardDetector: context.createStandardDetector,
-      createLegacyDetector: context.createLegacyDetector,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createStandardDetector: managedContext.createStandardDetector,
+      createLegacyDetector: managedContext.createLegacyDetector,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

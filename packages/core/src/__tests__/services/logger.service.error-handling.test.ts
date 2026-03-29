@@ -40,24 +40,25 @@ type LoggerTestFixtures = Pick<
 >;
 
 function bindLoggerTestContext() {
-  let context: ManagedLoggerTestContext;
+  let cleanup: ManagedLoggerTestContext['cleanup'];
   let fixtures: LoggerTestFixtures;
 
   beforeEach(() => {
-    context = createManagedLoggerTestContext();
+    const managedContext = createManagedLoggerTestContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      testLogDir: context.testLogDir,
-      errorHandler: context.errorHandler,
-      createLogger: context.createLogger,
-      createLegacyLogger: context.createLegacyLogger,
-      createInvalidStandardService: context.createInvalidStandardService,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      testLogDir: managedContext.testLogDir,
+      errorHandler: managedContext.errorHandler,
+      createLogger: managedContext.createLogger,
+      createLegacyLogger: managedContext.createLegacyLogger,
+      createInvalidStandardService: managedContext.createInvalidStandardService,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(async () => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

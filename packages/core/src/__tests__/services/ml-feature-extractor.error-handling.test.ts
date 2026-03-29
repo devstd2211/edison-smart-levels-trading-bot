@@ -18,25 +18,26 @@ const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
 function bindMLFeatureExtractorContext() {
-  let context: ManagedMLFeatureExtractorContext;
+  let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
   let fixtures: Pick<
     ManagedMLFeatureExtractorContext,
     'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService'
   >;
 
   beforeEach(() => {
-    context = createManagedMLFeatureExtractorContext();
+    const managedContext = createManagedMLFeatureExtractorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      logger: context.logger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      logger: managedContext.logger,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

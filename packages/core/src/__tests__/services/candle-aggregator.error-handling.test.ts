@@ -27,25 +27,26 @@ import {
 } from '../helpers/candle-aggregator-test.utils';
 
 function bindCandleAggregatorContext() {
-  let context: ManagedCandleAggregatorContext;
+  let cleanup: ManagedCandleAggregatorContext['cleanup'];
   let fixtures: Pick<
     ManagedCandleAggregatorContext,
     'service' | 'errorHandler' | 'mockLogger' | 'createStandardService' | 'createLegacyService'
   >;
 
   beforeEach(() => {
-    context = createManagedCandleAggregatorContext();
+    const managedContext = createManagedCandleAggregatorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      mockLogger: context.mockLogger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      mockLogger: managedContext.mockLogger,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

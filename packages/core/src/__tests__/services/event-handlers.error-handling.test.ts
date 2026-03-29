@@ -66,48 +66,50 @@ type WebSocketEventHandlerFixtures = Pick<
 >;
 
 function bindPositionEventHandlerContext() {
-  let context: ManagedPositionEventHandlerContext;
+  let cleanup: ManagedPositionEventHandlerContext['cleanup'];
   let fixtures: PositionEventHandlerFixtures;
 
   beforeEach(() => {
-    context = createManagedPositionEventHandlerContext();
+    const managedContext = createManagedPositionEventHandlerContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      mockPositionManager: context.mockPositionManager,
-      mockPositionExitingService: context.mockPositionExitingService,
-      mockBybitService: context.mockBybitService,
-      mockTelegram: context.mockTelegram,
-      mockLogger: context.mockLogger,
-      createStandardHandler: context.createStandardHandler,
+      mockPositionManager: managedContext.mockPositionManager,
+      mockPositionExitingService: managedContext.mockPositionExitingService,
+      mockBybitService: managedContext.mockBybitService,
+      mockTelegram: managedContext.mockTelegram,
+      mockLogger: managedContext.mockLogger,
+      createStandardHandler: managedContext.createStandardHandler,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
 }
 
 function bindWebSocketEventHandlerContext() {
-  let context: ManagedWebSocketEventHandlerContext;
+  let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
   let fixtures: WebSocketEventHandlerFixtures;
 
   beforeEach(() => {
-    context = createManagedEventHandlersWebSocketContext();
+    const managedContext = createManagedEventHandlersWebSocketContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      handler: context.handler,
-      mockPositionManager: context.mockPositionManager,
-      mockPositionExitingService: context.mockPositionExitingService,
-      mockBybitService: context.mockBybitService,
-      mockWebSocketManager: context.mockWebSocketManager,
-      mockJournal: context.mockJournal,
-      mockTelegram: context.mockTelegram,
-      mockLogger: context.mockLogger,
+      handler: managedContext.handler,
+      mockPositionManager: managedContext.mockPositionManager,
+      mockPositionExitingService: managedContext.mockPositionExitingService,
+      mockBybitService: managedContext.mockBybitService,
+      mockWebSocketManager: managedContext.mockWebSocketManager,
+      mockJournal: managedContext.mockJournal,
+      mockTelegram: managedContext.mockTelegram,
+      mockLogger: managedContext.mockLogger,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

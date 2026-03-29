@@ -30,21 +30,22 @@ const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
 
 function bindExitTypeDetectorContext() {
-  let context: ManagedExitTypeDetectorContext;
+  let cleanup: ManagedExitTypeDetectorContext['cleanup'];
   let fixtures: Pick<ManagedExitTypeDetectorContext, 'logger' | 'service' | 'createScenario'>;
 
   beforeEach(() => {
     const mockLogger = createExitTypeDetectorMockLogger();
-    context = createManagedExitTypeDetectorContext({ logger: mockLogger });
+    const managedContext = createManagedExitTypeDetectorContext({ logger: mockLogger });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      service: context.service,
-      createScenario: context.createScenario,
+      logger: managedContext.logger,
+      service: managedContext.service,
+      createScenario: managedContext.createScenario,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

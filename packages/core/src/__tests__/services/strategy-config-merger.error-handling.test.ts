@@ -20,23 +20,24 @@ type StrategyConfigMergerFixtures = Pick<
 >;
 
 function bindStrategyConfigMergerContext() {
-  let context: ManagedStrategyConfigMergerContext;
+  let cleanup: ManagedStrategyConfigMergerContext['cleanup'];
   let fixtures: StrategyConfigMergerFixtures;
 
   beforeEach(() => {
-    context = createManagedStrategyConfigMergerContext({
+    const managedContext = createManagedStrategyConfigMergerContext({
       logger: createStrategyConfigMergerLogger(),
     });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      service: context.service,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      logger: managedContext.logger,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

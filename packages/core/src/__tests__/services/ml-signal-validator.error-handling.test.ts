@@ -32,25 +32,26 @@ import {
 } from '../helpers/ml-signal-validator-test.utils';
 
 function bindMLSignalValidatorContext() {
-  let context: ManagedMLSignalValidatorContext;
+  let cleanup: ManagedMLSignalValidatorContext['cleanup'];
   let fixtures: Pick<
     ManagedMLSignalValidatorContext,
     'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
   >;
 
   beforeEach(() => {
-    context = createManagedMLSignalValidatorContext();
+    const managedContext = createManagedMLSignalValidatorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      service: context.service,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

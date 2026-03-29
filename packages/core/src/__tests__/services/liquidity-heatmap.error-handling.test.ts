@@ -40,25 +40,26 @@ import {
 function bindLiquidityHeatmapContext(
   options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
 ) {
-  let context: ManagedLiquidityHeatmapContext;
+  let cleanup: ManagedLiquidityHeatmapContext['cleanup'];
   let fixtures: Pick<
     ManagedLiquidityHeatmapContext,
     'service' | 'logger' | 'createService' | 'createStandardService' | 'createLegacyService'
   >;
 
   beforeEach(() => {
-    context = createManagedLiquidityHeatmapContext(options);
+    const managedContext = createManagedLiquidityHeatmapContext(options);
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      logger: context.logger,
-      createService: context.createService,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      service: managedContext.service,
+      logger: managedContext.logger,
+      createService: managedContext.createService,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

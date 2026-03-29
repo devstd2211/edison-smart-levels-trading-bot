@@ -28,27 +28,28 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
+  let cleanup: ManagedFundingRateFilterContext['cleanup'];
   let createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
   let createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
   function bindFundingRateFilterContext() {
-    let context: ManagedFundingRateFilterContext;
     let fixtures: FundingRateFilterFixtures;
 
     beforeEach(() => {
-      context = createManagedFundingRateFilterContext();
+      const managedContext = createManagedFundingRateFilterContext();
+      cleanup = managedContext.cleanup;
       fixtures = {
-        logger: context.logger,
-        config: context.config,
-        mockGetFundingRate: context.mockGetFundingRate,
-        errorHandler: context.errorHandler,
-        createStandardFilter: context.createStandardFilter,
-        createLegacyFilter: context.createLegacyFilter,
+        logger: managedContext.logger,
+        config: managedContext.config,
+        mockGetFundingRate: managedContext.mockGetFundingRate,
+        errorHandler: managedContext.errorHandler,
+        createStandardFilter: managedContext.createStandardFilter,
+        createLegacyFilter: managedContext.createLegacyFilter,
       };
     });
 
     afterEach(async () => {
-      await context.cleanup();
+      await cleanup();
     });
 
     return () => fixtures;

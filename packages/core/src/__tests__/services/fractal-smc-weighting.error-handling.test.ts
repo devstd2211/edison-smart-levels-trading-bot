@@ -38,22 +38,23 @@ type FractalSmcWeightingFixtures = Pick<
 >;
 
 function bindFractalSmcWeightingContext() {
-  let context: ManagedFractalSmcWeightingContext;
+  let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
   let fixtures: FractalSmcWeightingFixtures;
 
   beforeEach(() => {
     const mockLogger = createFractalSmcWeightingMockLogger();
-    context = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+    const managedContext = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      service: context.service,
-      createService: context.createService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

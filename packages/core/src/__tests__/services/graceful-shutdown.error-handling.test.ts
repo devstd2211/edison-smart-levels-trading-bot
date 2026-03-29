@@ -45,7 +45,7 @@ const mockExit = jest.fn(() => {
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
 function bindGracefulShutdownContext() {
-  let context: ManagedGracefulShutdownTestContext;
+  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
   let fixtures: {
     manager: ManagedGracefulShutdownTestContext['manager'];
     harness: ManagedGracefulShutdownTestContext['harness'];
@@ -56,24 +56,25 @@ function bindGracefulShutdownContext() {
   };
 
   beforeEach(() => {
-    context = createManagedGracefulShutdownTestContext({
+    const managedContext = createManagedGracefulShutdownTestContext({
       position: createMockShutdownPosition({ reason: 'error-handling-test' }),
     });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      manager: context.manager,
-      harness: context.harness,
+      manager: managedContext.manager,
+      harness: managedContext.harness,
       mocks: {
-        positionLifecycleService: context.mocks.positionLifecycleService,
-        actionQueue: context.mocks.actionQueue,
-        exchange: context.mocks.exchange,
-        logger: context.mocks.logger,
-        eventBus: context.mocks.eventBus,
+        positionLifecycleService: managedContext.mocks.positionLifecycleService,
+        actionQueue: managedContext.mocks.actionQueue,
+        exchange: managedContext.mocks.exchange,
+        logger: managedContext.mocks.logger,
+        eventBus: managedContext.mocks.eventBus,
       },
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

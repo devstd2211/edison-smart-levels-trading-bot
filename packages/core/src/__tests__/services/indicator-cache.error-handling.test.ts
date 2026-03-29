@@ -28,24 +28,25 @@ import {
 } from '../helpers/indicator-cache-test.utils';
 
 function bindIndicatorCacheContext() {
-  let context: ManagedIndicatorCacheContext;
+  let cleanup: ManagedIndicatorCacheContext['cleanup'];
   let fixtures: Pick<
     ManagedIndicatorCacheContext,
     'logger' | 'errorHandler' | 'repository' | 'cache'
   >;
 
   beforeEach(() => {
-    context = createManagedIndicatorCacheContext();
+    const managedContext = createManagedIndicatorCacheContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      repository: context.repository,
-      cache: context.cache,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      repository: managedContext.repository,
+      cache: managedContext.cache,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

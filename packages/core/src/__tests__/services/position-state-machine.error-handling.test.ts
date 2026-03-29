@@ -38,7 +38,7 @@ import {
 } from '../helpers/position-state-machine-test.utils';
 
 function bindPositionStateMachineContext() {
-  let context: ManagedPositionStateMachineContext;
+  let cleanup: ManagedPositionStateMachineContext['cleanup'];
   let fixtures: Pick<
     ManagedPositionStateMachineContext,
     | 'logger'
@@ -49,20 +49,21 @@ function bindPositionStateMachineContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedPositionStateMachineContext({
+    const managedContext = createManagedPositionStateMachineContext({
       logger: createMockPositionStateMachineLogger(),
     });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      testDataDir: context.testDataDir,
-      createStandardService: context.createStandardService,
-      createInitializedStandardService: context.createInitializedStandardService,
-      createInitializedLegacyService: context.createInitializedLegacyService,
+      logger: managedContext.logger,
+      testDataDir: managedContext.testDataDir,
+      createStandardService: managedContext.createStandardService,
+      createInitializedStandardService: managedContext.createInitializedStandardService,
+      createInitializedLegacyService: managedContext.createInitializedLegacyService,
     };
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
   });
 
   return () => fixtures;

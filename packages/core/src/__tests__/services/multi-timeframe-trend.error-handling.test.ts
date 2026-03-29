@@ -28,25 +28,26 @@ import {
 } from '../helpers/multi-timeframe-trend-test.utils';
 
 function bindMultiTimeframeTrendContext() {
-  let context: ManagedMultiTimeframeTrendContext;
+  let cleanup: ManagedMultiTimeframeTrendContext['cleanup'];
   let fixtures: Pick<
     ManagedMultiTimeframeTrendContext,
     'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService'
   >;
 
   beforeEach(() => {
-    context = createManagedMultiTimeframeTrendContext();
+    const managedContext = createManagedMultiTimeframeTrendContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      logger: context.logger,
-      swingPointDetector: context.swingPointDetector,
-      createService: context.createService,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      logger: managedContext.logger,
+      swingPointDetector: managedContext.swingPointDetector,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

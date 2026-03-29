@@ -17,20 +17,21 @@ import {
 } from '../helpers/entry-confirmation-test.utils';
 
 function bindEntryConfirmationContext() {
-  let context: ManagedEntryConfirmationContext;
+  let cleanup: ManagedEntryConfirmationContext['cleanup'];
   let fixtures: Pick<ManagedEntryConfirmationContext, 'manager' | 'logger' | 'errorHandler'>;
 
   beforeEach(() => {
-    context = createManagedEntryConfirmationContext();
+    const managedContext = createManagedEntryConfirmationContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      manager: context.manager,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
+      manager: managedContext.manager,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

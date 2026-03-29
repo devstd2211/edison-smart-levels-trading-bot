@@ -31,17 +31,29 @@ import {
 } from '../helpers/ladder-tp-manager-test.utils';
 
 function bindLadderTpContext() {
-  let context: ManagedLadderTpContext;
+  let cleanup: ManagedLadderTpContext['cleanup'];
+  let fixtures: Pick<
+    ManagedLadderTpContext,
+    'logger' | 'bybitService' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+  >;
 
   beforeEach(() => {
-    context = createManagedLadderTpContext();
+    const managedContext = createManagedLadderTpContext();
+    cleanup = managedContext.cleanup;
+    fixtures = {
+      logger: managedContext.logger,
+      bybitService: managedContext.bybitService,
+      errorHandler: managedContext.errorHandler,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 // ============================================================================
@@ -65,15 +77,7 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   const getContext = bindLadderTpContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: LadderTpFixtures = {
-      logger: context.logger,
-      bybitService: context.bybitService,
-      errorHandler: context.errorHandler,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures: LadderTpFixtures = getContext();
     ({ logger, bybitService, errorHandler } = fixtures);
     createStandardService = fixtures.createStandardService;
     createLegacyService = fixtures.createLegacyService;

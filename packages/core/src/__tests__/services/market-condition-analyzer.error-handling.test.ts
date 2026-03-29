@@ -29,24 +29,25 @@ import {
 } from '../helpers/market-condition-analyzer-test.utils';
 
 function bindMarketConditionContext() {
-  let context: ManagedMarketConditionContext;
+  let cleanup: ManagedMarketConditionContext['cleanup'];
   let fixtures: Pick<
     ManagedMarketConditionContext,
     'logger' | 'errorHandler' | 'service' | 'createService'
   >;
 
   beforeEach(() => {
-    context = createManagedMarketConditionContext();
+    const managedContext = createManagedMarketConditionContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      service: context.service,
-      createService: context.createService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

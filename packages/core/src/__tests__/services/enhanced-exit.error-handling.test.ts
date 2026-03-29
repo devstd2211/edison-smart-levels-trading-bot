@@ -24,23 +24,24 @@ import {
 } from '../helpers/enhanced-exit-test.utils';
 
 function bindEnhancedExitContext() {
-  let context: ManagedEnhancedExitContext;
+  let cleanup: ManagedEnhancedExitContext['cleanup'];
   let fixtures: Pick<
     ManagedEnhancedExitContext,
     'logger' | 'errorHandler' | 'createService'
   >;
 
   beforeEach(() => {
-    context = createManagedEnhancedExitContext();
+    const managedContext = createManagedEnhancedExitContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

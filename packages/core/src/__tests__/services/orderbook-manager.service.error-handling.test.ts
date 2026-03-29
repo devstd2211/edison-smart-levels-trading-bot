@@ -23,17 +23,35 @@ import {
 } from '../helpers/orderbook-manager-test.utils';
 
 function bindOrderbookManagerContext() {
-  let context: ManagedOrderbookManagerContext;
+  let cleanup: ManagedOrderbookManagerContext['cleanup'];
+  let fixtures: Pick<
+    ManagedOrderbookManagerContext,
+    | 'service'
+    | 'mockLogger'
+    | 'createLegacyService'
+    | 'createServiceWithoutWallTracker'
+    | 'mockWallTracker'
+    | 'errorHandler'
+  >;
 
   beforeEach(() => {
-    context = createManagedOrderbookManagerContext();
+    const managedContext = createManagedOrderbookManagerContext();
+    cleanup = managedContext.cleanup;
+    fixtures = {
+      service: managedContext.service,
+      mockLogger: managedContext.mockLogger,
+      createLegacyService: managedContext.createLegacyService,
+      createServiceWithoutWallTracker: managedContext.createServiceWithoutWallTracker,
+      mockWallTracker: managedContext.mockWallTracker,
+      errorHandler: managedContext.errorHandler,
+    };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {

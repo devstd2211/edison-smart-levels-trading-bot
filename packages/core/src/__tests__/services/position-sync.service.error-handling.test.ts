@@ -44,7 +44,7 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 function bindPositionSyncContext() {
-  let context: ManagedPositionSyncContext;
+  let cleanup: ManagedPositionSyncContext['cleanup'];
   let fixtures: Pick<
     ManagedPositionSyncContext,
     'errorHandler' | 'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
@@ -52,20 +52,21 @@ function bindPositionSyncContext() {
 
   beforeEach(() => {
     const errorHandler = createPositionSyncErrorHandler();
-    context = createManagedPositionSyncContext({ errorHandler });
+    const managedContext = createManagedPositionSyncContext({ errorHandler });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      errorHandler: context.errorHandler,
-      service: context.service,
-      mockBybit: context.mockBybit,
-      mockPositionManager: context.mockPositionManager,
-      mockExitTypeDetector: context.mockExitTypeDetector,
-      mockTelegram: context.mockTelegram,
-      logger: context.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      mockBybit: managedContext.mockBybit,
+      mockPositionManager: managedContext.mockPositionManager,
+      mockExitTypeDetector: managedContext.mockExitTypeDetector,
+      mockTelegram: managedContext.mockTelegram,
+      logger: managedContext.logger,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

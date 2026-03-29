@@ -24,7 +24,7 @@ import {
 } from '../helpers/indicator-precalculation-test.utils';
 
 function bindIndicatorPrecalculationContext() {
-  let context: ManagedIndicatorPrecalculationContext;
+  let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
   let fixtures: Pick<
     ManagedIndicatorPrecalculationContext,
     | 'service'
@@ -38,21 +38,22 @@ function bindIndicatorPrecalculationContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedIndicatorPrecalculationContext();
+    const managedContext = createManagedIndicatorPrecalculationContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      candleProvider: context.candleProvider,
-      cache: context.cache,
-      calculators: context.calculators,
-      createStandardService: context.createStandardService,
-      createLegacyHarness: context.createLegacyHarness,
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      candleProvider: managedContext.candleProvider,
+      cache: managedContext.cache,
+      calculators: managedContext.calculators,
+      createStandardService: managedContext.createStandardService,
+      createLegacyHarness: managedContext.createLegacyHarness,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

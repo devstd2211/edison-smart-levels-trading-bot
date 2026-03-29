@@ -34,19 +34,20 @@ import {
 // ============================================================================
 
 function bindLadderExitContext() {
-  let context: ManagedLadderExitContext;
+  let cleanup: ManagedLadderExitContext['cleanup'];
   let fixtures: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
 
   beforeEach(() => {
-    context = createManagedLadderExitContext();
+    const managedContext = createManagedLadderExitContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      bybitService: context.bybitService,
+      logger: managedContext.logger,
+      bybitService: managedContext.bybitService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
