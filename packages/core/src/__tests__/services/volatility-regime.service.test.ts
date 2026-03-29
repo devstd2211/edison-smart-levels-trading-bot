@@ -10,6 +10,7 @@ import {
 } from '../helpers/volatility-regime-test.utils';
 
 describe('VolatilityRegimeService', () => {
+  type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
   let service: VolatilityRegimeService;
   let logger: LoggerService;
   let createService: ManagedVolatilityRegimeContext['createLegacyService'];
@@ -21,7 +22,7 @@ describe('VolatilityRegimeService', () => {
 
   function bindVolatilityRegimeContext() {
     let fixtures: VolatilityRegimeFixtures;
-    let cleanup: ManagedVolatilityRegimeContext['cleanup'];
+    let cleanup: VolatilityRegimeCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });

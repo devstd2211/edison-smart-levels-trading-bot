@@ -17,11 +17,14 @@ import {
 } from '../../helpers/resilience-test.utils';
 
 describe('CircuitBreakerService', () => {
-  let context: ManagedCircuitBreakerContext;
+  type ResilienceCircuitBreakerFixtures = Pick<
+    ManagedCircuitBreakerContext,
+    'logger' | 'errorHandler' | 'createDefaultService' | 'createInvalidService' | 'harness'
+  >;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
-  let createDefaultService: ManagedCircuitBreakerContext['createDefaultService'];
-  let createInvalidService: ManagedCircuitBreakerContext['createInvalidService'];
+  let createDefaultService: ResilienceCircuitBreakerFixtures['createDefaultService'];
+  let createInvalidService: ResilienceCircuitBreakerFixtures['createInvalidService'];
   let createService: (
     config?: Partial<CircuitBreakerConfig>,
     serviceLogger?: LoggerService,
@@ -29,32 +32,41 @@ describe('CircuitBreakerService', () => {
   ) => CircuitBreakerService;
 
   function bindCircuitBreakerContext() {
-    let managedContext: ManagedCircuitBreakerContext;
+    let fixtures: ResilienceCircuitBreakerFixtures;
+    let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedCircuitBreakerContext();
+      const managedContext = createManagedCircuitBreakerContext();
+      fixtures = {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        createDefaultService: managedContext.createDefaultService,
+        createInvalidService: managedContext.createInvalidService,
+        harness: managedContext.harness,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindCircuitBreakerContext();
 
   beforeEach(() => {
-    context = getContext();
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    createDefaultService = context.createDefaultService;
-    createInvalidService = context.createInvalidService;
+    const fixtures = getContext();
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    createDefaultService = fixtures.createDefaultService;
+    createInvalidService = fixtures.createInvalidService;
     createService = (
       config = {},
       serviceLogger = logger as LoggerService,
       handler = errorHandler,
-    ) => context.harness.createCircuitBreakerService(config, { logger: serviceLogger, errorHandler: handler });
+    ) => fixtures.harness.createCircuitBreakerService(config, { logger: serviceLogger, errorHandler: handler });
   });
 
   // ============================================================================

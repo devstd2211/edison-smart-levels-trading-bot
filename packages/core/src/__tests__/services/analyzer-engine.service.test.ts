@@ -34,23 +34,25 @@ import {
 // ============================================================================
 
 describe('AnalyzerEngineService', () => {
+  type AnalyzerEngineScenarioMap = Map<
+    string,
+    { instance: IAnalyzer; weight: number; priority: number }
+  >;
+  type AnalyzerEngineScenarioOptions = {
+    analyzerNames?: string[];
+    candleCount?: number;
+  };
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
   let createScenario: (
-    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
-    options?: {
-      analyzerNames?: string[];
-      candleCount?: number;
-    },
+    analyzers: AnalyzerEngineScenarioMap,
+    options?: AnalyzerEngineScenarioOptions,
   ) => ManagedAnalyzerEngineContext;
 
   type AnalyzerEngineScenarioFactory = (
-    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
-    options?: {
-      analyzerNames?: string[];
-      candleCount?: number;
-    },
+    analyzers: AnalyzerEngineScenarioMap,
+    options?: AnalyzerEngineScenarioOptions,
   ) => ManagedAnalyzerEngineContext;
 
   function bindAnalyzerEngineScenarioContext() {
@@ -70,11 +72,8 @@ describe('AnalyzerEngineService', () => {
     return {
       getLogger: () => managedLogger,
       createScenario: (
-        analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
-        options: {
-          analyzerNames?: string[];
-          candleCount?: number;
-        } = {},
+        analyzers: AnalyzerEngineScenarioMap,
+        options: AnalyzerEngineScenarioOptions = {},
       ) => {
         const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
           logger: managedLogger,

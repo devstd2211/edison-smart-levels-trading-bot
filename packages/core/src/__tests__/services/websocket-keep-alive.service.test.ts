@@ -11,6 +11,7 @@ import {
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
   type MockWebSocket,
+  type ManagedWebSocketKeepAliveContext,
 } from '../helpers/websocket-keep-alive-test.utils';
 
 // ============================================================================
@@ -18,16 +19,8 @@ import {
 // ============================================================================
 
 describe('WebSocketKeepAliveService', () => {
-  let service: WebSocketKeepAliveService;
-  let logger: LoggerService;
-  let mockWs: MockWebSocket;
-  let createStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStandardService'];
-  let createStartedStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedStandardService'];
-  let createStartedService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedService'];
-  let createWebSocket: ReturnType<typeof createManagedWebSocketKeepAliveContext>['harness']['createWebSocket'];
-
   type WebSocketKeepAliveFixtures = Pick<
-    ReturnType<typeof createManagedWebSocketKeepAliveContext>,
+    ManagedWebSocketKeepAliveContext,
     | 'service'
     | 'logger'
     | 'websocket'
@@ -36,6 +29,13 @@ describe('WebSocketKeepAliveService', () => {
     | 'createStartedService'
     | 'harness'
   >;
+  let service: WebSocketKeepAliveService;
+  let logger: LoggerService;
+  let mockWs: MockWebSocket;
+  let createStandardService: WebSocketKeepAliveFixtures['createStandardService'];
+  let createStartedStandardService: WebSocketKeepAliveFixtures['createStartedStandardService'];
+  let createStartedService: WebSocketKeepAliveFixtures['createStartedService'];
+  let createWebSocket: WebSocketKeepAliveFixtures['harness']['createWebSocket'];
 
   function bindWebSocketKeepAliveContext() {
     let fixtures: WebSocketKeepAliveFixtures;

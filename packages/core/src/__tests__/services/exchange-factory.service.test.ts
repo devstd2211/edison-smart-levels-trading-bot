@@ -12,17 +12,17 @@ import {
   createBybitExchangeFactoryConfig,
   createExchangeFactoryConfig,
   createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let createFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createFactory'];
-  let createBybitFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createBybitFactory'];
-  let createBinanceFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createBinanceFactory'];
-
   type ExchangeFactoryFixtures = Pick<
-    ReturnType<typeof createManagedExchangeFactoryContext>,
+    ManagedExchangeFactoryContext,
     'createFactory' | 'createBybitFactory' | 'createBinanceFactory'
   >;
+  let createFactory: ExchangeFactoryFixtures['createFactory'];
+  let createBybitFactory: ExchangeFactoryFixtures['createBybitFactory'];
+  let createBinanceFactory: ExchangeFactoryFixtures['createBinanceFactory'];
 
   function bindExchangeFactoryContext() {
     let fixtures: ExchangeFactoryFixtures;

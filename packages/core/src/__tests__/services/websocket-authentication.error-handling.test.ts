@@ -17,17 +17,22 @@ import {
   type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
+type WebSocketAuthenticationFixtures = Pick<
+  ManagedWebSocketAuthenticationContext,
+  | 'service'
+  | 'errorHandler'
+  | 'mockLogger'
+  | 'createService'
+  | 'createLegacyService'
+  | 'createServiceWithoutLogger'
+>;
+type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFixtures['createService'];
+type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFixtures['createLegacyService'];
+type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFixtures['createServiceWithoutLogger'];
+
 function bindWebSocketAuthenticationContext() {
   let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
-  let fixtures: Pick<
-    ManagedWebSocketAuthenticationContext,
-    | 'service'
-    | 'errorHandler'
-    | 'mockLogger'
-    | 'createService'
-    | 'createLegacyService'
-    | 'createServiceWithoutLogger'
-  >;
+  let fixtures: WebSocketAuthenticationFixtures;
 
   beforeEach(() => {
     const context = createManagedWebSocketAuthenticationContext();
@@ -53,13 +58,20 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;
-  let createService: ManagedWebSocketAuthenticationContext['createService'];
-  let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
-  let createServiceWithoutLogger: ManagedWebSocketAuthenticationContext['createServiceWithoutLogger'];
+  let createService: WebSocketAuthenticationServiceFactory;
+  let createLegacyService: WebSocketAuthenticationLegacyServiceFactory;
+  let createServiceWithoutLogger: WebSocketAuthenticationLoggerlessFactory;
   const getContext = bindWebSocketAuthenticationContext();
 
   beforeEach(() => {
-    ({ service, errorHandler, mockLogger, createService, createLegacyService, createServiceWithoutLogger } = getContext());
+    ({
+      service,
+      errorHandler,
+      mockLogger,
+      createService,
+      createLegacyService,
+      createServiceWithoutLogger,
+    } = getContext());
   });
 
   // ===== THROW: Input Validation =====

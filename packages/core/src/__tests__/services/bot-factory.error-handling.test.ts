@@ -39,9 +39,11 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   throw error;
 };
 
+type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
+
 function bindTrackedServicesContext() {
   let context: ManagedTrackedServicesContext;
-  let fixtures: Pick<ManagedTrackedServicesContext, 'trackedServices'>;
+  let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {
     context = createManagedTrackedServicesContext();
@@ -59,7 +61,7 @@ function bindTrackedServicesContext() {
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let validConfig: Config;
-  let trackedServices: ManagedTrackedServicesContext['trackedServices'];
+  let trackedServices: BotFactoryTrackedServicesFixtures['trackedServices'];
   const getContext = bindTrackedServicesContext();
 
   beforeEach(() => {

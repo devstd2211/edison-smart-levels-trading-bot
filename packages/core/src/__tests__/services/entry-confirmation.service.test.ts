@@ -9,6 +9,7 @@ import {
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -24,7 +25,7 @@ describe('EntryConfirmationManager', () => {
   let logger: LoggerService;
 
   type EntryConfirmationFixtures = Pick<
-    ReturnType<typeof createManagedEntryConfirmationContext>,
+    ManagedEntryConfirmationContext,
     'manager' | 'logger'
   >;
 

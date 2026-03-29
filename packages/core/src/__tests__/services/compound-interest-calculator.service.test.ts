@@ -17,32 +17,41 @@ import {
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
+  type CompoundInterestFixtures = Pick<
+    ManagedCompoundInterestContext,
+    'logger' | 'mockGetBalance' | 'createCalculator'
+  >;
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
-  let createCalculator: ManagedCompoundInterestContext['createCalculator'];
-  let context: ManagedCompoundInterestContext;
+  let createCalculator: CompoundInterestFixtures['createCalculator'];
 
   const defaultConfig = createCompoundInterestConfig();
 
   function bindCompoundInterestContext() {
-    let managedContext: ManagedCompoundInterestContext;
+    let fixtures: CompoundInterestFixtures;
+    let cleanup: ManagedCompoundInterestContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedLegacyCompoundInterestContext();
+      const managedContext = createManagedLegacyCompoundInterestContext();
+      fixtures = {
+        logger: managedContext.logger,
+        mockGetBalance: managedContext.mockGetBalance,
+        createCalculator: managedContext.createCalculator,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindCompoundInterestContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ logger, mockGetBalance, createCalculator } = context);
+    ({ logger, mockGetBalance, createCalculator } = getContext());
   });
 
   // ============================================================================

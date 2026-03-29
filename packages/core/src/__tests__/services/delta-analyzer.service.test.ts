@@ -14,6 +14,7 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
+  type DeltaAnalyzerCleanup = ManagedDeltaAnalyzerContext['cleanup'];
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
@@ -25,7 +26,7 @@ describe('DeltaAnalyzerService', () => {
 
   function bindDeltaAnalyzerContext() {
     let fixtures: DeltaAnalyzerFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: DeltaAnalyzerCleanup | undefined;
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();

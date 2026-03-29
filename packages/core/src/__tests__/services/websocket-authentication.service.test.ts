@@ -9,6 +9,7 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
@@ -17,12 +18,11 @@ import {
 
 describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
-  let createService: ReturnType<typeof createManagedWebSocketAuthenticationContext>['createStandardService'];
-
   type WebSocketAuthenticationFixtures = Pick<
-    ReturnType<typeof createManagedWebSocketAuthenticationContext>,
+    ManagedWebSocketAuthenticationContext,
     'service' | 'createStandardService'
   >;
+  let createService: WebSocketAuthenticationFixtures['createStandardService'];
 
   function bindWebSocketAuthenticationContext() {
     let fixtures: WebSocketAuthenticationFixtures;

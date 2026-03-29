@@ -25,28 +25,15 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
+  type ManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  type DynamicPositionSizerService = ReturnType<typeof createManagedDynamicPositionSizerContext>['service'];
-  let service: DynamicPositionSizerService;
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let mockConfig: SizingConfig;
-  let createInvalidService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createInvalidService'];
-  let createBrokenService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createNoHandlerService'];
-  let createService: (options?: {
-    config?: SizingConfig;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  }) => DynamicPositionSizerService;
-
   type DynamicPositionSizerFixtures = Pick<
-    ReturnType<typeof createManagedDynamicPositionSizerContext>,
+    ManagedDynamicPositionSizerContext,
     | 'service'
     | 'logger'
     | 'errorHandler'
@@ -56,6 +43,19 @@ describe('DynamicPositionSizerService', () => {
     | 'createNoHandlerService'
     | 'createService'
   >;
+  type DynamicPositionSizerService = DynamicPositionSizerFixtures['service'];
+  let service: DynamicPositionSizerService;
+  let logger: LoggerService;
+  let errorHandler: ErrorHandler;
+  let mockConfig: SizingConfig;
+  let createInvalidService: DynamicPositionSizerFixtures['createInvalidService'];
+  let createBrokenService: DynamicPositionSizerFixtures['createBrokenService'];
+  let createNoHandlerService: DynamicPositionSizerFixtures['createNoHandlerService'];
+  let createService: (options?: {
+    config?: SizingConfig;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => DynamicPositionSizerService;
 
   function bindDynamicPositionSizerContext() {
     let fixtures: DynamicPositionSizerFixtures;

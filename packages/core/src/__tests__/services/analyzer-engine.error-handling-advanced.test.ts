@@ -73,6 +73,17 @@ type ManagedAnalyzerEngineScenarioFixtures = Pick<
   ManagedAnalyzerEngineContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
+type AnalyzerEngineScenarioMap = Map<
+  string,
+  { instance: IAnalyzer; weight: number; priority: number }
+>;
+type AnalyzerEngineScenarioOptions = {
+  registry?: AnalyzerRegistryService;
+  logger?: AnalyzerEngineMockLogger;
+  errorHandler?: ErrorHandler;
+  analyzerNames?: string[];
+  candleCount?: number;
+};
 
 /**
  * Create ErrorHandler with callback spies
@@ -179,14 +190,8 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: ReturnType<typeof createMockLogger>;
   let createScenario: (
-    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
-    options?: {
-      registry?: AnalyzerRegistryService;
-      logger?: AnalyzerEngineMockLogger;
-      errorHandler?: ErrorHandler;
-      analyzerNames?: string[];
-      candleCount?: number;
-    },
+    analyzers: AnalyzerEngineScenarioMap,
+    options?: AnalyzerEngineScenarioOptions,
   ) => ManagedAnalyzerEngineScenarioFixtures;
   const bindScenario = bindManagedAnalyzerEngineScenarios();
 

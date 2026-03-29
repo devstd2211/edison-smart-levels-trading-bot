@@ -9,6 +9,7 @@ import {
   createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
@@ -17,7 +18,7 @@ describe('TFAlignmentService', () => {
   let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
   type TFAlignmentFixtures = Pick<
-    ReturnType<typeof createManagedTFAlignmentContext>,
+    ManagedTFAlignmentContext,
     'service' | 'config'
   >;
 

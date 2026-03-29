@@ -12,27 +12,30 @@ import {
   createWhaleDetectionConfigWithWallBreak,
   createManagedWhaleDetectionContext,
   createWhaleDetectionWall,
+  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
+type WhaleDetectorScenarioOptions = {
+  strategy?: 'BREAKOUT' | 'FOLLOW';
+  withErrorHandler?: boolean;
+  walls?: OrderBookWall[];
+  ratio?: number;
+  direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+};
+type WhaleDetectionFixtures = Pick<
+  ManagedWhaleDetectionContext,
+  'detector' | 'logger' | 'config' | 'createLegacyService' | 'createScenario'
+>;
+type WhaleDetectorLegacyServiceFactory = WhaleDetectionFixtures['createLegacyService'];
+type WhaleDetectorScenarioFactory = WhaleDetectionFixtures['createScenario'];
 
 describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
   let logger: LoggerService;
   let config: WhaleDetectorConfig;
-  let createService: ReturnType<typeof createManagedWhaleDetectionContext>['createLegacyService'];
-  let createScenario: (options?: {
-    strategy?: 'BREAKOUT' | 'FOLLOW';
-    withErrorHandler?: boolean;
-    walls?: OrderBookWall[];
-    ratio?: number;
-    direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  }) => ReturnType<ReturnType<typeof createManagedWhaleDetectionContext>['createScenario']>;
-
-  type WhaleDetectionFixtures = Pick<
-    ReturnType<typeof createManagedWhaleDetectionContext>,
-    'detector' | 'logger' | 'config' | 'createLegacyService' | 'createScenario'
-  >;
+  let createService: WhaleDetectorLegacyServiceFactory;
+  let createScenario: (options?: WhaleDetectorScenarioOptions) => ReturnType<WhaleDetectorScenarioFactory>;
 
   function bindWhaleDetectionContext() {
     let fixtures: WhaleDetectionFixtures;

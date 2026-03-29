@@ -34,11 +34,14 @@ type MockBotServices = ManagedBotInitializerTestContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-
 type BotInitializerFixtures = Pick<
   ManagedBotInitializerTestContext,
   'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler'
 >;
+type BotInitializerConfig = BotInitializerFixtures['config'];
+type BotInitializerErrorHandler = BotInitializerFixtures['errorHandler'];
+type BotInitializerRebuild = BotInitializerFixtures['rebuild'];
+type BotInitializerWithoutHandlerFactory = BotInitializerFixtures['createWithoutHandler'];
 
 function bindBotInitializerContext() {
   let context: ManagedBotInitializerTestContext;
@@ -71,10 +74,10 @@ function bindBotInitializerContext() {
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
-  let config: ManagedBotInitializerTestContext['config'];
-  let errorHandler: ManagedBotInitializerTestContext['errorHandler'];
-  let rebuild: ManagedBotInitializerTestContext['rebuild'];
-  let createWithoutHandler: ManagedBotInitializerTestContext['createWithoutHandler'];
+  let config: BotInitializerConfig;
+  let errorHandler: BotInitializerErrorHandler;
+  let rebuild: BotInitializerRebuild;
+  let createWithoutHandler: BotInitializerWithoutHandlerFactory;
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,

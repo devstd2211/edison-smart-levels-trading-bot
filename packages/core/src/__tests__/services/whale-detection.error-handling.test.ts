@@ -17,16 +17,27 @@ import {
   createManagedWhaleDetectionContext,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
-  createWhaleDetectionService,
   type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
+type WhaleDetectionFixtures = Pick<
+  ManagedWhaleDetectionContext,
+  'createStandardService' | 'createLegacyService' | 'createScenario'
+>;
+type WhaleDetectionServiceFactory = WhaleDetectionFixtures['createStandardService'];
+type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['createLegacyService'];
+type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['createScenario'];
+type WhaleDetectionScenarioOptions = {
+  config?: WhaleDetectorConfig;
+  logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
+  withErrorHandler?: boolean;
+  ratio?: number;
+  direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+};
+
 function bindWhaleDetectionContext() {
   let cleanup: ManagedWhaleDetectionContext['cleanup'];
-  let fixtures: Pick<
-    ManagedWhaleDetectionContext,
-    'createStandardService' | 'createLegacyService' | 'createScenario'
-  >;
+  let fixtures: WhaleDetectionFixtures;
 
   beforeEach(() => {
     const context = createManagedWhaleDetectionContext();
@@ -51,15 +62,9 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
-  let createService: ManagedWhaleDetectionContext['createStandardService'];
-  let createLegacyService: ManagedWhaleDetectionContext['createLegacyService'];
-  let createScenario: (options?: {
-    config?: WhaleDetectorConfig;
-    logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
-    withErrorHandler?: boolean;
-    ratio?: number;
-    direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-  }) => ReturnType<ManagedWhaleDetectionContext['createScenario']>;
+  let createService: WhaleDetectionServiceFactory;
+  let createLegacyService: WhaleDetectionLegacyServiceFactory;
+  let createScenario: (options?: WhaleDetectionScenarioOptions) => ReturnType<WhaleDetectionScenarioFactory>;
   const getContext = bindWhaleDetectionContext();
 
   beforeEach(() => {

@@ -13,29 +13,37 @@ import {
 
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
-    let context: ManagedConfigValidatorContext;
-    let validateAtStartup: ManagedConfigValidatorContext['validateAtStartup'];
-    let validConfig: ManagedConfigValidatorContext['validConfig'];
+    type ConfigValidatorFixtures = Pick<
+      ManagedConfigValidatorContext,
+      'validateAtStartup' | 'validConfig'
+    >;
+    let validateAtStartup: ConfigValidatorFixtures['validateAtStartup'];
+    let validConfig: ConfigValidatorFixtures['validConfig'];
 
     function bindConfigValidatorContext() {
-      let managedContext: ManagedConfigValidatorContext;
+      let fixtures: ConfigValidatorFixtures;
+      let cleanup: ManagedConfigValidatorContext['cleanup'];
 
       beforeEach(() => {
-        managedContext = createManagedConfigValidatorContext();
+        const managedContext = createManagedConfigValidatorContext();
+        fixtures = {
+          validateAtStartup: managedContext.validateAtStartup,
+          validConfig: managedContext.validConfig,
+        };
+        cleanup = managedContext.cleanup;
       });
 
       afterEach(() => {
-        managedContext.cleanup();
+        cleanup();
       });
 
-      return () => managedContext;
+      return () => fixtures;
     }
 
     const getContext = bindConfigValidatorContext();
 
     beforeEach(() => {
-      context = getContext();
-      ({ validateAtStartup, validConfig } = context);
+      ({ validateAtStartup, validConfig } = getContext());
     });
 
     it('should pass validation for valid config', () => {

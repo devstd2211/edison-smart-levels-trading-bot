@@ -18,6 +18,7 @@ import {
   createManagedHealthCheckContext,
   createStandardHealthCheckService,
   type HealthCheckTestHarness,
+  type ManagedHealthCheckContext,
 } from '../helpers/health-check-test.utils';
 
 describe('HealthCheckService', () => {
@@ -25,7 +26,7 @@ describe('HealthCheckService', () => {
   let harness: HealthCheckTestHarness;
 
   type HealthCheckFixtures = Pick<
-    ReturnType<typeof createManagedHealthCheckContext>,
+    ManagedHealthCheckContext,
     'service' | 'harness'
   >;
 

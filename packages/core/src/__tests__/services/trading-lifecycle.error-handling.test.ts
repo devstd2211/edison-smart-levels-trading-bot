@@ -30,13 +30,16 @@ import {
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
+type TradingLifecycleFixtures = Pick<
+  ManagedTradingLifecycleContext,
+  'logger' | 'eventBus' | 'actionQueue' | 'rebuild' | 'harness'
+>;
+type TradingLifecycleRebuild = TradingLifecycleFixtures['rebuild'];
+type TradingLifecycleHarness = TradingLifecycleFixtures['harness'];
 
 function bindTradingLifecycleContext() {
   let cleanup: ManagedTradingLifecycleContext['cleanup'];
-  let fixtures: Pick<
-    ManagedTradingLifecycleContext,
-    'logger' | 'eventBus' | 'actionQueue' | 'rebuild' | 'harness'
-  >;
+  let fixtures: TradingLifecycleFixtures;
 
   beforeEach(() => {
     const context = createManagedTradingLifecycleContext();
@@ -62,17 +65,13 @@ function bindTradingLifecycleContext() {
 // ============================================================================
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
-  type TradingLifecycleFixtures = Pick<
-    ManagedTradingLifecycleContext,
-    'logger' | 'eventBus' | 'actionQueue' | 'rebuild' | 'harness'
-  >;
   let manager: TradingLifecycleManager;
   let mockLogger: MockTradingLifecycleLogger;
   let mockEventBus: MockTradingLifecycleEventBus;
   let mockActionQueue: MockTradingLifecycleActionQueue;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let rebuild: ManagedTradingLifecycleContext['rebuild'];
-  let harness: ManagedTradingLifecycleContext['harness'];
+  let rebuild: TradingLifecycleRebuild;
+  let harness: TradingLifecycleHarness;
   const getContext = bindTradingLifecycleContext();
 
   beforeEach(() => {

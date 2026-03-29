@@ -16,32 +16,39 @@ import {
 } from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService', () => {
+  type StrategyLoaderFixtures = Pick<
+    ManagedStrategyLoaderContext,
+    'tempDir' | 'loader' | 'createLoader'
+  >;
   let tempDir: string;
   let loader: StrategyLoaderService;
-  let createLoader: ReturnType<typeof createStrategyLoaderHarness>['createLoader'];
-  let context: ManagedStrategyLoaderContext;
+  let createLoader: StrategyLoaderFixtures['createLoader'];
 
   function bindStrategyLoaderContext() {
-    let managedContext: ManagedStrategyLoaderContext;
+    let fixtures: StrategyLoaderFixtures;
+    let cleanup: ManagedStrategyLoaderContext['cleanup'];
 
     beforeEach(async () => {
-      managedContext = await createManagedStrategyLoaderContext();
+      const managedContext = await createManagedStrategyLoaderContext();
+      fixtures = {
+        tempDir: managedContext.tempDir,
+        loader: managedContext.loader,
+        createLoader: managedContext.createLoader,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await managedContext.cleanup();
+      await cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindStrategyLoaderContext();
 
   beforeEach(() => {
-    context = getContext();
-    tempDir = context.tempDir;
-    loader = context.loader;
-    createLoader = context.createLoader;
+    ({ tempDir, loader, createLoader } = getContext());
   });
 
   describe('loadStrategy', () => {

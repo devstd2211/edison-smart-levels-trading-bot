@@ -14,33 +14,43 @@ import {
 } from '../../helpers/resilience-test.utils';
 
 describe('BulkheadService', () => {
-  let context: ManagedBulkheadContext;
+  type BulkheadFixtures = Pick<
+    ManagedBulkheadContext,
+    'createDefaultService' | 'createInvalidService' | 'createService'
+  >;
   let service: BulkheadService | undefined;
-  let createDefaultService: ManagedBulkheadContext['createDefaultService'];
-  let createInvalidService: ManagedBulkheadContext['createInvalidService'];
+  let createDefaultService: BulkheadFixtures['createDefaultService'];
+  let createInvalidService: BulkheadFixtures['createInvalidService'];
 
   function bindBulkheadContext() {
-    let managedContext: ManagedBulkheadContext;
+    let fixtures: BulkheadFixtures;
+    let cleanup: ManagedBulkheadContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedBulkheadContext();
+      const managedContext = createManagedBulkheadContext();
+      fixtures = {
+        createDefaultService: managedContext.createDefaultService,
+        createInvalidService: managedContext.createInvalidService,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
       service = undefined;
       jest.clearAllTimers();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindBulkheadContext();
 
   beforeEach(() => {
-    context = getContext();
-    createDefaultService = context.createDefaultService;
-    createInvalidService = context.createInvalidService;
+    const fixtures = getContext();
+    createDefaultService = fixtures.createDefaultService;
+    createInvalidService = fixtures.createInvalidService;
   });
 
   // ============================================================================
@@ -76,7 +86,7 @@ describe('BulkheadService', () => {
 
   describe('Pool Management', () => {
     it('should create pool on first use', async () => {
-      service = context.createService({ maxConcurrent: 2, queueSize: 5 });
+      service = getContext().createService({ maxConcurrent: 2, queueSize: 5 });
 
       await service.execute('api-pool', async () => 'success');
 
@@ -86,7 +96,7 @@ describe('BulkheadService', () => {
     });
 
     it('should throw when max pools exceeded', async () => {
-      service = context.createService({ maxConcurrent: 1 });
+      service = getContext().createService({ maxConcurrent: 1 });
 
       // Create 50 pools (MAX_BULKHEADS)
       for (let i = 0; i < 50; i++) {
@@ -105,7 +115,7 @@ describe('BulkheadService', () => {
 
   describe('Execution', () => {
     it('should execute immediately when pool not full', async () => {
-      service = context.createService({ maxConcurrent: 2 });
+      service = getContext().createService({ maxConcurrent: 2 });
 
       const result = await service.execute('test-pool', async () => 'success');
       expect(result).toBe('success');
@@ -116,7 +126,7 @@ describe('BulkheadService', () => {
     });
 
     it('should track active workers correctly', async () => {
-      service = context.createService({ maxConcurrent: 2 });
+      service = getContext().createService({ maxConcurrent: 2 });
 
       let resolve1: () => void;
       let resolve2: () => void;
@@ -148,7 +158,7 @@ describe('BulkheadService', () => {
     });
 
     it('should handle operation errors correctly', async () => {
-      service = context.createService({ maxConcurrent: 1 });
+      service = getContext().createService({ maxConcurrent: 1 });
 
       await expect(service.execute('test-pool', async () => {
         throw new Error('Operation failed');
@@ -163,7 +173,7 @@ describe('BulkheadService', () => {
     });
 
     it('should execute operations in FIFO order from queue', async () => {
-      service = context.createService({ maxConcurrent: 1, queueSize: 5 });
+      service = getContext().createService({ maxConcurrent: 1, queueSize: 5 });
 
       const results: number[] = [];
       let resolveFirst: () => void;
@@ -194,7 +204,7 @@ describe('BulkheadService', () => {
     });
 
     it('should use custom config per pool', async () => {
-      service = context.createService({ maxConcurrent: 1 });
+      service = getContext().createService({ maxConcurrent: 1 });
 
       // Create pool with custom config
       await service.execute('custom-pool', async () => 'success', {
@@ -212,7 +222,7 @@ describe('BulkheadService', () => {
 
   describe('Rejection Policies', () => {
     it('should reject immediately with FAIL_FAST policy', async () => {
-      service = context.createService({
+      service = getContext().createService({
         maxConcurrent: 1,
         queueSize: 0,
         rejectPolicy: 'FAIL_FAST',
@@ -237,7 +247,7 @@ describe('BulkheadService', () => {
     });
 
     it('should queue operations with QUEUE policy', async () => {
-      service = context.createService({
+      service = getContext().createService({
         maxConcurrent: 1,
         queueSize: 5,
         rejectPolicy: 'QUEUE',
@@ -266,7 +276,7 @@ describe('BulkheadService', () => {
     });
 
     it('should timeout queued operations with TIMEOUT policy', async () => {
-      service = context.createService({
+      service = getContext().createService({
         maxConcurrent: 1,
         queueSize: 5,
         rejectPolicy: 'TIMEOUT',
@@ -303,7 +313,7 @@ describe('BulkheadService', () => {
 
   describe('Integration Tests', () => {
     it('should handle multiple pools independently', async () => {
-      service = context.createService({ maxConcurrent: 1, queueSize: 5 });
+      service = getContext().createService({ maxConcurrent: 1, queueSize: 5 });
 
       let resolveApi: () => void;
       let resolveWs: () => void;
@@ -335,7 +345,7 @@ describe('BulkheadService', () => {
     });
 
     it('should reset pool correctly', async () => {
-      service = context.createService({ maxConcurrent: 1, queueSize: 5 });
+      service = getContext().createService({ maxConcurrent: 1, queueSize: 5 });
 
       let resolveFirst: () => void;
 
@@ -373,7 +383,7 @@ describe('BulkheadService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler and Logger', async () => {
-      service = context.createService(
+      service = getContext().createService(
         { maxConcurrent: 2 },
         { logger: undefined, errorHandler: undefined },
       );

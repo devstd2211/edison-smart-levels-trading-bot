@@ -6,16 +6,16 @@ import { TakeProfitManagerService } from '../../services/take-profit-manager.ser
 import { LoggerService, PositionSide } from '../../types/legacy';
 import {
   createManagedTakeProfitManagerContext,
+  type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService', () => {
   let logger: LoggerService;
-  let createManager: ReturnType<typeof createManagedTakeProfitManagerContext>['createManager'];
-
   type TakeProfitManagerFixtures = Pick<
-    ReturnType<typeof createManagedTakeProfitManagerContext>,
+    ManagedTakeProfitManagerContext,
     'logger' | 'createManager'
   >;
+  let createManager: TakeProfitManagerFixtures['createManager'];
 
   function bindTakeProfitManagerContext() {
     let fixtures: TakeProfitManagerFixtures;

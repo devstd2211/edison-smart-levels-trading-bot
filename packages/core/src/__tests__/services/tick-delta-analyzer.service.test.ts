@@ -10,16 +10,16 @@ import {
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 describe('TickDeltaAnalyzerService', () => {
   let service: TickDeltaAnalyzerService;
-  let createService: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['createService'];
-
   type TickDeltaAnalyzerFixtures = Pick<
-    ReturnType<typeof createManagedTickDeltaAnalyzerContext>,
+    ManagedTickDeltaAnalyzerContext,
     'service' | 'createService'
   >;
+  let createService: TickDeltaAnalyzerFixtures['createService'];
 
   function bindTickDeltaAnalyzerContext() {
     let fixtures: TickDeltaAnalyzerFixtures;
