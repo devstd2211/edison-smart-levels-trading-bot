@@ -22,21 +22,22 @@ type ExchangeFactoryFixtures = Pick<
 >;
 
 function bindExchangeFactoryContext() {
-  let context: ManagedExchangeFactoryContext;
+  let cleanup: ManagedExchangeFactoryContext['cleanup'];
   let fixtures: ExchangeFactoryFixtures;
 
   beforeEach(() => {
-    context = createManagedExchangeFactoryContext();
+    const managedContext = createManagedExchangeFactoryContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      mockLogger: context.mockLogger,
-      errorHandler: context.errorHandler,
-      createFactory: context.createFactory,
-      createFactoryWithoutErrorHandler: context.createFactoryWithoutErrorHandler,
+      mockLogger: managedContext.mockLogger,
+      errorHandler: managedContext.errorHandler,
+      createFactory: managedContext.createFactory,
+      createFactoryWithoutErrorHandler: managedContext.createFactoryWithoutErrorHandler,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

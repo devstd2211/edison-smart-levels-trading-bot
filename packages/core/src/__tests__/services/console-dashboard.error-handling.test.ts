@@ -18,22 +18,23 @@ import {
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 
 function bindConsoleDashboardContext() {
-  let context: ManagedConsoleDashboardContext;
+  let cleanup: ManagedConsoleDashboardContext['cleanup'];
   let fixtures: Pick<
     ManagedConsoleDashboardContext,
     'createService' | 'createLegacyService'
   >;
 
   beforeEach(() => {
-    context = createManagedConsoleDashboardContext();
+    const managedContext = createManagedConsoleDashboardContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

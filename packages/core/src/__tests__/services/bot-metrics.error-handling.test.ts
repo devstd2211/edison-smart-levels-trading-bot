@@ -25,22 +25,23 @@ type BotMetricsFixtures = Pick<
 >;
 
 function bindBotMetricsContext() {
-  let context: ManagedBotMetricsTestContext;
+  let cleanup: ManagedBotMetricsTestContext['cleanup'];
   let fixtures: BotMetricsFixtures;
 
   beforeEach(() => {
-    context = createManagedBotMetricsTestContext();
+    const managedContext = createManagedBotMetricsTestContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      service: context.service,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

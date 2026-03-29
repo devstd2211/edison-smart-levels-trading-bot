@@ -12,6 +12,7 @@ import {
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
+  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const createMockOrder = createExitTypeDetectorOrder;
@@ -33,7 +34,7 @@ describe('ExitTypeDetectorService', () => {
   }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
 
   type ExitTypeDetectorFixtures = Pick<
-    ReturnType<typeof createManagedExitTypeDetectorContext>,
+    ManagedExitTypeDetectorContext,
     'service' | 'logger' | 'createScenario'
   >;
 

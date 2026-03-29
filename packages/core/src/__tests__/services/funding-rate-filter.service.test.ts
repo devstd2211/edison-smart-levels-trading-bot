@@ -7,16 +7,17 @@ import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../t
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
+  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let createFilter: ReturnType<typeof createManagedFundingRateFilterContext>['createLegacyFilter'];
+  let createFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
   type FundingRateFilterFixtures = Pick<
-    ReturnType<typeof createManagedFundingRateFilterContext>,
+    ManagedFundingRateFilterContext,
     'logger' | 'config' | 'mockGetFundingRate' | 'createLegacyFilter'
   >;
 

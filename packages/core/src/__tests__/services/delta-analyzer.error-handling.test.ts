@@ -19,24 +19,25 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 function bindDeltaAnalyzerContext() {
-  let context: ManagedDeltaAnalyzerContext;
+  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
   let fixtures: Pick<
     ManagedDeltaAnalyzerContext,
     'logger' | 'errorHandler' | 'createHarness' | 'createService'
   >;
 
   beforeEach(() => {
-    context = createManagedDeltaAnalyzerContext();
+    const managedContext = createManagedDeltaAnalyzerContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createHarness: context.createHarness,
-      createService: context.createService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createHarness: managedContext.createHarness,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

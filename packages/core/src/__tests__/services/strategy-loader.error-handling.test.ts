@@ -65,6 +65,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   const getContext = bindStrategyLoaderContext();
 
   beforeEach(async () => {
+    const fixtures: StrategyLoaderFixtures = getContext();
     ({
       errorHandler: mockErrorHandler,
       tempDir: testStrategiesDir,
@@ -72,7 +73,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
       createLoader,
       fileReadSpy,
       dirReadSpy,
-    } = getContext());
+    } = fixtures);
   });
 
   // ============================================================================

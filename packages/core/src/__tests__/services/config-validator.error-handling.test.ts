@@ -44,23 +44,24 @@ type ConfigValidatorFixtures = Pick<
 >;
 
 function bindConfigValidatorContext() {
-  let context: ManagedConfigValidatorContext;
+  let cleanup: ManagedConfigValidatorContext['cleanup'];
   let fixtures: ConfigValidatorFixtures;
 
   beforeEach(() => {
-    context = createManagedConfigValidatorContext();
+    const managedContext = createManagedConfigValidatorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      validator: context.validator,
-      createValidator: context.createValidator,
-      createLegacyValidator: context.createLegacyValidator,
-      validConfig: context.validConfig,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      validator: managedContext.validator,
+      createValidator: managedContext.createValidator,
+      createLegacyValidator: managedContext.createLegacyValidator,
+      validConfig: managedContext.validConfig,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

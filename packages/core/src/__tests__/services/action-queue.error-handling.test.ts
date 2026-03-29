@@ -16,22 +16,23 @@ type ActionQueueFixtures = Pick<
 >;
 
 function bindActionQueueContext() {
-  let context: ManagedActionQueueContext;
+  let cleanup: ManagedActionQueueContext['cleanup'];
   let fixtures: ActionQueueFixtures;
 
   beforeEach(() => {
-    context = createManagedActionQueueContext();
+    const managedContext = createManagedActionQueueContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      createAction: context.createAction,
-      createHandler: context.createHandler,
-      enqueueActions: context.enqueueActions,
-      createActionBatch: context.createActionBatch,
+      service: managedContext.service,
+      createAction: managedContext.createAction,
+      createHandler: managedContext.createHandler,
+      enqueueActions: managedContext.enqueueActions,
+      createActionBatch: managedContext.createActionBatch,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

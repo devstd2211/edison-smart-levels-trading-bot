@@ -64,6 +64,10 @@ function bindPositionMonitorContext(
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
+  type PositionMonitorErrorFixtures = Pick<
+    ManagedPositionMonitorContext,
+    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
+  >;
   let monitor: PositionMonitorService;
   let mockBybit: ManagedPositionMonitorContext['mockBybit'];
   let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
@@ -73,7 +77,7 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   const getContext = bindPositionMonitorContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures: PositionMonitorErrorFixtures = getContext();
     monitor = fixtures.monitor;
     mockBybit = fixtures.mockBybit;
     mockPositionManager = fixtures.mockPositionManager;

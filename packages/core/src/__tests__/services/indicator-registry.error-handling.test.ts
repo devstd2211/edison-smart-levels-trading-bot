@@ -33,22 +33,23 @@ type IndicatorRegistryFixtures = Pick<
 >;
 
 function bindIndicatorRegistryContext() {
-  let context: ManagedIndicatorRegistryContext;
+  let cleanup: ManagedIndicatorRegistryContext['cleanup'];
   let fixtures: IndicatorRegistryFixtures;
 
   beforeEach(() => {
-    context = createManagedIndicatorRegistryContext();
+    const managedContext = createManagedIndicatorRegistryContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      registry: context.registry,
-      createStandardRegistry: context.createStandardRegistry,
-      createLegacyRegistry: context.createLegacyRegistry,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      registry: managedContext.registry,
+      createStandardRegistry: managedContext.createStandardRegistry,
+      createLegacyRegistry: managedContext.createLegacyRegistry,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

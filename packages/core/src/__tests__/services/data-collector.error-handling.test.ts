@@ -20,7 +20,7 @@ import {
 } from '../helpers/data-collector-test.utils';
 
 function bindDataCollectorContext() {
-  let context: ManagedDataCollectorContext;
+  let cleanup: ManagedDataCollectorContext['cleanup'];
   let fixtures: Pick<
     ManagedDataCollectorContext,
     | 'logger'
@@ -34,21 +34,22 @@ function bindDataCollectorContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedDataCollectorContext();
+    const managedContext = createManagedDataCollectorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      config: context.config,
-      createDatabase: context.createDatabase,
-      createWriter: context.createWriter,
-      createLegacyWriter: context.createLegacyWriter,
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      config: managedContext.config,
+      createDatabase: managedContext.createDatabase,
+      createWriter: managedContext.createWriter,
+      createLegacyWriter: managedContext.createLegacyWriter,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

@@ -22,28 +22,41 @@ import {
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
+  type PrometheusMetricsFixtures = Pick<
+    ManagedPrometheusMetricsTestContext,
+    'service' | 'logger' | 'createService' | 'createStartedService'
+  >;
   let service: PrometheusMetricsService;
-  let context: ManagedPrometheusMetricsTestContext;
+  let logger: ManagedPrometheusMetricsTestContext['logger'];
+  let createService: ManagedPrometheusMetricsTestContext['createService'];
+  let createStartedService: ManagedPrometheusMetricsTestContext['createStartedService'];
 
   function bindPrometheusMetricsContext() {
-    let managedContext: ManagedPrometheusMetricsTestContext;
+    let fixtures: PrometheusMetricsFixtures;
+    let cleanup: ManagedPrometheusMetricsTestContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedPrometheusMetricsTestContext();
+      const managedContext = createManagedPrometheusMetricsTestContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        createService: managedContext.createService,
+        createStartedService: managedContext.createStartedService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindPrometheusMetricsContext();
+  const getFixtures = bindPrometheusMetricsContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
+    ({ service, logger, createService, createStartedService } = getFixtures());
   });
 
   // ==========================================================================
@@ -52,37 +65,37 @@ describe('PrometheusMetricsService', () => {
 
   describe('Initialization', () => {
     it('should initialize with default config', () => {
-      const svc = context.createService();
+      const svc = createService();
       expect(svc).toBeDefined();
     });
 
     it('should initialize with custom prefix', () => {
-      const svc = context.createService({ prefix: 'my_bot_' }, context.logger, undefined);
+      const svc = createService({ prefix: 'my_bot_' }, logger, undefined);
       expect(svc).toBeDefined();
     });
 
     it('should initialize with logger', () => {
-      const svc = context.createService({}, context.logger, undefined);
-      expect(context.logger.info).toHaveBeenCalledWith(
+      const svc = createService({}, logger, undefined);
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('initialized'),
         expect.any(Object)
       );
     });
 
     it('should initialize with auto-collection', () => {
-      const svc = context.createStartedService({ collectInterval: 1000 }, context.logger, undefined);
+      const svc = createStartedService({ collectInterval: 1000 }, logger, undefined);
       expect(svc).toBeDefined();
     });
 
     it('should initialize with default labels', () => {
-      const svc = context.createService(
+      const svc = createService(
         {
           defaultLabels: {
             env: 'test',
             bot: 'v1',
           },
         },
-        context.logger,
+        logger,
         undefined,
       );
       expect(svc).toBeDefined();
@@ -339,14 +352,14 @@ describe('PrometheusMetricsService', () => {
 
   describe('Lifecycle Management', () => {
     it('should start and stop auto-collection', () => {
-      const svc = context.createStartedService({ collectInterval: 100 }, context.logger, undefined);
+      const svc = createStartedService({ collectInterval: 100 }, logger, undefined);
 
       expect(svc).toBeDefined();
 
       // Stop collection
       svc.stop();
 
-      expect(context.logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('stopped'),
         expect.any(Object)
       );
@@ -363,7 +376,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without logger', () => {
-      const svc = context.createService(undefined, undefined, undefined);
+      const svc = createService(undefined, undefined, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);
@@ -372,7 +385,7 @@ describe('PrometheusMetricsService', () => {
     });
 
     it('should work without errorHandler', () => {
-      const svc = context.createService({}, context.logger, undefined);
+      const svc = createService({}, logger, undefined);
 
       svc.incrementOrdersPlaced('Buy', 'BTCUSDT', 'market');
       svc.updateActivePositions(3);

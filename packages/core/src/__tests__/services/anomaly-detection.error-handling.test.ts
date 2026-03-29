@@ -35,22 +35,23 @@ type AnomalyDetectionFixtures = Pick<
 >;
 
 function bindAnomalyDetectionContext() {
-  let context: ManagedAnomalyDetectionContext;
+  let cleanup: ManagedAnomalyDetectionContext['cleanup'];
   let fixtures: AnomalyDetectionFixtures;
 
   beforeEach(() => {
-    context = createManagedAnomalyDetectionContext();
+    const managedContext = createManagedAnomalyDetectionContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

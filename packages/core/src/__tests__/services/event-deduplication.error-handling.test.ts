@@ -25,24 +25,25 @@ import {
 } from '../helpers/event-deduplication-test.utils';
 
 function bindEventDeduplicationContext() {
-  let context: ManagedEventDeduplicationContext;
+  let cleanup: ManagedEventDeduplicationContext['cleanup'];
   let fixtures: Pick<
     ManagedEventDeduplicationContext,
     'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
   >;
 
   beforeEach(() => {
-    context = createManagedEventDeduplicationContext();
+    const managedContext = createManagedEventDeduplicationContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createServiceWithDefaults: context.createServiceWithDefaults,
-      createLegacyService: context.createLegacyService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createServiceWithDefaults: managedContext.createServiceWithDefaults,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

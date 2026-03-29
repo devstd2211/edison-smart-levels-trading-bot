@@ -33,34 +33,43 @@ const createOpenTrade = createJournalOpenParams;
 const createCloseTrade = createJournalCloseParams;
 
 describe('TradingJournalService', () => {
+  type TradingJournalFixtures = Pick<
+    ManagedTradingJournalContext,
+    'journal' | 'logger' | 'dataDir' | 'createLegacyService'
+  >;
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
-  let context: ManagedTradingJournalContext;
+  let createLegacyService: ManagedTradingJournalContext['createLegacyService'];
 
   function bindTradingJournalContext() {
-    let managedContext: ManagedTradingJournalContext;
+    let fixtures: TradingJournalFixtures;
+    let cleanup: ManagedTradingJournalContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedTradingJournalContext({
+      const managedContext = createManagedTradingJournalContext({
         withErrorHandler: false,
       });
+      fixtures = {
+        journal: managedContext.journal,
+        logger: managedContext.logger,
+        dataDir: managedContext.dataDir,
+        createLegacyService: managedContext.createLegacyService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindTradingJournalContext();
+  const getFixtures = bindTradingJournalContext();
 
   beforeEach(() => {
-    context = getContext();
-    journal = context.journal;
-    logger = context.logger;
-    testDataDir = context.dataDir;
+    ({ journal, logger, dataDir: testDataDir, createLegacyService } = getFixtures());
   });
 
   // ============================================================================
@@ -108,7 +117,7 @@ describe('TradingJournalService', () => {
       fs.writeFileSync(journalPath, JSON.stringify(testTrades, null, 2));
 
       // Create new journal instance that should load the file
-      const newJournal = context.createLegacyService();
+      const newJournal = createLegacyService();
       const loaded = newJournal.getAllTrades();
 
       expect(loaded).toHaveLength(1);
@@ -122,7 +131,7 @@ describe('TradingJournalService', () => {
       fs.writeFileSync(journalPath, 'not valid json {{{');
 
       // Should not throw, just log error
-      const newJournal = context.createLegacyService();
+      const newJournal = createLegacyService();
       const trades = newJournal.getAllTrades();
 
       expect(trades).toEqual([]); // Empty journal
@@ -265,7 +274,7 @@ describe('TradingJournalService', () => {
       });
 
       // Create new journal instance and check if trade is loaded
-      const newJournal = context.createLegacyService();
+      const newJournal = createLegacyService();
       const trade = newJournal.getTrade('PERSIST_TEST');
 
       expect(trade).toBeDefined();
@@ -359,7 +368,7 @@ describe('TradingJournalService', () => {
       });
 
       // Create new journal instance and verify
-      const newJournal = context.createLegacyService();
+      const newJournal = createLegacyService();
       const trade = newJournal.getTrade('CLOSE_TEST');
 
       expect(trade).toBeDefined();
@@ -758,7 +767,7 @@ describe('TradingJournalService', () => {
       expect(journal.getAllTrades()).toHaveLength(0);
 
       // Verify persistence
-      const newJournal = context.createLegacyService();
+      const newJournal = createLegacyService();
       expect(newJournal.getAllTrades()).toHaveLength(0);
     });
   });

@@ -20,35 +20,44 @@ import {
 } from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService', () => {
+  type StructureAwareExitFixtures = Pick<
+    ManagedStructureAwareExitContext,
+    'logger' | 'createService'
+  >;
   let service: StructureAwareExitService;
   let mockLogger: LoggerService;
   let defaultConfig: StructureAwareExitConfig;
-  let context: ManagedStructureAwareExitContext;
+  let createService: ManagedStructureAwareExitContext['createService'];
 
   function bindStructureAwareExitContext() {
-    let managedContext: ManagedStructureAwareExitContext;
+    let fixtures: StructureAwareExitFixtures;
+    let cleanup: ManagedStructureAwareExitContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedStructureAwareExitContext({
+      const managedContext = createManagedStructureAwareExitContext({
         config: createStructureAwareExitConfig(),
         withErrorHandler: false,
       });
+      fixtures = {
+        logger: managedContext.logger,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindStructureAwareExitContext();
+  const getFixtures = bindStructureAwareExitContext();
 
   beforeEach(() => {
     defaultConfig = createStructureAwareExitConfig();
-    context = getContext();
-    mockLogger = context.logger;
-    service = context.createService({
+    ({ logger: mockLogger, createService } = getFixtures());
+    service = createService({
       config: defaultConfig,
       logger: mockLogger,
       withErrorHandler: false,
@@ -258,7 +267,7 @@ describe('StructureAwareExitService', () => {
       const disabledConfig = createStructureAwareExitConfig({
         trailingStopAfterTP1: { enabled: false },
       });
-      const disabledService = context.createService({
+      const disabledService = createService({
         config: disabledConfig,
         logger: mockLogger,
         withErrorHandler: false,

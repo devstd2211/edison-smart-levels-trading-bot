@@ -24,20 +24,21 @@ type CompoundInterestFixtures = Pick<
 >;
 
 function bindCompoundInterestContext() {
-  let context: ManagedCompoundInterestContext;
+  let cleanup: ManagedCompoundInterestContext['cleanup'];
   let fixtures: CompoundInterestFixtures;
 
   beforeEach(() => {
-    context = createManagedLegacyCompoundInterestContext();
+    const managedContext = createManagedLegacyCompoundInterestContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      mockGetBalance: context.mockGetBalance,
-      createCalculator: context.createCalculator,
+      logger: managedContext.logger,
+      mockGetBalance: managedContext.mockGetBalance,
+      createCalculator: managedContext.createCalculator,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

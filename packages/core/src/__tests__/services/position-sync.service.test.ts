@@ -31,38 +31,51 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
+  type PositionSyncFixtures = Pick<
+    ManagedPositionSyncContext,
+    'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
+  >;
   let service: PositionSyncService;
-  let mockBybit: ReturnType<typeof createMockPositionSyncExchange>;
-  let mockPositionManager: ReturnType<typeof createMockPositionSyncManager>;
-  let mockExitTypeDetector: ReturnType<typeof createMockPositionSyncExitTypeDetector>;
-  let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
+  let mockBybit: ManagedPositionSyncContext['mockBybit'];
+  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
+  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
+  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
   let logger: LoggerService;
-  let context: ManagedPositionSyncContext;
 
   function bindPositionSyncContext() {
-    let managedContext: ManagedPositionSyncContext;
+    let fixtures: PositionSyncFixtures;
+    let cleanup: ManagedPositionSyncContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedPositionSyncContext();
+      const managedContext = createManagedPositionSyncContext();
+      fixtures = {
+        service: managedContext.service,
+        mockBybit: managedContext.mockBybit,
+        mockPositionManager: managedContext.mockPositionManager,
+        mockExitTypeDetector: managedContext.mockExitTypeDetector,
+        mockTelegram: managedContext.mockTelegram,
+        logger: managedContext.logger,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindPositionSyncContext();
+  const getFixtures = bindPositionSyncContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    mockBybit = context.mockBybit;
-    mockPositionManager = context.mockPositionManager;
-    mockExitTypeDetector = context.mockExitTypeDetector;
-    mockTelegram = context.mockTelegram;
-    logger = context.logger;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    mockBybit = fixtures.mockBybit;
+    mockPositionManager = fixtures.mockPositionManager;
+    mockExitTypeDetector = fixtures.mockExitTypeDetector;
+    mockTelegram = fixtures.mockTelegram;
+    logger = fixtures.logger;
   });
 
   // ==========================================================================

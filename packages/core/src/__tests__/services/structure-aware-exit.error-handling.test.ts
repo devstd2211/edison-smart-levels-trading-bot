@@ -60,7 +60,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   const getContext = bindStructureAwareExitContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures: Pick<
+      ManagedStructureAwareExitContext,
+      'logger' | 'errorHandler' | 'config' | 'createService'
+    > = getContext();
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     defaultConfig = fixtures.config;

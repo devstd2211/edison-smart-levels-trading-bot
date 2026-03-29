@@ -89,13 +89,14 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   const getContext = bindTradingJournalContext();
 
   beforeEach(() => {
+    const fixtures: TradingJournalFixtures = getContext();
     ({
       journal,
       logger,
       dataDir: tempDir,
       errorHandler,
       createService,
-    } = getContext());
+    } = fixtures);
   });
 
   // ============================================================================

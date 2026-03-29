@@ -36,12 +36,22 @@ import {
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
   type SmartOrderExecutionService = ManagedSmartOrderExecutionContext['service'];
+  type SmartOrderExecutionFixtures = Pick<
+    ManagedSmartOrderExecutionContext,
+    | 'service'
+    | 'logger'
+    | 'errorHandler'
+    | 'config'
+    | 'order'
+    | 'createInvalidService'
+    | 'createNoHandlerService'
+    | 'createService'
+  >;
   let service: SmartOrderExecutionService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
-  let context: ManagedSmartOrderExecutionContext;
   let createInvalidService: ManagedSmartOrderExecutionContext['createInvalidService'];
   let createNoHandlerService: ManagedSmartOrderExecutionContext['createNoHandlerService'];
   let createService: (options?: {
@@ -51,31 +61,43 @@ describe('SmartOrderExecutionService', () => {
   }) => SmartOrderExecutionService;
 
   function bindSmartOrderExecutionContext() {
-    let managedContext: ManagedSmartOrderExecutionContext;
+    let fixtures: SmartOrderExecutionFixtures;
+    let cleanup: ManagedSmartOrderExecutionContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedSmartOrderExecutionContext();
+      const managedContext = createManagedSmartOrderExecutionContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        config: managedContext.config,
+        order: managedContext.order,
+        createInvalidService: managedContext.createInvalidService,
+        createNoHandlerService: managedContext.createNoHandlerService,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindSmartOrderExecutionContext();
+  const getFixtures = bindSmartOrderExecutionContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    mockConfig = context.config;
-    baseOrder = context.order;
-    createInvalidService = context.createInvalidService;
-    createNoHandlerService = context.createNoHandlerService;
-    createService = context.createService;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    mockConfig = fixtures.config;
+    baseOrder = fixtures.order;
+    createInvalidService = fixtures.createInvalidService;
+    createNoHandlerService = fixtures.createNoHandlerService;
+    createService = fixtures.createService;
   });
 
   // ============================================================================

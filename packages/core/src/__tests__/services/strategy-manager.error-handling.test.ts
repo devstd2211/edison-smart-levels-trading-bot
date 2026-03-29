@@ -32,24 +32,25 @@ type StrategyManagerFixtures = Pick<
 >;
 
 function bindStrategyManagerContext() {
-  let context: ManagedStrategyManagerContext;
+  let cleanup: ManagedStrategyManagerContext['cleanup'];
   let fixtures: StrategyManagerFixtures;
 
   beforeEach(() => {
-    context = createManagedStrategyManagerContext();
+    const managedContext = createManagedStrategyManagerContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      mockLoader: context.mockLoader,
-      mockMerger: context.mockMerger,
-      mockErrorHandler: context.mockErrorHandler,
-      mockStrategy: context.mockStrategy,
-      mockMainConfig: context.mockMainConfig,
-      consoleLogSpy: context.consoleLogSpy,
-      createManager: context.createManager,
+      mockLoader: managedContext.mockLoader,
+      mockMerger: managedContext.mockMerger,
+      mockErrorHandler: managedContext.mockErrorHandler,
+      mockStrategy: managedContext.mockStrategy,
+      mockMainConfig: managedContext.mockMainConfig,
+      consoleLogSpy: managedContext.consoleLogSpy,
+      createManager: managedContext.createManager,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

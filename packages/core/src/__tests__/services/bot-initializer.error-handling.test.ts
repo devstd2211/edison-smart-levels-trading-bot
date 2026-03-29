@@ -44,24 +44,25 @@ type BotInitializerRebuild = BotInitializerFixtures['rebuild'];
 type BotInitializerWithoutHandlerFactory = BotInitializerFixtures['createWithoutHandler'];
 
 function bindBotInitializerContext() {
-  let context: ManagedBotInitializerTestContext;
+  let cleanup: ManagedBotInitializerTestContext['cleanup'];
   let fixtures: BotInitializerFixtures;
 
   beforeEach(() => {
-    context = createManagedBotInitializerTestContext({
+    const managedContext = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
+    cleanup = managedContext.cleanup;
     fixtures = {
-      services: context.services,
-      config: context.config,
-      errorHandler: context.errorHandler,
-      rebuild: context.rebuild,
-      createWithoutHandler: context.createWithoutHandler,
+      services: managedContext.services,
+      config: managedContext.config,
+      errorHandler: managedContext.errorHandler,
+      rebuild: managedContext.rebuild,
+      createWithoutHandler: managedContext.createWithoutHandler,
     };
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
   });
 
   return () => fixtures;

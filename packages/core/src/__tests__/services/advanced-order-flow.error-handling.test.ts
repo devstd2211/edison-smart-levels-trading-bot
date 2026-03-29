@@ -44,21 +44,22 @@ type AdvancedOrderFlowFixtures = Pick<
 >;
 
 function bindAdvancedOrderFlowContext() {
-  let context: ManagedAdvancedOrderFlowContext;
+  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
   let fixtures: AdvancedOrderFlowFixtures;
 
   beforeEach(() => {
-    context = createManagedAdvancedOrderFlowContext();
+    const managedContext = createManagedAdvancedOrderFlowContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

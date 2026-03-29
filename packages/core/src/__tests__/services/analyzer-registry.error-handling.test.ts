@@ -40,23 +40,24 @@ type AnalyzerRegistryFixtures = Pick<
 >;
 
 function bindAnalyzerRegistryContext() {
-  let context: ManagedAnalyzerRegistryContext;
+  let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
   let fixtures: AnalyzerRegistryFixtures;
 
   beforeEach(() => {
-    context = createManagedAnalyzerRegistryContext();
+    const managedContext = createManagedAnalyzerRegistryContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      registry: context.registry,
-      createScenario: context.createScenario,
-      createStandardRegistry: context.createStandardRegistry,
-      createLegacyRegistry: context.createLegacyRegistry,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      registry: managedContext.registry,
+      createScenario: managedContext.createScenario,
+      createStandardRegistry: managedContext.createStandardRegistry,
+      createLegacyRegistry: managedContext.createLegacyRegistry,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
